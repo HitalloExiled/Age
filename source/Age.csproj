@@ -7,6 +7,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PublishAot>true</PublishAot>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IlcDisableReflection>true</IlcDisableReflection>
   </PropertyGroup>
+  <ItemGroup>
+    <TrimmableAssembly Include="Silk.NET.Maths" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.OpenGLES.Extensions.OVR" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.Vulkan" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.16.0" />
+  </ItemGroup>
 
 </Project>
