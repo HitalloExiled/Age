@@ -1,0 +1,91 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Age.sln",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "clean",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "clean",
+                "${workspaceFolder}/Age.sln"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "rebuild",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "clean",
+                "build"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "publish",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/Age.sln",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "test",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "--collect:\"XPlat Code Coverage\"",
+                "--settings=coverlet.runsettings",
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "generate-report",
+            "command": "dotnet",
+            "type": "process",
+            "dependsOn": ["test"],
+            "args": [
+                "reportgenerator",
+                "-reports:\"tests/Age.Tests/TestResults/*/coverage.opencover.xml\"",
+                "-targetdir:\".coverage\"",
+                "-reporttypes:Html",
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "open-report",
+            "command": "Invoke-Item ./.coverage/index.html",
+            "type": "shell",
+            "dependsOn": ["generate-report"],
+            "problemMatcher": []
+        },
+        {
+            "label": "watch",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "--project",
+                "${workspaceFolder}/Age.sln"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

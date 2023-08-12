@@ -1,0 +1,14 @@
+{
+    "enabled": true,
+    "globRoot": ".",
+    "files": [
+        "**/*.cs",
+        "README.md"
+    ],
+    "words": [
+        "globaltool",
+        "Hitallo",
+        "reportgenerator",
+        "xunit"
+    ]
+}
