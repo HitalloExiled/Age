@@ -1,0 +1,17 @@
+using System.Runtime.InteropServices;
+
+namespace Age.Platform.Windows.Api.Native;
+
+internal static partial class User32
+{
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RAWKEYBOARD
+    {
+        public USHORT MakeCode;
+        public USHORT Flags;
+        public USHORT Reserved;
+        public USHORT VKey;
+        public UINT   Message;
+        public ULONG  ExtraInformation;
+    }
+}
