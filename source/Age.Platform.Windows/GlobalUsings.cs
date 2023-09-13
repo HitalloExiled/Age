@@ -1,0 +1,38 @@
+global using ATOM              = System.Int32;
+global using BYTE              = System.Byte;
+global using DWORD             = System.UInt32;
+global using HANDLE            = nint;
+global using HBRUSH            = nint;
+global using HCURSOR           = nint;
+global using HDC               = nint;
+global using HHOOK             = nint;
+global using HICON             = nint;
+global using HINSTANCE         = nint;
+global using HMENU             = nint;
+global using HMONITOR          = nint;
+global using HRAWINPUT         = nint;
+global using HRGN              = nint;
+global using HWND              = nint;
+global using LONG              = System.Int64;
+global using LONG_PTR          = nint;
+global using LPARAM            = nint;
+global using LPCRECT           = nint;
+global using LPMONITORINFO     = nint;
+global using LPMSG             = System.UInt16;
+global using LPPAINTSTRUCT     = nint;
+global using LPPOINT           = nint;
+global using LPRECT            = nint;
+global using LPTRACKMOUSEEVENT = nint;
+global using LPVOID            = nint;
+global using LRESULT           = nint;
+global using PUINT             = nuint;
+global using SHORT             = System.Int16;
+global using UINT              = System.UInt32;
+global using UINT_PTR          = nuint;
+global using ULONG             = System.UInt64;
+global using ULONG_PTR         = nuint;
+global using USHORT            = System.UInt16;
+global using WPARAM            = nint;
+
+
+

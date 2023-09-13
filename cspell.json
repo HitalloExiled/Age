@@ -1,13 +1,15 @@
 {
-    "enabled": true,
+    "enabled": false,
     "globRoot": ".",
     "files": [
         "**/*.cs",
+        "!**/**Native/**/*.cs",
         "README.md"
     ],
     "words": [
         "globaltool",
         "Hitallo",
+        "LPCWSTR",
         "reportgenerator",
         "xunit"
     ]
