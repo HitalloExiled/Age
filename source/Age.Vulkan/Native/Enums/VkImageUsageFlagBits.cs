@@ -1,4 +1,4 @@
-namespace Age.Vulkan.Native.Extensions.KHR.Enums;
+namespace Age.Vulkan.Native.Enums;
 
 /// <summary>
 /// Bitmask specifying intended usage of an image.

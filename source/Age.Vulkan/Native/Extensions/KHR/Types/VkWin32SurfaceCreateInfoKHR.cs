@@ -1,7 +1,8 @@
 using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Extensions.EXT.Flags;
+
 using HINSTANCE = nint;
-using HWND = nint;
+using HWND      = nint;
 
 namespace Age.Vulkan.Native.Extensions.KHR.Types;
 
@@ -13,7 +14,7 @@ public unsafe struct VkWin32SurfaceCreateInfoKHR
     /// <summary>
     /// a VkStructureType value identifying this structure.
     /// </summary>
-    public VkStructureType sType;
+    public readonly VkStructureType sType;
 
     /// <summary>
     /// NULL or a pointer to a structure extending this structure.
@@ -34,4 +35,7 @@ public unsafe struct VkWin32SurfaceCreateInfoKHR
     /// the Win32 <see cref="HWND"/> for the window to associate the surface with.
     /// </summary>
     public HWND hwnd;
+
+    public VkWin32SurfaceCreateInfoKHR() =>
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 }

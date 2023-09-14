@@ -11,7 +11,7 @@ public unsafe struct VkDeviceCreateInfo
     /// <summary>
     /// A <see cref="VkStructureType"/> value identifying this structure.
     /// </summary>
-    public VkStructureType sType;
+    public readonly VkStructureType sType;
 
     /// <summary>
     /// NULL or a pointer to a structure extending this structure.
@@ -59,4 +59,7 @@ public unsafe struct VkDeviceCreateInfo
     /// NULL or a pointer to a <see cref="VkPhysicalDeviceFeatures"/> structure containing boolean indicators of all the features to be enabled. Refer to the Features section for further details.
     /// </summary>
     public VkPhysicalDeviceFeatures* pEnabledFeatures;
+
+    public VkDeviceCreateInfo() =>
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 }

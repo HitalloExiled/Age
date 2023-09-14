@@ -1,5 +1,6 @@
 using Age.Vulkan.Native.Extensions.EXT.Flags;
 using Age.Vulkan.Native.Extensions.KHR.Enums;
+using Age.Vulkan.Native.Flags;
 
 namespace Age.Vulkan.Native.Types;
 

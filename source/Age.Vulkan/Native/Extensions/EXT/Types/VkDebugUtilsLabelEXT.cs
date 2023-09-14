@@ -10,7 +10,7 @@ public unsafe struct VkDebugUtilsLabelEXT
     /// <summary>
     /// A <see cref="VkStructureType"/> value identifying this structure.
     /// </summary>
-    public VkStructureType sType;
+    public readonly VkStructureType sType;
 
     /// <summary>
     /// NULL or a pointer to a structure extending this structure.
@@ -26,4 +26,7 @@ public unsafe struct VkDebugUtilsLabelEXT
     /// An optional RGBA color value that can be associated with the label. A particular implementation may choose to ignore this color value. The values contain RGBA values in order, in the range 0.0 to 1.0. If all elements in color are set to 0.0 then it is ignored.
     /// </summary>
     public fixed float color[4];
+
+    public VkDebugUtilsLabelEXT() =>
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
 }

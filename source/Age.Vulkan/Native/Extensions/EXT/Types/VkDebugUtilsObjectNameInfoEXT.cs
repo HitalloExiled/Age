@@ -11,7 +11,7 @@ public unsafe struct VkDebugUtilsObjectNameInfoEXT
     /// <summary>
     /// A VkStructureType value identifying this structure.
     /// </summary>
-    public VkStructureType sType;
+    public readonly VkStructureType sType;
 
     /// <summary>
     /// NULL or a pointer to a structure extending this structure.
@@ -32,4 +32,7 @@ public unsafe struct VkDebugUtilsObjectNameInfoEXT
     /// Either NULL or a null-terminated UTF-8 string specifying the name to apply to objectHandle.
     /// </summary>
     public byte* pObjectName;
+
+    public VkDebugUtilsObjectNameInfoEXT() =>
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
 }

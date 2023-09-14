@@ -11,7 +11,7 @@ public unsafe struct VkDeviceQueueCreateInfo
     /// <summary>
     /// A VkStructureType value identifying this structure.
     /// </summary>
-    public VkStructureType sType;
+    public readonly VkStructureType sType;
 
     /// <summary>
     /// NULL or a pointer to a structure extending this structure.
@@ -37,4 +37,7 @@ public unsafe struct VkDeviceQueueCreateInfo
     /// A pointer to an array of queueCount normalized floating point values, specifying priorities of work that will be submitted to each created queue. See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#devsandqueues-priority">Queue Priority</see> for more information.
     /// </summary>
     public float* pQueuePriorities;
+
+    public VkDeviceQueueCreateInfo() =>
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 }

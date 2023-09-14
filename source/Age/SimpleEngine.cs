@@ -7,10 +7,12 @@ using Age.Vulkan.Native;
 using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Extensions.EXT;
 using Age.Vulkan.Native.Extensions.EXT.Enums;
-using Age.Vulkan.Native.Extensions.EXT.Types;
 using Age.Vulkan.Native.Extensions.EXT.Flags;
+using Age.Vulkan.Native.Extensions.EXT.Types;
 using Age.Vulkan.Native.Extensions.KHR;
+using Age.Vulkan.Native.Extensions.KHR.Enums;
 using Age.Vulkan.Native.Extensions.KHR.Types;
+using Age.Vulkan.Native.Flags;
 using Age.Vulkan.Native.Types;
 
 namespace Age;
@@ -60,6 +62,32 @@ public unsafe class SimpleEngine : IDisposable
     private VkInstance instance;
     private Window     window = null!;
 
+    private static VkPresentModeKHR ChooseSwapPresentMode(VkPresentModeKHR[] availablePresentModes)
+    {
+        foreach (var availablePresentMode in availablePresentModes)
+        {
+            if (availablePresentMode == VkPresentModeKHR.VK_PRESENT_MODE_MAILBOX_KHR)
+            {
+                return availablePresentMode;
+            }
+        }
+
+        return VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR;
+    }
+
+    private static VkSurfaceFormatKHR ChooseSwapSurfaceFormat(VkSurfaceFormatKHR[] availableFormats)
+    {
+        foreach (var availableFormat in availableFormats)
+        {
+            if (availableFormat.format == VkFormat.VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            {
+                return availableFormat;
+            }
+        }
+
+        return availableFormats[0];
+    }
+
     private static VkBool32 DebugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT        messageType,
@@ -75,7 +103,6 @@ public unsafe class SimpleEngine : IDisposable
     private static void PopulateDebugMessengerCreateInfo(out VkDebugUtilsMessengerCreateInfoEXT createInfo) =>
         createInfo = new VkDebugUtilsMessengerCreateInfoEXT
         {
-            sType           = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
             messageSeverity = VkDebugUtilsMessageSeverityFlagBitsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VkDebugUtilsMessageSeverityFlagBitsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VkDebugUtilsMessageSeverityFlagBitsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
             messageType     = VkDebugUtilsMessageTypeFlagBitsEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VkDebugUtilsMessageTypeFlagBitsEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VkDebugUtilsMessageTypeFlagBitsEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
             pfnUserCallback = new(DebugCallback),
@@ -94,6 +121,27 @@ public unsafe class SimpleEngine : IDisposable
         this.vk.EnumerateInstanceLayerProperties(out VkLayerProperties[] availableLayers);
 
         return this.validationLayers.Overlaps(availableLayers.Select(x => Marshal.PtrToStringAnsi((nint)x.layerName)!));
+    }
+
+    private VkExtent2D ChooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities)
+    {
+        if (capabilities.currentExtent.width != uint.MaxValue)
+        {
+            return capabilities.currentExtent;
+        }
+        else
+        {
+            var actualExtent = new VkExtent2D
+            {
+                width  = (uint)this.window.Width,
+                height = (uint)this.window.Height,
+            };
+
+            actualExtent.width  = Math.Clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+            actualExtent.height = Math.Clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+
+            return actualExtent;
+        }
     }
 
     private void Cleanup()
@@ -121,7 +169,6 @@ public unsafe class SimpleEngine : IDisposable
         {
             var appInfo = new VkApplicationInfo
             {
-                sType              = VkStructureType.VK_STRUCTURE_TYPE_APPLICATION_INFO,
                 pApplicationName   = pApplicationName,
                 applicationVersion = Vk.MakeApiVersion(1, 0, 0),
                 pEngineName        = pEngineName,
@@ -131,8 +178,7 @@ public unsafe class SimpleEngine : IDisposable
 
             var createInfo = new VkInstanceCreateInfo
             {
-                sType             = VkStructureType.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-                pApplicationInfo  = &appInfo,
+                pApplicationInfo = &appInfo,
             };
 
             using var ppEnabledLayerNames = new StringArrayPtr(this.validationLayers.ToArray());
@@ -191,7 +237,6 @@ public unsafe class SimpleEngine : IDisposable
         {
             var queueCreateInfo = new VkDeviceQueueCreateInfo
             {
-                sType            = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
                 queueFamilyIndex = indices.GraphicsFamily!.Value,
                 queueCount       = 1,
                 pQueuePriorities = &queuePriority,
@@ -206,7 +251,6 @@ public unsafe class SimpleEngine : IDisposable
         {
             var createInfo = new VkDeviceCreateInfo
             {
-                sType                 = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
                 queueCreateInfoCount  = (uint)queueCreateInfos.Count,
                 pQueueCreateInfos     = pQueueCreateInfos,
                 pEnabledFeatures      = &deviceFeatures,
@@ -252,12 +296,67 @@ public unsafe class SimpleEngine : IDisposable
 
         var createInfo = new VkWin32SurfaceCreateInfoKHR
         {
-            sType     = VkStructureType.VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
             hwnd      = this.window!.Handle,
             hinstance = Process.GetCurrentProcess().Handle,
         };
 
         vkKhrWin32Surface.CreateWin32Surface(this.instance, createInfo, default, out this.surface);
+    }
+
+    private void CreateSwapChain()
+    {
+        var swapChainSupport = this.QuerySwapChainSupport(this.physicalDevice);
+        var surfaceFormat    = ChooseSwapSurfaceFormat(swapChainSupport.Formats);
+        var presentMode      = ChooseSwapPresentMode(swapChainSupport.PresentModes);
+        var extent           = this.ChooseSwapExtent(swapChainSupport.Capabilities);
+
+        var imageCount = swapChainSupport.Capabilities.minImageCount + 1;
+
+        if (swapChainSupport.Capabilities.maxImageCount > 0 && imageCount > swapChainSupport.Capabilities.maxImageCount)
+        {
+            imageCount = swapChainSupport.Capabilities.maxImageCount;
+        }
+
+        var createInfo = new VkSwapchainCreateInfoKHR
+        {
+            surface          = this.surface,
+            minImageCount    = imageCount,
+            imageFormat      = surfaceFormat.format,
+            imageColorSpace  = surfaceFormat.colorSpace,
+            imageExtent      = extent,
+            imageArrayLayers = 1,
+            imageUsage       = VkImageUsageFlagBits.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+        };
+
+        var indices = this.FindQueueFamilies(this.physicalDevice);
+
+        var queueFamilyIndices = new[]
+        {
+            indices.GraphicsFamily!.Value,
+            indices.PresentFamily!.Value
+        };
+
+        fixed (uint* pQueueFamilyIndices = queueFamilyIndices.AsSpan())
+        {
+            if (indices.GraphicsFamily != indices.PresentFamily)
+            {
+                createInfo.imageSharingMode      = VkSharingMode.VK_SHARING_MODE_CONCURRENT;
+                createInfo.queueFamilyIndexCount = 2;
+                createInfo.pQueueFamilyIndices   = pQueueFamilyIndices;
+            }
+            else
+            {
+                createInfo.imageSharingMode      = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
+                createInfo.queueFamilyIndexCount = 0; // Optional
+                createInfo.pQueueFamilyIndices   = null; // Optional
+            }
+
+            createInfo.preTransform   = swapChainSupport.Capabilities.currentTransform;
+            createInfo.compositeAlpha = VkCompositeAlphaFlagBitsKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+            createInfo.presentMode    = presentMode;
+            createInfo.clipped        = true;
+            createInfo.oldSwapchain   = default;
+        }
     }
 
     private List<string> GetRequiredExtensions()

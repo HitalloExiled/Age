@@ -27,7 +27,7 @@ public unsafe struct VkDebugUtilsMessengerCreateInfoEXT
     /// <summary>
     /// A <see cref="VkStructureType"/> value identifying this structure.
     /// </summary>
-    public VkStructureType sType;
+    public readonly VkStructureType sType;
 
     /// <summary>
     /// NULL or a pointer to a structure extending this structure.
@@ -58,4 +58,7 @@ public unsafe struct VkDebugUtilsMessengerCreateInfoEXT
     /// Is user data to be passed to the callback.
     /// </summary>
     public void* pUserData;
+
+    public VkDebugUtilsMessengerCreateInfoEXT() =>
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 }

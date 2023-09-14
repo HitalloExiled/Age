@@ -10,7 +10,7 @@ public unsafe struct VkApplicationInfo
     /// <summary>
     /// Value identifying this structure.
     /// </summary>
-    public VkStructureType sType;
+    public readonly VkStructureType sType;
 
     /// <summary>
     /// NULL or a pointer to a structure extending this structure.
@@ -41,4 +41,7 @@ public unsafe struct VkApplicationInfo
     /// Must be the highest version of Vulkan that the application is designed to use, encoded as described in https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#extendingvulkan-coreversions-versionnumbers. The patch version number specified in apiVersion is ignored when creating an instance object. The variant version of the instance must match that requested in apiVersion.
     /// </summary>
     public uint apiVersion;
+
+    public VkApplicationInfo() =>
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_APPLICATION_INFO;
 }

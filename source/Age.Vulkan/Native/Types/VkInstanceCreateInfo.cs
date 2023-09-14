@@ -13,7 +13,7 @@ public unsafe struct VkInstanceCreateInfo
     /// <summary>
     /// Value identifying this structure.
     /// </summary>
-    public VkStructureType sType;
+    public readonly VkStructureType sType;
 
     /// <summary>
     /// Null or a pointer to a structure extending this structure.
@@ -49,4 +49,7 @@ public unsafe struct VkInstanceCreateInfo
     /// Is a pointer to an array of enabledExtensionCount null-terminated UTF-8 strings containing the names of extensions to enable.
     /// </summary>
     public byte** ppEnabledExtensionNames;
+
+    public VkInstanceCreateInfo() =>
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 }

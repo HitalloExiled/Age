@@ -11,7 +11,7 @@ public unsafe struct VkDebugUtilsMessengerCallbackDataEXT
     /// <summary>
     /// value identifying this structure.
     /// </summary>
-    public VkStructureType sType;
+    public readonly VkStructureType sType;
 
     /// <summary>
     /// NULL or a pointer to a structure extending this structure.
@@ -67,4 +67,7 @@ public unsafe struct VkDebugUtilsMessengerCallbackDataEXT
     /// a pointer to an array of <see cref="VkDebugUtilsObjectNameInfoEXT"/> objects related to the detected issue. The array is roughly in order or importance, but the 0th element is always guaranteed to be the most important object for this message.
     /// </summary>
     public VkDebugUtilsObjectNameInfoEXT* pObjects;
+
+    public VkDebugUtilsMessengerCallbackDataEXT() =>
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
 }
