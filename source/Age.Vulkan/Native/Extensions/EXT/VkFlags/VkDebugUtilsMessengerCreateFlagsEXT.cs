@@ -1,13 +1,17 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Age.Vulkan.Interfaces;
 
-namespace Age.Vulkan.Native;
+namespace Age.Vulkan.Native.Extensions.EXT.VkFlags;
 
+/// <summary>
+/// Reserved for future use.
+/// </summary>
 [DebuggerDisplay("{Value}")]
-public record struct VkDebugUtilsMessengerCreateFlagsEXT(uint Value)
+public record struct VkDebugUtilsMessengerCreateFlagsEXT(uint Value) : IVkFlags
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly bool HasFlag(VkDebugUtilsMessengerCreateFlagsEXT value) =>
+    public readonly bool HasFlag(uint value) =>
         (this.Value & value) == value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

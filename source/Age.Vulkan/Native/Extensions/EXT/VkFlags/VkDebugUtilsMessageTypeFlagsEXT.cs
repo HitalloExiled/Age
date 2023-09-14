@@ -1,19 +1,18 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Age.Vulkan.Interfaces;
-using Age.Vulkan.Native.Enums;
+using Age.Vulkan.Native.Extensions.EXT.Enums;
 
-namespace Age.Vulkan.Native;
+namespace Age.Vulkan.Native.Extensions.EXT.VkFlags;
 
+/// <summary>
+/// Bitmask of <see cref="VkDebugUtilsMessageTypeFlagBitsEXT"/>.
+/// </summary>
 [DebuggerDisplay("{Value}")]
-public record struct VkDebugUtilsMessageTypeFlagsEXT(VkDebugUtilsMessageTypeFlagBitsEXT Value) : IVkFlags
+public record struct VkDebugUtilsMessageTypeFlagsEXT(VkDebugUtilsMessageTypeFlagBitsEXT Value) : IVkFlags<VkDebugUtilsMessageTypeFlagBitsEXT>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly bool HasFlag(uint value) =>
-        ((uint)this.Value & value) == value;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly bool HasFlag(VkDebugUtilsMessageTypeFlagsEXT value) =>
+    public readonly bool HasFlag(VkDebugUtilsMessageTypeFlagBitsEXT value) =>
         this.Value.HasFlag(value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

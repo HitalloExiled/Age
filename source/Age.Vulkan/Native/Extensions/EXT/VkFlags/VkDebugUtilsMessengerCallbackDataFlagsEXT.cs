@@ -2,8 +2,11 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Age.Vulkan.Interfaces;
 
-namespace Age.Vulkan.Native;
+namespace Age.Vulkan.Native.Extensions.EXT.VkFlags;
 
+/// <summary>
+/// Reserved for future use.
+/// </summary>
 [DebuggerDisplay("{Value}")]
 public record struct VkDebugUtilsMessengerCallbackDataFlagsEXT(uint Value) : IVkFlags
 {

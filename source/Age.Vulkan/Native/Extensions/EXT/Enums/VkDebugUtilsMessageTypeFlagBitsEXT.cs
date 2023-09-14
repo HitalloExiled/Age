@@ -1,4 +1,4 @@
-namespace Age.Vulkan.Native.Enums;
+namespace Age.Vulkan.Native.Extensions.EXT.Enums;
 
 /// <summary>
 /// Bitmask specifying which types of events cause a debug messenger callback

@@ -10,28 +10,48 @@ namespace Age.Vulkan.Native;
 public unsafe abstract class Vk
 {
     /// <summary>
-    /// the length in char values of an array containing a string with additional descriptive information about a query, as returned in <see cref="VkLayerProperties.description"/> and other queries.
+    /// The length in char values of an array containing a string with additional descriptive information about a query, as returned in <see cref="VkLayerProperties.description"/> and other queries.
     /// </summary>
     public const uint VK_MAX_DESCRIPTION_SIZE = 256;
 
     /// <summary>
-    /// the length in char values of an array containing a layer or extension name string, as returned in <see cref="VkLayerProperties.layerName"/>, <see cref="VkExtensionProperties.extensionName"/>, and other queries.
+    /// The length in char values of an array containing a layer or extension name string, as returned in <see cref="VkLayerProperties.layerName"/>, <see cref="VkExtensionProperties.extensionName"/>, and other queries.
     /// </summary>
     public const uint VK_MAX_EXTENSION_NAME_SIZE = 256;
 
+    /// <summary>
+    /// The length in char values of an array containing a physical device name string, as returned in <see cref="VkPhysicalDeviceProperties.deviceName"/>.
+    /// </summary>
+    public const uint VK_MAX_PHYSICAL_DEVICE_NAME_SIZE = 256;
+
+    /// <summary>
+    /// The length in byte values of an array containing a universally unique device or driver build identifier, as returned in <see cref="VkPhysicalDeviceIDProperties.deviceUUID"/> and <see cref="VkPhysicalDeviceIDProperties.driverUUID"/>.
+    /// </summary>
+    public const uint VK_UUID_SIZE = 16;
+
+    private delegate VkResult VkCreateDevice(VkPhysicalDevice physicalDevice, VkDeviceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDevice* pDevice);
     private delegate VkResult VkCreateInstance(VkInstanceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkInstance* pInstance);
     private delegate void VkDestroyInstance(VkInstance instance, VkAllocationCallbacks* pAllocator);
     private delegate VkResult VkEnumerateInstanceExtensionProperties(byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
     private delegate VkResult VkEnumerateInstanceLayerProperties(uint* pPropertyCount, VkLayerProperties* pProperties);
+    private delegate VkResult VkEnumeratePhysicalDevices(VkInstance instance, uint* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices);
     private delegate void* VkGetInstanceProcAddr(VkInstance instance, byte* pName);
+    private delegate void VkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures);
+    private delegate void VkGetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* pProperties);
+    private delegate void VkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, uint* pQueueFamilyPropertyCount, VkQueueFamilyProperties* pQueueFamilyProperties);
 
     private readonly Dictionary<string, HashSet<string>> extensionsMap = new();
 
-    private readonly VkCreateInstance                       vkCreateInstance;
-    private readonly VkDestroyInstance                      vkDestroyInstance;
-    private readonly VkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionProperties;
-    private readonly VkEnumerateInstanceLayerProperties     vkEnumerateInstanceLayerProperties;
-    private readonly VkGetInstanceProcAddr                  vkGetInstanceProcAddr;
+    private readonly VkCreateDevice                           vkCreateDevice;
+    private readonly VkCreateInstance                         vkCreateInstance;
+    private readonly VkDestroyInstance                        vkDestroyInstance;
+    private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties;
+    private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties;
+    private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices;
+    private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr;
+    private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures;
+    private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties;
+    private readonly VkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties;
 
     public static uint ApiVersion_1_0 { get; } = MakeApiVersion(0, 1, 0, 0);
 
@@ -39,16 +59,49 @@ public unsafe abstract class Vk
 
     public Vk()
     {
-        this.vkCreateInstance                       = this.Loader.Load<VkCreateInstance>("vkCreateInstance");
-        this.vkDestroyInstance                      = this.Loader.Load<VkDestroyInstance>("vkDestroyInstance");
-        this.vkEnumerateInstanceExtensionProperties = this.Loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
-        this.vkEnumerateInstanceLayerProperties     = this.Loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
-        this.vkEnumerateInstanceLayerProperties     = this.Loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
-        this.vkGetInstanceProcAddr                  = this.Loader.Load<VkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+        this.vkCreateDevice                           = this.Loader.Load<VkCreateDevice>("vkCreateDevice");
+        this.vkCreateInstance                         = this.Loader.Load<VkCreateInstance>("vkCreateInstance");
+        this.vkDestroyInstance                        = this.Loader.Load<VkDestroyInstance>("vkDestroyInstance");
+        this.vkEnumerateInstanceExtensionProperties   = this.Loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
+        this.vkEnumerateInstanceLayerProperties       = this.Loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
+        this.vkEnumerateInstanceLayerProperties       = this.Loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
+        this.vkEnumeratePhysicalDevices               = this.Loader.Load<VkEnumeratePhysicalDevices>("vkEnumeratePhysicalDevices");
+        this.vkGetInstanceProcAddr                    = this.Loader.Load<VkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+        this.vkGetPhysicalDeviceFeatures              = this.Loader.Load<VkGetPhysicalDeviceFeatures>("vkGetPhysicalDeviceFeatures");
+        this.vkGetPhysicalDeviceProperties            = this.Loader.Load<VkGetPhysicalDeviceProperties>("vkGetPhysicalDeviceProperties");
+        this.vkGetPhysicalDeviceQueueFamilyProperties = this.Loader.Load<VkGetPhysicalDeviceQueueFamilyProperties>("vkGetPhysicalDeviceQueueFamilyProperties");
     }
 
     public static uint MakeApiVersion(uint variant, uint major, uint minor, uint patch = default) =>
         (variant << 29) | (major << 22) | (minor << 12) | patch;
+
+    /// <summary>
+    /// <para><see cref="CreateDevice"/> verifies that extensions and features requested in the ppEnabledExtensionNames and pEnabledFeatures members of pCreateInfo, respectively, are supported by the implementation. If any requested extension is not supported, <see cref="CreateDevice"/> must return <see cref="VkResult.VK_ERROR_EXTENSION_NOT_PRESENT"/>. If any requested feature is not supported, <see cref="CreateDevice"/> must return <see cref="VkResult.VK_ERROR_FEATURE_NOT_PRESENT"/>. Support for extensions can be checked before creating a device by querying vkEnumerateDeviceExtensionProperties. Support for features can similarly be checked by querying <see cref="GetPhysicalDeviceFeatures"/>.</para>
+    /// <para>After verifying and enabling the extensions the <see cref="VkDevice"/> object is created and returned to the application.</para>
+    /// <para>Multiple logical devices can be created from the same physical device. Logical device creation may fail due to lack of device-specific resources (in addition to other errors). If that occurs, <see cref="CreateDevice"/> will return <see cref="VkResult.VK_ERROR_TOO_MANY_OBJECTS"/>.</para>
+    /// </summary>
+    /// <param name="physicalDevice">Must be one of the device handles returned from a call to <see cref="EnumeratePhysicalDevices"/> (see <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#devsandqueues-physical-device-enumeration">Physical Device Enumeration</see>).</param>
+    /// <param name="pCreateInfo">A pointer to a <see cref="VkDeviceCreateInfo"/> structure containing information about how to create the device.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pDevice">A pointer to a handle in which the created <see cref="VkDevice"/> is returned.</param>
+    /// <returns></returns>
+    public VkResult CreateDevice(VkPhysicalDevice physicalDevice, VkDeviceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDevice* pDevice) =>
+        this.vkCreateDevice.Invoke(physicalDevice, pCreateInfo, pAllocator, pDevice);
+
+    public VkResult CreateDevice(VkPhysicalDevice physicalDevice, in VkDeviceCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkDevice device)
+    {
+        fixed (VkDeviceCreateInfo*    pCreateInfo = &createInfo)
+        fixed (VkAllocationCallbacks* pAllocator  = &allocator)
+        fixed (VkDevice*              pDevice     = &device)
+        {
+            return this.vkCreateDevice.Invoke(
+                physicalDevice,
+                pCreateInfo,
+                allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator,
+                pDevice
+            );
+        }
+    }
 
     /// <summary>
     /// <para>Create a new Vulkan instance.</para>
@@ -153,6 +206,35 @@ public unsafe abstract class Vk
         }
     }
 
+    /// <summary>
+    /// If pPhysicalDevices is NULL, then the number of physical devices available is returned in <see cref="pPhysicalDeviceCount"/>. Otherwise, <see cref="pPhysicalDeviceCount"/> must point to a variable set by the user to the number of elements in the <see cref="pPhysicalDevices"/> array, and on return the variable is overwritten with the number of handles actually written to <see cref="pPhysicalDevices"/>. If <see cref="pPhysicalDeviceCount"/> is less than the number of physical devices available, at most <see cref="pPhysicalDeviceCount"/> structures will be written, and <see cref="VkResult.VK_INCOMPLETE"/> will be returned instead of <see cref="VkResult.VK_SUCCESS"/>, to indicate that not all the available physical devices were returned.
+    /// </summary>
+    /// <param name="instance">A handle to a Vulkan instance previously created with <see cref="CreateInstance"/>.</param>
+    /// <param name="pPhysicalDeviceCount">A pointer to an integer related to the number of physical devices available or queried, as described above.</param>
+    /// <param name="pPhysicalDevices">Either NULL or a pointer to an array of VkPhysicalDevice handles.</param>
+    public VkResult EnumeratePhysicalDevices(VkInstance instance, uint* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices) =>
+        this.vkEnumeratePhysicalDevices.Invoke(instance, pPhysicalDeviceCount, pPhysicalDevices);
+
+    public VkResult EnumeratePhysicalDevices(VkInstance instance, out uint physicalDeviceCount)
+    {
+        fixed (uint* pPhysicalDeviceCount = &physicalDeviceCount)
+        {
+            return this.vkEnumeratePhysicalDevices.Invoke(instance, pPhysicalDeviceCount, null);
+        }
+    }
+
+    public VkResult EnumeratePhysicalDevices(VkInstance instance, out VkPhysicalDevice[] physicalDevices)
+    {
+        this.EnumeratePhysicalDevices(instance, out uint physicalDeviceCount);
+
+        physicalDevices = new VkPhysicalDevice[(int)physicalDeviceCount];
+
+        fixed (VkPhysicalDevice* pPhysicalDevices = physicalDevices.AsSpan())
+        {
+            return this.vkEnumeratePhysicalDevices.Invoke(instance, &physicalDeviceCount, pPhysicalDevices);
+        }
+    }
+
     public void* GetInstanceProcAddr(VkInstance instance, byte* pName) =>
         this.vkGetInstanceProcAddr.Invoke(instance, pName);
 
@@ -163,6 +245,67 @@ public unsafe abstract class Vk
             var pointer = this.vkGetInstanceProcAddr.Invoke(instance, pName);
 
             return pointer != null ? Marshal.GetDelegateForFunctionPointer<T>((nint)pointer) : null;
+        }
+    }
+
+    /// <summary>
+    /// Reports capabilities of a physical device.
+    /// </summary>
+    /// <param name="physicalDevice">The physical device from which to query the supported features.</param>
+    /// <param name="pFeatures">A pointer to a <see cref="VkPhysicalDeviceFeatures"/> structure in which the physical device features are returned. For each feature, a value of true specifies that the feature is supported on this physical device, and VK_FALSE specifies that the feature is not supported.</param>
+    public void GetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures) =>
+        this.vkGetPhysicalDeviceFeatures.Invoke(physicalDevice, pFeatures);
+
+    public void GetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, out VkPhysicalDeviceFeatures features)
+    {
+        fixed (VkPhysicalDeviceFeatures* pFeatures = &features)
+        {
+            this.vkGetPhysicalDeviceFeatures.Invoke(physicalDevice, pFeatures);
+        }
+    }
+
+    /// <summary>
+    /// Returns properties of a physical device.
+    /// </summary>
+    /// <param name="physicalDevice">The handle to the physical device whose properties will be queried.</param>
+    /// <param name="pProperties">A pointer to a <see cref="VkPhysicalDeviceProperties"/> structure in which properties are returned.</param>
+    public void GetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* pProperties) =>
+        this.vkGetPhysicalDeviceProperties.Invoke(physicalDevice, pProperties);
+
+    public void GetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, out VkPhysicalDeviceProperties properties)
+    {
+        fixed (VkPhysicalDeviceProperties* pProperties = &properties)
+        {
+            this.vkGetPhysicalDeviceProperties.Invoke(physicalDevice, pProperties);
+        }
+    }
+
+    /// <summary>
+    /// If pQueueFamilyProperties is NULL, then the number of queue families available is returned in pQueueFamilyPropertyCount. Implementations must support at least one queue family. Otherwise, pQueueFamilyPropertyCount must point to a variable set by the user to the number of elements in the pQueueFamilyProperties array, and on return the variable is overwritten with the number of structures actually written to pQueueFamilyProperties. If pQueueFamilyPropertyCount is less than the number of queue families available, at most pQueueFamilyPropertyCount structures will be written.
+    /// </summary>
+    /// <param name="physicalDevice">The handle to the physical device whose properties will be queried.</param>
+    /// <param name="pQueueFamilyPropertyCount">A pointer to an integer related to the number of queue families available or queried, as described above.</param>
+    /// <param name="pQueueFamilyProperties">Either NULL or a pointer to an array of <see cref="VkQueueFamilyProperties"/> structures.</param>
+    public void GetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, uint* pQueueFamilyPropertyCount, VkQueueFamilyProperties* pQueueFamilyProperties) =>
+        this.vkGetPhysicalDeviceQueueFamilyProperties.Invoke(physicalDevice, pQueueFamilyPropertyCount, pQueueFamilyProperties);
+
+    public void GetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, out uint queueFamilyPropertyCount)
+    {
+        fixed (uint* pQueueFamilyPropertyCount = &queueFamilyPropertyCount)
+        {
+            this.vkGetPhysicalDeviceQueueFamilyProperties.Invoke(physicalDevice, pQueueFamilyPropertyCount, null);
+        }
+    }
+
+    public void GetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, out VkQueueFamilyProperties[] queueFamilyProperties)
+    {
+        this.GetPhysicalDeviceQueueFamilyProperties(physicalDevice, out uint queueFamilyPropertyCount);
+
+        queueFamilyProperties = new VkQueueFamilyProperties[(int)queueFamilyPropertyCount];
+
+        fixed (VkQueueFamilyProperties* pQueueFamilyProperties = queueFamilyProperties.AsSpan())
+        {
+            this.vkGetPhysicalDeviceQueueFamilyProperties.Invoke(physicalDevice, &queueFamilyPropertyCount, pQueueFamilyProperties);
         }
     }
 

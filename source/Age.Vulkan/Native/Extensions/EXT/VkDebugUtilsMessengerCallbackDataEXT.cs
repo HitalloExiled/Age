@@ -1,3 +1,5 @@
+using Age.Vulkan.Native.Extensions.EXT.VkFlags;
+
 namespace Age.Vulkan.Native.Extensions.EXT;
 
 /// <summary>

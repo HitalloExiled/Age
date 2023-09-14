@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Age.Vulkan.Native.Enums;
-using Age.Vulkan.Native.Extensions.EXT;
+using Age.Vulkan.Native.Extensions.EXT.Enums;
+using Age.Vulkan.Native.Extensions.EXT.VkFlags;
 
-namespace Age.Vulkan.Native.PFN;
+namespace Age.Vulkan.Native.Extensions.EXT.PFN;
 
 /// <summary>
 /// Application-defined debug messenger callback function

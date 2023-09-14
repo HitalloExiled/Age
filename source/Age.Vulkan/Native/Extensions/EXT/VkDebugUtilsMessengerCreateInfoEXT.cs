@@ -1,5 +1,6 @@
-using Age.Vulkan.Native.Enums;
-using Age.Vulkan.Native.PFN;
+using Age.Vulkan.Native.Extensions.EXT.Enums;
+using Age.Vulkan.Native.Extensions.EXT.PFN;
+using Age.Vulkan.Native.Extensions.EXT.VkFlags;
 
 namespace Age.Vulkan.Native.Extensions.EXT;
 

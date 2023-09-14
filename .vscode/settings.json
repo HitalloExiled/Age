@@ -4,5 +4,6 @@
         "**/bin": true,
         "**/obj": true,
         ".coverage": true
-    }
+    },
+    // "csharp.semanticHighlighting.enabled": false
 }
