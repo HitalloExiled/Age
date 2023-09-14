@@ -1,4 +1,4 @@
-namespace Age.Vulkan;
+namespace Age.Vulkan.Native;
 
 public enum VkResult
 {

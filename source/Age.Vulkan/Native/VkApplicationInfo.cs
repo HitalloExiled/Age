@@ -18,7 +18,7 @@ public unsafe struct VkApplicationInfo
     /// <summary>
     /// A pointer to a null-terminated UTF-8 string containing the name of the application.
     /// </summary>
-    public char* pApplicationName;
+    public byte* pApplicationName;
 
     /// <summary>
     /// An unsigned integer variable containing the developer-supplied version number of the application.
@@ -28,7 +28,7 @@ public unsafe struct VkApplicationInfo
     /// <summary>
     /// A pointer to a null-terminated UTF-8 string containing the name of the engine (if any) used to create the application.
     /// </summary>
-    public char* pEngineName;
+    public byte* pEngineName;
 
     /// <summary>
     /// An unsigned integer variable containing the developer-supplied version number of the engine used to create the application.

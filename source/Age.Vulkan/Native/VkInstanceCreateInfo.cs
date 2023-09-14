@@ -37,7 +37,7 @@ public unsafe struct VkInstanceCreateInfo
     /// <summary>
     /// Is a pointer to an array of enabledLayerCount null-terminated UTF-8 strings containing the names of layers to enable for the created instance. The layers are loaded in the order they are listed in this array, with the first array element being the closest to the application, and the last array element being the closest to the driver. See the https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#extendingvulkan-layers section for further details.
     /// </summary>
-    public char** ppEnabledLayerNames;
+    public byte** ppEnabledLayerNames;
 
     /// <summary>
     /// Is the number of global extensions to enable.
@@ -47,5 +47,5 @@ public unsafe struct VkInstanceCreateInfo
     /// <summary>
     /// Is a pointer to an array of enabledExtensionCount null-terminated UTF-8 strings containing the names of extensions to enable.
     /// </summary>
-    public char** ppEnabledExtensionNames;
+    public byte** ppEnabledExtensionNames;
 }

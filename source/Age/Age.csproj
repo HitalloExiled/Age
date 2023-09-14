@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
     <ProjectReference Include="..\Age.Platform.Windows\Age.Platform.Windows.csproj" />
     <ProjectReference Include="..\Age.Vulkan\Age.Vulkan.csproj" />
   </ItemGroup>
