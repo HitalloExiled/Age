@@ -1,10 +1,13 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Age.Platform.Windows.Native.Types;
 
 namespace Age.Platform.Windows.Native;
 
 internal static partial class User32
 {
+    [DebuggerDisplay("{Value}")]
     public record struct MONITORENUMPROC(nint Value = default)
     {
         public delegate BOOL Function(HMONITOR hMonitor, HDC hdc, LPRECT lpRect, LPARAM lParam);

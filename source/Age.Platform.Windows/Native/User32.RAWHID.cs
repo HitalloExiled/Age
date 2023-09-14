@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Age.Platform.Windows.Native.Types;
 
 namespace Age.Platform.Windows.Native;
 

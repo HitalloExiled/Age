@@ -1,14 +1,14 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Age.Platform.Windows.Native;
+namespace Age.Platform.Windows.Native.Types;
 
 [DebuggerDisplay("{Value}")]
-public readonly record struct BOOL(int Value = default)
+public unsafe readonly record struct LPCVOID(nint Value = default)
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator bool(BOOL value) => value.Value == 1;
+    public static implicit operator void*(LPCVOID value) => (void*)value.Value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator BOOL(bool value) => new(value ? 1 : 0);
+    public static implicit operator LPCVOID(void* value) => new(new(value));
 }

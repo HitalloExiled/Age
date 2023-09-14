@@ -1,3 +1,5 @@
+using Age.Platform.Windows.Native.Types;
+
 namespace Age.Platform.Windows.Display;
 
 public class WindowManager : IDisposable

@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using Age.Core.Interfaces;
 using Age.Platform.Windows.Native;
+using Age.Platform.Windows.Native.Types;
 
 namespace Godot.Net.Platforms.Windows;
 

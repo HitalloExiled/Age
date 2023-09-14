@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Age.Platform.Windows.Native.Types;
 
 [assembly: InternalsVisibleTo("Age.Platform.Windows.Display")]
 
@@ -306,6 +307,16 @@ internal static partial class User32
 
     [LibraryImport(nameof(User32))]
     public static partial BOOL GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpmi);
+
+
+    public readonly record struct LPMONITORINFO(nint Value = default)
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        public static unsafe implicit operator MONITORINFO*(LPMONITORINFO value) => (MONITORINFO*)value.Value;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        public static unsafe implicit operator LPMONITORINFO(MONITORINFO* value) => new(new(value));
+    }
 
     [LibraryImport(nameof(User32))]
     public static partial UINT GetRawInputData(HRAWINPUT hRawInput, RAW_INPUT_DATA_COMMAND_FLAGS uiCommand, LPVOID pData, PUINT pcbSize, UINT cbSizeHeader);

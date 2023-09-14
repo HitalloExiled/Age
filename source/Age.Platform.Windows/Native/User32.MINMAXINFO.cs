@@ -1,3 +1,5 @@
+using Age.Platform.Windows.Native.Types;
+
 namespace Age.Platform.Windows.Native;
 
 #pragma warning disable CS0649

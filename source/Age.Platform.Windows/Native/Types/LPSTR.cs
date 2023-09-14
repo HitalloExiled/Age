@@ -2,22 +2,22 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Age.Platform.Windows.Native;
+namespace Age.Platform.Windows.Native.Types;
 
 [DebuggerDisplay("{Value}")]
-public readonly record struct LPCSTR(nint Value = default) : IDisposable
+public unsafe readonly record struct LPSTR(nint Value = default) : IDisposable
 {
-    public LPCSTR(string? value) : this(Marshal.StringToHGlobalAnsi(value))
+    public LPSTR(string? value) : this(Marshal.StringToHGlobalAnsi(value))
     { }
 
     public void Dispose() => Marshal.FreeHGlobal(this.Value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static unsafe implicit operator char*(LPCSTR value) => (char*)value;
+    public static implicit operator byte*(LPSTR value) => (byte*)value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static unsafe implicit operator LPCSTR(char* value) => new(new nint(value));
+    public static implicit operator LPSTR(byte* value) => new((nint)value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator string?(LPCSTR value) => Marshal.PtrToStringAnsi(value.Value);
+    public static implicit operator string?(LPSTR value) => Marshal.PtrToStringAnsi(value.Value);
 }

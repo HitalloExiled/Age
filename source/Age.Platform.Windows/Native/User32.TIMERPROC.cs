@@ -1,10 +1,13 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Age.Platform.Windows.Native.Types;
 
 namespace Age.Platform.Windows.Native;
 
 internal static partial class User32
 {
+    [DebuggerDisplay("{Value}")]
     public record struct TIMERPROC(nint Value = default)
     {
         public delegate void Function(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4);

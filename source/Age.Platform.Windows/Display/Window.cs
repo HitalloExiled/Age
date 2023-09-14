@@ -1,5 +1,6 @@
 ﻿
 using Age.Platform.Windows.Native;
+using Age.Platform.Windows.Native.Types;
 
 namespace Age.Platform.Windows.Display;
 
@@ -38,7 +39,7 @@ public class Window : IDisposable
         {
             cbSize        = (uint)sizeof(User32.WNDCLASSEXW),
             hbrBackground = default,
-            hCursor       = User32.LoadCursorW(0, User32.IDC_STANDARD_CURSORS.IDC_ARROW),
+            hCursor       = User32.LoadCursorW(default, User32.IDC_STANDARD_CURSORS.IDC_ARROW),
             hIcon         = default,
             hIconSm       = default,
             hInstance     = default,

@@ -1,4 +1,4 @@
-﻿namespace Age.Platform.Windows.Native;
+﻿namespace Age.Platform.Windows.Native.Types;
 
 /// <summary>
 /// The POINT structure defines the x- and y- coordinates of a point.

@@ -1,4 +1,6 @@
-﻿namespace Age.Platform.Windows.Native;
+﻿using Age.Platform.Windows.Native.Types;
+
+namespace Age.Platform.Windows.Native;
 
 /// <content>
 /// Contains the <see cref="MONITORINFO"/> nested type.
