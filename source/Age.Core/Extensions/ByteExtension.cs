@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Godot.Net.Extensions;
+namespace Age.Core.Extensions;
 
 public static class ByteExtension
 {

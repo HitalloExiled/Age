@@ -4,18 +4,15 @@ using Age.Core.Interfaces;
 using Age.Platform.Windows.Native;
 using Age.Platform.Windows.Native.Types;
 
-namespace Godot.Net.Platforms.Windows;
+namespace Age.Platform.Windows;
 
-public class WindowsLibrary : ILibrary
+public class WindowsLibrary(string lib) : ILibrary
 {
+    private readonly HMODULE handler = Kernel32.LoadLibraryW(lib);
+
     private bool disposed;
 
-    private readonly HMODULE handler;
-
     public bool IsLoaded => this.handler != default;
-
-    public WindowsLibrary(string lib) =>
-        this.handler = Kernel32.LoadLibraryW(lib);
 
     ~WindowsLibrary() =>
         this.Dispose(disposing: false);

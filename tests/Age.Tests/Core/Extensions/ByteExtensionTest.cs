@@ -1,5 +1,5 @@
 using System.Text;
-using Godot.Net.Extensions;
+using Age.Core.Extensions;
 
 namespace Age.Tests.Core.Extensions;
 

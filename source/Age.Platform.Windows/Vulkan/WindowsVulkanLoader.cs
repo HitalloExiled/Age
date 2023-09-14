@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Age.Core;
 using Age.Vulkan.Interfaces;
-using Godot.Net.Platforms.Windows;
 
 namespace Age.Platform.Windows.Vulkan;
 
