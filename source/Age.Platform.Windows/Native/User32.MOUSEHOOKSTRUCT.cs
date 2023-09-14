@@ -1,4 +1,4 @@
-﻿namespace Age.Platform.Windows.Api.Native;
+﻿namespace Age.Platform.Windows.Native;
 
 #pragma warning disable CS0649
 

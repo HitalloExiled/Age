@@ -1,5 +1,5 @@
 ﻿
-using Age.Platform.Windows.Api.Native;
+using Age.Platform.Windows.Native;
 
 namespace Age.Platform.Windows.Display;
 

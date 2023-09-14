@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 [assembly: InternalsVisibleTo("Age.Platform.Windows.Display")]
 
-namespace Age.Platform.Windows.Api.Native;
+namespace Age.Platform.Windows.Native;
 
 internal static partial class User32
 {

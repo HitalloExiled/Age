@@ -1,6 +1,7 @@
 global using ATOM              = System.Int32;
 global using BYTE              = System.Byte;
 global using DWORD             = System.UInt32;
+global using FARPROC           = nint;
 global using HANDLE            = nint;
 global using HBRUSH            = nint;
 global using HCURSOR           = nint;
@@ -9,6 +10,7 @@ global using HHOOK             = nint;
 global using HICON             = nint;
 global using HINSTANCE         = nint;
 global using HMENU             = nint;
+global using HMODULE           = nint;
 global using HMONITOR          = nint;
 global using HRAWINPUT         = nint;
 global using HRGN              = nint;

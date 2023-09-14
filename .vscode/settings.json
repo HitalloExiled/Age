@@ -1,7 +1,4 @@
 {
-    "explorer.fileNesting.patterns": {
-        "*.cs": "${capture}.*.cs"
-    },
     "files.exclude": {
         "**/TestResults": true,
         "**/bin": true,

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Age.Platform.Windows.Api.Native;
+namespace Age.Platform.Windows.Native;
 
 [DebuggerDisplay("{Value}")]
 public readonly record struct LPCWSTR(nint Value = default) : IDisposable

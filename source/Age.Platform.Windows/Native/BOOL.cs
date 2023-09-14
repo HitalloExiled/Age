@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Age.Platform.Windows.Api.Native;
+namespace Age.Platform.Windows.Native;
 
 [DebuggerDisplay("{Value}")]
 public readonly record struct BOOL(int Value = default)

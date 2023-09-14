@@ -1,4 +1,4 @@
-﻿namespace Age.Platform.Windows.Api.Native;
+﻿namespace Age.Platform.Windows.Native;
 
 /// <summary>
 /// Contains the <see cref="MONITOR_INFO_FLAGS"/> nested type.

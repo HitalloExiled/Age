@@ -1,4 +1,4 @@
-namespace Age.Platform.Windows.Api.Native;
+namespace Age.Platform.Windows.Native;
 
 /// <summary>
 /// The RECT structure defines the coordinates of the upper-left and lower-right corners of a rectangle.
