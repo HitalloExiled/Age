@@ -1,7 +1,7 @@
 using Age.Vulkan.Interfaces;
 using Age.Vulkan.Native.Enums;
-using Age.Vulkan.Native.Extensions.EXT.Types;
 using Age.Vulkan.Native.Types;
+using Age.Vulkan.Native.Types.EXT;
 
 namespace Age.Vulkan.Native.Extensions.EXT;
 
