@@ -2,7 +2,9 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Age.Vulkan.Native.Extensions.EXT.Enums;
-using Age.Vulkan.Native.Extensions.EXT.VkFlags;
+using Age.Vulkan.Native.Extensions.EXT.Types;
+using Age.Vulkan.Native.Extensions.EXT.Flags;
+using Age.Vulkan.Native.Types;
 
 namespace Age.Vulkan.Native.Extensions.EXT.PFN;
 

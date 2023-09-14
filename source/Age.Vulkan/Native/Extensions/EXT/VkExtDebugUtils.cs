@@ -1,4 +1,7 @@
 using Age.Vulkan.Interfaces;
+using Age.Vulkan.Native.Enums;
+using Age.Vulkan.Native.Extensions.EXT.Types;
+using Age.Vulkan.Native.Types;
 
 namespace Age.Vulkan.Native.Extensions.EXT;
 
@@ -7,7 +10,7 @@ public unsafe class VkExtDebugUtils : IVkInstanceExtension
     private delegate VkResult VkCreateDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger);
     private delegate void VkDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT messenger, VkAllocationCallbacks* pAllocator);
 
-    public static string Name => "VK_EXT_debug_utils";
+    public static string Name { get; } = "VK_EXT_debug_utils";
 
     private readonly VkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT;
     private readonly VkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT;

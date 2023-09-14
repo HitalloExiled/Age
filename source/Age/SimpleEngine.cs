@@ -7,8 +7,11 @@ using Age.Vulkan.Native;
 using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Extensions.EXT;
 using Age.Vulkan.Native.Extensions.EXT.Enums;
-using Age.Vulkan.Native.Extensions.EXT.VkFlags;
+using Age.Vulkan.Native.Extensions.EXT.Types;
+using Age.Vulkan.Native.Extensions.EXT.Flags;
 using Age.Vulkan.Native.Extensions.KHR;
+using Age.Vulkan.Native.Extensions.KHR.Types;
+using Age.Vulkan.Native.Types;
 
 namespace Age;
 
@@ -19,13 +22,26 @@ public unsafe class SimpleEngine : IDisposable
         public uint? GraphicsFamily { get; set; }
         public uint? PresentFamily  { get; set; }
 
-        public bool IsComplete => GraphicsFamily.HasValue && PresentFamily.HasValue;
+        public bool IsComplete => this.GraphicsFamily.HasValue && this.PresentFamily.HasValue;
     }
+
+    public record SwapChainSupportDetails
+    {
+        public required VkSurfaceCapabilitiesKHR Capabilities { get; init; }
+        public required VkSurfaceFormatKHR[]     Formats      { get; init; }
+        public required VkPresentModeKHR[]       PresentModes { get; init; }
+    }
+
+    private readonly HashSet<string> deviceExtensions = new()
+    {
+        VkKhrSwapchain.Name
+    };
 
     private readonly HashSet<string> validationLayers = new()
     {
         "VK_LAYER_KHRONOS_validation"
     };
+
     private readonly VulkanWindows vk            = new();
     private readonly WindowManager windowManager = new();
 
@@ -65,6 +81,20 @@ public unsafe class SimpleEngine : IDisposable
             pfnUserCallback = new(DebugCallback),
             pUserData       = null
         };
+
+    private bool CheckDeviceExtensionSupport(VkPhysicalDevice device)
+    {
+        this.vk.EnumerateDeviceExtensionProperties(device, null, out VkExtensionProperties[] extensions);
+
+        return this.deviceExtensions.Overlaps(extensions.Select(x => Marshal.PtrToStringAnsi((nint)x.extensionName)!));
+    }
+
+    private bool CheckValidationLayerSupport()
+    {
+        this.vk.EnumerateInstanceLayerProperties(out VkLayerProperties[] availableLayers);
+
+        return this.validationLayers.Overlaps(availableLayers.Select(x => Marshal.PtrToStringAnsi((nint)x.layerName)!));
+    }
 
     private void Cleanup()
     {
@@ -128,7 +158,7 @@ public unsafe class SimpleEngine : IDisposable
 
             if (this.vk.CreateInstance(createInfo, default, out var instance) == VkResult.VK_SUCCESS)
             {
-                if (this.enableValidationLayers && !this.vk.TryGetInstanceExtension<VkExtDebugUtils>(instance, out vkExtDebugUtils))
+                if (this.enableValidationLayers && !this.vk.TryGetInstanceExtension(instance, out this.vkExtDebugUtils))
                 {
                     throw new Exception($"Cannot found required extension {VkExtDebugUtils.Name}");
                 }
@@ -183,16 +213,25 @@ public unsafe class SimpleEngine : IDisposable
                 enabledExtensionCount = 0,
             };
 
-            // Deprecated
-            // if (this.enableValidationLayers)
-            // {
-            //     createInfo.enabledLayerCount   = (uint)ppEnabledLayerNames.Length;
-            //     createInfo.ppEnabledLayerNames = ppEnabledLayerNames;
-            // }
-            // else
-            // {
-            //     createInfo.enabledLayerCount = 0;
-            // }
+            using var ppEnabledLayerNames = new StringArrayPtr(this.validationLayers.ToArray());
+
+            // Compatibility
+            #pragma warning disable CS0618
+            if (this.enableValidationLayers)
+            {
+                createInfo.enabledLayerCount   = (uint)ppEnabledLayerNames.Length;
+                createInfo.ppEnabledLayerNames = ppEnabledLayerNames;
+            }
+            else
+            {
+                createInfo.enabledLayerCount = 0;
+            }
+            #pragma warning restore CS0618
+
+            using var ppEnabledExtensionNames = new StringArrayPtr(this.deviceExtensions.ToArray());
+
+            createInfo.enabledExtensionCount   = (uint)ppEnabledExtensionNames.Length;
+            createInfo.ppEnabledExtensionNames = ppEnabledExtensionNames;
 
             if (this.vk.CreateDevice(this.physicalDevice, createInfo, default, out this.device) != VkResult.VK_SUCCESS)
             {
@@ -206,7 +245,7 @@ public unsafe class SimpleEngine : IDisposable
 
     private void CreateSurface()
     {
-        if (!this.vk.TryGetInstanceExtension<VkKhrWin32Surface>(instance, null, out var vkKhrWin32Surface))
+        if (!this.vk.TryGetInstanceExtension<VkKhrWin32Surface>(this.instance, null, out var vkKhrWin32Surface))
         {
             throw new Exception($"Cannot found required extension {VkKhrWin32Surface.Name}");
         }
@@ -214,18 +253,11 @@ public unsafe class SimpleEngine : IDisposable
         var createInfo = new VkWin32SurfaceCreateInfoKHR
         {
             sType     = VkStructureType.VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
-            hwnd      = window!.Handle,
+            hwnd      = this.window!.Handle,
             hinstance = Process.GetCurrentProcess().Handle,
         };
 
-        vkKhrWin32Surface.CreateWin32Surface(instance, createInfo, default, out surface);
-    }
-
-    private bool CheckValidationLayerSupport()
-    {
-        this.vk.EnumerateInstanceLayerProperties(out VkLayerProperties[] availableLayers);
-
-        return availableLayers.Any(x => this.validationLayers.Contains(Marshal.PtrToStringAnsi((nint)x.layerName)!));
+        vkKhrWin32Surface.CreateWin32Surface(this.instance, createInfo, default, out this.surface);
     }
 
     private List<string> GetRequiredExtensions()
@@ -258,7 +290,7 @@ public unsafe class SimpleEngine : IDisposable
                 indices.GraphicsFamily = i;
             }
 
-            vkKhrSurface.GetPhysicalDeviceSurfaceSupport(device, i, surface, out var presentSupport);
+            this.vkKhrSurface.GetPhysicalDeviceSurfaceSupport(device, i, this.surface, out var presentSupport);
 
             if (presentSupport)
             {
@@ -292,7 +324,18 @@ public unsafe class SimpleEngine : IDisposable
     {
         var indices = this.FindQueueFamilies(device);
 
-        return indices.IsComplete;
+        var extensionsSupported = this.CheckDeviceExtensionSupport(device);
+
+        var swapChainAdequate = false;
+
+        if (extensionsSupported)
+        {
+            var swapChainSupport = this.QuerySwapChainSupport(device);
+
+            swapChainAdequate = swapChainSupport.Formats.Length != 0 && swapChainSupport.PresentModes.Length != 0;
+        }
+
+        return indices.IsComplete && extensionsSupported && swapChainAdequate;
     }
 
     private void MainLoop()
@@ -322,6 +365,20 @@ public unsafe class SimpleEngine : IDisposable
         {
             throw new Exception("failed to find a suitable GPU!");
         }
+    }
+
+    private SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device)
+    {
+        this.vkKhrSurface.GetPhysicalDeviceSurfaceCapabilities(device, this.surface, out var capabilities);
+        this.vkKhrSurface.GetPhysicalDeviceSurfaceFormats(device, this.surface, out VkSurfaceFormatKHR[] formats);
+        this.vkKhrSurface.GetPhysicalDeviceSurfacePresentModes(device, this.surface, out VkPresentModeKHR[] presentModes);
+
+        return new SwapChainSupportDetails
+        {
+            Capabilities = capabilities,
+            Formats      = formats,
+            PresentModes = presentModes
+        };
     }
 
     private void SetupDebugMessenger()

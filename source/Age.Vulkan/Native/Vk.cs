@@ -3,6 +3,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Age.Vulkan.Interfaces;
+using Age.Vulkan.Native.Enums;
+using Age.Vulkan.Native.Types;
 
 namespace Age.Vulkan.Native;
 
@@ -32,6 +34,7 @@ public unsafe abstract class Vk
     private delegate VkResult VkCreateInstance(VkInstanceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkInstance* pInstance);
     private delegate void VkDestroyDevice(VkDevice device, VkAllocationCallbacks* pAllocator);
     private delegate void VkDestroyInstance(VkInstance instance, VkAllocationCallbacks* pAllocator);
+    private delegate VkResult VkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
     private delegate VkResult VkEnumerateInstanceExtensionProperties(byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
     private delegate VkResult VkEnumerateInstanceLayerProperties(uint* pPropertyCount, VkLayerProperties* pProperties);
     private delegate VkResult VkEnumeratePhysicalDevices(VkInstance instance, uint* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices);
@@ -47,6 +50,7 @@ public unsafe abstract class Vk
     private readonly VkCreateInstance                         vkCreateInstance;
     private readonly VkDestroyDevice                          vkDestroyDevice;
     private readonly VkDestroyInstance                        vkDestroyInstance;
+    private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties;
     private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties;
     private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties;
     private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices;
@@ -66,6 +70,7 @@ public unsafe abstract class Vk
         this.vkCreateInstance                         = this.Loader.Load<VkCreateInstance>("vkCreateInstance");
         this.vkDestroyDevice                          = this.Loader.Load<VkDestroyDevice>("vkDestroyDevice");
         this.vkDestroyInstance                        = this.Loader.Load<VkDestroyInstance>("vkDestroyInstance");
+        this.vkEnumerateDeviceExtensionProperties     = this.Loader.Load<VkEnumerateDeviceExtensionProperties>("vkEnumerateDeviceExtensionProperties");
         this.vkEnumerateInstanceExtensionProperties   = this.Loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
         this.vkEnumerateInstanceLayerProperties       = this.Loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
         this.vkEnumerateInstanceLayerProperties       = this.Loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
@@ -86,12 +91,9 @@ public unsafe abstract class Vk
         {
             var pointer = this.vkGetInstanceProcAddr.Invoke(instance, pName);
 
-            if (pointer != null)
-            {
-                return Marshal.GetDelegateForFunctionPointer<T>((nint)pointer);
-            }
-
-            throw new Exception($"Can't find the proc {name} on the provided instance. Check if the extension {extension} is loaded.");
+            return pointer != null
+                ? Marshal.GetDelegateForFunctionPointer<T>((nint)pointer)
+                : throw new Exception($"Can't find the proc {name} on the provided instance. Check if the extension {extension} is loaded.");
         }
     }
 
@@ -178,6 +180,48 @@ public unsafe abstract class Vk
     }
 
     /// <summary>
+    /// <para>Returns properties of available physical device extensions.</para>
+    /// <para>When pLayerName parameter is NULL, only extensions provided by the Vulkan implementation or by implicitly enabled layers are returned. When pLayerName is the name of a layer, the device extensions provided by that layer are returned.</para>
+    /// <para>Implementations must not advertise any pair of extensions that cannot be enabled together due to behavioral differences, or any extension that cannot be enabled against the advertised version.</para>
+    /// <para>Implementations claiming support for the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#roadmap-2022">Roadmap 2022</see> profile must advertise the VK_KHR_global_priority extension in pProperties.</para>
+    /// <remarks>Due to platform details on Android, <see cref="EnumerateDeviceExtensionProperties"/> may be called with physicalDevice equal to NULL during layer discovery. This behaviour will only be observed by layer implementations, and not the underlying Vulkan driver.</remarks>
+    /// </summary>
+    /// <param name="physicalDevice">The physical device that will be queried.</param>
+    /// <param name="pLayerName">Either NULL or a pointer to a null-terminated UTF-8 string naming the layer to retrieve extensions from.</param>
+    /// <param name="pPropertyCount">A pointer to an integer related to the number of extension properties available or queried, and is treated in the same fashion as the <see cref="EnumerateInstanceExtensionProperties"/> pPropertyCount parameter.</param>
+    /// <param name="pProperties">Either NULL or a pointer to an array of <see cref="VkExtensionProperties"/> structures.</param>
+    /// <returns></returns>
+    public VkResult EnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties) =>
+        this.vkEnumerateDeviceExtensionProperties.Invoke(physicalDevice, pLayerName, pPropertyCount, pProperties);
+
+    public VkResult EnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, string? layerName, out uint propertyCount)
+    {
+        fixed (byte* pLayerName     = Encoding.UTF8.GetBytes(layerName ?? ""))
+        fixed (uint* pPropertyCount = &propertyCount)
+        {
+            return this.vkEnumerateDeviceExtensionProperties.Invoke(physicalDevice, pLayerName, pPropertyCount, null);
+        }
+    }
+
+    public VkResult EnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, string? layerName, out VkExtensionProperties[] properties)
+    {
+        if (this.EnumerateDeviceExtensionProperties(physicalDevice, layerName, out uint propertyCount) is var result and not VkResult.VK_SUCCESS)
+        {
+            properties = Array.Empty<VkExtensionProperties>();
+
+            return result;
+        }
+
+        properties = new VkExtensionProperties[propertyCount];
+
+        fixed (byte* pLayerName     = Encoding.UTF8.GetBytes(layerName ?? ""))
+        fixed (VkExtensionProperties* pProperties = properties.AsSpan())
+        {
+            return this.vkEnumerateDeviceExtensionProperties.Invoke(physicalDevice, pLayerName, &propertyCount, pProperties);
+        }
+    }
+
+    /// <summary>
     /// <para>When layerName parameter is null, only extensions provided by the Vulkan implementation or by implicitly enabled layers are returned. When layerName is the name of a layer, the instance extensions provided by that layer are returned.</para>
     /// <para>If properties is null, then the number of extensions properties available is returned in propertyCount. Otherwise, propertyCount must point to a variable set by the user to the number of elements in the properties array, and on return the variable is overwritten with the number of structures actually written to properties. If propertyCount is less than the number of extension properties available, at most propertyCount structures will be written, and <see cref="VkResult.Incomplete"/> will be returned instead of <see cref="VkResult.Success"/>, to indicate that not all the available properties were returned.</para>
     /// <para>Because the list of available layers may change externally between calls to <see cref="EnumerateInstanceExtensionProperties"/>, two calls may retrieve different results if a layerName is available in one call but not in another. The extensions supported by a layer may also change between two calls, e.g. if the layer implementation is replaced by a different version between those calls.</para>
@@ -201,9 +245,14 @@ public unsafe abstract class Vk
 
     public VkResult EnumerateInstanceExtensionProperties(string? layerName, out VkExtensionProperties[] properties)
     {
-        this.EnumerateInstanceExtensionProperties(layerName, out uint propertyCount);
+        if (this.EnumerateInstanceExtensionProperties(layerName, out uint propertyCount) is var result and not VkResult.VK_SUCCESS)
+        {
+            properties = Array.Empty<VkExtensionProperties>();
 
-        properties = new VkExtensionProperties[(int)propertyCount];
+            return result;
+        }
+
+        properties = new VkExtensionProperties[propertyCount];
 
         fixed (byte*                  pLayerName  = Encoding.UTF8.GetBytes(layerName ?? ""))
         fixed (VkExtensionProperties* pProperties = properties.AsSpan())
@@ -233,9 +282,14 @@ public unsafe abstract class Vk
 
     public VkResult EnumerateInstanceLayerProperties(out VkLayerProperties[] properties)
     {
-        this.EnumerateInstanceLayerProperties(out uint propertyCount);
+        if (this.EnumerateInstanceLayerProperties(out uint propertyCount) is var result and not VkResult.VK_SUCCESS)
+        {
+            properties = Array.Empty<VkLayerProperties>();
 
-        properties = new VkLayerProperties[(int)propertyCount];
+            return result;
+        }
+
+        properties = new VkLayerProperties[propertyCount];
 
         fixed (VkLayerProperties* pProperties = properties.AsSpan())
         {
@@ -262,9 +316,14 @@ public unsafe abstract class Vk
 
     public VkResult EnumeratePhysicalDevices(VkInstance instance, out VkPhysicalDevice[] physicalDevices)
     {
-        this.EnumeratePhysicalDevices(instance, out uint physicalDeviceCount);
+        if (this.EnumeratePhysicalDevices(instance, out uint physicalDeviceCount) is var result and not VkResult.VK_SUCCESS)
+        {
+            physicalDevices = Array.Empty<VkPhysicalDevice>();
 
-        physicalDevices = new VkPhysicalDevice[(int)physicalDeviceCount];
+            return result;
+        }
+
+        physicalDevices = new VkPhysicalDevice[physicalDeviceCount];
 
         fixed (VkPhysicalDevice* pPhysicalDevices = physicalDevices.AsSpan())
         {
@@ -291,15 +350,10 @@ public unsafe abstract class Vk
         }
     }
 
-    public T GetInstanceExtension<T>(VkInstance instance, string? layer = default) where T : class, IVkInstanceExtension
-    {
-        if (this.TryGetInstanceExtension<T>(instance, layer, out var extension))
-        {
-            return extension;
-        }
-
-        throw new Exception($"Cant find extension {T.Name}");
-    }
+    public T GetInstanceExtension<T>(VkInstance instance, string? layer = default) where T : class, IVkInstanceExtension =>
+        this.TryGetInstanceExtension<T>(instance, layer, out var extension)
+            ? extension
+            : throw new Exception($"Cant find extension {T.Name}");
 
     /// <summary>
     /// Return a function pointer for a command.
@@ -373,7 +427,7 @@ public unsafe abstract class Vk
     {
         this.GetPhysicalDeviceQueueFamilyProperties(physicalDevice, out uint queueFamilyPropertyCount);
 
-        queueFamilyProperties = new VkQueueFamilyProperties[(int)queueFamilyPropertyCount];
+        queueFamilyProperties = new VkQueueFamilyProperties[queueFamilyPropertyCount];
 
         fixed (VkQueueFamilyProperties* pQueueFamilyProperties = queueFamilyProperties.AsSpan())
         {

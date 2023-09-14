@@ -1,4 +1,5 @@
 using Age.Vulkan.Native;
+using Age.Vulkan.Native.Types;
 
 namespace Age.Vulkan.Interfaces;
 

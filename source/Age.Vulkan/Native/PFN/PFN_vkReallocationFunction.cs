@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Age.Vulkan.Native.Enums;
 
 namespace Age.Vulkan.Native.PFN;
 

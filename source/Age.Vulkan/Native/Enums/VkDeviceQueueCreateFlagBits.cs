@@ -4,7 +4,7 @@ namespace Age.Vulkan.Native.Enums;
 /// Bitmask specifying behavior of the queue.
 /// </summary>
 [Flags]
-public enum VkDeviceQueueCreateFlagBits
+public enum VkDeviceQueueCreateFlagBits : uint
 {
     /// <summary>
     /// Specifies that the device queue is a protected-capable queue.

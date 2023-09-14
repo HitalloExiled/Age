@@ -1,4 +1,7 @@
 using Age.Vulkan.Interfaces;
+using Age.Vulkan.Native.Enums;
+using Age.Vulkan.Native.Extensions.KHR.Types;
+using Age.Vulkan.Native.Types;
 
 namespace Age.Vulkan.Native.Extensions.KHR;
 
@@ -6,7 +9,7 @@ public unsafe class VkKhrWin32Surface : IVkInstanceExtension
 {
     private delegate VkResult VkCreateWin32SurfaceKHR(VkInstance instance, VkWin32SurfaceCreateInfoKHR* pCreateInfo, VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
 
-    public static string Name => "VK_KHR_win32_surface";
+    public static string Name { get; } = "VK_KHR_win32_surface";
 
     private readonly VkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR;
 
