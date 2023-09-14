@@ -3,7 +3,7 @@ using Age.Vulkan.Native;
 
 namespace Age.Platform.Windows.Vulkan;
 
-public class VulkanWindows : VK, IDisposable
+public class VulkanWindows : Vk, IDisposable
 {
     protected override IVulkanLoader Loader { get; } = new WindowsVulkanLoader();
     private bool disposed;

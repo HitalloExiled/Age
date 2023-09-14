@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Age.Core.Unsafe;
 using Age.Platform.Windows.Display;
 using Age.Platform.Windows.Vulkan;
 using Age.Vulkan.Native;
 using Age.Vulkan.Native.Enums;
+using Age.Vulkan.Native.Extensions.EXT;
 
 namespace Age;
 
@@ -13,14 +15,13 @@ public unsafe class SimpleEngine : IDisposable
     {
         "VK_LAYER_KHRONOS_validation"
     };
-    private readonly VulkanWindows   vk               = new();
-    private readonly WindowManager   windowManager    = new();
+    private readonly VulkanWindows vk            = new();
+    private readonly WindowManager windowManager = new();
 
-    #if DEBUG
-    private readonly bool enableValidationLayers = true;
-    #else
-    private readonly bool enableValidationLayers;
-    #endif
+    private readonly bool            enableValidationLayers = Debugger.IsAttached;
+
+    private VkDebugUtilsMessengerEXT debugMessenger;
+    private VkExtDebugUtils?         vkExtDebugUtils;
 
     private bool       disposed;
     private VkInstance instance;
@@ -39,8 +40,15 @@ public unsafe class SimpleEngine : IDisposable
         return false;
     }
 
-    private void Cleanup() =>
+    private void Cleanup()
+    {
+        if (this.enableValidationLayers && this.vkExtDebugUtils != null)
+        {
+            this.vkExtDebugUtils.DestroyDebugUtilsMessenger(this.instance, this.debugMessenger, default);
+        }
+
         this.vk.DestroyInstance(this.instance, null);
+    }
 
     private void CreateInstance()
     {
@@ -56,10 +64,10 @@ public unsafe class SimpleEngine : IDisposable
             {
                 sType              = VkStructureType.VK_STRUCTURE_TYPE_APPLICATION_INFO,
                 pApplicationName   = pApplicationName,
-                applicationVersion = VK.MakeApiVersion(1, 0, 0),
+                applicationVersion = Vk.MakeApiVersion(1, 0, 0),
                 pEngineName        = pEngineName,
-                engineVersion      = VK.MakeApiVersion(1, 0, 0),
-                apiVersion         = VK.ApiVersion_1_0,
+                engineVersion      = Vk.MakeApiVersion(1, 0, 0),
+                apiVersion         = Vk.ApiVersion_1_0,
             };
 
             var createInfo = new VkInstanceCreateInfo
@@ -87,7 +95,13 @@ public unsafe class SimpleEngine : IDisposable
 
             if (this.vk.CreateInstance(createInfo, default, out var instance) == VkResult.VK_SUCCESS)
             {
-                this.instance = instance;
+                if (!this.vk.TryGetExtension<VkExtDebugUtils>(instance, out var vkExtDebugUtils))
+                {
+                    throw new InvalidOperationException($"Cannot found required extension {VkExtDebugUtils.Name}");
+                }
+
+                this.instance        = instance;
+                this.vkExtDebugUtils = vkExtDebugUtils;
             }
         }
     }
@@ -105,7 +119,7 @@ public unsafe class SimpleEngine : IDisposable
 
         if (this.enableValidationLayers)
         {
-            extensions.Add("VK_EXT_debug_utils");
+            extensions.Add(VkExtDebugUtils.Name);
         }
 
         return extensions;
@@ -144,6 +158,11 @@ public unsafe class SimpleEngine : IDisposable
             pfnUserCallback = new(DebugCallback),
             pUserData       = null
         };
+
+        if (this.vkExtDebugUtils!.CreateDebugUtilsMessenger(this.instance, createInfo, default, out this.debugMessenger) != VkResult.VK_SUCCESS)
+        {
+            throw new InvalidOperationException("failed to set up debug messenger!");
+        }
     }
 
     protected virtual void Dispose(bool disposing)

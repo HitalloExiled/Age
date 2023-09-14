@@ -1,9 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using Age.Vulkan.Interfaces;
+using Age.Vulkan.Native.Extensions;
 
 namespace Age.Vulkan.Native;
 
-public abstract class VK
+public unsafe abstract class Vk
 {
     /// <summary>
     /// the length in char values of an array containing a string with additional descriptive information about a query, as returned in <see cref="VkLayerProperties.description"/> and other queries.
@@ -15,26 +19,32 @@ public abstract class VK
     /// </summary>
     public const uint VK_MAX_EXTENSION_NAME_SIZE = 256;
 
-    private unsafe delegate VkResult VkCreateInstance(VkInstanceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkInstance* pInstance);
-    private unsafe delegate void VkDestroyInstance(VkInstance instance, VkAllocationCallbacks* pAllocator);
-    private unsafe delegate VkResult VkEnumerateInstanceExtensionProperties(byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
-    private unsafe delegate VkResult VkEnumerateInstanceLayerProperties(uint* pPropertyCount, VkLayerProperties* pProperties);
+    private delegate VkResult VkCreateInstance(VkInstanceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkInstance* pInstance);
+    private delegate void VkDestroyInstance(VkInstance instance, VkAllocationCallbacks* pAllocator);
+    private delegate VkResult VkEnumerateInstanceExtensionProperties(byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
+    private delegate VkResult VkEnumerateInstanceLayerProperties(uint* pPropertyCount, VkLayerProperties* pProperties);
+    private delegate void* VkGetInstanceProcAddr(VkInstance instance, byte* pName);
+
+    private readonly Dictionary<string, HashSet<string>> extensionsMap = new();
 
     private readonly VkCreateInstance                       vkCreateInstance;
     private readonly VkDestroyInstance                      vkDestroyInstance;
     private readonly VkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionProperties;
     private readonly VkEnumerateInstanceLayerProperties     vkEnumerateInstanceLayerProperties;
+    private readonly VkGetInstanceProcAddr                  vkGetInstanceProcAddr;
 
     public static uint ApiVersion_1_0 { get; } = MakeApiVersion(0, 1, 0, 0);
 
     protected abstract IVulkanLoader Loader { get; }
 
-    public VK()
+    public Vk()
     {
         this.vkCreateInstance                       = this.Loader.Load<VkCreateInstance>("vkCreateInstance");
         this.vkDestroyInstance                      = this.Loader.Load<VkDestroyInstance>("vkDestroyInstance");
         this.vkEnumerateInstanceExtensionProperties = this.Loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
         this.vkEnumerateInstanceLayerProperties     = this.Loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
+        this.vkEnumerateInstanceLayerProperties     = this.Loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
+        this.vkGetInstanceProcAddr                  = this.Loader.Load<VkGetInstanceProcAddr>("vkGetInstanceProcAddr");
     }
 
     public static uint MakeApiVersion(uint variant, uint major, uint minor, uint patch = default) =>
@@ -47,10 +57,10 @@ public abstract class VK
     /// <param name="pCreateInfo">A pointer to a <see cref="VkInstanceCreateInfo"/> structure controlling creation of the instance.</param>
     /// <param name="pAllocator">Controls host memory allocation as described in the Memory Allocation chapter.</param>
     /// <param name="pInstance">Points a VkInstance handle in which the resulting instance is returned.</param>
-    public unsafe VkResult CreateInstance(VkInstanceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkInstance* pInstance) =>
+    public VkResult CreateInstance(VkInstanceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkInstance* pInstance) =>
         this.vkCreateInstance.Invoke(pCreateInfo, pAllocator, pInstance);
 
-    public unsafe VkResult CreateInstance(in VkInstanceCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkInstance instance)
+    public VkResult CreateInstance(in VkInstanceCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkInstance instance)
     {
         fixed (VkInstanceCreateInfo*  pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator  = &allocator)
@@ -66,10 +76,10 @@ public abstract class VK
     /// <param name="instance">The handle of the instance to destroy.</param>
     /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
-    public unsafe void DestroyInstance(VkInstance instance, VkAllocationCallbacks* pAllocator) =>
+    public void DestroyInstance(VkInstance instance, VkAllocationCallbacks* pAllocator) =>
         this.vkDestroyInstance.Invoke(instance, pAllocator);
 
-    public unsafe void DestroyInstance(VkInstance instance, in VkAllocationCallbacks allocator)
+    public void DestroyInstance(VkInstance instance, in VkAllocationCallbacks allocator)
     {
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
@@ -87,19 +97,19 @@ public abstract class VK
     /// <param name="pPropertyCount">A pointer to an integer related to the number of extension properties available or queried, as described above.</param>
     /// <param name="pProperties">Either NULL or a pointer to an array of VkExtensionProperties structures.</param>
     /// <returns>Up to requested number of global extension properties</returns>
-    public unsafe VkResult EnumerateInstanceExtensionProperties(byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties) =>
+    public VkResult EnumerateInstanceExtensionProperties(byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties) =>
         this.vkEnumerateInstanceExtensionProperties.Invoke(pLayerName, pPropertyCount, pProperties);
 
-    public unsafe VkResult EnumerateInstanceExtensionProperties(string? layerName, out uint propertyCount)
+    public VkResult EnumerateInstanceExtensionProperties(string? layerName, out uint propertyCount)
     {
-        fixed (byte*                  pLayerName     = Encoding.UTF8.GetBytes(layerName ?? ""))
-        fixed (uint*                  pPropertyCount = &propertyCount)
+        fixed (byte* pLayerName     = Encoding.UTF8.GetBytes(layerName ?? ""))
+        fixed (uint* pPropertyCount = &propertyCount)
         {
             return this.vkEnumerateInstanceExtensionProperties.Invoke(pLayerName, pPropertyCount, null);
         }
     }
 
-    public unsafe VkResult EnumerateInstanceExtensionProperties(string? layerName, out VkExtensionProperties[] properties)
+    public VkResult EnumerateInstanceExtensionProperties(string? layerName, out VkExtensionProperties[] properties)
     {
         this.EnumerateInstanceExtensionProperties(layerName, out uint propertyCount);
 
@@ -120,10 +130,10 @@ public abstract class VK
     /// <param name="pProperties">Either NULL or a pointer to an array of <see cref="VkLayerProperties"/> structures.</param>
     /// <returns></returns>
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
-    public unsafe VkResult EnumerateInstanceLayerProperties(uint* pPropertyCount, VkLayerProperties* pProperties) =>
+    public VkResult EnumerateInstanceLayerProperties(uint* pPropertyCount, VkLayerProperties* pProperties) =>
         this.vkEnumerateInstanceLayerProperties.Invoke(pPropertyCount, pProperties);
 
-    public unsafe VkResult EnumerateInstanceLayerProperties(out uint propertyCount)
+    public VkResult EnumerateInstanceLayerProperties(out uint propertyCount)
     {
         fixed (uint* pPropertyCount = &propertyCount)
         {
@@ -131,7 +141,7 @@ public abstract class VK
         }
     }
 
-    public unsafe VkResult EnumerateInstanceLayerProperties(out VkLayerProperties[] properties)
+    public VkResult EnumerateInstanceLayerProperties(out VkLayerProperties[] properties)
     {
         this.EnumerateInstanceLayerProperties(out uint propertyCount);
 
@@ -142,4 +152,49 @@ public abstract class VK
             return this.vkEnumerateInstanceLayerProperties.Invoke(&propertyCount, pProperties);
         }
     }
+
+    public void* GetInstanceProcAddr(VkInstance instance, byte* pName) =>
+        this.vkGetInstanceProcAddr.Invoke(instance, pName);
+
+    public T? GetInstanceProcAddr<T>(VkInstance instance, string name) where T : Delegate
+    {
+        fixed (byte* pName = Encoding.UTF8.GetBytes(name))
+        {
+            var pointer = this.vkGetInstanceProcAddr.Invoke(instance, pName);
+
+            return pointer != null ? Marshal.GetDelegateForFunctionPointer<T>((nint)pointer) : null;
+        }
+    }
+
+    public bool HasExtension(string name, string? layer = default)
+    {
+        if (!this.extensionsMap.TryGetValue(layer ?? "", out var extensions))
+        {
+            this.EnumerateInstanceExtensionProperties(layer, out VkExtensionProperties[] properties);
+
+            this.extensionsMap[layer ?? ""] = extensions = properties.Select(x => Marshal.PtrToStringAnsi((nint)x.extensionName)!).ToHashSet();
+        }
+
+        return extensions.Contains(name);
+    }
+
+    public bool TryGetExtension<T>(VkInstance instance, string? layer, [NotNullWhen(true)] out T? extension) where T : class, IVkExtension
+    {
+        extension = null;
+
+        if (this.HasExtension(T.Name, layer))
+        {
+            extension = (T)T.Create(this, instance);
+        }
+
+        return extension != null;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public bool TryGetExtension<T>([NotNullWhen(true)] out T? extension) where T : class, IVkExtension =>
+        this.TryGetExtension(default, default, out extension);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public bool TryGetExtension<T>(VkInstance instance, [NotNullWhen(true)] out T? extension) where T : class, IVkExtension =>
+        this.TryGetExtension(instance, null, out extension);
 }

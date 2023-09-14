@@ -1,7 +1,7 @@
 using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.PFN;
 
-namespace Age.Vulkan.Native;
+namespace Age.Vulkan.Native.Extensions.EXT;
 
 /// <summary>
 /// <para>For each <see cref="VkDebugUtilsMessengerEXT"/> that is created the <see cref="messageSeverity"/> and <see cref="messageType"/> determine when that <see cref="pfnUserCallback"/> is called. The process to determine if the user’s <see cref="pfnUserCallback"/> is triggered when an event occurs is as follows:</para>

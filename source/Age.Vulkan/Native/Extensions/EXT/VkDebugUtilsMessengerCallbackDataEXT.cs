@@ -1,4 +1,4 @@
-namespace Age.Vulkan.Native;
+namespace Age.Vulkan.Native.Extensions.EXT;
 
 /// <summary>
 /// Since adding queue and command buffer labels behaves like pushing and popping onto a stack, the order of both <see cref="pQueueLabels"/> and <see cref="pCmdBufLabels"/> is based on the order the labels were defined. The result is that the first label in either <see cref="pQueueLabels"/> or <see cref="pCmdBufLabels"/> will be the first defined (and therefore the oldest) while the last label in each list will be the most recent.

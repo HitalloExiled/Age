@@ -1,4 +1,4 @@
-namespace Age.Vulkan.Native;
+namespace Age.Vulkan.Native.Extensions.EXT;
 
 /// <summary>
 /// Specify parameters of a label region

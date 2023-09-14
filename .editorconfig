@@ -328,7 +328,7 @@ dotnet_diagnostic.IDE0080.severity = suggestion # Remove unnecessary suppression
 dotnet_diagnostic.IDE0082.severity = suggestion # Convert typeof to nameof
 dotnet_diagnostic.IDE1006.severity = suggestion # Remove unnecessary suppression operator
 
-[**/Native/*.cs]
+[**/Native/**/*.cs]
 dotnet_naming_rule.public_fields_rule.severity = none
 dotnet_diagnostic.CA1707.severity              = none
 

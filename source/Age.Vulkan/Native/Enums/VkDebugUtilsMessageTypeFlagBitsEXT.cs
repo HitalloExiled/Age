@@ -17,7 +17,7 @@ public enum VkDebugUtilsMessageTypeFlagBitsEXT : uint
     VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT = 0x00000002,
 
     /// <summary>
-    /// Specifies a potentially non-optimal use of Vulkan, e.g. using <see cref="VK.CmdClearColorImage"/> when setting <see cref="VkAttachmentDescription.loadOp"/> to <see cref="VK_ATTACHMENT_LOAD_OP_CLEAR"/> would have worked.
+    /// Specifies a potentially non-optimal use of Vulkan, e.g. using <see cref="Vk.CmdClearColorImage"/> when setting <see cref="VkAttachmentDescription.loadOp"/> to <see cref="VK_ATTACHMENT_LOAD_OP_CLEAR"/> would have worked.
     /// </summary>
     VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT = 0x00000004,
 

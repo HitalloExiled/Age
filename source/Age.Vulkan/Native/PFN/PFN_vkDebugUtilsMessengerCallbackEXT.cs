@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Age.Vulkan.Native.Enums;
+using Age.Vulkan.Native.Extensions.EXT;
 
 namespace Age.Vulkan.Native.PFN;
 
