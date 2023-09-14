@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -6,6 +7,7 @@ namespace Age.Vulkan.Native;
 /// <summary>
 /// Application-defined memory free notification function
 /// </summary>
+[DebuggerDisplay("{Value}")]
 public record struct PFN_vkInternalFreeNotification(nint Value)
 {
     /// <summary>
