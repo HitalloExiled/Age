@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Age.Vulkan.Native;
+namespace Age.Vulkan.Native.PFN;
 
 /// <summary>
 /// Application-defined memory free function

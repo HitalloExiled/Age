@@ -56,7 +56,7 @@ public abstract class VK
         fixed (VkAllocationCallbacks* pAllocator  = &allocator)
         fixed (VkInstance*            pInstance   = &instance)
         {
-            return this.vkCreateInstance.Invoke(pCreateInfo, allocator.Equals(default) ? null : pAllocator, pInstance);
+            return this.vkCreateInstance.Invoke(pCreateInfo, allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator, pInstance);
         }
     }
 
@@ -73,7 +73,7 @@ public abstract class VK
     {
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
-            this.vkDestroyInstance.Invoke(instance, allocator.Equals(default) ? null : pAllocator);
+            this.vkDestroyInstance.Invoke(instance, allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator);
         }
     }
 

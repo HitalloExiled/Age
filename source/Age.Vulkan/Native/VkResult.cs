@@ -134,3 +134,4 @@ public enum VkResult
     /// <remarks>Provided by VK_EXT_pipeline_creation_cache_control</remarks>
     VK_ERROR_PIPELINE_COMPILE_REQUIRED_EXT                = VK_PIPELINE_COMPILE_REQUIRED,
 }
+

@@ -45,9 +45,19 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "clean-test",
+            "windows": {
+                "command": "if (Test-Path -Path ./tests/Age.Tests/TestResults) { Remove-Item ./tests/Age.Tests/TestResults/* -Force -Recurse; }"
+            },
+            "type": "shell",
+            "problemMatcher": []
+        },
+
+        {
             "label": "test",
             "command": "dotnet",
             "type": "process",
+            "dependsOn": ["clean-test"],
             "args": [
                 "test",
                 "--collect:\"XPlat Code Coverage\"",
@@ -69,8 +79,10 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "open-report",
-            "command": "Invoke-Item ./.coverage/index.html",
+            "label": "coverage",
+            "windows":{
+                "command": "Invoke-Item ./.coverage/index.html",
+            },
             "type": "shell",
             "dependsOn": ["generate-report"],
             "problemMatcher": []
