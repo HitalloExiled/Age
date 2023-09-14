@@ -1,6 +1,8 @@
+using Age.Vulkan.Interfaces;
+
 namespace Age.Vulkan.Native.Extensions.EXT;
 
-public unsafe class VkExtDebugUtils : IVkExtension
+public unsafe class VkExtDebugUtils : IVkInstanceExtension
 {
     private delegate VkResult VkCreateDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger);
     private delegate void VkDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT messenger, VkAllocationCallbacks* pAllocator);
@@ -12,11 +14,11 @@ public unsafe class VkExtDebugUtils : IVkExtension
 
     public VkExtDebugUtils(Vk vk, VkInstance instance)
     {
-        this.vkCreateDebugUtilsMessengerEXT  = vk.GetInstanceProcAddr<VkCreateDebugUtilsMessengerEXT>(instance, "vkCreateDebugUtilsMessengerEXT")!;
-        this.vkDestroyDebugUtilsMessengerEXT = vk.GetInstanceProcAddr<VkDestroyDebugUtilsMessengerEXT>(instance, "vkDestroyDebugUtilsMessengerEXT")!;
+        this.vkCreateDebugUtilsMessengerEXT  = vk.GetInstanceProcAddr<VkCreateDebugUtilsMessengerEXT>(Name, instance, "vkCreateDebugUtilsMessengerEXT");
+        this.vkDestroyDebugUtilsMessengerEXT = vk.GetInstanceProcAddr<VkDestroyDebugUtilsMessengerEXT>(Name, instance, "vkDestroyDebugUtilsMessengerEXT");
     }
 
-    public static IVkExtension Create(Vk vk, VkInstance instance) =>
+    public static IVkInstanceExtension Create(Vk vk, VkInstance instance) =>
         new VkExtDebugUtils(vk, instance);
 
     /// <summary>

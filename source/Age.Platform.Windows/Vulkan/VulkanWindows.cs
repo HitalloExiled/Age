@@ -6,6 +6,7 @@ namespace Age.Platform.Windows.Vulkan;
 public class VulkanWindows : Vk, IDisposable
 {
     protected override IVulkanLoader Loader { get; } = new WindowsVulkanLoader();
+
     private bool disposed;
 
     protected virtual void Dispose(bool disposing)

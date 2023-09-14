@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Age.Vulkan.Interfaces;
-using Age.Vulkan.Native.Extensions;
 
 namespace Age.Vulkan.Native;
 
@@ -31,23 +30,27 @@ public unsafe abstract class Vk
 
     private delegate VkResult VkCreateDevice(VkPhysicalDevice physicalDevice, VkDeviceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDevice* pDevice);
     private delegate VkResult VkCreateInstance(VkInstanceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkInstance* pInstance);
+    private delegate void VkDestroyDevice(VkDevice device, VkAllocationCallbacks* pAllocator);
     private delegate void VkDestroyInstance(VkInstance instance, VkAllocationCallbacks* pAllocator);
     private delegate VkResult VkEnumerateInstanceExtensionProperties(byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
     private delegate VkResult VkEnumerateInstanceLayerProperties(uint* pPropertyCount, VkLayerProperties* pProperties);
     private delegate VkResult VkEnumeratePhysicalDevices(VkInstance instance, uint* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices);
+    private delegate void VkGetDeviceQueue(VkDevice device, uint queueFamilyIndex, uint queueIndex, VkQueue* pQueue);
     private delegate void* VkGetInstanceProcAddr(VkInstance instance, byte* pName);
     private delegate void VkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures);
     private delegate void VkGetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* pProperties);
     private delegate void VkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, uint* pQueueFamilyPropertyCount, VkQueueFamilyProperties* pQueueFamilyProperties);
 
-    private readonly Dictionary<string, HashSet<string>> extensionsMap = new();
+    private readonly Dictionary<string, HashSet<string>> instanceExtensionsMap = new();
 
     private readonly VkCreateDevice                           vkCreateDevice;
     private readonly VkCreateInstance                         vkCreateInstance;
+    private readonly VkDestroyDevice                          vkDestroyDevice;
     private readonly VkDestroyInstance                        vkDestroyInstance;
     private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties;
     private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties;
     private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices;
+    private readonly VkGetDeviceQueue                         vkGetDeviceQueue;
     private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr;
     private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures;
     private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties;
@@ -61,11 +64,13 @@ public unsafe abstract class Vk
     {
         this.vkCreateDevice                           = this.Loader.Load<VkCreateDevice>("vkCreateDevice");
         this.vkCreateInstance                         = this.Loader.Load<VkCreateInstance>("vkCreateInstance");
+        this.vkDestroyDevice                          = this.Loader.Load<VkDestroyDevice>("vkDestroyDevice");
         this.vkDestroyInstance                        = this.Loader.Load<VkDestroyInstance>("vkDestroyInstance");
         this.vkEnumerateInstanceExtensionProperties   = this.Loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
         this.vkEnumerateInstanceLayerProperties       = this.Loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
         this.vkEnumerateInstanceLayerProperties       = this.Loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
         this.vkEnumeratePhysicalDevices               = this.Loader.Load<VkEnumeratePhysicalDevices>("vkEnumeratePhysicalDevices");
+        this.vkGetDeviceQueue                         = this.Loader.Load<VkGetDeviceQueue>("vkGetDeviceQueue");
         this.vkGetInstanceProcAddr                    = this.Loader.Load<VkGetInstanceProcAddr>("vkGetInstanceProcAddr");
         this.vkGetPhysicalDeviceFeatures              = this.Loader.Load<VkGetPhysicalDeviceFeatures>("vkGetPhysicalDeviceFeatures");
         this.vkGetPhysicalDeviceProperties            = this.Loader.Load<VkGetPhysicalDeviceProperties>("vkGetPhysicalDeviceProperties");
@@ -74,6 +79,21 @@ public unsafe abstract class Vk
 
     public static uint MakeApiVersion(uint variant, uint major, uint minor, uint patch = default) =>
         (variant << 29) | (major << 22) | (minor << 12) | patch;
+
+    internal T GetInstanceProcAddr<T>(string extension, VkInstance instance, string name) where T : Delegate
+    {
+        fixed (byte* pName = Encoding.UTF8.GetBytes(name))
+        {
+            var pointer = this.vkGetInstanceProcAddr.Invoke(instance, pName);
+
+            if (pointer != null)
+            {
+                return Marshal.GetDelegateForFunctionPointer<T>((nint)pointer);
+            }
+
+            throw new Exception($"Can't find the proc {name} on the provided instance. Check if the extension {extension} is loaded.");
+        }
+    }
 
     /// <summary>
     /// <para><see cref="CreateDevice"/> verifies that extensions and features requested in the ppEnabledExtensionNames and pEnabledFeatures members of pCreateInfo, respectively, are supported by the implementation. If any requested extension is not supported, <see cref="CreateDevice"/> must return <see cref="VkResult.VK_ERROR_EXTENSION_NOT_PRESENT"/>. If any requested feature is not supported, <see cref="CreateDevice"/> must return <see cref="VkResult.VK_ERROR_FEATURE_NOT_PRESENT"/>. Support for extensions can be checked before creating a device by querying vkEnumerateDeviceExtensionProperties. Support for features can similarly be checked by querying <see cref="GetPhysicalDeviceFeatures"/>.</para>
@@ -120,6 +140,23 @@ public unsafe abstract class Vk
         fixed (VkInstance*            pInstance   = &instance)
         {
             return this.vkCreateInstance.Invoke(pCreateInfo, allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator, pInstance);
+        }
+    }
+
+    /// <summary>
+    /// <para>Destroy a logical device.</para>
+    /// <para>To ensure that no work is active on the device, <see cref="DeviceWaitIdle"/> can be used to gate the destruction of the device. Prior to destroying a device, an application is responsible for destroying/freeing any Vulkan objects that were created using that device as the first parameter of the corresponding vkCreate* or vkAllocate* command.</para>
+    /// </summary>
+    /// <param name="device">The logical device to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the Memory Allocation chapter.</param>
+    public void DestroyDevice(VkDevice device, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroyDevice(device, pAllocator);
+
+    public void DestroyDevice(VkDevice device, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkDestroyDevice.Invoke(device, allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator);
         }
     }
 
@@ -235,6 +272,40 @@ public unsafe abstract class Vk
         }
     }
 
+    /// <summary>
+    /// <para>Get a queue handle from a device.</para>
+    /// <para><see cref="GetDeviceQueue"/> must only be used to get queues that were created with the flags parameter of <see cref="VkDeviceQueueCreateInfo"/> set to zero. To get queues that were created with a non-zero flags parameter use <see cref="GetDeviceQueue2"/>.</para>
+    /// </summary>
+    /// <param name="device">The logical device that owns the queue.</param>
+    /// <param name="queueFamilyIndex">The index of the queue family to which the queue belongs.</param>
+    /// <param name="queueIndex">The index within this queue family of the queue to retrieve.</param>
+    /// <param name="pQueue"A pointer to a <see cref="VkQueue"/> object that will be filled with the handle for the requested queue.></param>
+    public void GetDeviceQueue(VkDevice device, uint queueFamilyIndex, uint queueIndex, VkQueue* pQueue) =>
+        this.vkGetDeviceQueue.Invoke(device, queueFamilyIndex, queueIndex, pQueue);
+
+    public void GetDeviceQueue(VkDevice device, uint queueFamilyIndex, uint queueIndex, out VkQueue queue)
+    {
+        fixed (VkQueue* pQueue = &queue)
+        {
+            this.vkGetDeviceQueue.Invoke(device, queueFamilyIndex, queueIndex, pQueue);
+        }
+    }
+
+    public T GetInstanceExtension<T>(VkInstance instance, string? layer = default) where T : class, IVkInstanceExtension
+    {
+        if (this.TryGetInstanceExtension<T>(instance, layer, out var extension))
+        {
+            return extension;
+        }
+
+        throw new Exception($"Cant find extension {T.Name}");
+    }
+
+    /// <summary>
+    /// Return a function pointer for a command.
+    /// </summary>
+    /// <param name="instance">The instance that the function pointer will be compatible with, or NULL for commands not dependent on any instance.</param>
+    /// <param name="pName">The name of the command to obtain.</param>
     public void* GetInstanceProcAddr(VkInstance instance, byte* pName) =>
         this.vkGetInstanceProcAddr.Invoke(instance, pName);
 
@@ -249,7 +320,8 @@ public unsafe abstract class Vk
     }
 
     /// <summary>
-    /// Reports capabilities of a physical device.
+    /// <para>Reports capabilities of a physical device.</para>
+    /// <para><see cref="GetInstanceProcAddr"/> itself is obtained in a platform- and loader- specific manner. Typically, the loader library will export this command as a function symbol, so applications can link against the loader library, or load it dynamically and look up the symbol using platform-specific APIs.</para>
     /// </summary>
     /// <param name="physicalDevice">The physical device from which to query the supported features.</param>
     /// <param name="pFeatures">A pointer to a <see cref="VkPhysicalDeviceFeatures"/> structure in which the physical device features are returned. For each feature, a value of true specifies that the feature is supported on this physical device, and VK_FALSE specifies that the feature is not supported.</param>
@@ -309,23 +381,23 @@ public unsafe abstract class Vk
         }
     }
 
-    public bool HasExtension(string name, string? layer = default)
+    public bool HasInstanceExtension(string name, string? layer = default)
     {
-        if (!this.extensionsMap.TryGetValue(layer ?? "", out var extensions))
+        if (!this.instanceExtensionsMap.TryGetValue(layer ?? "", out var extensions))
         {
             this.EnumerateInstanceExtensionProperties(layer, out VkExtensionProperties[] properties);
 
-            this.extensionsMap[layer ?? ""] = extensions = properties.Select(x => Marshal.PtrToStringAnsi((nint)x.extensionName)!).ToHashSet();
+            this.instanceExtensionsMap[layer ?? ""] = extensions = properties.Select(x => Marshal.PtrToStringAnsi((nint)x.extensionName)!).ToHashSet();
         }
 
         return extensions.Contains(name);
     }
 
-    public bool TryGetExtension<T>(VkInstance instance, string? layer, [NotNullWhen(true)] out T? extension) where T : class, IVkExtension
+    public bool TryGetInstanceExtension<T>(VkInstance instance, string? layer, [NotNullWhen(true)] out T? extension) where T : class, IVkInstanceExtension
     {
         extension = null;
 
-        if (this.HasExtension(T.Name, layer))
+        if (this.HasInstanceExtension(T.Name, layer))
         {
             extension = (T)T.Create(this, instance);
         }
@@ -334,10 +406,6 @@ public unsafe abstract class Vk
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public bool TryGetExtension<T>([NotNullWhen(true)] out T? extension) where T : class, IVkExtension =>
-        this.TryGetExtension(default, default, out extension);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public bool TryGetExtension<T>(VkInstance instance, [NotNullWhen(true)] out T? extension) where T : class, IVkExtension =>
-        this.TryGetExtension(instance, null, out extension);
+    public bool TryGetInstanceExtension<T>(VkInstance instance, [NotNullWhen(true)] out T? extension) where T : class, IVkInstanceExtension =>
+        this.TryGetInstanceExtension(instance, null, out extension);
 }

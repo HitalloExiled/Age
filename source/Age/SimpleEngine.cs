@@ -8,6 +8,7 @@ using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Extensions.EXT;
 using Age.Vulkan.Native.Extensions.EXT.Enums;
 using Age.Vulkan.Native.Extensions.EXT.VkFlags;
+using Age.Vulkan.Native.Extensions.KHR;
 
 namespace Age;
 
@@ -16,6 +17,9 @@ public unsafe class SimpleEngine : IDisposable
     public record QueueFamilyIndices
     {
         public uint? GraphicsFamily { get; set; }
+        public uint? PresentFamily  { get; set; }
+
+        public bool IsComplete => GraphicsFamily.HasValue && PresentFamily.HasValue;
     }
 
     private readonly HashSet<string> validationLayers = new()
@@ -25,16 +29,20 @@ public unsafe class SimpleEngine : IDisposable
     private readonly VulkanWindows vk            = new();
     private readonly WindowManager windowManager = new();
 
-    private readonly bool            enableValidationLayers = Debugger.IsAttached;
+    private readonly bool enableValidationLayers = Debugger.IsAttached;
 
     private VkDebugUtilsMessengerEXT debugMessenger;
     private VkDevice                 device;
+    private VkQueue                  graphicsQueue;
     private VkPhysicalDevice         physicalDevice;
+    private VkQueue                  presentQueue;
+    private VkSurfaceKHR             surface;
     private VkExtDebugUtils?         vkExtDebugUtils;
+    private VkKhrSurface             vkKhrSurface = null!;
 
     private bool       disposed;
     private VkInstance instance;
-    private Window?    window;
+    private Window     window = null!;
 
     private static VkBool32 DebugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -43,7 +51,6 @@ public unsafe class SimpleEngine : IDisposable
         void*                                  pUserData
     )
     {
-
         Console.WriteLine("validation layer: " + Marshal.PtrToStringAnsi((nint)pCallbackData->pMessage));
 
         return false;
@@ -61,11 +68,14 @@ public unsafe class SimpleEngine : IDisposable
 
     private void Cleanup()
     {
+        this.vk.DestroyDevice(this.device, null);
+
         if (this.enableValidationLayers && this.vkExtDebugUtils != null)
         {
             this.vkExtDebugUtils.DestroyDebugUtilsMessenger(this.instance, this.debugMessenger, default);
         }
 
+        this.vkKhrSurface.DestroySurface(this.instance, this.surface, null);
         this.vk.DestroyInstance(this.instance, null);
     }
 
@@ -118,58 +128,97 @@ public unsafe class SimpleEngine : IDisposable
 
             if (this.vk.CreateInstance(createInfo, default, out var instance) == VkResult.VK_SUCCESS)
             {
-                if (!this.vk.TryGetExtension<VkExtDebugUtils>(instance, out var vkExtDebugUtils))
+                if (this.enableValidationLayers && !this.vk.TryGetInstanceExtension<VkExtDebugUtils>(instance, out vkExtDebugUtils))
                 {
                     throw new Exception($"Cannot found required extension {VkExtDebugUtils.Name}");
                 }
 
-                this.instance        = instance;
-                this.vkExtDebugUtils = vkExtDebugUtils;
+                if (!this.vk.TryGetInstanceExtension<VkKhrSurface>(instance, out var vkKhrSurface))
+                {
+                    throw new Exception($"Cannot found required extension {VkExtDebugUtils.Name}");
+                }
+
+                this.instance     = instance;
+                this.vkKhrSurface = vkKhrSurface;
             }
         }
     }
 
-    private void CreateLogicalDevice()
+    private unsafe void CreateLogicalDevice()
     {
         var indices = this.FindQueueFamilies(this.physicalDevice);
 
-        var queueCreateInfo = new VkDeviceQueueCreateInfo
+        var queueCreateInfos    = new List<VkDeviceQueueCreateInfo>();
+        var uniqueQueueFamilies = new HashSet<uint>
         {
-            sType            = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            queueFamilyIndex = indices.GraphicsFamily!.Value,
-            queueCount       = 1
+            indices.GraphicsFamily!.Value,
+            indices.PresentFamily!.Value
         };
 
         var queuePriority = 1.0f;
 
-        queueCreateInfo.pQueuePriorities = &queuePriority;
+        foreach (var queueFamily in uniqueQueueFamilies)
+        {
+            var queueCreateInfo = new VkDeviceQueueCreateInfo
+            {
+                sType            = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+                queueFamilyIndex = indices.GraphicsFamily!.Value,
+                queueCount       = 1,
+                pQueuePriorities = &queuePriority,
+            };
+
+            queueCreateInfos.Add(queueCreateInfo);
+        }
 
         var deviceFeatures = new VkPhysicalDeviceFeatures();
 
-        var createInfo = new VkDeviceCreateInfo
+        fixed (VkDeviceQueueCreateInfo* pQueueCreateInfos = queueCreateInfos.ToArray())
         {
-            sType                 = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            pQueueCreateInfos     = &queueCreateInfo,
-            queueCreateInfoCount  = 1,
-            pEnabledFeatures      = &deviceFeatures,
-            enabledExtensionCount = 0,
+            var createInfo = new VkDeviceCreateInfo
+            {
+                sType                 = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+                queueCreateInfoCount  = (uint)queueCreateInfos.Count,
+                pQueueCreateInfos     = pQueueCreateInfos,
+                pEnabledFeatures      = &deviceFeatures,
+                enabledExtensionCount = 0,
+            };
+
+            // Deprecated
+            // if (this.enableValidationLayers)
+            // {
+            //     createInfo.enabledLayerCount   = (uint)ppEnabledLayerNames.Length;
+            //     createInfo.ppEnabledLayerNames = ppEnabledLayerNames;
+            // }
+            // else
+            // {
+            //     createInfo.enabledLayerCount = 0;
+            // }
+
+            if (this.vk.CreateDevice(this.physicalDevice, createInfo, default, out this.device) != VkResult.VK_SUCCESS)
+            {
+                throw new Exception("failed to create logical device!");
+            }
+
+            this.vk.GetDeviceQueue(this.device, indices.GraphicsFamily.Value, 0, out this.graphicsQueue);
+            this.vk.GetDeviceQueue(this.device, indices.PresentFamily.Value, 0, out this.presentQueue);
+        }
+    }
+
+    private void CreateSurface()
+    {
+        if (!this.vk.TryGetInstanceExtension<VkKhrWin32Surface>(instance, null, out var vkKhrWin32Surface))
+        {
+            throw new Exception($"Cannot found required extension {VkKhrWin32Surface.Name}");
+        }
+
+        var createInfo = new VkWin32SurfaceCreateInfoKHR
+        {
+            sType     = VkStructureType.VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+            hwnd      = window!.Handle,
+            hinstance = Process.GetCurrentProcess().Handle,
         };
 
-        // Deprecated
-        // if (this.enableValidationLayers)
-        // {
-        //     createInfo.enabledLayerCount   = (uint)ppEnabledLayerNames.Length;
-        //     createInfo.ppEnabledLayerNames = ppEnabledLayerNames;
-        // }
-        // else
-        // {
-        //     createInfo.enabledLayerCount = 0;
-        // }
-
-        if (this.vk.CreateDevice(this.physicalDevice, createInfo, default, out this.device) != VkResult.VK_SUCCESS)
-        {
-            throw new Exception("failed to create logical device!");
-        }
+        vkKhrWin32Surface.CreateWin32Surface(instance, createInfo, default, out surface);
     }
 
     private bool CheckValidationLayerSupport()
@@ -187,6 +236,9 @@ public unsafe class SimpleEngine : IDisposable
         {
             extensions.Add(VkExtDebugUtils.Name);
         }
+
+        extensions.Add(VkKhrSurface.Name);
+        extensions.Add(VkKhrWin32Surface.Name);
 
         return extensions;
     }
@@ -206,7 +258,14 @@ public unsafe class SimpleEngine : IDisposable
                 indices.GraphicsFamily = i;
             }
 
-            if (indices.GraphicsFamily.HasValue)
+            vkKhrSurface.GetPhysicalDeviceSurfaceSupport(device, i, surface, out var presentSupport);
+
+            if (presentSupport)
+            {
+                indices.PresentFamily = i;
+            }
+
+            if (indices.IsComplete)
             {
                 break;
             }
@@ -221,22 +280,24 @@ public unsafe class SimpleEngine : IDisposable
     {
         this.CreateInstance();
         this.SetupDebugMessenger();
+        this.CreateSurface();
         this.PickPhysicalDevice();
         this.CreateLogicalDevice();
     }
+
+    private void InitWindow() =>
+        this.window = this.windowManager.CreateWindow("Age", 600, 400, 0, 0);
 
     private bool IsDeviceSuitable(VkPhysicalDevice device)
     {
         var indices = this.FindQueueFamilies(device);
 
-        return indices.GraphicsFamily.HasValue;
+        return indices.IsComplete;
     }
 
     private void MainLoop()
     {
-        this.window = this.windowManager.CreateWindow("Age", 600, 400, 0, 0);
-
-        this.window.Show();
+        this.window!.Show();
 
         while (!this.window.Closed)
         {
@@ -302,6 +363,7 @@ public unsafe class SimpleEngine : IDisposable
 
     public void Run()
     {
+        this.InitWindow();
         this.InitVulkan();
         this.MainLoop();
         this.Cleanup();
