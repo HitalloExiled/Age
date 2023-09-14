@@ -5,16 +5,13 @@ using Age.Vulkan.Native.Types;
 
 namespace Age.Vulkan.Native.Extensions.KHR;
 
-public unsafe class VkKhrWin32Surface : IVkInstanceExtension
+public unsafe class VkKhrWin32Surface(Vk vk, VkInstance instance) : IVkInstanceExtension
 {
     private delegate VkResult VkCreateWin32SurfaceKHR(VkInstance instance, VkWin32SurfaceCreateInfoKHR* pCreateInfo, VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
 
     public static string Name { get; } = "VK_KHR_win32_surface";
 
-    private readonly VkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR;
-
-    public VkKhrWin32Surface(Vk vk, VkInstance instance) =>
-        this.vkCreateWin32SurfaceKHR = vk.GetInstanceProcAddr<VkCreateWin32SurfaceKHR>(Name, instance, "vkCreateWin32SurfaceKHR");
+    private readonly VkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR = vk.GetInstanceProcAddr<VkCreateWin32SurfaceKHR>(Name, instance, "vkCreateWin32SurfaceKHR");
 
     public static IVkInstanceExtension Create(Vk vk, VkInstance instance) =>
         new VkKhrWin32Surface(vk, instance);

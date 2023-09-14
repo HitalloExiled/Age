@@ -12,55 +12,45 @@ using Age.Vulkan.Native.Extensions.EXT.Types;
 using Age.Vulkan.Native.Extensions.KHR;
 using Age.Vulkan.Native.Extensions.KHR.Enums;
 using Age.Vulkan.Native.Extensions.KHR.Types;
-using Age.Vulkan.Native.Flags;
 using Age.Vulkan.Native.Types;
 
 namespace Age;
 
-public unsafe class SimpleEngine : IDisposable
+public unsafe partial class SimpleEngine : IDisposable
 {
-    public record QueueFamilyIndices
-    {
-        public uint? GraphicsFamily { get; set; }
-        public uint? PresentFamily  { get; set; }
-
-        public bool IsComplete => this.GraphicsFamily.HasValue && this.PresentFamily.HasValue;
-    }
-
-    public record SwapChainSupportDetails
-    {
-        public required VkSurfaceCapabilitiesKHR Capabilities { get; init; }
-        public required VkSurfaceFormatKHR[]     Formats      { get; init; }
-        public required VkPresentModeKHR[]       PresentModes { get; init; }
-    }
-
     private readonly HashSet<string> deviceExtensions = new()
     {
         VkKhrSwapchain.Name
     };
 
-    private readonly HashSet<string> validationLayers = new()
-    {
-        "VK_LAYER_KHRONOS_validation"
-    };
 
-    private readonly VulkanWindows vk            = new();
-    private readonly WindowManager windowManager = new();
 
-    private readonly bool enableValidationLayers = Debugger.IsAttached;
+    private readonly bool                enableValidationLayers = Debugger.IsAttached;
+    private readonly HashSet<string>     validationLayers       = new() { "VK_LAYER_KHRONOS_validation" };
+    private readonly Vk                  vk;
+    private readonly WindowManager       windowManager          = new();
+    private readonly WindowsVulkanLoader windowsVulkanLoader;
 
     private VkDebugUtilsMessengerEXT debugMessenger;
     private VkDevice                 device;
+    private bool                     disposed;
     private VkQueue                  graphicsQueue;
+    private VkInstance               instance;
     private VkPhysicalDevice         physicalDevice;
     private VkQueue                  presentQueue;
     private VkSurfaceKHR             surface;
+    private VkSwapchainKHR           swapChain;
+    private VkImage[]                swapChainImages = Array.Empty<VkImage>();
     private VkExtDebugUtils?         vkExtDebugUtils;
     private VkKhrSurface             vkKhrSurface = null!;
+    private VkKhrSwapchain           vkKhrSwapchain = null!;
+    private Window                   window = null!;
 
-    private bool       disposed;
-    private VkInstance instance;
-    private Window     window = null!;
+    public SimpleEngine()
+    {
+        this.windowsVulkanLoader = new();
+        this.vk                  = new(this.windowsVulkanLoader);
+    }
 
     private static VkPresentModeKHR ChooseSwapPresentMode(VkPresentModeKHR[] availablePresentModes)
     {
@@ -146,6 +136,7 @@ public unsafe class SimpleEngine : IDisposable
 
     private void Cleanup()
     {
+        this.vkKhrSwapchain.DestroySwapchain(this.device, this.swapChain, null);
         this.vk.DestroyDevice(this.device, null);
 
         if (this.enableValidationLayers && this.vkExtDebugUtils != null)
@@ -211,11 +202,11 @@ public unsafe class SimpleEngine : IDisposable
 
                 if (!this.vk.TryGetInstanceExtension<VkKhrSurface>(instance, out var vkKhrSurface))
                 {
-                    throw new Exception($"Cannot found required extension {VkExtDebugUtils.Name}");
+                    throw new Exception($"Cannot found required extension {VkKhrSurface.Name}");
                 }
 
-                this.instance     = instance;
-                this.vkKhrSurface = vkKhrSurface;
+                this.instance       = instance;
+                this.vkKhrSurface   = vkKhrSurface;
             }
         }
     }
@@ -281,6 +272,13 @@ public unsafe class SimpleEngine : IDisposable
             {
                 throw new Exception("failed to create logical device!");
             }
+
+            if (!this.vk.TryGetDeviceExtension<VkKhrSwapchain>(this.physicalDevice, this.device, out var vkKhrSwapchain))
+            {
+                throw new Exception($"Cannot found required extension {VkKhrSwapchain.Name}");
+            }
+
+            this.vkKhrSwapchain = vkKhrSwapchain;
 
             this.vk.GetDeviceQueue(this.device, indices.GraphicsFamily.Value, 0, out this.graphicsQueue);
             this.vk.GetDeviceQueue(this.device, indices.PresentFamily.Value, 0, out this.presentQueue);
@@ -357,6 +355,13 @@ public unsafe class SimpleEngine : IDisposable
             createInfo.clipped        = true;
             createInfo.oldSwapchain   = default;
         }
+
+        if (this.vkKhrSwapchain.CreateSwapchain(this.device, createInfo, default, out this.swapChain) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to create swap chain!");
+        }
+
+        this.vkKhrSwapchain.GetSwapchainImages(this.device, this.swapChain, out this.swapChainImages);
     }
 
     private List<string> GetRequiredExtensions()
@@ -414,6 +419,7 @@ public unsafe class SimpleEngine : IDisposable
         this.CreateSurface();
         this.PickPhysicalDevice();
         this.CreateLogicalDevice();
+        this.CreateSwapChain();
     }
 
     private void InitWindow() =>
@@ -504,7 +510,7 @@ public unsafe class SimpleEngine : IDisposable
                 // TODO: dispose managed state (managed objects)
             }
 
-            this.vk.Dispose();
+            this.windowsVulkanLoader.Dispose();
             this.windowManager.Dispose();
 
             this.disposed = true;

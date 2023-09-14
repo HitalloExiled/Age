@@ -5,7 +5,7 @@ using Age.Vulkan.Native.Types;
 
 namespace Age.Vulkan.Native.Extensions.KHR;
 
-public unsafe class VkKhrSurface : IVkInstanceExtension
+public unsafe class VkKhrSurface(Vk vk, VkInstance instance) : IVkInstanceExtension
 {
     private delegate void VkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, VkAllocationCallbacks* pAllocator);
     private delegate VkResult VkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR* pSurfaceCapabilities);
@@ -15,20 +15,11 @@ public unsafe class VkKhrSurface : IVkInstanceExtension
 
     public static string Name { get; } = "VK_KHR_surface";
 
-    private readonly VkDestroySurfaceKHR                       vkDestroySurfaceKHR;
-    private readonly VkGetPhysicalDeviceSurfaceCapabilitiesKHR vkGetPhysicalDeviceSurfaceCapabilitiesKHR;
-    private readonly VkGetPhysicalDeviceSurfaceFormatsKHR      vkGetPhysicalDeviceSurfaceFormatsKHR;
-    private readonly VkGetPhysicalDeviceSurfacePresentModesKHR vkGetPhysicalDeviceSurfacePresentModesKHR;
-    private readonly VkGetPhysicalDeviceSurfaceSupportKHR      vkGetPhysicalDeviceSurfaceSupportKHR;
-
-    public VkKhrSurface(Vk vk, VkInstance instance)
-    {
-        this.vkDestroySurfaceKHR                       = vk.GetInstanceProcAddr<VkDestroySurfaceKHR>(Name, instance, "vkDestroySurfaceKHR");
-        this.vkGetPhysicalDeviceSurfaceCapabilitiesKHR = vk.GetInstanceProcAddr<VkGetPhysicalDeviceSurfaceCapabilitiesKHR>(Name, instance, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
-        this.vkGetPhysicalDeviceSurfaceFormatsKHR      = vk.GetInstanceProcAddr<VkGetPhysicalDeviceSurfaceFormatsKHR>(Name, instance, "vkGetPhysicalDeviceSurfaceFormatsKHR");
-        this.vkGetPhysicalDeviceSurfacePresentModesKHR = vk.GetInstanceProcAddr<VkGetPhysicalDeviceSurfacePresentModesKHR>(Name, instance, "vkGetPhysicalDeviceSurfacePresentModesKHR");
-        this.vkGetPhysicalDeviceSurfaceSupportKHR      = vk.GetInstanceProcAddr<VkGetPhysicalDeviceSurfaceSupportKHR>(Name, instance, "vkGetPhysicalDeviceSurfaceSupportKHR");
-    }
+    private readonly VkDestroySurfaceKHR                       vkDestroySurfaceKHR                       = vk.GetInstanceProcAddr<VkDestroySurfaceKHR>(Name, instance, "vkDestroySurfaceKHR");
+    private readonly VkGetPhysicalDeviceSurfaceCapabilitiesKHR vkGetPhysicalDeviceSurfaceCapabilitiesKHR = vk.GetInstanceProcAddr<VkGetPhysicalDeviceSurfaceCapabilitiesKHR>(Name, instance, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
+    private readonly VkGetPhysicalDeviceSurfaceFormatsKHR      vkGetPhysicalDeviceSurfaceFormatsKHR      = vk.GetInstanceProcAddr<VkGetPhysicalDeviceSurfaceFormatsKHR>(Name, instance, "vkGetPhysicalDeviceSurfaceFormatsKHR");
+    private readonly VkGetPhysicalDeviceSurfacePresentModesKHR vkGetPhysicalDeviceSurfacePresentModesKHR = vk.GetInstanceProcAddr<VkGetPhysicalDeviceSurfacePresentModesKHR>(Name, instance, "vkGetPhysicalDeviceSurfacePresentModesKHR");
+    private readonly VkGetPhysicalDeviceSurfaceSupportKHR      vkGetPhysicalDeviceSurfaceSupportKHR      = vk.GetInstanceProcAddr<VkGetPhysicalDeviceSurfaceSupportKHR>(Name, instance, "vkGetPhysicalDeviceSurfaceSupportKHR");
 
     public static IVkInstanceExtension Create(Vk vk, VkInstance instance) =>
         new VkKhrSurface(vk, instance);

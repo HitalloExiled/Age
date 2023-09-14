@@ -8,7 +8,7 @@ using Age.Vulkan.Native.Types;
 
 namespace Age.Vulkan.Native;
 
-public unsafe abstract class Vk
+public unsafe class Vk(IVulkanLoader loader)
 {
     /// <summary>
     /// The length in char values of an array containing a string with additional descriptive information about a query, as returned in <see cref="VkLayerProperties.description"/> and other queries.
@@ -39,51 +39,46 @@ public unsafe abstract class Vk
     private delegate VkResult VkEnumerateInstanceLayerProperties(uint* pPropertyCount, VkLayerProperties* pProperties);
     private delegate VkResult VkEnumeratePhysicalDevices(VkInstance instance, uint* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices);
     private delegate void VkGetDeviceQueue(VkDevice device, uint queueFamilyIndex, uint queueIndex, VkQueue* pQueue);
+    private delegate void* VkGetDeviceProcAddr(VkDevice device, byte* pName);
     private delegate void* VkGetInstanceProcAddr(VkInstance instance, byte* pName);
     private delegate void VkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures);
     private delegate void VkGetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* pProperties);
     private delegate void VkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, uint* pQueueFamilyPropertyCount, VkQueueFamilyProperties* pQueueFamilyProperties);
 
+    private readonly Dictionary<string, HashSet<string>> deviceExtensionsMap   = new();
     private readonly Dictionary<string, HashSet<string>> instanceExtensionsMap = new();
 
-    private readonly VkCreateDevice                           vkCreateDevice;
-    private readonly VkCreateInstance                         vkCreateInstance;
-    private readonly VkDestroyDevice                          vkDestroyDevice;
-    private readonly VkDestroyInstance                        vkDestroyInstance;
-    private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties;
-    private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties;
-    private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties;
-    private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices;
-    private readonly VkGetDeviceQueue                         vkGetDeviceQueue;
-    private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr;
-    private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures;
-    private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties;
-    private readonly VkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties;
+    private readonly VkCreateDevice                           vkCreateDevice                           = loader.Load<VkCreateDevice>("vkCreateDevice");
+    private readonly VkCreateInstance                         vkCreateInstance                         = loader.Load<VkCreateInstance>("vkCreateInstance");
+    private readonly VkDestroyDevice                          vkDestroyDevice                          = loader.Load<VkDestroyDevice>("vkDestroyDevice");
+    private readonly VkDestroyInstance                        vkDestroyInstance                        = loader.Load<VkDestroyInstance>("vkDestroyInstance");
+    private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties     = loader.Load<VkEnumerateDeviceExtensionProperties>("vkEnumerateDeviceExtensionProperties");
+    private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties   = loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
+    private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties       = loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
+    private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices               = loader.Load<VkEnumeratePhysicalDevices>("vkEnumeratePhysicalDevices");
+    private readonly VkGetDeviceQueue                         vkGetDeviceQueue                         = loader.Load<VkGetDeviceQueue>("vkGetDeviceQueue");
+    private readonly VkGetDeviceProcAddr                      vkGetDeviceProcAddr                      = loader.Load<VkGetDeviceProcAddr>("vkGetDeviceProcAddr");
+    private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr                    = loader.Load<VkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+    private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures              = loader.Load<VkGetPhysicalDeviceFeatures>("vkGetPhysicalDeviceFeatures");
+    private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties            = loader.Load<VkGetPhysicalDeviceProperties>("vkGetPhysicalDeviceProperties");
+    private readonly VkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = loader.Load<VkGetPhysicalDeviceQueueFamilyProperties>("vkGetPhysicalDeviceQueueFamilyProperties");
 
     public static uint ApiVersion_1_0 { get; } = MakeApiVersion(0, 1, 0, 0);
 
-    protected abstract IVulkanLoader Loader { get; }
-
-    public Vk()
-    {
-        this.vkCreateDevice                           = this.Loader.Load<VkCreateDevice>("vkCreateDevice");
-        this.vkCreateInstance                         = this.Loader.Load<VkCreateInstance>("vkCreateInstance");
-        this.vkDestroyDevice                          = this.Loader.Load<VkDestroyDevice>("vkDestroyDevice");
-        this.vkDestroyInstance                        = this.Loader.Load<VkDestroyInstance>("vkDestroyInstance");
-        this.vkEnumerateDeviceExtensionProperties     = this.Loader.Load<VkEnumerateDeviceExtensionProperties>("vkEnumerateDeviceExtensionProperties");
-        this.vkEnumerateInstanceExtensionProperties   = this.Loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
-        this.vkEnumerateInstanceLayerProperties       = this.Loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
-        this.vkEnumerateInstanceLayerProperties       = this.Loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
-        this.vkEnumeratePhysicalDevices               = this.Loader.Load<VkEnumeratePhysicalDevices>("vkEnumeratePhysicalDevices");
-        this.vkGetDeviceQueue                         = this.Loader.Load<VkGetDeviceQueue>("vkGetDeviceQueue");
-        this.vkGetInstanceProcAddr                    = this.Loader.Load<VkGetInstanceProcAddr>("vkGetInstanceProcAddr");
-        this.vkGetPhysicalDeviceFeatures              = this.Loader.Load<VkGetPhysicalDeviceFeatures>("vkGetPhysicalDeviceFeatures");
-        this.vkGetPhysicalDeviceProperties            = this.Loader.Load<VkGetPhysicalDeviceProperties>("vkGetPhysicalDeviceProperties");
-        this.vkGetPhysicalDeviceQueueFamilyProperties = this.Loader.Load<VkGetPhysicalDeviceQueueFamilyProperties>("vkGetPhysicalDeviceQueueFamilyProperties");
-    }
-
     public static uint MakeApiVersion(uint variant, uint major, uint minor, uint patch = default) =>
         (variant << 29) | (major << 22) | (minor << 12) | patch;
+
+    internal T GetDeviceProcAddr<T>(string extension, VkDevice device, string name) where T : Delegate
+    {
+        fixed (byte* pName = Encoding.UTF8.GetBytes(name))
+        {
+            var pointer = this.vkGetDeviceProcAddr.Invoke(device, pName);
+
+            return pointer != null
+                ? Marshal.GetDelegateForFunctionPointer<T>((nint)pointer)
+                : throw new Exception($"Can't find the proc {name} on the provided instance. Check if the extension {extension} is loaded.");
+        }
+    }
 
     internal T GetInstanceProcAddr<T>(string extension, VkInstance instance, string name) where T : Delegate
     {
@@ -332,6 +327,22 @@ public unsafe abstract class Vk
     }
 
     /// <summary>
+    /// In order to support systems with multiple Vulkan implementations, the function pointers returned by <see cref="GetInstanceProcAddr"/> may point to dispatch code that calls a different real implementation for different <see cref="VkDevice"/> objects or their child objects. The overhead of the internal dispatch for <see cref="VkDevice"/> objects can be avoided by obtaining device-specific function pointers for any commands that use a device or device-child object as their dispatchable object.
+    /// </summary>
+    public void* GetDeviceProcAddr(VkDevice device, byte* pName) =>
+        this.vkGetDeviceProcAddr.Invoke(device, pName);
+
+    public T? GetDeviceProcAddr<T>(VkDevice device, string name) where T : Delegate
+    {
+        fixed (byte* pName = Encoding.UTF8.GetBytes(name))
+        {
+            var pointer = this.vkGetDeviceProcAddr.Invoke(device, pName);
+
+            return pointer != null ? Marshal.GetDelegateForFunctionPointer<T>((nint)pointer) : null;
+        }
+    }
+
+    /// <summary>
     /// <para>Get a queue handle from a device.</para>
     /// <para><see cref="GetDeviceQueue"/> must only be used to get queues that were created with the flags parameter of <see cref="VkDeviceQueueCreateInfo"/> set to zero. To get queues that were created with a non-zero flags parameter use <see cref="GetDeviceQueue2"/>.</para>
     /// </summary>
@@ -435,6 +446,18 @@ public unsafe abstract class Vk
         }
     }
 
+    public bool HasDeviceExtension(VkPhysicalDevice device, string name, string? layer = default)
+    {
+        if (!this.deviceExtensionsMap.TryGetValue(layer ?? "", out var extensions))
+        {
+            this.EnumerateDeviceExtensionProperties(device, layer, out VkExtensionProperties[] properties);
+
+            this.instanceExtensionsMap[layer ?? ""] = extensions = properties.Select(x => Marshal.PtrToStringAnsi((nint)x.extensionName)!).ToHashSet();
+        }
+
+        return extensions.Contains(name);
+    }
+
     public bool HasInstanceExtension(string name, string? layer = default)
     {
         if (!this.instanceExtensionsMap.TryGetValue(layer ?? "", out var extensions))
@@ -446,6 +469,22 @@ public unsafe abstract class Vk
 
         return extensions.Contains(name);
     }
+
+    public bool TryGetDeviceExtension<T>(VkPhysicalDevice physicalDevice, VkDevice device, string? layer, [NotNullWhen(true)] out T? extension) where T : class, IVkDeviceExtension
+    {
+        extension = null;
+
+        if (this.HasDeviceExtension(physicalDevice, T.Name, layer))
+        {
+            extension = (T)T.Create(this, device);
+        }
+
+        return extension != null;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public bool TryGetDeviceExtension<T>(VkPhysicalDevice physicalDevice, VkDevice device, [NotNullWhen(true)] out T? extension) where T : class, IVkDeviceExtension =>
+        this.TryGetDeviceExtension(physicalDevice, device, null, out extension);
 
     public bool TryGetInstanceExtension<T>(VkInstance instance, string? layer, [NotNullWhen(true)] out T? extension) where T : class, IVkInstanceExtension
     {

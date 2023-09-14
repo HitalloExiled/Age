@@ -10,6 +10,9 @@ public class WindowsVulkanLoader : IVulkanLoader
     private bool disposed;
     private readonly WindowsLibrary library = new("vulkan-1.dll");
 
+    ~WindowsVulkanLoader() =>
+        this.Dispose(false);
+
     protected virtual void Dispose(bool disposing)
     {
         if (!this.disposed)
