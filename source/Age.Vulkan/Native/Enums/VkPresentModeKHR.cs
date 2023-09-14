@@ -2,7 +2,7 @@
 namespace Age.Vulkan.Native.Enums;
 
 /// <summary>
-///
+/// Presentation mode supported for a surface.
 /// </summary>
 public enum VkPresentModeKHR : uint
 {
