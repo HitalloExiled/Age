@@ -1,12 +1,11 @@
 using System.Runtime.InteropServices;
-using Age.Core.Extensions;
+using System.Text;
 
 namespace Age.Core.Unsafe;
 
 public unsafe class StringArrayPtr : IDisposable
 {
     public int    Length  { get; }
-    public int    MaxSize { get; }
     public byte** PpData  { get; private set; }
 
     private bool disposed;
@@ -14,31 +13,25 @@ public unsafe class StringArrayPtr : IDisposable
     ~StringArrayPtr() =>
         this.Dispose(false);
 
-    public StringArrayPtr(IList<string> values, int maxSize = 256)
+    public StringArrayPtr(IList<string> values)
     {
         var ppData = (byte**)Marshal.AllocHGlobal(sizeof(byte*) * values.Count);
 
         for (var i = 0; i < values.Count; i++)
         {
-            var bytes  = values[i].ToUTF8Bytes();
+            var bytes = Encoding.UTF8.GetBytes(values[i]);
 
-            if (bytes.Length > maxSize)
-            {
-                throw new InvalidOperationException($"Element length at {i} is greater than the max size {maxSize}");
-            }
-
-            var pValue = (byte*)Marshal.AllocHGlobal(sizeof(byte) * maxSize);
-
-            UnmanagedUtils.ZeroFill(pValue, maxSize);
+            var pValue = (byte*)Marshal.AllocHGlobal(bytes.Length + 1);
 
             UnmanagedUtils.Copy(bytes, pValue, bytes.Length);
+
+            pValue[bytes.Length] = 0;
 
             ppData[i] = pValue;
         }
 
         this.PpData  = ppData;
         this.Length  = values.Count;
-        this.MaxSize = maxSize;
     }
 
     protected virtual void Dispose(bool disposing)

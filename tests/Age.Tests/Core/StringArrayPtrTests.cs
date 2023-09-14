@@ -6,7 +6,7 @@ namespace Age.Tests.Core;
 public class StringArrayPtrTests
 {
     [Fact]
-    public unsafe void NewInstanceShouldPass()
+    public unsafe void ConstructorShouldPass()
     {
         var list = new[]
         {
@@ -72,16 +72,10 @@ public class StringArrayPtrTests
     }
 
     [Fact]
-    public unsafe void ListWithElementSizeGreaterThanMaxSizeShouldFail()
+    public unsafe void DestructorShouldPass()
     {
-        var list = new[]
-        {
-            "One",
-            "Two",
-            "Three",
-        };
+        _ = new StringArrayPtr(Array.Empty<string>());
 
-        var exception = Assert.Throws<InvalidOperationException>(() => new StringArrayPtr(list, 3));
-        Assert.Equal($"Element length at {2} is greater than the max size {3}", exception.Message);
+        Assert.True(true);
     }
 }

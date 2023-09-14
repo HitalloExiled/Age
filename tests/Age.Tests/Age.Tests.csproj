@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\source\Age\Age.csproj" />
     <ProjectReference Include="..\..\source\Age.Core\Age.Core.csproj" />
   </ItemGroup>
 

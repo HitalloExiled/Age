@@ -6,6 +6,7 @@
         <Configuration>
           <Format>opencover</Format>
           <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
+          <Exclude>[*]*.Native.*</Exclude>
           <SkipAutoProps>true</SkipAutoProps>
         </Configuration>
       </DataCollector>

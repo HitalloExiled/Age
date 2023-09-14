@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using Age.Core.Extensions;
 using Age.Core.Unsafe;
 using Age.Platform.Windows.Display;
 using Age.Platform.Windows.Vulkan;
@@ -50,8 +49,8 @@ public unsafe class SimpleEngine : IDisposable
             throw new InvalidOperationException("validation layers requested, but not available!");
         }
 
-        fixed (byte* pApplicationName = "Hello Triangle".ToUTF8Bytes())
-        fixed (byte* pEngineName      = "No Engine".ToUTF8Bytes())
+        fixed (byte* pApplicationName = "Hello Triangle"u8)
+        fixed (byte* pEngineName      = "No Engine"u8)
         {
             var appInfo = new VkApplicationInfo
             {

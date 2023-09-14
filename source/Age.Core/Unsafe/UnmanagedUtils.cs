@@ -21,7 +21,7 @@ public static class UnmanagedUtils
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static unsafe void Copy<T>(ReadOnlySpan<T> source, T* destination, int length) where T : unmanaged
+    public static unsafe void Copy<T>(Span<T> source, T* destination, int length) where T : unmanaged
     {
         for (var i = 0; i < length; i++)
         {
@@ -56,6 +56,6 @@ public static class UnmanagedUtils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static unsafe void ZeroFill<T>(T* pointer, int size) where T : unmanaged =>
+    public static unsafe void ZeroFill(byte* pointer, int size) =>
         ZeroFill((nint)pointer, size);
 }

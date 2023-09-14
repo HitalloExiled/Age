@@ -1,4 +1,4 @@
-using Age.Core.Extensions;
+using System.Text;
 using Age.Vulkan.Interfaces;
 
 namespace Age.Vulkan.Native;
@@ -92,7 +92,7 @@ public abstract class VK
 
     public unsafe VkResult EnumerateInstanceExtensionProperties(string? layerName, out uint propertyCount)
     {
-        fixed (byte*                  pLayerName     = layerName?.ToUTF8Bytes())
+        fixed (byte*                  pLayerName     = Encoding.UTF8.GetBytes(layerName ?? ""))
         fixed (uint*                  pPropertyCount = &propertyCount)
         {
             return this.vkEnumerateInstanceExtensionProperties.Invoke(pLayerName, pPropertyCount, null);
@@ -105,7 +105,7 @@ public abstract class VK
 
         properties = new VkExtensionProperties[(int)propertyCount];
 
-        fixed (byte*                  pLayerName  = layerName?.ToUTF8Bytes())
+        fixed (byte*                  pLayerName  = Encoding.UTF8.GetBytes(layerName ?? ""))
         fixed (VkExtensionProperties* pProperties = properties.AsSpan())
         {
             return this.vkEnumerateInstanceExtensionProperties.Invoke(pLayerName, &propertyCount, pProperties);
