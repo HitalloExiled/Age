@@ -38,11 +38,14 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkQueue                  presentQueue;
     private VkSurfaceKHR             surface;
     private VkSwapchainKHR           swapChain;
-    private VkImage[]                swapChainImages = Array.Empty<VkImage>();
+    private VkExtent2D               swapChainExtent;
+    private VkFormat                 swapChainImageFormat;
+    private VkImage[]                swapChainImages     = Array.Empty<VkImage>();
+    private VkImageView[]            swapChainImageViews = Array.Empty<VkImageView>();
     private VkExtDebugUtils?         vkExtDebugUtils;
-    private VkKhrSurface             vkKhrSurface = null!;
-    private VkKhrSwapchain           vkKhrSwapchain = null!;
-    private Window                   window = null!;
+    private VkKhrSurface             vkKhrSurface        = null!;
+    private VkKhrSwapchain           vkKhrSwapchain      = null!;
+    private Window                   window              = null!;
 
     public SimpleEngine()
     {
@@ -134,6 +137,11 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void Cleanup()
     {
+        foreach (var imageView in this.swapChainImageViews)
+        {
+            this.vk.DestroyImageView(this.device, imageView, null);
+        }
+
         this.vkKhrSwapchain.DestroySwapchain(this.device, this.swapChain, null);
         this.vk.DestroyDevice(this.device, null);
 
@@ -144,6 +152,41 @@ public unsafe partial class SimpleEngine : IDisposable
 
         this.vkKhrSurface.DestroySurface(this.instance, this.surface, null);
         this.vk.DestroyInstance(this.instance, null);
+    }
+
+    private void CreateImageViews()
+    {
+        this.swapChainImageViews = new VkImageView[this.swapChainImages.Length];
+
+        for (var i = 0; i < this.swapChainImages.Length; i++)
+        {
+            var createInfo = new VkImageViewCreateInfo
+            {
+                image      = this.swapChainImages[i],
+                viewType   = VkImageViewType.VK_IMAGE_VIEW_TYPE_2D,
+                format     = this.swapChainImageFormat,
+                components = new()
+                {
+                    r = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY,
+                    g = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY,
+                    b = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY,
+                    a = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY,
+                },
+                subresourceRange = new()
+                {
+                    aspectMask     = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
+                    baseMipLevel   = 0,
+                    levelCount     = 1,
+                    baseArrayLayer = 0,
+                    layerCount     = 1,
+                }
+            };
+
+            if (this.vk.CreateImageView(this.device, createInfo, default, out this.swapChainImageViews[i]) != VkResult.VK_SUCCESS)
+            {
+                throw new Exception("failed to create image views!");
+            }
+        }
     }
 
     private void CreateInstance()
@@ -360,6 +403,9 @@ public unsafe partial class SimpleEngine : IDisposable
         }
 
         this.vkKhrSwapchain.GetSwapchainImages(this.device, this.swapChain, out this.swapChainImages);
+
+        this.swapChainImageFormat = surfaceFormat.format;
+        this.swapChainExtent      = extent;
     }
 
     private List<string> GetRequiredExtensions()
@@ -418,6 +464,7 @@ public unsafe partial class SimpleEngine : IDisposable
         this.PickPhysicalDevice();
         this.CreateLogicalDevice();
         this.CreateSwapChain();
+        this.CreateImageViews();
     }
 
     private void InitWindow() =>

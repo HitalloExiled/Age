@@ -7,6 +7,7 @@ namespace Age.Vulkan.Native.Types;
 /// <para>Opaque handle to an image object.</para>
 /// <para>Images represent multidimensional - up to 3 - arrays of data which can be used for various purposes (e.g. attachments, textures), by binding them to a graphics or compute pipeline via descriptor sets, or by directly specifying them as parameters to certain commands.</para>
 /// </summary>
+/// <remarks>Provided by VK_VERSION_1_0</remarks>
 [DebuggerDisplay("{Value}")]
 public record struct VkImage(nint Value)
 {
