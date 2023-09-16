@@ -1,9 +1,10 @@
-namespace Age.Vulkan.Native.Enums;
+namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
 /// Bitmask specifying which aspects of an image are included in a view
 /// </summary>
 /// <remarks>Provided by VK_VERSION_1_0</remarks>
+[Flags]
 public enum VkImageAspectFlagBits
 {
     /// <summary>

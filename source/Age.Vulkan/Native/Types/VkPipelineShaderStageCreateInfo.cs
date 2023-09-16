@@ -21,7 +21,7 @@ public unsafe struct VkPipelineShaderStageCreateInfo
     public VkStructureType sType;
 
     /// <summary>
-    /// NULL or a pointer to a structure extending this structure.
+    /// Null or a pointer to a structure extending this structure.
     /// </summary>
     public void* pNext;
 
@@ -52,5 +52,5 @@ public unsafe struct VkPipelineShaderStageCreateInfo
 
 
     public VkPipelineShaderStageCreateInfo() =>
-        sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 }

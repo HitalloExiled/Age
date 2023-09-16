@@ -35,5 +35,5 @@ public unsafe struct VkShaderModuleCreateInfo
     public uint* pCode;
 
     public VkShaderModuleCreateInfo() =>
-        sType = VkStructureType.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 }

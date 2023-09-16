@@ -12,7 +12,8 @@ namespace Age.Vulkan.Native.Enums;
 /// <para>If the allocation is scoped to the lifetime of an instance and the instance has an allocator, its allocator will be used with an allocation scope of <see cref="VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE"/>.</para>
 /// <para>Otherwise an implementation will allocate memory through an alternative mechanism that is unspecified.</para>
 /// </summary>
-public enum VkSystemAllocationScope : uint
+/// <remarks>Provided by VK_VERSION_1_0</remarks>
+public enum VkSystemAllocationScope
 {
     /// <summary>
     /// Specifies that the allocation is scoped to the duration of the Vulkan command.

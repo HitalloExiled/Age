@@ -1,10 +1,11 @@
-namespace Age.Vulkan.Native.Enums.KHR;
+namespace Age.Vulkan.Native.Flags.KHR;
 
 /// <summary>
 /// Alpha compositing modes supported on a device.
 /// </summary>
+/// <remarks>Provided by VK_KHR_surface</remarks>
 [Flags]
-public enum VkCompositeAlphaFlagBitsKHR : uint
+public enum VkCompositeAlphaFlagBitsKHR
 {
     /// <summary>
     /// The alpha component, if it exists, of the images is ignored in the compositing process. Instead, the image is treated as if it has a constant alpha of 1.0.

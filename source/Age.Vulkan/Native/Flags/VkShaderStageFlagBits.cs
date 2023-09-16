@@ -1,10 +1,11 @@
-namespace Age.Vulkan.Native.Enums;
+namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
 /// <para>Bitmask specifying a pipeline stage.</para>
 /// <remarks><see cref="VK_SHADER_STAGE_ALL_GRAPHICS"/> only includes the original five graphics stages included in Vulkan 1.0, and not any stages added by extensions. Thus, it may not have the desired effect in all cases.</remarks>
 /// </summary>
 /// <remarks>Provided by VK_VERSION_1_0</remarks>
+[Flags]
 public enum VkShaderStageFlagBits
 {
     /// <summary>

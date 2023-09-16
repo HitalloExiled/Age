@@ -35,10 +35,12 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkCreateDevice(VkPhysicalDevice physicalDevice, VkDeviceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDevice* pDevice);
     private delegate VkResult VkCreateImageView(VkDevice device, VkImageViewCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkImageView* pView);
     private delegate VkResult VkCreateInstance(VkInstanceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkInstance* pInstance);
+    private delegate VkResult VkCreatePipelineLayout(VkDevice device, VkPipelineLayoutCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkPipelineLayout* pPipelineLayout);
     private delegate VkResult VkCreateShaderModule(VkDevice device, VkShaderModuleCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkShaderModule* pShaderModule);
     private delegate void VkDestroyDevice(VkDevice device, VkAllocationCallbacks* pAllocator);
     private delegate void VkDestroyInstance(VkInstance instance, VkAllocationCallbacks* pAllocator);
     private delegate void VkDestroyImageView(VkDevice device, VkImageView imageView, VkAllocationCallbacks* pAllocator);
+    private delegate void VkDestroyPipelineLayout(VkDevice device, VkPipelineLayout pipelineLayout, VkAllocationCallbacks* pAllocator);
     private delegate void VkDestroyShaderModule(VkDevice device, VkShaderModule shaderModule, VkAllocationCallbacks* pAllocator);
     private delegate VkResult VkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
     private delegate VkResult VkEnumerateInstanceExtensionProperties(byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
@@ -57,10 +59,12 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCreateDevice                           vkCreateDevice                           = loader.Load<VkCreateDevice>("vkCreateDevice");
     private readonly VkCreateImageView                        vkCreateImageView                        = loader.Load<VkCreateImageView>("vkCreateImageView");
     private readonly VkCreateInstance                         vkCreateInstance                         = loader.Load<VkCreateInstance>("vkCreateInstance");
+    private readonly VkCreatePipelineLayout                   vkCreatePipelineLayout                   = loader.Load<VkCreatePipelineLayout>("vkCreatePipelineLayout");
     private readonly VkCreateShaderModule                     vkCreateShaderModule                     = loader.Load<VkCreateShaderModule>("vkCreateShaderModule");
     private readonly VkDestroyDevice                          vkDestroyDevice                          = loader.Load<VkDestroyDevice>("vkDestroyDevice");
     private readonly VkDestroyInstance                        vkDestroyInstance                        = loader.Load<VkDestroyInstance>("vkDestroyInstance");
     private readonly VkDestroyImageView                       vkDestroyImageView                       = loader.Load<VkDestroyImageView>("vkDestroyImageView");
+    private readonly VkDestroyPipelineLayout                  vkDestroyPipelineLayout                  = loader.Load<VkDestroyPipelineLayout>("vkDestroyPipelineLayout");
     private readonly VkDestroyShaderModule                    vkDestroyShaderModule                    = loader.Load<VkDestroyShaderModule>("vkDestroyShaderModule");
     private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties     = loader.Load<VkEnumerateDeviceExtensionProperties>("vkEnumerateDeviceExtensionProperties");
     private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties   = loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
@@ -165,6 +169,27 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Creates a new pipeline layout object.
+    /// </summary>
+    /// <param name="device">The logical device that creates the pipeline layout.</param>
+    /// <param name="pCreateInfo">A pointer to a <see cref="VkPipelineLayoutCreateInfo"/> structure specifying the state of the pipeline layout object.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pPipelineLayout">A pointer to a <see cref="VkPipelineLayout"/> handle in which the resulting pipeline layout object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult CreatePipelineLayout(VkDevice device, VkPipelineLayoutCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkPipelineLayout* pPipelineLayout) =>
+        this.vkCreatePipelineLayout.Invoke(device, pCreateInfo, pAllocator, pPipelineLayout);
+
+    public VkResult CreatePipelineLayout(VkDevice device, in VkPipelineLayoutCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkPipelineLayout pipelineLayout)
+    {
+        fixed (VkPipelineLayoutCreateInfo* pCreateInfo     = &createInfo)
+        fixed (VkAllocationCallbacks*      pAllocator      = &allocator)
+        fixed (VkPipelineLayout*           pPipelineLayout = &pipelineLayout)
+        {
+            return this.vkCreatePipelineLayout.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pPipelineLayout);
+        }
+    }
+
+    /// <summary>
     /// <para>Creates a new shader module object.</para>
     /// <para>Once a shader module has been created, any entry points it contains can be used in pipeline shader stages as described in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#pipelines-compute">Compute Pipelines</see> and <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#pipelines-graphics">Graphics Pipelines</see>.</para>
     /// <remarks>If the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#features-maintenance5">maintenance5</see> feature is enabled, shader module creation can be omitted entirely. Instead, applications should provide the <see cref="VkShaderModuleCreateInfo"/> structure directly in to pipeline creation by chaining it to <see cref="VkPipelineShaderStageCreateInfo"/>. This avoids the overhead of creating and managing an additional object.</remarks>
@@ -234,6 +259,24 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
             this.vkDestroyInstance.Invoke(instance, NullIfDefault(allocator, pAllocator));
+        }
+    }
+
+    /// <summary>
+    /// Destroy a pipeline layout object.
+    /// </summary>
+    /// <param name="device">The logical device that destroys the pipeline layout.</param>
+    /// <param name="pipelineLayout">The pipeline layout to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void DestroyPipelineLayout(VkDevice device, VkPipelineLayout pipelineLayout, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroyPipelineLayout.Invoke(device, pipelineLayout, pAllocator);
+
+    public void DestroyPipelineLayout(VkDevice device, VkPipelineLayout pipelineLayout, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkDestroyPipelineLayout.Invoke(device, pipelineLayout, NullIfDefault(allocator, pAllocator));
         }
     }
 

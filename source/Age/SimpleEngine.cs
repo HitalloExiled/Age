@@ -5,11 +5,12 @@ using Age.Platform.Windows.Display;
 using Age.Platform.Windows.Vulkan;
 using Age.Vulkan.Native;
 using Age.Vulkan.Native.Enums;
-using Age.Vulkan.Native.Enums.EXT;
 using Age.Vulkan.Native.Enums.KHR;
 using Age.Vulkan.Native.Extensions.EXT;
 using Age.Vulkan.Native.Extensions.KHR;
+using Age.Vulkan.Native.Flags;
 using Age.Vulkan.Native.Flags.EXT;
+using Age.Vulkan.Native.Flags.KHR;
 using Age.Vulkan.Native.Types;
 using Age.Vulkan.Native.Types.EXT;
 using Age.Vulkan.Native.Types.KHR;
@@ -35,6 +36,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkQueue                  graphicsQueue;
     private VkInstance               instance;
     private VkPhysicalDevice         physicalDevice;
+    private VkPipelineLayout         pipelineLayout;
     private VkQueue                  presentQueue;
     private VkSurfaceKHR             surface;
     private VkSwapchainKHR           swapChain;
@@ -137,6 +139,8 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void Cleanup()
     {
+        this.vk.DestroyPipelineLayout(this.device, this.pipelineLayout, null);
+
         foreach (var imageView in this.swapChainImageViews)
         {
             this.vk.DestroyImageView(this.device, imageView, null);
@@ -184,8 +188,88 @@ public unsafe partial class SimpleEngine : IDisposable
                 fragShaderStageInfo
             };
 
-            this.vk.DestroyShaderModule(this.device, fragShaderModule, null);
-            this.vk.DestroyShaderModule(this.device, vertShaderModule, null);
+            var vertexInputInfo = new VkPipelineVertexInputStateCreateInfo
+            {
+                vertexBindingDescriptionCount   = 0,
+                vertexAttributeDescriptionCount = 0
+            };
+
+            var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
+            {
+                topology               = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                primitiveRestartEnable = false
+            };
+
+            var viewportState = new VkPipelineViewportStateCreateInfo
+            {
+                viewportCount = 1,
+                scissorCount  = 1
+            };
+
+            var rasterizer = new VkPipelineRasterizationStateCreateInfo
+            {
+                depthClampEnable        = false,
+                rasterizerDiscardEnable = false,
+                polygonMode             = VkPolygonMode.VK_POLYGON_MODE_FILL,
+                lineWidth               = 1.0f,
+                cullMode                = VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT,
+                frontFace               = VkFrontFace.VK_FRONT_FACE_CLOCKWISE,
+                depthBiasEnable         = false
+            };
+
+            var multisampling = new VkPipelineMultisampleStateCreateInfo
+            {
+                sampleShadingEnable  = false,
+                rasterizationSamples = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT
+            };
+
+            var colorBlendAttachment = new VkPipelineColorBlendAttachmentState
+            {
+                colorWriteMask = VkColorComponentFlagBits.VK_COLOR_COMPONENT_R_BIT | VkColorComponentFlagBits.VK_COLOR_COMPONENT_G_BIT | VkColorComponentFlagBits.VK_COLOR_COMPONENT_B_BIT | VkColorComponentFlagBits.VK_COLOR_COMPONENT_A_BIT,
+                blendEnable    = false
+            };
+
+            var colorBlending = new VkPipelineColorBlendStateCreateInfo
+            {
+                logicOpEnable   = false,
+                logicOp         = VkLogicOp.VK_LOGIC_OP_COPY,
+                attachmentCount = 1,
+                pAttachments    = &colorBlendAttachment
+            };
+
+            colorBlending.blendConstants[0] = 0.0f;
+            colorBlending.blendConstants[1] = 0.0f;
+            colorBlending.blendConstants[2] = 0.0f;
+            colorBlending.blendConstants[3] = 0.0f;
+
+            var dynamicStates = new[]
+            {
+                VkDynamicState.VK_DYNAMIC_STATE_VIEWPORT,
+                VkDynamicState.VK_DYNAMIC_STATE_SCISSOR
+            };
+
+            fixed (VkDynamicState* pDynamicStates = dynamicStates)
+            {
+                var dynamicState = new VkPipelineDynamicStateCreateInfo
+                {
+                    dynamicStateCount = (uint)dynamicStates.Length,
+                    pDynamicStates    = pDynamicStates
+                };
+
+                var pipelineLayoutInfo = new VkPipelineLayoutCreateInfo
+                {
+                    setLayoutCount         = 0,
+                    pushConstantRangeCount = 0
+                };
+
+                if (this.vk.CreatePipelineLayout(this.device, pipelineLayoutInfo, default, out this.pipelineLayout) != VkResult.VK_SUCCESS)
+                {
+                    throw new Exception("failed to create pipeline layout!");
+                }
+
+                this.vk.DestroyShaderModule(this.device, fragShaderModule, null);
+                this.vk.DestroyShaderModule(this.device, vertShaderModule, null);
+            }
         }
     }
 

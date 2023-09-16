@@ -14,7 +14,7 @@ public unsafe struct VkDeviceCreateInfo
     public readonly VkStructureType sType;
 
     /// <summary>
-    /// NULL or a pointer to a structure extending this structure.
+    /// Null or a pointer to a structure extending this structure.
     /// </summary>
     public void* pNext;
 
@@ -56,7 +56,7 @@ public unsafe struct VkDeviceCreateInfo
     public byte** ppEnabledExtensionNames;
 
     /// <summary>
-    /// NULL or a pointer to a <see cref="VkPhysicalDeviceFeatures"/> structure containing boolean indicators of all the features to be enabled. Refer to the Features section for further details.
+    /// Null or a pointer to a <see cref="VkPhysicalDeviceFeatures"/> structure containing boolean indicators of all the features to be enabled. Refer to the Features section for further details.
     /// </summary>
     public VkPhysicalDeviceFeatures* pEnabledFeatures;
 

@@ -1,9 +1,10 @@
-
-namespace Age.Vulkan.Native.Enums;
+namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
 /// Bitmask controlling how a pipeline shader stage is created.
 /// </summary>
+/// <remarks>Provided by VK_VERSION_1_0</remarks>
+[Flags]
 public enum VkPipelineShaderStageCreateFlagBits
 {
     /// <summary>

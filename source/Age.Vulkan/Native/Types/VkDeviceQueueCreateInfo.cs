@@ -14,7 +14,7 @@ public unsafe struct VkDeviceQueueCreateInfo
     public readonly VkStructureType sType;
 
     /// <summary>
-    /// NULL or a pointer to a structure extending this structure.
+    /// Null or a pointer to a structure extending this structure.
     /// </summary>
     public void* pNext;
 

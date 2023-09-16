@@ -1,10 +1,10 @@
-namespace Age.Vulkan.Native.Enums;
+namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
 /// Bitmask specifying behavior of the instance.
 /// </summary>
 [Flags]
-public enum VkInstanceCreateFlagBits : uint
+public enum VkInstanceCreateFlagBits
 {
     /// <summary>
     /// Specifies that the instance will enumerate available Vulkan Portability-compliant physical devices and groups in addition to the Vulkan physical devices and groups that are enumerated by default.

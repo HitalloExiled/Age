@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Age.Vulkan.Native.Enums.EXT;
 using Age.Vulkan.Native.Flags.EXT;
 using Age.Vulkan.Native.Types;
 using Age.Vulkan.Native.Types.EXT;

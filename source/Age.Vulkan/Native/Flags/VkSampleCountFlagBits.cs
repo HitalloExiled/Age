@@ -1,10 +1,11 @@
-namespace Age.Vulkan.Native.Enums;
+namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
 /// Bitmask specifying sample counts supported for an image used for storage operations.
 /// </summary>
+/// <remarks>Provided by VK_VERSION_1_0</remarks>
 [Flags]
-public enum VkSampleCountFlagBits : uint
+public enum VkSampleCountFlagBits
 {
     /// <summary>
     /// Specifies an image with one sample per pixel.

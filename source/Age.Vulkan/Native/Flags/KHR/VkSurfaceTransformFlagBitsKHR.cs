@@ -1,11 +1,11 @@
-
-namespace Age.Vulkan.Native.Enums.KHR;
+namespace Age.Vulkan.Native.Flags.KHR;
 
 /// <summary>
 /// Sransforms supported on a device.
 /// </summary>
+/// <remarks>Provided by VK_KHR_surface</remarks>
 [Flags]
-public enum VkSurfaceTransformFlagBitsKHR : uint
+public enum VkSurfaceTransformFlagBitsKHR
 {
     /// <summary>
     /// Specifies that image content is presented without being transformed.

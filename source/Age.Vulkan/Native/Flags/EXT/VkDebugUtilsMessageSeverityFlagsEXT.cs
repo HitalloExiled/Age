@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Age.Vulkan.Interfaces;
-using Age.Vulkan.Native.Enums.EXT;
 
 namespace Age.Vulkan.Native.Flags.EXT;
 

@@ -7,6 +7,7 @@ namespace Age.Vulkan.Native.Types;
 /// <para>Opaque handle to a queue object.</para>
 /// <para>Creating a logical device also creates the queues associated with that device. The queues to create are described by a set of <see cref="VkDeviceQueueCreateInfo"/> structures that are passed to <see cref="Vk.CreateDevice"/> in pQueueCreateInfos.</para>
 /// </summary>
+/// <remarks>Provided by VK_VERSION_1_0</remarks>
 [DebuggerDisplay("{Value}")]
 public record struct VkQueue(nint Value)
 {

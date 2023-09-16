@@ -1,8 +1,10 @@
-namespace Age.Vulkan.Native.Enums;
+namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
 /// Bitmask specifying additional parameters of an image view.
 /// </summary>
+/// <remarks>Provided by VK_VERSION_1_0</remarks>
+[Flags]
 public enum VkImageViewCreateFlagBits
 {
     /// <summary>

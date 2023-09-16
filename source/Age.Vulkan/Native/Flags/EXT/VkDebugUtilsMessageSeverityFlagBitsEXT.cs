@@ -1,10 +1,11 @@
-namespace Age.Vulkan.Native.Enums.EXT;
+namespace Age.Vulkan.Native.Flags.EXT;
 
 /// <summary>
 /// Bitmask specifying which severities of events cause a debug messenger callback.
 /// </summary>
+/// <remarks>Provided by VK_EXT_debug_utils</remarks>
 [Flags]
-public enum VkDebugUtilsMessageSeverityFlagBitsEXT : uint
+public enum VkDebugUtilsMessageSeverityFlagBitsEXT
 {
     /// <summary>
     /// Specifies the most verbose output indicating all diagnostic messages from the Vulkan loader, layers, and drivers should be captured.

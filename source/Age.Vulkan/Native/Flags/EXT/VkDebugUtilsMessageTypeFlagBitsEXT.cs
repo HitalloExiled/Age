@@ -1,10 +1,11 @@
-namespace Age.Vulkan.Native.Enums.EXT;
+namespace Age.Vulkan.Native.Flags.EXT;
 
 /// <summary>
 /// Bitmask specifying which types of events cause a debug messenger callback
 /// </summary>
+/// <remarks>Provided by VK_EXT_debug_utils</remarks>
 [Flags]
-public enum VkDebugUtilsMessageTypeFlagBitsEXT : uint
+public enum VkDebugUtilsMessageTypeFlagBitsEXT
 {
     /// <summary>
     /// Specifies that some general event has occurred. This is typically a non-specification, non-performance event.

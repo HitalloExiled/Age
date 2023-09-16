@@ -3,7 +3,7 @@ namespace Age.Vulkan.Native.Enums;
 /// <summary>
 /// Available image formats
 /// </summary>
-public enum VkFormat : uint
+public enum VkFormat
 {
     /// <summary>
     /// Specifies that the format is not specified.

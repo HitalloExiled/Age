@@ -1,4 +1,4 @@
-namespace Age.Vulkan.Native.Enums.KHR;
+namespace Age.Vulkan.Native.Flags.KHR;
 
 /// <summary>
 /// Retrieve the index of the next available presentable image.

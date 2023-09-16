@@ -1,4 +1,4 @@
-namespace Age.Vulkan.Native.Enums;
+namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
 /// <para>Bitmask specifying capabilities of queues in a queue family</para>
@@ -6,7 +6,9 @@ namespace Age.Vulkan.Native.Enums;
 /// <para>Furthermore, if the protectedMemory physical device feature is supported, then at least one queue family of at least one physical device exposed by the implementation must support graphics operations, compute operations, and protected memory operations.</para>
 /// <remarks>All commands that are allowed on a queue that supports transfer operations are also allowed on a queue that supports either graphics or compute operations. Thus, if the capabilities of a queue family include <see cref="VK_QUEUE_GRAPHICS_BIT"/> or <see cref="VK_QUEUE_COMPUTE_BIT"/>, then reporting the <see cref="VK_QUEUE_TRANSFER_BIT"/> capability separately for that queue family is optional.</remarks>
 /// </summary>
-public enum VkQueueFlagBits : uint
+/// <remarks>Provided by VK_VERSION_1_0</remarks>
+[Flags]
+public enum VkQueueFlagBits
 {
     /// <summary>
     /// Specifies that queues in this queue family support graphics operations.
@@ -40,14 +42,14 @@ public enum VkQueueFlagBits : uint
     /// <remarks>Provided by VK_KHR_video_decode_queue</remarks>
     VK_QUEUE_VIDEO_DECODE_BIT_KHR = 0x00000020,
 
-    #if VK_ENABLE_BETA_EXTENSIONS
+#if VK_ENABLE_BETA_EXTENSIONS
     /// <summary>
     /// Specifies that queues in this queue family support optical flow operations.
     /// </summary>
     /// <remarks>Provided by VK_KHR_video_encode_queue</remarks>
     VK_QUEUE_VIDEO_ENCODE_BIT_KHR = 0x00000040,
 
-    #endif
+#endif
     /// <summary>
     /// Specifies that queues in this queue family support the <see cref="VkDeviceQueueCreateFlagBits.VK_DEVICE_QUEUE_CREATE_PROTECTED_BIT"/> bit. (see <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-protected-memory">Protected Memory</see>). If the physical device supports the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#features-protectedMemory">protectedMemory</see> feature, at least one of its queue families must support this bit.
     /// </summary>

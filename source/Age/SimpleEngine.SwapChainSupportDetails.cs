@@ -1,4 +1,4 @@
-using Age.Vulkan.Native.Enums;
+using Age.Vulkan.Native.Enums.KHR;
 using Age.Vulkan.Native.Types;
 using Age.Vulkan.Native.Types.KHR;
 

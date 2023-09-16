@@ -1,10 +1,11 @@
 
-namespace Age.Vulkan.Native.Enums;
+namespace Age.Vulkan.Native.Enums.KHR;
 
 /// <summary>
 /// Presentation mode supported for a surface.
 /// </summary>
-public enum VkPresentModeKHR : uint
+/// <remarks>Provided by VK_KHR_surface</remarks>
+public enum VkPresentModeKHR
 {
     /// <summary>
     /// VK_PRESENT_MODE_IMMEDIATE_KHR specifies that the presentation engine does not wait for a vertical blanking period to update the current image, meaning this mode may result in visible tearing. No internal queuing of presentation requests is needed, as the requests are applied immediately.

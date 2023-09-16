@@ -1,12 +1,10 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Age.Vulkan.Interfaces;
-using Age.Vulkan.Native.Enums;
 
 namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
-/// VkImageViewCreateFlagBits
 /// Bitmask of <see cref="VkImageViewCreateFlagBits"/>
 /// Reserved for future use.
 /// </summary>

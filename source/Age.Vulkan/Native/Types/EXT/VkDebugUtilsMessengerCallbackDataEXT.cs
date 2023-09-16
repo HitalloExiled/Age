@@ -14,7 +14,7 @@ public unsafe struct VkDebugUtilsMessengerCallbackDataEXT
     public readonly VkStructureType sType;
 
     /// <summary>
-    /// NULL or a pointer to a structure extending this structure.
+    /// Null or a pointer to a structure extending this structure.
     /// </summary>
     public void* pNext;
 
@@ -44,7 +44,7 @@ public unsafe struct VkDebugUtilsMessengerCallbackDataEXT
     public uint queueLabelCount;
 
     /// <summary>
-    /// NULL or a pointer to an array of <see cref="VkDebugUtilsLabelEXT"/> active in the current VkQueue at the time the callback was triggered. Refer to Queue Labels for more information.
+    /// Null or a pointer to an array of <see cref="VkDebugUtilsLabelEXT"/> active in the current VkQueue at the time the callback was triggered. Refer to Queue Labels for more information.
     /// </summary>
     public VkDebugUtilsLabelEXT* pQueueLabels;
 
@@ -54,7 +54,7 @@ public unsafe struct VkDebugUtilsMessengerCallbackDataEXT
     public uint cmdBufLabelCount;
 
     /// <summary>
-    /// NULL or a pointer to an array of <see cref="VkDebugUtilsLabelEXT"/> active in the current <see cref="VkCommandBuffer"/> at the time the callback was triggered. Refer to Command Buffer Labels for more information.
+    /// Null or a pointer to an array of <see cref="VkDebugUtilsLabelEXT"/> active in the current <see cref="VkCommandBuffer"/> at the time the callback was triggered. Refer to Command Buffer Labels for more information.
     /// </summary>
     public VkDebugUtilsLabelEXT* pCmdBufLabels;
 

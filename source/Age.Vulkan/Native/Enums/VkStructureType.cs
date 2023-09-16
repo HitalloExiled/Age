@@ -4,7 +4,8 @@ namespace Age.Vulkan.Native.Enums;
 /// <para>Each value corresponds to a particular structure with a sType member with a matching name. As a general rule, the name of each VkStructureType value is obtained by taking the name of the structure, stripping the leading Vk, prefixing each capital letter with _, converting the entire resulting string to upper case, and prefixing it with VK_STRUCTURE_TYPE_. For example, structures of type <see cref="VkImageCreateInfo"/> correspond to a <see cref="VkStructureType"/> value of <see cref="VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO"/>, and thus a structure of this type must have its sType member set to this value before it is passed to the API.</para>
 /// <para>The values <see cref="VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO"/> and <see cref="VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO"/> are reserved for internal use by the loader, and do not have corresponding Vulkan structures in this Specification.</para>
 /// </summary>
-public enum VkStructureType : uint
+/// <remarks>Provided by VK_VERSION_1_0</remarks>
+public enum VkStructureType
 {
     VK_STRUCTURE_TYPE_APPLICATION_INFO                                                    = 0,
     VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO                                                = 1,

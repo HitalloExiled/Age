@@ -1,10 +1,10 @@
-namespace Age.Vulkan.Native.Enums;
+namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
 /// Bitmask specifying intended usage of an image.
 /// </summary>
 [Flags]
-public enum VkImageUsageFlagBits : uint
+public enum VkImageUsageFlagBits
 {
     /// <summary>
     /// Specifies that the image can be used as the source of a transfer command.

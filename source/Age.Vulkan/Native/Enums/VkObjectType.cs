@@ -5,7 +5,7 @@ namespace Age.Vulkan.Native.Enums;
 /// <summary>
 /// Specify an enumeration to track object handle types.
 /// </summary>
-public enum VkObjectType : uint
+public enum VkObjectType
 {
     VK_OBJECT_TYPE_UNKNOWN = 0,
 

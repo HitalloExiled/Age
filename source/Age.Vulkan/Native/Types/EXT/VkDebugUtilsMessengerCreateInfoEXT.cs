@@ -1,5 +1,4 @@
 using Age.Vulkan.Native.Enums;
-using Age.Vulkan.Native.Enums.EXT;
 using Age.Vulkan.Native.Flags.EXT;
 using Age.Vulkan.Native.PFN.EXT;
 
@@ -30,7 +29,7 @@ public unsafe struct VkDebugUtilsMessengerCreateInfoEXT
     public readonly VkStructureType sType;
 
     /// <summary>
-    /// NULL or a pointer to a structure extending this structure.
+    /// Null or a pointer to a structure extending this structure.
     /// </summary>
     public void* pNext;
 

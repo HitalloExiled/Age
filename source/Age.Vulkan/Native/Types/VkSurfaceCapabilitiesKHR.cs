@@ -1,4 +1,3 @@
-using Age.Vulkan.Native.Enums.KHR;
 using Age.Vulkan.Native.Flags;
 using Age.Vulkan.Native.Flags.KHR;
 

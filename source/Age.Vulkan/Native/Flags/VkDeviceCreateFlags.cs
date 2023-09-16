@@ -5,7 +5,7 @@ using Age.Vulkan.Interfaces;
 namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
-/// Reserved for future use
+/// Reserved for future use.
 /// </summary>
 /// <remarks>Provided by VK_VERSION_1_0</remarks>
 [DebuggerDisplay("{Value}")]
