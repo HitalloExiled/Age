@@ -3,6 +3,8 @@ using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Types;
 using Age.Vulkan.Native.Types.EXT;
 
+using static Age.Core.Unsafe.UnmanagedUtils;
+
 namespace Age.Vulkan.Native.Extensions.EXT;
 
 public unsafe class VkExtDebugUtils(Vk vk, VkInstance instance) : IVkInstanceExtension
@@ -35,12 +37,7 @@ public unsafe class VkExtDebugUtils(Vk vk, VkInstance instance) : IVkInstanceExt
         fixed (VkAllocationCallbacks* pAllocator               = &allocator)
         fixed (VkDebugUtilsMessengerEXT* pMessenger            = &messenger)
         {
-            return this.vkCreateDebugUtilsMessengerEXT.Invoke(
-                instance,
-                createInfo.Equals(default(VkDebugUtilsMessengerCreateInfoEXT)) ? null : pCreateInfo,
-                allocator.Equals(default(VkAllocationCallbacks))               ? null : pAllocator,
-                pMessenger
-            );
+            return this.vkCreateDebugUtilsMessengerEXT.Invoke(instance, NullIfDefault(createInfo, pCreateInfo), NullIfDefault(allocator, pAllocator), pMessenger);
         }
     }
 
@@ -57,7 +54,7 @@ public unsafe class VkExtDebugUtils(Vk vk, VkInstance instance) : IVkInstanceExt
     {
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
-            this.vkDestroyDebugUtilsMessengerEXT.Invoke(instance, messenger, allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator);
+            this.vkDestroyDebugUtilsMessengerEXT.Invoke(instance, messenger, NullIfDefault(allocator, pAllocator));
         }
     }
 }

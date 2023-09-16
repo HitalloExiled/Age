@@ -3,6 +3,8 @@ using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Types;
 using Age.Vulkan.Native.Types.KHR;
 
+using static Age.Core.Unsafe.UnmanagedUtils;
+
 namespace Age.Vulkan.Native.Extensions.KHR;
 
 public unsafe class VkKhrSurface(Vk vk, VkInstance instance) : IVkInstanceExtension
@@ -38,7 +40,7 @@ public unsafe class VkKhrSurface(Vk vk, VkInstance instance) : IVkInstanceExtens
     {
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
-            this.vkDestroySurfaceKHR.Invoke(instance, surface, allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator);
+            this.vkDestroySurfaceKHR.Invoke(instance, surface, NullIfDefault(allocator, pAllocator));
         }
     }
 
@@ -131,7 +133,7 @@ public unsafe class VkKhrSurface(Vk vk, VkInstance instance) : IVkInstanceExtens
 
         presentModes = new VkPresentModeKHR[presentModeCount];
 
-        fixed (VkPresentModeKHR* pPresentModes = presentModes.AsSpan())
+        fixed (VkPresentModeKHR* pPresentModes = presentModes)
         {
             return this.vkGetPhysicalDeviceSurfacePresentModesKHR.Invoke(physicalDevice, surface, &presentModeCount, pPresentModes);
         }

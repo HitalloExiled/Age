@@ -6,6 +6,8 @@ using Age.Vulkan.Interfaces;
 using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Types;
 
+using static Age.Core.Unsafe.UnmanagedUtils;
+
 namespace Age.Vulkan.Native;
 
 public unsafe class Vk(IVulkanLoader loader)
@@ -33,9 +35,11 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkCreateDevice(VkPhysicalDevice physicalDevice, VkDeviceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDevice* pDevice);
     private delegate VkResult VkCreateImageView(VkDevice device, VkImageViewCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkImageView* pView);
     private delegate VkResult VkCreateInstance(VkInstanceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkInstance* pInstance);
+    private delegate VkResult VkCreateShaderModule(VkDevice device, VkShaderModuleCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkShaderModule* pShaderModule);
     private delegate void VkDestroyDevice(VkDevice device, VkAllocationCallbacks* pAllocator);
     private delegate void VkDestroyInstance(VkInstance instance, VkAllocationCallbacks* pAllocator);
     private delegate void VkDestroyImageView(VkDevice device, VkImageView imageView, VkAllocationCallbacks* pAllocator);
+    private delegate void VkDestroyShaderModule(VkDevice device, VkShaderModule shaderModule, VkAllocationCallbacks* pAllocator);
     private delegate VkResult VkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
     private delegate VkResult VkEnumerateInstanceExtensionProperties(byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
     private delegate VkResult VkEnumerateInstanceLayerProperties(uint* pPropertyCount, VkLayerProperties* pProperties);
@@ -53,9 +57,11 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCreateDevice                           vkCreateDevice                           = loader.Load<VkCreateDevice>("vkCreateDevice");
     private readonly VkCreateImageView                        vkCreateImageView                        = loader.Load<VkCreateImageView>("vkCreateImageView");
     private readonly VkCreateInstance                         vkCreateInstance                         = loader.Load<VkCreateInstance>("vkCreateInstance");
+    private readonly VkCreateShaderModule                     vkCreateShaderModule                     = loader.Load<VkCreateShaderModule>("vkCreateShaderModule");
     private readonly VkDestroyDevice                          vkDestroyDevice                          = loader.Load<VkDestroyDevice>("vkDestroyDevice");
     private readonly VkDestroyInstance                        vkDestroyInstance                        = loader.Load<VkDestroyInstance>("vkDestroyInstance");
     private readonly VkDestroyImageView                       vkDestroyImageView                       = loader.Load<VkDestroyImageView>("vkDestroyImageView");
+    private readonly VkDestroyShaderModule                    vkDestroyShaderModule                    = loader.Load<VkDestroyShaderModule>("vkDestroyShaderModule");
     private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties     = loader.Load<VkEnumerateDeviceExtensionProperties>("vkEnumerateDeviceExtensionProperties");
     private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties   = loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
     private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties       = loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
@@ -112,7 +118,7 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkAllocationCallbacks* pAllocator  = &allocator)
         fixed (VkImageView*           pView       = &view)
         {
-            return this.vkCreateImageView.Invoke(device, pCreateInfo, allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator, pView);
+            return this.vkCreateImageView.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pView);
         }
     }
 
@@ -134,12 +140,7 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkAllocationCallbacks* pAllocator  = &allocator)
         fixed (VkDevice*              pDevice     = &device)
         {
-            return this.vkCreateDevice.Invoke(
-                physicalDevice,
-                pCreateInfo,
-                allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator,
-                pDevice
-            );
+            return this.vkCreateDevice.Invoke(physicalDevice, pCreateInfo, NullIfDefault(allocator, pAllocator), pDevice);
         }
     }
 
@@ -159,7 +160,29 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkAllocationCallbacks* pAllocator  = &allocator)
         fixed (VkInstance*            pInstance   = &instance)
         {
-            return this.vkCreateInstance.Invoke(pCreateInfo, allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator, pInstance);
+            return this.vkCreateInstance.Invoke(pCreateInfo, NullIfDefault(allocator, pAllocator), pInstance);
+        }
+    }
+
+    /// <summary>
+    /// <para>Creates a new shader module object.</para>
+    /// <para>Once a shader module has been created, any entry points it contains can be used in pipeline shader stages as described in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#pipelines-compute">Compute Pipelines</see> and <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#pipelines-graphics">Graphics Pipelines</see>.</para>
+    /// <remarks>If the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#features-maintenance5">maintenance5</see> feature is enabled, shader module creation can be omitted entirely. Instead, applications should provide the <see cref="VkShaderModuleCreateInfo"/> structure directly in to pipeline creation by chaining it to <see cref="VkPipelineShaderStageCreateInfo"/>. This avoids the overhead of creating and managing an additional object.</remarks>
+    /// </summary>
+    /// <param name="device">The logical device that creates the shader module.</param>
+    /// <param name="pCreateInfo">A pointer to a <see cref="VkShaderModuleCreateInfo"/> structure.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pShaderModule">A pointer to a <see cref="VkShaderModule"/> handle in which the resulting shader module object is returned.</param>
+    public VkResult CreateShaderModule(VkDevice device, VkShaderModuleCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkShaderModule* pShaderModule) =>
+        this.vkCreateShaderModule.Invoke(device, pCreateInfo, pAllocator, pShaderModule);
+
+    public VkResult CreateShaderModule(VkDevice device, in VkShaderModuleCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkShaderModule shaderModule)
+    {
+        fixed (VkShaderModuleCreateInfo* pCreateInfo   = &createInfo)
+        fixed (VkAllocationCallbacks*    pAllocator    = &allocator)
+        fixed (VkShaderModule*           pShaderModule = &shaderModule)
+        {
+            return this.vkCreateShaderModule.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pShaderModule);
         }
     }
 
@@ -170,13 +193,13 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="device">The logical device to destroy.</param>
     /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
     public void DestroyDevice(VkDevice device, VkAllocationCallbacks* pAllocator) =>
-        this.vkDestroyDevice(device, pAllocator);
+        this.vkDestroyDevice.Invoke(device, pAllocator);
 
     public void DestroyDevice(VkDevice device, in VkAllocationCallbacks allocator)
     {
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
-            this.vkDestroyDevice.Invoke(device, allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator);
+            this.vkDestroyDevice.Invoke(device, NullIfDefault(allocator, pAllocator));
         }
     }
 
@@ -210,7 +233,26 @@ public unsafe class Vk(IVulkanLoader loader)
     {
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
-            this.vkDestroyInstance.Invoke(instance, allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator);
+            this.vkDestroyInstance.Invoke(instance, NullIfDefault(allocator, pAllocator));
+        }
+    }
+
+    /// <summary>
+    /// <para>Destroy a shader module.</para>
+    /// <para>A shader module can be destroyed while pipelines created using its shaders are still in use.</para>
+    /// </summary>
+    /// <param name="device">The logical device that destroys the shader module.</param>
+    /// <param name="shaderModule">The handle of the shader module to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void DestroyShaderModule(VkDevice device, VkShaderModule shaderModule, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroyShaderModule.Invoke(device, shaderModule, pAllocator);
+
+    public void DestroyShaderModule(VkDevice device, VkShaderModule shaderModule, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkDestroyShaderModule.Invoke(device, shaderModule, NullIfDefault(allocator, pAllocator));
         }
     }
 
@@ -249,7 +291,7 @@ public unsafe class Vk(IVulkanLoader loader)
         properties = new VkExtensionProperties[propertyCount];
 
         fixed (byte* pLayerName     = Encoding.UTF8.GetBytes(layerName ?? ""))
-        fixed (VkExtensionProperties* pProperties = properties.AsSpan())
+        fixed (VkExtensionProperties* pProperties = properties)
         {
             return this.vkEnumerateDeviceExtensionProperties.Invoke(physicalDevice, pLayerName, &propertyCount, pProperties);
         }
@@ -289,7 +331,7 @@ public unsafe class Vk(IVulkanLoader loader)
         properties = new VkExtensionProperties[propertyCount];
 
         fixed (byte*                  pLayerName  = Encoding.UTF8.GetBytes(layerName ?? ""))
-        fixed (VkExtensionProperties* pProperties = properties.AsSpan())
+        fixed (VkExtensionProperties* pProperties = properties)
         {
             return this.vkEnumerateInstanceExtensionProperties.Invoke(pLayerName, &propertyCount, pProperties);
         }
@@ -324,7 +366,7 @@ public unsafe class Vk(IVulkanLoader loader)
 
         properties = new VkLayerProperties[propertyCount];
 
-        fixed (VkLayerProperties* pProperties = properties.AsSpan())
+        fixed (VkLayerProperties* pProperties = properties)
         {
             return this.vkEnumerateInstanceLayerProperties.Invoke(&propertyCount, pProperties);
         }
@@ -358,7 +400,7 @@ public unsafe class Vk(IVulkanLoader loader)
 
         physicalDevices = new VkPhysicalDevice[physicalDeviceCount];
 
-        fixed (VkPhysicalDevice* pPhysicalDevices = physicalDevices.AsSpan())
+        fixed (VkPhysicalDevice* pPhysicalDevices = physicalDevices)
         {
             return this.vkEnumeratePhysicalDevices.Invoke(instance, &physicalDeviceCount, pPhysicalDevices);
         }
@@ -478,7 +520,7 @@ public unsafe class Vk(IVulkanLoader loader)
 
         queueFamilyProperties = new VkQueueFamilyProperties[queueFamilyPropertyCount];
 
-        fixed (VkQueueFamilyProperties* pQueueFamilyProperties = queueFamilyProperties.AsSpan())
+        fixed (VkQueueFamilyProperties* pQueueFamilyProperties = queueFamilyProperties)
         {
             this.vkGetPhysicalDeviceQueueFamilyProperties.Invoke(physicalDevice, &queueFamilyPropertyCount, pQueueFamilyProperties);
         }

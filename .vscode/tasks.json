@@ -52,7 +52,6 @@
             "type": "shell",
             "problemMatcher": []
         },
-
         {
             "label": "test",
             "command": "dotnet",
@@ -98,6 +97,17 @@
                 "${workspaceFolder}/Age.sln"
             ],
             "problemMatcher": "$msCompile"
-        }
+        },
+        {
+            "label": "shader:compile",
+            "windows":{
+                "command": "C:/VulkanSDK/1.3.261.0/Bin/glslc.exe shader.vert -o vert.spv; C:/VulkanSDK/1.3.261.0/Bin/glslc.exe shader.frag -o frag.spv;",
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/source/Age/Shaders"
+            },
+            "type": "shell",
+            "problemMatcher": []
+        },
     ]
 }

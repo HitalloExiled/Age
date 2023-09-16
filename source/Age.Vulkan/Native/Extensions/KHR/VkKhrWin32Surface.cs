@@ -3,6 +3,8 @@ using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Types;
 using Age.Vulkan.Native.Types.KHR;
 
+using static Age.Core.Unsafe.UnmanagedUtils;
+
 namespace Age.Vulkan.Native.Extensions.KHR;
 
 public unsafe class VkKhrWin32Surface(Vk vk, VkInstance instance) : IVkInstanceExtension
@@ -33,12 +35,7 @@ public unsafe class VkKhrWin32Surface(Vk vk, VkInstance instance) : IVkInstanceE
         fixed (VkAllocationCallbacks*       pAllocator  = &allocator)
         fixed (VkSurfaceKHR*                pSurface    = &surface)
         {
-            return this.vkCreateWin32SurfaceKHR.Invoke(
-                instance,
-                pCreateInfo,
-                allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator,
-                pSurface
-            );
+            return this.vkCreateWin32SurfaceKHR.Invoke(instance, pCreateInfo, NullIfDefault(allocator, pAllocator), pSurface);
         }
     }
 }

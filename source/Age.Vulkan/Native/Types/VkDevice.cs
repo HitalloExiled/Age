@@ -6,6 +6,7 @@ namespace Age.Vulkan.Native.Types;
 /// <summary>
 /// Opaque handle to a device object.
 /// </summary>
+/// <remarks>Provided by VK_VERSION_1_0</remarks>
 [DebuggerDisplay("{Value}")]
 public record struct VkDevice(nint Value)
 {

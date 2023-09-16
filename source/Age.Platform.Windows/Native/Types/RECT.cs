@@ -30,23 +30,4 @@ public struct RECT
     /// The y-coordinate of the lower-right corner of the rectangle.
     /// </summary>
     public int bottom;
-
-    public override readonly bool Equals(object? obj) =>
-        obj is RECT rect
-        && this.left   == rect.left
-        && this.top    == rect.top
-        && this.right  == rect.right
-        && this.bottom == rect.bottom;
-
-    public override readonly int GetHashCode() =>
-        this.left.GetHashCode()
-        ^ this.top.GetHashCode()
-        ^ this.right.GetHashCode()
-        ^ this.bottom.GetHashCode();
-
-    public static bool operator ==(RECT left, RECT right) =>
-        left.Equals(right);
-
-    public static bool operator !=(RECT left, RECT right) =>
-        !left.Equals(right);
 }

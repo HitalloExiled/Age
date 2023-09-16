@@ -154,6 +154,41 @@ public unsafe partial class SimpleEngine : IDisposable
         this.vk.DestroyInstance(this.instance, null);
     }
 
+    private void CreateGraphicsPipeline()
+    {
+        var vertShaderCode = File.ReadAllBytes(Path.Join(AppContext.BaseDirectory, "Shaders/vert.spv"))!;
+        var fragShaderCode = File.ReadAllBytes(Path.Join(AppContext.BaseDirectory, "Shaders/frag.spv"))!;
+
+        var vertShaderModule = this.CreateShaderModule(vertShaderCode);
+        var fragShaderModule = this.CreateShaderModule(fragShaderCode);
+
+        fixed (byte* pName = "main"u8)
+        {
+            var vertShaderStageInfo = new VkPipelineShaderStageCreateInfo
+            {
+                stage  = VkShaderStageFlagBits.VK_SHADER_STAGE_VERTEX_BIT,
+                module = vertShaderModule,
+                pName  = pName
+            };
+
+            var fragShaderStageInfo = new VkPipelineShaderStageCreateInfo
+            {
+                stage  = VkShaderStageFlagBits.VK_SHADER_STAGE_FRAGMENT_BIT,
+                module = fragShaderModule,
+                pName  = pName
+            };
+
+            var shaderStages = new[]
+            {
+                vertShaderStageInfo,
+                fragShaderStageInfo
+            };
+
+            this.vk.DestroyShaderModule(this.device, fragShaderModule, null);
+            this.vk.DestroyShaderModule(this.device, vertShaderModule, null);
+        }
+    }
+
     private void CreateImageViews()
     {
         this.swapChainImageViews = new VkImageView[this.swapChainImages.Length];
@@ -252,7 +287,7 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
-    private unsafe void CreateLogicalDevice()
+    private void CreateLogicalDevice()
     {
         var indices = this.FindQueueFamilies(this.physicalDevice);
 
@@ -326,6 +361,22 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
+    private VkShaderModule CreateShaderModule(byte[] code)
+    {
+        fixed (byte* pCode = code)
+        {
+            var createInfo = new VkShaderModuleCreateInfo
+            {
+                codeSize = (uint)code.Length,
+                pCode    = (uint*)pCode
+            };
+
+            return this.vk.CreateShaderModule(this.device, createInfo, default, out var shaderModule) != VkResult.VK_SUCCESS
+                ? throw new Exception("failed to create shader module!")
+                : shaderModule;
+        }
+    }
+
     private void CreateSurface()
     {
         if (!this.vk.TryGetInstanceExtension<VkKhrWin32Surface>(this.instance, null, out var vkKhrWin32Surface))
@@ -375,7 +426,7 @@ public unsafe partial class SimpleEngine : IDisposable
             indices.PresentFamily!.Value
         };
 
-        fixed (uint* pQueueFamilyIndices = queueFamilyIndices.AsSpan())
+        fixed (uint* pQueueFamilyIndices = queueFamilyIndices)
         {
             if (indices.GraphicsFamily != indices.PresentFamily)
             {
@@ -465,6 +516,7 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateLogicalDevice();
         this.CreateSwapChain();
         this.CreateImageViews();
+        this.CreateGraphicsPipeline();
     }
 
     private void InitWindow() =>

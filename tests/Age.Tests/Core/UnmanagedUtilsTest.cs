@@ -36,6 +36,16 @@ public class UnmanagedUtilsTest
     }
 
     [Fact]
+    public unsafe void NullIfDefaultShouldPass()
+    {
+        var value  = 1;
+        var pValue = &value;
+
+        Assert.True(UnmanagedUtils.NullIfDefault(default, pValue) == null);
+        Assert.True(UnmanagedUtils.NullIfDefault(value, pValue)   == pValue);
+    }
+
+    [Fact]
     public unsafe void PointerToArrayShouldPass()
     {
         fixed (int* pSource = new[] { 1, 2, 3})

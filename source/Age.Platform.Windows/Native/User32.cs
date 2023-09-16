@@ -252,7 +252,7 @@ internal static partial class User32
         fixed(RECT* lprcClip = &clip)
         fixed(T*    dwData   = &data)
         {
-            return EnumDisplayMonitors(hdc, clip == default ? default : (LPCRECT)lprcClip, lpfnEnum, (LPARAM)dwData);
+            return EnumDisplayMonitors(hdc, clip.Equals(default(RECT)) ? default : (LPCRECT)lprcClip, lpfnEnum, (LPARAM)dwData);
         }
     }
 

@@ -3,6 +3,8 @@ using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Types;
 using Age.Vulkan.Native.Types.KHR;
 
+using static Age.Core.Unsafe.UnmanagedUtils;
+
 namespace Age.Vulkan.Native.Extensions.KHR;
 
 public unsafe class VkKhrSwapchain(Vk vk, VkDevice device) : IVkDeviceExtension
@@ -100,7 +102,7 @@ public unsafe class VkKhrSwapchain(Vk vk, VkDevice device) : IVkDeviceExtension
         fixed (VkAllocationCallbacks*    pAllocator  = &allocator)
         fixed (VkSwapchainKHR*           pSwapchain  = &swapchain)
         {
-            return this.vkCreateSwapchainKHR.Invoke(device, pCreateInfo, allocator.Equals(default(VkAllocationCallbacks)) ? null : pAllocator, pSwapchain);
+            return this.vkCreateSwapchainKHR.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pSwapchain);
         }
     }
 
@@ -147,7 +149,7 @@ public unsafe class VkKhrSwapchain(Vk vk, VkDevice device) : IVkDeviceExtension
 
         swapchainImages = new VkImage[swapchainImageCount];
 
-        fixed (VkImage* pSwapchainImages = swapchainImages.AsSpan())
+        fixed (VkImage* pSwapchainImages = swapchainImages)
         {
             return this.vkGetSwapchainImagesKHR.Invoke(device, swapchain, &swapchainImageCount, pSwapchainImages);
         }

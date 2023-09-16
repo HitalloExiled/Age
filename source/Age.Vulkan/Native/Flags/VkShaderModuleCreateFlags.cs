@@ -9,15 +9,15 @@ namespace Age.Vulkan.Native.Flags;
 /// </summary>
 /// <remarks>Provided by VK_VERSION_1_0</remarks>
 [DebuggerDisplay("{Value}")]
-public record struct VkDeviceCreateFlags(uint Value) : IVkFlags
+public record struct VkShaderModuleCreateFlags(uint Value) : IVkFlags
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public readonly bool HasFlag(uint value) =>
         (this.Value & value) == value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator VkDeviceCreateFlags(uint value) => new(value);
+    public static implicit operator VkShaderModuleCreateFlags(uint value) => new(value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator uint(VkDeviceCreateFlags value) => value.Value;
+    public static implicit operator uint(VkShaderModuleCreateFlags value) => value.Value;
 }
