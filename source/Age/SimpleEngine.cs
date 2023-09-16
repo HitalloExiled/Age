@@ -38,6 +38,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkPhysicalDevice         physicalDevice;
     private VkPipelineLayout         pipelineLayout;
     private VkQueue                  presentQueue;
+    private VkRenderPass             renderPass;
     private VkSurfaceKHR             surface;
     private VkSwapchainKHR           swapChain;
     private VkExtent2D               swapChainExtent;
@@ -140,6 +141,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private void Cleanup()
     {
         this.vk.DestroyPipelineLayout(this.device, this.pipelineLayout, null);
+        this.vk.DestroyRenderPass(this.device, this.renderPass, null);
 
         foreach (var imageView in this.swapChainImageViews)
         {
@@ -445,6 +447,47 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
+    private void CreateRenderPass()
+    {
+        var colorAttachment = new VkAttachmentDescription
+        {
+            format         = this.swapChainImageFormat,
+            samples        = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
+            loadOp         = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR,
+            storeOp        = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE,
+            stencilLoadOp  = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            stencilStoreOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            initialLayout  = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
+            finalLayout    = VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+        };
+
+        var colorAttachmentRef = new VkAttachmentReference
+        {
+            attachment = 0,
+            layout     = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        };
+
+        var subpass = new VkSubpassDescription
+        {
+            pipelineBindPoint    = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
+            colorAttachmentCount = 1,
+            pColorAttachments    = &colorAttachmentRef
+        };
+
+        var renderPassInfo = new VkRenderPassCreateInfo
+        {
+            attachmentCount = 1,
+            pAttachments    = &colorAttachment,
+            subpassCount    = 1,
+            pSubpasses      = &subpass
+        };
+
+        if (this.vk.CreateRenderPass(this.device, renderPassInfo, default, out this.renderPass) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to create render pass!");
+        }
+    }
+
     private VkShaderModule CreateShaderModule(byte[] code)
     {
         fixed (byte* pCode = code)
@@ -600,6 +643,7 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateLogicalDevice();
         this.CreateSwapChain();
         this.CreateImageViews();
+        this.CreateRenderPass();
         this.CreateGraphicsPipeline();
     }
 

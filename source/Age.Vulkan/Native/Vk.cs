@@ -36,11 +36,13 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkCreateImageView(VkDevice device, VkImageViewCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkImageView* pView);
     private delegate VkResult VkCreateInstance(VkInstanceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkInstance* pInstance);
     private delegate VkResult VkCreatePipelineLayout(VkDevice device, VkPipelineLayoutCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkPipelineLayout* pPipelineLayout);
+    private delegate VkResult VkCreateRenderPass(VkDevice device, VkRenderPassCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkRenderPass* pRenderPass);
     private delegate VkResult VkCreateShaderModule(VkDevice device, VkShaderModuleCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkShaderModule* pShaderModule);
     private delegate void VkDestroyDevice(VkDevice device, VkAllocationCallbacks* pAllocator);
     private delegate void VkDestroyInstance(VkInstance instance, VkAllocationCallbacks* pAllocator);
     private delegate void VkDestroyImageView(VkDevice device, VkImageView imageView, VkAllocationCallbacks* pAllocator);
     private delegate void VkDestroyPipelineLayout(VkDevice device, VkPipelineLayout pipelineLayout, VkAllocationCallbacks* pAllocator);
+    private delegate void VkDestroyRenderPass(VkDevice device, VkRenderPass renderPass, VkAllocationCallbacks* pAllocator);
     private delegate void VkDestroyShaderModule(VkDevice device, VkShaderModule shaderModule, VkAllocationCallbacks* pAllocator);
     private delegate VkResult VkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
     private delegate VkResult VkEnumerateInstanceExtensionProperties(byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
@@ -60,11 +62,13 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCreateImageView                        vkCreateImageView                        = loader.Load<VkCreateImageView>("vkCreateImageView");
     private readonly VkCreateInstance                         vkCreateInstance                         = loader.Load<VkCreateInstance>("vkCreateInstance");
     private readonly VkCreatePipelineLayout                   vkCreatePipelineLayout                   = loader.Load<VkCreatePipelineLayout>("vkCreatePipelineLayout");
+    private readonly VkCreateRenderPass                       vkCreateRenderPass                       = loader.Load<VkCreateRenderPass>("vkCreateRenderPass");
     private readonly VkCreateShaderModule                     vkCreateShaderModule                     = loader.Load<VkCreateShaderModule>("vkCreateShaderModule");
     private readonly VkDestroyDevice                          vkDestroyDevice                          = loader.Load<VkDestroyDevice>("vkDestroyDevice");
     private readonly VkDestroyInstance                        vkDestroyInstance                        = loader.Load<VkDestroyInstance>("vkDestroyInstance");
     private readonly VkDestroyImageView                       vkDestroyImageView                       = loader.Load<VkDestroyImageView>("vkDestroyImageView");
     private readonly VkDestroyPipelineLayout                  vkDestroyPipelineLayout                  = loader.Load<VkDestroyPipelineLayout>("vkDestroyPipelineLayout");
+    private readonly VkDestroyRenderPass                      vkDestroyRenderPass                      = loader.Load<VkDestroyRenderPass>("vkDestroyRenderPass");
     private readonly VkDestroyShaderModule                    vkDestroyShaderModule                    = loader.Load<VkDestroyShaderModule>("vkDestroyShaderModule");
     private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties     = loader.Load<VkEnumerateDeviceExtensionProperties>("vkEnumerateDeviceExtensionProperties");
     private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties   = loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
@@ -190,6 +194,27 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Create a new render pass object.
+    /// </summary>
+    /// <param name="device">The logical device that creates the render pass.</param>
+    /// <param name="pCreateInfo">A pointer to a VkRenderPassCreateInfo structure describing the parameters of the render pass.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pRenderPass">A pointer to a VkRenderPass handle in which the resulting render pass object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult CreateRenderPass(VkDevice device, VkRenderPassCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkRenderPass* pRenderPass) =>
+        this.vkCreateRenderPass.Invoke(device, pCreateInfo, pAllocator, pRenderPass);
+
+    public VkResult CreateRenderPass(VkDevice device, in VkRenderPassCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkRenderPass renderPass)
+    {
+        fixed (VkRenderPassCreateInfo* pCreateInfo = &createInfo)
+        fixed (VkAllocationCallbacks*  pAllocator  = &allocator)
+        fixed (VkRenderPass*           pRenderPass = &renderPass)
+        {
+            return this.vkCreateRenderPass.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pRenderPass);
+        }
+    }
+
+    /// <summary>
     /// <para>Creates a new shader module object.</para>
     /// <para>Once a shader module has been created, any entry points it contains can be used in pipeline shader stages as described in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#pipelines-compute">Compute Pipelines</see> and <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#pipelines-graphics">Graphics Pipelines</see>.</para>
     /// <remarks>If the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#features-maintenance5">maintenance5</see> feature is enabled, shader module creation can be omitted entirely. Instead, applications should provide the <see cref="VkShaderModuleCreateInfo"/> structure directly in to pipeline creation by chaining it to <see cref="VkPipelineShaderStageCreateInfo"/>. This avoids the overhead of creating and managing an additional object.</remarks>
@@ -277,6 +302,24 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
             this.vkDestroyPipelineLayout.Invoke(device, pipelineLayout, NullIfDefault(allocator, pAllocator));
+        }
+    }
+
+    /// <summary>
+    /// Destroy a render pass object.
+    /// </summary>
+    /// <param name="device">The logical device that destroys the render pass.</param>
+    /// <param name="renderPass">The handle of the render pass to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void DestroyRenderPass(VkDevice device, VkRenderPass renderPass, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroyRenderPass.Invoke(device, renderPass, pAllocator);
+
+    public void DestroyRenderPass(VkDevice device, VkRenderPass renderPass, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkDestroyRenderPass.Invoke(device, renderPass, NullIfDefault(allocator, pAllocator));
         }
     }
 
