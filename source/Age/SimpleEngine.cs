@@ -30,6 +30,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private readonly WindowManager       windowManager          = new();
     private readonly WindowsVulkanLoader windowsVulkanLoader;
 
+    private VkCommandBuffer          commandBuffer;
     private VkCommandPool            commandPool;
     private VkDebugUtilsMessengerEXT debugMessenger;
     private VkDevice                 device;
@@ -169,6 +170,21 @@ public unsafe partial class SimpleEngine : IDisposable
 
         this.vkKhrSurface.DestroySurface(this.instance, this.surface, null);
         this.vk.DestroyInstance(this.instance, null);
+    }
+
+    private void CreateCommandBuffer()
+    {
+        var allocInfo = new VkCommandBufferAllocateInfo
+        {
+            commandPool        = this.commandPool,
+            level              = VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            commandBufferCount = 1
+        };
+
+        if (this.vk.AllocateCommandBuffers(this.device, allocInfo, out this.commandBuffer) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to allocate command buffers!");
+        }
     }
 
     private void CreateCommandPool()
@@ -728,6 +744,7 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateGraphicsPipeline();
         this.CreateFramebuffers();
         this.CreateCommandPool();
+        this.CreateCommandBuffer();
     }
 
     private void InitWindow() =>
@@ -792,6 +809,79 @@ public unsafe partial class SimpleEngine : IDisposable
             Formats      = formats,
             PresentModes = presentModes
         };
+    }
+
+    private void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint imageIndex)
+    {
+        var beginInfo = new VkCommandBufferBeginInfo();
+
+        if (this.vk.BeginCommandBuffer(commandBuffer, ref beginInfo) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to begin recording command buffer!");
+        }
+
+        var renderPassInfo = new VkRenderPassBeginInfo
+        {
+            renderPass  = this.renderPass,
+            framebuffer = this.swapChainFramebuffers[imageIndex],
+            renderArea  = new()
+            {
+                offset = new()
+                {
+                    x = 0,
+                    y = 0
+                },
+                extent = this.swapChainExtent,
+            }
+        };
+
+        var clearColor = new VkClearValue();
+
+        clearColor.color.float32[0] = 0;
+        clearColor.color.float32[1] = 0;
+        clearColor.color.float32[2] = 0;
+        clearColor.color.float32[3] = 1;
+
+        renderPassInfo.clearValueCount = 1;
+        renderPassInfo.pClearValues    = &clearColor;
+
+        this.vk.CmdBeginRenderPass(commandBuffer, renderPassInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
+
+        #region RenderPass
+        this.vk.CmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.graphicsPipeline);
+
+        var viewport = new VkViewport
+        {
+            x        = 0.0f,
+            y        = 0.0f,
+            width    = this.swapChainExtent.width,
+            height   = this.swapChainExtent.height,
+            minDepth = 0.0f,
+            maxDepth = 1.0f
+        };
+
+        this.vk.CmdSetViewport(commandBuffer, 0, 1, viewport);
+
+        var scissor = new VkRect2D
+        {
+            offset = new()
+            {
+                x = 0,
+                y = 0
+            },
+            extent = this.swapChainExtent
+        };
+
+        this.vk.CmdSetScissor(commandBuffer, 0, 1, scissor);
+        this.vk.CmdDraw(commandBuffer, 3, 1, 0, 0);
+        #endregion RenderPass
+
+        this.vk.CmdEndRenderPass(commandBuffer);
+
+        if (this.vk.EndCommandBuffer(commandBuffer) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to record command buffer!");
+        }
     }
 
     private void SetupDebugMessenger()

@@ -33,6 +33,30 @@ public unsafe class Vk(IVulkanLoader loader)
     public const uint VK_UUID_SIZE = 16;
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkAllocateCommandBuffers(VkDevice device, VkCommandBufferAllocateInfo* pAllocateInfo, VkCommandBuffer* pCommandBuffers);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkBeginCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferBeginInfo* pBeginInfo);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdBeginRenderPass(VkCommandBuffer commandBuffer, VkRenderPassBeginInfo* pRenderPassBegin, VkSubpassContents contents);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdDraw(VkCommandBuffer commandBuffer, uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdEndRenderPass(VkCommandBuffer commandBuffer);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdSetScissor(VkCommandBuffer commandBuffer, uint firstScissor, uint scissorCount, VkRect2D* pScissors);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdSetViewport(VkCommandBuffer commandBuffer, uint firstViewport, uint viewportCount, VkViewport* pViewports);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateCommandPool(VkDevice device, VkCommandPoolCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkCommandPool* pCommandPool);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -87,6 +111,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate void VkDestroyShaderModule(VkDevice device, VkShaderModule shaderModule, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkEndCommandBuffer(VkCommandBuffer commandBuffer);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -120,6 +147,14 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly Dictionary<string, HashSet<string>> deviceExtensionsMap   = new();
     private readonly Dictionary<string, HashSet<string>> instanceExtensionsMap = new();
 
+    private readonly VkAllocateCommandBuffers                 vkAllocateCommandBuffers                 = loader.Load<VkAllocateCommandBuffers>("vkAllocateCommandBuffers");
+    private readonly VkBeginCommandBuffer                     vkBeginCommandBuffer                     = loader.Load<VkBeginCommandBuffer>("vkBeginCommandBuffer");
+    private readonly VkCmdBeginRenderPass                     vkCmdBeginRenderPass                     = loader.Load<VkCmdBeginRenderPass>("vkCmdBeginRenderPass");
+    private readonly VkCmdBindPipeline                        vkCmdBindPipeline                        = loader.Load<VkCmdBindPipeline>("vkCmdBindPipeline");
+    private readonly VkCmdDraw                                vkCmdDraw                                = loader.Load<VkCmdDraw>("vkCmdDraw");
+    private readonly VkCmdEndRenderPass                       vkCmdEndRenderPass                       = loader.Load<VkCmdEndRenderPass>("vkCmdEndRenderPass");
+    private readonly VkCmdSetScissor                          vkCmdSetScissor                          = loader.Load<VkCmdSetScissor>("vkCmdSetScissor");
+    private readonly VkCmdSetViewport                         vkCmdSetViewport                         = loader.Load<VkCmdSetViewport>("vkCmdSetViewport");
     private readonly VkCreateCommandPool                      vkCreateCommandPool                      = loader.Load<VkCreateCommandPool>("vkCreateCommandPool");
     private readonly VkCreateDevice                           vkCreateDevice                           = loader.Load<VkCreateDevice>("vkCreateDevice");
     private readonly VkCreateFramebuffer                      vkCreateFramebuffer                      = loader.Load<VkCreateFramebuffer>("vkCreateFramebuffer");
@@ -138,6 +173,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkDestroyPipelineLayout                  vkDestroyPipelineLayout                  = loader.Load<VkDestroyPipelineLayout>("vkDestroyPipelineLayout");
     private readonly VkDestroyRenderPass                      vkDestroyRenderPass                      = loader.Load<VkDestroyRenderPass>("vkDestroyRenderPass");
     private readonly VkDestroyShaderModule                    vkDestroyShaderModule                    = loader.Load<VkDestroyShaderModule>("vkDestroyShaderModule");
+    private readonly VkEndCommandBuffer                       vkEndCommandBuffer                       = loader.Load<VkEndCommandBuffer>("vkEndCommandBuffer");
     private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties     = loader.Load<VkEnumerateDeviceExtensionProperties>("vkEnumerateDeviceExtensionProperties");
     private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties   = loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
     private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties       = loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
@@ -196,6 +232,138 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkImageView*           pView       = &view)
         {
             return this.vkCreateImageView.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pView);
+        }
+    }
+
+    /// <summary>
+    /// <para>Allocate command buffers from an existing command pool</para>
+    /// <para><see cref="Vk.AllocateCommandBuffers"/> can be used to allocate multiple command buffers. If the allocation of any of those command buffers fails, the implementation must free all successfully allocated command buffer objects from this command, set all entries of the pCommandBuffers array to NULL and return the error.</para>
+    /// <para>Note: Filling pCommandBuffers with NULL values on failure is an exception to the default error behavior that output parameters will have undefined contents.</para>
+    /// <para>When command buffers are first allocated, they are in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">initial state</see>.</para>
+    /// </summary>
+    /// <param name="device">The logical device that owns the command pool.</param>
+    /// <param name="pAllocateInfo">A pointer to a <see cref="VkCommandBufferAllocateInfo"/> structure describing parameters of the allocation.</param>
+    /// <param name="pCommandBuffers">A pointer to an array of <see cref="VkCommandBuffer"/> handles in which the resulting command buffer objects are returned. The array must be at least the length specified by the commandBufferCount member of pAllocateInfo. Each allocated command buffer begins in the initial state.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult AllocateCommandBuffers(VkDevice device, VkCommandBufferAllocateInfo* pAllocateInfo, VkCommandBuffer* pCommandBuffers) =>
+        this.vkAllocateCommandBuffers.Invoke(device, pAllocateInfo, pCommandBuffers);
+
+    public VkResult AllocateCommandBuffers(VkDevice device, in VkCommandBufferAllocateInfo allocateInfo, out VkCommandBuffer commandBuffers)
+    {
+        fixed (VkCommandBufferAllocateInfo* pAllocateInfo   = &allocateInfo)
+        fixed (VkCommandBuffer*             pCommandBuffers = &commandBuffers)
+        {
+            return this.vkAllocateCommandBuffers.Invoke(device, pAllocateInfo, pCommandBuffers);
+        }
+    }
+
+    /// <summary>
+    /// Start recording a command buffer.
+    /// </summary>
+    /// <param name="commandBuffer">The handle of the command buffer which is to be put in the recording state.</param>
+    /// <param name="pBeginInfo">A pointer to a <see cref="VkCommandBufferBeginInfo"/> structure defining additional information about how the command buffer begins recording.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult BeginCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferBeginInfo* pBeginInfo) =>
+        this.vkBeginCommandBuffer.Invoke(commandBuffer, pBeginInfo);
+
+    public VkResult BeginCommandBuffer(VkCommandBuffer commandBuffer, ref VkCommandBufferBeginInfo beginInfo)
+    {
+        fixed (VkCommandBufferBeginInfo* pBeginInfo = &beginInfo)
+        {
+            return this.vkBeginCommandBuffer.Invoke(commandBuffer, pBeginInfo);
+        }
+    }
+
+    /// <summary>
+    /// Begin a new render pass.
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer in which to record the command.</param>
+    /// <param name="pRenderPassBegin">A pointer to a <see cref="VkRenderPassBeginInfo"/> structure specifying the render pass to begin an instance of, and the framebuffer the instance uses.</param>
+    /// <param name="contents">A <see cref="VkSubpassContents"/> value specifying how the commands in the first subpass will be provided.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdBeginRenderPass(VkCommandBuffer commandBuffer, VkRenderPassBeginInfo* pRenderPassBegin, VkSubpassContents contents) =>
+        this.vkCmdBeginRenderPass.Invoke(commandBuffer, pRenderPassBegin, contents);
+
+    public void CmdBeginRenderPass(VkCommandBuffer commandBuffer, in VkRenderPassBeginInfo renderPassBegin, VkSubpassContents contents)
+    {
+        fixed (VkRenderPassBeginInfo* pRenderPassBegin = &renderPassBegin)
+        {
+            this.vkCmdBeginRenderPass.Invoke(commandBuffer, pRenderPassBegin, contents);
+        }
+    }
+
+    /// <summary>
+    /// <para>Bind a pipeline object to a command buffer.</para>
+    /// <para>Once bound, a pipeline binding affects subsequent commands that interact with the given pipeline type in the command buffer until a different pipeline of the same type is bound to the bind point, or until the pipeline bind point is disturbed by binding a <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-objects">shader object</see> as described in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-objects-pipeline-interaction">Interaction with Pipelines</see>. Commands that do not interact with the <see href="<see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-binding">given pipeline</see>">given pipeline</see> type must not be affected by the pipeline state.</para>
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer that the pipeline will be bound to.</param>
+    /// <param name="pipelineBindPoint">A VkPipelineBindPoint value specifying to which bind point the pipeline is bound. Binding one does not disturb the others.</param>
+    /// <param name="pipeline">The pipeline to be bound.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline) =>
+        this.vkCmdBindPipeline.Invoke(commandBuffer, pipelineBindPoint, pipeline);
+
+    /// <summary>
+    /// <para>Draw primitives.</para>
+    /// <para>When the command is executed, primitives are assembled using the current primitive topology and vertexCount consecutive vertex indices with the first vertexIndex value equal to firstVertex. The primitives are drawn instanceCount times with instanceIndex starting with firstInstance and increasing sequentially for each instance. The assembled primitives execute the bound graphics pipeline.</para>
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer into which the command is recorded.</param>
+    /// <param name="vertexCount">The number of vertices to draw.</param>
+    /// <param name="instanceCount">The number of instances to draw.</param>
+    /// <param name="firstVertex">The index of the first vertex to draw.</param>
+    /// <param name="firstInstance">The instance ID of the first instance to draw.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdDraw(VkCommandBuffer commandBuffer, uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance) =>
+        this.vkCmdDraw.Invoke(commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+
+    /// <summary>
+    /// <para>End the current render pass.</para>
+    /// <para>Ending a render pass instance performs any multisample resolve operations on the final subpass.</para>
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer in which to end the current render pass instance.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdEndRenderPass(VkCommandBuffer commandBuffer) =>
+        this.vkCmdEndRenderPass.Invoke(commandBuffer);
+
+    /// <summary>
+    /// <para>Set scissor rectangles dynamically for a command buffer.</para>
+    /// <para>The scissor rectangles taken from element i of pScissors replace the current state for the scissor index firstScissor + i, for i in [0, scissorCount).</para>
+    /// <para>This command sets the scissor rectangles for subsequent drawing commands when drawing using <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-objects">shader objects</see>, or when the graphics pipeline is created with <see cref="VkDynamicState.VK_DYNAMIC_STATE_SCISSOR"/> set in <see cref="VkPipelineDynamicStateCreateInfo.pDynamicStates"/>. Otherwise, this state is specified by the <see cref="VkPipelineViewportStateCreateInfo.pScissors"/> values used to create the currently active pipeline.</para>
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer into which the command will be recorded.</param>
+    /// <param name="firstScissor">The index of the first scissor whose state is updated by the command.</param>
+    /// <param name="scissorCount">The number of scissors whose rectangles are updated by the command.</param>
+    /// <param name="pScissors">A pointer to an array of <see cref="VkRect2D"/> structures defining scissor rectangles.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdSetScissor(VkCommandBuffer commandBuffer, uint firstScissor, uint scissorCount, VkRect2D* pScissors) =>
+        this.vkCmdSetScissor.Invoke(commandBuffer, firstScissor, scissorCount, pScissors);
+
+    public void CmdSetScissor(VkCommandBuffer commandBuffer, uint firstScissor, uint scissorCount, in VkRect2D scissors)
+    {
+        fixed (VkRect2D* pScissors = &scissors)
+        {
+            this.vkCmdSetScissor.Invoke(commandBuffer, firstScissor, scissorCount, pScissors);
+        }
+    }
+
+    /// <summary>
+    /// Set the viewport dynamically for a command buffer.
+    /// This command sets the viewport transformation parameters state for subsequent drawing commands when drawing using <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-objects">shader objects</see>, or when the graphics pipeline is created with <see cref="VkDynamicState.VK_DYNAMIC_STATE_VIEWPORT"/> set in <see cref="VkPipelineDynamicStateCreateInfo.pDynamicStates"/>. Otherwise, this state is specified by the <see cref="VkPipelineViewportStateCreateInfo.pViewports"/> values used to create the currently active pipeline.
+    /// The viewport parameters taken from element i of pViewports replace the current state for the viewport index firstViewport + i, for i in [0, viewportCount).
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer into which the command will be recorded.</param>
+    /// <param name="firstViewport">The index of the first viewport whose parameters are updated by the command.</param>
+    /// <param name="viewportCount">The number of viewports whose parameters are updated by the command.</param>
+    /// <param name="pViewports">A pointer to an array of <see cref="VkViewport"/> structures specifying viewport parameters.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdSetViewport(VkCommandBuffer commandBuffer, uint firstViewport, uint viewportCount, VkViewport* pViewports) =>
+        this.vkCmdSetViewport.Invoke(commandBuffer, firstViewport, viewportCount, pViewports);
+
+    public void CmdSetViewport(VkCommandBuffer commandBuffer, uint firstViewport, uint viewportCount, in VkViewport viewports)
+    {
+        fixed (VkViewport* pViewports = &viewports)
+        {
+            this.vkCmdSetViewport.Invoke(commandBuffer, firstViewport, viewportCount, pViewports);
         }
     }
 
@@ -537,6 +705,18 @@ public unsafe class Vk(IVulkanLoader loader)
             this.vkDestroyShaderModule.Invoke(device, shaderModule, NullIfDefault(allocator, pAllocator));
         }
     }
+
+    /// <summary>
+    /// <para>Finish recording a command buffer.</para>
+    /// <para>The command buffer must have been in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">recording state</see>, and, if successful, is moved to the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">executable state</see>.</para>
+    /// <para>If there was an error during recording, the application will be notified by an unsuccessful return code returned by <see cref="EndCommandBuffer"/>, and the command buffer will be moved to the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">invalid state</see>.</para>
+    /// <para>In case the application recorded one or more <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#video-encode-operations">video encode operations</see> into the command buffer, implementations may return the <see cref="VkResult.VK_ERROR_INVALID_VIDEO_STD_PARAMETERS_KHR"/> error if any of the specified Video Std parameters do not adhere to the syntactic or semantic requirements of the used video compression standard, or if values derived from parameters according to the rules defined by the used video compression standard do not adhere to the capabilities of the video compression standard or the implementation.</para>
+    /// <remarks>Note: Applications should not rely on the <see cref="VkResult.VK_ERROR_INVALID_VIDEO_STD_PARAMETERS_KHR"/> error being returned by any command as a means to verify Video Std parameters, as implementations are not required to report the error in any specific set of cases.</remarks>
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer to complete recording.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult EndCommandBuffer(VkCommandBuffer commandBuffer) =>
+        this.vkEndCommandBuffer.Invoke(commandBuffer);
 
     /// <summary>
     /// <para>Returns properties of available physical device extensions.</para>
