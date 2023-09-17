@@ -33,7 +33,13 @@ public unsafe class Vk(IVulkanLoader loader)
     public const uint VK_UUID_SIZE = 16;
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkCreateCommandPool(VkDevice device, VkCommandPoolCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkCommandPool* pCommandPool);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateDevice(VkPhysicalDevice physicalDevice, VkDeviceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDevice* pDevice);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkCreateFramebuffer(VkDevice device, VkFramebufferCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkFramebuffer* pFramebuffer);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache, uint createInfoCount, VkGraphicsPipelineCreateInfo* pCreateInfos, VkAllocationCallbacks* pAllocator, VkPipeline* pPipelines);
@@ -54,7 +60,13 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkCreateShaderModule(VkDevice device, VkShaderModuleCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkShaderModule* pShaderModule);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkDestroyCommandPool(VkDevice device, VkCommandPool commandPool, VkAllocationCallbacks* pAllocator);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyDevice(VkDevice device, VkAllocationCallbacks* pAllocator);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkDestroyFramebuffer(VkDevice device, VkFramebuffer framebuffer, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyImageView(VkDevice device, VkImageView imageView, VkAllocationCallbacks* pAllocator);
@@ -108,14 +120,18 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly Dictionary<string, HashSet<string>> deviceExtensionsMap   = new();
     private readonly Dictionary<string, HashSet<string>> instanceExtensionsMap = new();
 
+    private readonly VkCreateCommandPool                      vkCreateCommandPool                      = loader.Load<VkCreateCommandPool>("vkCreateCommandPool");
     private readonly VkCreateDevice                           vkCreateDevice                           = loader.Load<VkCreateDevice>("vkCreateDevice");
+    private readonly VkCreateFramebuffer                      vkCreateFramebuffer                      = loader.Load<VkCreateFramebuffer>("vkCreateFramebuffer");
     private readonly VkCreateGraphicsPipelines                vkCreateGraphicsPipelines                = loader.Load<VkCreateGraphicsPipelines>("vkCreateGraphicsPipelines");
     private readonly VkCreateImageView                        vkCreateImageView                        = loader.Load<VkCreateImageView>("vkCreateImageView");
     private readonly VkCreateInstance                         vkCreateInstance                         = loader.Load<VkCreateInstance>("vkCreateInstance");
     private readonly VkCreatePipelineLayout                   vkCreatePipelineLayout                   = loader.Load<VkCreatePipelineLayout>("vkCreatePipelineLayout");
     private readonly VkCreateRenderPass                       vkCreateRenderPass                       = loader.Load<VkCreateRenderPass>("vkCreateRenderPass");
     private readonly VkCreateShaderModule                     vkCreateShaderModule                     = loader.Load<VkCreateShaderModule>("vkCreateShaderModule");
+    private readonly VkDestroyCommandPool                     vkDestroyCommandPool                     = loader.Load<VkDestroyCommandPool>("vkDestroyCommandPool");
     private readonly VkDestroyDevice                          vkDestroyDevice                          = loader.Load<VkDestroyDevice>("vkDestroyDevice");
+    private readonly VkDestroyFramebuffer                     vkDestroyFramebuffer                     = loader.Load<VkDestroyFramebuffer>("vkDestroyFramebuffer");
     private readonly VkDestroyImageView                       vkDestroyImageView                       = loader.Load<VkDestroyImageView>("vkDestroyImageView");
     private readonly VkDestroyInstance                        vkDestroyInstance                        = loader.Load<VkDestroyInstance>("vkDestroyInstance");
     private readonly VkDestroyPipeline                        vkDestroyPipeline                        = loader.Load<VkDestroyPipeline>("vkDestroyPipeline");
@@ -169,6 +185,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="pCreateInfo">A pointer to a <see cref="VkImageViewCreateInfo"/> structure containing parameters to be used to create the image view.</param>
     /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
     /// <param name="pView">A pointer to a VkImageView handle in which the resulting image view object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public VkResult CreateImageView(VkDevice device, VkImageViewCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkImageView* pView) =>
         this.vkCreateImageView.Invoke(device, pCreateInfo, pAllocator, pView);
 
@@ -183,6 +200,27 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Create a new command pool object.
+    /// </summary>
+    /// <param name="device">the logical device that creates the command pool.</param>
+    /// <param name="pCreateInfo">a pointer to a VkCommandPoolCreateInfo structure specifying the state of the command pool object.</param>
+    /// <param name="pAllocator">controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pCommandPool">a pointer to a <see cref="VkCommandPool"/> handle in which the created pool is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult CreateCommandPool(VkDevice device, VkCommandPoolCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkCommandPool* pCommandPool) =>
+        this.vkCreateCommandPool.Invoke(device, pCreateInfo, pAllocator, pCommandPool);
+
+    public VkResult CreateCommandPool(VkDevice device, in VkCommandPoolCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkCommandPool commandPool)
+    {
+        fixed (VkCommandPoolCreateInfo* pCreateInfo  = &createInfo)
+        fixed (VkAllocationCallbacks*   pAllocator   = &allocator)
+        fixed (VkCommandPool*           pCommandPool = &commandPool)
+        {
+            return this.vkCreateCommandPool.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pCommandPool);
+        }
+    }
+
+    /// <summary>
     /// <para><see cref="CreateDevice"/> verifies that extensions and features requested in the ppEnabledExtensionNames and pEnabledFeatures members of pCreateInfo, respectively, are supported by the implementation. If any requested extension is not supported, <see cref="CreateDevice"/> must return <see cref="VkResult.VK_ERROR_EXTENSION_NOT_PRESENT"/>. If any requested feature is not supported, <see cref="CreateDevice"/> must return <see cref="VkResult.VK_ERROR_FEATURE_NOT_PRESENT"/>. Support for extensions can be checked before creating a device by querying vkEnumerateDeviceExtensionProperties. Support for features can similarly be checked by querying <see cref="GetPhysicalDeviceFeatures"/>.</para>
     /// <para>After verifying and enabling the extensions the <see cref="VkDevice"/> object is created and returned to the application.</para>
     /// <para>Multiple logical devices can be created from the same physical device. Logical device creation may fail due to lack of device-specific resources (in addition to other errors). If that occurs, <see cref="CreateDevice"/> will return <see cref="VkResult.VK_ERROR_TOO_MANY_OBJECTS"/>.</para>
@@ -191,8 +229,40 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="pCreateInfo">A pointer to a <see cref="VkDeviceCreateInfo"/> structure containing information about how to create the device.</param>
     /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
     /// <param name="pDevice">A pointer to a handle in which the created <see cref="VkDevice"/> is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public VkResult CreateDevice(VkPhysicalDevice physicalDevice, VkDeviceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDevice* pDevice) =>
         this.vkCreateDevice.Invoke(physicalDevice, pCreateInfo, pAllocator, pDevice);
+
+    public VkResult CreateDevice(VkPhysicalDevice physicalDevice, in VkDeviceCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkDevice device)
+    {
+        fixed (VkDeviceCreateInfo*    pCreateInfo = &createInfo)
+        fixed (VkAllocationCallbacks* pAllocator  = &allocator)
+        fixed (VkDevice*              pDevice     = &device)
+        {
+            return this.vkCreateDevice.Invoke(physicalDevice, pCreateInfo, NullIfDefault(allocator, pAllocator), pDevice);
+        }
+    }
+
+    /// <summary>
+    /// Create a new framebuffer object.
+    /// </summary>
+    /// <param name="device">The logical device that creates the framebuffer.</param>
+    /// <param name="pCreateInfo">A pointer to a VkFramebufferCreateInfo structure describing additional information about framebuffer creation.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pFramebuffer">A pointer to a VkFramebuffer handle in which the resulting framebuffer object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult CreateFramebuffer(VkDevice device, VkFramebufferCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkFramebuffer* pFramebuffer) =>
+        this.vkCreateFramebuffer.Invoke(device, pCreateInfo, pAllocator, pFramebuffer);
+
+    public VkResult CreateFramebuffer(VkDevice device, in VkFramebufferCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkFramebuffer framebuffer)
+    {
+        fixed (VkFramebufferCreateInfo* pCreateInfo  = &createInfo)
+        fixed (VkAllocationCallbacks*   pAllocator   = &allocator)
+        fixed (VkFramebuffer*           pFramebuffer = &framebuffer)
+        {
+            return this.vkCreateFramebuffer.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pFramebuffer);
+        }
+    }
 
     /// <summary>
     /// <para>Create graphics pipelines.</para>
@@ -204,7 +274,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="pCreateInfos">A pointer to an array of <see cref="VkGraphicsPipelineCreateInfo"/> structures.</param>
     /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
     /// <param name="pPipelines">A pointer to an array of <see cref="VkPipeline"/> handles in which the resulting graphics pipeline objects are returned.</param>
-    /// <returns></returns>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public VkResult CreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache, uint createInfoCount, VkGraphicsPipelineCreateInfo* pCreateInfos, VkAllocationCallbacks* pAllocator, VkPipeline* pPipelines) =>
         this.vkCreateGraphicsPipelines.Invoke(device, pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
 
@@ -218,16 +288,6 @@ public unsafe class Vk(IVulkanLoader loader)
         }
     }
 
-    public VkResult CreateDevice(VkPhysicalDevice physicalDevice, in VkDeviceCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkDevice device)
-    {
-        fixed (VkDeviceCreateInfo*    pCreateInfo = &createInfo)
-        fixed (VkAllocationCallbacks* pAllocator  = &allocator)
-        fixed (VkDevice*              pDevice     = &device)
-        {
-            return this.vkCreateDevice.Invoke(physicalDevice, pCreateInfo, NullIfDefault(allocator, pAllocator), pDevice);
-        }
-    }
-
     /// <summary>
     /// <para>Create a new Vulkan instance.</para>
     /// <see cref="CreateInstance"/> verifies that the requested layers exist. If not, <see cref="CreateInstance"/> will return <see cref="VkResult.VK_ERROR_LAYER_NOT_PRESENT"/>. Next <see cref="CreateInstance"/> verifies that the requested extensions are supported (e.g. in the implementation or in any enabled instance layer) and if any requested extension is not supported, <see cref="CreateInstance"/> must return VK_ERROR_EXTENSION_NOT_PRESENT. After verifying and enabling the instance layers and extensions the VkInstance object is created and returned to the application. If a requested extension is only supported by a layer, both the layer and the extension need to be specified at <see cref="CreateInstance"/> time for the creation to succeed.
@@ -235,6 +295,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="pCreateInfo">A pointer to a <see cref="VkInstanceCreateInfo"/> structure controlling creation of the instance.</param>
     /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
     /// <param name="pInstance">Points a VkInstance handle in which the resulting instance is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public VkResult CreateInstance(VkInstanceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkInstance* pInstance) =>
         this.vkCreateInstance.Invoke(pCreateInfo, pAllocator, pInstance);
 
@@ -299,6 +360,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="pCreateInfo">A pointer to a <see cref="VkShaderModuleCreateInfo"/> structure.</param>
     /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
     /// <param name="pShaderModule">A pointer to a <see cref="VkShaderModule"/> handle in which the resulting shader module object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public VkResult CreateShaderModule(VkDevice device, VkShaderModuleCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkShaderModule* pShaderModule) =>
         this.vkCreateShaderModule.Invoke(device, pCreateInfo, pAllocator, pShaderModule);
 
@@ -313,11 +375,32 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// <para>Destroy a command pool object</para>
+    /// <para>When a pool is destroyed, all command buffers allocated from the pool are freed.</para>
+    /// <para>Any primary command buffer allocated from another <see cref="VkCommandPool"/> that is in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">recording or executable state</see> and has a secondary command buffer allocated from commandPool recorded into it, becomes <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">invalid</see>.</para>
+    /// </summary>
+    /// <param name="device">The logical device that destroys the command pool.</param>
+    /// <param name="commandPool">The handle of the command pool to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void DestroyCommandPool(VkDevice device, VkCommandPool commandPool, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroyCommandPool.Invoke(device, commandPool, pAllocator);
+
+    public void DestroyCommandPool(VkDevice device, VkCommandPool commandPool, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkDestroyCommandPool.Invoke(device, commandPool, NullIfDefault(allocator, pAllocator));
+        }
+    }
+
+    /// <summary>
     /// <para>Destroy a logical device.</para>
     /// <para>To ensure that no work is active on the device, <see cref="DeviceWaitIdle"/> can be used to gate the destruction of the device. Prior to destroying a device, an application is responsible for destroying/freeing any Vulkan objects that were created using that device as the first parameter of the corresponding vkCreate* or vkAllocate* command.</para>
     /// </summary>
     /// <param name="device">The logical device to destroy.</param>
     /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void DestroyDevice(VkDevice device, VkAllocationCallbacks* pAllocator) =>
         this.vkDestroyDevice.Invoke(device, pAllocator);
 
@@ -330,11 +413,30 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Destroy a framebuffer object.
+    /// </summary>
+    /// <param name="device">The logical device that destroys the framebuffer.</param>
+    /// <param name="framebuffer">The handle of the framebuffer to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void DestroyFramebuffer(VkDevice device, VkFramebuffer framebuffer, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroyFramebuffer(device, framebuffer, pAllocator);
+
+    public void DestroyFramebuffer(VkDevice device, VkFramebuffer framebuffer, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkDestroyFramebuffer(device, framebuffer, NullIfDefault(allocator, pAllocator));
+        }
+    }
+
+    /// <summary>
     /// Destroy an image view object.
     /// </summary>
     /// <param name="device">The logical device that destroys the image view.</param>
     /// <param name="imageView">The image view to destroy.</param>
     /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void DestroyImageView(VkDevice device, VkImageView imageView, VkAllocationCallbacks* pAllocator) =>
         this.vkDestroyImageView.Invoke(device, imageView, pAllocator);
 
@@ -369,6 +471,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="device">The logical device that destroys the pipeline.</param>
     /// <param name="pipeline">The handle of the pipeline to destroy.</param>
     /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void DestroyPipeline(VkDevice device, VkPipeline pipeline, VkAllocationCallbacks* pAllocator) =>
         this.vkDestroyPipeline.Invoke(device, pipeline, pAllocator);
 
@@ -446,6 +549,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="pLayerName">Either NULL or a pointer to a null-terminated UTF-8 string naming the layer to retrieve extensions from.</param>
     /// <param name="pPropertyCount">A pointer to an integer related to the number of extension properties available or queried, and is treated in the same fashion as the <see cref="EnumerateInstanceExtensionProperties"/> pPropertyCount parameter.</param>
     /// <param name="pProperties">Either NULL or a pointer to an array of <see cref="VkExtensionProperties"/> structures.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public VkResult EnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties) =>
         this.vkEnumerateDeviceExtensionProperties.Invoke(physicalDevice, pLayerName, pPropertyCount, pProperties);
 
@@ -486,6 +590,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="pPropertyCount">A pointer to an integer related to the number of extension properties available or queried, as described above.</param>
     /// <param name="pProperties">Either NULL or a pointer to an array of VkExtensionProperties structures.</param>
     /// <returns>Up to requested number of global extension properties</returns>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public VkResult EnumerateInstanceExtensionProperties(byte* pLayerName, uint* pPropertyCount, VkExtensionProperties* pProperties) =>
         this.vkEnumerateInstanceExtensionProperties.Invoke(pLayerName, pPropertyCount, pProperties);
 
@@ -557,6 +662,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="instance">A handle to a Vulkan instance previously created with <see cref="CreateInstance"/>.</param>
     /// <param name="pPhysicalDeviceCount">A pointer to an integer related to the number of physical devices available or queried, as described above.</param>
     /// <param name="pPhysicalDevices">Either NULL or a pointer to an array of VkPhysicalDevice handles.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public VkResult EnumeratePhysicalDevices(VkInstance instance, uint* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices) =>
         this.vkEnumeratePhysicalDevices.Invoke(instance, pPhysicalDeviceCount, pPhysicalDevices);
 
@@ -588,6 +694,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <summary>
     /// In order to support systems with multiple Vulkan implementations, the function pointers returned by <see cref="GetInstanceProcAddr"/> may point to dispatch code that calls a different real implementation for different <see cref="VkDevice"/> objects or their child objects. The overhead of the internal dispatch for <see cref="VkDevice"/> objects can be avoided by obtaining device-specific function pointers for any commands that use a device or device-child object as their dispatchable object.
     /// </summary>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void* GetDeviceProcAddr(VkDevice device, byte* pName) =>
         this.vkGetDeviceProcAddr.Invoke(device, pName);
 
@@ -609,6 +716,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="queueFamilyIndex">The index of the queue family to which the queue belongs.</param>
     /// <param name="queueIndex">The index within this queue family of the queue to retrieve.</param>
     /// <param name="pQueue"A pointer to a <see cref="VkQueue"/> object that will be filled with the handle for the requested queue.></param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void GetDeviceQueue(VkDevice device, uint queueFamilyIndex, uint queueIndex, VkQueue* pQueue) =>
         this.vkGetDeviceQueue.Invoke(device, queueFamilyIndex, queueIndex, pQueue);
 
@@ -630,6 +738,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// </summary>
     /// <param name="instance">The instance that the function pointer will be compatible with, or NULL for commands not dependent on any instance.</param>
     /// <param name="pName">The name of the command to obtain.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void* GetInstanceProcAddr(VkInstance instance, byte* pName) =>
         this.vkGetInstanceProcAddr.Invoke(instance, pName);
 
@@ -649,6 +758,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// </summary>
     /// <param name="physicalDevice">The physical device from which to query the supported features.</param>
     /// <param name="pFeatures">A pointer to a <see cref="VkPhysicalDeviceFeatures"/> structure in which the physical device features are returned. For each feature, a value of true specifies that the feature is supported on this physical device, and VK_FALSE specifies that the feature is not supported.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void GetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures) =>
         this.vkGetPhysicalDeviceFeatures.Invoke(physicalDevice, pFeatures);
 
@@ -665,6 +775,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// </summary>
     /// <param name="physicalDevice">The handle to the physical device whose properties will be queried.</param>
     /// <param name="pProperties">A pointer to a <see cref="VkPhysicalDeviceProperties"/> structure in which properties are returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void GetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* pProperties) =>
         this.vkGetPhysicalDeviceProperties.Invoke(physicalDevice, pProperties);
 
@@ -682,6 +793,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="physicalDevice">The handle to the physical device whose properties will be queried.</param>
     /// <param name="pQueueFamilyPropertyCount">A pointer to an integer related to the number of queue families available or queried, as described above.</param>
     /// <param name="pQueueFamilyProperties">Either NULL or a pointer to an array of <see cref="VkQueueFamilyProperties"/> structures.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void GetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, uint* pQueueFamilyPropertyCount, VkQueueFamilyProperties* pQueueFamilyProperties) =>
         this.vkGetPhysicalDeviceQueueFamilyProperties.Invoke(physicalDevice, pQueueFamilyPropertyCount, pQueueFamilyProperties);
 

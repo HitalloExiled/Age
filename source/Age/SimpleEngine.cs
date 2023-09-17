@@ -30,6 +30,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private readonly WindowManager       windowManager          = new();
     private readonly WindowsVulkanLoader windowsVulkanLoader;
 
+    private VkCommandPool            commandPool;
     private VkDebugUtilsMessengerEXT debugMessenger;
     private VkDevice                 device;
     private bool                     disposed;
@@ -43,6 +44,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkSurfaceKHR             surface;
     private VkSwapchainKHR           swapChain;
     private VkExtent2D               swapChainExtent;
+    private VkFramebuffer[]          swapChainFramebuffers = Array.Empty<VkFramebuffer>();
     private VkFormat                 swapChainImageFormat;
     private VkImage[]                swapChainImages     = Array.Empty<VkImage>();
     private VkImageView[]            swapChainImageViews = Array.Empty<VkImageView>();
@@ -141,6 +143,13 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void Cleanup()
     {
+        this.vk.DestroyCommandPool(this.device, this.commandPool, null);
+
+        foreach (var framebuffer in this.swapChainFramebuffers)
+        {
+            this.vk.DestroyFramebuffer(this.device, framebuffer, null);
+        }
+
         this.vk.DestroyPipeline(this.device, this.graphicsPipeline, null);
         this.vk.DestroyPipelineLayout(this.device, this.pipelineLayout, null);
         this.vk.DestroyRenderPass(this.device, this.renderPass, null);
@@ -160,6 +169,53 @@ public unsafe partial class SimpleEngine : IDisposable
 
         this.vkKhrSurface.DestroySurface(this.instance, this.surface, null);
         this.vk.DestroyInstance(this.instance, null);
+    }
+
+    private void CreateCommandPool()
+    {
+        var queueFamilyIndices = this.FindQueueFamilies(this.physicalDevice);
+
+        var poolInfo = new VkCommandPoolCreateInfo
+        {
+            flags            = VkCommandPoolCreateFlagBits.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            queueFamilyIndex = queueFamilyIndices.GraphicsFamily!.Value,
+        };
+
+        if (this.vk.CreateCommandPool(this.device, poolInfo, default, out this.commandPool) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to create command pool!");
+        }
+    }
+
+    private void CreateFramebuffers()
+    {
+        this.swapChainFramebuffers = new VkFramebuffer[this.swapChainImageViews.Length];
+
+        for (var i = 0; i < this.swapChainImageViews.Length; i++)
+        {
+            var attachments = new[]
+            {
+                this.swapChainImageViews[i]
+            };
+
+            fixed (VkImageView* pAttachments = attachments)
+            {
+                var framebufferInfo = new VkFramebufferCreateInfo
+                {
+                    renderPass      = this.renderPass,
+                    attachmentCount = 1,
+                    pAttachments    = pAttachments,
+                    width           = this.swapChainExtent.width,
+                    height          = this.swapChainExtent.height,
+                    layers          = 1
+                };
+
+                if (this.vk.CreateFramebuffer(this.device, framebufferInfo, default, out this.swapChainFramebuffers[i]) != VkResult.VK_SUCCESS)
+                {
+                    throw new Exception("failed to create framebuffer!");
+                }
+            }
+        }
     }
 
     private void CreateGraphicsPipeline()
@@ -272,22 +328,24 @@ public unsafe partial class SimpleEngine : IDisposable
                     throw new Exception("failed to create pipeline layout!");
                 }
 
-                var pipelineInfo = new VkGraphicsPipelineCreateInfo();
-                pipelineInfo.stageCount          = 2;
-                pipelineInfo.pStages             = pStages;
-                pipelineInfo.pVertexInputState   = &vertexInputInfo;
-                pipelineInfo.pInputAssemblyState = &inputAssembly;
-                pipelineInfo.pViewportState      = &viewportState;
-                pipelineInfo.pRasterizationState = &rasterizer;
-                pipelineInfo.pMultisampleState   = &multisampling;
-                pipelineInfo.pColorBlendState    = &colorBlending;
-                pipelineInfo.pDynamicState       = &dynamicState;
-                pipelineInfo.layout              = pipelineLayout;
-                pipelineInfo.renderPass          = renderPass;
-                pipelineInfo.subpass             = 0;
-                pipelineInfo.basePipelineHandle  = default;
+                var pipelineInfo = new VkGraphicsPipelineCreateInfo
+                {
+                    stageCount          = 2,
+                    pStages             = pStages,
+                    pVertexInputState   = &vertexInputInfo,
+                    pInputAssemblyState = &inputAssembly,
+                    pViewportState      = &viewportState,
+                    pRasterizationState = &rasterizer,
+                    pMultisampleState   = &multisampling,
+                    pColorBlendState    = &colorBlending,
+                    pDynamicState       = &dynamicState,
+                    layout              = this.pipelineLayout,
+                    renderPass          = this.renderPass,
+                    subpass             = 0,
+                    basePipelineHandle  = default,
+                };
 
-                if (vk.CreateGraphicsPipelines(device, default, 1, pipelineInfo, default, out graphicsPipeline) != VkResult.VK_SUCCESS)
+                if (this.vk.CreateGraphicsPipelines(this.device, default, 1, pipelineInfo, default, out this.graphicsPipeline) != VkResult.VK_SUCCESS)
                 {
                     throw new Exception("failed to create graphics pipeline!");
                 }
@@ -668,6 +726,8 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateImageViews();
         this.CreateRenderPass();
         this.CreateGraphicsPipeline();
+        this.CreateFramebuffers();
+        this.CreateCommandPool();
     }
 
     private void InitWindow() =>
