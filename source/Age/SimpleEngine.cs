@@ -752,11 +752,9 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private bool IsDeviceSuitable(VkPhysicalDevice device)
     {
-        var indices = this.FindQueueFamilies(device);
-
+        var indices             = this.FindQueueFamilies(device);
         var extensionsSupported = this.CheckDeviceExtensionSupport(device);
-
-        var swapChainAdequate = false;
+        var swapChainAdequate   = false;
 
         if (extensionsSupported)
         {

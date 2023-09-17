@@ -20,5 +20,5 @@ public struct VkSpecializationMapEntry
     /// <summary>
     /// The byte size of the specialization constant value within the supplied data buffer.
     /// </summary>
-    public uint size;
+    public ulong size;
 }

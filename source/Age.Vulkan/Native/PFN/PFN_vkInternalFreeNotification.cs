@@ -18,7 +18,7 @@ public record struct PFN_vkInternalFreeNotification(nint Value)
     /// <param name="size">The requested size of an allocation.</param>
     /// <param name="allocationType">a <see cref="VkInternalAllocationType"/>Value specifying the requested type of an allocation.</param>
     /// <param name="allocationScope"><see cref="VkSystemAllocationScope"/>Value specifying the allocation scope of the lifetime of the allocation</param>
-    public unsafe delegate void* Function(void* pUserData, uint size, VkInternalAllocationType allocationType, VkSystemAllocationScope allocationScope);
+    public unsafe delegate void* Function(void* pUserData, ulong size, VkInternalAllocationType allocationType, VkSystemAllocationScope allocationScope);
 
     public PFN_vkInternalFreeNotification(Function value) : this(Marshal.GetFunctionPointerForDelegate(value))
     { }

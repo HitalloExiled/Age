@@ -24,7 +24,7 @@ public record struct PFN_vkReallocationFunction(nint Value)
     /// <param name="size">The size in bytes of the requested allocation.</param>
     /// <param name="alignment">Is the requested alignment of the allocation in bytes and must be a power of two.</param>
     /// <param name="allocationScope">A <see cref="VkSystemAllocationScope"/> value specifying the allocation scope of the lifetime of the allocation, as described here.</param>
-    public unsafe delegate void* Function(void* pUserData, void* pOriginal, uint size, uint alignment, VkSystemAllocationScope allocationScope);
+    public unsafe delegate void* Function(void* pUserData, void* pOriginal, ulong size, ulong alignment, VkSystemAllocationScope allocationScope);
 
     public PFN_vkReallocationFunction(Function value) : this(Marshal.GetFunctionPointerForDelegate(value))
     { }

@@ -342,7 +342,7 @@ public unsafe struct VkPhysicalDeviceLimits
     /// <summary>
     /// The minimum required alignment, in bytes, of host visible memory allocations within the host address space. When mapping a memory allocation with <see cref="Vk.MapMemory"/>, subtracting offset bytes from the returned pointer will always produce an integer multiple of this limit. See https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-device-hostaccess. The value must be a power of two.
     /// </summary>
-    public int minMemoryMapAlignment;
+    public ulong minMemoryMapAlignment;
 
     /// <summary>
     /// The minimum required alignment, in bytes, for the offset member of the <see cref="VkBufferViewCreateInfo"/> structure for texel buffers. The value must be a power of two. If <see cref="texelBufferAlignment"/> is enabled, this limit is equivalent to the maximum of the <see cref="uniformTexelBufferOffsetAlignmentBytes"/> and <see cref="storageTexelBufferOffsetAlignmentBytes"/> members of <see cref="VkPhysicalDeviceTexelBufferAlignmentProperties"/>, but smaller alignment is optionally allowed by <see cref="storageTexelBufferOffsetSingleTexelAlignment"/> and <see cref="uniformTexelBufferOffsetSingleTexelAlignment"/>. If <see cref="texelBufferAlignment"/> is not enabled, <see cref="VkBufferViewCreateInfo.offset"/> must be a multiple of this value.

@@ -19,7 +19,7 @@ public unsafe struct VkSpecializationInfo
     /// <summary>
     /// The byte size of the pData buffer.
     /// </summary>
-    public uint dataSize;
+    public ulong dataSize;
 
     /// <summary>
     /// Contains the actual constant values to specialize with.
