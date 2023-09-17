@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Age.Vulkan.Interfaces;
 using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Types;
@@ -9,11 +10,16 @@ namespace Age.Vulkan.Native.Extensions.KHR;
 
 public unsafe class VkKhrSwapchain(Vk vk, VkDevice device) : IVkDeviceExtension
 {
-    public static string Name { get; } = "VK_KHR_swapchain";
-
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateSwapchainKHR(VkDevice device, VkSwapchainCreateInfoKHR* pCreateInfo, VkAllocationCallbacks* pAllocator, VkSwapchainKHR* pSwapchain);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain, VkAllocationCallbacks* pAllocator);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkGetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR swapchain, uint* pSwapchainImageCount, VkImage* pSwapchainImages);
+
+    public static string Name { get; } = "VK_KHR_swapchain";
 
     private readonly VkCreateSwapchainKHR    vkCreateSwapchainKHR    = vk.GetDeviceProcAddr<VkCreateSwapchainKHR>(Name, device, "vkCreateSwapchainKHR");
     private readonly VkDestroySwapchainKHR   vkDestroySwapchainKHR   = vk.GetDeviceProcAddr<VkDestroySwapchainKHR>(Name, device, "vkDestroySwapchainKHR");

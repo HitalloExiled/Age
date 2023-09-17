@@ -10,6 +10,7 @@ internal static partial class User32
     [DebuggerDisplay("{Value}")]
     public record struct HOOKPROC(nint Value = default)
     {
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         public delegate LRESULT Function(int code, WINDOW_MESSAGE wParam, LPARAM lParam);
 
         public HOOKPROC(Function value) : this(Marshal.GetFunctionPointerForDelegate(value))

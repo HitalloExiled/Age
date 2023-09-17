@@ -10,6 +10,7 @@ internal static partial class User32
     [DebuggerDisplay("{Value}")]
     public record struct MONITORENUMPROC(nint Value = default)
     {
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         public delegate BOOL Function(HMONITOR hMonitor, HDC hdc, LPRECT lpRect, LPARAM lParam);
 
         public MONITORENUMPROC(Function value) : this(Marshal.GetFunctionPointerForDelegate(value))

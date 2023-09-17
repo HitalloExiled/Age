@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Age.Vulkan.Interfaces;
 using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Types;
@@ -9,6 +10,7 @@ namespace Age.Vulkan.Native.Extensions.KHR;
 
 public unsafe class VkKhrWin32Surface(Vk vk, VkInstance instance) : IVkInstanceExtension
 {
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateWin32SurfaceKHR(VkInstance instance, VkWin32SurfaceCreateInfoKHR* pCreateInfo, VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
 
     public static string Name { get; } = "VK_KHR_win32_surface";
