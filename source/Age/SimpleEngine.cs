@@ -33,6 +33,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkDebugUtilsMessengerEXT debugMessenger;
     private VkDevice                 device;
     private bool                     disposed;
+    private VkPipeline               graphicsPipeline;
     private VkQueue                  graphicsQueue;
     private VkInstance               instance;
     private VkPhysicalDevice         physicalDevice;
@@ -140,6 +141,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void Cleanup()
     {
+        this.vk.DestroyPipeline(this.device, this.graphicsPipeline, null);
         this.vk.DestroyPipelineLayout(this.device, this.pipelineLayout, null);
         this.vk.DestroyRenderPass(this.device, this.renderPass, null);
 
@@ -250,7 +252,8 @@ public unsafe partial class SimpleEngine : IDisposable
                 VkDynamicState.VK_DYNAMIC_STATE_SCISSOR
             };
 
-            fixed (VkDynamicState* pDynamicStates = dynamicStates)
+            fixed (VkDynamicState*                  pDynamicStates = dynamicStates)
+            fixed (VkPipelineShaderStageCreateInfo* pStages        = shaderStages)
             {
                 var dynamicState = new VkPipelineDynamicStateCreateInfo
                 {
@@ -267,6 +270,26 @@ public unsafe partial class SimpleEngine : IDisposable
                 if (this.vk.CreatePipelineLayout(this.device, pipelineLayoutInfo, default, out this.pipelineLayout) != VkResult.VK_SUCCESS)
                 {
                     throw new Exception("failed to create pipeline layout!");
+                }
+
+                var pipelineInfo = new VkGraphicsPipelineCreateInfo();
+                pipelineInfo.stageCount          = 2;
+                pipelineInfo.pStages             = pStages;
+                pipelineInfo.pVertexInputState   = &vertexInputInfo;
+                pipelineInfo.pInputAssemblyState = &inputAssembly;
+                pipelineInfo.pViewportState      = &viewportState;
+                pipelineInfo.pRasterizationState = &rasterizer;
+                pipelineInfo.pMultisampleState   = &multisampling;
+                pipelineInfo.pColorBlendState    = &colorBlending;
+                pipelineInfo.pDynamicState       = &dynamicState;
+                pipelineInfo.layout              = pipelineLayout;
+                pipelineInfo.renderPass          = renderPass;
+                pipelineInfo.subpass             = 0;
+                pipelineInfo.basePipelineHandle  = default;
+
+                if (vk.CreateGraphicsPipelines(device, default, 1, pipelineInfo, default, out graphicsPipeline) != VkResult.VK_SUCCESS)
+                {
+                    throw new Exception("failed to create graphics pipeline!");
                 }
 
                 this.vk.DestroyShaderModule(this.device, fragShaderModule, null);

@@ -12,7 +12,7 @@ public unsafe struct VkPipelineViewportStateCreateInfo
     /// <summary>
     /// A <see cref="VkStructureType"/> value identifying this structure.
     /// </summary>
-    public VkStructureType sType;
+    public readonly VkStructureType sType;
 
     /// <summary>
     /// Null or a pointer to a structure extending this structure.

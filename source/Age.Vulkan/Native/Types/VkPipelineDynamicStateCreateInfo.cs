@@ -12,7 +12,7 @@ public unsafe struct VkPipelineDynamicStateCreateInfo
     /// A <see cref="VkStructureType"/> value identifying this structure.
     /// </summary>
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
-    public VkStructureType sType;
+    public readonly VkStructureType sType;
 
     /// <summary>
     /// Null or a pointer to a structure extending this structure.
@@ -33,4 +33,7 @@ public unsafe struct VkPipelineDynamicStateCreateInfo
     /// A pointer to an array of <see cref="VkDynamicState"/> values specifying which pieces of pipeline state will use the values from dynamic state commands rather than from pipeline state creation information.
     /// </summary>
     public VkDynamicState* pDynamicStates;
+
+    public VkPipelineDynamicStateCreateInfo() =>
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 }

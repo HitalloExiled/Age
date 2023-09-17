@@ -1,4 +1,4 @@
-namespace Age.Vulkan.Native.Enums;
+namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
 /// <para>Bitmask controlling triangle culling.</para>

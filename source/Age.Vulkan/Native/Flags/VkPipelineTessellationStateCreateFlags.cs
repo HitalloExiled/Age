@@ -5,19 +5,19 @@ using Age.Vulkan.Interfaces;
 namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
-/// Bitmask of <see cref="VkCullModeFlagBits"/>
+/// Reserved for future use.
 /// </summary>
 /// <remarks>Provided by VK_VERSION_1_0</remarks>
 [DebuggerDisplay("{Value}")]
-public record struct VkCullModeFlags(VkCullModeFlagBits Value) : IVkFlags<VkCullModeFlagBits>
+public record struct VkPipelineTessellationStateCreateFlags(uint Value) : IVkFlags
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly bool HasFlag(VkCullModeFlagBits value) =>
-        this.Value.HasFlag(value);
+    public readonly bool HasFlag(uint value) =>
+        (this.Value & value) == value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator VkCullModeFlags(VkCullModeFlagBits value) => new(value);
+    public static implicit operator VkPipelineTessellationStateCreateFlags(uint value) => new(value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator VkCullModeFlagBits(VkCullModeFlags value) => value.Value;
+    public static implicit operator uint(VkPipelineTessellationStateCreateFlags value) => value.Value;
 }
