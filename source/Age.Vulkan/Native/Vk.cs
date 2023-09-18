@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Age.Vulkan.Interfaces;
 using Age.Vulkan.Native.Enums;
+using Age.Vulkan.Native.Flags;
 using Age.Vulkan.Native.Types;
 
 using static Age.Core.Unsafe.UnmanagedUtils;
@@ -63,6 +64,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkCreateDevice(VkPhysicalDevice physicalDevice, VkDeviceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDevice* pDevice);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkCreateFence(VkDevice device, VkFenceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkFence* pFence);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateFramebuffer(VkDevice device, VkFramebufferCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkFramebuffer* pFramebuffer);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -81,6 +85,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkCreateRenderPass(VkDevice device, VkRenderPassCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkRenderPass* pRenderPass);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkCreateSemaphore(VkDevice device, VkSemaphoreCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkSemaphore* pSemaphore);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateShaderModule(VkDevice device, VkShaderModuleCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkShaderModule* pShaderModule);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -88,6 +95,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyDevice(VkDevice device, VkAllocationCallbacks* pAllocator);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkDestroyFence(VkDevice device, VkFence fence, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyFramebuffer(VkDevice device, VkFramebuffer framebuffer, VkAllocationCallbacks* pAllocator);
@@ -106,6 +116,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyRenderPass(VkDevice device, VkRenderPass renderPass, VkAllocationCallbacks* pAllocator);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkDestroySemaphore(VkDevice device, VkSemaphore semaphore, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyShaderModule(VkDevice device, VkShaderModule shaderModule, VkAllocationCallbacks* pAllocator);
@@ -157,21 +170,25 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCmdSetViewport                         vkCmdSetViewport                         = loader.Load<VkCmdSetViewport>("vkCmdSetViewport");
     private readonly VkCreateCommandPool                      vkCreateCommandPool                      = loader.Load<VkCreateCommandPool>("vkCreateCommandPool");
     private readonly VkCreateDevice                           vkCreateDevice                           = loader.Load<VkCreateDevice>("vkCreateDevice");
+    private readonly VkCreateFence                            vkCreateFence                            = loader.Load<VkCreateFence>("vkCreateFence");
     private readonly VkCreateFramebuffer                      vkCreateFramebuffer                      = loader.Load<VkCreateFramebuffer>("vkCreateFramebuffer");
     private readonly VkCreateGraphicsPipelines                vkCreateGraphicsPipelines                = loader.Load<VkCreateGraphicsPipelines>("vkCreateGraphicsPipelines");
     private readonly VkCreateImageView                        vkCreateImageView                        = loader.Load<VkCreateImageView>("vkCreateImageView");
     private readonly VkCreateInstance                         vkCreateInstance                         = loader.Load<VkCreateInstance>("vkCreateInstance");
     private readonly VkCreatePipelineLayout                   vkCreatePipelineLayout                   = loader.Load<VkCreatePipelineLayout>("vkCreatePipelineLayout");
     private readonly VkCreateRenderPass                       vkCreateRenderPass                       = loader.Load<VkCreateRenderPass>("vkCreateRenderPass");
+    private readonly VkCreateSemaphore                        vkCreateSemaphore                        = loader.Load<VkCreateSemaphore>("vkCreateSemaphore");
     private readonly VkCreateShaderModule                     vkCreateShaderModule                     = loader.Load<VkCreateShaderModule>("vkCreateShaderModule");
     private readonly VkDestroyCommandPool                     vkDestroyCommandPool                     = loader.Load<VkDestroyCommandPool>("vkDestroyCommandPool");
     private readonly VkDestroyDevice                          vkDestroyDevice                          = loader.Load<VkDestroyDevice>("vkDestroyDevice");
+    private readonly VkDestroyFence                           vkDestroyFence                           = loader.Load<VkDestroyFence>("vkDestroyFence");
     private readonly VkDestroyFramebuffer                     vkDestroyFramebuffer                     = loader.Load<VkDestroyFramebuffer>("vkDestroyFramebuffer");
     private readonly VkDestroyImageView                       vkDestroyImageView                       = loader.Load<VkDestroyImageView>("vkDestroyImageView");
     private readonly VkDestroyInstance                        vkDestroyInstance                        = loader.Load<VkDestroyInstance>("vkDestroyInstance");
     private readonly VkDestroyPipeline                        vkDestroyPipeline                        = loader.Load<VkDestroyPipeline>("vkDestroyPipeline");
     private readonly VkDestroyPipelineLayout                  vkDestroyPipelineLayout                  = loader.Load<VkDestroyPipelineLayout>("vkDestroyPipelineLayout");
     private readonly VkDestroyRenderPass                      vkDestroyRenderPass                      = loader.Load<VkDestroyRenderPass>("vkDestroyRenderPass");
+    private readonly VkDestroySemaphore                       vkDestroySemaphore                       = loader.Load<VkDestroySemaphore>("vkDestroySemaphore");
     private readonly VkDestroyShaderModule                    vkDestroyShaderModule                    = loader.Load<VkDestroyShaderModule>("vkDestroyShaderModule");
     private readonly VkEndCommandBuffer                       vkEndCommandBuffer                       = loader.Load<VkEndCommandBuffer>("vkEndCommandBuffer");
     private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties     = loader.Load<VkEnumerateDeviceExtensionProperties>("vkEnumerateDeviceExtensionProperties");
@@ -412,6 +429,27 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Create a new fence object.
+    /// </summary>
+    /// <param name="device">The logical device that creates the fence.</param>
+    /// <param name="pCreateInfo">A pointer to a VkFenceCreateInfo structure containing information about how the fence is to be created.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pFence">A pointer to a handle in which the resulting fence object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult CreateFence(VkDevice device, VkFenceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkFence* pFence) =>
+        this.vkCreateFence.Invoke(device, pCreateInfo, pAllocator, pFence);
+
+    public VkResult CreateFence(VkDevice device, in VkFenceCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkFence fence)
+    {
+        fixed (VkFenceCreateInfo*     pCreateInfo = &createInfo)
+        fixed (VkAllocationCallbacks* pAllocator  = &allocator)
+        fixed (VkFence*               pFence      = &fence)
+        {
+            return this.vkCreateFence.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pFence);
+        }
+    }
+
+    /// <summary>
     /// Create a new framebuffer object.
     /// </summary>
     /// <param name="device">The logical device that creates the framebuffer.</param>
@@ -520,6 +558,27 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Create a new queue semaphore object.
+    /// </summary>
+    /// <param name="device">The logical device that creates the semaphore.</param>
+    /// <param name="pCreateInfo">A pointer to a VkSemaphoreCreateInfo structure containing information about how the semaphore is to be created.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pSemaphore">A pointer to a handle in which the resulting semaphore object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult CreateSemaphore(VkDevice device, VkSemaphoreCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkSemaphore* pSemaphore) =>
+        this.vkCreateSemaphore.Invoke(device, pCreateInfo, pAllocator, pSemaphore);
+
+    public VkResult CreateSemaphore(VkDevice device, in VkSemaphoreCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkSemaphore semaphore)
+    {
+        fixed (VkSemaphoreCreateInfo* pCreateInfo = &createInfo)
+        fixed (VkAllocationCallbacks* pAllocator  = &allocator)
+        fixed (VkSemaphore*           pSemaphore  = &semaphore)
+        {
+            return this.vkCreateSemaphore.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pSemaphore);
+        }
+    }
+
+    /// <summary>
     /// <para>Creates a new shader module object.</para>
     /// <para>Once a shader module has been created, any entry points it contains can be used in pipeline shader stages as described in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#pipelines-compute">Compute Pipelines</see> and <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#pipelines-graphics">Graphics Pipelines</see>.</para>
     /// <remarks>If the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#features-maintenance5">maintenance5</see> feature is enabled, shader module creation can be omitted entirely. Instead, applications should provide the <see cref="VkShaderModuleCreateInfo"/> structure directly in to pipeline creation by chaining it to <see cref="VkPipelineShaderStageCreateInfo"/>. This avoids the overhead of creating and managing an additional object.</remarks>
@@ -577,6 +636,24 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
             this.vkDestroyDevice.Invoke(device, NullIfDefault(allocator, pAllocator));
+        }
+    }
+
+    /// <summary>
+    /// Destroy a fence object.
+    /// </summary>
+    /// <param name="device">The logical device that destroys the fence.</param>
+    /// <param name="fence">The handle of the fence to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void DestroyFence(VkDevice device, VkFence fence, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroyFence.Invoke(device, fence, pAllocator);
+
+    public void DestroyFence(VkDevice device, VkFence fence, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkDestroyFence.Invoke(device, fence, pAllocator);
         }
     }
 
@@ -688,6 +765,24 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Destroy a semaphore object.
+    /// </summary>
+    /// <param name="device">The logical device that destroys the semaphore.</param>
+    /// <param name="semaphore">The handle of the semaphore to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void DestroySemaphore(VkDevice device, VkSemaphore semaphore, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroySemaphore.Invoke(device, semaphore, pAllocator);
+
+    public void DestroySemaphore(VkDevice device, VkSemaphore semaphore, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkDestroySemaphore.Invoke(device, semaphore, NullIfDefault(allocator, pAllocator));
+        }
+    }
+
+    /// <summary>
     /// <para>Destroy a shader module.</para>
     /// <para>A shader module can be destroyed while pipelines created using its shaders are still in use.</para>
     /// </summary>
@@ -753,7 +848,7 @@ public unsafe class Vk(IVulkanLoader loader)
 
         properties = new VkExtensionProperties[propertyCount];
 
-        fixed (byte* pLayerName     = Encoding.UTF8.GetBytes(layerName ?? ""))
+        fixed (byte*                  pLayerName  = Encoding.UTF8.GetBytes(layerName ?? ""))
         fixed (VkExtensionProperties* pProperties = properties)
         {
             return this.vkEnumerateDeviceExtensionProperties.Invoke(physicalDevice, pLayerName, &propertyCount, pProperties);
@@ -1003,7 +1098,7 @@ public unsafe class Vk(IVulkanLoader loader)
         {
             this.EnumerateDeviceExtensionProperties(device, layer, out VkExtensionProperties[] properties);
 
-            this.instanceExtensionsMap[layer ?? ""] = extensions = properties.Select(x => Marshal.PtrToStringAnsi((nint)x.extensionName)!).ToHashSet();
+            this.deviceExtensionsMap[layer ?? ""] = extensions = properties.Select(x => Marshal.PtrToStringAnsi((nint)x.extensionName)!).ToHashSet();
         }
 
         return extensions.Contains(name);
@@ -1020,6 +1115,42 @@ public unsafe class Vk(IVulkanLoader loader)
 
         return extensions.Contains(name);
     }
+
+    /// <summary>
+    /// <para>Submits a sequence of semaphores or command buffers to a queue.</para>
+    /// <para><see cref="QueueSubmit"/> is a <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#devsandqueues-submission">queue submission command</see>, with each batch defined by an element of pSubmits. Batches begin execution in the order they appear in pSubmits, but may complete out of order.</para>
+    /// <para>Fence and semaphore operations submitted with <see cref="QueueSubmit"/> have additional ordering constraints compared to other submission commands, with dependencies involving previous and subsequent queue operations. Information about these additional constraints can be found in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-semaphores">semaphore</see> and <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-fences">fence</see> sections of the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization">synchronization chapter</see>.</para>
+    /// <para>Details on the interaction of pWaitDstStageMask with synchronization are described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-semaphores-waiting">semaphore wait operation</see> section of <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization">the synchronization chapter</see>.</para>
+    /// <para>The order that batches appear in pSubmits is used to determine <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-submission-order">submission order</see>, and thus all the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-implicit">implicit ordering guarantees</see> that respect it. Other than these implicit ordering guarantees and any <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization">explicit synchronization primitives</see>, these batches may overlap or otherwise execute out of order.</para>
+    /// <para>If any command buffer submitted to this queue is in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">executable state</see>, it is moved to the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">pending state</see>. Once execution of all submissions of a command buffer complete, it moves from the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">pending state</see>, back to the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">executable state</see>. If a command buffer was recorded with the <see cref="VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT"/> flag, it instead moves to the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">invalid state</see>.</para>
+    /// <para>If <see cref="QueueSubmit"/> fails, it may return <see cref="VkResult.VK_ERROR_OUT_OF_HOST_MEMORY"/> or <see cref="VkResult.VK_ERROR_OUT_OF_DEVICE_MEMORY"/>. If it does, the implementation must ensure that the state and contents of any resources or synchronization primitives referenced by the submitted command buffers and any semaphores referenced by pSubmits is unaffected by the call or its failure. If vkQueueSubmit fails in such a way that the implementation is unable to make that guarantee, the implementation must return <see cref="VkResult.VK_ERROR_DEVICE_LOST"/>. See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#devsandqueues-lost-device">Lost Device</see>.</para>
+    /// </summary>
+    /// <param name="queue">The queue that the command buffers will be submitted to.</param>
+    /// <param name="submitCount">The number of elements in the pSubmits array.</param>
+    /// <param name="pSubmits">A pointer to an array of VkSubmitInfo structures, each specifying a command buffer submission batch.</param>
+    /// <param name="fence">An optional handle to a fence to be signaled once all submitted command buffers have completed execution. If fence is not VK_NULL_HANDLE, it defines a <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-fences-signaling">fence signal operation</see>.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult QueueSubmit(VkQueue queue, uint submitCount, VkSubmitInfo* pSubmits, VkFence fence) => throw new NotImplementedException();
+
+    /// <summary>
+    /// Reset a command buffer to the initial state.
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer to reset. The command buffer can be in any state other than <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">pending</see>, and is moved into the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">initial state</see>.</param>
+    /// <param name="flags">A bitmask of <see cref="VkCommandBufferResetFlagBits"/> controlling the reset operation.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult ResetCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferResetFlags flags) => throw new NotImplementedException();
+
+    /// <summary>
+    /// <para>Resets one or more fence objects.</para>
+    /// <para>If any member of pFences currently has its <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-fences-importing">payload imported</see> with temporary permanence, that fence’s prior permanent payload is first restored. The remaining operations described therefore operate on the restored payload.</para>
+    /// <para>When <see cref="ResetFences"/> is executed on the host, it defines a fence unsignal operation for each fence, which resets the fence to the unsignaled state.</para>
+    /// <para>If any member of pFences is already in the unsignaled state when <see cref="ResetFences"/> is executed, then <see cref="ResetFences"/> has no effect on that fence.</para>
+    /// </summary>
+    /// <param name="device">The logical device that owns the fences.</param>
+    /// <param name="fenceCount">The number of fences to reset.</param>
+    /// <param name="pFences">A pointer to an array of fence handles to reset.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult ResetFences(VkDevice device, uint fenceCount, VkFence* pFences) => throw new NotImplementedException();
 
     public bool TryGetDeviceExtension<T>(VkPhysicalDevice physicalDevice, VkDevice device, string? layer, [NotNullWhen(true)] out T? extension) where T : class, IVkDeviceExtension
     {
@@ -1052,4 +1183,20 @@ public unsafe class Vk(IVulkanLoader loader)
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool TryGetInstanceExtension<T>(VkInstance instance, [NotNullWhen(true)] out T? extension) where T : class, IVkInstanceExtension =>
         this.TryGetInstanceExtension(instance, null, out extension);
+
+    /// <summary>
+    /// <para>Wait for one or more fences to become signaled.</para>
+    /// <para>If the condition is satisfied when <see cref="WaitForFences"/> is called, then <see cref="WaitForFences"/> returns immediately. If the condition is not satisfied at the time <see cref="WaitForFences"/> is called, then <see cref="WaitForFences"/> will block and wait until the condition is satisfied or the timeout has expired, whichever is sooner.</para>
+    /// <para>If timeout is zero, then <see cref="WaitForFences"/> does not wait, but simply returns the current state of the fences. VK_TIMEOUT will be returned in this case if the condition is not satisfied, even though no actual wait was performed.</para>
+    /// <para>If the condition is satisfied before the timeout has expired, vkWaitForFences returns <see cref="VkResult.VK_SUCCESS"/>. Otherwise, vkWaitForFences returns <see cref="VkResult.VK_TIMEOUT"/> after the timeout has expired.</para>
+    /// <para>If device loss occurs (see Lost Device) before the timeout has expired, vkWaitForFences must return in finite time with either <see cref="VkResult.VK_SUCCESS"/> or <see cref="VkResult.VK_ERROR_DEVICE_LOST"/>.</para>
+    /// <remarks>Note: While we guarantee that <see cref="WaitForFences"/> must return in finite time, no guarantees are made that it returns immediately upon device loss. However, the client can reasonably expect that the delay will be on the order of seconds and that calling <see cref="WaitForFences"/> will not result in a permanently (or seemingly permanently) dead process.</remarks>
+    /// </summary>
+    /// <param name="device">The logical device that owns the fences.</param>
+    /// <param name="fenceCount">The number of fences to wait on.</param>
+    /// <param name="pFences">A pointer to an array of fenceCount fence handles.</param>
+    /// <param name="waitAll">The condition that must be satisfied to successfully unblock the wait. If waitAll is VK_TRUE, then the condition is that all fences in pFences are signaled. Otherwise, the condition is that at least one fence in pFences is signaled.</param>
+    /// <param name="timeout">The timeout period in units of nanoseconds. timeout is adjusted to the closest value allowed by the implementation-dependent timeout accuracy, which may be substantially longer than one nanosecond, and may be longer than the requested period.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult WaitForFences(VkDevice device, uint fenceCount, VkFence* pFences, VkBool32 waitAll, ulong timeout) => throw new NotImplementedException();
 }

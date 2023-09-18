@@ -8,6 +8,7 @@ using static Age.Core.Unsafe.UnmanagedUtils;
 
 namespace Age.Vulkan.Native.Extensions.KHR;
 
+/// <remarks>Provided by VK_KHR_swapchain</remarks>
 public unsafe class VkKhrSwapchain(Vk vk, VkDevice device) : IVkDeviceExtension
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -27,6 +28,18 @@ public unsafe class VkKhrSwapchain(Vk vk, VkDevice device) : IVkDeviceExtension
 
     public static IVkDeviceExtension Create(Vk vk, VkDevice device) =>
         new VkKhrSwapchain(vk, device);
+
+    /// <summary>
+    /// <para>Retrieve the index of the next available presentable image.</para>
+    /// <para>If the swapchain has been created with the <see cref="VkSwapchainCreateFlagBitsKHR.VK_SWAPCHAIN_CREATE_DEFERRED_MEMORY_ALLOCATION_BIT_EXT"/> flag, the image whose index is returned in pImageIndex will be fully backed by memory before this call returns to the application, as if it is bound completely and contiguously to a single <see cref="VkDeviceMemory"/> object.</para>
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="swapchain"></param>
+    /// <param name="timeout"></param>
+    /// <param name="semaphore"></param>
+    /// <param name="fence"></param>
+    /// <param name="pImageIndex"></param>
+    public VkResult AcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain, ulong timeout, VkSemaphore semaphore, VkFence fence, uint* pImageIndex) => throw new NotImplementedException();
 
     /// <summary>
     /// <para>Create a swapchain.</para>
@@ -160,4 +173,12 @@ public unsafe class VkKhrSwapchain(Vk vk, VkDevice device) : IVkDeviceExtension
             return this.vkGetSwapchainImagesKHR.Invoke(device, swapchain, &swapchainImageCount, pSwapchainImages);
         }
     }
+
+    /// <summary>
+    /// <para>Queue an image for presentation.</para>
+    /// <para>Note: There is no requirement for an application to present images in the same order that they were acquired - applications can arbitrarily present any image that is currently acquired.</para>
+    /// </summary>
+    /// <param name="queue">A queue that is capable of presentation to the target surface’s platform on the same device as the image’s swapchain.</param>
+    /// <param name="pPresentInfo">A pointer to a <see cref="VkPresentInfoKHR"/> structure specifying parameters of the presentation.</param>
+    public VkResult QueuePresent(VkQueue queue, VkPresentInfoKHR* pPresentInfo) => throw new NotImplementedException();
 }

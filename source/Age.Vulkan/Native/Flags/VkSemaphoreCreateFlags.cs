@@ -5,19 +5,19 @@ using Age.Vulkan.Interfaces;
 namespace Age.Vulkan.Native.Flags;
 
 /// <summary>
-/// Bitmask of <see cref="VkSampleCountFlagBits"/>
+/// Reserved for future use.
 /// </summary>
 /// <remarks>Provided by VK_VERSION_1_0</remarks>
 [DebuggerDisplay("{Value}")]
-public record struct VkSampleCountFlags(VkSampleCountFlagBits Value) : IVkFlags<VkSampleCountFlagBits>
+public record struct VkSemaphoreCreateFlags(uint Value) : IVkFlags
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly bool HasFlag(VkSampleCountFlagBits value) =>
-        this.Value.HasFlag(value);
+    public readonly bool HasFlag(uint value) =>
+        (this.Value & value) == value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator VkSampleCountFlags(VkSampleCountFlagBits value) => new(value);
+    public static implicit operator VkSemaphoreCreateFlags(uint value) => new(value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator VkSampleCountFlagBits(VkSampleCountFlags value) => value.Value;
+    public static implicit operator uint(VkSemaphoreCreateFlags value) => value.Value;
 }

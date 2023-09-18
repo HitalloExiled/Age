@@ -8,6 +8,7 @@ using static Age.Core.Unsafe.UnmanagedUtils;
 
 namespace Age.Vulkan.Native.Extensions.EXT;
 
+/// <remarks>Provided by VK_EXT_debug_utils</remarks>
 public unsafe class VkExtDebugUtils(Vk vk, VkInstance instance) : IVkInstanceExtension
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]

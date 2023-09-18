@@ -9,15 +9,15 @@ namespace Age.Vulkan.Native.Flags;
 /// </summary>
 /// <remarks>Provided by VK_VERSION_1_0</remarks>
 [DebuggerDisplay("{Value}")]
-public record struct VkSampleCountFlags(VkSampleCountFlagBits Value) : IVkFlags<VkSampleCountFlagBits>
+public record struct VkFenceCreateFlags(VkFenceCreateFlagBits Value) : IVkFlags<VkFenceCreateFlagBits>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly bool HasFlag(VkSampleCountFlagBits value) =>
+    public readonly bool HasFlag(VkFenceCreateFlagBits value) =>
         this.Value.HasFlag(value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator VkSampleCountFlags(VkSampleCountFlagBits value) => new(value);
+    public static implicit operator VkFenceCreateFlags(VkFenceCreateFlagBits value) => new(value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator VkSampleCountFlagBits(VkSampleCountFlags value) => value.Value;
+    public static implicit operator VkFenceCreateFlagBits(VkFenceCreateFlags value) => value.Value;
 }

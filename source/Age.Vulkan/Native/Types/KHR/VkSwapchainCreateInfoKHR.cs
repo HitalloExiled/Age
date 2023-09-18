@@ -1,5 +1,6 @@
 using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Enums.KHR;
+using Age.Vulkan.Native.Extensions.KHR;
 using Age.Vulkan.Native.Flags;
 using Age.Vulkan.Native.Flags.KHR;
 
@@ -11,7 +12,7 @@ namespace Age.Vulkan.Native.Types.KHR;
 /// <para>Upon calling <see cref="VkKhrSwapchain.CreateSwapchain"/> with an oldSwapchain that is not VK_NULL_HANDLE, any images from oldSwapchain that are not acquired by the application may be freed by the implementation, which may occur even if creation of the new swapchain fails. The application can destroy oldSwapchain to free all memory associated with oldSwapchain.</para>
 /// <remarks>
 /// <para>Multiple retired swapchains can be associated with the same <see cref="VkSurfaceKHR"/> through multiple uses of oldSwapchain that outnumber calls to <see cref="VkKhrSwapchain.DestroySwapchain"/>.</para>
-/// <para>After oldSwapchain is retired, the application can pass to <see cref="VkKhrSwapchain.QueuePresent"/> any images it had already acquired from oldSwapchain. E.g., an application may present an image from the old swapchain before an image from the new swapchain is ready to be presented. As usual, vkQueuePresentKHR may fail if oldSwapchain has entered a state that causes <see cref="VkResult.VK_ERROR_OUT_OF_DATE_KHR"/> to be returned.</para>
+/// <para>After oldSwapchain is retired, the application can pass to <see cref="VkKhrSwapchain.QueuePresent"/> any images it had already acquired from oldSwapchain. E.g., an application may present an image from the old swapchain before an image from the new swapchain is ready to be presented. As usual, <see cref="VkKhrSwapchain.QueuePresent"/> may fail if oldSwapchain has entered a state that causes <see cref="VkResult.VK_ERROR_OUT_OF_DATE_KHR"/> to be returned.</para>
 /// <para>The application can continue to use a shared presentable image obtained from oldSwapchain until a presentable image is acquired from the new swapchain, as long as it has not entered a state that causes it to return VK_ERROR_OUT_OF_DATE_KHR.</para>
 /// </remarks>
 /// </summary>

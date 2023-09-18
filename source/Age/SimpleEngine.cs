@@ -37,10 +37,13 @@ public unsafe partial class SimpleEngine : IDisposable
     private bool                     disposed;
     private VkPipeline               graphicsPipeline;
     private VkQueue                  graphicsQueue;
+    private VkSemaphore              imageAvailableSemaphore;
+    private VkFence                  inFlightFence;
     private VkInstance               instance;
     private VkPhysicalDevice         physicalDevice;
     private VkPipelineLayout         pipelineLayout;
     private VkQueue                  presentQueue;
+    private VkSemaphore              renderFinishedSemaphore;
     private VkRenderPass             renderPass;
     private VkSurfaceKHR             surface;
     private VkSwapchainKHR           swapChain;
@@ -144,6 +147,9 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void Cleanup()
     {
+        this.vk.DestroySemaphore(this.device, this.imageAvailableSemaphore, null);
+        this.vk.DestroySemaphore(this.device, this.renderFinishedSemaphore, null);
+        this.vk.DestroyFence(this.device, this.inFlightFence, null);
         this.vk.DestroyCommandPool(this.device, this.commandPool, null);
 
         foreach (var framebuffer in this.swapChainFramebuffers)
@@ -683,6 +689,21 @@ public unsafe partial class SimpleEngine : IDisposable
         this.swapChainExtent      = extent;
     }
 
+    private void CreateSyncObjects()
+    {
+        var semaphoreInfo = new VkSemaphoreCreateInfo();
+        var fenceInfo     = new VkFenceCreateInfo();
+
+        if (
+            this.vk.CreateSemaphore(this.device, semaphoreInfo, default, out this.imageAvailableSemaphore) != VkResult.VK_SUCCESS ||
+            this.vk.CreateSemaphore(this.device, semaphoreInfo, default, out this.renderFinishedSemaphore) != VkResult.VK_SUCCESS ||
+            this.vk.CreateFence(this.device, fenceInfo, default, out this.inFlightFence) != VkResult.VK_SUCCESS
+        )
+        {
+            throw new Exception("failed to create semaphores!");
+        }
+    }
+
     private List<string> GetRequiredExtensions()
     {
         var extensions = new List<string>();
@@ -745,6 +766,7 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateFramebuffers();
         this.CreateCommandPool();
         this.CreateCommandBuffer();
+        this.CreateSyncObjects();
     }
 
     private void InitWindow() =>

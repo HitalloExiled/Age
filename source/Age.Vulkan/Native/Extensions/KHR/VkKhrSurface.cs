@@ -9,6 +9,7 @@ using static Age.Core.Unsafe.UnmanagedUtils;
 
 namespace Age.Vulkan.Native.Extensions.KHR;
 
+/// <remarks>Provided by VK_KHR_surface</remarks>
 public unsafe class VkKhrSurface(Vk vk, VkInstance instance) : IVkInstanceExtension
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
