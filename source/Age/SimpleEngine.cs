@@ -692,7 +692,10 @@ public unsafe partial class SimpleEngine : IDisposable
     private void CreateSyncObjects()
     {
         var semaphoreInfo = new VkSemaphoreCreateInfo();
-        var fenceInfo     = new VkFenceCreateInfo();
+        var fenceInfo     = new VkFenceCreateInfo
+        {
+            flags = VkFenceCreateFlagBits.VK_FENCE_CREATE_SIGNALED_BIT
+        };
 
         if (
             this.vk.CreateSemaphore(this.device, semaphoreInfo, default, out this.imageAvailableSemaphore) != VkResult.VK_SUCCESS ||
@@ -701,6 +704,89 @@ public unsafe partial class SimpleEngine : IDisposable
         )
         {
             throw new Exception("failed to create semaphores!");
+        }
+    }
+
+    private void DrawFrame()
+    {
+        this.vk.WaitForFences(this.device, this.inFlightFence, true, ulong.MaxValue);
+        this.vk.ResetFences(this.device, this.inFlightFence);
+
+        this.vkKhrSwapchain.AcquireNextImage(this.device, this.swapChain, ulong.MaxValue, this.imageAvailableSemaphore, default, out var imageIndex);
+
+        this.vk.ResetCommandBuffer(this.commandBuffer, default);
+
+        this.RecordCommandBuffer(this.commandBuffer, imageIndex);
+
+        var submitInfo = new VkSubmitInfo();
+
+        var waitSemaphores = new[]
+        {
+            this.imageAvailableSemaphore
+        };
+
+        var waitStages = new VkPipelineStageFlags[]
+        {
+            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+        };
+
+        var commandBuffers = new[]
+        {
+            this.commandBuffer
+        };
+
+        var signalSemaphores = new[]
+        {
+            this.renderFinishedSemaphore
+        };
+
+        fixed (VkSemaphore*          pWaitSemaphores   = waitSemaphores)
+        fixed (VkPipelineStageFlags* pWaitDstStageMask = waitStages)
+        fixed (VkCommandBuffer*      pCommandBuffers   = commandBuffers)
+        fixed (VkSemaphore*          pSignalSemaphores = signalSemaphores)
+        {
+            submitInfo.waitSemaphoreCount   = 1;
+            submitInfo.pWaitSemaphores      = pWaitSemaphores;
+            submitInfo.pWaitDstStageMask    = pWaitDstStageMask;
+            submitInfo.commandBufferCount   = 1;
+            submitInfo.pCommandBuffers      = pCommandBuffers;
+            submitInfo.signalSemaphoreCount = 1;
+            submitInfo.pSignalSemaphores    = pSignalSemaphores;
+
+            if (this.vk.QueueSubmit(this.graphicsQueue, submitInfo, this.inFlightFence) != VkResult.VK_SUCCESS)
+            {
+                throw new Exception("failed to submit draw command buffer!");
+            }
+
+            var dependency = new VkSubpassDependency
+            {
+                srcSubpass    = Vk.VK_SUBPASS_EXTERNAL,
+                dstSubpass    = 0,
+                srcStageMask  = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                srcAccessMask = default,
+                dstStageMask  = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                dstAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
+            };
+
+            var presentInfo = new VkPresentInfoKHR
+            {
+                waitSemaphoreCount = 1,
+                pWaitSemaphores    = pSignalSemaphores
+            };
+
+            var swapChains = new[]
+            {
+                this.swapChain
+            };
+
+            fixed (VkSwapchainKHR* pSwapchains = swapChains)
+            {
+                presentInfo.swapchainCount = 1;
+                presentInfo.pSwapchains    = pSwapchains;
+                presentInfo.pImageIndices  = &imageIndex;
+
+                this.vkKhrSwapchain.QueuePresent(this.presentQueue, presentInfo);
+            }
         }
     }
 
@@ -795,7 +881,10 @@ public unsafe partial class SimpleEngine : IDisposable
         while (!this.window.Closed)
         {
             this.window.DoEvents();
+            this.DrawFrame();
         }
+
+        this.vk.DeviceWaitIdle(this.device);
     }
 
     private void PickPhysicalDevice()

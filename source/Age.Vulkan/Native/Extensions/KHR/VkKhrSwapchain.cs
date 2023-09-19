@@ -12,6 +12,9 @@ namespace Age.Vulkan.Native.Extensions.KHR;
 public unsafe class VkKhrSwapchain(Vk vk, VkDevice device) : IVkDeviceExtension
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain, ulong timeout, VkSemaphore semaphore, VkFence fence, uint* pImageIndex);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateSwapchainKHR(VkDevice device, VkSwapchainCreateInfoKHR* pCreateInfo, VkAllocationCallbacks* pAllocator, VkSwapchainKHR* pSwapchain);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -20,11 +23,16 @@ public unsafe class VkKhrSwapchain(Vk vk, VkDevice device) : IVkDeviceExtension
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkGetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR swapchain, uint* pSwapchainImageCount, VkImage* pSwapchainImages);
 
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkQueuePresentKHR(VkQueue queue, VkPresentInfoKHR* pPresentInfo);
+
     public static string Name { get; } = "VK_KHR_swapchain";
 
+    private readonly VkAcquireNextImageKHR   vkAcquireNextImageKHR   = vk.GetDeviceProcAddr<VkAcquireNextImageKHR>(Name, device, "vkAcquireNextImageKHR");
     private readonly VkCreateSwapchainKHR    vkCreateSwapchainKHR    = vk.GetDeviceProcAddr<VkCreateSwapchainKHR>(Name, device, "vkCreateSwapchainKHR");
     private readonly VkDestroySwapchainKHR   vkDestroySwapchainKHR   = vk.GetDeviceProcAddr<VkDestroySwapchainKHR>(Name, device, "vkDestroySwapchainKHR");
     private readonly VkGetSwapchainImagesKHR vkGetSwapchainImagesKHR = vk.GetDeviceProcAddr<VkGetSwapchainImagesKHR>(Name, device, "vkGetSwapchainImagesKHR");
+    private readonly VkQueuePresentKHR       vkQueuePresentKHR       = vk.GetDeviceProcAddr<VkQueuePresentKHR>(Name, device, "vkQueuePresentKHR");
 
     public static IVkDeviceExtension Create(Vk vk, VkDevice device) =>
         new VkKhrSwapchain(vk, device);
@@ -39,7 +47,16 @@ public unsafe class VkKhrSwapchain(Vk vk, VkDevice device) : IVkDeviceExtension
     /// <param name="semaphore"></param>
     /// <param name="fence"></param>
     /// <param name="pImageIndex"></param>
-    public VkResult AcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain, ulong timeout, VkSemaphore semaphore, VkFence fence, uint* pImageIndex) => throw new NotImplementedException();
+    public VkResult AcquireNextImage(VkDevice device, VkSwapchainKHR swapchain, ulong timeout, VkSemaphore semaphore, VkFence fence, uint* pImageIndex) =>
+        this.vkAcquireNextImageKHR.Invoke(device, swapchain, timeout, semaphore, fence, pImageIndex);
+
+    public VkResult AcquireNextImage(VkDevice device, VkSwapchainKHR swapchain, ulong timeout, VkSemaphore semaphore, VkFence fence, out uint imageIndex)
+    {
+        fixed (uint* pImageIndex = &imageIndex)
+        {
+            return this.vkAcquireNextImageKHR.Invoke(device, swapchain, timeout, semaphore, fence, pImageIndex);
+        }
+    }
 
     /// <summary>
     /// <para>Create a swapchain.</para>
@@ -180,5 +197,14 @@ public unsafe class VkKhrSwapchain(Vk vk, VkDevice device) : IVkDeviceExtension
     /// </summary>
     /// <param name="queue">A queue that is capable of presentation to the target surface’s platform on the same device as the image’s swapchain.</param>
     /// <param name="pPresentInfo">A pointer to a <see cref="VkPresentInfoKHR"/> structure specifying parameters of the presentation.</param>
-    public VkResult QueuePresent(VkQueue queue, VkPresentInfoKHR* pPresentInfo) => throw new NotImplementedException();
+    public VkResult QueuePresent(VkQueue queue, VkPresentInfoKHR* pPresentInfo) =>
+        this.vkQueuePresentKHR.Invoke(queue, pPresentInfo);
+
+    public VkResult QueuePresent(VkQueue queue, in VkPresentInfoKHR presentInfo)
+    {
+        fixed (VkPresentInfoKHR* pPresentInfo = &presentInfo)
+        {
+            return this.vkQueuePresentKHR.Invoke(queue, pPresentInfo);
+        }
+    }
 }

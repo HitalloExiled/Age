@@ -33,6 +33,11 @@ public unsafe class Vk(IVulkanLoader loader)
     /// </summary>
     public const uint VK_UUID_SIZE = 16;
 
+    /// <summary>
+    /// Subpass index sentinel expanding synchronization scope outside a subpass
+    /// </summary>
+    public const uint VK_SUBPASS_EXTERNAL = uint.MaxValue;
+
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkAllocateCommandBuffers(VkDevice device, VkCommandBufferAllocateInfo* pAllocateInfo, VkCommandBuffer* pCommandBuffers);
 
@@ -124,6 +129,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate void VkDestroyShaderModule(VkDevice device, VkShaderModule shaderModule, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkDeviceWaitIdle(VkDevice device);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkEndCommandBuffer(VkCommandBuffer commandBuffer);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -156,6 +164,17 @@ public unsafe class Vk(IVulkanLoader loader)
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, uint* pQueueFamilyPropertyCount, VkQueueFamilyProperties* pQueueFamilyProperties);
 
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkQueueSubmit(VkQueue queue, uint submitCount, VkSubmitInfo* pSubmits, VkFence fence);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkResetCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferResetFlags flags);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkResetFences(VkDevice device, uint fenceCount, VkFence* pFences);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkWaitForFences(VkDevice device, uint fenceCount, VkFence* pFences, VkBool32 waitAll, ulong timeout);
 
     private readonly Dictionary<string, HashSet<string>> deviceExtensionsMap   = new();
     private readonly Dictionary<string, HashSet<string>> instanceExtensionsMap = new();
@@ -190,6 +209,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkDestroyRenderPass                      vkDestroyRenderPass                      = loader.Load<VkDestroyRenderPass>("vkDestroyRenderPass");
     private readonly VkDestroySemaphore                       vkDestroySemaphore                       = loader.Load<VkDestroySemaphore>("vkDestroySemaphore");
     private readonly VkDestroyShaderModule                    vkDestroyShaderModule                    = loader.Load<VkDestroyShaderModule>("vkDestroyShaderModule");
+    private readonly VkDeviceWaitIdle                         vkDeviceWaitIdle                         = loader.Load<VkDeviceWaitIdle>("vkDeviceWaitIdle");
     private readonly VkEndCommandBuffer                       vkEndCommandBuffer                       = loader.Load<VkEndCommandBuffer>("vkEndCommandBuffer");
     private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties     = loader.Load<VkEnumerateDeviceExtensionProperties>("vkEnumerateDeviceExtensionProperties");
     private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties   = loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
@@ -201,6 +221,10 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures              = loader.Load<VkGetPhysicalDeviceFeatures>("vkGetPhysicalDeviceFeatures");
     private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties            = loader.Load<VkGetPhysicalDeviceProperties>("vkGetPhysicalDeviceProperties");
     private readonly VkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = loader.Load<VkGetPhysicalDeviceQueueFamilyProperties>("vkGetPhysicalDeviceQueueFamilyProperties");
+    private readonly VkQueueSubmit                            vkQueueSubmit                            = loader.Load<VkQueueSubmit>("vkQueueSubmit");
+    private readonly VkResetCommandBuffer                     vkResetCommandBuffer                     = loader.Load<VkResetCommandBuffer>("vkResetCommandBuffer");
+    private readonly VkResetFences                            vkResetFences                            = loader.Load<VkResetFences>("vkResetFences");
+    private readonly VkWaitForFences                          vkWaitForFences                          = loader.Load<VkWaitForFences>("vkWaitForFences");
 
     public static uint ApiVersion_1_0 { get; } = MakeApiVersion(0, 1, 0, 0);
 
@@ -802,6 +826,14 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// <para>Wait for a device to become idle.</para>
+    /// </summary>
+    /// <param name="device">The logical device to idle.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult DeviceWaitIdle(VkDevice device) =>
+        this.vkDeviceWaitIdle.Invoke(device);
+
+    /// <summary>
     /// <para>Finish recording a command buffer.</para>
     /// <para>The command buffer must have been in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">recording state</see>, and, if successful, is moved to the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">executable state</see>.</para>
     /// <para>If there was an error during recording, the application will be notified by an unsuccessful return code returned by <see cref="EndCommandBuffer"/>, and the command buffer will be moved to the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">invalid state</see>.</para>
@@ -1130,7 +1162,24 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="pSubmits">A pointer to an array of VkSubmitInfo structures, each specifying a command buffer submission batch.</param>
     /// <param name="fence">An optional handle to a fence to be signaled once all submitted command buffers have completed execution. If fence is not VK_NULL_HANDLE, it defines a <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-fences-signaling">fence signal operation</see>.</param>
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
-    public VkResult QueueSubmit(VkQueue queue, uint submitCount, VkSubmitInfo* pSubmits, VkFence fence) => throw new NotImplementedException();
+    public VkResult QueueSubmit(VkQueue queue, uint submitCount, VkSubmitInfo* pSubmits, VkFence fence) =>
+        this.vkQueueSubmit.Invoke(queue, submitCount, pSubmits, fence);
+
+    public VkResult QueueSubmit(VkQueue queue, in VkSubmitInfo submit, VkFence fence)
+    {
+        fixed (VkSubmitInfo* pSubmits = &submit)
+        {
+            return this.vkQueueSubmit.Invoke(queue, 1, pSubmits, fence);
+        }
+    }
+
+    public VkResult QueueSubmit(VkQueue queue, VkSubmitInfo[] submits, VkFence fence)
+    {
+        fixed (VkSubmitInfo* pSubmits = submits)
+        {
+            return this.vkQueueSubmit.Invoke(queue, (uint)submits.Length, pSubmits, fence);
+        }
+    }
 
     /// <summary>
     /// Reset a command buffer to the initial state.
@@ -1138,7 +1187,8 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="commandBuffer">The command buffer to reset. The command buffer can be in any state other than <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">pending</see>, and is moved into the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">initial state</see>.</param>
     /// <param name="flags">A bitmask of <see cref="VkCommandBufferResetFlagBits"/> controlling the reset operation.</param>
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
-    public VkResult ResetCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferResetFlags flags) => throw new NotImplementedException();
+    public VkResult ResetCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferResetFlags flags) =>
+        this.vkResetCommandBuffer.Invoke(commandBuffer, flags);
 
     /// <summary>
     /// <para>Resets one or more fence objects.</para>
@@ -1150,7 +1200,24 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="fenceCount">The number of fences to reset.</param>
     /// <param name="pFences">A pointer to an array of fence handles to reset.</param>
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
-    public VkResult ResetFences(VkDevice device, uint fenceCount, VkFence* pFences) => throw new NotImplementedException();
+    public VkResult ResetFences(VkDevice device, uint fenceCount, VkFence* pFences) =>
+        this.vkResetFences.Invoke(device, fenceCount, pFences);
+
+    public VkResult ResetFences(VkDevice device, in VkFence fence)
+    {
+        fixed (VkFence* pFences = &fence)
+        {
+            return this.vkResetFences.Invoke(device, 1, pFences);
+        }
+    }
+
+    public VkResult ResetFences(VkDevice device, VkFence[] fences)
+    {
+        fixed (VkFence* pFences = fences)
+        {
+            return this.vkResetFences.Invoke(device, (uint)fences.Length, pFences);
+        }
+    }
 
     public bool TryGetDeviceExtension<T>(VkPhysicalDevice physicalDevice, VkDevice device, string? layer, [NotNullWhen(true)] out T? extension) where T : class, IVkDeviceExtension
     {
@@ -1198,5 +1265,22 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="waitAll">The condition that must be satisfied to successfully unblock the wait. If waitAll is VK_TRUE, then the condition is that all fences in pFences are signaled. Otherwise, the condition is that at least one fence in pFences is signaled.</param>
     /// <param name="timeout">The timeout period in units of nanoseconds. timeout is adjusted to the closest value allowed by the implementation-dependent timeout accuracy, which may be substantially longer than one nanosecond, and may be longer than the requested period.</param>
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
-    public VkResult WaitForFences(VkDevice device, uint fenceCount, VkFence* pFences, VkBool32 waitAll, ulong timeout) => throw new NotImplementedException();
+    public VkResult WaitForFences(VkDevice device, uint fenceCount, VkFence* pFences, VkBool32 waitAll, ulong timeout) =>
+        this.vkWaitForFences.Invoke(device, fenceCount, pFences, waitAll, timeout);
+
+    public VkResult WaitForFences(VkDevice device, in VkFence fence, VkBool32 waitAll, ulong timeout)
+    {
+        fixed (VkFence* pFences = &fence)
+        {
+            return this.vkWaitForFences.Invoke(device, 1, pFences, waitAll, timeout);
+        }
+    }
+
+    public VkResult WaitForFences(VkDevice device, VkFence[] fences, VkBool32 waitAll, ulong timeout)
+    {
+        fixed (VkFence* pFences = fences)
+        {
+            return this.vkWaitForFences.Invoke(device, (uint)fences.Length, pFences, waitAll, timeout);
+        }
+    }
 }
