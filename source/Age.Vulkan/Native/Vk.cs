@@ -289,6 +289,17 @@ public unsafe class Vk(IVulkanLoader loader)
     public VkResult AllocateCommandBuffers(VkDevice device, VkCommandBufferAllocateInfo* pAllocateInfo, VkCommandBuffer* pCommandBuffers) =>
         this.vkAllocateCommandBuffers.Invoke(device, pAllocateInfo, pCommandBuffers);
 
+    public VkResult AllocateCommandBuffers(VkDevice device, in VkCommandBufferAllocateInfo allocateInfo, out VkCommandBuffer[] commandBuffers)
+    {
+        commandBuffers = new VkCommandBuffer[allocateInfo.commandBufferCount];
+
+        fixed (VkCommandBufferAllocateInfo* pAllocateInfo = &allocateInfo)
+        fixed (VkCommandBuffer* pCommandBuffers           = commandBuffers)
+        {
+            return this.vkAllocateCommandBuffers.Invoke(device, pAllocateInfo, pCommandBuffers);
+        }
+    }
+
     public VkResult AllocateCommandBuffers(VkDevice device, in VkCommandBufferAllocateInfo allocateInfo, out VkCommandBuffer commandBuffers)
     {
         fixed (VkCommandBufferAllocateInfo* pAllocateInfo   = &allocateInfo)

@@ -19,31 +19,35 @@ namespace Age;
 
 public unsafe partial class SimpleEngine : IDisposable
 {
+    private const int MAX_FRAMES_IN_FLIGHT = 2;
+
     private readonly HashSet<string> deviceExtensions = new()
     {
         VkKhrSwapchain.Name
     };
 
-    private readonly bool                enableValidationLayers = Debugger.IsAttached;
-    private readonly HashSet<string>     validationLayers       = new() { "VK_LAYER_KHRONOS_validation" };
+
+    private readonly bool                enableValidationLayers   = Debugger.IsAttached;
+    private readonly VkSemaphore[]       imageAvailableSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkFence[]           inFlightFences           = new VkFence[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkSemaphore[]       renderFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
+    private readonly HashSet<string>     validationLayers         = new() { "VK_LAYER_KHRONOS_validation" };
     private readonly Vk                  vk;
-    private readonly WindowManager       windowManager          = new();
+    private readonly WindowManager       windowManager            = new();
     private readonly WindowsVulkanLoader windowsVulkanLoader;
 
-    private VkCommandBuffer          commandBuffer;
+    private VkCommandBuffer[]        commandBuffers = Array.Empty<VkCommandBuffer>();
     private VkCommandPool            commandPool;
+    private uint                     currentFrame;
     private VkDebugUtilsMessengerEXT debugMessenger;
     private VkDevice                 device;
     private bool                     disposed;
     private VkPipeline               graphicsPipeline;
     private VkQueue                  graphicsQueue;
-    private VkSemaphore              imageAvailableSemaphore;
-    private VkFence                  inFlightFence;
     private VkInstance               instance;
     private VkPhysicalDevice         physicalDevice;
     private VkPipelineLayout         pipelineLayout;
     private VkQueue                  presentQueue;
-    private VkSemaphore              renderFinishedSemaphore;
     private VkRenderPass             renderPass;
     private VkSurfaceKHR             surface;
     private VkSwapchainKHR           swapChain;
@@ -147,9 +151,13 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void Cleanup()
     {
-        this.vk.DestroySemaphore(this.device, this.imageAvailableSemaphore, null);
-        this.vk.DestroySemaphore(this.device, this.renderFinishedSemaphore, null);
-        this.vk.DestroyFence(this.device, this.inFlightFence, null);
+        for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            this.vk.DestroySemaphore(this.device, this.imageAvailableSemaphores[i], null);
+            this.vk.DestroySemaphore(this.device, this.renderFinishedSemaphores[i], null);
+            this.vk.DestroyFence(this.device, this.inFlightFences[i], null);
+        }
+
         this.vk.DestroyCommandPool(this.device, this.commandPool, null);
 
         foreach (var framebuffer in this.swapChainFramebuffers)
@@ -178,16 +186,16 @@ public unsafe partial class SimpleEngine : IDisposable
         this.vk.DestroyInstance(this.instance, null);
     }
 
-    private void CreateCommandBuffer()
+    private void CreateCommandBuffers()
     {
         var allocInfo = new VkCommandBufferAllocateInfo
         {
             commandPool        = this.commandPool,
             level              = VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-            commandBufferCount = 1
+            commandBufferCount = MAX_FRAMES_IN_FLIGHT,
         };
 
-        if (this.vk.AllocateCommandBuffers(this.device, allocInfo, out this.commandBuffer) != VkResult.VK_SUCCESS)
+        if (this.vk.AllocateCommandBuffers(this.device, allocInfo, out this.commandBuffers) != VkResult.VK_SUCCESS)
         {
             throw new Exception("failed to allocate command buffers!");
         }
@@ -697,32 +705,35 @@ public unsafe partial class SimpleEngine : IDisposable
             flags = VkFenceCreateFlagBits.VK_FENCE_CREATE_SIGNALED_BIT
         };
 
-        if (
-            this.vk.CreateSemaphore(this.device, semaphoreInfo, default, out this.imageAvailableSemaphore) != VkResult.VK_SUCCESS ||
-            this.vk.CreateSemaphore(this.device, semaphoreInfo, default, out this.renderFinishedSemaphore) != VkResult.VK_SUCCESS ||
-            this.vk.CreateFence(this.device, fenceInfo, default, out this.inFlightFence) != VkResult.VK_SUCCESS
-        )
+        for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            throw new Exception("failed to create semaphores!");
+            if (
+                this.vk.CreateSemaphore(this.device, semaphoreInfo, default, out this.imageAvailableSemaphores[i]) != VkResult.VK_SUCCESS ||
+                this.vk.CreateSemaphore(this.device, semaphoreInfo, default, out this.renderFinishedSemaphores[i]) != VkResult.VK_SUCCESS ||
+                this.vk.CreateFence(this.device, fenceInfo, default, out this.inFlightFences[i]) != VkResult.VK_SUCCESS
+            )
+            {
+                throw new Exception("failed to create semaphores!");
+            }
         }
     }
 
     private void DrawFrame()
     {
-        this.vk.WaitForFences(this.device, this.inFlightFence, true, ulong.MaxValue);
-        this.vk.ResetFences(this.device, this.inFlightFence);
+        this.vk.WaitForFences(this.device, this.inFlightFences[this.currentFrame], true, ulong.MaxValue);
+        this.vk.ResetFences(this.device, this.inFlightFences[this.currentFrame]);
 
-        this.vkKhrSwapchain.AcquireNextImage(this.device, this.swapChain, ulong.MaxValue, this.imageAvailableSemaphore, default, out var imageIndex);
+        this.vkKhrSwapchain.AcquireNextImage(this.device, this.swapChain, ulong.MaxValue, this.imageAvailableSemaphores[this.currentFrame], default, out var imageIndex);
 
-        this.vk.ResetCommandBuffer(this.commandBuffer, default);
+        this.vk.ResetCommandBuffer(this.commandBuffers[this.currentFrame], default);
 
-        this.RecordCommandBuffer(this.commandBuffer, imageIndex);
+        this.RecordCommandBuffer(this.commandBuffers[this.currentFrame], imageIndex);
 
         var submitInfo = new VkSubmitInfo();
 
         var waitSemaphores = new[]
         {
-            this.imageAvailableSemaphore
+            this.imageAvailableSemaphores[this.currentFrame]
         };
 
         var waitStages = new VkPipelineStageFlags[]
@@ -732,12 +743,12 @@ public unsafe partial class SimpleEngine : IDisposable
 
         var commandBuffers = new[]
         {
-            this.commandBuffer
+            this.commandBuffers[this.currentFrame]
         };
 
         var signalSemaphores = new[]
         {
-            this.renderFinishedSemaphore
+            this.renderFinishedSemaphores[this.currentFrame]
         };
 
         fixed (VkSemaphore*          pWaitSemaphores   = waitSemaphores)
@@ -753,7 +764,7 @@ public unsafe partial class SimpleEngine : IDisposable
             submitInfo.signalSemaphoreCount = 1;
             submitInfo.pSignalSemaphores    = pSignalSemaphores;
 
-            if (this.vk.QueueSubmit(this.graphicsQueue, submitInfo, this.inFlightFence) != VkResult.VK_SUCCESS)
+            if (this.vk.QueueSubmit(this.graphicsQueue, submitInfo, this.inFlightFences[this.currentFrame]) != VkResult.VK_SUCCESS)
             {
                 throw new Exception("failed to submit draw command buffer!");
             }
@@ -788,6 +799,8 @@ public unsafe partial class SimpleEngine : IDisposable
                 this.vkKhrSwapchain.QueuePresent(this.presentQueue, presentInfo);
             }
         }
+
+        this.currentFrame = (this.currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
     private List<string> GetRequiredExtensions()
@@ -851,7 +864,7 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateGraphicsPipeline();
         this.CreateFramebuffers();
         this.CreateCommandPool();
-        this.CreateCommandBuffer();
+        this.CreateCommandBuffers();
         this.CreateSyncObjects();
     }
 
