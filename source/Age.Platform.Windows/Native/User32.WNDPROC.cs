@@ -10,7 +10,6 @@ internal static partial class User32
     [DebuggerDisplay("{Value}")]
     public record struct WNDPROC(nint Value = default)
     {
-        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         public delegate LRESULT Function(HWND hwnd, WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam);
 
         public WNDPROC(Function value) : this(Marshal.GetFunctionPointerForDelegate(value))
@@ -18,11 +17,5 @@ internal static partial class User32
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public static implicit operator nint(WNDPROC value) => value.Value;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public static explicit operator Function(WNDPROC value) => Marshal.GetDelegateForFunctionPointer<Function>(value.Value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public static explicit operator WNDPROC(Function value) => new(value);
     }
 }

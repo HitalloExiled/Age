@@ -6,7 +6,7 @@ using Age.Platform.Windows.Native.Types;
 
 namespace Age.Platform.Windows.Native;
 
-internal static partial class User32
+internal static unsafe partial class User32
 {
     public const uint   HOVER_DEFAULT      = 0xFFFFFFFF;
     public const uint   USER_TIMER_MINIMUM = 0x0000000A;
@@ -43,6 +43,19 @@ internal static partial class User32
     [LibraryImport(nameof(User32))]
     public static partial LRESULT CallWindowProcW(WNDPROC lpPrevWndFunc, HWND hWnd, WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam);
 
+    /// <summary>
+    /// The ClientToScreen function converts the client-area coordinates of a specified point to screen coordinates.
+    /// </summary>
+    /// <param name="hWnd">A handle to the window whose client area is used for the conversion.</param>
+    /// <param name="lpPoint">A pointer to a <see cref="POINT"/> structure that contains the client coordinates to be converted. The new screen coordinates are copied into this structure if the function succeeds.</param>
+    /// <returns>
+    /// If the function succeeds, the return value is nonzero.
+    /// If the function fails, the return value is zero.
+    /// </returns>
+    /// <remarks>
+    /// <para>The <see cref="ClientToScreen"/> function replaces the client-area coordinates in the <see cref="POINT"/> structure with the screen coordinates. The screen coordinates are relative to the upper-left corner of the screen. Note, a screen-coordinate point that is above the window's client area has a negative y-coordinate. Similarly, a screen coordinate to the left of a client area has a negative x-coordinate.</para>
+    /// <para>All coordinates are device coordinates.</para>
+    /// </remarks>
     [LibraryImport(nameof(User32))]
     public static partial BOOL ClientToScreen(HWND hWnd, LPPOINT lpPoint);
 
@@ -50,15 +63,15 @@ internal static partial class User32
     public static partial BOOL ClientToScreen(HWND hWnd, ref POINT lpPoint);
 
     [LibraryImport(nameof(User32))]
-    public static unsafe partial BOOL ClipCursor(RECT* lpRect);
+    public static partial BOOL ClipCursor(RECT* lpRect);
 
     [LibraryImport(nameof(User32))]
-    public static unsafe partial BOOL ClipCursor(in RECT lpRect);
+    public static partial BOOL ClipCursor(in RECT lpRect);
 
     [LibraryImport(nameof(User32))]
-    public static unsafe partial HRGN CreatePolygonRgn(POINT* pptl, int cPoint, FILL_MODE iMode);
+    public static partial HRGN CreatePolygonRgn(POINT* pptl, int cPoint, FILL_MODE iMode);
 
-    public static unsafe HRGN CreatePolygonRgn(POINT[] points, FILL_MODE iMode)
+    public static HRGN CreatePolygonRgn(POINT[] points, FILL_MODE iMode)
     {
         fixed (POINT* pptl = points)
         {
@@ -138,19 +151,7 @@ internal static partial class User32
         LPVOID           lpParam
     );
 
-    /// <inheritdoc cref="CreateWindowExW(WINDOW_STYLES_EX, LPCWSTR, LPCWSTR, WINDOW_STYLES, int, int, int, int, HWND, HMENU, HINSTANCE, LPVOID)"/>
-    /// <param name="className">
-    /// A null-terminated string or a class atom created by a previous call to the <see cref="RegisterClass"/> or <see cref="RegisterClassEx"/> function.
-    /// The atom must be in the low-order word of lpClassName; the high-order word must be zero. If lpClassName is a string, it specifies the window class name.
-    /// The class name can be any name registered with <see cref="RegisterClass"/> or <see cref="RegisterClassEx"/>, provided that the module that registers the class is also the module that creates the window.
-    /// The class name can also be any of the predefined system class names.
-    /// </param>
-    /// <param name="windowName">
-    /// The window name. If the window style specifies a title bar, the window title pointed to by windowName is displayed in the title bar.
-    /// When using CreateWindow to create controls, such as buttons, check boxes, and static controls, use windowName to specify the text of the control. When creating a static control with the SS_ICON style,
-    /// use windowName to specify the icon name or identifier. To specify an identifier, use the syntax "#num".
-    /// </param>
-    public static unsafe HWND CreateWindowExW<T>(
+    public static HWND CreateWindowExW<T>(
         WINDOW_STYLES_EX dwExStyle,
         string?          className,
         string?          windowName,
@@ -165,10 +166,9 @@ internal static partial class User32
         in T             param
     ) where T : unmanaged
     {
-        using var lpClassName  = new LPCWSTR(className);
-        using var lpWindowName = new LPCWSTR(windowName);
-
-        fixed(void* lpParam = &param)
+        fixed (char* lpClassName  = className)
+        fixed (char* lpWindowName = windowName)
+        fixed (void* lpParam      = &param)
         {
             return CreateWindowExW(
                 dwExStyle,
@@ -239,7 +239,7 @@ internal static partial class User32
     public static partial LRESULT DispatchMessageW(in MSG lpMsg);
 
     [LibraryImport(nameof(User32))]
-    public static unsafe partial BOOL EndPaint(HWND hWnd, PAINTSTRUCT* lpPaint);
+    public static partial BOOL EndPaint(HWND hWnd, PAINTSTRUCT* lpPaint);
 
     [LibraryImport(nameof(User32))]
     public static partial BOOL EndPaint(HWND hWnd, in PAINTSTRUCT lpPaint);
@@ -247,21 +247,30 @@ internal static partial class User32
     [LibraryImport(nameof(User32))]
     public static partial BOOL EnumDisplayMonitors(HDC hdc, LPCRECT lprcClip, MONITORENUMPROC lpfnEnum, LPARAM dwData);
 
-    public static unsafe BOOL EnumDisplayMonitors<T>(HDC hdc, in RECT clip, MONITORENUMPROC lpfnEnum, ref T data) where T : unmanaged
+    public static BOOL EnumDisplayMonitors<T>(HDC hdc, in RECT clip, MONITORENUMPROC lpfnEnum, ref T data) where T : unmanaged
     {
-        fixed(RECT* lprcClip = &clip)
-        fixed(T*    dwData   = &data)
+        fixed (RECT* lprcClip = &clip)
+        fixed (T*    dwData   = &data)
         {
             return EnumDisplayMonitors(hdc, clip.Equals(default(RECT)) ? default : (LPCRECT)lprcClip, lpfnEnum, (LPARAM)dwData);
         }
     }
 
     [LibraryImport(nameof(User32))]
-    public static unsafe partial int FillRect(HDC hDC, RECT* lprc, HBRUSH hbr);
+    public static partial int FillRect(HDC hDC, RECT* lprc, HBRUSH hbr);
 
     [LibraryImport(nameof(User32))]
     public static partial int FillRect(HDC hDC, in RECT lprc, HBRUSH hbr);
 
+    /// <summary>
+    /// Retrieves the coordinates of a window's client area. The client coordinates specify the upper-left and lower-right corners of the client area. Because client coordinates are relative to the upper-left corner of a window's client area, the coordinates of the upper-left corner are (0,0).
+    /// </summary>
+    /// <param name="hWnd">A handle to the window whose client coordinates are to be retrieved.</param>
+    /// <param name="lpRect">A pointer to a <see cref="RECT"/> structure that receives the client coordinates. The left and top members are zero. The right and bottom members contain the width and height of the window.</param>
+    /// <returns>
+    /// If the function succeeds, the return value is nonzero.
+    /// If the function fails, the return value is zero. To get extended error information, call <see cref="Kernel32.GetLastError"/>.
+    /// </returns>
     [LibraryImport(nameof(User32))]
     public static partial BOOL GetClientRect(HWND hWnd, LPRECT lpRect);
 
@@ -308,20 +317,10 @@ internal static partial class User32
     [LibraryImport(nameof(User32))]
     public static partial BOOL GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpmi);
 
-
-    public readonly record struct LPMONITORINFO(nint Value = default)
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public static unsafe implicit operator MONITORINFO*(LPMONITORINFO value) => (MONITORINFO*)value.Value;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public static unsafe implicit operator LPMONITORINFO(MONITORINFO* value) => new(new(value));
-    }
-
     [LibraryImport(nameof(User32))]
     public static partial UINT GetRawInputData(HRAWINPUT hRawInput, RAW_INPUT_DATA_COMMAND_FLAGS uiCommand, LPVOID pData, PUINT pcbSize, UINT cbSizeHeader);
 
-    public static unsafe uint GetRawInputData<T>(ref RAWINPUT rawInput, RAW_INPUT_DATA_COMMAND_FLAGS uiCommand, ref T data, ref UINT size, UINT cbSizeHeader) where T : unmanaged
+    public static uint GetRawInputData<T>(ref RAWINPUT rawInput, RAW_INPUT_DATA_COMMAND_FLAGS uiCommand, ref T data, ref UINT size, UINT cbSizeHeader) where T : unmanaged
     {
         fixed (RAWINPUT* pRawInput = &rawInput)
         fixed (void*     pdata     = &data)
@@ -393,10 +392,11 @@ internal static partial class User32
 
     public static int MessageBoxW(HWND hWnd, string text, string caption, MESSAGE_BOX_OPTIONS type)
     {
-        using var lpText    = new LPCWSTR(text);
-        using var lpCaption = new LPCWSTR(caption);
-
-        return MessageBoxW(hWnd, lpText, lpCaption, type);
+        fixed (char* lpText    = text)
+        fixed (char* lpCaption = caption)
+        {
+            return MessageBoxW(hWnd, lpText, lpCaption, type);
+        }
     }
 
     [LibraryImport(nameof(User32))]
@@ -567,9 +567,10 @@ internal static partial class User32
 
     public static BOOL SetWindowTextW(HWND hWnd, string? text)
     {
-        using var lpString = new LPCWSTR(text);
-
-        return SetWindowTextW(hWnd, lpString);
+        fixed (char* lpString = text)
+        {
+            return SetWindowTextW(hWnd, lpString);
+        }
     }
 
     /// <summary>

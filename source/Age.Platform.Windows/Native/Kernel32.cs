@@ -1,9 +1,10 @@
 using System.Runtime.InteropServices;
+using System.Text;
 using Age.Platform.Windows.Native.Types;
 
 namespace Age.Platform.Windows.Native;
 
-internal static partial class Kernel32
+internal unsafe static partial class Kernel32
 {
     /// <summary>
     /// Frees the loaded dynamic-link library (DLL) module and, if necessary, decrements its reference count. When the reference count reaches zero, the module is unloaded from the address space of the calling process and the handle is no longer valid.
@@ -53,9 +54,10 @@ internal static partial class Kernel32
     /// <param name="procName"><inheritdoc cref="GetProcAddress" path="/param[@name='lpProcName']" /></param>
     public static FARPROC GetProcAddress(HMODULE hModule, string procName)
     {
-        using var lpProcName = new LPCSTR(procName);
-
-        return GetProcAddress(hModule, lpProcName);
+        fixed (byte* lpProcName = Encoding.UTF8.GetBytes(procName))
+        {
+            return GetProcAddress(hModule, lpProcName);
+        }
     }
 
     /// <summary>
@@ -94,9 +96,10 @@ internal static partial class Kernel32
     /// <param name="libFileName"><inheritdoc cref="LoadLibraryExW" path="/param[@name='lpLibFileName']" /></param>
     public static HMODULE LoadLibraryExW(string libFileName, HANDLE hFile, LOAD_LIBRARY_FLAGS dwFlags)
     {
-        using var lpLibFileName = new LPCWSTR(libFileName);
-
-        return LoadLibraryExW(lpLibFileName, hFile, dwFlags);
+        fixed (char* lpLibFileName = libFileName)
+        {
+            return LoadLibraryExW(lpLibFileName, hFile, dwFlags);
+        }
     }
 
     /// <summary>
@@ -137,8 +140,9 @@ internal static partial class Kernel32
     /// <param name="libFileName"><inheritdoc cref="LoadLibraryW(LPCWSTR)" path="/param[@name='lpLibFileName']" /></param>
     public static HMODULE LoadLibraryW(string libFileName)
     {
-        using var lpLibFileName = new LPCWSTR(libFileName);
-
-        return LoadLibraryW(lpLibFileName);
+        fixed (char* lpLibFileName = libFileName)
+        {
+            return LoadLibraryW(lpLibFileName);
+        }
     }
 }

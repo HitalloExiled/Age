@@ -82,6 +82,13 @@ public class Window : IDisposable
         {
             switch (msg)
             {
+                case User32.WINDOW_MESSAGE.WM_WINDOWPOSCHANGED:
+                    User32.GetClientRect(hwnd, out var rect);
+
+                    window.Height = rect.bottom - rect.top;
+                    window.Width  = rect.right  - rect.left;
+
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_PAINT:
                     _ = User32.BeginPaint(hwnd, out var ps);
 
