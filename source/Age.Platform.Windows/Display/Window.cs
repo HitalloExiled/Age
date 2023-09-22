@@ -7,6 +7,9 @@ public class Window : IDisposable
 {
     internal event Action<Window>? Destroyed;
 
+    public event Action? WindowClosed;
+    public event Action? SizeChanged;
+
     private static readonly Dictionary<HWND, Window> windows = new();
 
     private bool disposed;
@@ -82,22 +85,39 @@ public class Window : IDisposable
         {
             switch (msg)
             {
-                case User32.WINDOW_MESSAGE.WM_WINDOWPOSCHANGED:
-                    User32.GetClientRect(hwnd, out var rect);
+                case User32.WINDOW_MESSAGE.WM_SIZE:
+                    {
+                        User32.GetWindowPlacement(hwnd, out var placement);
 
-                    window.Height = rect.bottom - rect.top;
-                    window.Width  = rect.right  - rect.left;
+                        window.Maximized = placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMAXIMIZED;
+                        window.Minimized = placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMINIMIZED;
+
+                        var width  = placement.rcNormalPosition.right - placement.rcNormalPosition.left;
+                        var height = placement.rcNormalPosition.bottom - placement.rcNormalPosition.top;
+
+                        if (width != window.Width || height != window.Height)
+                        {
+                            window.Height = height;
+                            window.Width  = width;
+
+                            window.NotifySizeChanged();
+                        }
+                    }
 
                     return 0;
-                case User32.WINDOW_MESSAGE.WM_PAINT:
-                    _ = User32.BeginPaint(hwnd, out var ps);
+                case User32.WINDOW_MESSAGE.WM_MOVING:
+                    {
+                        User32.GetWindowPlacement(hwnd, out var placement);
 
-                    User32.EndPaint(hwnd, ps);
+                        window.X = placement.rcNormalPosition.left;
+                        window.Y = placement.rcNormalPosition.top;
+                    }
+
                     return 0;
                 case User32.WINDOW_MESSAGE.WM_CLOSE:
                     window.Close();
 
-                    return 0;
+                    return User32.DefWindowProcW(hwnd, msg, wParam, lParam);
                 default:
                     break;
             }
@@ -105,6 +125,10 @@ public class Window : IDisposable
 
         return User32.DefWindowProcW(hwnd, msg, wParam, lParam);
     }
+
+    private void NotifySizeChanged() =>
+        this.SizeChanged?.Invoke();
+
 
     protected virtual void Dispose(bool disposing)
     {
@@ -127,6 +151,7 @@ public class Window : IDisposable
         {
             this.Closed = true;
 
+            this.WindowClosed?.Invoke();
             this.Destroyed?.Invoke(this);
 
             User32.DestroyWindow(this.Handle);

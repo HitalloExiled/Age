@@ -42,6 +42,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkDebugUtilsMessengerEXT debugMessenger;
     private VkDevice                 device;
     private bool                     disposed;
+    private bool                     framebufferResized;
     private VkPipeline               graphicsPipeline;
     private VkQueue                  graphicsQueue;
     private VkInstance               instance;
@@ -151,6 +152,12 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void Cleanup()
     {
+        this.CleanupSwapChain();
+
+        this.vk.DestroyPipeline(this.device, this.graphicsPipeline, null);
+        this.vk.DestroyPipelineLayout(this.device, this.pipelineLayout, null);
+        this.vk.DestroyRenderPass(this.device, this.renderPass, null);
+
         for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
             this.vk.DestroySemaphore(this.device, this.imageAvailableSemaphores[i], null);
@@ -159,22 +166,6 @@ public unsafe partial class SimpleEngine : IDisposable
         }
 
         this.vk.DestroyCommandPool(this.device, this.commandPool, null);
-
-        foreach (var framebuffer in this.swapChainFramebuffers)
-        {
-            this.vk.DestroyFramebuffer(this.device, framebuffer, null);
-        }
-
-        this.vk.DestroyPipeline(this.device, this.graphicsPipeline, null);
-        this.vk.DestroyPipelineLayout(this.device, this.pipelineLayout, null);
-        this.vk.DestroyRenderPass(this.device, this.renderPass, null);
-
-        foreach (var imageView in this.swapChainImageViews)
-        {
-            this.vk.DestroyImageView(this.device, imageView, null);
-        }
-
-        this.vkKhrSwapchain.DestroySwapchain(this.device, this.swapChain, null);
         this.vk.DestroyDevice(this.device, null);
 
         if (this.enableValidationLayers && this.vkExtDebugUtils != null)
@@ -184,6 +175,21 @@ public unsafe partial class SimpleEngine : IDisposable
 
         this.vkKhrSurface.DestroySurface(this.instance, this.surface, null);
         this.vk.DestroyInstance(this.instance, null);
+    }
+
+    private void CleanupSwapChain()
+    {
+        for (var i = 0; i < this.swapChainFramebuffers.Length; i++)
+        {
+            this.vk.DestroyFramebuffer(this.device, this.swapChainFramebuffers[i], null);
+        }
+
+        for (var i = 0; i < this.swapChainImageViews.Length; i++)
+        {
+            this.vk.DestroyImageView(this.device, this.swapChainImageViews[i], null);
+        }
+
+        this.vkKhrSwapchain.DestroySwapchain(this.device, this.swapChain, null);
     }
 
     private void CreateCommandBuffers()
@@ -721,10 +727,21 @@ public unsafe partial class SimpleEngine : IDisposable
     private void DrawFrame()
     {
         this.vk.WaitForFences(this.device, this.inFlightFences[this.currentFrame], true, ulong.MaxValue);
+
+        var result = this.vkKhrSwapchain.AcquireNextImage(this.device, this.swapChain, ulong.MaxValue, this.imageAvailableSemaphores[this.currentFrame], default, out var imageIndex);
+
+        if (result == VkResult.VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            this.RecreateSwapChain();
+
+            return;
+        }
+        else if (result is not VkResult.VK_SUCCESS and not VkResult.VK_SUBOPTIMAL_KHR)
+        {
+            throw new Exception("failed to acquire swap chain image!");
+        }
+
         this.vk.ResetFences(this.device, this.inFlightFences[this.currentFrame]);
-
-        this.vkKhrSwapchain.AcquireNextImage(this.device, this.swapChain, ulong.MaxValue, this.imageAvailableSemaphores[this.currentFrame], default, out var imageIndex);
-
         this.vk.ResetCommandBuffer(this.commandBuffers[this.currentFrame], default);
 
         this.RecordCommandBuffer(this.commandBuffers[this.currentFrame], imageIndex);
@@ -796,7 +813,18 @@ public unsafe partial class SimpleEngine : IDisposable
                 presentInfo.pSwapchains    = pSwapchains;
                 presentInfo.pImageIndices  = &imageIndex;
 
-                this.vkKhrSwapchain.QueuePresent(this.presentQueue, presentInfo);
+                result = this.vkKhrSwapchain.QueuePresent(this.presentQueue, presentInfo);
+
+                if (result is VkResult.VK_ERROR_OUT_OF_DATE_KHR or VkResult.VK_SUBOPTIMAL_KHR || framebufferResized)
+                {
+                    framebufferResized = false;
+
+                    this.RecreateSwapChain();
+                }
+                else if (result != VkResult.VK_SUCCESS)
+                {
+                    throw new Exception("failed to present swap chain image!");
+                }
             }
         }
 
@@ -868,8 +896,12 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateSyncObjects();
     }
 
-    private void InitWindow() =>
+    private void InitWindow()
+    {
         this.window = this.windowManager.CreateWindow("Age", 600, 400, 0, 0);
+
+        this.window.SizeChanged += () => this.framebufferResized = true;
+    }
 
     private bool IsDeviceSuitable(VkPhysicalDevice device)
     {
@@ -889,13 +921,18 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void MainLoop()
     {
-        this.window!.Show();
+        this.window.Show();
 
-        while (!this.window.Closed)
+        do
         {
             this.window.DoEvents();
-            this.DrawFrame();
+
+            if (!this.window.Closed)
+            {
+                this.DrawFrame();
+            }
         }
+        while (!this.window.Closed);
 
         this.vk.DeviceWaitIdle(this.device);
     }
@@ -1004,6 +1041,22 @@ public unsafe partial class SimpleEngine : IDisposable
         {
             throw new Exception("failed to record command buffer!");
         }
+    }
+
+    private void RecreateSwapChain()
+    {
+        while (window.Minimized)
+        {
+            window.DoEvents();
+        }
+
+        this.vk.DeviceWaitIdle(this.device);
+
+        this.CleanupSwapChain();
+
+        this.CreateSwapChain();
+        this.CreateImageViews();
+        this.CreateFramebuffers();
     }
 
     private void SetupDebugMessenger()

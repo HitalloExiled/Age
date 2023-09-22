@@ -342,6 +342,24 @@ internal static unsafe partial class User32
     [LibraryImport(nameof(User32))]
     public static partial LONG_PTR GetWindowLongPtrW(HWND hWnd, WINDOW_LONG_INDEX nIndex);
 
+    /// <summary>
+    /// Retrieves the show state and the restored, minimized, and maximized positions of the specified window.
+    /// </summary>
+    /// <param name="hWnd">A handle to the window.</param>
+    /// <param name="*lpwndpl">A pointer to the <see cref="WINDOWPLACEMENT"/> structure that receives the show state and position information. Before calling <see cref="GetWindowPlacement"/>, set the length member to sizeof(WINDOWPLACEMENT). <see cref="GetWindowPlacement"/> fails if lpwndpl-> length is not set correctly.</param>
+    /// <returns></returns>
+    [LibraryImport(nameof(User32))]
+    public static partial BOOL GetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static BOOL GetWindowPlacement(HWND hWnd, out WINDOWPLACEMENT wndpl)
+    {
+        fixed (WINDOWPLACEMENT* lpwndpl = &wndpl)
+        {
+            return GetWindowPlacement(hWnd, lpwndpl);
+        }
+    }
+
     [LibraryImport(nameof(User32))]
     public static partial BOOL GetWindowRect(HWND hWnd, LPRECT lpRect);
 
