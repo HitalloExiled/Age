@@ -24,6 +24,16 @@ public unsafe class Vk(IVulkanLoader loader)
     public const uint VK_MAX_EXTENSION_NAME_SIZE = 256;
 
     /// <summary>
+    /// The length of an array of VkMemoryHeap structures describing memory heaps, as returned in <see cref="VkPhysicalDeviceMemoryProperties.memoryHeaps"/>.
+    /// </summary>
+    public const uint VK_MAX_MEMORY_HEAPS = 16;
+
+    /// <summary>
+    /// The length of an array of VkMemoryType structures describing memory types, as returned in <see cref="VkPhysicalDeviceMemoryProperties.memoryTypes"/>.
+    /// </summary>
+    public const uint VK_MAX_MEMORY_TYPES = 32;
+
+    /// <summary>
     /// The length in char values of an array containing a physical device name string, as returned in <see cref="VkPhysicalDeviceProperties.deviceName"/>.
     /// </summary>
     public const uint VK_MAX_PHYSICAL_DEVICE_NAME_SIZE = 256;
@@ -42,13 +52,22 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkAllocateCommandBuffers(VkDevice device, VkCommandBufferAllocateInfo* pAllocateInfo, VkCommandBuffer* pCommandBuffers);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkAllocateMemory(VkDevice device, VkMemoryAllocateInfo* pAllocateInfo, VkAllocationCallbacks* pAllocator, VkDeviceMemory* pMemory);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkBeginCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferBeginInfo* pBeginInfo);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkBindBufferMemory(VkDevice device, VkBuffer buffer, VkDeviceMemory memory, VkDeviceSize memoryOffset);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdBeginRenderPass(VkCommandBuffer commandBuffer, VkRenderPassBeginInfo* pRenderPassBegin, VkSubpassContents contents);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdBindVertexBuffers(VkCommandBuffer commandBuffer, uint firstBinding, uint bindingCount, VkBuffer* pBuffers, VkDeviceSize* pOffsets);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdDraw(VkCommandBuffer commandBuffer, uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance);
@@ -61,6 +80,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdSetViewport(VkCommandBuffer commandBuffer, uint firstViewport, uint viewportCount, VkViewport* pViewports);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkCreateBuffer(VkDevice device, VkBufferCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkBuffer* pBuffer);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateCommandPool(VkDevice device, VkCommandPoolCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkCommandPool* pCommandPool);
@@ -94,6 +116,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateShaderModule(VkDevice device, VkShaderModuleCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkShaderModule* pShaderModule);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkDestroyBuffer(VkDevice device, VkBuffer buffer, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyCommandPool(VkDevice device, VkCommandPool commandPool, VkAllocationCallbacks* pAllocator);
@@ -147,6 +172,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkEnumeratePhysicalDevices(VkInstance instance, uint* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkFreeMemory(VkDevice device, VkDeviceMemory memory, VkAllocationCallbacks* pAllocator);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void* VkGetDeviceProcAddr(VkDevice device, byte* pName);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -156,13 +184,22 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate void* VkGetInstanceProcAddr(VkInstance instance, byte* pName);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkGetBufferMemoryRequirements(VkDevice device, VkBuffer buffer, VkMemoryRequirements* pMemoryRequirements);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties* pMemoryProperties);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkGetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* pProperties);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, uint* pQueueFamilyPropertyCount, VkQueueFamilyProperties* pQueueFamilyProperties);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags, void** ppData);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkQueueSubmit(VkQueue queue, uint submitCount, VkSubmitInfo* pSubmits, VkFence fence);
@@ -174,19 +211,26 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkResetFences(VkDevice device, uint fenceCount, VkFence* pFences);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkUnmapMemory(VkDevice device, VkDeviceMemory memory);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkWaitForFences(VkDevice device, uint fenceCount, VkFence* pFences, VkBool32 waitAll, ulong timeout);
 
     private readonly Dictionary<string, HashSet<string>> deviceExtensionsMap   = new();
     private readonly Dictionary<string, HashSet<string>> instanceExtensionsMap = new();
 
     private readonly VkAllocateCommandBuffers                 vkAllocateCommandBuffers                 = loader.Load<VkAllocateCommandBuffers>("vkAllocateCommandBuffers");
+    private readonly VkAllocateMemory                         vkAllocateMemory                         = loader.Load<VkAllocateMemory>("vkAllocateMemory");
     private readonly VkBeginCommandBuffer                     vkBeginCommandBuffer                     = loader.Load<VkBeginCommandBuffer>("vkBeginCommandBuffer");
+    private readonly VkBindBufferMemory                       vkBindBufferMemory                       = loader.Load<VkBindBufferMemory>("vkBindBufferMemory");
     private readonly VkCmdBeginRenderPass                     vkCmdBeginRenderPass                     = loader.Load<VkCmdBeginRenderPass>("vkCmdBeginRenderPass");
     private readonly VkCmdBindPipeline                        vkCmdBindPipeline                        = loader.Load<VkCmdBindPipeline>("vkCmdBindPipeline");
+    private readonly VkCmdBindVertexBuffers                   vkCmdBindVertexBuffers                   = loader.Load<VkCmdBindVertexBuffers>("vkCmdBindVertexBuffers");
     private readonly VkCmdDraw                                vkCmdDraw                                = loader.Load<VkCmdDraw>("vkCmdDraw");
     private readonly VkCmdEndRenderPass                       vkCmdEndRenderPass                       = loader.Load<VkCmdEndRenderPass>("vkCmdEndRenderPass");
     private readonly VkCmdSetScissor                          vkCmdSetScissor                          = loader.Load<VkCmdSetScissor>("vkCmdSetScissor");
     private readonly VkCmdSetViewport                         vkCmdSetViewport                         = loader.Load<VkCmdSetViewport>("vkCmdSetViewport");
+    private readonly VkCreateBuffer                           vkCreateBuffer                           = loader.Load<VkCreateBuffer>("vkCreateBuffer");
     private readonly VkCreateCommandPool                      vkCreateCommandPool                      = loader.Load<VkCreateCommandPool>("vkCreateCommandPool");
     private readonly VkCreateDevice                           vkCreateDevice                           = loader.Load<VkCreateDevice>("vkCreateDevice");
     private readonly VkCreateFence                            vkCreateFence                            = loader.Load<VkCreateFence>("vkCreateFence");
@@ -198,6 +242,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCreateRenderPass                       vkCreateRenderPass                       = loader.Load<VkCreateRenderPass>("vkCreateRenderPass");
     private readonly VkCreateSemaphore                        vkCreateSemaphore                        = loader.Load<VkCreateSemaphore>("vkCreateSemaphore");
     private readonly VkCreateShaderModule                     vkCreateShaderModule                     = loader.Load<VkCreateShaderModule>("vkCreateShaderModule");
+    private readonly VkDestroyBuffer                          vkDestroyBuffer                          = loader.Load<VkDestroyBuffer>("vkDestroyBuffer");
     private readonly VkDestroyCommandPool                     vkDestroyCommandPool                     = loader.Load<VkDestroyCommandPool>("vkDestroyCommandPool");
     private readonly VkDestroyDevice                          vkDestroyDevice                          = loader.Load<VkDestroyDevice>("vkDestroyDevice");
     private readonly VkDestroyFence                           vkDestroyFence                           = loader.Load<VkDestroyFence>("vkDestroyFence");
@@ -215,15 +260,20 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties   = loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
     private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties       = loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
     private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices               = loader.Load<VkEnumeratePhysicalDevices>("vkEnumeratePhysicalDevices");
+    private readonly VkFreeMemory                             vkFreeMemory                             = loader.Load<VkFreeMemory>("vkFreeMemory");
     private readonly VkGetDeviceProcAddr                      vkGetDeviceProcAddr                      = loader.Load<VkGetDeviceProcAddr>("vkGetDeviceProcAddr");
     private readonly VkGetDeviceQueue                         vkGetDeviceQueue                         = loader.Load<VkGetDeviceQueue>("vkGetDeviceQueue");
     private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr                    = loader.Load<VkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+    private readonly VkGetBufferMemoryRequirements            vkGetBufferMemoryRequirements            = loader.Load<VkGetBufferMemoryRequirements>("vkGetBufferMemoryRequirements");
     private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures              = loader.Load<VkGetPhysicalDeviceFeatures>("vkGetPhysicalDeviceFeatures");
+    private readonly VkGetPhysicalDeviceMemoryProperties      vkGetPhysicalDeviceMemoryProperties      = loader.Load<VkGetPhysicalDeviceMemoryProperties>("vkGetPhysicalDeviceMemoryProperties");
     private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties            = loader.Load<VkGetPhysicalDeviceProperties>("vkGetPhysicalDeviceProperties");
     private readonly VkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = loader.Load<VkGetPhysicalDeviceQueueFamilyProperties>("vkGetPhysicalDeviceQueueFamilyProperties");
+    private readonly VkMapMemory                              vkMapMemory                              = loader.Load<VkMapMemory>("vkMapMemory");
     private readonly VkQueueSubmit                            vkQueueSubmit                            = loader.Load<VkQueueSubmit>("vkQueueSubmit");
     private readonly VkResetCommandBuffer                     vkResetCommandBuffer                     = loader.Load<VkResetCommandBuffer>("vkResetCommandBuffer");
     private readonly VkResetFences                            vkResetFences                            = loader.Load<VkResetFences>("vkResetFences");
+    private readonly VkUnmapMemory                            vkUnmapMemory                            = loader.Load<VkUnmapMemory>("vkUnmapMemory");
     private readonly VkWaitForFences                          vkWaitForFences                          = loader.Load<VkWaitForFences>("vkWaitForFences");
 
     public static uint ApiVersion_1_0 { get; } = MakeApiVersion(0, 1, 0, 0);
@@ -310,6 +360,38 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// <para>Allocate device memory.</para>
+    /// <para>Allocations returned by <see cref="AllocateMemory"/> are guaranteed to meet any alignment requirement of the implementation. For example, if an implementation requires 128 byte alignment for images and 64 byte alignment for buffers, the device memory returned through this mechanism would be 128-byte aligned. This ensures that applications can correctly suballocate objects of different types (with potentially different alignment requirements) in the same memory object.</para>
+    /// <para>When memory is allocated, its contents are undefined with the following constraint:</para>
+    /// <para>The contents of unprotected memory must not be a function of the contents of data protected memory objects, even if those memory objects were previously freed.</para>
+    /// <remarks>Note: The contents of memory allocated by one application should not be a function of data from protected memory objects of another application, even if those memory objects were previously freed.</remarks>
+    /// <para>The maximum number of valid memory allocations that can exist simultaneously within a <see cref="VkDevice"/> may be restricted by implementation- or platform-dependent limits. The maxMemoryAllocationCount feature describes the number of allocations that can exist simultaneously before encountering these internal limits.</para>
+    /// <remarks>Note: For historical reasons, if maxMemoryAllocationCount is exceeded, some implementations may return <see cref="VkResult.VK_ERROR_TOO_MANY_OBJECTS"/>. Exceeding this limit will result in undefined behavior, and an application should not rely on the use of the returned error code in order to identify when the limit is reached.</remarks>
+    /// <remarks>Note: Many protected memory implementations involve complex hardware and system software support, and often have additional and much lower limits on the number of simultaneous protected memory allocations (from memory types with the <see cref="VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_PROTECTED_BIT"/> property) than for non-protected memory allocations. These limits can be system-wide, and depend on a variety of factors outside of the Vulkan implementation, so they cannot be queried in Vulkan. Applications should use as few allocations as possible from such memory types by suballocating aggressively, and be prepared for allocation failure even when there is apparently plenty of capacity remaining in the memory heap. As a guideline, the Vulkan conformance test suite requires that at least 80 minimum-size allocations can exist concurrently when no other uses of protected memory are active in the system.</remarks>
+    /// <para>Some platforms may have a limit on the maximum size of a single allocation. For example, certain systems may fail to create allocations with a size greater than or equal to 4GB. Such a limit is implementation-dependent, and if such a failure occurs then the error <see cref="VkResult.VK_ERROR_OUT_OF_DEVICE_MEMORY"/> must be returned. This limit is advertised in <see cref="VkPhysicalDeviceMaintenance3Properties.maxMemoryAllocationSize"/>.</para>
+    /// <para>The cumulative memory size allocated to a heap can be limited by the size of the specified heap. In such cases, allocated memory is tracked on a per-device and per-heap basis. Some platforms allow overallocation into other heaps. The overallocation behavior can be specified through the <see cref="VkAmdMemoryOverallocationBehavior"/> extension.</para>
+    /// <para>If the <see cref="VkPhysicalDevicePageableDeviceLocalMemoryFeaturesEXT.pageableDeviceLocalMemory"/> feature is enabled, memory allocations made from a heap that includes <see cref="VkMemoryHeapFlagBits.VK_MEMORY_HEAP_DEVICE_LOCAL_BIT"/> in <see cref="VkMemoryHeap.flags"/> may be transparently moved to host-local memory allowing multiple applications to share device-local memory. If there is no space left in device-local memory when this new allocation is made, other allocations may be moved out transparently to make room. The operating system will determine which allocations to move to device-local memory or host-local memory based on platform-specific criteria. To help the operating system make good choices, the application should set the appropriate memory priority with <see cref="VkMemoryPriorityAllocateInfoEXT"/> and adjust it as necessary with <see cref="VkExtPageableDeviceLocalMemory.SetDeviceMemoryPriority"/>. Higher priority allocations will moved to device-local memory first.</para>
+    /// <para>Memory allocations made on heaps without the <see cref="VkMemoryHeapFlagBits.VK_MEMORY_HEAP_DEVICE_LOCAL_BIT"/> property will not be transparently promoted to device-local memory by the operating system.</para>
+    /// </summary>
+    /// <param name="device">The logical device that owns the memory.</param>
+    /// <param name="pAllocateInfo">A pointer to a <see cref="VkMemoryAllocateInfo"/> structure describing parameters of the allocation. A successfully returned allocation must use the requested parameters — no substitution is permitted by the implementation.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pMemory">A pointer to a VkDeviceMemory handle in which information about the allocated memory is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult AllocateMemory(VkDevice device, VkMemoryAllocateInfo* pAllocateInfo, VkAllocationCallbacks* pAllocator, VkDeviceMemory* pMemory) =>
+        this.vkAllocateMemory.Invoke(device, pAllocateInfo, pAllocator, pMemory);
+
+    public VkResult AllocateMemory(VkDevice device, in VkMemoryAllocateInfo allocateInfo, in VkAllocationCallbacks allocator, out VkDeviceMemory memory)
+    {
+        fixed (VkMemoryAllocateInfo*  pAllocateInfo = &allocateInfo)
+        fixed (VkAllocationCallbacks* pAllocator    = &allocator)
+        fixed (VkDeviceMemory*        pMemory       = &memory)
+        {
+            return this.vkAllocateMemory.Invoke(device, pAllocateInfo, NullIfDefault(allocator, pAllocator), pMemory);
+        }
+    }
+
+    /// <summary>
     /// Start recording a command buffer.
     /// </summary>
     /// <param name="commandBuffer">The handle of the command buffer which is to be put in the recording state.</param>
@@ -325,6 +407,18 @@ public unsafe class Vk(IVulkanLoader loader)
             return this.vkBeginCommandBuffer.Invoke(commandBuffer, pBeginInfo);
         }
     }
+
+    /// <summary>
+    /// <para>Bind device memory to a buffer object.</para>
+    /// <para><see cref="BindBufferMemory"/> is equivalent to passing the same parameters through <see cref="BindBufferMemoryInfo"/> to <see cref="BindBufferMemory2"/>.</para>
+    /// </summary>
+    /// <param name="device">The logical device that owns the buffer and memory.</param>
+    /// <param name="buffer">The buffer to be attached to memory.</param>
+    /// <param name="memory">A <see cref="VkDeviceMemory"/> object describing the device memory to attach.</param>
+    /// <param name="memoryOffset">The start offset of the region of memory which is to be bound to the buffer. The number of bytes returned in the <see cref="VkMemoryRequirements.size"/> member in memory, starting from memoryOffset bytes, will be bound to the specified buffer.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult BindBufferMemory(VkDevice device, VkBuffer buffer, VkDeviceMemory memory, VkDeviceSize memoryOffset) =>
+        this.vkBindBufferMemory.Invoke(device, buffer, memory, memoryOffset);
 
     /// <summary>
     /// Begin a new render pass.
@@ -346,7 +440,7 @@ public unsafe class Vk(IVulkanLoader loader)
 
     /// <summary>
     /// <para>Bind a pipeline object to a command buffer.</para>
-    /// <para>Once bound, a pipeline binding affects subsequent commands that interact with the given pipeline type in the command buffer until a different pipeline of the same type is bound to the bind point, or until the pipeline bind point is disturbed by binding a <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-objects">shader object</see> as described in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-objects-pipeline-interaction">Interaction with Pipelines</see>. Commands that do not interact with the <see href="<see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-binding">given pipeline</see>">given pipeline</see> type must not be affected by the pipeline state.</para>
+    /// <para>Once bound, a pipeline binding affects subsequent commands that interact with the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-binding">given pipeline</see> type in the command buffer until a different pipeline of the same type is bound to the bind point, or until the pipeline bind point is disturbed by binding a <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-objects">shader object</see> as described in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-objects-pipeline-interaction">Interaction with Pipelines</see>. Commands that do not interact with the given pipeline type must not be affected by the pipeline state.</para>
     /// </summary>
     /// <param name="commandBuffer">The command buffer that the pipeline will be bound to.</param>
     /// <param name="pipelineBindPoint">A VkPipelineBindPoint value specifying to which bind point the pipeline is bound. Binding one does not disturb the others.</param>
@@ -354,6 +448,28 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void CmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline) =>
         this.vkCmdBindPipeline.Invoke(commandBuffer, pipelineBindPoint, pipeline);
+
+    /// <summary>
+    /// Bind vertex buffers to a command buffer.
+    /// The values taken from elements i of pBuffers and pOffsets replace the current state for the vertex input binding firstBinding + i, for i in [0, bindingCount). The vertex input binding is updated to start at the offset indicated by pOffsets[i] from the start of the buffer pBuffers[i]. All vertex input attributes that use each of these bindings will use these updated addresses in their address calculations for subsequent drawing commands. If the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#features-nullDescriptor">nullDescriptor</see> feature is enabled, elements of pBuffers can be VK_NULL_HANDLE, and can be used by the vertex shader. If a vertex input attribute is bound to a vertex input binding that is VK_NULL_HANDLE, the values taken from memory are considered to be zero, and missing G, B, or A components are <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdBindVertexBuffers.html#fxvertex-input-extraction">filled with (0,0,1)</see>.
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer into which the command is recorded.</param>
+    /// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
+    /// <param name="bindingCount">The number of vertex input bindings whose state is updated by the command.</param>
+    /// <param name="pBuffers">A pointer to an array of buffer handles.</param>
+    /// <param name="pOffsets">A pointer to an array of buffer offsets.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdBindVertexBuffers(VkCommandBuffer commandBuffer, uint firstBinding, uint bindingCount, VkBuffer* pBuffers, VkDeviceSize* pOffsets) =>
+        this.vkCmdBindVertexBuffers.Invoke(commandBuffer, firstBinding, bindingCount, pBuffers, pOffsets);
+
+    public void CmdBindVertexBuffers(VkCommandBuffer commandBuffer, uint firstBinding, VkBuffer[] buffers, VkDeviceSize[] offsets)
+    {
+        fixed (VkBuffer*     pBuffers = buffers)
+        fixed (VkDeviceSize* pOffsets = offsets)
+        {
+            this.vkCmdBindVertexBuffers.Invoke(commandBuffer, firstBinding, (uint)buffers.Length, pBuffers, pOffsets);
+        }
+    }
 
     /// <summary>
     /// <para>Draw primitives.</para>
@@ -420,12 +536,33 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Create a new buffer object.
+    /// </summary>
+    /// <param name="device">The logical device that creates the buffer object.</param>
+    /// <param name="pCreateInfo">A pointer to a <see cref="VkBufferCreateInfo"/> structure containing parameters affecting creation of the buffer.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pBuffer">A pointer to a <see cref="VkBuffer"/> handle in which the resulting buffer object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult CreateBuffer(VkDevice device, VkBufferCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkBuffer* pBuffer) =>
+        this.vkCreateBuffer.Invoke(device, pCreateInfo, pAllocator, pBuffer);
+
+    public VkResult CreateBuffer(VkDevice device, in VkBufferCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkBuffer buffer)
+    {
+        fixed (VkBufferCreateInfo*    pCreateInfo = &createInfo)
+        fixed (VkAllocationCallbacks* pAllocator  = &allocator)
+        fixed (VkBuffer*              pBuffer     = &buffer)
+        {
+            return this.vkCreateBuffer.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pBuffer);
+        }
+    }
+
+    /// <summary>
     /// Create a new command pool object.
     /// </summary>
-    /// <param name="device">the logical device that creates the command pool.</param>
-    /// <param name="pCreateInfo">a pointer to a VkCommandPoolCreateInfo structure specifying the state of the command pool object.</param>
-    /// <param name="pAllocator">controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
-    /// <param name="pCommandPool">a pointer to a <see cref="VkCommandPool"/> handle in which the created pool is returned.</param>
+    /// <param name="device">The logical device that creates the command pool.</param>
+    /// <param name="pCreateInfo">A pointer to a VkCommandPoolCreateInfo structure specifying the state of the command pool object.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pCommandPool">A pointer to a <see cref="VkCommandPool"/> handle in which the created pool is returned.</param>
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public VkResult CreateCommandPool(VkDevice device, VkCommandPoolCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkCommandPool* pCommandPool) =>
         this.vkCreateCommandPool.Invoke(device, pCreateInfo, pAllocator, pCommandPool);
@@ -637,6 +774,24 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Destroy a buffer object.
+    /// </summary>
+    /// <param name="device">The logical device that destroys the buffer.</param>
+    /// <param name="buffer">The buffer to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void DestroyBuffer(VkDevice device, VkBuffer buffer, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroyBuffer.Invoke(device, buffer, pAllocator);
+
+    public void DestroyBuffer(VkDevice device, VkBuffer buffer, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkDestroyBuffer.Invoke(device, buffer, NullIfDefault(allocator, pAllocator));
+        }
+    }
+
+    /// <summary>
     /// <para>Destroy a command pool object</para>
     /// <para>When a pool is destroyed, all command buffers allocated from the pool are freed.</para>
     /// <para>Any primary command buffer allocated from another <see cref="VkCommandPool"/> that is in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">recording or executable state</see> and has a secondary command buffer allocated from commandPool recorded into it, becomes <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">invalid</see>.</para>
@@ -688,7 +843,7 @@ public unsafe class Vk(IVulkanLoader loader)
     {
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
-            this.vkDestroyFence.Invoke(device, fence, pAllocator);
+            this.vkDestroyFence.Invoke(device, fence, NullIfDefault(allocator, pAllocator));
         }
     }
 
@@ -724,7 +879,7 @@ public unsafe class Vk(IVulkanLoader loader)
     {
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
-            this.vkDestroyImageView.Invoke(device, imageView, pAllocator);
+            this.vkDestroyImageView.Invoke(device, imageView, NullIfDefault(allocator, pAllocator));
         }
     }
 
@@ -1010,6 +1165,27 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// <para>Free device memory.</para>
+    /// <para>Before freeing a memory object, an application must ensure the memory object is no longer in use by the device — for example by command buffers in the pending state. Memory can be freed whilst still bound to resources, but those resources must not be used afterwards. Freeing a memory object releases the reference it held, if any, to its payload. If there are still any bound images or buffers, the memory object’s payload may not be immediately released by the implementation, but must be released by the time all bound images and buffers have been destroyed. Once all references to a payload are released, it is returned to the heap from which it was allocated.</para>
+    /// <para>How memory objects are bound to Images and Buffers is described in detail in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#resources-association">Resource Memory Association</see> section.</para>
+    /// <para>If a memory object is mapped at the time it is freed, it is implicitly unmapped.</para>
+    /// <remarks>Note: As described above, host writes are not implicitly flushed when the memory object is unmapped, but the implementation must guarantee that writes that have not been flushed do not affect any other memory.</remarks>
+    /// </summary>
+    /// <param name="device">The logical device that owns the memory.</param>
+    /// <param name="memory">The <see cref="VkDeviceMemory"/> object to be freed.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    public void FreeMemory(VkDevice device, VkDeviceMemory memory, VkAllocationCallbacks* pAllocator) =>
+        this.vkFreeMemory.Invoke(device, memory, pAllocator);
+
+    public void FreeMemory(VkDevice device, VkDeviceMemory memory, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkFreeMemory.Invoke(device, memory, NullIfDefault(allocator, pAllocator));
+        }
+    }
+
+    /// <summary>
     /// In order to support systems with multiple Vulkan implementations, the function pointers returned by <see cref="GetInstanceProcAddr"/> may point to dispatch code that calls a different real implementation for different <see cref="VkDevice"/> objects or their child objects. The overhead of the internal dispatch for <see cref="VkDevice"/> objects can be avoided by obtaining device-specific function pointers for any commands that use a device or device-child object as their dispatchable object.
     /// </summary>
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
@@ -1070,6 +1246,25 @@ public unsafe class Vk(IVulkanLoader loader)
         }
     }
 
+
+    /// <summary>
+    /// Returns the memory requirements for specified Vulkan object.
+    /// </summary>
+    /// <param name="device">The logical device that owns the buffer.</param>
+    /// <param name="buffer">The buffer to query.</param>
+    /// <param name="pMemoryRequirements">A pointer to a <see cref="VkMemoryRequirements"/> structure in which the memory requirements of the buffer object are returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void GetBufferMemoryRequirements(VkDevice device, VkBuffer buffer, VkMemoryRequirements* pMemoryRequirements) =>
+        this.vkGetBufferMemoryRequirements.Invoke(device, buffer, pMemoryRequirements);
+
+    public void GetBufferMemoryRequirements(VkDevice device, VkBuffer buffer, out VkMemoryRequirements memoryRequirements)
+    {
+        fixed (VkMemoryRequirements* pMemoryRequirements = &memoryRequirements)
+        {
+            this.vkGetBufferMemoryRequirements.Invoke(device, buffer, pMemoryRequirements);
+        }
+    }
+
     /// <summary>
     /// <para>Reports capabilities of a physical device.</para>
     /// <para><see cref="GetInstanceProcAddr"/> itself is obtained in a platform- and loader- specific manner. Typically, the loader library will export this command as a function symbol, so applications can link against the loader library, or load it dynamically and look up the symbol using platform-specific APIs.</para>
@@ -1085,6 +1280,23 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkPhysicalDeviceFeatures* pFeatures = &features)
         {
             this.vkGetPhysicalDeviceFeatures.Invoke(physicalDevice, pFeatures);
+        }
+    }
+
+    /// <summary>
+    /// Reports memory information for the specified physical device.
+    /// </summary>
+    /// <param name="physicalDevice">The handle to the device to query.</param>
+    /// <param name="pMemoryProperties">A pointer to a <see cref="VkPhysicalDeviceMemoryProperties"/> structure in which the properties are returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void GetPhysicalDeviceMemoryProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties* pMemoryProperties) =>
+        this.vkGetPhysicalDeviceMemoryProperties.Invoke(physicalDevice, pMemoryProperties);
+
+    public void GetPhysicalDeviceMemoryProperties(VkPhysicalDevice physicalDevice, out VkPhysicalDeviceMemoryProperties memoryProperties)
+    {
+        fixed (VkPhysicalDeviceMemoryProperties* pMemoryProperties = &memoryProperties)
+        {
+            this.vkGetPhysicalDeviceMemoryProperties.Invoke(physicalDevice, pMemoryProperties);
         }
     }
 
@@ -1157,6 +1369,38 @@ public unsafe class Vk(IVulkanLoader loader)
         }
 
         return extensions.Contains(name);
+    }
+
+    /// <summary>
+    /// Map a memory object into application address space.
+    /// After a successful call to <see cref="MapMemory"/> the memory object memory is considered to be currently host mapped.
+    /// Note: It is an application error to call <see cref="MapMemory"/> on a memory object that is already host mapped.
+    /// Note: <see cref="MapMemory"/> will fail if the implementation is unable to allocate an appropriately sized contiguous virtual address range, e.g. due to virtual address space fragmentation or platform limits. In such cases, vkMapMemory must return <see cref="VkResult.VK_ERROR_MEMORY_MAP_FAILED"/>. The application can improve the likelihood of success by reducing the size of the mapped range and/or removing unneeded mappings using <see cref="UnmapMemory"/>.
+    /// <see cref="MapMemory"/> does not check whether the device memory is currently in use before returning the host-accessible pointer. The application must guarantee that any previously submitted command that writes to this range has completed before the host reads from or writes to that range, and that any previously submitted command that reads from that range has completed before the host writes to that region (see here for details on fulfilling such a guarantee). If the device memory was allocated without the <see cref="VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT"/> set, these guarantees must be made for an extended range: the application must round down the start of the range to the nearest multiple of <see cref="VkPhysicalDeviceLimits.nonCoherentAtomSize"/>, and round the end of the range up to the nearest multiple of <see cref="VkPhysicalDeviceLimits.nonCoherentAtomSize"/>.
+    /// While a range of device memory is host mapped, the application is responsible for synchronizing both device and host access to that memory range.
+    /// Note: It is important for the application developer to become meticulously familiar with all of the mechanisms described in the chapter on <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization">Synchronization and Cache Control</see> as they are crucial to maintaining memory access ordering.
+    /// Calling <see cref="MapMemory"/> is equivalent to calling <see cref="VkKhrMapMemory2.MapMemory2"/> with an empty pNext chain.
+    /// </summary>
+    /// <param name="device">The logical device that owns the memory.</param>
+    /// <param name="memory">The <see cref="VkDeviceMemory"/> object to be mapped.</param>
+    /// <param name="offset">A zero-based byte offset from the beginning of the memory object.</param>
+    /// <param name="size">The size of the memory range to map, or VK_WHOLE_SIZE to map from offset to the end of the allocation.</param>
+    /// <param name="flags">Reserved for future use.</param>
+    /// <param name="ppData">A pointer to a void* variable in which a host-accessible pointer to the beginning of the mapped range is returned. This pointer minus offset must be aligned to at least <see cref="VkPhysicalDeviceLimits.minMemoryMapAlignment"/>.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult MapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags, void** ppData) =>
+        this.vkMapMemory.Invoke(device, memory, offset, size, flags, ppData);
+
+    public VkResult MapMemory<T>(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkMemoryMapFlags flags, T[] data) where T : unmanaged
+    {
+        var ppData = stackalloc T*[data.Length];
+
+        if (this.vkMapMemory.Invoke(device, memory, offset, (ulong)(Marshal.SizeOf<T>() * data.Length), flags, (void**)ppData) is var result && result == VkResult.VK_SUCCESS)
+        {
+            Copy(data, *ppData, data.Length);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -1261,6 +1505,16 @@ public unsafe class Vk(IVulkanLoader loader)
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool TryGetInstanceExtension<T>(VkInstance instance, [NotNullWhen(true)] out T? extension) where T : class, IVkInstanceExtension =>
         this.TryGetInstanceExtension(instance, null, out extension);
+
+    /// <summary>
+    /// <para>Unmap a previously mapped memory object.</para>
+    /// <para>Calling <see cref="UnmapMemory"/> is equivalent to calling <see cref="VkKhrMapMemory2.UnmapMemory2"/> with an empty pNext chain and the flags parameter set to zero.</para>
+    /// </summary>
+    /// <param name="device">The logical device that owns the memory.</param>
+    /// <param name="memory">A pointer to a <see cref="VkMemoryUnmapInfoKHR"/> structure describing parameters of the unmap.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void UnmapMemory(VkDevice device, VkDeviceMemory memory) =>
+        this.vkUnmapMemory.Invoke(device, memory);
 
     /// <summary>
     /// <para>Wait for one or more fences to become signaled.</para>

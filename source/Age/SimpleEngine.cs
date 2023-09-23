@@ -35,6 +35,12 @@ public unsafe partial class SimpleEngine : IDisposable
     private readonly Vk                  vk;
     private readonly WindowManager       windowManager            = new();
     private readonly WindowsVulkanLoader windowsVulkanLoader;
+    private readonly Vertex[] vertices = new Vertex[]
+    {
+        new(new(0.0f, -0.5f), new(1.0f, 1.0f, 1.0f)),
+        new(new(0.5f, 0.5f),  new(0.0f, 1.0f, 0.0f)),
+        new(new(-0.5f, 0.5f), new(0.0f, 0.0f, 1.0f)),
+    };
 
     private VkCommandBuffer[]        commandBuffers = Array.Empty<VkCommandBuffer>();
     private VkCommandPool            commandPool;
@@ -57,6 +63,8 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkFormat                 swapChainImageFormat;
     private VkImage[]                swapChainImages     = Array.Empty<VkImage>();
     private VkImageView[]            swapChainImageViews = Array.Empty<VkImageView>();
+    private VkBuffer                 vertexBuffer;
+    private VkDeviceMemory           vertexBufferMemory;
     private VkExtDebugUtils?         vkExtDebugUtils;
     private VkKhrSurface             vkKhrSurface        = null!;
     private VkKhrSwapchain           vkKhrSwapchain      = null!;
@@ -154,6 +162,8 @@ public unsafe partial class SimpleEngine : IDisposable
     {
         this.CleanupSwapChain();
 
+        this.vk.DestroyBuffer(this.device, this.vertexBuffer, null);
+        this.vk.FreeMemory(this.device, this.vertexBufferMemory, null);
         this.vk.DestroyPipeline(this.device, this.graphicsPipeline, null);
         this.vk.DestroyPipelineLayout(this.device, this.pipelineLayout, null);
         this.vk.DestroyRenderPass(this.device, this.renderPass, null);
@@ -284,110 +294,118 @@ public unsafe partial class SimpleEngine : IDisposable
                 fragShaderStageInfo
             };
 
-            var vertexInputInfo = new VkPipelineVertexInputStateCreateInfo
-            {
-                vertexBindingDescriptionCount   = 0,
-                vertexAttributeDescriptionCount = 0
-            };
+            var bindingDescription    = Vertex.GetBindingDescription();
+            var attributeDescriptions = Vertex.GetAttributeDescriptions();
 
-            var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
+            fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions = attributeDescriptions)
             {
-                topology               = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-                primitiveRestartEnable = false
-            };
-
-            var viewportState = new VkPipelineViewportStateCreateInfo
-            {
-                viewportCount = 1,
-                scissorCount  = 1
-            };
-
-            var rasterizer = new VkPipelineRasterizationStateCreateInfo
-            {
-                depthClampEnable        = false,
-                rasterizerDiscardEnable = false,
-                polygonMode             = VkPolygonMode.VK_POLYGON_MODE_FILL,
-                lineWidth               = 1.0f,
-                cullMode                = VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT,
-                frontFace               = VkFrontFace.VK_FRONT_FACE_CLOCKWISE,
-                depthBiasEnable         = false
-            };
-
-            var multisampling = new VkPipelineMultisampleStateCreateInfo
-            {
-                sampleShadingEnable  = false,
-                rasterizationSamples = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT
-            };
-
-            var colorBlendAttachment = new VkPipelineColorBlendAttachmentState
-            {
-                colorWriteMask = VkColorComponentFlagBits.VK_COLOR_COMPONENT_R_BIT | VkColorComponentFlagBits.VK_COLOR_COMPONENT_G_BIT | VkColorComponentFlagBits.VK_COLOR_COMPONENT_B_BIT | VkColorComponentFlagBits.VK_COLOR_COMPONENT_A_BIT,
-                blendEnable    = false
-            };
-
-            var colorBlending = new VkPipelineColorBlendStateCreateInfo
-            {
-                logicOpEnable   = false,
-                logicOp         = VkLogicOp.VK_LOGIC_OP_COPY,
-                attachmentCount = 1,
-                pAttachments    = &colorBlendAttachment
-            };
-
-            colorBlending.blendConstants[0] = 0.0f;
-            colorBlending.blendConstants[1] = 0.0f;
-            colorBlending.blendConstants[2] = 0.0f;
-            colorBlending.blendConstants[3] = 0.0f;
-
-            var dynamicStates = new[]
-            {
-                VkDynamicState.VK_DYNAMIC_STATE_VIEWPORT,
-                VkDynamicState.VK_DYNAMIC_STATE_SCISSOR
-            };
-
-            fixed (VkDynamicState*                  pDynamicStates = dynamicStates)
-            fixed (VkPipelineShaderStageCreateInfo* pStages        = shaderStages)
-            {
-                var dynamicState = new VkPipelineDynamicStateCreateInfo
+                var vertexInputInfo = new VkPipelineVertexInputStateCreateInfo
                 {
-                    dynamicStateCount = (uint)dynamicStates.Length,
-                    pDynamicStates    = pDynamicStates
+                    vertexBindingDescriptionCount   = 1,
+                    vertexAttributeDescriptionCount = (uint)attributeDescriptions.Length,
+                    pVertexBindingDescriptions      = &bindingDescription,
+                    pVertexAttributeDescriptions    = pVertexAttributeDescriptions
                 };
 
-                var pipelineLayoutInfo = new VkPipelineLayoutCreateInfo
+                var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
                 {
-                    setLayoutCount         = 0,
-                    pushConstantRangeCount = 0
+                    topology               = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                    primitiveRestartEnable = false
                 };
 
-                if (this.vk.CreatePipelineLayout(this.device, pipelineLayoutInfo, default, out this.pipelineLayout) != VkResult.VK_SUCCESS)
+                var viewportState = new VkPipelineViewportStateCreateInfo
                 {
-                    throw new Exception("failed to create pipeline layout!");
+                    viewportCount = 1,
+                    scissorCount  = 1
+                };
+
+                var rasterizer = new VkPipelineRasterizationStateCreateInfo
+                {
+                    depthClampEnable        = false,
+                    rasterizerDiscardEnable = false,
+                    polygonMode             = VkPolygonMode.VK_POLYGON_MODE_FILL,
+                    lineWidth               = 1.0f,
+                    cullMode                = VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT,
+                    frontFace               = VkFrontFace.VK_FRONT_FACE_CLOCKWISE,
+                    depthBiasEnable         = false
+                };
+
+                var multisampling = new VkPipelineMultisampleStateCreateInfo
+                {
+                    sampleShadingEnable  = false,
+                    rasterizationSamples = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT
+                };
+
+                var colorBlendAttachment = new VkPipelineColorBlendAttachmentState
+                {
+                    colorWriteMask = VkColorComponentFlagBits.VK_COLOR_COMPONENT_R_BIT | VkColorComponentFlagBits.VK_COLOR_COMPONENT_G_BIT | VkColorComponentFlagBits.VK_COLOR_COMPONENT_B_BIT | VkColorComponentFlagBits.VK_COLOR_COMPONENT_A_BIT,
+                    blendEnable    = false
+                };
+
+                var colorBlending = new VkPipelineColorBlendStateCreateInfo
+                {
+                    logicOpEnable   = false,
+                    logicOp         = VkLogicOp.VK_LOGIC_OP_COPY,
+                    attachmentCount = 1,
+                    pAttachments    = &colorBlendAttachment
+                };
+
+                colorBlending.blendConstants[0] = 0.0f;
+                colorBlending.blendConstants[1] = 0.0f;
+                colorBlending.blendConstants[2] = 0.0f;
+                colorBlending.blendConstants[3] = 0.0f;
+
+                var dynamicStates = new[]
+                {
+                    VkDynamicState.VK_DYNAMIC_STATE_VIEWPORT,
+                    VkDynamicState.VK_DYNAMIC_STATE_SCISSOR
+                };
+
+                fixed (VkDynamicState*                  pDynamicStates = dynamicStates)
+                fixed (VkPipelineShaderStageCreateInfo* pStages        = shaderStages)
+                {
+                    var dynamicState = new VkPipelineDynamicStateCreateInfo
+                    {
+                        dynamicStateCount = (uint)dynamicStates.Length,
+                        pDynamicStates    = pDynamicStates
+                    };
+
+                    var pipelineLayoutInfo = new VkPipelineLayoutCreateInfo
+                    {
+                        setLayoutCount         = 0,
+                        pushConstantRangeCount = 0
+                    };
+
+                    if (this.vk.CreatePipelineLayout(this.device, pipelineLayoutInfo, default, out this.pipelineLayout) != VkResult.VK_SUCCESS)
+                    {
+                        throw new Exception("failed to create pipeline layout!");
+                    }
+
+                    var pipelineInfo = new VkGraphicsPipelineCreateInfo
+                    {
+                        stageCount          = 2,
+                        pStages             = pStages,
+                        pVertexInputState   = &vertexInputInfo,
+                        pInputAssemblyState = &inputAssembly,
+                        pViewportState      = &viewportState,
+                        pRasterizationState = &rasterizer,
+                        pMultisampleState   = &multisampling,
+                        pColorBlendState    = &colorBlending,
+                        pDynamicState       = &dynamicState,
+                        layout              = this.pipelineLayout,
+                        renderPass          = this.renderPass,
+                        subpass             = 0,
+                        basePipelineHandle  = default,
+                    };
+
+                    if (this.vk.CreateGraphicsPipelines(this.device, default, 1, pipelineInfo, default, out this.graphicsPipeline) != VkResult.VK_SUCCESS)
+                    {
+                        throw new Exception("failed to create graphics pipeline!");
+                    }
+
+                    this.vk.DestroyShaderModule(this.device, fragShaderModule, null);
+                    this.vk.DestroyShaderModule(this.device, vertShaderModule, null);
                 }
-
-                var pipelineInfo = new VkGraphicsPipelineCreateInfo
-                {
-                    stageCount          = 2,
-                    pStages             = pStages,
-                    pVertexInputState   = &vertexInputInfo,
-                    pInputAssemblyState = &inputAssembly,
-                    pViewportState      = &viewportState,
-                    pRasterizationState = &rasterizer,
-                    pMultisampleState   = &multisampling,
-                    pColorBlendState    = &colorBlending,
-                    pDynamicState       = &dynamicState,
-                    layout              = this.pipelineLayout,
-                    renderPass          = this.renderPass,
-                    subpass             = 0,
-                    basePipelineHandle  = default,
-                };
-
-                if (this.vk.CreateGraphicsPipelines(this.device, default, 1, pipelineInfo, default, out this.graphicsPipeline) != VkResult.VK_SUCCESS)
-                {
-                    throw new Exception("failed to create graphics pipeline!");
-                }
-
-                this.vk.DestroyShaderModule(this.device, fragShaderModule, null);
-                this.vk.DestroyShaderModule(this.device, vertShaderModule, null);
             }
         }
     }
@@ -724,6 +742,39 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
+    private void CreateVertexBuffer()
+    {
+        var bufferInfo = new VkBufferCreateInfo
+        {
+            size        = (ulong)(Marshal.SizeOf(this.vertices[0]) * this.vertices.Length),
+            usage       = VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE,
+        };
+
+        if (this.vk.CreateBuffer(this.device, bufferInfo, default, out this.vertexBuffer) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to create vertex buffer!");
+        }
+
+        this.vk.GetBufferMemoryRequirements(this.device, this.vertexBuffer, out var memRequirements);
+
+        var allocInfo = new VkMemoryAllocateInfo
+        {
+            allocationSize  = memRequirements.size,
+            memoryTypeIndex = this.FindMemoryType(memRequirements.memoryTypeBits, VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+        };
+
+        if (this.vk.AllocateMemory(this.device, allocInfo, default, out this.vertexBufferMemory) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to allocate vertex buffer memory!");
+        }
+
+        this.vk.BindBufferMemory(this.device, this.vertexBuffer, this.vertexBufferMemory, 0);
+
+        this.vk.MapMemory(this.device, this.vertexBufferMemory, 0, 0, this.vertices);
+        this.vk.UnmapMemory(this.device, this.vertexBufferMemory);
+    }
+
     private void DrawFrame()
     {
         this.vk.WaitForFences(this.device, this.inFlightFences[this.currentFrame], true, ulong.MaxValue);
@@ -815,9 +866,9 @@ public unsafe partial class SimpleEngine : IDisposable
 
                 result = this.vkKhrSwapchain.QueuePresent(this.presentQueue, presentInfo);
 
-                if (result is VkResult.VK_ERROR_OUT_OF_DATE_KHR or VkResult.VK_SUBOPTIMAL_KHR || framebufferResized)
+                if (result is VkResult.VK_ERROR_OUT_OF_DATE_KHR or VkResult.VK_SUBOPTIMAL_KHR || this.framebufferResized)
                 {
-                    framebufferResized = false;
+                    this.framebufferResized = false;
 
                     this.RecreateSwapChain();
                 }
@@ -844,6 +895,21 @@ public unsafe partial class SimpleEngine : IDisposable
         extensions.Add(VkKhrWin32Surface.Name);
 
         return extensions;
+    }
+
+    private uint FindMemoryType(uint typeFilter, VkMemoryPropertyFlagBits properties)
+    {
+        this.vk.GetPhysicalDeviceMemoryProperties(this.physicalDevice, out var memProperties);
+
+        for (var i = 0u; i < memProperties.memoryTypeCount; i++)
+        {
+            if ((typeFilter & (1 << (int)i)) != 0 && ((VkMemoryType*)memProperties.memoryTypes)[i].propertyFlags.HasFlag(properties))
+            {
+                return i;
+            }
+        }
+
+        throw new Exception("failed to find suitable memory type!");
     }
 
     private QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device)
@@ -892,9 +958,11 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateGraphicsPipeline();
         this.CreateFramebuffers();
         this.CreateCommandPool();
+        this.CreateVertexBuffer();
         this.CreateCommandBuffers();
         this.CreateSyncObjects();
     }
+
 
     private void InitWindow()
     {
@@ -1032,7 +1100,16 @@ public unsafe partial class SimpleEngine : IDisposable
         };
 
         this.vk.CmdSetScissor(commandBuffer, 0, 1, scissor);
-        this.vk.CmdDraw(commandBuffer, 3, 1, 0, 0);
+
+        var vertexBuffers = new[]
+        {
+            this.vertexBuffer
+        };
+
+        var offsets = new VkDeviceSize[] { 0 };
+
+        this.vk.CmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+        this.vk.CmdDraw(commandBuffer, (uint)this.vertices.Length, 1, 0, 0);
         #endregion RenderPass
 
         this.vk.CmdEndRenderPass(commandBuffer);
@@ -1045,9 +1122,9 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void RecreateSwapChain()
     {
-        while (window.Minimized)
+        while (this.window.Minimized)
         {
-            window.DoEvents();
+            this.window.DoEvents();
         }
 
         this.vk.DeviceWaitIdle(this.device);
