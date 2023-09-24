@@ -67,6 +67,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate void VkCmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdBindIndexBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, VkIndexType indexType);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdBindVertexBuffers(VkCommandBuffer commandBuffer, uint firstBinding, uint bindingCount, VkBuffer* pBuffers, VkDeviceSize* pOffsets);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -74,6 +77,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdDraw(VkCommandBuffer commandBuffer, uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdDrawIndexed(VkCommandBuffer commandBuffer, uint indexCount, uint instanceCount, uint firstIndex, int vertexOffset, uint firstInstance);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdEndRenderPass(VkCommandBuffer commandBuffer);
@@ -233,10 +239,12 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkBeginCommandBuffer                     vkBeginCommandBuffer                     = loader.Load<VkBeginCommandBuffer>("vkBeginCommandBuffer");
     private readonly VkBindBufferMemory                       vkBindBufferMemory                       = loader.Load<VkBindBufferMemory>("vkBindBufferMemory");
     private readonly VkCmdBeginRenderPass                     vkCmdBeginRenderPass                     = loader.Load<VkCmdBeginRenderPass>("vkCmdBeginRenderPass");
+    private readonly VkCmdBindIndexBuffer                     vkCmdBindIndexBuffer                     = loader.Load<VkCmdBindIndexBuffer>("vkCmdBindIndexBuffer");
     private readonly VkCmdBindPipeline                        vkCmdBindPipeline                        = loader.Load<VkCmdBindPipeline>("vkCmdBindPipeline");
     private readonly VkCmdBindVertexBuffers                   vkCmdBindVertexBuffers                   = loader.Load<VkCmdBindVertexBuffers>("vkCmdBindVertexBuffers");
     private readonly VkCmdCopyBuffer                          vkCmdCopyBuffer                          = loader.Load<VkCmdCopyBuffer>("vkCmdCopyBuffer");
     private readonly VkCmdDraw                                vkCmdDraw                                = loader.Load<VkCmdDraw>("vkCmdDraw");
+    private readonly VkCmdDrawIndexed                         vkCmdDrawIndexed                         = loader.Load<VkCmdDrawIndexed>("vkCmdDrawIndexed");
     private readonly VkCmdEndRenderPass                       vkCmdEndRenderPass                       = loader.Load<VkCmdEndRenderPass>("vkCmdEndRenderPass");
     private readonly VkCmdSetScissor                          vkCmdSetScissor                          = loader.Load<VkCmdSetScissor>("vkCmdSetScissor");
     private readonly VkCmdSetViewport                         vkCmdSetViewport                         = loader.Load<VkCmdSetViewport>("vkCmdSetViewport");
@@ -272,17 +280,17 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices               = loader.Load<VkEnumeratePhysicalDevices>("vkEnumeratePhysicalDevices");
     private readonly VkFreeCommandBuffers                     vkFreeCommandBuffers                     = loader.Load<VkFreeCommandBuffers>("vkFreeCommandBuffers");
     private readonly VkFreeMemory                             vkFreeMemory                             = loader.Load<VkFreeMemory>("vkFreeMemory");
+    private readonly VkGetBufferMemoryRequirements            vkGetBufferMemoryRequirements            = loader.Load<VkGetBufferMemoryRequirements>("vkGetBufferMemoryRequirements");
     private readonly VkGetDeviceProcAddr                      vkGetDeviceProcAddr                      = loader.Load<VkGetDeviceProcAddr>("vkGetDeviceProcAddr");
     private readonly VkGetDeviceQueue                         vkGetDeviceQueue                         = loader.Load<VkGetDeviceQueue>("vkGetDeviceQueue");
     private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr                    = loader.Load<VkGetInstanceProcAddr>("vkGetInstanceProcAddr");
-    private readonly VkGetBufferMemoryRequirements            vkGetBufferMemoryRequirements            = loader.Load<VkGetBufferMemoryRequirements>("vkGetBufferMemoryRequirements");
     private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures              = loader.Load<VkGetPhysicalDeviceFeatures>("vkGetPhysicalDeviceFeatures");
     private readonly VkGetPhysicalDeviceMemoryProperties      vkGetPhysicalDeviceMemoryProperties      = loader.Load<VkGetPhysicalDeviceMemoryProperties>("vkGetPhysicalDeviceMemoryProperties");
     private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties            = loader.Load<VkGetPhysicalDeviceProperties>("vkGetPhysicalDeviceProperties");
     private readonly VkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = loader.Load<VkGetPhysicalDeviceQueueFamilyProperties>("vkGetPhysicalDeviceQueueFamilyProperties");
     private readonly VkMapMemory                              vkMapMemory                              = loader.Load<VkMapMemory>("vkMapMemory");
-    private readonly VkQueueWaitIdle                          vkQueueWaitIdle                          = loader.Load<VkQueueWaitIdle>("vkQueueWaitIdle");
     private readonly VkQueueSubmit                            vkQueueSubmit                            = loader.Load<VkQueueSubmit>("vkQueueSubmit");
+    private readonly VkQueueWaitIdle                          vkQueueWaitIdle                          = loader.Load<VkQueueWaitIdle>("vkQueueWaitIdle");
     private readonly VkResetCommandBuffer                     vkResetCommandBuffer                     = loader.Load<VkResetCommandBuffer>("vkResetCommandBuffer");
     private readonly VkResetFences                            vkResetFences                            = loader.Load<VkResetFences>("vkResetFences");
     private readonly VkUnmapMemory                            vkUnmapMemory                            = loader.Load<VkUnmapMemory>("vkUnmapMemory");
@@ -462,6 +470,17 @@ public unsafe class Vk(IVulkanLoader loader)
         this.vkCmdBindPipeline.Invoke(commandBuffer, pipelineBindPoint, pipeline);
 
     /// <summary>
+    /// Bind an index buffer to a command buffer.
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer into which the command is recorded.</param>
+    /// <param name="buffer">The buffer being bound.</param>
+    /// <param name="offset">The starting offset in bytes within buffer used in index buffer address calculations.</param>
+    /// <param name="indexType">A <see cref="VkIndexType"/> value specifying the size of the indices.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdBindIndexBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, VkIndexType indexType) =>
+        this.vkCmdBindIndexBuffer.Invoke(commandBuffer, buffer, offset, indexType);
+
+    /// <summary>
     /// Bind vertex buffers to a command buffer.
     /// The values taken from elements i of pBuffers and pOffsets replace the current state for the vertex input binding firstBinding + i, for i in [0, bindingCount). The vertex input binding is updated to start at the offset indicated by pOffsets[i] from the start of the buffer pBuffers[i]. All vertex input attributes that use each of these bindings will use these updated addresses in their address calculations for subsequent drawing commands. If the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#features-nullDescriptor">nullDescriptor</see> feature is enabled, elements of pBuffers can be VK_NULL_HANDLE, and can be used by the vertex shader. If a vertex input attribute is bound to a vertex input binding that is VK_NULL_HANDLE, the values taken from memory are considered to be zero, and missing G, B, or A components are <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdBindVertexBuffers.html#fxvertex-input-extraction">filled with (0,0,1)</see>.
     /// </summary>
@@ -524,6 +543,9 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void CmdDraw(VkCommandBuffer commandBuffer, uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance) =>
         this.vkCmdDraw.Invoke(commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+
+    public void CmdDrawIndexed(VkCommandBuffer commandBuffer, uint indexCount, uint instanceCount, uint firstIndex, int vertexOffset, uint firstInstance) =>
+        this.vkCmdDrawIndexed.Invoke(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 
     /// <summary>
     /// <para>End the current render pass.</para>

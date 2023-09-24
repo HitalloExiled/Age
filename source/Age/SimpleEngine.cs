@@ -21,28 +21,25 @@ public unsafe partial class SimpleEngine : IDisposable
 {
     private const int MAX_FRAMES_IN_FLIGHT = 2;
 
-    private readonly HashSet<string> deviceExtensions = new()
-    {
-        VkKhrSwapchain.Name
-    };
-
-
+    private readonly HashSet<string>     deviceExtensions         = new() { VkKhrSwapchain.Name };
     private readonly bool                enableValidationLayers   = Debugger.IsAttached;
     private readonly VkSemaphore[]       imageAvailableSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
+    private readonly ushort[]            indices                  = { 0, 1, 2, 2, 3, 0 };
     private readonly VkFence[]           inFlightFences           = new VkFence[MAX_FRAMES_IN_FLIGHT];
     private readonly VkSemaphore[]       renderFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
     private readonly HashSet<string>     validationLayers         = new() { "VK_LAYER_KHRONOS_validation" };
+    private readonly Vertex[]            vertices                 =
+    {
+        new(new(-0.5f, -0.5f), new(1.0f, 0.0f, 0.0f)),
+        new(new(0.5f, -0.5f),  new(0.0f, 1.0f, 0.0f)),
+        new(new(0.5f, 0.5f),   new(0.0f, 0.0f, 1.0f)),
+        new(new(-0.5f, 0.5f),  new(1.0f, 1.0f, 1.0f)),
+    };
     private readonly Vk                  vk;
     private readonly WindowManager       windowManager            = new();
     private readonly WindowsVulkanLoader windowsVulkanLoader;
-    private readonly Vertex[] vertices = new Vertex[]
-    {
-        new(new(0.0f, -0.5f), new(1.0f, 1.0f, 1.0f)),
-        new(new(0.5f, 0.5f),  new(0.0f, 1.0f, 0.0f)),
-        new(new(-0.5f, 0.5f), new(0.0f, 0.0f, 1.0f)),
-    };
 
-    private VkCommandBuffer[]        commandBuffers = Array.Empty<VkCommandBuffer>();
+    private VkCommandBuffer[]        commandBuffers        = Array.Empty<VkCommandBuffer>();
     private VkCommandPool            commandPool;
     private uint                     currentFrame;
     private VkDebugUtilsMessengerEXT debugMessenger;
@@ -51,6 +48,8 @@ public unsafe partial class SimpleEngine : IDisposable
     private bool                     framebufferResized;
     private VkPipeline               graphicsPipeline;
     private VkQueue                  graphicsQueue;
+    private VkBuffer                 indexBuffer;
+    private VkDeviceMemory           indexBufferMemory;
     private VkInstance               instance;
     private VkPhysicalDevice         physicalDevice;
     private VkPipelineLayout         pipelineLayout;
@@ -61,14 +60,14 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkExtent2D               swapChainExtent;
     private VkFramebuffer[]          swapChainFramebuffers = Array.Empty<VkFramebuffer>();
     private VkFormat                 swapChainImageFormat;
-    private VkImage[]                swapChainImages     = Array.Empty<VkImage>();
-    private VkImageView[]            swapChainImageViews = Array.Empty<VkImageView>();
+    private VkImage[]                swapChainImages       = Array.Empty<VkImage>();
+    private VkImageView[]            swapChainImageViews   = Array.Empty<VkImageView>();
     private VkBuffer                 vertexBuffer;
     private VkDeviceMemory           vertexBufferMemory;
     private VkExtDebugUtils?         vkExtDebugUtils;
-    private VkKhrSurface             vkKhrSurface        = null!;
-    private VkKhrSwapchain           vkKhrSwapchain      = null!;
-    private Window                   window              = null!;
+    private VkKhrSurface             vkKhrSurface          = null!;
+    private VkKhrSwapchain           vkKhrSwapchain        = null!;
+    private Window                   window                = null!;
 
     public SimpleEngine()
     {
@@ -162,6 +161,8 @@ public unsafe partial class SimpleEngine : IDisposable
     {
         this.CleanupSwapChain();
 
+        this.vk.DestroyBuffer(this.device, this.indexBuffer, null);
+        this.vk.FreeMemory(this.device, this.indexBufferMemory, null);
         this.vk.DestroyBuffer(this.device, this.vertexBuffer, null);
         this.vk.FreeMemory(this.device, this.vertexBufferMemory, null);
         this.vk.DestroyPipeline(this.device, this.graphicsPipeline, null);
@@ -513,6 +514,35 @@ public unsafe partial class SimpleEngine : IDisposable
                 throw new Exception("failed to create image views!");
             }
         }
+    }
+
+    private void CreateIndexBuffer()
+    {
+        VkDeviceSize bufferSize = (ulong)(sizeof(ushort) * this.indices.Length);
+
+        this.CreateBuffer(
+            bufferSize,
+            VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            out var stagingBuffer,
+            out var stagingBufferMemory
+        );
+
+        this.vk.MapMemory(this.device, stagingBufferMemory, 0, 0, this.indices);
+        this.vk.UnmapMemory(this.device, stagingBufferMemory);
+
+        this.CreateBuffer(
+            bufferSize,
+            VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_DST_BIT | VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            out this.indexBuffer,
+            out this.indexBufferMemory
+        );
+
+        this.CopyBuffer(stagingBuffer, this.indexBuffer, bufferSize);
+
+        this.vk.DestroyBuffer(this.device, stagingBuffer, null);
+        this.vk.FreeMemory(this.device, stagingBufferMemory, null);
     }
 
     private void CreateInstance()
@@ -1025,10 +1055,10 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateFramebuffers();
         this.CreateCommandPool();
         this.CreateVertexBuffer();
+        this.CreateIndexBuffer();
         this.CreateCommandBuffers();
         this.CreateSyncObjects();
     }
-
 
     private void InitWindow()
     {
@@ -1175,7 +1205,8 @@ public unsafe partial class SimpleEngine : IDisposable
         var offsets = new VkDeviceSize[] { 0 };
 
         this.vk.CmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-        this.vk.CmdDraw(commandBuffer, (uint)this.vertices.Length, 1, 0, 0);
+        this.vk.CmdBindIndexBuffer(commandBuffer, this.indexBuffer, 0, VkIndexType.VK_INDEX_TYPE_UINT16);
+        this.vk.CmdDrawIndexed(commandBuffer, (uint)this.indices.Length, 1, 0, 0, 0);
         #endregion RenderPass
 
         this.vk.CmdEndRenderPass(commandBuffer);
