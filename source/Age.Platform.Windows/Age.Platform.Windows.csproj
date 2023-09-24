@@ -1,6 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Age.Vulkan\Age.Vulkan.csproj" />
     <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
   </ItemGroup>
+
 </Project>

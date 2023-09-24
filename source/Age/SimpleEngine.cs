@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Age.Core.Unsafe;
+using Age.Numerics;
 using Age.Platform.Windows.Display;
 using Age.Platform.Windows.Vulkan;
 using Age.Vulkan.Native;
@@ -19,6 +20,8 @@ namespace Age;
 
 public unsafe partial class SimpleEngine : IDisposable
 {
+    private static readonly DateTime startTime = DateTime.UtcNow;
+
     private const int MAX_FRAMES_IN_FLIGHT = 2;
 
     private readonly HashSet<string>     deviceExtensions         = new() { VkKhrSwapchain.Name };
@@ -27,6 +30,9 @@ public unsafe partial class SimpleEngine : IDisposable
     private readonly ushort[]            indices                  = { 0, 1, 2, 2, 3, 0 };
     private readonly VkFence[]           inFlightFences           = new VkFence[MAX_FRAMES_IN_FLIGHT];
     private readonly VkSemaphore[]       renderFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkBuffer[]          uniformBuffers           = new VkBuffer[MAX_FRAMES_IN_FLIGHT];
+    private readonly nint[]              uniformBuffersMapped     = new nint[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkDeviceMemory[]    uniformBuffersMemory     = new VkDeviceMemory[MAX_FRAMES_IN_FLIGHT];
     private readonly HashSet<string>     validationLayers         = new() { "VK_LAYER_KHRONOS_validation" };
     private readonly Vertex[]            vertices                 =
     {
@@ -43,6 +49,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkCommandPool            commandPool;
     private uint                     currentFrame;
     private VkDebugUtilsMessengerEXT debugMessenger;
+    private VkDescriptorSetLayout    descriptorSetLayout;
     private VkDevice                 device;
     private bool                     disposed;
     private bool                     framebufferResized;
@@ -73,6 +80,11 @@ public unsafe partial class SimpleEngine : IDisposable
     {
         this.windowsVulkanLoader = new();
         this.vk                  = new(this.windowsVulkanLoader);
+
+        for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            this.uniformBuffersMapped[i] = Marshal.AllocHGlobal(Marshal.SizeOf<UniformBufferObject>());
+        }
     }
 
     private static VkPresentModeKHR ChooseSwapPresentMode(VkPresentModeKHR[] availablePresentModes)
@@ -161,6 +173,13 @@ public unsafe partial class SimpleEngine : IDisposable
     {
         this.CleanupSwapChain();
 
+        for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            this.vk.DestroyBuffer(this.device, this.uniformBuffers[i], null);
+            this.vk.FreeMemory(this.device, this.uniformBuffersMemory[i], null);
+        }
+
+        this.vk.DestroyDescriptorSetLayout(this.device, this.descriptorSetLayout, null);
         this.vk.DestroyBuffer(this.device, this.indexBuffer, null);
         this.vk.FreeMemory(this.device, this.indexBufferMemory, null);
         this.vk.DestroyBuffer(this.device, this.vertexBuffer, null);
@@ -304,6 +323,29 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
+    private void CreateDescriptorSetLayout()
+    {
+        var uboLayoutBinding = new VkDescriptorSetLayoutBinding
+        {
+            binding            = 0,
+            descriptorType     = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            descriptorCount    = 1,
+            stageFlags         = VkShaderStageFlagBits.VK_SHADER_STAGE_VERTEX_BIT,
+            pImmutableSamplers = default, // Optional
+        };
+
+        var layoutInfo = new VkDescriptorSetLayoutCreateInfo
+        {
+            bindingCount = 1,
+            pBindings    = &uboLayoutBinding
+        };
+
+        if (this.vk.CreateDescriptorSetLayout(this.device, layoutInfo, default, out this.descriptorSetLayout) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to create descriptor set layout!");
+        }
+    }
+
     private void CreateFramebuffers()
     {
         this.swapChainFramebuffers = new VkFramebuffer[this.swapChainImageViews.Length];
@@ -434,6 +476,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
                 fixed (VkDynamicState*                  pDynamicStates = dynamicStates)
                 fixed (VkPipelineShaderStageCreateInfo* pStages        = shaderStages)
+                fixed (VkDescriptorSetLayout*           pSetLayouts    = &this.descriptorSetLayout)
                 {
                     var dynamicState = new VkPipelineDynamicStateCreateInfo
                     {
@@ -443,8 +486,8 @@ public unsafe partial class SimpleEngine : IDisposable
 
                     var pipelineLayoutInfo = new VkPipelineLayoutCreateInfo
                     {
-                        setLayoutCount         = 0,
-                        pushConstantRangeCount = 0
+                        setLayoutCount         = 1,
+                        pSetLayouts            = pSetLayouts
                     };
 
                     if (this.vk.CreatePipelineLayout(this.device, pipelineLayoutInfo, default, out this.pipelineLayout) != VkResult.VK_SUCCESS)
@@ -842,6 +885,24 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
+    private void CreateUniformBuffers()
+    {
+        VkDeviceSize bufferSize = (ulong)Marshal.SizeOf<UniformBufferObject>();
+
+        for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            this.CreateBuffer(
+                bufferSize,
+                VkBufferUsageFlagBits.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                out this.uniformBuffers[i],
+                out this.uniformBuffersMemory[i]
+            );
+
+            this.vk.MapMemory(this.device, this.uniformBuffersMemory[i], 0, 0, this.uniformBuffersMapped[i]);
+        }
+    }
+
     private void CreateVertexBuffer()
     {
         VkDeviceSize bufferSize = (ulong)(Marshal.SizeOf<Vertex>() * this.vertices.Length);
@@ -887,6 +948,8 @@ public unsafe partial class SimpleEngine : IDisposable
         {
             throw new Exception("failed to acquire swap chain image!");
         }
+
+        this.UpdateUniformBuffer(this.currentFrame);
 
         this.vk.ResetFences(this.device, this.inFlightFences[this.currentFrame]);
         this.vk.ResetCommandBuffer(this.commandBuffers[this.currentFrame], default);
@@ -1051,11 +1114,13 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateSwapChain();
         this.CreateImageViews();
         this.CreateRenderPass();
+        this.CreateDescriptorSetLayout();
         this.CreateGraphicsPipeline();
         this.CreateFramebuffers();
         this.CreateCommandPool();
         this.CreateVertexBuffer();
         this.CreateIndexBuffer();
+        this.CreateUniformBuffers();
         this.CreateCommandBuffers();
         this.CreateSyncObjects();
     }
@@ -1248,6 +1313,23 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
+    private void UpdateUniformBuffer(uint currentImage)
+    {
+        var currentTime = DateTime.UtcNow;
+        var time        = (currentTime - startTime).Ticks;
+
+        var ubo = new UniformBufferObject
+        {
+            Model = new Matrix4x4<float>(1).Rotate(new(0, 0, 1), time * (float)(90.0 * Math.PI / 180)),
+            View  = Matrix4x4<float>.LookAt(new(2, 2, 2), new(0, 0, 0), new(0, 0, 1)),
+            Proj  = Matrix4x4<float>.Perspective((float)(90.0 * Math.PI / 180), this.swapChainExtent.width / (float)this.swapChainExtent.height, 0.1f, 10.0f)
+        };
+
+        ubo.Proj[1, 1] *= -1;
+
+        Marshal.StructureToPtr(ubo, this.uniformBuffersMapped[currentImage], true);
+    }
+
     protected virtual void Dispose(bool disposing)
     {
         if (!this.disposed)
@@ -1255,6 +1337,11 @@ public unsafe partial class SimpleEngine : IDisposable
             if (disposing)
             {
                 // TODO: dispose managed state (managed objects)
+            }
+
+            for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+            {
+                Marshal.FreeHGlobal(this.uniformBuffersMapped[i]);
             }
 
             this.windowsVulkanLoader.Dispose();

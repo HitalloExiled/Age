@@ -97,6 +97,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkCreateCommandPool(VkDevice device, VkCommandPoolCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkCommandPool* pCommandPool);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkCreateDescriptorSetLayout(VkDevice device, VkDescriptorSetLayoutCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDescriptorSetLayout* pSetLayout);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateDevice(VkPhysicalDevice physicalDevice, VkDeviceCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDevice* pDevice);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -131,6 +134,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyCommandPool(VkDevice device, VkCommandPool commandPool, VkAllocationCallbacks* pAllocator);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkDestroyDescriptorSetLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyDevice(VkDevice device, VkAllocationCallbacks* pAllocator);
@@ -250,6 +256,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCmdSetViewport                         vkCmdSetViewport                         = loader.Load<VkCmdSetViewport>("vkCmdSetViewport");
     private readonly VkCreateBuffer                           vkCreateBuffer                           = loader.Load<VkCreateBuffer>("vkCreateBuffer");
     private readonly VkCreateCommandPool                      vkCreateCommandPool                      = loader.Load<VkCreateCommandPool>("vkCreateCommandPool");
+    private readonly VkCreateDescriptorSetLayout              vkCreateDescriptorSetLayout              = loader.Load<VkCreateDescriptorSetLayout>("vkCreateDescriptorSetLayout");
     private readonly VkCreateDevice                           vkCreateDevice                           = loader.Load<VkCreateDevice>("vkCreateDevice");
     private readonly VkCreateFence                            vkCreateFence                            = loader.Load<VkCreateFence>("vkCreateFence");
     private readonly VkCreateFramebuffer                      vkCreateFramebuffer                      = loader.Load<VkCreateFramebuffer>("vkCreateFramebuffer");
@@ -262,6 +269,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCreateShaderModule                     vkCreateShaderModule                     = loader.Load<VkCreateShaderModule>("vkCreateShaderModule");
     private readonly VkDestroyBuffer                          vkDestroyBuffer                          = loader.Load<VkDestroyBuffer>("vkDestroyBuffer");
     private readonly VkDestroyCommandPool                     vkDestroyCommandPool                     = loader.Load<VkDestroyCommandPool>("vkDestroyCommandPool");
+    private readonly VkDestroyDescriptorSetLayout             vkDestroyDescriptorSetLayout             = loader.Load<VkDestroyDescriptorSetLayout>("vkDestroyDescriptorSetLayout");
     private readonly VkDestroyDevice                          vkDestroyDevice                          = loader.Load<VkDestroyDevice>("vkDestroyDevice");
     private readonly VkDestroyFence                           vkDestroyFence                           = loader.Load<VkDestroyFence>("vkDestroyFence");
     private readonly VkDestroyFramebuffer                     vkDestroyFramebuffer                     = loader.Load<VkDestroyFramebuffer>("vkDestroyFramebuffer");
@@ -641,6 +649,27 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Create a new descriptor set layout.
+    /// </summary>
+    /// <param name="device">The logical device that creates the descriptor set layout.</param>
+    /// <param name="pCreateInfo">A pointer to a <see cref="VkDescriptorSetLayoutCreateInfo"/> structure specifying the state of the descriptor set layout object.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pSetLayout">A pointer to a <see cref="VkDescriptorSetLayout"/> handle in which the resulting descriptor set layout object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult CreateDescriptorSetLayout(VkDevice device, VkDescriptorSetLayoutCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDescriptorSetLayout* pSetLayout) =>
+        this.vkCreateDescriptorSetLayout.Invoke(device, pCreateInfo, pAllocator, pSetLayout);
+
+    public VkResult CreateDescriptorSetLayout(VkDevice device, in VkDescriptorSetLayoutCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkDescriptorSetLayout setLayout)
+    {
+        fixed (VkDescriptorSetLayoutCreateInfo* pCreateInfo = &createInfo)
+        fixed (VkAllocationCallbacks*           pAllocator  = &allocator)
+        fixed (VkDescriptorSetLayout*           pSetLayout  = &setLayout)
+        {
+            return this.vkCreateDescriptorSetLayout.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pSetLayout);
+        }
+    }
+
+    /// <summary>
     /// <para><see cref="CreateDevice"/> verifies that extensions and features requested in the ppEnabledExtensionNames and pEnabledFeatures members of pCreateInfo, respectively, are supported by the implementation. If any requested extension is not supported, <see cref="CreateDevice"/> must return <see cref="VkResult.VK_ERROR_EXTENSION_NOT_PRESENT"/>. If any requested feature is not supported, <see cref="CreateDevice"/> must return <see cref="VkResult.VK_ERROR_FEATURE_NOT_PRESENT"/>. Support for extensions can be checked before creating a device by querying vkEnumerateDeviceExtensionProperties. Support for features can similarly be checked by querying <see cref="GetPhysicalDeviceFeatures"/>.</para>
     /// <para>After verifying and enabling the extensions the <see cref="VkDevice"/> object is created and returned to the application.</para>
     /// <para>Multiple logical devices can be created from the same physical device. Logical device creation may fail due to lack of device-specific resources (in addition to other errors). If that occurs, <see cref="CreateDevice"/> will return <see cref="VkResult.VK_ERROR_TOO_MANY_OBJECTS"/>.</para>
@@ -871,6 +900,24 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
             this.vkDestroyCommandPool.Invoke(device, commandPool, NullIfDefault(allocator, pAllocator));
+        }
+    }
+
+    /// <summary>
+    /// Destroy a descriptor set layout object.
+    /// </summary>
+    /// <param name="device">The logical device that destroys the descriptor set layout.</param>
+    /// <param name="descriptorSetLayout">The descriptor set layout to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void DestroyDescriptorSetLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroyDescriptorSetLayout.Invoke(device, descriptorSetLayout, pAllocator);
+
+    public void DestroyDescriptorSetLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkDestroyDescriptorSetLayout.Invoke(device, descriptorSetLayout, NullIfDefault(allocator, pAllocator));
         }
     }
 
@@ -1482,6 +1529,18 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public VkResult MapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags, void** ppData) =>
         this.vkMapMemory.Invoke(device, memory, offset, size, flags, ppData);
+
+    public VkResult MapMemory<T>(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkMemoryMapFlags flags, in T data) where T : unmanaged
+    {
+        var ppData = stackalloc T*[1];
+
+        if (this.vkMapMemory.Invoke(device, memory, offset, (ulong)Marshal.SizeOf<T>(), flags, (void**)ppData) is var result && result == VkResult.VK_SUCCESS)
+        {
+            *ppData[0] = data;
+        }
+
+        return result;
+    }
 
     public VkResult MapMemory<T>(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkMemoryMapFlags flags, T[] data) where T : unmanaged
     {

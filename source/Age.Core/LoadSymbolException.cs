@@ -3,8 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 namespace Age.Core;
 
 [ExcludeFromCodeCoverage]
-public class LoadSymbolException : Exception
+public class LoadSymbolException(string symbol) : Exception($"Failed to load symbol {symbol}")
 {
-    public LoadSymbolException(string symbol) : base($"Failed to load symbol {symbol}")
-    { }
 }

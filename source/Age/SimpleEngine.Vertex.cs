@@ -1,17 +1,16 @@
 using System.Runtime.InteropServices;
-using Age.Core.Math;
+using Age.Numerics;
 using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Types;
 
 namespace Age;
 
-#pragma warning disable IDE1006
 public unsafe partial class SimpleEngine
 {
     private struct Vertex(Vector2<float> pos, Vector3<float> color)
     {
-        public Vector2<float> pos   = pos;
-        public Vector3<float> color = color;
+        public Vector2<float> Pos   = pos;
+        public Vector3<float> Color = color;
 
         public static VkVertexInputBindingDescription GetBindingDescription()
         {
@@ -34,14 +33,14 @@ public unsafe partial class SimpleEngine
                     binding  = 0,
                     location = 0,
                     format   = VkFormat.VK_FORMAT_R32G32_SFLOAT,
-                    offset   = (uint)Marshal.OffsetOf<Vertex>("pos")!,
+                    offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Pos))!,
                 },
                 new()
                 {
                     binding  = 0,
                     location = 1,
                     format   = VkFormat.VK_FORMAT_R32G32B32_SFLOAT,
-                    offset   = (uint)Marshal.OffsetOf<Vertex>("color")!,
+                    offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Color))!,
                 }
             };
 
