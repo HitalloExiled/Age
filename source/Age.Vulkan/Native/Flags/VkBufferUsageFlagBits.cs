@@ -8,7 +8,7 @@ namespace Age.Vulkan.Native.Flags;
 public enum VkBufferUsageFlagBits
 {
     /// <summary>
-    /// Specifies that the buffer can be used as the source of a transfer command (see the definition of <see cref="VkPipelineStage.VK_PIPELINE_STAGE_TRANSFER_BIT"/>).
+    /// Specifies that the buffer can be used as the source of a transfer command (see the definition of <see cref="VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT"/>).
     /// </summary>
     VK_BUFFER_USAGE_TRANSFER_SRC_BIT = 0x00000001,
 

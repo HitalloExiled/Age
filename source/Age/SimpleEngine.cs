@@ -202,6 +202,76 @@ public unsafe partial class SimpleEngine : IDisposable
         this.vkKhrSwapchain.DestroySwapchain(this.device, this.swapChain, null);
     }
 
+    private void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+    {
+        var allocInfo = new VkCommandBufferAllocateInfo
+        {
+            level              = VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            commandPool        = this.commandPool,
+            commandBufferCount = 1
+        };
+
+        this.vk.AllocateCommandBuffers(this.device, allocInfo, out VkCommandBuffer commandBuffer);
+
+        var beginInfo = new VkCommandBufferBeginInfo
+        {
+            flags = VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+        };
+
+        this.vk.BeginCommandBuffer(commandBuffer, ref beginInfo);
+        #region Copy Buffer
+        var copyRegion = new VkBufferCopy
+        {
+            srcOffset = 0, // Optional
+            dstOffset = 0, // Optional
+            size      = size
+        };
+
+        this.vk.CmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, copyRegion);
+        this.vk.EndCommandBuffer(commandBuffer);
+        #endregion Copy Buffer
+
+        var submitInfo = new VkSubmitInfo
+        {
+            commandBufferCount = 1,
+            pCommandBuffers    = &commandBuffer
+        };
+
+        this.vk.QueueSubmit(this.graphicsQueue, submitInfo, default);
+        this.vk.QueueWaitIdle(this.graphicsQueue);
+        this.vk.FreeCommandBuffers(this.device, this.commandPool, commandBuffer);
+    }
+
+    private void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, out VkBuffer buffer, out VkDeviceMemory bufferMemory)
+    {
+        var bufferInfo = new VkBufferCreateInfo
+        {
+            size        = size,
+            usage       = usage,
+            sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE
+        };
+
+        if (this.vk.CreateBuffer(this.device, bufferInfo, default, out buffer) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to create buffer!");
+        }
+
+        this.vk.GetBufferMemoryRequirements(this.device, buffer, out var memRequirements);
+
+        var allocInfo = new VkMemoryAllocateInfo
+        {
+            allocationSize = memRequirements.size,
+            memoryTypeIndex = this.FindMemoryType(memRequirements.memoryTypeBits, properties)
+        };
+
+        if (this.vk.AllocateMemory(this.device, allocInfo, default, out bufferMemory) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to allocate buffer memory!");
+        }
+
+        this.vk.BindBufferMemory(this.device, buffer, bufferMemory, 0);
+    }
+
     private void CreateCommandBuffers()
     {
         var allocInfo = new VkCommandBufferAllocateInfo
@@ -744,35 +814,31 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void CreateVertexBuffer()
     {
-        var bufferInfo = new VkBufferCreateInfo
-        {
-            size        = (ulong)(Marshal.SizeOf(this.vertices[0]) * this.vertices.Length),
-            usage       = VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE,
-        };
+        VkDeviceSize bufferSize = (ulong)(Marshal.SizeOf<Vertex>() * this.vertices.Length);
 
-        if (this.vk.CreateBuffer(this.device, bufferInfo, default, out this.vertexBuffer) != VkResult.VK_SUCCESS)
-        {
-            throw new Exception("failed to create vertex buffer!");
-        }
+        this.CreateBuffer(
+            bufferSize,
+            VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            out var stagingBuffer,
+            out var stagingBufferMemory
+        );
 
-        this.vk.GetBufferMemoryRequirements(this.device, this.vertexBuffer, out var memRequirements);
+        this.vk.MapMemory(this.device, stagingBufferMemory, 0, 0, this.vertices);
+        this.vk.UnmapMemory(this.device, stagingBufferMemory);
 
-        var allocInfo = new VkMemoryAllocateInfo
-        {
-            allocationSize  = memRequirements.size,
-            memoryTypeIndex = this.FindMemoryType(memRequirements.memoryTypeBits, VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-        };
+        this.CreateBuffer(
+            bufferSize,
+            VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_DST_BIT | VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            out this.vertexBuffer,
+            out this.vertexBufferMemory
+        );
 
-        if (this.vk.AllocateMemory(this.device, allocInfo, default, out this.vertexBufferMemory) != VkResult.VK_SUCCESS)
-        {
-            throw new Exception("failed to allocate vertex buffer memory!");
-        }
+        this.CopyBuffer(stagingBuffer, this.vertexBuffer, bufferSize);
 
-        this.vk.BindBufferMemory(this.device, this.vertexBuffer, this.vertexBufferMemory, 0);
-
-        this.vk.MapMemory(this.device, this.vertexBufferMemory, 0, 0, this.vertices);
-        this.vk.UnmapMemory(this.device, this.vertexBufferMemory);
+        this.vk.DestroyBuffer(this.device, stagingBuffer, null);
+        this.vk.FreeMemory(this.device, stagingBufferMemory, null);
     }
 
     private void DrawFrame()

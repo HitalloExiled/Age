@@ -20,7 +20,7 @@ public enum VkMemoryPropertyFlagBits
     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT = 0x00000002,
 
     /// <summary>
-    /// Specifies that the host cache management commands <see cref="vkFlushMappedMemoryRanges"/> and <see cref="vkInvalidateMappedMemoryRanges"/> are not needed to flush host writes to the device or make device writes visible to the host, respectively.
+    /// Specifies that the host cache management commands <see cref="Vk.FlushMappedMemoryRanges"/> and <see cref="Vk.InvalidateMappedMemoryRanges"/> are not needed to flush host writes to the device or make device writes visible to the host, respectively.
     /// </summary>
     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT = 0x00000004,
 

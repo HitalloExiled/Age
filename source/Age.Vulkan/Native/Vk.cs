@@ -70,6 +70,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate void VkCmdBindVertexBuffers(VkCommandBuffer commandBuffer, uint firstBinding, uint bindingCount, VkBuffer* pBuffers, VkDeviceSize* pOffsets);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdCopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, uint regionCount, VkBufferCopy* pRegions);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdDraw(VkCommandBuffer commandBuffer, uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -172,6 +175,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkEnumeratePhysicalDevices(VkInstance instance, uint* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkFreeCommandBuffers(VkDevice device, VkCommandPool commandPool, uint commandBufferCount, VkCommandBuffer* pCommandBuffers);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkFreeMemory(VkDevice device, VkDeviceMemory memory, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -202,6 +208,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags, void** ppData);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkQueueWaitIdle(VkQueue queue);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkQueueSubmit(VkQueue queue, uint submitCount, VkSubmitInfo* pSubmits, VkFence fence);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -226,6 +235,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCmdBeginRenderPass                     vkCmdBeginRenderPass                     = loader.Load<VkCmdBeginRenderPass>("vkCmdBeginRenderPass");
     private readonly VkCmdBindPipeline                        vkCmdBindPipeline                        = loader.Load<VkCmdBindPipeline>("vkCmdBindPipeline");
     private readonly VkCmdBindVertexBuffers                   vkCmdBindVertexBuffers                   = loader.Load<VkCmdBindVertexBuffers>("vkCmdBindVertexBuffers");
+    private readonly VkCmdCopyBuffer                          vkCmdCopyBuffer                          = loader.Load<VkCmdCopyBuffer>("vkCmdCopyBuffer");
     private readonly VkCmdDraw                                vkCmdDraw                                = loader.Load<VkCmdDraw>("vkCmdDraw");
     private readonly VkCmdEndRenderPass                       vkCmdEndRenderPass                       = loader.Load<VkCmdEndRenderPass>("vkCmdEndRenderPass");
     private readonly VkCmdSetScissor                          vkCmdSetScissor                          = loader.Load<VkCmdSetScissor>("vkCmdSetScissor");
@@ -260,6 +270,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties   = loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
     private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties       = loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
     private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices               = loader.Load<VkEnumeratePhysicalDevices>("vkEnumeratePhysicalDevices");
+    private readonly VkFreeCommandBuffers                     vkFreeCommandBuffers                     = loader.Load<VkFreeCommandBuffers>("vkFreeCommandBuffers");
     private readonly VkFreeMemory                             vkFreeMemory                             = loader.Load<VkFreeMemory>("vkFreeMemory");
     private readonly VkGetDeviceProcAddr                      vkGetDeviceProcAddr                      = loader.Load<VkGetDeviceProcAddr>("vkGetDeviceProcAddr");
     private readonly VkGetDeviceQueue                         vkGetDeviceQueue                         = loader.Load<VkGetDeviceQueue>("vkGetDeviceQueue");
@@ -270,6 +281,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties            = loader.Load<VkGetPhysicalDeviceProperties>("vkGetPhysicalDeviceProperties");
     private readonly VkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = loader.Load<VkGetPhysicalDeviceQueueFamilyProperties>("vkGetPhysicalDeviceQueueFamilyProperties");
     private readonly VkMapMemory                              vkMapMemory                              = loader.Load<VkMapMemory>("vkMapMemory");
+    private readonly VkQueueWaitIdle                          vkQueueWaitIdle                          = loader.Load<VkQueueWaitIdle>("vkQueueWaitIdle");
     private readonly VkQueueSubmit                            vkQueueSubmit                            = loader.Load<VkQueueSubmit>("vkQueueSubmit");
     private readonly VkResetCommandBuffer                     vkResetCommandBuffer                     = loader.Load<VkResetCommandBuffer>("vkResetCommandBuffer");
     private readonly VkResetFences                            vkResetFences                            = loader.Load<VkResetFences>("vkResetFences");
@@ -468,6 +480,35 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkDeviceSize* pOffsets = offsets)
         {
             this.vkCmdBindVertexBuffers.Invoke(commandBuffer, firstBinding, (uint)buffers.Length, pBuffers, pOffsets);
+        }
+    }
+
+    /// <summary>
+    /// <para>Copy data between buffer regions.</para>
+    /// <para>Each source region specified by pRegions is copied from the source buffer to the destination region of the destination buffer. If any of the specified regions in srcBuffer overlaps in memory with any of the specified regions in dstBuffer, values read from those overlapping regions are undefined.</para>
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer into which the command will be recorded.</param>
+    /// <param name="srcBuffer">The source buffer.</param>
+    /// <param name="dstBuffer">The destination buffer.</param>
+    /// <param name="regionCount">The number of regions to copy.</param>
+    /// <param name="pRegions">A pointer to an array of <see cref="VkBufferCopy"/> structures specifying the regions to copy.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdCopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, uint regionCount, VkBufferCopy* pRegions) =>
+        this.vkCmdCopyBuffer.Invoke(commandBuffer, srcBuffer, dstBuffer, regionCount, pRegions);
+
+    public void CmdCopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, in VkBufferCopy region)
+    {
+        fixed (VkBufferCopy* pRegions = &region)
+        {
+            this.vkCmdCopyBuffer.Invoke(commandBuffer, srcBuffer, dstBuffer, 1, pRegions);
+        }
+    }
+
+    public void CmdCopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, VkBufferCopy[] regions)
+    {
+        fixed (VkBufferCopy* pRegions = regions)
+        {
+            this.vkCmdCopyBuffer.Invoke(commandBuffer, srcBuffer, dstBuffer, (uint)regions.Length, pRegions);
         }
     }
 
@@ -1165,6 +1206,34 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// <para>Free command buffers.</para>
+    /// <para>Any primary command buffer that is in the recording or executable state and has any element of pCommandBuffers recorded into it, becomes <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">invalid</see>.</para>
+    /// </summary>
+    /// <param name="device">The logical device that owns the command pool.</param>
+    /// <param name="commandPool">The command pool from which the command buffers were allocated.</param>
+    /// <param name="commandBufferCount">The length of the pCommandBuffers array.</param>
+    /// <param name="pCommandBuffers">A pointer to an array of handles of command buffers to free.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void FreeCommandBuffers(VkDevice device, VkCommandPool commandPool, uint commandBufferCount, VkCommandBuffer* pCommandBuffers) =>
+        this.vkFreeCommandBuffers.Invoke(device, commandPool, commandBufferCount, pCommandBuffers);
+
+    public void FreeCommandBuffers(VkDevice device, VkCommandPool commandPool, in VkCommandBuffer commandBuffer)
+    {
+        fixed (VkCommandBuffer* pCommandBuffers = &commandBuffer)
+        {
+            this.vkFreeCommandBuffers.Invoke(device, commandPool, 1, pCommandBuffers);
+        }
+    }
+
+    public void FreeCommandBuffers(VkDevice device, VkCommandPool commandPool, VkCommandBuffer[] commandBuffers)
+    {
+        fixed (VkCommandBuffer* pCommandBuffers = commandBuffers)
+        {
+            this.vkFreeCommandBuffers.Invoke(device, commandPool, (uint)commandBuffers.Length, pCommandBuffers);
+        }
+    }
+
+    /// <summary>
     /// <para>Free device memory.</para>
     /// <para>Before freeing a memory object, an application must ensure the memory object is no longer in use by the device — for example by command buffers in the pending state. Memory can be freed whilst still bound to resources, but those resources must not be used afterwards. Freeing a memory object releases the reference it held, if any, to its payload. If there are still any bound images or buffers, the memory object’s payload may not be immediately released by the implementation, but must be released by the time all bound images and buffers have been destroyed. Once all references to a payload are released, it is returned to the heap from which it was allocated.</para>
     /// <para>How memory objects are bound to Images and Buffers is described in detail in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#resources-association">Resource Memory Association</see> section.</para>
@@ -1174,6 +1243,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="device">The logical device that owns the memory.</param>
     /// <param name="memory">The <see cref="VkDeviceMemory"/> object to be freed.</param>
     /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void FreeMemory(VkDevice device, VkDeviceMemory memory, VkAllocationCallbacks* pAllocator) =>
         this.vkFreeMemory.Invoke(device, memory, pAllocator);
 
@@ -1404,6 +1474,15 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// <para>Wait for a queue to become idle.</para>
+    /// <para><see cref="QueueWaitIdle"/> is equivalent to having submitted a valid fence to every previously executed queue submission command that accepts a fence, then waiting for all of those fences to signal using <see cref="WaitForFences"/> with an infinite timeout and waitAll set to true.</para>
+    /// </summary>
+    /// <param name="queue">The queue on which to wait.</param>
+    /// <returns></returns>
+    public VkResult QueueWaitIdle(VkQueue queue) =>
+        this.vkQueueWaitIdle.Invoke(queue);
+
+    /// <summary>
     /// <para>Submits a sequence of semaphores or command buffers to a queue.</para>
     /// <para><see cref="QueueSubmit"/> is a <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#devsandqueues-submission">queue submission command</see>, with each batch defined by an element of pSubmits. Batches begin execution in the order they appear in pSubmits, but may complete out of order.</para>
     /// <para>Fence and semaphore operations submitted with <see cref="QueueSubmit"/> have additional ordering constraints compared to other submission commands, with dependencies involving previous and subsequent queue operations. Information about these additional constraints can be found in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-semaphores">semaphore</see> and <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-fences">fence</see> sections of the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization">synchronization chapter</see>.</para>
@@ -1527,7 +1606,7 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="device">The logical device that owns the fences.</param>
     /// <param name="fenceCount">The number of fences to wait on.</param>
     /// <param name="pFences">A pointer to an array of fenceCount fence handles.</param>
-    /// <param name="waitAll">The condition that must be satisfied to successfully unblock the wait. If waitAll is VK_TRUE, then the condition is that all fences in pFences are signaled. Otherwise, the condition is that at least one fence in pFences is signaled.</param>
+    /// <param name="waitAll">The condition that must be satisfied to successfully unblock the wait. If waitAll is true, then the condition is that all fences in pFences are signaled. Otherwise, the condition is that at least one fence in pFences is signaled.</param>
     /// <param name="timeout">The timeout period in units of nanoseconds. timeout is adjusted to the closest value allowed by the implementation-dependent timeout accuracy, which may be substantially longer than one nanosecond, and may be longer than the requested period.</param>
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public VkResult WaitForFences(VkDevice device, uint fenceCount, VkFence* pFences, VkBool32 waitAll, ulong timeout) =>
