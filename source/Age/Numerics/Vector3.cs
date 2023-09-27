@@ -11,6 +11,13 @@ public record struct Vector3<T> where T :  IFloatingPoint<T>, IRootFunctions<T>,
     public T Y;
     public T Z;
 
+    public Vector3(T value)
+    {
+        this.X = value;
+        this.Y = value;
+        this.Z = value;
+    }
+
     public Vector3(T x, T y, T z)
     {
         this.X = x;

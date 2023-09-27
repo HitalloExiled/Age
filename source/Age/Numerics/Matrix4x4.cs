@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("[{Row1}], [{Row2}], [{Row3}], [{Row4}]")]
+[DebuggerDisplay("[{Column1}], [{Column2}], [{Column3}], [{Column4}]")]
 public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public static Matrix4x4<T> Identity => new(
@@ -14,27 +14,22 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
         new(T.Zero, T.Zero, T.Zero, T.One)
     );
 
-    public Vector4<T> Row1;
-    public Vector4<T> Row2;
-    public Vector4<T> Row3;
-    public Vector4<T> Row4;
-
-    public Vector4<T> this[int index]
-    {
-        get
-        {
-            Common.ThrowIfOutOfRange(0, 3, index);
-
-            return Unsafe.Add(ref this.Row1, index);
-        }
-
-        set
-        {
-            Common.ThrowIfOutOfRange(0, 3, index);
-
-            Unsafe.Add(ref this.Row1, index) = value;
-        }
-    }
+    public T M11;
+	public T M12;
+	public T M13;
+	public T M14;
+	public T M21;
+	public T M22;
+	public T M23;
+	public T M24;
+	public T M31;
+	public T M32;
+	public T M33;
+	public T M34;
+	public T M41;
+	public T M42;
+	public T M43;
+	public T M44;
 
     public T this[int row, int column]
     {
@@ -43,72 +38,95 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
             Common.ThrowIfOutOfRange(0, 3, row);
             Common.ThrowIfOutOfRange(0, 3, column);
 
-            return Unsafe.Add(ref this.Row1, row)[column];
+		    return Unsafe.Add(ref Unsafe.As<T, Vector4<T>>(ref this.M11), row)[column];
         }
-
         set
         {
             Common.ThrowIfOutOfRange(0, 3, row);
             Common.ThrowIfOutOfRange(0, 3, column);
 
-            Unsafe.Add(ref this.Row1, row)[column] = value;
+            Unsafe.Add(ref Unsafe.As<T, Vector4<T>>(ref this.M11), row)[column] = value;
         }
     }
 
     public readonly bool IsIdentity =>
-        this.Row1[0] == T.One &&
-        this.Row2[1] == T.One &&
-        this.Row3[2] == T.One &&
-        this.Row4[3] == T.One &&
-        this.Row1[1] == T.Zero &&
-        this.Row1[2] == T.Zero &&
-        this.Row1[3] == T.Zero &&
-        this.Row2[0] == T.Zero &&
-        this.Row2[2] == T.Zero &&
-        this.Row2[3] == T.Zero &&
-        this.Row3[0] == T.Zero &&
-        this.Row3[1] == T.Zero &&
-        this.Row3[3] == T.Zero &&
-        this.Row4[0] == T.Zero &&
-        this.Row4[1] == T.Zero &&
-        this.Row4[2] == T.Zero;
+        this.M11 == T.One &&
+        this.M22 == T.One &&
+        this.M33 == T.One &&
+        this.M44 == T.One &&
+        this.M12 == T.Zero &&
+        this.M13 == T.Zero &&
+        this.M14 == T.Zero &&
+        this.M21 == T.Zero &&
+        this.M23 == T.Zero &&
+        this.M24 == T.Zero &&
+        this.M31 == T.Zero &&
+        this.M32 == T.Zero &&
+        this.M34 == T.Zero &&
+        this.M41 == T.Zero &&
+        this.M42 == T.Zero &&
+        this.M43 == T.Zero;
 
-    public Matrix4x4(T value)
+    public Matrix4x4(Vector4<T> column1, Vector4<T> column2, Vector4<T> column3, Vector4<T> column4)
     {
-        this.Row1 = new(value, T.Zero, T.Zero, T.Zero);
-        this.Row2 = new(T.Zero, value, T.Zero, T.Zero);
-        this.Row3 = new(T.Zero, T.Zero, value, T.Zero);
-        this.Row4 = new(T.Zero, T.Zero, T.Zero, value);
+        this.M11 = column1.X;
+        this.M12 = column2.X;
+        this.M13 = column3.X;
+        this.M14 = column4.X;
+        this.M21 = column1.Y;
+        this.M22 = column2.Y;
+        this.M23 = column3.Y;
+        this.M24 = column4.Y;
+        this.M31 = column1.Z;
+        this.M32 = column2.Z;
+        this.M33 = column3.Z;
+        this.M34 = column4.Z;
+        this.M41 = column1.W;
+        this.M42 = column2.W;
+        this.M43 = column3.W;
+        this.M44 = column4.W;
     }
 
-    public Matrix4x4(Vector4<T> row1, Vector4<T> row2, Vector4<T> row3, Vector4<T> row4)
+    public Matrix4x4(T m11, T m12, T m13, T m14, T m21, T m22, T m23, T m24, T m31, T m32, T m33, T m34, T m41, T m42, T m43, T m44)
     {
-        this.Row1 = row1;
-        this.Row2 = row2;
-        this.Row3 = row3;
-        this.Row4 = row4;
+        this.M11 = m11;
+        this.M12 = m12;
+        this.M13 = m13;
+        this.M14 = m14;
+        this.M21 = m21;
+        this.M22 = m22;
+        this.M23 = m23;
+        this.M24 = m24;
+        this.M31 = m31;
+        this.M32 = m32;
+        this.M33 = m33;
+        this.M34 = m34;
+        this.M41 = m41;
+        this.M42 = m42;
+        this.M43 = m43;
+        this.M44 = m44;
     }
 
-    public static Matrix4x4<T> LookAt(Vector3<T> cameraPosition, Vector3<T> cameraTarget, Vector3<T> cameraUpVector)
+    public static Matrix4x4<T> LookAt(Vector3<T> eye, Vector3<T> center, Vector3<T> up)
     {
-        var forward = (cameraPosition - cameraTarget).Normalized;
-        var side    = cameraUpVector.Cross(forward).Normalized;
-        var up      = forward.Cross(side);
+        var zaxis = (eye - center).Normalized;
+        var xaxis = up.Cross(zaxis).Normalized;
+        var yaxis = zaxis.Cross(xaxis);
 
         var identity = Identity;
 
-        identity[0, 0] = side.X;
-        identity[0, 1] = up.X;
-        identity[0, 2] = forward.X;
-        identity[1, 0] = side.Y;
-        identity[1, 1] = up.Y;
-        identity[1, 2] = forward.Y;
-        identity[2, 0] = side.Z;
-        identity[2, 1] = up.Z;
-        identity[2, 2] = forward.Z;
-        identity[3, 0] = T.Zero - side.Dot(cameraPosition);
-        identity[3, 1] = T.Zero - up.Dot(cameraPosition);
-        identity[3, 2] = T.Zero - forward.Dot(cameraPosition);
+        identity.M11 = xaxis.X;
+        identity.M12 = yaxis.X;
+        identity.M13 = zaxis.X;
+        identity.M21 = xaxis.Y;
+        identity.M22 = yaxis.Y;
+        identity.M23 = zaxis.Y;
+        identity.M31 = xaxis.Z;
+        identity.M32 = yaxis.Z;
+        identity.M33 = zaxis.Z;
+        identity.M41 = T.Zero - xaxis.Dot(eye);
+        identity.M42 = T.Zero - yaxis.Dot(eye);
+        identity.M43 = T.Zero - zaxis.Dot(eye);
 
         return identity;
     }
@@ -119,26 +137,56 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(farPlaneDistance, T.Zero);
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(nearPlaneDistance, farPlaneDistance);
 
-        var result = new Matrix4x4<T>();
+        Unsafe.SkipInit(out Matrix4x4<T> result);
 
         var two = T.CreateChecked(2);
 
-        result[0, 0] = two * nearPlaneDistance / width;
-        result[0, 1] = result[0, 2] = result[0, 3] = T.Zero;
-        result[1, 1] = two * nearPlaneDistance / height;
-        result[1, 0] = result[1, 2] = result[1, 3] = T.Zero;
+        result.M11 = two * nearPlaneDistance / width;
+        result.M12 = result[0, 2] = result[0, 3] = T.Zero;
+        result.M22 = two * nearPlaneDistance / height;
+        result.M21 = result[1, 2] = result[1, 3] = T.Zero;
 
         var num = result[2, 2] = T.IsPositiveInfinity(farPlaneDistance) ? (-T.One) : (farPlaneDistance / (nearPlaneDistance - farPlaneDistance));
 
-        result[2, 0] = result[2, 1] = T.Zero;
-        result[2, 3] = -T.One;
-        result[3, 0] = result[3, 1] = result[3, 3] = T.Zero;
-        result[3, 2] = nearPlaneDistance * num;
+        result.M31 = result[2, 1] = T.Zero;
+        result.M34 = -T.One;
+        result.M41 = result[3, 1] = result[3, 3] = T.Zero;
+        result.M43 = nearPlaneDistance * num;
 
         return result;
     }
 
-    public readonly Matrix4x4<T> Rotate(Vector3<T> axis, T angle)
+    public static Matrix4x4<T> PerspectiveFov(T fieldOfView, T aspectRatio, T nearPlaneDistance, T farPlaneDistance)
+    {
+        if (fieldOfView <= T.Zero || fieldOfView >= T.CreateSaturating(Math.PI))
+        {
+            throw new ArgumentOutOfRangeException(nameof(fieldOfView));
+        }
+
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(nearPlaneDistance, T.Zero);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(farPlaneDistance, T.Zero);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(nearPlaneDistance, farPlaneDistance);
+
+        var num = T.One / T.Tan(fieldOfView * T.CreateSaturating(0.5));
+
+        Unsafe.SkipInit(out Matrix4x4<T> result);
+
+        result.M11 = num / aspectRatio;
+        result.M12 = result[0, 2] = result[0, 3] = T.Zero;
+        result.M22 = num;
+        result.M21 = result[1, 2] = result[1, 3] = T.Zero;
+        result.M31 = result[2, 1] = T.Zero;
+
+        var zz = result[2, 2] = T.IsPositiveInfinity(farPlaneDistance) ? (-T.One) : (farPlaneDistance / (nearPlaneDistance - farPlaneDistance));
+
+        result.M34 = -T.One;
+        result.M41 = result[3, 1] = result[3, 3] = T.Zero;
+        result.M43 = nearPlaneDistance * zz;
+
+        return result;
+    }
+
+    public static Matrix4x4<T> Rotate(Vector3<T> axis, T angle)
     {
         var x   = axis.X;
         var y   = axis.Y;
@@ -154,15 +202,15 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
 
         var identity = Identity;
 
-        identity[0, 0] = xx + cos * (T.One - xx);
-        identity[0, 1] = xy - cos * xy + sin * z;
-        identity[0, 2] = xz - cos * xz - sin * y;
-        identity[1, 0] = xy - cos * xy - sin * z;
-        identity[1, 1] = yy + cos * (T.One - yy);
-        identity[1, 2] = yz - cos * yz + sin * x;
-        identity[2, 0] = xz - cos * xz + sin * y;
-        identity[2, 1] = yz - cos * yz - sin * x;
-        identity[2, 2] = zz + cos * (T.One - zz);
+        identity.M11 = xx + cos * (T.One - xx);
+        identity.M12 = xy - cos * xy + sin * z;
+        identity.M13 = xz - cos * xz - sin * y;
+        identity.M21 = xy - cos * xy - sin * z;
+        identity.M22 = yy + cos * (T.One - yy);
+        identity.M23 = yz - cos * yz + sin * x;
+        identity.M31 = xz - cos * xz + sin * y;
+        identity.M32 = yz - cos * yz - sin * x;
+        identity.M33 = zz + cos * (T.One - zz);
 
         return identity;
     }

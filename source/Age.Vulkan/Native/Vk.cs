@@ -52,6 +52,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkAllocateCommandBuffers(VkDevice device, VkCommandBufferAllocateInfo* pAllocateInfo, VkCommandBuffer* pCommandBuffers);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkAllocateDescriptorSets(VkDevice device, VkDescriptorSetAllocateInfo* pAllocateInfo, VkDescriptorSet* pDescriptorSets);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkAllocateMemory(VkDevice device, VkMemoryAllocateInfo* pAllocateInfo, VkAllocationCallbacks* pAllocator, VkDeviceMemory* pMemory);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -62,6 +65,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdBeginRenderPass(VkCommandBuffer commandBuffer, VkRenderPassBeginInfo* pRenderPassBegin, VkSubpassContents contents);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdBindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint firstSet, uint descriptorSetCount, VkDescriptorSet* pDescriptorSets, uint dynamicOffsetCount, uint* pDynamicOffsets);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline);
@@ -95,6 +101,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateCommandPool(VkDevice device, VkCommandPoolCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkCommandPool* pCommandPool);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkCreateDescriptorPool(VkDevice device, VkDescriptorPoolCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDescriptorPool* pDescriptorPool);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateDescriptorSetLayout(VkDevice device, VkDescriptorSetLayoutCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDescriptorSetLayout* pSetLayout);
@@ -134,6 +143,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyCommandPool(VkDevice device, VkCommandPool commandPool, VkAllocationCallbacks* pAllocator);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkDestroyDescriptorPool(VkDevice device, VkDescriptorPool descriptorPool, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyDescriptorSetLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, VkAllocationCallbacks* pAllocator);
@@ -235,17 +247,22 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate void VkUnmapMemory(VkDevice device, VkDeviceMemory memory);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkUpdateDescriptorSets(VkDevice device, uint descriptorWriteCount, VkWriteDescriptorSet* pDescriptorWrites, uint descriptorCopyCount, VkCopyDescriptorSet* pDescriptorCopies);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkWaitForFences(VkDevice device, uint fenceCount, VkFence* pFences, VkBool32 waitAll, ulong timeout);
 
     private readonly Dictionary<string, HashSet<string>> deviceExtensionsMap   = new();
     private readonly Dictionary<string, HashSet<string>> instanceExtensionsMap = new();
 
     private readonly VkAllocateCommandBuffers                 vkAllocateCommandBuffers                 = loader.Load<VkAllocateCommandBuffers>("vkAllocateCommandBuffers");
+    private readonly VkAllocateDescriptorSets                 vkAllocateDescriptorSets                 = loader.Load<VkAllocateDescriptorSets>("vkAllocateDescriptorSets");
     private readonly VkAllocateMemory                         vkAllocateMemory                         = loader.Load<VkAllocateMemory>("vkAllocateMemory");
     private readonly VkBeginCommandBuffer                     vkBeginCommandBuffer                     = loader.Load<VkBeginCommandBuffer>("vkBeginCommandBuffer");
     private readonly VkBindBufferMemory                       vkBindBufferMemory                       = loader.Load<VkBindBufferMemory>("vkBindBufferMemory");
     private readonly VkCmdBeginRenderPass                     vkCmdBeginRenderPass                     = loader.Load<VkCmdBeginRenderPass>("vkCmdBeginRenderPass");
     private readonly VkCmdBindIndexBuffer                     vkCmdBindIndexBuffer                     = loader.Load<VkCmdBindIndexBuffer>("vkCmdBindIndexBuffer");
+    private readonly VkCmdBindDescriptorSets                  vkCmdBindDescriptorSets                  = loader.Load<VkCmdBindDescriptorSets>("vkCmdBindDescriptorSets");
     private readonly VkCmdBindPipeline                        vkCmdBindPipeline                        = loader.Load<VkCmdBindPipeline>("vkCmdBindPipeline");
     private readonly VkCmdBindVertexBuffers                   vkCmdBindVertexBuffers                   = loader.Load<VkCmdBindVertexBuffers>("vkCmdBindVertexBuffers");
     private readonly VkCmdCopyBuffer                          vkCmdCopyBuffer                          = loader.Load<VkCmdCopyBuffer>("vkCmdCopyBuffer");
@@ -256,6 +273,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCmdSetViewport                         vkCmdSetViewport                         = loader.Load<VkCmdSetViewport>("vkCmdSetViewport");
     private readonly VkCreateBuffer                           vkCreateBuffer                           = loader.Load<VkCreateBuffer>("vkCreateBuffer");
     private readonly VkCreateCommandPool                      vkCreateCommandPool                      = loader.Load<VkCreateCommandPool>("vkCreateCommandPool");
+    private readonly VkCreateDescriptorPool                   vkCreateDescriptorPool                   = loader.Load<VkCreateDescriptorPool>("vkCreateDescriptorPool");
     private readonly VkCreateDescriptorSetLayout              vkCreateDescriptorSetLayout              = loader.Load<VkCreateDescriptorSetLayout>("vkCreateDescriptorSetLayout");
     private readonly VkCreateDevice                           vkCreateDevice                           = loader.Load<VkCreateDevice>("vkCreateDevice");
     private readonly VkCreateFence                            vkCreateFence                            = loader.Load<VkCreateFence>("vkCreateFence");
@@ -269,6 +287,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCreateShaderModule                     vkCreateShaderModule                     = loader.Load<VkCreateShaderModule>("vkCreateShaderModule");
     private readonly VkDestroyBuffer                          vkDestroyBuffer                          = loader.Load<VkDestroyBuffer>("vkDestroyBuffer");
     private readonly VkDestroyCommandPool                     vkDestroyCommandPool                     = loader.Load<VkDestroyCommandPool>("vkDestroyCommandPool");
+    private readonly VkDestroyDescriptorPool                  vkDestroyDescriptorPool                  = loader.Load<VkDestroyDescriptorPool>("vkDestroyDescriptorPool");
     private readonly VkDestroyDescriptorSetLayout             vkDestroyDescriptorSetLayout             = loader.Load<VkDestroyDescriptorSetLayout>("vkDestroyDescriptorSetLayout");
     private readonly VkDestroyDevice                          vkDestroyDevice                          = loader.Load<VkDestroyDevice>("vkDestroyDevice");
     private readonly VkDestroyFence                           vkDestroyFence                           = loader.Load<VkDestroyFence>("vkDestroyFence");
@@ -302,6 +321,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkResetCommandBuffer                     vkResetCommandBuffer                     = loader.Load<VkResetCommandBuffer>("vkResetCommandBuffer");
     private readonly VkResetFences                            vkResetFences                            = loader.Load<VkResetFences>("vkResetFences");
     private readonly VkUnmapMemory                            vkUnmapMemory                            = loader.Load<VkUnmapMemory>("vkUnmapMemory");
+    private readonly VkUpdateDescriptorSets                   vkUpdateDescriptorSets                   = loader.Load<VkUpdateDescriptorSets>("vkUpdateDescriptorSets");
     private readonly VkWaitForFences                          vkWaitForFences                          = loader.Load<VkWaitForFences>("vkWaitForFences");
 
     public static uint ApiVersion_1_0 { get; } = MakeApiVersion(0, 1, 0, 0);
@@ -388,6 +408,39 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// <para>Allocate one or more descriptor sets.</para>
+    /// <para>The allocated descriptor sets are returned in pDescriptorSets.</para>
+    /// <para>When a descriptor set is allocated, the initial state is largely uninitialized and all descriptors are undefined, with the exception that samplers with a non-null pImmutableSamplers are initialized on allocation. Descriptors also become undefined if the underlying resource or view object is destroyed. Descriptor sets containing undefined descriptors can still be bound and used, subject to the following conditions:</para>
+    /// <list type="bullet">
+    /// <item>For descriptor set bindings created with the <see cref="VkDescriptorBindingFlagBits.VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT"/> bit set, all descriptors in that binding that are dynamically used must have been populated before the descriptor set is <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#descriptorsets-binding">consumed</see>.</item>
+    /// <item>For descriptor set bindings created without the <see cref="VkDescriptorBindingFlagBits.VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT"/> bit set, all descriptors in that binding that are statically used must have been populated before the descriptor set is <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#descriptorsets-binding">consumed</see>.</item>
+    /// <item>Descriptor bindings with descriptor type of <see cref="VkDescriptorBindingFlagBits.VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK"/> can be undefined when the descriptor set is <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#descriptorsets-binding">consumed</see>; though values in that block will be undefined.</item>
+    /// <item>Entries that are not used by a pipeline can have undefined descriptors.</item>
+    /// </list>
+    /// <para>If a call to <see cref="AllocateDescriptorSets"/> would cause the total number of descriptor sets allocated from the pool to exceed the value of <see cref="VkDescriptorPoolCreateInfo.maxSets"/> used to create pAllocateInfo->descriptorPool, then the allocation may fail due to lack of space in the descriptor pool. Similarly, the allocation may fail due to lack of space if the call to <see cref="AllocateDescriptorSets"/> would cause the number of any given descriptor type to exceed the sum of all the descriptorCount members of each element of <see cref="VkDescriptorPoolCreateInfo.pPoolSizes"/> with a type equal to that type.</para>
+    /// <para>Additionally, the allocation may also fail if a call to <see cref="AllocateDescriptorSets"/> would cause the total number of inline uniform block bindings allocated from the pool to exceed the value of <see cref="VkDescriptorPoolInlineUniformBlockCreateInfo.maxInlineUniformBlockBindings"/> used to create the descriptor pool.</para>
+    /// <para>If the allocation fails due to no more space in the descriptor pool, and not because of system or device memory exhaustion, then <see cref="VkResult.VK_ERROR_OUT_OF_POOL_MEMORY"/> must be returned.</para>
+    /// <para><see cref="AllocateDescriptorSets"/> can be used to create multiple descriptor sets. If the creation of any of those descriptor sets fails, then the implementation must destroy all successfully created descriptor set objects from this command, set all entries of the pDescriptorSets array to VK_NULL_HANDLE and return the error.</para>
+    /// </summary>
+    /// <param name="device">The logical device that owns the descriptor pool.</param>
+    /// <param name="pAllocateInfo">A pointer to a <see cref="VkDescriptorSetAllocateInfo"/> structure describing parameters of the allocation.</param>
+    /// <param name="pDescriptorSets">A pointer to an array of <see cref="VkDescriptorSet"/> handles in which the resulting descriptor set objects are returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult AllocateDescriptorSets(VkDevice device, VkDescriptorSetAllocateInfo* pAllocateInfo, VkDescriptorSet* pDescriptorSets) =>
+        this.vkAllocateDescriptorSets.Invoke(device, pAllocateInfo, pDescriptorSets);
+
+    public VkResult AllocateDescriptorSets(VkDevice device, in VkDescriptorSetAllocateInfo allocateInfo, out VkDescriptorSet[] descriptorSets)
+    {
+        descriptorSets = new VkDescriptorSet[allocateInfo.descriptorSetCount];
+
+        fixed (VkDescriptorSetAllocateInfo* pAllocateInfo   = &allocateInfo)
+        fixed (VkDescriptorSet*             pDescriptorSets = descriptorSets)
+        {
+            return this.vkAllocateDescriptorSets.Invoke(device, pAllocateInfo, pDescriptorSets);
+        }
+    }
+
+    /// <summary>
     /// <para>Allocate device memory.</para>
     /// <para>Allocations returned by <see cref="AllocateMemory"/> are guaranteed to meet any alignment requirement of the implementation. For example, if an implementation requires 128 byte alignment for images and 64 byte alignment for buffers, the device memory returned through this mechanism would be 128-byte aligned. This ensures that applications can correctly suballocate objects of different types (with potentially different alignment requirements) in the same memory object.</para>
     /// <para>When memory is allocated, its contents are undefined with the following constraint:</para>
@@ -463,6 +516,43 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkRenderPassBeginInfo* pRenderPassBegin = &renderPassBegin)
         {
             this.vkCmdBeginRenderPass.Invoke(commandBuffer, pRenderPassBegin, contents);
+        }
+    }
+
+    /// <summary>
+    /// Binds descriptor sets to a command buffer.
+    /// <see cref="CmdBindDescriptorSets"/> binds descriptor sets pDescriptorSets[0..descriptorSetCount-1] to set numbers [firstSet..firstSet+descriptorSetCount-1] for subsequent <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#pipelines-bindpoint-commands">bound pipeline commands</see> set by pipelineBindPoint. Any bindings that were previously applied via these sets , or calls to <see cref="VkExtDescriptorBuffer.CmdSetDescriptorBufferOffsets"/> or <see cref="VkExtDescriptorBuffer.CmdBindDescriptorBufferEmbeddedSamplers"/>, are no longer valid.
+    /// Once bound, a descriptor set affects rendering of subsequent commands that interact with the given pipeline type in the command buffer until either a different set is bound to the same set number, or the set is disturbed as described in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#descriptorsets-compatibility">Pipeline Layout Compatibility</see>.
+    /// A compatible descriptor set must be bound for all set numbers that any shaders in a pipeline access, at the time that a drawing or dispatching command is recorded to execute using that pipeline. However, if none of the shaders in a pipeline statically use any bindings with a particular set number, then no descriptor set need be bound for that set number, even if the pipeline layout includes a non-trivial descriptor set layout for that set number.
+    /// When consuming a descriptor, a descriptor is considered valid if the descriptor is not undefined as described by <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#descriptor-set-initial-state">descriptor set allocation</see>. If the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#features-nullDescriptor">nullDescriptor</see> feature is enabled, a null descriptor is also considered valid. A descriptor that was disturbed by <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#descriptorsets-compatibility">Pipeline Layout Compatibility</see>, or was never bound by <see cref="CmdBindDescriptorSets"/> is not considered valid. If a pipeline accesses a descriptor either statically or dynamically depending on the <see cref="VkDescriptorBindingFlagBits"/>, the consuming descriptor type in the pipeline must match the <see cref="VkDescriptorType"/> in <see cref="VkDescriptorSetLayoutCreateInfo"/> for the descriptor to be considered valid. If a descriptor is a mutable descriptor, the consuming descriptor type in the pipeline must match the active descriptor type for the descriptor to be considered valid.
+    /// Note: Further validation may be carried out beyond validation for descriptor types, e.g. <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#textures-input-validation">Texel Input Validation</see>.
+    /// If any of the sets being bound include dynamic uniform or storage buffers, then pDynamicOffsets includes one element for each array element in each dynamic descriptor type binding in each set. Values are taken from pDynamicOffsets in an order such that all entries for set N come before set N+1; within a set, entries are ordered by the binding numbers in the descriptor set layouts; and within a binding array, elements are in order. dynamicOffsetCount must equal the total number of dynamic descriptors in the sets being bound.
+    /// The effective offset used for dynamic uniform and storage buffer bindings is the sum of the relative offset taken from pDynamicOffsets, and the base address of the buffer plus base offset in the descriptor set. The range of the dynamic uniform and storage buffer bindings is the buffer range as specified in the descriptor set.
+    /// Each of the pDescriptorSets must be compatible with the pipeline layout specified by layout. The layout used to program the bindings must also be compatible with the pipeline used in subsequent bound pipeline commands with that pipeline type, as defined in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#descriptorsets-compatibility">Pipeline Layout Compatibility</see> section.
+    /// The descriptor set contents bound by a call to <see cref="CmdBindDescriptorSets"/> may be consumed at the following times:
+    /// For descriptor bindings created with the <see cref="VkDescriptorBindingFlagBits.VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT"/> bit set, the contents may be consumed when the command buffer is submitted to a queue, or during shader execution of the resulting draws and dispatches, or any time in between. Otherwise,
+    /// during host execution of the command, or during shader execution of the resulting draws and dispatches, or any time in between.
+    /// Thus, the contents of a descriptor set binding must not be altered (overwritten by an update command, or freed) between the first point in time that it may be consumed, and when the command completes executing on the queue.
+    /// The contents of pDynamicOffsets are consumed immediately during execution of <see cref="CmdBindDescriptorSets"/>. Once all pending uses have completed, it is legal to update and reuse a descriptor set.
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer that the descriptor sets will be bound to.</param>
+    /// <param name="pipelineBindPoint">A VkPipelineBindPoint indicating the type of the pipeline that will use the descriptors. There is a separate set of bind points for each pipeline type, so binding one does not disturb the others.</param>
+    /// <param name="layout">A VkPipelineLayout object used to program the bindings.</param>
+    /// <param name="firstSet">The set number of the first descriptor set to be bound.</param>
+    /// <param name="descriptorSetCount">The number of elements in the pDescriptorSets array.</param>
+    /// <param name="pDescriptorSets">A pointer to an array of handles to VkDescriptorSet objects describing the descriptor sets to bind to.</param>
+    /// <param name="dynamicOffsetCount">The number of dynamic offsets in the pDynamicOffsets array.</param>
+    /// <param name="pDynamicOffsets">A pointer to an array of uint32_t values specifying dynamic offsets.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdBindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint firstSet, uint descriptorSetCount, VkDescriptorSet* pDescriptorSets, uint dynamicOffsetCount, uint* pDynamicOffsets) =>
+        this.vkCmdBindDescriptorSets.Invoke(commandBuffer, pipelineBindPoint, layout, firstSet, descriptorSetCount, pDescriptorSets, dynamicOffsetCount, pDynamicOffsets);
+
+    public void CmdBindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint firstSet, VkDescriptorSet[] descriptorSets, uint[] dynamicOffsets)
+    {
+        fixed (VkDescriptorSet* pDescriptorSets = descriptorSets)
+        fixed (uint*            pDynamicOffsets = dynamicOffsets)
+        {
+            this.vkCmdBindDescriptorSets.Invoke(commandBuffer, pipelineBindPoint, layout, firstSet, (uint)descriptorSets.Length, pDescriptorSets, (uint)dynamicOffsets.Length, pDynamicOffsets);
         }
     }
 
@@ -645,6 +735,28 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkCommandPool*           pCommandPool = &commandPool)
         {
             return this.vkCreateCommandPool.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pCommandPool);
+        }
+    }
+
+    /// <summary>
+    /// <para>Creates a descriptor pool object.</para>
+    /// <para>The created descriptor pool is returned in pDescriptorPool.</para>
+    /// </summary>
+    /// <param name="device">The logical device that creates the descriptor pool.</param>
+    /// <param name="pCreateInfo">A pointer to a <see cref="VkDescriptorPoolCreateInfo"/> structure specifying the state of the descriptor pool object.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pDescriptorPool">A pointer to a VkDescriptorPool handle in which the resulting descriptor pool object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult CreateDescriptorPool(VkDevice device, VkDescriptorPoolCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDescriptorPool* pDescriptorPool) =>
+        this.vkCreateDescriptorPool.Invoke(device, pCreateInfo, pAllocator, pDescriptorPool);
+
+    public VkResult CreateDescriptorPool(VkDevice device, in VkDescriptorPoolCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkDescriptorPool descriptorPool)
+    {
+        fixed (VkDescriptorPoolCreateInfo* pCreateInfo     = &createInfo)
+        fixed (VkAllocationCallbacks*      pAllocator      = &allocator)
+        fixed (VkDescriptorPool*           pDescriptorPool = &descriptorPool)
+        {
+            return this.vkCreateDescriptorPool.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pDescriptorPool);
         }
     }
 
@@ -902,6 +1014,16 @@ public unsafe class Vk(IVulkanLoader loader)
             this.vkDestroyCommandPool.Invoke(device, commandPool, NullIfDefault(allocator, pAllocator));
         }
     }
+
+    /// <summary>
+    /// <para>Destroy a descriptor pool object.</para>
+    /// <para>When a pool is destroyed, all descriptor sets allocated from the pool are implicitly freed and become invalid. Descriptor sets allocated from a given pool do not need to be freed before destroying that descriptor pool.</para>
+    /// </summary>
+    /// <param name="device">The logical device that destroys the descriptor pool.</param>
+    /// <param name="descriptorPool">The descriptor pool to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    public void DestroyDescriptorPool(VkDevice device, VkDescriptorPool descriptorPool, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroyDescriptorPool.Invoke(device, descriptorPool, pAllocator);
 
     /// <summary>
     /// Destroy a descriptor set layout object.
@@ -1530,6 +1652,9 @@ public unsafe class Vk(IVulkanLoader loader)
     public VkResult MapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags, void** ppData) =>
         this.vkMapMemory.Invoke(device, memory, offset, size, flags, ppData);
 
+    public VkResult MapMemory<T>(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkMemoryMapFlags flags, T** ppData) where T : unmanaged =>
+        this.vkMapMemory.Invoke(device, memory, offset, (ulong)Marshal.SizeOf<T>(), flags, (void**)ppData);
+
     public VkResult MapMemory<T>(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkMemoryMapFlags flags, in T data) where T : unmanaged
     {
         var ppData = stackalloc T*[1];
@@ -1675,6 +1800,31 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void UnmapMemory(VkDevice device, VkDeviceMemory memory) =>
         this.vkUnmapMemory.Invoke(device, memory);
+
+    /// <summary>
+    /// <para>Update the contents of a descriptor set object.</para>
+    /// <para>The operations described by pDescriptorWrites are performed first, followed by the operations described by pDescriptorCopies. Within each array, the operations are performed in the order they appear in the array.</para>
+    /// <para>Each element in the pDescriptorWrites array describes an operation updating the descriptor set using descriptors for resources specified in the structure.</para>
+    /// <para>Each element in the pDescriptorCopies array is a <see cref="VkCopyDescriptorSet"/> structure describing an operation copying descriptors between sets.</para>
+    /// <para>If the dstSet member of any element of pDescriptorWrites or pDescriptorCopies is bound, accessed, or modified by any command that was recorded to a command buffer which is currently in the recording or executable state, and any of the descriptor bindings that are updated were not created with the <see cref="VkDescriptorBindingFlagBits.VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT"/> or <see cref="VkDescriptorBindingFlagBits.VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT"/> bits set, that command buffer becomes <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">invalid</see>.</para>
+    /// </summary>
+    /// <param name="device">the logical device that updates the descriptor sets.</param>
+    /// <param name="descriptorWriteCount">The number of elements in the pDescriptorWrites array.</param>
+    /// <param name="pDescriptorWrites">A pointer to an array of <see cref="VkWriteDescriptorSet"/> structures describing the descriptor sets to write to.</param>
+    /// <param name="descriptorCopyCount">The number of elements in the pDescriptorCopies array.</param>
+    /// <param name="pDescriptorCopies">A pointer to an array of <see cref="VkCopyDescriptorSet"/> structures describing the descriptor sets to copy between.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void UpdateDescriptorSets(VkDevice device, uint descriptorWriteCount, VkWriteDescriptorSet* pDescriptorWrites, uint descriptorCopyCount, VkCopyDescriptorSet* pDescriptorCopies) =>
+        this.vkUpdateDescriptorSets.Invoke(device, descriptorWriteCount, pDescriptorWrites, descriptorCopyCount, pDescriptorCopies);
+
+    public void UpdateDescriptorSets(VkDevice device, VkWriteDescriptorSet[] descriptorWrites, VkCopyDescriptorSet[] descriptorCopies)
+    {
+        fixed (VkWriteDescriptorSet* pDescriptorWrites = descriptorWrites)
+        fixed (VkCopyDescriptorSet*  pDescriptorCopies = descriptorCopies)
+        {
+            this.vkUpdateDescriptorSets.Invoke(device, (uint)descriptorWrites.Length, pDescriptorWrites, (uint)descriptorCopies.Length, pDescriptorCopies);
+        }
+    }
 
     /// <summary>
     /// <para>Wait for one or more fences to become signaled.</para>

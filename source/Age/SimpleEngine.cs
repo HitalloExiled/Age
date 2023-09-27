@@ -24,17 +24,17 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private const int MAX_FRAMES_IN_FLIGHT = 2;
 
-    private readonly HashSet<string>     deviceExtensions         = new() { VkKhrSwapchain.Name };
-    private readonly bool                enableValidationLayers   = Debugger.IsAttached;
-    private readonly VkSemaphore[]       imageAvailableSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
-    private readonly ushort[]            indices                  = { 0, 1, 2, 2, 3, 0 };
-    private readonly VkFence[]           inFlightFences           = new VkFence[MAX_FRAMES_IN_FLIGHT];
-    private readonly VkSemaphore[]       renderFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
-    private readonly VkBuffer[]          uniformBuffers           = new VkBuffer[MAX_FRAMES_IN_FLIGHT];
-    private readonly nint[]              uniformBuffersMapped     = new nint[MAX_FRAMES_IN_FLIGHT];
-    private readonly VkDeviceMemory[]    uniformBuffersMemory     = new VkDeviceMemory[MAX_FRAMES_IN_FLIGHT];
-    private readonly HashSet<string>     validationLayers         = new() { "VK_LAYER_KHRONOS_validation" };
-    private readonly Vertex[]            vertices                 =
+    private readonly HashSet<string>        deviceExtensions         = new() { VkKhrSwapchain.Name };
+    private readonly bool                   enableValidationLayers   = Debugger.IsAttached;
+    private readonly VkSemaphore[]          imageAvailableSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
+    private readonly ushort[]               indices                  = { 0, 1, 2, 2, 3, 0 };
+    private readonly VkFence[]              inFlightFences           = new VkFence[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkSemaphore[]          renderFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkBuffer[]             uniformBuffers           = new VkBuffer[MAX_FRAMES_IN_FLIGHT];
+    private readonly UniformBufferObject*[] uniformBuffersMapped     = new UniformBufferObject*[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkDeviceMemory[]       uniformBuffersMemory     = new VkDeviceMemory[MAX_FRAMES_IN_FLIGHT];
+    private readonly HashSet<string>        validationLayers         = new() { "VK_LAYER_KHRONOS_validation" };
+    private readonly Vertex[]               vertices                 =
     {
         new(new(-0.5f, -0.5f), new(1.0f, 0.0f, 0.0f)),
         new(new(0.5f, -0.5f),  new(0.0f, 1.0f, 0.0f)),
@@ -49,7 +49,9 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkCommandPool            commandPool;
     private uint                     currentFrame;
     private VkDebugUtilsMessengerEXT debugMessenger;
+    private VkDescriptorPool         descriptorPool;
     private VkDescriptorSetLayout    descriptorSetLayout;
+    private VkDescriptorSet[]        descriptorSets        = Array.Empty<VkDescriptorSet>();
     private VkDevice                 device;
     private bool                     disposed;
     private bool                     framebufferResized;
@@ -83,7 +85,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
         for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            this.uniformBuffersMapped[i] = Marshal.AllocHGlobal(Marshal.SizeOf<UniformBufferObject>());
+            this.uniformBuffersMapped[i] = (UniformBufferObject*)Marshal.AllocHGlobal(Marshal.SizeOf<UniformBufferObject>());
         }
     }
 
@@ -173,20 +175,22 @@ public unsafe partial class SimpleEngine : IDisposable
     {
         this.CleanupSwapChain();
 
+        this.vk.DestroyPipeline(this.device, this.graphicsPipeline, null);
+        this.vk.DestroyPipelineLayout(this.device, this.pipelineLayout, null);
+        this.vk.DestroyRenderPass(this.device, this.renderPass, null);
+
         for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
             this.vk.DestroyBuffer(this.device, this.uniformBuffers[i], null);
             this.vk.FreeMemory(this.device, this.uniformBuffersMemory[i], null);
         }
 
+        this.vk.DestroyDescriptorPool(this.device, this.descriptorPool, null);
         this.vk.DestroyDescriptorSetLayout(this.device, this.descriptorSetLayout, null);
         this.vk.DestroyBuffer(this.device, this.indexBuffer, null);
         this.vk.FreeMemory(this.device, this.indexBufferMemory, null);
         this.vk.DestroyBuffer(this.device, this.vertexBuffer, null);
         this.vk.FreeMemory(this.device, this.vertexBufferMemory, null);
-        this.vk.DestroyPipeline(this.device, this.graphicsPipeline, null);
-        this.vk.DestroyPipelineLayout(this.device, this.pipelineLayout, null);
-        this.vk.DestroyRenderPass(this.device, this.renderPass, null);
 
         for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
@@ -323,6 +327,73 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
+    private void CreateDescriptorPool()
+    {
+        var poolSize = new VkDescriptorPoolSize
+        {
+            type            = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            descriptorCount = MAX_FRAMES_IN_FLIGHT
+        };
+
+        var poolInfo = new VkDescriptorPoolCreateInfo
+        {
+            poolSizeCount = 1,
+            pPoolSizes    = &poolSize,
+            maxSets       = MAX_FRAMES_IN_FLIGHT,
+        };
+
+        if (this.vk.CreateDescriptorPool(this.device, poolInfo, default, out this.descriptorPool) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to create descriptor pool!");
+        }
+    }
+
+    private void CreateDescriptorSets()
+    {
+        var layouts = new VkDescriptorSetLayout[MAX_FRAMES_IN_FLIGHT]
+        {
+            this.descriptorSetLayout,
+            this.descriptorSetLayout,
+        };
+
+        fixed (VkDescriptorSetLayout* pSetLayouts = layouts)
+        {
+            var allocInfo = new VkDescriptorSetAllocateInfo
+            {
+                descriptorPool     = this.descriptorPool,
+                descriptorSetCount = MAX_FRAMES_IN_FLIGHT,
+                pSetLayouts        = pSetLayouts
+            };
+
+            if (this.vk.AllocateDescriptorSets(this.device, allocInfo, out this.descriptorSets) != VkResult.VK_SUCCESS)
+            {
+                throw new Exception("failed to allocate descriptor sets!");
+            }
+
+            for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+            {
+                var bufferInfo = new VkDescriptorBufferInfo
+                {
+                    buffer = this.uniformBuffers[i],
+                    offset = 0,
+                    range  = (uint)Marshal.SizeOf<UniformBufferObject>()
+                };
+
+                var descriptorWrite = new VkWriteDescriptorSet
+                {
+                    dstSet          = this.descriptorSets[i],
+                    dstBinding      = 0,
+                    dstArrayElement = 0,
+                    descriptorType  = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    descriptorCount = 1,
+                    pBufferInfo     = &bufferInfo
+                };
+
+                this.vk.UpdateDescriptorSets(this.device, new[] { descriptorWrite }, Array.Empty<VkCopyDescriptorSet>());
+            }
+        }
+    }
+
     private void CreateDescriptorSetLayout()
     {
         var uboLayoutBinding = new VkDescriptorSetLayoutBinding
@@ -439,8 +510,8 @@ public unsafe partial class SimpleEngine : IDisposable
                     polygonMode             = VkPolygonMode.VK_POLYGON_MODE_FILL,
                     lineWidth               = 1.0f,
                     cullMode                = VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT,
-                    frontFace               = VkFrontFace.VK_FRONT_FACE_CLOCKWISE,
-                    depthBiasEnable         = false
+                    frontFace               = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE,
+                    depthBiasEnable         = false,
                 };
 
                 var multisampling = new VkPipelineMultisampleStateCreateInfo
@@ -645,8 +716,8 @@ public unsafe partial class SimpleEngine : IDisposable
                     throw new Exception($"Cannot found required extension {VkKhrSurface.Name}");
                 }
 
-                this.instance       = instance;
-                this.vkKhrSurface   = vkKhrSurface;
+                this.instance     = instance;
+                this.vkKhrSurface = vkKhrSurface;
             }
         }
     }
@@ -899,7 +970,10 @@ public unsafe partial class SimpleEngine : IDisposable
                 out this.uniformBuffersMemory[i]
             );
 
-            this.vk.MapMemory(this.device, this.uniformBuffersMemory[i], 0, 0, this.uniformBuffersMapped[i]);
+            fixed (UniformBufferObject** ppData = &this.uniformBuffersMapped[i])
+            {
+                this.vk.MapMemory(this.device, this.uniformBuffersMemory[i], 0, 0, ppData);
+            }
         }
     }
 
@@ -1121,6 +1195,8 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateVertexBuffer();
         this.CreateIndexBuffer();
         this.CreateUniformBuffers();
+        this.CreateDescriptorPool();
+        this.CreateDescriptorSets();
         this.CreateCommandBuffers();
         this.CreateSyncObjects();
     }
@@ -1271,6 +1347,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
         this.vk.CmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
         this.vk.CmdBindIndexBuffer(commandBuffer, this.indexBuffer, 0, VkIndexType.VK_INDEX_TYPE_UINT16);
+        this.vk.CmdBindDescriptorSets(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.pipelineLayout, 0, new [] { this.descriptorSets[this.currentFrame] }, Array.Empty<uint>());
         this.vk.CmdDrawIndexed(commandBuffer, (uint)this.indices.Length, 1, 0, 0, 0);
         #endregion RenderPass
 
@@ -1315,19 +1392,20 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void UpdateUniformBuffer(uint currentImage)
     {
-        var currentTime = DateTime.UtcNow;
-        var time        = (currentTime - startTime).Ticks;
+        const double RADIANS = 0.017453292519943295;
+
+        var time = Math.Max(0, (float)(1000 / (DateTime.UtcNow - startTime).TotalMilliseconds));
 
         var ubo = new UniformBufferObject
         {
-            Model = new Matrix4x4<float>(1).Rotate(new(0, 0, 1), time * (float)(90.0 * Math.PI / 180)),
-            View  = Matrix4x4<float>.LookAt(new(2, 2, 2), new(0, 0, 0), new(0, 0, 1)),
-            Proj  = Matrix4x4<float>.Perspective((float)(90.0 * Math.PI / 180), this.swapChainExtent.width / (float)this.swapChainExtent.height, 0.1f, 10.0f)
+            Model = Matrix4x4<float>.Rotate(new(0, 0, 1), time * (float)(90 * RADIANS)),
+            View  = Matrix4x4<float>.LookAt(new(2), new(0), new(0, 0, 1)),
+            Proj  = Matrix4x4<float>.PerspectiveFov((float)(45 * RADIANS), this.swapChainExtent.width / (float)this.swapChainExtent.height, 0.1f, 10)
         };
 
         ubo.Proj[1, 1] *= -1;
 
-        Marshal.StructureToPtr(ubo, this.uniformBuffersMapped[currentImage], true);
+        Marshal.StructureToPtr(ubo, (nint)this.uniformBuffersMapped[currentImage], true);
     }
 
     protected virtual void Dispose(bool disposing)
@@ -1341,7 +1419,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
             for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
             {
-                Marshal.FreeHGlobal(this.uniformBuffersMapped[i]);
+                Marshal.FreeHGlobal((nint)this.uniformBuffersMapped[i]);
             }
 
             this.windowsVulkanLoader.Dispose();
