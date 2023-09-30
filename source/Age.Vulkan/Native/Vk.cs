@@ -121,6 +121,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache, uint createInfoCount, VkGraphicsPipelineCreateInfo* pCreateInfos, VkAllocationCallbacks* pAllocator, VkPipeline* pPipelines);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkCreateImage(VkDevice device, VkImageCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkImage* pImage);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateImageView(VkDevice device, VkImageViewCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkImageView* pView);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -279,6 +282,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCreateFence                            vkCreateFence                            = loader.Load<VkCreateFence>("vkCreateFence");
     private readonly VkCreateFramebuffer                      vkCreateFramebuffer                      = loader.Load<VkCreateFramebuffer>("vkCreateFramebuffer");
     private readonly VkCreateGraphicsPipelines                vkCreateGraphicsPipelines                = loader.Load<VkCreateGraphicsPipelines>("vkCreateGraphicsPipelines");
+    private readonly VkCreateImage                            vkCreateImage                            = loader.Load<VkCreateImage>("vkCreateImage");
     private readonly VkCreateImageView                        vkCreateImageView                        = loader.Load<VkCreateImageView>("vkCreateImageView");
     private readonly VkCreateInstance                         vkCreateInstance                         = loader.Load<VkCreateInstance>("vkCreateInstance");
     private readonly VkCreatePipelineLayout                   vkCreatePipelineLayout                   = loader.Load<VkCreatePipelineLayout>("vkCreatePipelineLayout");
@@ -353,26 +357,6 @@ public unsafe class Vk(IVulkanLoader loader)
         }
     }
 
-    /// <summary>
-    /// Create an image view from an existing image.
-    /// </summary>
-    /// <param name="device">The logical device that creates the image view.</param>
-    /// <param name="pCreateInfo">A pointer to a <see cref="VkImageViewCreateInfo"/> structure containing parameters to be used to create the image view.</param>
-    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
-    /// <param name="pView">A pointer to a VkImageView handle in which the resulting image view object is returned.</param>
-    /// <remarks>Provided by VK_VERSION_1_0</remarks>
-    public VkResult CreateImageView(VkDevice device, VkImageViewCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkImageView* pView) =>
-        this.vkCreateImageView.Invoke(device, pCreateInfo, pAllocator, pView);
-
-    public VkResult CreateImageView(VkDevice device, in VkImageViewCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkImageView view)
-    {
-        fixed (VkImageViewCreateInfo* pCreateInfo = &createInfo)
-        fixed (VkAllocationCallbacks* pAllocator  = &allocator)
-        fixed (VkImageView*           pView       = &view)
-        {
-            return this.vkCreateImageView.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pView);
-        }
-    }
 
     /// <summary>
     /// <para>Allocate command buffers from an existing command pool</para>
@@ -867,6 +851,48 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkPipeline*                   pPipelines   = &pipelines)
         {
             return this.vkCreateGraphicsPipelines.Invoke(device, pipelineCache, createInfoCount, pCreateInfos, NullIfDefault(allocator, pAllocator), pPipelines);
+        }
+    }
+
+    /// <summary>
+    /// Create a new image object.
+    /// </summary>
+    /// <param name="device">The logical device that creates the image.</param>
+    /// <param name="pCreateInfo">A pointer to a <see cref="VkImageCreateInfo"/> structure containing parameters to be used to create the image.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pImage">A pointer to a <see cref="VkImage"/> handle in which the resulting image object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult CreateImage(VkDevice device, VkImageCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkImage* pImage) =>
+        this.vkCreateImage.Invoke(device, pCreateInfo, pAllocator, pImage);
+
+    public VkResult CreateImage(VkDevice device, in VkImageCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkImage image)
+    {
+        fixed (VkImageCreateInfo*     pCreateInfo = &createInfo)
+        fixed (VkAllocationCallbacks* pAllocator  = &allocator)
+        fixed (VkImage*               pImage      = &image)
+        {
+            return this.vkCreateImage.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pImage);
+        }
+    }
+
+    /// <summary>
+    /// Create an image view from an existing image.
+    /// </summary>
+    /// <param name="device">The logical device that creates the image view.</param>
+    /// <param name="pCreateInfo">A pointer to a <see cref="VkImageViewCreateInfo"/> structure containing parameters to be used to create the image view.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pView">A pointer to a VkImageView handle in which the resulting image view object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult CreateImageView(VkDevice device, VkImageViewCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkImageView* pView) =>
+        this.vkCreateImageView.Invoke(device, pCreateInfo, pAllocator, pView);
+
+    public VkResult CreateImageView(VkDevice device, in VkImageViewCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkImageView view)
+    {
+        fixed (VkImageViewCreateInfo* pCreateInfo = &createInfo)
+        fixed (VkAllocationCallbacks* pAllocator  = &allocator)
+        fixed (VkImageView*           pView       = &view)
+        {
+            return this.vkCreateImageView.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pView);
         }
     }
 
@@ -1654,18 +1680,6 @@ public unsafe class Vk(IVulkanLoader loader)
 
     public VkResult MapMemory<T>(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkMemoryMapFlags flags, T** ppData) where T : unmanaged =>
         this.vkMapMemory.Invoke(device, memory, offset, (ulong)Marshal.SizeOf<T>(), flags, (void**)ppData);
-
-    public VkResult MapMemory<T>(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkMemoryMapFlags flags, in T data) where T : unmanaged
-    {
-        var ppData = stackalloc T*[1];
-
-        if (this.vkMapMemory.Invoke(device, memory, offset, (ulong)Marshal.SizeOf<T>(), flags, (void**)ppData) is var result && result == VkResult.VK_SUCCESS)
-        {
-            *ppData[0] = data;
-        }
-
-        return result;
-    }
 
     public VkResult MapMemory<T>(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkMemoryMapFlags flags, T[] data) where T : unmanaged
     {

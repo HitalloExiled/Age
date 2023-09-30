@@ -5,6 +5,7 @@ namespace Age.Vulkan.Native.Flags;
 /// <para>Following culling, fragments are produced for any triangles which have not been discarded.</para>
 /// </summary>
 /// <remarks>Provided by VK_VERSION_1_0</remarks>
+[Flags]
 public enum VkCullModeFlagBits
 {
     /// <summary>

@@ -13,5 +13,10 @@
 
   <ItemGroup>
     <None Include="./Shaders/*.spv" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="./Textures/*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="2.88.6" />
   </ItemGroup>
 </Project>

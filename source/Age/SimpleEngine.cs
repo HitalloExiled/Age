@@ -15,6 +15,7 @@ using Age.Vulkan.Native.Flags.KHR;
 using Age.Vulkan.Native.Types;
 using Age.Vulkan.Native.Types.EXT;
 using Age.Vulkan.Native.Types.KHR;
+using SkiaSharp;
 
 namespace Age;
 
@@ -71,6 +72,8 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkFormat                 swapChainImageFormat;
     private VkImage[]                swapChainImages       = Array.Empty<VkImage>();
     private VkImageView[]            swapChainImageViews   = Array.Empty<VkImageView>();
+    private VkImage                  textureImage;
+    private VkDeviceMemory           textureImageMemory;
     private VkBuffer                 vertexBuffer;
     private VkDeviceMemory           vertexBufferMemory;
     private VkExtDebugUtils?         vkExtDebugUtils;
@@ -956,6 +959,51 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
+    private void CreateTextureImage()
+    {
+        using var stream = File.OpenRead(Path.Join(AppContext.BaseDirectory, "Textures/texture.jpg"));
+        var bitmap       = SKBitmap.Decode(stream);
+        var pixels       = bitmap.Pixels.Select(x => (uint)x).ToArray();
+
+        VkDeviceSize imageSize = (ulong)(bitmap.Width * bitmap.Height * 4);
+
+        this.CreateBuffer(
+            imageSize,
+            VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            out var stagingBuffer,
+            out var stagingBufferMemory
+        );
+
+        this.vk.MapMemory(this.device, stagingBufferMemory, 0, 0, pixels);
+        this.vk.UnmapMemory(this.device, stagingBufferMemory);
+
+        var imageInfo = new VkImageCreateInfo
+        {
+            imageType = VkImageType.VK_IMAGE_TYPE_2D,
+            extent    = new()
+            {
+                width  = (uint)bitmap.Width,
+                height = (uint)bitmap.Height,
+                depth  = 1,
+            },
+            mipLevels     = 1,
+            arrayLayers   = 1,
+            format        = VkFormat.VK_FORMAT_R8G8B8A8_SRGB,
+            tiling        = VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
+            initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
+            usage         = VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_DST_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT,
+            sharingMode   = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE,
+            samples       = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
+            flags         = default,
+        };
+
+        if (this.vk.CreateImage(this.device, imageInfo, default, out this.textureImage) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to create image!");
+        }
+    }
+
     private void CreateUniformBuffers()
     {
         VkDeviceSize bufferSize = (ulong)Marshal.SizeOf<UniformBufferObject>();
@@ -1192,6 +1240,7 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateGraphicsPipeline();
         this.CreateFramebuffers();
         this.CreateCommandPool();
+        this.CreateTextureImage();
         this.CreateVertexBuffer();
         this.CreateIndexBuffer();
         this.CreateUniformBuffers();
