@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using Age.Core.Unsafe;
 using Age.Vulkan.Interfaces;
 using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Flags;
@@ -39,14 +40,19 @@ public unsafe class Vk(IVulkanLoader loader)
     public const uint VK_MAX_PHYSICAL_DEVICE_NAME_SIZE = 256;
 
     /// <summary>
-    /// The length in byte values of an array containing a universally unique device or driver build identifier, as returned in <see cref="VkPhysicalDeviceIDProperties.deviceUUID"/> and <see cref="VkPhysicalDeviceIDProperties.driverUUID"/>.
+    /// The special queue family index VK_QUEUE_FAMILY_IGNORED indicates that a queue family parameter or member is ignored.
     /// </summary>
-    public const uint VK_UUID_SIZE = 16;
+    public const uint VK_QUEUE_FAMILY_IGNORED = uint.MaxValue;
 
     /// <summary>
     /// Subpass index sentinel expanding synchronization scope outside a subpass
     /// </summary>
     public const uint VK_SUBPASS_EXTERNAL = uint.MaxValue;
+
+    /// <summary>
+    /// The length in byte values of an array containing a universally unique device or driver build identifier, as returned in <see cref="VkPhysicalDeviceIDProperties.deviceUUID"/> and <see cref="VkPhysicalDeviceIDProperties.driverUUID"/>.
+    /// </summary>
+    public const uint VK_UUID_SIZE = 16;
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkAllocateCommandBuffers(VkDevice device, VkCommandBufferAllocateInfo* pAllocateInfo, VkCommandBuffer* pCommandBuffers);
@@ -62,6 +68,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkBindBufferMemory(VkDevice device, VkBuffer buffer, VkDeviceMemory memory, VkDeviceSize memoryOffset);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkBindImageMemory(VkDevice device, VkImage image, VkDeviceMemory memory, VkDeviceSize memoryOffset);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdBeginRenderPass(VkCommandBuffer commandBuffer, VkRenderPassBeginInfo* pRenderPassBegin, VkSubpassContents contents);
@@ -82,6 +91,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate void VkCmdCopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, uint regionCount, VkBufferCopy* pRegions);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdCopyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkImage dstImage, VkImageLayout dstImageLayout, uint regionCount, VkBufferImageCopy* pRegions);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdDraw(VkCommandBuffer commandBuffer, uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -89,6 +101,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdEndRenderPass(VkCommandBuffer commandBuffer);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdPipelineBarrier(VkCommandBuffer commandBuffer, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkDependencyFlags dependencyFlags, uint memoryBarrierCount, VkMemoryBarrier* pMemoryBarriers, uint bufferMemoryBarrierCount, VkBufferMemoryBarrier* pBufferMemoryBarriers, uint imageMemoryBarrierCount, VkImageMemoryBarrier* pImageMemoryBarriers);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdSetScissor(VkCommandBuffer commandBuffer, uint firstScissor, uint scissorCount, VkRect2D* pScissors);
@@ -136,6 +151,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate VkResult VkCreateRenderPass(VkDevice device, VkRenderPassCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkRenderPass* pRenderPass);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkCreateSampler(VkDevice device, VkSamplerCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkSampler* pSampler);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateSemaphore(VkDevice device, VkSemaphoreCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkSemaphore* pSemaphore);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -163,6 +181,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate void VkDestroyFramebuffer(VkDevice device, VkFramebuffer framebuffer, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkDestroyImage(VkDevice device, VkImage image, VkAllocationCallbacks* pAllocator);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyImageView(VkDevice device, VkImageView imageView, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -176,6 +197,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroyRenderPass(VkDevice device, VkRenderPass renderPass, VkAllocationCallbacks* pAllocator);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkDestroySampler(VkDevice device, VkSampler sampler, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroySemaphore(VkDevice device, VkSemaphore semaphore, VkAllocationCallbacks* pAllocator);
@@ -220,6 +244,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate void VkGetBufferMemoryRequirements(VkDevice device, VkBuffer buffer, VkMemoryRequirements* pMemoryRequirements);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkGetImageMemoryRequirements(VkDevice device, VkImage image, VkMemoryRequirements* pMemoryRequirements);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -258,75 +285,82 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly Dictionary<string, HashSet<string>> deviceExtensionsMap   = new();
     private readonly Dictionary<string, HashSet<string>> instanceExtensionsMap = new();
 
-    private readonly VkAllocateCommandBuffers                 vkAllocateCommandBuffers                 = loader.Load<VkAllocateCommandBuffers>("vkAllocateCommandBuffers");
-    private readonly VkAllocateDescriptorSets                 vkAllocateDescriptorSets                 = loader.Load<VkAllocateDescriptorSets>("vkAllocateDescriptorSets");
-    private readonly VkAllocateMemory                         vkAllocateMemory                         = loader.Load<VkAllocateMemory>("vkAllocateMemory");
-    private readonly VkBeginCommandBuffer                     vkBeginCommandBuffer                     = loader.Load<VkBeginCommandBuffer>("vkBeginCommandBuffer");
-    private readonly VkBindBufferMemory                       vkBindBufferMemory                       = loader.Load<VkBindBufferMemory>("vkBindBufferMemory");
-    private readonly VkCmdBeginRenderPass                     vkCmdBeginRenderPass                     = loader.Load<VkCmdBeginRenderPass>("vkCmdBeginRenderPass");
-    private readonly VkCmdBindIndexBuffer                     vkCmdBindIndexBuffer                     = loader.Load<VkCmdBindIndexBuffer>("vkCmdBindIndexBuffer");
-    private readonly VkCmdBindDescriptorSets                  vkCmdBindDescriptorSets                  = loader.Load<VkCmdBindDescriptorSets>("vkCmdBindDescriptorSets");
-    private readonly VkCmdBindPipeline                        vkCmdBindPipeline                        = loader.Load<VkCmdBindPipeline>("vkCmdBindPipeline");
-    private readonly VkCmdBindVertexBuffers                   vkCmdBindVertexBuffers                   = loader.Load<VkCmdBindVertexBuffers>("vkCmdBindVertexBuffers");
-    private readonly VkCmdCopyBuffer                          vkCmdCopyBuffer                          = loader.Load<VkCmdCopyBuffer>("vkCmdCopyBuffer");
-    private readonly VkCmdDraw                                vkCmdDraw                                = loader.Load<VkCmdDraw>("vkCmdDraw");
-    private readonly VkCmdDrawIndexed                         vkCmdDrawIndexed                         = loader.Load<VkCmdDrawIndexed>("vkCmdDrawIndexed");
-    private readonly VkCmdEndRenderPass                       vkCmdEndRenderPass                       = loader.Load<VkCmdEndRenderPass>("vkCmdEndRenderPass");
-    private readonly VkCmdSetScissor                          vkCmdSetScissor                          = loader.Load<VkCmdSetScissor>("vkCmdSetScissor");
-    private readonly VkCmdSetViewport                         vkCmdSetViewport                         = loader.Load<VkCmdSetViewport>("vkCmdSetViewport");
-    private readonly VkCreateBuffer                           vkCreateBuffer                           = loader.Load<VkCreateBuffer>("vkCreateBuffer");
-    private readonly VkCreateCommandPool                      vkCreateCommandPool                      = loader.Load<VkCreateCommandPool>("vkCreateCommandPool");
-    private readonly VkCreateDescriptorPool                   vkCreateDescriptorPool                   = loader.Load<VkCreateDescriptorPool>("vkCreateDescriptorPool");
-    private readonly VkCreateDescriptorSetLayout              vkCreateDescriptorSetLayout              = loader.Load<VkCreateDescriptorSetLayout>("vkCreateDescriptorSetLayout");
-    private readonly VkCreateDevice                           vkCreateDevice                           = loader.Load<VkCreateDevice>("vkCreateDevice");
-    private readonly VkCreateFence                            vkCreateFence                            = loader.Load<VkCreateFence>("vkCreateFence");
-    private readonly VkCreateFramebuffer                      vkCreateFramebuffer                      = loader.Load<VkCreateFramebuffer>("vkCreateFramebuffer");
-    private readonly VkCreateGraphicsPipelines                vkCreateGraphicsPipelines                = loader.Load<VkCreateGraphicsPipelines>("vkCreateGraphicsPipelines");
-    private readonly VkCreateImage                            vkCreateImage                            = loader.Load<VkCreateImage>("vkCreateImage");
-    private readonly VkCreateImageView                        vkCreateImageView                        = loader.Load<VkCreateImageView>("vkCreateImageView");
-    private readonly VkCreateInstance                         vkCreateInstance                         = loader.Load<VkCreateInstance>("vkCreateInstance");
-    private readonly VkCreatePipelineLayout                   vkCreatePipelineLayout                   = loader.Load<VkCreatePipelineLayout>("vkCreatePipelineLayout");
-    private readonly VkCreateRenderPass                       vkCreateRenderPass                       = loader.Load<VkCreateRenderPass>("vkCreateRenderPass");
-    private readonly VkCreateSemaphore                        vkCreateSemaphore                        = loader.Load<VkCreateSemaphore>("vkCreateSemaphore");
-    private readonly VkCreateShaderModule                     vkCreateShaderModule                     = loader.Load<VkCreateShaderModule>("vkCreateShaderModule");
-    private readonly VkDestroyBuffer                          vkDestroyBuffer                          = loader.Load<VkDestroyBuffer>("vkDestroyBuffer");
-    private readonly VkDestroyCommandPool                     vkDestroyCommandPool                     = loader.Load<VkDestroyCommandPool>("vkDestroyCommandPool");
-    private readonly VkDestroyDescriptorPool                  vkDestroyDescriptorPool                  = loader.Load<VkDestroyDescriptorPool>("vkDestroyDescriptorPool");
-    private readonly VkDestroyDescriptorSetLayout             vkDestroyDescriptorSetLayout             = loader.Load<VkDestroyDescriptorSetLayout>("vkDestroyDescriptorSetLayout");
-    private readonly VkDestroyDevice                          vkDestroyDevice                          = loader.Load<VkDestroyDevice>("vkDestroyDevice");
-    private readonly VkDestroyFence                           vkDestroyFence                           = loader.Load<VkDestroyFence>("vkDestroyFence");
-    private readonly VkDestroyFramebuffer                     vkDestroyFramebuffer                     = loader.Load<VkDestroyFramebuffer>("vkDestroyFramebuffer");
-    private readonly VkDestroyImageView                       vkDestroyImageView                       = loader.Load<VkDestroyImageView>("vkDestroyImageView");
-    private readonly VkDestroyInstance                        vkDestroyInstance                        = loader.Load<VkDestroyInstance>("vkDestroyInstance");
-    private readonly VkDestroyPipeline                        vkDestroyPipeline                        = loader.Load<VkDestroyPipeline>("vkDestroyPipeline");
-    private readonly VkDestroyPipelineLayout                  vkDestroyPipelineLayout                  = loader.Load<VkDestroyPipelineLayout>("vkDestroyPipelineLayout");
-    private readonly VkDestroyRenderPass                      vkDestroyRenderPass                      = loader.Load<VkDestroyRenderPass>("vkDestroyRenderPass");
-    private readonly VkDestroySemaphore                       vkDestroySemaphore                       = loader.Load<VkDestroySemaphore>("vkDestroySemaphore");
-    private readonly VkDestroyShaderModule                    vkDestroyShaderModule                    = loader.Load<VkDestroyShaderModule>("vkDestroyShaderModule");
-    private readonly VkDeviceWaitIdle                         vkDeviceWaitIdle                         = loader.Load<VkDeviceWaitIdle>("vkDeviceWaitIdle");
-    private readonly VkEndCommandBuffer                       vkEndCommandBuffer                       = loader.Load<VkEndCommandBuffer>("vkEndCommandBuffer");
-    private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties     = loader.Load<VkEnumerateDeviceExtensionProperties>("vkEnumerateDeviceExtensionProperties");
-    private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties   = loader.Load<VkEnumerateInstanceExtensionProperties>("vkEnumerateInstanceExtensionProperties");
-    private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties       = loader.Load<VkEnumerateInstanceLayerProperties>("vkEnumerateInstanceLayerProperties");
-    private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices               = loader.Load<VkEnumeratePhysicalDevices>("vkEnumeratePhysicalDevices");
-    private readonly VkFreeCommandBuffers                     vkFreeCommandBuffers                     = loader.Load<VkFreeCommandBuffers>("vkFreeCommandBuffers");
-    private readonly VkFreeMemory                             vkFreeMemory                             = loader.Load<VkFreeMemory>("vkFreeMemory");
-    private readonly VkGetBufferMemoryRequirements            vkGetBufferMemoryRequirements            = loader.Load<VkGetBufferMemoryRequirements>("vkGetBufferMemoryRequirements");
-    private readonly VkGetDeviceProcAddr                      vkGetDeviceProcAddr                      = loader.Load<VkGetDeviceProcAddr>("vkGetDeviceProcAddr");
-    private readonly VkGetDeviceQueue                         vkGetDeviceQueue                         = loader.Load<VkGetDeviceQueue>("vkGetDeviceQueue");
-    private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr                    = loader.Load<VkGetInstanceProcAddr>("vkGetInstanceProcAddr");
-    private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures              = loader.Load<VkGetPhysicalDeviceFeatures>("vkGetPhysicalDeviceFeatures");
-    private readonly VkGetPhysicalDeviceMemoryProperties      vkGetPhysicalDeviceMemoryProperties      = loader.Load<VkGetPhysicalDeviceMemoryProperties>("vkGetPhysicalDeviceMemoryProperties");
-    private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties            = loader.Load<VkGetPhysicalDeviceProperties>("vkGetPhysicalDeviceProperties");
-    private readonly VkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = loader.Load<VkGetPhysicalDeviceQueueFamilyProperties>("vkGetPhysicalDeviceQueueFamilyProperties");
-    private readonly VkMapMemory                              vkMapMemory                              = loader.Load<VkMapMemory>("vkMapMemory");
-    private readonly VkQueueSubmit                            vkQueueSubmit                            = loader.Load<VkQueueSubmit>("vkQueueSubmit");
-    private readonly VkQueueWaitIdle                          vkQueueWaitIdle                          = loader.Load<VkQueueWaitIdle>("vkQueueWaitIdle");
-    private readonly VkResetCommandBuffer                     vkResetCommandBuffer                     = loader.Load<VkResetCommandBuffer>("vkResetCommandBuffer");
-    private readonly VkResetFences                            vkResetFences                            = loader.Load<VkResetFences>("vkResetFences");
-    private readonly VkUnmapMemory                            vkUnmapMemory                            = loader.Load<VkUnmapMemory>("vkUnmapMemory");
-    private readonly VkUpdateDescriptorSets                   vkUpdateDescriptorSets                   = loader.Load<VkUpdateDescriptorSets>("vkUpdateDescriptorSets");
-    private readonly VkWaitForFences                          vkWaitForFences                          = loader.Load<VkWaitForFences>("vkWaitForFences");
+    private readonly VkAllocateCommandBuffers                 vkAllocateCommandBuffers                 = loader.Load<VkAllocateCommandBuffers>(nameof(vkAllocateCommandBuffers));
+    private readonly VkAllocateDescriptorSets                 vkAllocateDescriptorSets                 = loader.Load<VkAllocateDescriptorSets>(nameof(vkAllocateDescriptorSets));
+    private readonly VkAllocateMemory                         vkAllocateMemory                         = loader.Load<VkAllocateMemory>(nameof(vkAllocateMemory));
+    private readonly VkBeginCommandBuffer                     vkBeginCommandBuffer                     = loader.Load<VkBeginCommandBuffer>(nameof(vkBeginCommandBuffer));
+    private readonly VkBindBufferMemory                       vkBindBufferMemory                       = loader.Load<VkBindBufferMemory>(nameof(vkBindBufferMemory));
+    private readonly VkBindImageMemory                        vkBindImageMemory                        = loader.Load<VkBindImageMemory>(nameof(vkBindImageMemory));
+    private readonly VkCmdBeginRenderPass                     vkCmdBeginRenderPass                     = loader.Load<VkCmdBeginRenderPass>(nameof(vkCmdBeginRenderPass));
+    private readonly VkCmdBindIndexBuffer                     vkCmdBindIndexBuffer                     = loader.Load<VkCmdBindIndexBuffer>(nameof(vkCmdBindIndexBuffer));
+    private readonly VkCmdBindDescriptorSets                  vkCmdBindDescriptorSets                  = loader.Load<VkCmdBindDescriptorSets>(nameof(vkCmdBindDescriptorSets));
+    private readonly VkCmdBindPipeline                        vkCmdBindPipeline                        = loader.Load<VkCmdBindPipeline>(nameof(vkCmdBindPipeline));
+    private readonly VkCmdBindVertexBuffers                   vkCmdBindVertexBuffers                   = loader.Load<VkCmdBindVertexBuffers>(nameof(vkCmdBindVertexBuffers));
+    private readonly VkCmdCopyBuffer                          vkCmdCopyBuffer                          = loader.Load<VkCmdCopyBuffer>(nameof(vkCmdCopyBuffer));
+    private readonly VkCmdCopyBufferToImage                   vkCmdCopyBufferToImage                   = loader.Load<VkCmdCopyBufferToImage>(nameof(vkCmdCopyBufferToImage));
+    private readonly VkCmdDraw                                vkCmdDraw                                = loader.Load<VkCmdDraw>(nameof(vkCmdDraw));
+    private readonly VkCmdDrawIndexed                         vkCmdDrawIndexed                         = loader.Load<VkCmdDrawIndexed>(nameof(vkCmdDrawIndexed));
+    private readonly VkCmdEndRenderPass                       vkCmdEndRenderPass                       = loader.Load<VkCmdEndRenderPass>(nameof(vkCmdEndRenderPass));
+    private readonly VkCmdPipelineBarrier                     vkCmdPipelineBarrier                     = loader.Load<VkCmdPipelineBarrier>(nameof(vkCmdPipelineBarrier));
+    private readonly VkCmdSetScissor                          vkCmdSetScissor                          = loader.Load<VkCmdSetScissor>(nameof(vkCmdSetScissor));
+    private readonly VkCmdSetViewport                         vkCmdSetViewport                         = loader.Load<VkCmdSetViewport>(nameof(vkCmdSetViewport));
+    private readonly VkCreateBuffer                           vkCreateBuffer                           = loader.Load<VkCreateBuffer>(nameof(vkCreateBuffer));
+    private readonly VkCreateCommandPool                      vkCreateCommandPool                      = loader.Load<VkCreateCommandPool>(nameof(vkCreateCommandPool));
+    private readonly VkCreateDescriptorPool                   vkCreateDescriptorPool                   = loader.Load<VkCreateDescriptorPool>(nameof(vkCreateDescriptorPool));
+    private readonly VkCreateDescriptorSetLayout              vkCreateDescriptorSetLayout              = loader.Load<VkCreateDescriptorSetLayout>(nameof(vkCreateDescriptorSetLayout));
+    private readonly VkCreateDevice                           vkCreateDevice                           = loader.Load<VkCreateDevice>(nameof(vkCreateDevice));
+    private readonly VkCreateFence                            vkCreateFence                            = loader.Load<VkCreateFence>(nameof(vkCreateFence));
+    private readonly VkCreateFramebuffer                      vkCreateFramebuffer                      = loader.Load<VkCreateFramebuffer>(nameof(vkCreateFramebuffer));
+    private readonly VkCreateGraphicsPipelines                vkCreateGraphicsPipelines                = loader.Load<VkCreateGraphicsPipelines>(nameof(vkCreateGraphicsPipelines));
+    private readonly VkCreateImage                            vkCreateImage                            = loader.Load<VkCreateImage>(nameof(vkCreateImage));
+    private readonly VkCreateImageView                        vkCreateImageView                        = loader.Load<VkCreateImageView>(nameof(vkCreateImageView));
+    private readonly VkCreateInstance                         vkCreateInstance                         = loader.Load<VkCreateInstance>(nameof(vkCreateInstance));
+    private readonly VkCreatePipelineLayout                   vkCreatePipelineLayout                   = loader.Load<VkCreatePipelineLayout>(nameof(vkCreatePipelineLayout));
+    private readonly VkCreateRenderPass                       vkCreateRenderPass                       = loader.Load<VkCreateRenderPass>(nameof(vkCreateRenderPass));
+    private readonly VkCreateSampler                          vkCreateSampler                          = loader.Load<VkCreateSampler>(nameof(vkCreateSampler));
+    private readonly VkCreateSemaphore                        vkCreateSemaphore                        = loader.Load<VkCreateSemaphore>(nameof(vkCreateSemaphore));
+    private readonly VkCreateShaderModule                     vkCreateShaderModule                     = loader.Load<VkCreateShaderModule>(nameof(vkCreateShaderModule));
+    private readonly VkDestroyBuffer                          vkDestroyBuffer                          = loader.Load<VkDestroyBuffer>(nameof(vkDestroyBuffer));
+    private readonly VkDestroyCommandPool                     vkDestroyCommandPool                     = loader.Load<VkDestroyCommandPool>(nameof(vkDestroyCommandPool));
+    private readonly VkDestroyDescriptorPool                  vkDestroyDescriptorPool                  = loader.Load<VkDestroyDescriptorPool>(nameof(vkDestroyDescriptorPool));
+    private readonly VkDestroyDescriptorSetLayout             vkDestroyDescriptorSetLayout             = loader.Load<VkDestroyDescriptorSetLayout>(nameof(vkDestroyDescriptorSetLayout));
+    private readonly VkDestroyDevice                          vkDestroyDevice                          = loader.Load<VkDestroyDevice>(nameof(vkDestroyDevice));
+    private readonly VkDestroyFence                           vkDestroyFence                           = loader.Load<VkDestroyFence>(nameof(vkDestroyFence));
+    private readonly VkDestroyFramebuffer                     vkDestroyFramebuffer                     = loader.Load<VkDestroyFramebuffer>(nameof(vkDestroyFramebuffer));
+    private readonly VkDestroyImage                           vkDestroyImage                           = loader.Load<VkDestroyImage>(nameof(vkDestroyImage));
+    private readonly VkDestroyImageView                       vkDestroyImageView                       = loader.Load<VkDestroyImageView>(nameof(vkDestroyImageView));
+    private readonly VkDestroyInstance                        vkDestroyInstance                        = loader.Load<VkDestroyInstance>(nameof(vkDestroyInstance));
+    private readonly VkDestroyPipeline                        vkDestroyPipeline                        = loader.Load<VkDestroyPipeline>(nameof(vkDestroyPipeline));
+    private readonly VkDestroyPipelineLayout                  vkDestroyPipelineLayout                  = loader.Load<VkDestroyPipelineLayout>(nameof(vkDestroyPipelineLayout));
+    private readonly VkDestroyRenderPass                      vkDestroyRenderPass                      = loader.Load<VkDestroyRenderPass>(nameof(vkDestroyRenderPass));
+    private readonly VkDestroySampler                         vkDestroySampler                         = loader.Load<VkDestroySampler>(nameof(vkDestroySampler));
+    private readonly VkDestroySemaphore                       vkDestroySemaphore                       = loader.Load<VkDestroySemaphore>(nameof(vkDestroySemaphore));
+    private readonly VkDestroyShaderModule                    vkDestroyShaderModule                    = loader.Load<VkDestroyShaderModule>(nameof(vkDestroyShaderModule));
+    private readonly VkDeviceWaitIdle                         vkDeviceWaitIdle                         = loader.Load<VkDeviceWaitIdle>(nameof(vkDeviceWaitIdle));
+    private readonly VkEndCommandBuffer                       vkEndCommandBuffer                       = loader.Load<VkEndCommandBuffer>(nameof(vkEndCommandBuffer));
+    private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties     = loader.Load<VkEnumerateDeviceExtensionProperties>(nameof(vkEnumerateDeviceExtensionProperties));
+    private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties   = loader.Load<VkEnumerateInstanceExtensionProperties>(nameof(vkEnumerateInstanceExtensionProperties));
+    private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties       = loader.Load<VkEnumerateInstanceLayerProperties>(nameof(vkEnumerateInstanceLayerProperties));
+    private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices               = loader.Load<VkEnumeratePhysicalDevices>(nameof(vkEnumeratePhysicalDevices));
+    private readonly VkFreeCommandBuffers                     vkFreeCommandBuffers                     = loader.Load<VkFreeCommandBuffers>(nameof(vkFreeCommandBuffers));
+    private readonly VkFreeMemory                             vkFreeMemory                             = loader.Load<VkFreeMemory>(nameof(vkFreeMemory));
+    private readonly VkGetBufferMemoryRequirements            vkGetBufferMemoryRequirements            = loader.Load<VkGetBufferMemoryRequirements>(nameof(vkGetBufferMemoryRequirements));
+    private readonly VkGetDeviceProcAddr                      vkGetDeviceProcAddr                      = loader.Load<VkGetDeviceProcAddr>(nameof(vkGetDeviceProcAddr));
+    private readonly VkGetDeviceQueue                         vkGetDeviceQueue                         = loader.Load<VkGetDeviceQueue>(nameof(vkGetDeviceQueue));
+    private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr                    = loader.Load<VkGetInstanceProcAddr>(nameof(vkGetInstanceProcAddr));
+    private readonly VkGetImageMemoryRequirements             vkGetImageMemoryRequirements            = loader.Load<VkGetImageMemoryRequirements>(nameof(vkGetImageMemoryRequirements));
+    private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures              = loader.Load<VkGetPhysicalDeviceFeatures>(nameof(vkGetPhysicalDeviceFeatures));
+    private readonly VkGetPhysicalDeviceMemoryProperties      vkGetPhysicalDeviceMemoryProperties      = loader.Load<VkGetPhysicalDeviceMemoryProperties>(nameof(vkGetPhysicalDeviceMemoryProperties));
+    private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties            = loader.Load<VkGetPhysicalDeviceProperties>(nameof(vkGetPhysicalDeviceProperties));
+    private readonly VkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = loader.Load<VkGetPhysicalDeviceQueueFamilyProperties>(nameof(vkGetPhysicalDeviceQueueFamilyProperties));
+    private readonly VkMapMemory                              vkMapMemory                              = loader.Load<VkMapMemory>(nameof(vkMapMemory));
+    private readonly VkQueueSubmit                            vkQueueSubmit                            = loader.Load<VkQueueSubmit>(nameof(vkQueueSubmit));
+    private readonly VkQueueWaitIdle                          vkQueueWaitIdle                          = loader.Load<VkQueueWaitIdle>(nameof(vkQueueWaitIdle));
+    private readonly VkResetCommandBuffer                     vkResetCommandBuffer                     = loader.Load<VkResetCommandBuffer>(nameof(vkResetCommandBuffer));
+    private readonly VkResetFences                            vkResetFences                            = loader.Load<VkResetFences>(nameof(vkResetFences));
+    private readonly VkUnmapMemory                            vkUnmapMemory                            = loader.Load<VkUnmapMemory>(nameof(vkUnmapMemory));
+    private readonly VkUpdateDescriptorSets                   vkUpdateDescriptorSets                   = loader.Load<VkUpdateDescriptorSets>(nameof(vkUpdateDescriptorSets));
+    private readonly VkWaitForFences                          vkWaitForFences                          = loader.Load<VkWaitForFences>(nameof(vkWaitForFences));
 
     public static uint ApiVersion_1_0 { get; } = MakeApiVersion(0, 1, 0, 0);
 
@@ -486,6 +520,18 @@ public unsafe class Vk(IVulkanLoader loader)
         this.vkBindBufferMemory.Invoke(device, buffer, memory, memoryOffset);
 
     /// <summary>
+    /// <para>Bind device memory to an image object.</para>
+    /// <para><see cref="BindImageMemory"/> is equivalent to passing the same parameters through <see cref="VkBindImageMemoryInfo"/> to <see cref="BindImageMemory2"/>.</para>
+    /// </summary>
+    /// <param name="device">The logical device that owns the image and memory.</param>
+    /// <param name="image">The image.</param>
+    /// <param name="memory">The <see cref="VkDeviceMemory"/> object describing the device memory to attach.</param>
+    /// <param name="memoryOffset">The start offset of the region of memory which is to be bound to the image. The number of bytes returned in the <see cref="VkMemoryRequirements.size"/> member in memory, starting from memoryOffset bytes, will be bound to the specified image.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult BindImageMemory(VkDevice device, VkImage image, VkDeviceMemory memory, VkDeviceSize memoryOffset) =>
+        this.vkBindImageMemory.Invoke(device, image, memory, memoryOffset);
+
+    /// <summary>
     /// Begin a new render pass.
     /// </summary>
     /// <param name="commandBuffer">The command buffer in which to record the command.</param>
@@ -531,12 +577,12 @@ public unsafe class Vk(IVulkanLoader loader)
     public void CmdBindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint firstSet, uint descriptorSetCount, VkDescriptorSet* pDescriptorSets, uint dynamicOffsetCount, uint* pDynamicOffsets) =>
         this.vkCmdBindDescriptorSets.Invoke(commandBuffer, pipelineBindPoint, layout, firstSet, descriptorSetCount, pDescriptorSets, dynamicOffsetCount, pDynamicOffsets);
 
-    public void CmdBindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint firstSet, VkDescriptorSet[] descriptorSets, uint[] dynamicOffsets)
+    public void CmdBindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint firstSet, VkDescriptorSet[]? descriptorSets, uint[]? dynamicOffsets)
     {
         fixed (VkDescriptorSet* pDescriptorSets = descriptorSets)
         fixed (uint*            pDynamicOffsets = dynamicOffsets)
         {
-            this.vkCmdBindDescriptorSets.Invoke(commandBuffer, pipelineBindPoint, layout, firstSet, (uint)descriptorSets.Length, pDescriptorSets, (uint)dynamicOffsets.Length, pDynamicOffsets);
+            this.vkCmdBindDescriptorSets.Invoke(commandBuffer, pipelineBindPoint, layout, firstSet, (uint)(descriptorSets?.Length ?? 0), pDescriptorSets, (uint)(dynamicOffsets?.Length ?? 0), pDynamicOffsets);
         }
     }
 
@@ -614,6 +660,37 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// <para>Copy data from a buffer into an image.</para>
+    /// <para>Each source region specified by pRegions is copied from the source buffer to the destination region of the destination image according to the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#copies-buffers-images-addressing">addressing calculations</see> for each resource. If any of the specified regions in srcBuffer overlaps in memory with any of the specified regions in dstImage, values read from those overlapping regions are undefined. If any region accesses a depth aspect in dstImage and the <see cref="VkExtDepthRangeUnrestricted"/> extension is not enabled, values copied from srcBuffer outside of the range [0,1] will be be written as undefined values to the destination image.</para>
+    /// <para>Copy regions for the image must be aligned to a multiple of the texel block extent in each dimension, except at the edges of the image, where region extents must match the edge of the image.</para>
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer into which the command will be recorded.</param>
+    /// <param name="srcBuffer">The source buffer.</param>
+    /// <param name="dstImage">The destination image.</param>
+    /// <param name="dstImageLayout">The layout of the destination image subresources for the copy.</param>
+    /// <param name="regionCount">The number of regions to copy.</param>
+    /// <param name="pRegions">A pointer to an array of <see cref="VkBufferImageCopy"/> structures specifying the regions to copy.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdCopyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkImage dstImage, VkImageLayout dstImageLayout, uint regionCount, VkBufferImageCopy* pRegions) =>
+        this.vkCmdCopyBufferToImage.Invoke(commandBuffer, srcBuffer, dstImage, dstImageLayout, regionCount, pRegions);
+
+    public void CmdCopyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkImage dstImage, VkImageLayout dstImageLayout, in VkBufferImageCopy region)
+    {
+        fixed (VkBufferImageCopy* pRegions = &region)
+        {
+            this.vkCmdCopyBufferToImage.Invoke(commandBuffer, srcBuffer, dstImage, dstImageLayout, 1, pRegions);
+        }
+    }
+
+    public void CmdCopyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkImage dstImage, VkImageLayout dstImageLayout, VkBufferImageCopy[] regions)
+    {
+        fixed (VkBufferImageCopy* pRegions = regions)
+        {
+            this.vkCmdCopyBufferToImage.Invoke(commandBuffer, srcBuffer, dstImage, dstImageLayout, (uint)regions.Length, pRegions);
+        }
+    }
+
+    /// <summary>
     /// <para>Draw primitives.</para>
     /// <para>When the command is executed, primitives are assembled using the current primitive topology and vertexCount consecutive vertex indices with the first vertexIndex value equal to firstVertex. The primitives are drawn instanceCount times with instanceIndex starting with firstInstance and increasing sequentially for each instance. The assembled primitives execute the bound graphics pipeline.</para>
     /// </summary>
@@ -637,6 +714,40 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void CmdEndRenderPass(VkCommandBuffer commandBuffer) =>
         this.vkCmdEndRenderPass.Invoke(commandBuffer);
+
+    /// <summary>
+    /// <para>Insert a memory dependency.</para>
+    /// <para><see cref="CmdPipelineBarrier"/> operates almost identically to <see cref="CmdPipelineBarrier2"/>, except that the scopes and barriers are defined as direct parameters rather than being defined by an <see cref="VkDependencyInfo"/>.</para>
+    /// <para>When <see cref="CmdPipelineBarrier"/> is submitted to a queue, it defines a memory dependency between commands that were submitted to the same queue before it, and those submitted to the same queue after it.</para>
+    /// <para>If <see cref="CmdPipelineBarrier"/> was recorded outside a render pass instance, the first <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-dependencies-scopes">synchronization scope</see> includes all commands that occur earlier in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-submission-order">submission order</see>. If <see cref="CmdPipelineBarrier"/> was recorded inside a render pass instance, the first <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-dependencies-scopes">synchronization scope</see> includes only commands that occur earlier in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-submission-order">submission order</see> within the same subpass. In either case, the first <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-dependencies-scopes">synchronization scope</see> is limited to operations on the pipeline stages determined by the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-pipeline-stages-masks">source stage mask</see> specified by srcStageMask.</para>
+    /// <para>If <see cref="CmdPipelineBarrier"/> was recorded outside a render pass instance, the second <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-dependencies-scopes">synchronization scope</see> includes all commands that occur later in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-submission-order">submission order</see>. If <see cref="CmdPipelineBarrier"/> was recorded inside a render pass instance, the second <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-dependencies-scopes">synchronization scope</see> includes only commands that occur later in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-submission-order">submission order</see> within the same subpass. In either case, the second <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-dependencies-scopes">synchronization scope</see> is limited to operations on the pipeline stages determined by the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-pipeline-stages-masks">destination stage mask</see> specified by dstStageMask.</para>
+    /// <para>The first access scope is limited to accesses in the pipeline stages determined by the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-pipeline-stages-masks">source stage mask</see> specified by srcStageMask. Within that, the first access scope only includes the first access scopes defined by elements of the pMemoryBarriers, pBufferMemoryBarriers and pImageMemoryBarriers arrays, which each define a set of <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-memory-barriers">memory barriers</see>. If no <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-memory-barriers">memory barriers</see> are specified, then the first access scope includes no accesses.</para>
+    /// <para>The second access scope is limited to accesses in the pipeline stages determined by the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-pipeline-stages-masks">destination stage mask</see> specified by dstStageMask. Within that, the second access scope only includes the second access scopes defined by elements of the pMemoryBarriers, pBufferMemoryBarriers and pImageMemoryBarriers arrays, which each define a set of <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-memory-barriers">memory barriers</see>. If no <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-memory-barriers">memory barriers</see> are specified, then the second access scope includes no accesses.</para>
+    /// <para>If dependencyFlags includes <see cref="VkDependencyFlagBits.VK_DEPENDENCY_BY_REGION_BIT"/>, then any dependency between <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-framebuffer-regions">framebuffer-space</see> pipeline stages is <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-framebuffer-regions">framebuffer-local</see> - otherwise it is <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-framebuffer-regions">framebuffer-global</see>.</para>
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer into which the command is recorded.</param>
+    /// <param name="srcStageMask">A bitmask of <see cref="VkPipelineStageFlagBits"/> specifying the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-pipeline-stages-masks">source stages</see>.</param>
+    /// <param name="dstStageMask">A bitmask of <see cref="VkPipelineStageFlagBits"/> specifying the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-pipeline-stages-masks">destination stages</see>.</param>
+    /// <param name="dependencyFlags">A bitmask of <see cref="VkDependencyFlagBits"/> specifying how execution and memory dependencies are formed.</param>
+    /// <param name="memoryBarrierCount">The length of the pMemoryBarriers array.</param>
+    /// <param name="pMemoryBarriers">A pointer to an array of <see cref="VkMemoryBarrier"/> structures.</param>
+    /// <param name="bufferMemoryBarrierCount">The length of the pBufferMemoryBarriers array.</param>
+    /// <param name="pBufferMemoryBarriers">A pointer to an array of <see cref="VkBufferMemoryBarrier"/> structures.</param>
+    /// <param name="imageMemoryBarrierCount">The length of the pImageMemoryBarriers array.</param>
+    /// <param name="pImageMemoryBarriers">A pointer to an array of <see cref="VkImageMemoryBarrier"/> structures.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdPipelineBarrier(VkCommandBuffer commandBuffer, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkDependencyFlags dependencyFlags, uint memoryBarrierCount, VkMemoryBarrier* pMemoryBarriers, uint bufferMemoryBarrierCount, VkBufferMemoryBarrier* pBufferMemoryBarriers, uint imageMemoryBarrierCount, VkImageMemoryBarrier* pImageMemoryBarriers) =>
+        this.vkCmdPipelineBarrier.Invoke(commandBuffer, srcStageMask, dstStageMask, dependencyFlags, memoryBarrierCount, pMemoryBarriers, bufferMemoryBarrierCount, pBufferMemoryBarriers, imageMemoryBarrierCount, pImageMemoryBarriers);
+
+    public void CmdPipelineBarrier(VkCommandBuffer commandBuffer, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkDependencyFlags dependencyFlags, VkMemoryBarrier[]? memoryBarriers, VkBufferMemoryBarrier[]? bufferMemoryBarriers, VkImageMemoryBarrier[]? imageMemoryBarriers)
+    {
+        fixed (VkMemoryBarrier*       pMemoryBarriers       = memoryBarriers)
+        fixed (VkBufferMemoryBarrier* pBufferMemoryBarriers = bufferMemoryBarriers)
+        fixed (VkImageMemoryBarrier*  pImageMemoryBarriers  = imageMemoryBarriers)
+        {
+            this.vkCmdPipelineBarrier.Invoke(commandBuffer, srcStageMask, dstStageMask, dependencyFlags, (uint)(memoryBarriers?.Length ?? 0), pMemoryBarriers, (uint)(bufferMemoryBarriers?.Length ?? 0), pBufferMemoryBarriers, (uint)(imageMemoryBarriers?.Length ?? 0), pImageMemoryBarriers);
+        }
+    }
 
     /// <summary>
     /// <para>Set scissor rectangles dynamically for a command buffer.</para>
@@ -960,6 +1071,27 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Create a new sampler object.
+    /// </summary>
+    /// <param name="device">The logical device that creates the sampler.</param>
+    /// <param name="pCreateInfo">A pointer to a VkSamplerCreateInfo structure specifying the state of the sampler object.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <param name="pSampler">A pointer to a <see cref="VkSampler"/> handle in which the resulting sampler object is returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult CreateSampler(VkDevice device, VkSamplerCreateInfo* pCreateInfo, VkAllocationCallbacks* pAllocator, VkSampler* pSampler) =>
+        this.vkCreateSampler.Invoke(device, pCreateInfo, pAllocator, pSampler);
+
+    public VkResult CreateSampler(VkDevice device, in VkSamplerCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkSampler sampler)
+    {
+        fixed (VkSamplerCreateInfo*   pCreateInfo = &createInfo)
+        fixed (VkAllocationCallbacks* pAllocator  = &allocator)
+        fixed (VkSampler*             pSampler    = &sampler)
+        {
+            return this.vkCreateSampler.Invoke(device, pCreateInfo, NullIfDefault(allocator, pAllocator), pSampler);
+        }
+    }
+
+    /// <summary>
     /// Create a new queue semaphore object.
     /// </summary>
     /// <param name="device">The logical device that creates the semaphore.</param>
@@ -1124,6 +1256,24 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Destroy an image object.
+    /// </summary>
+    /// <param name="device">The logical device that destroys the image.</param>
+    /// <param name="image">The image to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void DestroyImage(VkDevice device, VkImage image, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroyImage.Invoke(device, image, pAllocator);
+
+    public void DestroyImage(VkDevice device, VkImage image, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkDestroyImage.Invoke(device, image, pAllocator);
+        }
+    }
+
+    /// <summary>
     /// Destroy an image view object.
     /// </summary>
     /// <param name="device">The logical device that destroys the image view.</param>
@@ -1209,6 +1359,24 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkAllocationCallbacks* pAllocator = &allocator)
         {
             this.vkDestroyRenderPass.Invoke(device, renderPass, NullIfDefault(allocator, pAllocator));
+        }
+    }
+
+    /// <summary>
+    /// Destroy a sampler object.
+    /// </summary>
+    /// <param name="device">The logical device that destroys the sampler.</param>
+    /// <param name="sampler">The sampler to destroy.</param>
+    /// <param name="pAllocator">Controls host memory allocation as described in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#memory-allocation">Memory Allocation</see> chapter.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void DestroySampler(VkDevice device, VkSampler sampler, VkAllocationCallbacks* pAllocator) =>
+        this.vkDestroySampler.Invoke(device, sampler, pAllocator);
+
+    public void DestroySampler(VkDevice device, VkSampler sampler, in VkAllocationCallbacks allocator)
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &allocator)
+        {
+            this.vkDestroySampler.Invoke(device, sampler, NullIfDefault(allocator, pAllocator));
         }
     }
 
@@ -1553,6 +1721,24 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Returns the memory requirements for specified Vulkan object.
+    /// </summary>
+    /// <param name="device">The logical device that owns the image.</param>
+    /// <param name="image">The image to query.</param>
+    /// <param name="pMemoryRequirements">A pointer to a <see cref="VkMemoryRequirements"/> structure in which the memory requirements of the image object are returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void GetImageMemoryRequirements(VkDevice device, VkImage image, VkMemoryRequirements* pMemoryRequirements) =>
+        this.vkGetImageMemoryRequirements.Invoke(device, image, pMemoryRequirements);
+
+    public void GetImageMemoryRequirements(VkDevice device, VkImage image, out VkMemoryRequirements memoryRequirements)
+    {
+        fixed (VkMemoryRequirements* pMemoryRequirements = &memoryRequirements)
+        {
+            this.vkGetImageMemoryRequirements.Invoke(device, image, pMemoryRequirements);
+        }
+    }
+
+    /// <summary>
     /// <para>Reports capabilities of a physical device.</para>
     /// <para><see cref="GetInstanceProcAddr"/> itself is obtained in a platform- and loader- specific manner. Typically, the loader library will export this command as a function symbol, so applications can link against the loader library, or load it dynamically and look up the symbol using platform-specific APIs.</para>
     /// </summary>
@@ -1683,7 +1869,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     public VkResult MapMemory<T>(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkMemoryMapFlags flags, T[] data) where T : unmanaged
     {
-        var ppData = stackalloc T*[data.Length];
+        using var pointer = new Pointer(sizeof(T*) * data.Length);
+
+        var ppData = (T**)(nint)pointer;
 
         if (this.vkMapMemory.Invoke(device, memory, offset, (ulong)(Marshal.SizeOf<T>() * data.Length), flags, (void**)ppData) is var result && result == VkResult.VK_SUCCESS)
         {
@@ -1831,12 +2019,12 @@ public unsafe class Vk(IVulkanLoader loader)
     public void UpdateDescriptorSets(VkDevice device, uint descriptorWriteCount, VkWriteDescriptorSet* pDescriptorWrites, uint descriptorCopyCount, VkCopyDescriptorSet* pDescriptorCopies) =>
         this.vkUpdateDescriptorSets.Invoke(device, descriptorWriteCount, pDescriptorWrites, descriptorCopyCount, pDescriptorCopies);
 
-    public void UpdateDescriptorSets(VkDevice device, VkWriteDescriptorSet[] descriptorWrites, VkCopyDescriptorSet[] descriptorCopies)
+    public void UpdateDescriptorSets(VkDevice device, VkWriteDescriptorSet[]? descriptorWrites, VkCopyDescriptorSet[]? descriptorCopies)
     {
         fixed (VkWriteDescriptorSet* pDescriptorWrites = descriptorWrites)
         fixed (VkCopyDescriptorSet*  pDescriptorCopies = descriptorCopies)
         {
-            this.vkUpdateDescriptorSets.Invoke(device, (uint)descriptorWrites.Length, pDescriptorWrites, (uint)descriptorCopies.Length, pDescriptorCopies);
+            this.vkUpdateDescriptorSets.Invoke(device, (uint)(descriptorWrites?.Length ?? 0), pDescriptorWrites, (uint)(descriptorCopies?.Length ?? 0), pDescriptorCopies);
         }
     }
 

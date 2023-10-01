@@ -1,14 +1,14 @@
 using System.Runtime.InteropServices;
 using Age.Core.Unsafe;
 
-namespace Age.Tests.Core;
+namespace Age.Tests.Core.Unsafe;
 
 public class UnmanagedUtilsTest
 {
     [Fact]
     public unsafe void CopyFromPointerShouldPass()
     {
-        fixed (int* pSource = new[] { 1, 2, 3})
+        fixed (int* pSource = new[] { 1, 2, 3 })
         {
             var destination = new int[3];
 
@@ -24,7 +24,7 @@ public class UnmanagedUtilsTest
     [Fact]
     public unsafe void CopyToPointerShouldPass()
     {
-        var source       = new[] { 1, 2, 3 };
+        var source = new[] { 1, 2, 3 };
         var pDestination = stackalloc int[3];
 
         UnmanagedUtils.Copy(source, (nint)pDestination, 3);
@@ -38,17 +38,17 @@ public class UnmanagedUtilsTest
     [Fact]
     public unsafe void NullIfDefaultShouldPass()
     {
-        var value  = 1;
+        var value = 1;
         var pValue = &value;
 
         Assert.True(UnmanagedUtils.NullIfDefault(default, pValue) == null);
-        Assert.True(UnmanagedUtils.NullIfDefault(value, pValue)   == pValue);
+        Assert.True(UnmanagedUtils.NullIfDefault(value, pValue) == pValue);
     }
 
     [Fact]
     public unsafe void PointerToArrayShouldPass()
     {
-        fixed (int* pSource = new[] { 1, 2, 3})
+        fixed (int* pSource = new[] { 1, 2, 3 })
         {
             var destination = UnmanagedUtils.PointerToArray<int>((nint)pSource, 3);
 

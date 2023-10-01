@@ -37,10 +37,10 @@ public unsafe partial class SimpleEngine : IDisposable
     private readonly HashSet<string>        validationLayers         = new() { "VK_LAYER_KHRONOS_validation" };
     private readonly Vertex[]               vertices                 =
     {
-        new(new(-0.5f, -0.5f), new(1.0f, 0.0f, 0.0f)),
-        new(new(0.5f, -0.5f),  new(0.0f, 1.0f, 0.0f)),
-        new(new(0.5f, 0.5f),   new(0.0f, 0.0f, 1.0f)),
-        new(new(-0.5f, 0.5f),  new(1.0f, 1.0f, 1.0f)),
+        new(new(-0.5f, -0.5f), new(1, 0, 0), new(1, 0)),
+        new(new(0.5f, -0.5f),  new(0, 1, 0), new(0, 0)),
+        new(new(0.5f, 0.5f),   new(0, 0, 1), new(0, 1)),
+        new(new(-0.5f, 0.5f),  new(1, 1, 1), new(1, 1)),
     };
     private readonly Vk                  vk;
     private readonly WindowManager       windowManager            = new();
@@ -74,6 +74,8 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkImageView[]            swapChainImageViews   = Array.Empty<VkImageView>();
     private VkImage                  textureImage;
     private VkDeviceMemory           textureImageMemory;
+    private VkImageView              textureImageView;
+    private VkSampler                textureSampler;
     private VkBuffer                 vertexBuffer;
     private VkDeviceMemory           vertexBufferMemory;
     private VkExtDebugUtils?         vkExtDebugUtils;
@@ -139,6 +141,27 @@ public unsafe partial class SimpleEngine : IDisposable
             pUserData       = null
         };
 
+    private VkCommandBuffer BeginSingleTimeCommands()
+    {
+        var allocInfo = new VkCommandBufferAllocateInfo
+        {
+            level              = VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            commandPool        = this.commandPool,
+            commandBufferCount = 1
+        };
+
+        this.vk.AllocateCommandBuffers(this.device, allocInfo, out VkCommandBuffer commandBuffer);
+
+        var beginInfo = new VkCommandBufferBeginInfo
+        {
+            flags = VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+        };
+
+        this.vk.BeginCommandBuffer(commandBuffer, ref beginInfo);
+
+        return commandBuffer;
+    }
+
     private bool CheckDeviceExtensionSupport(VkPhysicalDevice device)
     {
         this.vk.EnumerateDeviceExtensionProperties(device, null, out VkExtensionProperties[] extensions);
@@ -178,6 +201,10 @@ public unsafe partial class SimpleEngine : IDisposable
     {
         this.CleanupSwapChain();
 
+        this.vk.DestroySampler(this.device, this.textureSampler, null);
+        this.vk.DestroyImageView(this.device, this.textureImageView, null);
+        this.vk.DestroyImage(this.device, this.textureImage, null);
+        this.vk.FreeMemory(this.device, this.textureImageMemory, null);
         this.vk.DestroyPipeline(this.device, this.graphicsPipeline, null);
         this.vk.DestroyPipelineLayout(this.device, this.pipelineLayout, null);
         this.vk.DestroyRenderPass(this.device, this.renderPass, null);
@@ -231,42 +258,52 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
     {
-        var allocInfo = new VkCommandBufferAllocateInfo
-        {
-            level              = VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-            commandPool        = this.commandPool,
-            commandBufferCount = 1
-        };
+        var commandBuffer = this.BeginSingleTimeCommands();
 
-        this.vk.AllocateCommandBuffers(this.device, allocInfo, out VkCommandBuffer commandBuffer);
-
-        var beginInfo = new VkCommandBufferBeginInfo
-        {
-            flags = VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
-        };
-
-        this.vk.BeginCommandBuffer(commandBuffer, ref beginInfo);
-        #region Copy Buffer
         var copyRegion = new VkBufferCopy
         {
-            srcOffset = 0, // Optional
-            dstOffset = 0, // Optional
-            size      = size
+            size = size
         };
 
         this.vk.CmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, copyRegion);
-        this.vk.EndCommandBuffer(commandBuffer);
-        #endregion Copy Buffer
 
-        var submitInfo = new VkSubmitInfo
+        this.EndSingleTimeCommands(commandBuffer);
+    }
+
+    private void CopyBufferToImage(VkBuffer buffer, VkImage image, int width, int height)
+    {
+        var commandBuffer = this.BeginSingleTimeCommands();
+
+        var region = new VkBufferImageCopy
         {
-            commandBufferCount = 1,
-            pCommandBuffers    = &commandBuffer
+            bufferOffset      = 0,
+            bufferRowLength   = 0,
+            bufferImageHeight = 0,
+            imageSubresource  = new()
+            {
+                aspectMask     = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
+                mipLevel       = 0,
+                baseArrayLayer = 0,
+                layerCount     = 1,
+            },
+            imageOffset = new() { x = 0, y = 0, z = 0 },
+            imageExtent = new()
+            {
+                width  = (uint)width,
+                height = (uint)height,
+                depth  = 1,
+            }
         };
 
-        this.vk.QueueSubmit(this.graphicsQueue, submitInfo, default);
-        this.vk.QueueWaitIdle(this.graphicsQueue);
-        this.vk.FreeCommandBuffers(this.device, this.commandPool, commandBuffer);
+        this.vk.CmdCopyBufferToImage(
+            commandBuffer,
+            buffer,
+            image,
+            VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            region
+        );
+
+        this.EndSingleTimeCommands(commandBuffer);
     }
 
     private void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, out VkBuffer buffer, out VkDeviceMemory bufferMemory)
@@ -332,22 +369,33 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void CreateDescriptorPool()
     {
-        var poolSize = new VkDescriptorPoolSize
+        var poolSizes = new VkDescriptorPoolSize[]
         {
-            type            = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            descriptorCount = MAX_FRAMES_IN_FLIGHT
+            new()
+            {
+                type            = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                descriptorCount = MAX_FRAMES_IN_FLIGHT,
+            },
+            new()
+            {
+                type            = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                descriptorCount = MAX_FRAMES_IN_FLIGHT,
+            },
         };
 
-        var poolInfo = new VkDescriptorPoolCreateInfo
+        fixed (VkDescriptorPoolSize* pPoolSizes = poolSizes)
         {
-            poolSizeCount = 1,
-            pPoolSizes    = &poolSize,
-            maxSets       = MAX_FRAMES_IN_FLIGHT,
-        };
+            var poolInfo = new VkDescriptorPoolCreateInfo
+            {
+                poolSizeCount = (uint)poolSizes.Length,
+                pPoolSizes    = pPoolSizes,
+                maxSets       = MAX_FRAMES_IN_FLIGHT,
+            };
 
-        if (this.vk.CreateDescriptorPool(this.device, poolInfo, default, out this.descriptorPool) != VkResult.VK_SUCCESS)
-        {
-            throw new Exception("failed to create descriptor pool!");
+            if (this.vk.CreateDescriptorPool(this.device, poolInfo, default, out this.descriptorPool) != VkResult.VK_SUCCESS)
+            {
+                throw new Exception("failed to create descriptor pool!");
+            }
         }
     }
 
@@ -382,17 +430,36 @@ public unsafe partial class SimpleEngine : IDisposable
                     range  = (uint)Marshal.SizeOf<UniformBufferObject>()
                 };
 
-                var descriptorWrite = new VkWriteDescriptorSet
+                var imageInfo = new VkDescriptorImageInfo
                 {
-                    dstSet          = this.descriptorSets[i],
-                    dstBinding      = 0,
-                    dstArrayElement = 0,
-                    descriptorType  = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    descriptorCount = 1,
-                    pBufferInfo     = &bufferInfo
+                    imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                    imageView   = this.textureImageView,
+                    sampler     = this.textureSampler
                 };
 
-                this.vk.UpdateDescriptorSets(this.device, new[] { descriptorWrite }, Array.Empty<VkCopyDescriptorSet>());
+                var descriptorWrites = new VkWriteDescriptorSet[]
+                {
+                    new()
+                    {
+                        dstSet          = this.descriptorSets[i],
+                        dstBinding      = 0,
+                        dstArrayElement = 0,
+                        descriptorType  = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                        descriptorCount = 1,
+                        pBufferInfo     = &bufferInfo,
+                    },
+                    new()
+                    {
+                        dstSet          = this.descriptorSets[i],
+                        dstBinding      = 1,
+                        dstArrayElement = 0,
+                        descriptorType  = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                        descriptorCount = 1,
+                        pImageInfo      = &imageInfo,
+                    }
+                };
+
+                this.vk.UpdateDescriptorSets(this.device, descriptorWrites, null);
             }
         }
     }
@@ -408,15 +475,33 @@ public unsafe partial class SimpleEngine : IDisposable
             pImmutableSamplers = default, // Optional
         };
 
-        var layoutInfo = new VkDescriptorSetLayoutCreateInfo
+        var samplerLayoutBinding = new VkDescriptorSetLayoutBinding
         {
-            bindingCount = 1,
-            pBindings    = &uboLayoutBinding
+            binding            = 1,
+            descriptorCount    = 1,
+            descriptorType     = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            pImmutableSamplers = null,
+            stageFlags         = VkShaderStageFlagBits.VK_SHADER_STAGE_FRAGMENT_BIT
         };
 
-        if (this.vk.CreateDescriptorSetLayout(this.device, layoutInfo, default, out this.descriptorSetLayout) != VkResult.VK_SUCCESS)
+        var bindings = new[]
         {
-            throw new Exception("failed to create descriptor set layout!");
+            uboLayoutBinding,
+            samplerLayoutBinding
+        };
+
+        fixed (VkDescriptorSetLayoutBinding* pBindings = bindings)
+        {
+            var layoutInfo = new VkDescriptorSetLayoutCreateInfo
+            {
+                bindingCount = (uint)bindings.Length,
+                pBindings    = pBindings
+            };
+
+            if (this.vk.CreateDescriptorSetLayout(this.device, layoutInfo, default, out this.descriptorSetLayout) != VkResult.VK_SUCCESS)
+            {
+                throw new Exception("failed to create descriptor set layout!");
+            }
         }
     }
 
@@ -511,7 +596,7 @@ public unsafe partial class SimpleEngine : IDisposable
                     depthClampEnable        = false,
                     rasterizerDiscardEnable = false,
                     polygonMode             = VkPolygonMode.VK_POLYGON_MODE_FILL,
-                    lineWidth               = 1.0f,
+                    lineWidth               = 1,
                     cullMode                = VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT,
                     frontFace               = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE,
                     depthBiasEnable         = false,
@@ -537,10 +622,10 @@ public unsafe partial class SimpleEngine : IDisposable
                     pAttachments    = &colorBlendAttachment
                 };
 
-                colorBlending.blendConstants[0] = 0.0f;
-                colorBlending.blendConstants[1] = 0.0f;
-                colorBlending.blendConstants[2] = 0.0f;
-                colorBlending.blendConstants[3] = 0.0f;
+                colorBlending.blendConstants[0] = 0;
+                colorBlending.blendConstants[1] = 0;
+                colorBlending.blendConstants[2] = 0;
+                colorBlending.blendConstants[3] = 0;
 
                 var dynamicStates = new[]
                 {
@@ -598,38 +683,35 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
+    public VkImageView CreateImageView(VkImage image, VkFormat format)
+    {
+        var viewInfo = new VkImageViewCreateInfo
+        {
+            image            = image,
+            viewType         = VkImageViewType.VK_IMAGE_VIEW_TYPE_2D,
+            format           = format,
+            subresourceRange = new()
+            {
+                aspectMask     = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
+                baseMipLevel   = 0,
+                levelCount     = 1,
+                baseArrayLayer = 0,
+                layerCount     = 1
+            }
+        };
+
+        return this.vk.CreateImageView(this.device, viewInfo, default, out var imageView) != VkResult.VK_SUCCESS
+            ? throw new Exception("failed to create texture image view!")
+            : imageView;
+    }
+
     private void CreateImageViews()
     {
         this.swapChainImageViews = new VkImageView[this.swapChainImages.Length];
 
         for (var i = 0; i < this.swapChainImages.Length; i++)
         {
-            var createInfo = new VkImageViewCreateInfo
-            {
-                image      = this.swapChainImages[i],
-                viewType   = VkImageViewType.VK_IMAGE_VIEW_TYPE_2D,
-                format     = this.swapChainImageFormat,
-                components = new()
-                {
-                    r = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY,
-                    g = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY,
-                    b = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY,
-                    a = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY,
-                },
-                subresourceRange = new()
-                {
-                    aspectMask     = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
-                    baseMipLevel   = 0,
-                    levelCount     = 1,
-                    baseArrayLayer = 0,
-                    layerCount     = 1,
-                }
-            };
-
-            if (this.vk.CreateImageView(this.device, createInfo, default, out this.swapChainImageViews[i]) != VkResult.VK_SUCCESS)
-            {
-                throw new Exception("failed to create image views!");
-            }
+            this.swapChainImageViews[i] = this.CreateImageView(this.swapChainImages[i], this.swapChainImageFormat);
         }
     }
 
@@ -736,7 +818,7 @@ public unsafe partial class SimpleEngine : IDisposable
             indices.PresentFamily!.Value
         };
 
-        var queuePriority = 1.0f;
+        var queuePriority = 1f;
 
         foreach (var queueFamily in uniqueQueueFamilies)
         {
@@ -750,7 +832,10 @@ public unsafe partial class SimpleEngine : IDisposable
             queueCreateInfos.Add(queueCreateInfo);
         }
 
-        var deviceFeatures = new VkPhysicalDeviceFeatures();
+        var deviceFeatures = new VkPhysicalDeviceFeatures
+        {
+            samplerAnisotropy = true
+        };
 
         fixed (VkDeviceQueueCreateInfo* pQueueCreateInfos = queueCreateInfos.ToArray())
         {
@@ -962,10 +1047,10 @@ public unsafe partial class SimpleEngine : IDisposable
     private void CreateTextureImage()
     {
         using var stream = File.OpenRead(Path.Join(AppContext.BaseDirectory, "Textures/texture.jpg"));
-        var bitmap       = SKBitmap.Decode(stream);
-        var pixels       = bitmap.Pixels.Select(x => (uint)x).ToArray();
+        var bitmap = SKBitmap.Decode(stream);
+        var pixels = bitmap.Pixels.Select(x => (uint)x).ToArray();
 
-        VkDeviceSize imageSize = (ulong)(bitmap.Width * bitmap.Height * 4);
+        VkDeviceSize imageSize = (ulong)(pixels.Length * 4);
 
         this.CreateBuffer(
             imageSize,
@@ -978,30 +1063,98 @@ public unsafe partial class SimpleEngine : IDisposable
         this.vk.MapMemory(this.device, stagingBufferMemory, 0, 0, pixels);
         this.vk.UnmapMemory(this.device, stagingBufferMemory);
 
+        this.CreateImage(
+            bitmap.Width,
+            bitmap.Height,
+            VkFormat.VK_FORMAT_R8G8B8A8_SRGB,
+            VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
+            VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_DST_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT,
+            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            out this.textureImage,
+            out this.textureImageMemory
+        );
+
+        this.TransitionImageLayout(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        this.CopyBufferToImage(stagingBuffer, this.textureImage, bitmap.Width, bitmap.Height);
+        this.TransitionImageLayout(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+        this.vk.DestroyBuffer(this.device, stagingBuffer, null);
+        this.vk.FreeMemory(this.device, stagingBufferMemory, null);
+    }
+
+    private void CreateTextureSampler()
+    {
+        this.vk.GetPhysicalDeviceProperties(this.physicalDevice, out var properties);
+
+        var samplerInfo = new VkSamplerCreateInfo
+        {
+            magFilter               = VkFilter.VK_FILTER_LINEAR,
+            minFilter               = VkFilter.VK_FILTER_LINEAR,
+            addressModeU            = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            addressModeV            = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            addressModeW            = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            anisotropyEnable        = true,
+            maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
+            borderColor             = VkBorderColor.VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+            unnormalizedCoordinates = false,
+            compareEnable           = false,
+            compareOp               = VkCompareOp.VK_COMPARE_OP_ALWAYS,
+            mipmapMode              = VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR,
+            mipLodBias              = 0,
+            minLod                  = 0,
+            maxLod                  = 0,
+        };
+
+        if (this.vk.CreateSampler(this.device, samplerInfo, default, out this.textureSampler) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to create texture sampler!");
+        }
+    }
+
+    private void CreateTextureImageView() =>
+        this.textureImageView = this.CreateImageView(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB);
+
+    private void CreateImage(int width, int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits usage, VkMemoryPropertyFlagBits properties, out VkImage image, out VkDeviceMemory imageMemory)
+    {
         var imageInfo = new VkImageCreateInfo
         {
             imageType = VkImageType.VK_IMAGE_TYPE_2D,
             extent    = new()
             {
-                width  = (uint)bitmap.Width,
-                height = (uint)bitmap.Height,
+                width  = (uint)width,
+                height = (uint)height,
                 depth  = 1,
             },
             mipLevels     = 1,
             arrayLayers   = 1,
-            format        = VkFormat.VK_FORMAT_R8G8B8A8_SRGB,
-            tiling        = VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
+            format        = format,
+            tiling        = tiling,
             initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-            usage         = VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_DST_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT,
+            usage         = usage,
             sharingMode   = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE,
             samples       = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
             flags         = default,
         };
 
-        if (this.vk.CreateImage(this.device, imageInfo, default, out this.textureImage) != VkResult.VK_SUCCESS)
+        if (this.vk.CreateImage(this.device, imageInfo, default, out image) != VkResult.VK_SUCCESS)
         {
             throw new Exception("failed to create image!");
         }
+
+        this.vk.GetImageMemoryRequirements(this.device, this.textureImage, out var memRequirements);
+
+        var allocInfo = new VkMemoryAllocateInfo
+        {
+            allocationSize  = memRequirements.size,
+            memoryTypeIndex = this.FindMemoryType(memRequirements.memoryTypeBits, properties)
+        };
+
+        if (this.vk.AllocateMemory(this.device, allocInfo, default, out imageMemory) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to allocate image memory!");
+        }
+
+        this.vk.BindImageMemory(this.device, this.textureImage, imageMemory, 0);
     }
 
     private void CreateUniformBuffers()
@@ -1163,6 +1316,22 @@ public unsafe partial class SimpleEngine : IDisposable
         this.currentFrame = (this.currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
+    private void EndSingleTimeCommands(VkCommandBuffer commandBuffer)
+    {
+        this.vk.EndCommandBuffer(commandBuffer);
+
+        var submitInfo = new VkSubmitInfo
+        {
+            commandBufferCount = 1,
+            pCommandBuffers    = &commandBuffer
+        };
+
+        this.vk.QueueSubmit(this.graphicsQueue, submitInfo, default);
+        this.vk.QueueWaitIdle(this.graphicsQueue);
+
+        this.vk.FreeCommandBuffers(this.device, this.commandPool, 1, &commandBuffer);
+    }
+
     private List<string> GetRequiredExtensions()
     {
         var extensions = new List<string>();
@@ -1241,6 +1410,8 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateFramebuffers();
         this.CreateCommandPool();
         this.CreateTextureImage();
+        this.CreateTextureImageView();
+        this.CreateTextureSampler();
         this.CreateVertexBuffer();
         this.CreateIndexBuffer();
         this.CreateUniformBuffers();
@@ -1270,7 +1441,9 @@ public unsafe partial class SimpleEngine : IDisposable
             swapChainAdequate = swapChainSupport.Formats.Length != 0 && swapChainSupport.PresentModes.Length != 0;
         }
 
-        return indices.IsComplete && extensionsSupported && swapChainAdequate;
+        this.vk.GetPhysicalDeviceFeatures(device, out var supportedFeatures);
+
+        return indices.IsComplete && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
     }
 
     private void MainLoop()
@@ -1365,12 +1538,12 @@ public unsafe partial class SimpleEngine : IDisposable
 
         var viewport = new VkViewport
         {
-            x        = 0.0f,
-            y        = 0.0f,
+            x        = 0,
+            y        = 0,
             width    = this.swapChainExtent.width,
             height   = this.swapChainExtent.height,
-            minDepth = 0.0f,
-            maxDepth = 1.0f
+            minDepth = 0,
+            maxDepth = 1
         };
 
         this.vk.CmdSetViewport(commandBuffer, 0, 1, viewport);
@@ -1396,7 +1569,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
         this.vk.CmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
         this.vk.CmdBindIndexBuffer(commandBuffer, this.indexBuffer, 0, VkIndexType.VK_INDEX_TYPE_UINT16);
-        this.vk.CmdBindDescriptorSets(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.pipelineLayout, 0, new [] { this.descriptorSets[this.currentFrame] }, Array.Empty<uint>());
+        this.vk.CmdBindDescriptorSets(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.pipelineLayout, 0, new [] { this.descriptorSets[this.currentFrame] }, null);
         this.vk.CmdDrawIndexed(commandBuffer, (uint)this.indices.Length, 1, 0, 0, 0);
         #endregion RenderPass
 
@@ -1437,6 +1610,66 @@ public unsafe partial class SimpleEngine : IDisposable
         {
             throw new Exception("failed to set up debug messenger!");
         }
+    }
+
+    private void TransitionImageLayout(VkImage image, VkFormat _, VkImageLayout oldLayout, VkImageLayout newLayout)
+    {
+        var commandBuffer = this.BeginSingleTimeCommands();
+
+        var barrier = new VkImageMemoryBarrier
+        {
+            oldLayout           = oldLayout,
+            newLayout           = newLayout,
+            srcQueueFamilyIndex = Vk.VK_QUEUE_FAMILY_IGNORED,
+            dstQueueFamilyIndex = Vk.VK_QUEUE_FAMILY_IGNORED,
+            image               = image,
+            srcAccessMask       = default, // TODO
+            dstAccessMask       = default, // TODO
+            subresourceRange    = new()
+            {
+                aspectMask     = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
+                baseMipLevel   = 0,
+                levelCount     = 1,
+                baseArrayLayer = 0,
+                layerCount     = 1,
+            }
+        };
+
+        VkPipelineStageFlags sourceStage;
+        VkPipelineStageFlags destinationStage;
+
+        if (oldLayout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+        {
+            barrier.srcAccessMask = default;
+            barrier.dstAccessMask = VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT;
+
+            sourceStage      = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            destinationStage = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT;
+        }
+        else if (oldLayout == VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+        {
+            barrier.srcAccessMask = VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.dstAccessMask = VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT;
+
+            sourceStage      = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT;
+            destinationStage = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        }
+        else
+        {
+            throw new Exception("unsupported layout transition!");
+        }
+
+        this.vk.CmdPipelineBarrier(
+            commandBuffer,
+            sourceStage,
+            destinationStage,
+            default,
+            null,
+            null,
+            new[] { barrier }
+        );
+
+        this.EndSingleTimeCommands(commandBuffer);
     }
 
     private void UpdateUniformBuffer(uint currentImage)

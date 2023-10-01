@@ -3,7 +3,8 @@
         "**/TestResults": true,
         "**/bin": true,
         "**/obj": true,
-        ".coverage": true
+        ".coverage": true,
+        "**/*.spv": true
     },
     // "csharp.semanticHighlighting.enabled": false
 }

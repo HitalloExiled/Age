@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Age.Core.Unsafe;
 
-namespace Age.Tests.Core;
+namespace Age.Tests.Core.Unsafe;
 
 public class StringArrayPtrTests
 {
