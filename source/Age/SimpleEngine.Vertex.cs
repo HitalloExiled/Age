@@ -7,9 +7,9 @@ namespace Age;
 
 public unsafe partial class SimpleEngine
 {
-    private struct Vertex(Vector2<float> pos, Vector3<float> color, Vector2<float> texCoord)
+    private struct Vertex(Vector3<float> pos, Vector3<float> color, Vector2<float> texCoord)
     {
-        public Vector2<float> Pos      = pos;
+        public Vector3<float> Pos      = pos;
         public Vector3<float> Color    = color;
         public Vector2<float> TexCoord = texCoord;
 
@@ -33,7 +33,7 @@ public unsafe partial class SimpleEngine
                 {
                     binding  = 0,
                     location = 0,
-                    format   = VkFormat.VK_FORMAT_R32G32_SFLOAT,
+                    format   = VkFormat.VK_FORMAT_R32G32B32_SFLOAT,
                     offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Pos))!,
                 },
                 new()

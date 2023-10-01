@@ -247,6 +247,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate void VkGetImageMemoryRequirements(VkDevice device, VkImage image, VkMemoryRequirements* pMemoryRequirements);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkGetPhysicalDeviceFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, VkFormatProperties* pFormatProperties);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -348,7 +351,8 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkGetDeviceProcAddr                      vkGetDeviceProcAddr                      = loader.Load<VkGetDeviceProcAddr>(nameof(vkGetDeviceProcAddr));
     private readonly VkGetDeviceQueue                         vkGetDeviceQueue                         = loader.Load<VkGetDeviceQueue>(nameof(vkGetDeviceQueue));
     private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr                    = loader.Load<VkGetInstanceProcAddr>(nameof(vkGetInstanceProcAddr));
-    private readonly VkGetImageMemoryRequirements             vkGetImageMemoryRequirements            = loader.Load<VkGetImageMemoryRequirements>(nameof(vkGetImageMemoryRequirements));
+    private readonly VkGetImageMemoryRequirements             vkGetImageMemoryRequirements             = loader.Load<VkGetImageMemoryRequirements>(nameof(vkGetImageMemoryRequirements));
+    private readonly VkGetPhysicalDeviceFormatProperties      vkGetPhysicalDeviceFormatProperties      = loader.Load<VkGetPhysicalDeviceFormatProperties>(nameof(vkGetPhysicalDeviceFormatProperties));
     private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures              = loader.Load<VkGetPhysicalDeviceFeatures>(nameof(vkGetPhysicalDeviceFeatures));
     private readonly VkGetPhysicalDeviceMemoryProperties      vkGetPhysicalDeviceMemoryProperties      = loader.Load<VkGetPhysicalDeviceMemoryProperties>(nameof(vkGetPhysicalDeviceMemoryProperties));
     private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties            = loader.Load<VkGetPhysicalDeviceProperties>(nameof(vkGetPhysicalDeviceProperties));
@@ -1735,6 +1739,24 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkMemoryRequirements* pMemoryRequirements = &memoryRequirements)
         {
             this.vkGetImageMemoryRequirements.Invoke(device, image, pMemoryRequirements);
+        }
+    }
+
+    /// <summary>
+    /// Lists physical device's format capabilities;
+    /// </summary>
+    /// <param name="physicalDevice">The physical device from which to query the format properties.</param>
+    /// <param name="format">The format whose properties are queried.</param>
+    /// <param name="pFormatProperties">A pointer to a VkFormatProperties structure in which physical device properties for format are returned.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void GetPhysicalDeviceFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, VkFormatProperties* pFormatProperties) =>
+        vkGetPhysicalDeviceFormatProperties.Invoke(physicalDevice, format, pFormatProperties);
+
+    public void GetPhysicalDeviceFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, out VkFormatProperties formatProperties)
+    {
+        fixed (VkFormatProperties* pFormatProperties = &formatProperties)
+        {
+            vkGetPhysicalDeviceFormatProperties.Invoke(physicalDevice, format, pFormatProperties);
         }
     }
 

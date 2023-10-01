@@ -28,7 +28,11 @@ public unsafe partial class SimpleEngine : IDisposable
     private readonly HashSet<string>        deviceExtensions         = new() { VkKhrSwapchain.Name };
     private readonly bool                   enableValidationLayers   = Debugger.IsAttached;
     private readonly VkSemaphore[]          imageAvailableSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
-    private readonly ushort[]               indices                  = { 0, 1, 2, 2, 3, 0 };
+    private readonly ushort[]               indices                  =
+    {
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4
+    };
     private readonly VkFence[]              inFlightFences           = new VkFence[MAX_FRAMES_IN_FLIGHT];
     private readonly VkSemaphore[]          renderFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
     private readonly VkBuffer[]             uniformBuffers           = new VkBuffer[MAX_FRAMES_IN_FLIGHT];
@@ -37,19 +41,27 @@ public unsafe partial class SimpleEngine : IDisposable
     private readonly HashSet<string>        validationLayers         = new() { "VK_LAYER_KHRONOS_validation" };
     private readonly Vertex[]               vertices                 =
     {
-        new(new(-0.5f, -0.5f), new(1, 0, 0), new(1, 0)),
-        new(new(0.5f, -0.5f),  new(0, 1, 0), new(0, 0)),
-        new(new(0.5f, 0.5f),   new(0, 0, 1), new(0, 1)),
-        new(new(-0.5f, 0.5f),  new(1, 1, 1), new(1, 1)),
+        new(new(-0.5f, -0.5f,     0), new(1, 0, 0), new(0, 0)),
+        new(new( 0.5f, -0.5f,     0), new(0, 1, 0), new(1, 0)),
+        new(new( 0.5f,  0.5f,     0), new(0, 0, 1), new(1, 1)),
+        new(new(-0.5f,  0.5f,     0), new(1, 1, 1), new(0, 1)),
+        new(new(-0.5f, -0.5f, -0.5f), new(1, 0, 0), new(0, 0)),
+        new(new( 0.5f, -0.5f, -0.5f), new(0, 1, 0), new(1, 0)),
+        new(new( 0.5f,  0.5f, -0.5f), new(0, 0, 1), new(1, 1)),
+        new(new(-0.5f,  0.5f, -0.5f), new(1, 1, 1), new(0, 1)),
     };
+
     private readonly Vk                  vk;
-    private readonly WindowManager       windowManager            = new();
+    private readonly WindowManager       windowManager = new();
     private readonly WindowsVulkanLoader windowsVulkanLoader;
 
     private VkCommandBuffer[]        commandBuffers        = Array.Empty<VkCommandBuffer>();
     private VkCommandPool            commandPool;
     private uint                     currentFrame;
     private VkDebugUtilsMessengerEXT debugMessenger;
+    private VkImage                  depthImage;
+    private VkDeviceMemory           depthImageMemory;
+    private VkImageView              depthImageView;
     private VkDescriptorPool         descriptorPool;
     private VkDescriptorSetLayout    descriptorSetLayout;
     private VkDescriptorSet[]        descriptorSets        = Array.Empty<VkDescriptorSet>();
@@ -131,6 +143,9 @@ public unsafe partial class SimpleEngine : IDisposable
 
         return false;
     }
+
+    private static bool HasStencilComponent(VkFormat format) =>
+        format == VkFormat.VK_FORMAT_D32_SFLOAT_S8_UINT || format == VkFormat.VK_FORMAT_D24_UNORM_S8_UINT;
 
     private static void PopulateDebugMessengerCreateInfo(out VkDebugUtilsMessengerCreateInfoEXT createInfo) =>
         createInfo = new VkDebugUtilsMessengerCreateInfoEXT
@@ -243,6 +258,10 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void CleanupSwapChain()
     {
+        this.vk.DestroyImageView(this.device, this.depthImageView, null);
+        this.vk.DestroyImage(this.device, this.depthImage, null);
+        this.vk.FreeMemory(this.device, this.depthImageMemory, null);
+
         for (var i = 0; i < this.swapChainFramebuffers.Length; i++)
         {
             this.vk.DestroyFramebuffer(this.device, this.swapChainFramebuffers[i], null);
@@ -365,6 +384,24 @@ public unsafe partial class SimpleEngine : IDisposable
         {
             throw new Exception("failed to create command pool!");
         }
+    }
+
+    private void CreateDepthResources()
+    {
+        var depthFormat = this.FindDepthFormat();
+
+        this.CreateImage(
+            this.swapChainExtent.width,
+            this.swapChainExtent.height,
+            depthFormat,
+            VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
+            VkImageUsageFlagBits.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            out this.depthImage,
+            out this.depthImageMemory
+        );
+
+        this.depthImageView = this.CreateImageView(this.depthImage, depthFormat, VkImageAspectFlagBits.VK_IMAGE_ASPECT_DEPTH_BIT);
     }
 
     private void CreateDescriptorPool()
@@ -513,7 +550,8 @@ public unsafe partial class SimpleEngine : IDisposable
         {
             var attachments = new[]
             {
-                this.swapChainImageViews[i]
+                this.swapChainImageViews[i],
+                this.depthImageView,
             };
 
             fixed (VkImageView* pAttachments = attachments)
@@ -521,7 +559,7 @@ public unsafe partial class SimpleEngine : IDisposable
                 var framebufferInfo = new VkFramebufferCreateInfo
                 {
                     renderPass      = this.renderPass,
-                    attachmentCount = 1,
+                    attachmentCount = (uint)attachments.Length,
                     pAttachments    = pAttachments,
                     width           = this.swapChainExtent.width,
                     height          = this.swapChainExtent.height,
@@ -608,6 +646,15 @@ public unsafe partial class SimpleEngine : IDisposable
                     rasterizationSamples = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT
                 };
 
+                var depthStencil = new VkPipelineDepthStencilStateCreateInfo
+                {
+                    depthTestEnable       = true,
+                    depthWriteEnable      = true,
+                    depthCompareOp        = VkCompareOp.VK_COMPARE_OP_LESS,
+                    depthBoundsTestEnable = false,
+                    stencilTestEnable     = false
+                };
+
                 var colorBlendAttachment = new VkPipelineColorBlendAttachmentState
                 {
                     colorWriteMask = VkColorComponentFlagBits.VK_COLOR_COMPONENT_R_BIT | VkColorComponentFlagBits.VK_COLOR_COMPONENT_G_BIT | VkColorComponentFlagBits.VK_COLOR_COMPONENT_B_BIT | VkColorComponentFlagBits.VK_COLOR_COMPONENT_A_BIT,
@@ -669,6 +716,7 @@ public unsafe partial class SimpleEngine : IDisposable
                         renderPass          = this.renderPass,
                         subpass             = 0,
                         basePipelineHandle  = default,
+                        pDepthStencilState  = &depthStencil,
                     };
 
                     if (this.vk.CreateGraphicsPipelines(this.device, default, 1, pipelineInfo, default, out this.graphicsPipeline) != VkResult.VK_SUCCESS)
@@ -683,7 +731,7 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
-    public VkImageView CreateImageView(VkImage image, VkFormat format)
+    public VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlagBits aspectFlags)
     {
         var viewInfo = new VkImageViewCreateInfo
         {
@@ -692,7 +740,7 @@ public unsafe partial class SimpleEngine : IDisposable
             format           = format,
             subresourceRange = new()
             {
-                aspectMask     = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
+                aspectMask     = aspectFlags,
                 baseMipLevel   = 0,
                 levelCount     = 1,
                 baseArrayLayer = 0,
@@ -711,7 +759,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
         for (var i = 0; i < this.swapChainImages.Length; i++)
         {
-            this.swapChainImageViews[i] = this.CreateImageView(this.swapChainImages[i], this.swapChainImageFormat);
+            this.swapChainImageViews[i] = this.CreateImageView(this.swapChainImages[i], this.swapChainImageFormat, VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT);
         }
     }
 
@@ -898,30 +946,68 @@ public unsafe partial class SimpleEngine : IDisposable
             finalLayout    = VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
         };
 
+        var depthAttachment = new VkAttachmentDescription
+        {
+            format         = this.FindDepthFormat(),
+            samples        = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
+            loadOp         = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR,
+            storeOp        = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            stencilLoadOp  = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            stencilStoreOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            initialLayout  = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
+            finalLayout    = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        };
+
         var colorAttachmentRef = new VkAttachmentReference
         {
             attachment = 0,
             layout     = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         };
 
+        var depthAttachmentRef = new VkAttachmentReference
+        {
+            attachment = 1,
+            layout     = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        };
+
         var subpass = new VkSubpassDescription
         {
-            pipelineBindPoint    = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
-            colorAttachmentCount = 1,
-            pColorAttachments    = &colorAttachmentRef
+            pipelineBindPoint       = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
+            colorAttachmentCount    = 1,
+            pColorAttachments       = &colorAttachmentRef,
+            pDepthStencilAttachment = &depthAttachmentRef,
         };
 
-        var renderPassInfo = new VkRenderPassCreateInfo
+        var dependency = new VkSubpassDependency
         {
-            attachmentCount = 1,
-            pAttachments    = &colorAttachment,
-            subpassCount    = 1,
-            pSubpasses      = &subpass
+            srcSubpass    = Vk.VK_SUBPASS_EXTERNAL,
+            dstSubpass    = 0,
+            srcStageMask  = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+            srcAccessMask = default,
+            dstStageMask  = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+            dstAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
         };
 
-        if (this.vk.CreateRenderPass(this.device, renderPassInfo, default, out this.renderPass) != VkResult.VK_SUCCESS)
+        var attachments = new[]
         {
-            throw new Exception("failed to create render pass!");
+            colorAttachment,
+            depthAttachment
+        };
+
+        fixed (VkAttachmentDescription* pAttachments = attachments)
+        {
+            var renderPassInfo = new VkRenderPassCreateInfo
+            {
+                attachmentCount = (uint)attachments.Length,
+                pAttachments    = pAttachments,
+                subpassCount    = 1,
+                pSubpasses      = &subpass
+            };
+
+            if (this.vk.CreateRenderPass(this.device, renderPassInfo, default, out this.renderPass) != VkResult.VK_SUCCESS)
+            {
+                throw new Exception("failed to create render pass!");
+            }
         }
     }
 
@@ -1064,8 +1150,8 @@ public unsafe partial class SimpleEngine : IDisposable
         this.vk.UnmapMemory(this.device, stagingBufferMemory);
 
         this.CreateImage(
-            bitmap.Width,
-            bitmap.Height,
+            (uint)bitmap.Width,
+            (uint)bitmap.Height,
             VkFormat.VK_FORMAT_R8G8B8A8_SRGB,
             VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
             VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_DST_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -1112,17 +1198,17 @@ public unsafe partial class SimpleEngine : IDisposable
     }
 
     private void CreateTextureImageView() =>
-        this.textureImageView = this.CreateImageView(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB);
+        this.textureImageView = this.CreateImageView(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT);
 
-    private void CreateImage(int width, int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits usage, VkMemoryPropertyFlagBits properties, out VkImage image, out VkDeviceMemory imageMemory)
+    private void CreateImage(uint width, uint height, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits usage, VkMemoryPropertyFlagBits properties, out VkImage image, out VkDeviceMemory imageMemory)
     {
         var imageInfo = new VkImageCreateInfo
         {
             imageType = VkImageType.VK_IMAGE_TYPE_2D,
             extent    = new()
             {
-                width  = (uint)width,
-                height = (uint)height,
+                width  = width,
+                height = height,
                 depth  = 1,
             },
             mipLevels     = 1,
@@ -1141,7 +1227,7 @@ public unsafe partial class SimpleEngine : IDisposable
             throw new Exception("failed to create image!");
         }
 
-        this.vk.GetImageMemoryRequirements(this.device, this.textureImage, out var memRequirements);
+        this.vk.GetImageMemoryRequirements(this.device, image, out var memRequirements);
 
         var allocInfo = new VkMemoryAllocateInfo
         {
@@ -1154,7 +1240,7 @@ public unsafe partial class SimpleEngine : IDisposable
             throw new Exception("failed to allocate image memory!");
         }
 
-        this.vk.BindImageMemory(this.device, this.textureImage, imageMemory, 0);
+        this.vk.BindImageMemory(this.device, image, imageMemory, 0);
     }
 
     private void CreateUniformBuffers()
@@ -1347,6 +1433,13 @@ public unsafe partial class SimpleEngine : IDisposable
         return extensions;
     }
 
+    private VkFormat FindDepthFormat() =>
+        this.FindSupportedFormat(
+            new[] { VkFormat.VK_FORMAT_D32_SFLOAT, VkFormat.VK_FORMAT_D32_SFLOAT_S8_UINT, VkFormat.VK_FORMAT_D24_UNORM_S8_UINT },
+            VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
+            VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+        );
+
     private uint FindMemoryType(uint typeFilter, VkMemoryPropertyFlagBits properties)
     {
         this.vk.GetPhysicalDeviceMemoryProperties(this.physicalDevice, out var memProperties);
@@ -1395,6 +1488,27 @@ public unsafe partial class SimpleEngine : IDisposable
         return indices;
     }
 
+    private VkFormat FindSupportedFormat(VkFormat[] candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+    {
+        foreach (var format in candidates)
+        {
+            this.vk.GetPhysicalDeviceFormatProperties(this.physicalDevice, format, out var props);
+
+            if (tiling == VkImageTiling.VK_IMAGE_TILING_LINEAR && props.linearTilingFeatures.HasFlag(features))
+            {
+                return format;
+            }
+            else if (tiling == VkImageTiling.VK_IMAGE_TILING_OPTIMAL && props.optimalTilingFeatures.HasFlag(features))
+            {
+                return format;
+            }
+        }
+
+        throw new Exception("failed to find supported format!");
+    }
+
+
+
     private void InitVulkan()
     {
         this.CreateInstance();
@@ -1407,8 +1521,9 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateRenderPass();
         this.CreateDescriptorSetLayout();
         this.CreateGraphicsPipeline();
-        this.CreateFramebuffers();
         this.CreateCommandPool();
+        this.CreateDepthResources();
+        this.CreateFramebuffers();
         this.CreateTextureImage();
         this.CreateTextureImageView();
         this.CreateTextureSampler();
@@ -1521,63 +1636,72 @@ public unsafe partial class SimpleEngine : IDisposable
             }
         };
 
-        var clearColor = new VkClearValue();
+        var clearValues = new VkClearValue[2];
 
-        clearColor.color.float32[0] = 0;
-        clearColor.color.float32[1] = 0;
-        clearColor.color.float32[2] = 0;
-        clearColor.color.float32[3] = 1;
+        clearValues[0].color.float32[0] = 0;
+        clearValues[0].color.float32[1] = 0;
+        clearValues[0].color.float32[2] = 0;
+        clearValues[0].color.float32[3] = 1;
 
-        renderPassInfo.clearValueCount = 1;
-        renderPassInfo.pClearValues    = &clearColor;
-
-        this.vk.CmdBeginRenderPass(commandBuffer, renderPassInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
-
-        #region RenderPass
-        this.vk.CmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.graphicsPipeline);
-
-        var viewport = new VkViewport
+        clearValues[1].depthStencil = new()
         {
-            x        = 0,
-            y        = 0,
-            width    = this.swapChainExtent.width,
-            height   = this.swapChainExtent.height,
-            minDepth = 0,
-            maxDepth = 1
+            depth   = 1.0f,
+            stencil = 0
         };
 
-        this.vk.CmdSetViewport(commandBuffer, 0, 1, viewport);
-
-        var scissor = new VkRect2D
+        fixed (VkClearValue* pClearValues = clearValues)
         {
-            offset = new()
+            renderPassInfo.clearValueCount = (uint)clearValues.Length;
+            renderPassInfo.pClearValues    = pClearValues;
+
+            this.vk.CmdBeginRenderPass(commandBuffer, renderPassInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
+
+            #region RenderPass
+            this.vk.CmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.graphicsPipeline);
+
+            var viewport = new VkViewport
             {
-                x = 0,
-                y = 0
-            },
-            extent = this.swapChainExtent
-        };
+                x        = 0,
+                y        = 0,
+                width    = this.swapChainExtent.width,
+                height   = this.swapChainExtent.height,
+                minDepth = 0,
+                maxDepth = 1
+            };
 
-        this.vk.CmdSetScissor(commandBuffer, 0, 1, scissor);
+            this.vk.CmdSetViewport(commandBuffer, 0, 1, viewport);
 
-        var vertexBuffers = new[]
-        {
-            this.vertexBuffer
-        };
+            var scissor = new VkRect2D
+            {
+                offset = new()
+                {
+                    x = 0,
+                    y = 0
+                },
+                extent = this.swapChainExtent
+            };
 
-        var offsets = new VkDeviceSize[] { 0 };
+            this.vk.CmdSetScissor(commandBuffer, 0, 1, scissor);
 
-        this.vk.CmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-        this.vk.CmdBindIndexBuffer(commandBuffer, this.indexBuffer, 0, VkIndexType.VK_INDEX_TYPE_UINT16);
-        this.vk.CmdBindDescriptorSets(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.pipelineLayout, 0, new [] { this.descriptorSets[this.currentFrame] }, null);
-        this.vk.CmdDrawIndexed(commandBuffer, (uint)this.indices.Length, 1, 0, 0, 0);
-        #endregion RenderPass
+            var vertexBuffers = new[]
+            {
+                this.vertexBuffer
+            };
 
-        this.vk.CmdEndRenderPass(commandBuffer);
+            var offsets = new VkDeviceSize[] { 0 };
 
-        if (this.vk.EndCommandBuffer(commandBuffer) != VkResult.VK_SUCCESS)
-        {
-            throw new Exception("failed to record command buffer!");
+            this.vk.CmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+            this.vk.CmdBindIndexBuffer(commandBuffer, this.indexBuffer, 0, VkIndexType.VK_INDEX_TYPE_UINT16);
+            this.vk.CmdBindDescriptorSets(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.pipelineLayout, 0, new [] { this.descriptorSets[this.currentFrame] }, null);
+            this.vk.CmdDrawIndexed(commandBuffer, (uint)this.indices.Length, 1, 0, 0, 0);
+            #endregion RenderPass
+
+            this.vk.CmdEndRenderPass(commandBuffer);
+
+            if (this.vk.EndCommandBuffer(commandBuffer) != VkResult.VK_SUCCESS)
+            {
+                throw new Exception("failed to record command buffer!");
+            }
         }
     }
 
@@ -1594,6 +1718,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
         this.CreateSwapChain();
         this.CreateImageViews();
+        this.CreateDepthResources();
         this.CreateFramebuffers();
     }
 
@@ -1638,7 +1763,7 @@ public unsafe partial class SimpleEngine : IDisposable
         VkPipelineStageFlags sourceStage;
         VkPipelineStageFlags destinationStage;
 
-        if (oldLayout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+        if (oldLayout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED && newLayout ==  VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
         {
             barrier.srcAccessMask = default;
             barrier.dstAccessMask = VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -1646,7 +1771,7 @@ public unsafe partial class SimpleEngine : IDisposable
             sourceStage      = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             destinationStage = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT;
         }
-        else if (oldLayout == VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+        else if (oldLayout ==  VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout ==  VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
         {
             barrier.srcAccessMask = VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT;
             barrier.dstAccessMask = VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT;
@@ -1676,7 +1801,9 @@ public unsafe partial class SimpleEngine : IDisposable
     {
         const double RADIANS = 0.017453292519943295;
 
-        var time = Math.Max(0, (float)(1000 / (DateTime.UtcNow - startTime).TotalMilliseconds));
+        var now = DateTime.UtcNow;
+
+        var time = Math.Max(0, (float)(now - startTime).TotalMilliseconds / 1000);
 
         var ubo = new UniformBufferObject
         {
