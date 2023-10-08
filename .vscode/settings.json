@@ -1,10 +1,13 @@
 {
+    "dotnetCoreExplorer.logpanel": true,
+    "dotnetCoreExplorer.searchpatterns": "**/tests/**/*.Tests.{dll,exe}",
+    "dotnetCoreExplorer.codeLens": false,
+    // "csharp.semanticHighlighting.enabled": false
     "files.exclude": {
+        "**/*.spv": true,
         "**/TestResults": true,
         "**/bin": true,
         "**/obj": true,
-        ".coverage": true,
-        "**/*.spv": true
-    },
-    // "csharp.semanticHighlighting.enabled": false
+        ".coverage": true
+    }
 }

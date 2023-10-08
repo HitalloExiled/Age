@@ -10,7 +10,7 @@ public class Window : IDisposable
     public event Action? WindowClosed;
     public event Action? SizeChanged;
 
-    private static readonly Dictionary<HWND, Window> windows = new();
+    private static readonly Dictionary<HWND, Window> windows = [];
 
     private bool disposed;
 

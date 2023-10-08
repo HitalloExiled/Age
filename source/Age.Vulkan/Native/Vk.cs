@@ -285,8 +285,8 @@ public unsafe class Vk(IVulkanLoader loader)
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkWaitForFences(VkDevice device, uint fenceCount, VkFence* pFences, VkBool32 waitAll, ulong timeout);
 
-    private readonly Dictionary<string, HashSet<string>> deviceExtensionsMap   = new();
-    private readonly Dictionary<string, HashSet<string>> instanceExtensionsMap = new();
+    private readonly Dictionary<string, HashSet<string>> deviceExtensionsMap   = [];
+    private readonly Dictionary<string, HashSet<string>> instanceExtensionsMap = [];
 
     private readonly VkAllocateCommandBuffers                 vkAllocateCommandBuffers                 = loader.Load<VkAllocateCommandBuffers>(nameof(vkAllocateCommandBuffers));
     private readonly VkAllocateDescriptorSets                 vkAllocateDescriptorSets                 = loader.Load<VkAllocateDescriptorSets>(nameof(vkAllocateDescriptorSets));
@@ -1469,7 +1469,7 @@ public unsafe class Vk(IVulkanLoader loader)
     {
         if (this.EnumerateDeviceExtensionProperties(physicalDevice, layerName, out uint propertyCount) is var result and not VkResult.VK_SUCCESS)
         {
-            properties = Array.Empty<VkExtensionProperties>();
+            properties = [];
 
             return result;
         }
@@ -1510,7 +1510,7 @@ public unsafe class Vk(IVulkanLoader loader)
     {
         if (this.EnumerateInstanceExtensionProperties(layerName, out uint propertyCount) is var result and not VkResult.VK_SUCCESS)
         {
-            properties = Array.Empty<VkExtensionProperties>();
+            properties = [];
 
             return result;
         }
@@ -1546,7 +1546,7 @@ public unsafe class Vk(IVulkanLoader loader)
     {
         if (this.EnumerateInstanceLayerProperties(out uint propertyCount) is var result and not VkResult.VK_SUCCESS)
         {
-            properties = Array.Empty<VkLayerProperties>();
+            properties = [];
 
             return result;
         }
@@ -1581,7 +1581,7 @@ public unsafe class Vk(IVulkanLoader loader)
     {
         if (this.EnumeratePhysicalDevices(instance, out uint physicalDeviceCount) is var result and not VkResult.VK_SUCCESS)
         {
-            physicalDevices = Array.Empty<VkPhysicalDevice>();
+            physicalDevices = [];
 
             return result;
         }
@@ -1750,13 +1750,13 @@ public unsafe class Vk(IVulkanLoader loader)
     /// <param name="pFormatProperties">A pointer to a VkFormatProperties structure in which physical device properties for format are returned.</param>
     /// <remarks>Provided by VK_VERSION_1_0</remarks>
     public void GetPhysicalDeviceFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, VkFormatProperties* pFormatProperties) =>
-        vkGetPhysicalDeviceFormatProperties.Invoke(physicalDevice, format, pFormatProperties);
+        this.vkGetPhysicalDeviceFormatProperties.Invoke(physicalDevice, format, pFormatProperties);
 
     public void GetPhysicalDeviceFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, out VkFormatProperties formatProperties)
     {
         fixed (VkFormatProperties* pFormatProperties = &formatProperties)
         {
-            vkGetPhysicalDeviceFormatProperties.Invoke(physicalDevice, format, pFormatProperties);
+            this.vkGetPhysicalDeviceFormatProperties.Invoke(physicalDevice, format, pFormatProperties);
         }
     }
 

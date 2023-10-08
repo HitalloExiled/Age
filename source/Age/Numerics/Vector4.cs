@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace Age.Numerics;
 
 [DebuggerDisplay("X: {X}, Y: {Y}, Z: {Z}, W: {W}")]
-public record struct Vector4<T> where T : IFloatingPoint<T>
+public record struct Vector4<T> where T :  IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public T X;
     public T Y;
@@ -35,4 +35,13 @@ public record struct Vector4<T> where T : IFloatingPoint<T>
             Unsafe.Add(ref this.X, index) = value;
         }
     }
+
+    public static implicit operator Vector2<T>(Vector4<T> vector) =>
+        new(vector.X, vector.Y);
+
+    public static implicit operator Vector3<T>(Vector4<T> vector) =>
+        new(vector.X, vector.Y, vector.Z);
+
+    public override readonly string ToString()
+        => $"{{ X = {this.X}, Y = {this.Y}, Z = {this.Z}, W = {this.W} }}";
 }

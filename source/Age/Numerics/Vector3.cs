@@ -101,4 +101,10 @@ public record struct Vector3<T> where T :  IFloatingPoint<T>, IRootFunctions<T>,
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Vector3<T> operator /(Vector3<T> left, Vector3<T> right) =>
         new(left.X / right.X, left.Y / right.Y, left.Z / right.Z);
+
+    public static implicit operator Vector2<T>(Vector3<T> vector) =>
+        new(vector.X, vector.Y);
+
+    public override readonly string ToString()
+        => $"{{ X = {this.X}, Y = {this.Y}, Z = {this.Z} }}";
 }

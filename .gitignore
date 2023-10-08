@@ -32,3 +32,4 @@ _ReSharper*/
 packages/
 .coverage
 *.spv
+!source/Age/Models/*.obj
