@@ -24,9 +24,9 @@ namespace Age;
 
 public unsafe partial class SimpleEngine : IDisposable
 {
-    private static readonly DateTime startTime = DateTime.UtcNow;
-
     private const int MAX_FRAMES_IN_FLIGHT = 2;
+
+    private static readonly DateTime startTime = DateTime.UtcNow;
 
     private readonly HashSet<string>        deviceExtensions         = [VkKhrSwapchain.Name];
     private readonly bool                   enableValidationLayers   = Debugger.IsAttached;
@@ -41,10 +41,13 @@ public unsafe partial class SimpleEngine : IDisposable
     private readonly HashSet<string>        validationLayers         = ["VK_LAYER_KHRONOS_validation"];
     private readonly List<Vertex>           vertices                 = [];
     private readonly Vk                     vk;
-    private readonly WindowManager          windowManager            = new();
+    private readonly WindowManager          windowManager = new();
     private readonly WindowsVulkanLoader    windowsVulkanLoader;
 
-    private VkCommandBuffer[]        commandBuffers        = [];
+    private VkImage                  colorImage;
+    private VkDeviceMemory           colorImageMemory;
+    private VkImageView              colorImageView;
+    private VkCommandBuffer[]        commandBuffers = [];
     private VkCommandPool            commandPool;
     private uint                     currentFrame;
     private VkDebugUtilsMessengerEXT debugMessenger;
@@ -53,7 +56,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkImageView              depthImageView;
     private VkDescriptorPool         descriptorPool;
     private VkDescriptorSetLayout    descriptorSetLayout;
-    private VkDescriptorSet[]        descriptorSets        = [];
+    private VkDescriptorSet[]        descriptorSets = [];
     private VkDevice                 device;
     private bool                     disposed;
     private bool                     framebufferResized;
@@ -63,6 +66,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkDeviceMemory           indexBufferMemory;
     private VkInstance               instance;
     private uint                     mipLevels;
+    private VkSampleCountFlagBits    msaaSamples = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT;
     private VkPhysicalDevice         physicalDevice;
     private VkPipelineLayout         pipelineLayout;
     private VkQueue                  presentQueue;
@@ -72,8 +76,8 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkExtent2D               swapChainExtent;
     private VkFramebuffer[]          swapChainFramebuffers = [];
     private VkFormat                 swapChainImageFormat;
-    private VkImage[]                swapChainImages       = [];
-    private VkImageView[]            swapChainImageViews   = [];
+    private VkImage[]                swapChainImages     = [];
+    private VkImageView[]            swapChainImageViews = [];
     private VkImage                  textureImage;
     private VkDeviceMemory           textureImageMemory;
     private VkImageView              textureImageView;
@@ -81,9 +85,9 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkBuffer                 vertexBuffer;
     private VkDeviceMemory           vertexBufferMemory;
     private VkExtDebugUtils?         vkExtDebugUtils;
-    private VkKhrSurface             vkKhrSurface          = null!;
-    private VkKhrSwapchain           vkKhrSwapchain        = null!;
-    private Window                   window                = null!;
+    private VkKhrSurface             vkKhrSurface   = null!;
+    private VkKhrSwapchain           vkKhrSwapchain = null!;
+    private Window                   window         = null!;
 
     public SimpleEngine()
     {
@@ -252,6 +256,10 @@ public unsafe partial class SimpleEngine : IDisposable
         this.vk.DestroyImage(this.device, this.depthImage, null);
         this.vk.FreeMemory(this.device, this.depthImageMemory, null);
 
+        this.vk.DestroyImageView(this.device, this.colorImageView, null);
+        this.vk.DestroyImage(this.device, this.colorImage, null);
+        this.vk.FreeMemory(this.device, this.colorImageMemory, null);
+
         for (var i = 0; i < this.swapChainFramebuffers.Length; i++)
         {
             this.vk.DestroyFramebuffer(this.device, this.swapChainFramebuffers[i], null);
@@ -376,6 +384,25 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
+    private void CreateColorResources()
+    {
+        var colorFormat = this.swapChainImageFormat;
+
+        this.CreateImage(
+            this.swapChainExtent.width,
+            this.swapChainExtent.height,
+            1,
+            this.msaaSamples,
+            colorFormat,
+            VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
+            VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            out this.colorImage,
+            out this.colorImageMemory
+        );
+        this.colorImageView = this.CreateImageView(this.colorImage, colorFormat, VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT, 1);
+    }
+
     private void CreateDepthResources()
     {
         var depthFormat = this.FindDepthFormat();
@@ -384,6 +411,7 @@ public unsafe partial class SimpleEngine : IDisposable
             this.swapChainExtent.width,
             this.swapChainExtent.height,
             1,
+            this.msaaSamples,
             depthFormat,
             VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
             VkImageUsageFlagBits.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
@@ -541,8 +569,9 @@ public unsafe partial class SimpleEngine : IDisposable
         {
             var attachments = new[]
             {
-                this.swapChainImageViews[i],
+                this.colorImageView,
                 this.depthImageView,
+                this.swapChainImageViews[i]
             };
 
             fixed (VkImageView* pAttachments = attachments)
@@ -633,8 +662,9 @@ public unsafe partial class SimpleEngine : IDisposable
 
                 var multisampling = new VkPipelineMultisampleStateCreateInfo
                 {
-                    sampleShadingEnable  = false,
-                    rasterizationSamples = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT
+                    sampleShadingEnable  = true,
+                    rasterizationSamples = this.msaaSamples,
+                    minSampleShading     = 2,
                 };
 
                 var depthStencil = new VkPipelineDepthStencilStateCreateInfo
@@ -722,7 +752,50 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
-    public VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlagBits aspectFlags, uint mipLevels)
+    private void CreateImage(uint width, uint height, uint mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits usage, VkMemoryPropertyFlagBits properties, out VkImage image, out VkDeviceMemory imageMemory)
+    {
+        var imageInfo = new VkImageCreateInfo
+        {
+            imageType = VkImageType.VK_IMAGE_TYPE_2D,
+            extent    = new()
+            {
+                width  = width,
+                height = height,
+                depth  = 1,
+            },
+            mipLevels     = mipLevels,
+            arrayLayers   = 1,
+            format        = format,
+            tiling        = tiling,
+            initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
+            usage         = usage,
+            sharingMode   = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE,
+            samples       = numSamples,
+            flags         = default,
+        };
+
+        if (this.vk.CreateImage(this.device, imageInfo, default, out image) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to create image!");
+        }
+
+        this.vk.GetImageMemoryRequirements(this.device, image, out var memRequirements);
+
+        var allocInfo = new VkMemoryAllocateInfo
+        {
+            allocationSize  = memRequirements.size,
+            memoryTypeIndex = this.FindMemoryType(memRequirements.memoryTypeBits, properties)
+        };
+
+        if (this.vk.AllocateMemory(this.device, allocInfo, default, out imageMemory) != VkResult.VK_SUCCESS)
+        {
+            throw new Exception("failed to allocate image memory!");
+        }
+
+        this.vk.BindImageMemory(this.device, image, imageMemory, 0);
+    }
+
+    private VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlagBits aspectFlags, uint mipLevels)
     {
         var viewInfo = new VkImageViewCreateInfo
         {
@@ -873,7 +946,8 @@ public unsafe partial class SimpleEngine : IDisposable
 
         var deviceFeatures = new VkPhysicalDeviceFeatures
         {
-            samplerAnisotropy = true
+            samplerAnisotropy = true,
+            sampleRateShading = true,
         };
 
         fixed (VkDeviceQueueCreateInfo* pQueueCreateInfos = queueCreateInfos.ToArray())
@@ -928,8 +1002,32 @@ public unsafe partial class SimpleEngine : IDisposable
         var colorAttachment = new VkAttachmentDescription
         {
             format         = this.swapChainImageFormat,
-            samples        = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
+            samples        = this.msaaSamples,
             loadOp         = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR,
+            storeOp        = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE,
+            stencilLoadOp  = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            stencilStoreOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            initialLayout  = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
+            finalLayout    = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        };
+
+        var depthAttachment = new VkAttachmentDescription
+        {
+            format         = this.FindDepthFormat(),
+            samples        = this.msaaSamples,
+            loadOp         = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR,
+            storeOp        = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            stencilLoadOp  = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            stencilStoreOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            initialLayout  = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
+            finalLayout    = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        };
+
+        var colorAttachmentResolve = new VkAttachmentDescription()
+        {
+            format         = this.swapChainImageFormat,
+            samples        = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
+            loadOp         = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             storeOp        = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE,
             stencilLoadOp  = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             stencilStoreOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -937,16 +1035,10 @@ public unsafe partial class SimpleEngine : IDisposable
             finalLayout    = VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
         };
 
-        var depthAttachment = new VkAttachmentDescription
+        var colorAttachmentResolveRef = new VkAttachmentReference
         {
-            format         = this.FindDepthFormat(),
-            samples        = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
-            loadOp         = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR,
-            storeOp        = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            stencilLoadOp  = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            stencilStoreOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            initialLayout  = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-            finalLayout    = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+            attachment = 2,
+            layout     = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         };
 
         var colorAttachmentRef = new VkAttachmentReference
@@ -967,6 +1059,7 @@ public unsafe partial class SimpleEngine : IDisposable
             colorAttachmentCount    = 1,
             pColorAttachments       = &colorAttachmentRef,
             pDepthStencilAttachment = &depthAttachmentRef,
+            pResolveAttachments     = &colorAttachmentResolveRef,
         };
 
         var dependency = new VkSubpassDependency
@@ -982,7 +1075,8 @@ public unsafe partial class SimpleEngine : IDisposable
         var attachments = new[]
         {
             colorAttachment,
-            depthAttachment
+            depthAttachment,
+            colorAttachmentResolve,
         };
 
         fixed (VkAttachmentDescription* pAttachments = attachments)
@@ -1146,6 +1240,7 @@ public unsafe partial class SimpleEngine : IDisposable
             (uint)bitmap.Width,
             (uint)bitmap.Height,
             this.mipLevels,
+            VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
             VkFormat.VK_FORMAT_R8G8B8A8_SRGB,
             VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
             VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_DST_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -1195,49 +1290,6 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void CreateTextureImageView() =>
         this.textureImageView = this.CreateImageView(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT, this.mipLevels);
-
-    private void CreateImage(uint width, uint height, uint mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits usage, VkMemoryPropertyFlagBits properties, out VkImage image, out VkDeviceMemory imageMemory)
-    {
-        var imageInfo = new VkImageCreateInfo
-        {
-            imageType = VkImageType.VK_IMAGE_TYPE_2D,
-            extent    = new()
-            {
-                width  = width,
-                height = height,
-                depth  = 1,
-            },
-            mipLevels     = mipLevels,
-            arrayLayers   = 1,
-            format        = format,
-            tiling        = tiling,
-            initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-            usage         = usage,
-            sharingMode   = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE,
-            samples       = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
-            flags         = default,
-        };
-
-        if (this.vk.CreateImage(this.device, imageInfo, default, out image) != VkResult.VK_SUCCESS)
-        {
-            throw new Exception("failed to create image!");
-        }
-
-        this.vk.GetImageMemoryRequirements(this.device, image, out var memRequirements);
-
-        var allocInfo = new VkMemoryAllocateInfo
-        {
-            allocationSize  = memRequirements.size,
-            memoryTypeIndex = this.FindMemoryType(memRequirements.memoryTypeBits, properties)
-        };
-
-        if (this.vk.AllocateMemory(this.device, allocInfo, default, out imageMemory) != VkResult.VK_SUCCESS)
-        {
-            throw new Exception("failed to allocate image memory!");
-        }
-
-        this.vk.BindImageMemory(this.device, image, imageMemory, 0);
-    }
 
     private void CreateUniformBuffers()
     {
@@ -1412,6 +1464,27 @@ public unsafe partial class SimpleEngine : IDisposable
         this.vk.QueueWaitIdle(this.graphicsQueue);
 
         this.vk.FreeCommandBuffers(this.device, this.commandPool, 1, &commandBuffer);
+    }
+
+    private VkSampleCountFlagBits GetMaxUsableSampleCount()
+    {
+        this.vk.GetPhysicalDeviceProperties(this.physicalDevice, out var physicalDeviceProperties);
+
+        var counts = (VkSampleCountFlagBits)physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+
+        return counts.HasFlag(VkSampleCountFlagBits.VK_SAMPLE_COUNT_64_BIT)
+            ? VkSampleCountFlagBits.VK_SAMPLE_COUNT_64_BIT
+            : counts.HasFlag(VkSampleCountFlagBits.VK_SAMPLE_COUNT_32_BIT)
+                ? VkSampleCountFlagBits.VK_SAMPLE_COUNT_32_BIT
+                : counts.HasFlag(VkSampleCountFlagBits.VK_SAMPLE_COUNT_16_BIT)
+                    ? VkSampleCountFlagBits.VK_SAMPLE_COUNT_16_BIT
+                    : counts.HasFlag(VkSampleCountFlagBits.VK_SAMPLE_COUNT_8_BIT)
+                        ? VkSampleCountFlagBits.VK_SAMPLE_COUNT_8_BIT
+                        : counts.HasFlag(VkSampleCountFlagBits.VK_SAMPLE_COUNT_4_BIT)
+                            ? VkSampleCountFlagBits.VK_SAMPLE_COUNT_4_BIT
+                            : counts.HasFlag(VkSampleCountFlagBits.VK_SAMPLE_COUNT_2_BIT)
+                                ? VkSampleCountFlagBits.VK_SAMPLE_COUNT_2_BIT
+                                : VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT;
     }
 
     private List<string> GetRequiredExtensions()
@@ -1642,6 +1715,7 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateDescriptorSetLayout();
         this.CreateGraphicsPipeline();
         this.CreateCommandPool();
+        this.CreateColorResources();
         this.CreateDepthResources();
         this.CreateFramebuffers();
         this.CreateTextureImage();
@@ -1739,6 +1813,8 @@ public unsafe partial class SimpleEngine : IDisposable
             if (this.IsDeviceSuitable(device))
             {
                 this.physicalDevice = device;
+                this.msaaSamples    = this.GetMaxUsableSampleCount();
+
                 break;
             }
         }
@@ -1869,6 +1945,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
         this.CreateSwapChain();
         this.CreateImageViews();
+        this.CreateColorResources();
         this.CreateDepthResources();
         this.CreateFramebuffers();
     }
