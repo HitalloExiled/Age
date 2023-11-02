@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
+using Age.Platform.Windows.Native.Types;
 
-namespace Age.Platform.Windows.Api.Native;
+namespace Age.Platform.Windows.Native;
 
 internal static partial class User32
 {

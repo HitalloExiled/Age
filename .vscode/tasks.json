@@ -45,34 +45,55 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "clean-test",
+            "windows": {
+                "command": "if (Test-Path -Path ./tests/Age.Tests/TestResults) { Remove-Item ./tests/Age.Tests/TestResults/* -Force -Recurse; }"
+            },
+            "type": "shell",
+            "problemMatcher": []
+        },
+        {
             "label": "test",
             "command": "dotnet",
             "type": "process",
+            "dependsOn": [
+                "clean-test"
+            ],
             "args": [
                 "test",
                 "--collect:\"XPlat Code Coverage\"",
-                "--settings=coverlet.runsettings",
+                "--settings=coverlet.runsettings"
             ],
             "problemMatcher": "$msCompile"
         },
         {
             "label": "generate-report",
-            "command": "dotnet",
+            // "command": "dotnet", // Broken on dotnet 8
+            "command": "reportgenerator",
             "type": "process",
-            "dependsOn": ["test"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": [
+                "test"
+            ],
             "args": [
-                "reportgenerator",
+                // "reportgenerator", // Broken on dotnet 8
                 "-reports:\"tests/Age.Tests/TestResults/*/coverage.opencover.xml\"",
                 "-targetdir:\".coverage\"",
-                "-reporttypes:Html",
+                "-reporttypes:Html"
             ],
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "open-report",
-            "command": "Invoke-Item ./.coverage/index.html",
+            "label": "coverage",
+            "windows": {
+                "command": "Invoke-Item ./.coverage/index.html"
+            },
             "type": "shell",
-            "dependsOn": ["generate-report"],
+            "dependsOn": [
+                "generate-report"
+            ],
             "problemMatcher": []
         },
         {
@@ -85,6 +106,26 @@
                 "--project",
                 "${workspaceFolder}/Age.sln"
             ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "shader:compile",
+            "windows": {
+                "command": "glslc shader.vert -o vert.spv; glslc shader.frag -o frag.spv;"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/source/Age/Shaders"
+            },
+            "type": "shell",
+            "problemMatcher": []
+        },
+        {
+            "label": "build:all",
+            "dependsOn": [
+                "build",
+                "shader:compile"
+            ],
+            "dependsOrder": "parallel",
             "problemMatcher": "$msCompile"
         }
     ]

@@ -1,4 +1,4 @@
-namespace Age.Platform.Windows.Api.Native;
+namespace Age.Platform.Windows.Native;
 internal static partial class User32
 {
     public enum FILL_MODE

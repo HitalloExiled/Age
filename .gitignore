@@ -31,3 +31,5 @@ _ReSharper*/
 #Nuget packages folder
 packages/
 .coverage
+*.spv
+!source/Age/Models/*.obj

@@ -312,6 +312,7 @@ dotnet_diagnostic.CA1836.severity  = suggestion # Prefer IsEmpty over Count when
 dotnet_diagnostic.CA1836.severity  = suggestion # Property names should not match get methods
 dotnet_diagnostic.CA1861.severity  = suggestion # Avoid constant arrays as arguments
 dotnet_diagnostic.CA2254.severity  = suggestion # Remove unnecessary suppression operator
+dotnet_diagnostic.CS8019.severity  = suggestion # Unnecessary using directives
 dotnet_diagnostic.IDE0001.severity = suggestion # Name can be simplyfied
 dotnet_diagnostic.IDE0002.severity = suggestion # Name can be simplyfied
 dotnet_diagnostic.IDE0004.severity = suggestion # Redundant conversion
@@ -327,9 +328,12 @@ dotnet_diagnostic.IDE0080.severity = suggestion # Remove unnecessary suppression
 dotnet_diagnostic.IDE0082.severity = suggestion # Convert typeof to nameof
 dotnet_diagnostic.IDE1006.severity = suggestion # Remove unnecessary suppression operator
 
-[source/Age.Platform.Windows/Native/*.cs]
+[**/Native/**.cs]
 dotnet_naming_rule.public_fields_rule.severity = none
 dotnet_diagnostic.CA1707.severity              = none
+
+[**/obj/**.cs]
+dotnet_diagnostic.CS8019.severity = none
 
 [*.{csproj,xml,yml,yaml}]
 indent_style = space

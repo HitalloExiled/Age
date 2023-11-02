@@ -1,8 +1,10 @@
 {
-    "explorer.fileNesting.patterns": {
-        "*.cs": "${capture}.*.cs"
-    },
+    "dotnetCoreExplorer.logpanel": true,
+    "dotnetCoreExplorer.searchpatterns": "**/tests/**/*.Tests.{dll,exe}",
+    "dotnetCoreExplorer.codeLens": false,
+    // "csharp.semanticHighlighting.enabled": false
     "files.exclude": {
+        "**/*.spv": true,
         "**/TestResults": true,
         "**/bin": true,
         "**/obj": true,
