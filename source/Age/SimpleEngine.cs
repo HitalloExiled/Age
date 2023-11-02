@@ -62,6 +62,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkBuffer                 indexBuffer;
     private VkDeviceMemory           indexBufferMemory;
     private VkInstance               instance;
+    private uint                     mipLevels;
     private VkPhysicalDevice         physicalDevice;
     private VkPipelineLayout         pipelineLayout;
     private VkQueue                  presentQueue;
@@ -382,6 +383,7 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateImage(
             this.swapChainExtent.width,
             this.swapChainExtent.height,
+            1,
             depthFormat,
             VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
             VkImageUsageFlagBits.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
@@ -390,7 +392,7 @@ public unsafe partial class SimpleEngine : IDisposable
             out this.depthImageMemory
         );
 
-        this.depthImageView = this.CreateImageView(this.depthImage, depthFormat, VkImageAspectFlagBits.VK_IMAGE_ASPECT_DEPTH_BIT);
+        this.depthImageView = this.CreateImageView(this.depthImage, depthFormat, VkImageAspectFlagBits.VK_IMAGE_ASPECT_DEPTH_BIT, 1);
     }
 
     private void CreateDescriptorPool()
@@ -720,7 +722,7 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
-    public VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlagBits aspectFlags)
+    public VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlagBits aspectFlags, uint mipLevels)
     {
         var viewInfo = new VkImageViewCreateInfo
         {
@@ -731,7 +733,7 @@ public unsafe partial class SimpleEngine : IDisposable
             {
                 aspectMask     = aspectFlags,
                 baseMipLevel   = 0,
-                levelCount     = 1,
+                levelCount     = mipLevels,
                 baseArrayLayer = 0,
                 layerCount     = 1
             }
@@ -748,7 +750,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
         for (var i = 0; i < this.swapChainImages.Length; i++)
         {
-            this.swapChainImageViews[i] = this.CreateImageView(this.swapChainImages[i], this.swapChainImageFormat, VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT);
+            this.swapChainImageViews[i] = this.CreateImageView(this.swapChainImages[i], this.swapChainImageFormat, VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT, 1);
         }
     }
 
@@ -1125,6 +1127,8 @@ public unsafe partial class SimpleEngine : IDisposable
         var bitmap = SKBitmap.Decode(stream);
         var pixels = bitmap.Pixels.Select(x => (uint)x).ToArray();
 
+        this.mipLevels = (uint)Math.Floor(Math.Log2(Math.Max(bitmap.Width, bitmap.Height))) + 1;
+
         VkDeviceSize imageSize = (ulong)(pixels.Length * 4);
 
         this.CreateBuffer(
@@ -1141,20 +1145,23 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateImage(
             (uint)bitmap.Width,
             (uint)bitmap.Height,
+            this.mipLevels,
             VkFormat.VK_FORMAT_R8G8B8A8_SRGB,
             VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
-            VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_DST_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT,
+            VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_DST_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT,
             VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
             out this.textureImage,
             out this.textureImageMemory
         );
 
-        this.TransitionImageLayout(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        this.TransitionImageLayout(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, this.mipLevels);
         this.CopyBufferToImage(stagingBuffer, this.textureImage, bitmap.Width, bitmap.Height);
-        this.TransitionImageLayout(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
 
         this.vk.DestroyBuffer(this.device, stagingBuffer, null);
         this.vk.FreeMemory(this.device, stagingBufferMemory, null);
+
+        this.GenerateMipmaps(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, bitmap.Width, bitmap.Height, this.mipLevels);
     }
 
     private void CreateTextureSampler()
@@ -1163,21 +1170,21 @@ public unsafe partial class SimpleEngine : IDisposable
 
         var samplerInfo = new VkSamplerCreateInfo
         {
-            magFilter               = VkFilter.VK_FILTER_LINEAR,
-            minFilter               = VkFilter.VK_FILTER_LINEAR,
             addressModeU            = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT,
             addressModeV            = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT,
             addressModeW            = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT,
             anisotropyEnable        = true,
-            maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
             borderColor             = VkBorderColor.VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-            unnormalizedCoordinates = false,
             compareEnable           = false,
             compareOp               = VkCompareOp.VK_COMPARE_OP_ALWAYS,
-            mipmapMode              = VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR,
-            mipLodBias              = 0,
+            magFilter               = VkFilter.VK_FILTER_LINEAR,
+            maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
+            maxLod                  = this.mipLevels,
+            minFilter               = VkFilter.VK_FILTER_LINEAR,
             minLod                  = 0,
-            maxLod                  = 0,
+            mipLodBias              = 0,
+            mipmapMode              = VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR,
+            unnormalizedCoordinates = false,
         };
 
         if (this.vk.CreateSampler(this.device, samplerInfo, default, out this.textureSampler) != VkResult.VK_SUCCESS)
@@ -1187,9 +1194,9 @@ public unsafe partial class SimpleEngine : IDisposable
     }
 
     private void CreateTextureImageView() =>
-        this.textureImageView = this.CreateImageView(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT);
+        this.textureImageView = this.CreateImageView(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT, this.mipLevels);
 
-    private void CreateImage(uint width, uint height, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits usage, VkMemoryPropertyFlagBits properties, out VkImage image, out VkDeviceMemory imageMemory)
+    private void CreateImage(uint width, uint height, uint mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits usage, VkMemoryPropertyFlagBits properties, out VkImage image, out VkDeviceMemory imageMemory)
     {
         var imageInfo = new VkImageCreateInfo
         {
@@ -1200,7 +1207,7 @@ public unsafe partial class SimpleEngine : IDisposable
                 height = height,
                 depth  = 1,
             },
-            mipLevels     = 1,
+            mipLevels     = mipLevels,
             arrayLayers   = 1,
             format        = format,
             tiling        = tiling,
@@ -1435,7 +1442,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
         for (var i = 0u; i < memProperties.memoryTypeCount; i++)
         {
-            if ((typeFilter & (1 << (int)i)) != 0 && ((VkMemoryType*)memProperties.memoryTypes)[i].propertyFlags.HasFlag(properties))
+            if ((typeFilter & (1 << (int)i)) != 0 && memProperties.GetMemoryTypes((int)i).propertyFlags.HasFlag(properties))
             {
                 return i;
             }
@@ -1496,7 +1503,131 @@ public unsafe partial class SimpleEngine : IDisposable
         throw new Exception("failed to find supported format!");
     }
 
+    private void GenerateMipmaps(VkImage image, VkFormat imageFormat, int texWidth, int texHeight, uint mipLevels)
+    {
+        // Check if image format supports linear blitting
+        this.vk.GetPhysicalDeviceFormatProperties(this.physicalDevice, imageFormat, out var formatProperties);
 
+        if (!formatProperties.optimalTilingFeatures.HasFlag(VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
+        {
+            throw new Exception("texture image format does not support linear blitting!");
+        }
+
+        var commandBuffer = this.BeginSingleTimeCommands();
+
+        var barrier = new VkImageMemoryBarrier
+        {
+            image               = image,
+            srcQueueFamilyIndex = Vk.VK_QUEUE_FAMILY_IGNORED,
+            dstQueueFamilyIndex = Vk.VK_QUEUE_FAMILY_IGNORED,
+            subresourceRange    = new()
+            {
+                aspectMask     = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
+                baseArrayLayer = 0,
+                layerCount     = 1,
+                levelCount     = 1,
+            }
+        };
+
+        var mipWidth  = texWidth;
+        var mipHeight = texHeight;
+
+        for (var i = 1u; i < mipLevels; i++)
+        {
+            barrier.subresourceRange.baseMipLevel = i - 1;
+            barrier.oldLayout                     = VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            barrier.newLayout                     = VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            barrier.srcAccessMask                 = VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.dstAccessMask                 = VkAccessFlagBits.VK_ACCESS_TRANSFER_READ_BIT;
+
+            this.vk.CmdPipelineBarrier(
+                commandBuffer,
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT,
+                default,
+                null,
+                null,
+                [barrier]
+            );
+
+            var blit = new VkImageBlit
+            {
+                srcSubresource = new()
+                {
+                    aspectMask     = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
+                    mipLevel       = i - 1,
+                    baseArrayLayer = 0,
+                    layerCount     = 1
+                },
+                dstSubresource = new()
+                {
+                    aspectMask     = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
+                    mipLevel       = i,
+                    baseArrayLayer = 0,
+                    layerCount     = 1
+                }
+            };
+
+            blit.SetSrcOffsets(0, new VkOffset3D());
+            blit.SetSrcOffsets(1, new VkOffset3D { x = mipWidth, y = mipHeight, z = 1 });
+
+            blit.SetDstOffsets(0, new VkOffset3D());
+            blit.SetDstOffsets(1, new VkOffset3D { x = mipWidth > 1 ? mipWidth / 2 : 1, y = mipHeight > 1 ? mipHeight / 2 : 1, z = 1 });
+
+            this.vk.CmdBlitImage(
+                commandBuffer,
+                image,
+                VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                image,
+                VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                [blit],
+                VkFilter.VK_FILTER_LINEAR
+            );
+
+            barrier.oldLayout     = VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            barrier.newLayout     = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            barrier.srcAccessMask = VkAccessFlagBits.VK_ACCESS_TRANSFER_READ_BIT;
+            barrier.dstAccessMask = VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT;
+
+            this.vk.CmdPipelineBarrier(
+                commandBuffer,
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                default,
+                null,
+                null,
+                [barrier]
+            );
+
+            if (mipWidth > 1)
+            {
+                mipWidth /= 2;
+            }
+
+            if (mipHeight > 1)
+            {
+                mipHeight /= 2;
+            }
+        }
+
+        barrier.subresourceRange.baseMipLevel = mipLevels - 1;
+        barrier.oldLayout     = VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.newLayout     = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrier.srcAccessMask = VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT;
+
+        this.vk.CmdPipelineBarrier(
+            commandBuffer,
+            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            default,
+            null,
+            null,
+            [barrier]
+        );
+
+        this.EndSingleTimeCommands(commandBuffer);
+    }
 
     private void InitVulkan()
     {
@@ -1757,7 +1888,7 @@ public unsafe partial class SimpleEngine : IDisposable
         }
     }
 
-    private void TransitionImageLayout(VkImage image, VkFormat _, VkImageLayout oldLayout, VkImageLayout newLayout)
+    private void TransitionImageLayout(VkImage image, VkFormat _, VkImageLayout oldLayout, VkImageLayout newLayout, uint mipLevels)
     {
         var commandBuffer = this.BeginSingleTimeCommands();
 
@@ -1774,7 +1905,7 @@ public unsafe partial class SimpleEngine : IDisposable
             {
                 aspectMask     = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
                 baseMipLevel   = 0,
-                levelCount     = 1,
+                levelCount     = mipLevels,
                 baseArrayLayer = 0,
                 layerCount     = 1,
             }

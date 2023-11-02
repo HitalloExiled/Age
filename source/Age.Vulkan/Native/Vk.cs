@@ -88,6 +88,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate void VkCmdBindVertexBuffers(VkCommandBuffer commandBuffer, uint firstBinding, uint bindingCount, VkBuffer* pBuffers, VkDeviceSize* pOffsets);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdBlitImage(VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint regionCount, VkImageBlit* pRegions, VkFilter filter);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdCopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, uint regionCount, VkBufferCopy* pRegions);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -299,6 +302,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCmdBindDescriptorSets                  vkCmdBindDescriptorSets                  = loader.Load<VkCmdBindDescriptorSets>(nameof(vkCmdBindDescriptorSets));
     private readonly VkCmdBindPipeline                        vkCmdBindPipeline                        = loader.Load<VkCmdBindPipeline>(nameof(vkCmdBindPipeline));
     private readonly VkCmdBindVertexBuffers                   vkCmdBindVertexBuffers                   = loader.Load<VkCmdBindVertexBuffers>(nameof(vkCmdBindVertexBuffers));
+    private readonly VkCmdBlitImage                           vkCmdBlitImage                           = loader.Load<VkCmdBlitImage>(nameof(vkCmdBlitImage));
     private readonly VkCmdCopyBuffer                          vkCmdCopyBuffer                          = loader.Load<VkCmdCopyBuffer>(nameof(vkCmdCopyBuffer));
     private readonly VkCmdCopyBufferToImage                   vkCmdCopyBufferToImage                   = loader.Load<VkCmdCopyBufferToImage>(nameof(vkCmdCopyBufferToImage));
     private readonly VkCmdDraw                                vkCmdDraw                                = loader.Load<VkCmdDraw>(nameof(vkCmdDraw));
@@ -614,7 +618,7 @@ public unsafe class Vk(IVulkanLoader loader)
 
     /// <summary>
     /// Bind vertex buffers to a command buffer.
-    /// The values taken from elements i of pBuffers and pOffsets replace the current state for the vertex input binding firstBinding + i, for i in [0, bindingCount). The vertex input binding is updated to start at the offset indicated by pOffsets[i] from the start of the buffer pBuffers[i]. All vertex input attributes that use each of these bindings will use these updated addresses in their address calculations for subsequent drawing commands. If the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#features-nullDescriptor">nullDescriptor</see> feature is enabled, elements of pBuffers can be VK_NULL_HANDLE, and can be used by the vertex shader. If a vertex input attribute is bound to a vertex input binding that is VK_NULL_HANDLE, the values taken from memory are considered to be zero, and missing G, B, or A components are <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdBindVertexBuffers.html#fxvertex-input-extraction">filled with (0,0,1)</see>.
+    /// The values taken from elements i of pBuffers and pOffsets replace the current state for the vertex input binding firstBinding + i, for i in [0, bindingCount). The vertex input binding is updated to start at the offset indicated by pOffsets[i] from the start of the buffer pBuffers[i]. All vertex input attributes that use each of these bindings will use these updated addresses in their address calculations for subsequent drawing commands. If the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#features-nullDescriptor">nullDescriptor</see> feature is enabled, elements of pBuffers can be <see cref="VK_NULL_HANDLE"/>, and can be used by the vertex shader. If a vertex input attribute is bound to a vertex input binding that is <see cref="VK_NULL_HANDLE"/>, the values taken from memory are considered to be zero, and missing G, B, or A components are <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdBindVertexBuffers.html#fxvertex-input-extraction">filled with (0,0,1)</see>.
     /// </summary>
     /// <param name="commandBuffer">The command buffer into which the command is recorded.</param>
     /// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
@@ -631,6 +635,75 @@ public unsafe class Vk(IVulkanLoader loader)
         fixed (VkDeviceSize* pOffsets = offsets)
         {
             this.vkCmdBindVertexBuffers.Invoke(commandBuffer, firstBinding, (uint)buffers.Length, pBuffers, pOffsets);
+        }
+    }
+
+    /// <summary>
+    /// <para><see cref="CmdBlitImage"/> must not be used for multisampled source or destination images. Use <see cref="CmdResolveImage"/> for this purpose.</para>
+    /// <para>As the sizes of the source and destination extents can differ in any dimension, texels in the source extent are scaled and filtered to the destination extent. Scaling occurs via the following operations:</para>
+    /// <list type="bullet">
+    /// <item>
+    /// <para>For each destination texel, the integer coordinate of that texel is converted to an unnormalized texture coordinate, using the effective inverse of the equations described in unnormalized to integer conversion:</para>
+    /// <para>ubase = i + ½</para>
+    /// <para>vbase = j + ½</para>
+    /// <para>wbase = k + ½</para>
+    /// </item>
+    /// <item>
+    /// <para>These base coordinates are then offset by the first destination offset:</para>
+    /// <para>uoffset = ubase - xdst0</para>
+    /// <para>voffset = vbase - ydst0</para>
+    /// <para>woffset = wbase - zdst0</para>
+    /// <para>aoffset = a - baseArrayCountdst</para>
+    /// </item>
+    /// <item>
+    /// <para>The scale is determined from the source and destination regions, and applied to the offset coordinates:</para>
+    /// <para>scaleu = (xsrc1 - xsrc0) / (xdst1 - xdst0)</para>
+    /// <para>scalev = (ysrc1 - ysrc0) / (ydst1 - ydst0)</para>
+    /// <para>scalew = (zsrc1 - zsrc0) / (zdst1 - zdst0)</para>
+    /// <para>uscaled = uoffset × scaleu</para>
+    /// <para>vscaled = voffset × scalev</para>
+    /// <para>wscaled = woffset × scalew</para>
+    /// </item>
+    /// <item>
+    /// <para>Finally the source offset is added to the scaled coordinates, to determine the final unnormalized coordinates used to sample from srcImage:</para>
+    /// <para>u = uscaled + xsrc0</para>
+    /// <para>v = vscaled + ysrc0</para>
+    /// <para>w = wscaled + zsrc0</para>
+    /// <para>q = mipLevel</para>
+    /// <para>a = aoffset + baseArrayCountsrc</para>
+    /// </item>
+    /// </list>
+    /// <para>These coordinates are used to sample from the source image, as described in Image Operations chapter, with the filter mode equal to that of filter, a mipmap mode of <see cref="VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_NEAREST"/> and an address mode of <see cref="VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE"/>. Implementations must clamp at the edge of the source image, and may additionally clamp to the edge of the source region.</para>
+    /// <remarks>Note: Due to allowable rounding errors in the generation of the source texture coordinates, it is not always possible to guarantee exactly which source texels will be sampled for a given blit. As rounding errors are implementation-dependent, the exact results of a blitting operation are also implementation-dependent.</remarks>
+    /// <para>Blits are done layer by layer starting with the baseArrayLayer member of srcSubresource for the source and dstSubresource for the destination. layerCount layers are blitted to the destination image.</para>
+    /// <para>When blitting 3D textures, slices in the destination region bounded by dstOffsets[0].z and dstOffsets[1].z are sampled from slices in the source region bounded by srcOffsets[0].z and srcOffsets[1].z. If the filter parameter is <see cref="VkFilter.VK_FILTER_LINEAR"/> then the value sampled from the source image is taken by doing linear filtering using the interpolated z coordinate represented by w in the previous equations. If the filter parameter is <see cref="VK_FILTER_NEAREST"/> then the value sampled from the source image is taken from the single nearest slice, with an implementation-dependent arithmetic rounding mode.</para>
+    /// <para>The following filtering and conversion rules apply:</para>
+    /// <list type="bullet">
+    /// <item>Integer formats can only be converted to other integer formats with the same signedness.</item>
+    /// <item>No format conversion is supported between depth/stencil images. The formats must match.</item>
+    /// <item>Format conversions on unorm, snorm, scaled and packed float formats of the copied aspect of the image are performed by first converting the pixels to float values.</item>
+    /// <item>For sRGB source formats, nonlinear RGB values are converted to linear representation prior to filtering.</item>
+    /// <item>After filtering, the float values are first clamped and then cast to the destination image format. In case of sRGB destination format, linear RGB values are converted to nonlinear representation before writing the pixel to the image.</item>
+    /// </list>
+    /// <para>Signed and unsigned integers are converted by first clamping to the representable range of the destination format, then casting the value.</para>
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer into which the command will be recorded.</param>
+    /// <param name="srcImage">The source image.</param>
+    /// <param name="srcImageLayout">The layout of the source image subresources for the blit.</param>
+    /// <param name="dstImage">The destination image.</param>
+    /// <param name="dstImageLayout">The layout of the destination image subresources for the blit.</param>
+    /// <param name="regionCount">The number of regions to blit.</param>
+    /// <param name="pRegions">A pointer to an array of <see cref="VkImageBlit"/> structures specifying the regions to blit.</param>
+    /// <param name="filter">A <see cref="VkFilter"/> specifying the filter to apply if the blits require scaling.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdBlitImage(VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint regionCount, VkImageBlit* pRegions, VkFilter filter) =>
+        this.vkCmdBlitImage.Invoke(commandBuffer, srcImage, srcImageLayout, dstImage, dstImageLayout, regionCount, pRegions, filter);
+
+    public void CmdBlitImage(VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, VkImageBlit[] regions, VkFilter filter)
+    {
+        fixed (VkImageBlit* pRegions = regions)
+        {
+            this.vkCmdBlitImage.Invoke(commandBuffer, srcImage, srcImageLayout, dstImage, dstImageLayout, (uint)regions.Length, pRegions, filter);
         }
     }
 

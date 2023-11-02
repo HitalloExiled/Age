@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Age.Vulkan.Native.Types;
 
 /// <summary>
@@ -61,4 +63,36 @@ public unsafe struct VkPhysicalDeviceMemoryProperties
     /// An array of <see cref="Vk.VK_MAX_MEMORY_HEAPS"/> <see cref="VkMemoryHeap"/> structures describing the memory heaps from which memory can be allocated.
     /// </summary>
     public fixed byte memoryHeaps[16 * (int)Vk.VK_MAX_MEMORY_HEAPS];
+
+    public VkMemoryType GetMemoryTypes(int index)
+    {
+        fixed (byte* pMemoryTypes = this.memoryTypes)
+        {
+            return Unsafe.Read<VkMemoryType>(pMemoryTypes + sizeof(VkMemoryType) * index);
+        }
+    }
+
+    public VkMemoryHeap GetMemoryHeaps(int index)
+    {
+        fixed (byte* pMemoryHeaps = this.memoryHeaps)
+        {
+            return Unsafe.Read<VkMemoryHeap>(pMemoryHeaps + sizeof(VkMemoryHeap) * index);
+        }
+    }
+
+    public void SetMemoryTypes(int index, in VkMemoryType value)
+    {
+        fixed (byte* pMemoryTypes = this.memoryTypes)
+        {
+            Unsafe.Write(pMemoryTypes + sizeof(VkMemoryType) * index, value);
+        }
+    }
+
+    public void SetMemoryHeaps(int index, in VkMemoryHeap value)
+    {
+        fixed (byte* pMemoryHeaps = this.memoryHeaps)
+        {
+            Unsafe.Write(pMemoryHeaps + sizeof(VkMemoryHeap) * index, value);
+        }
+    }
 }
