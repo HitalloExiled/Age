@@ -13,7 +13,7 @@
             "request": "launch",
             "preLaunchTask": "build:all",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/source/Age/bin/Debug/net8.0/Age.exe",
+            "program": "${workspaceFolder}/source/Age.Playground/bin/Debug/net8.0/Age.Playground.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console

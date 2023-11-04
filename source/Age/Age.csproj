@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <OutputType>Exe</OutputType>
-    <PublishAot>true</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,12 +8,6 @@
     <ProjectReference Include="..\Age.Platform\Age.Platform.csproj" />
     <ProjectReference Include="..\Age.Platform.Windows\Age.Platform.Windows.csproj" />
     <ProjectReference Include="..\Age.Vulkan\Age.Vulkan.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="./Models/*" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="./Shaders/*.spv" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="./Textures/*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

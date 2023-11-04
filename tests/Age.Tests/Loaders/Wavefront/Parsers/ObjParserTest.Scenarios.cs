@@ -1,6 +1,6 @@
-using Age.Loaders.Wavefront;
-using Age.Loaders.Wavefront.Exceptions;
-using Age.Loaders.Wavefront.Parsers;
+using Age.Resources.Loaders.Wavefront;
+using Age.Resources.Loaders.Wavefront.Exceptions;
+using Age.Resources.Loaders.Wavefront.Parsers;
 
 namespace Age.Tests.Loaders.Wavefront.Parsers;
 
