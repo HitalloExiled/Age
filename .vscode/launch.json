@@ -11,7 +11,7 @@
             "name": ".NET Core Launch (console)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build:all",
+            "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/source/Age.Playground/bin/Debug/net8.0/Age.Playground.exe",
             "args": [],

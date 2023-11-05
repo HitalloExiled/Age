@@ -33,3 +33,5 @@ packages/
 .coverage
 *.spv
 !source/Age/Models/*.obj
+*.bkp
+*.dtmp

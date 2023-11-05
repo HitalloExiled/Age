@@ -1,5 +1,7 @@
-﻿using Age.Playground;
+﻿using Age;
+using Age.Platforms.Windows;
 
-using var engine = new SimpleEngine();
+using var platform = new WindowsPlatform();
+using var engine   = new Engine(platform);
 
 engine.Run();

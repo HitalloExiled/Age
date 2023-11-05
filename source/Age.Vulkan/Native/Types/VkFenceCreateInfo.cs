@@ -25,5 +25,5 @@ public unsafe struct VkFenceCreateInfo
     public VkFenceCreateFlags flags;
 
     public VkFenceCreateInfo() =>
-        sType = VkStructureType.VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        this.sType = VkStructureType.VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 }

@@ -13,13 +13,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{2A27D048
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Age.Tests", "tests\Age.Tests\Age.Tests.csproj", "{626CF554-8951-499E-81B1-A80C0B2CDCBD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Age.Platform.Windows", "source\Age.Platform.Windows\Age.Platform.Windows.csproj", "{552F69D4-47E4-475A-9BAE-7826F0A38AD5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Age.Platforms.Windows", "source\Age.Platforms.Windows\Age.Platforms.Windows.csproj", "{552F69D4-47E4-475A-9BAE-7826F0A38AD5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Age.Vulkan", "source\Age.Vulkan\Age.Vulkan.csproj", "{C1ABD36B-A364-4E10-8633-C8A925872A50}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Age.Core", "source\Age.Core\Age.Core.csproj", "{29F54852-B8A1-436D-AA39-4142B53407A0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Age.Platform", "source\Age.Platform\Age.Platform.csproj", "{08E516C5-4882-4120-8717-51C6FB40F79B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Age.Platforms", "source\Age.Platforms\Age.Platforms.csproj", "{08E516C5-4882-4120-8717-51C6FB40F79B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Age.Playground", "source\Age.Playground\Age.Playground.csproj", "{C9EE7027-6173-4268-8B4D-7F0B21D772FC}"
 EndProject

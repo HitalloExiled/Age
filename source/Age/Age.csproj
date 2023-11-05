@@ -5,12 +5,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
-    <ProjectReference Include="..\Age.Platform\Age.Platform.csproj" />
-    <ProjectReference Include="..\Age.Platform.Windows\Age.Platform.Windows.csproj" />
+    <ProjectReference Include="..\Age.Platforms\Age.Platforms.csproj" />
+    <ProjectReference Include="..\Age.Platforms.Windows\Age.Platforms.Windows.csproj" />
     <ProjectReference Include="..\Age.Vulkan\Age.Vulkan.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="SkiaSharp" Version="2.88.6" />
   </ItemGroup>
 </Project>

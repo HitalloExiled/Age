@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Age.Numerics\Age.Numerics.csproj" />
-    <ProjectReference Include="..\Age.Platform\Age.Platform.csproj" />
+    <ProjectReference Include="..\Age.Platforms\Age.Platforms.csproj" />
   </ItemGroup>
 
 </Project>

@@ -34,6 +34,10 @@ public unsafe static class UnmanagedUtils
         Copy(source, (T*)destination, length);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T? NullIfDefault<T>(in T target) where T : unmanaged =>
+        target.Equals(default(T)) ? null : target;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static T* NullIfDefault<T>(in T target, T* pointer) where T : unmanaged =>
         target.Equals(default(T)) ? null : pointer;
 

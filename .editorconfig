@@ -236,6 +236,7 @@ csharp_style_var_when_type_is_apparent                     = true:suggestion
 csharp_using_directive_placement                           = outside_namespace:suggestion
 dotnet_style_collection_initializer                        = true:suggestion
 dotnet_style_explicit_tuple_names                          = true:suggestion
+dotnet_style_namespace_match_folder                        = true:suggestion
 dotnet_style_object_initializer                            = true:suggestion
 dotnet_style_parentheses_in_arithmetic_binary_operators    = never_if_unnecessary:suggestion
 dotnet_style_parentheses_in_other_binary_operators         = never_if_unnecessary:suggestion

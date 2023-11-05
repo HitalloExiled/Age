@@ -4,4 +4,19 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
+    <ProjectReference Include="..\Age.Numerics\Age.Numerics.csproj" />
+    <ProjectReference Include="..\Age.Vulkan\Age.Vulkan.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="2.88.7" />
+    <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="./Shaders/*.spv" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

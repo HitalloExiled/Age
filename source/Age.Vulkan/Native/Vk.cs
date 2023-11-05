@@ -54,6 +54,8 @@ public unsafe class Vk(IVulkanLoader loader)
     /// </summary>
     public const uint VK_UUID_SIZE = 16;
 
+    public const string VK_LAYER_KHRONOS_VALIDATION = "VK_LAYER_KHRONOS_validation";
+
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkAllocateCommandBuffers(VkDevice device, VkCommandBufferAllocateInfo* pAllocateInfo, VkCommandBuffer* pCommandBuffers);
 
@@ -89,6 +91,9 @@ public unsafe class Vk(IVulkanLoader loader)
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdBlitImage(VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint regionCount, VkImageBlit* pRegions, VkFilter filter);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void VkCmdClearColorImage(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout imageLayout, VkClearColorValue* pColor, uint rangeCount, VkImageSubresourceRange* pRanges);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkCmdCopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, uint regionCount, VkBufferCopy* pRegions);
@@ -232,6 +237,9 @@ public unsafe class Vk(IVulkanLoader loader)
     private delegate void VkFreeCommandBuffers(VkDevice device, VkCommandPool commandPool, uint commandBufferCount, VkCommandBuffer* pCommandBuffers);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate VkResult VkFreeDescriptorSets(VkDevice device, VkDescriptorPool descriptorPool, uint descriptorSetCount, VkDescriptorSet* pDescriptorSets);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkFreeMemory(VkDevice device, VkDeviceMemory memory, VkAllocationCallbacks* pAllocator);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -303,6 +311,7 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkCmdBindPipeline                        vkCmdBindPipeline                        = loader.Load<VkCmdBindPipeline>(nameof(vkCmdBindPipeline));
     private readonly VkCmdBindVertexBuffers                   vkCmdBindVertexBuffers                   = loader.Load<VkCmdBindVertexBuffers>(nameof(vkCmdBindVertexBuffers));
     private readonly VkCmdBlitImage                           vkCmdBlitImage                           = loader.Load<VkCmdBlitImage>(nameof(vkCmdBlitImage));
+    private readonly VkCmdClearColorImage                     vkCmdClearColorImage                     = loader.Load<VkCmdClearColorImage>(nameof(vkCmdClearColorImage));
     private readonly VkCmdCopyBuffer                          vkCmdCopyBuffer                          = loader.Load<VkCmdCopyBuffer>(nameof(vkCmdCopyBuffer));
     private readonly VkCmdCopyBufferToImage                   vkCmdCopyBufferToImage                   = loader.Load<VkCmdCopyBufferToImage>(nameof(vkCmdCopyBufferToImage));
     private readonly VkCmdDraw                                vkCmdDraw                                = loader.Load<VkCmdDraw>(nameof(vkCmdDraw));
@@ -350,14 +359,15 @@ public unsafe class Vk(IVulkanLoader loader)
     private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties       = loader.Load<VkEnumerateInstanceLayerProperties>(nameof(vkEnumerateInstanceLayerProperties));
     private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices               = loader.Load<VkEnumeratePhysicalDevices>(nameof(vkEnumeratePhysicalDevices));
     private readonly VkFreeCommandBuffers                     vkFreeCommandBuffers                     = loader.Load<VkFreeCommandBuffers>(nameof(vkFreeCommandBuffers));
+    private readonly VkFreeDescriptorSets                     vkFreeDescriptorSets                     = loader.Load<VkFreeDescriptorSets>(nameof(vkFreeDescriptorSets));
     private readonly VkFreeMemory                             vkFreeMemory                             = loader.Load<VkFreeMemory>(nameof(vkFreeMemory));
     private readonly VkGetBufferMemoryRequirements            vkGetBufferMemoryRequirements            = loader.Load<VkGetBufferMemoryRequirements>(nameof(vkGetBufferMemoryRequirements));
     private readonly VkGetDeviceProcAddr                      vkGetDeviceProcAddr                      = loader.Load<VkGetDeviceProcAddr>(nameof(vkGetDeviceProcAddr));
     private readonly VkGetDeviceQueue                         vkGetDeviceQueue                         = loader.Load<VkGetDeviceQueue>(nameof(vkGetDeviceQueue));
-    private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr                    = loader.Load<VkGetInstanceProcAddr>(nameof(vkGetInstanceProcAddr));
     private readonly VkGetImageMemoryRequirements             vkGetImageMemoryRequirements             = loader.Load<VkGetImageMemoryRequirements>(nameof(vkGetImageMemoryRequirements));
-    private readonly VkGetPhysicalDeviceFormatProperties      vkGetPhysicalDeviceFormatProperties      = loader.Load<VkGetPhysicalDeviceFormatProperties>(nameof(vkGetPhysicalDeviceFormatProperties));
+    private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr                    = loader.Load<VkGetInstanceProcAddr>(nameof(vkGetInstanceProcAddr));
     private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures              = loader.Load<VkGetPhysicalDeviceFeatures>(nameof(vkGetPhysicalDeviceFeatures));
+    private readonly VkGetPhysicalDeviceFormatProperties      vkGetPhysicalDeviceFormatProperties      = loader.Load<VkGetPhysicalDeviceFormatProperties>(nameof(vkGetPhysicalDeviceFormatProperties));
     private readonly VkGetPhysicalDeviceMemoryProperties      vkGetPhysicalDeviceMemoryProperties      = loader.Load<VkGetPhysicalDeviceMemoryProperties>(nameof(vkGetPhysicalDeviceMemoryProperties));
     private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties            = loader.Load<VkGetPhysicalDeviceProperties>(nameof(vkGetPhysicalDeviceProperties));
     private readonly VkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = loader.Load<VkGetPhysicalDeviceQueueFamilyProperties>(nameof(vkGetPhysicalDeviceQueueFamilyProperties));
@@ -507,7 +517,14 @@ public unsafe class Vk(IVulkanLoader loader)
     public VkResult BeginCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferBeginInfo* pBeginInfo) =>
         this.vkBeginCommandBuffer.Invoke(commandBuffer, pBeginInfo);
 
-    public VkResult BeginCommandBuffer(VkCommandBuffer commandBuffer, ref VkCommandBufferBeginInfo beginInfo)
+    public VkResult BeginCommandBuffer(VkCommandBuffer commandBuffer)
+    {
+        var commandBufferBeginInfo = new VkCommandBufferBeginInfo();
+
+        return this.vkBeginCommandBuffer.Invoke(commandBuffer, &commandBufferBeginInfo);
+    }
+
+    public VkResult BeginCommandBuffer(VkCommandBuffer commandBuffer, in VkCommandBufferBeginInfo beginInfo)
     {
         fixed (VkCommandBufferBeginInfo* pBeginInfo = &beginInfo)
         {
@@ -737,6 +754,37 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Each specified range in pRanges is cleared to the value specified by pColor.
+    /// </summary>
+    /// <param name="commandBuffer">The command buffer into which the command will be recorded.</param>
+    /// <param name="image">The image to be cleared.</param>
+    /// <param name="imageLayout">Specifies the current layout of the image subresource ranges to be cleared, and must be VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR, VK_IMAGE_LAYOUT_GENERAL or VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL.</param>
+    /// <param name="pColor">A pointer to a VkClearColorValue structure containing the values that the image subresource ranges will be cleared to (see https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#clears-values below).</param>
+    /// <param name="rangeCount">The number of image subresource range structures in pRanges.</param>
+    /// <param name="pRanges">A pointer to an array of <see cref="VkImageSubresourceRange"/> structures describing a range of mipmap levels, array layers, and aspects to be cleared, as described in <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#resources-image-views">Image Views</see>.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public void CmdClearColorImage(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout imageLayout, VkClearColorValue* pColor, uint rangeCount, VkImageSubresourceRange* pRanges) =>
+        this.vkCmdClearColorImage.Invoke(commandBuffer, image, imageLayout, pColor, rangeCount, pRanges);
+
+    public void CmdClearColorImage(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout imageLayout, in VkClearColorValue color, in VkImageSubresourceRange range)
+    {
+        fixed (VkClearColorValue* pColor = &color)
+        fixed (VkImageSubresourceRange* pRanges = &range)
+        {
+            this.vkCmdClearColorImage.Invoke(commandBuffer, image, imageLayout, pColor, 1, pRanges);
+        }
+    }
+
+    public void CmdClearColorImage(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout imageLayout, in VkClearColorValue color, VkImageSubresourceRange[] ranges)
+    {
+        fixed (VkClearColorValue* pColor = &color)
+        fixed (VkImageSubresourceRange* pRanges = ranges)
+        {
+            this.vkCmdClearColorImage.Invoke(commandBuffer, image, imageLayout, pColor, (uint)ranges.Length, pRanges);
+        }
+    }
+
+    /// <summary>
     /// <para>Copy data from a buffer into an image.</para>
     /// <para>Each source region specified by pRegions is copied from the source buffer to the destination region of the destination image according to the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#copies-buffers-images-addressing">addressing calculations</see> for each resource. If any of the specified regions in srcBuffer overlaps in memory with any of the specified regions in dstImage, values read from those overlapping regions are undefined. If any region accesses a depth aspect in dstImage and the <see cref="VkExtDepthRangeUnrestricted"/> extension is not enabled, values copied from srcBuffer outside of the range [0,1] will be be written as undefined values to the destination image.</para>
     /// <para>Copy regions for the image must be aligned to a multiple of the texel block extent in each dimension, except at the edges of the image, where region extents must match the edge of the image.</para>
@@ -839,11 +887,19 @@ public unsafe class Vk(IVulkanLoader loader)
     public void CmdSetScissor(VkCommandBuffer commandBuffer, uint firstScissor, uint scissorCount, VkRect2D* pScissors) =>
         this.vkCmdSetScissor.Invoke(commandBuffer, firstScissor, scissorCount, pScissors);
 
-    public void CmdSetScissor(VkCommandBuffer commandBuffer, uint firstScissor, uint scissorCount, in VkRect2D scissors)
+    public void CmdSetScissor(VkCommandBuffer commandBuffer, uint firstScissor, in VkRect2D scissors)
     {
         fixed (VkRect2D* pScissors = &scissors)
         {
-            this.vkCmdSetScissor.Invoke(commandBuffer, firstScissor, scissorCount, pScissors);
+            this.vkCmdSetScissor.Invoke(commandBuffer, firstScissor, 1, pScissors);
+        }
+    }
+
+    public void CmdSetScissor(VkCommandBuffer commandBuffer, uint firstScissor, VkRect2D[] scissors)
+    {
+        fixed (VkRect2D* pScissors = scissors)
+        {
+            this.vkCmdSetScissor.Invoke(commandBuffer, firstScissor, (uint)scissors.Length, pScissors);
         }
     }
 
@@ -860,11 +916,19 @@ public unsafe class Vk(IVulkanLoader loader)
     public void CmdSetViewport(VkCommandBuffer commandBuffer, uint firstViewport, uint viewportCount, VkViewport* pViewports) =>
         this.vkCmdSetViewport.Invoke(commandBuffer, firstViewport, viewportCount, pViewports);
 
-    public void CmdSetViewport(VkCommandBuffer commandBuffer, uint firstViewport, uint viewportCount, in VkViewport viewports)
+    public void CmdSetViewport(VkCommandBuffer commandBuffer, uint firstViewport, in VkViewport viewports)
     {
         fixed (VkViewport* pViewports = &viewports)
         {
-            this.vkCmdSetViewport.Invoke(commandBuffer, firstViewport, viewportCount, pViewports);
+            this.vkCmdSetViewport.Invoke(commandBuffer, firstViewport, 1, pViewports);
+        }
+    }
+
+    public void CmdSetViewport(VkCommandBuffer commandBuffer, uint firstViewport, VkViewport[] viewports)
+    {
+        fixed (VkViewport* pViewports = viewports)
+        {
+            this.vkCmdSetViewport.Invoke(commandBuffer, firstViewport, (uint)viewports.Length, pViewports);
         }
     }
 
@@ -1032,13 +1096,23 @@ public unsafe class Vk(IVulkanLoader loader)
     public VkResult CreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache, uint createInfoCount, VkGraphicsPipelineCreateInfo* pCreateInfos, VkAllocationCallbacks* pAllocator, VkPipeline* pPipelines) =>
         this.vkCreateGraphicsPipelines.Invoke(device, pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
 
-    public VkResult CreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache, uint createInfoCount, in VkGraphicsPipelineCreateInfo createInfos, in VkAllocationCallbacks allocator, out VkPipeline pipelines)
+    public VkResult CreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache, in VkGraphicsPipelineCreateInfo createInfo, in VkAllocationCallbacks allocator, out VkPipeline pipelines)
     {
-        fixed (VkGraphicsPipelineCreateInfo* pCreateInfos = &createInfos)
+        fixed (VkGraphicsPipelineCreateInfo* pCreateInfos = &createInfo)
         fixed (VkAllocationCallbacks*        pAllocator   = &allocator)
         fixed (VkPipeline*                   pPipelines   = &pipelines)
         {
-            return this.vkCreateGraphicsPipelines.Invoke(device, pipelineCache, createInfoCount, pCreateInfos, NullIfDefault(allocator, pAllocator), pPipelines);
+            return this.vkCreateGraphicsPipelines.Invoke(device, pipelineCache, 1, pCreateInfos, NullIfDefault(allocator, pAllocator), pPipelines);
+        }
+    }
+
+    public VkResult CreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache, VkGraphicsPipelineCreateInfo[] createInfos, in VkAllocationCallbacks allocator, out VkPipeline[] pipelines)
+    {
+        fixed (VkGraphicsPipelineCreateInfo* pCreateInfos = createInfos)
+        fixed (VkAllocationCallbacks*        pAllocator   = &allocator)
+        fixed (VkPipeline*                   pPipelines   = pipelines)
+        {
+            return this.vkCreateGraphicsPipelines.Invoke(device, pipelineCache, (uint)createInfos.Length, pCreateInfos, NullIfDefault(allocator, pAllocator), pPipelines);
         }
     }
 
@@ -1696,6 +1770,33 @@ public unsafe class Vk(IVulkanLoader loader)
     }
 
     /// <summary>
+    /// Free one or more descriptor sets
+    /// </summary>
+    /// <param name="device">The logical device that owns the descriptor pool.</param>
+    /// <param name="descriptorPool">The descriptor pool from which the descriptor sets were allocated.</param>
+    /// <param name="descriptorSetCount">The number of elements in the pDescriptorSets array.</param>
+    /// <param name="pDescriptorSets">A pointer to an array of handles to <see cref="VkDescriptorSet"/> objects.</param>
+    /// <remarks>Provided by VK_VERSION_1_0</remarks>
+    public VkResult FreeDescriptorSets(VkDevice device, VkDescriptorPool descriptorPool, uint descriptorSetCount, VkDescriptorSet* pDescriptorSets) =>
+        this.vkFreeDescriptorSets.Invoke(device, descriptorPool, descriptorSetCount, pDescriptorSets);
+
+    public VkResult FreeDescriptorSets(VkDevice device, VkDescriptorPool descriptorPool, in VkDescriptorSet descriptorSet)
+    {
+        fixed (VkDescriptorSet* pDescriptorSets = &descriptorSet)
+        {
+            return this.vkFreeDescriptorSets.Invoke(device, descriptorPool, 1, pDescriptorSets);
+        }
+    }
+
+    public VkResult FreeDescriptorSets(VkDevice device, VkDescriptorPool descriptorPool, VkDescriptorSet[] descriptorSets)
+    {
+        fixed (VkDescriptorSet* pDescriptorSets = descriptorSets)
+        {
+            return this.vkFreeDescriptorSets.Invoke(device, descriptorPool, (uint)descriptorSets.Length, pDescriptorSets);
+        }
+    }
+
+    /// <summary>
     /// <para>Free device memory.</para>
     /// <para>Before freeing a memory object, an application must ensure the memory object is no longer in use by the device — for example by command buffers in the pending state. Memory can be freed whilst still bound to resources, but those resources must not be used afterwards. Freeing a memory object releases the reference it held, if any, to its payload. If there are still any bound images or buffers, the memory object’s payload may not be immediately released by the implementation, but must be released by the time all bound images and buffers have been destroyed. Once all references to a payload are released, it is returned to the heap from which it was allocated.</para>
     /// <para>How memory objects are bound to Images and Buffers is described in detail in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#resources-association">Resource Memory Association</see> section.</para>
@@ -1757,7 +1858,7 @@ public unsafe class Vk(IVulkanLoader loader)
     public T GetInstanceExtension<T>(VkInstance instance, string? layer = default) where T : class, IVkInstanceExtension =>
         this.TryGetInstanceExtension<T>(instance, layer, out var extension)
             ? extension
-            : throw new Exception($"Cant find extension {T.Name}");
+            : throw new Exception($"Cannot found extension {T.Name}");
 
     /// <summary>
     /// Return a function pointer for a command.
@@ -1964,7 +2065,7 @@ public unsafe class Vk(IVulkanLoader loader)
 
     public VkResult MapMemory<T>(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkMemoryMapFlags flags, T[] data) where T : unmanaged
     {
-        using var pointer = new Pointer(sizeof(T*) * data.Length);
+        using var pointer = new PointerArray(sizeof(T*) * data.Length);
 
         var ppData = (T**)(nint)pointer;
 

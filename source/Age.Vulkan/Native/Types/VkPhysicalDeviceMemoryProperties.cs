@@ -64,7 +64,7 @@ public unsafe struct VkPhysicalDeviceMemoryProperties
     /// </summary>
     public fixed byte memoryHeaps[16 * (int)Vk.VK_MAX_MEMORY_HEAPS];
 
-    public VkMemoryType GetMemoryTypes(int index)
+    public VkMemoryType GetMemoryTypes(uint index)
     {
         fixed (byte* pMemoryTypes = this.memoryTypes)
         {
@@ -72,7 +72,7 @@ public unsafe struct VkPhysicalDeviceMemoryProperties
         }
     }
 
-    public VkMemoryHeap GetMemoryHeaps(int index)
+    public VkMemoryHeap GetMemoryHeaps(uint index)
     {
         fixed (byte* pMemoryHeaps = this.memoryHeaps)
         {
@@ -80,7 +80,7 @@ public unsafe struct VkPhysicalDeviceMemoryProperties
         }
     }
 
-    public void SetMemoryTypes(int index, in VkMemoryType value)
+    public void SetMemoryTypes(uint index, in VkMemoryType value)
     {
         fixed (byte* pMemoryTypes = this.memoryTypes)
         {
@@ -88,7 +88,7 @@ public unsafe struct VkPhysicalDeviceMemoryProperties
         }
     }
 
-    public void SetMemoryHeaps(int index, in VkMemoryHeap value)
+    public void SetMemoryHeaps(uint index, in VkMemoryHeap value)
     {
         fixed (byte* pMemoryHeaps = this.memoryHeaps)
         {

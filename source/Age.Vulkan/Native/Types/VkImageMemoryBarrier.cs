@@ -25,12 +25,12 @@ public unsafe struct VkImageMemoryBarrier
     public void* pNext;
 
     /// <summary>
-    /// A bitmask of VkAccessFlagBits specifying a source access mask.
+    /// A bitmask of <see cref="VkAccessFlagBits"/> specifying a source access mask.
     /// </summary>
     public VkAccessFlags srcAccessMask;
 
     /// <summary>
-    /// A bitmask of VkAccessFlagBits specifying a destination access mask.
+    /// A bitmask of <see cref="VkAccessFlagBits"/> specifying a destination access mask.
     /// </summary>
     public VkAccessFlags dstAccessMask;
 

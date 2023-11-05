@@ -2,7 +2,7 @@ using System.Text;
 using Age.Resources.Loaders.Wavefront;
 using Age.Resources.Loaders.Wavefront.Exceptions;
 using Age.Resources.Loaders.Wavefront.Parsers;
-using Age.Platform.Abstractions.Interfaces;
+using Age.Platforms.Abstractions.Interfaces;
 
 namespace Age.Tests.Loaders.Wavefront.Parsers;
 

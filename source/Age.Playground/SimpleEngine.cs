@@ -2,9 +2,10 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Age.Core.Unsafe;
 using Age.Numerics;
-using Age.Platform.Abstractions;
-using Age.Platform.Windows.Display;
-using Age.Platform.Windows.Vulkan;
+using Age.Platforms.Abstractions;
+using Age.Platforms.Windows;
+using Age.Platforms.Windows.Display;
+using Age.Platforms.Windows.Vulkan;
 using Age.Vulkan.Native;
 using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Enums.KHR;
@@ -28,7 +29,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private static readonly DateTime startTime = DateTime.UtcNow;
 
-    private readonly HashSet<string>        deviceExtensions         = [VkKhrSwapchain.Name];
+    private readonly HashSet<string>        deviceExtensions         = [VkKhrSwapchainExtension.Name];
     private readonly bool                   enableValidationLayers   = Debugger.IsAttached;
     private readonly VkSemaphore[]          imageAvailableSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
     private readonly List<uint>             indices                  = [];
@@ -41,53 +42,53 @@ public unsafe partial class SimpleEngine : IDisposable
     private readonly HashSet<string>        validationLayers         = ["VK_LAYER_KHRONOS_validation"];
     private readonly List<Vertex>           vertices                 = [];
     private readonly Vk                     vk;
-    private readonly WindowManager          windowManager = new();
+    private readonly WindowsPlatform        platform = new();
     private readonly WindowsVulkanLoader    windowsVulkanLoader;
 
-    private VkImage                  colorImage;
-    private VkDeviceMemory           colorImageMemory;
-    private VkImageView              colorImageView;
-    private VkCommandBuffer[]        commandBuffers = [];
-    private VkCommandPool            commandPool;
-    private uint                     currentFrame;
-    private VkDebugUtilsMessengerEXT debugMessenger;
-    private VkImage                  depthImage;
-    private VkDeviceMemory           depthImageMemory;
-    private VkImageView              depthImageView;
-    private VkDescriptorPool         descriptorPool;
-    private VkDescriptorSetLayout    descriptorSetLayout;
-    private VkDescriptorSet[]        descriptorSets = [];
-    private VkDevice                 device;
-    private bool                     disposed;
-    private bool                     framebufferResized;
-    private VkPipeline               graphicsPipeline;
-    private VkQueue                  graphicsQueue;
-    private VkBuffer                 indexBuffer;
-    private VkDeviceMemory           indexBufferMemory;
-    private VkInstance               instance;
-    private uint                     mipLevels;
-    private VkSampleCountFlagBits    msaaSamples = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT;
-    private VkPhysicalDevice         physicalDevice;
-    private VkPipelineLayout         pipelineLayout;
-    private VkQueue                  presentQueue;
-    private VkRenderPass             renderPass;
-    private VkSurfaceKHR             surface;
-    private VkSwapchainKHR           swapChain;
-    private VkExtent2D               swapChainExtent;
-    private VkFramebuffer[]          swapChainFramebuffers = [];
-    private VkFormat                 swapChainImageFormat;
-    private VkImage[]                swapChainImages     = [];
-    private VkImageView[]            swapChainImageViews = [];
-    private VkImage                  textureImage;
-    private VkDeviceMemory           textureImageMemory;
-    private VkImageView              textureImageView;
-    private VkSampler                textureSampler;
-    private VkBuffer                 vertexBuffer;
-    private VkDeviceMemory           vertexBufferMemory;
-    private VkExtDebugUtils?         vkExtDebugUtils;
-    private VkKhrSurface             vkKhrSurface   = null!;
-    private VkKhrSwapchain           vkKhrSwapchain = null!;
-    private Window                   window         = null!;
+    private VkImage                   colorImage;
+    private VkDeviceMemory            colorImageMemory;
+    private VkImageView               colorImageView;
+    private VkCommandBuffer[]         commandBuffers = [];
+    private VkCommandPool             commandPool;
+    private uint                      currentFrame;
+    private VkDebugUtilsMessengerEXT  debugMessenger;
+    private VkImage                   depthImage;
+    private VkDeviceMemory            depthImageMemory;
+    private VkImageView               depthImageView;
+    private VkDescriptorPool          descriptorPool;
+    private VkDescriptorSetLayout     descriptorSetLayout;
+    private VkDescriptorSet[]         descriptorSets = [];
+    private VkDevice                  device;
+    private bool                      disposed;
+    private bool                      framebufferResized;
+    private VkPipeline                graphicsPipeline;
+    private VkQueue                   graphicsQueue;
+    private VkBuffer                  indexBuffer;
+    private VkDeviceMemory            indexBufferMemory;
+    private VkInstance                instance;
+    private uint                      mipLevels;
+    private VkSampleCountFlagBits     msaaSamples = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT;
+    private VkPhysicalDevice          physicalDevice;
+    private VkPipelineLayout          pipelineLayout;
+    private VkQueue                   presentQueue;
+    private VkRenderPass              renderPass;
+    private VkSurfaceKHR              surface;
+    private VkSwapchainKHR            swapChain;
+    private VkExtent2D                swapChainExtent;
+    private VkFramebuffer[]           swapChainFramebuffers = [];
+    private VkFormat                  swapChainImageFormat;
+    private VkImage[]                 swapChainImages     = [];
+    private VkImageView[]             swapChainImageViews = [];
+    private VkImage                   textureImage;
+    private VkDeviceMemory            textureImageMemory;
+    private VkImageView               textureImageView;
+    private VkSampler                 textureSampler;
+    private VkBuffer                  vertexBuffer;
+    private VkDeviceMemory            vertexBufferMemory;
+    private VkExtDebugUtilsExtension? vkExtDebugUtils;
+    private VkKhrSurfaceExtension     vkKhrSurface   = null!;
+    private VkKhrSwapchainExtension   vkKhrSwapchain = null!;
+    private Window                    window         = null!;
 
     public SimpleEngine()
     {
@@ -166,7 +167,7 @@ public unsafe partial class SimpleEngine : IDisposable
             flags = VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
         };
 
-        this.vk.BeginCommandBuffer(commandBuffer, ref beginInfo);
+        this.vk.BeginCommandBuffer(commandBuffer, beginInfo);
 
         return commandBuffer;
     }
@@ -195,8 +196,8 @@ public unsafe partial class SimpleEngine : IDisposable
         {
             var actualExtent = new VkExtent2D
             {
-                width  = (uint)this.window.Width,
-                height = (uint)this.window.Height,
+                width  = this.window.Size.Width,
+                height = this.window.Size.Height,
             };
 
             actualExtent.width  = Math.Clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
@@ -713,8 +714,8 @@ public unsafe partial class SimpleEngine : IDisposable
 
                     var pipelineLayoutInfo = new VkPipelineLayoutCreateInfo
                     {
-                        setLayoutCount         = 1,
-                        pSetLayouts            = pSetLayouts
+                        setLayoutCount = 1,
+                        pSetLayouts    = pSetLayouts
                     };
 
                     if (this.vk.CreatePipelineLayout(this.device, pipelineLayoutInfo, default, out this.pipelineLayout) != VkResult.VK_SUCCESS)
@@ -740,7 +741,7 @@ public unsafe partial class SimpleEngine : IDisposable
                         pDepthStencilState  = &depthStencil,
                     };
 
-                    if (this.vk.CreateGraphicsPipelines(this.device, default, 1, pipelineInfo, default, out this.graphicsPipeline) != VkResult.VK_SUCCESS)
+                    if (this.vk.CreateGraphicsPipelines(this.device, default, pipelineInfo, default, out this.graphicsPipeline) != VkResult.VK_SUCCESS)
                     {
                         throw new Exception("failed to create graphics pipeline!");
                     }
@@ -756,22 +757,21 @@ public unsafe partial class SimpleEngine : IDisposable
     {
         var imageInfo = new VkImageCreateInfo
         {
-            imageType = VkImageType.VK_IMAGE_TYPE_2D,
-            extent    = new()
+            arrayLayers = 1,
+            extent      = new()
             {
                 width  = width,
                 height = height,
                 depth  = 1,
             },
-            mipLevels     = mipLevels,
-            arrayLayers   = 1,
             format        = format,
-            tiling        = tiling,
+            imageType     = VkImageType.VK_IMAGE_TYPE_2D,
             initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-            usage         = usage,
-            sharingMode   = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE,
+            mipLevels     = mipLevels,
             samples       = numSamples,
-            flags         = default,
+            sharingMode   = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE,
+            tiling        = tiling,
+            usage         = usage,
         };
 
         if (this.vk.CreateImage(this.device, imageInfo, default, out image) != VkResult.VK_SUCCESS)
@@ -905,12 +905,12 @@ public unsafe partial class SimpleEngine : IDisposable
             {
                 if (this.enableValidationLayers && !this.vk.TryGetInstanceExtension(instance, out this.vkExtDebugUtils))
                 {
-                    throw new Exception($"Cannot found required extension {VkExtDebugUtils.Name}");
+                    throw new Exception($"Cannot found required extension {VkExtDebugUtilsExtension.Name}");
                 }
 
-                if (!this.vk.TryGetInstanceExtension<VkKhrSurface>(instance, out var vkKhrSurface))
+                if (!this.vk.TryGetInstanceExtension<VkKhrSurfaceExtension>(instance, out var vkKhrSurface))
                 {
-                    throw new Exception($"Cannot found required extension {VkKhrSurface.Name}");
+                    throw new Exception($"Cannot found required extension {VkKhrSurfaceExtension.Name}");
                 }
 
                 this.instance     = instance;
@@ -985,9 +985,9 @@ public unsafe partial class SimpleEngine : IDisposable
                 throw new Exception("failed to create logical device!");
             }
 
-            if (!this.vk.TryGetDeviceExtension<VkKhrSwapchain>(this.physicalDevice, this.device, out var vkKhrSwapchain))
+            if (!this.vk.TryGetDeviceExtension<VkKhrSwapchainExtension>(this.physicalDevice, this.device, out var vkKhrSwapchain))
             {
-                throw new Exception($"Cannot found required extension {VkKhrSwapchain.Name}");
+                throw new Exception($"Cannot found required extension {VkKhrSwapchainExtension.Name}");
             }
 
             this.vkKhrSwapchain = vkKhrSwapchain;
@@ -1114,9 +1114,9 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void CreateSurface()
     {
-        if (!this.vk.TryGetInstanceExtension<VkKhrWin32Surface>(this.instance, null, out var vkKhrWin32Surface))
+        if (!this.vk.TryGetInstanceExtension<VkKhrWin32SurfaceExtension>(this.instance, null, out var vkKhrWin32Surface))
         {
-            throw new Exception($"Cannot found required extension {VkKhrWin32Surface.Name}");
+            throw new Exception($"Cannot found required extension {VkKhrWin32SurfaceExtension.Name}");
         }
 
         var createInfo = new VkWin32SurfaceCreateInfoKHR
@@ -1144,13 +1144,13 @@ public unsafe partial class SimpleEngine : IDisposable
 
         var createInfo = new VkSwapchainCreateInfoKHR
         {
-            surface          = this.surface,
-            minImageCount    = imageCount,
-            imageFormat      = surfaceFormat.format,
+            imageArrayLayers = 1,
             imageColorSpace  = surfaceFormat.colorSpace,
             imageExtent      = extent,
-            imageArrayLayers = 1,
-            imageUsage       = VkImageUsageFlagBits.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+            imageFormat      = surfaceFormat.format,
+            imageUsage       = VkImageUsageFlagBits.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            minImageCount    = imageCount,
+            surface          = this.surface,
         };
 
         var indices = this.FindQueueFamilies(this.physicalDevice);
@@ -1365,8 +1365,6 @@ public unsafe partial class SimpleEngine : IDisposable
 
         this.RecordCommandBuffer(this.commandBuffers[this.currentFrame], imageIndex);
 
-        var submitInfo = new VkSubmitInfo();
-
         var waitSemaphores = new[]
         {
             this.imageAvailableSemaphores[this.currentFrame]
@@ -1392,13 +1390,16 @@ public unsafe partial class SimpleEngine : IDisposable
         fixed (VkCommandBuffer*      pCommandBuffers   = commandBuffers)
         fixed (VkSemaphore*          pSignalSemaphores = signalSemaphores)
         {
-            submitInfo.waitSemaphoreCount   = 1;
-            submitInfo.pWaitSemaphores      = pWaitSemaphores;
-            submitInfo.pWaitDstStageMask    = pWaitDstStageMask;
-            submitInfo.commandBufferCount   = 1;
-            submitInfo.pCommandBuffers      = pCommandBuffers;
-            submitInfo.signalSemaphoreCount = 1;
-            submitInfo.pSignalSemaphores    = pSignalSemaphores;
+            var submitInfo = new VkSubmitInfo
+            {
+                commandBufferCount   = 1,
+                pCommandBuffers      = pCommandBuffers,
+                pSignalSemaphores    = pSignalSemaphores,
+                pWaitDstStageMask    = pWaitDstStageMask,
+                pWaitSemaphores      = pWaitSemaphores,
+                signalSemaphoreCount = 1,
+                waitSemaphoreCount   = 1,
+            };
 
             if (this.vk.QueueSubmit(this.graphicsQueue, submitInfo, this.inFlightFences[this.currentFrame]) != VkResult.VK_SUCCESS)
             {
@@ -1463,7 +1464,7 @@ public unsafe partial class SimpleEngine : IDisposable
         this.vk.QueueSubmit(this.graphicsQueue, submitInfo, default);
         this.vk.QueueWaitIdle(this.graphicsQueue);
 
-        this.vk.FreeCommandBuffers(this.device, this.commandPool, 1, &commandBuffer);
+        this.vk.FreeCommandBuffers(this.device, this.commandPool, commandBuffer);
     }
 
     private VkSampleCountFlagBits GetMaxUsableSampleCount()
@@ -1493,11 +1494,11 @@ public unsafe partial class SimpleEngine : IDisposable
 
         if (this.enableValidationLayers)
         {
-            extensions.Add(VkExtDebugUtils.Name);
+            extensions.Add(VkExtDebugUtilsExtension.Name);
         }
 
-        extensions.Add(VkKhrSurface.Name);
-        extensions.Add(VkKhrWin32Surface.Name);
+        extensions.Add(VkKhrSurfaceExtension.Name);
+        extensions.Add(VkKhrWin32SurfaceExtension.Name);
 
         return extensions;
     }
@@ -1515,7 +1516,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
         for (var i = 0u; i < memProperties.memoryTypeCount; i++)
         {
-            if ((typeFilter & (1 << (int)i)) != 0 && memProperties.GetMemoryTypes((int)i).propertyFlags.HasFlag(properties))
+            if ((typeFilter & (1 << (int)i)) != 0 && memProperties.GetMemoryTypes(i).propertyFlags.HasFlag(properties))
             {
                 return i;
             }
@@ -1731,10 +1732,9 @@ public unsafe partial class SimpleEngine : IDisposable
         this.CreateSyncObjects();
     }
 
-
     private void InitWindow()
     {
-        this.window = this.windowManager.CreateWindow("Age", 600, 400, 0, 0);
+        this.window = this.platform.CreateWindow("Age*", 600, 400, 0, 0);
 
         this.window.SizeChanged += () => this.framebufferResized = true;
     }
@@ -1792,7 +1792,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
         do
         {
-            this.window.DoEvents();
+            this.platform.DoEvents();
 
             if (!this.window.Closed)
             {
@@ -1841,9 +1841,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint imageIndex)
     {
-        var beginInfo = new VkCommandBufferBeginInfo();
-
-        if (this.vk.BeginCommandBuffer(commandBuffer, ref beginInfo) != VkResult.VK_SUCCESS)
+        if (this.vk.BeginCommandBuffer(commandBuffer) != VkResult.VK_SUCCESS)
         {
             throw new Exception("failed to begin recording command buffer!");
         }
@@ -1868,7 +1866,7 @@ public unsafe partial class SimpleEngine : IDisposable
         clearValues[0].color.float32[0] = 0;
         clearValues[0].color.float32[1] = 0;
         clearValues[0].color.float32[2] = 0;
-        clearValues[0].color.float32[3] = 1;
+        clearValues[0].color.float32[3] = 0;
 
         clearValues[1].depthStencil = new()
         {
@@ -1896,7 +1894,7 @@ public unsafe partial class SimpleEngine : IDisposable
                 maxDepth = 1
             };
 
-            this.vk.CmdSetViewport(commandBuffer, 0, 1, viewport);
+            this.vk.CmdSetViewport(commandBuffer, 0, viewport);
 
             var scissor = new VkRect2D
             {
@@ -1908,7 +1906,7 @@ public unsafe partial class SimpleEngine : IDisposable
                 extent = this.swapChainExtent
             };
 
-            this.vk.CmdSetScissor(commandBuffer, 0, 1, scissor);
+            this.vk.CmdSetScissor(commandBuffer, 0, scissor);
 
             var vertexBuffers = new[]
             {
@@ -1936,7 +1934,7 @@ public unsafe partial class SimpleEngine : IDisposable
     {
         while (this.window.Minimized)
         {
-            this.window.DoEvents();
+            this.platform.DoEvents();
         }
 
         this.vk.DeviceWaitIdle(this.device);
@@ -2060,7 +2058,7 @@ public unsafe partial class SimpleEngine : IDisposable
             }
 
             this.windowsVulkanLoader.Dispose();
-            this.windowManager.Dispose();
+            this.platform.Dispose();
 
             this.disposed = true;
         }

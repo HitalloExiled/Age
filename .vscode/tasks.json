@@ -111,10 +111,11 @@
         {
             "label": "shader:compile",
             "windows": {
-                "command": "glslc shader.vert -o vert.spv; glslc shader.frag -o frag.spv;"
+                // "command": "scripts/shader-builder.ps1"
+                "command": "glslc ${file} -o ${file}.spv;"
             },
             "options": {
-                "cwd": "${workspaceFolder}/source/Age.Playground/Shaders"
+                "cwd": "${workspaceFolder}"
             },
             "type": "shell",
             "problemMatcher": []
