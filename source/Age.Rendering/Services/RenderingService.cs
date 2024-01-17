@@ -1,5 +1,7 @@
 using Age.Numerics;
 using Age.Rendering.Commands;
+using Age.Rendering.Display;
+using Age.Rendering.Drawing;
 using Age.Rendering.Enums;
 using Age.Rendering.Vulkan;
 using Age.Rendering.Vulkan.Handlers;
@@ -7,25 +9,65 @@ using Age.Rendering.Vulkan.Uniforms;
 
 namespace Age.Rendering.Services;
 
-public class RenderingService(VulkanRenderer renderer) : IDisposable
+public class RenderingService : IDisposable
 {
-    private readonly IndexBufferHandler  indexBuffer  = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
-    private readonly VulkanRenderer      renderer     = renderer;
-    private readonly Shader              shader       = new() { Handler = renderer.CreateShader() };
+    public static RenderingService Singleton { get; private set; } = null!;
 
-    private readonly List<CanvasItem>                             canvasItems   = [];
+    private readonly IndexBufferHandler indexBuffer;
+    private readonly VulkanRenderer     renderer;
+    private readonly Shader             shader;
+
     private readonly Dictionary<Texture, UniformSet>              textureSets   = [];
     private readonly Dictionary<DrawCommand, VertexBufferHandler> vertexBuffers = [];
 
     private bool disposed;
 
-    private void ExecuteDrawCommands(Frame frame, CanvasItem canvasItem)
+    public RenderingService(VulkanRenderer renderer)
+    {
+        Singleton = this;
+
+        this.indexBuffer = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
+        this.renderer    = renderer;
+        this.shader      = new() { Handler = renderer.CreateShader() };
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
+            {
+                this.renderer.WaitIdle();
+
+                foreach (var uniformSet in this.textureSets.Values)
+                {
+                    this.renderer.DestroyUniformSet(uniformSet);
+                }
+
+                foreach (var vertexBuffer in this.vertexBuffers.Values)
+                {
+                    this.renderer.DestroyVertexBuffer(vertexBuffer);
+                }
+
+                this.renderer.DestroyShader(this.shader);
+                this.renderer.DestroyIndexBuffer(this.indexBuffer);
+            }
+
+            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+            // TODO: set large fields to null
+            this.disposed = true;
+        }
+    }
+
+    private void Render(Window window, Element element)
     {
         IndexBufferHandler?  lastIndexBuffer  = default;
         VertexBufferHandler? lastVertexBuffer = default;
         UniformSet?          lastUniformSet   = default;
 
-        foreach (var command in canvasItem.EnumerateCommands())
+        var windowSize = window.ClientSize;
+
+        foreach (var command in element.EnumerateCommands())
         {
             switch (command)
             {
@@ -56,10 +98,10 @@ public class RenderingService(VulkanRenderer renderer) : IDisposable
                             this.vertexBuffers[command] = vertexBuffer = this.renderer.CreateVertexBuffer(new Vertex[4]);
                         }
 
-                        var x1 = rect.Position.X / frame.Viewport.Width;
-                        var x2 = (rect.Position.X + rect.Size.Width) / frame.Viewport.Width;
-                        var y1 = rect.Position.Y / frame.Viewport.Height;
-                        var y2 = (rect.Position.Y + rect.Size.Height) / frame.Viewport.Height;
+                        var x1 = rect.Position.X / windowSize.Width;
+                        var x2 = (rect.Position.X + rect.Size.Width) / windowSize.Width;
+                        var y1 = rect.Position.Y / windowSize.Height;
+                        var y2 = (rect.Position.Y + rect.Size.Height) / windowSize.Height;
 
                         var p1 = new Point<float>(x1 * 2 - 1, y1 * 2 - 1);
                         var p2 = new Point<float>(x2 * 2 - 1, y1 * 2 - 1);
@@ -77,26 +119,26 @@ public class RenderingService(VulkanRenderer renderer) : IDisposable
                         if (vertexBuffer != lastVertexBuffer)
                         {
                             this.renderer.UpdateVertexBuffer(vertexBuffer, vertices);
-                            this.renderer.BindVertexBuffer(frame.CommandBuffer, vertexBuffer);
+                            this.renderer.BindVertexBuffer(vertexBuffer);
 
                             lastVertexBuffer = vertexBuffer;
                         }
 
                         if (uniformSet != lastUniformSet)
                         {
-                            this.renderer.BindUniformSet(frame.CommandBuffer, uniformSet);
+                            this.renderer.BindUniformSet(uniformSet);
 
                             lastUniformSet = uniformSet;
                         }
 
                         if (this.indexBuffer != lastIndexBuffer)
                         {
-                            this.renderer.BindIndexBuffer(frame.CommandBuffer, this.indexBuffer);
+                            this.renderer.BindIndexBuffer(this.indexBuffer);
 
                             lastIndexBuffer = this.indexBuffer;
                         }
 
-                        this.renderer.DrawIndexed(frame.CommandBuffer, this.indexBuffer);
+                        this.renderer.DrawIndexed(this.indexBuffer);
 
                         break;
                     }
@@ -105,37 +147,6 @@ public class RenderingService(VulkanRenderer renderer) : IDisposable
             }
         }
     }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!this.disposed)
-        {
-            if (disposing)
-            {
-                this.renderer.WaitIdle();
-
-                foreach (var uniformSet in this.textureSets.Values)
-                {
-                    this.renderer.FreeUniformSet(uniformSet);
-                }
-
-                foreach (var vertexBuffer in this.vertexBuffers.Values)
-                {
-                    this.renderer.FreeVertexBuffer(vertexBuffer);
-                }
-
-                this.renderer.FreeShader(this.shader);
-                this.renderer.FreeIndexBuffer(this.indexBuffer);
-            }
-
-            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-            // TODO: set large fields to null
-            this.disposed = true;
-        }
-    }
-
-    public void AddCanvasItem(CanvasItem item) =>
-        this.canvasItems.Add(item);
 
     public void Dispose()
     {
@@ -170,43 +181,32 @@ public class RenderingService(VulkanRenderer renderer) : IDisposable
     public Sampler CreateSampler() =>
         new() { Handler = this.renderer.CreateSampler() };
 
-    public void Draw()
+    public void Render(Window window)
     {
-        var frame = this.renderer.BeginFrame();
+        this.renderer.BeginFrame(window.Context);
+        this.renderer.BeginRenderPass(window.Context);
 
-        if (!frame.Skipped)
+        this.renderer.BindPipeline(this.shader.Handler);
+
+        foreach (var element in window.Content.Enumerate<Element>())
         {
-            this.renderer.BindPipeline(frame.CommandBuffer, this.shader.Handler);
-
-            foreach (var item in this.canvasItems)
-            {
-                this.ExecuteDrawCommands(frame, item);
-            }
-
-            this.renderer.EndFrame(frame);
+            this.Render(window, element);
         }
+
+        this.renderer.EndRenderPass();
+        this.renderer.EndFrame();
     }
 
     public void FreeSampler(Sampler sampler)
     {
         this.renderer.WaitIdle();
-        this.renderer.FreeSampler(sampler.Handler);
+        this.renderer.DestroySampler(sampler.Handler);
     }
 
     public void FreeTexture(Texture texture)
     {
         this.renderer.WaitIdle(); // TODO find better solution
         this.textureSets.Remove(texture);
-        this.renderer.FreeTexture(texture.Handler);
-    }
-
-    public void RemoveCanvasItem(CanvasItem item)
-    {
-        this.canvasItems.Remove(item);
-
-        foreach (var command in item.EnumerateCommands())
-        {
-            this.vertexBuffers.Remove(command);
-        }
+        this.renderer.DestroyTexture(texture.Handler);
     }
 }

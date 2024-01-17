@@ -3,7 +3,8 @@ using Age.Platforms.Windows.Display;
 using Age.Platforms.Windows.Native;
 using Age.Platforms.Windows.Native.Types;
 using Age.Platforms.Windows.Vulkan;
-using Age.Rendering.Vulkan.Handlers;
+using Age.Rendering.Vulkan;
+using Age.Vulkan.Native;
 
 namespace Age.Platforms.Windows;
 
@@ -16,15 +17,20 @@ public class WindowsPlatform : Platform, IDisposable
 
     private bool disposed;
 
-    private readonly Window mainWindow;
-    private readonly WindowHandler mainWindowHandler;
+    private readonly WindowsVulkanContext rendererContext;
 
-    public override WindowsVulkanRenderer Renderer { get; }
-    public override bool CanDraw => !this.mainWindow.Minimized && !this.mainWindow.Closed;
+    public override VulkanRenderer Renderer { get; }
+
+    public override bool CanDraw => this.windows.Values.Any(x => !x.Closed && !x.Minimized);
 
     public unsafe WindowsPlatform()
     {
         singleton = this;
+
+        var vk = new Vk(this.windowsVulkanLoader);
+
+        this.rendererContext = new WindowsVulkanContext(vk);
+        this.Renderer        = new(vk, this.rendererContext);
 
         fixed (char* lpszClassName = "Engine")
         {
@@ -46,18 +52,17 @@ public class WindowsPlatform : Platform, IDisposable
             {
                 throw new Exception("Failed to register window class");
             }
-
-            this.mainWindow = this.CreateWindow("Age", 600, 400, 800, 300);
-
-            this.Renderer = new WindowsVulkanRenderer(new(this.windowsVulkanLoader));
-
-            this.mainWindowHandler = this.Renderer.CreateWindow(this.mainWindow.Handle, this.mainWindow.ClientSize, true);
-
-            this.mainWindow.SizeChanged += () => this.mainWindowHandler.Size = this.mainWindow.ClientSize;
         }
     }
 
     private static Size<uint> GetClientSize(HWND hwnd)
+    {
+        User32.GetClientRect(hwnd, out var rect);
+
+        return new((uint)(rect.right - rect.left), (uint)(rect.bottom - rect.top));
+    }
+
+    private static Size<uint> GetWindowSize(HWND hwnd)
     {
         User32.GetWindowRect(hwnd, out var rect);
 
@@ -77,7 +82,7 @@ public class WindowsPlatform : Platform, IDisposable
                         window.SetMaximized(placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMAXIMIZED);
                         window.SetMinimized(placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMINIMIZED);
 
-                        var size = GetClientSize(hwnd);
+                        var size = GetWindowSize(hwnd);
 
                         if (size.Width != window.Size.Width || size.Height != window.Size.Height)
                         {
@@ -99,11 +104,6 @@ public class WindowsPlatform : Platform, IDisposable
                 case User32.WINDOW_MESSAGE.WM_CLOSE:
                     window.Close();
 
-                    if (singleton.mainWindow.Closed)
-                    {
-                        singleton.QuitRequested = true;
-                    }
-
                     return User32.DefWindowProcW(hwnd, msg, wParam, lParam);
                 default:
                     break;
@@ -113,42 +113,7 @@ public class WindowsPlatform : Platform, IDisposable
         return User32.DefWindowProcW(hwnd, msg, wParam, lParam);
     }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!this.disposed)
-        {
-            if (disposing)
-            {
-                foreach (var window in this.windows.Values)
-                {
-                    window.Close();
-                }
-
-                this.windows.Clear();
-
-                this.Renderer.FreeWindow(this.mainWindowHandler);
-
-                this.Renderer.Dispose();
-                this.windowsVulkanLoader.Dispose();
-            }
-
-            this.disposed = true;
-        }
-    }
-
-    public override void DoEvents()
-    {
-        foreach (var window in this.windows.Values)
-        {
-            while (User32.PeekMessageW(out var msg, window.Handle, 0, 0, User32.PEEK_MESSAGE.PM_REMOVE) && !window.Closed)
-            {
-                User32.TranslateMessage(msg);
-                User32.DispatchMessageW(msg);
-            }
-        }
-    }
-
-    public Window CreateWindow(string title, uint width, uint height, int x, int y, Window? parent = null)
+    private Window CreateWindow(string title, uint width, uint height, int x, int y, Window? parent = null)
     {
         var hwnd = User32.CreateWindowExW(
             User32.WINDOW_STYLES_EX.WS_EX_APPWINDOW | User32.WINDOW_STYLES_EX.WS_EX_WINDOWEDGE,
@@ -170,7 +135,13 @@ public class WindowsPlatform : Platform, IDisposable
             throw new Exception("Failed to create window on Windows OS.");
 		}
 
-        var window = new Window(hwnd, title, new(width, height), new(x, y), parent);
+        var clientSize = GetClientSize(hwnd);
+
+        var windowContext = this.rendererContext.CreateWindow(hwnd, clientSize);
+
+        var window = new Window(hwnd, windowContext, title, new(width, height), new(x, y), parent);
+
+        window.SizeChanged += () => window.Context.Size = window.ClientSize;
 
         window.Destroyed += this.DestroyWindow;
 
@@ -179,15 +150,50 @@ public class WindowsPlatform : Platform, IDisposable
         return window;
     }
 
-    public void DestroyWindow(Window window)
+    private void DestroyWindow(Window window)
     {
         window.Destroyed -= this.DestroyWindow;
 
         window.Close();
 
         this.windows.Remove(window.Handle);
+        this.rendererContext.DestroyWindow(window.Context);
 
         User32.DestroyWindow(window.Handle);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
+            {
+                foreach (var window in this.windows.Values)
+                {
+                    window.Close();
+                }
+
+                this.windows.Clear();
+
+                this.Renderer.Dispose();
+                this.rendererContext.Dispose();
+                this.windowsVulkanLoader.Dispose();
+            }
+
+            this.disposed = true;
+        }
+    }
+
+    public override void DoEvents()
+    {
+        foreach (var window in this.windows.Values)
+        {
+            while (User32.PeekMessageW(out var msg, window.Handle, 0, 0, User32.PEEK_MESSAGE.PM_REMOVE) && !window.Closed)
+            {
+                User32.TranslateMessage(msg);
+                User32.DispatchMessageW(msg);
+            }
+        }
     }
 
     public override void Dispose()
@@ -195,4 +201,10 @@ public class WindowsPlatform : Platform, IDisposable
         this.Dispose(true);
         GC.SuppressFinalize(this);
     }
+
+    public override Rendering.Display.Window CreateWindow(string title, uint width, uint height, int x, int y, Rendering.Display.Window? parent = null) =>
+        this.CreateWindow(title, width, height, x, y, (Window?)parent);
+
+    public override void DestroyWindow(Rendering.Display.Window window) =>
+        this.DestroyWindow((Window)window);
 }

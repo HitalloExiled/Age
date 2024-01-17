@@ -1,18 +1,19 @@
 ﻿using Age.Numerics;
 using Age.Platforms.Windows.Native;
 using Age.Platforms.Windows.Native.Types;
+using Age.Rendering.Vulkan.Handlers;
 
-using PlatformWindow = Age.Platforms.Display.Window;
+using DisplayWindow = Age.Rendering.Display.Window;
 
 namespace Age.Platforms.Windows.Display;
 
-public class Window(HWND handle, string title, Size<uint> size, Point<int> position, PlatformWindow? parent = null) : PlatformWindow(title, size, position, parent), IDisposable
+public class Window(HWND handle, WindowContext context, string title, Size<uint> size, Point<int> position, DisplayWindow? parent = null) : DisplayWindow(context, title, size, position, parent), IDisposable
 {
-    internal event Action<Window>? Destroyed;
-
     private bool disposed;
 
-    public HWND Handle { get; } = handle;
+    public event Action<Window>? Destroyed;
+
+    public HWND Handle  { get; } = handle;
 
     public override Size<uint> ClientSize
     {

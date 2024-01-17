@@ -1,26 +1,26 @@
 using Age.Rendering.Commands;
 
-namespace Age.Rendering;
+namespace Age.Rendering.Drawing;
 
-public record CanvasItem
+public class Element : Node
 {
     public DrawCommand? Command { get; private set; }
 
     public void AddCommand(DrawCommand command)
     {
-        if (Command != null)
+        if (this.Command != null)
         {
-            Command.Next = command;
+            this.Command.Next = command;
         }
         else
         {
-            Command = command;
+            this.Command = command;
         }
     }
 
     public IEnumerable<DrawCommand> EnumerateCommands()
     {
-        var command = Command;
+        var command = this.Command;
 
         while (command != null)
         {

@@ -10,7 +10,7 @@ using Age.Vulkan.Native.Types.KHR;
 
 namespace Age.Platforms.Windows.Vulkan;
 
-public class WindowsVulkanRenderer(Vk vk) : VulkanRenderer(vk)
+public class WindowsVulkanContext(Vk vk) : VulkanContext(vk)
 {
     protected override string[] PlatformExtensions => [VkKhrWin32SurfaceExtension.Name];
 
@@ -32,10 +32,10 @@ public class WindowsVulkanRenderer(Vk vk) : VulkanRenderer(vk)
             : surface;
     }
 
-    public WindowHandler CreateWindow(HWND hwnd, Size<uint> size, bool activate)
+    public WindowContext CreateWindow(HWND hwnd, Size<uint> size)
     {
         var surface = this.CreateSurface(hwnd);
 
-        return this.CreateWindow(surface, size, activate);
+        return this.CreateWindow(surface, size);
     }
 }

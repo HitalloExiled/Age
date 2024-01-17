@@ -4,7 +4,7 @@ using Age.Vulkan.Native.Types.KHR;
 
 namespace Age.Rendering.Vulkan.Handlers;
 
-public record WindowHandler
+public record WindowContext
 {
     private Size<uint> size;
 
@@ -24,7 +24,6 @@ public record WindowHandler
 
     public required SwapchainHandler Swapchain { get; set; }
 
-    public uint CurrentBuffer      { get; set; }
+    public uint CurrentBuffer       { get; set; }
     public bool FramebufferResized { get; set; }
-
 }

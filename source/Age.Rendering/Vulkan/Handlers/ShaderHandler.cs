@@ -9,5 +9,6 @@ public record ShaderHandler
     public required VkPipeline            Pipeline            { get; init; }
     public required VkPipelineBindPoint   PipelineBindPoint   { get; init; }
     public required VkPipelineLayout      PipelineLayout      { get; init; }
+    public required VkRenderPass          RenderPass          { get; init; }
 }
 

@@ -1,16 +1,27 @@
 using Age.Numerics;
 using Age.Rendering.Commands;
+using Age.Rendering.Drawing;
 using SkiaSharp;
 
 namespace Age.Rendering.Services;
 
-public class TextService(RenderingService renderingService) : IDisposable
+public class TextService : IDisposable
 {
-    private readonly RenderingService               renderingService = renderingService;
-    private readonly Sampler                        sampler          = renderingService.CreateSampler();
-    private readonly Dictionary<string, Texture>    textures         = [];
+    public static TextService Singleton { get; private set; } = null!;
+
+    private readonly RenderingService            renderingService;
+    private readonly Sampler                     sampler;
+    private readonly Dictionary<string, Texture> textures         = [];
 
     private bool disposed;
+
+    public TextService(RenderingService renderingService)
+    {
+        Singleton = this;
+
+        this.renderingService = renderingService;
+        this.sampler = renderingService.CreateSampler();
+    }
 
     protected virtual void Dispose(bool disposing)
     {
@@ -32,7 +43,7 @@ public class TextService(RenderingService renderingService) : IDisposable
         }
     }
 
-    public void DrawText(string text, int fontSize, Point<int> position)
+    public Element DrawText(string text, int fontSize, Point<int> position)
     {
         if (!this.textures.TryGetValue(text, out var texture))
         {
@@ -80,11 +91,11 @@ public class TextService(RenderingService renderingService) : IDisposable
 
         var rect = new Rect<float>(new(texture.Image.Width, texture.Image.Height), position.Cast<float>());
 
-        var canvasItem = new CanvasItem();
+        var element = new Element();
 
-        canvasItem.AddCommand(new RectDrawCommand { Rect = rect, Texture = texture });
+        element.AddCommand(new RectDrawCommand { Rect = rect, Texture = texture });
 
-        this.renderingService.AddCanvasItem(canvasItem);
+        return element;
     }
 
     public void Dispose()

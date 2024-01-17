@@ -1734,7 +1734,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void InitWindow()
     {
-        this.window = this.platform.CreateWindow("Age*", 600, 400, 0, 0);
+        this.window = (Window)this.platform.CreateWindow("Age*", 600, 400, 0, 0);
 
         this.window.SizeChanged += () => this.framebufferResized = true;
     }

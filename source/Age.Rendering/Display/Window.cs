@@ -1,11 +1,15 @@
 ﻿using Age.Numerics;
+using Age.Rendering.Drawing;
+using Age.Rendering.Vulkan.Handlers;
 
-namespace Age.Platforms.Display;
+namespace Age.Rendering.Display;
 
-public abstract class Window(string title, Size<uint> size, Point<int> position, Window? parent = null)
+public abstract class Window(WindowContext context, string title, Size<uint> size, Point<int> position, Window? parent = null)
 {
     public event Action? WindowClosed;
     public event Action? SizeChanged;
+
+    public WindowContext Context { get; } = context;
 
     public bool Closed    { get; protected set; }
     public bool Maximized { get; protected set; }
@@ -14,9 +18,11 @@ public abstract class Window(string title, Size<uint> size, Point<int> position,
 
     public Window? Parent { get; protected set; } = parent;
 
-    public Point<int>  Position   { get; set; } = position;
-    public Size<uint>  Size       { get; set; } = size;
-    public string      Title      { get; set; } = title;
+    public Content Content { get; } = new();
+
+    public Point<int> Position { get; set; } = position;
+    public Size<uint> Size     { get; set; } = size;
+    public string     Title    { get; set; } = title;
 
     public abstract Size<uint> ClientSize { get; }
 

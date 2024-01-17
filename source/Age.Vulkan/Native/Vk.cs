@@ -434,10 +434,10 @@ public unsafe class Vk(IVulkanLoader loader)
         }
     }
 
-    public VkResult AllocateCommandBuffers(VkDevice device, in VkCommandBufferAllocateInfo allocateInfo, out VkCommandBuffer commandBuffers)
+    public VkResult AllocateCommandBuffers(VkDevice device, in VkCommandBufferAllocateInfo allocateInfo, out VkCommandBuffer commandBuffer)
     {
         fixed (VkCommandBufferAllocateInfo* pAllocateInfo   = &allocateInfo)
-        fixed (VkCommandBuffer*             pCommandBuffers = &commandBuffers)
+        fixed (VkCommandBuffer*             pCommandBuffers = &commandBuffer)
         {
             return this.vkAllocateCommandBuffers.Invoke(device, pAllocateInfo, pCommandBuffers);
         }
