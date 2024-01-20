@@ -1,6 +1,6 @@
-using Age.Vulkan.Native.Enums;
-using Age.Vulkan.Native.Types;
-using Age.Vulkan.Native.Types.KHR;
+using Age.Vulkan.Enums;
+using Age.Vulkan.Types;
+using Age.Vulkan.Types.KHR;
 
 namespace Age.Rendering.Vulkan.Handlers;
 

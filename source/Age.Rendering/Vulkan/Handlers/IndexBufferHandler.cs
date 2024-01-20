@@ -1,4 +1,4 @@
-using Age.Vulkan.Native.Enums;
+using Age.Vulkan.Enums;
 
 namespace Age.Rendering.Vulkan.Handlers;
 

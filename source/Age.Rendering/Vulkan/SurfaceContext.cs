@@ -1,7 +1,7 @@
 using Age.Numerics;
 using Age.Rendering.Vulkan.Handlers;
-using Age.Vulkan.Native.Types;
-using Age.Vulkan.Native.Types.KHR;
+using Age.Vulkan.Types;
+using Age.Vulkan.Types.KHR;
 
 namespace Age.Rendering.Vulkan;
 

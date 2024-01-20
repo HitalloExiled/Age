@@ -1,6 +1,6 @@
-using Age.Vulkan.Native.Enums;
-using Age.Vulkan.Native.Flags;
-using Age.Vulkan.Native.Types;
+using Age.Vulkan.Enums;
+using Age.Vulkan.Flags;
+using Age.Vulkan.Types;
 
 namespace Age.Rendering.Vulkan.Handlers;
 

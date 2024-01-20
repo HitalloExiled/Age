@@ -1,6 +1,6 @@
-using Age.Vulkan.Native.Enums.KHR;
-using Age.Vulkan.Native.Types;
-using Age.Vulkan.Native.Types.KHR;
+using Age.Vulkan.Enums.KHR;
+using Age.Vulkan.Types;
+using Age.Vulkan.Types.KHR;
 
 namespace Age.Playground;
 

@@ -6,9 +6,9 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Age.Numerics;
-using Age.Vulkan.Native.Enums;
-using Age.Vulkan.Native.Extensions.KHR;
-using Age.Vulkan.Native.Types.KHR;
+using Age.Vulkan.Enums;
+using Age.Vulkan.Extensions.KHR;
+using Age.Vulkan.Types.KHR;
 
 namespace Age.Rendering.Vulkan;
 

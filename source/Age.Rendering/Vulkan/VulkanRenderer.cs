@@ -6,12 +6,12 @@ using Age.Core.Unsafe;
 using Age.Rendering.Enums;
 using Age.Rendering.Vulkan.Handlers;
 using Age.Rendering.Vulkan.Uniforms;
-using Age.Vulkan.Native;
-using Age.Vulkan.Native.Enums;
-using Age.Vulkan.Native.Flags;
-using Age.Vulkan.Native.Flags.EXT;
-using Age.Vulkan.Native.Types;
-using Age.Vulkan.Native.Types.EXT;
+using Age.Vulkan;
+using Age.Vulkan.Enums;
+using Age.Vulkan.Flags;
+using Age.Vulkan.Flags.EXT;
+using Age.Vulkan.Types;
+using Age.Vulkan.Types.EXT;
 
 namespace Age.Rendering.Vulkan;
 
