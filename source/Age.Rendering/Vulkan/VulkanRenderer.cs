@@ -15,15 +15,23 @@ using Age.Vulkan.Native.Types.EXT;
 
 namespace Age.Rendering.Vulkan;
 
-public unsafe partial class VulkanRenderer(Vk vk, VulkanContext context) : IDisposable
+public unsafe partial class VulkanRenderer : IDisposable
 {
     private const ushort MAX_DESCRIPTORS_PER_POOL = 64;
 
-    private readonly VulkanContext                                             context         = context;
+    private readonly VulkanContext                                             context;
     private readonly Dictionary<VkDescriptorType, List<DescriptorPoolHandler>> descriptorPools = [];
-    private readonly Vk                                                        vk              = vk;
+    private readonly Vk                                                        vk;
 
     private bool disposed;
+
+    public VulkanContext Context => this.context;
+
+    public VulkanRenderer()
+    {
+        this.context = new VulkanContext();
+        this.vk      = this.context.Vk;
+    }
 
     private static VkDescriptorType ConvertToDescriptorType(UniformType type) =>
         type switch
@@ -174,6 +182,7 @@ public unsafe partial class VulkanRenderer(Vk vk, VulkanContext context) : IDisp
         {
             var descriptorPoolCreateInfo = new VkDescriptorPoolCreateInfo
             {
+                flags         = VkDescriptorPoolCreateFlagBits.VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
                 maxSets       = MAX_DESCRIPTORS_PER_POOL,
                 poolSizeCount = (uint)sizes.Count,
                 pPoolSizes    = pPoolSizes,
@@ -624,40 +633,14 @@ public unsafe partial class VulkanRenderer(Vk vk, VulkanContext context) : IDisp
         }
     }
 
-    public void BeginFrame(WindowContext windowContext)
+    public void BeginFrame()
     {
         this.context.PrepareBuffers();
 
-        var commandBuffer = this.context.Frame.CommandBuffer;
-
-        this.vk.BeginCommandBuffer(commandBuffer);
-
-        var viewport = new VkViewport
-        {
-            x        = 0,
-            y        = 0,
-            width    = windowContext.Size.Width,
-            height   = windowContext.Size.Height,
-            minDepth = 0,
-            maxDepth = 1
-        };
-
-        this.vk.CmdSetViewport(commandBuffer, 0, viewport);
-
-        var scissor = new VkRect2D
-        {
-            offset = new()
-            {
-                x = 0,
-                y = 0
-            },
-            extent = windowContext.Swapchain.Extent,
-        };
-
-        this.vk.CmdSetScissor(commandBuffer, 0, scissor);
+        this.vk.BeginCommandBuffer(this.context.Frame.CommandBuffer);
     }
 
-    public void BeginRenderPass(WindowContext windowContext)
+    public void BeginRenderPass(SurfaceContext windowContext)
     {
         var clearValues = new VkClearValue[2];
 
@@ -1021,6 +1004,35 @@ public unsafe partial class VulkanRenderer(Vk vk, VulkanContext context) : IDisp
         this.RemoveFromDescriptorPool(uniformSet.DescriptorPool);
     }
 
+    public void SetViewport(SurfaceContext surfaceContext)
+    {
+        var commandBuffer = this.context.Frame.CommandBuffer;
+
+        var viewport = new VkViewport
+        {
+            x        = 0,
+            y        = 0,
+            width    = surfaceContext.Size.Width,
+            height   = surfaceContext.Size.Height,
+            minDepth = 0,
+            maxDepth = 1
+        };
+
+        this.vk.CmdSetViewport(commandBuffer, 0, viewport);
+
+        var scissor = new VkRect2D
+        {
+            offset = new()
+            {
+                x = 0,
+                y = 0
+            },
+            extent = surfaceContext.Swapchain.Extent,
+        };
+
+        this.vk.CmdSetScissor(commandBuffer, 0, scissor);
+    }
+
     public void UpdateBuffer<T>(BufferHandler buffer, T data) where T : unmanaged =>
         this.UpdateBuffer(buffer, [data]);
 
@@ -1102,4 +1114,6 @@ public unsafe partial class VulkanRenderer(Vk vk, VulkanContext context) : IDisp
 
     public void WaitIdle() =>
         this.vk.DeviceWaitIdle(this.context.Device);
+
+
 }

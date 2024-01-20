@@ -1,29 +1,14 @@
-using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace Age.Rendering.Drawing;
 
+[DebuggerDisplay("Index: {Index}, Children: {children.Count}, Parent: {Parent != null}")]
 public class Node
 {
     private readonly List<Node> children = [];
 
+    public int   Index  { get; private set; }
     public Node? Parent { get; private set; }
-
-    public ImmutableArray<Node> Children => [.. this.children];
-
-    public virtual Node? Root
-    {
-        get
-        {
-            var next = this;
-
-            while (next.Parent != null)
-            {
-                next = next.Parent;
-            }
-
-            return next;
-        }
-    }
 
     protected virtual void OnUpdate()
     { }
@@ -31,6 +16,8 @@ public class Node
     public void Add(Node child)
     {
         child.Parent = this;
+        child.Index  = this.children.Count;
+
         this.children.Add(child);
     }
 
@@ -72,6 +59,8 @@ public class Node
     public void Remove(Node child)
     {
         child.Parent = null;
+        child.Index  = -1;
+
         this.children.Remove(child);
     }
 

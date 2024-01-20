@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
-    <ProjectReference Include="..\Age.Rendering\Age.Rendering.csproj" />
   </ItemGroup>
 
 </Project>

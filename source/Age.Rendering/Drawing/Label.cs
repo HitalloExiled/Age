@@ -2,17 +2,19 @@ using Age.Rendering.Services;
 
 namespace Age.Rendering.Drawing;
 
-public class Label : Node
+public class Label : Element
 {
-    private Element? textElement;
     private string? text;
 
     public string? Text  { get => this.text; set => this.UpdateText(value); }
-    public Style   Style { get; set; }
 
     public Label(string? text, Style? style = null)
     {
-        this.Style = style ?? new() { FontSize = 20 };
+        if (style != null)
+        {
+            this.Style = style;
+        }
+
         this.Text  = text;
     }
 
@@ -20,9 +22,7 @@ public class Label : Node
     {
         if (value != null && value != this.text)
         {
-            this.textElement?.Remove();
-
-            this.Add(this.textElement = TextService.Singleton.DrawText(value, this.Style.FontSize, this.Style.Position));
+            Singleton.TextService.DrawText(this, value);
 
             this.text = value;
         }

@@ -11,8 +11,6 @@ namespace Age.Rendering.Services;
 
 public class RenderingService : IDisposable
 {
-    public static RenderingService Singleton { get; private set; } = null!;
-
     private readonly IndexBufferHandler indexBuffer;
     private readonly VulkanRenderer     renderer;
     private readonly Shader             shader;
@@ -24,8 +22,6 @@ public class RenderingService : IDisposable
 
     public RenderingService(VulkanRenderer renderer)
     {
-        Singleton = this;
-
         this.indexBuffer = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
         this.renderer    = renderer;
         this.shader      = new() { Handler = renderer.CreateShader() };
@@ -67,7 +63,7 @@ public class RenderingService : IDisposable
 
         var windowSize = window.ClientSize;
 
-        foreach (var command in element.EnumerateCommands())
+        foreach (var command in element.Commands)
         {
             switch (command)
             {
@@ -100,8 +96,8 @@ public class RenderingService : IDisposable
 
                         var x1 = rect.Position.X / windowSize.Width;
                         var x2 = (rect.Position.X + rect.Size.Width) / windowSize.Width;
-                        var y1 = rect.Position.Y / windowSize.Height;
-                        var y2 = (rect.Position.Y + rect.Size.Height) / windowSize.Height;
+                        var y1 = -rect.Position.Y / windowSize.Height;
+                        var y2 = (-rect.Position.Y + rect.Size.Height) / windowSize.Height;
 
                         var p1 = new Point<float>(x1 * 2 - 1, y1 * 2 - 1);
                         var p2 = new Point<float>(x2 * 2 - 1, y1 * 2 - 1);
@@ -183,7 +179,7 @@ public class RenderingService : IDisposable
 
     public void Render(Window window)
     {
-        this.renderer.BeginFrame(window.Context);
+        this.renderer.SetViewport(window.Context);
         this.renderer.BeginRenderPass(window.Context);
 
         this.renderer.BindPipeline(this.shader.Handler);
@@ -194,7 +190,6 @@ public class RenderingService : IDisposable
         }
 
         this.renderer.EndRenderPass();
-        this.renderer.EndFrame();
     }
 
     public void FreeSampler(Sampler sampler)

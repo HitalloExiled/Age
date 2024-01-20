@@ -5,23 +5,13 @@ using SkiaSharp;
 
 namespace Age.Rendering.Services;
 
-public class TextService : IDisposable
+public partial class TextService(RenderingService renderingService) : IDisposable
 {
-    public static TextService Singleton { get; private set; } = null!;
-
-    private readonly RenderingService            renderingService;
-    private readonly Sampler                     sampler;
-    private readonly Dictionary<string, Texture> textures         = [];
+    private readonly Dictionary<char, Glyph>     glyphs           = [];
+    private readonly RenderingService            renderingService = renderingService;
+    private readonly Sampler                     sampler          = renderingService.CreateSampler();
 
     private bool disposed;
-
-    public TextService(RenderingService renderingService)
-    {
-        Singleton = this;
-
-        this.renderingService = renderingService;
-        this.sampler = renderingService.CreateSampler();
-    }
 
     protected virtual void Dispose(bool disposing)
     {
@@ -29,9 +19,9 @@ public class TextService : IDisposable
         {
             if (disposing)
             {
-                foreach (var texture in this.textures.Values)
+                foreach (var glyph in this.glyphs.Values)
                 {
-                    this.renderingService.FreeTexture(texture);
+                    this.renderingService.FreeTexture(glyph.Texture);
                 }
 
                 this.renderingService.FreeSampler(this.sampler);
@@ -43,37 +33,20 @@ public class TextService : IDisposable
         }
     }
 
-    public Element DrawText(string text, int fontSize, Point<int> position)
+    private Glyph DrawGlyph(char character, SKPaint paint)
     {
-        if (!this.textures.TryGetValue(text, out var texture))
+        if (!this.glyphs.TryGetValue(character, out var glyph))
         {
-            var typeface = SKTypeface.FromFamilyName("Comic Sans", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-
-            var paint = new SKPaint
-            {
-                Color       = SKColors.Black,
-                IsAntialias = true,
-                TextAlign   = SKTextAlign.Left,
-                TextSize    = fontSize,
-                Typeface    = typeface,
-            };
-
             var bounds = new SKRect();
 
-            paint.MeasureText(text, ref bounds);
+            var charString = character.ToString();
+
+            paint.MeasureText(charString, ref bounds);
 
             using var bitmap = new SKBitmap((int)bounds.Width, (int)bounds.Height);
             using var canvas = new SKCanvas(bitmap);
 
-            canvas.DrawText(text, -bounds.Location.X, -bounds.Location.Y, paint);
-
-            var skimage = SKImage.FromBitmap(bitmap);
-
-            var data = skimage.Encode(SKEncodedImageFormat.Png, 100);
-
-            using var stream = File.OpenWrite($"C:\\Users\\rafael.franca\\Projects\\Age\\source\\{text}.png");
-
-            data.SaveTo(stream);
+            canvas.DrawText(charString, -bounds.Location.X, -bounds.Location.Y, paint);
 
             var pixels = bitmap.Pixels.Select(x => (uint)x).ToArray();
 
@@ -84,18 +57,68 @@ public class TextService : IDisposable
                 Pixels = pixels,
             };
 
-            texture = this.renderingService.Create2DTexture(image, this.sampler);
+            var texture = this.renderingService.Create2DTexture(image, this.sampler);
 
-            this.textures[text] = texture;
+            this.glyphs[character] = glyph = new()
+            {
+                Character = character,
+                Bounds    = bounds,
+                Texture   = texture,
+                Size      = new(bounds.Width, bounds.Height),
+            };
         }
 
-        var rect = new Rect<float>(new(texture.Image.Width, texture.Image.Height), position.Cast<float>());
+        return glyph;
+    }
 
-        var element = new Element();
+    public void DrawText(Element element, string text)
+    {
+        var style    = element.Style;
+        var typeface = SKTypeface.FromFamilyName("Comic Sans", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
 
-        element.AddCommand(new RectDrawCommand { Rect = rect, Texture = texture });
+        var paint = new SKPaint
+        {
+            Color       = SKColors.Red,
+            IsAntialias = true,
+            TextAlign   = SKTextAlign.Left,
+            TextSize    = style.FontSize,
+            Typeface    = typeface,
+        };
 
-        return element;
+        paint.GetFontMetrics(out var fontMetrics);
+
+        var cursor     = (float)style.Position.X;
+        var lineHeight = style.Position.Y + fontMetrics.Ascent + fontMetrics.Descent;
+
+        element.Commands.Clear();
+
+        for (var i = 0; i < text.Length; i++)
+        {
+            var glyph    = this.DrawGlyph(text[i], paint);
+            var position = new Point<float>(cursor + glyph.Bounds.Left, lineHeight - glyph.Bounds.Top);
+            var command  = new RectDrawCommand(new(glyph.Size, position), glyph.Texture);
+
+            element.Commands.Add(command);
+
+            cursor = position.X + glyph.Bounds.Right;
+        }
+
+        var bounds = new SKRect();
+
+        paint.MeasureText(text, ref bounds);
+
+        using var bitmap = new SKBitmap((int)bounds.Width, (int)bounds.Height);
+        using var canvas = new SKCanvas(bitmap);
+
+        canvas.DrawText(text, -bounds.Location.X, -bounds.Location.Y, paint);
+
+        var skimage = SKImage.FromBitmap(bitmap);
+
+        var data = skimage.Encode(SKEncodedImageFormat.Png, 100);
+
+        using var stream = File.OpenWrite($"C:\\Users\\rafael.franca\\Projects\\Age\\source\\{text}.png");
+
+        data.SaveTo(stream);
     }
 
     public void Dispose()

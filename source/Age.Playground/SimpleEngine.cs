@@ -1,11 +1,9 @@
+#if SIMPLE_ENGINE
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Age.Core.Unsafe;
 using Age.Numerics;
 using Age.Platforms.Abstractions;
-using Age.Platforms.Windows;
-using Age.Platforms.Windows.Display;
-using Age.Platforms.Windows.Vulkan;
 using Age.Vulkan.Native;
 using Age.Vulkan.Native.Enums;
 using Age.Vulkan.Native.Enums.KHR;
@@ -43,7 +41,7 @@ public unsafe partial class SimpleEngine : IDisposable
     private readonly List<Vertex>           vertices                 = [];
     private readonly Vk                     vk;
     private readonly WindowsPlatform        platform = new();
-    private readonly WindowsVulkanLoader    windowsVulkanLoader;
+    private readonly VulkanLoader           vulkanLoader;
 
     private VkImage                   colorImage;
     private VkDeviceMemory            colorImageMemory;
@@ -92,8 +90,8 @@ public unsafe partial class SimpleEngine : IDisposable
 
     public SimpleEngine()
     {
-        this.windowsVulkanLoader = new();
-        this.vk                  = new(this.windowsVulkanLoader);
+        this.vulkanLoader = new();
+        this.vk                  = new(this.vulkanLoader);
 
         for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
@@ -1734,7 +1732,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void InitWindow()
     {
-        this.window = (Window)this.platform.CreateWindow("Age*", 600, 400, 0, 0);
+        this.window = (Window)this.platform.CreateWindow("Age*", new(600, 400), new());
 
         this.window.SizeChanged += () => this.framebufferResized = true;
     }
@@ -2057,7 +2055,7 @@ public unsafe partial class SimpleEngine : IDisposable
                 Marshal.FreeHGlobal((nint)this.uniformBuffersMapped[i]);
             }
 
-            this.windowsVulkanLoader.Dispose();
+            this.vulkanLoader.Dispose();
             this.platform.Dispose();
 
             this.disposed = true;
@@ -2078,3 +2076,4 @@ public unsafe partial class SimpleEngine : IDisposable
         this.Cleanup();
     }
 }
+#endif

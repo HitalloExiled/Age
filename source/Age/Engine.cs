@@ -1,27 +1,29 @@
-using Age.Platforms;
 using Age.Rendering.Display;
 using Age.Rendering.Drawing;
 using Age.Rendering.Services;
+using Age.Rendering.Vulkan;
 
 namespace Age;
 
 public class Engine : IDisposable
 {
-    private readonly Platform         platform;
+    private readonly Window           mainWindow;
+    private readonly VulkanRenderer   renderer = new();
     private readonly RenderingService renderingService;
     private readonly TextService      textService;
-    private readonly Window           window;
 
     private bool disposed;
 
     public bool Running { get; private set; }
 
-    public Engine(Platform platform)
+    public Engine()
     {
-        this.platform         = platform;
-        this.window           = this.platform.CreateWindow("Age", 600, 400, 800, 300);
-        this.renderingService = new(platform.Renderer);
-        this.textService      = new(this.renderingService);
+        Window.Register("Engine", this.renderer);
+
+        this.mainWindow = new Window("Age", new(600, 400), new(800, 300));
+
+        Singleton.RenderingService = this.renderingService = new(this.renderer);
+        Singleton.TextService      = this.textService      = new(this.renderingService);
     }
 
     protected virtual void Dispose(bool disposing)
@@ -30,6 +32,8 @@ public class Engine : IDisposable
         {
             if (disposing)
             {
+                Window.CloseAll();
+
                 this.textService.Dispose();
                 this.renderingService.Dispose();
             }
@@ -48,20 +52,31 @@ public class Engine : IDisposable
     {
         this.Running = true;
 
-        this.window.Content.Add(new Label("Hello World!!!", new() { FontSize = 80, Position = new(0, 0) }));
-        this.window.Content.Add(new Label("Hello World!!!", new() { FontSize = 80, Position = new(0, 100) }));
+        var text = "ÂxHello_World!!!";
+        // var text = "Hx";
+        // var text = "H";
+
+        this.mainWindow.Content.Add(new Label(text, new() { FontSize = 200, Position = new(00, 000) }));
+        // this.mainWindow.Content.Add(new Label(text, new() { FontSize = 40, Position = new(50, -100) }));
 
         while (this.Running)
         {
-            this.platform.DoEvents();
-            this.window.Content.Update();
+            Window.DoEventsAll();
 
-            if (this.platform.CanDraw)
+            this.renderer.BeginFrame();
+
+            foreach (var window in Window.Windows)
             {
-                this.renderingService.Render(this.window);
+                if (!window.Closed && !window.Minimized)
+                {
+                    window.Content.Update();
+                    this.renderingService.Render(window);
+                }
             }
 
-            this.Running = !this.window.Closed;
+            this.renderer.EndFrame();
+
+            this.Running = Window.Windows.Any(x => !x.Closed);
         }
     }
 }

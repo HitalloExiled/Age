@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Age.Platforms.Windows.Native.Types;
 
-[assembly: InternalsVisibleTo("Age.Platforms.Windows.Display")]
+[assembly: InternalsVisibleTo("Age.Rendering")]
 
 namespace Age.Platforms.Windows.Native;
 

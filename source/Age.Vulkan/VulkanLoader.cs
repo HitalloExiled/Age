@@ -1,15 +1,16 @@
 using System.Diagnostics.CodeAnalysis;
 using Age.Core;
+using Age.Platforms;
 using Age.Vulkan.Interfaces;
 
-namespace Age.Platforms.Windows.Vulkan;
+namespace Age.Vulkan;
 
-public class WindowsVulkanLoader : IVulkanLoader
+public class VulkanLoader : IVulkanLoader
 {
     private bool disposed;
-    private readonly WindowsLibrary library = new("vulkan-1.dll");
+    private readonly Library library = new("vulkan-1.dll");
 
-    ~WindowsVulkanLoader() =>
+    ~VulkanLoader() =>
         this.Dispose(false);
 
     protected virtual void Dispose(bool disposing)

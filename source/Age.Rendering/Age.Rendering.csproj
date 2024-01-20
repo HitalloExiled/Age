@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
     <ProjectReference Include="..\Age.Numerics\Age.Numerics.csproj" />
+    <ProjectReference Include="..\Age.Platforms\Age.Platforms.csproj" />
     <ProjectReference Include="..\Age.Vulkan\Age.Vulkan.csproj" />
   </ItemGroup>
 

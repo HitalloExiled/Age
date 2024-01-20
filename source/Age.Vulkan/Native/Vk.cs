@@ -12,7 +12,7 @@ using static Age.Core.Unsafe.UnmanagedUtils;
 
 namespace Age.Vulkan.Native;
 
-public unsafe class Vk(IVulkanLoader loader)
+public unsafe class Vk : IDisposable
 {
     /// <summary>
     /// The length in char values of an array containing a string with additional descriptive information about a query, as returned in <see cref="VkLayerProperties.description"/> and other queries.
@@ -298,87 +298,173 @@ public unsafe class Vk(IVulkanLoader loader)
 
     private readonly Dictionary<string, HashSet<string>> deviceExtensionsMap   = [];
     private readonly Dictionary<string, HashSet<string>> instanceExtensionsMap = [];
+    private readonly VulkanLoader                        loader                = new();
 
-    private readonly VkAllocateCommandBuffers                 vkAllocateCommandBuffers                 = loader.Load<VkAllocateCommandBuffers>(nameof(vkAllocateCommandBuffers));
-    private readonly VkAllocateDescriptorSets                 vkAllocateDescriptorSets                 = loader.Load<VkAllocateDescriptorSets>(nameof(vkAllocateDescriptorSets));
-    private readonly VkAllocateMemory                         vkAllocateMemory                         = loader.Load<VkAllocateMemory>(nameof(vkAllocateMemory));
-    private readonly VkBeginCommandBuffer                     vkBeginCommandBuffer                     = loader.Load<VkBeginCommandBuffer>(nameof(vkBeginCommandBuffer));
-    private readonly VkBindBufferMemory                       vkBindBufferMemory                       = loader.Load<VkBindBufferMemory>(nameof(vkBindBufferMemory));
-    private readonly VkBindImageMemory                        vkBindImageMemory                        = loader.Load<VkBindImageMemory>(nameof(vkBindImageMemory));
-    private readonly VkCmdBeginRenderPass                     vkCmdBeginRenderPass                     = loader.Load<VkCmdBeginRenderPass>(nameof(vkCmdBeginRenderPass));
-    private readonly VkCmdBindIndexBuffer                     vkCmdBindIndexBuffer                     = loader.Load<VkCmdBindIndexBuffer>(nameof(vkCmdBindIndexBuffer));
-    private readonly VkCmdBindDescriptorSets                  vkCmdBindDescriptorSets                  = loader.Load<VkCmdBindDescriptorSets>(nameof(vkCmdBindDescriptorSets));
-    private readonly VkCmdBindPipeline                        vkCmdBindPipeline                        = loader.Load<VkCmdBindPipeline>(nameof(vkCmdBindPipeline));
-    private readonly VkCmdBindVertexBuffers                   vkCmdBindVertexBuffers                   = loader.Load<VkCmdBindVertexBuffers>(nameof(vkCmdBindVertexBuffers));
-    private readonly VkCmdBlitImage                           vkCmdBlitImage                           = loader.Load<VkCmdBlitImage>(nameof(vkCmdBlitImage));
-    private readonly VkCmdClearColorImage                     vkCmdClearColorImage                     = loader.Load<VkCmdClearColorImage>(nameof(vkCmdClearColorImage));
-    private readonly VkCmdCopyBuffer                          vkCmdCopyBuffer                          = loader.Load<VkCmdCopyBuffer>(nameof(vkCmdCopyBuffer));
-    private readonly VkCmdCopyBufferToImage                   vkCmdCopyBufferToImage                   = loader.Load<VkCmdCopyBufferToImage>(nameof(vkCmdCopyBufferToImage));
-    private readonly VkCmdDraw                                vkCmdDraw                                = loader.Load<VkCmdDraw>(nameof(vkCmdDraw));
-    private readonly VkCmdDrawIndexed                         vkCmdDrawIndexed                         = loader.Load<VkCmdDrawIndexed>(nameof(vkCmdDrawIndexed));
-    private readonly VkCmdEndRenderPass                       vkCmdEndRenderPass                       = loader.Load<VkCmdEndRenderPass>(nameof(vkCmdEndRenderPass));
-    private readonly VkCmdPipelineBarrier                     vkCmdPipelineBarrier                     = loader.Load<VkCmdPipelineBarrier>(nameof(vkCmdPipelineBarrier));
-    private readonly VkCmdSetScissor                          vkCmdSetScissor                          = loader.Load<VkCmdSetScissor>(nameof(vkCmdSetScissor));
-    private readonly VkCmdSetViewport                         vkCmdSetViewport                         = loader.Load<VkCmdSetViewport>(nameof(vkCmdSetViewport));
-    private readonly VkCreateBuffer                           vkCreateBuffer                           = loader.Load<VkCreateBuffer>(nameof(vkCreateBuffer));
-    private readonly VkCreateCommandPool                      vkCreateCommandPool                      = loader.Load<VkCreateCommandPool>(nameof(vkCreateCommandPool));
-    private readonly VkCreateDescriptorPool                   vkCreateDescriptorPool                   = loader.Load<VkCreateDescriptorPool>(nameof(vkCreateDescriptorPool));
-    private readonly VkCreateDescriptorSetLayout              vkCreateDescriptorSetLayout              = loader.Load<VkCreateDescriptorSetLayout>(nameof(vkCreateDescriptorSetLayout));
-    private readonly VkCreateDevice                           vkCreateDevice                           = loader.Load<VkCreateDevice>(nameof(vkCreateDevice));
-    private readonly VkCreateFence                            vkCreateFence                            = loader.Load<VkCreateFence>(nameof(vkCreateFence));
-    private readonly VkCreateFramebuffer                      vkCreateFramebuffer                      = loader.Load<VkCreateFramebuffer>(nameof(vkCreateFramebuffer));
-    private readonly VkCreateGraphicsPipelines                vkCreateGraphicsPipelines                = loader.Load<VkCreateGraphicsPipelines>(nameof(vkCreateGraphicsPipelines));
-    private readonly VkCreateImage                            vkCreateImage                            = loader.Load<VkCreateImage>(nameof(vkCreateImage));
-    private readonly VkCreateImageView                        vkCreateImageView                        = loader.Load<VkCreateImageView>(nameof(vkCreateImageView));
-    private readonly VkCreateInstance                         vkCreateInstance                         = loader.Load<VkCreateInstance>(nameof(vkCreateInstance));
-    private readonly VkCreatePipelineLayout                   vkCreatePipelineLayout                   = loader.Load<VkCreatePipelineLayout>(nameof(vkCreatePipelineLayout));
-    private readonly VkCreateRenderPass                       vkCreateRenderPass                       = loader.Load<VkCreateRenderPass>(nameof(vkCreateRenderPass));
-    private readonly VkCreateSampler                          vkCreateSampler                          = loader.Load<VkCreateSampler>(nameof(vkCreateSampler));
-    private readonly VkCreateSemaphore                        vkCreateSemaphore                        = loader.Load<VkCreateSemaphore>(nameof(vkCreateSemaphore));
-    private readonly VkCreateShaderModule                     vkCreateShaderModule                     = loader.Load<VkCreateShaderModule>(nameof(vkCreateShaderModule));
-    private readonly VkDestroyBuffer                          vkDestroyBuffer                          = loader.Load<VkDestroyBuffer>(nameof(vkDestroyBuffer));
-    private readonly VkDestroyCommandPool                     vkDestroyCommandPool                     = loader.Load<VkDestroyCommandPool>(nameof(vkDestroyCommandPool));
-    private readonly VkDestroyDescriptorPool                  vkDestroyDescriptorPool                  = loader.Load<VkDestroyDescriptorPool>(nameof(vkDestroyDescriptorPool));
-    private readonly VkDestroyDescriptorSetLayout             vkDestroyDescriptorSetLayout             = loader.Load<VkDestroyDescriptorSetLayout>(nameof(vkDestroyDescriptorSetLayout));
-    private readonly VkDestroyDevice                          vkDestroyDevice                          = loader.Load<VkDestroyDevice>(nameof(vkDestroyDevice));
-    private readonly VkDestroyFence                           vkDestroyFence                           = loader.Load<VkDestroyFence>(nameof(vkDestroyFence));
-    private readonly VkDestroyFramebuffer                     vkDestroyFramebuffer                     = loader.Load<VkDestroyFramebuffer>(nameof(vkDestroyFramebuffer));
-    private readonly VkDestroyImage                           vkDestroyImage                           = loader.Load<VkDestroyImage>(nameof(vkDestroyImage));
-    private readonly VkDestroyImageView                       vkDestroyImageView                       = loader.Load<VkDestroyImageView>(nameof(vkDestroyImageView));
-    private readonly VkDestroyInstance                        vkDestroyInstance                        = loader.Load<VkDestroyInstance>(nameof(vkDestroyInstance));
-    private readonly VkDestroyPipeline                        vkDestroyPipeline                        = loader.Load<VkDestroyPipeline>(nameof(vkDestroyPipeline));
-    private readonly VkDestroyPipelineLayout                  vkDestroyPipelineLayout                  = loader.Load<VkDestroyPipelineLayout>(nameof(vkDestroyPipelineLayout));
-    private readonly VkDestroyRenderPass                      vkDestroyRenderPass                      = loader.Load<VkDestroyRenderPass>(nameof(vkDestroyRenderPass));
-    private readonly VkDestroySampler                         vkDestroySampler                         = loader.Load<VkDestroySampler>(nameof(vkDestroySampler));
-    private readonly VkDestroySemaphore                       vkDestroySemaphore                       = loader.Load<VkDestroySemaphore>(nameof(vkDestroySemaphore));
-    private readonly VkDestroyShaderModule                    vkDestroyShaderModule                    = loader.Load<VkDestroyShaderModule>(nameof(vkDestroyShaderModule));
-    private readonly VkDeviceWaitIdle                         vkDeviceWaitIdle                         = loader.Load<VkDeviceWaitIdle>(nameof(vkDeviceWaitIdle));
-    private readonly VkEndCommandBuffer                       vkEndCommandBuffer                       = loader.Load<VkEndCommandBuffer>(nameof(vkEndCommandBuffer));
-    private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties     = loader.Load<VkEnumerateDeviceExtensionProperties>(nameof(vkEnumerateDeviceExtensionProperties));
-    private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties   = loader.Load<VkEnumerateInstanceExtensionProperties>(nameof(vkEnumerateInstanceExtensionProperties));
-    private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties       = loader.Load<VkEnumerateInstanceLayerProperties>(nameof(vkEnumerateInstanceLayerProperties));
-    private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices               = loader.Load<VkEnumeratePhysicalDevices>(nameof(vkEnumeratePhysicalDevices));
-    private readonly VkFreeCommandBuffers                     vkFreeCommandBuffers                     = loader.Load<VkFreeCommandBuffers>(nameof(vkFreeCommandBuffers));
-    private readonly VkFreeDescriptorSets                     vkFreeDescriptorSets                     = loader.Load<VkFreeDescriptorSets>(nameof(vkFreeDescriptorSets));
-    private readonly VkFreeMemory                             vkFreeMemory                             = loader.Load<VkFreeMemory>(nameof(vkFreeMemory));
-    private readonly VkGetBufferMemoryRequirements            vkGetBufferMemoryRequirements            = loader.Load<VkGetBufferMemoryRequirements>(nameof(vkGetBufferMemoryRequirements));
-    private readonly VkGetDeviceProcAddr                      vkGetDeviceProcAddr                      = loader.Load<VkGetDeviceProcAddr>(nameof(vkGetDeviceProcAddr));
-    private readonly VkGetDeviceQueue                         vkGetDeviceQueue                         = loader.Load<VkGetDeviceQueue>(nameof(vkGetDeviceQueue));
-    private readonly VkGetImageMemoryRequirements             vkGetImageMemoryRequirements             = loader.Load<VkGetImageMemoryRequirements>(nameof(vkGetImageMemoryRequirements));
-    private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr                    = loader.Load<VkGetInstanceProcAddr>(nameof(vkGetInstanceProcAddr));
-    private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures              = loader.Load<VkGetPhysicalDeviceFeatures>(nameof(vkGetPhysicalDeviceFeatures));
-    private readonly VkGetPhysicalDeviceFormatProperties      vkGetPhysicalDeviceFormatProperties      = loader.Load<VkGetPhysicalDeviceFormatProperties>(nameof(vkGetPhysicalDeviceFormatProperties));
-    private readonly VkGetPhysicalDeviceMemoryProperties      vkGetPhysicalDeviceMemoryProperties      = loader.Load<VkGetPhysicalDeviceMemoryProperties>(nameof(vkGetPhysicalDeviceMemoryProperties));
-    private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties            = loader.Load<VkGetPhysicalDeviceProperties>(nameof(vkGetPhysicalDeviceProperties));
-    private readonly VkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = loader.Load<VkGetPhysicalDeviceQueueFamilyProperties>(nameof(vkGetPhysicalDeviceQueueFamilyProperties));
-    private readonly VkMapMemory                              vkMapMemory                              = loader.Load<VkMapMemory>(nameof(vkMapMemory));
-    private readonly VkQueueSubmit                            vkQueueSubmit                            = loader.Load<VkQueueSubmit>(nameof(vkQueueSubmit));
-    private readonly VkQueueWaitIdle                          vkQueueWaitIdle                          = loader.Load<VkQueueWaitIdle>(nameof(vkQueueWaitIdle));
-    private readonly VkResetCommandBuffer                     vkResetCommandBuffer                     = loader.Load<VkResetCommandBuffer>(nameof(vkResetCommandBuffer));
-    private readonly VkResetFences                            vkResetFences                            = loader.Load<VkResetFences>(nameof(vkResetFences));
-    private readonly VkUnmapMemory                            vkUnmapMemory                            = loader.Load<VkUnmapMemory>(nameof(vkUnmapMemory));
-    private readonly VkUpdateDescriptorSets                   vkUpdateDescriptorSets                   = loader.Load<VkUpdateDescriptorSets>(nameof(vkUpdateDescriptorSets));
-    private readonly VkWaitForFences                          vkWaitForFences                          = loader.Load<VkWaitForFences>(nameof(vkWaitForFences));
+    private readonly VkAllocateCommandBuffers                 vkAllocateCommandBuffers;
+    private readonly VkAllocateDescriptorSets                 vkAllocateDescriptorSets;
+    private readonly VkAllocateMemory                         vkAllocateMemory;
+    private readonly VkBeginCommandBuffer                     vkBeginCommandBuffer;
+    private readonly VkBindBufferMemory                       vkBindBufferMemory;
+    private readonly VkBindImageMemory                        vkBindImageMemory;
+    private readonly VkCmdBeginRenderPass                     vkCmdBeginRenderPass;
+    private readonly VkCmdBindDescriptorSets                  vkCmdBindDescriptorSets;
+    private readonly VkCmdBindIndexBuffer                     vkCmdBindIndexBuffer;
+    private readonly VkCmdBindPipeline                        vkCmdBindPipeline;
+    private readonly VkCmdBindVertexBuffers                   vkCmdBindVertexBuffers;
+    private readonly VkCmdBlitImage                           vkCmdBlitImage;
+    private readonly VkCmdClearColorImage                     vkCmdClearColorImage;
+    private readonly VkCmdCopyBuffer                          vkCmdCopyBuffer;
+    private readonly VkCmdCopyBufferToImage                   vkCmdCopyBufferToImage;
+    private readonly VkCmdDraw                                vkCmdDraw;
+    private readonly VkCmdDrawIndexed                         vkCmdDrawIndexed;
+    private readonly VkCmdEndRenderPass                       vkCmdEndRenderPass;
+    private readonly VkCmdPipelineBarrier                     vkCmdPipelineBarrier;
+    private readonly VkCmdSetScissor                          vkCmdSetScissor;
+    private readonly VkCmdSetViewport                         vkCmdSetViewport;
+    private readonly VkCreateBuffer                           vkCreateBuffer;
+    private readonly VkCreateCommandPool                      vkCreateCommandPool;
+    private readonly VkCreateDescriptorPool                   vkCreateDescriptorPool;
+    private readonly VkCreateDescriptorSetLayout              vkCreateDescriptorSetLayout;
+    private readonly VkCreateDevice                           vkCreateDevice;
+    private readonly VkCreateFence                            vkCreateFence;
+    private readonly VkCreateFramebuffer                      vkCreateFramebuffer;
+    private readonly VkCreateGraphicsPipelines                vkCreateGraphicsPipelines;
+    private readonly VkCreateImage                            vkCreateImage;
+    private readonly VkCreateImageView                        vkCreateImageView;
+    private readonly VkCreateInstance                         vkCreateInstance;
+    private readonly VkCreatePipelineLayout                   vkCreatePipelineLayout;
+    private readonly VkCreateRenderPass                       vkCreateRenderPass;
+    private readonly VkCreateSampler                          vkCreateSampler;
+    private readonly VkCreateSemaphore                        vkCreateSemaphore;
+    private readonly VkCreateShaderModule                     vkCreateShaderModule;
+    private readonly VkDestroyBuffer                          vkDestroyBuffer;
+    private readonly VkDestroyCommandPool                     vkDestroyCommandPool;
+    private readonly VkDestroyDescriptorPool                  vkDestroyDescriptorPool;
+    private readonly VkDestroyDescriptorSetLayout             vkDestroyDescriptorSetLayout;
+    private readonly VkDestroyDevice                          vkDestroyDevice;
+    private readonly VkDestroyFence                           vkDestroyFence;
+    private readonly VkDestroyFramebuffer                     vkDestroyFramebuffer;
+    private readonly VkDestroyImage                           vkDestroyImage;
+    private readonly VkDestroyImageView                       vkDestroyImageView;
+    private readonly VkDestroyInstance                        vkDestroyInstance;
+    private readonly VkDestroyPipeline                        vkDestroyPipeline;
+    private readonly VkDestroyPipelineLayout                  vkDestroyPipelineLayout;
+    private readonly VkDestroyRenderPass                      vkDestroyRenderPass;
+    private readonly VkDestroySampler                         vkDestroySampler;
+    private readonly VkDestroySemaphore                       vkDestroySemaphore;
+    private readonly VkDestroyShaderModule                    vkDestroyShaderModule;
+    private readonly VkDeviceWaitIdle                         vkDeviceWaitIdle;
+    private readonly VkEndCommandBuffer                       vkEndCommandBuffer;
+    private readonly VkEnumerateDeviceExtensionProperties     vkEnumerateDeviceExtensionProperties;
+    private readonly VkEnumerateInstanceExtensionProperties   vkEnumerateInstanceExtensionProperties;
+    private readonly VkEnumerateInstanceLayerProperties       vkEnumerateInstanceLayerProperties;
+    private readonly VkEnumeratePhysicalDevices               vkEnumeratePhysicalDevices;
+    private readonly VkFreeCommandBuffers                     vkFreeCommandBuffers;
+    private readonly VkFreeDescriptorSets                     vkFreeDescriptorSets;
+    private readonly VkFreeMemory                             vkFreeMemory;
+    private readonly VkGetBufferMemoryRequirements            vkGetBufferMemoryRequirements;
+    private readonly VkGetDeviceProcAddr                      vkGetDeviceProcAddr;
+    private readonly VkGetDeviceQueue                         vkGetDeviceQueue;
+    private readonly VkGetImageMemoryRequirements             vkGetImageMemoryRequirements;
+    private readonly VkGetInstanceProcAddr                    vkGetInstanceProcAddr;
+    private readonly VkGetPhysicalDeviceFeatures              vkGetPhysicalDeviceFeatures;
+    private readonly VkGetPhysicalDeviceFormatProperties      vkGetPhysicalDeviceFormatProperties;
+    private readonly VkGetPhysicalDeviceMemoryProperties      vkGetPhysicalDeviceMemoryProperties;
+    private readonly VkGetPhysicalDeviceProperties            vkGetPhysicalDeviceProperties;
+    private readonly VkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties;
+    private readonly VkMapMemory                              vkMapMemory;
+    private readonly VkQueueSubmit                            vkQueueSubmit;
+    private readonly VkQueueWaitIdle                          vkQueueWaitIdle;
+    private readonly VkResetCommandBuffer                     vkResetCommandBuffer;
+    private readonly VkResetFences                            vkResetFences;
+    private readonly VkUnmapMemory                            vkUnmapMemory;
+    private readonly VkUpdateDescriptorSets                   vkUpdateDescriptorSets;
+    private readonly VkWaitForFences                          vkWaitForFences;
+    private bool disposedValue;
+
+    public Vk()
+    {
+        this.vkAllocateCommandBuffers                 = this.loader.Load<VkAllocateCommandBuffers>(nameof(this.vkAllocateCommandBuffers));
+        this.vkAllocateDescriptorSets                 = this.loader.Load<VkAllocateDescriptorSets>(nameof(this.vkAllocateDescriptorSets));
+        this.vkAllocateMemory                         = this.loader.Load<VkAllocateMemory>(nameof(this.vkAllocateMemory));
+        this.vkBeginCommandBuffer                     = this.loader.Load<VkBeginCommandBuffer>(nameof(this.vkBeginCommandBuffer));
+        this.vkBindBufferMemory                       = this.loader.Load<VkBindBufferMemory>(nameof(this.vkBindBufferMemory));
+        this.vkBindImageMemory                        = this.loader.Load<VkBindImageMemory>(nameof(this.vkBindImageMemory));
+        this.vkCmdBeginRenderPass                     = this.loader.Load<VkCmdBeginRenderPass>(nameof(this.vkCmdBeginRenderPass));
+        this.vkCmdBindIndexBuffer                     = this.loader.Load<VkCmdBindIndexBuffer>(nameof(this.vkCmdBindIndexBuffer));
+        this.vkCmdBindDescriptorSets                  = this.loader.Load<VkCmdBindDescriptorSets>(nameof(this.vkCmdBindDescriptorSets));
+        this.vkCmdBindPipeline                        = this.loader.Load<VkCmdBindPipeline>(nameof(this.vkCmdBindPipeline));
+        this.vkCmdBindVertexBuffers                   = this.loader.Load<VkCmdBindVertexBuffers>(nameof(this.vkCmdBindVertexBuffers));
+        this.vkCmdBlitImage                           = this.loader.Load<VkCmdBlitImage>(nameof(this.vkCmdBlitImage));
+        this.vkCmdClearColorImage                     = this.loader.Load<VkCmdClearColorImage>(nameof(this.vkCmdClearColorImage));
+        this.vkCmdCopyBuffer                          = this.loader.Load<VkCmdCopyBuffer>(nameof(this.vkCmdCopyBuffer));
+        this.vkCmdCopyBufferToImage                   = this.loader.Load<VkCmdCopyBufferToImage>(nameof(this.vkCmdCopyBufferToImage));
+        this.vkCmdDraw                                = this.loader.Load<VkCmdDraw>(nameof(this.vkCmdDraw));
+        this.vkCmdDrawIndexed                         = this.loader.Load<VkCmdDrawIndexed>(nameof(this.vkCmdDrawIndexed));
+        this.vkCmdEndRenderPass                       = this.loader.Load<VkCmdEndRenderPass>(nameof(this.vkCmdEndRenderPass));
+        this.vkCmdPipelineBarrier                     = this.loader.Load<VkCmdPipelineBarrier>(nameof(this.vkCmdPipelineBarrier));
+        this.vkCmdSetScissor                          = this.loader.Load<VkCmdSetScissor>(nameof(this.vkCmdSetScissor));
+        this.vkCmdSetViewport                         = this.loader.Load<VkCmdSetViewport>(nameof(this.vkCmdSetViewport));
+        this.vkCreateBuffer                           = this.loader.Load<VkCreateBuffer>(nameof(this.vkCreateBuffer));
+        this.vkCreateCommandPool                      = this.loader.Load<VkCreateCommandPool>(nameof(this.vkCreateCommandPool));
+        this.vkCreateDescriptorPool                   = this.loader.Load<VkCreateDescriptorPool>(nameof(this.vkCreateDescriptorPool));
+        this.vkCreateDescriptorSetLayout              = this.loader.Load<VkCreateDescriptorSetLayout>(nameof(this.vkCreateDescriptorSetLayout));
+        this.vkCreateDevice                           = this.loader.Load<VkCreateDevice>(nameof(this.vkCreateDevice));
+        this.vkCreateFence                            = this.loader.Load<VkCreateFence>(nameof(this.vkCreateFence));
+        this.vkCreateFramebuffer                      = this.loader.Load<VkCreateFramebuffer>(nameof(this.vkCreateFramebuffer));
+        this.vkCreateGraphicsPipelines                = this.loader.Load<VkCreateGraphicsPipelines>(nameof(this.vkCreateGraphicsPipelines));
+        this.vkCreateImage                            = this.loader.Load<VkCreateImage>(nameof(this.vkCreateImage));
+        this.vkCreateImageView                        = this.loader.Load<VkCreateImageView>(nameof(this.vkCreateImageView));
+        this.vkCreateInstance                         = this.loader.Load<VkCreateInstance>(nameof(this.vkCreateInstance));
+        this.vkCreatePipelineLayout                   = this.loader.Load<VkCreatePipelineLayout>(nameof(this.vkCreatePipelineLayout));
+        this.vkCreateRenderPass                       = this.loader.Load<VkCreateRenderPass>(nameof(this.vkCreateRenderPass));
+        this.vkCreateSampler                          = this.loader.Load<VkCreateSampler>(nameof(this.vkCreateSampler));
+        this.vkCreateSemaphore                        = this.loader.Load<VkCreateSemaphore>(nameof(this.vkCreateSemaphore));
+        this.vkCreateShaderModule                     = this.loader.Load<VkCreateShaderModule>(nameof(this.vkCreateShaderModule));
+        this.vkDestroyBuffer                          = this.loader.Load<VkDestroyBuffer>(nameof(this.vkDestroyBuffer));
+        this.vkDestroyCommandPool                     = this.loader.Load<VkDestroyCommandPool>(nameof(this.vkDestroyCommandPool));
+        this.vkDestroyDescriptorPool                  = this.loader.Load<VkDestroyDescriptorPool>(nameof(this.vkDestroyDescriptorPool));
+        this.vkDestroyDescriptorSetLayout             = this.loader.Load<VkDestroyDescriptorSetLayout>(nameof(this.vkDestroyDescriptorSetLayout));
+        this.vkDestroyDevice                          = this.loader.Load<VkDestroyDevice>(nameof(this.vkDestroyDevice));
+        this.vkDestroyFence                           = this.loader.Load<VkDestroyFence>(nameof(this.vkDestroyFence));
+        this.vkDestroyFramebuffer                     = this.loader.Load<VkDestroyFramebuffer>(nameof(this.vkDestroyFramebuffer));
+        this.vkDestroyImage                           = this.loader.Load<VkDestroyImage>(nameof(this.vkDestroyImage));
+        this.vkDestroyImageView                       = this.loader.Load<VkDestroyImageView>(nameof(this.vkDestroyImageView));
+        this.vkDestroyInstance                        = this.loader.Load<VkDestroyInstance>(nameof(this.vkDestroyInstance));
+        this.vkDestroyPipeline                        = this.loader.Load<VkDestroyPipeline>(nameof(this.vkDestroyPipeline));
+        this.vkDestroyPipelineLayout                  = this.loader.Load<VkDestroyPipelineLayout>(nameof(this.vkDestroyPipelineLayout));
+        this.vkDestroyRenderPass                      = this.loader.Load<VkDestroyRenderPass>(nameof(this.vkDestroyRenderPass));
+        this.vkDestroySampler                         = this.loader.Load<VkDestroySampler>(nameof(this.vkDestroySampler));
+        this.vkDestroySemaphore                       = this.loader.Load<VkDestroySemaphore>(nameof(this.vkDestroySemaphore));
+        this.vkDestroyShaderModule                    = this.loader.Load<VkDestroyShaderModule>(nameof(this.vkDestroyShaderModule));
+        this.vkDeviceWaitIdle                         = this.loader.Load<VkDeviceWaitIdle>(nameof(this.vkDeviceWaitIdle));
+        this.vkEndCommandBuffer                       = this.loader.Load<VkEndCommandBuffer>(nameof(this.vkEndCommandBuffer));
+        this.vkEnumerateDeviceExtensionProperties     = this.loader.Load<VkEnumerateDeviceExtensionProperties>(nameof(this.vkEnumerateDeviceExtensionProperties));
+        this.vkEnumerateInstanceExtensionProperties   = this.loader.Load<VkEnumerateInstanceExtensionProperties>(nameof(this.vkEnumerateInstanceExtensionProperties));
+        this.vkEnumerateInstanceLayerProperties       = this.loader.Load<VkEnumerateInstanceLayerProperties>(nameof(this.vkEnumerateInstanceLayerProperties));
+        this.vkEnumeratePhysicalDevices               = this.loader.Load<VkEnumeratePhysicalDevices>(nameof(this.vkEnumeratePhysicalDevices));
+        this.vkFreeCommandBuffers                     = this.loader.Load<VkFreeCommandBuffers>(nameof(this.vkFreeCommandBuffers));
+        this.vkFreeDescriptorSets                     = this.loader.Load<VkFreeDescriptorSets>(nameof(this.vkFreeDescriptorSets));
+        this.vkFreeMemory                             = this.loader.Load<VkFreeMemory>(nameof(this.vkFreeMemory));
+        this.vkGetBufferMemoryRequirements            = this.loader.Load<VkGetBufferMemoryRequirements>(nameof(this.vkGetBufferMemoryRequirements));
+        this.vkGetDeviceProcAddr                      = this.loader.Load<VkGetDeviceProcAddr>(nameof(this.vkGetDeviceProcAddr));
+        this.vkGetDeviceQueue                         = this.loader.Load<VkGetDeviceQueue>(nameof(this.vkGetDeviceQueue));
+        this.vkGetImageMemoryRequirements             = this.loader.Load<VkGetImageMemoryRequirements>(nameof(this.vkGetImageMemoryRequirements));
+        this.vkGetInstanceProcAddr                    = this.loader.Load<VkGetInstanceProcAddr>(nameof(this.vkGetInstanceProcAddr));
+        this.vkGetPhysicalDeviceFeatures              = this.loader.Load<VkGetPhysicalDeviceFeatures>(nameof(this.vkGetPhysicalDeviceFeatures));
+        this.vkGetPhysicalDeviceFormatProperties      = this.loader.Load<VkGetPhysicalDeviceFormatProperties>(nameof(this.vkGetPhysicalDeviceFormatProperties));
+        this.vkGetPhysicalDeviceMemoryProperties      = this.loader.Load<VkGetPhysicalDeviceMemoryProperties>(nameof(this.vkGetPhysicalDeviceMemoryProperties));
+        this.vkGetPhysicalDeviceProperties            = this.loader.Load<VkGetPhysicalDeviceProperties>(nameof(this.vkGetPhysicalDeviceProperties));
+        this.vkGetPhysicalDeviceQueueFamilyProperties = this.loader.Load<VkGetPhysicalDeviceQueueFamilyProperties>(nameof(this.vkGetPhysicalDeviceQueueFamilyProperties));
+        this.vkMapMemory                              = this.loader.Load<VkMapMemory>(nameof(this.vkMapMemory));
+        this.vkQueueSubmit                            = this.loader.Load<VkQueueSubmit>(nameof(this.vkQueueSubmit));
+        this.vkQueueWaitIdle                          = this.loader.Load<VkQueueWaitIdle>(nameof(this.vkQueueWaitIdle));
+        this.vkResetCommandBuffer                     = this.loader.Load<VkResetCommandBuffer>(nameof(this.vkResetCommandBuffer));
+        this.vkResetFences                            = this.loader.Load<VkResetFences>(nameof(this.vkResetFences));
+        this.vkUnmapMemory                            = this.loader.Load<VkUnmapMemory>(nameof(this.vkUnmapMemory));
+        this.vkUpdateDescriptorSets                   = this.loader.Load<VkUpdateDescriptorSets>(nameof(this.vkUpdateDescriptorSets));
+        this.vkWaitForFences                          = this.loader.Load<VkWaitForFences>(nameof(this.vkWaitForFences));
+    }
 
     public static uint ApiVersion_1_0 { get; } = MakeApiVersion(0, 1, 0, 0);
 
@@ -389,7 +475,7 @@ public unsafe class Vk(IVulkanLoader loader)
     {
         fixed (byte* pName = Encoding.UTF8.GetBytes(name))
         {
-            var pointer = this.vkGetDeviceProcAddr.Invoke(device, pName);
+            var pointer                               = this.vkGetDeviceProcAddr.Invoke(device, pName);
 
             return pointer != null
                 ? Marshal.GetDelegateForFunctionPointer<T>((nint)pointer)
@@ -401,7 +487,7 @@ public unsafe class Vk(IVulkanLoader loader)
     {
         fixed (byte* pName = Encoding.UTF8.GetBytes(name))
         {
-            var pointer = this.vkGetInstanceProcAddr.Invoke(instance, pName);
+            var pointer                               = this.vkGetInstanceProcAddr.Invoke(instance, pName);
 
             return pointer != null
                 ? Marshal.GetDelegateForFunctionPointer<T>((nint)pointer)
@@ -409,6 +495,19 @@ public unsafe class Vk(IVulkanLoader loader)
         }
     }
 
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposedValue)
+        {
+            if (disposing)
+            {
+                // TODO: dispose managed state (managed objects)
+            }
+
+            this.loader.Dispose();
+            this.disposedValue = true;
+        }
+    }
 
     /// <summary>
     /// <para>Allocate command buffers from an existing command pool</para>
@@ -1576,6 +1675,13 @@ public unsafe class Vk(IVulkanLoader loader)
     public VkResult DeviceWaitIdle(VkDevice device) =>
         this.vkDeviceWaitIdle.Invoke(device);
 
+    public void Dispose()
+    {
+        // Não altere este código. Coloque o código de limpeza no método 'Dispose(bool disposing)'
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
     /// <summary>
     /// <para>Finish recording a command buffer.</para>
     /// <para>The command buffer must have been in the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">recording state</see>, and, if successful, is moved to the <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#commandbuffers-lifecycle">executable state</see>.</para>
@@ -1829,7 +1935,7 @@ public unsafe class Vk(IVulkanLoader loader)
     {
         fixed (byte* pName = Encoding.UTF8.GetBytes(name))
         {
-            var pointer = this.vkGetDeviceProcAddr.Invoke(device, pName);
+            var pointer                               = this.vkGetDeviceProcAddr.Invoke(device, pName);
 
             return pointer != null ? Marshal.GetDelegateForFunctionPointer<T>((nint)pointer) : null;
         }
@@ -1873,7 +1979,7 @@ public unsafe class Vk(IVulkanLoader loader)
     {
         fixed (byte* pName = Encoding.UTF8.GetBytes(name))
         {
-            var pointer = this.vkGetInstanceProcAddr.Invoke(instance, pName);
+            var pointer                               = this.vkGetInstanceProcAddr.Invoke(instance, pName);
 
             return pointer != null ? Marshal.GetDelegateForFunctionPointer<T>((nint)pointer) : null;
         }
