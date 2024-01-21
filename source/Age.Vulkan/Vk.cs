@@ -1961,7 +1961,7 @@ public unsafe class Vk : IDisposable
         }
     }
 
-    public T GetInstanceExtension<T>(VkInstance instance, string? layer = default) where T : class, IVkInstanceExtension =>
+    public T GetInstanceExtension<T>(VkInstance instance, string? layer = default) where T : class, IVkInstanceExtension<T> =>
         this.TryGetInstanceExtension<T>(instance, layer, out var extension)
             ? extension
             : throw new Exception($"Cannot found extension {T.Name}");
@@ -2263,36 +2263,36 @@ public unsafe class Vk : IDisposable
         }
     }
 
-    public bool TryGetDeviceExtension<T>(VkPhysicalDevice physicalDevice, VkDevice device, string? layer, [NotNullWhen(true)] out T? extension) where T : class, IVkDeviceExtension
+    public bool TryGetDeviceExtension<T>(VkPhysicalDevice physicalDevice, VkDevice device, string? layer, [NotNullWhen(true)] out T? extension) where T : class, IVkDeviceExtension<T>
     {
         extension = null;
 
         if (this.HasDeviceExtension(physicalDevice, T.Name, layer))
         {
-            extension = (T)T.Create(this, device);
+            extension = T.Create(this, device);
         }
 
         return extension != null;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public bool TryGetDeviceExtension<T>(VkPhysicalDevice physicalDevice, VkDevice device, [NotNullWhen(true)] out T? extension) where T : class, IVkDeviceExtension =>
+    public bool TryGetDeviceExtension<T>(VkPhysicalDevice physicalDevice, VkDevice device, [NotNullWhen(true)] out T? extension) where T : class, IVkDeviceExtension<T> =>
         this.TryGetDeviceExtension(physicalDevice, device, null, out extension);
 
-    public bool TryGetInstanceExtension<T>(VkInstance instance, string? layer, [NotNullWhen(true)] out T? extension) where T : class, IVkInstanceExtension
+    public bool TryGetInstanceExtension<T>(VkInstance instance, string? layer, [NotNullWhen(true)] out T? extension) where T : class, IVkInstanceExtension<T>
     {
         extension = null;
 
         if (this.HasInstanceExtension(T.Name, layer))
         {
-            extension = (T)T.Create(this, instance);
+            extension = T.Create(this, instance);
         }
 
         return extension != null;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public bool TryGetInstanceExtension<T>(VkInstance instance, [NotNullWhen(true)] out T? extension) where T : class, IVkInstanceExtension =>
+    public bool TryGetInstanceExtension<T>(VkInstance instance, [NotNullWhen(true)] out T? extension) where T : class, IVkInstanceExtension<T> =>
         this.TryGetInstanceExtension(instance, null, out extension);
 
     /// <summary>

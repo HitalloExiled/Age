@@ -9,7 +9,7 @@ using static Age.Core.Unsafe.UnmanagedUtils;
 namespace Age.Vulkan.Extensions.EXT;
 
 /// <remarks>Provided by VK_EXT_debug_utils</remarks>
-public unsafe class VkExtDebugUtilsExtension(Vk vk, VkInstance instance) : IVkInstanceExtension
+public unsafe class VkExtDebugUtilsExtension(Vk vk, VkInstance instance) : IVkInstanceExtension<VkExtDebugUtilsExtension>
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger);
@@ -22,8 +22,8 @@ public unsafe class VkExtDebugUtilsExtension(Vk vk, VkInstance instance) : IVkIn
     private readonly VkCreateDebugUtilsMessengerEXT  vkCreateDebugUtilsMessengerEXT  = vk.GetInstanceProcAddr<VkCreateDebugUtilsMessengerEXT>(Name, instance, "vkCreateDebugUtilsMessengerEXT");
     private readonly VkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = vk.GetInstanceProcAddr<VkDestroyDebugUtilsMessengerEXT>(Name, instance, "vkDestroyDebugUtilsMessengerEXT");
 
-    public static IVkInstanceExtension Create(Vk vk, VkInstance instance) =>
-        new VkExtDebugUtilsExtension(vk, instance);
+    public static VkExtDebugUtilsExtension Create(Vk vk, VkInstance instance) =>
+        new(vk, instance);
 
     /// <summary>
     /// Create a debug messenger object

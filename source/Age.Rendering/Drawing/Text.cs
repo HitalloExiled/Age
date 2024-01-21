@@ -2,29 +2,29 @@ using Age.Rendering.Services;
 
 namespace Age.Rendering.Drawing;
 
-public class Label : Element
+public class Text : Element
 {
-    private string? text;
+    private string? value;
 
-    public string? Text  { get => this.text; set => this.UpdateText(value); }
+    public string? Value { get => this.value; set => this.UpdateText(value); }
 
-    public Label(string? text, Style? style = null)
+    public Text(string? value, Style? style = null)
     {
         if (style != null)
         {
             this.Style = style;
         }
 
-        this.Text  = text;
+        this.Value = value;
     }
 
     private void UpdateText(string? value)
     {
-        if (value != null && value != this.text)
+        if (value != null && value != this.value)
         {
             Singleton.TextService.DrawText(this, value);
 
-            this.text = value;
+            this.value = value;
         }
     }
 }

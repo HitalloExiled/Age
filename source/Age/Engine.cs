@@ -20,7 +20,7 @@ public class Engine : IDisposable
     {
         Window.Register("Engine", this.renderer);
 
-        this.mainWindow = new Window("Age", new(600, 400), new(800, 300));
+        this.mainWindow = new Window("Age", new(800, 600), new(800, 300));
 
         Singleton.RenderingService = this.renderingService = new(this.renderer);
         Singleton.TextService      = this.textService      = new(this.renderingService);
@@ -52,12 +52,12 @@ public class Engine : IDisposable
     {
         this.Running = true;
 
-        var text = "ÂxHello_World!!!";
+        var text = "ÂxHgq";
         // var text = "Hx";
         // var text = "H";
 
-        this.mainWindow.Content.Add(new Label(text, new() { FontSize = 200, Position = new(00, 000) }));
-        // this.mainWindow.Content.Add(new Label(text, new() { FontSize = 40, Position = new(50, -100) }));
+        this.mainWindow.Content.Add(new Text(text, new() { FontSize = 100, Position = new(00, 000) }));
+        this.mainWindow.Content.Add(new Text("Hello World!!!", new() { FontSize = 40, Position = new(50, -200) }));
 
         while (this.Running)
         {

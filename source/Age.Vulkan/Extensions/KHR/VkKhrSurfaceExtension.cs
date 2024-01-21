@@ -10,7 +10,7 @@ using static Age.Core.Unsafe.UnmanagedUtils;
 namespace Age.Vulkan.Extensions.KHR;
 
 /// <remarks>Provided by VK_KHR_surface</remarks>
-public unsafe class VkKhrSurfaceExtension(Vk vk, VkInstance instance) : IVkInstanceExtension
+public unsafe class VkKhrSurfaceExtension(Vk vk, VkInstance instance) : IVkInstanceExtension<VkKhrSurfaceExtension>
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, VkAllocationCallbacks* pAllocator);
@@ -35,8 +35,8 @@ public unsafe class VkKhrSurfaceExtension(Vk vk, VkInstance instance) : IVkInsta
     private readonly VkGetPhysicalDeviceSurfacePresentModesKHR vkGetPhysicalDeviceSurfacePresentModesKHR = vk.GetInstanceProcAddr<VkGetPhysicalDeviceSurfacePresentModesKHR>(Name, instance, "vkGetPhysicalDeviceSurfacePresentModesKHR");
     private readonly VkGetPhysicalDeviceSurfaceSupportKHR      vkGetPhysicalDeviceSurfaceSupportKHR      = vk.GetInstanceProcAddr<VkGetPhysicalDeviceSurfaceSupportKHR>(Name, instance, "vkGetPhysicalDeviceSurfaceSupportKHR");
 
-    public static IVkInstanceExtension Create(Vk vk, VkInstance instance) =>
-        new VkKhrSurfaceExtension(vk, instance);
+    public static VkKhrSurfaceExtension Create(Vk vk, VkInstance instance) =>
+        new(vk, instance);
 
     /// <summary>
     /// <para>Destroy a <see cref="VkSurfaceKHR"/> object.</para>

@@ -9,7 +9,7 @@ using static Age.Core.Unsafe.UnmanagedUtils;
 namespace Age.Vulkan.Extensions.KHR;
 
 /// <remarks>Provided by VK_KHR_swapchain</remarks>
-public unsafe class VkKhrSwapchainExtension(Vk vk, VkDevice device) : IVkDeviceExtension
+public unsafe class VkKhrSwapchainExtension(Vk vk, VkDevice device) : IVkDeviceExtension<VkKhrSwapchainExtension>
 {
     public static string Name { get; } = "VK_KHR_swapchain";
 
@@ -34,8 +34,8 @@ public unsafe class VkKhrSwapchainExtension(Vk vk, VkDevice device) : IVkDeviceE
     private readonly VkGetSwapchainImagesKHR vkGetSwapchainImagesKHR = vk.GetDeviceProcAddr<VkGetSwapchainImagesKHR>(Name, device, "vkGetSwapchainImagesKHR");
     private readonly VkQueuePresentKHR       vkQueuePresentKHR       = vk.GetDeviceProcAddr<VkQueuePresentKHR>(Name, device, "vkQueuePresentKHR");
 
-    public static IVkDeviceExtension Create(Vk vk, VkDevice device) =>
-        new VkKhrSwapchainExtension(vk, device);
+    public static VkKhrSwapchainExtension Create(Vk vk, VkDevice device) =>
+        new(vk, device);
 
     /// <summary>
     /// <para>Retrieve the index of the next available presentable image.</para>

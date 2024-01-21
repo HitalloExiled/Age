@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("X: {X}, Y: {Y}")]
+[DebuggerDisplay("\\{ X: {X}, Y: {Y} \\}")]
 public record struct Point<T> where T : INumber<T>
 {
     public T X;

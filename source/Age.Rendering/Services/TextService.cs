@@ -7,41 +7,21 @@ namespace Age.Rendering.Services;
 
 public partial class TextService(RenderingService renderingService) : IDisposable
 {
-    private readonly Dictionary<char, Glyph>     glyphs           = [];
-    private readonly RenderingService            renderingService = renderingService;
-    private readonly Sampler                     sampler          = renderingService.CreateSampler();
+    private readonly Dictionary<char, Glyph> glyphs           = [];
+    private readonly RenderingService        renderingService = renderingService;
+    private readonly Sampler                 sampler          = renderingService.CreateSampler();
 
     private bool disposed;
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!this.disposed)
-        {
-            if (disposing)
-            {
-                foreach (var glyph in this.glyphs.Values)
-                {
-                    this.renderingService.FreeTexture(glyph.Texture);
-                }
-
-                this.renderingService.FreeSampler(this.sampler);
-            }
-
-            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-            // TODO: set large fields to null
-            this.disposed = true;
-        }
-    }
 
     private Glyph DrawGlyph(char character, SKPaint paint)
     {
         if (!this.glyphs.TryGetValue(character, out var glyph))
         {
-            var bounds = new SKRect();
-
             var charString = character.ToString();
 
-            paint.MeasureText(charString, ref bounds);
+            var bounds = new SKRect();
+
+            paint.MeasureText(character.ToString(), ref bounds);
 
             using var bitmap = new SKBitmap((int)bounds.Width, (int)bounds.Height);
             using var canvas = new SKCanvas(bitmap);
@@ -64,11 +44,30 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
                 Character = character,
                 Bounds    = bounds,
                 Texture   = texture,
-                Size      = new(bounds.Width, bounds.Height),
             };
         }
 
         return glyph;
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
+            {
+                foreach (var glyph in this.glyphs.Values)
+                {
+                    this.renderingService.FreeTexture(glyph.Texture);
+                }
+
+                this.renderingService.FreeSampler(this.sampler);
+            }
+
+            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+            // TODO: set large fields to null
+            this.disposed = true;
+        }
     }
 
     public void DrawText(Element element, string text)
@@ -94,13 +93,23 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
         for (var i = 0; i < text.Length; i++)
         {
-            var glyph    = this.DrawGlyph(text[i], paint);
-            var position = new Point<float>(cursor + glyph.Bounds.Left, lineHeight - glyph.Bounds.Top);
-            var command  = new RectDrawCommand(new(glyph.Size, position), glyph.Texture);
+            var character = text[i];
 
-            element.Commands.Add(command);
+            if (!char.IsWhiteSpace(character))
+            {
+                var glyph    = this.DrawGlyph(character, paint);
+                var size     = new Size<float>(glyph.Bounds.Width, glyph.Bounds.Height);
+                var position = new Point<float>(cursor + glyph.Bounds.Left, lineHeight - glyph.Bounds.Top);
+                var command  = new RectDrawCommand(new(size, position), glyph.Texture);
 
-            cursor = position.X + glyph.Bounds.Right;
+                element.Commands.Add(command);
+
+                cursor = position.X + glyph.Bounds.Right;
+            }
+            else
+            {
+                cursor += paint.MeasureText(character.ToString());
+            }
         }
 
         var bounds = new SKRect();
@@ -116,7 +125,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
         var data = skimage.Encode(SKEncodedImageFormat.Png, 100);
 
-        using var stream = File.OpenWrite($"C:\\Users\\rafael.franca\\Projects\\Age\\source\\{text}.png");
+        using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"{text}.png"));
 
         data.SaveTo(stream);
     }

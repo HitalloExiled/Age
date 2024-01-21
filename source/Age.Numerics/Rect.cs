@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.Numerics;
 
 namespace Age.Numerics;
 
+[DebuggerDisplay("\\{ Size: {Size}, Position: {Position} \\}")]
 public record struct Rect<T> where T : IFloatingPoint<T>
 {
     public Size<T>  Size;

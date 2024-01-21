@@ -9,7 +9,7 @@ using static Age.Core.Unsafe.UnmanagedUtils;
 namespace Age.Vulkan.Extensions.KHR;
 
 /// <remarks>Provided by VK_KHR_win32_surface</remarks>
-public unsafe class VkKhrWin32SurfaceExtension(Vk vk, VkInstance instance) : IVkInstanceExtension
+public unsafe class VkKhrWin32SurfaceExtension(Vk vk, VkInstance instance) : IVkInstanceExtension<VkKhrWin32SurfaceExtension>
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateWin32SurfaceKHR(VkInstance instance, VkWin32SurfaceCreateInfoKHR* pCreateInfo, VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
@@ -18,8 +18,8 @@ public unsafe class VkKhrWin32SurfaceExtension(Vk vk, VkInstance instance) : IVk
 
     private readonly VkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR = vk.GetInstanceProcAddr<VkCreateWin32SurfaceKHR>(Name, instance, "vkCreateWin32SurfaceKHR");
 
-    public static IVkInstanceExtension Create(Vk vk, VkInstance instance) =>
-        new VkKhrWin32SurfaceExtension(vk, instance);
+    public static VkKhrWin32SurfaceExtension Create(Vk vk, VkInstance instance) =>
+        new(vk, instance);
 
     /// <summary>
     /// Create a VkSurfaceKHR object for an Win32 native window.
