@@ -3,25 +3,40 @@ using Age.Rendering.Commands;
 using Age.Rendering.Drawing;
 using SkiaSharp;
 
+using GlyphKey = (char, ushort);
+
 namespace Age.Rendering.Services;
 
 public partial class TextService(RenderingService renderingService) : IDisposable
 {
-    private readonly Dictionary<char, Glyph> glyphs           = [];
-    private readonly RenderingService        renderingService = renderingService;
-    private readonly Sampler                 sampler          = renderingService.CreateSampler();
+    private readonly Dictionary<GlyphKey, Glyph> glyphs           = [];
+    private readonly RenderingService            renderingService = renderingService;
+    private readonly Sampler                     sampler          = renderingService.CreateSampler();
 
     private bool disposed;
 
-    private Glyph DrawGlyph(char character, SKPaint paint)
+    private static void SaveToFile(string text, SKPaint paint)
     {
-        if (!this.glyphs.TryGetValue(character, out var glyph))
+        var drawBounds = new SKRect();
+
+        paint.MeasureText(text, ref drawBounds);
+        using var bitmap = new SKBitmap((int)drawBounds.Width, (int)drawBounds.Height);
+        using var canvas = new SKCanvas(bitmap);
+
+        canvas.DrawText(text, -drawBounds.Location.X, -drawBounds.Location.Y, paint);
+
+        var skimage = SKImage.FromBitmap(bitmap);
+
+        var data = skimage.Encode(SKEncodedImageFormat.Png, 100);
+        using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"{text.Replace('\n', '_')}.png"));
+        data.SaveTo(stream);
+    }
+
+    private Glyph DrawGlyph(char character, ushort fontSize, SKRect bounds, SKPaint paint)
+    {
+        if (!this.glyphs.TryGetValue((character, fontSize), out var glyph))
         {
             var charString = character.ToString();
-
-            var bounds = new SKRect();
-
-            paint.MeasureText(character.ToString(), ref bounds);
 
             using var bitmap = new SKBitmap((int)bounds.Width, (int)bounds.Height);
             using var canvas = new SKCanvas(bitmap);
@@ -39,10 +54,9 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
             var texture = this.renderingService.Create2DTexture(image, this.sampler);
 
-            this.glyphs[character] = glyph = new()
+            this.glyphs[(character, fontSize)] = glyph = new()
             {
                 Character = character,
-                Bounds    = bounds,
                 Texture   = texture,
             };
         }
@@ -72,8 +86,8 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
     public void DrawText(Element element, string text)
     {
-        var style    = element.Style;
-        var typeface = SKTypeface.FromFamilyName("Comic Sans", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+        var style = element.Style;
+        var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
 
         var paint = new SKPaint
         {
@@ -84,10 +98,17 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
             Typeface    = typeface,
         };
 
-        paint.GetFontMetrics(out var fontMetrics);
+        var font   = paint.ToFont();
+        var glyphs = typeface.GetGlyphs(text);
 
-        var cursor     = (float)style.Position.X;
-        var lineHeight = style.Position.Y + fontMetrics.Ascent + fontMetrics.Descent;
+        var glyphsPosition = new SKPoint[glyphs.Length];
+        var glyphsBounds   = new SKRect[glyphs.Length];
+
+        font.GetGlyphPositions(glyphs, glyphsPosition);
+        font.GetGlyphWidths(glyphs, null, glyphsBounds, paint);
+
+        var lineHeight = -glyphsBounds.Max(x => x.Height);
+        var offset     = new Point<float>(style.Position.X, style.Position.Y + lineHeight);
 
         element.Commands.Clear();
 
@@ -97,37 +118,22 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
             if (!char.IsWhiteSpace(character))
             {
-                var glyph    = this.DrawGlyph(character, paint);
-                var size     = new Size<float>(glyph.Bounds.Width, glyph.Bounds.Height);
-                var position = new Point<float>(cursor + glyph.Bounds.Left, lineHeight - glyph.Bounds.Top);
+                var bounds   = glyphsBounds[i];
+                var glyph    = this.DrawGlyph(character, style.FontSize, glyphsBounds[i], paint);
+                var size     = new Size<float>(bounds.Width, bounds.Height);
+                var position = new Point<float>(offset.X + glyphsPosition[i].X, offset.Y - glyphsBounds[i].Top);
                 var command  = new RectDrawCommand(new(size, position), glyph.Texture);
 
                 element.Commands.Add(command);
-
-                cursor = position.X + glyph.Bounds.Right;
             }
-            else
+            else if (character == '\n' && i < text.Length - 1)
             {
-                cursor += paint.MeasureText(character.ToString());
+                offset.X  = style.Position.X + -glyphsPosition[i + 1].X;
+                offset.Y += lineHeight;
             }
         }
 
-        var bounds = new SKRect();
-
-        paint.MeasureText(text, ref bounds);
-
-        using var bitmap = new SKBitmap((int)bounds.Width, (int)bounds.Height);
-        using var canvas = new SKCanvas(bitmap);
-
-        canvas.DrawText(text, -bounds.Location.X, -bounds.Location.Y, paint);
-
-        var skimage = SKImage.FromBitmap(bitmap);
-
-        var data = skimage.Encode(SKEncodedImageFormat.Png, 100);
-
-        using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"{text}.png"));
-
-        data.SaveTo(stream);
+        SaveToFile(text, paint);
     }
 
     public void Dispose()
