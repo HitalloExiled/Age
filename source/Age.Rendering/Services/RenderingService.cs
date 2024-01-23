@@ -150,7 +150,7 @@ public class RenderingService : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public Texture Create2DTexture(Image image, Sampler sampler)
+    public Texture CreateTexture(Image image, TextureType textureType, Sampler sampler)
     {
         var textureCreate = new TextureCreate
         {
@@ -170,7 +170,7 @@ public class RenderingService : IDisposable
             Handler     = textureData,
             Image       = image,
             Sampler     = sampler,
-            TextureType = TextureType.T2D,
+            TextureType = textureType,
         };
     }
 

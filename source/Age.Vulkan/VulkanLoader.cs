@@ -5,10 +5,10 @@ using Age.Vulkan.Interfaces;
 
 namespace Age.Vulkan;
 
-public class VulkanLoader : IVulkanLoader
+public partial class VulkanLoader : IVulkanLoader
 {
     private bool disposed;
-    private readonly Library library = new("vulkan-1.dll");
+    private readonly Library library = new(PLATFORM_PATH);
 
     ~VulkanLoader() =>
         this.Dispose(false);

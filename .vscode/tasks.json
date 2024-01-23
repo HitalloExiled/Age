@@ -78,8 +78,8 @@
                 "test"
             ],
             "args": [
-                // "reportgenerator", // Broken on dotnet 8
-                "-reports:\"tests/Age.Tests/TestResults/*/coverage.opencover.xml\"",
+                "reportgenerator",
+                "-reports:\"tests/*/TestResults/*/coverage.opencover.xml\"",
                 "-targetdir:\".coverage\"",
                 "-reporttypes:Html"
             ],
@@ -111,7 +111,6 @@
         {
             "label": "shader:compile",
             "windows": {
-                // "command": "scripts/shader-builder.ps1"
                 "command": "glslc ${file} -o ${file}.spv;"
             },
             "options": {

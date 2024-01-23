@@ -1,22 +1,22 @@
 namespace Age.Platforms;
 
-public partial class Library
+public partial class Library : IDisposable
 {
     private bool disposed;
 
-    public bool IsLoaded => PlatformIsLoaded();
+    public bool IsLoaded => this.PlatformIsLoaded();
 
     ~Library() =>
         this.Dispose(false);
 
     protected virtual void Dispose(bool disposing) =>
-        PlatformDispose(disposing);
+        this.PlatformDispose(disposing);
 
     public nint GetProcAddress(string proc) =>
-        PlatformGetProcAddress(proc);
+        this.PlatformGetProcAddress(proc);
 
     public T? GetProcAddress<T>(string proc) where T : Delegate =>
-        PlatformGetProcAddress<T>(proc);
+        this.PlatformGetProcAddress<T>(proc);
 
     public void Dispose()
     {

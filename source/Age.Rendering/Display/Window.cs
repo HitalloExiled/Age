@@ -12,6 +12,8 @@ public partial class Window : IDisposable
     private static string?         className;
     private static VulkanRenderer? renderer;
 
+    private readonly List<Window> children = [];
+
     [MemberNotNullWhen(true, nameof(renderer))]
     private static bool Registered { get; set; }
 
@@ -52,6 +54,8 @@ public partial class Window : IDisposable
         }
 
         this.PlatformCreate(title, size, position, parent);
+
+        parent?.children.Add(this);
     }
 
     public static void Register(string className, VulkanRenderer context)
@@ -106,6 +110,7 @@ public partial class Window : IDisposable
         {
             this.PlatformClose();
 
+            this.Parent?.children.Remove(this);
             WindowClosed?.Invoke();
 
             this.Closed = true;

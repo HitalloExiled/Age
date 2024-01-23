@@ -9,6 +9,7 @@
     <ProjectReference Include="..\Age.Numerics\Age.Numerics.csproj" />
     <ProjectReference Include="..\Age.Platforms\Age.Platforms.csproj" />
     <ProjectReference Include="..\Age.Vulkan\Age.Vulkan.csproj" />
+    <ProjectReference Include="..\ThirdParty.Shaderc\ThirdParty.Shaderc.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -16,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="./Shaders/*.spv" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="./Shaders/*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

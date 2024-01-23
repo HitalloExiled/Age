@@ -52,10 +52,8 @@ public class Engine : IDisposable
     {
         this.Running = true;
 
-        var text = "Hello\nWorld\n!!!";
-
-        this.mainWindow.Content.Add(new Text(text, new() { FontSize = 100, Position = new(100, -100) }));
-        this.mainWindow.Content.Add(new Text("Hello World!!!", new() { FontSize = 50, Position = new(50, -400) }));
+        this.mainWindow.Content.Add(new Text("Hello\nWorld\n!!!", new() { FontSize = 100, Position = new(100, -100) }));
+        this.mainWindow.Content.Add(new Text("Hello World!!!",    new() { FontSize = 50,  Position = new(50, -400) }));
 
         while (this.Running)
         {

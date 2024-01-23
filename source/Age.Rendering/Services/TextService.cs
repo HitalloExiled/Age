@@ -1,6 +1,7 @@
 using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing;
+using Age.Rendering.Enums;
 using SkiaSharp;
 
 using GlyphKey = (char, ushort);
@@ -52,7 +53,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
                 Pixels = pixels,
             };
 
-            var texture = this.renderingService.Create2DTexture(image, this.sampler);
+            var texture = this.renderingService.CreateTexture(image, TextureType.T2D, this.sampler);
 
             this.glyphs[(character, fontSize)] = glyph = new()
             {

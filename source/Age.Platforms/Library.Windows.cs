@@ -9,12 +9,9 @@ using Age.Platforms.Windows.Native.Types;
 
 namespace Age.Platforms;
 
-public partial class Library
+public partial class Library(string lib)
 {
-    private readonly HMODULE handler;
-
-    public Library(string lib) =>
-        this.handler = Kernel32.LoadLibraryW(lib);
+    private readonly HMODULE handler = Kernel32.LoadLibraryW(lib);
 
     private nint PlatformGetProcAddress(string proc) =>
         Kernel32.GetProcAddress(this.handler, proc);
@@ -42,6 +39,6 @@ public partial class Library
     }
 
     private bool PlatformIsLoaded() =>
-        handler != default;
+        this.handler != default;
 }
 #endif

@@ -99,7 +99,19 @@ public partial class Window
 
     private void PlatformClose()
     {
+        foreach (var child in this.children)
+        {
+            child.Closed = true;
+
+            renderer!.Context.DestroySurfaceContext(child.Context);
+
+            windows.Remove(child.handler);
+
+            child.WindowClosed?.Invoke();
+        }
+
         User32.DestroyWindow(this.handler);
+
         renderer!.Context.DestroySurfaceContext(this.Context);
 
         windows.Remove(this.handler);

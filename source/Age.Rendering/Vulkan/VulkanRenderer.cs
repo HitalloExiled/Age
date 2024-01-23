@@ -12,6 +12,8 @@ using Age.Vulkan.Flags;
 using Age.Vulkan.Flags.EXT;
 using Age.Vulkan.Types;
 using Age.Vulkan.Types.EXT;
+using ThirdParty.Shaderc.Enums;
+using SpirvCompiler = ThirdParty.Shaderc.Compiler;
 
 namespace Age.Rendering.Vulkan;
 
@@ -22,6 +24,7 @@ public unsafe partial class VulkanRenderer : IDisposable
     private readonly VulkanContext                                             context;
     private readonly Dictionary<VkDescriptorType, List<DescriptorPoolHandler>> descriptorPools = [];
     private readonly Vk                                                        vk;
+    private readonly SpirvCompiler                                             spirvCompiler = new();
 
     private bool disposed;
 
@@ -29,8 +32,8 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public VulkanRenderer()
     {
-        this.context = new VulkanContext();
-        this.vk      = this.context.Vk;
+        this.context   = new();
+        this.vk        = this.context.Vk;
     }
 
     private static VkDescriptorType ConvertToDescriptorType(UniformType type) =>
@@ -294,12 +297,32 @@ public unsafe partial class VulkanRenderer : IDisposable
         return imageView;
     }
 
+    private byte[] CompileShader(string path)
+    {
+        var shaderKind = Path.GetExtension(path) switch
+        {
+            ".frag" => ShaderKind.FragmentShader,
+            ".vert" => ShaderKind.VertexShader,
+            _ => throw new Exception("Unsupported shader type"),
+        };
+
+        var fileName = Path.GetFileName(path);
+
+        var result = this.spirvCompiler.CompileIntoSpv(File.ReadAllText(path), shaderKind, fileName, "main");
+
+        return result.CompilationStatus != CompilationStatus.Success
+            ? throw new Exception($"Error compiling shader: {result.ErrorMessage}")
+            : result.Bytes;
+    }
+
     private VkPipeline CreatePipeline(VkPipelineLayout pipelineLayout, VkRenderPass renderPass)
     {
         fixed (byte* pName = "main"u8)
         {
-            var vertShaderCode = File.ReadAllBytes(Path.Join(AppContext.BaseDirectory, "Shaders/shader.vert.spv"))!;
-            var fragShaderCode = File.ReadAllBytes(Path.Join(AppContext.BaseDirectory, "Shaders/shader.frag.spv"))!;
+            using var compiler = new SpirvCompiler();
+
+            var vertShaderCode = this.CompileShader(Path.Join(AppContext.BaseDirectory, "Shaders/shader.vert"));
+            var fragShaderCode = this.CompileShader(Path.Join(AppContext.BaseDirectory, "Shaders/shader.frag"));
 
             var vertShaderModule = this.CreateShaderModule(vertShaderCode);
             var fragShaderModule = this.CreateShaderModule(fragShaderCode);
@@ -628,6 +651,9 @@ public unsafe partial class VulkanRenderer : IDisposable
             {
                 this.vk.DestroyDescriptorPool(this.context.Device, descriptorPool.Handler, null);
             }
+
+            this.context.Dispose();
+            this.spirvCompiler.Dispose();
 
             this.disposed = true;
         }

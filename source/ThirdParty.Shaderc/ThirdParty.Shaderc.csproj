@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="./NativeLib/*.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes/win-x64/native/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>
