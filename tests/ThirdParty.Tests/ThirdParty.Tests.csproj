@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\source\ThirdParty.Shaderc\ThirdParty.Shaderc.csproj" />
+    <ProjectReference Include="..\..\source\ThirdParty.SpirvCross\ThirdParty.SpirvCross.csproj" />
   </ItemGroup>
 
 </Project>
