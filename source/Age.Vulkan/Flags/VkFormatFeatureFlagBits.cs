@@ -83,25 +83,25 @@ public enum VkFormatFeatureFlagBits
     VK_FORMAT_FEATURE_BLIT_DST_BIT = 0x00000800,
 
     /// <summary>
-    /// <para>VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT specifies that if <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT"/> is also set, an image view can be used with a sampler that has either of magFilter or minFilter set to <see cref="VkFilter.VK_FILTER_LINEAR"/>, or mipmapMode set to <see cref="VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR"/>. If <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_BLIT_SRC_BIT"/> is also set, an image can be used as the srcImage to <see cref="Vk.CmdBlitImage2"/> and <see cref="Vk.CmdBlitImage"/> with a filter of <see cref="VkFilter.VK_FILTER_LINEAR"/>. This bit must only be exposed for formats that also support the <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT"/> or <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_BLIT_SRC_BIT"/>.</para>
+    /// <para>VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT specifies that if <see cref="VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT"/> is also set, an image view can be used with a sampler that has either of magFilter or minFilter set to <see cref="VkFilter.VK_FILTER_LINEAR"/>, or mipmapMode set to <see cref="VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR"/>. If <see cref="VK_FORMAT_FEATURE_BLIT_SRC_BIT"/> is also set, an image can be used as the srcImage to <see cref="Vk.CmdBlitImage2"/> and <see cref="Vk.CmdBlitImage"/> with a filter of <see cref="VkFilter.VK_FILTER_LINEAR"/>. This bit must only be exposed for formats that also support the <see cref="VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT"/> or <see cref="VK_FORMAT_FEATURE_BLIT_SRC_BIT"/>.</para>
     /// <para>If the format being queried is a depth/stencil format, this bit only specifies that the depth aspect (not the stencil aspect) of an image of this format supports linear filtering, and that linear filtering of the depth aspect is supported whether depth compare is enabled in the sampler or not. Where depth comparison is supported it may be linear filtered whether this bit is present or not, but where this bit is not present the filtered value may be computed in an implementation-dependent manner which differs from the normal rules of linear filtering. The resulting value must be in the range [0,1] and should be proportional to, or a weighted average of, the number of comparison passes or failures.</para>
     /// </summary>
     VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT = 0x00001000,
 
     /// <summary>
-    /// Specifies that an image can be used as a source image for copy commands. If the application apiVersion is Vulkan 1.0 and <see cref="VkKhrMaintenance1"/> is not supported, <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_TRANSFER_SRC_BIT"/> is implied to be set when the format feature flag is not 0.
+    /// Specifies that an image can be used as a source image for copy commands. If the application apiVersion is Vulkan 1.0 and <see cref="VkKhrMaintenance1"/> is not supported, <see cref="VK_FORMAT_FEATURE_TRANSFER_SRC_BIT"/> is implied to be set when the format feature flag is not 0.
     /// </summary>
     /// <remarks>Provided by VK_VERSION_1_1</remarks>
     VK_FORMAT_FEATURE_TRANSFER_SRC_BIT = 0x00004000,
 
     /// <summary>
-    /// Specifies that an image can be used as a destination image for copy commands and clear commands. If the application apiVersion is Vulkan 1.0 and <see cref="VkKhrMaintenance1"/> is not supported, <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_TRANSFER_DST_BIT"/> is implied to be set when the format feature flag is not 0.
+    /// Specifies that an image can be used as a destination image for copy commands and clear commands. If the application apiVersion is Vulkan 1.0 and <see cref="VkKhrMaintenance1"/> is not supported, <see cref="VK_FORMAT_FEATURE_TRANSFER_DST_BIT"/> is implied to be set when the format feature flag is not 0.
     /// </summary>
     /// <remarks>Provided by VK_VERSION_1_1</remarks>
     VK_FORMAT_FEATURE_TRANSFER_DST_BIT = 0x00008000,
 
     /// <summary>
-    /// Specifies that an application can define a sampler Y′CBCR conversion using this format as a source, and that an image of this format can be used with a <see cref="VkSamplerYcbcrConversionCreateInfo"/> xChromaOffset and/or yChromaOffset of <see cref="VkChromaLocation.VK_CHROMA_LOCATION_MIDPOINT"/>. Otherwise both xChromaOffset and yChromaOffset must be <see cref="VkChromaLocation.VK_CHROMA_LOCATION_COSITED_EVEN"/>. If a format does not incorporate chroma downsampling (it is not a “422” or “420” format) but the implementation supports sampler Y′CBCR conversion for this format, the implementation must set <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT"/>.
+    /// Specifies that an application can define a sampler Y′CBCR conversion using this format as a source, and that an image of this format can be used with a <see cref="VkSamplerYcbcrConversionCreateInfo"/> xChromaOffset and/or yChromaOffset of <see cref="VkChromaLocation.VK_CHROMA_LOCATION_MIDPOINT"/>. Otherwise both xChromaOffset and yChromaOffset must be <see cref="VkChromaLocation.VK_CHROMA_LOCATION_COSITED_EVEN"/>. If a format does not incorporate chroma downsampling (it is not a “422” or “420” format) but the implementation supports sampler Y′CBCR conversion for this format, the implementation must set <see cref="VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT"/>.
     /// </summary>
     /// <remarks>Provided by VK_VERSION_1_1</remarks>
     VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT = 0x00020000,
@@ -125,25 +125,25 @@ public enum VkFormatFeatureFlagBits
     VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_BIT = 0x00100000,
 
     /// <summary>
-    /// Specifies that reconstruction can be forcibly made explicit by setting <see cref="VkSamplerYcbcrConversionCreateInfo.forceExplicitReconstruction"/> to true. If the format being queried supports <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_BIT"/> it must also support <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_FORCEABLE_BIT"/>.
+    /// Specifies that reconstruction can be forcibly made explicit by setting <see cref="VkSamplerYcbcrConversionCreateInfo.forceExplicitReconstruction"/> to true. If the format being queried supports <see cref="VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_BIT"/> it must also support <see cref="VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_FORCEABLE_BIT"/>.
     /// </summary>
     /// <remarks>Provided by VK_VERSION_1_1</remarks>
     VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_FORCEABLE_BIT = 0x00200000,
 
     /// <summary>
-    /// Specifies that a multi-planar image can have the <see cref="VkImageCreateFlagBits.VK_IMAGE_CREATE_DISJOINT_BIT"/> set during image creation. An implementation must not set <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_DISJOINT_BIT"/> for single-plane formats.
+    /// Specifies that a multi-planar image can have the <see cref="VkImageCreateFlagBits.VK_IMAGE_CREATE_DISJOINT_BIT"/> set during image creation. An implementation must not set <see cref="VK_FORMAT_FEATURE_DISJOINT_BIT"/> for single-plane formats.
     /// </summary>
     /// <remarks>Provided by VK_VERSION_1_1</remarks>
     VK_FORMAT_FEATURE_DISJOINT_BIT = 0x00400000,
 
     /// <summary>
-    /// Specifies that an application can define a sampler Y′CBCR conversion using this format as a source, and that an image of this format can be used with a <see cref="VkSamplerYcbcrConversionCreateInfo"/> xChromaOffset and/or yChromaOffset of <see cref="VkChromaLocation.VK_CHROMA_LOCATION_COSITED_EVEN"/>. Otherwise both xChromaOffset and yChromaOffset must be <see cref="VkChromaLocation.VK_CHROMA_LOCATION_MIDPOINT"/>. If neither <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT"/> nor <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT"/> is set, the application must not define a sampler Y′CBCR conversion using this format as a source.
+    /// Specifies that an application can define a sampler Y′CBCR conversion using this format as a source, and that an image of this format can be used with a <see cref="VkSamplerYcbcrConversionCreateInfo"/> xChromaOffset and/or yChromaOffset of <see cref="VkChromaLocation.VK_CHROMA_LOCATION_COSITED_EVEN"/>. Otherwise both xChromaOffset and yChromaOffset must be <see cref="VkChromaLocation.VK_CHROMA_LOCATION_MIDPOINT"/>. If neither <see cref="VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT"/> nor <see cref="VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT"/> is set, the application must not define a sampler Y′CBCR conversion using this format as a source.
     /// </summary>
     /// <remarks>Provided by VK_VERSION_1_1</remarks>
     VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT = 0x00800000,
 
     /// <summary>
-    /// Specifies <see cref="VkImage"/> can be used as a sampled image with a min or max <see cref="VkSamplerReductionMode"/>. This bit must only be exposed for formats that also support the <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT"/>.
+    /// Specifies <see cref="VkImage"/> can be used as a sampled image with a min or max <see cref="VkSamplerReductionMode"/>. This bit must only be exposed for formats that also support the <see cref="VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT"/>.
     /// </summary>
     /// <remarks>Provided by VK_VERSION_1_2</remarks>
     VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_MINMAX_BIT = 0x00010000,
@@ -162,13 +162,13 @@ public enum VkFormatFeatureFlagBits
 
     /// <summary>
     /// <para>Specifies that the format can be used as the vertex format when creating an acceleration structure (<see cref="VkAccelerationStructureGeometryTrianglesDataKHR.vertexFormat"/>). This format can also be used as the vertex format in host memory when doing host acceleration structure builds.</para>
-    /// <remarks>Note: VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT and <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_ATOMIC_BIT"/> are only intended to be advertised for single-component formats, since SPIR-V atomic operations require a scalar type.</remarks>
+    /// <remarks>Note: VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT and <see cref="VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_ATOMIC_BIT"/> are only intended to be advertised for single-component formats, since SPIR-V atomic operations require a scalar type.</remarks>
     /// </summary>
     /// <remarks>Provided by VK_KHR_acceleration_structure</remarks>
     VK_FORMAT_FEATURE_ACCELERATION_STRUCTURE_VERTEX_BUFFER_BIT_KHR = 0x20000000,
 
     /// <summary>
-    /// Specifies that <see cref="VkImage"/> can be used with a sampler that has either of magFilter or minFilter set to <see cref="VkFilter.VK_FILTER_CUBIC_EXT"/>, or be the source image for a blit with filter set to <see cref="VkFilter.VK_FILTER_CUBIC_EXT"/>. This bit must only be exposed for formats that also support the <see cref="VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT"/>. If the format being queried is a depth/stencil format, this only specifies that the depth aspect is cubic filterable.
+    /// Specifies that <see cref="VkImage"/> can be used with a sampler that has either of magFilter or minFilter set to <see cref="VkFilter.VK_FILTER_CUBIC_EXT"/>, or be the source image for a blit with filter set to <see cref="VkFilter.VK_FILTER_CUBIC_EXT"/>. This bit must only be exposed for formats that also support the <see cref="VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT"/>. If the format being queried is a depth/stencil format, this only specifies that the depth aspect is cubic filterable.
     /// </summary>
     /// <remarks>Provided by VK_EXT_filter_cubic</remarks>
     VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_EXT = 0x00002000,

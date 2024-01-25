@@ -6,7 +6,8 @@ namespace ThirdParty.SpirvCross;
 public unsafe class Context : IDisposable
 {
     private readonly spvc_context handler;
-    private bool disposed;
+
+    private bool    disposed;
     private string? lastError;
 
     public Context()
@@ -23,7 +24,7 @@ public unsafe class Context : IDisposable
 
     internal void CheckResult(spvc_result result)
     {
-        if ((Result)result != Result.Success)
+        if (result != Result.Success)
         {
             throw new Exception($"Error: {this.lastError}");
         }
@@ -75,7 +76,7 @@ public unsafe class Context : IDisposable
     {
         spvc_compiler compiler;
 
-        this.CheckResult(PInvoke.spvc_context_create_compiler(this.handler, (spvc_backend)backend, parsedSpirv, (spvc_capture_mode)captureMode, &compiler));
+        this.CheckResult(PInvoke.spvc_context_create_compiler(this.handler, backend, parsedSpirv, captureMode, &compiler));
 
         return new(compiler, this);
     }

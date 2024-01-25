@@ -1,0 +1,11 @@
+namespace ThirdParty.Vulkan.Native;
+
+/// <summary>
+/// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkVertexInputBindingDescription.html">VkVertexInputBindingDescription</see>
+/// </summary>
+public struct VkVertexInputBindingDescription
+{
+    public uint              binding;
+    public uint              stride;
+    public VkVertexInputRate inputRate;
+}

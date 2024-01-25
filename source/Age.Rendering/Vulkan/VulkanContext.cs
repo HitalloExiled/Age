@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Age.Core.Unsafe;
+using Age.Core.Interop;
 using Age.Numerics;
 using Age.Rendering.Vulkan.Handlers;
 using Age.Vulkan;
@@ -16,7 +16,7 @@ using Age.Vulkan.Types;
 using Age.Vulkan.Types.EXT;
 using Age.Vulkan.Types.KHR;
 
-using static Age.Core.Unsafe.UnmanagedUtils;
+using static Age.Core.Interop.PointerHelper;
 
 namespace Age.Rendering.Vulkan;
 

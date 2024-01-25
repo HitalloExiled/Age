@@ -2,7 +2,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Age.Core;
-using Age.Core.Unsafe;
+using Age.Core.Interop;
 using Age.Rendering.Enums;
 using Age.Rendering.Vulkan.Handlers;
 using Age.Rendering.Vulkan.Uniforms;
@@ -20,20 +20,18 @@ namespace Age.Rendering.Vulkan;
 public unsafe partial class VulkanRenderer : IDisposable
 {
     private const ushort MAX_DESCRIPTORS_PER_POOL = 64;
-
-    private readonly VulkanContext                                             context;
     private readonly Dictionary<VkDescriptorType, List<DescriptorPoolHandler>> descriptorPools = [];
     private readonly Vk                                                        vk;
     private readonly SpirvCompiler                                             spirvCompiler = new();
 
     private bool disposed;
 
-    public VulkanContext Context => this.context;
+    public VulkanContext Context { get; }
 
     public VulkanRenderer()
     {
-        this.context   = new();
-        this.vk        = this.context.Vk;
+        this.Context = new();
+        this.vk      = this.Context.Vk;
     }
 
     private static VkDescriptorType ConvertToDescriptorType(UniformType type) =>
@@ -104,13 +102,13 @@ public unsafe partial class VulkanRenderer : IDisposable
             usage = usage,
         };
 
-        var device = this.context.Device;
+        var device = this.Context.Device;
 
         VkCheck(this.vk.CreateBuffer(device, bufferCreateInfo, default, out buffer));
 
         this.vk.GetBufferMemoryRequirements(device, buffer, out var memRequirements);
 
-        var memoryType = this.context.FindMemoryType(memRequirements.memoryTypeBits, properties);
+        var memoryType = this.Context.FindMemoryType(memRequirements.memoryTypeBits, properties);
 
         var memoryAllocateInfo = new VkMemoryAllocateInfo
         {
@@ -147,7 +145,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                 pSetLayouts        = pSetLayouts,
             };
 
-            VkCheck(this.vk.AllocateDescriptorSets(this.context.Device, descriptorSetAllocateInfo, out var descriptorSets));
+            VkCheck(this.vk.AllocateDescriptorSets(this.Context.Device, descriptorSetAllocateInfo, out var descriptorSets));
 
             return descriptorSets;
         }
@@ -191,7 +189,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                 pPoolSizes    = pPoolSizes,
             };
 
-            VkCheck(this.vk.CreateDescriptorPool(this.context.Device, descriptorPoolCreateInfo, default, out var descriptorPool));
+            VkCheck(this.vk.CreateDescriptorPool(this.Context.Device, descriptorPoolCreateInfo, default, out var descriptorPool));
 
             var descriptorPoolHandler = new DescriptorPoolHandler
             {
@@ -227,7 +225,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                 bindingCount = (uint)descriptorSetLayoutBindings.Length,
             };
 
-            VkCheck(this.vk.CreateDescriptorSetLayout(this.context.Device, descriptorSetLayoutCreateInfo, default, out var descriptorSetLayout));
+            VkCheck(this.vk.CreateDescriptorSetLayout(this.Context.Device, descriptorSetLayoutCreateInfo, default, out var descriptorSetLayout));
 
             return descriptorSetLayout;
         }
@@ -253,11 +251,11 @@ public unsafe partial class VulkanRenderer : IDisposable
             usage         = usage,
         };
 
-        VkCheck(this.vk.CreateImage(this.context.Device, imageCreateInfo, default, out image));
+        VkCheck(this.vk.CreateImage(this.Context.Device, imageCreateInfo, default, out image));
 
-        this.vk.GetImageMemoryRequirements(this.context.Device, image, out var memRequirements);
+        this.vk.GetImageMemoryRequirements(this.Context.Device, image, out var memRequirements);
 
-        var memoryType = this.context.FindMemoryType(memRequirements.memoryTypeBits, properties);
+        var memoryType = this.Context.FindMemoryType(memRequirements.memoryTypeBits, properties);
 
         var memoryAllocateInfo = new VkMemoryAllocateInfo
         {
@@ -265,8 +263,8 @@ public unsafe partial class VulkanRenderer : IDisposable
             memoryTypeIndex = memoryType,
         };
 
-        VkCheck(this.vk.AllocateMemory(this.context.Device, memoryAllocateInfo, default, out var deviceMemory));
-        VkCheck(this.vk.BindImageMemory(this.context.Device, image, deviceMemory, 0));
+        VkCheck(this.vk.AllocateMemory(this.Context.Device, memoryAllocateInfo, default, out var deviceMemory));
+        VkCheck(this.vk.BindImageMemory(this.Context.Device, image, deviceMemory, 0));
 
         allocation = new()
         {
@@ -292,7 +290,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             viewType = VkImageViewType.VK_IMAGE_VIEW_TYPE_2D,
         };
 
-        VkCheck(this.vk.CreateImageView(this.context.Device, imageViewCreateInfo, default, out var imageView));
+        VkCheck(this.vk.CreateImageView(this.Context.Device, imageViewCreateInfo, default, out var imageView));
 
         return imageView;
     }
@@ -456,10 +454,10 @@ public unsafe partial class VulkanRenderer : IDisposable
                     renderPass          = renderPass,
                 };
 
-                VkCheck(this.vk.CreateGraphicsPipelines(this.context.Device, default, graphicsPipelineCreateInfo, default, out var pipeline));
+                VkCheck(this.vk.CreateGraphicsPipelines(this.Context.Device, default, graphicsPipelineCreateInfo, default, out var pipeline));
 
-                this.vk.DestroyShaderModule(this.context.Device, fragShaderModule, null);
-                this.vk.DestroyShaderModule(this.context.Device, vertShaderModule, null);
+                this.vk.DestroyShaderModule(this.Context.Device, fragShaderModule, null);
+                this.vk.DestroyShaderModule(this.Context.Device, vertShaderModule, null);
 
                 return pipeline;
             }
@@ -474,7 +472,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             setLayoutCount = 1,
         };
 
-        VkCheck(this.vk.CreatePipelineLayout(this.context.Device, pipelineLayoutCreateInfo, default, out var pipelineLayout));
+        VkCheck(this.vk.CreatePipelineLayout(this.Context.Device, pipelineLayoutCreateInfo, default, out var pipelineLayout));
 
         return pipelineLayout;
     }
@@ -489,7 +487,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                 pCode    = (uint*)pCode,
             };
 
-            VkCheck(this.vk.CreateShaderModule(this.context.Device, shaderModuleCreateInfo, default, out var shaderModule));
+            VkCheck(this.vk.CreateShaderModule(this.Context.Device, shaderModuleCreateInfo, default, out var shaderModule));
 
             return shaderModule;
         }
@@ -507,7 +505,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             renderPass      = renderPass,
         };
 
-        VkCheck(this.vk.CreateFramebuffer(this.context.Device, framebufferCreateInfo, default, out var framebuffer));
+        VkCheck(this.vk.CreateFramebuffer(this.Context.Device, framebufferCreateInfo, default, out var framebuffer));
 
         return framebuffer;
     }
@@ -545,14 +543,14 @@ public unsafe partial class VulkanRenderer : IDisposable
             subpassCount    = 1,
         };
 
-        VkCheck(this.vk.CreateRenderPass(this.context.Device, renderPassCreateInfo, default, out var renderPass));
+        VkCheck(this.vk.CreateRenderPass(this.Context.Device, renderPassCreateInfo, default, out var renderPass));
 
         return renderPass;
     }
 
     private void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
     {
-        var commandBuffer = this.context.BeginSingleTimeCommands();
+        var commandBuffer = this.Context.BeginSingleTimeCommands();
 
         var copyRegion = new VkBufferCopy
         {
@@ -561,12 +559,12 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         this.vk.CmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, copyRegion);
 
-        this.context.EndSingleTimeCommands(commandBuffer);
+        this.Context.EndSingleTimeCommands(commandBuffer);
     }
 
     private void CopyBufferToImage(VkBuffer buffer, VkImage image, uint width, uint height)
     {
-        var commandBuffer = this.context.BeginSingleTimeCommands();
+        var commandBuffer = this.Context.BeginSingleTimeCommands();
 
         var bufferImageCopy = new VkBufferImageCopy
         {
@@ -585,7 +583,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         this.vk.CmdCopyBufferToImage(commandBuffer, buffer, image, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, bufferImageCopy);
 
-        this.context.EndSingleTimeCommands(commandBuffer);
+        this.Context.EndSingleTimeCommands(commandBuffer);
     }
 
     private void RemoveFromDescriptorPool(DescriptorPoolHandler descriptorPool)
@@ -594,7 +592,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         if (descriptorPool.Usage == 0)
         {
-            this.vk.DestroyDescriptorPool(this.context.Device, descriptorPool.Handler, null);
+            this.vk.DestroyDescriptorPool(this.Context.Device, descriptorPool.Handler, null);
 
             var entries = this.descriptorPools[descriptorPool.DescriptorType];
 
@@ -617,7 +615,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         VkPipelineStageFlagBits destinationStage
     )
     {
-        var commandBuffer = this.context.BeginSingleTimeCommands();
+        var commandBuffer = this.Context.BeginSingleTimeCommands();
 
         var imageMemoryBarrier = new VkImageMemoryBarrier
         {
@@ -638,21 +636,21 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         this.vk.CmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, default, null, null, [imageMemoryBarrier]);
 
-        this.context.EndSingleTimeCommands(commandBuffer);
+        this.Context.EndSingleTimeCommands(commandBuffer);
     }
 
     protected virtual void Dispose(bool disposing)
     {
         if (!this.disposed)
         {
-            this.vk.DeviceWaitIdle(this.context.Device);
+            this.vk.DeviceWaitIdle(this.Context.Device);
 
             foreach (var descriptorPool in this.descriptorPools.Values.SelectMany(x => x))
             {
-                this.vk.DestroyDescriptorPool(this.context.Device, descriptorPool.Handler, null);
+                this.vk.DestroyDescriptorPool(this.Context.Device, descriptorPool.Handler, null);
             }
 
-            this.context.Dispose();
+            this.Context.Dispose();
             this.spirvCompiler.Dispose();
 
             this.disposed = true;
@@ -661,9 +659,9 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public void BeginFrame()
     {
-        this.context.PrepareBuffers();
+        this.Context.PrepareBuffers();
 
-        this.vk.BeginCommandBuffer(this.context.Frame.CommandBuffer);
+        this.vk.BeginCommandBuffer(this.Context.Frame.CommandBuffer);
     }
 
     public void BeginRenderPass(SurfaceContext windowContext)
@@ -700,24 +698,24 @@ public unsafe partial class VulkanRenderer : IDisposable
                 renderPass = windowContext.Swapchain.RenderPass,
             };
 
-            this.vk.CmdBeginRenderPass(this.context.Frame.CommandBuffer, renderPassBeginInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
+            this.vk.CmdBeginRenderPass(this.Context.Frame.CommandBuffer, renderPassBeginInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
         }
     }
 
     public void BindIndexBuffer(IndexBufferHandler indexBuffer) =>
-        this.vk.CmdBindIndexBuffer(this.context.Frame.CommandBuffer, indexBuffer.Buffer.Handler, 0, indexBuffer.Type);
+        this.vk.CmdBindIndexBuffer(this.Context.Frame.CommandBuffer, indexBuffer.Buffer.Handler, 0, indexBuffer.Type);
 
     public void BindPipeline(ShaderHandler shader) =>
-        this.vk.CmdBindPipeline(this.context.Frame.CommandBuffer, shader.PipelineBindPoint, shader.Pipeline);
+        this.vk.CmdBindPipeline(this.Context.Frame.CommandBuffer, shader.PipelineBindPoint, shader.Pipeline);
 
     public void BindVertexBuffer(VertexBufferHandler vertexBuffer) =>
-        this.vk.CmdBindVertexBuffers(this.context.Frame.CommandBuffer, 0, [vertexBuffer.Buffer.Handler], [0]);
+        this.vk.CmdBindVertexBuffers(this.Context.Frame.CommandBuffer, 0, [vertexBuffer.Buffer.Handler], [0]);
 
     public void BindVertexBuffer(VertexBufferHandler[] vertexBuffers) =>
-        this.vk.CmdBindVertexBuffers(this.context.Frame.CommandBuffer, 0, [.. vertexBuffers.Select(x => x.Buffer.Handler)], new VkDeviceSize[vertexBuffers.Length]);
+        this.vk.CmdBindVertexBuffers(this.Context.Frame.CommandBuffer, 0, [.. vertexBuffers.Select(x => x.Buffer.Handler)], new VkDeviceSize[vertexBuffers.Length]);
 
     public void BindUniformSet(UniformSet uniformSet) =>
-        this.vk.CmdBindDescriptorSets(this.context.Frame.CommandBuffer, uniformSet.Shader.PipelineBindPoint, uniformSet.Shader.PipelineLayout, 0, uniformSet.DescriptorSets, null);
+        this.vk.CmdBindDescriptorSets(this.Context.Frame.CommandBuffer, uniformSet.Shader.PipelineBindPoint, uniformSet.Shader.PipelineLayout, 0, uniformSet.DescriptorSets, null);
 
     public BufferHandler CreateBuffer(ulong size, VkBufferUsageFlagBits usage, VkMemoryPropertyFlagBits properties)
     {
@@ -759,7 +757,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public ShaderHandler CreateShader()
     {
-        var renderPass          = this.CreateRenderPass(this.context.ScreenFormat);
+        var renderPass          = this.CreateRenderPass(this.Context.ScreenFormat);
         var descriptorSetLayout = this.CreateDescriptorSetLayout();
         var pipelineLayout      = this.CreatePipelineLayout(descriptorSetLayout);
         var pipeline            = this.CreatePipeline(pipelineLayout, renderPass);
@@ -776,7 +774,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public VkSampler CreateSampler()
     {
-        this.context.GetPhysicalDeviceProperties(out var properties);
+        this.Context.GetPhysicalDeviceProperties(out var properties);
 
         var samplerCreateInfo = new VkSamplerCreateInfo
         {
@@ -792,7 +790,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             mipmapMode    = VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR,
         };
 
-        VkCheck(this.vk.CreateSampler(this.context.Device, samplerCreateInfo, default, out var sampler));
+        VkCheck(this.vk.CreateSampler(this.Context.Device, samplerCreateInfo, default, out var sampler));
 
         return sampler;
     }
@@ -870,7 +868,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             pSetLayouts        = &descriptorSetLayout,
         };
 
-        this.vk.AllocateDescriptorSets(this.context.Device, descriptorSetAllocateInfo, out var descriptorSets);
+        this.vk.AllocateDescriptorSets(this.Context.Device, descriptorSetAllocateInfo, out var descriptorSets);
 
         foreach (var uniform in uniforms)
         {
@@ -941,7 +939,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         }
 
-        this.vk.UpdateDescriptorSets(this.context.Device, [..writes], null);
+        this.vk.UpdateDescriptorSets(this.Context.Device, [..writes], null);
 
         var uniformSet = new UniformSet()
         {
@@ -978,21 +976,21 @@ public unsafe partial class VulkanRenderer : IDisposable
     }
 
     public void DrawIndexed(IndexBufferHandler indexBuffer) =>
-        this.vk.CmdDrawIndexed(this.context.Frame.CommandBuffer, indexBuffer.Size, 1, 0, 0, 0);
+        this.vk.CmdDrawIndexed(this.Context.Frame.CommandBuffer, indexBuffer.Size, 1, 0, 0, 0);
 
     public void EndFrame()
     {
-        this.vk.EndCommandBuffer(this.context.Frame.CommandBuffer);
-        this.context.SwapBuffers();
+        this.vk.EndCommandBuffer(this.Context.Frame.CommandBuffer);
+        this.Context.SwapBuffers();
     }
 
     public void EndRenderPass() =>
-        this.vk.CmdEndRenderPass(this.context.Frame.CommandBuffer);
+        this.vk.CmdEndRenderPass(this.Context.Frame.CommandBuffer);
 
     public void DestroyBuffer(BufferHandler buffer)
     {
-        this.vk.DestroyBuffer(this.context.Device, buffer.Handler, null);
-        this.vk.FreeMemory(this.context.Device, buffer.Allocation.Memory, null);
+        this.vk.DestroyBuffer(this.Context.Device, buffer.Handler, null);
+        this.vk.FreeMemory(this.Context.Device, buffer.Allocation.Memory, null);
     }
 
     public void DestroyIndexBuffer(IndexBufferHandler indexBuffer) =>
@@ -1002,11 +1000,11 @@ public unsafe partial class VulkanRenderer : IDisposable
         this.DestroyBuffer(vertexBuffer.Buffer);
 
     public void DestroySampler(VkSampler sampler) =>
-        this.vk.DestroySampler(this.context.Device, sampler, null);
+        this.vk.DestroySampler(this.Context.Device, sampler, null);
 
     public void DestroyShader(Shader shader)
     {
-        var device = this.context.Device;
+        var device = this.Context.Device;
 
         this.vk.DestroyPipeline(device, shader.Handler.Pipeline, null);
         this.vk.DestroyPipelineLayout(device, shader.Handler.PipelineLayout, null);
@@ -1016,7 +1014,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public void DestroyTexture(TextureHandler texture)
     {
-        var device = this.context.Device;
+        var device = this.Context.Device;
 
         this.vk.FreeMemory(device, texture.Allocation.Memory, null);
         this.vk.DestroyImage(device, texture.Image, null);
@@ -1025,14 +1023,14 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public void DestroyUniformSet(UniformSet uniformSet)
     {
-        VkCheck(this.vk.FreeDescriptorSets(this.context.Device, uniformSet.DescriptorPool.Handler, uniformSet.DescriptorSets));
+        VkCheck(this.vk.FreeDescriptorSets(this.Context.Device, uniformSet.DescriptorPool.Handler, uniformSet.DescriptorSets));
 
         this.RemoveFromDescriptorPool(uniformSet.DescriptorPool);
     }
 
     public void SetViewport(SurfaceContext surfaceContext)
     {
-        var commandBuffer = this.context.Frame.CommandBuffer;
+        var commandBuffer = this.Context.Frame.CommandBuffer;
 
         var viewport = new VkViewport
         {
@@ -1074,13 +1072,13 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         var stagingMemory = allocation.Memory;
 
-        this.vk.MapMemory(this.context.Device, stagingMemory, 0, 0, data);
-        this.vk.UnmapMemory(this.context.Device, stagingMemory);
+        this.vk.MapMemory(this.Context.Device, stagingMemory, 0, 0, data);
+        this.vk.UnmapMemory(this.Context.Device, stagingMemory);
 
         this.CopyBuffer(stagingBuffer, buffer.Handler, buffer.Allocation.Size);
 
-        this.vk.DestroyBuffer(this.context.Device, stagingBuffer, null);
-        this.vk.FreeMemory(this.context.Device, stagingMemory, null);
+        this.vk.DestroyBuffer(this.Context.Device, stagingBuffer, null);
+        this.vk.FreeMemory(this.Context.Device, stagingMemory, null);
     }
 
     public void UpdateIndexBuffer<T>(VertexBufferHandler indexBuffer, T data) where T : unmanaged =>
@@ -1109,8 +1107,8 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         var stagingMemory = allocation.Memory;
 
-        VkCheck(this.vk.MapMemory(this.context.Device, stagingMemory, 0, 0, data));
-        this.vk.UnmapMemory(this.context.Device, stagingMemory);
+        VkCheck(this.vk.MapMemory(this.Context.Device, stagingMemory, 0, 0, data));
+        this.vk.UnmapMemory(this.Context.Device, stagingMemory);
 
         this.TransitionImageLayout(
             textureData.Image,
@@ -1134,12 +1132,12 @@ public unsafe partial class VulkanRenderer : IDisposable
             VkPipelineStageFlagBits.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
         );
 
-        this.vk.FreeMemory(this.context.Device, stagingMemory, null);
-        this.vk.DestroyBuffer(this.context.Device, stagingBuffer, null);
+        this.vk.FreeMemory(this.Context.Device, stagingMemory, null);
+        this.vk.DestroyBuffer(this.Context.Device, stagingBuffer, null);
     }
 
     public void WaitIdle() =>
-        this.vk.DeviceWaitIdle(this.context.Device);
+        this.vk.DeviceWaitIdle(this.Context.Device);
 
 
 }

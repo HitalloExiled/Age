@@ -18,7 +18,7 @@ public unsafe class Compiler
     {
         byte* source;
 
-        this.context.CheckResult(PInvoke.spvc_compiler_compile(handler, &source));
+        this.context.CheckResult(PInvoke.spvc_compiler_compile(this.handler, &source));
 
         return Marshal.PtrToStringAnsi((nint)source)!;
     }
@@ -33,5 +33,5 @@ public unsafe class Compiler
     }
 
     public uint GetDecoration(uint id, Decoration decoration) =>
-        PInvoke.spvc_compiler_get_decoration(handler, id, decoration);
+        PInvoke.spvc_compiler_get_decoration(this.handler, id, decoration);
 }

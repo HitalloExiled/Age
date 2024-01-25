@@ -312,7 +312,15 @@ dotnet_diagnostic.CA1810.severity  = suggestion # Initialize reference type stat
 dotnet_diagnostic.CA1836.severity  = suggestion # Prefer IsEmpty over Count when available
 dotnet_diagnostic.CA1836.severity  = suggestion # Property names should not match get methods
 dotnet_diagnostic.CA1861.severity  = suggestion # Avoid constant arrays as arguments
+# dotnet_diagnostic.CA2000.severity  = error      # Dispose objects before losing scope
+dotnet_diagnostic.CA2011.severity  = error      # Do not assign property within its setter
+dotnet_diagnostic.CA2014.severity  = error      # Do not use stackalloc in loops.
 dotnet_diagnostic.CA2254.severity  = suggestion # Remove unnecessary suppression operator
+dotnet_diagnostic.CS1570.severity  = warning    # XML comment on 'construct' has badly formed XML — 'reason'
+dotnet_diagnostic.CS1574.severity  = warning    # XML comment on 'construct' has syntactically incorrect cref attribute 'name'
+dotnet_diagnostic.CS1580.severity  = warning    # Invalid type for parameter 'parameter number' in XML comment cref attribute
+dotnet_diagnostic.CS1581.severity  = warning    # Invalid return type in XML comment cref attribute
+dotnet_diagnostic.CS1584.severity  = warning    # XML comment on 'member' has syntactically incorrect cref attribute 'invalid_syntax'
 dotnet_diagnostic.CS8019.severity  = suggestion # Unnecessary using directives
 dotnet_diagnostic.IDE0001.severity = suggestion # Name can be simplyfied
 dotnet_diagnostic.IDE0002.severity = suggestion # Name can be simplyfied
@@ -328,10 +336,6 @@ dotnet_diagnostic.IDE0078.severity = none       # Use pattern matching
 dotnet_diagnostic.IDE0080.severity = suggestion # Remove unnecessary suppression operator
 dotnet_diagnostic.IDE0082.severity = suggestion # Convert typeof to nameof
 dotnet_diagnostic.IDE1006.severity = suggestion # Remove unnecessary suppression operator
-
-[**/{Age.Vulkan,Native}/**.cs]
-dotnet_naming_rule.public_fields_rule.severity = none
-dotnet_diagnostic.CA1707.severity              = none
 
 [**/obj/**.cs]
 dotnet_diagnostic.CS8019.severity = none

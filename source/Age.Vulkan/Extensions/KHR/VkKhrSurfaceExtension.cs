@@ -5,7 +5,7 @@ using Age.Vulkan.Enums.KHR;
 using Age.Vulkan.Types;
 using Age.Vulkan.Types.KHR;
 
-using static Age.Core.Unsafe.UnmanagedUtils;
+using static Age.Core.Interop.PointerHelper;
 
 namespace Age.Vulkan.Extensions.KHR;
 

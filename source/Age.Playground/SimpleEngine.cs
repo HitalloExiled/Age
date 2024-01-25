@@ -1,7 +1,8 @@
+// #define SIMPLE_ENGINE
 #if SIMPLE_ENGINE
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Age.Core.Unsafe;
+using Age.Core.Interop;
 using Age.Numerics;
 using Age.Platforms.Abstractions;
 using Age.Vulkan;
@@ -95,7 +96,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
         for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            this.uniformBuffersMapped[i] = (UniformBufferObject*)Marshal.AllocHGlobal(Marshal.SizeOf<UniformBufferObject>());
+            this.uniformBuffersMapped[i] = (UniformBufferObject*)NativeMemory.Alloc(Marshal.SizeOf<UniformBufferObject>());
         }
     }
 

@@ -2,13 +2,13 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using Age.Core.Unsafe;
+using Age.Core.Interop;
 using Age.Vulkan.Interfaces;
 using Age.Vulkan.Enums;
 using Age.Vulkan.Flags;
 using Age.Vulkan.Types;
 
-using static Age.Core.Unsafe.UnmanagedUtils;
+using static Age.Core.Interop.PointerHelper;
 
 namespace Age.Vulkan;
 
@@ -2177,7 +2177,7 @@ public unsafe class Vk : IDisposable
 
         if (this.vkMapMemory.Invoke(device, memory, offset, (ulong)(Marshal.SizeOf<T>() * data.Length), flags, (void**)ppData) is var result && result == VkResult.VK_SUCCESS)
         {
-            Copy(data, *ppData, data.Length);
+            Copy(data, *ppData, (uint)data.Length);
         }
 
         return result;

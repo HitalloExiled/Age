@@ -32,7 +32,7 @@ public unsafe class Compiler : IDisposable
         fixed (byte* pInputFileName  = Encoding.UTF8.GetBytes(inputFileName))
         fixed (byte* pEntryPointName = Encoding.UTF8.GetBytes(entryPointName))
         {
-            var result = PInvoke.shaderc_compile_into_spv(this.handler, pSourceText, (ulong)sourceText.Length, (shaderc_shader_kind)shaderKind, pInputFileName, pEntryPointName, additionalOptions);
+            var result = PInvoke.shaderc_compile_into_spv(this.handler, pSourceText, (ulong)sourceText.Length, shaderKind, pInputFileName, pEntryPointName, additionalOptions);
 
             var length = PInvoke.shaderc_result_get_length(result);
 
@@ -45,7 +45,7 @@ public unsafe class Compiler : IDisposable
                 Marshal.Copy((nint)pBytes, bytes, 0, bytes.Length);
             }
 
-            var compilationStatus = (CompilationStatus)PInvoke.shaderc_result_get_compilation_status(result);
+            var compilationStatus = PInvoke.shaderc_result_get_compilation_status(result);
             var errorMessage      = Marshal.PtrToStringAnsi((nint)PInvoke.shaderc_result_get_error_message(result))!;
             var errors            = PInvoke.shaderc_result_get_num_errors(result);
             var warnings          = PInvoke.shaderc_result_get_num_warnings(result);

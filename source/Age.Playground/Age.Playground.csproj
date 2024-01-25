@@ -12,6 +12,7 @@
     <ProjectReference Include="..\Age.Resources\Age.Resources.csproj" />
     <ProjectReference Include="..\Age.Vulkan\Age.Vulkan.csproj" />
     <ProjectReference Include="..\Age\Age.csproj" />
+    <ProjectReference Include="..\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,12 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
-    <ProjectReference Include="..\Age.Platforms\Age.Platforms.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="./NativeLib/*.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes/win-x64/native/%(Filename)%(Extension)" />
+    <None Include="./Native/Lib/*.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes/win-x64/native/%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>
