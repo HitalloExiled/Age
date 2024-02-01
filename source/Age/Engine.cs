@@ -1,4 +1,3 @@
-using Age.Rendering.Display;
 using Age.Rendering.Drawing;
 using Age.Rendering.Services;
 using Age.Rendering.Vulkan;
@@ -18,7 +17,7 @@ public class Engine : IDisposable
 
     public Engine()
     {
-        Window.Register("Engine", this.renderer);
+        Window.Register(this.renderer);
 
         this.mainWindow = new Window("Age", new(800, 600), new(800, 300));
 
@@ -32,7 +31,7 @@ public class Engine : IDisposable
         {
             if (disposing)
             {
-                Window.CloseAll();
+                Platforms.Display.Window.CloseAll();
 
                 this.textService.Dispose();
                 this.renderingService.Dispose();

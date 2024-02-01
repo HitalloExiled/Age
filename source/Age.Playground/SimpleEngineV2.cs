@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using Age.Core.Interop;
 using Age.Numerics;
 using Age.Platforms.Abstractions;
-using Age.Rendering.Display;
 using SkiaSharp;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
@@ -23,6 +22,8 @@ using ThirdParty.Vulkan.Extensions.KHR;
 using Version = ThirdParty.Vulkan.Version;
 using System.Runtime.CompilerServices;
 using ThirdParty.Vulkan.Flags.KHR;
+
+using PlatformWindow = Age.Platforms.Display.Window;
 
 namespace Age.Playground;
 
@@ -88,7 +89,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     private DebugUtilsExtension?      debugUtilsExtension;
     private SurfaceExtension          surfaceExtension = null!;
     private SwapchainExtension        swapchainExtension = null!;
-    private Window                    window = null!;
+    private PlatformWindow            window = null!;
 
     private static PresentMode ChooseSwapPresentMode(PresentMode[] availablePresentModes)
     {
@@ -922,7 +923,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         var createInfo = new Win32Surface.CreateInfo
         {
-            Hwnd      = default,
+            Hwnd      = this.window.Handle,
             Hinstance = Process.GetCurrentProcess().Handle,
         };
 
@@ -1536,7 +1537,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
     private void InitWindow()
     {
-        this.window = new Window("Age*", new(600, 400), new());
+        this.window = new PlatformWindow("Age*", new(600, 400), new());
 
         this.window.SizeChanged += () => this.framebufferResized = true;
     }

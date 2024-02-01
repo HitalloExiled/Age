@@ -1,8 +1,8 @@
 using Age.Numerics;
 using Age.Rendering.Commands;
-using Age.Rendering.Display;
 using Age.Rendering.Drawing;
 using Age.Rendering.Enums;
+using Age.Rendering.Interfaces;
 using Age.Rendering.Vulkan;
 using Age.Rendering.Vulkan.Handlers;
 using Age.Rendering.Vulkan.Uniforms;
@@ -55,7 +55,7 @@ public class RenderingService : IDisposable
         }
     }
 
-    private void Render(Window window, Element element)
+    private void Render(IWindow window, Element element)
     {
         IndexBufferHandler?  lastIndexBuffer  = default;
         VertexBufferHandler? lastVertexBuffer = default;
@@ -177,7 +177,7 @@ public class RenderingService : IDisposable
     public Sampler CreateSampler() =>
         new() { Handler = this.renderer.CreateSampler() };
 
-    public void Render(Window window)
+    public void Render(IWindow window)
     {
         this.renderer.SetViewport(window.Context);
         this.renderer.BeginRenderPass(window.Context);
