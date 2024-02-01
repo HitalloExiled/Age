@@ -5,21 +5,19 @@ namespace ThirdParty.Vulkan;
 public unsafe partial class DeviceMemory : DisposableNativeHandle
 {
     private readonly Device device;
-    private readonly AllocationCallbacks? allocator;
 
-    internal DeviceMemory(Device device, AllocateInfo allocateInfo, AllocationCallbacks? allocator)
+    internal DeviceMemory(Device device, AllocateInfo allocateInfo)
     {
-        this.device    = device;
-        this.allocator = allocator;
+        this.device = device;
 
         fixed (VkDeviceMemory* pHandle = &this.Handle)
         {
-            VulkanException.Check(PInvoke.vkAllocateMemory(device, allocateInfo, allocator, pHandle));
+            VulkanException.Check(PInvoke.vkAllocateMemory(device, allocateInfo, device.PhysicalDevice.Instance.Allocator, pHandle));
         }
     }
 
     protected override void OnDispose() =>
-        PInvoke.vkFreeMemory(this.device, this, this.allocator);
+        PInvoke.vkFreeMemory(this.device, this, this.device.PhysicalDevice.Instance.Allocator);
 
     /// <inheritdoc cref="PInvoke.vkMapMemory" />
     public void Map<T>(ulong offset, uint flags, T data) where T : unmanaged =>

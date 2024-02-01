@@ -1,8 +1,8 @@
 using ThirdParty.Vulkan.Native.KHR;
 
-namespace ThirdParty.Vulkan.Extensions.KHR;
+namespace ThirdParty.Vulkan.KHR;
 
-public struct Win32Surface
+public static class Win32Surface
 {
     /// <inheritdoc cref="VkWin32SurfaceCreateInfoKHR" />
     public unsafe record CreateInfo : NativeReference<VkWin32SurfaceCreateInfoKHR>

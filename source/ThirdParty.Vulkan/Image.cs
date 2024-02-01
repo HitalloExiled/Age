@@ -4,17 +4,18 @@ namespace ThirdParty.Vulkan;
 
 public unsafe partial class Image : DisposableNativeHandle
 {
-    private readonly AllocationCallbacks? allocator;
-    private readonly Device               device;
+    private readonly Device device;
 
-    public Image(Device device, CreateInfo createInfo, AllocationCallbacks? allocator)
+    internal Image(VkImage handle, Device device) : base(handle) =>
+        this.device = device;
+
+    internal Image(Device device, CreateInfo createInfo)
     {
-        this.device    = device;
-        this.allocator = allocator;
+        this.device = device;
 
         fixed (VkImage* pHandle = &this.Handle)
         {
-            VulkanException.Check(PInvoke.vkCreateImage(device, createInfo, allocator, pHandle));
+            VulkanException.Check(PInvoke.vkCreateImage(device, createInfo, device.PhysicalDevice.Instance.Allocator, pHandle));
         }
     }
 
@@ -31,5 +32,5 @@ public unsafe partial class Image : DisposableNativeHandle
     }
 
     protected override void OnDispose() =>
-        PInvoke.vkDestroyImage(this.device, this, this.allocator);
+        PInvoke.vkDestroyImage(this.device, this, this.device.PhysicalDevice.Instance.Allocator);
 }

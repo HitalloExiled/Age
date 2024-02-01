@@ -4,22 +4,20 @@ namespace ThirdParty.Vulkan;
 
 public unsafe partial class CommandPool : DisposableNativeHandle
 {
-    private readonly AllocationCallbacks? allocator;
-    private readonly Device               device;
+    private readonly Device device;
 
-    public CommandPool(Device device, CreateInfo createInfo, AllocationCallbacks? allocator)
+    public CommandPool(Device device, CreateInfo createInfo)
     {
-        this.device    = device;
-        this.allocator = allocator;
+        this.device = device;
 
         fixed (VkCommandPool* pValue = &this.Handle)
         {
-            PInvoke.vkCreateCommandPool(device, createInfo, allocator, pValue);
+            PInvoke.vkCreateCommandPool(device, createInfo, device.PhysicalDevice.Instance.Allocator, pValue);
         }
     }
 
     protected override void OnDispose() =>
-        PInvoke.vkDestroyCommandPool(this.device, this.Handle, this.allocator);
+        PInvoke.vkDestroyCommandPool(this.device, this.Handle, this.device.PhysicalDevice.Instance.Allocator);
 
     #pragma warning disable IDE0001
     public CommandBuffer AllocateCommand(CommandBufferLevelFlags level) =>

@@ -159,7 +159,7 @@ public unsafe abstract record NativeReference
     where U : unmanaged
     where N : INumber<N>
     {
-        destination = (U*)NativeMemory.Alloc((uint)(sizeof(U) * value.Length));
+        destination = PointerHelper.Alloc(value);
         field       = value;
         length      = N.CreateChecked(value.Length);
     }

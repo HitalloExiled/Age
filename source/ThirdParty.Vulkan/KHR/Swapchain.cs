@@ -1,9 +1,22 @@
+using ThirdParty.Vulkan.Extensions.KHR;
+
 namespace ThirdParty.Vulkan.KHR;
 
 public partial class Swapchain : DisposableNativeHandle
 {
-    protected override void OnDispose() => throw new NotImplementedException();
+    private readonly SwapchainExtension extension;
 
-    public uint AcquireNextImage(ulong maxValue, Semaphore? semaphore, Fence? fence) => throw new NotImplementedException();
-    public Image[] GetImages() => throw new NotImplementedException();
+    internal Swapchain(VkSwapchainKHR handle, SwapchainExtension extension) : base(handle) =>
+        this.extension = extension;
+
+    protected override void OnDispose() =>
+        this.extension.DestroySwapchain(this);
+
+    /// <inheritdoc cref="SwapchainExtension.AcquireNextImage" />
+    public uint AcquireNextImage(ulong timeout, Semaphore? semaphore, Fence? fence) =>
+        this.extension.AcquireNextImage(this, timeout, semaphore, fence);
+
+    /// <inheritdoc cref="SwapchainExtension.GetSwapchainImages" />
+    public Image[] GetImages() =>
+        this.extension.GetSwapchainImages(this);
 }

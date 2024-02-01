@@ -6,13 +6,13 @@ namespace ThirdParty.Vulkan;
 
 public unsafe partial class PhysicalDevice : NativeHandle
 {
-    private readonly AllocationCallbacks? allocator;
+    internal Instance Instance { get; }
 
-    internal PhysicalDevice(VkPhysicalDevice handle, AllocationCallbacks? allocator) : base(handle) =>
-        this.allocator = allocator;
+    internal PhysicalDevice(VkPhysicalDevice handle, Instance instance) : base(handle) =>
+        this.Instance = instance;
 
     public Device CreateDevice(Device.CreateInfo createInfo) =>
-        new(this, createInfo, this.allocator);
+        new(this, createInfo);
 
     public ExtensionProperties[] EnumerateDeviceExtensionProperties(string? layerName = null)
     {

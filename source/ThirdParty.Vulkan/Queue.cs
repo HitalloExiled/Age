@@ -25,9 +25,10 @@ public unsafe partial class Queue : NativeHandle
     {
         fixed (VkSubmitInfo* pSubmits = submits.Select(x => (VkSubmitInfo)x).ToArray())
         {
-            VulkanException.Check(PInvoke.vkQueueSubmit(this.Handle, (uint)submits.Length, pSubmits, fence));
+            VulkanException.Check(PInvoke.vkQueueSubmit(this, (uint)submits.Length, pSubmits, fence));
         }
     }
 
-    public void WaitIdle() => throw new NotImplementedException();
+    public void WaitIdle() =>
+        PInvoke.vkQueueWaitIdle(this);
 }

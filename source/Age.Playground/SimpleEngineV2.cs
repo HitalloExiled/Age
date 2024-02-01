@@ -2,7 +2,6 @@
 #if SIMPLE_ENGINE_V2
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Age.Core.Interop;
 using Age.Numerics;
 using Age.Platforms.Abstractions;
 using SkiaSharp;
@@ -726,12 +725,6 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             ApiVersion         = Version.V1_0,
         };
 
-
-
-        using var ppEnabledLayerNames = new StringArrayPtr(this.validationLayers.ToArray());
-
-
-
         DebugUtilsMessenger.CreateInfo? debugCreateInfo = null;
         string[]                        enabledLayerNames = [];
 
@@ -756,12 +749,12 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             throw new Exception($"Cannot found required extension {DebugUtilsExtension.Name}");
         }
 
-        if (!this.instance.TryGetExtension<SurfaceExtension>(out var vkKhrSurface))
+        if (!this.instance.TryGetExtension<SurfaceExtension>(out var surfaceExtension))
         {
             throw new Exception($"Cannot found required extension {SurfaceExtension.Name}");
         }
 
-        this.surfaceExtension = vkKhrSurface;
+        this.surfaceExtension = surfaceExtension;
     }
 
     private void CreateLogicalDevice()
@@ -791,8 +784,6 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             SamplerAnisotropy = true,
             SampleRateShading = true,
         };
-
-        using var ppEnabledLayerNames = new StringArrayPtr(this.validationLayers.ToArray());
 
         var createInfo = new Device.CreateInfo
         {
@@ -1542,20 +1533,20 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         this.window.SizeChanged += () => this.framebufferResized = true;
     }
 
-    private bool IsDeviceSuitable(PhysicalDevice device)
+    private bool IsDeviceSuitable(PhysicalDevice physicalDevice)
     {
-        var indices             = this.FindQueueFamilies(device);
-        var extensionsSupported = this.CheckDeviceExtensionSupport(device);
+        var indices             = this.FindQueueFamilies(physicalDevice);
+        var extensionsSupported = this.CheckDeviceExtensionSupport(physicalDevice);
         var swapChainAdequate   = false;
 
         if (extensionsSupported)
         {
-            var swapChainSupport = this.QuerySwapChainSupport(device);
+            var swapChainSupport = this.QuerySwapChainSupport(physicalDevice);
 
             swapChainAdequate = swapChainSupport.Formats.Length != 0 && swapChainSupport.PresentModes.Length != 0;
         }
 
-        var supportedFeatures = this.physicalDevice.GetDeviceFeatures();
+        var supportedFeatures = physicalDevice.GetDeviceFeatures();
 
         return indices.IsComplete && extensionsSupported && swapChainAdequate && supportedFeatures.SamplerAnisotropy;
     }
