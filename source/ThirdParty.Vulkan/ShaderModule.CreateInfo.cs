@@ -1,3 +1,4 @@
+using Age.Core.Interop;
 using ThirdParty.Vulkan.Native;
 
 namespace ThirdParty.Vulkan;
@@ -7,7 +8,7 @@ public partial class ShaderModule
     /// <inheritdoc cref="VkShaderModuleCreateInfo" />
     public unsafe record CreateInfo : NativeReference<VkShaderModuleCreateInfo>
     {
-        private uint[] code = [];
+        private byte[] code = [];
 
         public void* Next
         {
@@ -21,10 +22,15 @@ public partial class ShaderModule
             init => this.PNative->flags = value;
         }
 
-        public uint[] Code
+        public byte[] Code
         {
             get => this.code;
-            init => Init(ref this.code, ref this.PNative->pCode, ref this.PNative->codeSize, value);
+            init
+            {
+                this.code              = value;
+                this.PNative->pCode    = PointerHelper.Alloc(value, BitConverter.ToUInt32);
+                this.PNative->codeSize = (uint)value.Length / sizeof(uint);
+            }
         }
 
         protected override void OnFinalize() =>

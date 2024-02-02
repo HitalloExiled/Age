@@ -5,24 +5,22 @@ using System.Runtime.InteropServices;
 using Age.Numerics;
 using Age.Platforms.Abstractions;
 using SkiaSharp;
-using ThirdParty.Vulkan;
-using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Enums.KHR;
+using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.EXT;
-using ThirdParty.Vulkan.Flags;
-using ThirdParty.Vulkan.Flags.EXT;
-using ThirdParty.Vulkan.KHR;
-
-using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
-using Buffer          = ThirdParty.Vulkan.Buffer;
-using Semaphore       = ThirdParty.Vulkan.Semaphore;
 using ThirdParty.Vulkan.Extensions.EXT;
 using ThirdParty.Vulkan.Extensions.KHR;
-using Version = ThirdParty.Vulkan.Version;
-using System.Runtime.CompilerServices;
+using ThirdParty.Vulkan.Flags.EXT;
 using ThirdParty.Vulkan.Flags.KHR;
+using ThirdParty.Vulkan.Flags;
+using ThirdParty.Vulkan.KHR;
+using ThirdParty.Vulkan;
 
-using PlatformWindow = Age.Platforms.Display.Window;
+using Buffer          = ThirdParty.Vulkan.Buffer;
+using PlatformWindow  = Age.Platforms.Display.Window;
+using Semaphore       = ThirdParty.Vulkan.Semaphore;
+using Version         = ThirdParty.Vulkan.Version;
+using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
 
 namespace Age.Playground;
 
@@ -899,7 +897,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     {
         var createInfo = new ShaderModule.CreateInfo
         {
-            Code = Unsafe.As<uint[]>(code),
+            Code = code,
         };
 
         return this.device.CreateShaderModule(createInfo);

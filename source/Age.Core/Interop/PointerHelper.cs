@@ -44,6 +44,20 @@ public unsafe static class PointerHelper
         return pointer;
     }
 
+    public static T* Alloc<T>(byte[] bytes, Func<byte[], int, T> converter) where T : unmanaged
+    {
+        var size = sizeof(T);
+
+        var pData = (T*)NativeMemory.Alloc((uint)(bytes.Length / size));
+
+        for (var i = 0; i < bytes.Length; i += size)
+        {
+            pData[i] = converter.Invoke(bytes, size * i);
+        }
+
+        return pData;
+    }
+
     public static T* Alloc<T>(IList<T> source) where T : unmanaged
     {
         var pData = (T*)NativeMemory.Alloc((uint)(sizeof(T) * source.Count));

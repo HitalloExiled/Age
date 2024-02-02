@@ -13,7 +13,7 @@ public unsafe class CompilerOptions : IDisposable
     public SourceLanguage SourceLanguage
     {
         get => this.sourceLanguage;
-        set => PInvoke.shaderc_compile_options_set_source_language(this.handler, (shaderc_source_language)(this.sourceLanguage = value));
+        set => PInvoke.shaderc_compile_options_set_source_language(this.handler, this.sourceLanguage = value);
     }
 
     private CompilerOptions(shaderc_compile_options_t handler) =>

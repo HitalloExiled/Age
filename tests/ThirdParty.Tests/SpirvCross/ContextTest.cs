@@ -62,6 +62,6 @@ public class ContextTest
     {
         using var context = new Context();
 
-        Assert.Throws<Exception>(() => context.ParseSpirv(new uint[255]));
+        Assert.Throws<Exception>(() => context.ParseSpirv(new byte[255]));
     }
 }

@@ -52,10 +52,7 @@ public unsafe class Context : IDisposable
     {
         var spirv = new uint[bytes.Length / sizeof(uint)];
 
-        for (var i = 0; i < spirv.Length; i++)
-        {
-            spirv[i] = BitConverter.ToUInt32(bytes, i * sizeof(uint));
-        }
+        Buffer.BlockCopy(bytes, 0, spirv, 0, bytes.Length);
 
         return this.ParseSpirv(spirv);
     }
