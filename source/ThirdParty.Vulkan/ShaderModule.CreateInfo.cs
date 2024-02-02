@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Age.Core.Interop;
 using ThirdParty.Vulkan.Native;
 
@@ -28,7 +29,7 @@ public partial class ShaderModule
             init
             {
                 this.code              = value;
-                this.PNative->pCode    = PointerHelper.Alloc(value, BitConverter.ToUInt32);
+                this.PNative->pCode    = PointerHelper.Alloc(MemoryMarshal.Cast<byte, uint>(value));
                 this.PNative->codeSize = (uint)value.Length / sizeof(uint);
             }
         }

@@ -48,22 +48,15 @@ public unsafe class Context : IDisposable
         }
     }
 
-    public ParsedSpirv ParseSpirv(byte[] bytes)
-    {
-        var spirv = new uint[bytes.Length / sizeof(uint)];
-
-        Buffer.BlockCopy(bytes, 0, spirv, 0, bytes.Length);
-
-        return this.ParseSpirv(spirv);
-    }
-
-    public ParsedSpirv ParseSpirv(uint[] spirv)
+    public ParsedSpirv ParseSpirv(byte[] spirv)
     {
         spvc_parsed_ir parsedIr;
 
-        fixed (uint* pSpirv = spirv)
+        var spirvSpan = MemoryMarshal.Cast<byte, uint>(spirv);
+
+        fixed (uint* pSpirv = spirvSpan)
         {
-            this.CheckResult(PInvoke.spvc_context_parse_spirv(this.handler, pSpirv, (ulong)spirv.Length, &parsedIr));
+            this.CheckResult(PInvoke.spvc_context_parse_spirv(this.handler, pSpirv, (ulong)spirvSpan.Length, &parsedIr));
         }
 
         return parsedIr;

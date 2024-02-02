@@ -44,49 +44,31 @@ public unsafe static class PointerHelper
         return pointer;
     }
 
-    public static T* Alloc<T>(byte[] bytes, Func<byte[], int, T> converter) where T : unmanaged
+    public static T* Alloc<T>(Span<T> source) where T : unmanaged
     {
-        var size = sizeof(T);
+        var ptr = NativeMemory.Alloc((uint)(sizeof(T) * source.Length));
 
-        var pData = (T*)NativeMemory.Alloc((uint)(bytes.Length / size));
+        var destination = new Span<T>(ptr, source.Length);
 
-        for (var i = 0; i < bytes.Length; i += size)
-        {
-            pData[i] = converter.Invoke(bytes, size * i);
-        }
+        source.CopyTo(destination);
 
-        return pData;
+        return (T*)ptr;
     }
 
-    public static T* Alloc<T>(IList<T> source) where T : unmanaged
-    {
-        var pData = (T*)NativeMemory.Alloc((uint)(sizeof(T) * source.Count));
+    public static T* Alloc<T>(T[] source) where T : unmanaged =>
+        Alloc(source.AsSpan());
 
-        for (var i = 0; i < source.Count; i++)
-        {
-            pData[i] = source[i];
-        }
-
-        return pData;
-    }
-
-    public static void Copy<T>(T* source, T[] destination, uint length) where T : unmanaged
-    {
-        for (var i = 0; i < length; i++)
-        {
-            destination[i] = source[i];
-        }
-    }
+    public static void Copy<T>(T* source, T[] destination, uint length) where T : unmanaged =>
+        new Span<T>(source, (int)length).CopyTo(destination);
 
     public static void Copy<T>(nint source, T[] destination, uint length) where T : unmanaged =>
         Copy((T*)source, destination, length);
 
     public static void Copy<T>(Span<T> source, T* destination, uint length) where T : unmanaged
     {
-        for (var i = 0; i < length; i++)
-        {
-            destination[i] = source[i];
-        }
+        var destinationSpan = new Span<T>(destination, (int)length);
+
+        source.CopyTo(destinationSpan);
     }
 
     public static void Copy<T>(T[] source, nint destination, uint length) where T : unmanaged =>
