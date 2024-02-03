@@ -15,7 +15,8 @@
         "**/bin": true,
         "**/obj": true,
         ".coverage": true,
-        "**/*.bkp": true
+        "**/*.bkp": true,
+        ".vs": true
     },
     "explorerExclude.backup": {}
 }

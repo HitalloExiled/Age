@@ -10,10 +10,10 @@ public unsafe record ApplicationInfo : NativeReference<VkApplicationInfo>
     private string? applicationName;
     private string? engineName;
 
-    public Version ApiVersion
+    public nint Next
     {
-        get => new(this.PNative->apiVersion);
-        init => this.PNative->apiVersion = value;
+        get => (nint)this.PNative->pNext;
+        init => this.PNative->pNext = value.ToPointer();
     }
 
     public string? ApplicationName
@@ -40,10 +40,10 @@ public unsafe record ApplicationInfo : NativeReference<VkApplicationInfo>
         init => this.PNative->engineVersion = value;
     }
 
-    public nint Next
+    public Version ApiVersion
     {
-        get => (nint)this.PNative->pNext;
-        init => this.PNative->pNext = value.ToPointer();
+        get => new(this.PNative->apiVersion);
+        init => this.PNative->apiVersion = value;
     }
 
     protected override void OnFinalize()

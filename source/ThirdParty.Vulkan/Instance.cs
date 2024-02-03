@@ -6,6 +6,9 @@ using ThirdParty.Vulkan.Native;
 
 namespace ThirdParty.Vulkan;
 
+/// <summary>
+/// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkInstance.html">VkInstance</see>
+/// </summary>
 public unsafe partial class Instance : DisposableNativeHandle
 {
     private readonly HashSet<string> enabledExtensions = [];
@@ -24,19 +27,20 @@ public unsafe partial class Instance : DisposableNativeHandle
         }
     }
 
+    /// <inheritdoc cref="PInvoke.vkEnumerateInstanceExtensionProperties" />
     public static ExtensionProperties[] EnumerateExtensionProperties(string? layer)
     {
         fixed (byte* pLayer = Encoding.UTF8.GetBytes(layer ?? ""))
         {
             uint propertyCount;
 
-            PInvoke.vkEnumerateInstanceExtensionProperties(pLayer, &propertyCount, null);
+            VulkanException.Check(PInvoke.vkEnumerateInstanceExtensionProperties(pLayer, &propertyCount, null));
 
             var vkExtensionProperties = new VkExtensionProperties[propertyCount];
 
             fixed (VkExtensionProperties* pExtensionProperties = vkExtensionProperties)
             {
-                PInvoke.vkEnumerateInstanceExtensionProperties(pLayer, &propertyCount, pExtensionProperties);
+                VulkanException.Check(PInvoke.vkEnumerateInstanceExtensionProperties(pLayer, &propertyCount, pExtensionProperties));
 
                 var extensionProperties = new ExtensionProperties[propertyCount];
 
@@ -50,6 +54,7 @@ public unsafe partial class Instance : DisposableNativeHandle
         }
     }
 
+    /// <inheritdoc cref="PInvoke.vkEnumerateInstanceLayerProperties" />
     public static LayerProperties[] EnumerateLayerProperties()
     {
         uint propertyCount;
@@ -76,6 +81,7 @@ public unsafe partial class Instance : DisposableNativeHandle
     protected override void OnDispose() =>
         PInvoke.vkDestroyInstance(this.Handle, this.Allocator);
 
+    /// <inheritdoc cref="PInvoke.vkEnumeratePhysicalDevices" />
     public PhysicalDevice[] EnumeratePhysicalDevices()
     {
         uint physicalDeviceCount;
@@ -99,6 +105,7 @@ public unsafe partial class Instance : DisposableNativeHandle
         return physicalDevices;
     }
 
+    /// <inheritdoc cref="PInvoke.vkGetInstanceProcAddr" />
     internal T GetProcAddr<T>(string name) where T : Delegate
     {
         fixed (byte* pName = Encoding.UTF8.GetBytes(name))

@@ -8,7 +8,7 @@ public unsafe record struct PointerArray(int Lenght = 1) : IDisposable
 
     public void Dispose()
     {
-        Marshal.FreeHGlobal(this.handler);
+        NativeMemory.Free((void*)this.handler);
         this.handler = default;
     }
 
@@ -39,7 +39,7 @@ public unsafe record struct PointerArray<T>(int Lenght = 1) : IDisposable where 
 
     public void Dispose()
     {
-        Marshal.FreeHGlobal(this.handler);
+        NativeMemory.Free((void*)this.handler);
 
         this.handler = default;
     }

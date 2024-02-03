@@ -1,13 +1,9 @@
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class DescriptorSetLayout : DisposableNativeHandle
+public unsafe partial class DescriptorSetLayout : DeviceResource
 {
-    private readonly Device device;
-
-    internal DescriptorSetLayout(Device device, CreateInfo createInfo)
+    internal DescriptorSetLayout(Device device, CreateInfo createInfo) : base(device)
     {
-        this.device = device;
-
         fixed (VkDescriptorSetLayout* pHandle = &this.Handle)
         {
             VulkanException.Check(PInvoke.vkCreateDescriptorSetLayout(device, createInfo, device.PhysicalDevice.Instance.Allocator, pHandle));
@@ -15,5 +11,5 @@ public unsafe partial class DescriptorSetLayout : DisposableNativeHandle
     }
 
     protected override void OnDispose() =>
-        PInvoke.vkDestroyDescriptorSetLayout(this.device, this, this.device.PhysicalDevice.Instance.Allocator);
+        PInvoke.vkDestroyDescriptorSetLayout(this.Device, this, this.Device.PhysicalDevice.Instance.Allocator);
 }

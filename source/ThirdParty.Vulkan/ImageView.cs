@@ -1,13 +1,9 @@
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class ImageView : DisposableNativeHandle
+public unsafe partial class ImageView : DeviceResource
 {
-    private readonly Device device;
-
-    public ImageView(Device device, CreateInfo createInfo)
+    public ImageView(Device device, CreateInfo createInfo) : base(device)
     {
-        this.device = device;
-
         fixed (VkImageView* pHandle = &this.Handle)
         {
             VulkanException.Check(PInvoke.vkCreateImageView(device, createInfo, device.PhysicalDevice.Instance.Allocator, pHandle));
@@ -15,5 +11,5 @@ public unsafe partial class ImageView : DisposableNativeHandle
     }
 
     protected override void OnDispose() =>
-        PInvoke.vkDestroyImageView(this.device, this, this.device.PhysicalDevice.Instance.Allocator);
+        PInvoke.vkDestroyImageView(this.Device, this, this.Device.PhysicalDevice.Instance.Allocator);
 }

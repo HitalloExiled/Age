@@ -5,11 +5,11 @@ namespace ThirdParty.Vulkan;
 /// <inheritdoc cref="VkSubpassDescription" />
 public unsafe record SubpassDescription : NativeReference<VkSubpassDescription>
 {
-    private AttachmentReference[] colorAttachments    = [];
-    private AttachmentReference?  depthStencilAttachment;
     private AttachmentReference[] inputAttachments    = [];
-    private uint[]                preserveAttachments = [];
+    private AttachmentReference[] colorAttachments    = [];
     private AttachmentReference[] resolveAttachments  = [];
+    private AttachmentReference?  depthStencilAttachment;
+    private uint[]                preserveAttachments = [];
 
     public VkSubpassDescriptionFlags Flags
     {

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -44,44 +45,57 @@ public unsafe static class PointerHelper
         return pointer;
     }
 
-    public static T* Alloc<T>(Span<T> source) where T : unmanaged
+    public static T* Alloc<T>(T[] source) where T : unmanaged
     {
-        var ptr = NativeMemory.Alloc((uint)(sizeof(T) * source.Length));
+        var ptr = (T*)NativeMemory.Alloc((uint)(sizeof(T) * source.Length));
 
-        var destination = new Span<T>(ptr, source.Length);
+        Copy(source, ptr);
 
-        source.CopyTo(destination);
-
-        return (T*)ptr;
+        return ptr;
     }
 
-    public static T* Alloc<T>(T[] source) where T : unmanaged =>
-        Alloc(source.AsSpan());
+    public static T* Alloc<T>(Span<T> source) where T : unmanaged
+    {
+        var ptr = (T*)NativeMemory.Alloc((uint)(sizeof(T) * source.Length));
 
-    public static void Copy<T>(T* source, T[] destination, uint length) where T : unmanaged =>
-        new Span<T>(source, (int)length).CopyTo(destination);
+        Copy(source, ptr);
 
+        return ptr;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Copy<T>(T* source, T[] destination, uint length) where T : unmanaged
+    {
+        for (var i = 0; i < length; i++)
+        {
+            destination[i] = source[i];
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Copy<T>(nint source, T[] destination, uint length) where T : unmanaged =>
         Copy((T*)source, destination, length);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Copy<T>(Span<T> source, T* destination, uint length) where T : unmanaged
     {
-        var destinationSpan = new Span<T>(destination, (int)length);
-
-        source.CopyTo(destinationSpan);
+        for (var i = 0; i < length; i++)
+        {
+            destination[i] = source[i];
+        }
     }
 
-    public static void Copy<T>(T[] source, nint destination, uint length) where T : unmanaged =>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Copy<T>(Span<T> source, nint destination, uint length) where T : unmanaged =>
         Copy(source, (T*)destination, length);
 
-    public static void Copy<T>(T[] source, nint destination) where T : unmanaged =>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Copy<T>(Span<T> source, nint destination) where T : unmanaged =>
         Copy(source, destination, (uint)source.Length);
 
-    public static void Copy<T>(T[] source, T* destination) where T : unmanaged =>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Copy<T>(Span<T> source, T* destination) where T : unmanaged =>
         Copy(source, destination, (uint)source.Length);
-
-    public static void Free<T>(T* pointer) where T : unmanaged =>
-        Free((nint)pointer);
 
     public static void Free<T>(T** pointer, uint length) where T : unmanaged
     {
@@ -91,34 +105,30 @@ public unsafe static class PointerHelper
             pointer[i] = null;
         }
 
-        Free((nint)pointer);
+        NativeMemory.Free(pointer);
     }
 
-    public static T? NullIfDefault<T>(in T target) where T : unmanaged =>
-        target.Equals(default(T)) ? null : target;
-
-    public static T* NullIfDefault<T>(in T target, T* pointer) where T : unmanaged =>
-        target.Equals(default(T)) ? null : pointer;
-
-
-
-    public static T[] ToArray<T>(T* source, uint length) where T : unmanaged
-    {
-        var result = new T[length];
-
-        Copy(source, result, length);
-
-        return result;
-    }
-
-    public static void Free(nint pointer)
+    public static void Free<T>(T* pointer) where T : unmanaged
     {
         if (pointer != default)
         {
-            Marshal.FreeHGlobal(pointer);
+            NativeMemory.Free(pointer);
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T? NullIfDefault<T>(in T target) where T : unmanaged =>
+        target.Equals(default(T)) ? null : target;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T* NullIfDefault<T>(in T target, T* pointer) where T : unmanaged =>
+        target.Equals(default(T)) ? null : pointer;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T[] ToArray<T>(T* source, uint length) where T : unmanaged =>
+        new Span<T>(source, (int)length).ToArray();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T[] ToArray<T>(nint source, uint length) where T : unmanaged =>
         ToArray((T*)source, length);
 
@@ -133,15 +143,4 @@ public unsafe static class PointerHelper
 
         return result;
     }
-
-    public static void ZeroFill(nint pointer, int size)
-    {
-        for (var i = 0; i < size; i++)
-        {
-            Marshal.WriteByte(pointer + i, 0);
-        }
-    }
-
-    public static void ZeroFill(byte* pointer, int size) =>
-        ZeroFill((nint)pointer, size);
 }

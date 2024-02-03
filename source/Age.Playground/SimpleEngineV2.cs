@@ -38,55 +38,63 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     private readonly WavefrontLoader        wavefrontLoader          = new(new FileSystem());
     private readonly Semaphore[]            renderFinishedSemaphores = new Semaphore[MAX_FRAMES_IN_FLIGHT];
     private readonly Buffer[]               uniformBuffers           = new Buffer[MAX_FRAMES_IN_FLIGHT];
-    private readonly UniformBufferObject[]  uniformBuffersMapped     = new UniformBufferObject[MAX_FRAMES_IN_FLIGHT];
+    private readonly UniformBufferObject*[]  uniformBuffersMapped    = new UniformBufferObject*[MAX_FRAMES_IN_FLIGHT];
     private readonly DeviceMemory[]         uniformBuffersMemory     = new DeviceMemory[MAX_FRAMES_IN_FLIGHT];
     private readonly HashSet<string>        validationLayers         = ["VK_LAYER_KHRONOS_validation"];
     private readonly List<Vertex>           vertices                 = [];
 
-    private Image                     colorImage = null!;
-    private DeviceMemory              colorImageMemory = null!;
-    private ImageView                 colorImageView = null!;
-    private CommandBuffer[]           commandBuffers = [];
-    private CommandPool               commandPool = null!;
-    private uint                      currentFrame;
-    private DebugUtilsMessenger       debugMessenger = null!;
-    private Image                     depthImage = null!;
-    private DeviceMemory              depthImageMemory = null!;
-    private ImageView                 depthImageView = null!;
-    private DescriptorPool            descriptorPool = null!;
-    private DescriptorSetLayout       descriptorSetLayout = null!;
-    private DescriptorSet[]           descriptorSets = [];
-    private Device                    device = null!;
-    private bool                      disposed;
-    private bool                      framebufferResized;
-    private Pipeline                  graphicsPipeline = null!;
-    private Queue                     graphicsQueue = null!;
-    private Buffer                    indexBuffer = null!;
-    private DeviceMemory              indexBufferMemory = null!;
-    private Instance                  instance = null!;
-    private uint                      mipLevels;
-    private SampleCountFlags          msaaSamples = SampleCountFlags.N1;
-    private PhysicalDevice            physicalDevice = null!;
-    private PipelineLayout            pipelineLayout = null!;
-    private Queue                     presentQueue = null!;
-    private RenderPass                renderPass = null!;
-    private Surface                   surface = null!;
-    private Swapchain                 swapChain = null!;
-    private Extent2D                  swapChainExtent = new();
-    private Framebuffer[]             swapChainFramebuffers = [];
-    private Format                    swapChainImageFormat;
-    private Image[]                   swapChainImages = [];
-    private ImageView[]               swapChainImageViews = [];
-    private Image                     textureImage = null!;
-    private DeviceMemory              textureImageMemory = null!;
-    private ImageView                 textureImageView = null!;
-    private Sampler                   textureSampler = null!;
-    private Buffer                    vertexBuffer = null!;
-    private DeviceMemory              vertexBufferMemory = null!;
-    private DebugUtilsExtension?      debugUtilsExtension;
-    private SurfaceExtension          surfaceExtension = null!;
-    private SwapchainExtension        swapchainExtension = null!;
-    private PlatformWindow            window = null!;
+    private Image                colorImage = null!;
+    private DeviceMemory         colorImageMemory = null!;
+    private ImageView            colorImageView = null!;
+    private CommandBuffer[]      commandBuffers = [];
+    private CommandPool          commandPool = null!;
+    private uint                 currentFrame;
+    private DebugUtilsMessenger  debugMessenger = null!;
+    private Image                depthImage = null!;
+    private DeviceMemory         depthImageMemory = null!;
+    private ImageView            depthImageView = null!;
+    private DescriptorPool       descriptorPool = null!;
+    private DescriptorSetLayout  descriptorSetLayout = null!;
+    private DescriptorSet[]      descriptorSets = [];
+    private Device               device = null!;
+    private bool                 disposed;
+    private bool                 framebufferResized;
+    private Pipeline             graphicsPipeline = null!;
+    private Queue                graphicsQueue = null!;
+    private Buffer               indexBuffer = null!;
+    private DeviceMemory         indexBufferMemory = null!;
+    private Instance             instance = null!;
+    private uint                 mipLevels;
+    private SampleCountFlags     msaaSamples = SampleCountFlags.N1;
+    private PhysicalDevice       physicalDevice = null!;
+    private PipelineLayout       pipelineLayout = null!;
+    private Queue                presentQueue = null!;
+    private RenderPass           renderPass = null!;
+    private Surface              surface = null!;
+    private Swapchain            swapChain = null!;
+    private Extent2D             swapChainExtent = new();
+    private Framebuffer[]        swapChainFramebuffers = [];
+    private Format               swapChainImageFormat;
+    private Image[]              swapChainImages = [];
+    private ImageView[]          swapChainImageViews = [];
+    private Image                textureImage = null!;
+    private DeviceMemory         textureImageMemory = null!;
+    private ImageView            textureImageView = null!;
+    private Sampler              textureSampler = null!;
+    private Buffer               vertexBuffer = null!;
+    private DeviceMemory         vertexBufferMemory = null!;
+    private DebugUtilsExtension? debugUtilsExtension;
+    private SurfaceExtension     surfaceExtension = null!;
+    private SwapchainExtension   swapchainExtension = null!;
+    private PlatformWindow       window = null!;
+
+    public SimpleEngineV2()
+    {
+        for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            this.uniformBuffersMapped[i] = (UniformBufferObject*)NativeMemory.Alloc((uint)sizeof(UniformBufferObject));
+        }
+    }
 
     private static PresentMode ChooseSwapPresentMode(PresentMode[] availablePresentModes)
     {
@@ -268,7 +276,12 @@ public unsafe partial class SimpleEngineV2 : IDisposable
                 LayerCount     = 1,
             },
             ImageOffset = new(),
-            ImageExtent = new(){ Width = (uint)width, Height = (uint)height },
+            ImageExtent = new()
+            {
+                Width = (uint)width,
+                Height = (uint)height,
+                Depth = 1
+            },
         };
 
         commandBuffer.CopyBufferToImage(buffer, image, ImageLayout.TransferDstOptimal, region);
@@ -489,8 +502,8 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
     private void CreateGraphicsPipeline()
     {
-        var vertShaderCode = File.ReadAllBytes(Path.Join(AppContext.BaseDirectory, "Shaders/vert.spv"))!;
-        var fragShaderCode = File.ReadAllBytes(Path.Join(AppContext.BaseDirectory, "Shaders/frag.spv"))!;
+        var vertShaderCode = File.ReadAllBytes(Path.Join(AppContext.BaseDirectory, "Shaders/shader.vert.spv"))!;
+        var fragShaderCode = File.ReadAllBytes(Path.Join(AppContext.BaseDirectory, "Shaders/shader.frag.spv"))!;
 
         var vertShaderModule = this.CreateShaderModule(vertShaderCode);
         var fragShaderModule = this.CreateShaderModule(fragShaderCode);
@@ -1020,7 +1033,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             (uint)bitmap.Height,
             this.mipLevels,
             SampleCountFlags.N1,
-            Format.R8G8B8A8Srgb,
+            Format.B8G8R8A8Srgb,
             ImageTiling.Optimal,
             ImageUsageFlags.TransferSrc | ImageUsageFlags.TransferDst | ImageUsageFlags.Sampled,
             MemoryPropertyFlags.DeviceLocal,
@@ -1028,14 +1041,14 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             out this.textureImageMemory
         );
 
-        this.TransitionImageLayout(this.textureImage, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDstOptimal, this.mipLevels);
+        this.TransitionImageLayout(this.textureImage, Format.B8G8R8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDstOptimal, this.mipLevels);
         this.CopyBufferToImage(stagingBuffer, this.textureImage, bitmap.Width, bitmap.Height);
         //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
 
         stagingBuffer.Dispose();
         stagingBufferMemory.Dispose();
 
-        this.GenerateMipmaps(this.textureImage, Format.R8G8B8A8Srgb, bitmap.Width, bitmap.Height, this.mipLevels);
+        this.GenerateMipmaps(this.textureImage, Format.B8G8R8A8Srgb, bitmap.Width, bitmap.Height, this.mipLevels);
     }
 
     private void CreateTextureSampler()
@@ -1065,7 +1078,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     }
 
     private void CreateTextureImageView() =>
-        this.textureImageView = this.CreateImageView(this.textureImage, Format.R8G8B8A8Srgb, ImageAspectFlags.Color, this.mipLevels);
+        this.textureImageView = this.CreateImageView(this.textureImage, Format.B8G8R8A8Srgb, ImageAspectFlags.Color, this.mipLevels);
 
     private void CreateUniformBuffers()
     {
@@ -1081,7 +1094,10 @@ public unsafe partial class SimpleEngineV2 : IDisposable
                 out this.uniformBuffersMemory[i]
             );
 
-            this.uniformBuffersMemory[i].Map(0, 0, this.uniformBuffersMapped[i]);
+            fixed (UniformBufferObject** ppData = &this.uniformBuffersMapped[i])
+            {
+                this.uniformBuffersMemory[i].Map(0, 0, ppData);
+            }
         }
     }
 
@@ -1337,6 +1353,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     private void GenerateMipmaps(Image image, Format imageFormat, int texWidth, int texHeight, uint mipLevels)
     {
         // Check if image format supports linear blitting
+
         var formatProperties = this.physicalDevice.GetFormatProperties(imageFormat);
 
         if (!formatProperties.OptimalTilingFeatures.HasFlag(FormatFeatureFlags.SampledImageFilterLinear))
@@ -1345,32 +1362,6 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         }
 
         var commandBuffer = this.BeginSingleTimeCommands();
-
-        static ImageMemoryBarrier clone(
-            ImageMemoryBarrier imageMemoryBarrier,
-            uint?              baseArrayLayer = default,
-            ImageLayout?       oldLayout      = default,
-            ImageLayout?       newLayout      = default,
-            AccessFlags?       srcAccessMask  = default,
-            AccessFlags?       dstAccessMask  = default
-        ) =>
-            new()
-            {
-                Image               = imageMemoryBarrier.Image,
-                SrcQueueFamilyIndex = imageMemoryBarrier.SrcQueueFamilyIndex,
-                DstQueueFamilyIndex = imageMemoryBarrier.DstQueueFamilyIndex,
-                SubresourceRange    = new()
-                {
-                    AspectMask     = imageMemoryBarrier.SubresourceRange!.AspectMask,
-                    BaseArrayLayer = baseArrayLayer ?? imageMemoryBarrier.SubresourceRange!.BaseArrayLayer,
-                    LayerCount     = imageMemoryBarrier.SubresourceRange!.LayerCount,
-                    LevelCount     = imageMemoryBarrier.SubresourceRange!.LevelCount,
-                },
-                OldLayout     = oldLayout     ?? imageMemoryBarrier.OldLayout,
-                NewLayout     = newLayout     ?? imageMemoryBarrier.NewLayout,
-                SrcAccessMask = srcAccessMask ?? imageMemoryBarrier.SrcAccessMask,
-                DstAccessMask = dstAccessMask ?? imageMemoryBarrier.DstAccessMask,
-            };
 
         var barrier = new ImageMemoryBarrier
         {
@@ -1391,14 +1382,14 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         for (var i = 1u; i < mipLevels; i++)
         {
-            barrier = clone(
-                barrier,
-                baseArrayLayer: i - 1,
-                oldLayout:      ImageLayout.TransferDstOptimal,
-                newLayout:      ImageLayout.TransferSrcOptimal,
-                srcAccessMask:  AccessFlags.TransferWrite,
-                dstAccessMask:  AccessFlags.TransferRead
-            );
+            barrier = barrier with
+            {
+                SubresourceRange = barrier.SubresourceRange with { BaseMipLevel = i - 1 },
+                OldLayout        = ImageLayout.TransferDstOptimal,
+                NewLayout        = ImageLayout.TransferSrcOptimal,
+                SrcAccessMask    = AccessFlags.TransferWrite,
+                DstAccessMask    = AccessFlags.TransferRead,
+            };
 
             commandBuffer.PipelineBarrier(
                 PipelineStageFlags.Transfer,
@@ -1418,23 +1409,23 @@ public unsafe partial class SimpleEngineV2 : IDisposable
                     BaseArrayLayer = 0,
                     LayerCount     = 1
                 },
-                SrcOffsets =
-                [
-                    new(),
-                    new() { X = mipWidth, Y = mipHeight, Z = 1 }
-                ],
-                DstOffsets =
-                [
-                    new(),
-                    new() { X = mipWidth > 1 ? mipWidth / 2 : 1, Y = mipHeight > 1 ? mipHeight / 2 : 1, Z = 1 },
-                ],
                 DstSubresource = new()
                 {
                     AspectMask     = ImageAspectFlags.Color,
                     MipLevel       = i,
                     BaseArrayLayer = 0,
                     LayerCount     = 1
-                }
+                },
+                SrcOffsets =
+                [
+                    new Offset3D(),
+                    new Offset3D { X = mipWidth, Y = mipHeight, Z = 1 }
+                ],
+                DstOffsets =
+                [
+                    new Offset3D(),
+                    new Offset3D { X = mipWidth > 1 ? mipWidth / 2 : 1, Y = mipHeight > 1 ? mipHeight / 2 : 1, Z = 1 }
+                ]
             };
 
             commandBuffer.BlitImage(
@@ -1446,13 +1437,13 @@ public unsafe partial class SimpleEngineV2 : IDisposable
                 Filter.Linear
             );
 
-            barrier = clone(
-                barrier,
-                oldLayout:     ImageLayout.TransferSrcOptimal,
-                newLayout:     ImageLayout.ShaderReadOnlyOptimal,
-                srcAccessMask: AccessFlags.TransferRead,
-                dstAccessMask: AccessFlags.ShaderRead
-            );
+            barrier = barrier with
+            {
+                OldLayout     = ImageLayout.TransferSrcOptimal,
+                NewLayout     = ImageLayout.ShaderReadOnlyOptimal,
+                SrcAccessMask = AccessFlags.TransferRead,
+                DstAccessMask = AccessFlags.ShaderRead,
+            };
 
             commandBuffer.PipelineBarrier(
                 PipelineStageFlags.Transfer,
@@ -1474,14 +1465,14 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             }
         }
 
-        barrier = clone(
-            barrier,
-            baseArrayLayer: mipLevels - 1,
-            oldLayout:      ImageLayout.TransferDstOptimal,
-            newLayout:      ImageLayout.ShaderReadOnlyOptimal,
-            srcAccessMask:  AccessFlags.TransferWrite,
-            dstAccessMask:  AccessFlags.ShaderRead
-        );
+        barrier = barrier with
+        {
+            SubresourceRange = barrier.SubresourceRange with { BaseMipLevel = mipLevels - 1 },
+            OldLayout        = ImageLayout.TransferDstOptimal,
+            NewLayout        = ImageLayout.ShaderReadOnlyOptimal,
+            SrcAccessMask    = AccessFlags.TransferWrite,
+            DstAccessMask    = AccessFlags.ShaderRead,
+        };
 
         commandBuffer.PipelineBarrier(
             PipelineStageFlags.Transfer,
@@ -1697,13 +1688,13 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         var offsets = new ulong[] { 0 };
 
-        commandBuffer.BindVertexBuffers(0, vertexBuffers, offsets);
+        commandBuffer.BindVertexBuffers(0, 1, vertexBuffers, offsets);
         commandBuffer.BindIndexBuffer(this.indexBuffer, 0, IndexType.Uint32);
         commandBuffer.BindDescriptorSets(PipelineBindPoint.Graphics, this.pipelineLayout, 0, [this.descriptorSets[this.currentFrame]], []);
         commandBuffer.DrawIndexed((uint)this.indices.Count, 1, 0, 0, 0);
         #endregion RenderPass
 
-        commandBuffer.EndRenderPass(commandBuffer);
+        commandBuffer.EndRenderPass();
 
         commandBuffer.End();
     }
@@ -1818,7 +1809,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         ubo.Proj[1, 1] *= -1;
 
-        this.uniformBuffersMapped[currentImage] = ubo;
+        Marshal.StructureToPtr(ubo, (nint)this.uniformBuffersMapped[currentImage], true);
     }
 
     protected virtual void Dispose(bool disposing)

@@ -3,26 +3,26 @@ using ThirdParty.Vulkan.Native;
 
 namespace ThirdParty.Vulkan;
 
-public static partial class GraphicsPipeline
+public partial class GraphicsPipeline
 {
     /// <summary>
     /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkGraphicsPipelineCreateInfo.html">VkGraphicsPipelineCreateInfo</see>
     /// </summary>
     public unsafe record CreateInfo : NativeReference<VkGraphicsPipelineCreateInfo>
     {
-        private Pipeline?                              basePipelineHandle;
-        private PipelineColorBlendState.CreateInfo?    colorBlendState;
-        private PipelineDepthStencilState.CreateInfo?  depthStencilState;
-        private PipelineDynamicState.CreateInfo?       dynamicState;
-        private PipelineInputAssemblyState.CreateInfo? inputAssemblyState;
-        private PipelineLayout?                        layout;
-        private PipelineMultisampleState.CreateInfo?   multisampleState;
-        private PipelineRasterizationState.CreateInfo? rasterizationState;
-        private RenderPass?                            renderPass;
         private PipelineShaderStage.CreateInfo[]       stages = [];
-        private PipelineTessellationState.CreateInfo?  tessellationState;
         private PipelineVertexInputState.CreateInfo?   vertexInputState;
+        private PipelineInputAssemblyState.CreateInfo? inputAssemblyState;
+        private PipelineTessellationState.CreateInfo?  tessellationState;
         private PipelineViewportState.CreateInfo?      viewportState;
+        private PipelineRasterizationState.CreateInfo? rasterizationState;
+        private PipelineMultisampleState.CreateInfo?   multisampleState;
+        private PipelineDepthStencilState.CreateInfo?  depthStencilState;
+        private PipelineColorBlendState.CreateInfo?    colorBlendState;
+        private PipelineDynamicState.CreateInfo?       dynamicState;
+        private PipelineLayout?                        layout;
+        private RenderPass?                            renderPass;
+        private Pipeline?                              basePipelineHandle;
 
         public nint Next
         {

@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using ThirdParty.Vulkan.Native;
 
 namespace ThirdParty.Vulkan;
@@ -41,23 +41,23 @@ public unsafe record ClearDepthStencilValue : NativeReference<VkClearDepthStenci
 /// <inheritdoc cref="VkClearColorValue" />
 public unsafe record ClearColorValue : NativeReference<VkClearColorValue>
 {
-    private readonly byte[] values = new byte[4 * 4];
+    private readonly byte[] values = new byte[4 * sizeof(int)];
 
     public float[] Float32
     {
-        get => Unsafe.As<float[]>(this.values);
-        init => Init(this.values, (byte*)this.PNative->float32, 4, Unsafe.As<byte[]>(this.values)!, nameof(this.Float32));
+        get => MemoryMarshal.Cast<byte, float>(this.values).ToArray();
+        init => Init(this.values, this.PNative->float32, 4, value, nameof(this.Float32));
     }
 
     public int[] Int32
     {
-        get => Unsafe.As<int[]>(this.values);
-        init => Init(this.values, (byte*)this.PNative->int32, 4, Unsafe.As<byte[]>(this.values)!, nameof(this.Float32));
+        get => MemoryMarshal.Cast<byte, int>(this.values).ToArray();
+        init => Init(this.values, this.PNative->int32, 4, value, nameof(this.Float32));
     }
 
     public uint[] Uint32
     {
-        get => Unsafe.As<uint[]>(this.values);
-        init => Init(this.values, (byte*)this.PNative->uint32, 4, Unsafe.As<byte[]>(this.values)!, nameof(this.Float32));
+        get => MemoryMarshal.Cast<byte, uint>(this.values).ToArray();
+        init => Init(this.values, this.PNative->uint32, 4, value, nameof(this.Float32));
     }
 }

@@ -5,8 +5,6 @@
 /// </content>
 internal static partial class User32
 {
-    internal static void SetCursor(object value) => throw new NotImplementedException();
-
     [Flags]
     public enum CLASS_STYLES : uint
     {

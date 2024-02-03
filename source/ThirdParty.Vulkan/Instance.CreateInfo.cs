@@ -11,8 +11,8 @@ public unsafe partial class Instance
     public record CreateInfo : NativeReference<VkInstanceCreateInfo>
     {
         private ApplicationInfo? applicationInfo;
-        private string[]         enabledExtensions = [];
         private string[]         enabledLayers     = [];
+        private string[]         enabledExtensions = [];
 
         public nint Next
         {
@@ -46,8 +46,8 @@ public unsafe partial class Instance
 
         protected override void OnFinalize()
         {
-            Free(ref this.PNative->ppEnabledExtensionNames, this.PNative->enabledExtensionCount);
             Free(ref this.PNative->ppEnabledLayerNames,     this.PNative->enabledLayerCount);
+            Free(ref this.PNative->ppEnabledExtensionNames, this.PNative->enabledExtensionCount);
         }
     }
 }

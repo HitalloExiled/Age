@@ -38,7 +38,7 @@ where TValue : unmanaged
     {
         foreach (var handler in this.handlers.Values)
         {
-            Marshal.FreeHGlobal(handler);
+            NativeMemory.Free(handler);
         }
 
         this.handlers.Clear();
@@ -57,7 +57,7 @@ where TValue : unmanaged
     {
         var handler = this.handlers[key];
 
-        Marshal.FreeHGlobal(handler);
+        NativeMemory.Free(handler);
 
         this.handlers.Remove(key);
     }

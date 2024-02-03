@@ -11,10 +11,10 @@ public unsafe partial class Device
     /// </summary>
     public record CreateInfo : NativeReference<VkDeviceCreateInfo>
     {
+        private DeviceQueue.CreateInfo[] queueCreateInfos = [];
+        private string[]                 enabledLayers    = [];
         private string[]                 enabledExtensions = [];
         private PhysicalDevice.Features? enabledFeatures;
-        private string[]                 enabledLayers    = [];
-        private DeviceQueue.CreateInfo[] queueCreateInfos = [];
 
         public nint Next
         {
@@ -55,9 +55,9 @@ public unsafe partial class Device
 
         protected override void OnFinalize()
         {
-            Free(ref this.PNative->ppEnabledExtensionNames, this.PNative->enabledExtensionCount);
-            Free(ref this.PNative->ppEnabledLayerNames,     this.PNative->enabledLayerCount);
             Free(ref this.PNative->pQueueCreateInfos);
+            Free(ref this.PNative->ppEnabledLayerNames,     this.PNative->enabledLayerCount);
+            Free(ref this.PNative->ppEnabledExtensionNames, this.PNative->enabledExtensionCount);
         }
     }
 }

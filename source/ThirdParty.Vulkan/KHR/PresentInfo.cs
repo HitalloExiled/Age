@@ -7,9 +7,9 @@ namespace ThirdParty.Vulkan.KHR;
 /// <inheritdoc cref="VkPresentInfoKHR" />
 public unsafe record PresentInfo : NativeReference<VkPresentInfoKHR>
 {
-    private uint[]      imageIndices   = [];
-    private Swapchain[] swapchains     = [];
     private Semaphore[] waitSemaphores = [];
+    private Swapchain[] swapchains     = [];
+    private uint[]      imageIndices   = [];
 
     public nint Next
     {

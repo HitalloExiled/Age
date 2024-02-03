@@ -11,10 +11,10 @@ public partial class ShaderModule
     {
         private byte[] code = [];
 
-        public void* Next
+        public nint Next
         {
-            get => this.PNative->pNext;
-            init => this.PNative->pNext = value;
+            get => (nint)this.PNative->pNext;
+            init => this.PNative->pNext = value.ToPointer();
         }
 
         public uint Flags
@@ -30,7 +30,7 @@ public partial class ShaderModule
             {
                 this.code              = value;
                 this.PNative->pCode    = PointerHelper.Alloc(MemoryMarshal.Cast<byte, uint>(value));
-                this.PNative->codeSize = (uint)value.Length / sizeof(uint);
+                this.PNative->codeSize = (uint)value.Length;
             }
         }
 

@@ -1,4 +1,4 @@
-// #define SIMPLE_ENGINE
+#define SIMPLE_ENGINE
 #if SIMPLE_ENGINE
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -17,6 +17,8 @@ using Age.Vulkan.Types;
 using Age.Vulkan.Types.EXT;
 using Age.Vulkan.Types.KHR;
 using SkiaSharp;
+
+using PlatformWindow = Age.Platforms.Display.Window;
 
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
 
@@ -41,8 +43,6 @@ public unsafe partial class SimpleEngine : IDisposable
     private readonly HashSet<string>        validationLayers         = ["VK_LAYER_KHRONOS_validation"];
     private readonly List<Vertex>           vertices                 = [];
     private readonly Vk                     vk;
-    private readonly WindowsPlatform        platform = new();
-    private readonly VulkanLoader           vulkanLoader;
 
     private VkImage                   colorImage;
     private VkDeviceMemory            colorImageMemory;
@@ -87,16 +87,15 @@ public unsafe partial class SimpleEngine : IDisposable
     private VkExtDebugUtilsExtension? vkExtDebugUtils;
     private VkKhrSurfaceExtension     vkKhrSurface   = null!;
     private VkKhrSwapchainExtension   vkKhrSwapchain = null!;
-    private Window                    window         = null!;
+    private PlatformWindow            window         = null!;
 
     public SimpleEngine()
     {
-        this.vulkanLoader = new();
-        this.vk                  = new(this.vulkanLoader);
+        this.vk = new();
 
         for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            this.uniformBuffersMapped[i] = (UniformBufferObject*)NativeMemory.Alloc(Marshal.SizeOf<UniformBufferObject>());
+            this.uniformBuffersMapped[i] = (UniformBufferObject*)NativeMemory.Alloc((uint)sizeof(UniformBufferObject));
         }
     }
 
@@ -1240,7 +1239,7 @@ public unsafe partial class SimpleEngine : IDisposable
             (uint)bitmap.Height,
             this.mipLevels,
             VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
-            VkFormat.VK_FORMAT_R8G8B8A8_SRGB,
+            VkFormat.VK_FORMAT_B8G8R8A8_SRGB,
             VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
             VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_DST_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT,
             VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -1248,14 +1247,14 @@ public unsafe partial class SimpleEngine : IDisposable
             out this.textureImageMemory
         );
 
-        this.TransitionImageLayout(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, this.mipLevels);
+        this.TransitionImageLayout(this.textureImage, VkFormat.VK_FORMAT_B8G8R8A8_SRGB, VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, this.mipLevels);
         this.CopyBufferToImage(stagingBuffer, this.textureImage, bitmap.Width, bitmap.Height);
         //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
 
         this.vk.DestroyBuffer(this.device, stagingBuffer, null);
         this.vk.FreeMemory(this.device, stagingBufferMemory, null);
 
-        this.GenerateMipmaps(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, bitmap.Width, bitmap.Height, this.mipLevels);
+        this.GenerateMipmaps(this.textureImage, VkFormat.VK_FORMAT_B8G8R8A8_SRGB, bitmap.Width, bitmap.Height, this.mipLevels);
     }
 
     private void CreateTextureSampler()
@@ -1288,7 +1287,7 @@ public unsafe partial class SimpleEngine : IDisposable
     }
 
     private void CreateTextureImageView() =>
-        this.textureImageView = this.CreateImageView(this.textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT, this.mipLevels);
+        this.textureImageView = this.CreateImageView(this.textureImage, VkFormat.VK_FORMAT_B8G8R8A8_SRGB, VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT, this.mipLevels);
 
     private void CreateUniformBuffers()
     {
@@ -1733,7 +1732,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
     private void InitWindow()
     {
-        this.window = (Window)this.platform.CreateWindow("Age*", new(600, 400), new());
+        this.window = new PlatformWindow("Age*", new(600, 400), new());
 
         this.window.SizeChanged += () => this.framebufferResized = true;
     }
@@ -1791,7 +1790,7 @@ public unsafe partial class SimpleEngine : IDisposable
 
         do
         {
-            this.platform.DoEvents();
+            this.window.DoEvents();
 
             if (!this.window.Closed)
             {
@@ -1933,7 +1932,7 @@ public unsafe partial class SimpleEngine : IDisposable
     {
         while (this.window.Minimized)
         {
-            this.platform.DoEvents();
+            this.window.DoEvents();
         }
 
         this.vk.DeviceWaitIdle(this.device);
@@ -2053,11 +2052,10 @@ public unsafe partial class SimpleEngine : IDisposable
 
             for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
             {
-                Marshal.FreeHGlobal((nint)this.uniformBuffersMapped[i]);
+                NativeMemory.Free(this.uniformBuffersMapped[i]);
             }
 
-            this.vulkanLoader.Dispose();
-            this.platform.Dispose();
+            this.window.Dispose();
 
             this.disposed = true;
         }

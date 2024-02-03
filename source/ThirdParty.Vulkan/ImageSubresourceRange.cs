@@ -35,5 +35,4 @@ public unsafe record ImageSubresourceRange : NativeReference<VkImageSubresourceR
         get => this.PNative->layerCount;
         init => this.PNative->layerCount = value;
     }
-
 }

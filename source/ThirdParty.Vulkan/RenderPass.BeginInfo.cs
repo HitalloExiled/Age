@@ -9,10 +9,10 @@ public partial class RenderPass
     /// </summary>
     public unsafe record BeginInfo : NativeReference<VkRenderPassBeginInfo>
     {
-        private ClearValue[] clearValues = [];
+        private RenderPass?  renderPass;
         private Framebuffer? framebuffer;
         private Rect2D?      renderArea;
-        private RenderPass?  renderPass;
+        private ClearValue[] clearValues = [];
 
         public nint Next
         {

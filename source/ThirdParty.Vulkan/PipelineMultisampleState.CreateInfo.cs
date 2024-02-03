@@ -59,5 +59,8 @@ public static class PipelineMultisampleState
             get => this.PNative->alphaToOneEnable;
             init => this.PNative->alphaToOneEnable = value;
         }
+
+        protected override void OnFinalize() =>
+            Free(ref this.PNative->pSampleMask);
     }
 }

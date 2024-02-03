@@ -1,6 +1,15 @@
 namespace ThirdParty.Vulkan;
 
-public partial class PipelineLayout : DisposableNativeHandle
+public unsafe partial class PipelineLayout : DeviceResource
 {
-    protected override void OnDispose() => throw new NotImplementedException();
+    internal PipelineLayout(Device device, CreateInfo createInfo) : base(device)
+    {
+        fixed (VkPipelineLayout* pHandle = &this.Handle)
+        {
+            VulkanException.Check(PInvoke.vkCreatePipelineLayout(device, createInfo, device.PhysicalDevice.Instance.Allocator, pHandle));
+        }
+    }
+
+    protected override void OnDispose() =>
+        PInvoke.vkDestroyPipelineLayout(this.Device, this, this.Device.PhysicalDevice.Instance.Allocator);
 }

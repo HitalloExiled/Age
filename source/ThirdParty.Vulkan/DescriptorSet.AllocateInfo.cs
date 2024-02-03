@@ -23,6 +23,9 @@ public partial class DescriptorSet
             init => Init(ref this.setLayouts, ref this.PNative->pSetLayouts, ref this.PNative->descriptorSetCount, value);
         }
 
+        internal void SetDescriptorPool(DescriptorPool descriptorPool) =>
+            this.PNative->descriptorPool = descriptorPool;
+
         protected override void OnFinalize() =>
             Free(ref this.PNative->pSetLayouts);
     }

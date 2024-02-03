@@ -4,6 +4,9 @@ using ThirdParty.Vulkan.Native;
 
 namespace ThirdParty.Vulkan;
 
+/// <summary>
+/// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VKPhysicalDevice.html">VKPhysicalDevice</see>
+/// </summary>
 public unsafe partial class PhysicalDevice : NativeHandle
 {
     internal Instance Instance { get; }
@@ -11,22 +14,24 @@ public unsafe partial class PhysicalDevice : NativeHandle
     internal PhysicalDevice(VkPhysicalDevice handle, Instance instance) : base(handle) =>
         this.Instance = instance;
 
+    /// <inheritdoc cref="PInvoke.vkCreateDevice" />
     public Device CreateDevice(Device.CreateInfo createInfo) =>
         new(this, createInfo);
 
+    /// <inheritdoc cref="PInvoke.vkEnumerateDeviceExtensionProperties" />
     public ExtensionProperties[] EnumerateDeviceExtensionProperties(string? layerName = null)
     {
         fixed (byte* pLayerName = Encoding.UTF8.GetBytes(layerName ?? ""))
         {
             uint propertyCount;
 
-            PInvoke.vkEnumerateDeviceExtensionProperties(this.Handle, pLayerName, &propertyCount, null);
+            VulkanException.Check(PInvoke.vkEnumerateDeviceExtensionProperties(this.Handle, pLayerName, &propertyCount, null));
 
             var buffer = new VkExtensionProperties[propertyCount];
 
             fixed (VkExtensionProperties* pExtensionProperties = buffer)
             {
-                PInvoke.vkEnumerateDeviceExtensionProperties(this.Handle, pLayerName, &propertyCount, pExtensionProperties);
+                VulkanException.Check(PInvoke.vkEnumerateDeviceExtensionProperties(this.Handle, pLayerName, &propertyCount, pExtensionProperties));
             }
 
             var extensionProperties = new ExtensionProperties[propertyCount];
@@ -40,6 +45,7 @@ public unsafe partial class PhysicalDevice : NativeHandle
         }
     }
 
+    /// <inheritdoc cref="PInvoke.vkGetPhysicalDeviceFeatures" />
     public Features GetDeviceFeatures()
     {
         VkPhysicalDeviceFeatures physicalDeviceFeatures;
@@ -49,6 +55,7 @@ public unsafe partial class PhysicalDevice : NativeHandle
         return new(physicalDeviceFeatures);
     }
 
+    /// <inheritdoc cref="PInvoke.vkGetPhysicalDeviceFormatProperties" />
     public FormatProperties GetFormatProperties(Format format)
     {
         VkFormatProperties formatProperties;
@@ -58,6 +65,7 @@ public unsafe partial class PhysicalDevice : NativeHandle
         return new(formatProperties);
     }
 
+    /// <inheritdoc cref="PInvoke.vkGetPhysicalDeviceMemoryProperties" />
     public MemoryProperties GetMemoryProperties()
     {
         VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
@@ -67,6 +75,7 @@ public unsafe partial class PhysicalDevice : NativeHandle
         return new(physicalDeviceMemoryProperties);
     }
 
+    /// <inheritdoc cref="PInvoke.vkGetPhysicalDeviceProperties" />
     public Properties GetProperties()
     {
         VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -76,6 +85,7 @@ public unsafe partial class PhysicalDevice : NativeHandle
         return new(physicalDeviceProperties);
     }
 
+    /// <inheritdoc cref="PInvoke.vkGetPhysicalDeviceQueueFamilyProperties" />
     public QueueFamilyProperties[] GetQueueFamilyProperties()
     {
         uint qeueFamilyPropertyCount;

@@ -96,7 +96,7 @@ public unsafe class SwapchainExtension : IDeviceExtension<SwapchainExtension>
 
         for (var i = 0; i < swapchainImageCount; i++)
         {
-            images[i] = new(swapchainImages[i], this.device);
+            images[i] = new(swapchainImages[i], this.device, true);
         }
 
         return images;

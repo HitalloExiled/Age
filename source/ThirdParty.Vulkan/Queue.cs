@@ -30,5 +30,5 @@ public unsafe partial class Queue : NativeHandle
     }
 
     public void WaitIdle() =>
-        PInvoke.vkQueueWaitIdle(this);
+        VulkanException.Check(PInvoke.vkQueueWaitIdle(this));
 }

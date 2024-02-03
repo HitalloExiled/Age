@@ -1,6 +1,15 @@
 namespace ThirdParty.Vulkan;
 
-public partial class ShaderModule : DisposableNativeHandle
+public unsafe partial class ShaderModule : DeviceResource
 {
-    protected override void OnDispose() => throw new NotImplementedException();
+    internal ShaderModule(Device device, CreateInfo createInfo) : base(device)
+    {
+        fixed (VkShaderModule* pHandle = &this.Handle)
+        {
+            VulkanException.Check(PInvoke.vkCreateShaderModule(device, createInfo, device.PhysicalDevice.Instance.Allocator, pHandle));
+        }
+    }
+
+    protected override void OnDispose() =>
+        PInvoke.vkDestroyShaderModule(this.Device, this, this.Device.PhysicalDevice.Instance.Allocator);
 }

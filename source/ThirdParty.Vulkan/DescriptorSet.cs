@@ -1,6 +1,16 @@
 namespace ThirdParty.Vulkan;
 
-public partial class DescriptorSet : DisposableNativeHandle
+public unsafe partial class DescriptorSet : DisposableNativeHandle
 {
-    protected override void OnDispose() => throw new NotImplementedException();
+    private readonly DescriptorPool descriptorPool;
+
+    internal DescriptorSet(VkDescriptorSet handle, DescriptorPool descriptorPool) : base(handle) =>
+        this.descriptorPool = descriptorPool;
+
+    protected override void OnDispose()
+    {
+        nint handle = this;
+
+        VulkanException.Check(PInvoke.vkFreeDescriptorSets(this.descriptorPool.Device, this.descriptorPool, 1, &handle));
+    }
 }

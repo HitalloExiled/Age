@@ -10,8 +10,8 @@ public partial class Framebuffer
     /// </summary>
     public unsafe record CreateInfo : NativeReference<VkFramebufferCreateInfo>
     {
-        private ImageView[] attachments = [];
         private RenderPass? renderPass;
+        private ImageView[] attachments = [];
 
         public nint Next
         {

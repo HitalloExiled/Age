@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Age.Core.Interop;
 
 namespace Age.Tests.Core.Interop;
@@ -27,7 +26,7 @@ public class PointerHelperTest
         var source = new[] { 1, 2, 3 };
         var pDestination = stackalloc int[3];
 
-        PointerHelper.Copy(source, (nint)pDestination, 3);
+        PointerHelper.Copy(source, pDestination, 3u);
 
         for (var i = 0; i < source.Length; i++)
         {
@@ -57,20 +56,5 @@ public class PointerHelperTest
                 Assert.Equal(pSource[i], destination[i]);
             }
         }
-    }
-
-    [Fact]
-    public unsafe void ZeroFillShouldPass()
-    {
-        var pointer = (byte*)NativeMemory.Alloc(3);
-
-        PointerHelper.ZeroFill(pointer, 3);
-
-        for (var i = 0; i < 3; i++)
-        {
-            Assert.Equal(0, pointer[i]);
-        }
-
-        Marshal.FreeHGlobal((nint)pointer);
     }
 }

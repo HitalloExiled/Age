@@ -5,18 +5,15 @@ using Age.Rendering.Vulkan;
 
 namespace Age;
 
-public class Window : Age.Platforms.Display.Window, IWindow
+public class Window(string title, Size<uint> size, Point<int> position, Platforms.Display.Window? parent = null) : Platforms.Display.Window(title, size, position, parent), IWindow
 {
-    public new static IEnumerable<Window> Windows = windows.Values.Cast<Window>();
+    public new static IEnumerable<Window> Windows => windows.Values.Cast<Window>();
 
     public Content Content { get; } = new();
 
     private static VulkanRenderer renderer = null!;
 
     public SurfaceContext Context { get; private set; } = null!;
-
-    public Window(string title, Size<uint> size, Point<int> position, Platforms.Display.Window? parent = null) : base(title, size, position, parent)
-    { }
 
     public static void Register(VulkanRenderer renderer)
     {

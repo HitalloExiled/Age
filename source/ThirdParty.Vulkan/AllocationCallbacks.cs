@@ -8,11 +8,12 @@ namespace ThirdParty.Vulkan;
 /// </summary>
 public unsafe partial record AllocationCallbacks : NativeReference<VkAllocationCallbacks>
 {
+    private readonly Ref<Callbacks> callbacksRef = new();
+
     private AllocationFunction?             allocation;
     private FreeFunction?                   free;
     private InternalAllocationNotification? internalAllocation;
     private InternalFreeNotification?       internalFree;
-    private Ptr<Callbacks>                  pCallbacks = Alloc(new Callbacks());
     private ReallocationFunction?           reallocation;
 
     public AllocationFunction? Allocation
@@ -20,7 +21,7 @@ public unsafe partial record AllocationCallbacks : NativeReference<VkAllocationC
         get => this.allocation;
         set
         {
-            this.pCallbacks.Value->Allocation = ToPointer(ref this.allocation, value);
+            this.callbacksRef.Handle->Allocation = ToPointer(ref this.allocation, value);
             this.PNative->pfnAllocation = Marshal.GetFunctionPointerForDelegate(AllocationFunctionCallback);
         }
     }
@@ -30,7 +31,7 @@ public unsafe partial record AllocationCallbacks : NativeReference<VkAllocationC
         get => this.free;
         set
         {
-            this.pCallbacks.Value->Free = ToPointer(ref this.free, value);
+            this.callbacksRef.Handle->Free = ToPointer(ref this.free, value);
             this.PNative->pfnFree = Marshal.GetFunctionPointerForDelegate(FreeFunctionCallback);
         }
     }
@@ -40,7 +41,7 @@ public unsafe partial record AllocationCallbacks : NativeReference<VkAllocationC
         get => this.internalAllocation;
         set
         {
-            this.pCallbacks.Value->InternalAllocation = ToPointer(ref this.internalAllocation, value);
+            this.callbacksRef.Handle->InternalAllocation = ToPointer(ref this.internalAllocation, value);
             this.PNative->pfnInternalAllocation = Marshal.GetFunctionPointerForDelegate(InternalAllocationNotificationCallback);
         }
     }
@@ -50,7 +51,7 @@ public unsafe partial record AllocationCallbacks : NativeReference<VkAllocationC
         get => this.internalFree;
         set
         {
-            this.pCallbacks.Value->InternalFree = ToPointer(ref this.internalFree, value);
+            this.callbacksRef.Handle->InternalFree = ToPointer(ref this.internalFree, value);
             this.PNative->pfnInternalFree = Marshal.GetFunctionPointerForDelegate(InternalFreeNotificationCallback);
         }
     }
@@ -60,13 +61,13 @@ public unsafe partial record AllocationCallbacks : NativeReference<VkAllocationC
         get => this.reallocation;
         set
         {
-            this.pCallbacks.Value->Reallocation = ToPointer(ref this.reallocation, value);
+            this.callbacksRef.Handle->Reallocation = ToPointer(ref this.reallocation, value);
             this.PNative->pfnReallocation = Marshal.GetFunctionPointerForDelegate(InternalFreeNotificationCallback);
         }
     }
 
     public AllocationCallbacks() =>
-        this.PNative->pUserData = this.pCallbacks.Value;
+        this.PNative->pUserData = this.callbacksRef.Handle;
 
     private static void* AllocationFunctionCallback(void* pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
     {
@@ -104,5 +105,5 @@ public unsafe partial record AllocationCallbacks : NativeReference<VkAllocationC
     }
 
     protected override void OnFinalize() =>
-        NativeReference.Free(ref this.pCallbacks);
+        this.callbacksRef.Free();
 }

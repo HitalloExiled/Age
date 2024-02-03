@@ -2,22 +2,18 @@ using ThirdParty.Vulkan.Flags;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class CommandPool : DisposableNativeHandle
+public unsafe partial class CommandPool : DeviceResource
 {
-    private readonly Device device;
-
-    public CommandPool(Device device, CreateInfo createInfo)
+    public CommandPool(Device device, CreateInfo createInfo) : base(device)
     {
-        this.device = device;
-
         fixed (VkCommandPool* pValue = &this.Handle)
         {
-            PInvoke.vkCreateCommandPool(device, createInfo, device.PhysicalDevice.Instance.Allocator, pValue);
+            VulkanException.Check(PInvoke.vkCreateCommandPool(device, createInfo, device.PhysicalDevice.Instance.Allocator, pValue));
         }
     }
 
     protected override void OnDispose() =>
-        PInvoke.vkDestroyCommandPool(this.device, this.Handle, this.device.PhysicalDevice.Instance.Allocator);
+        PInvoke.vkDestroyCommandPool(this.Device, this.Handle, this.Device.PhysicalDevice.Instance.Allocator);
 
     #pragma warning disable IDE0001
     public CommandBuffer AllocateCommand(CommandBufferLevelFlags level) =>
@@ -45,14 +41,14 @@ public unsafe partial class CommandPool : DisposableNativeHandle
 
         fixed (VkCommandBuffer* pBuffer = buffer)
         {
-            VulkanException.Check(PInvoke.vkAllocateCommandBuffers(this.device, allocateInfo, pBuffer));
+            VulkanException.Check(PInvoke.vkAllocateCommandBuffers(this.Device, allocateInfo, pBuffer));
         }
 
         var commands = new CommandBuffer[count];
 
         for (var i = 0; i < count; i++)
         {
-            commands[i] = new(buffer[i], this.device, this);
+            commands[i] = new(buffer[i], this.Device, this);
         }
 
         return commands;
@@ -63,7 +59,7 @@ public unsafe partial class CommandPool : DisposableNativeHandle
         fixed (nint*            pHandle         = &this.Handle)
         fixed (VkCommandBuffer* pCommandBuffers = commandBuffers.Select(x => x.Handle).ToArray())
         {
-            PInvoke.vkFreeCommandBuffers(this.device, this, (uint)commandBuffers.Length, pCommandBuffers);
+            PInvoke.vkFreeCommandBuffers(this.Device, this, (uint)commandBuffers.Length, pCommandBuffers);
         }
     }
 }

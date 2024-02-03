@@ -1,15 +1,12 @@
+using System.Runtime.InteropServices;
 using Age.Core.Interop;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class DeviceMemory : DisposableNativeHandle
+public unsafe partial class DeviceMemory : DeviceResource
 {
-    private readonly Device device;
-
-    internal DeviceMemory(Device device, AllocateInfo allocateInfo)
+    internal DeviceMemory(Device device, AllocateInfo allocateInfo) : base(device)
     {
-        this.device = device;
-
         fixed (VkDeviceMemory* pHandle = &this.Handle)
         {
             VulkanException.Check(PInvoke.vkAllocateMemory(device, allocateInfo, device.PhysicalDevice.Instance.Allocator, pHandle));
@@ -17,7 +14,7 @@ public unsafe partial class DeviceMemory : DisposableNativeHandle
     }
 
     protected override void OnDispose() =>
-        PInvoke.vkFreeMemory(this.device, this, this.device.PhysicalDevice.Instance.Allocator);
+        PInvoke.vkFreeMemory(this.Device, this, this.Device.PhysicalDevice.Instance.Allocator);
 
     /// <inheritdoc cref="PInvoke.vkMapMemory" />
     public void Map<T>(ulong offset, uint flags, T data) where T : unmanaged =>
@@ -26,15 +23,20 @@ public unsafe partial class DeviceMemory : DisposableNativeHandle
     /// <inheritdoc cref="PInvoke.vkMapMemory" />
     public void Map<T>(ulong offset, uint flags, T[] data) where T : unmanaged
     {
-        var size   = sizeof(T) * data.Length;
-        var buffer = stackalloc T[size];
+        var ppData = (T**)NativeMemory.Alloc((uint)(sizeof(T*) * data.Length));
 
-        VulkanException.Check(PInvoke.vkMapMemory(this.device, this, offset, (ulong)size, flags, (void**)&buffer));
+        VulkanException.Check(PInvoke.vkMapMemory(this.Device, this, offset, (uint)(sizeof(T) * data.Length), flags, (void**)ppData));
 
-        PointerHelper.Copy(data, buffer);
+        PointerHelper.Copy(data, *ppData, (uint)data.Length);
+
+        NativeMemory.Free(ppData);
     }
+
+    /// <inheritdoc cref="PInvoke.vkMapMemory" />
+    public void Map<T>(ulong offset, uint flags, T** ppData) where T : unmanaged =>
+        PInvoke.vkMapMemory(this.Device, this, offset, (ulong)Marshal.SizeOf<T>(), flags, (void**)ppData);
 
     /// <inheritdoc cref="PInvoke.vkUnmapMemory" />
     public void Unmap() =>
-        PInvoke.vkUnmapMemory(this.device, this);
+        PInvoke.vkUnmapMemory(this.Device, this);
 }

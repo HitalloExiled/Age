@@ -15,7 +15,6 @@ public partial class ObjParser
         private readonly List<Group>             groups                = [];
         private readonly List<Material>          materials             = [];
         private readonly Dictionary<string, int> materialIndices       = [];
-        private readonly Dictionary<Normal, int> normalIndices         = [];
         private readonly List<Object>            objects               = [];
         private readonly Dictionary<int, int>    texCoordIndices       = [];
         private readonly Dictionary<int, int>    vertexColorIndex      = [];
