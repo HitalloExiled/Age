@@ -9,11 +9,11 @@ namespace ThirdParty.Vulkan.Native;
 public unsafe struct VkClearColorValue
 {
     [FieldOffset(0)]
-    public fixed float float32[4];
+    public fixed float Float32[4];
 
     [FieldOffset(0)]
-    public fixed int int32[4];
+    public fixed int Int32[4];
 
     [FieldOffset(0)]
-    public fixed uint uint32[4];
+    public fixed uint Uint32[4];
 }

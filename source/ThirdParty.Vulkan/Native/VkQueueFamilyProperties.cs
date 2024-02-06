@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,8 +7,8 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkQueueFamilyProperties
 {
-    public VkQueueFlags queueFlags;
-    public uint         queueCount;
-    public uint         timestampValidBits;
-    public VkExtent3D   minImageTransferGranularity;
+    public VkQueueFlags QueueFlags;
+    public uint         QueueCount;
+    public uint         TimestampValidBits;
+    public VkExtent3D   MinImageTransferGranularity;
 }

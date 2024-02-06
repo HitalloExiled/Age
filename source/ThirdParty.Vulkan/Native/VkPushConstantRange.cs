@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkPushConstantRange
 {
-    public VkShaderStageFlags stageFlags;
-    public uint               offset;
-    public uint               size;
+    public VkShaderStageFlags StageFlags;
+    public uint               Offset;
+    public uint               Size;
 }

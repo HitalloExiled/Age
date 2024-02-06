@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Enums;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,8 +7,8 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkComponentMapping
 {
-    public VkComponentSwizzle r;
-    public VkComponentSwizzle g;
-    public VkComponentSwizzle b;
-    public VkComponentSwizzle a;
+    public VkComponentSwizzle R;
+    public VkComponentSwizzle G;
+    public VkComponentSwizzle B;
+    public VkComponentSwizzle A;
 }

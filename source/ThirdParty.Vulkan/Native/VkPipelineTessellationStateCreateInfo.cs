@@ -5,12 +5,12 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkPipelineTessellationStateCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                                  pNext;
-    public VkPipelineTessellationStateCreateFlags flags;
-    public uint                                   patchControlPoints;
+    public void*                                  PNext;
+    public VkPipelineTessellationStateCreateFlags Flags;
+    public uint                                   PatchControlPoints;
 
     public VkPipelineTessellationStateCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+        this.SType = VkStructureType.PipelineTessellationStateCreateInfo;
 }

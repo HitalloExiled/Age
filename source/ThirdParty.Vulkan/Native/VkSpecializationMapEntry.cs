@@ -5,7 +5,7 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkSpecializationMapEntry
 {
-    public uint  constantID;
-    public uint  offset;
-    public ulong size;
+    public uint  ConstantId;
+    public uint  Offset;
+    public ulong Size;
 }

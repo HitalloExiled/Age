@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,13 +7,13 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkDescriptorSetLayoutCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                            pNext;
-    public VkDescriptorSetLayoutCreateFlags flags;
-    public uint                             bindingCount;
-    public VkDescriptorSetLayoutBinding*    pBindings;
+    public void*                            PNext;
+    public VkDescriptorSetLayoutCreateFlags Flags;
+    public uint                             BindingCount;
+    public VkDescriptorSetLayoutBinding*    PBindings;
 
     public VkDescriptorSetLayoutCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        this.SType = VkStructureType.DescriptorSetLayoutCreateInfo;
 }

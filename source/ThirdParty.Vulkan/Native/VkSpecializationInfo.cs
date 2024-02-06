@@ -5,8 +5,8 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkSpecializationInfo
 {
-    public uint                      mapEntryCount;
-    public VkSpecializationMapEntry* pMapEntries;
-    public ulong                     dataSize;
-    public void*                     pData;
+    public uint                      MapEntryCount;
+    public VkSpecializationMapEntry* PMapEntries;
+    public ulong                     DataSize;
+    public void*                     PData;
 }

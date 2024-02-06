@@ -5,15 +5,15 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkPipelineVertexInputStateCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                                 pNext;
-    public VkPipelineVertexInputStateCreateFlags flags;
-    public uint                                  vertexBindingDescriptionCount;
-    public VkVertexInputBindingDescription*      pVertexBindingDescriptions;
-    public uint                                  vertexAttributeDescriptionCount;
-    public VkVertexInputAttributeDescription*    pVertexAttributeDescriptions;
+    public void*                                 PNext;
+    public VkPipelineVertexInputStateCreateFlags Flags;
+    public uint                                  VertexBindingDescriptionCount;
+    public VkVertexInputBindingDescription*      PVertexBindingDescriptions;
+    public uint                                  VertexAttributeDescriptionCount;
+    public VkVertexInputAttributeDescription*    PVertexAttributeDescriptions;
 
     public VkPipelineVertexInputStateCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        this.SType = VkStructureType.PipelineVertexInputStateCreateInfo;
 }

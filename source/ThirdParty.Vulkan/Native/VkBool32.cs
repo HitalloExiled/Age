@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace ThirdParty.Vulkan.Native;
 
-[DebuggerDisplay("{Value}")]
+[DebuggerDisplay("{Value == 1}")]
 public record struct VkBool32(uint Value)
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

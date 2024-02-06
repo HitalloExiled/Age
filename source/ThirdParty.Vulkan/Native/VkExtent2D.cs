@@ -5,6 +5,6 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkExtent2D
 {
-    public uint width;
-    public uint height;
+    public uint Width;
+    public uint Height;
 }

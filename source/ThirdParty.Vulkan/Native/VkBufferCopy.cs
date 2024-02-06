@@ -5,7 +5,7 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkBufferCopy
 {
-    public VkDeviceSize srcOffset;
-    public VkDeviceSize dstOffset;
-    public VkDeviceSize size;
+    public VkDeviceSize SrcOffset;
+    public VkDeviceSize DstOffset;
+    public VkDeviceSize Size;
 }

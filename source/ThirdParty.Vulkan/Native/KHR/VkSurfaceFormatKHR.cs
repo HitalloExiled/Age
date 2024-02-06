@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Enums.KHR;
+
 namespace ThirdParty.Vulkan.Native.KHR;
 
 /// <summary>
@@ -5,6 +8,6 @@ namespace ThirdParty.Vulkan.Native.KHR;
 /// </summary>
 public struct VkSurfaceFormatKHR
 {
-    public VkFormat        format;
-    public VkColorSpaceKHR colorSpace;
+    public VkFormat        Format;
+    public VkColorSpaceKHR ColorSpace;
 }

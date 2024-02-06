@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.EXT;
+using ThirdParty.Vulkan.Flags.EXT;
+
 namespace ThirdParty.Vulkan.Native.EXT;
 
 /// <summary>
@@ -6,15 +9,15 @@ namespace ThirdParty.Vulkan.Native.EXT;
 /// </summary>
 public unsafe struct VkDebugUtilsMessengerCreateInfoEXT
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                                pNext;
-    public VkDebugUtilsMessengerCreateFlagsEXT  flags;
-    public VkDebugUtilsMessageSeverityFlagsEXT  messageSeverity;
-    public VkDebugUtilsMessageTypeFlagsEXT      messageType;
-    public PFN_vkDebugUtilsMessengerCallbackEXT pfnUserCallback;
-    public void*                                pUserData;
+    public void*                                PNext;
+    public VkDebugUtilsMessengerCreateFlagsEXT  Flags;
+    public VkDebugUtilsMessageSeverityFlagsEXT  MessageSeverity;
+    public VkDebugUtilsMessageTypeFlagsEXT      MessageType;
+    public PFN_vkDebugUtilsMessengerCallbackEXT PfnUserCallback;
+    public void*                                PUserData;
 
     public VkDebugUtilsMessengerCreateInfoEXT() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        this.SType = VkStructureType.DebugUtilsMessengerCreateInfoEXT;
 }

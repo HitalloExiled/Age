@@ -1,3 +1,9 @@
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Enums.KHR;
+using ThirdParty.Vulkan.Flags;
+using ThirdParty.Vulkan.Flags.KHR;
+using ThirdParty.Vulkan.KHR;
+
 namespace ThirdParty.Vulkan.Native.KHR;
 
 /// <summary>
@@ -5,26 +11,26 @@ namespace ThirdParty.Vulkan.Native.KHR;
 /// </summary>
 public unsafe struct VkSwapchainCreateInfoKHR
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                         pNext;
-    public VkSwapchainCreateFlagsKHR     flags;
-    public VkSurfaceKHR                  surface;
-    public uint                          minImageCount;
-    public VkFormat                      imageFormat;
-    public VkColorSpaceKHR               imageColorSpace;
-    public VkExtent2D                    imageExtent;
-    public uint                          imageArrayLayers;
-    public VkImageUsageFlags             imageUsage;
-    public VkSharingMode                 imageSharingMode;
-    public uint                          queueFamilyIndexCount;
-    public uint*                         pQueueFamilyIndices;
-    public VkSurfaceTransformFlagBitsKHR preTransform;
-    public VkCompositeAlphaFlagBitsKHR   compositeAlpha;
-    public VkPresentModeKHR              presentMode;
-    public VkBool32                      clipped;
-    public VkSwapchainKHR                oldSwapchain;
+    public void*                      PNext;
+    public VkSwapchainCreateFlagsKHR  Flags;
+    public VkHandle<VkSurfaceKHR>     Surface;
+    public uint                       MinImageCount;
+    public VkFormat                   ImageFormat;
+    public VkColorSpaceKHR            ImageColorSpace;
+    public VkExtent2D                 ImageExtent;
+    public uint                       ImageArrayLayers;
+    public VkImageUsageFlags          ImageUsage;
+    public VkSharingMode              ImageSharingMode;
+    public uint                       QueueFamilyIndexCount;
+    public uint*                      PQueueFamilyIndices;
+    public VkSurfaceTransformFlagsKHR PreTransform;
+    public VkCompositeAlphaFlagsKHR   CompositeAlpha;
+    public VkPresentModeKHR           PresentMode;
+    public VkBool32                   Clipped;
+    public VkHandle<VkSwapchainKHR>   OldSwapchain;
 
     public VkSwapchainCreateInfoKHR() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        this.SType = VkStructureType.SwapchainCreateInfoKHR;
 }

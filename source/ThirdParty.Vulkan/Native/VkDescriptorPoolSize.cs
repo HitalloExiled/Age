@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Enums;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,6 +7,6 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkDescriptorPoolSize
 {
-    public VkDescriptorType type;
-    public uint             descriptorCount;
+    public VkDescriptorType Type;
+    public uint             DescriptorCount;
 }

@@ -5,6 +5,6 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkClearDepthStencilValue
 {
-    public float depth;
-    public uint  stencil;
+    public float Depth;
+    public uint  Stencil;
 }

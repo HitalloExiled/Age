@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Enums;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,18 +7,18 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkWriteDescriptorSet
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                   pNext;
-    public VkDescriptorSet         dstSet;
-    public uint                    dstBinding;
-    public uint                    dstArrayElement;
-    public uint                    descriptorCount;
-    public VkDescriptorType        descriptorType;
-    public VkDescriptorImageInfo*  pImageInfo;
-    public VkDescriptorBufferInfo* pBufferInfo;
-    public VkBufferView*           pTexelBufferView;
+    public void*                     PNext;
+    public VkHandle<VkDescriptorSet> DstSet;
+    public uint                      DstBinding;
+    public uint                      DstArrayElement;
+    public uint                      DescriptorCount;
+    public VkDescriptorType          DescriptorType;
+    public VkDescriptorImageInfo*    PImageInfo;
+    public VkDescriptorBufferInfo*   PBufferInfo;
+    public VkHandle<VkBufferView>*   PTexelBufferView;
 
     public VkWriteDescriptorSet() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        this.SType = VkStructureType.WriteDescriptorSet;
 }

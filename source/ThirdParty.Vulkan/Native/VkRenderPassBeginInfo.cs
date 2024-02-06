@@ -5,15 +5,15 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkRenderPassBeginInfo
 {
-    public VkStructureType sType;
+    public VkStructureType SType;
 
-    public void*         pNext;
-    public VkRenderPass  renderPass;
-    public VkFramebuffer framebuffer;
-    public VkRect2D      renderArea;
-    public uint          clearValueCount;
-    public VkClearValue* pClearValues;
+    public void*                   PNext;
+    public VkHandle<VkRenderPass>  RenderPass;
+    public VkHandle<VkFramebuffer> Framebuffer;
+    public VkRect2D                RenderArea;
+    public uint                    ClearValueCount;
+    public VkClearValue*           PClearValues;
 
     public VkRenderPassBeginInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        this.SType = VkStructureType.RenderPassBeginInfo;
 }

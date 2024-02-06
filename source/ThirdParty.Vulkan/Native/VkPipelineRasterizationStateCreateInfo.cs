@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,21 +8,21 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkPipelineRasterizationStateCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                                   pNext;
-    public VkPipelineRasterizationStateCreateFlags flags;
-    public VkBool32                                depthClampEnable;
-    public VkBool32                                rasterizerDiscardEnable;
-    public VkPolygonMode                           polygonMode;
-    public VkCullModeFlags                         cullMode;
-    public VkFrontFace                             frontFace;
-    public VkBool32                                depthBiasEnable;
-    public float                                   depthBiasConstantFactor;
-    public float                                   depthBiasClamp;
-    public float                                   depthBiasSlopeFactor;
-    public float                                   lineWidth;
+    public void*                                   PNext;
+    public VkPipelineRasterizationStateCreateFlags Flags;
+    public VkBool32                                DepthClampEnable;
+    public VkBool32                                RasterizerDiscardEnable;
+    public VkPolygonMode                           PolygonMode;
+    public VkCullModeFlags                         CullMode;
+    public VkFrontFace                             FrontFace;
+    public VkBool32                                DepthBiasEnable;
+    public float                                   DepthBiasConstantFactor;
+    public float                                   DepthBiasClamp;
+    public float                                   DepthBiasSlopeFactor;
+    public float                                   LineWidth;
 
     public VkPipelineRasterizationStateCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        this.SType = VkStructureType.PipelineRasterizationStateCreateInfo;
 }

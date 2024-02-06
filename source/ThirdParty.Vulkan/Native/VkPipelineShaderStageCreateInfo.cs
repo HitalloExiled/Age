@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,16 +7,16 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkPipelineShaderStageCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                            pNext;
-    public VkPipelineShaderStageCreateFlags flags;
-    public VkShaderStageFlagBits            stage;
-    public VkShaderModule                   module;
-    public byte*                            pName;
-    public VkSpecializationInfo*            pSpecializationInfo;
+    public void*                            PNext;
+    public VkPipelineShaderStageCreateFlags Flags;
+    public VkShaderStageFlags               Stage;
+    public VkHandle<VkShaderModule>         Module;
+    public byte*                            PName;
+    public VkSpecializationInfo*            PSpecializationInfo;
 
 
     public VkPipelineShaderStageCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        this.SType = VkStructureType.PipelineShaderStageCreateInfo;
 }

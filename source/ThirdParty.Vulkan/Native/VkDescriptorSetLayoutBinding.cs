@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,9 +8,9 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkDescriptorSetLayoutBinding
 {
-    public uint               binding;
-    public VkDescriptorType   descriptorType;
-    public uint               descriptorCount;
-    public VkShaderStageFlags stageFlags;
-    public VkSampler*         pImmutableSamplers;
+    public uint                 Binding;
+    public VkDescriptorType     DescriptorType;
+    public uint                 DescriptorCount;
+    public VkShaderStageFlags   StageFlags;
+    public VkHandle<VkSampler>* PImmutableSamplers;
 }

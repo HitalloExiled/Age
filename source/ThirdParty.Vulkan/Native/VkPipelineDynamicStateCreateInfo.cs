@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Enums;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -7,11 +9,11 @@ public unsafe struct VkPipelineDynamicStateCreateInfo
 {
     public readonly VkStructureType sType;
 
-    public void*                             pNext;
-    public VkPipelineDynamicStateCreateFlags flags;
-    public uint                              dynamicStateCount;
-    public VkDynamicState*                   pDynamicStates;
+    public void*                             PNext;
+    public VkPipelineDynamicStateCreateFlags Flags;
+    public uint                              DynamicStateCount;
+    public VkDynamicState*                   PDynamicStates;
 
     public VkPipelineDynamicStateCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        this.sType = VkStructureType.PipelineDynamicStateCreateInfo;
 }

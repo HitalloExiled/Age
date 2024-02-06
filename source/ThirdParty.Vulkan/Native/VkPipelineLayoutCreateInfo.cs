@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,15 +7,15 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkPipelineLayoutCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                       pNext;
-    public VkPipelineLayoutCreateFlags flags;
-    public uint                        setLayoutCount;
-    public VkDescriptorSetLayout*      pSetLayouts;
-    public uint                        pushConstantRangeCount;
-    public VkPushConstantRange*        pPushConstantRanges;
+    public void*                            PNext;
+    public VkPipelineLayoutCreateFlags      Flags;
+    public uint                             SetLayoutCount;
+    public VkHandle<VkDescriptorSetLayout>* PSetLayouts;
+    public uint                             PushConstantRangeCount;
+    public VkPushConstantRange*             PPushConstantRanges;
 
     public VkPipelineLayoutCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        this.SType = VkStructureType.PipelineLayoutCreateInfo;
 }

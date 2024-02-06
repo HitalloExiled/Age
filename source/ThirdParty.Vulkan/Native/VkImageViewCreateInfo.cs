@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,16 +8,16 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkImageViewCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                   pNext;
-    public VkImageViewCreateFlags  flags;
-    public VkImage                 image;
-    public VkImageViewType         viewType;
-    public VkFormat                format;
-    public VkComponentMapping      components;
-    public VkImageSubresourceRange subresourceRange;
+    public void*                   PNext;
+    public VkImageViewCreateFlags  Flags;
+    public VkHandle<VkImage>       Image;
+    public VkImageViewType         ViewType;
+    public VkFormat                Format;
+    public VkComponentMapping      Components;
+    public VkImageSubresourceRange SubresourceRange;
 
     public VkImageViewCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        this.SType = VkStructureType.ImageViewCreateInfo;
 }

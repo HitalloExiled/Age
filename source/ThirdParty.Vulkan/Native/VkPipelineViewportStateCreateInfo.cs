@@ -5,15 +5,15 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkPipelineViewportStateCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                              pNext;
-    public VkPipelineViewportStateCreateFlags flags;
-    public uint                               viewportCount;
-    public VkViewport*                        pViewports;
-    public uint                               scissorCount;
-    public VkRect2D*                          pScissors;
+    public void*                              PNext;
+    public VkPipelineViewportStateCreateFlags Flags;
+    public uint                               ViewportCount;
+    public VkViewport*                        PViewports;
+    public uint                               ScissorCount;
+    public VkRect2D*                          PScissors;
 
     public VkPipelineViewportStateCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        this.SType = VkStructureType.PipelineViewportStateCreateInfo;
 }

@@ -5,22 +5,22 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkDeviceCreateInfo
 {
-    public readonly VkStructureType sType;
-    public void*                     pNext;
-    public VkDeviceCreateFlags       flags;
-    public uint                      queueCreateInfoCount;
-    public VkDeviceQueueCreateInfo*  pQueueCreateInfos;
+    public readonly VkStructureType  SType;
+    public void*                     PNext;
+    public VkDeviceCreateFlags       Flags;
+    public uint                      QueueCreateInfoCount;
+    public VkDeviceQueueCreateInfo*  PQueueCreateInfos;
 
     [Obsolete("Ignored")]
-    public uint enabledLayerCount;
+    public uint EnabledLayerCount;
 
     [Obsolete("Ignored")]
-    public byte** ppEnabledLayerNames;
+    public byte** PpEnabledLayerNames;
 
-    public uint                      enabledExtensionCount;
-    public byte**                    ppEnabledExtensionNames;
-    public VkPhysicalDeviceFeatures* pEnabledFeatures;
+    public uint                      EnabledExtensionCount;
+    public byte**                    PpEnabledExtensionNames;
+    public VkPhysicalDeviceFeatures* PEnabledFeatures;
 
     public VkDeviceCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        this.SType = VkStructureType.DeviceCreateInfo;
 }

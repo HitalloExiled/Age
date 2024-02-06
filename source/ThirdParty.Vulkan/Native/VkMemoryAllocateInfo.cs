@@ -5,12 +5,12 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkMemoryAllocateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*        pNext;
-    public VkDeviceSize allocationSize;
-    public uint         memoryTypeIndex;
+    public void*        PNext;
+    public VkDeviceSize AllocationSize;
+    public uint         MemoryTypeIndex;
 
     public VkMemoryAllocateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        this.SType = VkStructureType.MemoryAllocateInfo;
 }

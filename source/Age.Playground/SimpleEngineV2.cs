@@ -16,11 +16,12 @@ using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan.KHR;
 using ThirdParty.Vulkan;
 
-using Buffer          = ThirdParty.Vulkan.Buffer;
 using PlatformWindow  = Age.Platforms.Display.Window;
-using Semaphore       = ThirdParty.Vulkan.Semaphore;
-using Version         = ThirdParty.Vulkan.Version;
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
+using ThirdParty.Vulkan.Native;
+using Age.Core.Interop;
+using ThirdParty.Vulkan.Native.EXT;
+using ThirdParty.Vulkan.Native.KHR;
 
 namespace Age.Playground;
 
@@ -30,90 +31,90 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
     private static readonly DateTime startTime = DateTime.UtcNow;
 
-    private readonly HashSet<string>        deviceExtensions         = [SwapchainExtension.Name];
+    private readonly HashSet<string>        deviceExtensions         = [VkSwapchainExtensionKHR.Name];
     private readonly bool                   enableValidationLayers   = Debugger.IsAttached;
-    private readonly Semaphore[]            imageAvailableSemaphores = new Semaphore[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkSemaphore[]          imageAvailableSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
     private readonly List<uint>             indices                  = [];
-    private readonly Fence[]                inFlightFences           = new Fence[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkFence[]              inFlightFences           = new VkFence[MAX_FRAMES_IN_FLIGHT];
     private readonly WavefrontLoader        wavefrontLoader          = new(new FileSystem());
-    private readonly Semaphore[]            renderFinishedSemaphores = new Semaphore[MAX_FRAMES_IN_FLIGHT];
-    private readonly Buffer[]               uniformBuffers           = new Buffer[MAX_FRAMES_IN_FLIGHT];
-    private readonly UniformBufferObject*[]  uniformBuffersMapped    = new UniformBufferObject*[MAX_FRAMES_IN_FLIGHT];
-    private readonly DeviceMemory[]         uniformBuffersMemory     = new DeviceMemory[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkSemaphore[]          renderFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkBuffer[]             uniformBuffers           = new VkBuffer[MAX_FRAMES_IN_FLIGHT];
+    private readonly nint[]                 uniformBuffersMapped     = new nint[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkDeviceMemory[]       uniformBuffersMemory     = new VkDeviceMemory[MAX_FRAMES_IN_FLIGHT];
     private readonly HashSet<string>        validationLayers         = ["VK_LAYER_KHRONOS_validation"];
     private readonly List<Vertex>           vertices                 = [];
 
-    private Image                colorImage = null!;
-    private DeviceMemory         colorImageMemory = null!;
-    private ImageView            colorImageView = null!;
-    private CommandBuffer[]      commandBuffers = [];
-    private CommandPool          commandPool = null!;
-    private uint                 currentFrame;
-    private DebugUtilsMessenger  debugMessenger = null!;
-    private Image                depthImage = null!;
-    private DeviceMemory         depthImageMemory = null!;
-    private ImageView            depthImageView = null!;
-    private DescriptorPool       descriptorPool = null!;
-    private DescriptorSetLayout  descriptorSetLayout = null!;
-    private DescriptorSet[]      descriptorSets = [];
-    private Device               device = null!;
-    private bool                 disposed;
-    private bool                 framebufferResized;
-    private Pipeline             graphicsPipeline = null!;
-    private Queue                graphicsQueue = null!;
-    private Buffer               indexBuffer = null!;
-    private DeviceMemory         indexBufferMemory = null!;
-    private Instance             instance = null!;
-    private uint                 mipLevels;
-    private SampleCountFlags     msaaSamples = SampleCountFlags.N1;
-    private PhysicalDevice       physicalDevice = null!;
-    private PipelineLayout       pipelineLayout = null!;
-    private Queue                presentQueue = null!;
-    private RenderPass           renderPass = null!;
-    private Surface              surface = null!;
-    private Swapchain            swapChain = null!;
-    private Extent2D             swapChainExtent = new();
-    private Framebuffer[]        swapChainFramebuffers = [];
-    private Format               swapChainImageFormat;
-    private Image[]              swapChainImages = [];
-    private ImageView[]          swapChainImageViews = [];
-    private Image                textureImage = null!;
-    private DeviceMemory         textureImageMemory = null!;
-    private ImageView            textureImageView = null!;
-    private Sampler              textureSampler = null!;
-    private Buffer               vertexBuffer = null!;
-    private DeviceMemory         vertexBufferMemory = null!;
-    private DebugUtilsExtension? debugUtilsExtension;
-    private SurfaceExtension     surfaceExtension = null!;
-    private SwapchainExtension   swapchainExtension = null!;
-    private PlatformWindow       window = null!;
+    private VkImage                   colorImage            = null!;
+    private VkDeviceMemory            colorImageMemory      = null!;
+    private VkImageView               colorImageView        = null!;
+    private VkCommandBuffer[]         commandBuffers        = [];
+    private VkCommandPool             commandPool           = null!;
+    private uint                      currentFrame;
+    private VkDebugUtilsMessengerEXT  debugMessenger        = null!;
+    private VkImage                   depthImage            = null!;
+    private VkDeviceMemory            depthImageMemory      = null!;
+    private VkImageView               depthImageView        = null!;
+    private VkDescriptorPool          descriptorPool        = null!;
+    private VkDescriptorSetLayout     descriptorSetLayout   = null!;
+    private VkDescriptorSet[]         descriptorSets        = [];
+    private VkDevice                  device                = null!;
+    private bool                      disposed;
+    private bool                      framebufferResized;
+    private VkPipeline                graphicsPipeline      = null!;
+    private VkQueue                   graphicsQueue         = null!;
+    private VkBuffer                  indexBuffer           = null!;
+    private VkDeviceMemory            indexBufferMemory     = null!;
+    private VkInstance                instance              = null!;
+    private uint                      mipLevels;
+    private VkSampleCountFlags        msaaSamples           = VkSampleCountFlags.N1;
+    private VkPhysicalDevice          physicalDevice        = null!;
+    private VkPipelineLayout          pipelineLayout        = null!;
+    private VkQueue                   presentQueue          = null!;
+    private VkRenderPass              renderPass            = null!;
+    private VkSurfaceKHR              surface               = null!;
+    private VkSwapchainKHR            swapChain             = null!;
+    private VkExtent2D                swapChainExtent;
+    private VkFramebuffer[]           swapChainFramebuffers = [];
+    private VkFormat                  swapChainImageFormat;
+    private VkImage[]                 swapChainImages       = [];
+    private VkImageView[]             swapChainImageViews   = [];
+    private VkImage                   textureImage          = null!;
+    private VkDeviceMemory            textureImageMemory    = null!;
+    private VkImageView               textureImageView      = null!;
+    private VkSampler                 textureSampler        = null!;
+    private VkBuffer                  vertexBuffer          = null!;
+    private VkDeviceMemory            vertexBufferMemory    = null!;
+    private VkDebugUtilsExtensionEXT? debugUtilsExtension;
+    private VkSurfaceExtensionKHR     surfaceExtension      = null!;
+    private VkSwapchainExtensionKHR   swapchainExtension    = null!;
+    private PlatformWindow            window                = null!;
 
     public SimpleEngineV2()
     {
         for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            this.uniformBuffersMapped[i] = (UniformBufferObject*)NativeMemory.Alloc((uint)sizeof(UniformBufferObject));
+            this.uniformBuffersMapped[i] = (nint)NativeMemory.Alloc((uint)sizeof(UniformBufferObject));
         }
     }
 
-    private static PresentMode ChooseSwapPresentMode(PresentMode[] availablePresentModes)
+    private static VkPresentModeKHR ChooseSwapPresentMode(VkPresentModeKHR[] availablePresentModes)
     {
         foreach (var availablePresentMode in availablePresentModes)
         {
-            if (availablePresentMode == PresentMode.Mailbox)
+            if (availablePresentMode == VkPresentModeKHR.Mailbox)
             {
                 return availablePresentMode;
             }
         }
 
-        return PresentMode.Fifo;
+        return VkPresentModeKHR.Fifo;
     }
 
-    private static SurfaceFormat ChooseSwapSurfaceFormat(SurfaceFormat[] availableFormats)
+    private static VkSurfaceFormatKHR ChooseSwapSurfaceFormat(VkSurfaceFormatKHR[] availableFormats)
     {
         foreach (var availableFormat in availableFormats)
         {
-            if (availableFormat.Format == Format.B8G8R8A8Srgb && availableFormat.ColorSpace == ColorSpace.SrgbNonlinear)
+            if (availableFormat.Format == VkFormat.B8G8R8A8Srgb && availableFormat.ColorSpace == VkColorSpaceKHR.SrgbNonlinear)
             {
                 return availableFormat;
             }
@@ -122,45 +123,45 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         return availableFormats[0];
     }
 
-    private static bool DebugCallback(DebugUtilsMessageSeverityFlags messageSeverity, DebugUtilsMessageTypeFlags messageType, DebugUtilsMessenger.CallbackData callbackData)
+    private static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
-        Console.WriteLine("validation layer: " + callbackData.Message);
+        Console.WriteLine("validation layer: " + Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage));
 
         return false;
     }
 
-    private static void PopulateDebugMessengerCreateInfo(out DebugUtilsMessenger.CreateInfo createInfo) =>
-        createInfo = new DebugUtilsMessenger.CreateInfo
+    private static void PopulateDebugMessengerCreateInfo(out VkDebugUtilsMessengerCreateInfoEXT createInfo) =>
+        createInfo = new VkDebugUtilsMessengerCreateInfoEXT
         {
-            MessageSeverity = DebugUtilsMessageSeverityFlags.Verbose | DebugUtilsMessageSeverityFlags.Warning | DebugUtilsMessageSeverityFlags.Error,
-            MessageType     = DebugUtilsMessageTypeFlags.General | DebugUtilsMessageTypeFlags.Validation | DebugUtilsMessageTypeFlags.Performance,
-            UserCallback    = DebugCallback,
+            MessageSeverity = VkDebugUtilsMessageSeverityFlagsEXT.Verbose | VkDebugUtilsMessageSeverityFlagsEXT.Warning | VkDebugUtilsMessageSeverityFlagsEXT.Error,
+            MessageType     = VkDebugUtilsMessageTypeFlagsEXT.General | VkDebugUtilsMessageTypeFlagsEXT.Validation | VkDebugUtilsMessageTypeFlagsEXT.Performance,
+            PfnUserCallback = new(DebugCallback),
         };
 
-    private CommandBuffer BeginSingleTimeCommands()
+    private VkCommandBuffer BeginSingleTimeCommands()
     {
-        var commandBuffer = this.commandPool.AllocateCommand(CommandBufferLevelFlags.Primary);
+        var commandBuffer = this.commandPool.AllocateCommand(VkCommandBufferLevelFlags.Primary);
 
         commandBuffer.Begin();
 
         return commandBuffer;
     }
 
-    private bool CheckDeviceExtensionSupport(PhysicalDevice physicalDevice)
+    private bool CheckDeviceExtensionSupport(VkPhysicalDevice physicalDevice)
     {
         var extensions = physicalDevice.EnumerateDeviceExtensionProperties();
 
-        return this.deviceExtensions.Overlaps(extensions.Select(x => x.ExtensionName));
+        return this.deviceExtensions.Overlaps(extensions.Select(x => Marshal.PtrToStringAnsi((nint)x.ExtensionName)!));
     }
 
     private bool CheckValidationLayerSupport()
     {
-        var availableLayers = Instance.EnumerateLayerProperties();
+        var availableLayers = VkInstance.EnumerateLayerProperties();
 
-        return this.validationLayers.Overlaps(availableLayers.Select(x => x.LayerName));
+        return this.validationLayers.Overlaps(availableLayers.Select(x => Marshal.PtrToStringAnsi((nint)x.LayerName)!));
     }
 
-    private Extent2D ChooseSwapExtent(SurfaceCapabilities capabilities)
+    private VkExtent2D ChooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities)
     {
         if (capabilities.CurrentExtent.Width != uint.MaxValue)
         {
@@ -168,7 +169,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         }
         else
         {
-            var actualExtent = new Extent2D
+            var actualExtent = new VkExtent2D
             {
                 Width  = Math.Clamp(this.window.Size.Width, capabilities.MinImageExtent.Width, capabilities.MaxImageExtent.Width),
                 Height = Math.Clamp(this.window.Size.Height, capabilities.MinImageExtent.Height, capabilities.MaxImageExtent.Height),
@@ -245,11 +246,11 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         this.swapChain.Dispose();
     }
 
-    private void CopyBuffer(Buffer srcBuffer, Buffer dstBuffer, ulong size)
+    private void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, ulong size)
     {
         var commandBuffer = this.BeginSingleTimeCommands();
 
-        var copyRegion = new BufferCopy
+        var copyRegion = new VkBufferCopy
         {
             Size = size
         };
@@ -259,18 +260,18 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         this.EndSingleTimeCommands(commandBuffer);
     }
 
-    private void CopyBufferToImage(Buffer buffer, Image image, int width, int height)
+    private void CopyBufferToImage(VkBuffer buffer, VkImage image, int width, int height)
     {
         var commandBuffer = this.BeginSingleTimeCommands();
 
-        var region = new BufferImageCopy
+        var region = new VkBufferImageCopy
         {
             BufferOffset      = 0,
             BufferRowLength   = 0,
             BufferImageHeight = 0,
             ImageSubresource  = new()
             {
-                AspectMask     = ImageAspectFlags.Color,
+                AspectMask     = VkImageAspectFlags.Color,
                 MipLevel       = 0,
                 BaseArrayLayer = 0,
                 LayerCount     = 1,
@@ -284,27 +285,27 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             },
         };
 
-        commandBuffer.CopyBufferToImage(buffer, image, ImageLayout.TransferDstOptimal, region);
+        commandBuffer.CopyBufferToImage(buffer, image, VkImageLayout.TransferDstOptimal, region);
 
         this.EndSingleTimeCommands(commandBuffer);
     }
 
-    private void CreateBuffer(ulong size, BufferUsageFlags usage, MemoryPropertyFlags properties, out Buffer buffer, out DeviceMemory bufferMemory)
+    private void CreateBuffer(ulong size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, out VkBuffer buffer, out VkDeviceMemory bufferMemory)
     {
-        var createInfo = new Buffer.CreateInfo
+        var createInfo = new VkBufferCreateInfo
         {
             Size        = size,
             Usage       = usage,
-            SharingMode = SharingMode.Exclusive
+            SharingMode = VkSharingMode.Exclusive
         };
 
         buffer = this.device.CreateBuffer(createInfo);
 
-        var memRequirements = buffer.GetMemoryRequirements();
+        buffer.GetMemoryRequirements(out var memRequirements);
 
-        var allocInfo = new DeviceMemory.AllocateInfo
+        var allocInfo = new VkMemoryAllocateInfo
         {
-            AllocationSize = memRequirements.Size,
+            AllocationSize  = memRequirements.Size,
             MemoryTypeIndex = this.FindMemoryType(memRequirements.MemoryTypeBits, properties)
         };
 
@@ -314,13 +315,13 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     }
 
     private void CreateCommandBuffers() =>
-        this.commandBuffers = this.commandPool.AllocateCommands(MAX_FRAMES_IN_FLIGHT, CommandBufferLevelFlags.Primary);
+        this.commandBuffers = this.commandPool.AllocateCommands(MAX_FRAMES_IN_FLIGHT, VkCommandBufferLevelFlags.Primary);
 
     private void CreateCommandPool()
     {
         var queueFamilyIndices = this.FindQueueFamilies(this.physicalDevice);
 
-        this.commandPool = this.device.CreateCommandPool(queueFamilyIndices.GraphicsFamily!.Value, CommandPoolCreateFlags.ResetCommandBuffer);
+        this.commandPool = this.device.CreateCommandPool(queueFamilyIndices.GraphicsFamily!.Value, VkCommandPoolCreateFlags.ResetCommandBuffer);
     }
 
     private void CreateColorResources()
@@ -333,13 +334,13 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             1,
             this.msaaSamples,
             colorFormat,
-            ImageTiling.Optimal,
-            ImageUsageFlags.TransientAttachment | ImageUsageFlags.ColorAttachment,
-            MemoryPropertyFlags.DeviceLocal,
+            VkImageTiling.Optimal,
+            VkImageUsageFlags.TransientAttachment | VkImageUsageFlags.ColorAttachment,
+            VkMemoryPropertyFlags.DeviceLocal,
             out this.colorImage,
             out this.colorImageMemory
         );
-        this.colorImageView = this.CreateImageView(this.colorImage, colorFormat, ImageAspectFlags.Color, 1);
+        this.colorImageView = this.CreateImageView(this.colorImage, colorFormat, VkImageAspectFlags.Color, 1);
     }
 
     private void CreateDepthResources()
@@ -352,112 +353,122 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             1,
             this.msaaSamples,
             depthFormat,
-            ImageTiling.Optimal,
-            ImageUsageFlags.DepthStencilAttachment,
-            MemoryPropertyFlags.DeviceLocal,
+            VkImageTiling.Optimal,
+            VkImageUsageFlags.DepthStencilAttachment,
+            VkMemoryPropertyFlags.DeviceLocal,
             out this.depthImage,
             out this.depthImageMemory
         );
 
-        this.depthImageView = this.CreateImageView(this.depthImage, depthFormat, ImageAspectFlags.Depth, 1);
+        this.depthImageView = this.CreateImageView(this.depthImage, depthFormat, VkImageAspectFlags.Depth, 1);
     }
 
     private void CreateDescriptorPool()
     {
-        var createInfo = new DescriptorPool.CreateInfo
+        var poolSizes = new VkDescriptorPoolSize[]
         {
-            PoolSizes =
-            [
-                new()
-                {
-                    Type            = DescriptorType.UniformBuffer,
-                    DescriptorCount = MAX_FRAMES_IN_FLIGHT,
-                },
-                new()
-                {
-                    Type            = DescriptorType.CombinedImageSampler,
-                    DescriptorCount = MAX_FRAMES_IN_FLIGHT,
-                },
-            ],
-            MaxSets = MAX_FRAMES_IN_FLIGHT,
+            new()
+            {
+                Type            = VkDescriptorType.UniformBuffer,
+                DescriptorCount = MAX_FRAMES_IN_FLIGHT,
+            },
+            new()
+            {
+                Type            = VkDescriptorType.CombinedImageSampler,
+                DescriptorCount = MAX_FRAMES_IN_FLIGHT,
+            },
         };
 
-        this.descriptorPool = this.device.CreateDescriptorPool(createInfo);
+        fixed (VkDescriptorPoolSize* pPoolSizes = poolSizes)
+        {
+            var createInfo = new VkDescriptorPoolCreateInfo
+            {
+                PPoolSizes    = pPoolSizes,
+                PoolSizeCount = (uint)poolSizes.Length,
+                MaxSets       = MAX_FRAMES_IN_FLIGHT,
+            };
+
+            this.descriptorPool = this.device.CreateDescriptorPool(createInfo);
+        }
     }
 
     private void CreateDescriptorSets()
     {
-        var layouts = new DescriptorSetLayout[MAX_FRAMES_IN_FLIGHT]
+        var layouts = new VkHandle<VkDescriptorSetLayout>[MAX_FRAMES_IN_FLIGHT]
         {
             this.descriptorSetLayout,
             this.descriptorSetLayout,
         };
 
-        var allocInfo = new DescriptorSet.AllocateInfo
+        fixed (VkHandle<VkDescriptorSetLayout>* pSetLayouts = layouts)
         {
-            SetLayouts = layouts
-        };
-
-        this.descriptorSets = this.descriptorPool.AllocateDescriptorSets(allocInfo);
-
-        for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-        {
-            var bufferInfo = new DescriptorBufferInfo
+            var allocInfo = new VkDescriptorSetAllocateInfo
             {
-                Buffer = this.uniformBuffers[i],
-                Offset = 0,
-                Range  = (uint)Marshal.SizeOf<UniformBufferObject>()
+                DescriptorSetCount = (uint)layouts.Length,
+                PSetLayouts        = pSetLayouts
             };
 
-            var imageInfo = new DescriptorImageInfo
-            {
-                ImageLayout = ImageLayout.ShaderReadOnlyOptimal,
-                ImageView   = this.textureImageView,
-                Sampler     = this.textureSampler
-            };
+            this.descriptorSets = this.descriptorPool.AllocateDescriptorSets(allocInfo);
 
-            var descriptorWrites = new WriteDescriptorSet[]
+            for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
             {
-                new()
+                var bufferInfo = new VkDescriptorBufferInfo
                 {
-                    BufferInfo      = [bufferInfo],
-                    DescriptorCount = 1,
-                    DescriptorType  = DescriptorType.UniformBuffer,
-                    DstArrayElement = 0,
-                    DstBinding      = 0,
-                    DstSet          = this.descriptorSets[i],
-                },
-                new()
-                {
-                    DescriptorCount = 1,
-                    DescriptorType  = DescriptorType.CombinedImageSampler,
-                    DstArrayElement = 0,
-                    DstBinding      = 1,
-                    DstSet          = this.descriptorSets[i],
-                    ImageInfo       = [imageInfo],
-                }
-            };
+                    Buffer = this.uniformBuffers[i],
+                    Offset = 0,
+                    Range  = (uint)Marshal.SizeOf<UniformBufferObject>()
+                };
 
-            this.device.UpdateDescriptorSets(descriptorWrites, []);
+                var imageInfo = new VkDescriptorImageInfo
+                {
+                    ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
+                    ImageView   = this.textureImageView,
+                    Sampler     = this.textureSampler
+                };
+
+                var descriptorWrites = new VkWriteDescriptorSet[]
+                {
+                    new()
+                    {
+                        DescriptorCount = 1,
+                        DescriptorType  = VkDescriptorType.UniformBuffer,
+                        DstArrayElement = 0,
+                        DstBinding      = 0,
+                        DstSet          = this.descriptorSets[i],
+                        PBufferInfo     = &bufferInfo,
+                    },
+                    new()
+                    {
+                        DescriptorCount = 1,
+                        DescriptorType  = VkDescriptorType.CombinedImageSampler,
+                        DstArrayElement = 0,
+                        DstBinding      = 1,
+                        DstSet          = this.descriptorSets[i],
+                        PImageInfo      = &imageInfo,
+                    }
+                };
+
+                this.device.UpdateDescriptorSets(descriptorWrites, []);
+            }
         }
     }
 
     private void CreateDescriptorSetLayout()
     {
-        var uboLayoutBinding = new DescriptorSetLayoutBinding
+        var uboLayoutBinding = new VkDescriptorSetLayoutBinding
         {
             Binding         = 0,
-            DescriptorType  = DescriptorType.UniformBuffer,
+            DescriptorType  = VkDescriptorType.UniformBuffer,
             DescriptorCount = 1,
-            StageFlags      = ShaderStageFlags.Vertex,
+            StageFlags      = VkShaderStageFlags.Vertex,
         };
 
-        var samplerLayoutBinding = new DescriptorSetLayoutBinding
+        var samplerLayoutBinding = new VkDescriptorSetLayoutBinding
         {
             Binding         = 1,
             DescriptorCount = 1,
-            DescriptorType  = DescriptorType.CombinedImageSampler,
-            StageFlags      = ShaderStageFlags.Fragment
+            DescriptorType  = VkDescriptorType.CombinedImageSampler,
+            StageFlags      = VkShaderStageFlags.Fragment
         };
 
         var bindings = new[]
@@ -466,37 +477,45 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             samplerLayoutBinding
         };
 
-        var createInfo = new DescriptorSetLayout.CreateInfo
+        fixed (VkDescriptorSetLayoutBinding* pBindings = bindings)
         {
-            Bindings = bindings
-        };
+            var createInfo = new VkDescriptorSetLayoutCreateInfo
+            {
+                PBindings    = pBindings,
+                BindingCount = (uint)bindings.Length,
+            };
 
-        this.descriptorSetLayout = this.device.CreateDescriptorSetLayout(createInfo);
+            this.descriptorSetLayout = this.device.CreateDescriptorSetLayout(createInfo);
+        }
     }
 
     private void CreateFramebuffers()
     {
-        this.swapChainFramebuffers = new Framebuffer[this.swapChainImageViews.Length];
+        this.swapChainFramebuffers = new VkFramebuffer[this.swapChainImageViews.Length];
 
         for (var i = 0; i < this.swapChainImageViews.Length; i++)
         {
-            var attachments = new[]
+            var attachments = new VkHandle<VkImageView>[]
             {
                 this.colorImageView,
                 this.depthImageView,
                 this.swapChainImageViews[i]
             };
 
-            var createInfo = new Framebuffer.CreateInfo
+            fixed (VkHandle<VkImageView>* pAttachments = attachments)
             {
-                RenderPass  = this.renderPass,
-                Attachments = attachments,
-                Width       = this.swapChainExtent.Width,
-                Height      = this.swapChainExtent.Height,
-                Layers      = 1
-            };
+                var createInfo = new VkFramebufferCreateInfo
+                {
+                    RenderPass      = this.renderPass,
+                    PAttachments    = pAttachments,
+                    AttachmentCount = (uint)attachments.Length,
+                    Width           = this.swapChainExtent.Width,
+                    Height          = this.swapChainExtent.Height,
+                    Layers          = 1
+                };
 
-            this.swapChainFramebuffers[i] = this.device.CreateFramebuffer(createInfo);
+                this.swapChainFramebuffers[i] = this.device.CreateFramebuffer(createInfo);
+            }
         }
     }
 
@@ -508,126 +527,147 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         var vertShaderModule = this.CreateShaderModule(vertShaderCode);
         var fragShaderModule = this.CreateShaderModule(fragShaderCode);
 
-        var name = "main";
-        var vertShaderStageInfo = new PipelineShaderStage.CreateInfo
+        fixed (byte* pName = "main"u8)
         {
-            Module = vertShaderModule,
-            Name   = name,
-            Stage  = ShaderStageFlags.Vertex,
-        };
+            var vertShaderStageInfo = new VkPipelineShaderStageCreateInfo
+            {
+                Module = vertShaderModule,
+                PName  = pName,
+                Stage  = VkShaderStageFlags.Vertex,
+            };
 
-        var fragShaderStageInfo = new PipelineShaderStage.CreateInfo
-        {
-            Module = fragShaderModule,
-            Name   = name,
-            Stage  = ShaderStageFlags.Fragment,
-        };
+            var fragShaderStageInfo = new VkPipelineShaderStageCreateInfo
+            {
+                Module = fragShaderModule,
+                PName  = pName,
+                Stage  = VkShaderStageFlags.Fragment,
+            };
 
-        var shaderStages = new[]
-        {
-            vertShaderStageInfo,
-            fragShaderStageInfo
-        };
+            var stages = new[]
+            {
+                vertShaderStageInfo,
+                fragShaderStageInfo
+            };
 
-        var bindingDescription    = Vertex.GetBindingDescription();
-        var attributeDescriptions = Vertex.GetAttributeDescriptions();
+            var bindingDescription    = Vertex.GetBindingDescription();
+            var attributeDescriptions = Vertex.GetAttributeDescriptions();
 
-        var vertexInputInfo = new PipelineVertexInputState.CreateInfo
-        {
-            VertexBindingDescriptions   = [bindingDescription],
-            VertexAttributeDescriptions = attributeDescriptions
-        };
+            var dynamicStates = new[]
+            {
+                VkDynamicState.Viewport,
+                VkDynamicState.Scissor,
+            };
 
-        var inputAssembly = new PipelineInputAssemblyState.CreateInfo
-        {
-            Topology               = PrimitiveTopology.TriangleList,
-            PrimitiveRestartEnable = false
-        };
+            fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions = attributeDescriptions)
+            fixed (VkPipelineShaderStageCreateInfo*   pStages                      = stages)
+            fixed (VkDynamicState*                    pDynamicStates               = dynamicStates)
+            {
+                var vertexInputState = new VkPipelineVertexInputStateCreateInfo
+            {
+                PVertexBindingDescriptions      = &bindingDescription,
+                VertexBindingDescriptionCount   = 1,
+                PVertexAttributeDescriptions    = pVertexAttributeDescriptions,
+                VertexAttributeDescriptionCount = (uint)attributeDescriptions.Length,
+            };
 
-        var viewportState = new PipelineViewportState.CreateInfo
-        {
-            ViewportCount = 1,
-            ScissorCount  = 1
-        };
+            var inputAssemblyState = new VkPipelineInputAssemblyStateCreateInfo
+            {
+                Topology               = VkPrimitiveTopology.TriangleList,
+                PrimitiveRestartEnable = false
+            };
 
-        var rasterizer = new PipelineRasterizationState.CreateInfo
-        {
-            DepthClampEnable        = false,
-            RasterizerDiscardEnable = false,
-            PolygonMode             = PolygonMode.Fill,
-            LineWidth               = 1,
-            CullMode                = CullModeFlags.Back,
-            FrontFace               = FrontFace.CounterClockwise,
-            DepthBiasEnable         = false,
-        };
+            var viewportState = new VkPipelineViewportStateCreateInfo
+            {
+                ViewportCount = 1,
+                ScissorCount  = 1
+            };
 
-        var multisampling = new PipelineMultisampleState.CreateInfo
-        {
-            SampleShadingEnable  = true,
-            RasterizationSamples = this.msaaSamples,
-            MinSampleShading     = 1,
-        };
+            var rasterizationState = new VkPipelineRasterizationStateCreateInfo
+            {
+                DepthClampEnable        = false,
+                RasterizerDiscardEnable = false,
+                PolygonMode             = VkPolygonMode.Fill,
+                LineWidth               = 1,
+                CullMode                = VkCullModeFlags.Back,
+                FrontFace               = VkFrontFace.CounterClockwise,
+                DepthBiasEnable         = false,
+            };
 
-        var depthStencil = new PipelineDepthStencilState.CreateInfo
-        {
-            DepthTestEnable       = true,
-            DepthWriteEnable      = true,
-            DepthCompareOp        = CompareOp.Less,
-            DepthBoundsTestEnable = false,
-            StencilTestEnable     = false
-        };
+            var multisampleState = new VkPipelineMultisampleStateCreateInfo
+            {
+                SampleShadingEnable  = true,
+                RasterizationSamples = this.msaaSamples,
+                MinSampleShading     = 1,
+            };
 
-        var colorBlendAttachment = new PipelineColorBlendAttachmentState
-        {
-            ColorWriteMask = ColorComponentFlags.R | ColorComponentFlags.G | ColorComponentFlags.B | ColorComponentFlags.A,
-            BlendEnable    = false
-        };
+            var depthStencilState = new VkPipelineDepthStencilStateCreateInfo
+            {
+                DepthTestEnable       = true,
+                DepthWriteEnable      = true,
+                DepthCompareOp        = VkCompareOp.Less,
+                DepthBoundsTestEnable = false,
+                StencilTestEnable     = false
+            };
 
-        var colorBlending = new PipelineColorBlendState.CreateInfo
-        {
-            LogicOpEnable = false,
-            LogicOp       = LogicOp.Copy,
-            Attachments   = [colorBlendAttachment]
-        };
+            var colorBlendAttachment = new VkPipelineColorBlendAttachmentState
+            {
+                ColorWriteMask = VkColorComponentFlags.R | VkColorComponentFlags.G | VkColorComponentFlags.B | VkColorComponentFlags.A,
+                BlendEnable    = false
+            };
 
-        var dynamicState = new PipelineDynamicState.CreateInfo
-        {
-            DynamicStates = [DynamicState.Viewport, DynamicState.Scissor]
-        };
+            var colorBlendState = new VkPipelineColorBlendStateCreateInfo
+            {
+                LogicOpEnable   = false,
+                LogicOp         = VkLogicOp.Copy,
+                PAttachments    = &colorBlendAttachment,
+                AttachmentCount = 1,
+            };
 
-        var pipelineLayoutInfo = new PipelineLayout.CreateInfo
-        {
-            SetLayouts = [this.descriptorSetLayout]
-        };
+                var dynamicState = new VkPipelineDynamicStateCreateInfo
+                {
+                    PDynamicStates    = pDynamicStates,
+                    DynamicStateCount = (uint)dynamicStates.Length
+                };
 
-        this.pipelineLayout = this.device.CreatePipelineLayout(pipelineLayoutInfo);
+                VkHandle<VkDescriptorSetLayout> setLaout = this.descriptorSetLayout;
 
-        var pipelineInfo = new GraphicsPipeline.CreateInfo
-        {
-            Stages             = shaderStages,
-            VertexInputState   = vertexInputInfo,
-            InputAssemblyState = inputAssembly,
-            ViewportState      = viewportState,
-            RasterizationState = rasterizer,
-            MultisampleState   = multisampling,
-            ColorBlendState    = colorBlending,
-            DynamicState       = dynamicState,
-            Layout             = this.pipelineLayout,
-            RenderPass         = this.renderPass,
-            Subpass            = 0,
-            BasePipelineHandle = default,
-            DepthStencilState  = depthStencil,
-        };
+                var pipelineLayoutInfo = new VkPipelineLayoutCreateInfo
+                {
+                    PSetLayouts    = &setLaout,
+                    SetLayoutCount = 1,
+                };
 
-        this.graphicsPipeline =  this.device.CreateGraphicsPipelines(pipelineInfo);
+                this.pipelineLayout = this.device.CreatePipelineLayout(pipelineLayoutInfo);
 
-        fragShaderModule.Dispose();
-        vertShaderModule.Dispose();
+                var pipelineInfo = new VkGraphicsPipelineCreateInfo
+                {
+                    PStages             = pStages,
+                    StageCount          = (uint)stages.Length,
+                    PVertexInputState   = &vertexInputState,
+                    PInputAssemblyState = &inputAssemblyState,
+                    PViewportState      = &viewportState,
+                    PRasterizationState = &rasterizationState,
+                    PMultisampleState   = &multisampleState,
+                    PColorBlendState    = &colorBlendState,
+                    PDynamicState       = &dynamicState,
+                    Layout              = this.pipelineLayout,
+                    RenderPass          = this.renderPass,
+                    Subpass             = 0,
+                    BasePipelineHandle  = default,
+                    PDepthStencilState  = &depthStencilState,
+                };
+
+                this.graphicsPipeline =  this.device.CreateGraphicsPipelines(pipelineInfo);
+
+                fragShaderModule.Dispose();
+                vertShaderModule.Dispose();
+            }
+        }
     }
 
-    private void CreateImage(uint width, uint height, uint mipLevels, SampleCountFlags numSamples, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, out Image image, out DeviceMemory imageMemory)
+    private void CreateImage(uint width, uint height, uint mipLevels, VkSampleCountFlags numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, out VkImage image, out VkDeviceMemory imageMemory)
     {
-        var createInfo = new Image.CreateInfo
+        var createInfo = new VkImageCreateInfo
         {
             ArrayLayers = 1,
             Extent      = new()
@@ -637,20 +677,20 @@ public unsafe partial class SimpleEngineV2 : IDisposable
                 Depth  = 1,
             },
             Format        = format,
-            ImageType     = ImageType.N2D,
-            InitialLayout = ImageLayout.Undefined,
+            ImageType     = VkImageType.N2D,
+            InitialLayout = VkImageLayout.Undefined,
             MipLevels     = mipLevels,
             Samples       = numSamples,
-            SharingMode   = SharingMode.Exclusive,
+            SharingMode   = VkSharingMode.Exclusive,
             Tiling        = tiling,
             Usage         = usage,
         };
 
         image = this.device.CreateImage(createInfo);
 
-        var memRequirements = image.GetMemoryRequirements();
+        image.GetMemoryRequirements(out var memRequirements);
 
-        var allocInfo = new DeviceMemory.AllocateInfo
+        var allocInfo = new VkMemoryAllocateInfo
         {
             AllocationSize  = memRequirements.Size,
             MemoryTypeIndex = this.FindMemoryType(memRequirements.MemoryTypeBits, properties)
@@ -661,12 +701,12 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         image.BindMemory(imageMemory, 0);
     }
 
-    private ImageView CreateImageView(Image image, Format format, ImageAspectFlags aspectFlags, uint mipLevels)
+    private VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint mipLevels)
     {
-        var createInfo = new ImageView.CreateInfo
+        var createInfo = new VkImageViewCreateInfo
         {
             Image            = image,
-            ViewType         = ImageViewType.N2D,
+            ViewType         = VkImageViewType.N2D,
             Format           = format,
             SubresourceRange = new()
             {
@@ -683,11 +723,11 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
     private void CreateImageViews()
     {
-        this.swapChainImageViews = new ImageView[this.swapChainImages.Length];
+        this.swapChainImageViews = new VkImageView[this.swapChainImages.Length];
 
         for (var i = 0; i < this.swapChainImages.Length; i++)
         {
-            this.swapChainImageViews[i] = this.CreateImageView(this.swapChainImages[i], this.swapChainImageFormat, ImageAspectFlags.Color, 1);
+            this.swapChainImageViews[i] = this.CreateImageView(this.swapChainImages[i], this.swapChainImageFormat, VkImageAspectFlags.Color, 1);
         }
     }
 
@@ -697,8 +737,8 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         this.CreateBuffer(
             bufferSize,
-            BufferUsageFlags.TransferSrc,
-            MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent,
+            VkBufferUsageFlags.TransferSrc,
+            VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
             out var stagingBuffer,
             out var stagingBufferMemory
         );
@@ -708,8 +748,8 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         this.CreateBuffer(
             bufferSize,
-            BufferUsageFlags.TransferDst | BufferUsageFlags.IndexBuffer,
-            MemoryPropertyFlags.DeviceLocal,
+            VkBufferUsageFlags.TransferDst | VkBufferUsageFlags.IndexBuffer,
+            VkMemoryPropertyFlags.DeviceLocal,
             out this.indexBuffer,
             out this.indexBufferMemory
         );
@@ -727,17 +767,23 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             throw new Exception("validation layers requested, but not available!");
         }
 
-        var appInfo = new ApplicationInfo
-        {
-            ApplicationName    = "Hello Triangle",
-            ApplicationVersion = new Version(0, 1, 0, 0),
-            EngineName         = "No Engine",
-            EngineVersion      = new Version(0, 1, 0, 0),
-            ApiVersion         = Version.V1_0,
-        };
+        VkApplicationInfo appInfo;
 
-        DebugUtilsMessenger.CreateInfo? debugCreateInfo = null;
-        string[]                        enabledLayerNames = [];
+        fixed (byte* pApplicationName = "Hello Triangle"u8)
+        fixed (byte* pEngineName      = "No Engine"u8)
+        {
+            appInfo = new VkApplicationInfo
+            {
+                PApplicationName   = pApplicationName,
+                ApplicationVersion = new VkVersion(0, 1, 0, 0),
+                PEngineName        = pEngineName,
+                EngineVersion      = new VkVersion(0, 1, 0, 0),
+                ApiVersion         = VkVersion.V1_0,
+            };
+        }
+
+        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+        string[]                           enabledLayerNames = [];
 
         if (this.enableValidationLayers)
         {
@@ -745,24 +791,29 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             PopulateDebugMessengerCreateInfo(out debugCreateInfo);
         }
 
-        var createInfo = new Instance.CreateInfo
+        using var ppEnabledExtensionNames = new StringArrayPtr(this.GetRequiredExtensions());
+        using var ppEnabledLayerNames     = new StringArrayPtr(enabledLayerNames);
+
+        var createInfo = new VkInstanceCreateInfo
         {
-            ApplicationInfo   = appInfo,
-            EnabledExtensions = [.. this.GetRequiredExtensions()],
-            EnabledLayers     = enabledLayerNames,
-            Next              = debugCreateInfo,
+            PApplicationInfo        = &appInfo,
+            PpEnabledExtensionNames = ppEnabledExtensionNames,
+            EnabledExtensionCount   = (uint)ppEnabledExtensionNames.Length,
+            PpEnabledLayerNames     = ppEnabledLayerNames,
+            EnabledLayerCount       = (uint)ppEnabledLayerNames.Length,
+            PNext                   = &debugCreateInfo,
         };
 
-        this.instance = new Instance(createInfo);
+        this.instance = new VkInstance(createInfo);
 
         if (this.enableValidationLayers && !this.instance.TryGetExtension(out this.debugUtilsExtension))
         {
-            throw new Exception($"Cannot found required extension {DebugUtilsExtension.Name}");
+            throw new Exception($"Cannot found required extension {VkDebugUtilsExtensionEXT.Name}");
         }
 
-        if (!this.instance.TryGetExtension<SurfaceExtension>(out var surfaceExtension))
+        if (!this.instance.TryGetExtension<VkSurfaceExtensionKHR>(out var surfaceExtension))
         {
-            throw new Exception($"Cannot found required extension {SurfaceExtension.Name}");
+            throw new Exception($"Cannot found required extension {VkSurfaceExtensionKHR.Name}");
         }
 
         this.surfaceExtension = surfaceExtension;
@@ -772,122 +823,134 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     {
         var indices = this.FindQueueFamilies(this.physicalDevice);
 
-        var queueCreateInfos    = new List<DeviceQueue.CreateInfo>();
+        var queueCreateInfos    = new List<VkDeviceQueueCreateInfo>();
         var uniqueQueueFamilies = new HashSet<uint>
         {
             indices.GraphicsFamily!.Value,
             indices.PresentFamily!.Value
         };
 
+        var queuePriorities = 1f;
+
         foreach (var queueFamily in uniqueQueueFamilies)
         {
-            var queueCreateInfo = new DeviceQueue.CreateInfo
+            var queueCreateInfo = new VkDeviceQueueCreateInfo
             {
                 QueueFamilyIndex = queueFamily,
-                QueuePriorities  = [1],
+                PQueuePriorities = &queuePriorities,
+                QueueCount       = 1,
             };
 
             queueCreateInfos.Add(queueCreateInfo);
         }
 
-        var deviceFeatures = new PhysicalDevice.Features
+        var deviceFeatures = new VkPhysicalDeviceFeatures
         {
             SamplerAnisotropy = true,
             SampleRateShading = true,
         };
 
-        var createInfo = new Device.CreateInfo
+        using var ppEnabledExtensionNames = new StringArrayPtr(this.deviceExtensions.ToArray());
+
+        VkDeviceCreateInfo createInfo;
+
+        fixed (VkDeviceQueueCreateInfo* pQueueCreateInfos = queueCreateInfos.ToArray())
         {
-            QueueCreateInfos  = [.. queueCreateInfos],
-            EnabledFeatures   = deviceFeatures,
-            EnabledExtensions = [.. this.deviceExtensions],
-        };
+            createInfo = new VkDeviceCreateInfo
+            {
+                PQueueCreateInfos       = pQueueCreateInfos,
+                QueueCreateInfoCount    = (uint)queueCreateInfos.Count,
+                PEnabledFeatures        = &deviceFeatures,
+                PpEnabledExtensionNames = ppEnabledExtensionNames,
+                EnabledExtensionCount   = (uint)ppEnabledExtensionNames.Length,
+            };
+        }
 
         this.device = this.physicalDevice.CreateDevice(createInfo);
 
-        if (!this.device.TryGetExtension<SwapchainExtension>(out var vkKhrSwapchain))
+        if (!this.device.TryGetExtension<VkSwapchainExtensionKHR>(out var vkKhrSwapchain))
         {
-            throw new Exception($"Cannot found required extension {SwapchainExtension.Name}");
+            throw new Exception($"Cannot found required extension {VkSwapchainExtensionKHR.Name}");
         }
 
         this.swapchainExtension = vkKhrSwapchain;
         this.graphicsQueue  = this.device.GetQueue(indices.GraphicsFamily.Value, 0);
         this.presentQueue   = this.device.GetQueue(indices.PresentFamily.Value, 0);
-
     }
 
     private void CreateRenderPass()
     {
-        var colorAttachment = new AttachmentDescription
+        var colorAttachment = new VkAttachmentDescription
         {
             Format         = this.swapChainImageFormat,
             Samples        = this.msaaSamples,
-            LoadOp         = AttachmentLoadOp.Clear,
-            StoreOp        = AttachmentStoreOp.Store,
-            StencilLoadOp  = AttachmentLoadOp.DontCare,
-            StencilStoreOp = AttachmentStoreOp.DontCare,
-            InitialLayout  = ImageLayout.Undefined,
-            FinalLayout    = ImageLayout.ColorAttachmentOptimal
+            LoadOp         = VkAttachmentLoadOp.Clear,
+            StoreOp        = VkAttachmentStoreOp.Store,
+            StencilLoadOp  = VkAttachmentLoadOp.DontCare,
+            StencilStoreOp = VkAttachmentStoreOp.DontCare,
+            InitialLayout  = VkImageLayout.Undefined,
+            FinalLayout    = VkImageLayout.ColorAttachmentOptimal
         };
 
-        var depthAttachment = new AttachmentDescription
+        var depthAttachment = new VkAttachmentDescription
         {
             Format         = this.FindDepthFormat(),
             Samples        = this.msaaSamples,
-            LoadOp         = AttachmentLoadOp.Clear,
-            StoreOp        = AttachmentStoreOp.DontCare,
-            StencilLoadOp  = AttachmentLoadOp.DontCare,
-            StencilStoreOp = AttachmentStoreOp.DontCare,
-            InitialLayout  = ImageLayout.Undefined,
-            FinalLayout    = ImageLayout.DepthStencilAttachmentOptimal
+            LoadOp         = VkAttachmentLoadOp.Clear,
+            StoreOp        = VkAttachmentStoreOp.DontCare,
+            StencilLoadOp  = VkAttachmentLoadOp.DontCare,
+            StencilStoreOp = VkAttachmentStoreOp.DontCare,
+            InitialLayout  = VkImageLayout.Undefined,
+            FinalLayout    = VkImageLayout.DepthStencilAttachmentOptimal
         };
 
-        var colorAttachmentResolve = new AttachmentDescription
+        var colorAttachmentResolve = new VkAttachmentDescription
         {
             Format         = this.swapChainImageFormat,
-            Samples        = SampleCountFlags.N1,
-            LoadOp         = AttachmentLoadOp.DontCare,
-            StoreOp        = AttachmentStoreOp.Store,
-            StencilLoadOp  = AttachmentLoadOp.DontCare,
-            StencilStoreOp = AttachmentStoreOp.DontCare,
-            InitialLayout  = ImageLayout.Undefined,
-            FinalLayout    = ImageLayout.PresentSrcKhr
+            Samples        = VkSampleCountFlags.N1,
+            LoadOp         = VkAttachmentLoadOp.DontCare,
+            StoreOp        = VkAttachmentStoreOp.Store,
+            StencilLoadOp  = VkAttachmentLoadOp.DontCare,
+            StencilStoreOp = VkAttachmentStoreOp.DontCare,
+            InitialLayout  = VkImageLayout.Undefined,
+            FinalLayout    = VkImageLayout.PresentSrcKHR
         };
 
-        var colorAttachmentResolveRef = new AttachmentReference
+        var colorAttachmentResolveRef = new VkAttachmentReference
         {
             Attachment = 2,
-            Layout     = ImageLayout.ColorAttachmentOptimal
+            Layout     = VkImageLayout.ColorAttachmentOptimal
         };
 
-        var colorAttachmentRef = new AttachmentReference
+        var colorAttachmentRef = new VkAttachmentReference
         {
             Attachment = 0,
-            Layout     = ImageLayout.ColorAttachmentOptimal
+            Layout     = VkImageLayout.ColorAttachmentOptimal
         };
 
-        var depthAttachmentRef = new AttachmentReference
+        var depthAttachmentRef = new VkAttachmentReference
         {
             Attachment = 1,
-            Layout     = ImageLayout.DepthStencilAttachmentOptimal
+            Layout     = VkImageLayout.DepthStencilAttachmentOptimal
         };
 
-        var subpass = new SubpassDescription
+        var subpass = new VkSubpassDescription
         {
-            PipelineBindPoint      = PipelineBindPoint.Graphics,
-            ColorAttachments       = [colorAttachmentRef],
-            DepthStencilAttachment = depthAttachmentRef,
-            ResolveAttachments     = [colorAttachmentResolveRef],
+            PipelineBindPoint       = VkPipelineBindPoint.Graphics,
+            PColorAttachments       = &colorAttachmentRef,
+            ColorAttachmentCount    = 1,
+            PDepthStencilAttachment = &depthAttachmentRef,
+            PResolveAttachments     = &colorAttachmentResolveRef,
         };
 
-        _ = new SubpassDependency
+        _ = new VkSubpassDependency
         {
-            SrcSubpass = Constants.VK_SUBPASS_EXTERNAL,
+            SrcSubpass = VkConstants.VK_SUBPASS_EXTERNAL,
             DstSubpass = 0,
-            SrcStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
+            SrcStageMask = VkPipelineStageFlags.ColorAttachmentOutput | VkPipelineStageFlags.EarlyFragmentTests,
             SrcAccessMask = default,
-            DstStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
-            DstAccessMask = AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentWrite
+            DstStageMask = VkPipelineStageFlags.ColorAttachmentOutput | VkPipelineStageFlags.EarlyFragmentTests,
+            DstAccessMask = VkAccessFlags.ColorAttachmentWrite | VkAccessFlags.DepthStencilAttachmentWrite
         };
 
         var attachments = new[]
@@ -897,33 +960,42 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             colorAttachmentResolve,
         };
 
-        var renderPassInfo = new RenderPass.CreateInfo
+        fixed (VkAttachmentDescription* pAttachments = attachments)
         {
-            Attachments = attachments,
-            Subpasses   = [subpass],
-        };
+            var renderPassInfo = new VkRenderPassCreateInfo
+            {
+                PAttachments    = pAttachments,
+                AttachmentCount = (uint)attachments.Length,
+                PSubpasses      = &subpass,
+                SubpassCount    = 1,
+            };
 
-        this.renderPass = this.device.CreateRenderPass(renderPassInfo);
+            this.renderPass = this.device.CreateRenderPass(renderPassInfo);
+        }
     }
 
-    private ShaderModule CreateShaderModule(byte[] code)
+    private VkShaderModule CreateShaderModule(byte[] code)
     {
-        var createInfo = new ShaderModule.CreateInfo
+        fixed (byte* pCode = code)
         {
-            Code = code,
-        };
+            var createInfo = new VkShaderModuleCreateInfo
+            {
+                PCode    = (uint*)pCode,
+                CodeSize = (uint)code.Length,
+            };
 
-        return this.device.CreateShaderModule(createInfo);
+            return this.device.CreateShaderModule(createInfo);
+        }
     }
 
     private void CreateSurface()
     {
-        if (!this.instance.TryGetExtension<Win32SurfaceExtension>(out var vkKhrWin32Surface))
+        if (!this.instance.TryGetExtension<VkWin32SurfaceExtensionKHR>(out var vkKhrWin32Surface))
         {
-            throw new Exception($"Cannot found required extension {Win32SurfaceExtension.Name}");
+            throw new Exception($"Cannot found required extension {VkWin32SurfaceExtensionKHR.Name}");
         }
 
-        var createInfo = new Win32Surface.CreateInfo
+        var createInfo = new VkWin32SurfaceCreateInfoKHR
         {
             Hwnd      = this.window.Handle,
             Hinstance = Process.GetCurrentProcess().Handle,
@@ -949,11 +1021,11 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         var indices = this.FindQueueFamilies(this.physicalDevice);
 
         uint[] queueFamilyIndices;
-        SharingMode sharingMode;
+        VkSharingMode sharingMode;
 
         if (indices.GraphicsFamily != indices.PresentFamily)
         {
-            sharingMode        = SharingMode.Concurrent;
+            sharingMode        = VkSharingMode.Concurrent;
             queueFamilyIndices =
             [
                 indices.GraphicsFamily!.Value,
@@ -962,41 +1034,45 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         }
         else
         {
-            sharingMode        = SharingMode.Exclusive;
+            sharingMode        = VkSharingMode.Exclusive;
             queueFamilyIndices = [];
         }
 
-        var createInfo = new Swapchain.CreateInfo
+        fixed (uint* pQueueFamilyIndices = queueFamilyIndices)
         {
-            Clipped            = true,
-            CompositeAlpha     = CompositeAlphaFlags.Opaque,
-            ImageArrayLayers   = 1,
-            ImageColorSpace    = surfaceFormat.ColorSpace,
-            ImageExtent        = extent,
-            ImageFormat        = surfaceFormat.Format,
-            ImageSharingMode   = sharingMode,
-            ImageUsage         = ImageUsageFlags.ColorAttachment,
-            MinImageCount      = imageCount,
-            OldSwapchain       = default,
-            PresentMode        = presentMode,
-            PreTransform       = swapChainSupport.Capabilities.CurrentTransform,
-            QueueFamilyIndices = queueFamilyIndices,
-            Surface            = this.surface,
-        };
+            var createInfo = new VkSwapchainCreateInfoKHR
+            {
+                Clipped               = true,
+                CompositeAlpha        = VkCompositeAlphaFlagsKHR.Opaque,
+                ImageArrayLayers      = 1,
+                ImageColorSpace       = surfaceFormat.ColorSpace,
+                ImageExtent           = extent,
+                ImageFormat           = surfaceFormat.Format,
+                ImageSharingMode      = sharingMode,
+                ImageUsage            = VkImageUsageFlags.ColorAttachment,
+                MinImageCount         = imageCount,
+                OldSwapchain          = default,
+                PresentMode           = presentMode,
+                PreTransform          = swapChainSupport.Capabilities.CurrentTransform,
+                PQueueFamilyIndices   = pQueueFamilyIndices,
+                QueueFamilyIndexCount = (uint)queueFamilyIndices.Length,
+                Surface               = this.surface,
+            };
 
-        this.swapChain       = this.swapchainExtension.CreateSwapchain(createInfo);
-        this.swapChainImages = this.swapChain.GetImages();
+            this.swapChain       = this.swapchainExtension.CreateSwapchain(createInfo);
+            this.swapChainImages = this.swapChain.GetImages();
 
-        this.swapChainImageFormat = surfaceFormat.Format;
-        this.swapChainExtent      = extent;
+            this.swapChainImageFormat = surfaceFormat.Format;
+            this.swapChainExtent      = extent;
+        }
     }
 
     private void CreateSyncObjects()
     {
-        var semaphoreInfo = new Semaphore.CreateInfo();
-        var fenceInfo     = new Fence.CreateInfo
+        var semaphoreInfo = new VkSemaphoreCreateInfo();
+        var fenceInfo     = new VkFenceCreateInfo
         {
-            Flags = FenceCreateFlags.Signaled
+            Flags = VkFenceCreateFlags.Signaled
         };
 
         for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -1019,8 +1095,8 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         this.CreateBuffer(
             imageSize,
-            BufferUsageFlags.TransferSrc,
-            MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent,
+            VkBufferUsageFlags.TransferSrc,
+            VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
             out var stagingBuffer,
             out var stagingBufferMemory
         );
@@ -1032,45 +1108,45 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             (uint)bitmap.Width,
             (uint)bitmap.Height,
             this.mipLevels,
-            SampleCountFlags.N1,
-            Format.B8G8R8A8Srgb,
-            ImageTiling.Optimal,
-            ImageUsageFlags.TransferSrc | ImageUsageFlags.TransferDst | ImageUsageFlags.Sampled,
-            MemoryPropertyFlags.DeviceLocal,
+            VkSampleCountFlags.N1,
+            VkFormat.B8G8R8A8Srgb,
+            VkImageTiling.Optimal,
+            VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled,
+            VkMemoryPropertyFlags.DeviceLocal,
             out this.textureImage,
             out this.textureImageMemory
         );
 
-        this.TransitionImageLayout(this.textureImage, Format.B8G8R8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDstOptimal, this.mipLevels);
+        this.TransitionImageLayout(this.textureImage, VkFormat.B8G8R8A8Srgb, VkImageLayout.Undefined, VkImageLayout.TransferDstOptimal, this.mipLevels);
         this.CopyBufferToImage(stagingBuffer, this.textureImage, bitmap.Width, bitmap.Height);
         //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
 
         stagingBuffer.Dispose();
         stagingBufferMemory.Dispose();
 
-        this.GenerateMipmaps(this.textureImage, Format.B8G8R8A8Srgb, bitmap.Width, bitmap.Height, this.mipLevels);
+        this.GenerateMipmaps(this.textureImage, VkFormat.B8G8R8A8Srgb, bitmap.Width, bitmap.Height, this.mipLevels);
     }
 
     private void CreateTextureSampler()
     {
-        var properties = this.physicalDevice.GetProperties();
+        this.physicalDevice.GetProperties(out var properties);
 
-        var samplerInfo = new Sampler.CreateInfo
+        var samplerInfo = new VkSamplerCreateInfo
         {
-            AddressModeU            = SamplerAddressMode.Repeat,
-            AddressModeV            = SamplerAddressMode.Repeat,
-            AddressModeW            = SamplerAddressMode.Repeat,
+            AddressModeU            = VkSamplerAddressMode.Repeat,
+            AddressModeV            = VkSamplerAddressMode.Repeat,
+            AddressModeW            = VkSamplerAddressMode.Repeat,
             AnisotropyEnable        = true,
-            BorderColor             = BorderColor.IntOpaqueBlack,
+            BorderColor             = VkBorderColor.IntOpaqueBlack,
             CompareEnable           = false,
-            CompareOp               = CompareOp.Always,
-            MagFilter               = Filter.Linear,
+            CompareOp               = VkCompareOp.Always,
+            MagFilter               = VkFilter.Linear,
             MaxAnisotropy           = properties.Limits.MaxSamplerAnisotropy,
             MaxLod                  = this.mipLevels,
-            MinFilter               = Filter.Linear,
+            MinFilter               = VkFilter.Linear,
             MinLod                  = 0,
             MipLodBias              = 0,
-            MipmapMode              = SamplerMipmapMode.Linear,
+            MipmapMode              = VkSamplerMipmapMode.Linear,
             UnnormalizedCoordinates = false,
         };
 
@@ -1078,7 +1154,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     }
 
     private void CreateTextureImageView() =>
-        this.textureImageView = this.CreateImageView(this.textureImage, Format.B8G8R8A8Srgb, ImageAspectFlags.Color, this.mipLevels);
+        this.textureImageView = this.CreateImageView(this.textureImage, VkFormat.B8G8R8A8Srgb, VkImageAspectFlags.Color, this.mipLevels);
 
     private void CreateUniformBuffers()
     {
@@ -1088,16 +1164,13 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         {
             this.CreateBuffer(
                 bufferSize,
-                BufferUsageFlags.UniformBuffer,
-                MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent,
+                VkBufferUsageFlags.UniformBuffer,
+                VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
                 out this.uniformBuffers[i],
                 out this.uniformBuffersMemory[i]
             );
 
-            fixed (UniformBufferObject** ppData = &this.uniformBuffersMapped[i])
-            {
-                this.uniformBuffersMemory[i].Map(0, 0, ppData);
-            }
+            this.uniformBuffersMemory[i].Map(0, (ulong)sizeof(UniformBufferObject), 0, this.uniformBuffersMapped[i]);
         }
     }
 
@@ -1107,8 +1180,8 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         this.CreateBuffer(
             bufferSize,
-            BufferUsageFlags.TransferSrc,
-            MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent,
+            VkBufferUsageFlags.TransferSrc,
+            VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
             out var stagingBuffer,
             out var stagingBufferMemory
         );
@@ -1118,8 +1191,8 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         this.CreateBuffer(
             bufferSize,
-            BufferUsageFlags.TransferDst | BufferUsageFlags.VertexBuffer,
-            MemoryPropertyFlags.DeviceLocal,
+            VkBufferUsageFlags.TransferDst | VkBufferUsageFlags.VertexBuffer,
+            VkMemoryPropertyFlags.DeviceLocal,
             out this.vertexBuffer,
             out this.vertexBufferMemory
         );
@@ -1140,15 +1213,15 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         {
             imageIndex = this.swapChain.AcquireNextImage(ulong.MaxValue, this.imageAvailableSemaphores[this.currentFrame], default);
         }
-        catch (VulkanException exception)
+        catch (VkException exception)
         {
-            if (exception.Result == Result.ErrorOutOfDateKhr)
+            if (exception.Result == VkResult.ErrorOutOfDateKHR)
             {
                 this.RecreateSwapChain();
 
                 return;
             }
-            else if (exception.Result != Result.SuboptimalKhr)
+            else if (exception.Result != VkResult.SuboptimalKHR)
             {
                 throw new Exception("failed to acquire swap chain image!");
             }
@@ -1161,55 +1234,53 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         this.RecordCommandBuffer(this.commandBuffers[this.currentFrame], imageIndex);
 
-        var waitSemaphores = new[]
-        {
-            this.imageAvailableSemaphores[this.currentFrame]
-        };
+        var waitStage = VkPipelineStageFlags.ColorAttachmentOutput;
 
-        var waitStages = new PipelineStageFlags[]
-        {
-            PipelineStageFlags.ColorAttachmentOutput
-        };
+        var waitSemaphore   = this.imageAvailableSemaphores[this.currentFrame].Handle;
+        var commandBuffer   = this.commandBuffers[this.currentFrame].Handle;
+        var signalSemaphore = this.renderFinishedSemaphores[this.currentFrame].Handle;
 
-        var commandBuffers = new[]
+        var submitInfo = new VkSubmitInfo
         {
-            this.commandBuffers[this.currentFrame]
-        };
-
-        var submitInfo = new SubmitInfo
-        {
-            CommandBuffers   = commandBuffers,
-            SignalSemaphores = [this.renderFinishedSemaphores[this.currentFrame]],
-            WaitDstStageMask = waitStages,
-            WaitSemaphores   = waitSemaphores,
+            PCommandBuffers      = &commandBuffer,
+            CommandBufferCount   = 1,
+            PSignalSemaphores    = &signalSemaphore,
+            SignalSemaphoreCount = 1,
+            PWaitDstStageMask    = &waitStage,
+            PWaitSemaphores      = &waitSemaphore,
+            WaitSemaphoreCount   = 1,
         };
 
         this.graphicsQueue.Submit(submitInfo, this.inFlightFences[this.currentFrame]);
 
-        _ = new SubpassDependency
+        _ = new VkSubpassDependency
         {
-            SrcSubpass = Constants.VK_SUBPASS_EXTERNAL,
-            DstSubpass = 0,
-            SrcStageMask = PipelineStageFlags.ColorAttachmentOutput,
+            SrcSubpass    = VkConstants.VK_SUBPASS_EXTERNAL,
+            DstSubpass    = 0,
+            SrcStageMask  = VkPipelineStageFlags.ColorAttachmentOutput,
             SrcAccessMask = default,
-            DstStageMask = PipelineStageFlags.ColorAttachmentOutput,
-            DstAccessMask = AccessFlags.ColorAttachmentWrite
+            DstStageMask  = VkPipelineStageFlags.ColorAttachmentOutput,
+            DstAccessMask = VkAccessFlags.ColorAttachmentWrite
         };
 
-        var presentInfo = new PresentInfo
+        var swapchain = this.swapChain.Handle;
+
+        var presentInfo = new VkPresentInfoKHR
         {
-            WaitSemaphores = [this.renderFinishedSemaphores[this.currentFrame]],
-            Swapchains     = [this.swapChain],
-            ImageIndices   = [imageIndex],
+            PWaitSemaphores    = &signalSemaphore,
+            WaitSemaphoreCount = 1,
+            PSwapchains        = &swapchain,
+            SwapchainCount     = 1,
+            PImageIndices      = &imageIndex,
         };
 
         try
         {
             this.swapchainExtension.QueuePresent(this.presentQueue, presentInfo);
         }
-        catch (VulkanException exception)
+        catch (VkException exception)
         {
-            if (exception.Result is Result.ErrorOutOfDateKhr or Result.SuboptimalKhr || this.framebufferResized)
+            if (exception.Result is VkResult.ErrorOutOfDateKHR or VkResult.SuboptimalKHR || this.framebufferResized)
             {
                 this.framebufferResized = false;
 
@@ -1225,40 +1296,44 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         this.currentFrame = (this.currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
-    private void EndSingleTimeCommands(CommandBuffer commandBuffer)
+    private void EndSingleTimeCommands(VkCommandBuffer commandBuffer)
     {
         commandBuffer.End();
 
-        var submitInfo = new SubmitInfo
+        VkHandle<VkCommandBuffer> handle = commandBuffer;
+
+        var submitInfo = new VkSubmitInfo
         {
-            CommandBuffers = [commandBuffer]
+            CommandBufferCount = 1,
+            PCommandBuffers    = &handle
         };
 
         this.graphicsQueue.Submit([submitInfo]);
+
         this.graphicsQueue.WaitIdle();
 
         commandBuffer.Dispose();
     }
 
-    private SampleCountFlags GetMaxUsableSampleCount()
+    private VkSampleCountFlags GetMaxUsableSampleCount()
     {
-        var physicalDeviceProperties = this.physicalDevice.GetProperties();
+        this.physicalDevice.GetProperties(out var physicalDeviceProperties);
 
         var counts = physicalDeviceProperties.Limits.FramebufferColorSampleCounts & physicalDeviceProperties.Limits.FramebufferDepthSampleCounts;
 
-        return counts.HasFlag(SampleCountFlags.N64)
-            ? SampleCountFlags.N64
-            : counts.HasFlag(SampleCountFlags.N32)
-                ? SampleCountFlags.N32
-                : counts.HasFlag(SampleCountFlags.N16)
-                    ? SampleCountFlags.N16
-                    : counts.HasFlag(SampleCountFlags.N8)
-                        ? SampleCountFlags.N8
-                        : counts.HasFlag(SampleCountFlags.N4)
-                            ? SampleCountFlags.N4
-                            : counts.HasFlag(SampleCountFlags.N2)
-                                ? SampleCountFlags.N2
-                                : SampleCountFlags.N1;
+        return counts.HasFlag(VkSampleCountFlags.N64)
+            ? VkSampleCountFlags.N64
+            : counts.HasFlag(VkSampleCountFlags.N32)
+                ? VkSampleCountFlags.N32
+                : counts.HasFlag(VkSampleCountFlags.N16)
+                    ? VkSampleCountFlags.N16
+                    : counts.HasFlag(VkSampleCountFlags.N8)
+                        ? VkSampleCountFlags.N8
+                        : counts.HasFlag(VkSampleCountFlags.N4)
+                            ? VkSampleCountFlags.N4
+                            : counts.HasFlag(VkSampleCountFlags.N2)
+                                ? VkSampleCountFlags.N2
+                                : VkSampleCountFlags.N1;
     }
 
     private List<string> GetRequiredExtensions()
@@ -1267,29 +1342,29 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         if (this.enableValidationLayers)
         {
-            extensions.Add(DebugUtilsExtension.Name);
+            extensions.Add(VkDebugUtilsExtensionEXT.Name);
         }
 
-        extensions.Add(SurfaceExtension.Name);
-        extensions.Add(Win32SurfaceExtension.Name);
+        extensions.Add(VkSurfaceExtensionKHR.Name);
+        extensions.Add(VkWin32SurfaceExtensionKHR.Name);
 
         return extensions;
     }
 
-    private Format FindDepthFormat() =>
+    private VkFormat FindDepthFormat() =>
         this.FindSupportedFormat(
-            [Format.D32Sfloat, Format.D32SfloatS8Uint, Format.D24UnormS8Uint],
-            ImageTiling.Optimal,
-            FormatFeatureFlags.DepthStencilAttachment
+            [VkFormat.D32Sfloat, VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint],
+            VkImageTiling.Optimal,
+            VkFormatFeatureFlags.DepthStencilAttachment
         );
 
-    private uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)
+    private uint FindMemoryType(uint typeFilter, VkMemoryPropertyFlags properties)
     {
-        var memProperties = this.physicalDevice.GetMemoryProperties();
+        this.physicalDevice.GetMemoryProperties(out var memProperties);
 
-        for (var i = 0u; i < memProperties.MemoryTypes.Length; i++)
+        for (var i = 0u; i < VkConstants.VK_MAX_MEMORY_TYPES; i++)
         {
-            if ((typeFilter & (1 << (int)i)) != 0 && memProperties.MemoryTypes[i].PropertyFlags.HasFlag(properties))
+            if ((typeFilter & (1 << (int)i)) != 0 && ((VkMemoryType*)memProperties.MemoryTypes)[i].PropertyFlags.HasFlag(properties))
             {
                 return i;
             }
@@ -1298,7 +1373,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         throw new Exception("failed to find suitable memory type!");
     }
 
-    private QueueFamilyIndices FindQueueFamilies(PhysicalDevice physicalDevice)
+    private QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice physicalDevice)
     {
         var indices = new QueueFamilyIndices();
 
@@ -1308,7 +1383,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         foreach (var queueFamily in queueFamilies)
         {
-            if (queueFamily.QueueFlags.HasFlag(QueueFlags.Graphics))
+            if (queueFamily.QueueFlags.HasFlag(VkQueueFlags.Graphics))
             {
                 indices.GraphicsFamily = i;
             }
@@ -1331,17 +1406,17 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         return indices;
     }
 
-    private Format FindSupportedFormat(Format[] candidates, ImageTiling tiling, FormatFeatureFlags features)
+    private VkFormat FindSupportedFormat(VkFormat[] candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
     {
         foreach (var format in candidates)
         {
-            var props = this.physicalDevice.GetFormatProperties(format);
+            this.physicalDevice.GetFormatProperties(format, out var props);
 
-            if (tiling == ImageTiling.Linear && props.LinearTilingFeatures.HasFlag(features))
+            if (tiling == VkImageTiling.Linear && props.LinearTilingFeatures.HasFlag(features))
             {
                 return format;
             }
-            else if (tiling == ImageTiling.Optimal && props.OptimalTilingFeatures.HasFlag(features))
+            else if (tiling == VkImageTiling.Optimal && props.OptimalTilingFeatures.HasFlag(features))
             {
                 return format;
             }
@@ -1350,27 +1425,27 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         throw new Exception("failed to find supported format!");
     }
 
-    private void GenerateMipmaps(Image image, Format imageFormat, int texWidth, int texHeight, uint mipLevels)
+    private void GenerateMipmaps(VkImage image, VkFormat imageFormat, int texWidth, int texHeight, uint mipLevels)
     {
         // Check if image format supports linear blitting
 
-        var formatProperties = this.physicalDevice.GetFormatProperties(imageFormat);
+        this.physicalDevice.GetFormatProperties(imageFormat, out var formatProperties);
 
-        if (!formatProperties.OptimalTilingFeatures.HasFlag(FormatFeatureFlags.SampledImageFilterLinear))
+        if (!formatProperties.OptimalTilingFeatures.HasFlag(VkFormatFeatureFlags.SampledImageFilterLinear))
         {
             throw new Exception("texture image format does not support linear blitting!");
         }
 
         var commandBuffer = this.BeginSingleTimeCommands();
 
-        var barrier = new ImageMemoryBarrier
+        var barrier = new VkImageMemoryBarrier
         {
             Image               = image,
-            SrcQueueFamilyIndex = Constants.VK_QUEUE_FAMILY_IGNORED,
-            DstQueueFamilyIndex = Constants.VK_QUEUE_FAMILY_IGNORED,
+            SrcQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
+            DstQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
             SubresourceRange    = new()
             {
-                AspectMask     = ImageAspectFlags.Color,
+                AspectMask     = VkImageAspectFlags.Color,
                 BaseArrayLayer = 0,
                 LayerCount     = 1,
                 LevelCount     = 1,
@@ -1385,69 +1460,62 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             barrier = barrier with
             {
                 SubresourceRange = barrier.SubresourceRange with { BaseMipLevel = i - 1 },
-                OldLayout        = ImageLayout.TransferDstOptimal,
-                NewLayout        = ImageLayout.TransferSrcOptimal,
-                SrcAccessMask    = AccessFlags.TransferWrite,
-                DstAccessMask    = AccessFlags.TransferRead,
+                OldLayout        = VkImageLayout.TransferDstOptimal,
+                NewLayout        = VkImageLayout.TransferSrcOptimal,
+                SrcAccessMask    = VkAccessFlags.TransferWrite,
+                DstAccessMask    = VkAccessFlags.TransferRead,
             };
 
             commandBuffer.PipelineBarrier(
-                PipelineStageFlags.Transfer,
-                PipelineStageFlags.Transfer,
+                VkPipelineStageFlags.Transfer,
+                VkPipelineStageFlags.Transfer,
                 default,
                 [],
                 [],
                 [barrier]
             );
 
-            var blit = new ImageBlit
+            var blit = new VkImageBlit
             {
                 SrcSubresource = new()
                 {
-                    AspectMask     = ImageAspectFlags.Color,
+                    AspectMask     = VkImageAspectFlags.Color,
                     MipLevel       = i - 1,
                     BaseArrayLayer = 0,
                     LayerCount     = 1
                 },
                 DstSubresource = new()
                 {
-                    AspectMask     = ImageAspectFlags.Color,
+                    AspectMask     = VkImageAspectFlags.Color,
                     MipLevel       = i,
                     BaseArrayLayer = 0,
                     LayerCount     = 1
                 },
-                SrcOffsets =
-                [
-                    new Offset3D(),
-                    new Offset3D { X = mipWidth, Y = mipHeight, Z = 1 }
-                ],
-                DstOffsets =
-                [
-                    new Offset3D(),
-                    new Offset3D { X = mipWidth > 1 ? mipWidth / 2 : 1, Y = mipHeight > 1 ? mipHeight / 2 : 1, Z = 1 }
-                ]
             };
+
+            ((VkOffset3D*)blit.SrcOffsets)[1] = new() { X = mipWidth, Y = mipHeight, Z = 1 };
+            ((VkOffset3D*)blit.DstOffsets)[1] = new() { X = mipWidth > 1 ? mipWidth / 2 : 1, Y = mipHeight > 1 ? mipHeight / 2 : 1, Z = 1 };
 
             commandBuffer.BlitImage(
                 image,
-                ImageLayout.TransferSrcOptimal,
+                VkImageLayout.TransferSrcOptimal,
                 image,
-                ImageLayout.TransferDstOptimal,
+                VkImageLayout.TransferDstOptimal,
                 [blit],
-                Filter.Linear
+                VkFilter.Linear
             );
 
             barrier = barrier with
             {
-                OldLayout     = ImageLayout.TransferSrcOptimal,
-                NewLayout     = ImageLayout.ShaderReadOnlyOptimal,
-                SrcAccessMask = AccessFlags.TransferRead,
-                DstAccessMask = AccessFlags.ShaderRead,
+                OldLayout     = VkImageLayout.TransferSrcOptimal,
+                NewLayout     = VkImageLayout.ShaderReadOnlyOptimal,
+                SrcAccessMask = VkAccessFlags.TransferRead,
+                DstAccessMask = VkAccessFlags.ShaderRead,
             };
 
             commandBuffer.PipelineBarrier(
-                PipelineStageFlags.Transfer,
-                PipelineStageFlags.FragmentShader,
+                VkPipelineStageFlags.Transfer,
+                VkPipelineStageFlags.FragmentShader,
                 default,
                 [],
                 [],
@@ -1468,15 +1536,15 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         barrier = barrier with
         {
             SubresourceRange = barrier.SubresourceRange with { BaseMipLevel = mipLevels - 1 },
-            OldLayout        = ImageLayout.TransferDstOptimal,
-            NewLayout        = ImageLayout.ShaderReadOnlyOptimal,
-            SrcAccessMask    = AccessFlags.TransferWrite,
-            DstAccessMask    = AccessFlags.ShaderRead,
+            OldLayout        = VkImageLayout.TransferDstOptimal,
+            NewLayout        = VkImageLayout.ShaderReadOnlyOptimal,
+            SrcAccessMask    = VkAccessFlags.TransferWrite,
+            DstAccessMask    = VkAccessFlags.ShaderRead,
         };
 
         commandBuffer.PipelineBarrier(
-            PipelineStageFlags.Transfer,
-            PipelineStageFlags.FragmentShader,
+            VkPipelineStageFlags.Transfer,
+            VkPipelineStageFlags.FragmentShader,
             default,
             [],
             [],
@@ -1522,7 +1590,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         this.window.SizeChanged += () => this.framebufferResized = true;
     }
 
-    private bool IsDeviceSuitable(PhysicalDevice physicalDevice)
+    private bool IsDeviceSuitable(VkPhysicalDevice physicalDevice)
     {
         var indices             = this.FindQueueFamilies(physicalDevice);
         var extensionsSupported = this.CheckDeviceExtensionSupport(physicalDevice);
@@ -1535,7 +1603,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             swapChainAdequate = swapChainSupport.Formats.Length != 0 && swapChainSupport.PresentModes.Length != 0;
         }
 
-        var supportedFeatures = physicalDevice.GetDeviceFeatures();
+        physicalDevice.GetDeviceFeatures(out var supportedFeatures);
 
         return indices.IsComplete && extensionsSupported && swapChainAdequate && supportedFeatures.SamplerAnisotropy;
     }
@@ -1608,9 +1676,9 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         }
     }
 
-    private SwapChainSupportDetails QuerySwapChainSupport(PhysicalDevice physicalDevice)
+    private SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice physicalDevice)
     {
-        var capabilities = this.surface.GetCapabilities(physicalDevice);
+        this.surface.GetCapabilities(physicalDevice, out var capabilities);
         var formats      = this.surface.GetFormats(physicalDevice);
         var presentModes = this.surface.GetPresentModes(physicalDevice);
 
@@ -1622,42 +1690,48 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         };
     }
 
-    private void RecordCommandBuffer(CommandBuffer commandBuffer, uint imageIndex)
+    private void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint imageIndex)
     {
         commandBuffer.Begin();
 
-        var renderPassInfo = new RenderPass.BeginInfo
+        var clearValues = new VkClearValue[]
         {
-            RenderPass  = this.renderPass,
-            Framebuffer = this.swapChainFramebuffers[imageIndex],
-            RenderArea  = new()
+            new(),
+            new()
             {
-                Offset = new()
+                DepthStencil = new()
                 {
-                    X = 0,
-                    Y = 0
-                },
-                Extent = this.swapChainExtent,
-            },
-            ClearValues =
-            [
-                new(),
-                new()
-                {
-                    DepthStencil = new()
-                    {
-                        Depth = 1,
-                    }
+                    Depth = 1,
                 }
-            ]
+            }
         };
 
-        commandBuffer.BeginRenderPass(renderPassInfo, SubpassContents.Inline);
+        fixed (VkClearValue* pClearValues = clearValues)
+        {
+            var renderPassInfo = new VkRenderPassBeginInfo
+            {
+                RenderPass  = this.renderPass,
+                Framebuffer = this.swapChainFramebuffers[imageIndex],
+                RenderArea  = new()
+                {
+                    Offset = new()
+                    {
+                        X = 0,
+                        Y = 0
+                    },
+                    Extent = this.swapChainExtent,
+                },
+                PClearValues    = pClearValues,
+                ClearValueCount = (uint)clearValues.Length,
+            };
+
+            commandBuffer.BeginRenderPass(renderPassInfo, VkSubpassContents.Inline);
+        }
 
         #region RenderPass
-        commandBuffer.BindPipeline(PipelineBindPoint.Graphics, this.graphicsPipeline);
+        commandBuffer.BindPipeline(VkPipelineBindPoint.Graphics, this.graphicsPipeline);
 
-        var viewport = new Viewport
+        var viewport = new VkViewport
         {
             X        = 0,
             Y        = 0,
@@ -1669,7 +1743,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         commandBuffer.SetViewport(0, viewport);
 
-        var scissor = new Rect2D
+        var scissor = new VkRect2D
         {
             Offset = new()
             {
@@ -1681,16 +1755,9 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         commandBuffer.SetScissor(0, scissor);
 
-        var vertexBuffers = new[]
-        {
-            this.vertexBuffer
-        };
-
-        var offsets = new ulong[] { 0 };
-
-        commandBuffer.BindVertexBuffers(0, 1, vertexBuffers, offsets);
-        commandBuffer.BindIndexBuffer(this.indexBuffer, 0, IndexType.Uint32);
-        commandBuffer.BindDescriptorSets(PipelineBindPoint.Graphics, this.pipelineLayout, 0, [this.descriptorSets[this.currentFrame]], []);
+        commandBuffer.BindVertexBuffers(0, 1, this.vertexBuffer, 0);
+        commandBuffer.BindIndexBuffer(this.indexBuffer, 0, VkIndexType.Uint32);
+        commandBuffer.BindDescriptorSets(VkPipelineBindPoint.Graphics, this.pipelineLayout, 0, this.descriptorSets[this.currentFrame], []);
         commandBuffer.DrawIndexed((uint)this.indices.Count, 1, 0, 0, 0);
         #endregion RenderPass
 
@@ -1729,50 +1796,48 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         this.debugMessenger = this.debugUtilsExtension!.CreateDebugUtilsMessenger(createInfo);
     }
 
-    private void TransitionImageLayout(Image image, Format _, ImageLayout oldLayout, ImageLayout newLayout, uint mipLevels)
+    private void TransitionImageLayout(VkImage image, VkFormat _, VkImageLayout oldLayout, VkImageLayout newLayout, uint mipLevels)
     {
         var commandBuffer = this.BeginSingleTimeCommands();
 
+        VkPipelineStageFlags sourceStage;
+        VkPipelineStageFlags destinationStage;
+        VkAccessFlags        srcAccessMask;
+        VkAccessFlags        dstAccessMask;
 
-
-        PipelineStageFlags sourceStage;
-        PipelineStageFlags destinationStage;
-        AccessFlags        srcAccessMask;
-        AccessFlags        dstAccessMask;
-
-        if (oldLayout == ImageLayout.Undefined && newLayout ==  ImageLayout.TransferDstOptimal)
+        if (oldLayout == VkImageLayout.Undefined && newLayout == VkImageLayout.TransferDstOptimal)
         {
             srcAccessMask = default;
-            dstAccessMask = AccessFlags.TransferWrite;
+            dstAccessMask = VkAccessFlags.TransferWrite;
 
-            sourceStage      = PipelineStageFlags.TopOfPipe;
-            destinationStage = PipelineStageFlags.Transfer;
+            sourceStage      = VkPipelineStageFlags.TopOfPipe;
+            destinationStage = VkPipelineStageFlags.Transfer;
         }
-        else if (oldLayout ==  ImageLayout.TransferDstOptimal && newLayout ==  ImageLayout.ShaderReadOnlyOptimal)
+        else if (oldLayout ==  VkImageLayout.TransferDstOptimal && newLayout ==  VkImageLayout.ShaderReadOnlyOptimal)
         {
-            srcAccessMask = AccessFlags.TransferWrite;
-            dstAccessMask = AccessFlags.ShaderRead;
+            srcAccessMask = VkAccessFlags.TransferWrite;
+            dstAccessMask = VkAccessFlags.ShaderRead;
 
-            sourceStage      = PipelineStageFlags.Transfer;
-            destinationStage = PipelineStageFlags.FragmentShader;
+            sourceStage      = VkPipelineStageFlags.Transfer;
+            destinationStage = VkPipelineStageFlags.FragmentShader;
         }
         else
         {
             throw new Exception("unsupported layout transition!");
         }
 
-        var barrier = new ImageMemoryBarrier
+        var barrier = new VkImageMemoryBarrier
         {
             OldLayout           = oldLayout,
             NewLayout           = newLayout,
-            SrcQueueFamilyIndex = Constants.VK_QUEUE_FAMILY_IGNORED,
-            DstQueueFamilyIndex = Constants.VK_QUEUE_FAMILY_IGNORED,
+            SrcQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
+            DstQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
             Image               = image,
             SrcAccessMask       = srcAccessMask,
             DstAccessMask       = dstAccessMask,
             SubresourceRange    = new()
             {
-                AspectMask     = ImageAspectFlags.Color,
+                AspectMask     = VkImageAspectFlags.Color,
                 BaseMipLevel   = 0,
                 LevelCount     = mipLevels,
                 BaseArrayLayer = 0,

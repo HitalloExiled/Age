@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Enums;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,13 +7,13 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkPhysicalDeviceProperties
 {
-    public uint                             apiVersion;
-    public uint                             driverVersion;
-    public uint                             vendorID;
-    public uint                             deviceID;
-    public VkPhysicalDeviceType             deviceType;
-    public fixed byte                       deviceName[(int)Constants.VK_MAX_PHYSICAL_DEVICE_NAME_SIZE];
-    public fixed byte                       pipelineCacheUUID[(int)Constants.VK_UUID_SIZE];
-    public VkPhysicalDeviceLimits           limits;
-    public VkPhysicalDeviceSparseProperties sparseProperties;
+    public uint                             ApiVersion;
+    public uint                             DriverVersion;
+    public uint                             VendorId;
+    public uint                             DeviceId;
+    public VkPhysicalDeviceType             DeviceType;
+    public fixed byte                       DeviceName[(int)VkConstants.VK_MAX_PHYSICAL_DEVICE_NAME_SIZE];
+    public fixed byte                       PipelineCacheUuid[(int)VkConstants.VK_UUID_SIZE];
+    public VkPhysicalDeviceLimits           Limits;
+    public VkPhysicalDeviceSparseProperties SparseProperties;
 }

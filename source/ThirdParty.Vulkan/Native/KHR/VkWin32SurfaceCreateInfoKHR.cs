@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Native.Handles;
+
 namespace ThirdParty.Vulkan.Native.KHR;
 
 /// <summary>
@@ -5,13 +7,13 @@ namespace ThirdParty.Vulkan.Native.KHR;
 /// </summary>
 public unsafe struct VkWin32SurfaceCreateInfoKHR
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                        pNext;
-    public VkWin32SurfaceCreateFlagsKHR flags;
-    public HINSTANCE                    hinstance;
-    public HWND                         hwnd;
+    public void*                        PNext;
+    public VkWin32SurfaceCreateFlagsKHR Flags;
+    public HINSTANCE                    Hinstance;
+    public HWND                         Hwnd;
 
     public VkWin32SurfaceCreateInfoKHR() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+        this.SType = VkStructureType.Win32SurfaceCreateInfoKHR;
 }

@@ -5,13 +5,13 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkShaderModuleCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                     pNext;
-    public VkShaderModuleCreateFlags flags;
-    public ulong                     codeSize;
-    public uint*                     pCode;
+    public void*                     PNext;
+    public VkShaderModuleCreateFlags Flags;
+    public ulong                     CodeSize;
+    public uint*                     PCode;
 
     public VkShaderModuleCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        this.SType = VkStructureType.ShaderModuleCreateInfo;
 }

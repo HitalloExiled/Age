@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,14 +7,14 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkDeviceQueueCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                    pNext;
-    public VkDeviceQueueCreateFlags flags;
-    public uint                     queueFamilyIndex;
-    public uint                     queueCount;
-    public float*                   pQueuePriorities;
+    public void*                    PNext;
+    public VkDeviceQueueCreateFlags Flags;
+    public uint                     QueueFamilyIndex;
+    public uint                     QueueCount;
+    public float*                   PQueuePriorities;
 
     public VkDeviceQueueCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        this.SType = VkStructureType.DeviceQueueCreateInfo;
 }

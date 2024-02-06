@@ -5,6 +5,6 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkRect2D
 {
-    public VkOffset2D offset;
-    public VkExtent2D extent;
+    public VkOffset2D Offset;
+    public VkExtent2D Extent;
 }

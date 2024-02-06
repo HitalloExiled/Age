@@ -5,13 +5,13 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkDescriptorSetAllocateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                  pNext;
-    public VkDescriptorPool       descriptorPool;
-    public uint                   descriptorSetCount;
-    public VkDescriptorSetLayout* pSetLayouts;
+    public void*                            PNext;
+    public VkHandle<VkDescriptorPool>       DescriptorPool;
+    public uint                             DescriptorSetCount;
+    public VkHandle<VkDescriptorSetLayout>* PSetLayouts;
 
     public VkDescriptorSetAllocateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        this.SType = VkStructureType.DescriptorSetAllocateInfo;
 }

@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,18 +8,18 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkImageMemoryBarrier
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                   pNext;
-    public VkAccessFlags           srcAccessMask;
-    public VkAccessFlags           dstAccessMask;
-    public VkImageLayout           oldLayout;
-    public VkImageLayout           newLayout;
-    public uint                    srcQueueFamilyIndex;
-    public uint                    dstQueueFamilyIndex;
-    public VkImage                 image;
-    public VkImageSubresourceRange subresourceRange;
+    public void*                   PNext;
+    public VkAccessFlags           SrcAccessMask;
+    public VkAccessFlags           DstAccessMask;
+    public VkImageLayout           OldLayout;
+    public VkImageLayout           NewLayout;
+    public uint                    SrcQueueFamilyIndex;
+    public uint                    DstQueueFamilyIndex;
+    public VkHandle<VkImage>       Image;
+    public VkImageSubresourceRange SubresourceRange;
 
     public VkImageMemoryBarrier() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        this.SType = VkStructureType.ImageMemoryBarrier;
 }

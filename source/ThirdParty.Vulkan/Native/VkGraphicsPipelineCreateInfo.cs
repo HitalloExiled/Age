@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,27 +7,27 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkGraphicsPipelineCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                                   pNext;
-    public VkPipelineCreateFlags                   flags;
-    public uint                                    stageCount;
-    public VkPipelineShaderStageCreateInfo*        pStages;
-    public VkPipelineVertexInputStateCreateInfo*   pVertexInputState;
-    public VkPipelineInputAssemblyStateCreateInfo* pInputAssemblyState;
-    public VkPipelineTessellationStateCreateInfo*  pTessellationState;
-    public VkPipelineViewportStateCreateInfo*      pViewportState;
-    public VkPipelineRasterizationStateCreateInfo* pRasterizationState;
-    public VkPipelineMultisampleStateCreateInfo*   pMultisampleState;
-    public VkPipelineDepthStencilStateCreateInfo*  pDepthStencilState;
-    public VkPipelineColorBlendStateCreateInfo*    pColorBlendState;
-    public VkPipelineDynamicStateCreateInfo*       pDynamicState;
-    public VkPipelineLayout                        layout;
-    public VkRenderPass                            renderPass;
-    public uint                                    subpass;
-    public VkPipeline                              basePipelineHandle;
-    public int                                     basePipelineIndex;
+    public void*                                   PNext;
+    public VkPipelineCreateFlags                   Flags;
+    public uint                                    StageCount;
+    public VkPipelineShaderStageCreateInfo*        PStages;
+    public VkPipelineVertexInputStateCreateInfo*   PVertexInputState;
+    public VkPipelineInputAssemblyStateCreateInfo* PInputAssemblyState;
+    public VkPipelineTessellationStateCreateInfo*  PTessellationState;
+    public VkPipelineViewportStateCreateInfo*      PViewportState;
+    public VkPipelineRasterizationStateCreateInfo* PRasterizationState;
+    public VkPipelineMultisampleStateCreateInfo*   PMultisampleState;
+    public VkPipelineDepthStencilStateCreateInfo*  PDepthStencilState;
+    public VkPipelineColorBlendStateCreateInfo*    PColorBlendState;
+    public VkPipelineDynamicStateCreateInfo*       PDynamicState;
+    public VkHandle<VkPipelineLayout>              Layout;
+    public VkHandle<VkRenderPass>                  RenderPass;
+    public uint                                    Subpass;
+    public VkHandle<VkPipeline>                    BasePipelineHandle;
+    public int                                     BasePipelineIndex;
 
     public VkGraphicsPipelineCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        this.SType = VkStructureType.GraphicsPipelineCreateInfo;
 }

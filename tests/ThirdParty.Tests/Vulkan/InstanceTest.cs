@@ -1,97 +1,114 @@
+using System.Runtime.InteropServices;
+using Age.Core.Interop;
 using ThirdParty.Vulkan;
-using ThirdParty.Vulkan.EXT;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan.Flags.EXT;
-using Version = ThirdParty.Vulkan.Version;
+using ThirdParty.Vulkan.Native;
+using ThirdParty.Vulkan.Native.EXT;
+using VkVersion = ThirdParty.Vulkan.VkVersion;
 
 namespace ThirdParty.Tests.Vulkan;
 
 public class InstanceTest
 {
     [Fact]
-    public void CreateInstance()
+    public unsafe void NativeCreateInstance()
     {
-        unsafe static bool callback(DebugUtilsMessageSeverityFlags messageSeverity, DebugUtilsMessageTypeFlags messageTypes, DebugUtilsMessenger.CallbackData callbackData)
+        static unsafe VkBool32 callback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
         {
             var defaultColor = Console.ForegroundColor;
 
             var color = messageSeverity switch
             {
-                DebugUtilsMessageSeverityFlags.Error => ConsoleColor.DarkRed,
-                DebugUtilsMessageSeverityFlags.Warning => ConsoleColor.DarkYellow,
-                DebugUtilsMessageSeverityFlags.Info => ConsoleColor.DarkBlue,
+                VkDebugUtilsMessageSeverityFlagsEXT.Error => ConsoleColor.DarkRed,
+                VkDebugUtilsMessageSeverityFlagsEXT.Warning => ConsoleColor.DarkYellow,
+                VkDebugUtilsMessageSeverityFlagsEXT.Info => ConsoleColor.DarkBlue,
                 _ => defaultColor
             };
 
             Console.ForegroundColor = color;
 
-            Console.WriteLine(callbackData.Message);
+            Console.WriteLine(Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage));
 
             Console.ForegroundColor = defaultColor;
 
             return true;
         }
 
-        var applicationInfo = new ApplicationInfo
+        VkApplicationInfo applicationInfo;
+
+        fixed (byte* pName = "Engine"u8)
         {
-            ApiVersion         = Version.V1_0,
-            ApplicationName    = "Engine",
-            ApplicationVersion = new Version(0, 0, 1, 0),
-            EngineName         = "Engine",
-            EngineVersion      = new Version(0, 0, 1, 0),
+            applicationInfo = new VkApplicationInfo
+            {
+                ApiVersion         = VkVersion.V1_0,
+                PApplicationName   = pName,
+                ApplicationVersion = new VkVersion(0, 0, 1, 0),
+                PEngineName        = pName,
+                EngineVersion      = new VkVersion(0, 0, 1, 0),
+            };
+        }
+
+        var debugUtilsMessengerCreateInfo = new VkDebugUtilsMessengerCreateInfoEXT
+        {
+            PfnUserCallback = new(callback),
+            MessageSeverity = VkDebugUtilsMessageSeverityFlagsEXT.Error
+                | VkDebugUtilsMessageSeverityFlagsEXT.Warning
+                | VkDebugUtilsMessageSeverityFlagsEXT.Info,
+            MessageType = VkDebugUtilsMessageTypeFlagsEXT.DeviceAddressBinding
+                | VkDebugUtilsMessageTypeFlagsEXT.General
+                | VkDebugUtilsMessageTypeFlagsEXT.Performance
+                | VkDebugUtilsMessageTypeFlagsEXT.Validation,
         };
 
-        var debugUtilsMessengerCreateInfo = new DebugUtilsMessenger.CreateInfo
+        using var ppEnabledExtensionNames = new StringArrayPtr(["VK_EXT_debug_utils"]);
+        using var ppEnabledLayerNames     = new StringArrayPtr([VkConstants.VK_LAYER_KHRONOS_VALIDATION]);
+
+        var instanceCreateInfo = new VkInstanceCreateInfo
         {
-            UserCallback = callback,
-            MessageSeverity = DebugUtilsMessageSeverityFlags.Error
-                | DebugUtilsMessageSeverityFlags.Warning
-                | DebugUtilsMessageSeverityFlags.Info,
-            MessageType = DebugUtilsMessageTypeFlags.DeviceAddressBinding
-                | DebugUtilsMessageTypeFlags.General
-                | DebugUtilsMessageTypeFlags.Performance
-                | DebugUtilsMessageTypeFlags.Validation,
+            PApplicationInfo        = &applicationInfo,
+            PpEnabledExtensionNames = ppEnabledExtensionNames,
+            EnabledExtensionCount   = (uint)ppEnabledExtensionNames.Length,
+            PpEnabledLayerNames     = ppEnabledLayerNames,
+            EnabledLayerCount       = (uint)ppEnabledLayerNames.Length,
+            PNext                   = &debugUtilsMessengerCreateInfo,
         };
 
-        var instanceCreateInfo = new Instance.CreateInfo
-        {
-            ApplicationInfo   = applicationInfo,
-            EnabledExtensions = ["VK_EXT_debug_utils"],
-            EnabledLayers     = [Constants.VK_LAYER_KHRONOS_VALIDATION],
-            Next              = debugUtilsMessengerCreateInfo,
-        };
-
-        using var instance = new Instance(instanceCreateInfo);
+        using var instance = new VkInstance(instanceCreateInfo);
 
         var physicalDevice = instance.EnumeratePhysicalDevices()[0];
-        var enabledFeatures = physicalDevice.GetDeviceFeatures();
 
-        var deviceCreateInfo = new Device.CreateInfo
+        var qeuePriorities = 1f;
+
+        var queueCreateInfo = new VkDeviceQueueCreateInfo
         {
-            EnabledFeatures   = enabledFeatures,
-            EnabledExtensions = [],
-            QueueCreateInfos  =
-            [
-                new DeviceQueue.CreateInfo
-                {
-                    QueueFamilyIndex = 0,
-                    QueuePriorities  = [1],
-                }
-            ],
+            QueueFamilyIndex = 0,
+            QueueCount       = 1,
+            PQueuePriorities = &qeuePriorities,
         };
 
-        var properties = physicalDevice.GetProperties();
+        physicalDevice.GetDeviceFeatures(out var enabledFeatures);
+
+        var deviceCreateInfo = new VkDeviceCreateInfo
+        {
+            PEnabledFeatures     = &enabledFeatures,
+            PQueueCreateInfos    = &queueCreateInfo,
+            QueueCreateInfoCount = 1,
+        };
+
+        physicalDevice.GetProperties(out var properties);
+
         using var device = physicalDevice.CreateDevice(deviceCreateInfo);
 
         var queue = device.GetQueue(0, 0);
 
-        var commandPoolCreateInfo = new CommandPool.CreateInfo
+        var commandPoolCreateInfo = new VkCommandPoolCreateInfo
         {
-            Flags = CommandPoolCreateFlags.ResetCommandBuffer,
+            Flags = VkCommandPoolCreateFlags.ResetCommandBuffer,
         };
 
         using var commandPool   = device.CreateCommandPool(commandPoolCreateInfo);
-        using var commandBuffer = commandPool.AllocateCommand(CommandBufferLevelFlags.Primary);
+        using var commandBuffer = commandPool.AllocateCommand(VkCommandBufferLevelFlags.Primary);
 
         Assert.True(true);
     }

@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkFormatProperties
 {
-    public VkFormatFeatureFlags linearTilingFeatures;
-    public VkFormatFeatureFlags optimalTilingFeatures;
-    public VkFormatFeatureFlags bufferFeatures;
+    public VkFormatFeatureFlags LinearTilingFeatures;
+    public VkFormatFeatureFlags OptimalTilingFeatures;
+    public VkFormatFeatureFlags BufferFeatures;
 }

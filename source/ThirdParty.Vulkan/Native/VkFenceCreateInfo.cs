@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,11 +7,11 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkFenceCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*              pNext;
-    public VkFenceCreateFlags flags;
+    public void*              PNext;
+    public VkFenceCreateFlags Flags;
 
     public VkFenceCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        this.SType = VkStructureType.FenceCreateInfo;
 }

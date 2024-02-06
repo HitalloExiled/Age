@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Enums;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkVertexInputBindingDescription
 {
-    public uint              binding;
-    public uint              stride;
-    public VkVertexInputRate inputRate;
+    public uint              Binding;
+    public uint              Stride;
+    public VkVertexInputRate InputRate;
 }

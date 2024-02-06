@@ -7,13 +7,13 @@ public unsafe struct VkApplicationInfo
 {
     public readonly VkStructureType sType;
 
-    public void* pNext;
-    public byte* pApplicationName;
-    public uint  applicationVersion;
-    public byte* pEngineName;
-    public uint  engineVersion;
-    public uint  apiVersion;
+    public void* PNext;
+    public byte* PApplicationName;
+    public uint  ApplicationVersion;
+    public byte* PEngineName;
+    public uint  EngineVersion;
+    public uint  ApiVersion;
 
     public VkApplicationInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        this.sType = VkStructureType.ApplicationInfo;
 }

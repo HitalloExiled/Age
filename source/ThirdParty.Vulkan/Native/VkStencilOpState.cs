@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Enums;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,11 +7,11 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkStencilOpState
 {
-    public VkStencilOp failOp;
-    public VkStencilOp passOp;
-    public VkStencilOp depthFailOp;
-    public VkCompareOp compareOp;
-    public uint        compareMask;
-    public uint        writeMask;
-    public uint        reference;
+    public VkStencilOp FailOp;
+    public VkStencilOp PassOp;
+    public VkStencilOp DepthFailOp;
+    public VkCompareOp CompareOp;
+    public uint        CompareMask;
+    public uint        WriteMask;
+    public uint        Reference;
 }

@@ -5,17 +5,17 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkCopyDescriptorSet
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*           pNext;
-    public VkDescriptorSet srcSet;
-    public uint            srcBinding;
-    public uint            srcArrayElement;
-    public VkDescriptorSet dstSet;
-    public uint            dstBinding;
-    public uint            dstArrayElement;
-    public uint            descriptorCount;
+    public void*                     PNext;
+    public VkHandle<VkDescriptorSet> SrcSet;
+    public uint                      SrcBinding;
+    public uint                      SrcArrayElement;
+    public VkHandle<VkDescriptorSet> DstSet;
+    public uint                      DstBinding;
+    public uint                      DstArrayElement;
+    public uint                      DescriptorCount;
 
     public VkCopyDescriptorSet() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET;
+        this.SType = VkStructureType.CopyDescriptorSet;
 }

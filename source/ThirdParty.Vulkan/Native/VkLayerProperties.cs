@@ -5,8 +5,8 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkLayerProperties
 {
-    public fixed byte layerName[(int)Constants.VK_MAX_EXTENSION_NAME_SIZE];
-    public uint       specVersion;
-    public uint       implementationVersion;
-    public fixed byte description[(int)Constants.VK_MAX_DESCRIPTION_SIZE];
+    public fixed byte LayerName[(int)VkConstants.VK_MAX_EXTENSION_NAME_SIZE];
+    public uint       SpecVersion;
+    public uint       ImplementationVersion;
+    public fixed byte Description[(int)VkConstants.VK_MAX_DESCRIPTION_SIZE];
 }

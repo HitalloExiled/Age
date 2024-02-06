@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Age.Numerics;
-using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Native;
 
 namespace Age.Playground;
 
@@ -13,41 +13,41 @@ public unsafe partial class SimpleEngineV2
         public Color          Color    = Color;
         public Vector2<float> TexCoord = TexCoord;
 
-        public static VertexInputBindingDescription GetBindingDescription()
+        public static VkVertexInputBindingDescription GetBindingDescription()
         {
-            var bindingDescription = new VertexInputBindingDescription
+            var bindingDescription = new VkVertexInputBindingDescription
             {
                 Binding   = 0,
                 Stride    = (uint)Marshal.SizeOf<Vertex>(),
-                InputRate = VertexInputRate.Vertex
+                InputRate = VkVertexInputRate.Vertex
             };
 
             return bindingDescription;
         }
 
-        public static VertexInputAttributeDescription[] GetAttributeDescriptions()
+        public static VkVertexInputAttributeDescription[] GetAttributeDescriptions()
         {
-            var attributeDescriptions = new VertexInputAttributeDescription[]
+            var attributeDescriptions = new VkVertexInputAttributeDescription[]
             {
                 new()
                 {
                     Binding  = 0,
                     Location = 0,
-                    Format   = Format.R32G32B32Sfloat,
+                    Format   = VkFormat.R32G32B32Sfloat,
                     Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Pos))!,
                 },
                 new()
                 {
                     Binding  = 0,
                     Location = 1,
-                    Format   = Format.R32G32B32A32Sfloat,
+                    Format   = VkFormat.R32G32B32A32Sfloat,
                     Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Color))!,
                 },
                 new()
                 {
                     Binding  = 0,
                     Location = 2,
-                    Format   = Format.R32G32Sfloat,
+                    Format   = VkFormat.R32G32Sfloat,
                     Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(TexCoord))!,
                 }
             };

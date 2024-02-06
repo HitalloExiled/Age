@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,12 +7,12 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkMemoryBarrier
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*         pNext;
-    public VkAccessFlags srcAccessMask;
-    public VkAccessFlags dstAccessMask;
+    public void*         PNext;
+    public VkAccessFlags SrcAccessMask;
+    public VkAccessFlags DstAccessMask;
 
     public VkMemoryBarrier() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+        this.SType = VkStructureType.MemoryBarrier;
 }

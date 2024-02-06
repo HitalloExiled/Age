@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,12 +8,12 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkPipelineColorBlendAttachmentState
 {
-    public VkBool32              blendEnable;
-    public VkBlendFactor         srcColorBlendFactor;
-    public VkBlendFactor         dstColorBlendFactor;
-    public VkBlendOp             colorBlendOp;
-    public VkBlendFactor         srcAlphaBlendFactor;
-    public VkBlendFactor         dstAlphaBlendFactor;
-    public VkBlendOp             alphaBlendOp;
-    public VkColorComponentFlags colorWriteMask;
+    public VkBool32              BlendEnable;
+    public VkBlendFactor         SrcColorBlendFactor;
+    public VkBlendFactor         DstColorBlendFactor;
+    public VkBlendOp             ColorBlendOp;
+    public VkBlendFactor         SrcAlphaBlendFactor;
+    public VkBlendFactor         DstAlphaBlendFactor;
+    public VkBlendOp             AlphaBlendOp;
+    public VkColorComponentFlags ColorWriteMask;
 }

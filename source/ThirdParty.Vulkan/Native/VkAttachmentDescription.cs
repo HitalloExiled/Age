@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,13 +8,13 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkAttachmentDescription
 {
-    public VkAttachmentDescriptionFlags flags;
-    public VkFormat                     format;
-    public VkSampleCountFlagBits        samples;
-    public VkAttachmentLoadOp           loadOp;
-    public VkAttachmentStoreOp          storeOp;
-    public VkAttachmentLoadOp           stencilLoadOp;
-    public VkAttachmentStoreOp          stencilStoreOp;
-    public VkImageLayout                initialLayout;
-    public VkImageLayout                finalLayout;
+    public VkAttachmentDescriptionFlags Flags;
+    public VkFormat                     Format;
+    public VkSampleCountFlags           Samples;
+    public VkAttachmentLoadOp           LoadOp;
+    public VkAttachmentStoreOp          StoreOp;
+    public VkAttachmentLoadOp           StencilLoadOp;
+    public VkAttachmentStoreOp          StencilStoreOp;
+    public VkImageLayout                InitialLayout;
+    public VkImageLayout                FinalLayout;
 }

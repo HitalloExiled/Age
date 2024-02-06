@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,20 +8,20 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkPipelineDepthStencilStateCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                                  pNext;
-    public VkPipelineDepthStencilStateCreateFlags flags;
-    public VkBool32                               depthTestEnable;
-    public VkBool32                               depthWriteEnable;
-    public VkCompareOp                            depthCompareOp;
-    public VkBool32                               depthBoundsTestEnable;
-    public VkBool32                               stencilTestEnable;
-    public VkStencilOpState                       front;
-    public VkStencilOpState                       back;
-    public float                                  minDepthBounds;
-    public float                                  maxDepthBounds;
+    public void*                                  PNext;
+    public VkPipelineDepthStencilStateCreateFlags Flags;
+    public VkBool32                               DepthTestEnable;
+    public VkBool32                               DepthWriteEnable;
+    public VkCompareOp                            DepthCompareOp;
+    public VkBool32                               DepthBoundsTestEnable;
+    public VkBool32                               StencilTestEnable;
+    public VkStencilOpState                       Front;
+    public VkStencilOpState                       Back;
+    public float                                  MinDepthBounds;
+    public float                                  MaxDepthBounds;
 
     public VkPipelineDepthStencilStateCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        this.SType = VkStructureType.PipelineDepthStencilStateCreateInfo;
 }

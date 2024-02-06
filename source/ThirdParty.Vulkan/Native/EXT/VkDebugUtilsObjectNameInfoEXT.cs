@@ -7,13 +7,13 @@ namespace ThirdParty.Vulkan.Native.EXT;
 /// </summary>
 public unsafe struct VkDebugUtilsObjectNameInfoEXT
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*        pNext;
-    public VkObjectType objectType;
-    public long         objectHandle;
-    public byte*        pObjectName;
+    public void*        PNext;
+    public VkObjectType ObjectType;
+    public long         ObjectHandle;
+    public byte*        PObjectName;
 
     public VkDebugUtilsObjectNameInfoEXT() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        this.SType = VkStructureType.DebugUtilsObjectNameInfoEXT;
 }

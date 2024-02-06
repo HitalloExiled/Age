@@ -5,12 +5,12 @@ namespace ThirdParty.Vulkan.Native.EXT;
 /// </summary>
 public unsafe struct VkDebugUtilsLabelEXT
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*       pNext;
-    public byte*       pLabelName;
-    public fixed float color[4];
+    public void*       PNext;
+    public byte*       PLabelName;
+    public fixed float Color[4];
 
     public VkDebugUtilsLabelEXT() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+        this.SType = VkStructureType.DebugUtilsLabelEXT;
 }

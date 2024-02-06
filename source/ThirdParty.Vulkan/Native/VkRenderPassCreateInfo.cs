@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,17 +7,17 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkRenderPassCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                    pNext;
-    public VkRenderPassCreateFlags  flags;
-    public uint                     attachmentCount;
-    public VkAttachmentDescription* pAttachments;
-    public uint                     subpassCount;
-    public VkSubpassDescription*    pSubpasses;
-    public uint                     dependencyCount;
-    public VkSubpassDependency*     pDependencies;
+    public void*                    PNext;
+    public VkRenderPassCreateFlags  Flags;
+    public uint                     AttachmentCount;
+    public VkAttachmentDescription* PAttachments;
+    public uint                     SubpassCount;
+    public VkSubpassDescription*    PSubpasses;
+    public uint                     DependencyCount;
+    public VkSubpassDependency*     PDependencies;
 
     public VkRenderPassCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        this.SType = VkStructureType.RenderPassCreateInfo;
 }

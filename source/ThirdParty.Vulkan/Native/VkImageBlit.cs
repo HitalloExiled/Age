@@ -5,8 +5,8 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkImageBlit
 {
-    public VkImageSubresourceLayers srcSubresource;
-    public fixed byte               srcOffsets[2 * 12];
-    public VkImageSubresourceLayers dstSubresource;
-    public fixed byte               dstOffsets[2 * 12];
+    public VkImageSubresourceLayers SrcSubresource;
+    public fixed byte               SrcOffsets[2 * 12];
+    public VkImageSubresourceLayers DstSubresource;
+    public fixed byte               DstOffsets[2 * 12];
 }

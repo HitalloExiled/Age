@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,23 +8,23 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkImageCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                 pNext;
-    public VkImageCreateFlags    flags;
-    public VkImageType           imageType;
-    public VkFormat              format;
-    public VkExtent3D            extent;
-    public uint                  mipLevels;
-    public uint                  arrayLayers;
-    public VkSampleCountFlagBits samples;
-    public VkImageTiling         tiling;
-    public VkImageUsageFlags     usage;
-    public VkSharingMode         sharingMode;
-    public uint                  queueFamilyIndexCount;
-    public uint*                 pQueueFamilyIndices;
-    public VkImageLayout         initialLayout;
+    public void*                 PNext;
+    public VkImageCreateFlags    Flags;
+    public VkImageType           ImageType;
+    public VkFormat              Format;
+    public VkExtent3D            Extent;
+    public uint                  MipLevels;
+    public uint                  ArrayLayers;
+    public VkSampleCountFlags    Samples;
+    public VkImageTiling         Tiling;
+    public VkImageUsageFlags     Usage;
+    public VkSharingMode         SharingMode;
+    public uint                  QueueFamilyIndexCount;
+    public uint*                 PQueueFamilyIndices;
+    public VkImageLayout         InitialLayout;
 
     public VkImageCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        this.SType = VkStructureType.ImageCreateInfo;
 }

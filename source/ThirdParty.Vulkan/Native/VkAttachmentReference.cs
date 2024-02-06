@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Enums;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,6 +7,6 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkAttachmentReference
 {
-    public uint          attachment;
-    public VkImageLayout layout;
+    public uint          Attachment;
+    public VkImageLayout Layout;
 }

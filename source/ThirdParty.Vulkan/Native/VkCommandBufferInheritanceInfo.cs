@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,16 +7,16 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkCommandBufferInheritanceInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                         pNext;
-    public VkRenderPass                  renderPass;
-    public uint                          subpass;
-    public VkFramebuffer                 framebuffer;
-    public VkBool32                      occlusionQueryEnable;
-    public VkQueryControlFlags           queryFlags;
-    public VkQueryPipelineStatisticFlags pipelineStatistics;
+    public void*                         PNext;
+    public VkHandle<VkRenderPass>        RenderPass;
+    public uint                          Subpass;
+    public VkHandle<VkFramebuffer>       Framebuffer;
+    public VkBool32                      OcclusionQueryEnable;
+    public VkQueryControlFlags           QueryFlags;
+    public VkQueryPipelineStatisticFlags PipelineStatistics;
 
     public VkCommandBufferInheritanceInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+        this.SType = VkStructureType.CommandBufferInheritanceInfo;
 }

@@ -5,6 +5,6 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkExtensionProperties
 {
-    public fixed byte extensionName[(int)Constants.VK_MAX_EXTENSION_NAME_SIZE];
-    public uint       specVersion;
+    public fixed byte ExtensionName[(int)VkConstants.VK_MAX_EXTENSION_NAME_SIZE];
+    public uint       SpecVersion;
 }

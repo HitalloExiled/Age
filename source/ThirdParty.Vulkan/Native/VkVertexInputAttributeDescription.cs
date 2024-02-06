@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Enums;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,8 +7,8 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkVertexInputAttributeDescription
 {
-    public uint     location;
-    public uint     binding;
-    public VkFormat format;
-    public uint     offset;
+    public uint     Location;
+    public uint     Binding;
+    public VkFormat Format;
+    public uint     Offset;
 }

@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,11 +7,11 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkSubpassDependency
 {
-    public uint                 srcSubpass;
-    public uint                 dstSubpass;
-    public VkPipelineStageFlags srcStageMask;
-    public VkPipelineStageFlags dstStageMask;
-    public VkAccessFlags        srcAccessMask;
-    public VkAccessFlags        dstAccessMask;
-    public VkDependencyFlags    dependencyFlags;
+    public uint                 SrcSubpass;
+    public uint                 DstSubpass;
+    public VkPipelineStageFlags SrcStageMask;
+    public VkPipelineStageFlags DstStageMask;
+    public VkAccessFlags        SrcAccessMask;
+    public VkAccessFlags        DstAccessMask;
+    public VkDependencyFlags    DependencyFlags;
 }

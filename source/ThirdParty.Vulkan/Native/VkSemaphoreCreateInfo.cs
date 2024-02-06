@@ -5,11 +5,11 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkSemaphoreCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                  pNext;
-    public VkSemaphoreCreateFlags flags;
+    public void*                  PNext;
+    public VkSemaphoreCreateFlags Flags;
 
     public VkSemaphoreCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        this.SType = VkStructureType.SemaphoreCreateInfo;
 }

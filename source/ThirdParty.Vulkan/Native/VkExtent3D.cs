@@ -4,7 +4,8 @@ namespace ThirdParty.Vulkan.Native;
 /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkExtent3D.html">VkExtent3D</see>
 /// </summary>
 public struct VkExtent3D
-{    public uint width;
-    public uint height;
-    public uint  depth;
+{
+    public uint Width;
+    public uint Height;
+    public uint Depth;
 }

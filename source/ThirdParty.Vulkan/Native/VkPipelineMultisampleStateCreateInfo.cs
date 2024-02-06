@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -7,15 +9,15 @@ public unsafe struct VkPipelineMultisampleStateCreateInfo
 {
     public readonly VkStructureType sType;
 
-    public void*                                 pNext;
-    public VkPipelineMultisampleStateCreateFlags flags;
-    public VkSampleCountFlagBits                 rasterizationSamples;
-    public VkBool32                              sampleShadingEnable;
-    public float                                 minSampleShading;
-    public VkSampleMask*                         pSampleMask;
-    public VkBool32                              alphaToCoverageEnable;
-    public VkBool32                              alphaToOneEnable;
+    public void*                                 PNext;
+    public VkPipelineMultisampleStateCreateFlags Flags;
+    public VkSampleCountFlags                    RasterizationSamples;
+    public VkBool32                              SampleShadingEnable;
+    public float                                 MinSampleShading;
+    public VkHandle<VkSampleMask>*               PSampleMask;
+    public VkBool32                              AlphaToCoverageEnable;
+    public VkBool32                              AlphaToOneEnable;
 
     public VkPipelineMultisampleStateCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        this.sType = VkStructureType.PipelineMultisampleStateCreateInfo;
 }

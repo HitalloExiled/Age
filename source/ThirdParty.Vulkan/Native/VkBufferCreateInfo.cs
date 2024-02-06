@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,16 +8,16 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkBufferCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*               pNext;
-    public VkBufferCreateFlags flags;
-    public VkDeviceSize        size;
-    public VkBufferUsageFlags  usage;
-    public VkSharingMode       sharingMode;
-    public uint                queueFamilyIndexCount;
-    public uint*               pQueueFamilyIndices;
+    public void*               PNext;
+    public VkBufferCreateFlags Flags;
+    public VkDeviceSize        Size;
+    public VkBufferUsageFlags  Usage;
+    public VkSharingMode       SharingMode;
+    public uint                QueueFamilyIndexCount;
+    public uint*               PQueueFamilyIndices;
 
     public VkBufferCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        this.SType = VkStructureType.BufferCreateInfo;
 }

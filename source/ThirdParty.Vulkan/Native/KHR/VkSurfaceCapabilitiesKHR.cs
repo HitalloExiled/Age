@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.Flags;
+using ThirdParty.Vulkan.Flags.KHR;
+
 namespace ThirdParty.Vulkan.Native.KHR;
 
 /// <summary>
@@ -5,14 +8,14 @@ namespace ThirdParty.Vulkan.Native.KHR;
 /// </summary>
 public struct VkSurfaceCapabilitiesKHR
 {
-    public uint                          minImageCount;
-    public uint                          maxImageCount;
-    public VkExtent2D                    currentExtent;
-    public VkExtent2D                    minImageExtent;
-    public VkExtent2D                    maxImageExtent;
-    public uint                          maxImageArrayLayers;
-    public VkSurfaceTransformFlagsKHR    supportedTransforms;
-    public VkSurfaceTransformFlagBitsKHR currentTransform;
-    public VkCompositeAlphaFlagBitsKHR   supportedCompositeAlpha;
-    public VkImageUsageFlags             supportedUsageFlags;
+    public uint                       MinImageCount;
+    public uint                       MaxImageCount;
+    public VkExtent2D                 CurrentExtent;
+    public VkExtent2D                 MinImageExtent;
+    public VkExtent2D                 MaxImageExtent;
+    public uint                       MaxImageArrayLayers;
+    public VkSurfaceTransformFlagsKHR SupportedTransforms;
+    public VkSurfaceTransformFlagsKHR CurrentTransform;
+    public VkCompositeAlphaFlagsKHR   SupportedCompositeAlpha;
+    public VkImageUsageFlags          SupportedUsageFlags;
 }

@@ -5,7 +5,7 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkMemoryRequirements
 {
-    public VkDeviceSize size;
-    public VkDeviceSize alignment;
-    public uint         memoryTypeBits;
+    public VkDeviceSize Size;
+    public VkDeviceSize Alignment;
+    public uint         MemoryTypeBits;
 }

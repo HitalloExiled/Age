@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Enums;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkDescriptorImageInfo
 {
-    public VkSampler     sampler;
-    public VkImageView   imageView;
-    public VkImageLayout imageLayout;
+    public VkHandle<VkSampler>   Sampler;
+    public VkHandle<VkImageView> ImageView;
+    public VkImageLayout         ImageLayout;
 }

@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,12 +7,12 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkCommandBufferBeginInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                           pNext;
-    public VkCommandBufferUsageFlags       flags;
-    public VkCommandBufferInheritanceInfo* pInheritanceInfo;
+    public void*                           PNext;
+    public VkCommandBufferUsageFlags       Flags;
+    public VkCommandBufferInheritanceInfo* PInheritanceInfo;
 
     public VkCommandBufferBeginInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        this.SType = VkStructureType.CommandBufferBeginInfo;
 }

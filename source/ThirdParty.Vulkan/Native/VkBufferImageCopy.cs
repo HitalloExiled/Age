@@ -5,10 +5,10 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkBufferImageCopy
 {
-    public VkDeviceSize             bufferOffset;
-    public uint                     bufferRowLength;
-    public uint                     bufferImageHeight;
-    public VkImageSubresourceLayers imageSubresource;
-    public VkOffset3D               imageOffset;
-    public VkExtent3D               imageExtent;
+    public VkDeviceSize             BufferOffset;
+    public uint                     BufferRowLength;
+    public uint                     BufferImageHeight;
+    public VkImageSubresourceLayers ImageSubresource;
+    public VkOffset3D               ImageOffset;
+    public VkExtent3D               ImageExtent;
 }

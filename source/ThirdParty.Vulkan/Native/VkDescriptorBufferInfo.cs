@@ -5,7 +5,7 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkDescriptorBufferInfo
 {
-    public VkBuffer     buffer;
-    public VkDeviceSize offset;
-    public VkDeviceSize range;
+    public VkHandle<VkBuffer> Buffer;
+    public VkDeviceSize       Offset;
+    public VkDeviceSize       Range;
 }

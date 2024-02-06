@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,14 +7,14 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkDescriptorPoolCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                       pNext;
-    public VkDescriptorPoolCreateFlags flags;
-    public uint                        maxSets;
-    public uint                        poolSizeCount;
-    public VkDescriptorPoolSize*       pPoolSizes;
+    public void*                       PNext;
+    public VkDescriptorPoolCreateFlags Flags;
+    public uint                        MaxSets;
+    public uint                        PoolSizeCount;
+    public VkDescriptorPoolSize*       PPoolSizes;
 
     public VkDescriptorPoolCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        this.SType = VkStructureType.DescriptorPoolCreateInfo;
 }

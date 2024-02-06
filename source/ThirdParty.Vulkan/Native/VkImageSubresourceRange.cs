@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,9 +7,9 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkImageSubresourceRange
 {
-    public VkImageAspectFlags aspectMask;
-    public uint               baseMipLevel;
-    public uint               levelCount;
-    public uint               baseArrayLayer;
-    public uint               layerCount;
+    public VkImageAspectFlags AspectMask;
+    public uint               BaseMipLevel;
+    public uint               LevelCount;
+    public uint               BaseArrayLayer;
+    public uint               LayerCount;
 }

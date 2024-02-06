@@ -5,20 +5,20 @@ namespace ThirdParty.Vulkan.Native.EXT;
 /// </summary>
 public unsafe struct VkDebugUtilsMessengerCallbackDataEXT
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                                     pNext;
-    public VkDebugUtilsMessengerCallbackDataFlagsEXT flags;
-    public byte*                                     pMessageIdName;
-    public int                                       messageIdNumber;
-    public byte*                                     pMessage;
-    public uint                                      queueLabelCount;
-    public VkDebugUtilsLabelEXT*                     pQueueLabels;
-    public uint                                      cmdBufLabelCount;
-    public VkDebugUtilsLabelEXT*                     pCmdBufLabels;
-    public uint                                      objectCount;
-    public VkDebugUtilsObjectNameInfoEXT*            pObjects;
+    public void*                                     PNext;
+    public VkDebugUtilsMessengerCallbackDataFlagsEXT Flags;
+    public byte*                                     PMessageIdName;
+    public int                                       MessageIdNumber;
+    public byte*                                     PMessage;
+    public uint                                      QueueLabelCount;
+    public VkDebugUtilsLabelEXT*                     PQueueLabels;
+    public uint                                      CmdBufLabelCount;
+    public VkDebugUtilsLabelEXT*                     PCmdBufLabels;
+    public uint                                      ObjectCount;
+    public VkDebugUtilsObjectNameInfoEXT*            PObjects;
 
     public VkDebugUtilsMessengerCallbackDataEXT() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
+        this.SType = VkStructureType.DebugUtilsMessengerCallbackDataEXT;
 }

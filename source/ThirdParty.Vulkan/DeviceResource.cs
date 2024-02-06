@@ -1,12 +1,15 @@
 namespace ThirdParty.Vulkan;
 
-public abstract class DeviceResource : DisposableNativeHandle
+public abstract class DeviceResource<T> : DisposableManagedHandle<T> where T : ManagedHandle<T>
 {
-    internal Device Device { get; }
+    internal VkDevice Device { get; }
 
-    internal DeviceResource(Device device) : base() =>
+    internal VkInstance       Instance       => this.Device.PhysicalDevice.Instance;
+    internal VkPhysicalDevice PhysicalDevice => this.Device.PhysicalDevice;
+
+    internal DeviceResource(VkDevice device) : base() =>
         this.Device = device;
 
-    internal DeviceResource(nint handle, Device device) : base(handle) =>
+    internal DeviceResource(VkHandle<T> handle, VkDevice device) : base(handle) =>
         this.Device = device;
 }

@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,17 +7,17 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkFramebufferCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                    pNext;
-    public VkFramebufferCreateFlags flags;
-    public VkRenderPass             renderPass;
-    public uint                     attachmentCount;
-    public VkImageView*             pAttachments;
-    public uint                     width;
-    public uint                     height;
-    public uint                     layers;
+    public void*                    PNext;
+    public VkFramebufferCreateFlags Flags;
+    public VkHandle<VkRenderPass>   RenderPass;
+    public uint                     AttachmentCount;
+    public VkHandle<VkImageView>*   PAttachments;
+    public uint                     Width;
+    public uint                     Height;
+    public uint                     Layers;
 
     public VkFramebufferCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        this.SType = VkStructureType.FramebufferCreateInfo;
 }

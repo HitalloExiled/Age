@@ -1,3 +1,6 @@
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.KHR;
+
 namespace ThirdParty.Vulkan.Native.KHR;
 
 /// <summary>
@@ -5,16 +8,16 @@ namespace ThirdParty.Vulkan.Native.KHR;
 /// </summary>
 public unsafe struct VkPresentInfoKHR
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*           pNext;
-    public uint            waitSemaphoreCount;
-    public VkSemaphore*    pWaitSemaphores;
-    public uint            swapchainCount;
-    public VkSwapchainKHR* pSwapchains;
-    public uint*           pImageIndices;
-    public VkResult*       pResults;
+    public void*                     PNext;
+    public uint                      WaitSemaphoreCount;
+    public VkHandle<VkSemaphore>*    PWaitSemaphores;
+    public uint                      SwapchainCount;
+    public VkHandle<VkSwapchainKHR>* PSwapchains;
+    public uint*                     PImageIndices;
+    public VkResult*                 PResults;
 
     public VkPresentInfoKHR() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        this.SType = VkStructureType.PresentInfoKHR;
 }

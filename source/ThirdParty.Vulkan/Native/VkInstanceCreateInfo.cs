@@ -1,5 +1,7 @@
 #pragma warning disable IDE0001
 
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -9,14 +11,14 @@ public unsafe struct VkInstanceCreateInfo
 {
     public readonly VkStructureType sType;
 
-    public void*                 pNext;
-    public VkInstanceCreateFlags flags;
-    public VkApplicationInfo*    pApplicationInfo;
-    public uint                  enabledLayerCount;
-    public byte**                ppEnabledLayerNames;
-    public uint                  enabledExtensionCount;
-    public byte**                ppEnabledExtensionNames;
+    public void*                 PNext;
+    public VkInstanceCreateFlags Flags;
+    public VkApplicationInfo*    PApplicationInfo;
+    public uint                  EnabledLayerCount;
+    public byte**                PpEnabledLayerNames;
+    public uint                  EnabledExtensionCount;
+    public byte**                PpEnabledExtensionNames;
 
     public VkInstanceCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        this.sType = VkStructureType.InstanceCreateInfo;
 }

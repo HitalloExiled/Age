@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,6 +7,6 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public struct VkMemoryHeap
 {
-    public VkDeviceSize      size;
-    public VkMemoryHeapFlags flags;
+    public VkDeviceSize      Size;
+    public VkMemoryHeapFlags Flags;
 }

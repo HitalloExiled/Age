@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Enums;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,13 +7,13 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkPipelineInputAssemblyStateCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                                   pNext;
-    public VkPipelineInputAssemblyStateCreateFlags flags;
-    public VkPrimitiveTopology                     topology;
-    public VkBool32                                primitiveRestartEnable;
+    public void*                                   PNext;
+    public VkPipelineInputAssemblyStateCreateFlags Flags;
+    public VkPrimitiveTopology                     Topology;
+    public VkBool32                                PrimitiveRestartEnable;
 
     public VkPipelineInputAssemblyStateCreateInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        this.SType = VkStructureType.PipelineInputAssemblyStateCreateInfo;
 }

@@ -1,0 +1,25 @@
+using Age.Core.Interop;
+using ThirdParty.Vulkan.Native;
+
+namespace ThirdParty.Vulkan;
+
+public unsafe partial class VkDescriptorSetLayout : DeviceResource<VkDescriptorSetLayout>
+{
+    internal VkDescriptorSetLayout(VkDevice device, in VkDescriptorSetLayoutCreateInfo createInfo) : base(device)
+    {
+        fixed (VkHandle<VkDescriptorSetLayout>* pHandle     = &this.Handle)
+        fixed (VkDescriptorSetLayoutCreateInfo* pCreateInfo = &createInfo)
+        fixed (VkAllocationCallbacks*           pAllocator  = &this.Instance.Allocator)
+        {
+            VkException.Check(PInvoke.vkCreateDescriptorSetLayout(device, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+        }
+    }
+
+    protected override void OnDispose()
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
+        {
+            PInvoke.vkDestroyDescriptorSetLayout(this.Device, this, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+        }
+    }
+}

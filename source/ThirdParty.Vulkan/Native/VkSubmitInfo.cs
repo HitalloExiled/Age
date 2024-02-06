@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Flags;
+
 namespace ThirdParty.Vulkan.Native;
 
 /// <summary>
@@ -5,17 +7,17 @@ namespace ThirdParty.Vulkan.Native;
 /// </summary>
 public unsafe struct VkSubmitInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
-    public void*                 pNext;
-    public uint                  waitSemaphoreCount;
-    public VkSemaphore*          pWaitSemaphores;
-    public VkPipelineStageFlags* pWaitDstStageMask;
-    public uint                  commandBufferCount;
-    public VkCommandBuffer*      pCommandBuffers;
-    public uint                  signalSemaphoreCount;
-    public VkSemaphore*          pSignalSemaphores;
+    public void*                      PNext;
+    public uint                       WaitSemaphoreCount;
+    public VkHandle<VkSemaphore>*     PWaitSemaphores;
+    public VkPipelineStageFlags*      PWaitDstStageMask;
+    public uint                       CommandBufferCount;
+    public VkHandle<VkCommandBuffer>* PCommandBuffers;
+    public uint                       SignalSemaphoreCount;
+    public VkHandle<VkSemaphore>*     PSignalSemaphores;
 
     public VkSubmitInfo() =>
-        this.sType = VkStructureType.VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        this.SType = VkStructureType.SubmitInfo;
 }
