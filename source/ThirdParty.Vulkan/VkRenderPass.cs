@@ -11,7 +11,7 @@ public unsafe partial class VkRenderPass : DeviceResource<VkRenderPass>
         fixed (VkRenderPassCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*  pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateRenderPass(device, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateRenderPass(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
         }
     }
 
@@ -19,7 +19,7 @@ public unsafe partial class VkRenderPass : DeviceResource<VkRenderPass>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyRenderPass(this.Device, this, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyRenderPass(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }

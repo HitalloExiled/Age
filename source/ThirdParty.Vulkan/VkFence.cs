@@ -11,7 +11,7 @@ public unsafe partial class VkFence : DeviceResource<VkFence>
         fixed (VkFenceCreateInfo*     pCcreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator   = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateFence(device, pCcreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateFence(device.Handle, pCcreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
         }
     }
 
@@ -45,40 +45,40 @@ public unsafe partial class VkFence : DeviceResource<VkFence>
     {
         foreach (var group in fences.GroupBy(x => x.Device))
         {
-            Reset(group.Key, ToHandlers(group.ToArray()));
+            Reset(group.Key.Handle, ToHandlers(group.ToArray()));
         }
     }
 
     /// <inheritdoc cref="PInvoke.vkResetFences" />
     public static void Reset(VkDevice device, VkFence[] fences) =>
-        Reset(device, ToHandlers(fences));
+        Reset(device.Handle, ToHandlers(fences));
 
     /// <inheritdoc cref="PInvoke.vkWaitForFences" />
     public static void Wait(VkFence[] fences, bool waitAll, ulong timeout)
     {
         foreach (var group in fences.GroupBy(x => x.Device))
         {
-            Wait(group.Key, ToHandlers(group.ToArray()), waitAll, timeout);
+            Wait(group.Key.Handle, ToHandlers(group.ToArray()), waitAll, timeout);
         }
     }
 
     /// <inheritdoc cref="PInvoke.vkWaitForFences" />
     public static void Wait(VkDevice device, VkFence[] fences, bool waitAll, ulong timeout) =>
-        Wait(device, ToHandlers(fences), waitAll, timeout);
+        Wait(device.Handle, ToHandlers(fences), waitAll, timeout);
 
     protected override void OnDispose()
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyFence(this.Device, this, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyFence(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 
     /// <inheritdoc cref="PInvoke.vkResetFences" />
     public void Reset() =>
-        Reset(this.Device, this);
+        Reset(this.Device.Handle, this.Handle);
 
     /// <inheritdoc cref="PInvoke.vkWaitForFences" />
     public void Wait(bool waitAll, ulong timeout) =>
-        Wait(this.Device, this, waitAll, timeout);
+        Wait(this.Device.Handle, this.Handle, waitAll, timeout);
 }

@@ -20,6 +20,4 @@ public abstract class ManagedHandle<T> where T : ManagedHandle<T>
 
         return handlers;
     }
-
-    public static implicit operator VkHandle<T>(ManagedHandle<T>? value) => value == null ? default : value.Handle;
 }

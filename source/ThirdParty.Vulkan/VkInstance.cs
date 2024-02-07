@@ -103,7 +103,7 @@ public unsafe partial class VkInstance : DisposableManagedHandle<VkInstance>
     {
         fixed (byte* pName = Encoding.UTF8.GetBytes(name))
         {
-            return Marshal.GetDelegateForFunctionPointer<T>((nint)PInvoke.vkGetInstanceProcAddr(this, pName));
+            return Marshal.GetDelegateForFunctionPointer<T>((nint)PInvoke.vkGetInstanceProcAddr(this.Handle, pName));
         }
     }
 

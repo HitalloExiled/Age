@@ -9,8 +9,8 @@ public unsafe partial class VkDescriptorSet : DisposableManagedHandle<VkDescript
 
     protected override void OnDispose()
     {
-        VkHandle<VkDescriptorSet> handle = this;
+        var handle = this.Handle;
 
-        VkException.Check(PInvoke.vkFreeDescriptorSets(this.descriptorPool.Device, this.descriptorPool, 1, &handle));
+        VkException.Check(PInvoke.vkFreeDescriptorSets(this.descriptorPool.Device.Handle, this.descriptorPool.Handle, 1, &handle));
     }
 }

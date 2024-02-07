@@ -27,7 +27,7 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
         fixed (VkDeviceCreateInfo*    pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateDevice(physicalDevice, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateDevice(physicalDevice.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
         }
     }
 
@@ -93,10 +93,10 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
         var vkPipelines = new VkHandle<VkPipeline>[createInfos.Length];
 
         fixed (VkGraphicsPipelineCreateInfo* pCreateInfo = createInfos)
-        fixed (VkHandle<VkPipeline>*                   pPipelines  = vkPipelines)
+        fixed (VkHandle<VkPipeline>*         pPipelines  = vkPipelines)
         fixed (VkAllocationCallbacks*        pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateGraphicsPipelines(this, pipelineCache, (uint)createInfos.Length, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pPipelines));
+            VkException.Check(PInvoke.vkCreateGraphicsPipelines(this.Handle, pipelineCache.Handle, (uint)createInfos.Length, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pPipelines));
         }
 
         var pipelines = new VkPipeline[vkPipelines.Length];
@@ -135,7 +135,7 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
     {
         fixed (byte* pName = Encoding.UTF8.GetBytes(name))
         {
-            return Marshal.GetDelegateForFunctionPointer<T>((nint)PInvoke.vkGetDeviceProcAddr(this, pName));
+            return Marshal.GetDelegateForFunctionPointer<T>((nint)PInvoke.vkGetDeviceProcAddr(this.Handle, pName));
         }
     }
 
@@ -156,12 +156,12 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
         fixed (VkWriteDescriptorSet* pDescriptorWrites = descriptorWrites)
         fixed (VkCopyDescriptorSet*  pDescriptorCopies = descriptorCopies)
         {
-            PInvoke.vkUpdateDescriptorSets(this, (uint)descriptorWrites.Length, pDescriptorWrites, (uint)descriptorCopies.Length, pDescriptorCopies);
+            PInvoke.vkUpdateDescriptorSets(this.Handle, (uint)descriptorWrites.Length, pDescriptorWrites, (uint)descriptorCopies.Length, pDescriptorCopies);
         }
     }
 
 
     /// <inheritdoc cref="PInvoke.vkDeviceWaitIdle" />
     public void WaitIdle() =>
-        VkException.Check(PInvoke.vkDeviceWaitIdle(this));
+        VkException.Check(PInvoke.vkDeviceWaitIdle(this.Handle));
 }

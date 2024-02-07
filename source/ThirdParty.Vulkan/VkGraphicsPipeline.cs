@@ -13,7 +13,7 @@ public unsafe partial class VkGraphicsPipeline : VkPipeline
         fixed (VkGraphicsPipelineCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*        pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateGraphicsPipelines(device, pipelineCache, 1, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateGraphicsPipelines(device.Handle, pipelineCache?.Handle ?? default, 1, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
         }
     }
 }

@@ -56,7 +56,7 @@ public unsafe class VkSurfaceExtensionKHR : IInstanceExtension<VkSurfaceExtensio
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.instance.Allocator)
         {
-            this.vkDestroySurfaceKHR.Invoke(this.instance, surface, PointerHelper.NullIfDefault(this.instance.Allocator, pAllocator));
+            this.vkDestroySurfaceKHR.Invoke(this.instance.Handle, surface.Handle, PointerHelper.NullIfDefault(this.instance.Allocator, pAllocator));
         }
     }
 
@@ -67,7 +67,7 @@ public unsafe class VkSurfaceExtensionKHR : IInstanceExtension<VkSurfaceExtensio
     {
         fixed (VkSurfaceCapabilitiesKHR* pSurfaceCapabilities = &surfaceCapabilities)
         {
-            VkException.Check(this.vkGetPhysicalDeviceSurfaceCapabilitiesKHR.Invoke(physicalDevice, surface, pSurfaceCapabilities));
+            VkException.Check(this.vkGetPhysicalDeviceSurfaceCapabilitiesKHR.Invoke(physicalDevice.Handle, surface.Handle, pSurfaceCapabilities));
         }
     }
 
@@ -78,13 +78,13 @@ public unsafe class VkSurfaceExtensionKHR : IInstanceExtension<VkSurfaceExtensio
     {
         uint surfaceFormatCount;
 
-        VkException.Check(this.vkGetPhysicalDeviceSurfaceFormatsKHR.Invoke(physicalDevice, surface, &surfaceFormatCount, null));
+        VkException.Check(this.vkGetPhysicalDeviceSurfaceFormatsKHR.Invoke(physicalDevice.Handle, surface.Handle, &surfaceFormatCount, null));
 
         var surfaceFormats = new VkSurfaceFormatKHR[surfaceFormatCount];
 
         fixed (VkSurfaceFormatKHR* pSurfaceFormats = surfaceFormats)
         {
-            VkException.Check(this.vkGetPhysicalDeviceSurfaceFormatsKHR.Invoke(physicalDevice, surface, &surfaceFormatCount, pSurfaceFormats));
+            VkException.Check(this.vkGetPhysicalDeviceSurfaceFormatsKHR.Invoke(physicalDevice.Handle, surface.Handle, &surfaceFormatCount, pSurfaceFormats));
         }
 
         return surfaceFormats;
@@ -93,17 +93,17 @@ public unsafe class VkSurfaceExtensionKHR : IInstanceExtension<VkSurfaceExtensio
     /// <summary>
     /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkGetPhysicalDeviceSurfacePresentModesKHR.html">vkGetPhysicalDeviceSurfacePresentModesKHR</see>
     /// </summary>
-    public VkPresentModeKHR[] GetPhysicalDeviceSurfacePresentModes(VkHandle<VkPhysicalDevice> physicalDevice, VkSurfaceKHR surface)
+    public VkPresentModeKHR[] GetPhysicalDeviceSurfacePresentModes(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
     {
         uint presentModeCount;
 
-        VkException.Check(this.vkGetPhysicalDeviceSurfacePresentModesKHR.Invoke(physicalDevice, surface, &presentModeCount, null));
+        VkException.Check(this.vkGetPhysicalDeviceSurfacePresentModesKHR.Invoke(physicalDevice.Handle, surface.Handle, &presentModeCount, null));
 
         var presentModes = new VkPresentModeKHR[presentModeCount];
 
         fixed (VkPresentModeKHR* pPresentModes = presentModes)
         {
-            VkException.Check(this.vkGetPhysicalDeviceSurfacePresentModesKHR.Invoke(physicalDevice, surface, &presentModeCount, pPresentModes));
+            VkException.Check(this.vkGetPhysicalDeviceSurfacePresentModesKHR.Invoke(physicalDevice.Handle, surface.Handle, &presentModeCount, pPresentModes));
         }
 
         return presentModes;
@@ -116,7 +116,7 @@ public unsafe class VkSurfaceExtensionKHR : IInstanceExtension<VkSurfaceExtensio
     {
         VkBool32 supported;
 
-        VkException.Check(this.vkGetPhysicalDeviceSurfaceSupportKHR.Invoke(physicalDevice, queueFamilyIndex, surface, &supported));
+        VkException.Check(this.vkGetPhysicalDeviceSurfaceSupportKHR.Invoke(physicalDevice.Handle, queueFamilyIndex, surface.Handle, &supported));
 
         return supported;
     }

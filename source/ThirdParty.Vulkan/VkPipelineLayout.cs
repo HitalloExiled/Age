@@ -11,7 +11,7 @@ public unsafe partial class VkPipelineLayout : DeviceResource<VkPipelineLayout>
         fixed (VkPipelineLayoutCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*      pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreatePipelineLayout(device, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreatePipelineLayout(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
         }
     }
 
@@ -19,7 +19,7 @@ public unsafe partial class VkPipelineLayout : DeviceResource<VkPipelineLayout>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyPipelineLayout(this.Device, this, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyPipelineLayout(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }

@@ -396,8 +396,8 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     {
         var layouts = new VkHandle<VkDescriptorSetLayout>[MAX_FRAMES_IN_FLIGHT]
         {
-            this.descriptorSetLayout,
-            this.descriptorSetLayout,
+            this.descriptorSetLayout.Handle,
+            this.descriptorSetLayout.Handle,
         };
 
         fixed (VkHandle<VkDescriptorSetLayout>* pSetLayouts = layouts)
@@ -414,7 +414,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             {
                 var bufferInfo = new VkDescriptorBufferInfo
                 {
-                    Buffer = this.uniformBuffers[i],
+                    Buffer = this.uniformBuffers[i].Handle,
                     Offset = 0,
                     Range  = (uint)Marshal.SizeOf<UniformBufferObject>()
                 };
@@ -422,8 +422,8 @@ public unsafe partial class SimpleEngineV2 : IDisposable
                 var imageInfo = new VkDescriptorImageInfo
                 {
                     ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
-                    ImageView   = this.textureImageView,
-                    Sampler     = this.textureSampler
+                    ImageView   = this.textureImageView.Handle,
+                    Sampler     = this.textureSampler.Handle
                 };
 
                 var descriptorWrites = new VkWriteDescriptorSet[]
@@ -434,7 +434,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
                         DescriptorType  = VkDescriptorType.UniformBuffer,
                         DstArrayElement = 0,
                         DstBinding      = 0,
-                        DstSet          = this.descriptorSets[i],
+                        DstSet          = this.descriptorSets[i].Handle,
                         PBufferInfo     = &bufferInfo,
                     },
                     new()
@@ -443,7 +443,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
                         DescriptorType  = VkDescriptorType.CombinedImageSampler,
                         DstArrayElement = 0,
                         DstBinding      = 1,
-                        DstSet          = this.descriptorSets[i],
+                        DstSet          = this.descriptorSets[i].Handle,
                         PImageInfo      = &imageInfo,
                     }
                 };
@@ -497,16 +497,16 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         {
             var attachments = new VkHandle<VkImageView>[]
             {
-                this.colorImageView,
-                this.depthImageView,
-                this.swapChainImageViews[i]
+                this.colorImageView.Handle,
+                this.depthImageView.Handle,
+                this.swapChainImageViews[i].Handle
             };
 
             fixed (VkHandle<VkImageView>* pAttachments = attachments)
             {
                 var createInfo = new VkFramebufferCreateInfo
                 {
-                    RenderPass      = this.renderPass,
+                    RenderPass      = this.renderPass.Handle,
                     PAttachments    = pAttachments,
                     AttachmentCount = (uint)attachments.Length,
                     Width           = this.swapChainExtent.Width,
@@ -531,14 +531,14 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         {
             var vertShaderStageInfo = new VkPipelineShaderStageCreateInfo
             {
-                Module = vertShaderModule,
+                Module = vertShaderModule.Handle,
                 PName  = pName,
                 Stage  = VkShaderStageFlags.Vertex,
             };
 
             var fragShaderStageInfo = new VkPipelineShaderStageCreateInfo
             {
-                Module = fragShaderModule,
+                Module = fragShaderModule.Handle,
                 PName  = pName,
                 Stage  = VkShaderStageFlags.Fragment,
             };
@@ -629,7 +629,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
                     DynamicStateCount = (uint)dynamicStates.Length
                 };
 
-                VkHandle<VkDescriptorSetLayout> setLaout = this.descriptorSetLayout;
+                var setLaout = this.descriptorSetLayout.Handle;
 
                 var pipelineLayoutInfo = new VkPipelineLayoutCreateInfo
                 {
@@ -650,8 +650,8 @@ public unsafe partial class SimpleEngineV2 : IDisposable
                     PMultisampleState   = &multisampleState,
                     PColorBlendState    = &colorBlendState,
                     PDynamicState       = &dynamicState,
-                    Layout              = this.pipelineLayout,
-                    RenderPass          = this.renderPass,
+                    Layout              = this.pipelineLayout.Handle,
+                    RenderPass          = this.renderPass.Handle,
                     Subpass             = 0,
                     BasePipelineHandle  = default,
                     PDepthStencilState  = &depthStencilState,
@@ -705,7 +705,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     {
         var createInfo = new VkImageViewCreateInfo
         {
-            Image            = image,
+            Image            = image.Handle,
             ViewType         = VkImageViewType.N2D,
             Format           = format,
             SubresourceRange = new()
@@ -1056,7 +1056,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
                 PreTransform          = swapChainSupport.Capabilities.CurrentTransform,
                 PQueueFamilyIndices   = pQueueFamilyIndices,
                 QueueFamilyIndexCount = (uint)queueFamilyIndices.Length,
-                Surface               = this.surface,
+                Surface               = this.surface.Handle,
             };
 
             this.swapChain       = this.swapchainExtension.CreateSwapchain(createInfo);
@@ -1300,7 +1300,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     {
         commandBuffer.End();
 
-        VkHandle<VkCommandBuffer> handle = commandBuffer;
+        var handle = commandBuffer.Handle;
 
         var submitInfo = new VkSubmitInfo
         {
@@ -1440,7 +1440,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         var barrier = new VkImageMemoryBarrier
         {
-            Image               = image,
+            Image               = image.Handle,
             SrcQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
             DstQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
             SubresourceRange    = new()
@@ -1710,8 +1710,8 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         {
             var renderPassInfo = new VkRenderPassBeginInfo
             {
-                RenderPass  = this.renderPass,
-                Framebuffer = this.swapChainFramebuffers[imageIndex],
+                RenderPass  = this.renderPass.Handle,
+                Framebuffer = this.swapChainFramebuffers[imageIndex].Handle,
                 RenderArea  = new()
                 {
                     Offset = new()
@@ -1832,7 +1832,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             NewLayout           = newLayout,
             SrcQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
             DstQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
-            Image               = image,
+            Image               = image.Handle,
             SrcAccessMask       = srcAccessMask,
             DstAccessMask       = dstAccessMask,
             SubresourceRange    = new()
@@ -1874,7 +1874,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         ubo.Proj[1, 1] *= -1;
 
-        Marshal.StructureToPtr(ubo, (nint)this.uniformBuffersMapped[currentImage], true);
+        Marshal.StructureToPtr(ubo, this.uniformBuffersMapped[currentImage], true);
     }
 
     protected virtual void Dispose(bool disposing)

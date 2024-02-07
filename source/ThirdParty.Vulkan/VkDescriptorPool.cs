@@ -11,19 +11,19 @@ public unsafe partial class VkDescriptorPool : DeviceResource<VkDescriptorPool>
         fixed (VkDescriptorPoolCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*      pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateDescriptorPool(device, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandler));
+            VkException.Check(PInvoke.vkCreateDescriptorPool(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandler));
         }
     }
 
     public VkDescriptorSet[] AllocateDescriptorSets(VkDescriptorSetAllocateInfo allocInfo)
     {
-        allocInfo.DescriptorPool = this;
+        allocInfo.DescriptorPool = this.Handle;
 
         var vkDescriptorSets = new VkHandle<VkDescriptorSet>[allocInfo.DescriptorSetCount];
 
         fixed (VkHandle<VkDescriptorSet>* pDescriptorSets = vkDescriptorSets)
         {
-            VkException.Check(PInvoke.vkAllocateDescriptorSets(this.Device, &allocInfo, pDescriptorSets));
+            VkException.Check(PInvoke.vkAllocateDescriptorSets(this.Device.Handle, &allocInfo, pDescriptorSets));
         }
 
         var descriptorSets = new VkDescriptorSet[vkDescriptorSets.Length];
@@ -40,7 +40,7 @@ public unsafe partial class VkDescriptorPool : DeviceResource<VkDescriptorPool>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyDescriptorPool(this.Device, this, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyDescriptorPool(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }

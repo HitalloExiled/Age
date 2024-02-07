@@ -11,7 +11,7 @@ public unsafe partial class VkShaderModule : DeviceResource<VkShaderModule>
         fixed (VkShaderModuleCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*    pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateShaderModule(device, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateShaderModule(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
         }
     }
 
@@ -19,7 +19,7 @@ public unsafe partial class VkShaderModule : DeviceResource<VkShaderModule>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyShaderModule(this.Device, this, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyShaderModule(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }

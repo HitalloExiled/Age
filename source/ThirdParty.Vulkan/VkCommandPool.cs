@@ -12,7 +12,7 @@ public unsafe partial class VkCommandPool : DeviceResource<VkCommandPool>
         fixed (VkCommandPoolCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*   pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateCommandPool(device, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateCommandPool(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
         }
     }
 
@@ -20,7 +20,7 @@ public unsafe partial class VkCommandPool : DeviceResource<VkCommandPool>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyCommandPool(this.Device, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyCommandPool(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 
@@ -48,7 +48,7 @@ public unsafe partial class VkCommandPool : DeviceResource<VkCommandPool>
 
         fixed (VkHandle<VkCommandBuffer>* pBuffer = buffer)
         {
-            VkException.Check(PInvoke.vkAllocateCommandBuffers(this.Device, &allocateInfo, pBuffer));
+            VkException.Check(PInvoke.vkAllocateCommandBuffers(this.Device.Handle, &allocateInfo, pBuffer));
         }
 
         var commands = new VkCommandBuffer[count];
@@ -66,7 +66,7 @@ public unsafe partial class VkCommandPool : DeviceResource<VkCommandPool>
         fixed (VkHandle<VkCommandPool>*   pHandle         = &this.Handle)
         fixed (VkHandle<VkCommandBuffer>* pCommandBuffers = commandBuffers.Select(x => x.Handle).ToArray())
         {
-            PInvoke.vkFreeCommandBuffers(this.Device, this, (uint)commandBuffers.Length, pCommandBuffers);
+            PInvoke.vkFreeCommandBuffers(this.Device.Handle, this.Handle, (uint)commandBuffers.Length, pCommandBuffers);
         }
     }
 }

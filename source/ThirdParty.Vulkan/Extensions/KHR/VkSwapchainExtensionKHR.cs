@@ -55,7 +55,12 @@ public unsafe class VkSwapchainExtensionKHR : IDeviceExtension<VkSwapchainExtens
     {
         uint imageIndex;
 
-        VkException.Check(this.vkAcquireNextImageKHR.Invoke(this.device, swapchain, timeout, semaphore, fence, &imageIndex));
+        var result = this.vkAcquireNextImageKHR.Invoke(this.device.Handle, swapchain.Handle, timeout, semaphore?.Handle ?? default, fence?.Handle ?? default, &imageIndex);
+
+        if (result is not VkResult.Success and not VkResult.SuboptimalKHR)
+        {
+            throw new VkException(result);
+        }
 
         return imageIndex;
     }
@@ -70,7 +75,7 @@ public unsafe class VkSwapchainExtensionKHR : IDeviceExtension<VkSwapchainExtens
         fixed (VkSwapchainCreateInfoKHR* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*    pAllocator  = &this.device.Instance.Allocator)
         {
-            VkException.Check(this.vkCreateSwapchainKHR.Invoke(this.device, pCreateInfo, PointerHelper.NullIfDefault(this.device.Instance.Allocator, pAllocator), &swapchain));
+            VkException.Check(this.vkCreateSwapchainKHR.Invoke(this.device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.device.Instance.Allocator, pAllocator), &swapchain));
         }
 
         return new(swapchain, this);
@@ -83,7 +88,7 @@ public unsafe class VkSwapchainExtensionKHR : IDeviceExtension<VkSwapchainExtens
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.device.Instance.Allocator)
         {
-            this.vkDestroySwapchainKHR.Invoke(this.device, swapchain, PointerHelper.NullIfDefault(this.device.Instance.Allocator, pAllocator));
+            this.vkDestroySwapchainKHR.Invoke(this.device.Handle, swapchain.Handle, PointerHelper.NullIfDefault(this.device.Instance.Allocator, pAllocator));
         }
     }
 
@@ -94,13 +99,13 @@ public unsafe class VkSwapchainExtensionKHR : IDeviceExtension<VkSwapchainExtens
     {
         uint swapchainImageCount;
 
-        VkException.Check(this.vkGetSwapchainImagesKHR.Invoke(this.device, swapchain, &swapchainImageCount, null));
+        VkException.Check(this.vkGetSwapchainImagesKHR.Invoke(this.device.Handle, swapchain.Handle, &swapchainImageCount, null));
 
         var swapchainImages = new VkHandle<VkImage>[swapchainImageCount];
 
         fixed (VkHandle<VkImage>* pSwapchainImages = swapchainImages)
         {
-            VkException.Check(this.vkGetSwapchainImagesKHR.Invoke(this.device, swapchain, &swapchainImageCount, pSwapchainImages));
+            VkException.Check(this.vkGetSwapchainImagesKHR.Invoke(this.device.Handle, swapchain.Handle, &swapchainImageCount, pSwapchainImages));
         }
 
         var images = new VkImage[swapchainImageCount];
@@ -120,7 +125,7 @@ public unsafe class VkSwapchainExtensionKHR : IDeviceExtension<VkSwapchainExtens
     {
         fixed (VkPresentInfoKHR* pPresentInfo = &presentInfo)
         {
-            VkException.Check(this.vkQueuePresentKHR.Invoke(queue, pPresentInfo));
+            VkException.Check(this.vkQueuePresentKHR.Invoke(queue.Handle, pPresentInfo));
         }
     }
 }

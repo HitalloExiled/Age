@@ -14,7 +14,7 @@ public unsafe partial class VkQueue : ManagedHandle<VkQueue>
 
         fixed (VkHandle<VkQueue>* pHandle = &this.Handle)
         {
-            PInvoke.vkGetDeviceQueue(device, familyIndex, index, pHandle);
+            PInvoke.vkGetDeviceQueue(device.Handle, familyIndex, index, pHandle);
         }
     }
 
@@ -22,7 +22,7 @@ public unsafe partial class VkQueue : ManagedHandle<VkQueue>
     {
         fixed (VkSubmitInfo* pSubmitInfo = &submitInfo)
         {
-            VkException.Check(PInvoke.vkQueueSubmit(this, 1, pSubmitInfo, fence));
+            VkException.Check(PInvoke.vkQueueSubmit(this.Handle, 1, pSubmitInfo, fence?.Handle ?? default));
         }
     }
 
@@ -30,10 +30,10 @@ public unsafe partial class VkQueue : ManagedHandle<VkQueue>
     {
         fixed (VkSubmitInfo* pSubmits = submits)
         {
-            VkException.Check(PInvoke.vkQueueSubmit(this, (uint)submits.Length, pSubmits, fence));
+            VkException.Check(PInvoke.vkQueueSubmit(this.Handle, (uint)submits.Length, pSubmits, fence?.Handle ?? default));
         }
     }
 
     public void WaitIdle() =>
-        VkException.Check(PInvoke.vkQueueWaitIdle(this));
+        VkException.Check(PInvoke.vkQueueWaitIdle(this.Handle));
 }

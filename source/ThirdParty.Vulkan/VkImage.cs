@@ -18,18 +18,18 @@ public unsafe partial class VkImage : DeviceResource<VkImage>
         fixed (VkImageCreateInfo*     pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateImage(device, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateImage(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
         }
     }
 
     public void BindMemory(VkDeviceMemory memory, ulong memoryOffset) =>
-        VkException.Check(PInvoke.vkBindImageMemory(this.Device, this, memory, memoryOffset));
+        VkException.Check(PInvoke.vkBindImageMemory(this.Device.Handle, this.Handle, memory.Handle, memoryOffset));
 
     public void GetMemoryRequirements(out VkMemoryRequirements memoryRequirements)
     {
         fixed (VkMemoryRequirements* pMemoryRequirements = &memoryRequirements)
         {
-            PInvoke.vkGetImageMemoryRequirements(this.Device, this, pMemoryRequirements);
+            PInvoke.vkGetImageMemoryRequirements(this.Device.Handle, this.Handle, pMemoryRequirements);
         }
     }
 
@@ -39,7 +39,7 @@ public unsafe partial class VkImage : DeviceResource<VkImage>
         {
             fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
             {
-                PInvoke.vkDestroyImage(this.Device, this, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+                PInvoke.vkDestroyImage(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
             }
         }
     }

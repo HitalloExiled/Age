@@ -11,7 +11,7 @@ public unsafe partial class VkSampler : DeviceResource<VkSampler>
         fixed (VkSamplerCreateInfo*   pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateSampler(device, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateSampler(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
         }
     }
 
@@ -19,7 +19,7 @@ public unsafe partial class VkSampler : DeviceResource<VkSampler>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroySampler(this.Device, this, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroySampler(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }

@@ -11,7 +11,7 @@ public unsafe partial class VkFramebuffer : DeviceResource<VkFramebuffer>
         fixed (VkFramebufferCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*   pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateFramebuffer(device, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateFramebuffer(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
         }
     }
 
@@ -19,7 +19,7 @@ public unsafe partial class VkFramebuffer : DeviceResource<VkFramebuffer>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyFramebuffer(this.Device, this, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyFramebuffer(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }
