@@ -9,7 +9,7 @@ public unsafe partial class VkGraphicsPipeline : VkPipeline
 
     internal VkGraphicsPipeline(VkDevice device, in VkGraphicsPipelineCreateInfo createInfo, VkPipelineCache? pipelineCache) : base(device)
     {
-        fixed (VkHandle<VkPipeline>*         pHandle     = &this.Handle)
+        fixed (VkHandle<VkPipeline>*         pHandle     = &this.handle)
         fixed (VkGraphicsPipelineCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*        pAllocator  = &this.Instance.Allocator)
         {

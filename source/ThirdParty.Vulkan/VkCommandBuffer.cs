@@ -17,7 +17,7 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
 
     protected override void OnDispose()
     {
-        fixed (VkHandle<VkCommandBuffer>* pHandle = &this.Handle)
+        fixed (VkHandle<VkCommandBuffer>* pHandle = &this.handle)
         {
             PInvoke.vkFreeCommandBuffers(this.device.Handle, this.commandPool.Handle, 1, pHandle);
         }
@@ -31,7 +31,7 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
             Flags = flags,
         };
 
-        VkException.Check(PInvoke.vkBeginCommandBuffer(this.Handle, &commandBufferBeginInfo));
+        VkException.Check(PInvoke.vkBeginCommandBuffer(this.handle, &commandBufferBeginInfo));
     }
 
     /// <inheritdoc cref="PInvoke.vkBeginCommandBuffer" />
@@ -39,7 +39,7 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
     {
         fixed (VkCommandBufferBeginInfo* pBeginInfo = &beginInfo)
         {
-            VkException.Check(PInvoke.vkBeginCommandBuffer(this.Handle, pBeginInfo));
+            VkException.Check(PInvoke.vkBeginCommandBuffer(this.handle, pBeginInfo));
         }
     }
 
@@ -48,17 +48,18 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
     {
         fixed (VkRenderPassBeginInfo* pBeginInfo = &beginInfo)
         {
-            PInvoke.vkCmdBeginRenderPass(this.Handle, pBeginInfo, contents);
+            PInvoke.vkCmdBeginRenderPass(this.handle, pBeginInfo, contents);
         }
     }
 
     /// <inheritdoc cref="PInvoke.vkCmdBindDescriptorSets" />
     public void BindDescriptorSets(VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint firstSet, VkDescriptorSet descriptorSet, uint[] dynamicOffsets)
     {
-        fixed (VkHandle<VkDescriptorSet>* pDescriptorSets = &descriptorSet.Handle)
-        fixed (uint*                      pDynamicOffsets = dynamicOffsets)
+        fixed (uint* pDynamicOffsets = dynamicOffsets)
         {
-            PInvoke.vkCmdBindDescriptorSets(this.Handle, pipelineBindPoint, layout.Handle, firstSet, 1, pDescriptorSets, (uint)dynamicOffsets.Length, pDynamicOffsets);
+            var handle = descriptorSet.Handle;
+
+            PInvoke.vkCmdBindDescriptorSets(this.handle, pipelineBindPoint, layout.Handle, firstSet, 1, &handle, (uint)dynamicOffsets.Length, pDynamicOffsets);
         }
     }
 
@@ -68,25 +69,24 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
         fixed (VkHandle<VkDescriptorSet>* pDescriptorSets = ToHandlers(descriptorSets))
         fixed (uint*                      pDynamicOffsets = dynamicOffsets)
         {
-            PInvoke.vkCmdBindDescriptorSets(this.Handle, pipelineBindPoint, layout.Handle, firstSet, (uint)descriptorSets.Length, pDescriptorSets, (uint)dynamicOffsets.Length, pDynamicOffsets);
+            PInvoke.vkCmdBindDescriptorSets(this.handle, pipelineBindPoint, layout.Handle, firstSet, (uint)descriptorSets.Length, pDescriptorSets, (uint)dynamicOffsets.Length, pDynamicOffsets);
         }
     }
 
     /// <inheritdoc cref="PInvoke.vkCmdBindIndexBuffer" />
     public void BindIndexBuffer(VkBuffer indexBuffer, ulong offset, VkIndexType indexType) =>
-        PInvoke.vkCmdBindIndexBuffer(this.Handle, indexBuffer.Handle, offset, indexType);
+        PInvoke.vkCmdBindIndexBuffer(this.handle, indexBuffer.Handle, offset, indexType);
 
     /// <inheritdoc cref="PInvoke.vkCmdBindPipeline" />
     public void BindPipeline(VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline) =>
-        PInvoke.vkCmdBindPipeline(this.Handle, pipelineBindPoint, pipeline.Handle);
+        PInvoke.vkCmdBindPipeline(this.handle, pipelineBindPoint, pipeline.Handle);
 
     /// <inheritdoc cref="PInvoke.vkCmdBindVertexBuffers" />
     public void BindVertexBuffers(uint firstBinding, uint bindingCount, VkBuffer vertexBuffer, ulong offset)
     {
-        fixed (VkHandle<VkBuffer>* pBuffers = &vertexBuffer.Handle)
-        {
-            PInvoke.vkCmdBindVertexBuffers(this.Handle, firstBinding, bindingCount, pBuffers, &offset);
-        }
+        var handle = vertexBuffer.Handle;
+
+        PInvoke.vkCmdBindVertexBuffers(this.handle, firstBinding, bindingCount, &handle, &offset);
     }
 
     /// <inheritdoc cref="PInvoke.vkCmdBindVertexBuffers" />
@@ -95,7 +95,7 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
         fixed (VkHandle<VkBuffer>* pVertexBuffers = ToHandlers(vertexBuffers))
         fixed (ulong*              pOffsets       = offsets)
         {
-            PInvoke.vkCmdBindVertexBuffers(this.Handle, firstBinding, bindingCount, pVertexBuffers, pOffsets);
+            PInvoke.vkCmdBindVertexBuffers(this.handle, firstBinding, bindingCount, pVertexBuffers, pOffsets);
         }
     }
 
@@ -104,7 +104,7 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
     {
         fixed (VkImageBlit* pRegions = regions)
         {
-            PInvoke.vkCmdBlitImage(this.Handle, srcImage.Handle, srcImageLayout, dstImage.Handle, dstImageLayout, (uint)regions.Length, pRegions, filter);
+            PInvoke.vkCmdBlitImage(this.handle, srcImage.Handle, srcImageLayout, dstImage.Handle, dstImageLayout, (uint)regions.Length, pRegions, filter);
         }
     }
 
@@ -113,7 +113,7 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
     {
         fixed (VkBufferCopy* pRegions = regions)
         {
-            PInvoke.vkCmdCopyBuffer(this.Handle, source.Handle, destination.Handle, (uint)regions.Length, pRegions);
+            PInvoke.vkCmdCopyBuffer(this.handle, source.Handle, destination.Handle, (uint)regions.Length, pRegions);
         }
     }
 
@@ -122,21 +122,21 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
     {
         fixed (VkBufferImageCopy* pRegions = regions)
         {
-            PInvoke.vkCmdCopyBufferToImage(this.Handle, sourceBuffer.Handle, destinationImage.Handle, transferDstOptimal, (uint)regions.Length, pRegions);
+            PInvoke.vkCmdCopyBufferToImage(this.handle, sourceBuffer.Handle, destinationImage.Handle, transferDstOptimal, (uint)regions.Length, pRegions);
         }
     }
 
     /// <inheritdoc cref="PInvoke.vkEndCommandBuffer" />
     public void End() =>
-        VkException.Check(PInvoke.vkEndCommandBuffer(this.Handle));
+        VkException.Check(PInvoke.vkEndCommandBuffer(this.handle));
 
     /// <inheritdoc cref="PInvoke.vkCmdDrawIndexed" />
     public void DrawIndexed(uint indexCount, uint instanceCount, uint firstIndex, int vertexOffset, uint firstInstance) =>
-        PInvoke.vkCmdDrawIndexed(this.Handle, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+        PInvoke.vkCmdDrawIndexed(this.handle, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 
     /// <inheritdoc cref="PInvoke.vkCmdEndRenderPass" />
     public void EndRenderPass() =>
-        PInvoke.vkCmdEndRenderPass(this.Handle);
+        PInvoke.vkCmdEndRenderPass(this.handle);
 
     /// <inheritdoc cref="PInvoke.vkCmdPipelineBarrier" />
     public void PipelineBarrier(
@@ -153,7 +153,7 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
         fixed (VkImageMemoryBarrier*  pImageMemoryBarriers  = imageMemoryBarriers)
         {
             PInvoke.vkCmdPipelineBarrier(
-                this.Handle,
+                this.handle,
                 srcStageMask,
                 dstStageMask,
                 dependencyFlags,
@@ -172,7 +172,7 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
     {
         fixed (VkRect2D* pScissors = scissors)
         {
-            PInvoke.vkCmdSetScissor(this.Handle, firstScissor, (uint)scissors.Length, pScissors);
+            PInvoke.vkCmdSetScissor(this.handle, firstScissor, (uint)scissors.Length, pScissors);
         }
     }
 
@@ -181,11 +181,11 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
     {
         fixed (VkViewport* pViewports = viewports)
         {
-            PInvoke.vkCmdSetViewport(this.Handle, firstViewport, (uint)viewports.Length, pViewports);
+            PInvoke.vkCmdSetViewport(this.handle, firstViewport, (uint)viewports.Length, pViewports);
         }
     }
 
     /// <inheritdoc cref="PInvoke.vkResetCommandBuffer" />
     public void Reset(VkCommandBufferResetFlags flags = default) =>
-        PInvoke.vkResetCommandBuffer(this.Handle, flags);
+        PInvoke.vkResetCommandBuffer(this.handle, flags);
 }

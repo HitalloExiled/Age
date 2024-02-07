@@ -1,13 +1,17 @@
 namespace ThirdParty.Vulkan;
 
+#pragma warning disable IDE1006
+
 public abstract class ManagedHandle<T> where T : ManagedHandle<T>
 {
-    public readonly VkHandle<T> Handle;
+    protected readonly VkHandle<T> handle;
+
+    public VkHandle<T> Handle => this.handle;
 
     internal ManagedHandle() { }
 
     internal ManagedHandle(VkHandle<T> handle) =>
-        this.Handle = handle;
+        this.handle = handle;
 
     public static VkHandle<U>[] ToHandlers<U>(IList<ManagedHandle<U>> source) where U : ManagedHandle<U>
     {
@@ -15,7 +19,7 @@ public abstract class ManagedHandle<T> where T : ManagedHandle<T>
 
         for (var i = 0; i < source.Count; i++)
         {
-            handlers[i] = new(source[i].Handle);
+            handlers[i] = new(source[i].handle);
         }
 
         return handlers;

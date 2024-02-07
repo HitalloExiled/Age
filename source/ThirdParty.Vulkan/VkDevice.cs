@@ -23,7 +23,7 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
         this.PhysicalDevice    = physicalDevice;
         this.enabledExtensions = [.. PointerHelper.ToArray(createInfo.PpEnabledExtensionNames, createInfo.EnabledExtensionCount)];
 
-        fixed (VkHandle<VkDevice>*    pHandle     = &this.Handle)
+        fixed (VkHandle<VkDevice>*    pHandle     = &this.handle)
         fixed (VkDeviceCreateInfo*    pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator  = &this.Instance.Allocator)
         {
@@ -35,7 +35,7 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyDevice(this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyDevice(this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 
@@ -96,7 +96,7 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
         fixed (VkHandle<VkPipeline>*         pPipelines  = vkPipelines)
         fixed (VkAllocationCallbacks*        pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateGraphicsPipelines(this.Handle, pipelineCache.Handle, (uint)createInfos.Length, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pPipelines));
+            VkException.Check(PInvoke.vkCreateGraphicsPipelines(this.handle, pipelineCache.Handle, (uint)createInfos.Length, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pPipelines));
         }
 
         var pipelines = new VkPipeline[vkPipelines.Length];
@@ -135,7 +135,7 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
     {
         fixed (byte* pName = Encoding.UTF8.GetBytes(name))
         {
-            return Marshal.GetDelegateForFunctionPointer<T>((nint)PInvoke.vkGetDeviceProcAddr(this.Handle, pName));
+            return Marshal.GetDelegateForFunctionPointer<T>((nint)PInvoke.vkGetDeviceProcAddr(this.handle, pName));
         }
     }
 
@@ -156,12 +156,12 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
         fixed (VkWriteDescriptorSet* pDescriptorWrites = descriptorWrites)
         fixed (VkCopyDescriptorSet*  pDescriptorCopies = descriptorCopies)
         {
-            PInvoke.vkUpdateDescriptorSets(this.Handle, (uint)descriptorWrites.Length, pDescriptorWrites, (uint)descriptorCopies.Length, pDescriptorCopies);
+            PInvoke.vkUpdateDescriptorSets(this.handle, (uint)descriptorWrites.Length, pDescriptorWrites, (uint)descriptorCopies.Length, pDescriptorCopies);
         }
     }
 
 
     /// <inheritdoc cref="PInvoke.vkDeviceWaitIdle" />
     public void WaitIdle() =>
-        VkException.Check(PInvoke.vkDeviceWaitIdle(this.Handle));
+        VkException.Check(PInvoke.vkDeviceWaitIdle(this.handle));
 }

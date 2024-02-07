@@ -7,7 +7,7 @@ public unsafe partial class VkSemaphore : DeviceResource<VkSemaphore>
 {
     internal VkSemaphore(VkDevice device, in VkSemaphoreCreateInfo createInfo) : base(device)
     {
-        fixed (VkHandle<VkSemaphore>* pHandle     = &this.Handle)
+        fixed (VkHandle<VkSemaphore>* pHandle     = &this.handle)
         fixed (VkSemaphoreCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator  = &this.Instance.Allocator)
         {
@@ -19,7 +19,7 @@ public unsafe partial class VkSemaphore : DeviceResource<VkSemaphore>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroySemaphore(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroySemaphore(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }

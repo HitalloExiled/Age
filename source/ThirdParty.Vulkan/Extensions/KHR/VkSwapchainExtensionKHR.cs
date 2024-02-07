@@ -27,7 +27,7 @@ public unsafe class VkSwapchainExtensionKHR : IDeviceExtension<VkSwapchainExtens
 
     public static string Name { get; } = "VK_KHR_swapchain";
 
-    private readonly VkDevice                  device;
+    private readonly VkDevice                device;
     private readonly VkAcquireNextImageKHR   vkAcquireNextImageKHR;
     private readonly VkCreateSwapchainKHR    vkCreateSwapchainKHR;
     private readonly VkDestroySwapchainKHR   vkDestroySwapchainKHR;

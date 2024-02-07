@@ -8,7 +8,7 @@ public unsafe partial class VkCommandPool : DeviceResource<VkCommandPool>
 {
     public VkCommandPool(VkDevice device, in VkCommandPoolCreateInfo createInfo) : base(device)
     {
-        fixed (VkHandle<VkCommandPool>* pHandle     = &this.Handle)
+        fixed (VkHandle<VkCommandPool>* pHandle     = &this.handle)
         fixed (VkCommandPoolCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*   pAllocator  = &this.Instance.Allocator)
         {
@@ -20,7 +20,7 @@ public unsafe partial class VkCommandPool : DeviceResource<VkCommandPool>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyCommandPool(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyCommandPool(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 
@@ -40,7 +40,7 @@ public unsafe partial class VkCommandPool : DeviceResource<VkCommandPool>
 
     public VkCommandBuffer[] AllocateCommands(VkCommandBufferAllocateInfo allocateInfo)
     {
-        allocateInfo.CommandPool = this.Handle;
+        allocateInfo.CommandPool = this.handle;
 
         var count = allocateInfo.CommandBufferCount;
 
@@ -63,10 +63,10 @@ public unsafe partial class VkCommandPool : DeviceResource<VkCommandPool>
 
     public void FreeCommandBuffers(params VkCommandBuffer[] commandBuffers)
     {
-        fixed (VkHandle<VkCommandPool>*   pHandle         = &this.Handle)
+        fixed (VkHandle<VkCommandPool>*   pHandle         = &this.handle)
         fixed (VkHandle<VkCommandBuffer>* pCommandBuffers = commandBuffers.Select(x => x.Handle).ToArray())
         {
-            PInvoke.vkFreeCommandBuffers(this.Device.Handle, this.Handle, (uint)commandBuffers.Length, pCommandBuffers);
+            PInvoke.vkFreeCommandBuffers(this.Device.Handle, this.handle, (uint)commandBuffers.Length, pCommandBuffers);
         }
     }
 }

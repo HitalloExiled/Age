@@ -7,7 +7,7 @@ public unsafe partial class VkImageView : DeviceResource<VkImageView>
 {
     public VkImageView(VkDevice device, in VkImageViewCreateInfo createInfo) : base(device)
     {
-        fixed (VkHandle<VkImageView>* pHandle     = &this.Handle)
+        fixed (VkHandle<VkImageView>* pHandle     = &this.handle)
         fixed (VkImageViewCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator  = &this.Instance.Allocator)
         {
@@ -19,7 +19,7 @@ public unsafe partial class VkImageView : DeviceResource<VkImageView>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyImageView(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyImageView(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }

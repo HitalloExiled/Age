@@ -7,7 +7,7 @@ public unsafe partial class VkShaderModule : DeviceResource<VkShaderModule>
 {
     internal VkShaderModule(VkDevice device, in VkShaderModuleCreateInfo createInfo) : base(device)
     {
-        fixed (VkHandle<VkShaderModule>* pHandle     = &this.Handle)
+        fixed (VkHandle<VkShaderModule>* pHandle     = &this.handle)
         fixed (VkShaderModuleCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*    pAllocator  = &this.Instance.Allocator)
         {
@@ -19,7 +19,7 @@ public unsafe partial class VkShaderModule : DeviceResource<VkShaderModule>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyShaderModule(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyShaderModule(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }

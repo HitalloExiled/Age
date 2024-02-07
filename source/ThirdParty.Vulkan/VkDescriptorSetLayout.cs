@@ -7,7 +7,7 @@ public unsafe partial class VkDescriptorSetLayout : DeviceResource<VkDescriptorS
 {
     internal VkDescriptorSetLayout(VkDevice device, in VkDescriptorSetLayoutCreateInfo createInfo) : base(device)
     {
-        fixed (VkHandle<VkDescriptorSetLayout>* pHandle     = &this.Handle)
+        fixed (VkHandle<VkDescriptorSetLayout>* pHandle     = &this.handle)
         fixed (VkDescriptorSetLayoutCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*           pAllocator  = &this.Instance.Allocator)
         {
@@ -19,7 +19,7 @@ public unsafe partial class VkDescriptorSetLayout : DeviceResource<VkDescriptorS
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyDescriptorSetLayout(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyDescriptorSetLayout(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }

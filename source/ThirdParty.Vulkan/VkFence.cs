@@ -7,7 +7,7 @@ public unsafe partial class VkFence : DeviceResource<VkFence>
 {
     internal VkFence(VkDevice device, in VkFenceCreateInfo createInfo) : base(device)
     {
-        fixed (VkHandle<VkFence>*     pHandle      = &this.Handle)
+        fixed (VkHandle<VkFence>*     pHandle      = &this.handle)
         fixed (VkFenceCreateInfo*     pCcreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator   = &this.Instance.Allocator)
         {
@@ -70,15 +70,15 @@ public unsafe partial class VkFence : DeviceResource<VkFence>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyFence(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyFence(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 
     /// <inheritdoc cref="PInvoke.vkResetFences" />
     public void Reset() =>
-        Reset(this.Device.Handle, this.Handle);
+        Reset(this.Device.Handle, this.handle);
 
     /// <inheritdoc cref="PInvoke.vkWaitForFences" />
     public void Wait(bool waitAll, ulong timeout) =>
-        Wait(this.Device.Handle, this.Handle, waitAll, timeout);
+        Wait(this.Device.Handle, this.handle, waitAll, timeout);
 }

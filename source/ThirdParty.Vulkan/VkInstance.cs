@@ -21,7 +21,7 @@ public unsafe partial class VkInstance : DisposableManagedHandle<VkInstance>
         this.Allocator         = allocator;
         this.enabledExtensions = [.. PointerHelper.ToArray(createInfo.PpEnabledExtensionNames, createInfo.EnabledExtensionCount)];
 
-        fixed (VkHandle<VkInstance>*  pHandler    = &this.Handle)
+        fixed (VkHandle<VkInstance>*  pHandler    = &this.handle)
         fixed (VkInstanceCreateInfo*  pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator  = &allocator)
         {
@@ -70,7 +70,7 @@ public unsafe partial class VkInstance : DisposableManagedHandle<VkInstance>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Allocator)
         {
-            PInvoke.vkDestroyInstance(this.Handle, PointerHelper.NullIfDefault(this.Allocator, pAllocator));
+            PInvoke.vkDestroyInstance(this.handle, PointerHelper.NullIfDefault(this.Allocator, pAllocator));
         }
     }
 
@@ -79,13 +79,13 @@ public unsafe partial class VkInstance : DisposableManagedHandle<VkInstance>
     {
         uint physicalDeviceCount;
 
-        VkException.Check(PInvoke.vkEnumeratePhysicalDevices(this.Handle, &physicalDeviceCount, null));
+        VkException.Check(PInvoke.vkEnumeratePhysicalDevices(this.handle, &physicalDeviceCount, null));
 
         var vkPhysicalDevices = new VkHandle<VkPhysicalDevice>[physicalDeviceCount];
 
         fixed (VkHandle<VkPhysicalDevice>* pPhysicalDevices = vkPhysicalDevices)
         {
-            VkException.Check(PInvoke.vkEnumeratePhysicalDevices(this.Handle, &physicalDeviceCount, pPhysicalDevices));
+            VkException.Check(PInvoke.vkEnumeratePhysicalDevices(this.handle, &physicalDeviceCount, pPhysicalDevices));
         }
 
         var physicalDevices = new VkPhysicalDevice[physicalDeviceCount];
@@ -103,7 +103,7 @@ public unsafe partial class VkInstance : DisposableManagedHandle<VkInstance>
     {
         fixed (byte* pName = Encoding.UTF8.GetBytes(name))
         {
-            return Marshal.GetDelegateForFunctionPointer<T>((nint)PInvoke.vkGetInstanceProcAddr(this.Handle, pName));
+            return Marshal.GetDelegateForFunctionPointer<T>((nint)PInvoke.vkGetInstanceProcAddr(this.handle, pName));
         }
     }
 

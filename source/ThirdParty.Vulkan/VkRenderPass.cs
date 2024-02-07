@@ -7,7 +7,7 @@ public unsafe partial class VkRenderPass : DeviceResource<VkRenderPass>
 {
     internal VkRenderPass(VkDevice device, in VkRenderPassCreateInfo createInfo) : base(device)
     {
-        fixed (VkHandle<VkRenderPass>* pHandle     = &this.Handle)
+        fixed (VkHandle<VkRenderPass>* pHandle     = &this.handle)
         fixed (VkRenderPassCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*  pAllocator  = &this.Instance.Allocator)
         {
@@ -19,7 +19,7 @@ public unsafe partial class VkRenderPass : DeviceResource<VkRenderPass>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyRenderPass(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyRenderPass(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }

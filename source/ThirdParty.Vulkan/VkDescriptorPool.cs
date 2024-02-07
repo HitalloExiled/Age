@@ -7,7 +7,7 @@ public unsafe partial class VkDescriptorPool : DeviceResource<VkDescriptorPool>
 {
     internal VkDescriptorPool(VkDevice device, in VkDescriptorPoolCreateInfo createInfo) : base(device)
     {
-        fixed (VkHandle<VkDescriptorPool>* pHandler    = &this.Handle)
+        fixed (VkHandle<VkDescriptorPool>* pHandler    = &this.handle)
         fixed (VkDescriptorPoolCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*      pAllocator  = &this.Instance.Allocator)
         {
@@ -17,7 +17,7 @@ public unsafe partial class VkDescriptorPool : DeviceResource<VkDescriptorPool>
 
     public VkDescriptorSet[] AllocateDescriptorSets(VkDescriptorSetAllocateInfo allocInfo)
     {
-        allocInfo.DescriptorPool = this.Handle;
+        allocInfo.DescriptorPool = this.handle;
 
         var vkDescriptorSets = new VkHandle<VkDescriptorSet>[allocInfo.DescriptorSetCount];
 
@@ -40,7 +40,7 @@ public unsafe partial class VkDescriptorPool : DeviceResource<VkDescriptorPool>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyDescriptorPool(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyDescriptorPool(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }

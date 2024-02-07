@@ -8,7 +8,7 @@ public unsafe partial class VkDeviceMemory : DeviceResource<VkDeviceMemory>
 {
     internal VkDeviceMemory(VkDevice device, in VkMemoryAllocateInfo allocateInfo) : base(device)
     {
-        fixed (VkHandle<VkDeviceMemory>* pHandle       = &this.Handle)
+        fixed (VkHandle<VkDeviceMemory>* pHandle       = &this.handle)
         fixed (VkMemoryAllocateInfo*     pAllocateInfo = &allocateInfo)
         fixed (VkAllocationCallbacks*    pAllocator    = &this.Instance.Allocator)
         {
@@ -20,7 +20,7 @@ public unsafe partial class VkDeviceMemory : DeviceResource<VkDeviceMemory>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkFreeMemory(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkFreeMemory(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 
@@ -33,7 +33,7 @@ public unsafe partial class VkDeviceMemory : DeviceResource<VkDeviceMemory>
     {
         var ppData = (T**)NativeMemory.Alloc((uint)(sizeof(T*) * data.Length));
 
-        VkException.Check(PInvoke.vkMapMemory(this.Device.Handle, this.Handle, offset, (uint)(sizeof(T) * data.Length), flags, (void**)ppData));
+        VkException.Check(PInvoke.vkMapMemory(this.Device.Handle, this.handle, offset, (uint)(sizeof(T) * data.Length), flags, (void**)ppData));
 
         PointerHelper.Copy(data, *ppData, (uint)data.Length);
 
@@ -45,7 +45,7 @@ public unsafe partial class VkDeviceMemory : DeviceResource<VkDeviceMemory>
     {
         fixed (T** ppData = &pData)
         {
-            PInvoke.vkMapMemory(this.Device.Handle, this.Handle, offset, (ulong)Marshal.SizeOf<T>(), flags, (void**)ppData);
+            PInvoke.vkMapMemory(this.Device.Handle, this.handle, offset, (ulong)Marshal.SizeOf<T>(), flags, (void**)ppData);
         }
     }
 
@@ -54,11 +54,11 @@ public unsafe partial class VkDeviceMemory : DeviceResource<VkDeviceMemory>
     {
         fixed (nint* ppData = &pData)
         {
-            PInvoke.vkMapMemory(this.Device.Handle, this.Handle, offset, size, flags, (void**)ppData);
+            PInvoke.vkMapMemory(this.Device.Handle, this.handle, offset, size, flags, (void**)ppData);
         }
     }
 
     /// <inheritdoc cref="PInvoke.vkUnmapMemory" />
     public void Unmap() =>
-        PInvoke.vkUnmapMemory(this.Device.Handle, this.Handle);
+        PInvoke.vkUnmapMemory(this.Device.Handle, this.handle);
 }

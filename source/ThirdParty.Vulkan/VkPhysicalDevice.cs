@@ -25,13 +25,13 @@ public unsafe partial class VkPhysicalDevice : ManagedHandle<VkPhysicalDevice>
         {
             uint propertyCount;
 
-            VkException.Check(PInvoke.vkEnumerateDeviceExtensionProperties(this.Handle, pLayerName, &propertyCount, null));
+            VkException.Check(PInvoke.vkEnumerateDeviceExtensionProperties(this.handle, pLayerName, &propertyCount, null));
 
             var properties = new VkExtensionProperties[propertyCount];
 
             fixed (VkExtensionProperties* pProperties = properties)
             {
-                VkException.Check(PInvoke.vkEnumerateDeviceExtensionProperties(this.Handle, pLayerName, &propertyCount, pProperties));
+                VkException.Check(PInvoke.vkEnumerateDeviceExtensionProperties(this.handle, pLayerName, &propertyCount, pProperties));
             }
 
             return properties;
@@ -43,7 +43,7 @@ public unsafe partial class VkPhysicalDevice : ManagedHandle<VkPhysicalDevice>
     {
         fixed (VkPhysicalDeviceFeatures* pFeatures = &features)
         {
-            PInvoke.vkGetPhysicalDeviceFeatures(this.Handle, pFeatures);
+            PInvoke.vkGetPhysicalDeviceFeatures(this.handle, pFeatures);
         }
     }
 
@@ -52,7 +52,7 @@ public unsafe partial class VkPhysicalDevice : ManagedHandle<VkPhysicalDevice>
     {
         fixed (VkFormatProperties* pFormatProperties = &formatProperties)
         {
-            PInvoke.vkGetPhysicalDeviceFormatProperties(this.Handle, format, pFormatProperties);
+            PInvoke.vkGetPhysicalDeviceFormatProperties(this.handle, format, pFormatProperties);
         }
     }
 
@@ -61,7 +61,7 @@ public unsafe partial class VkPhysicalDevice : ManagedHandle<VkPhysicalDevice>
     {
         fixed (VkPhysicalDeviceMemoryProperties* pMemoryProperties = &memoryProperties)
         {
-            PInvoke.vkGetPhysicalDeviceMemoryProperties(this.Handle, pMemoryProperties);
+            PInvoke.vkGetPhysicalDeviceMemoryProperties(this.handle, pMemoryProperties);
         }
     }
 
@@ -70,7 +70,7 @@ public unsafe partial class VkPhysicalDevice : ManagedHandle<VkPhysicalDevice>
     {
         fixed (VkPhysicalDeviceProperties* pProperties = &properties)
         {
-            PInvoke.vkGetPhysicalDeviceProperties(this.Handle, pProperties);
+            PInvoke.vkGetPhysicalDeviceProperties(this.handle, pProperties);
         }
     }
 
@@ -79,13 +79,13 @@ public unsafe partial class VkPhysicalDevice : ManagedHandle<VkPhysicalDevice>
     {
         uint qeueFamilyPropertyCount;
 
-        PInvoke.vkGetPhysicalDeviceQueueFamilyProperties(this.Handle, &qeueFamilyPropertyCount, null);
+        PInvoke.vkGetPhysicalDeviceQueueFamilyProperties(this.handle, &qeueFamilyPropertyCount, null);
 
         var queueFamilyProperties = new VkQueueFamilyProperties[qeueFamilyPropertyCount];
 
         fixed (VkQueueFamilyProperties* pQueueFamilyProperties = queueFamilyProperties)
         {
-            PInvoke.vkGetPhysicalDeviceQueueFamilyProperties(this.Handle, &qeueFamilyPropertyCount, pQueueFamilyProperties);
+            PInvoke.vkGetPhysicalDeviceQueueFamilyProperties(this.handle, &qeueFamilyPropertyCount, pQueueFamilyProperties);
         }
 
         return queueFamilyProperties;

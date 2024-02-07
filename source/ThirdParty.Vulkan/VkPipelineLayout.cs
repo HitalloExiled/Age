@@ -7,7 +7,7 @@ public unsafe partial class VkPipelineLayout : DeviceResource<VkPipelineLayout>
 {
     internal VkPipelineLayout(VkDevice device, in VkPipelineLayoutCreateInfo createInfo) : base(device)
     {
-        fixed (VkHandle<VkPipelineLayout>* pHandle     = &this.Handle)
+        fixed (VkHandle<VkPipelineLayout>* pHandle     = &this.handle)
         fixed (VkPipelineLayoutCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*      pAllocator  = &this.Instance.Allocator)
         {
@@ -19,7 +19,7 @@ public unsafe partial class VkPipelineLayout : DeviceResource<VkPipelineLayout>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyPipelineLayout(this.Device.Handle, this.Handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyPipelineLayout(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
         }
     }
 }
