@@ -121,12 +121,19 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
         new(this, createInfo);
 
     /// <inheritdoc cref="PInvoke.vkCreateSemaphore" />
+    public VkSemaphore CreateSemaphore() =>
+        new(this, new());
+
+    /// <inheritdoc cref="PInvoke.vkCreateSemaphore" />
     public VkSemaphore CreateSemaphore(in VkSemaphoreCreateInfo createInfo) =>
         new(this, createInfo);
 
     /// <inheritdoc cref="PInvoke.vkCreateShaderModule" />
     public VkShaderModule CreateShaderModule(in VkShaderModuleCreateInfo createInfo) =>
         new(this, createInfo);
+
+    public T GetExtension<T>() where T : IDeviceExtension<T> =>
+        this.TryGetExtension<T>(out var extension) ? extension : throw new InvalidOperationException($"Can't load required extension {T.Name}");
 
 
     /// <inheritdoc cref="PInvoke.vkGetDeviceProcAddr" />
@@ -158,7 +165,6 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
             PInvoke.vkUpdateDescriptorSets(this.handle, (uint)descriptorWrites.Length, pDescriptorWrites, (uint)descriptorCopies.Length, pDescriptorCopies);
         }
     }
-
 
     /// <inheritdoc cref="PInvoke.vkDeviceWaitIdle" />
     public void WaitIdle() =>

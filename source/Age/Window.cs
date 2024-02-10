@@ -7,7 +7,7 @@ namespace Age;
 
 public class Window(string title, Size<uint> size, Point<int> position, Platforms.Display.Window? parent = null) : Platforms.Display.Window(title, size, position, parent), IWindow
 {
-    public new static IEnumerable<Window> Windows => windows.Values.Cast<Window>();
+    public new static IEnumerable<Window> Windows => Platforms.Display.Window.Windows.Cast<Window>();
 
     public Content Content { get; } = new();
 

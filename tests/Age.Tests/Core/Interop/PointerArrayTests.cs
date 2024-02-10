@@ -7,7 +7,7 @@ public unsafe class PointerArrayTests
     [Fact]
     public void NonGenericPointer()
     {
-        using var pointer = new PointerArray(sizeof(int) * 4);
+        using var pointer = new NativeArray(sizeof(int) * 4);
 
         var ptr = pointer.As<int>();
 
@@ -37,7 +37,7 @@ public unsafe class PointerArrayTests
     [Fact]
     public void GenericPointer()
     {
-        var pointer = new PointerArray<int>(4);
+        var pointer = new NativeArray<int>(4);
 
         int* ptr = pointer;
 
@@ -65,7 +65,7 @@ public unsafe class PointerArrayTests
     [Fact]
     public void GenericPointerAccessAfterDisposedShouldThows()
     {
-        var pointer = new PointerArray<int>(4);
+        var pointer = new NativeArray<int>(4);
         pointer.Dispose();
 
         Assert.Throws<NullReferenceException>(() => pointer[0] == 1);
@@ -74,7 +74,7 @@ public unsafe class PointerArrayTests
     [Fact]
     public void NonGenericPointerAccessAfterDisposedShouldThows()
     {
-        var pointer = new PointerArray(sizeof(int) * 4);
+        var pointer = new NativeArray(sizeof(int) * 4);
         pointer.Dispose();
 
         Assert.Throws<NullReferenceException>(() => pointer.Set(0, 1));

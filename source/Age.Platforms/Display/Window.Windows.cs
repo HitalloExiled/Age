@@ -14,7 +14,7 @@ public partial class Window
 
     private static LRESULT WndProc(HWND hwnd, User32.WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam)
     {
-        if (windows.TryGetValue(hwnd, out var window))
+        if (WindowsMap.TryGetValue(hwnd, out var window))
         {
             switch (msg)
             {
@@ -97,18 +97,18 @@ public partial class Window
 
     protected virtual void PlatformClose()
     {
-        foreach (var child in this.children)
+        foreach (var child in this.Children)
         {
             child.Closed = true;
 
-            windows.Remove(child.Handle);
+            WindowsMap.Remove(child.Handle);
 
             child.WindowClosed?.Invoke();
         }
 
         User32.DestroyWindow(this.Handle);
 
-        windows.Remove(this.Handle);
+        WindowsMap.Remove(this.Handle);
     }
 
     protected virtual void PlatformCreate(string title, Size<uint> size, Point<int> position, Window? parent)
@@ -138,7 +138,7 @@ public partial class Window
             throw new Exception("Failed to create window on Windows OS.");
 		}
 
-        windows[this.Handle] = this;
+        WindowsMap[this.Handle] = this;
     }
 
     protected void PlatformDoEvents()

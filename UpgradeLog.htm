@@ -2,7 +2,7 @@
 <!-- saved from url=(0014)about:internet -->
  <html xmlns:msxsl="urn:schemas-microsoft-com:xslt"><head><meta content="en-us" http-equiv="Content-Language" /><meta content="text/html; charset=utf-16" http-equiv="Content-Type" /><title _locID="ConversionReport0">
           Relatório de Migração
-        </title><style> 
+        </title><style>
                     /* Body style, for the entire document */
                     body
                     {
@@ -19,7 +19,7 @@
                         padding: 10px 0px 10px 10px;
                         font-size: 21pt;
                         background-color: #E2E2E2;
-                        border-bottom: 1px #C1C1C2 solid; 
+                        border-bottom: 1px #C1C1C2 solid;
                         color: #201F20;
                         margin: 0;
                         font-weight: normal;
@@ -50,7 +50,7 @@
                         color: #1382CE;
                     }
 
-                    /* Table styles */ 
+                    /* Table styles */
                     table
                     {
                         border-spacing: 0 0;
@@ -91,7 +91,7 @@
                         text-decoration: none;
                     }
 
-                    /* Center text, used in the over views cells that contain message level counts */ 
+                    /* Center text, used in the over views cells that contain message level counts */
                     .textCentered
                     {
                         text-align: center;
@@ -103,17 +103,17 @@
                         width: 100%;
                     }
 
-                    /* Padding around the content after the h1 */ 
-                    #content 
+                    /* Padding around the content after the h1 */
+                    #content
                     {
-	                    padding: 0px 12px 12px 12px; 
+	                    padding: 0px 12px 12px 12px;
                     }
 
-                    /* The overview table expands to width, with a max width of 97% */ 
+                    /* The overview table expands to width, with a max width of 97% */
                     #overview table
                     {
                         width: auto;
-                        max-width: 75%; 
+                        max-width: 75%;
                     }
 
                     /* The messages tables are always 97% width */
@@ -126,7 +126,7 @@
                     .IconSuccessEncoded, .IconInfoEncoded, .IconWarningEncoded, .IconErrorEncoded
                     {
                         min-width:18px;
-                        min-height:18px; 
+                        min-height:18px;
                         background-repeat:no-repeat;
                         background-position:center;
                     }
@@ -162,26 +162,26 @@
                         /* [---XsltValidateInternal-Base64EncodedImage:IconError#Begin#background-image: url(data:image/png;base64,#Separator#);#End#] */
                         background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABQElEQVR4XqWTvUoEQRCE6wYPZUA80AfwAQz23uCMjA7MDRQEIzPBVEyNTQUFIw00vcQTTMzuAh/AxEQQT8HF/3G/oGGnEUGuoNnd6qoZuqltyKEsyzVJq5I6rnUp6SjGeGhESikzzlc1eL7opfuVbrqbU1Zw9NCgtQMaZpY0eNnaaL2fHusvTK5vKu7sjSS1Y4y3QUA6K3e3Mau5UFDyMP7tYF9o8cAHZv68vipoIJg971PZIZ5HiwdvYGGvFVFHmGmZ2MxwmQYPXubPl9Up0tfoMQGetXd6mRbvhBw+boZ6WF7Mbv1+GsHRk0fQmPAH1GfmZirbCfDJ61tw3Px8/8pZsPAG4jlVhcPgZ7adwNWBB68lkRQWFiTgFlbnLY3DGGM7izIJIyT/jjIvEJw6fdJTc6krDzh6aMwMP9bvDH4ADSsa9uSWVJkAAAAASUVORK5CYII=);
                     }
-                 </style><script type="text/javascript" language="javascript"> 
-          
-            // Startup 
+                 </style><script type="text/javascript" language="javascript">
+
+            // Startup
             // Hook up the the loaded event for the document/window, to linkify the document content
             var startupFunction = function() { linkifyElement("messages"); };
-            
+
             if(window.attachEvent)
             {
               window.attachEvent('onload', startupFunction);
             }
-            else if (window.addEventListener) 
+            else if (window.addEventListener)
             {
               window.addEventListener('load', startupFunction, false);
             }
-            else 
+            else
             {
               document.addEventListener('load', startupFunction, false);
-            } 
-            
-            // Toggles the visibility of table rows with the specified name 
+            }
+
+            // Toggles the visibility of table rows with the specified name
             function toggleTableRowsByName(name)
             {
                var allRows = document.getElementsByTagName('tr');
@@ -190,81 +190,81 @@
                   var currentName = allRows[i].getAttribute('name');
                   if(!!currentName && currentName.indexOf(name) == 0)
                   {
-                      var isVisible = allRows[i].style.display == ''; 
+                      var isVisible = allRows[i].style.display == '';
                       isVisible ? allRows[i].style.display = 'none' : allRows[i].style.display = '';
                   }
                }
             }
-            
-            function scrollToFirstVisibleRow(name) 
+
+            function scrollToFirstVisibleRow(name)
             {
                var allRows = document.getElementsByTagName('tr');
                for (i=0; i < allRows.length; i++)
                {
                   var currentName = allRows[i].getAttribute('name');
-                  var isVisible = allRows[i].style.display == ''; 
+                  var isVisible = allRows[i].style.display == '';
                   if(!!currentName && currentName.indexOf(name) == 0 && isVisible)
                   {
-                     allRows[i].scrollIntoView(true); 
-                     return true; 
+                     allRows[i].scrollIntoView(true);
+                     return true;
                   }
                }
-               
+
                return false;
             }
-            
-            // Linkifies the specified text content, replaces candidate links with html links 
+
+            // Linkifies the specified text content, replaces candidate links with html links
             function linkify(text)
             {
                  if(!text || 0 === text.length)
                  {
-                     return text; 
+                     return text;
                  }
 
-                 // Find http, https and ftp links and replace them with hyper links 
+                 // Find http, https and ftp links and replace them with hyper links
                  var urlLink = /(http|https|ftp)\:\/\/[a-zA-Z0-9\-\.]+(:[a-zA-Z0-9]*)?\/?([a-zA-Z0-9\-\._\?\,\/\\\+&%\$#\=~;\{\}])*/gi;
-                 
+
                  return text.replace(urlLink, '<a href="$&">$&</a>') ;
             }
-            
+
             // Linkifies the specified element by ID
             function linkifyElement(id)
             {
                 var element = document.getElementById(id);
                 if(!!element)
                 {
-                  element.innerHTML = linkify(element.innerHTML); 
+                  element.innerHTML = linkify(element.innerHTML);
                 }
             }
-            
+
             function ToggleMessageVisibility(projectName)
             {
               if(!projectName || 0 === projectName.length)
               {
-                return; 
+                return;
               }
-              
+
               toggleTableRowsByName("MessageRowClass" + projectName);
               toggleTableRowsByName('MessageRowHeaderShow' + projectName);
-              toggleTableRowsByName('MessageRowHeaderHide' + projectName); 
+              toggleTableRowsByName('MessageRowHeaderHide' + projectName);
             }
-            
+
             function ScrollToFirstVisibleMessage(projectName)
             {
               if(!projectName || 0 === projectName.length)
               {
-                return; 
+                return;
               }
-              
+
               // First try the 'Show messages' row
               if(!scrollToFirstVisibleRow('MessageRowHeaderShow' + projectName))
               {
-                // Failed to find a visible row for 'Show messages', try an actual message row 
-                scrollToFirstVisibleRow('MessageRowClass' + projectName); 
+                // Failed to find a visible row for 'Show messages', try an actual message row
+                scrollToFirstVisibleRow('MessageRowClass' + projectName);
               }
             }
            </script></head><body><h1 _locID="ConversionReport">
-          Relatório de Migração - </h1><div id="content"><h2 _locID="OverviewTitle">Visão geral</h2><div id="overview"><table><tr><th></th><th _locID="ProjectTableHeader">Projeto</th><th _locID="PathTableHeader">Caminho</th><th _locID="ErrorsTableHeader">Erros</th><th _locID="WarningsTableHeader">Avisos</th><th _locID="MessagesTableHeader">Mensagens</th></tr><tr><td class="IconWarningEncoded" /><td><strong><a href="#Solution"><span _locID="OverviewSolutionSpan">Solução</span></a></strong></td><td>Age.sln</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#SolutionWarning">1</a></td><td class="textCentered"><a href="#" onclick="ScrollToFirstVisibleMessage('Solution'); return false;">2</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age">Age</a></strong></td><td>source\Age\Age.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Core">Age.Core</a></strong></td><td>source\Age.Core\Age.Core.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Numerics">Age.Numerics</a></strong></td><td>source\Age.Numerics\Age.Numerics.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Platforms">Age.Platforms</a></strong></td><td>source\Age.Platforms\Age.Platforms.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Playground">Age.Playground</a></strong></td><td>source\Age.Playground\Age.Playground.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Rendering">Age.Rendering</a></strong></td><td>source\Age.Rendering\Age.Rendering.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Resources">Age.Resources</a></strong></td><td>source\Age.Resources\Age.Resources.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Tests">Age.Tests</a></strong></td><td>tests\Age.Tests\Age.Tests.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Vulkan">Age.Vulkan</a></strong></td><td>source\Age.Vulkan\Age.Vulkan.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#source">source</a></strong></td><td>source</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#tests">tests</a></strong></td><td>tests</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#ThirdParty.Shaderc">ThirdParty.Shaderc</a></strong></td><td>source\ThirdParty.Shaderc\ThirdParty.Shaderc.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#ThirdParty.Tests">ThirdParty.Tests</a></strong></td><td>tests\ThirdParty.Tests\ThirdParty.Tests.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#ThirdParty.Vulkan">ThirdParty.Vulkan</a></strong></td><td>source\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr></table></div><h2 _locID="SolutionAndProjectsTitle">Solução e projetos</h2><div id="messages"><a name="Solution" /><h3 _locID="ProjectDisplayNameHeader">Solução</h3><table><tr id="SolutionHeaderRow"><th></th><th class="messageCell" _locID="MessageTableHeader">Mensagem</th></tr><tr name="WarningRowClassSolution"><td class="IconWarningEncoded"><a name="SolutionWarning" /></td><td class="messageCell"><strong>Age.sln:
+          Relatório de Migração - </h1><div id="content"><h2 _locID="OverviewTitle">Visão geral</h2><div id="overview"><table><tr><th></th><th _locID="ProjectTableHeader">Projeto</th><th _locID="PathTableHeader">Caminho</th><th _locID="ErrorsTableHeader">Erros</th><th _locID="WarningsTableHeader">Avisos</th><th _locID="MessagesTableHeader">Mensagens</th></tr><tr><td class="IconWarningEncoded" /><td><strong><a href="#Solution"><span _locID="OverviewSolutionSpan">Solução</span></a></strong></td><td>Age.sln</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#SolutionWarning">1</a></td><td class="textCentered"><a href="#" onclick="ScrollToFirstVisibleMessage('Solution'); return false;">2</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age">Age</a></strong></td><td>source\Age\Age.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Core">Age.Core</a></strong></td><td>source\Age.Core\Age.Core.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Numerics">Age.Numerics</a></strong></td><td>source\Age.Numerics\Age.Numerics.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Platforms">Age.Platforms</a></strong></td><td>source\Age.Platforms\Age.Platforms.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Playground">Age.Playground</a></strong></td><td>source\Age.Playground\Age.Playground.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Rendering">Age.Rendering</a></strong></td><td>source\Age.Rendering\Age.Rendering.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Resources">Age.Resources</a></strong></td><td>source\Age.Resources\Age.Resources.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#Age.Tests">Age.Tests</a></strong></td><td>tests\Age.Tests\Age.Tests.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#ThirdParty.Vulkan">ThirdParty.Vulkan</a></strong></td><td>source\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#source">source</a></strong></td><td>source</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#tests">tests</a></strong></td><td>tests</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#ThirdParty.Shaderc">ThirdParty.Shaderc</a></strong></td><td>source\ThirdParty.Shaderc\ThirdParty.Shaderc.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#ThirdParty.Tests">ThirdParty.Tests</a></strong></td><td>tests\ThirdParty.Tests\ThirdParty.Tests.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr><tr><td class="IconSuccessEncoded" /><td><strong><a href="#ThirdParty.Vulkan">ThirdParty.Vulkan</a></strong></td><td>source\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj</td><td class="textCentered"><a>0</a></td><td class="textCentered"><a>0</a></td><td class="textCentered"><a href="#">0</a></td></tr></table></div><h2 _locID="SolutionAndProjectsTitle">Solução e projetos</h2><div id="messages"><a name="Solution" /><h3 _locID="ProjectDisplayNameHeader">Solução</h3><table><tr id="SolutionHeaderRow"><th></th><th class="messageCell" _locID="MessageTableHeader">Mensagem</th></tr><tr name="WarningRowClassSolution"><td class="IconWarningEncoded"><a name="SolutionWarning" /></td><td class="messageCell"><strong>Age.sln:
         </strong><span>O Visual Studio precisa fazer alterações não funcionais a este projeto para permitir que ele seja aberto em versões liberadas do Visual Studio mais novas que o Visual Studio 2010 SP1 sem impactar o comportamento do projeto.</span></td></tr><tr name="MessageRowHeaderShowSolution"><td class="IconInfoEncoded" /><td class="messageCell"><a _locID="ShowAdditionalMessages" href="#" name="SolutionMessage" onclick="ToggleMessageVisibility('Solution'); return false;">
           Mostrar 2 mensagens adicionais
         </a></td></tr><tr name="MessageRowClassSolution" style="display: none"><td class="IconInfoEncoded"><a name="SolutionMessage" /></td><td class="messageCell"><strong>Age.sln:
@@ -279,7 +279,7 @@
                   </td></tr></table><a name="Age.Rendering" /><h3>Age.Rendering</h3><table><tr id="Age.RenderingHeaderRow"><th></th><th class="messageCell" _locID="MessageTableHeader">Mensagem</th></tr><tr><td class="IconInfoEncoded" /><td class="messageCell" _locID="NoMessagesRow">Age.Rendering nenhuma mensagem registrada em log.
                   </td></tr></table><a name="Age.Resources" /><h3>Age.Resources</h3><table><tr id="Age.ResourcesHeaderRow"><th></th><th class="messageCell" _locID="MessageTableHeader">Mensagem</th></tr><tr><td class="IconInfoEncoded" /><td class="messageCell" _locID="NoMessagesRow">Age.Resources nenhuma mensagem registrada em log.
                   </td></tr></table><a name="Age.Tests" /><h3>Age.Tests</h3><table><tr id="Age.TestsHeaderRow"><th></th><th class="messageCell" _locID="MessageTableHeader">Mensagem</th></tr><tr><td class="IconInfoEncoded" /><td class="messageCell" _locID="NoMessagesRow">Age.Tests nenhuma mensagem registrada em log.
-                  </td></tr></table><a name="Age.Vulkan" /><h3>Age.Vulkan</h3><table><tr id="Age.VulkanHeaderRow"><th></th><th class="messageCell" _locID="MessageTableHeader">Mensagem</th></tr><tr><td class="IconInfoEncoded" /><td class="messageCell" _locID="NoMessagesRow">Age.Vulkan nenhuma mensagem registrada em log.
+                  </td></tr></table><a name="ThirdParty.Vulkan" /><h3>ThirdParty.Vulkan</h3><table><tr id="ThirdParty.VulkanHeaderRow"><th></th><th class="messageCell" _locID="MessageTableHeader">Mensagem</th></tr><tr><td class="IconInfoEncoded" /><td class="messageCell" _locID="NoMessagesRow">ThirdParty.Vulkan nenhuma mensagem registrada em log.
                   </td></tr></table><a name="source" /><h3>source</h3><table><tr id="sourceHeaderRow"><th></th><th class="messageCell" _locID="MessageTableHeader">Mensagem</th></tr><tr><td class="IconInfoEncoded" /><td class="messageCell" _locID="NoMessagesRow">source nenhuma mensagem registrada em log.
                   </td></tr></table><a name="tests" /><h3>tests</h3><table><tr id="testsHeaderRow"><th></th><th class="messageCell" _locID="MessageTableHeader">Mensagem</th></tr><tr><td class="IconInfoEncoded" /><td class="messageCell" _locID="NoMessagesRow">tests nenhuma mensagem registrada em log.
                   </td></tr></table><a name="ThirdParty.Shaderc" /><h3>ThirdParty.Shaderc</h3><table><tr id="ThirdParty.ShadercHeaderRow"><th></th><th class="messageCell" _locID="MessageTableHeader">Mensagem</th></tr><tr><td class="IconInfoEncoded" /><td class="messageCell" _locID="NoMessagesRow">ThirdParty.Shaderc nenhuma mensagem registrada em log.

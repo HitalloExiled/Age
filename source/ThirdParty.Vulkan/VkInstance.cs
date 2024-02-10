@@ -97,8 +97,11 @@ public unsafe partial class VkInstance : DisposableManagedHandle<VkInstance>
         return physicalDevices;
     }
 
+    public T GetExtension<T>() where T : IInstanceExtension<T> =>
+        this.TryGetExtension<T>(out var extension) ? extension : throw new InvalidOperationException($"Can't load extension {T.Name}");
+
     /// <inheritdoc cref="PInvoke.vkGetInstanceProcAddr" />
-    internal T GetProcAddr<T>(string name) where T : Delegate
+    public T GetProcAddr<T>(string name) where T : Delegate
     {
         fixed (byte* pName = Encoding.UTF8.GetBytes(name))
         {

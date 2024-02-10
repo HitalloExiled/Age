@@ -53,7 +53,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
                 Pixels = pixels,
             };
 
-            var texture = this.renderingService.CreateTexture(image, TextureType.T2D, this.sampler);
+            var texture = this.renderingService.CreateTexture(image, TextureType.N2D, this.sampler);
 
             this.glyphs[(character, fontSize)] = glyph = new()
             {

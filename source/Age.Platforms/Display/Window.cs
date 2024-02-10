@@ -7,12 +7,13 @@ public partial class Window : IDisposable
     public event Action? SizeChanged;
     public event Action? WindowClosed;
 
-    protected static readonly Dictionary<nint, Window> windows = [];
-    protected static string? className;
+    private static string? className;
 
-    protected readonly List<Window> children = [];
+    protected static readonly Dictionary<nint, Window> WindowsMap = [];
 
-    public static IEnumerable<Window> Windows = windows.Values;
+    protected readonly List<Window> Children = [];
+
+    public static IEnumerable<Window> Windows => WindowsMap.Values;
 
     private Point<int> position;
     private Size<uint> size;
@@ -43,7 +44,7 @@ public partial class Window : IDisposable
 
         this.PlatformCreate(title, size, position, parent);
 
-        parent?.children.Add(this);
+        parent?.Children.Add(this);
     }
 
     public static void Register(string className)
@@ -62,17 +63,17 @@ public partial class Window : IDisposable
 
     public static void CloseAll()
     {
-        foreach (var window in windows.Values)
+        foreach (var window in WindowsMap.Values)
         {
             window.Close();
         }
 
-        windows.Clear();
+        WindowsMap.Clear();
     }
 
     public static void DoEventsAll()
     {
-        foreach (var window in windows.Values)
+        foreach (var window in WindowsMap.Values)
         {
             window.DoEvents();
         }
@@ -97,7 +98,7 @@ public partial class Window : IDisposable
         {
             this.PlatformClose();
 
-            this.Parent?.children.Remove(this);
+            this.Parent?.Children.Remove(this);
             WindowClosed?.Invoke();
 
             this.Closed = true;

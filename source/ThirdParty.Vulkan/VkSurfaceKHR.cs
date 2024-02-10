@@ -27,4 +27,6 @@ public unsafe class VkSurfaceKHR : DisposableManagedHandle<VkSurfaceKHR>
     /// <inheritdoc cref="VkSurfaceExtensionKHR.GetPhysicalDeviceSurfacePresentModes" />
     public VkPresentModeKHR[] GetPresentModes(VkPhysicalDevice physicalDevice) =>
         this.extension.GetPhysicalDeviceSurfacePresentModes(physicalDevice, this);
+    public bool GetSupport(VkPhysicalDevice physicalDevice, uint queueFamilyIndex) =>
+        this.extension.GetPhysicalDeviceSurfaceSupport(physicalDevice, queueFamilyIndex, this);
 }

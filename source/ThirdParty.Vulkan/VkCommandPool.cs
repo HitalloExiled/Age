@@ -1,5 +1,5 @@
 using Age.Core.Interop;
-using ThirdParty.Vulkan.Flags;
+using ThirdParty.Vulkan.Enums;
 
 namespace ThirdParty.Vulkan;
 
@@ -23,10 +23,10 @@ public unsafe partial class VkCommandPool : VkDeviceResource<VkCommandPool>
         }
     }
 
-    public VkCommandBuffer AllocateCommand(VkCommandBufferLevelFlags level) =>
+    public VkCommandBuffer AllocateCommand(VkCommandBufferLevel level) =>
         this.AllocateCommands(1, level)[0];
 
-    public VkCommandBuffer[] AllocateCommands(uint count, VkCommandBufferLevelFlags level)
+    public VkCommandBuffer[] AllocateCommands(uint count, VkCommandBufferLevel level)
     {
         var allocateInfo = new VkCommandBufferAllocateInfo
         {

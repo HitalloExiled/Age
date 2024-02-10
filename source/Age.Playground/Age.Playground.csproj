@@ -10,7 +10,7 @@
     <ProjectReference Include="..\Age.Numerics\Age.Numerics.csproj" />
     <ProjectReference Include="..\Age.Platforms\Age.Platforms.csproj" />
     <ProjectReference Include="..\Age.Resources\Age.Resources.csproj" />
-    <ProjectReference Include="..\Age.Vulkan\Age.Vulkan.csproj" />
+    <ProjectReference Include="..\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj" />
     <ProjectReference Include="..\Age\Age.csproj" />
     <ProjectReference Include="..\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj" />
   </ItemGroup>

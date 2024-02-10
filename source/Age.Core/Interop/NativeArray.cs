@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Age.Core.Interop;
 
-public unsafe record struct PointerArray(int Lenght = 1) : IDisposable
+public unsafe record struct NativeArray(int Lenght = 1) : IDisposable
 {
     private nint handler = (nint)NativeMemory.Alloc((uint)Lenght);
 
@@ -16,14 +16,14 @@ public unsafe record struct PointerArray(int Lenght = 1) : IDisposable
     public readonly T Get<T>(int offset) where T : unmanaged => ((T*)this.handler)[offset];
     public readonly T Set<T>(int offset, T value) where T : unmanaged => ((T*)this.handler)[offset] = value;
 
-    public static implicit operator nint(PointerArray value) => value.handler;
+    public static implicit operator nint(NativeArray value) => value.handler;
 }
 
-public unsafe record struct PointerArray<T>(int Lenght = 1) : IDisposable where T : unmanaged
+public unsafe record struct NativeArray<T>(int Lenght = 1) : IDisposable where T : unmanaged
 {
     private nint handler = (nint)NativeMemory.Alloc((uint)(sizeof(T) * Lenght));
 
-    public PointerArray(IList<T> values) : this(values.Count)
+    public NativeArray(IList<T> values) : this(values.Count)
     {
         for (var i = 0; i < values.Count; i++)
         {
@@ -44,5 +44,5 @@ public unsafe record struct PointerArray<T>(int Lenght = 1) : IDisposable where 
         this.handler = default;
     }
 
-    public static implicit operator T*(PointerArray<T> value) => (T*)value.handler;
+    public static implicit operator T*(NativeArray<T> value) => (T*)value.handler;
 }

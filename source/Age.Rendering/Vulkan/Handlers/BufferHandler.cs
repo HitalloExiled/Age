@@ -1,5 +1,5 @@
-using Age.Vulkan.Flags;
-using Age.Vulkan.Types;
+using ThirdParty.Vulkan;
+using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Vulkan.Handlers;
 

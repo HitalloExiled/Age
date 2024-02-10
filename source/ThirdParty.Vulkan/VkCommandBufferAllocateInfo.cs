@@ -1,5 +1,4 @@
 using ThirdParty.Vulkan.Enums;
-using ThirdParty.Vulkan.Flags;
 
 namespace ThirdParty.Vulkan;
 
@@ -12,7 +11,7 @@ public unsafe struct VkCommandBufferAllocateInfo
 
     public void*                     PNext;
     public VkHandle<VkCommandPool>   CommandPool;
-    public VkCommandBufferLevelFlags Level;
+    public VkCommandBufferLevel Level;
     public uint                      CommandBufferCount;
 
     public VkCommandBufferAllocateInfo() =>

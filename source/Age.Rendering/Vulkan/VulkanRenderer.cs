@@ -1,18 +1,14 @@
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Age.Core;
 using Age.Core.Interop;
 using Age.Rendering.Enums;
 using Age.Rendering.Vulkan.Handlers;
 using Age.Rendering.Vulkan.Uniforms;
-using Age.Vulkan;
-using Age.Vulkan.Enums;
-using Age.Vulkan.Flags;
-using Age.Vulkan.Flags.EXT;
-using Age.Vulkan.Types;
-using Age.Vulkan.Types.EXT;
 using ThirdParty.Shaderc.Enums;
+using ThirdParty.Vulkan;
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Flags;
 using SpirvCompiler = ThirdParty.Shaderc.Compiler;
 
 namespace Age.Rendering.Vulkan;
@@ -21,103 +17,88 @@ public unsafe partial class VulkanRenderer : IDisposable
 {
     private const ushort MAX_DESCRIPTORS_PER_POOL = 64;
     private readonly Dictionary<VkDescriptorType, List<DescriptorPoolHandler>> descriptorPools = [];
-    private readonly Vk                                                        vk;
     private readonly SpirvCompiler                                             spirvCompiler = new();
 
     private bool disposed;
 
-    public VulkanContext Context { get; }
-
-    public VulkanRenderer()
-    {
-        this.Context = new();
-        this.vk      = this.Context.Vk;
-    }
+    public VulkanContext Context { get; } = new();
 
     private static VkDescriptorType ConvertToDescriptorType(UniformType type) =>
         type switch
         {
-            UniformType.CombinedImageSampler => VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            UniformType.UniformBuffer        => VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            UniformType.CombinedImageSampler => VkDescriptorType.CombinedImageSampler,
+            UniformType.UniformBuffer        => VkDescriptorType.UniformBuffer,
             _ => throw new NotImplementedException(),
         };
 
     private static VkImageType ConvertToImageType(TextureType type) =>
         type switch
         {
-            TextureType.T1D or TextureType.T1DArray                                              => VkImageType.VK_IMAGE_TYPE_1D,
-            TextureType.T2D or TextureType.T2DArray or TextureType.Cube or TextureType.CubeArray => VkImageType.VK_IMAGE_TYPE_2D,
-            TextureType.T3D                                                                      => VkImageType.VK_IMAGE_TYPE_3D,
+            TextureType.N1D or TextureType.N1DArray                                              => VkImageType.N1D,
+            TextureType.N2D or TextureType.N2DArray or TextureType.Cube or TextureType.CubeArray => VkImageType.N2D,
+            TextureType.N3D                                                                      => VkImageType.N3D,
             _ => throw new NotImplementedException(),
         };
 
     private static VkImageViewType ConvertToImageViewType(TextureType type) =>
         type switch
         {
-            TextureType.T1D       => VkImageViewType.VK_IMAGE_VIEW_TYPE_1D,
-            TextureType.T1DArray  => VkImageViewType.VK_IMAGE_VIEW_TYPE_1D_ARRAY,
-            TextureType.T2D       => VkImageViewType.VK_IMAGE_VIEW_TYPE_2D,
-            TextureType.T2DArray  => VkImageViewType.VK_IMAGE_VIEW_TYPE_2D_ARRAY,
-            TextureType.T3D       => VkImageViewType.VK_IMAGE_VIEW_TYPE_3D,
-            TextureType.Cube      => VkImageViewType.VK_IMAGE_VIEW_TYPE_CUBE,
-            TextureType.CubeArray => VkImageViewType.VK_IMAGE_VIEW_TYPE_CUBE_ARRAY,
+            TextureType.N1D       => VkImageViewType.N1D,
+            TextureType.N1DArray  => VkImageViewType.N1DArray,
+            TextureType.N2D       => VkImageViewType.N2D,
+            TextureType.N2DArray  => VkImageViewType.N2DArray,
+            TextureType.N3D       => VkImageViewType.N3D,
+            TextureType.Cube      => VkImageViewType.Cube,
+            TextureType.CubeArray => VkImageViewType.CubeArray,
             _ => throw new NotImplementedException(),
         };
 
-    private unsafe static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+    private unsafe static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
         var defaultColor = Console.ForegroundColor;
 
         var color = messageSeverity switch
         {
-            VkDebugUtilsMessageSeverityFlagBitsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT => ConsoleColor.DarkRed,
-            VkDebugUtilsMessageSeverityFlagBitsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT => ConsoleColor.DarkYellow,
-            VkDebugUtilsMessageSeverityFlagBitsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT => ConsoleColor.DarkBlue,
+            VkDebugUtilsMessageSeverityFlagsEXT.Error => ConsoleColor.DarkRed,
+            VkDebugUtilsMessageSeverityFlagsEXT.Warning => ConsoleColor.DarkYellow,
+            VkDebugUtilsMessageSeverityFlagsEXT.Info => ConsoleColor.DarkBlue,
             _ => defaultColor
         };
 
         Console.ForegroundColor = color;
 
-        Console.WriteLine("validation layer: " + Marshal.PtrToStringAnsi((nint)pCallbackData->pMessage));
+        Console.WriteLine("validation layer: " + Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage));
 
         Console.ForegroundColor = defaultColor;
 
         return true;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void VkCheck(in VkResult result)
-    {
-        if (result != VkResult.VK_SUCCESS)
-        {
-            throw new Exception($"Vulkan Error: {result}");
-        }
-    }
-
-    private void CreateBuffer(VkDeviceSize size, VkBufferUsageFlagBits usage, VkMemoryPropertyFlagBits properties, out VkBuffer buffer, out Allocation allocation)
+    private void CreateBuffer(ulong size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, out VkBuffer buffer, out Allocation allocation)
     {
         var bufferCreateInfo = new VkBufferCreateInfo
         {
-            size  = size,
-            usage = usage,
+            Size  = size,
+            Usage = usage,
         };
 
         var device = this.Context.Device;
 
-        VkCheck(this.vk.CreateBuffer(device, bufferCreateInfo, default, out buffer));
+        buffer = device.CreateBuffer(bufferCreateInfo);
 
-        this.vk.GetBufferMemoryRequirements(device, buffer, out var memRequirements);
+        buffer.GetMemoryRequirements(out var memRequirements);
 
-        var memoryType = this.Context.FindMemoryType(memRequirements.memoryTypeBits, properties);
+        var memoryType = this.Context.FindMemoryType(memRequirements.MemoryTypeBits, properties);
 
         var memoryAllocateInfo = new VkMemoryAllocateInfo
         {
-            allocationSize  = memRequirements.size,
-            memoryTypeIndex = memoryType
+            AllocationSize  = memRequirements.Size,
+            MemoryTypeIndex = memoryType
         };
 
-        VkCheck(this.vk.AllocateMemory(device, memoryAllocateInfo, default, out var memory));
-        VkCheck(this.vk.BindBufferMemory(device, buffer, memory, 0));
+        var memory = device.AllocateMemory(memoryAllocateInfo);
+
+        buffer.BindMemory(memory, 0);
 
         allocation = new()
         {
@@ -130,24 +111,21 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     private VkDescriptorSet[] CreateDescriptorSets(VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout)
     {
-        var descriptorSetLayouts = new VkDescriptorSetLayout[VulkanContext.MAX_FRAMES_IN_FLIGHT]
+        var descriptorSetLayouts = new VkHandle<VkDescriptorSetLayout>[VulkanContext.MAX_FRAMES_IN_FLIGHT]
         {
-            descriptorSetLayout,
-            descriptorSetLayout,
+            descriptorSetLayout.Handle,
+            descriptorSetLayout.Handle,
         };
 
-        fixed (VkDescriptorSetLayout* pSetLayouts = descriptorSetLayouts)
+        fixed (VkHandle<VkDescriptorSetLayout>* pSetLayouts = descriptorSetLayouts)
         {
             var descriptorSetAllocateInfo = new VkDescriptorSetAllocateInfo
             {
-                descriptorPool     = descriptorPool,
-                descriptorSetCount = VulkanContext.MAX_FRAMES_IN_FLIGHT,
-                pSetLayouts        = pSetLayouts,
+                DescriptorSetCount = VulkanContext.MAX_FRAMES_IN_FLIGHT,
+                PSetLayouts        = pSetLayouts,
             };
 
-            VkCheck(this.vk.AllocateDescriptorSets(this.Context.Device, descriptorSetAllocateInfo, out var descriptorSets));
-
-            return descriptorSets;
+            return descriptorPool.AllocateDescriptorSets(descriptorSetAllocateInfo);
         }
     }
 
@@ -169,27 +147,27 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         var sizes = new List<VkDescriptorPoolSize>();
 
-        if (descriptorType.HasFlag(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER))
+        if (descriptorType.HasFlag(VkDescriptorType.UniformBuffer))
         {
-            sizes.Add(new() { type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = MAX_DESCRIPTORS_PER_POOL });
+            sizes.Add(new() { Type = VkDescriptorType.UniformBuffer, DescriptorCount = MAX_DESCRIPTORS_PER_POOL });
         }
 
-        if (descriptorType.HasFlag(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER))
+        if (descriptorType.HasFlag(VkDescriptorType.CombinedImageSampler))
         {
-            sizes.Add(new() { type = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, descriptorCount = MAX_DESCRIPTORS_PER_POOL });
+            sizes.Add(new() { Type = VkDescriptorType.CombinedImageSampler, DescriptorCount = MAX_DESCRIPTORS_PER_POOL });
         }
 
         fixed (VkDescriptorPoolSize* pPoolSizes = sizes.ToArray())
         {
             var descriptorPoolCreateInfo = new VkDescriptorPoolCreateInfo
             {
-                flags         = VkDescriptorPoolCreateFlagBits.VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-                maxSets       = MAX_DESCRIPTORS_PER_POOL,
-                poolSizeCount = (uint)sizes.Count,
-                pPoolSizes    = pPoolSizes,
+                Flags         = VkDescriptorPoolCreateFlags.FreeDescriptorSet,
+                MaxSets       = MAX_DESCRIPTORS_PER_POOL,
+                PoolSizeCount = (uint)sizes.Count,
+                PPoolSizes    = pPoolSizes,
             };
 
-            VkCheck(this.vk.CreateDescriptorPool(this.Context.Device, descriptorPoolCreateInfo, default, out var descriptorPool));
+            var descriptorPool = this.Context.Device.CreateDescriptorPool(descriptorPoolCreateInfo);
 
             var descriptorPoolHandler = new DescriptorPoolHandler
             {
@@ -210,10 +188,10 @@ public unsafe partial class VulkanRenderer : IDisposable
         {
             new()
             {
-                binding         = 0,
-                descriptorCount = 1,
-                descriptorType  = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                stageFlags      = VkShaderStageFlagBits.VK_SHADER_STAGE_FRAGMENT_BIT,
+                Binding         = 0,
+                DescriptorCount = 1,
+                DescriptorType  = VkDescriptorType.CombinedImageSampler,
+                StageFlags      = VkShaderStageFlags.Fragment,
             },
         };
 
@@ -221,76 +199,77 @@ public unsafe partial class VulkanRenderer : IDisposable
         {
             var descriptorSetLayoutCreateInfo = new VkDescriptorSetLayoutCreateInfo
             {
-                pBindings    = pBindings,
-                bindingCount = (uint)descriptorSetLayoutBindings.Length,
+                PBindings    = pBindings,
+                BindingCount = (uint)descriptorSetLayoutBindings.Length,
             };
 
-            VkCheck(this.vk.CreateDescriptorSetLayout(this.Context.Device, descriptorSetLayoutCreateInfo, default, out var descriptorSetLayout));
+            var descriptorSetLayout = this.Context.Device.CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
             return descriptorSetLayout;
         }
     }
 
-    private void CreateImage(uint width, uint height, VkSampleCountFlagBits samples, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits usage, VkMemoryPropertyFlagBits properties, out VkImage image, out Allocation allocation)
+    private void CreateImage(uint width, uint height, VkSampleCountFlags samples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, out VkImage image, out Allocation allocation)
     {
         var imageCreateInfo = new VkImageCreateInfo
         {
-            arrayLayers = 1,
-            extent      = new()
+            ArrayLayers = 1,
+            Extent      = new()
             {
-                depth  = 1,
-                height = height,
-                width  = width,
+                Depth  = 1,
+                Height = height,
+                Width  = width,
             },
-            format        = format,
-            imageType     = VkImageType.VK_IMAGE_TYPE_2D,
-            initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-            mipLevels     = 1,
-            samples       = samples,
-            tiling        = tiling,
-            usage         = usage,
+            Format        = format,
+            ImageType     = VkImageType.N2D,
+            InitialLayout = VkImageLayout.Undefined,
+            MipLevels     = 1,
+            Samples       = samples,
+            Tiling        = tiling,
+            Usage         = usage,
         };
 
-        VkCheck(this.vk.CreateImage(this.Context.Device, imageCreateInfo, default, out image));
+        image = this.Context.Device.CreateImage(imageCreateInfo);
 
-        this.vk.GetImageMemoryRequirements(this.Context.Device, image, out var memRequirements);
+        image.GetMemoryRequirements(out var memRequirements);
 
-        var memoryType = this.Context.FindMemoryType(memRequirements.memoryTypeBits, properties);
+        var memoryType = this.Context.FindMemoryType(memRequirements.MemoryTypeBits, properties);
 
         var memoryAllocateInfo = new VkMemoryAllocateInfo
         {
-            allocationSize  = memRequirements.size,
-            memoryTypeIndex = memoryType,
+            AllocationSize  = memRequirements.Size,
+            MemoryTypeIndex = memoryType,
         };
 
-        VkCheck(this.vk.AllocateMemory(this.Context.Device, memoryAllocateInfo, default, out var deviceMemory));
-        VkCheck(this.vk.BindImageMemory(this.Context.Device, image, deviceMemory, 0));
+        var deviceMemory = this.Context.Device.AllocateMemory(memoryAllocateInfo);
+
+        image.BindMemory(deviceMemory, 0);
 
         allocation = new()
         {
             Memory     = deviceMemory,
             Memorytype = memoryType,
             Offset     = 0,
-            Size       = memRequirements.size,
+            Size       = memRequirements.Size,
         };
     }
 
-    private VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlagBits aspect)
+    private VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspect)
     {
         var imageViewCreateInfo = new VkImageViewCreateInfo
         {
-            format           = format,
-            image            = image,
-            subresourceRange = new()
+            Format           = format,
+            Image            = image.Handle,
+            SubresourceRange = new()
             {
-                aspectMask = aspect,
-                layerCount = 1,
-                levelCount = 1,
+                AspectMask = aspect,
+                LayerCount = 1,
+                LevelCount = 1,
             },
-            viewType = VkImageViewType.VK_IMAGE_VIEW_TYPE_2D,
+            ViewType = VkImageViewType.N2D,
         };
 
-        VkCheck(this.vk.CreateImageView(this.Context.Device, imageViewCreateInfo, default, out var imageView));
+        var imageView = this.Context.Device.CreateImageView(imageViewCreateInfo);
 
         return imageView;
     }
@@ -329,54 +308,54 @@ public unsafe partial class VulkanRenderer : IDisposable
             {
                 new()
                 {
-                    module = vertShaderModule,
-                    pName  = pName,
-                    stage  = VkShaderStageFlagBits.VK_SHADER_STAGE_VERTEX_BIT,
+                    Module = vertShaderModule.Handle,
+                    PName  = pName,
+                    Stage  = VkShaderStageFlags.Vertex,
                 },
                 new()
                 {
-                    module = fragShaderModule,
-                    pName  = pName,
-                    stage  = VkShaderStageFlagBits.VK_SHADER_STAGE_FRAGMENT_BIT,
+                    Module = fragShaderModule.Handle,
+                    PName  = pName,
+                    Stage  = VkShaderStageFlags.Fragment,
                 },
             };
 
             var vertexInputBindingDescription = new VkVertexInputBindingDescription
             {
-                binding   = 0,
-                stride    = (uint)Marshal.SizeOf<Vertex>(),
-                inputRate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX,
+                Binding   = 0,
+                Stride    = (uint)Marshal.SizeOf<Vertex>(),
+                InputRate = VkVertexInputRate.Vertex,
             };
 
             var vertexInputAttributeDescription = new VkVertexInputAttributeDescription[]
             {
                 new()
                 {
-                    binding  = 0,
-                    format   = VkFormat.VK_FORMAT_R32G32_SFLOAT,
-                    location = 0,
-                    offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.Position)),
+                    Binding  = 0,
+                    Format   = VkFormat.R32G32Sfloat,
+                    Location = 0,
+                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.Position)),
                 },
                 new()
                 {
-                    binding  = 0,
-                    format   = VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT,
-                    location = 1,
-                    offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.Color)),
+                    Binding  = 0,
+                    Format   = VkFormat.R32G32B32A32Sfloat,
+                    Location = 1,
+                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.Color)),
                 },
                 new()
                 {
-                    binding  = 0,
-                    format   = VkFormat.VK_FORMAT_R32G32_SFLOAT,
-                    location = 2,
-                    offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.UV)),
+                    Binding  = 0,
+                    Format   = VkFormat.R32G32Sfloat,
+                    Location = 2,
+                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.UV)),
                 },
             };
 
             var dynamicStates = new VkDynamicState[]
             {
-                VkDynamicState.VK_DYNAMIC_STATE_VIEWPORT,
-                VkDynamicState.VK_DYNAMIC_STATE_SCISSOR,
+                VkDynamicState.Viewport,
+                VkDynamicState.Scissor,
             };
 
             fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription)
@@ -385,79 +364,79 @@ public unsafe partial class VulkanRenderer : IDisposable
             {
                 var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
                 {
-                    topology = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                    Topology = VkPrimitiveTopology.TriangleList,
                 };
 
                 var pipelineVertexInputStateCreateInfo = new VkPipelineVertexInputStateCreateInfo
                 {
-                    pVertexAttributeDescriptions    = pVertexAttributeDescriptions,
-                    pVertexBindingDescriptions      = &vertexInputBindingDescription,
-                    vertexAttributeDescriptionCount = (uint)vertexInputAttributeDescription.Length,
-                    vertexBindingDescriptionCount   = 1,
+                    PVertexAttributeDescriptions    = pVertexAttributeDescriptions,
+                    PVertexBindingDescriptions      = &vertexInputBindingDescription,
+                    VertexAttributeDescriptionCount = (uint)vertexInputAttributeDescription.Length,
+                    VertexBindingDescriptionCount   = 1,
                 };
 
                 var pipelineDynamicStateCreateInfo = new VkPipelineDynamicStateCreateInfo
                 {
-                    dynamicStateCount = (uint)dynamicStates.Length,
-                    pDynamicStates    = pDynamicStates,
+                    DynamicStateCount = (uint)dynamicStates.Length,
+                    PDynamicStates    = pDynamicStates,
                 };
 
                 var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
                 {
-                    blendEnable    = true,
-                    colorWriteMask = VkColorComponentFlagBits.VK_COLOR_COMPONENT_R_BIT
-                        | VkColorComponentFlagBits.VK_COLOR_COMPONENT_G_BIT
-                        | VkColorComponentFlagBits.VK_COLOR_COMPONENT_B_BIT
-                        | VkColorComponentFlagBits.VK_COLOR_COMPONENT_A_BIT,
-                    dstColorBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                    srcAlphaBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_ONE,
-                    srcColorBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_SRC_ALPHA,
+                    BlendEnable    = true,
+                    ColorWriteMask = VkColorComponentFlags.R
+                        | VkColorComponentFlags.G
+                        | VkColorComponentFlags.B
+                        | VkColorComponentFlags.A,
+                    DstColorBlendFactor = VkBlendFactor.OneMinusSrcAlpha,
+                    SrcAlphaBlendFactor = VkBlendFactor.One,
+                    SrcColorBlendFactor = VkBlendFactor.SrcAlpha,
                 };
 
                 var pipelineColorBlendStateCreateInfo = new VkPipelineColorBlendStateCreateInfo
                 {
-                    attachmentCount = 1,
-                    pAttachments    = &pipelineColorBlendAttachmentState,
+                    AttachmentCount = 1,
+                    PAttachments    = &pipelineColorBlendAttachmentState,
                 };
 
                 var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
                 {
-                    rasterizationSamples = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
+                    RasterizationSamples = VkSampleCountFlags.N1,
                 };
 
                 var pipelineRasterizationStateCreateInfo = new VkPipelineRasterizationStateCreateInfo
                 {
-                    cullMode    = VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT,
-                    frontFace   = VkFrontFace.VK_FRONT_FACE_CLOCKWISE,
-                    lineWidth   = 1,
-                    polygonMode = VkPolygonMode.VK_POLYGON_MODE_FILL,
+                    CullMode    = VkCullModeFlags.Back,
+                    FrontFace   = VkFrontFace.Clockwise,
+                    LineWidth   = 1,
+                    PolygonMode = VkPolygonMode.Fill,
                 };
 
                 var pipelineViewportStateCreateInfo = new VkPipelineViewportStateCreateInfo
                 {
-                    viewportCount = 1,
-                    scissorCount  = 1,
+                    ViewportCount = 1,
+                    ScissorCount  = 1,
                 };
 
                 var graphicsPipelineCreateInfo = new VkGraphicsPipelineCreateInfo
                 {
-                    layout              = pipelineLayout,
-                    pColorBlendState    = &pipelineColorBlendStateCreateInfo,
-                    pDynamicState       = &pipelineDynamicStateCreateInfo,
-                    pInputAssemblyState = &inputAssembly,
-                    pMultisampleState   = &pipelineMultisampleStateCreateInfo,
-                    pRasterizationState = &pipelineRasterizationStateCreateInfo,
-                    pStages             = pPipelineShaderStageCreateInfos,
-                    pVertexInputState   = &pipelineVertexInputStateCreateInfo,
-                    pViewportState      = &pipelineViewportStateCreateInfo,
-                    stageCount          = (uint)pipelineShaderStageCreateInfos.Length,
-                    renderPass          = renderPass,
+                    Layout              = pipelineLayout.Handle,
+                    PColorBlendState    = &pipelineColorBlendStateCreateInfo,
+                    PDynamicState       = &pipelineDynamicStateCreateInfo,
+                    PInputAssemblyState = &inputAssembly,
+                    PMultisampleState   = &pipelineMultisampleStateCreateInfo,
+                    PRasterizationState = &pipelineRasterizationStateCreateInfo,
+                    PStages             = pPipelineShaderStageCreateInfos,
+                    PVertexInputState   = &pipelineVertexInputStateCreateInfo,
+                    PViewportState      = &pipelineViewportStateCreateInfo,
+                    StageCount          = (uint)pipelineShaderStageCreateInfos.Length,
+                    RenderPass          = renderPass.Handle,
                 };
 
-                VkCheck(this.vk.CreateGraphicsPipelines(this.Context.Device, default, graphicsPipelineCreateInfo, default, out var pipeline));
+                var pipeline = this.Context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);
 
-                this.vk.DestroyShaderModule(this.Context.Device, fragShaderModule, null);
-                this.vk.DestroyShaderModule(this.Context.Device, vertShaderModule, null);
+                fragShaderModule.Dispose();
+                vertShaderModule.Dispose();
 
                 return pipeline;
             }
@@ -466,98 +445,94 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     private VkPipelineLayout CreatePipelineLayout(VkDescriptorSetLayout descriptorSetLayout)
     {
-        var pipelineLayoutCreateInfo = new VkPipelineLayoutCreateInfo
+        var descriptorSetLayoutHandle = descriptorSetLayout.Handle;
+
+        var createInfo = new VkPipelineLayoutCreateInfo
         {
-            pSetLayouts    = &descriptorSetLayout,
-            setLayoutCount = 1,
+            PSetLayouts    = &descriptorSetLayoutHandle,
+            SetLayoutCount = 1,
         };
 
-        VkCheck(this.vk.CreatePipelineLayout(this.Context.Device, pipelineLayoutCreateInfo, default, out var pipelineLayout));
-
-        return pipelineLayout;
+        return this.Context.Device.CreatePipelineLayout(createInfo);
     }
 
     private VkShaderModule CreateShaderModule(byte[] buffer)
     {
         fixed (byte* pCode = buffer)
         {
-            var shaderModuleCreateInfo = new VkShaderModuleCreateInfo
+            var createInfo = new VkShaderModuleCreateInfo
             {
-                codeSize = (uint)buffer.Length,
-                pCode    = (uint*)pCode,
+                CodeSize = (uint)buffer.Length,
+                PCode    = (uint*)pCode,
             };
 
-            VkCheck(this.vk.CreateShaderModule(this.Context.Device, shaderModuleCreateInfo, default, out var shaderModule));
-
-            return shaderModule;
+            return this.Context.Device.CreateShaderModule(createInfo);
         }
     }
 
     private VkFramebuffer CreateFrameBuffer(VkRenderPass renderPass, VkImageView imageView, VkExtent2D extent)
     {
-        var framebufferCreateInfo = new VkFramebufferCreateInfo
+        var imageViewHandle = imageView.Handle;
+
+        var createInfo = new VkFramebufferCreateInfo
         {
-            attachmentCount = 1,
-            height          = extent.height,
-            layers          = 1,
-            pAttachments    = &imageView,
-            width           = extent.width,
-            renderPass      = renderPass,
+            AttachmentCount = 1,
+            Height          = extent.Height,
+            Layers          = 1,
+            PAttachments    = &imageViewHandle,
+            Width           = extent.Width,
+            RenderPass      = renderPass.Handle,
         };
 
-        VkCheck(this.vk.CreateFramebuffer(this.Context.Device, framebufferCreateInfo, default, out var framebuffer));
-
-        return framebuffer;
+        return this.Context.Device.CreateFramebuffer(createInfo);
     }
 
     private VkRenderPass CreateRenderPass(VkFormat format)
     {
         var attachmentDescription = new VkAttachmentDescription
         {
-            samples        = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
-            finalLayout    = VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-            format         = format,
-            initialLayout  = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-            loadOp         = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR,
-            stencilLoadOp  = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR,
-            stencilStoreOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            Samples        = VkSampleCountFlags.N1,
+            FinalLayout    = VkImageLayout.PresentSrcKHR,
+            Format         = format,
+            InitialLayout  = VkImageLayout.Undefined,
+            LoadOp         = VkAttachmentLoadOp.Clear,
+            StencilLoadOp  = VkAttachmentLoadOp.Clear,
+            StencilStoreOp = VkAttachmentStoreOp.DontCare,
         };
 
         var attachmentReference = new VkAttachmentReference
         {
-            layout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            Layout = VkImageLayout.ColorAttachmentOptimal,
         };
 
         var subpass = new VkSubpassDescription
         {
-            colorAttachmentCount = 1,
-            pColorAttachments    = &attachmentReference,
-            pipelineBindPoint    = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
+            ColorAttachmentCount = 1,
+            PColorAttachments    = &attachmentReference,
+            PipelineBindPoint    = VkPipelineBindPoint.Graphics,
         };
 
         var renderPassCreateInfo = new VkRenderPassCreateInfo
         {
-            attachmentCount = 1,
-            pAttachments    = &attachmentDescription,
-            pSubpasses      = &subpass,
-            subpassCount    = 1,
+            AttachmentCount = 1,
+            PAttachments    = &attachmentDescription,
+            PSubpasses      = &subpass,
+            SubpassCount    = 1,
         };
 
-        VkCheck(this.vk.CreateRenderPass(this.Context.Device, renderPassCreateInfo, default, out var renderPass));
-
-        return renderPass;
+        return this.Context.Device.CreateRenderPass(renderPassCreateInfo);
     }
 
-    private void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+    private void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, ulong size)
     {
         var commandBuffer = this.Context.BeginSingleTimeCommands();
 
         var copyRegion = new VkBufferCopy
         {
-            size = size
+            Size = size
         };
 
-        this.vk.CmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, copyRegion);
+        commandBuffer.CopyBuffer(srcBuffer, dstBuffer, copyRegion);
 
         this.Context.EndSingleTimeCommands(commandBuffer);
     }
@@ -568,20 +543,20 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         var bufferImageCopy = new VkBufferImageCopy
         {
-            imageExtent = new()
+            ImageExtent = new()
             {
-                depth  = 1,
-                height = height,
-                width  = width,
+                Depth  = 1,
+                Height = height,
+                Width  = width,
             },
-            imageSubresource = new()
+            ImageSubresource = new()
             {
-                aspectMask = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
-                layerCount = 1,
+                AspectMask = VkImageAspectFlags.Color,
+                LayerCount = 1,
             }
         };
 
-        this.vk.CmdCopyBufferToImage(commandBuffer, buffer, image, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, bufferImageCopy);
+        commandBuffer.CopyBufferToImage(buffer, image, VkImageLayout.TransferDstOptimal, bufferImageCopy);
 
         this.Context.EndSingleTimeCommands(commandBuffer);
     }
@@ -592,7 +567,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         if (descriptorPool.Usage == 0)
         {
-            this.vk.DestroyDescriptorPool(this.Context.Device, descriptorPool.Handler, null);
+            descriptorPool.Handler.Dispose();
 
             var entries = this.descriptorPools[descriptorPool.DescriptorType];
 
@@ -609,32 +584,32 @@ public unsafe partial class VulkanRenderer : IDisposable
         VkImage                 image,
         VkImageLayout           oldLayout,
         VkImageLayout           newLayout,
-        VkAccessFlagBits        srcAccessMask,
-        VkAccessFlagBits        dstAccessMask,
-        VkPipelineStageFlagBits sourceStage,
-        VkPipelineStageFlagBits destinationStage
+        VkAccessFlags        srcAccessMask,
+        VkAccessFlags        dstAccessMask,
+        VkPipelineStageFlags sourceStage,
+        VkPipelineStageFlags destinationStage
     )
     {
         var commandBuffer = this.Context.BeginSingleTimeCommands();
 
         var imageMemoryBarrier = new VkImageMemoryBarrier
         {
-            dstAccessMask       = dstAccessMask,
-            dstQueueFamilyIndex = Vk.VK_QUEUE_FAMILY_IGNORED,
-            image               = image,
-            newLayout           = newLayout,
-            oldLayout           = oldLayout,
-            srcAccessMask       = srcAccessMask,
-            srcQueueFamilyIndex = Vk.VK_QUEUE_FAMILY_IGNORED,
-            subresourceRange    = new()
+            DstAccessMask       = dstAccessMask,
+            DstQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
+            Image               = image.Handle,
+            NewLayout           = newLayout,
+            OldLayout           = oldLayout,
+            SrcAccessMask       = srcAccessMask,
+            SrcQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
+            SubresourceRange    = new()
             {
-                aspectMask = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
-                layerCount = 1,
-                levelCount = 1,
+                AspectMask = VkImageAspectFlags.Color,
+                LayerCount = 1,
+                LevelCount = 1,
             }
         };
 
-        this.vk.CmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, default, null, null, [imageMemoryBarrier]);
+        commandBuffer.PipelineBarrier(sourceStage, destinationStage, default, [], [], [imageMemoryBarrier]);
 
         this.Context.EndSingleTimeCommands(commandBuffer);
     }
@@ -643,11 +618,11 @@ public unsafe partial class VulkanRenderer : IDisposable
     {
         if (!this.disposed)
         {
-            this.vk.DeviceWaitIdle(this.Context.Device);
+            this.Context.Device.WaitIdle();
 
             foreach (var descriptorPool in this.descriptorPools.Values.SelectMany(x => x))
             {
-                this.vk.DestroyDescriptorPool(this.Context.Device, descriptorPool.Handler, null);
+                descriptorPool.Handler.Dispose();
             }
 
             this.Context.Dispose();
@@ -661,63 +636,63 @@ public unsafe partial class VulkanRenderer : IDisposable
     {
         this.Context.PrepareBuffers();
 
-        this.vk.BeginCommandBuffer(this.Context.Frame.CommandBuffer);
+        this.Context.Frame.CommandBuffer.Begin();
     }
 
     public void BeginRenderPass(SurfaceContext windowContext)
     {
         var clearValues = new VkClearValue[2];
 
-        clearValues[0].color.float32[0] = 1;
-        clearValues[0].color.float32[1] = 1;
-        clearValues[0].color.float32[2] = 1;
-        clearValues[0].color.float32[3] = 1;
+        clearValues[0].Color.Float32[0] = 1;
+        clearValues[0].Color.Float32[1] = 1;
+        clearValues[0].Color.Float32[2] = 1;
+        clearValues[0].Color.Float32[3] = 1;
 
-        clearValues[1].depthStencil = new()
+        clearValues[1].DepthStencil = new()
         {
-            depth   = 1.0f,
-            stencil = 0
+            Depth   = 1.0f,
+            Stencil = 0
         };
 
         fixed (VkClearValue* pClearValues = clearValues)
         {
             var renderPassBeginInfo = new VkRenderPassBeginInfo
             {
-                clearValueCount = (uint)clearValues.Length,
-                framebuffer     = windowContext.Swapchain.Framebuffers[windowContext.CurrentBuffer],
-                pClearValues    = pClearValues,
-                renderArea      = new()
+                ClearValueCount = (uint)clearValues.Length,
+                Framebuffer     = windowContext.Swapchain.Framebuffers[windowContext.CurrentBuffer].Handle,
+                PClearValues    = pClearValues,
+                RenderArea      = new()
                 {
-                    offset = new()
+                    Offset = new()
                     {
-                        x = 0,
-                        y = 0
+                        X = 0,
+                        Y = 0
                     },
-                    extent = windowContext.Swapchain.Extent,
+                    Extent = windowContext.Swapchain.Extent,
                 },
-                renderPass = windowContext.Swapchain.RenderPass,
+                RenderPass = windowContext.Swapchain.RenderPass.Handle,
             };
 
-            this.vk.CmdBeginRenderPass(this.Context.Frame.CommandBuffer, renderPassBeginInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
+            this.Context.Frame.CommandBuffer.BeginRenderPass(renderPassBeginInfo, VkSubpassContents.Inline);
         }
     }
 
     public void BindIndexBuffer(IndexBufferHandler indexBuffer) =>
-        this.vk.CmdBindIndexBuffer(this.Context.Frame.CommandBuffer, indexBuffer.Buffer.Handler, 0, indexBuffer.Type);
+        this.Context.Frame.CommandBuffer.BindIndexBuffer(indexBuffer.Buffer.Handler, 0, indexBuffer.Type);
 
     public void BindPipeline(ShaderHandler shader) =>
-        this.vk.CmdBindPipeline(this.Context.Frame.CommandBuffer, shader.PipelineBindPoint, shader.Pipeline);
+        this.Context.Frame.CommandBuffer.BindPipeline(shader.PipelineBindPoint, shader.Pipeline);
 
     public void BindVertexBuffer(VertexBufferHandler vertexBuffer) =>
-        this.vk.CmdBindVertexBuffers(this.Context.Frame.CommandBuffer, 0, [vertexBuffer.Buffer.Handler], [0]);
+        this.Context.Frame.CommandBuffer.BindVertexBuffers(0, 1, [vertexBuffer.Buffer.Handler], [0]);
 
     public void BindVertexBuffer(VertexBufferHandler[] vertexBuffers) =>
-        this.vk.CmdBindVertexBuffers(this.Context.Frame.CommandBuffer, 0, [.. vertexBuffers.Select(x => x.Buffer.Handler)], new VkDeviceSize[vertexBuffers.Length]);
+        this.Context.Frame.CommandBuffer.BindVertexBuffers(0, 1, [.. vertexBuffers.Select(x => x.Buffer.Handler)], new ulong[vertexBuffers.Length]);
 
     public void BindUniformSet(UniformSet uniformSet) =>
-        this.vk.CmdBindDescriptorSets(this.Context.Frame.CommandBuffer, uniformSet.Shader.PipelineBindPoint, uniformSet.Shader.PipelineLayout, 0, uniformSet.DescriptorSets, null);
+        this.Context.Frame.CommandBuffer.BindDescriptorSets(uniformSet.Shader.PipelineBindPoint, uniformSet.Shader.PipelineLayout, 0, uniformSet.DescriptorSets, []);
 
-    public BufferHandler CreateBuffer(ulong size, VkBufferUsageFlagBits usage, VkMemoryPropertyFlagBits properties)
+    public BufferHandler CreateBuffer(ulong size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
     {
         this.CreateBuffer(size, usage, properties, out var buffer, out var allocation);
 
@@ -730,19 +705,19 @@ public unsafe partial class VulkanRenderer : IDisposable
     }
 
     public IndexBufferHandler CreateIndexBuffer(IList<ushort> indices) =>
-        this.CreateIndexBuffer(indices, VkIndexType.VK_INDEX_TYPE_UINT16);
+        this.CreateIndexBuffer(indices, VkIndexType.Uint16);
 
     public IndexBufferHandler CreateIndexBuffer(IList<uint> indices) =>
-        this.CreateIndexBuffer(indices, VkIndexType.VK_INDEX_TYPE_UINT32);
+        this.CreateIndexBuffer(indices, VkIndexType.Uint32);
 
     public IndexBufferHandler CreateIndexBuffer<T>(IList<T> indices, VkIndexType indexType) where T : unmanaged, INumber<T>
     {
-        VkDeviceSize bufferSize = (ulong)(sizeof(T) * indices.Count);
+        var bufferSize = (ulong)(sizeof(T) * indices.Count);
 
         var buffer = this.CreateBuffer(
             bufferSize,
-            VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_DST_BIT | VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+            VkBufferUsageFlags.TransferDst | VkBufferUsageFlags.IndexBuffer,
+            VkMemoryPropertyFlags.DeviceLocal
         );
 
         this.UpdateBuffer(buffer, [.. indices]);
@@ -766,7 +741,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         {
             DescriptorSetLayout = descriptorSetLayout,
             Pipeline            = pipeline,
-            PipelineBindPoint   = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
+            PipelineBindPoint   = VkPipelineBindPoint.Graphics,
             PipelineLayout      = pipelineLayout,
             RenderPass          = renderPass,
         };
@@ -776,33 +751,31 @@ public unsafe partial class VulkanRenderer : IDisposable
     {
         this.Context.GetPhysicalDeviceProperties(out var properties);
 
-        var samplerCreateInfo = new VkSamplerCreateInfo
+        var createInfo = new VkSamplerCreateInfo
         {
-            addressModeU  = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            addressModeV  = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            addressModeW  = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            borderColor   = VkBorderColor.VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-            compareOp     = VkCompareOp.VK_COMPARE_OP_ALWAYS,
-            magFilter     = VkFilter.VK_FILTER_LINEAR,
-            maxAnisotropy = properties.limits.maxSamplerAnisotropy,
-            maxLod        = 1,
-            minFilter     = VkFilter.VK_FILTER_LINEAR,
-            mipmapMode    = VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR,
+            AddressModeU  = VkSamplerAddressMode.Repeat,
+            AddressModeV  = VkSamplerAddressMode.Repeat,
+            AddressModeW  = VkSamplerAddressMode.Repeat,
+            BorderColor   = VkBorderColor.IntOpaqueBlack,
+            CompareOp     = VkCompareOp.Always,
+            MagFilter     = VkFilter.Linear,
+            MaxAnisotropy = properties.Limits.MaxSamplerAnisotropy,
+            MaxLod        = 1,
+            MinFilter     = VkFilter.Linear,
+            MipmapMode    = VkSamplerMipmapMode.Linear,
         };
 
-        VkCheck(this.vk.CreateSampler(this.Context.Device, samplerCreateInfo, default, out var sampler));
-
-        return sampler;
+        return this.Context.Device.CreateSampler(createInfo);
     }
 
     public TextureHandler CreateTexture(TextureCreate textureCreate)
     {
         var imageType = ConvertToImageType(textureCreate.TextureType);
 
-        var samples = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT;
-        var tiling  = VkImageTiling.VK_IMAGE_TILING_OPTIMAL;
-        var usage   = VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_TRANSFER_DST_BIT | VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT;
-        var format  = VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
+        var samples = VkSampleCountFlags.N1;
+        var tiling  = VkImageTiling.Optimal;
+        var usage   = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
+        var format  = VkFormat.B8G8R8A8Srgb;
 
         this.CreateImage(
             textureCreate.Width,
@@ -811,22 +784,22 @@ public unsafe partial class VulkanRenderer : IDisposable
             format,
             tiling,
             usage,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            VkMemoryPropertyFlags.DeviceLocal,
             out var image,
             out var allocation
         );
 
         this.TransitionImageLayout(
             image,
-            VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-            VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VkImageLayout.Undefined,
+            VkImageLayout.TransferDstOptimal,
             default,
-            VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT,
-            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT
+            VkAccessFlags.TransferWrite,
+            VkPipelineStageFlags.TopOfPipe,
+            VkPipelineStageFlags.Transfer
         );
 
-        var imageView = this.CreateImageView(image, VkFormat.VK_FORMAT_B8G8R8A8_SRGB, VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT);
+        var imageView = this.CreateImageView(image, VkFormat.B8G8R8A8Srgb, VkImageAspectFlags.Color);
 
         var texture = new TextureHandler
         {
@@ -859,16 +832,15 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         var descriptorPool = this.CreateDescriptorPool(poolKey);
 
-        var descriptorSetLayout = shader.DescriptorSetLayout;
+        var descriptorSetLayoutHandle = shader.DescriptorSetLayout.Handle;
 
         var descriptorSetAllocateInfo = new VkDescriptorSetAllocateInfo
         {
-            descriptorPool     = descriptorPool.Handler,
-            descriptorSetCount = 1,
-            pSetLayouts        = &descriptorSetLayout,
+            DescriptorSetCount = 1,
+            PSetLayouts        = &descriptorSetLayoutHandle,
         };
 
-        this.vk.AllocateDescriptorSets(this.Context.Device, descriptorSetAllocateInfo, out var descriptorSets);
+        var descriptorSets = descriptorPool.Handler.AllocateDescriptorSets(descriptorSetAllocateInfo);
 
         foreach (var uniform in uniforms)
         {
@@ -876,7 +848,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             {
                 case CombinedImageSamplerUniform combinedImageSampler:
                 {
-                    var pImageInfo = new PointerArray<VkDescriptorImageInfo>(combinedImageSampler.Images.Count);
+                    var pImageInfo = new NativeArray<VkDescriptorImageInfo>(combinedImageSampler.Images.Count);
 
                     disposables.Add(pImageInfo);
 
@@ -886,9 +858,9 @@ public unsafe partial class VulkanRenderer : IDisposable
 
                         var descriptorImageInfo = new VkDescriptorImageInfo
                         {
-                            sampler     = image.Sampler,
-                            imageView   = image.Texture.ImageView,
-                            imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                            Sampler     = image.Sampler.Handle,
+                            ImageView   = image.Texture.ImageView.Handle,
+                            ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
                         };
 
                         pImageInfo[i] = descriptorImageInfo;
@@ -896,11 +868,11 @@ public unsafe partial class VulkanRenderer : IDisposable
 
                     var writeDescriptorSet = new VkWriteDescriptorSet
                     {
-                        descriptorCount = 1,
-                        descriptorType  = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                        dstBinding      = uniform.Binding,
-                        dstSet          = descriptorSets[0],
-                        pImageInfo      = pImageInfo,
+                        DescriptorCount = 1,
+                        DescriptorType  = VkDescriptorType.CombinedImageSampler,
+                        DstBinding      = uniform.Binding,
+                        DstSet          = descriptorSets[0].Handle,
+                        PImageInfo      = pImageInfo,
                     };
 
                     writes.Add(writeDescriptorSet);
@@ -911,22 +883,22 @@ public unsafe partial class VulkanRenderer : IDisposable
                 {
                     var descriptorBufferInfo = new VkDescriptorBufferInfo
                     {
-                        buffer = uniformBuffer.Buffer.Handler,
-                        offset = uniformBuffer.Buffer.Allocation.Offset,
-                        range  = uniformBuffer.Buffer.Allocation.Size,
+                        Buffer = uniformBuffer.Buffer.Handler.Handle,
+                        Offset = uniformBuffer.Buffer.Allocation.Offset,
+                        Range  = uniformBuffer.Buffer.Allocation.Size,
                     };
 
-                    var pBufferInfo = new PointerArray<VkDescriptorBufferInfo>([descriptorBufferInfo]);
+                    var pBufferInfo = new NativeArray<VkDescriptorBufferInfo>([descriptorBufferInfo]);
 
                     disposables.Add(pBufferInfo);
 
                     var writeDescriptorSet = new VkWriteDescriptorSet
                     {
-                        descriptorCount = 1,
-                        descriptorType  = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                        dstBinding      = uniform.Binding,
-                        dstSet          = descriptorSets[0],
-                        pBufferInfo     = pBufferInfo,
+                        DescriptorCount = 1,
+                        DescriptorType  = VkDescriptorType.UniformBuffer,
+                        DstBinding      = uniform.Binding,
+                        DstSet          = descriptorSets[0].Handle,
+                        PBufferInfo     = pBufferInfo,
                     };
 
                     writes.Add(writeDescriptorSet);
@@ -939,7 +911,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         }
 
-        this.vk.UpdateDescriptorSets(this.Context.Device, [..writes], null);
+        this.Context.Device.UpdateDescriptorSets([..writes], []);
 
         var uniformSet = new UniformSet()
         {
@@ -956,8 +928,8 @@ public unsafe partial class VulkanRenderer : IDisposable
         var size = (ulong)(data.Length * sizeof(T));
         var buffer = this.CreateBuffer(
             size,
-            VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_DST_BIT | VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+            VkBufferUsageFlags.TransferDst | VkBufferUsageFlags.VertexBuffer,
+            VkMemoryPropertyFlags.DeviceLocal
         );
 
         this.UpdateBuffer(buffer, data);
@@ -976,54 +948,47 @@ public unsafe partial class VulkanRenderer : IDisposable
     }
 
     public void DrawIndexed(IndexBufferHandler indexBuffer) =>
-        this.vk.CmdDrawIndexed(this.Context.Frame.CommandBuffer, indexBuffer.Size, 1, 0, 0, 0);
+        this.Context.Frame.CommandBuffer.DrawIndexed(indexBuffer.Size, 1, 0, 0, 0);
 
     public void EndFrame()
     {
-        this.vk.EndCommandBuffer(this.Context.Frame.CommandBuffer);
+        this.Context.Frame.CommandBuffer.End();
         this.Context.SwapBuffers();
     }
 
     public void EndRenderPass() =>
-        this.vk.CmdEndRenderPass(this.Context.Frame.CommandBuffer);
+        this.Context.Frame.CommandBuffer.EndRenderPass();
 
-    public void DestroyBuffer(BufferHandler buffer)
+    public static void DestroyBuffer(BufferHandler buffer)
     {
-        this.vk.DestroyBuffer(this.Context.Device, buffer.Handler, null);
-        this.vk.FreeMemory(this.Context.Device, buffer.Allocation.Memory, null);
+        buffer.Handler.Dispose();
+        buffer.Allocation.Memory.Dispose();
     }
 
-    public void DestroyIndexBuffer(IndexBufferHandler indexBuffer) =>
-        this.DestroyBuffer(indexBuffer.Buffer);
+    public static void DestroyIndexBuffer(IndexBufferHandler indexBuffer) =>
+        DestroyBuffer(indexBuffer.Buffer);
 
-    public void DestroyVertexBuffer(VertexBufferHandler vertexBuffer) =>
-        this.DestroyBuffer(vertexBuffer.Buffer);
+    public static void DestroyVertexBuffer(VertexBufferHandler vertexBuffer) =>
+        DestroyBuffer(vertexBuffer.Buffer);
 
-    public void DestroySampler(VkSampler sampler) =>
-        this.vk.DestroySampler(this.Context.Device, sampler, null);
-
-    public void DestroyShader(Shader shader)
+    public static void DestroyShader(Shader shader)
     {
-        var device = this.Context.Device;
-
-        this.vk.DestroyPipeline(device, shader.Handler.Pipeline, null);
-        this.vk.DestroyPipelineLayout(device, shader.Handler.PipelineLayout, null);
-        this.vk.DestroyDescriptorSetLayout(device, shader.Handler.DescriptorSetLayout, null);
-        this.vk.DestroyRenderPass(device, shader.Handler.RenderPass, null);
+        shader.Handler.Pipeline.Dispose();
+        shader.Handler.PipelineLayout.Dispose();
+        shader.Handler.DescriptorSetLayout.Dispose();
+        shader.Handler.RenderPass.Dispose();
     }
 
-    public void DestroyTexture(TextureHandler texture)
+    public static void DestroyTexture(TextureHandler texture)
     {
-        var device = this.Context.Device;
-
-        this.vk.FreeMemory(device, texture.Allocation.Memory, null);
-        this.vk.DestroyImage(device, texture.Image, null);
-        this.vk.DestroyImageView(device, texture.ImageView, null);
+        texture.Allocation.Memory.Dispose();
+        texture.Image.Dispose();
+        texture.ImageView.Dispose();
     }
 
     public void DestroyUniformSet(UniformSet uniformSet)
     {
-        VkCheck(this.vk.FreeDescriptorSets(this.Context.Device, uniformSet.DescriptorPool.Handler, uniformSet.DescriptorSets));
+        uniformSet.DescriptorPool.Handler.FreeDescriptorSets(uniformSet.DescriptorSets);
 
         this.RemoveFromDescriptorPool(uniformSet.DescriptorPool);
     }
@@ -1034,27 +999,27 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         var viewport = new VkViewport
         {
-            x        = 0,
-            y        = 0,
-            width    = surfaceContext.Size.Width,
-            height   = surfaceContext.Size.Height,
-            minDepth = 0,
-            maxDepth = 1
+            X        = 0,
+            Y        = 0,
+            Width    = surfaceContext.Size.Width,
+            Height   = surfaceContext.Size.Height,
+            MinDepth = 0,
+            MaxDepth = 1
         };
 
-        this.vk.CmdSetViewport(commandBuffer, 0, viewport);
+        commandBuffer.SetViewport(0, viewport);
 
         var scissor = new VkRect2D
         {
-            offset = new()
+            Offset = new()
             {
-                x = 0,
-                y = 0
+                X = 0,
+                Y = 0
             },
-            extent = surfaceContext.Swapchain.Extent,
+            Extent = surfaceContext.Swapchain.Extent,
         };
 
-        this.vk.CmdSetScissor(commandBuffer, 0, scissor);
+        commandBuffer.SetScissor(0, scissor);
     }
 
     public void UpdateBuffer<T>(BufferHandler buffer, T data) where T : unmanaged =>
@@ -1064,21 +1029,20 @@ public unsafe partial class VulkanRenderer : IDisposable
     {
         this.CreateBuffer(
             buffer.Allocation.Size,
-            VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            VkBufferUsageFlags.TransferSrc,
+            VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
             out var stagingBuffer,
             out var allocation
         );
 
         var stagingMemory = allocation.Memory;
 
-        this.vk.MapMemory(this.Context.Device, stagingMemory, 0, 0, data);
-        this.vk.UnmapMemory(this.Context.Device, stagingMemory);
+        stagingMemory.Write(0, 0, data);
 
         this.CopyBuffer(stagingBuffer, buffer.Handler, buffer.Allocation.Size);
 
-        this.vk.DestroyBuffer(this.Context.Device, stagingBuffer, null);
-        this.vk.FreeMemory(this.Context.Device, stagingMemory, null);
+        stagingBuffer.Dispose();
+        stagingMemory.Dispose();
     }
 
     public void UpdateIndexBuffer<T>(VertexBufferHandler indexBuffer, T data) where T : unmanaged =>
@@ -1095,49 +1059,48 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public void UpdateTexture(TextureHandler textureData, uint[] data)
     {
-        VkDeviceSize imageSize = (ulong)data.Length * 4;
+        var imageSize = (ulong)data.Length * 4;
 
         this.CreateBuffer(
             imageSize,
-            VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            VkBufferUsageFlags.TransferSrc,
+            VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
             out var stagingBuffer,
             out var allocation
         );
 
         var stagingMemory = allocation.Memory;
 
-        VkCheck(this.vk.MapMemory(this.Context.Device, stagingMemory, 0, 0, data));
-        this.vk.UnmapMemory(this.Context.Device, stagingMemory);
+        stagingMemory.Write(0, 0, data);
 
         this.TransitionImageLayout(
             textureData.Image,
-            VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-            VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VkImageLayout.Undefined,
+            VkImageLayout.TransferDstOptimal,
             default,
-            VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT,
-            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT
+            VkAccessFlags.TransferWrite,
+            VkPipelineStageFlags.TopOfPipe,
+            VkPipelineStageFlags.Transfer
         );
 
         this.CopyBufferToImage(stagingBuffer, textureData.Image, textureData.Width, textureData.Height);
 
         this.TransitionImageLayout(
             textureData.Image,
-            VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT,
-            VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT,
-            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+            VkImageLayout.TransferDstOptimal,
+            VkImageLayout.ShaderReadOnlyOptimal,
+            VkAccessFlags.TransferWrite,
+            VkAccessFlags.ShaderRead,
+            VkPipelineStageFlags.Transfer,
+            VkPipelineStageFlags.FragmentShader
         );
 
-        this.vk.FreeMemory(this.Context.Device, stagingMemory, null);
-        this.vk.DestroyBuffer(this.Context.Device, stagingBuffer, null);
+        stagingMemory.Dispose();
+        stagingBuffer.Dispose();
     }
 
     public void WaitIdle() =>
-        this.vk.DeviceWaitIdle(this.Context.Device);
+        this.Context.Device.WaitIdle();
 
 
 }

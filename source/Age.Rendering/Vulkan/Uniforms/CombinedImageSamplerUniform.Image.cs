@@ -1,5 +1,5 @@
 using Age.Rendering.Vulkan.Handlers;
-using Age.Vulkan.Types;
+using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Vulkan.Uniforms;
 

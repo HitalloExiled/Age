@@ -1,8 +1,7 @@
-﻿// using Age;
-using Age.Playground;
+﻿using Age;
+// using Age.Playground;
 
-// using var engine = new Engine();
-// using var engine = new SimpleEngine();
-using var engine = new SimpleEngineV2();
+using var engine = new Engine();
+// using var engine = new SimpleEngineV2();
 
 engine.Run();

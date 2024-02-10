@@ -1,4 +1,4 @@
-using Age.Vulkan.Types;
+using ThirdParty.Vulkan;
 
 namespace Age.Rendering;
 

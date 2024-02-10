@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Age.Core.Interop;
 using ThirdParty.Vulkan;
+using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 
 namespace ThirdParty.Tests.Vulkan;
@@ -104,7 +105,7 @@ public class InstanceTest
         };
 
         using var commandPool   = device.CreateCommandPool(commandPoolCreateInfo);
-        using var commandBuffer = commandPool.AllocateCommand(VkCommandBufferLevelFlags.Primary);
+        using var commandBuffer = commandPool.AllocateCommand(VkCommandBufferLevel.Primary);
 
         Assert.True(true);
     }

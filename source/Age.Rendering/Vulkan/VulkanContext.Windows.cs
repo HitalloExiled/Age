@@ -6,38 +6,32 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Age.Numerics;
-using Age.Vulkan.Enums;
-using Age.Vulkan.Extensions.KHR;
-using Age.Vulkan.Types.KHR;
+using ThirdParty.Vulkan;
+using ThirdParty.Vulkan.Extensions;
 
 namespace Age.Rendering.Vulkan;
 
 public unsafe partial class VulkanContext : IDisposable
 {
-    private readonly string[] platformExtensions = [VkKhrWin32SurfaceExtension.Name];
+    private readonly string[] platformExtensions = [VkWin32SurfaceExtensionKHR.Name];
 
-    private VkKhrWin32SurfaceExtension win32surfaceExtension;
+    private VkWin32SurfaceExtensionKHR win32surfaceExtension;
 
     [MemberNotNull(nameof(win32surfaceExtension))]
     public void PlatformInitialize()
     {
-        if (!this.vk.TryGetInstanceExtension(this.instance, out this.win32surfaceExtension!))
-        {
-            throw new Exception($"Cannot found required extension {VkKhrWin32SurfaceExtension.Name}");
-        }
+        this.win32surfaceExtension = instance.GetExtension<VkWin32SurfaceExtensionKHR>();
     }
 
     private VkSurfaceKHR CreateSurface(nint hwnd)
     {
-        var surfaceCreateInfo = new VkWin32SurfaceCreateInfoKHR
+        var createInfo = new VkWin32SurfaceCreateInfoKHR
         {
-            hinstance = Process.GetCurrentProcess().Handle,
-            hwnd      = hwnd,
+            Hinstance = Process.GetCurrentProcess().Handle,
+            Hwnd      = hwnd,
         };
 
-        return this.win32surfaceExtension.CreateWin32Surface(this.instance, surfaceCreateInfo, default, out var surface) != VkResult.VK_SUCCESS
-            ? throw new Exception($"Failed to create surface")
-            : surface;
+        return this.win32surfaceExtension.CreateSurface(createInfo);
     }
 
     public SurfaceContext CreateSurfaceContext(nint hwnd, Size<uint> size)

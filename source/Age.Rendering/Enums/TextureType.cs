@@ -2,11 +2,11 @@ namespace Age.Rendering.Enums;
 
 public enum TextureType
 {
-    T1D,
-    T1DArray,
-    T2D,
-    T2DArray,
-    T3D,
+    N1D,
+    N1DArray,
+    N2D,
+    N2DArray,
+    N3D,
     CubeArray,
     Cube,
 };

@@ -6,7 +6,7 @@ namespace ThirdParty.Vulkan;
 public unsafe struct VkPhysicalDeviceMemoryProperties
 {
     public uint       MemoryTypeCount;
-    public fixed byte MemoryTypes[8 * (int)VkConstants.VK_MAX_MEMORY_TYPES];
+    public fixed byte MemoryTypes[/* sizeof(MemoryType) */ 8 * (int)VkConstants.VK_MAX_MEMORY_TYPES];
     public uint       MemoryHeapCount;
-    public fixed byte MemoryHeaps[16 * (int)VkConstants.VK_MAX_MEMORY_HEAPS];
+    public fixed byte MemoryHeaps[/* sizeof(MemoryHeap) */ 16 * (int)VkConstants.VK_MAX_MEMORY_HEAPS];
 }

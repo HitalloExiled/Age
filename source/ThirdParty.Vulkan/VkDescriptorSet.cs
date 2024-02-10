@@ -1,3 +1,4 @@
+
 namespace ThirdParty.Vulkan;
 
 public unsafe partial class VkDescriptorSet : DisposableManagedHandle<VkDescriptorSet>

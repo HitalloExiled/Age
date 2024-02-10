@@ -56,7 +56,7 @@ public class Engine : IDisposable
 
         while (this.Running)
         {
-            Window.DoEventsAll();
+            Platforms.Display.Window.DoEventsAll();
 
             this.renderer.BeginFrame();
 

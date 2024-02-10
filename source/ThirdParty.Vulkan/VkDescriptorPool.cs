@@ -14,6 +14,14 @@ public unsafe partial class VkDescriptorPool : VkDeviceResource<VkDescriptorPool
         }
     }
 
+    protected override void OnDispose()
+    {
+        fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
+        {
+            PInvoke.vkDestroyDescriptorPool(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+        }
+    }
+
     public VkDescriptorSet[] AllocateDescriptorSets(VkDescriptorSetAllocateInfo allocInfo)
     {
         allocInfo.DescriptorPool = this.handle;
@@ -35,11 +43,11 @@ public unsafe partial class VkDescriptorPool : VkDeviceResource<VkDescriptorPool
         return descriptorSets;
     }
 
-    protected override void OnDispose()
+    public void FreeDescriptorSets(VkDescriptorSet[] descriptorSets)
     {
-        fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
+        fixed (VkHandle<VkDescriptorSet>* pDescriptorSets = ToHandlers(descriptorSets))
         {
-            PInvoke.vkDestroyDescriptorPool(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            VkException.Check(PInvoke.vkFreeDescriptorSets(this.Device.Handle, this.Handle, (uint)descriptorSets.Length, pDescriptorSets));
         }
     }
 }

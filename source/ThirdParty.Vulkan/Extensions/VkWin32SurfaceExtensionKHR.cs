@@ -39,7 +39,7 @@ public unsafe class VkWin32SurfaceExtensionKHR : IInstanceExtension<VkWin32Surfa
         fixed (VkAllocationCallbacks*       pAllocator  = &this.instance.Allocator)
         fixed (VkWin32SurfaceCreateInfoKHR* pCreateInfo = &createInfo)
         {
-            this.vkCreateWin32SurfaceKHR.Invoke(this.instance.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.instance.Allocator, pAllocator), &surfaceKHR);
+            VkException.Check(this.vkCreateWin32SurfaceKHR.Invoke(this.instance.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.instance.Allocator, pAllocator), &surfaceKHR));
         }
 
         return new(surfaceKHR, this.surfaceExtension);

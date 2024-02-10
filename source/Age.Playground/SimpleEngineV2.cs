@@ -131,7 +131,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
     private VkCommandBuffer BeginSingleTimeCommands()
     {
-        var commandBuffer = this.commandPool.AllocateCommand(VkCommandBufferLevelFlags.Primary);
+        var commandBuffer = this.commandPool.AllocateCommand(VkCommandBufferLevel.Primary);
 
         commandBuffer.Begin();
 
@@ -306,7 +306,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     }
 
     private void CreateCommandBuffers() =>
-        this.commandBuffers = this.commandPool.AllocateCommands(MAX_FRAMES_IN_FLIGHT, VkCommandBufferLevelFlags.Primary);
+        this.commandBuffers = this.commandPool.AllocateCommands(MAX_FRAMES_IN_FLIGHT, VkCommandBufferLevel.Primary);
 
     private void CreateCommandPool()
     {
@@ -734,7 +734,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             out var stagingBufferMemory
         );
 
-        stagingBufferMemory.Map(0, 0, [.. this.indices]);
+        stagingBufferMemory.Write(0, 0, [.. this.indices]);
         stagingBufferMemory.Unmap();
 
         this.CreateBuffer(
@@ -1092,7 +1092,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             out var stagingBufferMemory
         );
 
-        stagingBufferMemory.Map(0, 0, pixels);
+        stagingBufferMemory.Write(0, 0, pixels);
         stagingBufferMemory.Unmap();
 
         this.CreateImage(
@@ -1177,7 +1177,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             out var stagingBufferMemory
         );
 
-        stagingBufferMemory.Map(0, 0, this.vertices.ToArray());
+        stagingBufferMemory.Write(0, 0, this.vertices.ToArray());
         stagingBufferMemory.Unmap();
 
         this.CreateBuffer(

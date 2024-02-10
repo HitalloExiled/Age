@@ -42,11 +42,11 @@ public class RenderingService : IDisposable
 
                 foreach (var vertexBuffer in this.vertexBuffers.Values)
                 {
-                    this.renderer.DestroyVertexBuffer(vertexBuffer);
+                    VulkanRenderer.DestroyVertexBuffer(vertexBuffer);
                 }
 
-                this.renderer.DestroyShader(this.shader);
-                this.renderer.DestroyIndexBuffer(this.indexBuffer);
+                VulkanRenderer.DestroyShader(this.shader);
+                VulkanRenderer.DestroyIndexBuffer(this.indexBuffer);
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
@@ -159,7 +159,7 @@ public class RenderingService : IDisposable
             Width       = image.Width,
             Height      = image.Height,
             Format      = default,
-            TextureType = TextureType.T2D,
+            TextureType = TextureType.N2D,
         };
 
         var textureData = this.renderer.CreateTexture(textureCreate);
@@ -195,13 +195,13 @@ public class RenderingService : IDisposable
     public void FreeSampler(Sampler sampler)
     {
         this.renderer.WaitIdle();
-        this.renderer.DestroySampler(sampler.Handler);
+        sampler.Handler.Dispose();
     }
 
     public void FreeTexture(Texture texture)
     {
         this.renderer.WaitIdle(); // TODO find better solution
         this.textureSets.Remove(texture);
-        this.renderer.DestroyTexture(texture.Handler);
+        VulkanRenderer.DestroyTexture(texture.Handler);
     }
 }
