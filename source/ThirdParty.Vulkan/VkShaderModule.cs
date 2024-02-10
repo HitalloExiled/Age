@@ -2,7 +2,7 @@ using Age.Core.Interop;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkShaderModule : DeviceResource<VkShaderModule>
+public unsafe partial class VkShaderModule : VkDeviceResource<VkShaderModule>
 {
     internal VkShaderModule(VkDevice device, in VkShaderModuleCreateInfo createInfo) : base(device)
     {

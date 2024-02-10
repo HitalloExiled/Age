@@ -2,7 +2,7 @@ using Age.Core.Interop;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkFence : DeviceResource<VkFence>
+public unsafe partial class VkFence : VkDeviceResource<VkFence>
 {
     internal VkFence(VkDevice device, in VkFenceCreateInfo createInfo) : base(device)
     {

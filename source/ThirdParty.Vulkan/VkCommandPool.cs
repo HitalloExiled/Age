@@ -3,7 +3,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkCommandPool : DeviceResource<VkCommandPool>
+public unsafe partial class VkCommandPool : VkDeviceResource<VkCommandPool>
 {
     public VkCommandPool(VkDevice device, in VkCommandPoolCreateInfo createInfo) : base(device)
     {

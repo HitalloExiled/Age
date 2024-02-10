@@ -2,7 +2,7 @@ using Age.Core.Interop;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkSampler : DeviceResource<VkSampler>
+public unsafe partial class VkSampler : VkDeviceResource<VkSampler>
 {
     internal VkSampler(VkDevice device, in VkSamplerCreateInfo createInfo) : base(device)
     {

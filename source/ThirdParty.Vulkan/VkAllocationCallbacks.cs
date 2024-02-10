@@ -5,10 +5,10 @@ namespace ThirdParty.Vulkan;
 /// </summary>
 public unsafe struct VkAllocationCallbacks
 {
-    public void*                                PUserData;
-    public PFN_vkAllocationFunction             PfnAllocation;
-    public PFN_vkReallocationFunction           PfnReallocation;
-    public PFN_vkFreeFunction                   PfnFree;
-    public PFN_vkInternalAllocationNotification PfnInternalAllocation;
-    public PFN_vkInternalFreeNotification       PfnInternalFree;
+    public void*                                       PUserData;
+    public VkPfn<PFN_vkAllocationFunction>             PfnAllocation;
+    public VkPfn<PFN_vkReallocationFunction>           PfnReallocation;
+    public VkPfn<PFN_vkFreeFunction>                   PfnFree;
+    public VkPfn<PFN_vkInternalAllocationNotification> PfnInternalAllocation;
+    public VkPfn<PFN_vkInternalFreeNotification>       PfnInternalFree;
 }

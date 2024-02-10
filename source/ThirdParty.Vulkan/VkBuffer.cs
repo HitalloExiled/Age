@@ -2,7 +2,7 @@ using Age.Core.Interop;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe class VkBuffer : DeviceResource<VkBuffer>
+public unsafe class VkBuffer : VkDeviceResource<VkBuffer>
 {
     internal VkBuffer(VkDevice device, in VkBufferCreateInfo createInfo) : base(device)
     {

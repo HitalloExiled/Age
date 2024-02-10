@@ -3,7 +3,7 @@ using Age.Core.Interop;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkDeviceMemory : DeviceResource<VkDeviceMemory>
+public unsafe partial class VkDeviceMemory : VkDeviceResource<VkDeviceMemory>
 {
     internal VkDeviceMemory(VkDevice device, in VkMemoryAllocateInfo allocateInfo) : base(device)
     {

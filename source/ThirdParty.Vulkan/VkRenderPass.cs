@@ -2,7 +2,7 @@ using Age.Core.Interop;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkRenderPass : DeviceResource<VkRenderPass>
+public unsafe partial class VkRenderPass : VkDeviceResource<VkRenderPass>
 {
     internal VkRenderPass(VkDevice device, in VkRenderPassCreateInfo createInfo) : base(device)
     {

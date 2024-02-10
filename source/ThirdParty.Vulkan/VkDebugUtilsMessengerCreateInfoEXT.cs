@@ -11,12 +11,12 @@ public unsafe struct VkDebugUtilsMessengerCreateInfoEXT
 {
     public readonly VkStructureType SType;
 
-    public void*                                PNext;
-    public VkDebugUtilsMessengerCreateFlagsEXT  Flags;
-    public VkDebugUtilsMessageSeverityFlagsEXT  MessageSeverity;
-    public VkDebugUtilsMessageTypeFlagsEXT      MessageType;
-    public PFN_vkDebugUtilsMessengerCallbackEXT PfnUserCallback;
-    public void*                                PUserData;
+    public void*                                       PNext;
+    public VkDebugUtilsMessengerCreateFlagsEXT         Flags;
+    public VkDebugUtilsMessageSeverityFlagsEXT         MessageSeverity;
+    public VkDebugUtilsMessageTypeFlagsEXT             MessageType;
+    public VkPfn<PFN_vkDebugUtilsMessengerCallbackEXT> PfnUserCallback;
+    public void*                                       PUserData;
 
     public VkDebugUtilsMessengerCreateInfoEXT() =>
         this.SType = VkStructureType.DebugUtilsMessengerCreateInfoEXT;

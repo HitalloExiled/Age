@@ -2,7 +2,7 @@ using Age.Core.Interop;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkDescriptorPool : DeviceResource<VkDescriptorPool>
+public unsafe partial class VkDescriptorPool : VkDeviceResource<VkDescriptorPool>
 {
     internal VkDescriptorPool(VkDevice device, in VkDescriptorPoolCreateInfo createInfo) : base(device)
     {

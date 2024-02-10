@@ -2,7 +2,7 @@ using Age.Core.Interop;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkImageView : DeviceResource<VkImageView>
+public unsafe partial class VkImageView : VkDeviceResource<VkImageView>
 {
     public VkImageView(VkDevice device, in VkImageViewCreateInfo createInfo) : base(device)
     {

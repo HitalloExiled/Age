@@ -2,7 +2,7 @@ using Age.Core.Interop;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkPipelineLayout : DeviceResource<VkPipelineLayout>
+public unsafe partial class VkPipelineLayout : VkDeviceResource<VkPipelineLayout>
 {
     internal VkPipelineLayout(VkDevice device, in VkPipelineLayoutCreateInfo createInfo) : base(device)
     {

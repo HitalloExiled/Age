@@ -2,7 +2,7 @@ using Age.Core.Interop;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkDescriptorSetLayout : DeviceResource<VkDescriptorSetLayout>
+public unsafe partial class VkDescriptorSetLayout : VkDeviceResource<VkDescriptorSetLayout>
 {
     internal VkDescriptorSetLayout(VkDevice device, in VkDescriptorSetLayoutCreateInfo createInfo) : base(device)
     {

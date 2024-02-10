@@ -2,7 +2,7 @@ using Age.Core.Interop;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkSemaphore : DeviceResource<VkSemaphore>
+public unsafe partial class VkSemaphore : VkDeviceResource<VkSemaphore>
 {
     internal VkSemaphore(VkDevice device, in VkSemaphoreCreateInfo createInfo) : base(device)
     {
