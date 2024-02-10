@@ -5,23 +5,14 @@ using System.Runtime.InteropServices;
 using Age.Numerics;
 using Age.Platforms.Abstractions;
 using SkiaSharp;
-using ThirdParty.Vulkan.Enums.KHR;
 using ThirdParty.Vulkan.Enums;
-using ThirdParty.Vulkan.EXT;
-using ThirdParty.Vulkan.Extensions.EXT;
-using ThirdParty.Vulkan.Extensions.KHR;
-using ThirdParty.Vulkan.Flags.EXT;
-using ThirdParty.Vulkan.Flags.KHR;
-using ThirdParty.Vulkan.Flags;
-using ThirdParty.Vulkan.KHR;
 using ThirdParty.Vulkan;
+using ThirdParty.Vulkan.Extensions;
+using ThirdParty.Vulkan.Flags;
 
-using PlatformWindow  = Age.Platforms.Display.Window;
+using PlatformWindow = Age.Platforms.Display.Window;
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
-using ThirdParty.Vulkan.Native;
 using Age.Core.Interop;
-using ThirdParty.Vulkan.Native.EXT;
-using ThirdParty.Vulkan.Native.KHR;
 
 namespace Age.Playground;
 

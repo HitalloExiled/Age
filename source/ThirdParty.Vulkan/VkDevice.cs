@@ -4,7 +4,6 @@ using System.Text;
 using Age.Core.Interop;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan.Interfaces;
-using ThirdParty.Vulkan.Native;
 
 namespace ThirdParty.Vulkan;
 

@@ -1,6 +1,5 @@
 using Age.Core.Interop;
 using ThirdParty.Vulkan.Flags;
-using ThirdParty.Vulkan.Native;
 
 namespace ThirdParty.Vulkan;
 

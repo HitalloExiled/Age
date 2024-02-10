@@ -1,3 +1,5 @@
+global using HINSTANCE                                 = nint;
+global using HWND                                      = nint;
 global using size_t                                    = ulong;
 global using VkDebugUtilsMessengerCallbackDataFlagsEXT = uint;
 global using VkDebugUtilsMessengerCreateFlagsEXT       = uint;

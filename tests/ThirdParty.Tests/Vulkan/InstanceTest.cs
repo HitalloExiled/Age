@@ -2,10 +2,6 @@ using System.Runtime.InteropServices;
 using Age.Core.Interop;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Flags;
-using ThirdParty.Vulkan.Flags.EXT;
-using ThirdParty.Vulkan.Native;
-using ThirdParty.Vulkan.Native.EXT;
-using VkVersion = ThirdParty.Vulkan.VkVersion;
 
 namespace ThirdParty.Tests.Vulkan;
 

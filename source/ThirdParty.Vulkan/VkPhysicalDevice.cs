@@ -1,6 +1,5 @@
 using System.Text;
 using ThirdParty.Vulkan.Enums;
-using ThirdParty.Vulkan.Native;
 
 namespace ThirdParty.Vulkan;
 

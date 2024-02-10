@@ -1,5 +1,5 @@
-using ThirdParty.Vulkan.Enums.KHR;
-using ThirdParty.Vulkan.Native.KHR;
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan;
 
 namespace Age.Playground;
 

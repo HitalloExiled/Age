@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices;
 using Age.Core.Interop;
-using ThirdParty.Vulkan.Native;
 
 namespace ThirdParty.Vulkan;
 

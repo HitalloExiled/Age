@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Age.Core.Interop;
 using ThirdParty.Vulkan.Interfaces;
-using ThirdParty.Vulkan.Native;
 
 namespace ThirdParty.Vulkan;
 

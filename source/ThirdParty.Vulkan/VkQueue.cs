@@ -1,5 +1,3 @@
-using ThirdParty.Vulkan.Native;
-
 namespace ThirdParty.Vulkan;
 
 public unsafe partial class VkQueue : ManagedHandle<VkQueue>

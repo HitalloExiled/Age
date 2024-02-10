@@ -1,6 +1,5 @@
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
-using ThirdParty.Vulkan.Native;
 
 namespace ThirdParty.Vulkan;
 

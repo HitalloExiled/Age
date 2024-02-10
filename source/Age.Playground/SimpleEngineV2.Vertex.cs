@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Age.Numerics;
 using ThirdParty.Vulkan.Enums;
-using ThirdParty.Vulkan.Native;
+using ThirdParty.Vulkan;
 
 namespace Age.Playground;
 
