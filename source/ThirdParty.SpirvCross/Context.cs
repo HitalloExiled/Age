@@ -5,19 +5,19 @@ namespace ThirdParty.SpirvCross;
 
 public unsafe class Context : IDisposable
 {
-    private readonly spvc_context handler;
+    private readonly spvc_context handle;
 
     private bool    disposed;
     private string? lastError;
 
     public Context()
     {
-        fixed (spvc_context* pHandler = &this.handler)
+        fixed (spvc_context* pHandle = &this.handle)
         {
-            this.CheckResult(PInvoke.spvc_context_create(pHandler));
+            this.CheckResult(PInvoke.spvc_context_create(pHandle));
         }
 
-        PInvoke.spvc_context_set_error_callback(this.handler, Marshal.GetFunctionPointerForDelegate(this.ErrorCallback), default);
+        PInvoke.spvc_context_set_error_callback(this.handle, Marshal.GetFunctionPointerForDelegate(this.ErrorCallback), default);
     }
 
     ~Context() => this.Dispose(false);
@@ -42,7 +42,7 @@ public unsafe class Context : IDisposable
                 // TODO: dispose managed state (managed objects)
             }
 
-            PInvoke.spvc_context_destroy(this.handler);
+            PInvoke.spvc_context_destroy(this.handle);
 
             this.disposed = true;
         }
@@ -56,7 +56,7 @@ public unsafe class Context : IDisposable
 
         fixed (uint* pSpirv = spirvSpan)
         {
-            this.CheckResult(PInvoke.spvc_context_parse_spirv(this.handler, pSpirv, (ulong)spirvSpan.Length, &parsedIr));
+            this.CheckResult(PInvoke.spvc_context_parse_spirv(this.handle, pSpirv, (ulong)spirvSpan.Length, &parsedIr));
         }
 
         return parsedIr;
@@ -66,7 +66,7 @@ public unsafe class Context : IDisposable
     {
         spvc_compiler compiler;
 
-        this.CheckResult(PInvoke.spvc_context_create_compiler(this.handler, backend, parsedSpirv, captureMode, &compiler));
+        this.CheckResult(PInvoke.spvc_context_create_compiler(this.handle, backend, parsedSpirv, captureMode, &compiler));
 
         return new(compiler, this);
     }

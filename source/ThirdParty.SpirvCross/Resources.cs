@@ -7,11 +7,11 @@ namespace ThirdParty.SpirvCross;
 public unsafe class Resources
 {
     private readonly Context        context;
-    private readonly spvc_resources handler;
+    private readonly spvc_resources handle;
 
-    internal Resources(nint handler, Context context)
+    internal Resources(spvc_resources handle, Context context)
     {
-        this.handler = handler;
+        this.handle  = handle;
         this.context = context;
     }
 
@@ -20,7 +20,7 @@ public unsafe class Resources
         spvc_reflected_resource* resourceList;
         ulong                    resourceSize;
 
-        this.context.CheckResult(PInvoke.spvc_resources_get_resource_list_for_type(this.handler, (spvc_resource_type)resorceType, &resourceList, &resourceSize));
+        this.context.CheckResult(PInvoke.spvc_resources_get_resource_list_for_type(this.handle, resorceType, &resourceList, &resourceSize));
 
         var resources = new ReflectedResource[resourceSize];
 

@@ -3,15 +3,16 @@ using System.Runtime.InteropServices;
 using Age.Core;
 using Age.Core.Interop;
 using Age.Rendering.Enums;
+using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan.Uniforms;
-using ThirdParty.Shaderc.Enums;
+using ThirdParty.SpirvCross;
+using ThirdParty.SpirvCross.Enums;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 
-using Buffer        = Age.Rendering.Resources.Buffer;
-using SpirvCompiler = ThirdParty.Shaderc.Compiler;
+using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Rendering.Vulkan;
 
@@ -20,7 +21,6 @@ public unsafe partial class VulkanRenderer : IDisposable
     private const ushort MAX_DESCRIPTORS_PER_POOL = 64;
 
     private readonly Dictionary<VkDescriptorType, List<DescriptorPool>> descriptorPools = [];
-    private readonly SpirvCompiler                                      spirvCompiler   = new();
 
     private bool disposed;
 
@@ -31,28 +31,6 @@ public unsafe partial class VulkanRenderer : IDisposable
         {
             UniformType.CombinedImageSampler => VkDescriptorType.CombinedImageSampler,
             UniformType.UniformBuffer        => VkDescriptorType.UniformBuffer,
-            _ => throw new NotImplementedException(),
-        };
-
-    private static VkImageType ConvertToImageType(TextureType type) =>
-        type switch
-        {
-            TextureType.N1D or TextureType.N1DArray                                              => VkImageType.N1D,
-            TextureType.N2D or TextureType.N2DArray or TextureType.Cube or TextureType.CubeArray => VkImageType.N2D,
-            TextureType.N3D                                                                      => VkImageType.N3D,
-            _ => throw new NotImplementedException(),
-        };
-
-    private static VkImageViewType ConvertToImageViewType(TextureType type) =>
-        type switch
-        {
-            TextureType.N1D       => VkImageViewType.N1D,
-            TextureType.N1DArray  => VkImageViewType.N1DArray,
-            TextureType.N2D       => VkImageViewType.N2D,
-            TextureType.N2DArray  => VkImageViewType.N2DArray,
-            TextureType.N3D       => VkImageViewType.N3D,
-            TextureType.Cube      => VkImageViewType.Cube,
-            TextureType.CubeArray => VkImageViewType.CubeArray,
             _ => throw new NotImplementedException(),
         };
 
@@ -99,33 +77,6 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     private DescriptorPool CreateDescriptorPool(VkDescriptorType descriptorType) =>
         DescriptorPool.CreateDescriptorPool(this.Context.Device, descriptorType);
-
-    private VkDescriptorSetLayout CreateDescriptorSetLayout()
-    {
-        var descriptorSetLayoutBindings = new VkDescriptorSetLayoutBinding[]
-        {
-            new()
-            {
-                Binding         = 0,
-                DescriptorCount = 1,
-                DescriptorType  = VkDescriptorType.CombinedImageSampler,
-                StageFlags      = VkShaderStageFlags.Fragment,
-            },
-        };
-
-        fixed (VkDescriptorSetLayoutBinding* pBindings = descriptorSetLayoutBindings)
-        {
-            var descriptorSetLayoutCreateInfo = new VkDescriptorSetLayoutCreateInfo
-            {
-                PBindings    = pBindings,
-                BindingCount = (uint)descriptorSetLayoutBindings.Length,
-            };
-
-            var descriptorSetLayout = this.Context.Device.CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
-
-            return descriptorSetLayout;
-        }
-    }
 
     private void CreateImage(uint width, uint height, VkSampleCountFlags samples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, out VkImage image, out Allocation allocation)
     {
@@ -190,188 +141,6 @@ public unsafe partial class VulkanRenderer : IDisposable
         var imageView = this.Context.Device.CreateImageView(imageViewCreateInfo);
 
         return imageView;
-    }
-
-    private byte[] CompileShader(string path)
-    {
-        var shaderKind = Path.GetExtension(path) switch
-        {
-            ".frag" => ShaderKind.FragmentShader,
-            ".vert" => ShaderKind.VertexShader,
-            _ => throw new Exception("Unsupported shader type"),
-        };
-
-        var fileName = Path.GetFileName(path);
-
-        var result = this.spirvCompiler.CompileIntoSpv(File.ReadAllText(path), shaderKind, fileName, "main");
-
-        return result.CompilationStatus != CompilationStatus.Success
-            ? throw new Exception($"Error compiling shader: {result.ErrorMessage}")
-            : result.Bytes;
-    }
-
-    private VkPipeline CreatePipeline(VkPipelineLayout pipelineLayout, VkRenderPass renderPass)
-    {
-        fixed (byte* pName = "main"u8)
-        {
-            using var compiler = new SpirvCompiler();
-
-            var vertShaderCode = this.CompileShader(Path.Join(AppContext.BaseDirectory, "Shaders/shader.vert"));
-            var fragShaderCode = this.CompileShader(Path.Join(AppContext.BaseDirectory, "Shaders/shader.frag"));
-
-            var vertShaderModule = this.CreateShaderModule(vertShaderCode);
-            var fragShaderModule = this.CreateShaderModule(fragShaderCode);
-
-            var pipelineShaderStageCreateInfos = new VkPipelineShaderStageCreateInfo[]
-            {
-                new()
-                {
-                    Module = vertShaderModule.Handle,
-                    PName  = pName,
-                    Stage  = VkShaderStageFlags.Vertex,
-                },
-                new()
-                {
-                    Module = fragShaderModule.Handle,
-                    PName  = pName,
-                    Stage  = VkShaderStageFlags.Fragment,
-                },
-            };
-
-            var vertexInputBindingDescription = new VkVertexInputBindingDescription
-            {
-                Binding   = 0,
-                Stride    = (uint)Marshal.SizeOf<Vertex>(),
-                InputRate = VkVertexInputRate.Vertex,
-            };
-
-            var vertexInputAttributeDescription = new VkVertexInputAttributeDescription[]
-            {
-                new()
-                {
-                    Binding  = 0,
-                    Format   = VkFormat.R32G32Sfloat,
-                    Location = 0,
-                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.Position)),
-                },
-                new()
-                {
-                    Binding  = 0,
-                    Format   = VkFormat.R32G32B32A32Sfloat,
-                    Location = 1,
-                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.Color)),
-                },
-                new()
-                {
-                    Binding  = 0,
-                    Format   = VkFormat.R32G32Sfloat,
-                    Location = 2,
-                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.UV)),
-                },
-            };
-
-            var dynamicStates = new VkDynamicState[]
-            {
-                VkDynamicState.Viewport,
-                VkDynamicState.Scissor,
-            };
-
-            fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription)
-            fixed (VkDynamicState*                    pDynamicStates                  = dynamicStates)
-            fixed (VkPipelineShaderStageCreateInfo*   pPipelineShaderStageCreateInfos = pipelineShaderStageCreateInfos)
-            {
-                var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
-                {
-                    Topology = VkPrimitiveTopology.TriangleList,
-                };
-
-                var pipelineVertexInputStateCreateInfo = new VkPipelineVertexInputStateCreateInfo
-                {
-                    PVertexAttributeDescriptions    = pVertexAttributeDescriptions,
-                    PVertexBindingDescriptions      = &vertexInputBindingDescription,
-                    VertexAttributeDescriptionCount = (uint)vertexInputAttributeDescription.Length,
-                    VertexBindingDescriptionCount   = 1,
-                };
-
-                var pipelineDynamicStateCreateInfo = new VkPipelineDynamicStateCreateInfo
-                {
-                    DynamicStateCount = (uint)dynamicStates.Length,
-                    PDynamicStates    = pDynamicStates,
-                };
-
-                var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
-                {
-                    BlendEnable    = true,
-                    ColorWriteMask = VkColorComponentFlags.R
-                        | VkColorComponentFlags.G
-                        | VkColorComponentFlags.B
-                        | VkColorComponentFlags.A,
-                    DstColorBlendFactor = VkBlendFactor.OneMinusSrcAlpha,
-                    SrcAlphaBlendFactor = VkBlendFactor.One,
-                    SrcColorBlendFactor = VkBlendFactor.SrcAlpha,
-                };
-
-                var pipelineColorBlendStateCreateInfo = new VkPipelineColorBlendStateCreateInfo
-                {
-                    AttachmentCount = 1,
-                    PAttachments    = &pipelineColorBlendAttachmentState,
-                };
-
-                var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
-                {
-                    RasterizationSamples = VkSampleCountFlags.N1,
-                };
-
-                var pipelineRasterizationStateCreateInfo = new VkPipelineRasterizationStateCreateInfo
-                {
-                    CullMode    = VkCullModeFlags.Back,
-                    FrontFace   = VkFrontFace.Clockwise,
-                    LineWidth   = 1,
-                    PolygonMode = VkPolygonMode.Fill,
-                };
-
-                var pipelineViewportStateCreateInfo = new VkPipelineViewportStateCreateInfo
-                {
-                    ViewportCount = 1,
-                    ScissorCount  = 1,
-                };
-
-                var graphicsPipelineCreateInfo = new VkGraphicsPipelineCreateInfo
-                {
-                    Layout              = pipelineLayout.Handle,
-                    PColorBlendState    = &pipelineColorBlendStateCreateInfo,
-                    PDynamicState       = &pipelineDynamicStateCreateInfo,
-                    PInputAssemblyState = &inputAssembly,
-                    PMultisampleState   = &pipelineMultisampleStateCreateInfo,
-                    PRasterizationState = &pipelineRasterizationStateCreateInfo,
-                    PStages             = pPipelineShaderStageCreateInfos,
-                    PVertexInputState   = &pipelineVertexInputStateCreateInfo,
-                    PViewportState      = &pipelineViewportStateCreateInfo,
-                    StageCount          = (uint)pipelineShaderStageCreateInfos.Length,
-                    RenderPass          = renderPass.Handle,
-                };
-
-                var pipeline = this.Context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);
-
-                fragShaderModule.Dispose();
-                vertShaderModule.Dispose();
-
-                return pipeline;
-            }
-        }
-    }
-
-    private VkPipelineLayout CreatePipelineLayout(VkDescriptorSetLayout descriptorSetLayout)
-    {
-        var descriptorSetLayoutHandle = descriptorSetLayout.Handle;
-
-        var createInfo = new VkPipelineLayoutCreateInfo
-        {
-            PSetLayouts    = &descriptorSetLayoutHandle,
-            SetLayoutCount = 1,
-        };
-
-        return this.Context.Device.CreatePipelineLayout(createInfo);
     }
 
     private VkShaderModule CreateShaderModule(byte[] buffer)
@@ -525,7 +294,6 @@ public unsafe partial class VulkanRenderer : IDisposable
             }
 
             this.Context.Dispose();
-            this.spirvCompiler.Dispose();
 
             this.disposed = true;
         }
@@ -657,21 +425,170 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public Shader CreateShader()
+    public Shader CreateShader<TShader, TVertexInput>()
+    where TShader      : IShader
+    where TVertexInput : IVertexInput
     {
-        var renderPass          = this.CreateRenderPass(this.Context.ScreenFormat);
-        var descriptorSetLayout = this.CreateDescriptorSetLayout();
-        var pipelineLayout      = this.CreatePipelineLayout(descriptorSetLayout);
-        var pipeline            = this.CreatePipeline(pipelineLayout, renderPass);
+        var renderPass = this.CreateRenderPass(this.Context.ScreenFormat);
 
-        return new()
+        fixed (byte* pName = "main"u8)
         {
-            DescriptorSetLayout = descriptorSetLayout,
-            Pipeline            = pipeline,
-            PipelineBindPoint   = VkPipelineBindPoint.Graphics,
-            PipelineLayout      = pipelineLayout,
-            RenderPass          = renderPass,
-        };
+            var bindings                       = new List<VkDescriptorSetLayoutBinding>();
+            var pipelineShaderStageCreateInfos = new List<VkPipelineShaderStageCreateInfo>();
+
+            using var disposables = new Disposables();
+            using var context     = new Context();
+
+            foreach (var stage in TShader.Stages)
+            {
+                var spirv     = context.ParseSpirv(stage.Value);
+                var compiler  = context.CreateCompiler(Backend.Glsl, spirv, CaptureMode.TakeOwnership);
+                var resources = compiler.CreateShaderResources();
+
+                foreach (var resource in resources.GetResourceListForType(ResorceType.SampledImage))
+                {
+                    var binding = compiler.GetDecoration(resource.Id, Decoration.Binding);
+
+                    var layout = new VkDescriptorSetLayoutBinding()
+                    {
+                        Binding         = binding,
+                        DescriptorCount = 1,
+                        DescriptorType  = VkDescriptorType.CombinedImageSampler,
+                        StageFlags      = stage.Key,
+                    };
+
+                    bindings.Add(layout);
+                }
+
+                var shaderModule = this.CreateShaderModule(stage.Value);
+
+                disposables.Add(shaderModule);
+
+                var createInfo = new VkPipelineShaderStageCreateInfo()
+                {
+                    Module = shaderModule.Handle,
+                    PName  = pName,
+                    Stage  = stage.Key,
+                };
+
+                pipelineShaderStageCreateInfos.Add(createInfo);
+            }
+
+            var vertexInputAttributeDescription = TVertexInput.GetAttributes();
+            var vertexInputBindingDescription   = TVertexInput.GetBindings();
+
+            var dynamicStates = new VkDynamicState[]
+            {
+                VkDynamicState.Viewport,
+                VkDynamicState.Scissor,
+            };
+
+            fixed (VkDescriptorSetLayoutBinding*      pBindings                       = bindings.ToArray())
+            fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription)
+            fixed (VkDynamicState*                    pDynamicStates                  = dynamicStates)
+            fixed (VkPipelineShaderStageCreateInfo*   pPipelineShaderStageCreateInfos = pipelineShaderStageCreateInfos.ToArray())
+            {
+                var descriptorSetLayoutCreateInfo = new VkDescriptorSetLayoutCreateInfo
+                {
+                    PBindings    = pBindings,
+                    BindingCount = (uint)bindings.Count,
+                };
+
+                var descriptorSetLayout = this.Context.Device.CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+
+                var descriptorSetLayoutHandle = descriptorSetLayout.Handle;
+
+                var pipelineLayoutCreateInfo = new VkPipelineLayoutCreateInfo
+                {
+                    PSetLayouts    = &descriptorSetLayoutHandle,
+                    SetLayoutCount = 1,
+                };
+
+                var pipelineLayout = this.Context.Device.CreatePipelineLayout(pipelineLayoutCreateInfo);
+
+                var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
+                {
+                    Topology = VkPrimitiveTopology.TriangleList,
+                };
+
+                var pipelineVertexInputStateCreateInfo = new VkPipelineVertexInputStateCreateInfo
+                {
+                    PVertexAttributeDescriptions    = pVertexAttributeDescriptions,
+                    PVertexBindingDescriptions      = &vertexInputBindingDescription,
+                    VertexAttributeDescriptionCount = (uint)vertexInputAttributeDescription.Length,
+                    VertexBindingDescriptionCount   = 1,
+                };
+
+                var pipelineDynamicStateCreateInfo = new VkPipelineDynamicStateCreateInfo
+                {
+                    DynamicStateCount = (uint)dynamicStates.Length,
+                    PDynamicStates    = pDynamicStates,
+                };
+
+                var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
+                {
+                    BlendEnable    = true,
+                    ColorWriteMask = VkColorComponentFlags.R
+                        | VkColorComponentFlags.G
+                        | VkColorComponentFlags.B
+                        | VkColorComponentFlags.A,
+                    DstColorBlendFactor = VkBlendFactor.OneMinusSrcAlpha,
+                    SrcAlphaBlendFactor = VkBlendFactor.One,
+                    SrcColorBlendFactor = VkBlendFactor.SrcAlpha,
+                };
+
+                var pipelineColorBlendStateCreateInfo = new VkPipelineColorBlendStateCreateInfo
+                {
+                    AttachmentCount = 1,
+                    PAttachments    = &pipelineColorBlendAttachmentState,
+                };
+
+                var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
+                {
+                    RasterizationSamples = VkSampleCountFlags.N1,
+                };
+
+                var pipelineRasterizationStateCreateInfo = new VkPipelineRasterizationStateCreateInfo
+                {
+                    CullMode    = VkCullModeFlags.Back,
+                    FrontFace   = VkFrontFace.Clockwise,
+                    LineWidth   = 1,
+                    PolygonMode = VkPolygonMode.Fill,
+                };
+
+                var pipelineViewportStateCreateInfo = new VkPipelineViewportStateCreateInfo
+                {
+                    ViewportCount = 1,
+                    ScissorCount  = 1,
+                };
+
+                var graphicsPipelineCreateInfo = new VkGraphicsPipelineCreateInfo
+                {
+                    Layout              = pipelineLayout.Handle,
+                    PColorBlendState    = &pipelineColorBlendStateCreateInfo,
+                    PDynamicState       = &pipelineDynamicStateCreateInfo,
+                    PInputAssemblyState = &inputAssembly,
+                    PMultisampleState   = &pipelineMultisampleStateCreateInfo,
+                    PRasterizationState = &pipelineRasterizationStateCreateInfo,
+                    PStages             = pPipelineShaderStageCreateInfos,
+                    PVertexInputState   = &pipelineVertexInputStateCreateInfo,
+                    PViewportState      = &pipelineViewportStateCreateInfo,
+                    StageCount          = (uint)pipelineShaderStageCreateInfos.Count,
+                    RenderPass          = renderPass.Handle,
+                };
+
+                var pipeline = this.Context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);
+
+                return new()
+                {
+                    DescriptorSetLayout = descriptorSetLayout,
+                    Pipeline            = pipeline,
+                    PipelineBindPoint   = VkPipelineBindPoint.Graphics,
+                    PipelineLayout      = pipelineLayout,
+                    RenderPass          = renderPass,
+                };
+            }
+        }
     }
 
     public VkSampler CreateSampler()

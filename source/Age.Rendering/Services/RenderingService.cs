@@ -6,6 +6,7 @@ using Age.Rendering.Interfaces;
 using Age.Rendering.Vulkan;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan.Uniforms;
+using Age.Rendering.Shaders;
 
 namespace Age.Rendering.Services;
 
@@ -16,7 +17,7 @@ public class RenderingService : IDisposable
     private readonly Shader         shader;
 
     private readonly Dictionary<Texture, UniformSet>       textureSets   = [];
-    private readonly Dictionary<DrawCommand, VertexBuffer> vertexBuffers = [];
+    private readonly Dictionary<int, VertexBuffer> vertexBuffers = [];
 
     private int  changes;
     private bool disposed;
@@ -25,7 +26,7 @@ public class RenderingService : IDisposable
     {
         this.indexBuffer = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
         this.renderer    = renderer;
-        this.shader      = renderer.CreateShader();
+        this.shader      = renderer.CreateShader<CanvasShader, Vertex>();
 
         this.renderer.Context.SwapchainRecreated += this.RequestDraw;
     }
@@ -80,7 +81,9 @@ public class RenderingService : IDisposable
                             this.textureSets[rectDrawCommand.Texture] = uniformSet = this.renderer.CreateUniformSet([uniform], this.shader);
                         }
 
-                        if (!this.vertexBuffers.TryGetValue(command, out var vertexBuffer))
+                        var hashcode = windowSize.GetHashCode() ^ rectDrawCommand.Rect.GetHashCode();
+
+                        if (!this.vertexBuffers.TryGetValue(hashcode, out var vertexBuffer))
                         {
                             var rect = rectDrawCommand.Rect;
 
@@ -102,7 +105,7 @@ public class RenderingService : IDisposable
                                 new(p4, default, new(0, 1)),
                             };
 
-                            this.vertexBuffers[command] = vertexBuffer = this.renderer.CreateVertexBuffer(vertices);
+                            this.vertexBuffers[hashcode] = vertexBuffer = this.renderer.CreateVertexBuffer(vertices);
                         }
 
                         if (vertexBuffer != lastVertexBuffer)

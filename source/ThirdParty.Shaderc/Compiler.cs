@@ -6,7 +6,7 @@ namespace ThirdParty.Shaderc;
 
 public unsafe class Compiler : IDisposable
 {
-    private readonly shaderc_compiler_t handler = PInvoke.shaderc_compiler_initialize();
+    private readonly shaderc_compiler_t handle = PInvoke.shaderc_compiler_initialize();
     private bool disposed;
 
     ~Compiler() => this.Dispose(false);
@@ -20,19 +20,22 @@ public unsafe class Compiler : IDisposable
                 // TODO: dispose managed state (managed objects)
             }
 
-            PInvoke.shaderc_compiler_release(this.handler);
+            PInvoke.shaderc_compiler_release(this.handle);
 
             this.disposed = true;
         }
     }
 
-    public CompilationResult CompileIntoSpv(string sourceText, ShaderKind shaderKind, string inputFileName, string entryPointName, CompilerOptions? additionalOptions = null)
+    public CompilationResult CompileIntoSpv(string sourceText, ShaderKind shaderKind, string inputFileName, string entryPointName, CompilerOptions? additionalOptions = null) =>
+        this.CompileIntoSpv(Encoding.UTF8.GetBytes(sourceText), shaderKind, inputFileName, entryPointName, additionalOptions);
+
+    public CompilationResult CompileIntoSpv(byte[] source, ShaderKind shaderKind, string inputFileName, string entryPointName, CompilerOptions? additionalOptions = null)
     {
-        fixed (byte* pSourceText     = Encoding.UTF8.GetBytes(sourceText))
+        fixed (byte* pSourceText     = source)
         fixed (byte* pInputFileName  = Encoding.UTF8.GetBytes(inputFileName))
         fixed (byte* pEntryPointName = Encoding.UTF8.GetBytes(entryPointName))
         {
-            var result = PInvoke.shaderc_compile_into_spv(this.handler, pSourceText, (ulong)sourceText.Length, shaderKind, pInputFileName, pEntryPointName, additionalOptions);
+            var result = PInvoke.shaderc_compile_into_spv(this.handle, pSourceText, (ulong)source.Length, shaderKind, pInputFileName, pEntryPointName, additionalOptions);
 
             var length = PInvoke.shaderc_result_get_length(result);
 

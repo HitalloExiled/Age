@@ -6,11 +6,11 @@ namespace ThirdParty.SpirvCross;
 public unsafe class Compiler
 {
     private readonly Context       context;
-    private readonly spvc_compiler handler;
+    private readonly spvc_compiler handle;
 
-    internal Compiler(spvc_compiler handler, Context context)
+    internal Compiler(spvc_compiler handle, Context context)
     {
-        this.handler = handler;
+        this.handle  = handle;
         this.context = context;
     }
 
@@ -18,7 +18,7 @@ public unsafe class Compiler
     {
         byte* source;
 
-        this.context.CheckResult(PInvoke.spvc_compiler_compile(this.handler, &source));
+        this.context.CheckResult(PInvoke.spvc_compiler_compile(this.handle, &source));
 
         return Marshal.PtrToStringAnsi((nint)source)!;
     }
@@ -27,11 +27,11 @@ public unsafe class Compiler
     {
         spvc_resources resources;
 
-        this.context.CheckResult(PInvoke.spvc_compiler_create_shader_resources(this.handler, &resources));
+        this.context.CheckResult(PInvoke.spvc_compiler_create_shader_resources(this.handle, &resources));
 
         return new(resources, this.context);
     }
 
     public uint GetDecoration(uint id, Decoration decoration) =>
-        PInvoke.spvc_compiler_get_decoration(this.handler, id, decoration);
+        PInvoke.spvc_compiler_get_decoration(this.handle, id, decoration);
 }

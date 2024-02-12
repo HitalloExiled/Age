@@ -8,8 +8,9 @@
     <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
     <ProjectReference Include="..\Age.Numerics\Age.Numerics.csproj" />
     <ProjectReference Include="..\Age.Platforms\Age.Platforms.csproj" />
-    <ProjectReference Include="..\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj" />
     <ProjectReference Include="..\ThirdParty.Shaderc\ThirdParty.Shaderc.csproj" />
+    <ProjectReference Include="..\ThirdParty.SpirvCross\ThirdParty.SpirvCross.csproj" />
+    <ProjectReference Include="..\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj" />
   </ItemGroup>
 
   <ItemGroup>

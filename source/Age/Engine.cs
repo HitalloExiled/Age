@@ -9,10 +9,12 @@ namespace Age;
 
 public class Engine : IDisposable
 {
-    private readonly Window           mainWindow;
-    private readonly VulkanRenderer   renderer = new();
-    private readonly Container        container;
-    private readonly double           frameTime = 1000.0 / 60;
+    private const ushort TARGET_FPS = 60;
+
+    private readonly Container      container;
+    private readonly Window         mainWindow;
+    private readonly VulkanRenderer renderer = new();
+    private readonly double         targetFrameTime = 1000.0 / TARGET_FPS;
 
     private bool disposed;
 
@@ -90,11 +92,11 @@ public class Engine : IDisposable
 
             var totalMilliseconds = watch.Elapsed.TotalMilliseconds;
 
-            if (totalMilliseconds < this.frameTime)
+            if (totalMilliseconds < this.targetFrameTime)
             {
-                var remaining = this.frameTime - totalMilliseconds;
+                var remaining = this.targetFrameTime - totalMilliseconds;
 
-                Thread.Sleep(new TimeSpan((long)(remaining * TimeSpan.TicksPerMillisecond)));
+                Thread.Sleep(new TimeSpan((long)(remaining * TimeSpan.TicksPerMillisecond) / 2));
             }
 
             var fps       = Math.Round(1000.0 / watch.Elapsed.TotalMilliseconds, 2);
@@ -110,17 +112,17 @@ public class Engine : IDisposable
             minFrameTime = Math.Min(minFrameTime, frameTime);
 
             clockText.Value =
-            $"""
-            Frames: {frames}
-            FPS: {fps}
-                Avg: {avgFps}
-                Min: {minFps}
-                Max: {maxFps}
+                $"""
+                Frames: {frames}
+                FPS: {fps}
+                    Avg: {avgFps}
+                    Min: {minFps}
+                    Max: {maxFps}
 
-            FrameTime: {frameTime}ms
-                Min: {minFrameTime}ms
-                Max: {maxFrameTime}ms
-            """;
+                FrameTime: {frameTime}ms
+                    Min: {minFrameTime}ms
+                    Max: {maxFrameTime}ms
+                """;
 
             frames++;
 
