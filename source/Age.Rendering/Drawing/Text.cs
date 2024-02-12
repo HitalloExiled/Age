@@ -1,5 +1,3 @@
-using Age.Rendering.Services;
-
 namespace Age.Rendering.Drawing;
 
 public class Text : Element
@@ -20,9 +18,13 @@ public class Text : Element
 
     private void UpdateText(string? value)
     {
-        if (value != null && value != this.value)
+        if (string.IsNullOrEmpty(value))
         {
-            Singleton.TextService.DrawText(this, value);
+            this.Commands.Clear();
+        }
+        else if (value != this.value)
+        {
+            Container.Singleton.TextService.DrawText(this, value);
 
             this.value = value;
         }

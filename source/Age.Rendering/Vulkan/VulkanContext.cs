@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Age.Core.Interop;
 using Age.Numerics;
-using Age.Rendering.Vulkan.Handlers;
+using Age.Rendering.Resources;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Extensions;
@@ -13,6 +13,8 @@ namespace Age.Rendering.Vulkan;
 
 public unsafe partial class VulkanContext : IDisposable
 {
+    public event Action? SwapchainRecreated;
+
     public const ushort MAX_FRAMES_IN_FLIGHT = 2;
 
     private static readonly HashSet<string> validationLayers = [VkConstants.VK_LAYER_KHRONOS_VALIDATION];
@@ -23,21 +25,21 @@ public unsafe partial class VulkanContext : IDisposable
     private readonly VkFence[]                 fences = new VkFence[MAX_FRAMES_IN_FLIGHT];
     private readonly Frame[]                   frames = new Frame[MAX_FRAMES_IN_FLIGHT];
     private readonly VkInstance                instance;
+    private readonly Queue<IDisposable>        pendingDisposes = [];
     private readonly VkSemaphore[]             renderingFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
     private readonly VkSurfaceExtensionKHR     surfaceExtension;
-    private readonly List<SurfaceContext>      surfaceContexts = [];
 
-    private ushort                   currentFrame;
-    private VkDevice                 device = null!;
-    private bool                     deviceInitialized;
-    private bool                     disposed;
-    private VkQueue                  graphicsQueue = null!;
-    private uint                     graphicsQueueIndex;
-    private VkPhysicalDevice         physicalDevice = null!;
-    private VkQueue                  presentationQueue = null!;
-    private uint                     presentationQueueIndex;
-    private VkSurfaceFormatKHR       surfaceFormat;
-    private VkSwapchainExtensionKHR  swapchainExtension = null!;
+    private ushort                  currentFrame;
+    private VkDevice                device = null!;
+    private bool                    deviceInitialized;
+    private bool                    disposed;
+    private VkQueue                 graphicsQueue = null!;
+    private uint                    graphicsQueueIndex;
+    private VkPhysicalDevice        physicalDevice = null!;
+    private VkQueue                 presentationQueue = null!;
+    private uint                    presentationQueueIndex;
+    private VkSurfaceFormatKHR      surfaceFormat;
+    private VkSwapchainExtensionKHR swapchainExtension = null!;
 
     private IList<string> RequiredExtensions
     {
@@ -252,7 +254,7 @@ public unsafe partial class VulkanContext : IDisposable
         return imageView;
     }
 
-    private SwapchainHandler CreateSwapchain(VkSurfaceKHR surface, Size<uint> size)
+    private Swapchain CreateSwapchain(VkSurfaceKHR surface, Size<uint> size)
     {
         this.surfaceExtension.GetPhysicalDeviceSurfaceCapabilities(this.physicalDevice, surface, out var surfaceCapabilities);
         var extent = ChooseSwapExtent(size, surfaceCapabilities);
@@ -265,6 +267,7 @@ public unsafe partial class VulkanContext : IDisposable
                 ImageArrayLayers      = 1,
                 ImageColorSpace       = this.surfaceFormat.ColorSpace,
                 ImageExtent           = extent,
+                PresentMode           = VkPresentModeKHR.Immediate,
                 ImageFormat           = this.surfaceFormat.Format,
                 ImageUsage            = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst,
                 MinImageCount         = surfaceCapabilities.MinImageCount,
@@ -288,15 +291,15 @@ public unsafe partial class VulkanContext : IDisposable
                 framebuffers[i] = this.CreateFrameBuffer(renderPass, imageViews[i], extent);
             }
 
-            return new SwapchainHandler
+            return new Swapchain
             {
                 Extent        = extent,
                 Format        = this.surfaceFormat.Format,
                 Framebuffers  = framebuffers,
-                Handler       = swapchain,
                 Images        = images,
                 ImageViews    = imageViews,
                 RenderPass    = renderPass,
+                Value         = swapchain,
             };
         }
     }
@@ -424,18 +427,12 @@ public unsafe partial class VulkanContext : IDisposable
         this.EndSingleTimeCommands(commandBuffer);
     }
 
-    private void DestroySwapchain(SwapchainHandler swapchain)
+    private void DisposePendingResources()
     {
-        this.device.WaitIdle();
-
-        for (var i = 0; i < swapchain.ImageViews.Length; i++)
+        while (this.pendingDisposes.Count > 0)
         {
-            swapchain.Framebuffers[i].Dispose();
-            swapchain.ImageViews[i].Dispose();
+            this.pendingDisposes.Dequeue().Dispose();
         }
-
-        swapchain.RenderPass.Dispose();
-        swapchain.Handler.Dispose();
     }
 
     public uint FindMemoryType(uint typeFilter, VkMemoryPropertyFlags properties)
@@ -504,13 +501,17 @@ public unsafe partial class VulkanContext : IDisposable
         throw new Exception("Failed to find a suitable GPU!");
     }
 
-    private void RecreateSwapchain(SurfaceContext context)
+    private void RecreateSwapchain(Surface context)
     {
         if (!context.Hidden)
         {
-            this.DestroySwapchain(context.Swapchain);
+            this.Device.WaitIdle();
 
-            context.Swapchain  = this.CreateSwapchain(context.Surface, context.Size);
+            context.Swapchain.Dispose();
+
+            context.Swapchain = this.CreateSwapchain(context.Value, context.Size);
+
+            SwapchainRecreated?.Invoke();
         }
     }
 
@@ -519,6 +520,8 @@ public unsafe partial class VulkanContext : IDisposable
         if (!this.disposed)
         {
             this.device.WaitIdle();
+
+            this.DisposePendingResources();
 
             for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
             {
@@ -551,7 +554,7 @@ public unsafe partial class VulkanContext : IDisposable
         return commandBuffer;
     }
 
-    public virtual SurfaceContext CreateSurfaceContext(VkSurfaceKHR surface, Size<uint> size)
+    public virtual Surface CreateSurface(VkSurfaceKHR surface, Size<uint> size)
     {
         if (!this.deviceInitialized)
         {
@@ -569,15 +572,13 @@ public unsafe partial class VulkanContext : IDisposable
             semaphores[i] = this.device.CreateSemaphore();
         }
 
-        var surfaceContext = new SurfaceContext
+        var surfaceContext = new Surface
         {
             Semaphores  = semaphores,
             Size        = size,
-            Surface     = surface,
+            Value     = surface,
             Swapchain   = swapchain,
         };
-
-        this.surfaceContexts.Add(surfaceContext);
 
         return surfaceContext;
     }
@@ -588,20 +589,15 @@ public unsafe partial class VulkanContext : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public void DestroySurfaceContext(SurfaceContext context)
+    public void DefferedDispose(IDisposable disposable) =>
+        this.pendingDisposes.Enqueue(disposable);
+
+    public void DefferedDispose(IEnumerable<IDisposable> disposables)
     {
-        this.device.WaitIdle();
-
-        for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        foreach (var disposable in disposables)
         {
-            context.Semaphores[i].Dispose();
+            this.pendingDisposes.Enqueue(disposable);
         }
-
-        this.DestroySwapchain(context.Swapchain);
-
-        context.Surface.Dispose();
-
-        this.surfaceContexts.Remove(context);
     }
 
     public void EndSingleTimeCommands(VkCommandBuffer commandBuffer)
@@ -624,7 +620,7 @@ public unsafe partial class VulkanContext : IDisposable
 
     public void PrepareBuffers()
     {
-        if (this.surfaceContexts.Count == 0 || this.surfaceContexts.All(x => x.Hidden))
+        if (Surface.Entries.Count == 0 || Surface.Entries.All(x => x.Hidden))
         {
             return;
         }
@@ -634,15 +630,14 @@ public unsafe partial class VulkanContext : IDisposable
         fence.Wait(true, ulong.MaxValue);
         fence.Reset();
 
-        foreach (var context in this.surfaceContexts)
+        foreach (var context in Surface.Entries)
         {
             if (!context.Hidden)
             {
                 uint imageIndex = 0;
-
                 try
                 {
-                    imageIndex = context.Swapchain.Handler.AcquireNextImage(ulong.MaxValue, context.Semaphores[this.currentFrame], default);
+                    imageIndex = context.Swapchain.Value.AcquireNextImage(ulong.MaxValue, context.Semaphores[this.currentFrame], default);
                 }
                 catch (VkException exception)
                 {
@@ -666,7 +661,7 @@ public unsafe partial class VulkanContext : IDisposable
 
     public void SwapBuffers()
     {
-        var visibleSurfaces = this.surfaceContexts.Where(x => !x.Hidden).ToArray();
+        var visibleSurfaces = Surface.Entries.Where(x => !x.Hidden).ToArray();
         var fence = this.fences[this.currentFrame];
 
         if (visibleSurfaces.Length == 0)
@@ -685,7 +680,7 @@ public unsafe partial class VulkanContext : IDisposable
             var context = visibleSurfaces[i];
 
             imageIndices[i]   = context.CurrentBuffer;
-            swapchains[i]     = context.Swapchain.Handler.Handle;
+            swapchains[i]     = context.Swapchain.Value.Handle;
             waitSemaphores[i] = context.Semaphores[this.currentFrame].Handle;
             waitStages[i]     = VkPipelineStageFlags.ColorAttachmentOutput;
         }
@@ -731,7 +726,7 @@ public unsafe partial class VulkanContext : IDisposable
                 for (var i = 0; i < results.Length; i++)
                 {
                     var result  = results[i];
-                    var context = this.surfaceContexts[i];
+                    var context = Surface.Entries[i];
 
                     if (result is VkResult.ErrorOutOfDateKHR)
                     {
@@ -757,5 +752,7 @@ public unsafe partial class VulkanContext : IDisposable
         }
 
         this.currentFrame = (ushort)((this.currentFrame + 1) % MAX_FRAMES_IN_FLIGHT);
+
+        this.DisposePendingResources();
     }
 }

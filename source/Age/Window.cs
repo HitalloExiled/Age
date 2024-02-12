@@ -1,6 +1,7 @@
 using Age.Numerics;
 using Age.Rendering.Drawing;
 using Age.Rendering.Interfaces;
+using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 
 namespace Age;
@@ -13,7 +14,7 @@ public class Window(string title, Size<uint> size, Point<int> position, Platform
 
     private static VulkanRenderer renderer = null!;
 
-    public SurfaceContext Context { get; private set; } = null!;
+    public Surface Surface { get; private set; } = null!;
 
     public static void Register(VulkanRenderer renderer)
     {
@@ -26,13 +27,21 @@ public class Window(string title, Size<uint> size, Point<int> position, Platform
     {
         base.PlatformCreate(title, size, position, parent);
 
-        this.Context = renderer.Context.CreateSurfaceContext(this.Handle, this.ClientSize);
+        this.Surface = renderer.Context.CreateSurface(this.Handle, this.ClientSize);
+
+        this.SizeChanged += () =>
+        {
+            this.Surface.Size   = this.ClientSize;
+            this.Surface.Hidden = this.Minimized || !this.Visible;
+        };
     }
 
     protected override void PlatformClose()
     {
         base.PlatformClose();
 
-        renderer.Context.DestroySurfaceContext(this.Context);
+        renderer.WaitIdle();
+
+        this.Surface.Dispose();
     }
 }

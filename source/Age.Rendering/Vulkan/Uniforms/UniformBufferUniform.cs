@@ -1,5 +1,6 @@
 using Age.Rendering.Enums;
-using Age.Rendering.Vulkan.Handlers;
+
+using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Rendering.Vulkan.Uniforms;
 
@@ -7,5 +8,5 @@ public record UniformBufferUniform : Uniform
 {
     public override UniformType Type => UniformType.UniformBuffer;
 
-    public required BufferHandler Buffer { get; init; }
+    public required Buffer Buffer { get; init; }
 }

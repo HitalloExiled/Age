@@ -46,7 +46,7 @@ public unsafe partial class VkDeviceMemory : VkDeviceResource<VkDeviceMemory>
 
         VkException.Check(PInvoke.vkMapMemory(this.Device.Handle, this.handle, offset, (uint)(sizeof(T) * data.Length), flags, (void**)ppData));
 
-        PointerHelper.Copy(data, *ppData, (uint)data.Length);
+        data.AsSpan().CopyTo(new Span<T>(*ppData, data.Length));
 
         NativeMemory.Free(ppData);
 

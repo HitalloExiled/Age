@@ -1,11 +1,13 @@
-using Age.Rendering.Vulkan.Handlers;
 using ThirdParty.Vulkan;
 
-namespace Age.Rendering.Vulkan;
+namespace Age.Rendering.Resources;
 
-public record UniformSet
+public record UniformSet : Disposable
 {
-    public required DescriptorPoolHandler DescriptorPool { get; init; }
-    public required VkDescriptorSet[]     DescriptorSets { get; init; }
-    public required ShaderHandler         Shader         { get; init; }
+    public required DescriptorPool    DescriptorPool { get; init; }
+    public required VkDescriptorSet[] DescriptorSets { get; init; }
+    public required Shader            Shader         { get; init; }
+
+    protected override void OnDispose() =>
+        this.DescriptorPool.FreeDescriptorSets(this.DescriptorSets);
 }

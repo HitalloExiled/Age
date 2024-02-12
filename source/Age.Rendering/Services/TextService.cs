@@ -2,6 +2,7 @@ using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing;
 using Age.Rendering.Enums;
+using Age.Rendering.Resources;
 using SkiaSharp;
 
 using GlyphKey = (char, ushort);
@@ -16,6 +17,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
     private bool disposed;
 
+#if DUMP_IMAGES
     private static void SaveToFile(string text, SKPaint paint)
     {
         var drawBounds = new SKRect();
@@ -29,9 +31,13 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
         var skimage = SKImage.FromBitmap(bitmap);
 
         var data = skimage.Encode(SKEncodedImageFormat.Png, 100);
-        using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"{text.Replace('\n', '_')}.png"));
+
+        #pragma warning disable SYSLIB1045
+        using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"{Regex.Replace(text, "[\n:\\\\]", "_")}.png"));
+        #pragma warning restore SYSLIB1045
         data.SaveTo(stream);
     }
+#endif
 
     private Glyph DrawGlyph(char character, ushort fontSize, SKRect bounds, SKPaint paint)
     {
@@ -53,7 +59,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
                 Pixels = pixels,
             };
 
-            var texture = this.renderingService.CreateTexture(image, TextureType.N2D, this.sampler);
+            var texture = this.renderingService.CreateTexture(image, TextureType.N2D);
 
             this.glyphs[(character, fontSize)] = glyph = new()
             {
@@ -76,7 +82,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
                     this.renderingService.FreeTexture(glyph.Texture);
                 }
 
-                this.renderingService.FreeSampler(this.sampler);
+                this.renderingService.DestroySampler(this.sampler);
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
@@ -123,18 +129,22 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
                 var glyph    = this.DrawGlyph(character, style.FontSize, glyphsBounds[i], paint);
                 var size     = new Size<float>(bounds.Width, bounds.Height);
                 var position = new Point<float>(offset.X + glyphsPosition[i].X, offset.Y - glyphsBounds[i].Top);
-                var command  = new RectDrawCommand(new(size, position), glyph.Texture);
+                var command  = new RectDrawCommand(new(size, position), glyph.Texture, this.sampler);
 
                 element.Commands.Add(command);
             }
             else if (character == '\n' && i < text.Length - 1)
             {
                 offset.X  = style.Position.X + -glyphsPosition[i + 1].X;
-                offset.Y += lineHeight;
+                offset.Y += lineHeight + -4;
             }
         }
 
+        this.renderingService.RequestDraw();
+
+#if DUMP_IMAGES
         SaveToFile(text, paint);
+#endif
     }
 
     public void Dispose()

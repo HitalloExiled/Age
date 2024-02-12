@@ -1,6 +1,6 @@
 namespace Age.Rendering;
 
-public class Image
+public record Image
 {
     public required uint   Height { get; init; }
     public required uint[] Pixels { get; init; } = [];

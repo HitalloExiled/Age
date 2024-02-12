@@ -4,27 +4,30 @@ using Age.Rendering.Drawing;
 using Age.Rendering.Enums;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Vulkan;
-using Age.Rendering.Vulkan.Handlers;
+using Age.Rendering.Resources;
 using Age.Rendering.Vulkan.Uniforms;
 
 namespace Age.Rendering.Services;
 
 public class RenderingService : IDisposable
 {
-    private readonly IndexBufferHandler indexBuffer;
-    private readonly VulkanRenderer     renderer;
-    private readonly Shader             shader;
+    private readonly IndexBuffer    indexBuffer;
+    private readonly VulkanRenderer renderer;
+    private readonly Shader         shader;
 
-    private readonly Dictionary<Texture, UniformSet>              textureSets   = [];
-    private readonly Dictionary<DrawCommand, VertexBufferHandler> vertexBuffers = [];
+    private readonly Dictionary<Texture, UniformSet>       textureSets   = [];
+    private readonly Dictionary<DrawCommand, VertexBuffer> vertexBuffers = [];
 
+    private int  changes;
     private bool disposed;
 
     public RenderingService(VulkanRenderer renderer)
     {
         this.indexBuffer = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
         this.renderer    = renderer;
-        this.shader      = new() { Handler = renderer.CreateShader() };
+        this.shader      = renderer.CreateShader();
+
+        this.renderer.Context.SwapchainRecreated += this.RequestDraw;
     }
 
     protected virtual void Dispose(bool disposing)
@@ -33,20 +36,10 @@ public class RenderingService : IDisposable
         {
             if (disposing)
             {
-                this.renderer.WaitIdle();
-
-                foreach (var uniformSet in this.textureSets.Values)
-                {
-                    this.renderer.DestroyUniformSet(uniformSet);
-                }
-
-                foreach (var vertexBuffer in this.vertexBuffers.Values)
-                {
-                    VulkanRenderer.DestroyVertexBuffer(vertexBuffer);
-                }
-
-                VulkanRenderer.DestroyShader(this.shader);
-                VulkanRenderer.DestroyIndexBuffer(this.indexBuffer);
+                this.renderer.Context.DefferedDispose(this.textureSets.Values);
+                this.renderer.Context.DefferedDispose(this.vertexBuffers.Values);
+                this.renderer.Context.DefferedDispose(this.indexBuffer);
+                this.renderer.Context.DefferedDispose(this.shader);
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
@@ -57,9 +50,9 @@ public class RenderingService : IDisposable
 
     private void Render(IWindow window, Element element)
     {
-        IndexBufferHandler?  lastIndexBuffer  = default;
-        VertexBufferHandler? lastVertexBuffer = default;
-        UniformSet?          lastUniformSet   = default;
+        IndexBuffer?  lastIndexBuffer  = default;
+        VertexBuffer? lastVertexBuffer = default;
+        UniformSet?   lastUniformSet   = default;
 
         var windowSize = window.ClientSize;
 
@@ -78,13 +71,13 @@ public class RenderingService : IDisposable
                                 [
                                     new()
                                     {
-                                        Sampler = rectDrawCommand.Texture.Sampler.Handler,
-                                        Texture = rectDrawCommand.Texture.Handler,
+                                        Sampler = rectDrawCommand.Sampler,
+                                        Texture = rectDrawCommand.Texture,
                                     }
                                 ]
                             };
 
-                            this.textureSets[rectDrawCommand.Texture] = uniformSet = this.renderer.CreateUniformSet([uniform], this.shader.Handler);
+                            this.textureSets[rectDrawCommand.Texture] = uniformSet = this.renderer.CreateUniformSet([uniform], this.shader);
                         }
 
                         var rect = rectDrawCommand.Rect;
@@ -93,7 +86,6 @@ public class RenderingService : IDisposable
                         {
                             this.vertexBuffers[command] = vertexBuffer = this.renderer.CreateVertexBuffer(new Vertex[4]);
                         }
-
                         var x1 = rect.Position.X / windowSize.Width;
                         var x2 = (rect.Position.X + rect.Size.Width) / windowSize.Width;
                         var y1 = -rect.Position.Y / windowSize.Height;
@@ -150,7 +142,7 @@ public class RenderingService : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public Texture CreateTexture(Image image, TextureType textureType, Sampler sampler)
+    public Texture CreateTexture(Image image, TextureType textureType)
     {
         var textureCreate = new TextureCreate
         {
@@ -158,31 +150,24 @@ public class RenderingService : IDisposable
             Depth       = 1,
             Width       = image.Width,
             Height      = image.Height,
-            Format      = default,
-            TextureType = TextureType.N2D,
-        };
-
-        var textureData = this.renderer.CreateTexture(textureCreate);
-
-        return new()
-        {
-            Depth       = 1,
-            Handler     = textureData,
-            Image       = image,
-            Sampler     = sampler,
             TextureType = textureType,
         };
+
+        return this.renderer.CreateTexture(textureCreate);
     }
 
     public Sampler CreateSampler() =>
-        new() { Handler = this.renderer.CreateSampler() };
+        new() { Value = this.renderer.CreateSampler() };
+
+    public void DestroySampler(Sampler sampler) =>
+        this.renderer.Context.DefferedDispose(sampler);
 
     public void Render(IWindow window)
     {
-        this.renderer.SetViewport(window.Context);
-        this.renderer.BeginRenderPass(window.Context);
+        this.renderer.SetViewport(window.Surface);
+        this.renderer.BeginRenderPass(window.Surface);
 
-        this.renderer.BindPipeline(this.shader.Handler);
+        this.renderer.BindPipeline(this.shader);
 
         foreach (var element in window.Content.Enumerate<Element>())
         {
@@ -192,16 +177,34 @@ public class RenderingService : IDisposable
         this.renderer.EndRenderPass();
     }
 
-    public void FreeSampler(Sampler sampler)
-    {
-        this.renderer.WaitIdle();
-        sampler.Handler.Dispose();
-    }
-
     public void FreeTexture(Texture texture)
     {
-        this.renderer.WaitIdle(); // TODO find better solution
+        this.renderer.Context.DefferedDispose(texture);
         this.textureSets.Remove(texture);
-        VulkanRenderer.DestroyTexture(texture.Handler);
+    }
+
+    public void RequestDraw() =>
+        this.changes++;
+
+    public void Render(IEnumerable<IWindow> windows)
+    {
+        if (this.changes > 0)
+        {
+            this.renderer.BeginFrame();
+
+            foreach (var window in windows)
+            {
+                if (window.Visible && !window.Minimized && !window.Closed)
+                {
+                    window.Content.Update();
+
+                    this.Render(window);
+                }
+            }
+
+            this.renderer.EndFrame();
+
+            this.changes--;
+        }
     }
 }
