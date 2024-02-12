@@ -80,33 +80,33 @@ public class RenderingService : IDisposable
                             this.textureSets[rectDrawCommand.Texture] = uniformSet = this.renderer.CreateUniformSet([uniform], this.shader);
                         }
 
-                        var rect = rectDrawCommand.Rect;
-
                         if (!this.vertexBuffers.TryGetValue(command, out var vertexBuffer))
                         {
-                            this.vertexBuffers[command] = vertexBuffer = this.renderer.CreateVertexBuffer(new Vertex[4]);
+                            var rect = rectDrawCommand.Rect;
+
+                            var x1 = rect.Position.X / windowSize.Width;
+                            var x2 = (rect.Position.X + rect.Size.Width) / windowSize.Width;
+                            var y1 = -rect.Position.Y / windowSize.Height;
+                            var y2 = (-rect.Position.Y + rect.Size.Height) / windowSize.Height;
+
+                            var p1 = new Point<float>(x1 * 2 - 1, y1 * 2 - 1);
+                            var p2 = new Point<float>(x2 * 2 - 1, y1 * 2 - 1);
+                            var p3 = new Point<float>(x2 * 2 - 1, y2 * 2 - 1);
+                            var p4 = new Point<float>(x1 * 2 - 1, y2 * 2 - 1);
+
+                            var vertices = new Vertex[4]
+                            {
+                                new(p1, default, new(0, 0)),
+                                new(p2, default, new(1, 0)),
+                                new(p3, default, new(1, 1)),
+                                new(p4, default, new(0, 1)),
+                            };
+
+                            this.vertexBuffers[command] = vertexBuffer = this.renderer.CreateVertexBuffer(vertices);
                         }
-                        var x1 = rect.Position.X / windowSize.Width;
-                        var x2 = (rect.Position.X + rect.Size.Width) / windowSize.Width;
-                        var y1 = -rect.Position.Y / windowSize.Height;
-                        var y2 = (-rect.Position.Y + rect.Size.Height) / windowSize.Height;
-
-                        var p1 = new Point<float>(x1 * 2 - 1, y1 * 2 - 1);
-                        var p2 = new Point<float>(x2 * 2 - 1, y1 * 2 - 1);
-                        var p3 = new Point<float>(x2 * 2 - 1, y2 * 2 - 1);
-                        var p4 = new Point<float>(x1 * 2 - 1, y2 * 2 - 1);
-
-                        var vertices = new Vertex[4]
-                        {
-                            new(p1, default, new(0, 0)),
-                            new(p2, default, new(1, 0)),
-                            new(p3, default, new(1, 1)),
-                            new(p4, default, new(0, 1)),
-                        };
 
                         if (vertexBuffer != lastVertexBuffer)
                         {
-                            this.renderer.UpdateVertexBuffer(vertexBuffer, vertices);
                             this.renderer.BindVertexBuffer(vertexBuffer);
 
                             lastVertexBuffer = vertexBuffer;
