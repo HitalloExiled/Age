@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
-using Age.Core.Interop;
+
+using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
@@ -11,7 +12,7 @@ public unsafe partial class VkDeviceMemory : VkDeviceResource<VkDeviceMemory>
         fixed (VkMemoryAllocateInfo*     pAllocateInfo = &allocateInfo)
         fixed (VkAllocationCallbacks*    pAllocator    = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkAllocateMemory(device.Handle, pAllocateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkAllocateMemory(device.Handle, pAllocateInfo, NullIfDefault(pAllocator), pHandle));
         }
     }
 
@@ -19,7 +20,7 @@ public unsafe partial class VkDeviceMemory : VkDeviceResource<VkDeviceMemory>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkFreeMemory(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkFreeMemory(this.Device.Handle, this.handle, NullIfDefault(pAllocator));
         }
     }
 
@@ -39,14 +40,16 @@ public unsafe partial class VkDeviceMemory : VkDeviceResource<VkDeviceMemory>
     public void Write<T>(ulong offset, uint flags, T data) where T : unmanaged =>
         this.Write(offset, flags, [data]);
 
-    /// <inheritdoc cref="PInvoke.vkMapMemory" />
-    public void Write<T>(ulong offset, uint flags, T[] data) where T : unmanaged
+    public void Write<T>(ulong offset, uint flags, T[] data) where T : unmanaged =>
+        this.Write(offset, flags, data.AsSpan());
+
+    public void Write<T>(ulong offset, uint flags, Span<T> data) where T : unmanaged
     {
         var ppData = (T**)NativeMemory.Alloc((uint)(sizeof(T*) * data.Length));
 
         VkException.Check(PInvoke.vkMapMemory(this.Device.Handle, this.handle, offset, (uint)(sizeof(T) * data.Length), flags, (void**)ppData));
 
-        data.AsSpan().CopyTo(new Span<T>(*ppData, data.Length));
+        data.CopyTo(new Span<T>(*ppData, data.Length));
 
         NativeMemory.Free(ppData);
 

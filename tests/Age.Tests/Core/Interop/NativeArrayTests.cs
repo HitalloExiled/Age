@@ -2,7 +2,7 @@ using Age.Core.Interop;
 
 namespace Age.Tests.Core.Interop;
 
-public unsafe class PointerArrayTests
+public unsafe class NativeArrayTests
 {
     [Fact]
     public void NonGenericPointer()

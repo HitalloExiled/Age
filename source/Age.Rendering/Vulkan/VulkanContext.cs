@@ -98,8 +98,8 @@ public unsafe partial class VulkanContext : IDisposable
                 }
                 : default;
 
-            using var ppEnabledLayerNames     = new StringArrayPtr(validationLayers.ToArray());
-            using var ppEnabledExtensionNames = new StringArrayPtr(this.RequiredExtensions);
+            using var ppEnabledLayerNames     = new NativeStringArray(validationLayers.ToArray());
+            using var ppEnabledExtensionNames = new NativeStringArray(this.RequiredExtensions);
 
             var instanceCreateInfo = new VkInstanceCreateInfo
             {
@@ -108,7 +108,7 @@ public unsafe partial class VulkanContext : IDisposable
                 PApplicationInfo        = &applicationInfo,
                 PpEnabledExtensionNames = ppEnabledExtensionNames,
                 PpEnabledLayerNames     = ppEnabledLayerNames,
-                PNext                   = NullIfDefault(debugUtilsMessengerCreateInfo, &debugUtilsMessengerCreateInfo),
+                PNext                   = NullIfDefault(&debugUtilsMessengerCreateInfo),
             };
 
             this.instance = new VkInstance(instanceCreateInfo);
@@ -214,7 +214,7 @@ public unsafe partial class VulkanContext : IDisposable
             )
             .ToArray();
 
-        using var ppEnabledExtensionNames = new StringArrayPtr([VkSwapchainExtensionKHR.Name]);
+        using var ppEnabledExtensionNames = new NativeStringArray([VkSwapchainExtensionKHR.Name]);
 
         fixed (VkDeviceQueueCreateInfo* pQueueCreateInfos = queueCreateInfos)
         {

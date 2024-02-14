@@ -1,4 +1,4 @@
-using Age.Core.Interop;
+using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
@@ -14,7 +14,7 @@ public unsafe abstract class VkPipeline : VkDeviceResource<VkPipeline>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyPipeline(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyPipeline(this.Device.Handle, this.handle, NullIfDefault(pAllocator));
         }
     }
 }

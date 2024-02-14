@@ -3,7 +3,7 @@ using Age.Core.Interop;
 
 namespace Age.Tests.Core.Interop;
 
-public class StringArrayPtrTests
+public class NativeStringArrayTests
 {
     [Fact]
     public unsafe void ConstructorShouldPass()
@@ -15,7 +15,7 @@ public class StringArrayPtrTests
             "Three",
         };
 
-        using var stringArrayPtr = new StringArrayPtr(list);
+        using var stringArrayPtr = new NativeStringArray(list);
 
         Assert.Equal(list.Length, stringArrayPtr.Length);
 
@@ -35,7 +35,7 @@ public class StringArrayPtrTests
             "Three",
         };
 
-        using var stringArrayPtr = new StringArrayPtr(list);
+        using var stringArrayPtr = new NativeStringArray(list);
 
         Assert.True(list.SequenceEqual(stringArrayPtr.ToArray()));
     }
@@ -48,7 +48,7 @@ public class StringArrayPtrTests
             "One",
         };
 
-        using var stringArrayPtr = new StringArrayPtr(list);
+        using var stringArrayPtr = new NativeStringArray(list);
 
         byte** ppData = stringArrayPtr;
 
@@ -63,7 +63,7 @@ public class StringArrayPtrTests
             "One",
         };
 
-        var stringArrayPtr = new StringArrayPtr(list);
+        var stringArrayPtr = new NativeStringArray(list);
 
         stringArrayPtr.Dispose();
         stringArrayPtr.Dispose();
@@ -74,7 +74,7 @@ public class StringArrayPtrTests
     [Fact]
     public unsafe void DestructorShouldPass()
     {
-        _ = new StringArrayPtr(Array.Empty<string>());
+        _ = new NativeStringArray(Array.Empty<string>());
 
         Assert.True(true);
     }

@@ -1,4 +1,4 @@
-using Age.Core.Interop;
+using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
@@ -10,7 +10,7 @@ public unsafe partial class VkFramebuffer : VkDeviceResource<VkFramebuffer>
         fixed (VkFramebufferCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*   pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateFramebuffer(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateFramebuffer(device.Handle, pCreateInfo, NullIfDefault(pAllocator), pHandle));
         }
     }
 
@@ -18,7 +18,7 @@ public unsafe partial class VkFramebuffer : VkDeviceResource<VkFramebuffer>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyFramebuffer(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyFramebuffer(this.Device.Handle, this.handle, NullIfDefault(pAllocator));
         }
     }
 }

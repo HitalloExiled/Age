@@ -1,4 +1,4 @@
-using Age.Core.Interop;
+using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
@@ -10,7 +10,7 @@ public unsafe partial class VkDescriptorPool : VkDeviceResource<VkDescriptorPool
         fixed (VkDescriptorPoolCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*      pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateDescriptorPool(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandler));
+            VkException.Check(PInvoke.vkCreateDescriptorPool(device.Handle, pCreateInfo, NullIfDefault(pAllocator), pHandler));
         }
     }
 
@@ -18,7 +18,7 @@ public unsafe partial class VkDescriptorPool : VkDeviceResource<VkDescriptorPool
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyDescriptorPool(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyDescriptorPool(this.Device.Handle, this.handle, NullIfDefault(pAllocator));
         }
     }
 

@@ -5,6 +5,8 @@ using Age.Core.Interop;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan.Interfaces;
 
+using static Age.Core.Interop.PointerHelper;
+
 namespace ThirdParty.Vulkan;
 
 /// <summary>
@@ -20,13 +22,13 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
     internal VkDevice(VkPhysicalDevice physicalDevice, in VkDeviceCreateInfo createInfo)
     {
         this.PhysicalDevice    = physicalDevice;
-        this.enabledExtensions = [.. PointerHelper.ToArray(createInfo.PpEnabledExtensionNames, createInfo.EnabledExtensionCount)];
+        this.enabledExtensions = [.. NativeStringArray.ToArray(createInfo.PpEnabledExtensionNames, createInfo.EnabledExtensionCount)];
 
         fixed (VkHandle<VkDevice>*    pHandle     = &this.handle)
         fixed (VkDeviceCreateInfo*    pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateDevice(physicalDevice.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateDevice(physicalDevice.Handle, pCreateInfo, NullIfDefault(pAllocator), pHandle));
         }
     }
 
@@ -34,7 +36,7 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyDevice(this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyDevice(this.handle, NullIfDefault(pAllocator));
         }
     }
 
@@ -95,7 +97,7 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
         fixed (VkHandle<VkPipeline>*         pPipelines  = vkPipelines)
         fixed (VkAllocationCallbacks*        pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateGraphicsPipelines(this.handle, pipelineCache.Handle, (uint)createInfos.Length, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pPipelines));
+            VkException.Check(PInvoke.vkCreateGraphicsPipelines(this.handle, pipelineCache.Handle, (uint)createInfos.Length, pCreateInfo, NullIfDefault(pAllocator), pPipelines));
         }
 
         var pipelines = new VkPipeline[vkPipelines.Length];

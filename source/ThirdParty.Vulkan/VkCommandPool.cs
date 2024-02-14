@@ -1,5 +1,6 @@
-using Age.Core.Interop;
 using ThirdParty.Vulkan.Enums;
+
+using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
@@ -11,7 +12,7 @@ public unsafe partial class VkCommandPool : VkDeviceResource<VkCommandPool>
         fixed (VkCommandPoolCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*   pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateCommandPool(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateCommandPool(device.Handle, pCreateInfo, NullIfDefault(pAllocator), pHandle));
         }
     }
 
@@ -19,7 +20,7 @@ public unsafe partial class VkCommandPool : VkDeviceResource<VkCommandPool>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyCommandPool(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyCommandPool(this.Device.Handle, this.handle, NullIfDefault(pAllocator));
         }
     }
 
@@ -63,7 +64,7 @@ public unsafe partial class VkCommandPool : VkDeviceResource<VkCommandPool>
     public void FreeCommandBuffers(params VkCommandBuffer[] commandBuffers)
     {
         fixed (VkHandle<VkCommandPool>*   pHandle         = &this.handle)
-        fixed (VkHandle<VkCommandBuffer>* pCommandBuffers = commandBuffers.Select(x => x.Handle).ToArray())
+        fixed (VkHandle<VkCommandBuffer>* pCommandBuffers = ToHandlers(commandBuffers))
         {
             PInvoke.vkFreeCommandBuffers(this.Device.Handle, this.handle, (uint)commandBuffers.Length, pCommandBuffers);
         }

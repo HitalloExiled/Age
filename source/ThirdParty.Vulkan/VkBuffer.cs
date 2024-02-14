@@ -1,4 +1,4 @@
-using Age.Core.Interop;
+using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
@@ -11,7 +11,7 @@ public unsafe class VkBuffer : VkDeviceResource<VkBuffer>
         {
             fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
             {
-                VkException.Check(PInvoke.vkCreateBuffer(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+                VkException.Check(PInvoke.vkCreateBuffer(device.Handle, pCreateInfo, NullIfDefault(pAllocator), pHandle));
             }
         }
     }
@@ -20,7 +20,7 @@ public unsafe class VkBuffer : VkDeviceResource<VkBuffer>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyBuffer(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyBuffer(this.Device.Handle, this.handle, NullIfDefault(pAllocator));
         }
     }
 

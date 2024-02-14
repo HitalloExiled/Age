@@ -782,8 +782,8 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             PopulateDebugMessengerCreateInfo(out debugCreateInfo);
         }
 
-        using var ppEnabledExtensionNames = new StringArrayPtr(this.GetRequiredExtensions());
-        using var ppEnabledLayerNames     = new StringArrayPtr(enabledLayerNames);
+        using var ppEnabledExtensionNames = new NativeStringArray(this.GetRequiredExtensions());
+        using var ppEnabledLayerNames     = new NativeStringArray(enabledLayerNames);
 
         var createInfo = new VkInstanceCreateInfo
         {
@@ -841,11 +841,11 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             SampleRateShading = true,
         };
 
-        using var ppEnabledExtensionNames = new StringArrayPtr(this.deviceExtensions.ToArray());
+        using var ppEnabledExtensionNames = new NativeStringArray(this.deviceExtensions.ToArray());
 
         VkDeviceCreateInfo createInfo;
 
-        fixed (VkDeviceQueueCreateInfo* pQueueCreateInfos = queueCreateInfos.ToArray())
+        fixed (VkDeviceQueueCreateInfo* pQueueCreateInfos = CollectionsMarshal.AsSpan(queueCreateInfos))
         {
             createInfo = new VkDeviceCreateInfo
             {
@@ -907,12 +907,6 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             FinalLayout    = VkImageLayout.PresentSrcKHR
         };
 
-        var colorAttachmentResolveRef = new VkAttachmentReference
-        {
-            Attachment = 2,
-            Layout     = VkImageLayout.ColorAttachmentOptimal
-        };
-
         var colorAttachmentRef = new VkAttachmentReference
         {
             Attachment = 0,
@@ -923,6 +917,12 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         {
             Attachment = 1,
             Layout     = VkImageLayout.DepthStencilAttachmentOptimal
+        };
+
+        var colorAttachmentResolveRef = new VkAttachmentReference
+        {
+            Attachment = 2,
+            Layout     = VkImageLayout.ColorAttachmentOptimal
         };
 
         var subpass = new VkSubpassDescription

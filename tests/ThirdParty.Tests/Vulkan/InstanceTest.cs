@@ -58,8 +58,8 @@ public class InstanceTest
                 | VkDebugUtilsMessageTypeFlagsEXT.Validation,
         };
 
-        using var ppEnabledExtensionNames = new StringArrayPtr(["VK_EXT_debug_utils"]);
-        using var ppEnabledLayerNames     = new StringArrayPtr([VkConstants.VK_LAYER_KHRONOS_VALIDATION]);
+        using var ppEnabledExtensionNames = new NativeStringArray(["VK_EXT_debug_utils"]);
+        using var ppEnabledLayerNames     = new NativeStringArray([VkConstants.VK_LAYER_KHRONOS_VALIDATION]);
 
         var instanceCreateInfo = new VkInstanceCreateInfo
         {

@@ -1,7 +1,8 @@
 using System.Runtime.InteropServices;
-using Age.Core.Interop;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Interfaces;
+
+using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan.Extensions;
 
@@ -67,7 +68,7 @@ public unsafe class VkSwapchainExtensionKHR : IDeviceExtension<VkSwapchainExtens
         fixed (VkSwapchainCreateInfoKHR* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*    pAllocator  = &this.device.Instance.Allocator)
         {
-            VkException.Check(this.vkCreateSwapchainKHR.Invoke(this.device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.device.Instance.Allocator, pAllocator), &swapchain));
+            VkException.Check(this.vkCreateSwapchainKHR.Invoke(this.device.Handle, pCreateInfo, NullIfDefault(pAllocator), &swapchain));
         }
 
         return new(swapchain, this);
@@ -80,7 +81,7 @@ public unsafe class VkSwapchainExtensionKHR : IDeviceExtension<VkSwapchainExtens
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.device.Instance.Allocator)
         {
-            this.vkDestroySwapchainKHR.Invoke(this.device.Handle, swapchain.Handle, PointerHelper.NullIfDefault(this.device.Instance.Allocator, pAllocator));
+            this.vkDestroySwapchainKHR.Invoke(this.device.Handle, swapchain.Handle, NullIfDefault(pAllocator));
         }
     }
 

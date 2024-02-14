@@ -1,4 +1,4 @@
-using Age.Core.Interop;
+using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
@@ -10,7 +10,7 @@ public unsafe partial class VkRenderPass : VkDeviceResource<VkRenderPass>
         fixed (VkRenderPassCreateInfo* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*  pAllocator  = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateRenderPass(device.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateRenderPass(device.Handle, pCreateInfo, NullIfDefault(pAllocator), pHandle));
         }
     }
 
@@ -18,7 +18,7 @@ public unsafe partial class VkRenderPass : VkDeviceResource<VkRenderPass>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyRenderPass(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyRenderPass(this.Device.Handle, this.handle, NullIfDefault(pAllocator));
         }
     }
 }

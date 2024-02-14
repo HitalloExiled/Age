@@ -1,4 +1,4 @@
-using Age.Core.Interop;
+using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
@@ -10,7 +10,7 @@ public unsafe partial class VkFence : VkDeviceResource<VkFence>
         fixed (VkFenceCreateInfo*     pCcreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator   = &this.Instance.Allocator)
         {
-            VkException.Check(PInvoke.vkCreateFence(device.Handle, pCcreateInfo, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator), pHandle));
+            VkException.Check(PInvoke.vkCreateFence(device.Handle, pCcreateInfo, NullIfDefault(pAllocator), pHandle));
         }
     }
 
@@ -69,7 +69,7 @@ public unsafe partial class VkFence : VkDeviceResource<VkFence>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {
-            PInvoke.vkDestroyFence(this.Device.Handle, this.handle, PointerHelper.NullIfDefault(this.Instance.Allocator, pAllocator));
+            PInvoke.vkDestroyFence(this.Device.Handle, this.handle, NullIfDefault(pAllocator));
         }
     }
 

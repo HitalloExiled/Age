@@ -52,7 +52,7 @@ public unsafe class VkSurfaceExtensionKHR : IInstanceExtension<VkSurfaceExtensio
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.instance.Allocator)
         {
-            this.vkDestroySurfaceKHR.Invoke(this.instance.Handle, surface.Handle, PointerHelper.NullIfDefault(this.instance.Allocator, pAllocator));
+            this.vkDestroySurfaceKHR.Invoke(this.instance.Handle, surface.Handle, PointerHelper.NullIfDefault(pAllocator));
         }
     }
 

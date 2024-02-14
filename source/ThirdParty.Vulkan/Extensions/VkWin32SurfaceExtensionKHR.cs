@@ -1,7 +1,8 @@
 using System.Runtime.InteropServices;
-using Age.Core.Interop;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Interfaces;
+
+using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan.Extensions;
 
@@ -39,7 +40,7 @@ public unsafe class VkWin32SurfaceExtensionKHR : IInstanceExtension<VkWin32Surfa
         fixed (VkAllocationCallbacks*       pAllocator  = &this.instance.Allocator)
         fixed (VkWin32SurfaceCreateInfoKHR* pCreateInfo = &createInfo)
         {
-            VkException.Check(this.vkCreateWin32SurfaceKHR.Invoke(this.instance.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.instance.Allocator, pAllocator), &surfaceKHR));
+            VkException.Check(this.vkCreateWin32SurfaceKHR.Invoke(this.instance.Handle, pCreateInfo, NullIfDefault(pAllocator), &surfaceKHR));
         }
 
         return new(surfaceKHR, this.surfaceExtension);

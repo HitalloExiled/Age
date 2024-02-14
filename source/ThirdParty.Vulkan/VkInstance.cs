@@ -4,6 +4,8 @@ using System.Text;
 using Age.Core.Interop;
 using ThirdParty.Vulkan.Interfaces;
 
+using static Age.Core.Interop.PointerHelper;
+
 namespace ThirdParty.Vulkan;
 
 /// <summary>
@@ -18,13 +20,13 @@ public unsafe partial class VkInstance : DisposableManagedHandle<VkInstance>
     public VkInstance(in VkInstanceCreateInfo createInfo, in VkAllocationCallbacks allocator = default)
     {
         this.Allocator         = allocator;
-        this.enabledExtensions = [.. PointerHelper.ToArray(createInfo.PpEnabledExtensionNames, createInfo.EnabledExtensionCount)];
+        this.enabledExtensions = [.. NativeStringArray.ToArray(createInfo.PpEnabledExtensionNames, createInfo.EnabledExtensionCount)];
 
         fixed (VkHandle<VkInstance>*  pHandler    = &this.handle)
         fixed (VkInstanceCreateInfo*  pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks* pAllocator  = &allocator)
         {
-            VkException.Check(PInvoke.vkCreateInstance(pCreateInfo, PointerHelper.NullIfDefault(allocator, pAllocator), pHandler));
+            VkException.Check(PInvoke.vkCreateInstance(pCreateInfo, NullIfDefault(pAllocator), pHandler));
         }
     }
 
@@ -69,7 +71,7 @@ public unsafe partial class VkInstance : DisposableManagedHandle<VkInstance>
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Allocator)
         {
-            PInvoke.vkDestroyInstance(this.handle, PointerHelper.NullIfDefault(this.Allocator, pAllocator));
+            PInvoke.vkDestroyInstance(this.handle, NullIfDefault(pAllocator));
         }
     }
 

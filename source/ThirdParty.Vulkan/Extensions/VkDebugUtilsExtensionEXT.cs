@@ -38,7 +38,7 @@ public unsafe class VkDebugUtilsExtensionEXT : IInstanceExtension<VkDebugUtilsEx
         fixed (VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo = &createInfo)
         fixed (VkAllocationCallbacks*              pAllocator  = &this.instance.Allocator)
         {
-            this.vkCreateDebugUtilsMessengerEXT.Invoke(this.instance.Handle, pCreateInfo, PointerHelper.NullIfDefault(this.instance.Allocator, pAllocator), &messenger);
+            this.vkCreateDebugUtilsMessengerEXT.Invoke(this.instance.Handle, pCreateInfo, PointerHelper.NullIfDefault(pAllocator), &messenger);
         }
 
         return new(messenger, this);
@@ -48,7 +48,7 @@ public unsafe class VkDebugUtilsExtensionEXT : IInstanceExtension<VkDebugUtilsEx
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.instance.Allocator)
         {
-            this.vkDestroyDebugUtilsMessengerEXT.Invoke(this.instance.Handle, messenger.Handle, PointerHelper.NullIfDefault(this.instance.Allocator, pAllocator));
+            this.vkDestroyDebugUtilsMessengerEXT.Invoke(this.instance.Handle, messenger.Handle, PointerHelper.NullIfDefault(pAllocator));
         }
     }
 }
