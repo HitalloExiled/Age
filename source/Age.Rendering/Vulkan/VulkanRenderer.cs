@@ -174,42 +174,6 @@ public unsafe partial class VulkanRenderer : IDisposable
         return this.Context.Device.CreateFramebuffer(createInfo);
     }
 
-    private VkRenderPass CreateRenderPass(VkFormat format)
-    {
-        var attachmentDescription = new VkAttachmentDescription
-        {
-            Samples        = VkSampleCountFlags.N1,
-            FinalLayout    = VkImageLayout.PresentSrcKHR,
-            Format         = format,
-            InitialLayout  = VkImageLayout.Undefined,
-            LoadOp         = VkAttachmentLoadOp.Clear,
-            StencilLoadOp  = VkAttachmentLoadOp.Clear,
-            StencilStoreOp = VkAttachmentStoreOp.DontCare,
-        };
-
-        var attachmentReference = new VkAttachmentReference
-        {
-            Layout = VkImageLayout.ColorAttachmentOptimal,
-        };
-
-        var subpass = new VkSubpassDescription
-        {
-            ColorAttachmentCount = 1,
-            PColorAttachments    = &attachmentReference,
-            PipelineBindPoint    = VkPipelineBindPoint.Graphics,
-        };
-
-        var renderPassCreateInfo = new VkRenderPassCreateInfo
-        {
-            AttachmentCount = 1,
-            PAttachments    = &attachmentDescription,
-            PSubpasses      = &subpass,
-            SubpassCount    = 1,
-        };
-
-        return this.Context.Device.CreateRenderPass(renderPassCreateInfo);
-    }
-
     private void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, ulong size)
     {
         var commandBuffer = this.Context.BeginSingleTimeCommands();
@@ -249,9 +213,9 @@ public unsafe partial class VulkanRenderer : IDisposable
     }
 
     private void TransitionImageLayout(
-        VkImage                 image,
-        VkImageLayout           oldLayout,
-        VkImageLayout           newLayout,
+        VkImage              image,
+        VkImageLayout        oldLayout,
+        VkImageLayout        newLayout,
         VkAccessFlags        srcAccessMask,
         VkAccessFlags        dstAccessMask,
         VkPipelineStageFlags sourceStage,
@@ -306,7 +270,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         this.Context.Frame.CommandBuffer.Begin();
     }
 
-    public void BeginRenderPass(Surface surface)
+    public void BeginRenderPass(RenderPass renderPass, in VkExtent2D extent, uint framebuffer)
     {
         var clearValues = new VkClearValue[2];
 
@@ -326,7 +290,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             var renderPassBeginInfo = new VkRenderPassBeginInfo
             {
                 ClearValueCount = (uint)clearValues.Length,
-                Framebuffer     = surface.Swapchain.Framebuffers[surface.CurrentBuffer].Handle,
+                Framebuffer     = renderPass.Framebuffers[framebuffer].Value.Handle,
                 PClearValues    = pClearValues,
                 RenderArea      = new()
                 {
@@ -335,9 +299,9 @@ public unsafe partial class VulkanRenderer : IDisposable
                         X = 0,
                         Y = 0
                     },
-                    Extent = surface.Swapchain.Extent,
+                    Extent = extent,
                 },
-                RenderPass = surface.Swapchain.RenderPass.Handle,
+                RenderPass = renderPass.Value.Handle,
             };
 
             this.Context.Frame.CommandBuffer.BeginRenderPass(renderPassBeginInfo, VkSubpassContents.Inline);
@@ -425,12 +389,10 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public Shader CreateShader<TShader, TVertexInput>()
+    public Shader CreateShader<TShader, TVertexInput>(RenderPass renderPass)
     where TShader      : IShader
     where TVertexInput : IVertexInput
     {
-        var renderPass = this.CreateRenderPass(this.Context.ScreenFormat);
-
         fixed (byte* pName = "main"u8)
         {
             var bindings                       = new List<VkDescriptorSetLayoutBinding>();
@@ -483,10 +445,10 @@ public unsafe partial class VulkanRenderer : IDisposable
                 VkDynamicState.Scissor,
             };
 
-            fixed (VkDescriptorSetLayoutBinding*      pBindings                       = bindings.ToArray())
+            fixed (VkDescriptorSetLayoutBinding*      pBindings                       = CollectionsMarshal.AsSpan(bindings))
             fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription)
             fixed (VkDynamicState*                    pDynamicStates                  = dynamicStates)
-            fixed (VkPipelineShaderStageCreateInfo*   pPipelineShaderStageCreateInfos = pipelineShaderStageCreateInfos.ToArray())
+            fixed (VkPipelineShaderStageCreateInfo*   pPipelineShaderStageCreateInfos = CollectionsMarshal.AsSpan(pipelineShaderStageCreateInfos))
             {
                 var descriptorSetLayoutCreateInfo = new VkDescriptorSetLayoutCreateInfo
                 {
@@ -508,7 +470,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
                 var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
                 {
-                    Topology = VkPrimitiveTopology.TriangleList,
+                    Topology = TShader.PrimitiveTopology,
                 };
 
                 var pipelineVertexInputStateCreateInfo = new VkPipelineVertexInputStateCreateInfo
@@ -574,7 +536,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                     PVertexInputState   = &pipelineVertexInputStateCreateInfo,
                     PViewportState      = &pipelineViewportStateCreateInfo,
                     StageCount          = (uint)pipelineShaderStageCreateInfos.Count,
-                    RenderPass          = renderPass.Handle,
+                    RenderPass          = renderPass.Value.Handle,
                 };
 
                 var pipeline = this.Context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);
@@ -777,7 +739,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         return new()
         {
             Buffer = buffer,
-            Size   = size,
+            Size   = (uint)data.Length,
         };
     }
 
@@ -786,6 +748,9 @@ public unsafe partial class VulkanRenderer : IDisposable
         this.Dispose(true);
         GC.SuppressFinalize(this);
     }
+
+    public void Draw(VertexBuffer vertexBuffer) =>
+        this.Context.Frame.CommandBuffer.Draw(vertexBuffer.Size, 1, 0, 0);
 
     public void DrawIndexed(IndexBuffer indexBuffer) =>
         this.Context.Frame.CommandBuffer.DrawIndexed(indexBuffer.Size, 1, 0, 0, 0);

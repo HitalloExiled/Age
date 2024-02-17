@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -62,7 +63,7 @@ public record DescriptorPool : Disposable
             sizes.Add(new() { Type = VkDescriptorType.CombinedImageSampler, DescriptorCount = MAX_DESCRIPTORS_PER_POOL });
         }
 
-        fixed (VkDescriptorPoolSize* pPoolSizes = sizes.ToArray())
+        fixed (VkDescriptorPoolSize* pPoolSizes = CollectionsMarshal.AsSpan(sizes))
         {
             var descriptorPoolCreateInfo = new VkDescriptorPoolCreateInfo
             {

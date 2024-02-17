@@ -5,15 +5,13 @@ using Age.Rendering.Enums;
 using Age.Rendering.Resources;
 using SkiaSharp;
 
-using GlyphKey = (char, ushort);
-
 namespace Age.Rendering.Services;
 
 public partial class TextService(RenderingService renderingService) : IDisposable
 {
-    private readonly Dictionary<GlyphKey, Glyph> glyphs           = [];
-    private readonly RenderingService            renderingService = renderingService;
-    private readonly Sampler                     sampler          = renderingService.CreateSampler();
+    private readonly Dictionary<int, Glyph> glyphs          = [];
+    private readonly RenderingService      renderingService = renderingService;
+    private readonly Sampler               sampler          = renderingService.CreateSampler();
 
     private bool disposed;
 
@@ -41,7 +39,9 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
     private Glyph DrawGlyph(char character, ushort fontSize, SKRect bounds, SKPaint paint)
     {
-        if (!this.glyphs.TryGetValue((character, fontSize), out var glyph))
+        var hashcode = character.GetHashCode() ^ fontSize.GetHashCode();
+
+        if (!this.glyphs.TryGetValue(hashcode, out var glyph))
         {
             var charString = character.ToString();
 
@@ -61,7 +61,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
             var texture = this.renderingService.CreateTexture(image, TextureType.N2D);
 
-            this.glyphs[(character, fontSize)] = glyph = new()
+            this.glyphs[hashcode] = glyph = new()
             {
                 Character = character,
                 Texture   = texture,

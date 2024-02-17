@@ -96,7 +96,7 @@ public class Engine : IDisposable
             {
                 var remaining = this.targetFrameTime - totalMilliseconds;
 
-                Thread.Sleep(new TimeSpan((long)(remaining * TimeSpan.TicksPerMillisecond) / 2));
+                // Thread.Sleep(new TimeSpan((long)(remaining * TimeSpan.TicksPerMillisecond) / 2));
             }
 
             var fps       = Math.Round(1000.0 / watch.Elapsed.TotalMilliseconds, 2);

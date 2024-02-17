@@ -9,7 +9,7 @@ public record Shader : Disposable
     public required VkPipeline            Pipeline            { get; init; }
     public required VkPipelineBindPoint   PipelineBindPoint   { get; init; }
     public required VkPipelineLayout      PipelineLayout      { get; init; }
-    public required VkRenderPass          RenderPass          { get; init; }
+    public required RenderPass            RenderPass          { get; init; }
 
     protected override void OnDispose()
     {

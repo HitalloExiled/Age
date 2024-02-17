@@ -1,13 +1,16 @@
 using ThirdParty.Shaderc;
 using ThirdParty.Shaderc.Enums;
+using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Interfaces;
 
 public interface IShader
 {
-    static abstract string                                 Name   { get; }
-    static abstract Dictionary<VkShaderStageFlags, byte[]> Stages { get; }
+    static abstract string                                 Name              { get; }
+    static abstract VkPrimitiveTopology                    PrimitiveTopology { get; }
+    static abstract Dictionary<VkShaderStageFlags, byte[]> Stages            { get; }
+
 
     private static byte[] CompileShader(string name, ShaderKind shaderKind)
     {

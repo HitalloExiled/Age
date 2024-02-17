@@ -129,6 +129,10 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
     public void End() =>
         VkException.Check(PInvoke.vkEndCommandBuffer(this.handle));
 
+    /// <inheritdoc cref="PInvoke.vkCmdDraw" />
+    public void Draw(uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance) =>
+        PInvoke.vkCmdDraw(this.handle, vertexCount, instanceCount, firstVertex, firstInstance);
+
     /// <inheritdoc cref="PInvoke.vkCmdDrawIndexed" />
     public void DrawIndexed(uint indexCount, uint instanceCount, uint firstIndex, int vertexOffset, uint firstInstance) =>
         PInvoke.vkCmdDrawIndexed(this.handle, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
