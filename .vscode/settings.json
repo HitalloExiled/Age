@@ -18,5 +18,6 @@
         "**/*.bkp": true,
         ".vs": true
     },
-    "explorerExclude.backup": {}
+    "explorerExclude.backup": {},
+    "shadered.executablePath": "C:\\Program Files\\SHADERed\\SHADERed.exe"
 }

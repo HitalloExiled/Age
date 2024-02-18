@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<project version="2">
+	<pipeline>
+		<pass name="CanvasShader" type="shader" active="true" patchverts="1">
+			<shader type="vs" path="Shaders\CanvasShader.vert" entry="main" />
+			<shader type="ps" path="Shaders\CanvasShader.frag" entry="main" />
+			<inputlayout>
+				<item value="Position" />
+				<item value="Texcoord" />
+			</inputlayout>
+			<rendertexture />
+			<items>
+				<item name="Plane" type="geometry">
+					<type>Plane</type>
+					<width>1</width>
+					<height>1</height>
+					<depth>1</depth>
+					<z>-1.55909753</z>
+					<topology>LineList</topology>
+				</item>
+				<item name="Cube" type="geometry">
+					<type>Cube</type>
+					<width>1</width>
+					<height>1</height>
+					<depth>1</depth>
+					<topology>TriangleList</topology>
+				</item>
+			</items>
+			<itemvalues />
+			<macros />
+		</pass>
+	</pipeline>
+	<objects>
+		<object type="texture" path="Textures\Grid.png" vflip="false" min_filter="Linear" mag_filter="Nearest" wrap_s="Repeat" wrap_t="Repeat">
+			<bind slot="0" name="CanvasShader" />
+		</object>
+	</objects>
+	<cameras />
+	<settings>
+		<entry type="file" name="CanvasShader" shader="vs" />
+		<entry type="file" name="CanvasShader" shader="ps" />
+		<entry type="camera" fp="false">
+			<distance>6</distance>
+			<pitch>15</pitch>
+			<yaw>49</yaw>
+			<roll>360</roll>
+		</entry>
+		<entry type="clearcolor" r="0" g="0" b="0" a="0" />
+		<entry type="usealpha" val="false" />
+	</settings>
+	<plugindata />
+</project>

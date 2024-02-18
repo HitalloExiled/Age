@@ -25,8 +25,7 @@ public class RenderingService : IDisposable
     private readonly Dictionary<Texture, UniformSet> textureSets   = [];
     private readonly Dictionary<int, VertexBuffer>   vertexBuffers = [];
 
-    private RenderPass colorPass;
-    private RenderPass wireframePass;
+    private RenderPass renderPass;
 
     private int  changes;
     private bool disposed;
@@ -45,11 +44,7 @@ public class RenderingService : IDisposable
                         Format         = renderer.Context.ScreenFormat,
                         Samples        = VkSampleCountFlags.N1,
                         InitialLayout  = VkImageLayout.Undefined,
-                        #if DRAW_WIREFRAME
-                        FinalLayout    = VkImageLayout.ColorAttachmentOptimal,
-                        #else
                         FinalLayout    = VkImageLayout.PresentSrcKHR,
-                        #endif
                         LoadOp         = VkAttachmentLoadOp.Clear,
                         StoreOp        = VkAttachmentStoreOp.Store,
                         StencilLoadOp  = VkAttachmentLoadOp.Clear,
@@ -59,43 +54,18 @@ public class RenderingService : IDisposable
             ],
         };
 
-        var wireframePassCreateInfo = new RenderPass.CreateInfo
-        {
-            ColorAttachments =
-            [
-                new()
-                {
-                    Layout = VkImageLayout.ColorAttachmentOptimal,
-                    Color  = new VkAttachmentDescription
-                    {
-                        Format         = renderer.Context.ScreenFormat,
-                        Samples        = VkSampleCountFlags.N1,
-                        InitialLayout  = VkImageLayout.ColorAttachmentOptimal,
-                        FinalLayout    = VkImageLayout.PresentSrcKHR,
-                        LoadOp         = VkAttachmentLoadOp.Load,
-                        StoreOp        = VkAttachmentStoreOp.Store,
-                        StencilLoadOp  = VkAttachmentLoadOp.DontCare,
-                        StencilStoreOp = VkAttachmentStoreOp.DontCare,
-                    },
-                }
-            ],
-        };
-
-        this.colorPass            = renderer.Context.CreateRenderPass(colorPassCreateInfo);
-        this.wireframePass        = renderer.Context.CreateRenderPass(wireframePassCreateInfo);
+        this.renderPass           = renderer.Context.CreateRenderPass(colorPassCreateInfo);
         this.indexBuffer          = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
         this.wireframeIndexBuffer = renderer.CreateIndexBuffer([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
         this.renderer             = renderer;
-        this.diffuseShader        = renderer.CreateShader<CanvasShader, Vertex>(this.colorPass);
-        this.wireframeShader      = renderer.CreateShader<WireframeShader, Vertex>(this.wireframePass);
+        this.diffuseShader        = renderer.CreateShader<CanvasShader, Vertex>(this.renderPass);
+        this.wireframeShader      = renderer.CreateShader<WireframeShader, Vertex>(this.renderPass);
 
         this.renderer.Context.SwapchainRecreated += () =>
         {
-            this.colorPass.Dispose();
-            this.wireframePass.Dispose();
+            this.renderPass.Dispose();
 
-            this.colorPass     = renderer.Context.CreateRenderPass(colorPassCreateInfo);
-            this.wireframePass = renderer.Context.CreateRenderPass(wireframePassCreateInfo);
+            this.renderPass     = renderer.Context.CreateRenderPass(colorPassCreateInfo);
 
             this.RequestDraw();
         };
@@ -107,8 +77,7 @@ public class RenderingService : IDisposable
         {
             if (disposing)
             {
-                this.renderer.Context.DefferedDispose(this.colorPass);
-                this.renderer.Context.DefferedDispose(this.wireframePass);
+                this.renderer.Context.DefferedDispose(this.renderPass);
                 this.renderer.Context.DefferedDispose(this.diffuseShader);
                 this.renderer.Context.DefferedDispose(this.wireframeShader);
                 this.renderer.Context.DefferedDispose(this.indexBuffer);
@@ -123,7 +92,7 @@ public class RenderingService : IDisposable
         }
     }
 
-    private void Render(IWindow window, Element element, bool wireframe)
+    private void Render(IWindow window, Element element)
     {
         VertexBuffer? lastVertexBuffer = default;
         UniformSet?   lastUniformSet   = default;
@@ -154,7 +123,7 @@ public class RenderingService : IDisposable
                             this.textureSets[rectDrawCommand.Texture] = uniformSet = this.renderer.CreateUniformSet([uniform], this.diffuseShader);
                         }
 
-                        var hashcode = wireframe.GetHashCode() ^ windowSize.GetHashCode() ^ rectDrawCommand.Rect.GetHashCode();
+                        var hashcode = windowSize.GetHashCode() ^ rectDrawCommand.Rect.GetHashCode();
 
                         if (!this.vertexBuffers.TryGetValue(hashcode, out var vertexBuffer))
                         {
@@ -165,17 +134,17 @@ public class RenderingService : IDisposable
                             var y1 = -rect.Position.Y / windowSize.Height;
                             var y2 = (-rect.Position.Y + rect.Size.Height) / windowSize.Height;
 
-                            var p1 = new Point<float>(x1 * 2 - 1, y1 * 2 - 1);
-                            var p2 = new Point<float>(x2 * 2 - 1, y1 * 2 - 1);
-                            var p3 = new Point<float>(x2 * 2 - 1, y2 * 2 - 1);
-                            var p4 = new Point<float>(x1 * 2 - 1, y2 * 2 - 1);
+                            var p1 = new Vector3<float>(x1 * 2 - 1, y1 * 2 - 1, 1);
+                            var p2 = new Vector3<float>(x2 * 2 - 1, y1 * 2 - 1, 1);
+                            var p3 = new Vector3<float>(x2 * 2 - 1, y2 * 2 - 1, 1);
+                            var p4 = new Vector3<float>(x1 * 2 - 1, y2 * 2 - 1, 1);
 
                             var vertices = new Vertex[4]
                             {
-                                new(p1, default, new(0, 0)),
-                                new(p2, default, new(1, 0)),
-                                new(p3, default, new(1, 1)),
-                                new(p4, default, new(0, 1)),
+                                new(p1, new(0, 0)),
+                                new(p2, new(1, 0)),
+                                new(p3, new(1, 1)),
+                                new(p4, new(0, 1)),
                             };
 
                             this.vertexBuffers[hashcode] = vertexBuffer = this.renderer.CreateVertexBuffer(vertices);
@@ -195,18 +164,15 @@ public class RenderingService : IDisposable
                             lastUniformSet = uniformSet;
                         }
 
-                        var indexBuffer = wireframe ? this.wireframeIndexBuffer : this.indexBuffer;
+                        this.renderer.BindPipeline(this.diffuseShader);
+                        this.renderer.BindIndexBuffer(this.indexBuffer);
+                        this.renderer.DrawIndexed(this.indexBuffer);
 
-                        if (wireframe)
-                        {
-                            this.renderer.BindIndexBuffer(this.wireframeIndexBuffer);
-                        }
-                        else
-                        {
-                            this.renderer.BindIndexBuffer(this.indexBuffer);
-                        }
-
-                        this.renderer.DrawIndexed(indexBuffer);
+#if DRAW_WIREFRAME
+                        this.renderer.BindPipeline(this.wireframeShader);
+                        this.renderer.BindIndexBuffer(this.wireframeIndexBuffer);
+                        this.renderer.DrawIndexed(this.wireframeIndexBuffer);
+#endif
 
                         break;
                     }
@@ -244,28 +210,15 @@ public class RenderingService : IDisposable
 
     public void Render(IWindow window)
     {
-        var passes = new[]
+        this.renderer.BeginRenderPass(this.renderPass, window.Surface.Swapchain.Extent, window.Surface.CurrentBuffer);
+        this.renderer.SetViewport(window.Surface);
+
+        foreach (var element in window.Content.Enumerate<Element>())
         {
-            (this.diffuseShader,   this.colorPass),
-            #if DRAW_WIREFRAME
-            (this.wireframeShader, this.wireframePass),
-            #endif
-        };
-
-        foreach (var (shader, renderPass) in passes)
-        {
-            this.renderer.BeginRenderPass(renderPass, window.Surface.Swapchain.Extent, window.Surface.CurrentBuffer);
-            this.renderer.SetViewport(window.Surface);
-
-            this.renderer.BindPipeline(shader);
-
-            foreach (var element in window.Content.Enumerate<Element>())
-            {
-                this.Render(window, element, shader == this.wireframeShader);
-            }
-
-            this.renderer.EndRenderPass();
+            this.Render(window, element);
         }
+
+        this.renderer.EndRenderPass();
     }
 
     public void FreeTexture(Texture texture)

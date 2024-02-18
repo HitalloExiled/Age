@@ -8,7 +8,7 @@
             // Use IntelliSense to find out which attributes exist for C# debugging
             // Use hover for the description of the existing attributes
             // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
-            "name": ".NET Core Launch (console)",
+            "name": "Launch Playground",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -26,5 +26,11 @@
             },
             "enableStepFiltering": true,
         },
+        {
+            "type": "shadered",
+            "request": "launch",
+            "name": "Debug Shaders",
+            "program": "${workspaceFolder}/source/Age.Rendering/Age.Rendering.sprj"
+        }
     ]
 }
