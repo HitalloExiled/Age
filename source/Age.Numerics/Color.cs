@@ -7,6 +7,8 @@ public record struct Color
     public float B;
     public float A = 1;
 
+    public Color() { }
+
     public Color(float r, float g, float b, float a = 1)
     {
         this.R = r;

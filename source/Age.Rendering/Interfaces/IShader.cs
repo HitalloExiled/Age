@@ -38,3 +38,7 @@ public interface IShader
     protected static byte[] ReadVertexShader(string name) =>
         CompileShader(name, ShaderKind.VertexShader);
 }
+
+public interface IShader<TVertexInput, TPushConstant> : IShader
+where TVertexInput  : IVertexInput
+where TPushConstant : IPushConstant;

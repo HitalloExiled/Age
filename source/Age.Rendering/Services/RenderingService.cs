@@ -1,5 +1,4 @@
-#define DRAW_WIREFRAME
-using Age.Numerics;
+// #define DRAW_WIREFRAME
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing;
 using Age.Rendering.Enums;
@@ -16,14 +15,13 @@ namespace Age.Rendering.Services;
 
 public class RenderingService : IDisposable
 {
-    private readonly IndexBuffer    indexBuffer;
-    private readonly IndexBuffer    wireframeIndexBuffer;
-    private readonly VulkanRenderer renderer;
-    private readonly Shader         diffuseShader;
-    private readonly Shader         wireframeShader;
-
+    private readonly Shader                          diffuseShader;
+    private readonly IndexBuffer                     indexBuffer;
+    private readonly VulkanRenderer                  renderer;
     private readonly Dictionary<Texture, UniformSet> textureSets   = [];
-    private readonly Dictionary<int, VertexBuffer>   vertexBuffers = [];
+    private readonly VertexBuffer                    vertexBuffer;
+    private readonly IndexBuffer                     wireframeIndexBuffer;
+    private readonly Shader                          wireframeShader;
 
     private RenderPass renderPass;
 
@@ -32,6 +30,8 @@ public class RenderingService : IDisposable
 
     public RenderingService(VulkanRenderer renderer)
     {
+        this.renderer = renderer;
+
         var colorPassCreateInfo = new RenderPass.CreateInfo
         {
             ColorAttachments =
@@ -54,18 +54,27 @@ public class RenderingService : IDisposable
             ],
         };
 
-        this.renderPass           = renderer.Context.CreateRenderPass(colorPassCreateInfo);
+        this.renderPass = renderer.Context.CreateRenderPass(colorPassCreateInfo);
+
+        var vertices = new CanvasShader.Vertex[4]
+        {
+            new(new(-1, -1), new(0, 0)),
+            new(new( 1, -1), new(1, 0)),
+            new(new( 1,  1), new(1, 1)),
+            new(new(-1,  1), new(0, 1)),
+        };
+
+        this.vertexBuffer         = renderer.CreateVertexBuffer(vertices);
         this.indexBuffer          = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
         this.wireframeIndexBuffer = renderer.CreateIndexBuffer([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
-        this.renderer             = renderer;
-        this.diffuseShader        = renderer.CreateShader<CanvasShader, Vertex>(this.renderPass);
-        this.wireframeShader      = renderer.CreateShader<WireframeShader, Vertex>(this.renderPass);
+        this.diffuseShader        = renderer.CreateShader<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(this.renderPass);
+        this.wireframeShader      = renderer.CreateShader<WireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(this.renderPass);
 
         this.renderer.Context.SwapchainRecreated += () =>
         {
             this.renderPass.Dispose();
 
-            this.renderPass     = renderer.Context.CreateRenderPass(colorPassCreateInfo);
+            this.renderPass = renderer.Context.CreateRenderPass(colorPassCreateInfo);
 
             this.RequestDraw();
         };
@@ -81,8 +90,8 @@ public class RenderingService : IDisposable
                 this.renderer.Context.DefferedDispose(this.diffuseShader);
                 this.renderer.Context.DefferedDispose(this.wireframeShader);
                 this.renderer.Context.DefferedDispose(this.indexBuffer);
+                this.renderer.Context.DefferedDispose(this.vertexBuffer);
                 this.renderer.Context.DefferedDispose(this.wireframeIndexBuffer);
-                this.renderer.Context.DefferedDispose(this.vertexBuffers.Values);
                 this.renderer.Context.DefferedDispose(this.textureSets.Values);
             }
 
@@ -94,8 +103,7 @@ public class RenderingService : IDisposable
 
     private void Render(IWindow window, Element element)
     {
-        VertexBuffer? lastVertexBuffer = default;
-        UniformSet?   lastUniformSet   = default;
+        UniformSet? lastUniformSet   = default;
 
         var windowSize = window.ClientSize;
 
@@ -123,39 +131,39 @@ public class RenderingService : IDisposable
                             this.textureSets[rectDrawCommand.Texture] = uniformSet = this.renderer.CreateUniformSet([uniform], this.diffuseShader);
                         }
 
-                        var hashcode = windowSize.GetHashCode() ^ rectDrawCommand.Rect.GetHashCode();
+                        // var hashcode = windowSize.GetHashCode() ^ rectDrawCommand.Rect.GetHashCode();
 
-                        if (!this.vertexBuffers.TryGetValue(hashcode, out var vertexBuffer))
+                        // if (!this.vertexBuffers.TryGetValue(hashcode, out var vertexBuffer))
+                        // {
+                        //     var rect = rectDrawCommand.Rect;
+
+                        //     var x1 = rect.Position.X / windowSize.Width;
+                        //     var x2 = (rect.Position.X + rect.Size.Width) / windowSize.Width;
+                        //     var y1 = -rect.Position.Y / windowSize.Height;
+                        //     var y2 = (-rect.Position.Y + rect.Size.Height) / windowSize.Height;
+
+                        //     var p1 = new Point<float>(x1 * 2 - 1, y1 * 2 - 1);
+                        //     var p2 = new Point<float>(x2 * 2 - 1, y1 * 2 - 1);
+                        //     var p3 = new Point<float>(x2 * 2 - 1, y2 * 2 - 1);
+                        //     var p4 = new Point<float>(x1 * 2 - 1, y2 * 2 - 1);
+
+                        //     var vertices = new CanvasShader.Vertex[4]
+                        //     {
+                        //         new(p1, new(0, 0)),
+                        //         new(p2, new(1, 0)),
+                        //         new(p3, new(1, 1)),
+                        //         new(p4, new(0, 1)),
+                        //     };
+
+                        //     this.vertexBuffers[hashcode] = vertexBuffer = this.renderer.CreateVertexBuffer(vertices);
+                        // }
+
+                        var constant = new CanvasShader.PushConstant
                         {
-                            var rect = rectDrawCommand.Rect;
-
-                            var x1 = rect.Position.X / windowSize.Width;
-                            var x2 = (rect.Position.X + rect.Size.Width) / windowSize.Width;
-                            var y1 = -rect.Position.Y / windowSize.Height;
-                            var y2 = (-rect.Position.Y + rect.Size.Height) / windowSize.Height;
-
-                            var p1 = new Vector3<float>(x1 * 2 - 1, y1 * 2 - 1, 1);
-                            var p2 = new Vector3<float>(x2 * 2 - 1, y1 * 2 - 1, 1);
-                            var p3 = new Vector3<float>(x2 * 2 - 1, y2 * 2 - 1, 1);
-                            var p4 = new Vector3<float>(x1 * 2 - 1, y2 * 2 - 1, 1);
-
-                            var vertices = new Vertex[4]
-                            {
-                                new(p1, new(0, 0)),
-                                new(p2, new(1, 0)),
-                                new(p3, new(1, 1)),
-                                new(p4, new(0, 1)),
-                            };
-
-                            this.vertexBuffers[hashcode] = vertexBuffer = this.renderer.CreateVertexBuffer(vertices);
-                        }
-
-                        if (vertexBuffer != lastVertexBuffer)
-                        {
-                            this.renderer.BindVertexBuffer(vertexBuffer);
-
-                            lastVertexBuffer = vertexBuffer;
-                        }
+                            ViewportSize = windowSize.Cast<float>(),
+                            Rect         = rectDrawCommand.Rect,
+                            Color        = rectDrawCommand.Color,
+                        };
 
                         if (uniformSet != lastUniformSet)
                         {
@@ -164,16 +172,22 @@ public class RenderingService : IDisposable
                             lastUniformSet = uniformSet;
                         }
 
-                        this.renderer.BindPipeline(this.diffuseShader);
+                        this.renderer.PushConstant(this.diffuseShader, constant);
+
+#if !DRAW_WIREFRAME
+                        this.renderer.DrawIndexed(this.indexBuffer);
+#else
                         this.renderer.BindIndexBuffer(this.indexBuffer);
                         this.renderer.DrawIndexed(this.indexBuffer);
+                        this.renderer.BindVertexBuffer(this.vertexBuffer);
 
-#if DRAW_WIREFRAME
+                        this.renderer.BindPipeline(this.diffuseShader);
+
                         this.renderer.BindPipeline(this.wireframeShader);
                         this.renderer.BindIndexBuffer(this.wireframeIndexBuffer);
+                        this.renderer.PushConstant(this.wireframeShader, constant);
                         this.renderer.DrawIndexed(this.wireframeIndexBuffer);
 #endif
-
                         break;
                     }
                 default:
@@ -212,6 +226,12 @@ public class RenderingService : IDisposable
     {
         this.renderer.BeginRenderPass(this.renderPass, window.Surface.Swapchain.Extent, window.Surface.CurrentBuffer);
         this.renderer.SetViewport(window.Surface);
+
+#if !DRAW_WIREFRAME
+        this.renderer.BindPipeline(this.diffuseShader);
+        this.renderer.BindVertexBuffer(this.vertexBuffer);
+        this.renderer.BindIndexBuffer(this.indexBuffer);
+#endif
 
         foreach (var element in window.Content.Enumerate<Element>())
         {

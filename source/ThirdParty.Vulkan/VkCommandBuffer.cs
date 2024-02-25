@@ -170,6 +170,15 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
         }
     }
 
+    /// <inheritdoc cref="PInvoke.vkCmdPushConstants" />
+    public void PushConstants<T>(VkPipelineLayout layout, VkShaderStageFlags stageFlags, in T value) where T : unmanaged
+    {
+        fixed (T* pValues = &value)
+        {
+            PInvoke.vkCmdPushConstants(this.handle, layout.Handle, stageFlags, 0, (uint)sizeof(T), pValues);
+        }
+    }
+
     /// <inheritdoc cref="PInvoke.vkCmdSetScissor" />
     public void SetScissor(uint firstScissor, params VkRect2D[] scissors)
     {

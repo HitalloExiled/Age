@@ -1,5 +1,7 @@
 namespace ThirdParty.SpirvCross.Enums;
 
+#pragma warning disable CA1069
+
 public enum Decoration
 {
     RelaxedPrecision = 0,

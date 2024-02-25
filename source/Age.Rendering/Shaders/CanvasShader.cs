@@ -4,7 +4,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Shaders;
 
-public class CanvasShader : IShader
+public partial class CanvasShader : IShader<CanvasShader.Vertex, CanvasShader.PushConstant>
 {
     public static string Name { get; } = nameof(CanvasShader);
 

@@ -121,6 +121,12 @@ internal unsafe static partial class PInvoke
     public static partial void vkCmdPipelineBarrier(VkHandle<VkCommandBuffer> commandBuffer, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkDependencyFlags dependencyFlags, uint memoryBarrierCount, VkMemoryBarrier* pMemoryBarriers, uint bufferMemoryBarrierCount, VkBufferMemoryBarrier* pBufferMemoryBarriers, uint imageMemoryBarrierCount, VkImageMemoryBarrier* pImageMemoryBarriers);
 
     /// <summary>
+    /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdPushConstants.html">vkCmdPushConstants</see>
+    /// </summary>
+    [LibraryImport(PLATFORM_PATH)]
+    public static partial void vkCmdPushConstants(VkHandle<VkCommandBuffer> commandBuffer, VkHandle<VkPipelineLayout> layout, VkShaderStageFlags stageFlags, uint offset, uint size, void* pValues);
+
+    /// <summary>
     /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdSetScissor.html">vkCmdSetScissor</see>
     /// </summary>
     [LibraryImport(PLATFORM_PATH)]

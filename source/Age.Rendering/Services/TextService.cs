@@ -9,9 +9,9 @@ namespace Age.Rendering.Services;
 
 public partial class TextService(RenderingService renderingService) : IDisposable
 {
-    private readonly Dictionary<int, Glyph> glyphs          = [];
-    private readonly RenderingService      renderingService = renderingService;
-    private readonly Sampler               sampler          = renderingService.CreateSampler();
+    private readonly Dictionary<int, Glyph> glyphs           = [];
+    private readonly RenderingService       renderingService = renderingService;
+    private readonly Sampler                sampler          = renderingService.CreateSampler();
 
     private bool disposed;
 
@@ -98,7 +98,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
         var paint = new SKPaint
         {
-            Color       = SKColors.Red,
+            Color       = SKColors.Black,
             IsAntialias = true,
             TextAlign   = SKTextAlign.Left,
             TextSize    = style.FontSize,
@@ -129,7 +129,8 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
                 var glyph    = this.DrawGlyph(character, style.FontSize, glyphsBounds[i], paint);
                 var size     = new Size<float>(bounds.Width, bounds.Height);
                 var position = new Point<float>(offset.X + glyphsPosition[i].X, offset.Y - glyphsBounds[i].Top);
-                var command  = new RectDrawCommand(new(size, position), glyph.Texture, this.sampler);
+                var color    = style.Color == default ? new() : style.Color;
+                var command  = new RectDrawCommand(new(size, position), glyph.Texture, color, this.sampler);
 
                 element.Commands.Add(command);
             }

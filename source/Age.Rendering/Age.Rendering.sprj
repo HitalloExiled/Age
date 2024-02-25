@@ -5,21 +5,13 @@
 			<shader type="vs" path="Shaders\CanvasShader.vert" entry="main" />
 			<shader type="ps" path="Shaders\CanvasShader.frag" entry="main" />
 			<inputlayout>
-				<item value="Position" />
-				<item value="Texcoord" />
+				<item value="Position" semantic="&#04;" />
+				<item value="Texcoord" semantic="&#04;" />
 			</inputlayout>
 			<rendertexture />
 			<items>
-				<item name="Plane" type="geometry">
-					<type>Plane</type>
-					<width>1</width>
-					<height>1</height>
-					<depth>1</depth>
-					<z>-1.55909753</z>
-					<topology>LineList</topology>
-				</item>
-				<item name="Cube" type="geometry">
-					<type>Cube</type>
+				<item name="Screen" type="geometry">
+					<type>ScreenQuadNDC</type>
 					<width>1</width>
 					<height>1</height>
 					<depth>1</depth>
@@ -27,6 +19,9 @@
 				</item>
 			</items>
 			<itemvalues />
+			<variables>
+				<variable type="float2" name="ViewportSize" system="ViewportSize" />
+			</variables>
 			<macros />
 		</pass>
 	</pipeline>
@@ -37,8 +32,7 @@
 	</objects>
 	<cameras />
 	<settings>
-		<entry type="file" name="CanvasShader" shader="vs" />
-		<entry type="file" name="CanvasShader" shader="ps" />
+		<entry type="property" name="Screen" item="pipe" />
 		<entry type="camera" fp="false">
 			<distance>6</distance>
 			<pitch>15</pitch>

@@ -389,14 +389,28 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public Shader CreateShader<TShader, TVertexInput>(RenderPass renderPass)
-    where TShader      : IShader
-    where TVertexInput : IVertexInput
+    public Shader CreateShader<TShader, TVertexInput, TPushConstant>(RenderPass renderPass)
+    where TShader       : IShader<TVertexInput, TPushConstant>
+    where TVertexInput  : IVertexInput
+    where TPushConstant : IPushConstant
     {
         fixed (byte* pName = "main"u8)
         {
             var bindings                       = new List<VkDescriptorSetLayoutBinding>();
             var pipelineShaderStageCreateInfos = new List<VkPipelineShaderStageCreateInfo>();
+            var pushConstantRanges             = new List<VkPushConstantRange>();
+
+            if (TPushConstant.Size > 0)
+            {
+                var pushConstantRange = new VkPushConstantRange
+                {
+                    Size       = TPushConstant.Size,
+                    Offset     = TPushConstant.Offset,
+                    StageFlags = TPushConstant.Stages,
+                };
+
+                pushConstantRanges.Add(pushConstantRange);
+            }
 
             using var disposables = new Disposables();
             using var context     = new Context();
@@ -449,6 +463,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription)
             fixed (VkDynamicState*                    pDynamicStates                  = dynamicStates)
             fixed (VkPipelineShaderStageCreateInfo*   pPipelineShaderStageCreateInfos = CollectionsMarshal.AsSpan(pipelineShaderStageCreateInfos))
+            fixed (VkPushConstantRange*               pPushConstantRanges             = CollectionsMarshal.AsSpan(pushConstantRanges))
             {
                 var descriptorSetLayoutCreateInfo = new VkDescriptorSetLayoutCreateInfo
                 {
@@ -462,8 +477,10 @@ public unsafe partial class VulkanRenderer : IDisposable
 
                 var pipelineLayoutCreateInfo = new VkPipelineLayoutCreateInfo
                 {
-                    PSetLayouts    = &descriptorSetLayoutHandle,
-                    SetLayoutCount = 1,
+                    PSetLayouts            = &descriptorSetLayoutHandle,
+                    SetLayoutCount         = 1,
+                    PPushConstantRanges    = pPushConstantRanges,
+                    PushConstantRangeCount = (uint)pushConstantRanges.Count,
                 };
 
                 var pipelineLayout = this.Context.Device.CreatePipelineLayout(pipelineLayoutCreateInfo);
@@ -603,7 +620,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             VkPipelineStageFlags.Transfer
         );
 
-        var imageView = this.CreateImageView(image, VkFormat.B8G8R8A8Srgb, VkImageAspectFlags.Color);
+        var imageView = this.CreateImageView(image, format, VkImageAspectFlags.Color);
 
         var texture = new Texture
         {
@@ -763,6 +780,9 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public void EndRenderPass() =>
         this.Context.Frame.CommandBuffer.EndRenderPass();
+
+    public void PushConstant<T>(Shader shader, in T constant) where T : unmanaged, IPushConstant =>
+        this.Context.Frame.CommandBuffer.PushConstants(shader.PipelineLayout, T.Stages, constant);
 
     public void SetViewport(Surface surface)
     {
