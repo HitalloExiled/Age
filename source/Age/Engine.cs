@@ -67,7 +67,7 @@ public class Engine : IDisposable
     {
         this.Running = true;
 
-        var clockText = new Text("", new() { FontSize = 24, Color = new(1, 0, 0), Position = new(0, 0) });
+        var clockText = new Text("", new() { FontSize = 24, Color = new(1, 0, 0), Position = new(4, -4) });
 
         this.mainWindow.Content.Add(clockText);
         this.mainWindow.Content.Add(new Text("Hello\nWorld\n!!!", new() { FontSize = 100, Color = new(0, 1, 0), Position = new(100, -200) }));

@@ -4,6 +4,8 @@ namespace ThirdParty.Vulkan;
 
 public unsafe partial class VkFence : VkDeviceResource<VkFence>
 {
+    public bool IsSignaled => PInvoke.vkGetFenceStatus(this.Device.Handle, this.handle) == Enums.VkResult.Success;
+
     internal VkFence(VkDevice device, in VkFenceCreateInfo createInfo) : base(device)
     {
         fixed (VkHandle<VkFence>*     pHandle      = &this.handle)
@@ -76,6 +78,9 @@ public unsafe partial class VkFence : VkDeviceResource<VkFence>
     /// <inheritdoc cref="PInvoke.vkResetFences" />
     public void Reset() =>
         Reset(this.Device.Handle, this.handle);
+
+    public void Wait() =>
+        Wait(this.Device.Handle, this.handle, true, ulong.MaxValue);
 
     /// <inheritdoc cref="PInvoke.vkWaitForFences" />
     public void Wait(bool waitAll, ulong timeout) =>

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Age.Core;
 using Age.Core.Interop;
 using Age.Numerics;
 using Age.Rendering.Resources;
@@ -25,7 +26,6 @@ public unsafe partial class VulkanContext : IDisposable
     private readonly VkFence[]                 fences = new VkFence[MAX_FRAMES_IN_FLIGHT];
     private readonly Frame[]                   frames = new Frame[MAX_FRAMES_IN_FLIGHT];
     private readonly VkInstance                instance;
-    private readonly Queue<IDisposable>        pendingDisposes = [];
     private readonly VkSemaphore[]             renderingFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
     private readonly VkSurfaceExtensionKHR     surfaceExtension;
 
@@ -151,23 +151,17 @@ public unsafe partial class VulkanContext : IDisposable
 
     private unsafe static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
-        var defaultColor = Console.ForegroundColor;
-
-        var color = messageSeverity switch
+        var logLevel = messageSeverity switch
         {
-            VkDebugUtilsMessageSeverityFlagsEXT.Error => ConsoleColor.DarkRed,
-            VkDebugUtilsMessageSeverityFlagsEXT.Warning => ConsoleColor.DarkYellow,
-            VkDebugUtilsMessageSeverityFlagsEXT.Info => ConsoleColor.DarkBlue,
-            _ => defaultColor
+            VkDebugUtilsMessageSeverityFlagsEXT.Error   => LogLevel.Error,
+            VkDebugUtilsMessageSeverityFlagsEXT.Warning => LogLevel.Warning,
+            VkDebugUtilsMessageSeverityFlagsEXT.Info    => LogLevel.Info,
+            _ => LogLevel.None
         };
-
-        Console.ForegroundColor = color;
 
         var message = Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage);
 
-        Console.WriteLine(message);
-
-        Console.ForegroundColor = defaultColor;
+        Logger.Log(message!, logLevel);
 
         return true;
     }
@@ -192,6 +186,7 @@ public unsafe partial class VulkanContext : IDisposable
             var commandPool   = this.device.CreateCommandPool(createInfo);
             var commandBuffer = commandPool.AllocateCommand(VkCommandBufferLevel.Primary);
 
+            this.frames[i].Fence         = this.fences[i];
             this.frames[i].CommandBuffer = commandBuffer;
             this.frames[i].CommandPool   = commandPool;
             this.frames[i].Index         = i;
@@ -406,14 +401,6 @@ public unsafe partial class VulkanContext : IDisposable
         this.EndSingleTimeCommands(commandBuffer);
     }
 
-    private void DisposePendingResources()
-    {
-        while (this.pendingDisposes.Count > 0)
-        {
-            this.pendingDisposes.Dequeue().Dispose();
-        }
-    }
-
     public uint FindMemoryType(uint typeFilter, VkMemoryPropertyFlags properties)
     {
         this.physicalDevice.GetMemoryProperties(out var memProperties);
@@ -433,9 +420,9 @@ public unsafe partial class VulkanContext : IDisposable
     {
         this.PickPhysicalDevice(surface, out this.physicalDevice, out this.graphicsQueueIndex, out this.presentationQueueIndex);
         this.CreateDevice(out this.device, out this.swapchainExtension, out this.graphicsQueue, out this.presentationQueue);
-        this.SetupFrames();
         this.CreateSyncObjects();
         this.GetSurfaceCapabilities(surface, out this.surfaceFormat);
+        this.SetupFrames();
     }
 
     private void PickPhysicalDevice(VkSurfaceKHR surface, out VkPhysicalDevice physicalDevice, out uint graphicsQueueIndex, out uint presentationQueueIndex)
@@ -499,8 +486,6 @@ public unsafe partial class VulkanContext : IDisposable
         if (!this.disposed)
         {
             this.device.WaitIdle();
-
-            this.DisposePendingResources();
 
             for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
             {
@@ -659,17 +644,6 @@ public unsafe partial class VulkanContext : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public void DefferedDispose(IDisposable disposable) =>
-        this.pendingDisposes.Enqueue(disposable);
-
-    public void DefferedDispose(IEnumerable<IDisposable> disposables)
-    {
-        foreach (var disposable in disposables)
-        {
-            this.pendingDisposes.Enqueue(disposable);
-        }
-    }
-
     public void EndSingleTimeCommands(VkCommandBuffer commandBuffer)
     {
         commandBuffer.End();
@@ -698,7 +672,6 @@ public unsafe partial class VulkanContext : IDisposable
         var fence = this.fences[this.currentFrame];
 
         fence.Wait(true, ulong.MaxValue);
-        fence.Reset();
 
         foreach (var context in Surface.Entries)
         {
@@ -724,6 +697,9 @@ public unsafe partial class VulkanContext : IDisposable
                 context.CurrentBuffer = imageIndex;
             }
         }
+
+        fence.Reset();
+        this.Frame.CommandBuffer.Reset();
     }
 
     public void GetPhysicalDeviceProperties(out VkPhysicalDeviceProperties properties) =>
@@ -798,16 +774,11 @@ public unsafe partial class VulkanContext : IDisposable
                     var result  = results[i];
                     var context = Surface.Entries[i];
 
-                    if (result is VkResult.ErrorOutOfDateKHR)
+                    if (result is VkResult.ErrorOutOfDateKHR or VkResult.SuboptimalKHR)
                     {
-                        Console.WriteLine("Vulkan queue submit: Swapchain is out of date, recreating.");
+                        Logger.Trace("Vulkan queue submit: Swapchain is out of date, recreating.");
 
                         this.RecreateSwapchain(context);
-
-                    }
-                    else if (result == VkResult.SuboptimalKHR)
-                    {
-                        Console.WriteLine("Vulkan queue submit: Swapchain is suboptimal.");
                     }
                     else
                     {
@@ -822,7 +793,5 @@ public unsafe partial class VulkanContext : IDisposable
         }
 
         this.currentFrame = (ushort)((this.currentFrame + 1) % MAX_FRAMES_IN_FLIGHT);
-
-        this.DisposePendingResources();
     }
 }

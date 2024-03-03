@@ -1,7 +1,10 @@
 ﻿using Age;
-// using Age.Playground;
+using Age.Core;
+// // using Age.Playground;
+
+Logger.Level = LogLevel.Trace;
 
 using var engine = new Engine();
-// using var engine = new SimpleEngineV2();
+// // using var engine = new SimpleEngineV2();
 
 engine.Run();

@@ -67,14 +67,17 @@ public class RenderingService : IDisposable
         this.vertexBuffer         = renderer.CreateVertexBuffer(vertices);
         this.indexBuffer          = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
         this.wireframeIndexBuffer = renderer.CreateIndexBuffer([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
-        this.diffuseShader        = renderer.CreateShader<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(this.renderPass);
-        this.wireframeShader      = renderer.CreateShader<WireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(this.renderPass);
+        this.diffuseShader        = renderer.CreateShaderAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
+        this.wireframeShader      = renderer.CreateShaderAndWatch<WireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
 
         this.renderer.Context.SwapchainRecreated += () =>
         {
             this.renderPass.Dispose();
 
             this.renderPass = renderer.Context.CreateRenderPass(colorPassCreateInfo);
+
+            this.diffuseShader.RenderPass   = this.renderPass;
+            this.wireframeShader.RenderPass = this.renderPass;
 
             this.RequestDraw();
         };
@@ -86,13 +89,13 @@ public class RenderingService : IDisposable
         {
             if (disposing)
             {
-                this.renderer.Context.DefferedDispose(this.renderPass);
-                this.renderer.Context.DefferedDispose(this.diffuseShader);
-                this.renderer.Context.DefferedDispose(this.wireframeShader);
-                this.renderer.Context.DefferedDispose(this.indexBuffer);
-                this.renderer.Context.DefferedDispose(this.vertexBuffer);
-                this.renderer.Context.DefferedDispose(this.wireframeIndexBuffer);
-                this.renderer.Context.DefferedDispose(this.textureSets.Values);
+                this.renderer.DeferredDispose(this.renderPass);
+                this.renderer.DeferredDispose(this.diffuseShader);
+                this.renderer.DeferredDispose(this.wireframeShader);
+                this.renderer.DeferredDispose(this.indexBuffer);
+                this.renderer.DeferredDispose(this.vertexBuffer);
+                this.renderer.DeferredDispose(this.wireframeIndexBuffer);
+                this.renderer.DeferredDispose(this.textureSets.Values);
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
@@ -130,33 +133,6 @@ public class RenderingService : IDisposable
 
                             this.textureSets[rectDrawCommand.Texture] = uniformSet = this.renderer.CreateUniformSet([uniform], this.diffuseShader);
                         }
-
-                        // var hashcode = windowSize.GetHashCode() ^ rectDrawCommand.Rect.GetHashCode();
-
-                        // if (!this.vertexBuffers.TryGetValue(hashcode, out var vertexBuffer))
-                        // {
-                        //     var rect = rectDrawCommand.Rect;
-
-                        //     var x1 = rect.Position.X / windowSize.Width;
-                        //     var x2 = (rect.Position.X + rect.Size.Width) / windowSize.Width;
-                        //     var y1 = -rect.Position.Y / windowSize.Height;
-                        //     var y2 = (-rect.Position.Y + rect.Size.Height) / windowSize.Height;
-
-                        //     var p1 = new Point<float>(x1 * 2 - 1, y1 * 2 - 1);
-                        //     var p2 = new Point<float>(x2 * 2 - 1, y1 * 2 - 1);
-                        //     var p3 = new Point<float>(x2 * 2 - 1, y2 * 2 - 1);
-                        //     var p4 = new Point<float>(x1 * 2 - 1, y2 * 2 - 1);
-
-                        //     var vertices = new CanvasShader.Vertex[4]
-                        //     {
-                        //         new(p1, new(0, 0)),
-                        //         new(p2, new(1, 0)),
-                        //         new(p3, new(1, 1)),
-                        //         new(p4, new(0, 1)),
-                        //     };
-
-                        //     this.vertexBuffers[hashcode] = vertexBuffer = this.renderer.CreateVertexBuffer(vertices);
-                        // }
 
                         var constant = new CanvasShader.PushConstant
                         {
@@ -220,7 +196,7 @@ public class RenderingService : IDisposable
         new() { Value = this.renderer.CreateSampler() };
 
     public void DestroySampler(Sampler sampler) =>
-        this.renderer.Context.DefferedDispose(sampler);
+        this.renderer.DeferredDispose(sampler);
 
     public void Render(IWindow window)
     {
@@ -243,12 +219,17 @@ public class RenderingService : IDisposable
 
     public void FreeTexture(Texture texture)
     {
-        this.renderer.Context.DefferedDispose(texture);
+        this.renderer.DeferredDispose(texture);
         this.textureSets.Remove(texture);
     }
 
-    public void RequestDraw() =>
-        this.changes++;
+    public void RequestDraw()
+    {
+        if (this.changes == 0)
+        {
+            this.changes++;
+        }
+    }
 
     public void Render(IEnumerable<IWindow> windows)
     {

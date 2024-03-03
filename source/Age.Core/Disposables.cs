@@ -7,6 +7,11 @@ public class Disposables : IDisposable, IEnumerable<IDisposable>
     private readonly List<IDisposable> disposables = [];
     private bool disposed;
 
+    public Disposables() { }
+
+    public Disposables(params IDisposable[] disposables) =>
+        this.disposables.AddRange(disposables);
+
     ~Disposables() =>
         this.Dispose(false);
 

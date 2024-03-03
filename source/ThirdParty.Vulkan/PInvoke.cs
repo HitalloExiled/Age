@@ -397,6 +397,12 @@ internal unsafe static partial class PInvoke
     public static partial void vkGetDeviceQueue(VkHandle<VkDevice> device, uint queueFamilyIndex, uint queueIndex, VkHandle<VkQueue>* pQueue);
 
     /// <summary>
+    /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkGetFenceStatus.html">vkGetFenceStatus</see>
+    /// </summary>
+    [LibraryImport(PLATFORM_PATH)]
+    public static partial VkResult vkGetFenceStatus(VkHandle<VkDevice> device, VkHandle<VkFence> fence);
+
+    /// <summary>
     /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkGetInstanceProcAddr.html">vkGetInstanceProcAddr</see>
     /// </summary>
     [LibraryImport(PLATFORM_PATH)]

@@ -6,5 +6,6 @@ public record struct Frame
 {
     public VkCommandBuffer CommandBuffer;
     public VkCommandPool   CommandPool;
+    public VkFence         Fence;
     public ushort          Index;
  }

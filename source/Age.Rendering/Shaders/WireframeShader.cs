@@ -1,18 +1,12 @@
-using Age.Rendering.Interfaces;
 using ThirdParty.Vulkan.Enums;
-using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Shaders;
 
-public class WireframeShader : IShader<CanvasShader.Vertex, CanvasShader.PushConstant>
+public class WireframeShader : ShaderResources<CanvasShader.Vertex, CanvasShader.PushConstant>
 {
-    public static string Name { get; } = nameof(WireframeShader);
+    public override string              Name              { get; } = nameof(WireframeShader);
+    public override VkPrimitiveTopology PrimitiveTopology { get; } = VkPrimitiveTopology.LineList;
 
-    public static Dictionary<VkShaderStageFlags, byte[]> Stages { get; } = new()
-    {
-        [VkShaderStageFlags.Fragment] = IShader.ReadFragmentShader(Name),
-        [VkShaderStageFlags.Vertex]   = CanvasShader.Stages[VkShaderStageFlags.Vertex],
-    };
-
-    public static VkPrimitiveTopology PrimitiveTopology { get; } = VkPrimitiveTopology.LineList;
+    public WireframeShader() : base([$"{nameof(CanvasShader)}.vert", $"{nameof(WireframeShader)}.frag"])
+    { }
 }

@@ -5,6 +5,7 @@ using Age.Core.Interop;
 using Age.Rendering.Enums;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
+using Age.Rendering.Shaders;
 using Age.Rendering.Vulkan.Uniforms;
 using ThirdParty.SpirvCross;
 using ThirdParty.SpirvCross.Enums;
@@ -18,9 +19,13 @@ namespace Age.Rendering.Vulkan;
 
 public unsafe partial class VulkanRenderer : IDisposable
 {
-    private const ushort MAX_DESCRIPTORS_PER_POOL = 64;
+    private const ushort MAX_DESCRIPTORS_PER_POOL        = 64;
+    private const ushort FRAMES_BETWEEN_PENDING_DISPOSES = 2;
 
     private readonly Dictionary<VkDescriptorType, List<DescriptorPool>> descriptorPools = [];
+    private readonly Queue<IDisposable>                                 pendingDisposes = new();
+
+    private ushort framesUntilPendingDispose;
 
     private bool disposed;
 
@@ -36,21 +41,15 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     private unsafe static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
-        var defaultColor = Console.ForegroundColor;
-
-        var color = messageSeverity switch
+        var loglevel = messageSeverity switch
         {
-            VkDebugUtilsMessageSeverityFlagsEXT.Error => ConsoleColor.DarkRed,
-            VkDebugUtilsMessageSeverityFlagsEXT.Warning => ConsoleColor.DarkYellow,
-            VkDebugUtilsMessageSeverityFlagsEXT.Info => ConsoleColor.DarkBlue,
-            _ => defaultColor
+            VkDebugUtilsMessageSeverityFlagsEXT.Error   => LogLevel.Error,
+            VkDebugUtilsMessageSeverityFlagsEXT.Warning => LogLevel.Warning,
+            VkDebugUtilsMessageSeverityFlagsEXT.Info    => LogLevel.Info,
+            _ => LogLevel.None
         };
 
-        Console.ForegroundColor = color;
-
-        Console.WriteLine("validation layer: " + Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage));
-
-        Console.ForegroundColor = defaultColor;
+        Logger.Log(Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage)!, loglevel);
 
         return true;
     }
@@ -212,6 +211,196 @@ public unsafe partial class VulkanRenderer : IDisposable
         this.Context.EndSingleTimeCommands(commandBuffer);
     }
 
+    private void CreateShader<TShaderResources, TVertexInput, TPushConstant>(TShaderResources shaderResources, RenderPass renderPass, out VkPipeline pipeline, out VkPipelineLayout pipelineLayout, out VkDescriptorSetLayout descriptorSetLayout)
+    where TShaderResources : ShaderResources<TVertexInput, TPushConstant>
+    where TVertexInput     : IVertexInput
+    where TPushConstant    : IPushConstant
+    {
+        fixed (byte* pName = "main"u8)
+        {
+            var bindings                       = new List<VkDescriptorSetLayoutBinding>();
+            var pipelineShaderStageCreateInfos = new List<VkPipelineShaderStageCreateInfo>();
+            var pushConstantRanges             = new List<VkPushConstantRange>();
+
+            if (TPushConstant.Size > 0)
+            {
+                var pushConstantRange = new VkPushConstantRange
+                {
+                    Size       = TPushConstant.Size,
+                    Offset     = TPushConstant.Offset,
+                    StageFlags = TPushConstant.Stages,
+                };
+
+                pushConstantRanges.Add(pushConstantRange);
+            }
+
+            using var disposables = new Disposables();
+            using var context     = new Context();
+
+            foreach (var stage in shaderResources.Stages)
+            {
+                var spirv     = context.ParseSpirv(stage.Value);
+                var compiler  = context.CreateCompiler(Backend.Glsl, spirv, CaptureMode.TakeOwnership);
+                var resources = compiler.CreateShaderResources();
+
+                foreach (var resource in resources.GetResourceListForType(ResorceType.SampledImage))
+                {
+                    var binding = compiler.GetDecoration(resource.Id, Decoration.Binding);
+
+                    var layout = new VkDescriptorSetLayoutBinding()
+                    {
+                        Binding         = binding,
+                        DescriptorCount = 1,
+                        DescriptorType  = VkDescriptorType.CombinedImageSampler,
+                        StageFlags      = stage.Key,
+                    };
+
+                    bindings.Add(layout);
+                }
+
+                var shaderModule = this.CreateShaderModule(stage.Value);
+
+                disposables.Add(shaderModule);
+
+                var createInfo = new VkPipelineShaderStageCreateInfo()
+                {
+                    Module = shaderModule.Handle,
+                    PName  = pName,
+                    Stage  = stage.Key,
+                };
+
+                pipelineShaderStageCreateInfos.Add(createInfo);
+            }
+
+            var vertexInputAttributeDescription = TVertexInput.GetAttributes();
+            var vertexInputBindingDescription   = TVertexInput.GetBindings();
+
+            var dynamicStates = new VkDynamicState[]
+            {
+                VkDynamicState.Viewport,
+                VkDynamicState.Scissor,
+            };
+
+            fixed (VkDescriptorSetLayoutBinding*      pBindings                       = CollectionsMarshal.AsSpan(bindings))
+            fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription)
+            fixed (VkDynamicState*                    pDynamicStates                  = dynamicStates)
+            fixed (VkPipelineShaderStageCreateInfo*   pPipelineShaderStageCreateInfos = CollectionsMarshal.AsSpan(pipelineShaderStageCreateInfos))
+            fixed (VkPushConstantRange*               pPushConstantRanges             = CollectionsMarshal.AsSpan(pushConstantRanges))
+            {
+                var descriptorSetLayoutCreateInfo = new VkDescriptorSetLayoutCreateInfo
+                {
+                    PBindings    = pBindings,
+                    BindingCount = (uint)bindings.Count,
+                };
+
+                descriptorSetLayout = this.Context.Device.CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+
+                var descriptorSetLayoutHandle = descriptorSetLayout.Handle;
+
+                var pipelineLayoutCreateInfo = new VkPipelineLayoutCreateInfo
+                {
+                    PSetLayouts            = &descriptorSetLayoutHandle,
+                    SetLayoutCount         = 1,
+                    PPushConstantRanges    = pPushConstantRanges,
+                    PushConstantRangeCount = (uint)pushConstantRanges.Count,
+                };
+
+                pipelineLayout = this.Context.Device.CreatePipelineLayout(pipelineLayoutCreateInfo);
+
+                var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
+                {
+                    Topology = shaderResources.PrimitiveTopology,
+                };
+
+                var pipelineVertexInputStateCreateInfo = new VkPipelineVertexInputStateCreateInfo
+                {
+                    PVertexAttributeDescriptions    = pVertexAttributeDescriptions,
+                    PVertexBindingDescriptions      = &vertexInputBindingDescription,
+                    VertexAttributeDescriptionCount = (uint)vertexInputAttributeDescription.Length,
+                    VertexBindingDescriptionCount   = 1,
+                };
+
+                var pipelineDynamicStateCreateInfo = new VkPipelineDynamicStateCreateInfo
+                {
+                    DynamicStateCount = (uint)dynamicStates.Length,
+                    PDynamicStates    = pDynamicStates,
+                };
+
+                var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
+                {
+                    BlendEnable    = true,
+                    ColorWriteMask = VkColorComponentFlags.R
+                        | VkColorComponentFlags.G
+                        | VkColorComponentFlags.B
+                        | VkColorComponentFlags.A,
+                    DstColorBlendFactor = VkBlendFactor.OneMinusSrcAlpha,
+                    SrcAlphaBlendFactor = VkBlendFactor.One,
+                    SrcColorBlendFactor = VkBlendFactor.SrcAlpha,
+                };
+
+                var pipelineColorBlendStateCreateInfo = new VkPipelineColorBlendStateCreateInfo
+                {
+                    AttachmentCount = 1,
+                    PAttachments    = &pipelineColorBlendAttachmentState,
+                };
+
+                var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
+                {
+                    RasterizationSamples = VkSampleCountFlags.N1,
+                };
+
+                var pipelineRasterizationStateCreateInfo = new VkPipelineRasterizationStateCreateInfo
+                {
+                    CullMode    = VkCullModeFlags.Back,
+                    FrontFace   = VkFrontFace.Clockwise,
+                    LineWidth   = 1,
+                    PolygonMode = VkPolygonMode.Fill,
+                };
+
+                var pipelineViewportStateCreateInfo = new VkPipelineViewportStateCreateInfo
+                {
+                    ViewportCount = 1,
+                    ScissorCount  = 1,
+                };
+
+                var graphicsPipelineCreateInfo = new VkGraphicsPipelineCreateInfo
+                {
+                    Layout              = pipelineLayout.Handle,
+                    PColorBlendState    = &pipelineColorBlendStateCreateInfo,
+                    PDynamicState       = &pipelineDynamicStateCreateInfo,
+                    PInputAssemblyState = &inputAssembly,
+                    PMultisampleState   = &pipelineMultisampleStateCreateInfo,
+                    PRasterizationState = &pipelineRasterizationStateCreateInfo,
+                    PStages             = pPipelineShaderStageCreateInfos,
+                    PVertexInputState   = &pipelineVertexInputStateCreateInfo,
+                    PViewportState      = &pipelineViewportStateCreateInfo,
+                    StageCount          = (uint)pipelineShaderStageCreateInfos.Count,
+                    RenderPass          = renderPass.Value.Handle,
+                };
+
+                pipeline = this.Context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);
+            }
+        }
+    }
+
+    private void DisposePendingResources(bool immediate = false)
+    {
+        if (this.pendingDisposes.Count > 0)
+        {
+            if (immediate || this.framesUntilPendingDispose == 0)
+            {
+                while (this.pendingDisposes.Count > 0)
+                {
+                    this.pendingDisposes.Dequeue().Dispose();
+                }
+            }
+            else
+            {
+                this.framesUntilPendingDispose--;
+            }
+        }
+    }
+
     private void TransitionImageLayout(
         VkImage              image,
         VkImageLayout        oldLayout,
@@ -252,6 +441,8 @@ public unsafe partial class VulkanRenderer : IDisposable
         {
             this.Context.Device.WaitIdle();
 
+            this.DisposePendingResources(true);
+
             foreach (var descriptorPool in this.descriptorPools.Values.SelectMany(x => x))
             {
                 descriptorPool.Value.Dispose();
@@ -265,6 +456,8 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public void BeginFrame()
     {
+        this.DisposePendingResources();
+
         this.Context.PrepareBuffers();
 
         this.Context.Frame.CommandBuffer.Begin();
@@ -389,185 +582,33 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public Shader CreateShader<TShader, TVertexInput, TPushConstant>(RenderPass renderPass)
-    where TShader       : IShader<TVertexInput, TPushConstant>
-    where TVertexInput  : IVertexInput
-    where TPushConstant : IPushConstant
+    public Shader CreateShader<TShaderResources, TVertexInput, TPushConstant>(TShaderResources shaderResources, RenderPass renderPass)
+    where TShaderResources : ShaderResources<TVertexInput, TPushConstant>
+    where TVertexInput     : IVertexInput
+    where TPushConstant    : IPushConstant
     {
-        fixed (byte* pName = "main"u8)
+        this.CreateShader<TShaderResources, TVertexInput, TPushConstant>(shaderResources, renderPass, out var pipeline, out var pipelineLayout, out var descriptorSetLayout);
+
+        return new(shaderResources, VkPipelineBindPoint.Graphics, pipeline, pipelineLayout, descriptorSetLayout, renderPass);
+    }
+
+    public Shader CreateShaderAndWatch<TShaderResources, TVertexInput, TPushConstant>(TShaderResources shaderResources, RenderPass renderPass)
+    where TShaderResources : ShaderResources<TVertexInput, TPushConstant>
+    where TVertexInput     : IVertexInput
+    where TPushConstant    : IPushConstant
+    {
+        var shader = this.CreateShader<TShaderResources, TVertexInput, TPushConstant>(shaderResources, renderPass);
+
+        void action()
         {
-            var bindings                       = new List<VkDescriptorSetLayoutBinding>();
-            var pipelineShaderStageCreateInfos = new List<VkPipelineShaderStageCreateInfo>();
-            var pushConstantRanges             = new List<VkPushConstantRange>();
+            this.CreateShader<TShaderResources, TVertexInput, TPushConstant>(shaderResources, shader.RenderPass, out var pipeline, out var pipelineLayout, out var descriptorSetLayout);
 
-            if (TPushConstant.Size > 0)
-            {
-                var pushConstantRange = new VkPushConstantRange
-                {
-                    Size       = TPushConstant.Size,
-                    Offset     = TPushConstant.Offset,
-                    StageFlags = TPushConstant.Stages,
-                };
-
-                pushConstantRanges.Add(pushConstantRange);
-            }
-
-            using var disposables = new Disposables();
-            using var context     = new Context();
-
-            foreach (var stage in TShader.Stages)
-            {
-                var spirv     = context.ParseSpirv(stage.Value);
-                var compiler  = context.CreateCompiler(Backend.Glsl, spirv, CaptureMode.TakeOwnership);
-                var resources = compiler.CreateShaderResources();
-
-                foreach (var resource in resources.GetResourceListForType(ResorceType.SampledImage))
-                {
-                    var binding = compiler.GetDecoration(resource.Id, Decoration.Binding);
-
-                    var layout = new VkDescriptorSetLayoutBinding()
-                    {
-                        Binding         = binding,
-                        DescriptorCount = 1,
-                        DescriptorType  = VkDescriptorType.CombinedImageSampler,
-                        StageFlags      = stage.Key,
-                    };
-
-                    bindings.Add(layout);
-                }
-
-                var shaderModule = this.CreateShaderModule(stage.Value);
-
-                disposables.Add(shaderModule);
-
-                var createInfo = new VkPipelineShaderStageCreateInfo()
-                {
-                    Module = shaderModule.Handle,
-                    PName  = pName,
-                    Stage  = stage.Key,
-                };
-
-                pipelineShaderStageCreateInfos.Add(createInfo);
-            }
-
-            var vertexInputAttributeDescription = TVertexInput.GetAttributes();
-            var vertexInputBindingDescription   = TVertexInput.GetBindings();
-
-            var dynamicStates = new VkDynamicState[]
-            {
-                VkDynamicState.Viewport,
-                VkDynamicState.Scissor,
-            };
-
-            fixed (VkDescriptorSetLayoutBinding*      pBindings                       = CollectionsMarshal.AsSpan(bindings))
-            fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription)
-            fixed (VkDynamicState*                    pDynamicStates                  = dynamicStates)
-            fixed (VkPipelineShaderStageCreateInfo*   pPipelineShaderStageCreateInfos = CollectionsMarshal.AsSpan(pipelineShaderStageCreateInfos))
-            fixed (VkPushConstantRange*               pPushConstantRanges             = CollectionsMarshal.AsSpan(pushConstantRanges))
-            {
-                var descriptorSetLayoutCreateInfo = new VkDescriptorSetLayoutCreateInfo
-                {
-                    PBindings    = pBindings,
-                    BindingCount = (uint)bindings.Count,
-                };
-
-                var descriptorSetLayout = this.Context.Device.CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
-
-                var descriptorSetLayoutHandle = descriptorSetLayout.Handle;
-
-                var pipelineLayoutCreateInfo = new VkPipelineLayoutCreateInfo
-                {
-                    PSetLayouts            = &descriptorSetLayoutHandle,
-                    SetLayoutCount         = 1,
-                    PPushConstantRanges    = pPushConstantRanges,
-                    PushConstantRangeCount = (uint)pushConstantRanges.Count,
-                };
-
-                var pipelineLayout = this.Context.Device.CreatePipelineLayout(pipelineLayoutCreateInfo);
-
-                var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
-                {
-                    Topology = TShader.PrimitiveTopology,
-                };
-
-                var pipelineVertexInputStateCreateInfo = new VkPipelineVertexInputStateCreateInfo
-                {
-                    PVertexAttributeDescriptions    = pVertexAttributeDescriptions,
-                    PVertexBindingDescriptions      = &vertexInputBindingDescription,
-                    VertexAttributeDescriptionCount = (uint)vertexInputAttributeDescription.Length,
-                    VertexBindingDescriptionCount   = 1,
-                };
-
-                var pipelineDynamicStateCreateInfo = new VkPipelineDynamicStateCreateInfo
-                {
-                    DynamicStateCount = (uint)dynamicStates.Length,
-                    PDynamicStates    = pDynamicStates,
-                };
-
-                var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
-                {
-                    BlendEnable    = true,
-                    ColorWriteMask = VkColorComponentFlags.R
-                        | VkColorComponentFlags.G
-                        | VkColorComponentFlags.B
-                        | VkColorComponentFlags.A,
-                    DstColorBlendFactor = VkBlendFactor.OneMinusSrcAlpha,
-                    SrcAlphaBlendFactor = VkBlendFactor.One,
-                    SrcColorBlendFactor = VkBlendFactor.SrcAlpha,
-                };
-
-                var pipelineColorBlendStateCreateInfo = new VkPipelineColorBlendStateCreateInfo
-                {
-                    AttachmentCount = 1,
-                    PAttachments    = &pipelineColorBlendAttachmentState,
-                };
-
-                var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
-                {
-                    RasterizationSamples = VkSampleCountFlags.N1,
-                };
-
-                var pipelineRasterizationStateCreateInfo = new VkPipelineRasterizationStateCreateInfo
-                {
-                    CullMode    = VkCullModeFlags.Back,
-                    FrontFace   = VkFrontFace.Clockwise,
-                    LineWidth   = 1,
-                    PolygonMode = VkPolygonMode.Fill,
-                };
-
-                var pipelineViewportStateCreateInfo = new VkPipelineViewportStateCreateInfo
-                {
-                    ViewportCount = 1,
-                    ScissorCount  = 1,
-                };
-
-                var graphicsPipelineCreateInfo = new VkGraphicsPipelineCreateInfo
-                {
-                    Layout              = pipelineLayout.Handle,
-                    PColorBlendState    = &pipelineColorBlendStateCreateInfo,
-                    PDynamicState       = &pipelineDynamicStateCreateInfo,
-                    PInputAssemblyState = &inputAssembly,
-                    PMultisampleState   = &pipelineMultisampleStateCreateInfo,
-                    PRasterizationState = &pipelineRasterizationStateCreateInfo,
-                    PStages             = pPipelineShaderStageCreateInfos,
-                    PVertexInputState   = &pipelineVertexInputStateCreateInfo,
-                    PViewportState      = &pipelineViewportStateCreateInfo,
-                    StageCount          = (uint)pipelineShaderStageCreateInfos.Count,
-                    RenderPass          = renderPass.Value.Handle,
-                };
-
-                var pipeline = this.Context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);
-
-                return new()
-                {
-                    DescriptorSetLayout = descriptorSetLayout,
-                    Pipeline            = pipeline,
-                    PipelineBindPoint   = VkPipelineBindPoint.Graphics,
-                    PipelineLayout      = pipelineLayout,
-                    RenderPass          = renderPass,
-                };
-            }
+            this.DeferredDispose(shader.Update(pipeline, pipelineLayout, descriptorSetLayout));
         }
+
+        shader.Changed += action;
+
+        return shader;
     }
 
     public VkSampler CreateSampler()
@@ -758,6 +799,23 @@ public unsafe partial class VulkanRenderer : IDisposable
             Buffer = buffer,
             Size   = (uint)data.Length,
         };
+    }
+
+    public void DeferredDispose(IDisposable disposable)
+    {
+        this.framesUntilPendingDispose = FRAMES_BETWEEN_PENDING_DISPOSES;
+
+        this.pendingDisposes.Enqueue(disposable);
+    }
+
+    public void DeferredDispose(IEnumerable<IDisposable> disposables)
+    {
+        this.framesUntilPendingDispose += FRAMES_BETWEEN_PENDING_DISPOSES;
+
+        foreach (var disposable in disposables)
+        {
+            this.pendingDisposes.Enqueue(disposable);
+        }
     }
 
     public void Dispose()

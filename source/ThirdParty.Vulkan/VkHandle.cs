@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace ThirdParty.Vulkan;
 
+[DebuggerDisplay("{Value}")]
 public readonly struct VkHandle<T>(nint value) where T : ManagedHandle<T>
 {
     public readonly nint Value = value;
