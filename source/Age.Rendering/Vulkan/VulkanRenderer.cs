@@ -637,7 +637,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         var samples = VkSampleCountFlags.N1;
         var tiling  = VkImageTiling.Optimal;
         var usage   = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
-        var format  = VkFormat.B8G8R8A8Srgb;
+        var format  = textureCreate.ColorMode == ColorMode.Gray ? VkFormat.R8G8Unorm : VkFormat.B8G8R8A8Srgb;
 
         this.CreateImage(
             textureCreate.Width,
@@ -676,8 +676,6 @@ public unsafe partial class VulkanRenderer : IDisposable
             ImageView   = imageView,
             TextureType = textureCreate.TextureType,
         };
-
-        this.UpdateTexture(texture, textureCreate.Data);
 
         return texture;
     }

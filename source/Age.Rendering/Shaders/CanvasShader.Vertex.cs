@@ -11,15 +11,14 @@ public partial class CanvasShader
     public record struct Vertex : IVertexInput
     {
         public Point<float> Position = new();
-        public Point<float> UV       = new();
 
         public Vertex() { }
 
-        public Vertex(Point<float> position, Point<float> uv)
-        {
+        public Vertex(float x, float y) =>
+            this.Position = new(x, y);
+
+        public Vertex(Point<float> position) =>
             this.Position = position;
-            this.UV       = uv;
-        }
 
         public static VkVertexInputAttributeDescription[] GetAttributes() =>
             [
@@ -28,12 +27,6 @@ public partial class CanvasShader
                     Format   = VkFormat.R32G32Sfloat,
                     Location = 0,
                     Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Position)),
-                },
-                new()
-                {
-                    Format   = VkFormat.R32G32Sfloat,
-                    Location = 1,
-                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(UV)),
                 },
             ];
 

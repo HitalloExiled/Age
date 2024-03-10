@@ -1,14 +1,16 @@
 using System.Diagnostics;
-using Age.Rendering.Resources;
+using Age.Numerics;
 
 namespace Age.Rendering.Services;
 
 public partial class TextService
 {
-    [DebuggerDisplay("Character: {Character}, Size: {Size}")]
+    [DebuggerDisplay("Character: {Character}, Size: {Size}, Position: {Position}")]
     private record Glyph
     {
-        public required char    Character { get; init; }
-        public required Texture Texture   { get; init; }
+        public required TextureAtlas Atlas     { get; init; }
+        public required char         Character { get; init; }
+        public required Point<uint>  Position  { get; init; }
+        public required Size<uint>   Size      { get; init; }
     }
 }

@@ -1,7 +1,8 @@
+#define DUMP_IMAGES
+using System.Runtime.InteropServices;
 using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing;
-using Age.Rendering.Enums;
 using Age.Rendering.Resources;
 using SkiaSharp;
 
@@ -9,66 +10,87 @@ namespace Age.Rendering.Services;
 
 public partial class TextService(RenderingService renderingService) : IDisposable
 {
-    private readonly Dictionary<int, Glyph> glyphs           = [];
-    private readonly RenderingService       renderingService = renderingService;
-    private readonly Sampler                sampler          = renderingService.CreateSampler();
+    private readonly Dictionary<int, TextureAtlas> atlases          = [];
+    private readonly Dictionary<int, Glyph>        glyphs           = [];
+    private readonly RenderingService              renderingService = renderingService;
+    private readonly Sampler                       sampler          = renderingService.CreateSampler();
 
     private bool disposed;
 
 #if DUMP_IMAGES
-    private static void SaveToFile(string text, SKPaint paint)
+    private static void SaveToFile(TextureAtlas atlas)
     {
-        var drawBounds = new SKRect();
+        using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"Atlas-{atlas.Size.Width}x{atlas.Size.Height}.png"));
 
-        paint.MeasureText(text, ref drawBounds);
-        using var bitmap = new SKBitmap((int)drawBounds.Width, (int)drawBounds.Height);
-        using var canvas = new SKCanvas(bitmap);
+        var pixels = MemoryMarshal.Cast<uint, SKColor>(atlas.Bitmap.Pixels.AsSpan()).ToArray();
 
-        canvas.DrawText(text, -drawBounds.Location.X, -drawBounds.Location.Y, paint);
+        var bitmap = new SKBitmap(
+            (int)atlas.Bitmap.Size.Width,
+            (int)atlas.Bitmap.Size.Height,
+            SKColorType.Rgba8888,
+            SKAlphaType.Premul
+        )
+        {
+            Pixels = pixels
+        };
 
         var skimage = SKImage.FromBitmap(bitmap);
 
         var data = skimage.Encode(SKEncodedImageFormat.Png, 100);
 
-        #pragma warning disable SYSLIB1045
-        using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"{Regex.Replace(text, "[\n:\\\\]", "_")}.png"));
-        #pragma warning restore SYSLIB1045
         data.SaveTo(stream);
     }
 #endif
 
-    private Glyph DrawGlyph(char character, ushort fontSize, SKRect bounds, SKPaint paint)
+    private Glyph DrawGlyph(TextureAtlas atlas, char character, ushort fontSize, SKRect bounds, SKPaint paint)
     {
+        const ushort PADDING = 2;
+
         var hashcode = character.GetHashCode() ^ fontSize.GetHashCode();
 
         if (!this.glyphs.TryGetValue(hashcode, out var glyph))
         {
             var charString = character.ToString();
 
-            using var bitmap = new SKBitmap((int)bounds.Width, (int)bounds.Height);
+            using var bitmap = new SKBitmap(
+                (int)bounds.Width  + PADDING * 2,
+                (int)bounds.Height + PADDING * 2,
+                SKColorType.Rgba8888,
+                SKAlphaType.Premul
+            );
+
             using var canvas = new SKCanvas(bitmap);
 
-            canvas.DrawText(charString, -bounds.Location.X, -bounds.Location.Y, paint);
+            canvas.DrawText(charString, PADDING + -bounds.Location.X, PADDING + -bounds.Location.Y, paint);
 
-            var pixels = bitmap.Pixels.Select(x => (uint)x).ToArray();
-
-            var image = new Image
-            {
-                Width  = (uint)bitmap.Width,
-                Height = (uint)bitmap.Height,
-                Pixels = pixels,
-            };
-
-            var texture = this.renderingService.CreateTexture(image, TextureType.N2D);
+            var position = atlas.Add(MemoryMarshal.Cast<SKColor, uint>(bitmap.Pixels.AsSpan()), new((uint)bitmap.Width, (uint)bitmap.Height));
 
             this.glyphs[hashcode] = glyph = new()
             {
+                Atlas     = atlas,
                 Character = character,
-                Texture   = texture,
+                Position  = position + PADDING,
+                Size      = new((uint)bounds.Width, (uint)bounds.Height),
             };
         }
 
         return glyph;
+    }
+
+    private TextureAtlas GetAtlas(string familyName, int fontSize)
+    {
+        var hashcode = familyName.GetHashCode() ^ fontSize;
+
+        if (!this.atlases.TryGetValue(hashcode, out var atlas))
+        {
+            var size = (uint)Math.Max(fontSize * 8, 256);
+
+            var texture = this.renderingService.CreateTexture(new(size, size), ColorMode.RGBA, Enums.TextureType.N2D);
+
+            this.atlases[hashcode] = atlas = new(new(size, size), texture);
+        }
+
+        return atlas;
     }
 
     protected virtual void Dispose(bool disposing)
@@ -77,9 +99,9 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
         {
             if (disposing)
             {
-                foreach (var glyph in this.glyphs.Values)
+                foreach (var atlas in this.atlases.Values)
                 {
-                    this.renderingService.FreeTexture(glyph.Texture);
+                    this.renderingService.FreeTexture(atlas.Texture);
                 }
 
                 this.renderingService.DestroySampler(this.sampler);
@@ -93,8 +115,8 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
     public void DrawText(Element element, string text)
     {
-        var style = element.Style;
-        var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+        var style    = element.Style;
+        var typeface = SKTypeface.FromFamilyName(style.FontFamily, SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
 
         var paint = new SKPaint
         {
@@ -104,6 +126,8 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
             TextSize    = style.FontSize,
             Typeface    = typeface,
         };
+
+        var atlas = this.GetAtlas(style.FontFamily, style.FontSize);
 
         var font   = paint.ToFont();
         var glyphs = typeface.GetGlyphs(text);
@@ -125,12 +149,22 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
             if (!char.IsWhiteSpace(character))
             {
-                var bounds   = glyphsBounds[i];
-                var glyph    = this.DrawGlyph(character, style.FontSize, glyphsBounds[i], paint);
-                var size     = new Size<float>(bounds.Width, bounds.Height);
-                var position = new Point<float>(offset.X + glyphsPosition[i].X, offset.Y - glyphsBounds[i].Top);
-                var color    = style.Color == default ? new() : style.Color;
-                var command  = new RectDrawCommand(new(size, position), glyph.Texture, color, this.sampler);
+                var bounds    = glyphsBounds[i];
+                var glyph     = this.DrawGlyph(atlas, character, style.FontSize, glyphsBounds[i], paint);
+                var size      = new Size<float>(bounds.Width, bounds.Height);
+                var position  = new Point<float>(offset.X + glyphsPosition[i].X, offset.Y - glyphsBounds[i].Top);
+                var color     = style.Color == default ? new() : style.Color;
+                var atlasSize = new Size<float>(atlas.Size.Width, atlas.Size.Height);
+
+                var uv = new Point<float>[4]
+                {
+                    new Point<float>(glyph.Position.X, glyph.Position.Y) / atlasSize,
+                    new Point<float>(glyph.Position.X + glyph.Size.Width, glyph.Position.Y) / atlasSize,
+                    new Point<float>(glyph.Position.X + glyph.Size.Width, glyph.Position.Y + glyph.Size.Height) / atlasSize,
+                    new Point<float>(glyph.Position.X, glyph.Position.Y + glyph.Size.Height) / atlasSize,
+                };
+
+                var command = new RectDrawCommand(new(size, position), atlas.Texture, uv, color, this.sampler);
 
                 element.Commands.Add(command);
             }
@@ -141,11 +175,17 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
             }
         }
 
-        this.renderingService.RequestDraw();
+        if (atlas.IsDirty)
+        {
+            this.renderingService.UpdateTexture(atlas.Texture, atlas.Bitmap.Pixels);
 
+            atlas.IsDirty = false;
 #if DUMP_IMAGES
-        SaveToFile(text, paint);
+            SaveToFile(atlas);
 #endif
+        }
+
+        this.renderingService.RequestDraw();
     }
 
     public void Dispose()

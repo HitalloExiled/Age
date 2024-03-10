@@ -10,6 +10,7 @@ using Age.Rendering.Shaders;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Flags;
+using Age.Numerics;
 
 namespace Age.Rendering.Services;
 
@@ -58,10 +59,10 @@ public class RenderingService : IDisposable
 
         var vertices = new CanvasShader.Vertex[4]
         {
-            new(new(-1, -1), new(0, 0)),
-            new(new( 1, -1), new(1, 0)),
-            new(new( 1,  1), new(1, 1)),
-            new(new(-1,  1), new(0, 1)),
+            new(-1, -1),
+            new( 1, -1),
+            new( 1,  1),
+            new(-1,  1),
         };
 
         this.vertexBuffer         = renderer.CreateVertexBuffer(vertices);
@@ -69,6 +70,8 @@ public class RenderingService : IDisposable
         this.wireframeIndexBuffer = renderer.CreateIndexBuffer([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
         this.diffuseShader        = renderer.CreateShaderAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
         this.wireframeShader      = renderer.CreateShaderAndWatch<WireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
+
+        this.diffuseShader.Changed += this.RequestDraw;
 
         this.renderer.Context.SwapchainRecreated += () =>
         {
@@ -138,6 +141,10 @@ public class RenderingService : IDisposable
                         {
                             ViewportSize = windowSize.Cast<float>(),
                             Rect         = rectDrawCommand.Rect,
+                            UV0          = rectDrawCommand.UV[0],
+                            UV1          = rectDrawCommand.UV[1],
+                            UV2          = rectDrawCommand.UV[2],
+                            UV3          = rectDrawCommand.UV[3],
                             Color        = rectDrawCommand.Color,
                         };
 
@@ -178,15 +185,15 @@ public class RenderingService : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public Texture CreateTexture(Image image, TextureType textureType)
+    public Texture CreateTexture(Size<uint> size, ColorMode colorMode, TextureType textureType)
     {
         var textureCreate = new TextureCreate
         {
-            Data        = image.Pixels,
             Depth       = 1,
-            Width       = image.Width,
-            Height      = image.Height,
+            Width       = size.Width,
+            Height      = size.Height,
             TextureType = textureType,
+            ColorMode   = colorMode,
         };
 
         return this.renderer.CreateTexture(textureCreate);
@@ -252,4 +259,7 @@ public class RenderingService : IDisposable
             this.changes--;
         }
     }
+
+    public void UpdateTexture(Texture texture, uint[] data) =>
+        this.renderer.UpdateTexture(texture, data);
 }

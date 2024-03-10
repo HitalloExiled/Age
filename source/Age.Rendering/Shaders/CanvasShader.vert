@@ -1,7 +1,6 @@
 #version 450
 
 layout(location = 0) in vec2 inPosition;
-layout(location = 1) in vec2 inFragTexCoord;
 
 layout(location = 0) out vec2 outFragTexCoord;
 
@@ -10,6 +9,7 @@ layout(push_constant) uniform Data
     vec2  ViewportSize;
     vec2  Size;
     vec2  Position;
+    vec2  UV[4];
     float Color[4];
 } data;
 
@@ -59,7 +59,7 @@ void main()
 
     vec2 position = applyScale(inPosition, scale);
 
-    gl_Position = vec4(position + offset, 0, 1);
+    outFragTexCoord = data.UV[gl_VertexIndex];
 
-    outFragTexCoord = inFragTexCoord;
+    gl_Position = vec4(position + offset, 0, 1);
 }
