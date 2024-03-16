@@ -640,7 +640,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         var samples = VkSampleCountFlags.N1;
         var tiling  = VkImageTiling.Optimal;
         var usage   = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
-        var format  = textureCreate.ColorMode == ColorMode.Gray ? VkFormat.R8G8Unorm : VkFormat.B8G8R8A8Srgb;
+        var format  = textureCreate.ColorMode == ColorMode.GrayScale ? VkFormat.R8G8Unorm : VkFormat.B8G8R8A8Srgb;
 
         this.CreateImage(
             textureCreate.Width,
@@ -902,11 +902,9 @@ public unsafe partial class VulkanRenderer : IDisposable
     public void UpdateVertexBuffer<T>(VertexBuffer vertexBuffer, T[] data) where T : unmanaged =>
         this.UpdateBuffer(vertexBuffer.Buffer, data);
 
-    public void UpdateTexture(Texture texture, uint[] data)
+    public void UpdateTexture(Texture texture, byte[] data)
     {
-        var imageSize = (ulong)data.Length * 4;
-
-        var buffer = this.CreateBuffer(imageSize, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+        var buffer = this.CreateBuffer((ulong)data.Length, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
         buffer.Allocation.Memory.Write(0, 0, data);
 

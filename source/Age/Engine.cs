@@ -9,7 +9,8 @@ namespace Age;
 
 public class Engine : IDisposable
 {
-    private const ushort TARGET_FPS = 60;
+    private const bool   FPS_UNLOCKED = true;
+    private const ushort TARGET_FPS   = 60;
 
     private readonly Container      container;
     private readonly Window         mainWindow;
@@ -70,7 +71,8 @@ public class Engine : IDisposable
         var clockText = new Text("", new() { FontSize = 24, Color = new(1, 0, 0), Position = new(4, -4) });
 
         this.mainWindow.Content.Add(clockText);
-        this.mainWindow.Content.Add(new Text("Hello\nWorld\n!!!", new() { FontSize = 100, Color = new(0, 1, 0), Position = new(100, -200) }));
+        // this.mainWindow.Content.Add(new Text("H", new() { FontSize = 200, Color = new(0, 1, 0), Position = new(10, -10) }));
+        this.mainWindow.Content.Add(new Text("Hello\nWorld\n!!!", new() { FontSize = 200, Color = new(0, 1, 0), Position = new(100, -200) }));
         this.mainWindow.Content.Add(new Text("Hello World!!!",    new() { FontSize = 50,  Color = new(0, 0, 1), Position = new(50, -500) }));
 
         var frames       = 0ul;
@@ -92,11 +94,11 @@ public class Engine : IDisposable
 
             var totalMilliseconds = watch.Elapsed.TotalMilliseconds;
 
-            if (totalMilliseconds < this.targetFrameTime)
+            if (!FPS_UNLOCKED && totalMilliseconds < this.targetFrameTime)
             {
                 var remaining = this.targetFrameTime - totalMilliseconds;
 
-                // Thread.Sleep(new TimeSpan((long)(remaining * TimeSpan.TicksPerMillisecond) / 2));
+                Thread.Sleep(new TimeSpan((long)(remaining * TimeSpan.TicksPerMillisecond) / 2));
             }
 
             var fps       = Math.Round(1000.0 / watch.Elapsed.TotalMilliseconds, 2);

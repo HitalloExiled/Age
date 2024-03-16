@@ -1,7 +1,7 @@
 namespace Age.Rendering;
 
-public enum ColorMode : uint
+public enum ColorMode : ushort
 {
-    Gray = 2,
-    RGBA = 4,
+    GrayScale = 2,
+    RGBA      = 4,
 }

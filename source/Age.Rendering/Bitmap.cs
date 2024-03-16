@@ -4,19 +4,23 @@ namespace Age.Rendering;
 
 public class Bitmap
 {
-    public uint[]     Pixels { get; }
-    public Size<uint> Size   { get; }
+    public byte[]     Buffer    { get; }
+    public ColorMode  ColorMode { get; }
+    public Size<uint> Size      { get; }
 
-    public Bitmap(Size<uint> size, uint[]? pixels = null)
+    public ushort BytesPerPixel => (ushort)this.ColorMode;
+
+    public Bitmap(Size<uint> size, ColorMode colorMode, byte[]? buffer = null)
     {
-        var pixelLength = size.Height * size.Width;
+        var bufferSize = (int)colorMode * size.Height * size.Width;
 
-        if (pixels != null && pixelLength != pixels.Length)
+        if (buffer != null && bufferSize != buffer.Length)
         {
-            throw new ArgumentException($"{nameof(pixels)} must have the length equal to ${pixelLength}");
+            throw new ArgumentException($"{nameof(buffer)} must have the length equal to ${bufferSize}");
         }
 
-        this.Pixels = pixels ?? new uint[size.Width * size.Height];
-        this.Size   = size;
+        this.Buffer    = buffer ?? new byte[bufferSize];
+        this.ColorMode = colorMode;
+        this.Size      = size;
     }
 }

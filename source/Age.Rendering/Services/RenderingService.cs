@@ -15,7 +15,7 @@ namespace Age.Rendering.Services;
 
 public class RenderingService : IDisposable
 {
-    private const bool DRAW_WIREFRAME = true;
+    private const bool DRAW_WIREFRAME = false;
 
     private readonly Shader                          diffuseShader;
     private readonly IndexBuffer                     indexBuffer;
@@ -216,6 +216,7 @@ public class RenderingService : IDisposable
             this.Render(window, element, false);
         }
 
+        #pragma warning disable IDE0035, CS0162
         if (DRAW_WIREFRAME)
         {
             this.renderer.BindPipeline(this.wireframeShader);
@@ -226,6 +227,7 @@ public class RenderingService : IDisposable
                 this.Render(window, element, true);
             }
         }
+        #pragma warning restore IDE0035, CS0162
 
         this.renderer.EndRenderPass();
     }
@@ -236,13 +238,8 @@ public class RenderingService : IDisposable
         this.textureSets.Remove(texture);
     }
 
-    public void RequestDraw()
-    {
-        // if (this.changes == 0)
-        {
-            this.changes++;
-        }
-    }
+    public void RequestDraw() =>
+        this.changes++;
 
     public void Render(IEnumerable<IWindow> windows)
     {
@@ -266,6 +263,6 @@ public class RenderingService : IDisposable
         }
     }
 
-    public void UpdateTexture(Texture texture, uint[] data) =>
+    public void UpdateTexture(Texture texture, byte[] data) =>
         this.renderer.UpdateTexture(texture, data);
 }

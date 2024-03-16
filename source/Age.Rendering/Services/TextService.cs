@@ -1,5 +1,5 @@
 #define DUMP_IMAGES
-using System.Runtime.InteropServices;
+using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing;
@@ -20,15 +20,11 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 #if DUMP_IMAGES
     private static void SaveToFile(TextureAtlas atlas)
     {
-        using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"Atlas-{atlas.Size.Width}x{atlas.Size.Height}.png"));
-
-        var pixels = MemoryMarshal.Cast<uint, SKColor>(atlas.Bitmap.Pixels.AsSpan()).ToArray();
+        var pixels = atlas.GetPixels().AsSpan().Cast<uint, SKColor>().ToArray();
 
         var bitmap = new SKBitmap(
             (int)atlas.Bitmap.Size.Width,
-            (int)atlas.Bitmap.Size.Height,
-            SKColorType.Rgba8888,
-            SKAlphaType.Premul
+            (int)atlas.Bitmap.Size.Height
         )
         {
             Pixels = pixels
@@ -36,9 +32,9 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
         var skimage = SKImage.FromBitmap(bitmap);
 
-        var data = skimage.Encode(SKEncodedImageFormat.Png, 100);
+        using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"Atlas-{atlas.Size.Width}x{atlas.Size.Height}.png"));
 
-        data.SaveTo(stream);
+        skimage.Encode(SKEncodedImageFormat.Png, 100).SaveTo(stream);
     }
 #endif
 
@@ -54,16 +50,14 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
             using var bitmap = new SKBitmap(
                 (int)bounds.Width  + PADDING * 2,
-                (int)bounds.Height + PADDING * 2,
-                SKColorType.Rgba8888,
-                SKAlphaType.Premul
+                (int)bounds.Height + PADDING * 2
             );
 
             using var canvas = new SKCanvas(bitmap);
 
             canvas.DrawText(charString, PADDING + -bounds.Location.X, PADDING + -bounds.Location.Y, paint);
 
-            var position = atlas.Add(MemoryMarshal.Cast<SKColor, uint>(bitmap.Pixels.AsSpan()), new((uint)bitmap.Width, (uint)bitmap.Height));
+            var position = atlas.Pack(bitmap.Pixels.AsSpan().Cast<SKColor, uint>(), new((uint)bitmap.Width, (uint)bitmap.Height));
 
             this.glyphs[hashcode] = glyph = new()
             {
@@ -83,11 +77,12 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
         if (!this.atlases.TryGetValue(hashcode, out var atlas))
         {
-            var size = (uint)Math.Max(fontSize * 8, 256);
+            var axisSize = (uint)Math.Max(fontSize * 8, 256);
+            var size     = new Size<uint>(axisSize, axisSize);
 
-            var texture = this.renderingService.CreateTexture(new(size, size), ColorMode.RGBA, Enums.TextureType.N2D);
+            var texture = this.renderingService.CreateTexture(size, ColorMode.GrayScale, Enums.TextureType.N2D);
 
-            this.atlases[hashcode] = atlas = new(new(size, size), texture);
+            this.atlases[hashcode] = atlas = new(size, ColorMode.GrayScale, texture);
         }
 
         return atlas;
@@ -177,7 +172,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
         if (atlas.IsDirty)
         {
-            this.renderingService.UpdateTexture(atlas.Texture, atlas.Bitmap.Pixels);
+            this.renderingService.UpdateTexture(atlas.Texture, atlas.Bitmap.Buffer);
 
             atlas.IsDirty = false;
 #if DUMP_IMAGES

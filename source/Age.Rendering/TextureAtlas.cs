@@ -1,27 +1,23 @@
+using System.Runtime.CompilerServices;
+using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Resources;
 
 namespace Age.Rendering;
 
-public class TextureAtlas
+public class TextureAtlas(Size<uint> size, ColorMode colorMode, Texture texture)
 {
     private Point<uint> cursor;
     private uint        maxHeight;
 
     public Size<uint> Size => this.Bitmap.Size;
 
-    public Bitmap  Bitmap  { get; }
-    public Texture Texture { get; }
+    public Bitmap  Bitmap  { get; } = new(size, colorMode);
+    public Texture Texture { get; } = texture;
 
     public bool IsDirty { get; set; }
 
-    public TextureAtlas(Size<uint> size, Texture texture)
-    {
-        this.Bitmap  = new(size);
-        this.Texture = texture;
-    }
-
-    public Point<uint> Add(Span<uint> pixels, Size<uint> size)
+    public Point<uint> Pack(Span<uint> pixels, Size<uint> size)
     {
         var sourceCursor = new Point<uint>();
 
@@ -42,10 +38,12 @@ public class TextureAtlas
         {
             while (sourceCursor.X < size.Width)
             {
-                var sourceIndex      = sourceCursor.X + (size.Width * sourceCursor.Y);
-                var destinationIndex = sourceCursor.X + this.cursor.X + (this.Size.Width * (sourceCursor.Y + this.cursor.Y));
+                var sourceIndex      = (int)(sourceCursor.X + size.Width * sourceCursor.Y);
+                var destinationIndex = (int)(sourceCursor.X + this.cursor.X + this.Size.Width * (sourceCursor.Y + this.cursor.Y)) * this.Bitmap.BytesPerPixel;
 
-                this.Bitmap.Pixels[destinationIndex] = pixels[(int)sourceIndex];
+                var span = this.Bitmap.Buffer.AsSpan(destinationIndex).Cast<byte, uint>();
+
+                span[0] = this.Bitmap.ColorMode == ColorMode.GrayScale ? pixels[sourceIndex] >> 16 : pixels[sourceIndex];
 
                 sourceCursor.X++;
             }
@@ -61,5 +59,19 @@ public class TextureAtlas
         this.IsDirty = true;
 
         return position;
+    }
+
+    public uint[] GetPixels()
+    {
+        var buffer = new uint[this.Size.Width * this.Size.Height];
+
+        for (var i = 0; i < buffer.Length; i++)
+        {
+            var value = Unsafe.As<byte, uint>(ref this.Bitmap.Buffer[i * this.Bitmap.BytesPerPixel]);
+
+            buffer[i] = this.Bitmap.ColorMode == ColorMode.GrayScale ? value << 16 : value;
+        }
+
+        return buffer;
     }
 }

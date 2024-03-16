@@ -18,6 +18,5 @@ layout(push_constant) uniform Data
 void main() {
     vec4 color = texture(texSampler, inFragTexCoord);
 
-    outColor = vec4(1 - color.xyz, color.w) * vec4(data.Color[0], data.Color[1], data.Color[2], data.Color[3]);
-    // outColor = color;
+    outColor = vec4(1 - color.rrr, color.g) * vec4(data.Color[0], data.Color[1], data.Color[2], data.Color[3]);
 }
