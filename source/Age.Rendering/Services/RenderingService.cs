@@ -1,4 +1,3 @@
-// #define DRAW_WIREFRAME
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing;
 using Age.Rendering.Enums;
@@ -16,6 +15,8 @@ namespace Age.Rendering.Services;
 
 public class RenderingService : IDisposable
 {
+    private const bool DRAW_WIREFRAME = true;
+
     private readonly Shader                          diffuseShader;
     private readonly IndexBuffer                     indexBuffer;
     private readonly VulkanRenderer                  renderer;
@@ -72,6 +73,7 @@ public class RenderingService : IDisposable
         this.wireframeShader      = renderer.CreateShaderAndWatch<WireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
 
         this.diffuseShader.Changed += this.RequestDraw;
+        this.wireframeShader.Changed += this.RequestDraw;
 
         this.renderer.Context.SwapchainRecreated += () =>
         {
@@ -107,9 +109,9 @@ public class RenderingService : IDisposable
         }
     }
 
-    private void Render(IWindow window, Element element)
+    private void Render(IWindow window, Element element, bool isWireframe)
     {
-        UniformSet? lastUniformSet   = default;
+        UniformSet? lastUniformSet = default;
 
         var windowSize = window.ClientSize;
 
@@ -155,22 +157,16 @@ public class RenderingService : IDisposable
                             lastUniformSet = uniformSet;
                         }
 
-                        this.renderer.PushConstant(this.diffuseShader, constant);
-
-#if !DRAW_WIREFRAME
-                        this.renderer.DrawIndexed(this.indexBuffer);
-#else
-                        this.renderer.BindIndexBuffer(this.indexBuffer);
-                        this.renderer.DrawIndexed(this.indexBuffer);
-                        this.renderer.BindVertexBuffer(this.vertexBuffer);
-
-                        this.renderer.BindPipeline(this.diffuseShader);
-
-                        this.renderer.BindPipeline(this.wireframeShader);
-                        this.renderer.BindIndexBuffer(this.wireframeIndexBuffer);
-                        this.renderer.PushConstant(this.wireframeShader, constant);
-                        this.renderer.DrawIndexed(this.wireframeIndexBuffer);
-#endif
+                        if (!isWireframe)
+                        {
+                            this.renderer.PushConstant(this.diffuseShader, constant);
+                            this.renderer.DrawIndexed(this.indexBuffer);
+                        }
+                        else
+                        {
+                            this.renderer.PushConstant(this.wireframeShader, constant);
+                            this.renderer.DrawIndexed(this.wireframeIndexBuffer);
+                        }
                         break;
                     }
                 default:
@@ -210,15 +206,25 @@ public class RenderingService : IDisposable
         this.renderer.BeginRenderPass(this.renderPass, window.Surface.Swapchain.Extent, window.Surface.CurrentBuffer);
         this.renderer.SetViewport(window.Surface);
 
-#if !DRAW_WIREFRAME
-        this.renderer.BindPipeline(this.diffuseShader);
         this.renderer.BindVertexBuffer(this.vertexBuffer);
+
+        this.renderer.BindPipeline(this.diffuseShader);
         this.renderer.BindIndexBuffer(this.indexBuffer);
-#endif
 
         foreach (var element in window.Content.Enumerate<Element>())
         {
-            this.Render(window, element);
+            this.Render(window, element, false);
+        }
+
+        if (DRAW_WIREFRAME)
+        {
+            this.renderer.BindPipeline(this.wireframeShader);
+            this.renderer.BindIndexBuffer(this.wireframeIndexBuffer);
+
+            foreach (var element in window.Content.Enumerate<Element>())
+            {
+                this.Render(window, element, true);
+            }
         }
 
         this.renderer.EndRenderPass();
@@ -232,7 +238,7 @@ public class RenderingService : IDisposable
 
     public void RequestDraw()
     {
-        if (this.changes == 0)
+        // if (this.changes == 0)
         {
             this.changes++;
         }

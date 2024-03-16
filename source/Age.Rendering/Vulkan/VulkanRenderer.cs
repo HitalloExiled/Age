@@ -460,7 +460,10 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         this.Context.PrepareBuffers();
 
-        this.Context.Frame.CommandBuffer.Begin();
+        if (this.Context.Frame.BufferPrepared)
+        {
+            this.Context.Frame.CommandBuffer.Begin();
+        }
     }
 
     public void BeginRenderPass(RenderPass renderPass, in VkExtent2D extent, uint framebuffer)
@@ -830,7 +833,11 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public void EndFrame()
     {
-        this.Context.Frame.CommandBuffer.End();
+        if (this.Context.Frame.BufferPrepared)
+        {
+            this.Context.Frame.CommandBuffer.End();
+        }
+
         this.Context.SwapBuffers();
     }
 

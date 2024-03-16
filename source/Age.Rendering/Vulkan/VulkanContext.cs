@@ -61,7 +61,7 @@ public unsafe partial class VulkanContext : IDisposable
         }
     }
 
-    public Frame Frame => this.frames[this.currentFrame];
+    public ref Frame Frame => ref this.frames[this.currentFrame];
 
     public VkDevice Device       => this.device;
     public VkFormat ScreenFormat => this.surfaceFormat.Format;
@@ -511,7 +511,7 @@ public unsafe partial class VulkanContext : IDisposable
 
     public VkCommandBuffer BeginSingleTimeCommands()
     {
-        var commandBuffer = this.frames[this.currentFrame].CommandPool.AllocateCommand(VkCommandBufferLevel.Primary);
+        var commandBuffer = this.Frame.CommandPool.AllocateCommand(VkCommandBufferLevel.Primary);
 
         commandBuffer.Begin(VkCommandBufferUsageFlags.OneTimeSubmit);
 
@@ -700,6 +700,8 @@ public unsafe partial class VulkanContext : IDisposable
 
         fence.Reset();
         this.Frame.CommandBuffer.Reset();
+
+        this.Frame.BufferPrepared = true;
     }
 
     public void GetPhysicalDeviceProperties(out VkPhysicalDeviceProperties properties) =>
@@ -707,12 +709,12 @@ public unsafe partial class VulkanContext : IDisposable
 
     public void SwapBuffers()
     {
-        var visibleSurfaces = Surface.Entries.Where(x => !x.Hidden).ToArray();
-
-        if (visibleSurfaces.Length == 0)
+        if (!this.Frame.BufferPrepared)
         {
             return;
         }
+
+        var visibleSurfaces = Surface.Entries.Where(x => !x.Hidden).ToArray();
 
         var fence          = this.fences[this.currentFrame];
         var imageIndices   = new uint[visibleSurfaces.Length];
@@ -731,7 +733,7 @@ public unsafe partial class VulkanContext : IDisposable
             waitStages[i]     = VkPipelineStageFlags.ColorAttachmentOutput;
         }
 
-        var commandBufferHandle   = this.frames[this.currentFrame].CommandBuffer.Handle;
+        var commandBufferHandle   = this.Frame.CommandBuffer.Handle;
         var signalSemaphoreHandle = this.renderingFinishedSemaphores[this.currentFrame].Handle;
 
         fixed (VkHandle<VkSemaphore>*    pWaitSemaphores   = waitSemaphores)
@@ -793,5 +795,7 @@ public unsafe partial class VulkanContext : IDisposable
         }
 
         this.currentFrame = (ushort)((this.currentFrame + 1) % MAX_FRAMES_IN_FLIGHT);
+
+        this.Frame.BufferPrepared = false;
     }
 }
