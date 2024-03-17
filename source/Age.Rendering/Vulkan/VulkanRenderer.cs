@@ -825,11 +825,11 @@ public unsafe partial class VulkanRenderer : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public void Draw(VertexBuffer vertexBuffer) =>
-        this.Context.Frame.CommandBuffer.Draw(vertexBuffer.Size, 1, 0, 0);
+    public void Draw(VertexBuffer vertexBuffer, uint instanceCount = 1, uint firstVertex = 0, uint firstInstance = 0) =>
+        this.Context.Frame.CommandBuffer.Draw(vertexBuffer.Size, instanceCount, firstVertex, firstInstance);
 
-    public void DrawIndexed(IndexBuffer indexBuffer) =>
-        this.Context.Frame.CommandBuffer.DrawIndexed(indexBuffer.Size, 1, 0, 0, 0);
+    public void DrawIndexed(IndexBuffer indexBuffer, uint instanceCount = 1, uint firstIndex = 0, int vertexOffset = 0, uint firstInstance = 0) =>
+        this.Context.Frame.CommandBuffer.DrawIndexed(indexBuffer.Size, instanceCount, firstIndex, vertexOffset, firstInstance);
 
     public void EndFrame()
     {

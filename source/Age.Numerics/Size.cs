@@ -15,6 +15,18 @@ public record struct Size<T> where T : INumber<T>
         this.Height = height;
     }
 
-    public readonly Size<U> Cast<U>() where U : INumber<U> =>
-        new(U.CreateChecked(this.Width), U.CreateChecked(this.Height));
+    public static Size<T> operator +(Size<T> size, T value) =>
+        new(size.Width + value, size.Height + value);
+
+    public static Size<T> operator +(Size<T> left, Size<T> right) =>
+        new(left.Width + right.Width, left.Height + right.Height);
+
+    public static Size<T> operator -(Size<T> size, T value) =>
+        new(size.Width - value, size.Height - value);
+
+    public static Size<T> operator -(Size<T> left, Size<T> right) =>
+        new(left.Width - right.Width, left.Height - right.Height);
+
+    public static Size<T> operator /(Size<T> left, Size<T> right) =>
+        new(left.Width / right.Width, left.Height / right.Height);
 }

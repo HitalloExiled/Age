@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Age.Numerics;
 using Age.Rendering;
 using Age.Rendering.Drawing;
 using Age.Rendering.Services;
@@ -68,12 +69,16 @@ public class Engine : IDisposable
     {
         this.Running = true;
 
-        var clockText = new Text("", new() { FontSize = 24, Color = new(1, 0, 0), Position = new(4, -4) });
+        var style = new Style
+        {
+            Border = new(),
+        };
+
+        var clockText = new Text("", style with { FontSize = 24, Color = Color.Margenta, Position = new(4, -4) });
 
         this.mainWindow.Content.Add(clockText);
-        // this.mainWindow.Content.Add(new Text("H", new() { FontSize = 200, Color = new(0, 1, 0), Position = new(10, -10) }));
-        this.mainWindow.Content.Add(new Text("Hello\nWorld\n!!!", new() { FontSize = 200, Color = new(0, 1, 0), Position = new(100, -200) }));
-        this.mainWindow.Content.Add(new Text("Hello World!!!",    new() { FontSize = 50,  Color = new(0, 0, 1), Position = new(50, -500) }));
+        this.mainWindow.Content.Add(new Text("Hello\nWorld\n!!!", style with { FontSize = 100, Color = Color.Green, Position = new(100, -200) }));
+        this.mainWindow.Content.Add(new Text("Hello World!!!",    style with { FontSize = 50,  Color = Color.Blue,  Position = new(50,  -500) }));
 
         var frames       = 0ul;
         var minFps       = double.MaxValue;

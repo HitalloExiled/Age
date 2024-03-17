@@ -15,7 +15,7 @@ namespace Age.Rendering.Services;
 
 public class RenderingService : IDisposable
 {
-    private const bool DRAW_WIREFRAME = false;
+    private const bool DRAW_WIREFRAME = true;
 
     private readonly Shader                          diffuseShader;
     private readonly IndexBuffer                     indexBuffer;
@@ -121,7 +121,9 @@ public class RenderingService : IDisposable
             {
                 case RectDrawCommand rectDrawCommand:
                     {
-                        if (!this.textureSets.TryGetValue(rectDrawCommand.Texture, out var uniformSet))
+                        UniformSet? uniformSet = null;
+
+                        if (rectDrawCommand.Texture != null && !this.textureSets.TryGetValue(rectDrawCommand.Texture, out uniformSet))
                         {
                             var uniform = new CombinedImageSamplerUniform
                             {
@@ -130,7 +132,7 @@ public class RenderingService : IDisposable
                                 [
                                     new()
                                     {
-                                        Sampler = rectDrawCommand.Sampler,
+                                        Sampler = rectDrawCommand.Sampler!,
                                         Texture = rectDrawCommand.Texture,
                                     }
                                 ]
@@ -141,7 +143,7 @@ public class RenderingService : IDisposable
 
                         var constant = new CanvasShader.PushConstant
                         {
-                            ViewportSize = windowSize.Cast<float>(),
+                            ViewportSize = new(windowSize.Width, windowSize.Height),
                             Rect         = rectDrawCommand.Rect,
                             UV0          = rectDrawCommand.UV[0],
                             UV1          = rectDrawCommand.UV[1],
@@ -150,7 +152,7 @@ public class RenderingService : IDisposable
                             Color        = rectDrawCommand.Color,
                         };
 
-                        if (uniformSet != lastUniformSet)
+                        if (uniformSet != null && uniformSet != lastUniformSet)
                         {
                             this.renderer.BindUniformSet(uniformSet);
 

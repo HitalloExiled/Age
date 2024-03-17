@@ -138,6 +138,21 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
         element.Commands.Clear();
 
+        RectDrawCommand? backgroundDrawCommand = null;
+
+        if (style.Border != null)
+        {
+            backgroundDrawCommand = new()
+            {
+                Border  = style.Border,
+                Sampler = this.sampler,
+                Texture = atlas.Texture,
+            };
+            element.Commands.Add(backgroundDrawCommand);
+        }
+
+        var elementBounds = new Rect<float>(new(), offset).InvertedY();
+
         for (var i = 0; i < text.Length; i++)
         {
             var character = text[i];
@@ -149,7 +164,8 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
                 var size      = new Size<float>(bounds.Width, bounds.Height);
                 var position  = new Point<float>(offset.X + glyphsPosition[i].X, offset.Y - glyphsBounds[i].Top);
                 var color     = style.Color == default ? new() : style.Color;
-                var atlasSize = new Size<float>(atlas.Size.Width, atlas.Size.Height);
+
+                var atlasSize = new Point<float>(atlas.Size.Width, atlas.Size.Height);
 
                 var uv = new Point<float>[4]
                 {
@@ -159,15 +175,36 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
                     new Point<float>(glyph.Position.X, glyph.Position.Y + glyph.Size.Height) / atlasSize,
                 };
 
-                var command = new RectDrawCommand(new(size, position), atlas.Texture, uv, color, this.sampler);
+                var command = new RectDrawCommand
+                {
+                    Rect     = new(size, position),
+                    UV       = uv,
+                    Color    = color,
+                    Texture  = atlas.Texture,
+                    Sampler  = this.sampler
+                };
 
                 element.Commands.Add(command);
+
+                elementBounds.Grow(command.Rect.InvertedY());
             }
             else if (character == '\n' && i < text.Length - 1)
             {
                 offset.X  = style.Position.X + -glyphsPosition[i + 1].X;
                 offset.Y += lineHeight + -4;
             }
+        }
+
+        element.Bounds = new(
+            (int)elementBounds.Size.Width,
+            (int)elementBounds.Size.Height,
+            (int)elementBounds.Position.X,
+            (int)elementBounds.Position.Y
+        );
+
+        if (backgroundDrawCommand != null)
+        {
+            backgroundDrawCommand.Rect = elementBounds.InvertedY();
         }
 
         if (atlas.IsDirty)
