@@ -4,7 +4,11 @@ public class Text : Element
 {
     private string? value;
 
-    public string? Value { get => this.value; set => this.UpdateText(value); }
+    public string? Value
+    {
+        get => this.value;
+        set => this.UpdateText(value);
+    }
 
     public Text(string? value, Style? style = null)
     {

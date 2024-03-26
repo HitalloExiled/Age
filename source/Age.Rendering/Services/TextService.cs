@@ -134,7 +134,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
         font.GetGlyphWidths(glyphs, null, glyphsBounds, paint);
 
         var lineHeight = -glyphsBounds.Max(x => x.Height);
-        var offset     = new Point<float>(style.Position.X, style.Position.Y + lineHeight);
+        var offset     = new Point<float>(0, lineHeight);
 
         element.Commands.Clear();
 
@@ -190,7 +190,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
             }
             else if (character == '\n' && i < text.Length - 1)
             {
-                offset.X  = style.Position.X + -glyphsPosition[i + 1].X;
+                offset.X  = -glyphsPosition[i + 1].X;
                 offset.Y += lineHeight + -4;
             }
         }

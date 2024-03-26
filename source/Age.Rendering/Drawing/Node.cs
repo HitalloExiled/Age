@@ -7,18 +7,33 @@ public class Node
 {
     private readonly List<Node> children = [];
 
+    public Node? this[int index] => index > -1 && index < this.children.Count ? this.children[index] : null;
+    public Node? PreviousSibling => this.Parent?[this.Index - 1];
+    public Node? NextSibling     => this.Parent?[this.Index + 1];
+
     public int   Index  { get; private set; }
     public Node? Parent { get; private set; }
+
+    protected virtual void OnChildAdded(Node child)
+    { }
+
+    protected virtual void OnChildRemoved(Node child)
+    { }
 
     protected virtual void OnUpdate()
     { }
 
     public void Add(Node child)
     {
-        child.Parent = this;
-        child.Index  = this.children.Count;
+        if (child.Parent != this)
+        {
+            child.Parent = this;
+            child.Index  = this.children.Count;
 
-        this.children.Add(child);
+            this.children.Add(child);
+
+            this.OnChildAdded(child);
+        }
     }
 
     public IEnumerable<Node> Enumerate(bool topDown = false)
@@ -62,6 +77,8 @@ public class Node
         child.Index  = -1;
 
         this.children.Remove(child);
+
+        this.OnChildRemoved(child);
     }
 
     public void Update()

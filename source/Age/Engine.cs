@@ -74,11 +74,11 @@ public class Engine : IDisposable
             Border = new(),
         };
 
-        var clockText = new Text("", style with { FontSize = 24, Color = Color.Margenta, Position = new(4, -4) });
+        var clockText = new Text("", style with { FontSize = 24, Color = Color.Margenta, /* Position = new(4, -4) */ });
 
         this.mainWindow.Content.Add(clockText);
-        this.mainWindow.Content.Add(new Text("Hello\nWorld\n!!!", style with { FontSize = 100, Color = Color.Green, Position = new(100, -200) }));
-        this.mainWindow.Content.Add(new Text("Hello World!!!",    style with { FontSize = 50,  Color = Color.Blue,  Position = new(50,  -500) }));
+        this.mainWindow.Content.Add(new Text("Hello\nWorld\n!!!", style with { FontSize = 100, Color = Color.Green, /* Position = new(100, -200) */ }));
+        this.mainWindow.Content.Add(new Text("Hello World!!!",    style with { FontSize = 50,  Color = Color.Blue,  /* Position = new(50,  -500) */ }));
 
         var frames       = 0ul;
         var minFps       = double.MaxValue;

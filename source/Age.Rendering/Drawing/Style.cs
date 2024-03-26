@@ -10,4 +10,5 @@ public record Style
     public Point<int>   Position   { get; set; }
     public Size<uint>   Size       { get; set; }
     public BorderStyle? Border     { get; set; }
+    public StackMode    Stack      { get; set; }
 }

@@ -115,6 +115,8 @@ public class RenderingService : IDisposable
 
         var windowSize = window.ClientSize;
 
+        var elementPosition = new Point<float>(element.Bounds.Position.X, element.Bounds.Position.Y);
+
         foreach (var command in element.Commands)
         {
             switch (command)
@@ -144,7 +146,7 @@ public class RenderingService : IDisposable
                         var constant = new CanvasShader.PushConstant
                         {
                             ViewportSize = new(windowSize.Width, windowSize.Height),
-                            Rect         = rectDrawCommand.Rect,
+                            Rect         = rectDrawCommand.Rect with { Position = elementPosition + rectDrawCommand.Rect.Position },
                             UV0          = rectDrawCommand.UV[0],
                             UV1          = rectDrawCommand.UV[1],
                             UV2          = rectDrawCommand.UV[2],
@@ -213,6 +215,8 @@ public class RenderingService : IDisposable
         this.renderer.BindPipeline(this.diffuseShader);
         this.renderer.BindIndexBuffer(this.indexBuffer);
 
+        this.Render(window, window.Content, false);
+
         foreach (var element in window.Content.Enumerate<Element>())
         {
             this.Render(window, element, false);
@@ -223,6 +227,8 @@ public class RenderingService : IDisposable
         {
             this.renderer.BindPipeline(this.wireframeShader);
             this.renderer.BindIndexBuffer(this.wireframeIndexBuffer);
+
+            this.Render(window, window.Content, true);
 
             foreach (var element in window.Content.Enumerate<Element>())
             {
