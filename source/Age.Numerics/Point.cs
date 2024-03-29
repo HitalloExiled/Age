@@ -15,6 +15,9 @@ public record struct Point<T> where T : INumber<T>
         this.Y = y;
     }
 
+    public readonly Vector2<U> ToVector2<U>() where U : IFloatingPoint<U> =>
+        new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
+
     public readonly Point<U> Cast<U>() where U : INumber<U> =>
         new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
 

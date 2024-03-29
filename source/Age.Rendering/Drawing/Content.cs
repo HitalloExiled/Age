@@ -1,10 +1,5 @@
 namespace Age.Rendering.Drawing;
 
-public class Content : Element
+public class Content : Node
 {
-    public Content() =>
-        this.Style = new()
-        {
-            Stack = StackMode.Vertical,
-        };
 }

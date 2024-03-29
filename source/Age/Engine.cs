@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Age.Numerics;
 using Age.Rendering;
-using Age.Rendering.Drawing;
 using Age.Rendering.Services;
 using Age.Rendering.Storage;
 using Age.Rendering.Vulkan;
@@ -14,19 +13,20 @@ public class Engine : IDisposable
     private const ushort TARGET_FPS   = 60;
 
     private readonly Container      container;
-    private readonly Window         mainWindow;
     private readonly VulkanRenderer renderer = new();
     private readonly double         targetFrameTime = 1000.0 / TARGET_FPS;
 
+
     private bool disposed;
 
+    public Window Window { get; }
     public bool Running { get; private set; }
 
-    public Engine()
+    public Engine(string name, Size<uint> windowSize, Point<int> windowPosition)
     {
         Window.Register(this.renderer);
 
-        this.mainWindow = new Window("Age", new(800, 600), new(800, 300));
+        this.Window = new Window("Age", windowSize, windowPosition);
 
         var renderingService = new RenderingService(this.renderer);
         var textService      = new TextService(renderingService);
@@ -40,7 +40,7 @@ public class Engine : IDisposable
             TextureStorage   = textureStorage,
         };
 
-        this.mainWindow.SizeChanged += this.container.RenderingService.RequestDraw;
+        this.Window.SizeChanged += this.container.RenderingService.RequestDraw;
     }
 
     protected virtual void Dispose(bool disposing)
@@ -69,71 +69,33 @@ public class Engine : IDisposable
     {
         this.Running = true;
 
-        var style = new Style
-        {
-            Border = new(),
-        };
-
-        var clockText = new Text("", style with { FontSize = 24, Color = Color.Margenta, /* Position = new(4, -4) */ });
-
-        this.mainWindow.Content.Add(clockText);
-        this.mainWindow.Content.Add(new Text("Hello\nWorld\n!!!", style with { FontSize = 100, Color = Color.Green, /* Position = new(100, -200) */ }));
-        this.mainWindow.Content.Add(new Text("Hello World!!!",    style with { FontSize = 50,  Color = Color.Blue,  /* Position = new(50,  -500) */ }));
-
-        var frames       = 0ul;
-        var minFps       = double.MaxValue;
-        var maxFps       = 0.0;
-        var totalFps     = 0.0;
-        var maxFrameTime = 0.0;
-        var minFrameTime = double.MaxValue;
-
         var watch = new Stopwatch();
 
         while (this.Running)
         {
             watch.Restart();
 
-            Platforms.Display.Window.DoEventsAll();
-
             this.container.RenderingService.Render(Window.Windows);
 
-            var totalMilliseconds = watch.Elapsed.TotalMilliseconds;
+            var frameTime = watch.Elapsed.TotalMilliseconds;
 
-            if (!FPS_UNLOCKED && totalMilliseconds < this.targetFrameTime)
+            if (!FPS_UNLOCKED && frameTime < this.targetFrameTime)
             {
-                var remaining = this.targetFrameTime - totalMilliseconds;
+                var remaining = this.targetFrameTime - frameTime;
 
                 Thread.Sleep(new TimeSpan((long)(remaining * TimeSpan.TicksPerMillisecond) / 2));
             }
 
-            var fps       = Math.Round(1000.0 / watch.Elapsed.TotalMilliseconds, 2);
-            var frameTime = Math.Round(watch.Elapsed.TotalMilliseconds, 2);
-            var avgFps    = Math.Round(totalFps / frames, 2);
+            var deltaTime = watch.Elapsed.TotalMilliseconds / 1000;
 
-            totalFps += fps;
-
-            maxFps = Math.Max(maxFps, fps);
-            minFps = Math.Min(minFps, fps);
-
-            maxFrameTime = Math.Max(maxFrameTime, frameTime);
-            minFrameTime = Math.Min(minFrameTime, frameTime);
-
-            clockText.Value =
-                $"""
-                Frames: {frames}
-                FPS: {fps}
-                    Avg: {avgFps}
-                    Min: {minFps}
-                    Max: {maxFps}
-
-                FrameTime: {frameTime}ms
-                    Min: {minFrameTime}ms
-                    Max: {maxFrameTime}ms
-                """;
-
-            frames++;
+            foreach (var window in Window.Windows)
+            {
+                window.DoEvents();
+                window.Content.Update(deltaTime);
+            }
 
             this.Running = Window.Windows.Any(x => !x.Closed);
+
         }
     }
 }

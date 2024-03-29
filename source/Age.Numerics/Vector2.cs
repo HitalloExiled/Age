@@ -31,4 +31,22 @@ public record struct Vector2<T> where T : IFloatingPoint<T>
             Unsafe.Add(ref this.X, index) = value;
         }
     }
+
+    public readonly Point<U> ToPoint<U>() where U : INumber<U> =>
+        new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
+
+    public static Vector2<T> operator +(Vector2<T> vector, T value) =>
+        new(vector.X + value, vector.Y + value);
+
+    public static Vector2<T> operator +(Vector2<T> left, Vector2<T> right) =>
+        new(left.X + right.X, left.Y + right.Y);
+
+    public static Vector2<T> operator -(Vector2<T> vector, T value) =>
+        new(vector.X - value, vector.Y - value);
+
+    public static Vector2<T> operator -(Vector2<T> left, Vector2<T> right) =>
+        new(left.X - right.X, left.Y - right.Y);
+
+    public static Vector2<T> operator /(Vector2<T> left, Vector2<T> right) =>
+        new(left.X / right.X, left.Y / right.Y);
 }

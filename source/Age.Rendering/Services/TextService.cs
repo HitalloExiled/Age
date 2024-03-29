@@ -195,12 +195,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
             }
         }
 
-        element.Bounds = new(
-            (int)elementBounds.Size.Width,
-            (int)elementBounds.Size.Height,
-            (int)elementBounds.Position.X,
-            (int)elementBounds.Position.Y
-        );
+        element.Transform = new(elementBounds.Size, new(elementBounds.Position.X, elementBounds.Position.Y), 0);
 
         if (backgroundDrawCommand != null)
         {

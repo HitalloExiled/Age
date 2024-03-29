@@ -20,7 +20,7 @@ public class Node
     protected virtual void OnChildRemoved(Node child)
     { }
 
-    protected virtual void OnUpdate()
+    protected virtual void OnUpdate(double deltaTime)
     { }
 
     public void Add(Node child)
@@ -81,13 +81,13 @@ public class Node
         this.OnChildRemoved(child);
     }
 
-    public void Update()
+    public void Update(double deltaTime)
     {
         foreach (var child in this.children)
         {
-            child.Update();
+            child.Update(deltaTime);
         }
 
-        this.OnUpdate();
+        this.OnUpdate(deltaTime);
     }
 }

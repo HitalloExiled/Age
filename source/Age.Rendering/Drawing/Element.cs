@@ -5,10 +5,10 @@ namespace Age.Rendering.Drawing;
 
 public class Element : Node
 {
+    private Transform2D transform;
     private readonly List<Element> childrenElements = [];
 
-    private Rect<int> bounds;
-    private int       elementIndex = -1;
+    private int elementIndex = -1;
 
     internal List<DrawCommand> Commands { get; set; } = [];
 
@@ -17,16 +17,17 @@ public class Element : Node
     public Element? PreviousElementSibling => this.ParentElement?.GetElement(this.elementIndex - 1);
     public Element? NextElementSibling     => this.ParentElement?.GetElement(this.elementIndex + 1);
 
-    public Rect<int> Bounds
+
+    public Transform2D Transform
     {
-        get => this.bounds;
+        get => this.transform;
         set
         {
-            var hasChanged = this.bounds != value;
+            var hasSizeChanged = this.transform.Size != value.Size;
 
-            this.bounds = value;
+            this.transform = value;
 
-            if (hasChanged)
+            if (hasSizeChanged)
             {
                 this.ApplyRepositioning();
             }
@@ -55,7 +56,7 @@ public class Element : Node
         if (child is Element element)
         {
             element.elementIndex = -1;
-            element.Bounds = element.Bounds with { Position = element.Bounds.Position - this.Bounds.Position };
+            element.Transform = element.Transform with { Position = element.Transform.Position - this.Transform.Position };
 
             this.childrenElements.Remove(element);
         }
@@ -63,7 +64,7 @@ public class Element : Node
 
     private void ApplyRepositioning()
     {
-        var size      = new Size<int>();
+        var size      = new Size<float>();
         var stackMode = StackMode.Vertical;
 
         if (this.ParentElement != null)
@@ -74,13 +75,13 @@ public class Element : Node
             {
                 if (stackMode == StackMode.Horizontal)
                 {
-                    size.Height  = int.Max(size.Height, item.Bounds.Size.Height);
-                    size.Width  += item.Bounds.Size.Width;
+                    size.Height  = float.Max(size.Height, item.Transform.Size.Height);
+                    size.Width  += item.Transform.Size.Width;
                 }
                 else
                 {
-                    size.Height += item.Bounds.Size.Height;
-                    size.Width   = int.Max(size.Width, item.Bounds.Size.Width);
+                    size.Height += item.Transform.Size.Height;
+                    size.Width   = float.Max(size.Width, item.Transform.Size.Width);
                 }
             }
         }
@@ -93,27 +94,27 @@ public class Element : Node
             if (previous != null)
             {
                 var position = stackMode == StackMode.Horizontal
-                    ? new Point<int>(previous.Bounds.Position.X + previous.Bounds.Size.Width, -(size.Height - next.Bounds.Size.Height))
-                    : new Point<int>(0, previous.Bounds.Position.Y + -previous.Bounds.Size.Height);
+                    ? new Vector2<float>(previous.Transform.Position.X + previous.Transform.Size.Width, -(size.Height - next.Transform.Size.Height))
+                    : new Vector2<float>(0, previous.Transform.Position.Y + -previous.Transform.Size.Height);
 
-                next.bounds = next.Bounds with { Position = position };
+                next.Transform = next.Transform with { Position = position };
             }
             else
             {
                 var position = stackMode == StackMode.Horizontal
-                    ? new Point<int>(0, -(size.Height - next.Bounds.Size.Height))
-                    : new Point<int>(0, 0);
+                    ? new Vector2<float>(0, -(size.Height - next.Transform.Size.Height))
+                    : new Vector2<float>(0, 0);
 
-                next.bounds = next.Bounds with { Position = position };
+                next.Transform = next.Transform with { Position = position };
             }
 
             previous = next;
             next     = next.NextElementSibling;
         }
 
-        if (this.ParentElement != null && this.ParentElement.Bounds.Size != size)
+        if (this.ParentElement != null && this.ParentElement.Transform.Size != size)
         {
-            this.ParentElement.Bounds = this.ParentElement.Bounds with { Size = size };
+            this.ParentElement.Transform = this.ParentElement.Transform with { Size = size };
             this.ParentElement.Commands.Clear();
 
             var command = new RectDrawCommand()

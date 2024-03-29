@@ -15,7 +15,7 @@ namespace Age.Rendering.Services;
 
 public class RenderingService : IDisposable
 {
-    private const bool DRAW_WIREFRAME = true;
+    private const bool DRAW_WIREFRAME = false;
 
     private readonly Shader                          diffuseShader;
     private readonly IndexBuffer                     indexBuffer;
@@ -115,7 +115,7 @@ public class RenderingService : IDisposable
 
         var windowSize = window.ClientSize;
 
-        var elementPosition = new Point<float>(element.Bounds.Position.X, element.Bounds.Position.Y);
+        var elementPosition = element.Transform.Position.ToPoint<float>();
 
         foreach (var command in element.Commands)
         {
@@ -215,8 +215,6 @@ public class RenderingService : IDisposable
         this.renderer.BindPipeline(this.diffuseShader);
         this.renderer.BindIndexBuffer(this.indexBuffer);
 
-        this.Render(window, window.Content, false);
-
         foreach (var element in window.Content.Enumerate<Element>())
         {
             this.Render(window, element, false);
@@ -227,8 +225,6 @@ public class RenderingService : IDisposable
         {
             this.renderer.BindPipeline(this.wireframeShader);
             this.renderer.BindIndexBuffer(this.wireframeIndexBuffer);
-
-            this.Render(window, window.Content, true);
 
             foreach (var element in window.Content.Enumerate<Element>())
             {
@@ -259,8 +255,6 @@ public class RenderingService : IDisposable
             {
                 if (window.Visible && !window.Minimized && !window.Closed)
                 {
-                    window.Content.Update();
-
                     this.Render(window);
                 }
             }
