@@ -3,7 +3,7 @@ using Age.Rendering.Storage;
 
 namespace Age.Rendering;
 
-public class Container : IDisposable
+internal class Container : IDisposable
 {
     private bool disposed;
 

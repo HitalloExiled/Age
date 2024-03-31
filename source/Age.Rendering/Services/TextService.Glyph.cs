@@ -3,7 +3,7 @@ using Age.Numerics;
 
 namespace Age.Rendering.Services;
 
-public partial class TextService
+internal partial class TextService
 {
     [DebuggerDisplay("Character: {Character}, Size: {Size}, Position: {Position}")]
     private record Glyph

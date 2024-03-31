@@ -8,10 +8,11 @@ public interface IWindow
 {
     Size<uint> ClientSize { get; }
     bool       Closed     { get; }
-    Content    Content    { get; }
+    NodeTree   Tree       { get; }
     bool       Minimized  { get; }
     Surface    Surface    { get; }
     bool       Visible    { get; }
 
-    Size<uint> Size { get; set; }
+    Size<uint> Size     { get; set; }
+    Point<int> Position { get; set; }
 }

@@ -1,38 +1,39 @@
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing;
-using Age.Rendering.Enums;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Vulkan;
 using Age.Rendering.Resources;
-using Age.Rendering.Vulkan.Uniforms;
 using Age.Rendering.Shaders;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Flags;
 using Age.Numerics;
+using Age.Rendering.Storage;
+using Age.Rendering.Drawing.Elements;
 
 namespace Age.Rendering.Services;
 
-public class RenderingService : IDisposable
+internal class RenderingService : IDisposable
 {
-    private const bool DRAW_WIREFRAME = false;
+    private const bool DRAW_WIREFRAME = true;
 
-    private readonly Shader                          diffuseShader;
-    private readonly IndexBuffer                     indexBuffer;
-    private readonly VulkanRenderer                  renderer;
-    private readonly Dictionary<Texture, UniformSet> textureSets   = [];
-    private readonly VertexBuffer                    vertexBuffer;
-    private readonly IndexBuffer                     wireframeIndexBuffer;
-    private readonly Shader                          wireframeShader;
+    private readonly Shader         diffuseShader;
+    private readonly IndexBuffer    indexBuffer;
+    private readonly VulkanRenderer renderer;
+    private readonly TextureStorage textureStorage;
+    private readonly VertexBuffer   vertexBuffer;
+    private readonly IndexBuffer    wireframeIndexBuffer;
+    private readonly Shader         wireframeShader;
 
     private RenderPass renderPass;
 
     private int  changes;
     private bool disposed;
 
-    public RenderingService(VulkanRenderer renderer)
+    public RenderingService(VulkanRenderer renderer, TextureStorage textureStorage)
     {
-        this.renderer = renderer;
+        this.renderer       = renderer;
+        this.textureStorage = textureStorage;
 
         var colorPassCreateInfo = new RenderPass.CreateInfo
         {
@@ -100,7 +101,6 @@ public class RenderingService : IDisposable
                 this.renderer.DeferredDispose(this.indexBuffer);
                 this.renderer.DeferredDispose(this.vertexBuffer);
                 this.renderer.DeferredDispose(this.wireframeIndexBuffer);
-                this.renderer.DeferredDispose(this.textureSets.Values);
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
@@ -109,48 +109,27 @@ public class RenderingService : IDisposable
         }
     }
 
-    private void Render(IWindow window, Element element, bool isWireframe)
+    private void Render(IWindow window, Node2D node, bool isWireframe)
     {
         UniformSet? lastUniformSet = default;
 
         var windowSize = window.ClientSize;
 
-        var elementPosition = element.Transform.Position.ToPoint<float>();
+        var nodePosition = new Point<float>(node.Transform.Position.X, node.Transform.Position.Y);
 
-        foreach (var command in element.Commands)
+        foreach (var command in node.Commands)
         {
             switch (command)
             {
                 case RectDrawCommand rectDrawCommand:
                     {
-                        UniformSet? uniformSet = null;
-
-                        if (rectDrawCommand.Texture != null && !this.textureSets.TryGetValue(rectDrawCommand.Texture, out uniformSet))
-                        {
-                            var uniform = new CombinedImageSamplerUniform
-                            {
-                                Binding = 0,
-                                Images  =
-                                [
-                                    new()
-                                    {
-                                        Sampler = rectDrawCommand.Sampler!,
-                                        Texture = rectDrawCommand.Texture,
-                                    }
-                                ]
-                            };
-
-                            this.textureSets[rectDrawCommand.Texture] = uniformSet = this.renderer.CreateUniformSet([uniform], this.diffuseShader);
-                        }
+                        var uniformSet = this.textureStorage.GetUniformSet(this.diffuseShader, rectDrawCommand.SampledTexture.Texture, rectDrawCommand.SampledTexture.Sampler);
 
                         var constant = new CanvasShader.PushConstant
                         {
                             ViewportSize = new(windowSize.Width, windowSize.Height),
-                            Rect         = rectDrawCommand.Rect with { Position = elementPosition + rectDrawCommand.Rect.Position },
-                            UV0          = rectDrawCommand.UV[0],
-                            UV1          = rectDrawCommand.UV[1],
-                            UV2          = rectDrawCommand.UV[2],
-                            UV3          = rectDrawCommand.UV[3],
+                            Rect         = rectDrawCommand.Rect with { Position = nodePosition + rectDrawCommand.Rect.Position },
+                            UV           = rectDrawCommand.SampledTexture.UV,
                             Color        = rectDrawCommand.Color,
                         };
 
@@ -185,20 +164,6 @@ public class RenderingService : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public Texture CreateTexture(Size<uint> size, ColorMode colorMode, TextureType textureType)
-    {
-        var textureCreate = new TextureCreate
-        {
-            Depth       = 1,
-            Width       = size.Width,
-            Height      = size.Height,
-            TextureType = textureType,
-            ColorMode   = colorMode,
-        };
-
-        return this.renderer.CreateTexture(textureCreate);
-    }
-
     public Sampler CreateSampler() =>
         new() { Value = this.renderer.CreateSampler() };
 
@@ -215,9 +180,16 @@ public class RenderingService : IDisposable
         this.renderer.BindPipeline(this.diffuseShader);
         this.renderer.BindIndexBuffer(this.indexBuffer);
 
-        foreach (var element in window.Content.Enumerate<Element>())
+        foreach (var node in window.Tree.Traverse(true))
         {
-            this.Render(window, element, false);
+            if (node is Canvas canvas)
+            {
+                canvas.UpdateLayout();
+            }
+            else if (node is Node2D node2D)
+            {
+                this.Render(window, node2D, false);
+            }
         }
 
         #pragma warning disable IDE0035, CS0162
@@ -226,20 +198,14 @@ public class RenderingService : IDisposable
             this.renderer.BindPipeline(this.wireframeShader);
             this.renderer.BindIndexBuffer(this.wireframeIndexBuffer);
 
-            foreach (var element in window.Content.Enumerate<Element>())
+            foreach (var node in window.Tree.Traverse<Node2D>(true))
             {
-                this.Render(window, element, true);
+                this.Render(window, node, true);
             }
         }
         #pragma warning restore IDE0035, CS0162
 
         this.renderer.EndRenderPass();
-    }
-
-    public void FreeTexture(Texture texture)
-    {
-        this.renderer.DeferredDispose(texture);
-        this.textureSets.Remove(texture);
     }
 
     public void RequestDraw() =>

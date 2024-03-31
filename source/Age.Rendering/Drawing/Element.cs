@@ -1,129 +1,236 @@
+using System.Text;
+using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Commands;
+using Age.Rendering.Drawing.Elements;
 
 namespace Age.Rendering.Drawing;
 
-public class Element : Node
+public abstract class Element : Node2D, IEnumerable<Element>
 {
-    private Transform2D transform;
-    private readonly List<Element> childrenElements = [];
+    private readonly Style style = new();
 
-    private int elementIndex = -1;
-
-    internal List<DrawCommand> Commands { get; set; } = [];
+    private Canvas? canvas;
+    private bool    hasPendingUpdate;
+    private string? text;
 
     public Element? ParentElement => this.Parent as Element;
 
-    public Element? PreviousElementSibling => this.ParentElement?.GetElement(this.elementIndex - 1);
-    public Element? NextElementSibling     => this.ParentElement?.GetElement(this.elementIndex + 1);
+    public Element? FirstElementChild { get; private set; }
+    public Element? LastElementChild  { get; private set; }
 
+    public Element? PreviousElementSibling { get; private set; }
+    public Element? NextElementSibling     { get; private set; }
 
-    public Transform2D Transform
+    public Canvas? Canvas
     {
-        get => this.transform;
+        get => this.canvas;
+        internal set
+        {
+            this.canvas = value;
+
+            foreach (var item in this.Enumerate<Element>())
+            {
+                item.Canvas = value;
+            }
+
+            this.RequestUpdate();
+        }
+    }
+
+    public Style Style
+    {
+        get => this.style;
         set
         {
-            var hasSizeChanged = this.transform.Size != value.Size;
+            this.style.Update(value);
 
-            this.transform = value;
-
-            if (hasSizeChanged)
+            if (this.IsConnected && this.style.HasChanges)
             {
-                this.ApplyRepositioning();
+                this.RequestUpdate();
             }
         }
     }
 
-    public Style Style { get; set; } = new();
-
-    private Element? GetElement(int index) =>
-        index > -1 && index < this.childrenElements.Count ? this.childrenElements[index] : null;
-
-    protected override void OnChildAdded(Node child)
+    public string? Text
     {
-        if (child is Element element)
+        get
         {
-            element.elementIndex = this.childrenElements.Count;
+            var builder = new StringBuilder();
 
-            this.childrenElements.Add(element);
+            foreach (var item in this.Traverse<TextNode>(true))
+            {
+                builder.Append(item.Value);
+            }
 
-            element.ApplyRepositioning();
+            return builder.ToString();
+        }
+        set
+        {
+            if (value != this.text)
+            {
+                if (this.FirstChild is TextNode textNode)
+                {
+                    if (textNode != this.LastChild)
+                    {
+                        if (textNode.NextSibling != null && this.LastChild != null)
+                        {
+                            this.RemoveChildrenInRange(textNode.NextSibling, this.LastChild);
+                        }
+                    }
+
+                    textNode.Value = value;
+                }
+                else
+                {
+                    this.RemoveChildren();
+
+                    this.AppendChild(new TextNode() { Value = value });
+                }
+
+                this.text = value;
+
+                if (this.IsConnected)
+                {
+                    this.RequestUpdate();
+                }
+            }
+        }
+    }
+
+    IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
+    {
+        for (var childElement = this.FirstElementChild; childElement != null; childElement = childElement.NextElementSibling)
+        {
+            yield return childElement;
+        }
+    }
+
+    private void DrawBorder()
+    {
+        RectDrawCommand command;
+
+        if (this.Commands.Count == 0)
+        {
+            command = new()
+            {
+                SampledTexture = new(
+                    Container.Singleton.TextureStorage.DefaultTexture,
+                    Container.Singleton.TextureStorage.DefaultSampler,
+                    UVRect.Normalized
+                ),
+            };
+
+            this.Commands.Add(command);
+        }
+        else
+        {
+            command = (RectDrawCommand)this.Commands[0];
+        }
+
+        command.Rect = new(this.Size, this.Transform.Position);
+        command.Color = Color.Cyan;
+        Logger.Trace($"Drawing Border: {this}");
+    }
+
+    private void RequestUpdate()
+    {
+        Logger.Trace($"Requesting Update: {this}");
+        if (this.canvas != null && !this.hasPendingUpdate)
+        {
+            this.hasPendingUpdate = true;
+            this.canvas.RequestUpdate(this);
+            Container.Singleton.RenderingService.RequestDraw();
+            Logger.Trace($"Update Requested: {this}");
+        }
+    }
+
+    protected override void OnChildAppended(Node child)
+    {
+        if (child is Element childElement)
+        {
+            if (this.LastElementChild != null)
+            {
+                this.LastElementChild.NextElementSibling = childElement;
+                childElement.PreviousElementSibling = this.LastElementChild;
+
+                this.LastElementChild = childElement;
+            }
+            else
+            {
+                this.FirstElementChild = this.LastElementChild = childElement;
+            }
+
+            childElement.Canvas = this.Canvas;
+            this.RequestUpdate();
         }
     }
 
     protected override void OnChildRemoved(Node child)
     {
-        if (child is Element element)
+        if (child is Element elementChild)
         {
-            element.elementIndex = -1;
-            element.Transform = element.Transform with { Position = element.Transform.Position - this.Transform.Position };
+            if (elementChild == this.FirstElementChild)
+            {
+                this.FirstElementChild = elementChild.NextElementSibling;
+            }
 
-            this.childrenElements.Remove(element);
+            if (elementChild == this.LastElementChild)
+            {
+                this.FirstElementChild = elementChild.PreviousElementSibling;
+            }
+
+            if (elementChild.PreviousElementSibling != null)
+            {
+                elementChild.PreviousElementSibling.NextElementSibling = elementChild.NextElementSibling;
+
+                if (elementChild.NextElementSibling != null)
+                {
+                    elementChild.NextElementSibling.PreviousElementSibling = elementChild.PreviousElementSibling.NextElementSibling;
+                }
+            }
+            else if (elementChild.NextElementSibling != null)
+            {
+                elementChild.NextElementSibling.PreviousElementSibling = null;
+            }
+
+            elementChild.PreviousElementSibling = null;
+            elementChild.NextElementSibling     = null;
         }
     }
 
-    private void ApplyRepositioning()
+    protected override void OnBoundsChanged() =>
+        this.RequestUpdate();
+
+    internal void UpdateLayout()
     {
-        var size      = new Size<float>();
-        var stackMode = StackMode.Vertical;
+        Logger.Trace($"Updating Layout: {this}");
+        var size     = new Size<float>();
+        var previous = new Rect<float>();
 
-        if (this.ParentElement != null)
+        foreach (var child in this.Enumerate<Node2D>())
         {
-            stackMode = this.ParentElement.Style.Stack;
-
-            foreach (var item in this.ParentElement.childrenElements)
+            if (child is TextNode textNode)
             {
-                if (stackMode == StackMode.Horizontal)
-                {
-                    size.Height  = float.Max(size.Height, item.Transform.Size.Height);
-                    size.Width  += item.Transform.Size.Width;
-                }
-                else
-                {
-                    size.Height += item.Transform.Size.Height;
-                    size.Width   = float.Max(size.Width, item.Transform.Size.Width);
-                }
-            }
-        }
-
-        var previous = this.PreviousElementSibling;
-        var next     = this;
-
-        while (next != null)
-        {
-            if (previous != null)
-            {
-                var position = stackMode == StackMode.Horizontal
-                    ? new Vector2<float>(previous.Transform.Position.X + previous.Transform.Size.Width, -(size.Height - next.Transform.Size.Height))
-                    : new Vector2<float>(0, previous.Transform.Position.Y + -previous.Transform.Size.Height);
-
-                next.Transform = next.Transform with { Position = position };
-            }
-            else
-            {
-                var position = stackMode == StackMode.Horizontal
-                    ? new Vector2<float>(0, -(size.Height - next.Transform.Size.Height))
-                    : new Vector2<float>(0, 0);
-
-                next.Transform = next.Transform with { Position = position };
+                textNode.Redraw();
             }
 
-            previous = next;
-            next     = next.NextElementSibling;
-        }
-
-        if (this.ParentElement != null && this.ParentElement.Transform.Size != size)
-        {
-            this.ParentElement.Transform = this.ParentElement.Transform with { Size = size };
-            this.ParentElement.Commands.Clear();
-
-            var command = new RectDrawCommand()
+            child.Transform = child.Transform with
             {
-                Rect   = new(size.Width, size.Height, 0, 0),
-                Border = new(),
+                Position = this.Transform.Position + new Vector2<float>(previous.Size.Width + previous.Position.X, 0)
             };
 
-            this.ParentElement.Commands.Add(command);
+            size.Width += child.Size.Width;
+            size.Height = float.Max(size.Height, child.Size.Height);
+
+            previous = new(child.Size, child.Transform.Position);
         }
+
+        this.Size = size;
+
+        this.DrawBorder();
+
+        this.hasPendingUpdate = false;
+        Logger.Trace($"Layout Updated: {this}");
     }
 }

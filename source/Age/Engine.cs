@@ -16,7 +16,6 @@ public class Engine : IDisposable
     private readonly VulkanRenderer renderer = new();
     private readonly double         targetFrameTime = 1000.0 / TARGET_FPS;
 
-
     private bool disposed;
 
     public Window Window { get; }
@@ -26,12 +25,11 @@ public class Engine : IDisposable
     {
         Window.Register(this.renderer);
 
-        this.Window = new Window("Age", windowSize, windowPosition);
+        this.Window = new Window(name, windowSize, windowPosition);
 
-        var renderingService = new RenderingService(this.renderer);
-        var textService      = new TextService(renderingService);
         var textureStorage   = new TextureStorage(this.renderer);
-
+        var renderingService = new RenderingService(this.renderer, textureStorage);
+        var textService      = new TextService(renderingService, textureStorage);
 
         this.container = new()
         {
@@ -91,7 +89,7 @@ public class Engine : IDisposable
             foreach (var window in Window.Windows)
             {
                 window.DoEvents();
-                window.Content.Update(deltaTime);
+                window.Tree.Update(deltaTime);
             }
 
             this.Running = Window.Windows.Any(x => !x.Closed);

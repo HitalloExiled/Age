@@ -1,20 +1,53 @@
+using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Rendering.Drawing;
 
-[DebuggerDisplay("Index: {Index}, Children: {children.Count}, Parent: {Parent != null}")]
-public class Node
+[DebuggerDisplay("NodeName: {NodeName}, Name: {Name}, IsConnected: {IsConnected}")]
+public abstract class Node : IEnumerable<Node>
 {
-    private readonly List<Node> children = [];
+    private NodeTree? tree;
 
-    public Node? this[int index] => index > -1 && index < this.children.Count ? this.children[index] : null;
-    public Node? PreviousSibling => this.Parent?[this.Index - 1];
-    public Node? NextSibling     => this.Parent?[this.Index + 1];
+    public Node? FirstChild      { get; private set; }
+    public Node? LastChild       { get; private set; }
+    public Node? NextSibling     { get; private set; }
+    public Node? Parent          { get; private set; }
+    public Node? PreviousSibling { get; private set; }
 
-    public int   Index  { get; private set; }
-    public Node? Parent { get; private set; }
+    public Node[] Children => [.. this];
 
-    protected virtual void OnChildAdded(Node child)
+    public abstract string NodeName { get; }
+
+    public string? Name { get; set; }
+
+    [MemberNotNullWhen(true, nameof(IsConnected))]
+    public NodeTree? Tree
+    {
+        get => this.tree;
+        private set
+        {
+            if (value != this.tree)
+            {
+                this.tree = value;
+
+                for (var child = this.FirstChild; child != null; child = child.NextSibling)
+                {
+                    child.Tree = this.tree;
+                }
+            }
+        }
+    }
+
+    public bool IsConnected => this.Tree != null;
+
+    IEnumerator IEnumerable.GetEnumerator() =>
+        this.GetEnumerator();
+
+    protected virtual void OnAdopted()
+    { }
+
+    protected virtual void OnChildAppended(Node child)
     { }
 
     protected virtual void OnChildRemoved(Node child)
@@ -23,29 +56,162 @@ public class Node
     protected virtual void OnUpdate(double deltaTime)
     { }
 
-    public void Add(Node child)
+    public void AppendChild(Node child)
     {
         if (child.Parent != this)
         {
             child.Parent = this;
-            child.Index  = this.children.Count;
 
-            this.children.Add(child);
+            if (this.LastChild != null)
+            {
+                this.LastChild.NextSibling = child;
+                child.PreviousSibling = this.LastChild;
 
-            this.OnChildAdded(child);
+                this.LastChild = child;
+            }
+            else
+            {
+                this.FirstChild = this.LastChild = child;
+            }
+
+            child.Tree = this is NodeTree tree ? tree : this.Tree;
+
+            this.OnChildAppended(child);
+            child.OnAdopted();
         }
     }
 
-    public IEnumerable<Node> Enumerate(bool topDown = false)
+    public IEnumerable<T> Enumerate<T>() where T : Node
     {
-        foreach (var child in this.children)
+        foreach (var node in this)
+        {
+            if (node is T t)
+            {
+                yield return t;
+            }
+        }
+    }
+
+    public IEnumerator<Node> GetEnumerator()
+    {
+        if (this.FirstChild != null)
+        {
+            for (var child = this.FirstChild; child != null; child = child.NextSibling)
+            {
+                yield return child;
+            }
+        }
+    }
+
+    public void Remove() =>
+        this.Parent?.RemoveChild(this);
+
+    public void RemoveChildren()
+    {
+        if (this.FirstChild != null)
+        {
+            var next = this.FirstChild;
+
+            do
+            {
+                var child = next;
+
+                next = child.NextSibling;
+
+                child.PreviousSibling = null;
+                child.NextSibling     = null;
+                child.Parent          = null;
+                child.Tree            = null;
+
+                this.OnChildRemoved(child);
+            }
+            while (next != null);
+
+            this.FirstChild = null;
+            this.LastChild  = null;
+        }
+    }
+
+    public void RemoveChild(Node child)
+    {
+        if (child.Parent == this)
+        {
+            if (child == this.FirstChild)
+            {
+                this.FirstChild = child.NextSibling;
+            }
+
+            if (child == this.LastChild)
+            {
+                this.LastChild = child.PreviousSibling;
+            }
+
+            if (child.PreviousSibling != null)
+            {
+                child.PreviousSibling.NextSibling = child.NextSibling;
+
+                if (child.NextSibling != null)
+                {
+                    child.NextSibling.PreviousSibling = child.PreviousSibling.NextSibling;
+                }
+            }
+            else if (child.NextSibling != null)
+            {
+                child.NextSibling.PreviousSibling = null;
+            }
+
+            child.Tree            = null;
+            child.PreviousSibling = null;
+            child.NextSibling     = null;
+            child.Parent          = null;
+
+            this.OnChildRemoved(child);
+        }
+    }
+
+    public void RemoveChildrenInRange(Node start, Node end)
+    {
+        if (start.Parent != this || end.Parent != this)
+        {
+            return;
+        }
+
+        var next = start;
+
+        do
+        {
+            var child = next;
+
+            next = child.NextSibling;
+
+            child.PreviousSibling = null;
+            child.NextSibling     = null;
+            child.Parent          = null;
+            child.Tree            = null;
+
+            this.OnChildRemoved(child);
+
+            if (child == end)
+            {
+                break;
+            }
+        }
+        while (next != null);
+
+        this.FirstChild = null;
+        this.LastChild  = null;
+    }
+
+    public IEnumerable<Node> Traverse(bool topDown = false)
+    {
+        foreach (var child in this)
         {
             if (topDown)
             {
                 yield return child;
             }
 
-            foreach (var item in child.Enumerate(topDown))
+            foreach (var item in child.Traverse(topDown))
             {
                 yield return item;
             }
@@ -57,9 +223,9 @@ public class Node
         }
     }
 
-    public IEnumerable<T> Enumerate<T>(bool topDown = false) where T : Node
+    public IEnumerable<T> Traverse<T>(bool topDown = false) where T : Node
     {
-        foreach (var node in this.Enumerate(topDown))
+        foreach (var node in this.Traverse(topDown))
         {
             if (node is T t)
             {
@@ -68,22 +234,12 @@ public class Node
         }
     }
 
-    public void Remove() =>
-        this.Parent?.Remove(this);
-
-    public void Remove(Node child)
-    {
-        child.Parent = null;
-        child.Index  = -1;
-
-        this.children.Remove(child);
-
-        this.OnChildRemoved(child);
-    }
+    public override string ToString() =>
+        $"<{this.NodeName} name='{this.Name}'>";
 
     public void Update(double deltaTime)
     {
-        foreach (var child in this.children)
+        foreach (var child in this)
         {
             child.Update(deltaTime);
         }

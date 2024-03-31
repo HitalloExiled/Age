@@ -25,4 +25,12 @@ public record struct Color
         this.B = b;
         this.A = a;
     }
+
+    public readonly byte[] ToByteArray() =>
+        [
+            (byte)Math.Ceiling(this.R * 255),
+            (byte)Math.Ceiling(this.G * 255),
+            (byte)Math.Ceiling(this.B * 255),
+            (byte)Math.Ceiling(this.A * 255),
+        ];
 }

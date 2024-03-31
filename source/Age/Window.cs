@@ -6,13 +6,16 @@ using Age.Rendering.Vulkan;
 
 namespace Age;
 
-public class Window(string title, Size<uint> size, Point<int> position, Platforms.Display.Window? parent = null) : Platforms.Display.Window(title, size, position, parent), IWindow
+public class Window : Platforms.Display.Window, IWindow
 {
     public new static IEnumerable<Window> Windows => Platforms.Display.Window.Windows.Cast<Window>();
 
-    public Content Content { get; } = new();
+    public NodeTree Tree { get; }
 
     private static VulkanRenderer renderer = null!;
+
+    public Window(string title, Size<uint> size, Point<int> position, Platforms.Display.Window? parent = null) : base(title, size, position, parent) =>
+        this.Tree = new(this);
 
     public Surface Surface { get; private set; } = null!;
 

@@ -3,15 +3,17 @@ using System.Diagnostics;
 namespace Age.Numerics;
 
 [DebuggerDisplay("\\{ Size: {Size}, Position: {Position}, Rotation: {Rotation} \\}")]
-public struct Transform2D
+public record struct Transform2D
 {
-    public Size<float>    Size;
+    public Vector2<float> Scale = new(1, 1);
     public Vector2<float> Position;
     public float          Rotation;
 
-    public Transform2D(Size<float> size, Vector2<float> position, float rotation) : this()
+    public Transform2D() { }
+
+    public Transform2D(Vector2<float> scale, Vector2<float> position, float rotation) : this()
     {
-        this.Size     = size;
+        this.Scale    = scale;
         this.Position = position;
         this.Rotation = rotation;
     }

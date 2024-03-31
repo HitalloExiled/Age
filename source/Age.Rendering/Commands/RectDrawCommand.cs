@@ -7,11 +7,9 @@ namespace Age.Rendering.Commands;
 
 public record RectDrawCommand() : DrawCommand(DrawCommandType.Rect)
 {
-    public Texture?       Texture { get; init; }
-    public Point<float>[] UV      { get; init; } = new Point<float>[4];
-    public Color          Color   { get; init; }
-    public Sampler?       Sampler { get; init; }
-    public BorderStyle?   Border  { get; init; }
+    public required SampledTexture SampledTexture { get; init; }
 
-    public Rect<float> Rect { get; set; }
+    public BorderStyle? Border { get; set; }
+    public Color        Color  { get; set; }
+    public Rect<float>  Rect   { get; set; }
 }

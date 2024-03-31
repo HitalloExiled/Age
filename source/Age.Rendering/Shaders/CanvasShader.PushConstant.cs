@@ -14,10 +14,7 @@ public partial class CanvasShader
 
         public Size<float>  ViewportSize;
         public Rect<float>  Rect;
-        public Point<float> UV0;
-        public Point<float> UV1;
-        public Point<float> UV2;
-        public Point<float> UV3;
+        public UVRect           UV;
         public Color        Color;
     }
 }

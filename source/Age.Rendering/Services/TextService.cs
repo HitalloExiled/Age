@@ -2,13 +2,14 @@
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Commands;
-using Age.Rendering.Drawing;
+using Age.Rendering.Drawing.Elements;
 using Age.Rendering.Resources;
+using Age.Rendering.Storage;
 using SkiaSharp;
 
 namespace Age.Rendering.Services;
 
-public partial class TextService(RenderingService renderingService) : IDisposable
+internal partial class TextService(RenderingService renderingService, TextureStorage textureStorage) : IDisposable
 {
     private readonly Dictionary<int, TextureAtlas> atlases          = [];
     private readonly Dictionary<int, Glyph>        glyphs           = [];
@@ -80,7 +81,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
             var axisSize = (uint)Math.Max(fontSize * 8, 256);
             var size     = new Size<uint>(axisSize, axisSize);
 
-            var texture = this.renderingService.CreateTexture(size, ColorMode.GrayScale, Enums.TextureType.N2D);
+            var texture = textureStorage.CreateTexture(size, ColorMode.GrayScale, Enums.TextureType.N2D);
 
             this.atlases[hashcode] = atlas = new(size, ColorMode.GrayScale, texture);
         }
@@ -96,7 +97,7 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
             {
                 foreach (var atlas in this.atlases.Values)
                 {
-                    this.renderingService.FreeTexture(atlas.Texture);
+                    textureStorage.FreeTexture(atlas.Texture);
                 }
 
                 this.renderingService.DestroySampler(this.sampler);
@@ -108,9 +109,16 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
         }
     }
 
-    public void DrawText(Element element, string text)
+    public void DrawText(TextNode textNode, string text)
     {
-        var style    = element.Style;
+        if (textNode.ParentElement == null)
+        {
+            return;
+        }
+
+        var style    = textNode.ParentElement.Style;
+        var commands = textNode.Commands;
+
         var typeface = SKTypeface.FromFamilyName(style.FontFamily, SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
 
         var paint = new SKPaint
@@ -136,22 +144,9 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
         var lineHeight = -glyphsBounds.Max(x => x.Height);
         var offset     = new Point<float>(0, lineHeight);
 
-        element.Commands.Clear();
-
-        RectDrawCommand? backgroundDrawCommand = null;
-
-        if (style.Border != null)
-        {
-            backgroundDrawCommand = new()
-            {
-                Border  = style.Border,
-                Sampler = this.sampler,
-                Texture = atlas.Texture,
-            };
-            element.Commands.Add(backgroundDrawCommand);
-        }
-
         var elementBounds = new Rect<float>(new(), offset).InvertedY();
+
+        commands.Clear();
 
         for (var i = 0; i < text.Length; i++)
         {
@@ -167,25 +162,22 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
 
                 var atlasSize = new Point<float>(atlas.Size.Width, atlas.Size.Height);
 
-                var uv = new Point<float>[4]
+                var uv = new UVRect
                 {
-                    new Point<float>(glyph.Position.X, glyph.Position.Y) / atlasSize,
-                    new Point<float>(glyph.Position.X + glyph.Size.Width, glyph.Position.Y) / atlasSize,
-                    new Point<float>(glyph.Position.X + glyph.Size.Width, glyph.Position.Y + glyph.Size.Height) / atlasSize,
-                    new Point<float>(glyph.Position.X, glyph.Position.Y + glyph.Size.Height) / atlasSize,
+                    P1 = new Point<float>(glyph.Position.X, glyph.Position.Y) / atlasSize,
+                    P2 = new Point<float>(glyph.Position.X + glyph.Size.Width, glyph.Position.Y) / atlasSize,
+                    P3 = new Point<float>(glyph.Position.X + glyph.Size.Width, glyph.Position.Y + glyph.Size.Height) / atlasSize,
+                    P4 = new Point<float>(glyph.Position.X, glyph.Position.Y + glyph.Size.Height) / atlasSize,
                 };
 
                 var command = new RectDrawCommand
                 {
                     Rect     = new(size, position),
-                    UV       = uv,
                     Color    = color,
-                    Texture  = atlas.Texture,
-                    Sampler  = this.sampler
+                    SampledTexture = new(atlas.Texture, this.sampler, uv),
                 };
 
-                element.Commands.Add(command);
-
+                textNode.Commands.Add(command);
                 elementBounds.Grow(command.Rect.InvertedY());
             }
             else if (character == '\n' && i < text.Length - 1)
@@ -195,12 +187,8 @@ public partial class TextService(RenderingService renderingService) : IDisposabl
             }
         }
 
-        element.Transform = new(elementBounds.Size, new(elementBounds.Position.X, elementBounds.Position.Y), 0);
-
-        if (backgroundDrawCommand != null)
-        {
-            backgroundDrawCommand.Rect = elementBounds.InvertedY();
-        }
+        textNode.Size      = elementBounds.Size;
+        textNode.Transform = textNode.Transform with { Position = elementBounds.Position };
 
         if (atlas.IsDirty)
         {

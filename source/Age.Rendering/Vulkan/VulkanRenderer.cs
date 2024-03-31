@@ -683,7 +683,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         return texture;
     }
 
-    public UniformSet CreateUniformSet(IList<Uniform> uniforms, Shader shader)
+    public UniformSet CreateUniformSet(Shader shader, Uniform[] uniforms)
     {
         using var disposables = new Disposables();
 
@@ -902,7 +902,7 @@ public unsafe partial class VulkanRenderer : IDisposable
     public void UpdateVertexBuffer<T>(VertexBuffer vertexBuffer, T[] data) where T : unmanaged =>
         this.UpdateBuffer(vertexBuffer.Buffer, data);
 
-    public void UpdateTexture(Texture texture, byte[] data)
+    public void UpdateTexture(Texture texture, Span<byte> data)
     {
         var buffer = this.CreateBuffer((ulong)data.Length, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
