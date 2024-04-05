@@ -22,8 +22,7 @@ public unsafe partial class VulkanRenderer : IDisposable
     private const ushort MAX_DESCRIPTORS_PER_POOL        = 64;
     private const ushort FRAMES_BETWEEN_PENDING_DISPOSES = 2;
 
-    private readonly Dictionary<VkDescriptorType, List<DescriptorPool>> descriptorPools = [];
-    private readonly Queue<IDisposable>                                 pendingDisposes = new();
+    private readonly Queue<IDisposable> pendingDisposes = new();
 
     private ushort framesUntilPendingDispose;
 
@@ -443,10 +442,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
             this.DisposePendingResources(true);
 
-            foreach (var descriptorPool in this.descriptorPools.Values.SelectMany(x => x))
-            {
-                descriptorPool.Value.Dispose();
-            }
+            DescriptorPool.Clear();
 
             this.Context.Dispose();
 
@@ -811,7 +807,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public void DeferredDispose(IEnumerable<IDisposable> disposables)
     {
-        this.framesUntilPendingDispose += FRAMES_BETWEEN_PENDING_DISPOSES;
+        this.framesUntilPendingDispose = FRAMES_BETWEEN_PENDING_DISPOSES;
 
         foreach (var disposable in disposables)
         {

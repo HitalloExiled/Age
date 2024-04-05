@@ -10,6 +10,7 @@ using ThirdParty.Vulkan.Flags;
 using Age.Numerics;
 using Age.Rendering.Storage;
 using Age.Rendering.Drawing.Elements;
+using System.Runtime.CompilerServices;
 
 namespace Age.Rendering.Services;
 
@@ -73,8 +74,8 @@ internal class RenderingService : IDisposable
         this.diffuseShader        = renderer.CreateShaderAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
         this.wireframeShader      = renderer.CreateShaderAndWatch<WireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
 
-        this.diffuseShader.Changed += this.RequestDraw;
-        this.wireframeShader.Changed += this.RequestDraw;
+        this.diffuseShader.Changed += this.RequestDrawIncremental;
+        this.wireframeShader.Changed += this.RequestDrawIncremental;
 
         this.renderer.Context.SwapchainRecreated += () =>
         {
@@ -85,7 +86,7 @@ internal class RenderingService : IDisposable
             this.diffuseShader.RenderPass   = this.renderPass;
             this.wireframeShader.RenderPass = this.renderPass;
 
-            this.RequestDraw();
+            this.RequestDrawIncremental();
         };
     }
 
@@ -115,7 +116,9 @@ internal class RenderingService : IDisposable
 
         var windowSize = window.ClientSize;
 
-        var nodePosition = new Point<float>(node.Transform.Position.X, node.Transform.Position.Y);
+        var position = node.Transform.Position;
+
+        ref var nodePosition = ref Unsafe.As<Vector2<float>, Point<float>>(ref position);
 
         foreach (var command in node.Commands)
         {
@@ -157,6 +160,9 @@ internal class RenderingService : IDisposable
             }
         }
     }
+
+    private void RequestDrawIncremental() =>
+        this.changes++;
 
     public void Dispose()
     {
@@ -208,8 +214,13 @@ internal class RenderingService : IDisposable
         this.renderer.EndRenderPass();
     }
 
-    public void RequestDraw() =>
-        this.changes++;
+    public void RequestDraw()
+    {
+        if (this.changes == 0)
+        {
+            this.changes++;
+        }
+    }
 
     public void Render(IEnumerable<IWindow> windows)
     {

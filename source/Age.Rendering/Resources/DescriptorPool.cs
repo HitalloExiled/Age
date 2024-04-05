@@ -88,6 +88,22 @@ public record DescriptorPool : Disposable
         }
     }
 
+    public static void Clear()
+    {
+        foreach (var pools in typeEntries.Values)
+        {
+            foreach (var descriptorPool in pools)
+            {
+                descriptorPool.Dispose();
+            }
+
+            pools.Clear();
+        }
+
+        typeEntries.Clear();
+    }
+
+
     protected override void OnDispose() =>
         this.Value.Dispose();
 

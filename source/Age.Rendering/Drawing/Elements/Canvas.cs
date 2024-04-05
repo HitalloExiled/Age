@@ -4,8 +4,6 @@ public class Canvas : Node
 {
     private readonly Stack<Element> updateStack = [];
 
-    private bool updating;
-
     public override string NodeName { get; } = nameof(Canvas);
 
     protected override void OnChildAppended(Node child)
@@ -24,25 +22,16 @@ public class Canvas : Node
         }
     }
 
-    internal void RequestUpdate(Element element)
-    {
-        if (!updating)
-        {
-            this.updateStack.Push(element);
-        }
-    }
+    internal void RequestUpdate(Element element) =>
+        this.updateStack.Push(element);
 
     internal void UpdateLayout()
     {
-        updating = true;
-
-        while (updateStack.Count > 0)
+        while (this.updateStack.Count > 0)
         {
-            var element = updateStack.Pop();
+            var element = this.updateStack.Pop();
 
             element.UpdateLayout();
         }
-
-        updating = false;
     }
 }

@@ -5,8 +5,17 @@ using System.Runtime.CompilerServices;
 namespace Age.Numerics;
 
 [DebuggerDisplay("X: {X}, Y: {Y}, Z: {Z}")]
-public record struct Vector3<T> where T :  IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
+public record struct Vector3<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
+    public static Vector3<T> Back  => new(T.Zero, T.Zero, -T.One);
+    public static Vector3<T> Down  => new(T.Zero, -T.One, T.Zero);
+    public static Vector3<T> Front => new(T.Zero, T.Zero, T.One);
+    public static Vector3<T> Left  => new(-T.One, T.Zero, T.Zero);
+    public static Vector3<T> One   => new(T.One);
+    public static Vector3<T> Right => new(T.One, T.Zero, T.Zero);
+    public static Vector3<T> Up    => new(T.Zero, T.One, T.Zero);
+    public static Vector3<T> Zero  => default;
+
     public T X;
     public T Y;
     public T Z;
@@ -58,6 +67,9 @@ public record struct Vector3<T> where T :  IFloatingPoint<T>, IRootFunctions<T>,
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         get => this.Length is T length && length > T.Zero ? this / length : default;
     }
+
+    public Vector2<T> AsVector2() =>
+        Unsafe.As<Vector3<T>, Vector2<T>>(ref this);
 
     public readonly Vector3<T> Cross(Vector3<T> other) =>
         new(this.Y * other.Z - this.Z * other.Y, this.Z * other.X - this.X * other.Z, this.X * other.Y - this.Y * other.X);

@@ -50,10 +50,10 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
     }
 
     public readonly bool IsIdentity =>
-        this.M11 == T.One &&
-        this.M22 == T.One &&
-        this.M33 == T.One &&
-        this.M44 == T.One &&
+        this.M11 == T.One  &&
+        this.M22 == T.One  &&
+        this.M33 == T.One  &&
+        this.M44 == T.One  &&
         this.M12 == T.Zero &&
         this.M13 == T.Zero &&
         this.M14 == T.Zero &&
@@ -66,26 +66,6 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
         this.M41 == T.Zero &&
         this.M42 == T.Zero &&
         this.M43 == T.Zero;
-
-    public Matrix4x4(Vector4<T> column1, Vector4<T> column2, Vector4<T> column3, Vector4<T> column4)
-    {
-        this.M11 = column1.X;
-        this.M12 = column2.X;
-        this.M13 = column3.X;
-        this.M14 = column4.X;
-        this.M21 = column1.Y;
-        this.M22 = column2.Y;
-        this.M23 = column3.Y;
-        this.M24 = column4.Y;
-        this.M31 = column1.Z;
-        this.M32 = column2.Z;
-        this.M33 = column3.Z;
-        this.M34 = column4.Z;
-        this.M41 = column1.W;
-        this.M42 = column2.W;
-        this.M43 = column3.W;
-        this.M44 = column4.W;
-    }
 
     public Matrix4x4(T m11, T m12, T m13, T m14, T m21, T m22, T m23, T m24, T m31, T m32, T m33, T m34, T m41, T m42, T m43, T m44)
     {
@@ -105,6 +85,26 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
         this.M42 = m42;
         this.M43 = m43;
         this.M44 = m44;
+    }
+
+    public Matrix4x4(Vector4<T> column1, Vector4<T> column2, Vector4<T> column3, Vector4<T> column4)
+    {
+        this.M11 = column1.X;
+        this.M12 = column2.X;
+        this.M13 = column3.X;
+        this.M14 = column4.X;
+        this.M21 = column1.Y;
+        this.M22 = column2.Y;
+        this.M23 = column3.Y;
+        this.M24 = column4.Y;
+        this.M31 = column1.Z;
+        this.M32 = column2.Z;
+        this.M33 = column3.Z;
+        this.M34 = column4.Z;
+        this.M41 = column1.W;
+        this.M42 = column2.W;
+        this.M43 = column3.W;
+        this.M44 = column4.W;
     }
 
     public static Matrix4x4<T> LookAt(Vector3<T> eye, Vector3<T> center, Vector3<T> up)

@@ -29,9 +29,9 @@ internal class Container : IDisposable
     {
         if (!this.disposed)
         {
-            this.RenderingService.Dispose();
             this.TextService.Dispose();
             this.TextureStorage.Dispose();
+            this.RenderingService.Dispose();
 
             this.disposed = true;
         }

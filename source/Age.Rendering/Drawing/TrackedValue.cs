@@ -12,7 +12,7 @@ internal struct TrackedValue<T>(T value = default!) where T : notnull
         {
             this.Modified = true;
 
-            if (!Equals(value, this.value))
+            if (!this.value.Equals(value))
             {
                 this.value = value;
 

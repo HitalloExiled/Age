@@ -15,6 +15,8 @@ public class Editor : Node
     private double totalFps;
     private double maxFrameTime;
     private double minFrameTime = double.MaxValue;
+    private double delta;
+    private bool   increasing = true;
 
     public override string NodeName { get; } = nameof(Editor);
 
@@ -23,32 +25,36 @@ public class Editor : Node
         var style = new Style
         {
             FontSize = 24,
-            Border = new(),
-        };
-
-        this.statusText = new Span()
-        {
-            Name = "Status",
-            Text  = ".",
-            Style = style with
-            {
-                Color = Color.Margenta,
-                /* Position = new(4, -4) */
-            }
+            Border   = new(),
         };
 
         this.AppendChild(this.canvas = new Canvas());
 
-        // this.canvas.AppendChild(this.statusText);
+        var root = new Span() { Name = "Root", Style = new() { Position = new(50, -50) } };
+
+        this.canvas.AppendChild(root);
+
+        this.statusText = new Span()
+        {
+            Name  = "Status",
+            Text  = ".",
+            Style = style with
+            {
+                Color    = Color.Margenta,
+                Position = new(-10, 10)
+            }
+        };
+
+        root.AppendChild(this.statusText);
 
         // this.Append(new Text("Hello\nWorld\n!!!", style with { FontSize = 100, Color = Color.Green, /* Position = new(100, -200) */ }));
         // this.Append(new Text("Hello World!!!",    style with { FontSize = 50,  Color = Color.Blue,  /* Position = new(50,  -500) */ }));
-        var parentSpan = new Span() { Name = "Parent", Text = "W", Style = style };
-        this.canvas.AppendChild(parentSpan);
+        var parentSpan = new Span() { Name = "Parent", Text = "W", Style = style with { FontSize = 48, Position = new(20, -20) } };
+        root.AppendChild(parentSpan);
 
-        var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { /* Size = new(100, 100), */ Color = Color.Red } };
-        var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { /* Size = new(100, 100), */ Color = Color.Green } };
-        var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { /* Size = new(100, 100), */ Color = Color.Blue } };
+        var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { /* Size = new(100, 100), */Position = new(0, -10),  Color = Color.Red } };
+        var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { /* Size = new(100, 100), */Position = new(0, 0),  Color = Color.Green } };
+        var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { /* Size = new(100, 100), */Position = new(0, 10),  Color = Color.Blue } };
 
         parentSpan.AppendChild(childSpan1);
         parentSpan.AppendChild(childSpan2);
@@ -57,6 +63,19 @@ public class Editor : Node
 
     protected override void OnUpdate(double deltaTime)
     {
+        this.delta = this.increasing
+            ? double.Min(this.delta + deltaTime, 1)
+            : double.Max(this.delta - deltaTime, -1);
+
+        if (this.increasing && this.delta == 1)
+        {
+            this.increasing = false;
+        }
+        else if (!this.increasing && this.delta == -1)
+        {
+            this.increasing = true;
+        }
+
         var fps       = Math.Round(1 / deltaTime, 2);
         var frameTime = Math.Round(deltaTime * 1000, 2);
         var avgFps    = Math.Round(this.totalFps / this.frames, 2);
@@ -69,19 +88,23 @@ public class Editor : Node
         this.maxFrameTime = Math.Max(this.maxFrameTime, frameTime);
         this.minFrameTime = Math.Min(this.minFrameTime, frameTime);
 
-        // this.statusText.Text =
-        //     $"""
-        //     Frames:    {this.frames}
-        //     DeltaTime: {Math.Round(deltaTime, 4)}
-        //     FPS: {fps}
-        //         Avg: {avgFps}
-        //         Min: {this.minFps}
-        //         Max: {this.maxFps}
+        this.statusText.Style.Position = new Point<int>((int)(double.Cos(this.delta) * 50), (int)(double.Sin(this.delta) * -50));
 
-        //     FrameTime: {frameTime}ms
-        //         Min: {this.minFrameTime}ms
-        //         Max: {this.maxFrameTime}ms
-        //     """;
+        this.statusText.Text =
+            $"""
+            Frames:    {this.frames}
+            DeltaTime: {Math.Round(deltaTime, 4)}
+            FPS: {fps}
+                Avg: {avgFps}
+                Min: {this.minFps}
+                Max: {this.maxFps}
+
+            FrameTime: {frameTime}ms
+                Min: {this.minFrameTime}ms
+                Max: {this.maxFrameTime}ms
+
+            Position: {this.statusText.Style.Position};
+            """;
 
         this.frames++;
     }

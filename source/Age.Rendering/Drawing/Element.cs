@@ -1,5 +1,4 @@
 using System.Text;
-using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing.Elements;
@@ -8,7 +7,8 @@ namespace Age.Rendering.Drawing;
 
 public abstract class Element : Node2D, IEnumerable<Element>
 {
-    private readonly Style style = new();
+    private readonly Style style       = new();
+    private Transform2D styleTransform = new();
 
     private Canvas? canvas;
     private bool    hasPendingUpdate;
@@ -41,15 +41,7 @@ public abstract class Element : Node2D, IEnumerable<Element>
     public Style Style
     {
         get => this.style;
-        set
-        {
-            this.style.Update(value);
-
-            if (this.IsConnected && this.style.HasChanges)
-            {
-                this.RequestUpdate();
-            }
-        }
+        set => this.style.Update(value);
     }
 
     public string? Text
@@ -98,6 +90,16 @@ public abstract class Element : Node2D, IEnumerable<Element>
         }
     }
 
+    public override Transform2D Transform
+    {
+        get => this.styleTransform * base.Transform;
+        set => this.LocalTransform = value * this.styleTransform * base.Transform.Inverse();
+    }
+
+    public Element() =>
+        this.style.Changed += this.OnStyleChanged;
+
+
     IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
     {
         for (var childElement = this.FirstElementChild; childElement != null; childElement = childElement.NextElementSibling)
@@ -105,6 +107,8 @@ public abstract class Element : Node2D, IEnumerable<Element>
             yield return childElement;
         }
     }
+
+    private void ApplyStyle() => this.DrawBorder();
 
     private void DrawBorder()
     {
@@ -128,22 +132,35 @@ public abstract class Element : Node2D, IEnumerable<Element>
             command = (RectDrawCommand)this.Commands[0];
         }
 
-        command.Rect = new(this.Size, this.Transform.Position);
+        command.Rect = new(this.Size, default);
         command.Color = Color.Cyan;
-        Logger.Trace($"Drawing Border: {this}");
+        //Logger.Trace($"Drawing Border: {this}");
     }
 
     private void RequestUpdate()
     {
-        Logger.Trace($"Requesting Update: {this}");
+        //Logger.Trace($"Requesting Update: {this}");
         if (this.canvas != null && !this.hasPendingUpdate)
         {
             this.hasPendingUpdate = true;
             this.canvas.RequestUpdate(this);
             Container.Singleton.RenderingService.RequestDraw();
-            Logger.Trace($"Update Requested: {this}");
+            //Logger.Trace($"Update Requested: {this}");
         }
     }
+
+    private void OnStyleChanged()
+    {
+        this.UpdateStyleTransform();
+
+        if (this.IsConnected)
+        {
+            this.RequestUpdate();
+        }
+    }
+
+    private void UpdateStyleTransform() =>
+        this.styleTransform = this.styleTransform with { Position = this.style.Position };
 
     protected override void OnChildAppended(Node child)
     {
@@ -200,11 +217,11 @@ public abstract class Element : Node2D, IEnumerable<Element>
     }
 
     protected override void OnBoundsChanged() =>
-        this.RequestUpdate();
+        this.ParentElement?.RequestUpdate();
 
     internal void UpdateLayout()
     {
-        Logger.Trace($"Updating Layout: {this}");
+        //Logger.Trace($"Updating Layout: {this}");
         var size     = new Size<float>();
         var previous = new Rect<float>();
 
@@ -215,22 +232,24 @@ public abstract class Element : Node2D, IEnumerable<Element>
                 textNode.Redraw();
             }
 
-            child.Transform = child.Transform with
+            child.LocalTransform = child.LocalTransform with
             {
-                Position = this.Transform.Position + new Vector2<float>(previous.Size.Width + previous.Position.X, 0)
+                Position = new Vector2<float>(previous.Size.Width + previous.Position.X, 0)
             };
+
+            (child as Element)?.ApplyStyle();
 
             size.Width += child.Size.Width;
             size.Height = float.Max(size.Height, child.Size.Height);
 
-            previous = new(child.Size, child.Transform.Position);
+            previous = new(child.Size, child.LocalTransform.Position);
         }
 
         this.Size = size;
 
-        this.DrawBorder();
+        this.ApplyStyle();
 
         this.hasPendingUpdate = false;
-        Logger.Trace($"Layout Updated: {this}");
+        //Logger.Trace($"Layout Updated: {this}");
     }
 }

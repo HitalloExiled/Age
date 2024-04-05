@@ -6,7 +6,7 @@ namespace Age.Rendering.Drawing;
 public abstract class Node2D : Node
 {
     private Size<float> size;
-    private Transform2D transform = new();
+    private Transform2D localTransform = new();
 
     internal List<DrawCommand> Commands { get; set; } = [];
 
@@ -26,14 +26,20 @@ public abstract class Node2D : Node
         }
     }
 
-    public Transform2D Transform
+    public virtual Transform2D Transform
     {
-        get => this.transform;
+        get => this.localTransform * ((this.Parent as Node2D)?.Transform ?? new());
+        set => this.LocalTransform = value * ((this.Parent as Node2D)?.Transform ?? new()).Inverse();
+    }
+
+    public virtual Transform2D LocalTransform
+    {
+        get => this.localTransform;
         set
         {
-            var hasChanged = this.transform != value;
+            var hasChanged = this.localTransform != value;
 
-            this.transform = value;
+            this.localTransform = value;
 
             if (hasChanged)
             {

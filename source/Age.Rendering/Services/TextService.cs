@@ -187,8 +187,8 @@ internal partial class TextService(RenderingService renderingService, TextureSto
             }
         }
 
-        textNode.Size      = elementBounds.Size;
-        textNode.Transform = textNode.Transform with { Position = elementBounds.Position };
+        textNode.Size           = elementBounds.Size;
+        textNode.LocalTransform = textNode.LocalTransform with { Position = elementBounds.Position };
 
         if (atlas.IsDirty)
         {

@@ -8,6 +8,8 @@ public record Style : IMergeable<Style>
     private const string DEFAULT_FONT_FAMILY = "Segoe UI";
     private const ushort DEFAULT_FONT_SIZE   = 12;
 
+    public event Action? Changed;
+
     private TrackedValue<BorderStyle> border     = new(new());
     private TrackedValue<Color>       color;
     private TrackedValue<string>      fontFamily = new(DEFAULT_FONT_FAMILY);
@@ -38,8 +40,11 @@ public record Style : IMergeable<Style>
         this.stack.Changed        += this.OnValueChanged;
     }
 
-    private void OnValueChanged() =>
+    private void OnValueChanged()
+    {
         this.HasChanges = true;
+        this.Changed?.Invoke();
+    }
 
     public static Style Merge(Style left, Style right) => new()
     {

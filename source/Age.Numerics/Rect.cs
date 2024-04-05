@@ -33,6 +33,6 @@ public record struct Rect<T> where T : INumber<T>
     }
 
     public readonly Rect<T> InvertedY() =>
-        new (this.Size, new(this.Position.X, -this.Position.Y));
+        new(this.Size, new(this.Position.X, -this.Position.Y));
 
 }

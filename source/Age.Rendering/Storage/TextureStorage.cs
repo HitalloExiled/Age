@@ -41,12 +41,12 @@ internal class TextureStorage : IDisposable
     {
         if (!this.disposed)
         {
+            this.renderer.DeferredDispose(this.DefaultTexture);
+            this.renderer.DeferredDispose(this.DefaultSampler);
+            this.renderer.DeferredDispose(this.textureSets.Values);
+
             this.disposed = true;
         }
-
-        this.renderer.DeferredDispose(this.DefaultTexture);
-        this.renderer.DeferredDispose(this.DefaultSampler);
-        this.renderer.DeferredDispose(this.textureSets.Values);
 
         GC.SuppressFinalize(this);
     }
@@ -68,7 +68,11 @@ internal class TextureStorage : IDisposable
     public void FreeTexture(Texture texture)
     {
         this.renderer.DeferredDispose(texture);
-        this.textureSets.Remove(texture);
+
+        if (this.textureSets.Remove(texture, out var uniformSet))
+        {
+            uniformSet.Dispose();
+        }
     }
 
     public UniformSet GetUniformSet(Shader shader, Texture texture, Sampler sampler)
