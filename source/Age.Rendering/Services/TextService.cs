@@ -1,4 +1,5 @@
 #define DUMP_IMAGES
+using System.Text;
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Commands;
@@ -39,7 +40,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
     }
 #endif
 
-    private Glyph DrawGlyph(TextureAtlas atlas, char character, ushort fontSize, SKRect bounds, SKPaint paint)
+    private Glyph DrawGlyph(TextureAtlas atlas, char character, ushort fontSize, in SKRect bounds, SKPaint paint)
     {
         const ushort PADDING = 2;
 
@@ -128,23 +129,23 @@ internal partial class TextService(RenderingService renderingService, TextureSto
             TextAlign   = SKTextAlign.Left,
             TextSize    = style.FontSize,
             Typeface    = typeface,
+            SubpixelText = true,
         };
 
-        var atlas = this.GetAtlas(style.FontFamily, style.FontSize);
-
-        var font   = paint.ToFont();
+        var atlas  = this.GetAtlas(style.FontFamily, style.FontSize);
         var glyphs = typeface.GetGlyphs(text);
+        var font   = paint.ToFont();
 
-        var glyphsPosition = new SKPoint[glyphs.Length];
-        var glyphsBounds   = new SKRect[glyphs.Length];
+        font.GetFontMetrics(out var metrics);
 
-        font.GetGlyphPositions(glyphs, glyphsPosition);
-        font.GetGlyphWidths(glyphs, null, glyphsBounds, paint);
+        var glyphsBounds = new SKRect[glyphs.Length];
+        var glyphsWidths = new float[glyphs.Length];
 
-        var lineHeight = -glyphsBounds.Max(x => x.Height);
-        var offset     = new Point<float>(0, lineHeight);
+        font.GetGlyphWidths(glyphs, glyphsWidths, glyphsBounds, paint);
 
-        var elementBounds = new Rect<float>(new(), offset).InvertedY();
+        var lineHeight = float.Round(-metrics.Ascent + metrics.Descent);
+        var offset     = new Point<float>(0, float.Round(metrics.Ascent));
+        var maxSize    = new Size<float>(0, lineHeight);
 
         commands.Clear();
 
@@ -154,11 +155,12 @@ internal partial class TextService(RenderingService renderingService, TextureSto
 
             if (!char.IsWhiteSpace(character))
             {
-                var bounds    = glyphsBounds[i];
-                var glyph     = this.DrawGlyph(atlas, character, style.FontSize, glyphsBounds[i], paint);
-                var size      = new Size<float>(bounds.Width, bounds.Height);
-                var position  = new Point<float>(offset.X + glyphsPosition[i].X, offset.Y - glyphsBounds[i].Top);
-                var color     = style.Color == default ? new() : style.Color;
+                ref var bounds = ref glyphsBounds[i];
+
+                var glyph    = this.DrawGlyph(atlas, character, style.FontSize, bounds, paint);
+                var size     = new Size<float>(bounds.Width, bounds.Height);
+                var position = new Point<float>(float.Round(offset.X + bounds.Left), float.Round(offset.Y - bounds.Top));
+                var color    = style.Color == default ? new() : style.Color;
 
                 var atlasSize = new Point<float>(atlas.Size.Width, atlas.Size.Height);
 
@@ -172,23 +174,38 @@ internal partial class TextService(RenderingService renderingService, TextureSto
 
                 var command = new RectDrawCommand
                 {
-                    Rect     = new(size, position),
-                    Color    = color,
+                    Rect           = new(size, position),
+                    Color          = color,
                     SampledTexture = new(atlas.Texture, this.sampler, uv),
                 };
 
                 textNode.Commands.Add(command);
-                elementBounds.Grow(command.Rect.InvertedY());
+
+                maxSize.Width = float.Max(maxSize.Width, float.Round(position.X + bounds.Right));
+                offset.X += float.Round(glyphsWidths[i]);
+
             }
-            else if (character == '\n' && i < text.Length - 1)
+            else if (character == '\n')
             {
-                offset.X  = -glyphsPosition[i + 1].X;
-                offset.Y += lineHeight + -4;
+                offset.X  = 0;
+                offset.Y -= lineHeight + -metrics.Leading;
+
+                maxSize.Height += lineHeight + metrics.Leading;
+            }
+            else
+            {
+                offset.X += glyphsWidths[i];
             }
         }
 
-        textNode.Size           = elementBounds.Size;
-        textNode.LocalTransform = textNode.LocalTransform with { Position = elementBounds.Position };
+        if (textNode.Size != default && textNode.Size.Height != maxSize.Height)
+        {
+            Console.WriteLine($"Difference - {textNode.Size.Height - maxSize.Height}");
+        }
+
+        textNode.Size = maxSize;
+        Console.WriteLine($"Text: {text}\nHeight: {maxSize.Height}");
+
 
         if (atlas.IsDirty)
         {

@@ -6,7 +6,7 @@ namespace Age.Rendering.Drawing;
 public record Style : IMergeable<Style>
 {
     private const string DEFAULT_FONT_FAMILY = "Segoe UI";
-    private const ushort DEFAULT_FONT_SIZE   = 12;
+    private const ushort DEFAULT_FONT_SIZE   = 16;
 
     public event Action? Changed;
 
