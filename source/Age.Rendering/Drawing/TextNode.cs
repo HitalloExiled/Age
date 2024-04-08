@@ -8,6 +8,9 @@ public class TextNode : Node2D
 
     public Element? ParentElement => this.Parent as Element;
 
+    internal float BaseLine   { get; set; }
+    internal float LineHeight { get; set; }
+
     public string? Value
     {
         get => this.value;

@@ -1,5 +1,4 @@
 #define DUMP_IMAGES
-using System.Text;
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Commands;
@@ -117,22 +116,25 @@ internal partial class TextService(RenderingService renderingService, TextureSto
             return;
         }
 
-        var style    = textNode.ParentElement.Style;
-        var commands = textNode.Commands;
+        var style      = textNode.ParentElement.Style;
+        var fontFamily = style.Font.Family;
+        var fontSize   = style.Font.Size;
+        var commands   = textNode.Commands;
 
-        var typeface = SKTypeface.FromFamilyName(style.FontFamily, SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+
+        var typeface = SKTypeface.FromFamilyName(fontFamily, SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
 
         var paint = new SKPaint
         {
             Color       = SKColors.Black,
             IsAntialias = true,
             TextAlign   = SKTextAlign.Left,
-            TextSize    = style.FontSize,
+            TextSize    = fontSize,
             Typeface    = typeface,
             SubpixelText = true,
         };
 
-        var atlas  = this.GetAtlas(style.FontFamily, style.FontSize);
+        var atlas  = this.GetAtlas(fontFamily, fontSize);
         var glyphs = typeface.GetGlyphs(text);
         var font   = paint.ToFont();
 
@@ -144,7 +146,8 @@ internal partial class TextService(RenderingService renderingService, TextureSto
         font.GetGlyphWidths(glyphs, glyphsWidths, glyphsBounds, paint);
 
         var lineHeight = float.Round(-metrics.Ascent + metrics.Descent);
-        var offset     = new Point<float>(0, float.Round(metrics.Ascent));
+        var baseLine   = float.Round(metrics.Ascent);
+        var offset     = new Point<float>(0, baseLine);
         var maxSize    = new Size<float>(0, lineHeight);
 
         commands.Clear();
@@ -155,9 +158,9 @@ internal partial class TextService(RenderingService renderingService, TextureSto
 
             if (!char.IsWhiteSpace(character))
             {
-                ref var bounds = ref glyphsBounds[i];
+                ref readonly var bounds = ref glyphsBounds[i];
 
-                var glyph    = this.DrawGlyph(atlas, character, style.FontSize, bounds, paint);
+                var glyph    = this.DrawGlyph(atlas, character, fontSize, bounds, paint);
                 var size     = new Size<float>(bounds.Width, bounds.Height);
                 var position = new Point<float>(float.Round(offset.X + bounds.Left), float.Round(offset.Y - bounds.Top));
                 var color    = style.Color == default ? new() : style.Color;
@@ -198,14 +201,9 @@ internal partial class TextService(RenderingService renderingService, TextureSto
             }
         }
 
-        if (textNode.Size != default && textNode.Size.Height != maxSize.Height)
-        {
-            Console.WriteLine($"Difference - {textNode.Size.Height - maxSize.Height}");
-        }
-
-        textNode.Size = maxSize;
-        Console.WriteLine($"Text: {text}\nHeight: {maxSize.Height}");
-
+        textNode.BaseLine   = baseLine;
+        textNode.LineHeight = lineHeight;
+        textNode.Size       = maxSize;
 
         if (atlas.IsDirty)
         {

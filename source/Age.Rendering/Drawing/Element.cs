@@ -7,8 +7,12 @@ namespace Age.Rendering.Drawing;
 
 public abstract class Element : Node2D, IEnumerable<Element>
 {
-    private readonly Style style       = new();
-    private Transform2D styleTransform = new();
+    private bool           calculated;
+    private float          calculatedBaseLine;
+    private Size<float>    calculatedSize;
+    private Transform2D    dispositionTransform = new();
+    private readonly Style style                = new();
+    private Transform2D    styleTransform       = new();
 
     private Canvas? canvas;
     private bool    hasPendingUpdate;
@@ -92,13 +96,12 @@ public abstract class Element : Node2D, IEnumerable<Element>
 
     public override Transform2D Transform
     {
-        get => this.styleTransform * base.Transform;
-        set => this.LocalTransform = value * this.styleTransform * base.Transform.Inverse();
+        get => this.styleTransform * this.dispositionTransform * base.Transform;
+        set => this.LocalTransform = value * this.Transform.Inverse();
     }
 
     public Element() =>
         this.style.Changed += this.OnStyleChanged;
-
 
     IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
     {
@@ -132,20 +135,17 @@ public abstract class Element : Node2D, IEnumerable<Element>
             command = (RectDrawCommand)this.Commands[0];
         }
 
-        command.Rect = new(this.Size, default);
+        command.Rect  = new(this.Size, default);
         command.Color = Color.Cyan;
-        //Logger.Trace($"Drawing Border: {this}");
     }
 
     private void RequestUpdate()
     {
-        //Logger.Trace($"Requesting Update: {this}");
         if (this.canvas != null && !this.hasPendingUpdate)
         {
             this.hasPendingUpdate = true;
             this.canvas.RequestUpdate(this);
             Container.Singleton.RenderingService.RequestDraw();
-            //Logger.Trace($"Update Requested: {this}");
         }
     }
 
@@ -161,6 +161,14 @@ public abstract class Element : Node2D, IEnumerable<Element>
 
     private void UpdateStyleTransform() =>
         this.styleTransform = this.styleTransform with { Position = this.style.Position };
+
+    protected override void OnAdopted()
+    {
+        if (this.Parent is Element parentElement)
+        {
+            this.style.Parent = parentElement.Style;
+        }
+    }
 
     protected override void OnChildAppended(Node child)
     {
@@ -219,30 +227,81 @@ public abstract class Element : Node2D, IEnumerable<Element>
     protected override void OnBoundsChanged() =>
         this.ParentElement?.RequestUpdate();
 
-    internal void UpdateLayout()
+    private void CalculateLayout()
     {
-        //Logger.Trace($"Updating Layout: {this}");
-        var size     = new Size<float>();
-        var previous = new Rect<float>();
+        if (this.calculated)
+        {
+            return;
+        }
+
+        var stackMode = this.Style.Stack;
+
+        this.calculatedBaseLine = default;
+        this.calculatedSize     = default;
 
         foreach (var child in this.Enumerate<Node2D>())
         {
             if (child is TextNode textNode)
             {
                 textNode.Redraw();
+
+                if (stackMode == StackMode.Horizontal)
+                {
+                    this.calculatedBaseLine = float.Min(this.calculatedBaseLine, textNode.BaseLine);
+                }
             }
 
-            child.LocalTransform = child.LocalTransform with
+            if (child is Element element)
             {
-                Position = new Vector2<float>(previous.Size.Width + previous.Position.X, 0)
-            };
+                element.CalculateLayout();
+                this.calculatedBaseLine = float.Min(this.calculatedBaseLine, element.calculatedBaseLine);
+            }
 
-            (child as Element)?.ApplyStyle();
+            if (stackMode == StackMode.Horizontal)
+            {
+                this.calculatedSize.Height  = float.Max(this.calculatedSize.Height, child.Size.Height);
+                this.calculatedSize.Width  += child.Size.Width;
+            }
+            else
+            {
+                this.calculatedSize.Height += child.Size.Height;
+                this.calculatedSize.Width   = float.Max(this.calculatedSize.Width, child.Size.Width);
+            }
+        }
+    }
 
-            size.Width += child.Size.Width;
-            size.Height = float.Max(size.Height, child.Size.Height);
+    internal void UpdateLayout()
+    {
+        var previous = new Rect<float>();
 
-            previous = new(child.Size, child.LocalTransform.Position);
+        this.CalculateLayout();
+
+        ref readonly var size    = ref this.calculatedSize;
+        var proportionalBaseline = -this.calculatedBaseLine / this.calculatedSize.Height;
+
+        foreach (var child in this.Enumerate<Node2D>())
+        {
+            if (child is TextNode textNode)
+            {
+                // textNode.Redraw();
+                textNode.LocalTransform = textNode.LocalTransform with
+                {
+                    Position = new Vector2<float>(previous.Size.Width + previous.Position.X, -(size.Height - textNode.Size.Height) * proportionalBaseline)
+                };
+
+                previous = new(child.Size, child.LocalTransform.Position);
+            }
+            else if (child is Element element)
+            {
+                element.dispositionTransform = element.dispositionTransform with
+                {
+                    Position = new Vector2<float>(previous.Size.Width + previous.Position.X, -(size.Height - element.Size.Height) * proportionalBaseline)
+                };
+
+                element.ApplyStyle();
+
+                previous = new(child.Size, element.dispositionTransform.Position);
+            }
         }
 
         this.Size = size;
@@ -250,6 +309,6 @@ public abstract class Element : Node2D, IEnumerable<Element>
         this.ApplyStyle();
 
         this.hasPendingUpdate = false;
-        //Logger.Trace($"Layout Updated: {this}");
+        this.calculated       = false;
     }
 }

@@ -7,7 +7,7 @@ namespace Age.Editor;
 public class Editor : Node
 {
     private readonly Canvas canvas;
-    private readonly Span statusText;
+    private readonly Span   statusText;
 
     private ulong  frames;
     private double minFps = double.MaxValue;
@@ -24,37 +24,36 @@ public class Editor : Node
     {
         var style = new Style
         {
-            FontSize = 24,
-            Border   = new(),
+            Border = new(),
+            Font   = new() { Size = 24 },
         };
 
         this.AppendChild(this.canvas = new Canvas());
 
-        var root = new Span() { Name = "Root", Style = new() { Position = new(50, -50) } };
+        var root = new Span() { Name = "Root", Style = new() { Position = new(8, -8) } };
 
         this.canvas.AppendChild(root);
 
         this.statusText = new Span()
         {
             Name  = "Status",
-            Text  = ".",
             Style = style with
             {
-                Color    = Color.Margenta,
-                Position = new(-10, 10)
+                Color = Color.Margenta,
+                /* Position = new(-10, 10) */
             }
         };
 
-        root.AppendChild(this.statusText);
+        // root.AppendChild(this.statusText);
 
-        // this.Append(new Text("Hello\nWorld\n!!!", style with { FontSize = 100, Color = Color.Green, /* Position = new(100, -200) */ }));
-        // this.Append(new Text("Hello World!!!",    style with { FontSize = 50,  Color = Color.Blue,  /* Position = new(50,  -500) */ }));
-        var parentSpan = new Span() { Name = "Parent", Text = "W", Style = style with { FontSize = 48, Position = new(20, -20) } };
+        // // this.Append(new Text("Hello\nWorld\n!!!", style with { FontSize = 100, Color = Color.Green, /* Position = new(100, -200) */ }));
+        // // this.Append(new Text("Hello World!!!",    style with { FontSize = 50,  Color = Color.Blue,  /* Position = new(50,  -500) */ }));
+        var parentSpan = new Span() { Name = "Parent", Text = "Text", Style = new() { Font = new() { Size = 16 }, /* Position = new(20, -20) */ } };
         root.AppendChild(parentSpan);
 
-        var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { /* Size = new(100, 100), */Position = new(0, -10),  Color = Color.Red } };
-        var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { /* Size = new(100, 100), */Position = new(0, 0),  Color = Color.Green } };
-        var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { /* Size = new(100, 100), */Position = new(0, 10),  Color = Color.Blue } };
+        var childSpan1 = new Span() { Name = "X", Text = "X", Style = new() { Font = new() { Size = 24 }, /* Size = new(100, 100), *//* Position = new(0, -10), */  Color = Color.Red } };
+        var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = new() { Font = new() { Size = 48 }, /* Size = new(100, 100), *//* Position = new(0, 0),   */  Color = Color.Green } };
+        var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = new() { Font = new() { Size = 24 }, /* Size = new(100, 100), *//* Position = new(0, 10),  */  Color = Color.Blue } };
 
         parentSpan.AppendChild(childSpan1);
         parentSpan.AppendChild(childSpan2);
