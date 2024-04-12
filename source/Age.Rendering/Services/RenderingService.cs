@@ -114,7 +114,7 @@ internal class RenderingService : IDisposable
     {
         UniformSet? lastUniformSet = default;
 
-        var windowSize = window.ClientSize;
+        var windowSize = window.ClientSize.Cast<float>();
 
         var position = node.Transform.Position;
 
@@ -128,10 +128,13 @@ internal class RenderingService : IDisposable
                     {
                         var uniformSet = this.textureStorage.GetUniformSet(this.diffuseShader, rectDrawCommand.SampledTexture.Texture, rectDrawCommand.SampledTexture.Sampler);
 
+                        var rect = rectDrawCommand.Rect;
+                        rect.Position += nodePosition;
+
                         var constant = new CanvasShader.PushConstant
                         {
-                            ViewportSize = new(windowSize.Width, windowSize.Height),
-                            Rect         = rectDrawCommand.Rect with { Position = nodePosition + rectDrawCommand.Rect.Position },
+                            ViewportSize = windowSize,
+                            Rect         = rect,
                             UV           = rectDrawCommand.SampledTexture.UV,
                             Color        = rectDrawCommand.Color,
                         };

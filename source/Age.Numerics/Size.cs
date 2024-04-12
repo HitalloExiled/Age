@@ -15,11 +15,17 @@ public record struct Size<T> where T : INumber<T>
         this.Height = height;
     }
 
+    public readonly Size<U> Cast<U>() where U : INumber<U> =>
+        new(U.CreateChecked(this.Width), U.CreateChecked(this.Height));
+
     public readonly Size<T> Max(Size<T> other) =>
         new(T.Max(this.Width, other.Width), T.Max(this.Height, other.Height));
 
     public readonly Size<T> Min(Size<T> other) =>
         new(T.Min(this.Width, other.Width), T.Min(this.Height, other.Height));
+
+    public readonly Size<T> Range(Size<T> min, Size<T> max) =>
+        new(T.Max(T.Min(this.Width, min.Width), max.Width), T.Max(T.Min(this.Height, min.Height), max.Height));
 
     public static Size<T> operator +(Size<T> size, T value) =>
         new(size.Width + value, size.Height + value);
@@ -35,6 +41,9 @@ public record struct Size<T> where T : INumber<T>
 
     public static Size<T> operator /(Size<T> left, Size<T> right) =>
         new(left.Width / right.Width, left.Height / right.Height);
+
+    public static Size<T> operator /(Size<T> size, T value) =>
+        new(size.Width / value, size.Height / value);
 
     public static Size<T> operator *(Size<T> left, Size<T> right) =>
         new(left.Width * right.Width, left.Height * right.Height);

@@ -3,12 +3,13 @@ using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing.Elements;
+using Age.Rendering.Drawing.Styling;
 
 namespace Age.Rendering.Drawing;
 
 public abstract class Element : Node2D, IEnumerable<Element>
 {
-    private readonly Style        style             = new();
+    private Style style = new();
     private readonly List<Node2D> nodesToDistribute = [];
 
     private Transform2D dispositionTransform = new();
@@ -45,7 +46,16 @@ public abstract class Element : Node2D, IEnumerable<Element>
     public Style Style
     {
         get => this.style;
-        set => this.style.Update(value);
+        set
+        {
+            if (this.style != value)
+            {
+                this.style.Changed -= this.OnStyleChanged;
+                this.style = value;
+                this.style.Changed += this.OnStyleChanged;
+                this.OnStyleChanged();
+            }
+        }
     }
 
     public string? Text
@@ -115,46 +125,52 @@ public abstract class Element : Node2D, IEnumerable<Element>
 
     private void CalculateLayout()
     {
-        var stackMode = this.Style.Stack;
+        var stackMode = this.Style.Stack ?? StackType.Horizontal;
 
         var hightest = 0f;
-        var size     = new Size<float>();
+        var size     = this.Style.Size ?? new Size<int>();
 
         foreach (var child in this.Enumerate<Node2D>())
         {
-            if (stackMode == StackMode.Horizontal)
+            if (stackMode == StackType.Horizontal)
             {
                 if (child is TextNode textNode)
                 {
                     textNode.Draw();
-
-                    if (textNode.Size.Height > hightest)
-                    {
-                        this.BaseLine = textNode.BaseLine;
-
-                        hightest = textNode.Size.Height;
-                    }
                 }
-                else if (child.Size.Height > hightest)
+
+                if (child.Size.Height > hightest)
                 {
                     this.BaseLine = child.BaseLine;
 
                     hightest = child.Size.Height;
                 }
 
-                size.Height  = float.Max(size.Height, child.Size.Height);
-                size.Width  += child.Size.Width;
+                if (!this.Style.Size.HasValue)
+                {
+                    size.Height  = int.Max(size.Height, child.Size.Height);
+                    size.Width  += child.Size.Width;
+                }
             }
             else
             {
-                size.Height += child.Size.Height;
-                size.Width   = float.Max(size.Width, child.Size.Width);
+                if (!this.Style.Size.HasValue)
+                {
+                    size.Height += child.Size.Height;
+                    size.Width   = int.Max(size.Width, child.Size.Width);
+                }
             }
 
             this.nodesToDistribute.Add(child);
         }
 
-        this.Size = size.Max(this.Style.Size);
+        this.Size = this.Style.MinSize.HasValue && this.Style.MaxSize.HasValue
+            ? size.Range(this.Style.MinSize.Value, this.Style.MaxSize.Value)
+            : this.Style.MinSize.HasValue
+                ? size.Max(this.Style.MinSize.Value)
+                : this.Style.MaxSize.HasValue
+                    ? size.Min(this.Style.MaxSize.Value)
+                    : size;
 
         this.ApplyStyle();
     }
@@ -181,8 +197,8 @@ public abstract class Element : Node2D, IEnumerable<Element>
             command = (RectDrawCommand)this.Commands[0];
         }
 
-        command.Rect  = new(this.Size, default);
-        command.Color = new(0.75f, 0.75f, 0.75f, 1);
+        command.Rect  = new(this.Size.Cast<float>(), default);
+        command.Color = this.Style.BorderColor ?? new(0.75f, 0.75f, 0.75f, 1);
     }
 
     private void RequestUpdate()
@@ -212,18 +228,19 @@ public abstract class Element : Node2D, IEnumerable<Element>
             return;
         }
 
-        var previous = new Rect<float>();
+        var previous = new Rect<int>();
         var size     = this.Size;
-        var baseline = 1;//-this.BaseLine / size.Height;
-
-        Logger.Debug($"<{this.NodeName} name='{this.Name}' baseline={this.BaseLine}, size='{size}' p='{baseline}%'>");
 
         foreach (var child in this.nodesToDistribute)
         {
-            var position = new Vector2<float>(
-                    previous.Size.Width + previous.Position.X,
-                    -(size.Height - child.Size.Height * child.BaseLine - size.Height * (1 - this.BaseLine))
-                );
+            var style = (child as Element)?.Style;
+
+            var x = previous.Size.Width + previous.Position.X;
+            var y = style?.Baseline.HasValue ?? false
+                ? -((size.Height - child.Size.Height) * (1 - (1 + style.Baseline.Value) / 2))
+                : -(size.Height - child.Size.Height * child.BaseLine - size.Height * (1 - this.BaseLine));
+
+            var position = new Vector2<float>(x, y);
 
             if (child is Element element)
             {
@@ -241,7 +258,7 @@ public abstract class Element : Node2D, IEnumerable<Element>
     }
 
     private void UpdateStyleTransform() =>
-        this.styleTransform = this.styleTransform with { Position = this.style.Position };
+        this.styleTransform = this.styleTransform with { Position = this.style.Position ?? default };
 
     protected override void OnChildAppended(Node child)
     {

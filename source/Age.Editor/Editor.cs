@@ -1,6 +1,7 @@
 using Age.Numerics;
 using Age.Rendering.Drawing;
 using Age.Rendering.Drawing.Elements;
+using Age.Rendering.Drawing.Styling;
 
 namespace Age.Editor;
 
@@ -22,19 +23,19 @@ public class Editor : Node
 
     public Editor()
     {
-        var style = new Style
+        var style = new Style()
         {
-            Border = new(),
+            FontSize = 24,
         };
 
         this.AppendChild(this.canvas = new Canvas());
 
         var root = new Span()
         {
-            Name     = "Root",
-            BaseLine = 0,
-            Style    = new()
+            Name  = "Root",
+            Style = new()
             {
+                // Baseline = 0,
                 // Size     = new(100, 100),
                 Position = new(100, -100)
             }
@@ -47,48 +48,44 @@ public class Editor : Node
             Name  = "Status",
             Text  =
             """
-            Frame
-            Frame
+            {X}Àg
             """,
             Style = style with
             {
-                Color = Color.Margenta,
-                Font  = new()
-                {
-                    Size = 48,
-                }
+                BorderColor = Color.Red,
+                // Baseline = -1,
+                Color    = Color.Margenta,
+                FontSize = 24,
+                // Size     = new(25, 25)
                 /* Position = new(-10, 10) */
             }
         };
 
         root.AppendChild(this.statusText);
 
-        // // this.Append(new Text("Hello\nWorld\n!!!", style with { FontSize = 100, Color = Color.Green, /* Position = new(100, -200) */ }));
-        // // this.Append(new Text("Hello World!!!",    style with { FontSize = 50,  Color = Color.Blue,  /* Position = new(50,  -500) */ }));
+        // this.Append(new Text("Hello\nWorld\n!!!", style with { FontSize = 100, Color = Color.Green, /* Position = new(100, -200) */ }));
+        // this.Append(new Text("Hello World!!!",    style with { FontSize = 50,  Color = Color.Blue,  /* Position = new(50,  -500) */ }));
         var parentSpan = new Span()
         {
             Name = "Parent",
             Text = "Text",
-            // BaseLine = 0.75f,
-            Style = new()
+            Style = style with
             {
+                Baseline = 0,
                 // Size = new(100, 100),
-                Font = new()
-                {
-                    Size   = 48,
-                    Family = "Impact",
-                },
+                FontSize   = 48,
+                FontFamily = "Impact",
             /* Position = new(20, -20) */
             }
         };
 
         root.AppendChild(parentSpan);
 
-        var childSpan1 = new Span() { Name = "X", Text = "X", BaseLine = 0,     Style = new() { /* Size = new(10, 100),*/ Font = new() { Size = 48, Family = "Helvetica Neue" }, Color = Color.Red } };
-        var childSpan2 = new Span() { Name = "Y", Text = "Y", BaseLine = 0.5f,  Style = new() { /* Size = new(10, 100),*/ Font = new() { Size = 24, Family = "Lucida Console" }, Color = Color.Green } };
-        var childSpan3 = new Span() { Name = "Z", Text = "Z", BaseLine = 0.25f, Style = new() { /* Size = new(10, 100),*/ Font = new() { Size = 48, Family = "Verdana" }, Color = Color.Blue } };
-        var childSpan4 = new Span() { Text = "Hello", BaseLine = 1, Style = new() { Size = new(20, 20) } };
-        var childSpan5 = new Span() { Text = "World!!!", BaseLine = 1, Style = new() { Size = new(30, 30) } };
+        var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
+        var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
+        var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { FontSize = 48, FontFamily = "Verdana", Color = Color.Blue } };
+        var childSpan4 = new Span() { Text = "Hello",         Style = style with { Baseline = 0, MinSize  = new(20, 20) } };
+        var childSpan5 = new Span() { Text = "World!!!",      Style = style with { Baseline = 0, MinSize  = new(30, 30) } };
 
         parentSpan.AppendChild(childSpan1);
         parentSpan.AppendChild(childSpan2);

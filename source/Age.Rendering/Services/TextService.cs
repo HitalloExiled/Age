@@ -72,13 +72,13 @@ internal partial class TextService(RenderingService renderingService, TextureSto
         return glyph;
     }
 
-    private TextureAtlas GetAtlas(string familyName, int fontSize)
+    private TextureAtlas GetAtlas(string familyName, uint fontSize)
     {
         var hashcode = familyName.GetHashCode() ^ fontSize.GetHashCode();
 
         if (!this.atlases.TryGetValue(hashcode, out var atlas))
         {
-            var axisSize = (uint)Math.Max(fontSize * 8, 256);
+            var axisSize = uint.Max(fontSize * 8, 256);
             var size     = new Size<uint>(axisSize, axisSize);
 
             var texture = textureStorage.CreateTexture(size, ColorMode.GrayScale, Enums.TextureType.N2D);
@@ -117,8 +117,8 @@ internal partial class TextService(RenderingService renderingService, TextureSto
         }
 
         var style      = textNode.ParentElement.Style;
-        var fontFamily = style.Font.Family;
-        var fontSize   = style.Font.Size;
+        var fontFamily = style.FontFamily ?? "Segoi UI";
+        var fontSize   = style.FontSize ?? 16;
         var commands   = textNode.Commands;
 
 
@@ -145,10 +145,10 @@ internal partial class TextService(RenderingService renderingService, TextureSto
 
         font.GetGlyphWidths(glyphs, glyphsWidths, glyphsBounds, paint);
 
-        var lineHeight = float.Round(-metrics.Ascent + metrics.Descent);
-        var baseLine   = float.Round(metrics.Ascent);
-        var offset     = new Point<float>(0, baseLine);
-        var maxSize    = new Size<float>(0, lineHeight);
+        var lineHeight = (int)float.Round(-metrics.Ascent + metrics.Descent);
+        var baseLine   = (int)float.Round(metrics.Ascent);
+        var offset     = new Point<int>(0, baseLine);
+        var maxSize    = new Size<int>(0, lineHeight);
 
         commands.Clear();
 
@@ -163,7 +163,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
                 var glyph    = this.DrawGlyph(atlas, character, typeface.FamilyName, fontSize, bounds, paint);
                 var size     = new Size<float>(bounds.Width, bounds.Height);
                 var position = new Point<float>(float.Round(offset.X + bounds.Left), float.Round(offset.Y - bounds.Top));
-                var color    = style.Color == default ? new() : style.Color;
+                var color    = style.Color ?? new();
 
                 var atlasSize = new Point<float>(atlas.Size.Width, atlas.Size.Height);
 
@@ -184,24 +184,24 @@ internal partial class TextService(RenderingService renderingService, TextureSto
 
                 textNode.Commands.Add(command);
 
-                maxSize.Width = float.Max(maxSize.Width, float.Round(position.X + bounds.Right));
-                offset.X += float.Round(glyphsWidths[i]);
+                maxSize.Width = int.Max(maxSize.Width, (int)float.Round(position.X + bounds.Right));
+                offset.X += (int)float.Round(glyphsWidths[i]);
 
             }
             else if (character == '\n')
             {
                 offset.X  = 0;
-                offset.Y -= lineHeight + -metrics.Leading;
+                offset.Y -= lineHeight + (int)-metrics.Leading;
 
-                maxSize.Height += lineHeight + metrics.Leading;
+                maxSize.Height += lineHeight + (int)metrics.Leading;
             }
             else
             {
-                offset.X += glyphsWidths[i];
+                offset.X += (int)float.Round(glyphsWidths[i]);
             }
         }
 
-        textNode.BaseLine   = -offset.Y / maxSize.Height;
+        textNode.BaseLine   = -offset.Y / (float)maxSize.Height;
         textNode.LineHeight = lineHeight;
         textNode.Size       = maxSize;
 

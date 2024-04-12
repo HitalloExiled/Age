@@ -1,6 +1,6 @@
 namespace Age.Rendering.Drawing;
 
-public enum StackMode : byte
+public enum StackType : byte
 {
     Vertical,
     Horizontal,

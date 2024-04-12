@@ -1,106 +1,143 @@
 using Age.Numerics;
 
-namespace Age.Rendering.Drawing;
+namespace Age.Rendering.Drawing.Styling;
 
-public record Style : Trackable<Style>
+public record Style
 {
-    internal override event Action? Changed;
+    private AlignmentType? alignment;
+    private Color?         backgroundColor;
+    private float?         baseline;
+    private Color?         borderColor;
+    private uint?          borderRadius;
+    private uint?          borderSize;
+    private Color?         color;
+    private string?        fontFamily;
+    private ushort?        fontSize;
+    private Size<int>?     maxSize;
+    private Size<int>?     minSize;
+    private Point<int>?    position;
+    private PositionType?  positionType;
+    private Size<int>?     size;
+    private StackType?     stack;
 
-    private readonly BorderStyle border = new();
-    private readonly FontStyle   font   = new();
+    public event Action? Changed;
 
-    private TrackedValue<Color>      color;
-    private TrackedValue<Point<int>> position;
-    private TrackedValue<Size<float>> size;
-    private TrackedValue<StackMode>  stack = new(StackMode.Horizontal);
-
-    public BorderStyle Border
+    public AlignmentType? Alignment
     {
-        get => this.border;
-        set => this.border.Update(value);
+        get => alignment;
+        set => Set(ref alignment, value);
     }
 
-    public Color Color
+    public Color? BackgroundColor
     {
-        get => this.color.Value;
-        set => this.color.Value = value;
+        get => backgroundColor;
+        set => Set(ref backgroundColor, value);
     }
 
-    public FontStyle Font
+    public float? Baseline
     {
-        get => this.font;
-        set => this.font.Update(value);
+        get => baseline;
+        set => Set(ref baseline, value);
     }
 
-    public Point<int> Position
+    public Color? BorderColor
     {
-        get => this.position.Value;
-        set => this.position.Value = value;
+        get => this.borderColor;
+        set => Set(ref this.borderColor, value);
     }
 
-    public Size<float> Size
+    public uint? BorderSize
     {
-        get => this.size.Value;
-        set => this.size.Value = value;
+        get => this.borderSize;
+        set => Set(ref this.borderSize, value);
     }
 
-    public StackMode Stack
+    public uint? BorderRadius
     {
-        get => this.stack.Value;
-        set => this.stack.Value = value;
+        get => this.borderRadius;
+        set => Set(ref this.borderRadius, value);
     }
 
-    public Style() =>
-        this.ListenEvents();
-
-    public Style(Style source) : base(source)
+    public Color? BackgroundColor1
     {
-        this.border = new();
-        this.font   = new();
-
-        this.border.Update(source.border);
-        this.font.Update(source.font);
-
-        this.color.Value    = source.color.Value;
-        this.position.Value = source.position.Value;
-        this.size.Value     = source.size.Value;
-        this.stack.Value    = source.stack.Value;
-
-        this.ListenEvents();
+        get => this.backgroundColor;
+        set => Set(ref this.backgroundColor, value);
     }
 
-    private void ListenEvents()
+    public Color? Color
     {
-        this.border.Changed   += this.OnValueChanged;
-        this.color.Changed    += this.OnValueChanged;
-        this.font.Changed     += this.OnValueChanged;
-        this.position.Changed += this.OnValueChanged;
-        this.size.Changed     += this.OnValueChanged;
-        this.stack.Changed    += this.OnValueChanged;
+        get => color;
+        set => Set(ref color, value);
     }
 
-    private void OnValueChanged() =>
-        this.Changed?.Invoke();
-
-    public override void Update(Style source)
+    public string? FontFamily
     {
-        SetValue(ref this.color,    source.color);
-        SetValue(ref this.position, source.position);
-        SetValue(ref this.size,     source.size);
-        SetValue(ref this.stack,    source.stack);
-
-        this.Border.Update(source.Border);
-        this.Font.Update(source.Font);
+        get => fontFamily;
+        set => Set(ref fontFamily, value);
     }
 
-    public override Style Merge(Style other) =>
+    public ushort? FontSize
+    {
+        get => fontSize;
+        set => Set(ref fontSize, value);
+    }
+
+    public Size<int>? MaxSize
+    {
+        get => maxSize;
+        set => Set(ref maxSize, value);
+    }
+
+    public Size<int>? MinSize
+    {
+        get => minSize;
+        set => Set(ref minSize, value);
+    }
+
+    public Point<int>? Position
+    {
+        get => position;
+        set => Set(ref position, value);
+    }
+
+    public PositionType? PositionType
+    {
+        get => positionType;
+        set => Set(ref positionType, value);
+    }
+
+    public Size<int>? Size
+    {
+        get => size;
+        set => Set(ref size, value);
+    }
+
+    public StackType? Stack
+    {
+        get => stack;
+        set => Set(ref stack, value);
+    }
+
+    public static Style Merge(Style left, Style right) =>
         new()
         {
-            color    = GetValue(this.color,      other.color),
-            position = GetValue(this.position,   other.position),
-            size     = GetValue(this.size,       other.size),
-            stack    = GetValue(this.stack,      other.stack),
-            Border   = this.Border.Merge(other.Border),
-            Font     = this.Font.Merge(other.Font),
+            Alignment    = left.Alignment    ?? right.Alignment,
+            FontFamily   = left.FontFamily   ?? right.FontFamily,
+            FontSize     = left.FontSize     ?? right.FontSize,
+            MaxSize      = left.MaxSize      ?? right.MaxSize,
+            MinSize      = left.MinSize      ?? right.MinSize,
+            Position     = left.Position     ?? right.Position,
+            PositionType = left.PositionType ?? right.PositionType,
+            Size         = left.Size         ?? right.Size,
         };
+
+    private void Set<T>(ref T? field, T? value)
+    {
+        if (!Equals(field, value))
+        {
+            field = value;
+
+            Changed?.Invoke();
+        }
+    }
 }

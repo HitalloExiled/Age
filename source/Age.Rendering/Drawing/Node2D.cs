@@ -5,14 +5,14 @@ namespace Age.Rendering.Drawing;
 
 public abstract class Node2D : Node
 {
-    private Size<float> size;
+    private Size<int> size;
     private Transform2D localTransform = new();
 
     internal List<DrawCommand> Commands { get; set; } = [];
 
-    public float BaseLine { get; set; } = 1;
+    internal float BaseLine { get; set; } = 1;
 
-    public Size<float> Size
+    public Size<int> Size
     {
         get => this.size;
         internal set
