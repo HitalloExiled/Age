@@ -10,10 +10,12 @@ public abstract class Node2D : Node
 
     internal List<DrawCommand> Commands { get; set; } = [];
 
+    public float BaseLine { get; set; } = 1;
+
     public Size<float> Size
     {
         get => this.size;
-        set
+        internal set
         {
             var hasChanged = this.size != value;
 
@@ -52,5 +54,5 @@ public abstract class Node2D : Node
     { }
 
     public override string ToString() =>
-        $"<{this.NodeName} name='{this.Name}' size='w: {this.Size.Width}, h: {this.Size.Width}' position='x: {this.Transform.Position.X}, y: {this.Transform.Position.Y}' >";
+        $"<{this.NodeName} name='{this.Name}' size='w: {this.Size.Width}, h: {this.Size.Width}' position='x: {this.Transform.Position.X}, y: {this.Transform.Position.Y}' />";
 }

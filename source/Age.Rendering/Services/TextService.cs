@@ -19,7 +19,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
     private bool disposed;
 
 #if DUMP_IMAGES
-    private static void SaveToFile(TextureAtlas atlas)
+    private static void SaveToFile(string fontFamily, TextureAtlas atlas)
     {
         var pixels = atlas.GetPixels().AsSpan().Cast<uint, SKColor>().ToArray();
 
@@ -33,17 +33,17 @@ internal partial class TextService(RenderingService renderingService, TextureSto
 
         var skimage = SKImage.FromBitmap(bitmap);
 
-        using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"Atlas-{atlas.Size.Width}x{atlas.Size.Height}.png"));
+        using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"Atlas-{fontFamily}-{atlas.Size.Width}x{atlas.Size.Height}.png"));
 
         skimage.Encode(SKEncodedImageFormat.Png, 100).SaveTo(stream);
     }
 #endif
 
-    private Glyph DrawGlyph(TextureAtlas atlas, char character, ushort fontSize, in SKRect bounds, SKPaint paint)
+    private Glyph DrawGlyph(TextureAtlas atlas, char character, string fontFamily, ushort fontSize, in SKRect bounds, SKPaint paint)
     {
         const ushort PADDING = 2;
 
-        var hashcode = character.GetHashCode() ^ fontSize.GetHashCode();
+        var hashcode = character.GetHashCode() ^ fontFamily.GetHashCode() ^ fontSize.GetHashCode();
 
         if (!this.glyphs.TryGetValue(hashcode, out var glyph))
         {
@@ -74,7 +74,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
 
     private TextureAtlas GetAtlas(string familyName, int fontSize)
     {
-        var hashcode = familyName.GetHashCode() ^ fontSize;
+        var hashcode = familyName.GetHashCode() ^ fontSize.GetHashCode();
 
         if (!this.atlases.TryGetValue(hashcode, out var atlas))
         {
@@ -122,7 +122,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
         var commands   = textNode.Commands;
 
 
-        var typeface = SKTypeface.FromFamilyName(fontFamily, SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+        var typeface = SKTypeface.FromFamilyName(fontFamily);
 
         var paint = new SKPaint
         {
@@ -134,7 +134,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
             SubpixelText = true,
         };
 
-        var atlas  = this.GetAtlas(fontFamily, fontSize);
+        var atlas  = this.GetAtlas(typeface.FamilyName, fontSize);
         var glyphs = typeface.GetGlyphs(text);
         var font   = paint.ToFont();
 
@@ -160,7 +160,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
             {
                 ref readonly var bounds = ref glyphsBounds[i];
 
-                var glyph    = this.DrawGlyph(atlas, character, fontSize, bounds, paint);
+                var glyph    = this.DrawGlyph(atlas, character, typeface.FamilyName, fontSize, bounds, paint);
                 var size     = new Size<float>(bounds.Width, bounds.Height);
                 var position = new Point<float>(float.Round(offset.X + bounds.Left), float.Round(offset.Y - bounds.Top));
                 var color    = style.Color == default ? new() : style.Color;
@@ -201,7 +201,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
             }
         }
 
-        textNode.BaseLine   = baseLine;
+        textNode.BaseLine   = -offset.Y / maxSize.Height;
         textNode.LineHeight = lineHeight;
         textNode.Size       = maxSize;
 
@@ -211,7 +211,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
 
             atlas.IsDirty = false;
 #if DUMP_IMAGES
-            SaveToFile(atlas);
+            SaveToFile(fontFamily, atlas);
 #endif
         }
 

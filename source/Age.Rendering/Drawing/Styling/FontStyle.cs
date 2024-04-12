@@ -9,13 +9,13 @@ public record FontStyle : Trackable<FontStyle>
 
     public string Family
     {
-        get => GetValue(this.family, this.Parent?.family).Value;
+        get => this.family.Value;
         set => this.family.Value = value;
     }
 
     public ushort Size
     {
-        get => GetValue(this.size, this.Parent?.size).Value;
+        get => this.size.Value;
         set => this.size.Value = value;
     }
 

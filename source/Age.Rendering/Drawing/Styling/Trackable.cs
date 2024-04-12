@@ -4,8 +4,6 @@ public abstract record Trackable<T>
 {
     internal abstract event Action? Changed;
 
-    internal virtual T? Parent { get; set; }
-
     internal static TrackedValue<TValue> GetValue<TValue>(TrackedValue<TValue> left, TrackedValue<TValue>? right) where TValue : notnull =>
         left.Modified
             ? left

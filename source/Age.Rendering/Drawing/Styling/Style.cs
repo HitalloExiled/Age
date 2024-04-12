@@ -11,7 +11,7 @@ public record Style : Trackable<Style>
 
     private TrackedValue<Color>      color;
     private TrackedValue<Point<int>> position;
-    private TrackedValue<Size<uint>> size;
+    private TrackedValue<Size<float>> size;
     private TrackedValue<StackMode>  stack = new(StackMode.Horizontal);
 
     public BorderStyle Border
@@ -22,7 +22,7 @@ public record Style : Trackable<Style>
 
     public Color Color
     {
-        get => GetValue(this.color, this.Parent?.color).Value;
+        get => this.color.Value;
         set => this.color.Value = value;
     }
 
@@ -34,33 +34,20 @@ public record Style : Trackable<Style>
 
     public Point<int> Position
     {
-        get => GetValue(this.position, this.Parent?.position).Value;
+        get => this.position.Value;
         set => this.position.Value = value;
     }
 
-    public Size<uint> Size
+    public Size<float> Size
     {
-        get => GetValue(this.size, this.Parent?.size).Value;
+        get => this.size.Value;
         set => this.size.Value = value;
     }
 
     public StackMode Stack
     {
-        get => GetValue(this.stack, this.Parent?.stack).Value;
+        get => this.stack.Value;
         set => this.stack.Value = value;
-    }
-
-    private Style? parent;
-
-    internal override Style? Parent
-    {
-        get => this.parent;
-        set
-        {
-            this.parent        = value;
-            this.Border.Parent = value?.Border;
-            this.Font.Parent   = value?.Font;
-        }
     }
 
     public Style() =>
@@ -78,8 +65,6 @@ public record Style : Trackable<Style>
         this.position.Value = source.position.Value;
         this.size.Value     = source.size.Value;
         this.stack.Value    = source.stack.Value;
-
-        this.Parent = source.Parent;
 
         this.ListenEvents();
     }

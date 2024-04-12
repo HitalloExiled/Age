@@ -8,7 +8,6 @@ public class TextNode : Node2D
 
     public Element? ParentElement => this.Parent as Element;
 
-    internal float BaseLine   { get; set; }
     internal float LineHeight { get; set; }
 
     public string? Value
@@ -23,13 +22,13 @@ public class TextNode : Node2D
 
         if (parent != null && parent.IsConnected && value != this.value)
         {
-            this.Redraw();
+            this.Draw();
         }
 
         this.value = value;
     }
 
-    public void Redraw()
+    internal void Draw()
     {
         if (string.IsNullOrEmpty(this.value))
         {

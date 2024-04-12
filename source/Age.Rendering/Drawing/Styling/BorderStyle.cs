@@ -12,19 +12,19 @@ public record BorderStyle : Trackable<BorderStyle>
 
     public Color Color
     {
-        get => GetValue(this.color, this.Parent?.color).Value;
+        get => this.color.Value;
         set => this.color.Value = value;
     }
 
     public uint Radius
     {
-        get => GetValue(this.radius, this.Parent?.radius).Value;
+        get => this.radius.Value;
         set => this.radius.Value = value;
     }
 
     public uint Size
     {
-        get => GetValue(this.size, this.Parent?.size).Value;
+        get => this.size.Value;
         set => this.size.Value = value;
     }
 
