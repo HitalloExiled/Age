@@ -9,7 +9,7 @@ namespace Age;
 
 public class Engine : IDisposable
 {
-    private const bool   FPS_UNLOCKED = false;
+    private const bool   FPS_UNLOCKED = true;
     private const ushort TARGET_FPS   = 60;
 
     private readonly Container      container;

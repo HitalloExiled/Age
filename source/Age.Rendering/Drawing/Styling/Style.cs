@@ -4,6 +4,9 @@ namespace Age.Rendering.Drawing.Styling;
 
 public record Style
 {
+    public event Action? Changed;
+
+    private Point<int>?    align;
     private AlignmentType? alignment;
     private Color?         backgroundColor;
     private float?         baseline;
@@ -13,109 +16,120 @@ public record Style
     private Color?         color;
     private string?        fontFamily;
     private ushort?        fontSize;
-    private Size<int>?     maxSize;
-    private Size<int>?     minSize;
+    private Margin?        margin;
+    private Size<uint>?    maxSize;
+    private Size<uint>?    minSize;
     private Point<int>?    position;
     private PositionType?  positionType;
-    private Size<int>?     size;
+    private Size<uint>?    size;
     private StackType?     stack;
 
-    public event Action? Changed;
+    public Point<int>? Align
+    {
+        get => this.align;
+        set => this.Set(ref this.align, value);
+    }
 
     public AlignmentType? Alignment
     {
-        get => alignment;
-        set => Set(ref alignment, value);
+        get => this.alignment;
+        set => this.Set(ref this.alignment, value);
     }
 
     public Color? BackgroundColor
     {
-        get => backgroundColor;
-        set => Set(ref backgroundColor, value);
+        get => this.backgroundColor;
+        set => this.Set(ref this.backgroundColor, value);
     }
 
     public float? Baseline
     {
-        get => baseline;
-        set => Set(ref baseline, value);
+        get => this.baseline;
+        set => this.Set(ref this.baseline, value);
     }
 
     public Color? BorderColor
     {
         get => this.borderColor;
-        set => Set(ref this.borderColor, value);
+        set => this.Set(ref this.borderColor, value);
     }
 
     public uint? BorderSize
     {
         get => this.borderSize;
-        set => Set(ref this.borderSize, value);
+        set => this.Set(ref this.borderSize, value);
     }
 
     public uint? BorderRadius
     {
         get => this.borderRadius;
-        set => Set(ref this.borderRadius, value);
+        set => this.Set(ref this.borderRadius, value);
     }
 
     public Color? BackgroundColor1
     {
         get => this.backgroundColor;
-        set => Set(ref this.backgroundColor, value);
+        set => this.Set(ref this.backgroundColor, value);
     }
 
     public Color? Color
     {
-        get => color;
-        set => Set(ref color, value);
+        get => this.color;
+        set => this.Set(ref this.color, value);
     }
 
     public string? FontFamily
     {
-        get => fontFamily;
-        set => Set(ref fontFamily, value);
+        get => this.fontFamily;
+        set => this.Set(ref this.fontFamily, value);
     }
 
     public ushort? FontSize
     {
-        get => fontSize;
-        set => Set(ref fontSize, value);
+        get => this.fontSize;
+        set => this.Set(ref this.fontSize, value);
     }
 
-    public Size<int>? MaxSize
+    public Margin? Margin
     {
-        get => maxSize;
-        set => Set(ref maxSize, value);
+        get => this.margin;
+        set => this.Set(ref this.margin, value);
     }
 
-    public Size<int>? MinSize
+    public Size<uint>? MaxSize
     {
-        get => minSize;
-        set => Set(ref minSize, value);
+        get => this.maxSize;
+        set => this.Set(ref this.maxSize, value);
+    }
+
+    public Size<uint>? MinSize
+    {
+        get => this.minSize;
+        set => this.Set(ref this.minSize, value);
     }
 
     public Point<int>? Position
     {
-        get => position;
-        set => Set(ref position, value);
+        get => this.position;
+        set => this.Set(ref this.position, value);
     }
 
     public PositionType? PositionType
     {
-        get => positionType;
-        set => Set(ref positionType, value);
+        get => this.positionType;
+        set => this.Set(ref this.positionType, value);
     }
 
-    public Size<int>? Size
+    public Size<uint>? Size
     {
-        get => size;
-        set => Set(ref size, value);
+        get => this.size;
+        set => this.Set(ref this.size, value);
     }
 
     public StackType? Stack
     {
-        get => stack;
-        set => Set(ref stack, value);
+        get => this.stack;
+        set => this.Set(ref this.stack, value);
     }
 
     public static Style Merge(Style left, Style right) =>

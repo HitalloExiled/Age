@@ -16,7 +16,7 @@ namespace Age.Rendering.Services;
 
 internal class RenderingService : IDisposable
 {
-    private const bool DRAW_WIREFRAME = true;
+    private const bool DRAW_WIREFRAME = false;
 
     private readonly Shader         diffuseShader;
     private readonly IndexBuffer    indexBuffer;

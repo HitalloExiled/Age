@@ -1,4 +1,4 @@
-#define DUMP_IMAGES
+// #define DUMP_IMAGES
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Commands;
@@ -145,10 +145,10 @@ internal partial class TextService(RenderingService renderingService, TextureSto
 
         font.GetGlyphWidths(glyphs, glyphsWidths, glyphsBounds, paint);
 
-        var lineHeight = (int)float.Round(-metrics.Ascent + metrics.Descent);
+        var lineHeight = (uint)float.Round(-metrics.Ascent + metrics.Descent);
         var baseLine   = (int)float.Round(metrics.Ascent);
         var offset     = new Point<int>(0, baseLine);
-        var maxSize    = new Size<int>(0, lineHeight);
+        var maxSize    = new Size<uint>(0, lineHeight);
 
         commands.Clear();
 
@@ -184,16 +184,16 @@ internal partial class TextService(RenderingService renderingService, TextureSto
 
                 textNode.Commands.Add(command);
 
-                maxSize.Width = int.Max(maxSize.Width, (int)float.Round(position.X + bounds.Right));
+                maxSize.Width = uint.Max(maxSize.Width, (uint)float.Round(position.X + bounds.Right));
                 offset.X += (int)float.Round(glyphsWidths[i]);
 
             }
             else if (character == '\n')
             {
                 offset.X  = 0;
-                offset.Y -= lineHeight + (int)-metrics.Leading;
+                offset.Y -= (int)(lineHeight + -metrics.Leading);
 
-                maxSize.Height += lineHeight + (int)metrics.Leading;
+                maxSize.Height += lineHeight + (uint)metrics.Leading;
             }
             else
             {
@@ -201,7 +201,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
             }
         }
 
-        textNode.BaseLine   = -offset.Y / (float)maxSize.Height;
+        textNode.Baseline   = -offset.Y / (float)maxSize.Height;
         textNode.LineHeight = lineHeight;
         textNode.Size       = maxSize;
 

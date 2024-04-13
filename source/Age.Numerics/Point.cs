@@ -9,6 +9,9 @@ public record struct Point<T> where T : INumber<T>
     public T X;
     public T Y;
 
+    public Point(T value) : this(value, value)
+    { }
+
     public Point(T x, T y)
     {
         this.X = x;

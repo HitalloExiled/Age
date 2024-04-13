@@ -1,10 +1,30 @@
 namespace Age.Rendering.Drawing.Elements;
 
-public class Canvas : Node
+public class Canvas : Element
 {
+    private const ushort PADDING = 8;
     private readonly Stack<Element> updateStack = [];
 
     public override string NodeName { get; } = nameof(Canvas);
+
+    public Canvas() =>
+        this.Style = new()
+        {
+            Baseline = 1,
+            Position = new(PADDING, -PADDING),
+        };
+
+    private void OnWindowSizeChanged() =>
+        this.Style.Size = this.Tree!.Window.ClientSize - PADDING * 2;
+
+    protected override void OnConnected()
+    {
+        this.Tree!.Window.SizeChanged += this.OnWindowSizeChanged;
+        this.OnWindowSizeChanged();
+    }
+
+    protected override void OnDisconnected() =>
+        this.Tree!.Window.SizeChanged -= this.OnWindowSizeChanged;
 
     protected override void OnChildAppended(Node child)
     {
@@ -25,7 +45,7 @@ public class Canvas : Node
     internal void RequestUpdate(Element element) =>
         this.updateStack.Push(element);
 
-    internal void UpdateLayout()
+    internal override void UpdateLayout()
     {
         while (this.updateStack.Count > 0)
         {
@@ -33,5 +53,7 @@ public class Canvas : Node
 
             element.UpdateLayout();
         }
+
+        base.UpdateLayout();
     }
 }

@@ -6,6 +6,8 @@ namespace Age.Rendering.Interfaces;
 
 public interface IWindow
 {
+    event Action SizeChanged;
+
     Size<uint> ClientSize { get; }
     bool       Closed     { get; }
     NodeTree   Tree       { get; }

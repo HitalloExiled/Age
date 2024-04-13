@@ -36,6 +36,15 @@ public abstract class Node : IEnumerable<Node>
                 {
                     child.Tree = this.tree;
                 }
+
+                if (this.tree != null)
+                {
+                    this.OnConnected();
+                }
+                else
+                {
+                    this.OnDisconnected();
+                }
             }
         }
     }
@@ -49,6 +58,12 @@ public abstract class Node : IEnumerable<Node>
     { }
 
     protected virtual void OnChildAppended(Node child)
+    { }
+
+    protected virtual void OnConnected()
+    { }
+
+    protected virtual void OnDisconnected()
     { }
 
     protected virtual void OnInitialize()

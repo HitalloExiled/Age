@@ -18,6 +18,7 @@ public class Editor : Node
     private double minFrameTime = double.MaxValue;
     private double delta;
     private bool   increasing = true;
+    private double timeElapsed;
 
     public override string NodeName { get; } = nameof(Editor);
 
@@ -35,9 +36,8 @@ public class Editor : Node
             Name  = "Root",
             Style = new()
             {
-                // Baseline = 0,
-                // Size     = new(100, 100),
-                Position = new(100, -100)
+                Margin    = new(20),
+                Alignment = AlignmentType.Center | AlignmentType.Top
             }
         };
 
@@ -48,34 +48,27 @@ public class Editor : Node
             Name  = "Status",
             Text  =
             """
-            {X}Àg
+            Frame
             """,
             Style = style with
             {
+                Margin      = new(10),
                 BorderColor = Color.Red,
-                // Baseline = -1,
                 Color    = Color.Margenta,
                 FontSize = 24,
-                // Size     = new(25, 25)
-                /* Position = new(-10, 10) */
             }
         };
 
         root.AppendChild(this.statusText);
 
-        // this.Append(new Text("Hello\nWorld\n!!!", style with { FontSize = 100, Color = Color.Green, /* Position = new(100, -200) */ }));
-        // this.Append(new Text("Hello World!!!",    style with { FontSize = 50,  Color = Color.Blue,  /* Position = new(50,  -500) */ }));
         var parentSpan = new Span()
         {
-            Name = "Parent",
-            Text = "Text",
+            Name  = "Parent",
+            Text  = "Text",
             Style = style with
             {
-                Baseline = 0,
-                // Size = new(100, 100),
                 FontSize   = 48,
                 FontFamily = "Impact",
-            /* Position = new(20, -20) */
             }
         };
 
@@ -84,8 +77,8 @@ public class Editor : Node
         var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
         var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
         var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { FontSize = 48, FontFamily = "Verdana", Color = Color.Blue } };
-        var childSpan4 = new Span() { Text = "Hello",         Style = style with { Baseline = 0, MinSize  = new(20, 20) } };
-        var childSpan5 = new Span() { Text = "World!!!",      Style = style with { Baseline = 0, MinSize  = new(30, 30) } };
+        var childSpan4 = new Span() { Text = "Hello",         Style = style with { Margin = new(4, 0) } };
+        var childSpan5 = new Span() { Text = "World!!!",      Style = style with { Margin = new(4, 0) } };
 
         parentSpan.AppendChild(childSpan1);
         parentSpan.AppendChild(childSpan2);
@@ -121,23 +114,29 @@ public class Editor : Node
         this.maxFrameTime = Math.Max(this.maxFrameTime, frameTime);
         this.minFrameTime = Math.Min(this.minFrameTime, frameTime);
 
-        // this.statusText.Style.Position = new Point<int>((int)(double.Cos(this.delta) * 50), (int)(double.Sin(this.delta) * -50));
+        this.timeElapsed += deltaTime * 1000;
 
-        this.statusText.Text =
-            $"""
-            Frames:    {this.frames}
-            DeltaTime: {Math.Round(deltaTime, 4)}
-            FPS: {fps}
-                Avg: {avgFps}
-                Min: {this.minFps}
-                Max: {this.maxFps}
+        if (this.timeElapsed > 8.33)
+        {
+            // this.statusText.LocalTransform = this.statusText.LocalTransform with { Position = new Point<int>((int)(double.Cos(this.delta) * 50), (int)(double.Sin(this.delta) * -50)) };
+            this.statusText.Text =
+                $"""
+                Frames:    {this.frames}
+                Delta Time: {Math.Round(deltaTime, 4)}
+                FPS: {fps}
+                    Avg: {avgFps}
+                    Min: {this.minFps}
+                    Max: {this.maxFps}
 
-            FrameTime: {frameTime}ms
-                Min: {this.minFrameTime}ms
-                Max: {this.maxFrameTime}ms
+                Frame Time: {frameTime}ms
+                    Min: {this.minFrameTime}ms
+                    Max: {this.maxFrameTime}ms
 
-            Size: {this.statusText.Size};
-            """;
+                Size: {this.statusText.Size};
+                """;
+
+            this.timeElapsed = 0;
+        }
 
         this.frames++;
     }

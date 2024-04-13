@@ -1,5 +1,4 @@
 using System.Text;
-using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing.Elements;
@@ -9,15 +8,14 @@ namespace Age.Rendering.Drawing;
 
 public abstract class Element : Node2D, IEnumerable<Element>
 {
-    private Style style = new();
     private readonly List<Node2D> nodesToDistribute = [];
 
+    private Canvas?     canvas;
     private Transform2D dispositionTransform = new();
+    private bool        hasPendingUpdate;
+    private Style       style = new();
     private Transform2D styleTransform       = new();
-
-    private Canvas? canvas;
-    private bool    hasPendingUpdate;
-    private string? text;
+    private string?     text;
 
     public Element? ParentElement => this.Parent as Element;
 
@@ -128,10 +126,13 @@ public abstract class Element : Node2D, IEnumerable<Element>
         var stackMode = this.Style.Stack ?? StackType.Horizontal;
 
         var hightest = 0f;
-        var size     = this.Style.Size ?? new Size<int>();
+        var size     = this.Style.Size ?? new Size<uint>();
 
         foreach (var child in this.Enumerate<Node2D>())
         {
+            var childStyle = (child as Element)?.Style;
+            var margin     = childStyle?.Margin ?? new(0);
+
             if (stackMode == StackType.Horizontal)
             {
                 if (child is TextNode textNode)
@@ -141,23 +142,23 @@ public abstract class Element : Node2D, IEnumerable<Element>
 
                 if (child.Size.Height > hightest)
                 {
-                    this.BaseLine = child.BaseLine;
+                    this.Baseline = child.Baseline;
 
                     hightest = child.Size.Height;
                 }
 
                 if (!this.Style.Size.HasValue)
                 {
-                    size.Height  = int.Max(size.Height, child.Size.Height);
-                    size.Width  += child.Size.Width;
+                    size.Height  = uint.Max(size.Height, margin.Top + child.Size.Height + margin.Bottom);
+                    size.Width  += margin.Left + child.Size.Width + margin.Right;
                 }
             }
             else
             {
                 if (!this.Style.Size.HasValue)
                 {
-                    size.Height += child.Size.Height;
-                    size.Width   = int.Max(size.Width, child.Size.Width);
+                    size.Height += margin.Top + child.Size.Height + margin.Bottom;
+                    size.Width   = uint.Max(size.Width, margin.Left + child.Size.Width + margin.Right);
                 }
             }
 
@@ -228,20 +229,65 @@ public abstract class Element : Node2D, IEnumerable<Element>
             return;
         }
 
+        static int? getXAlignment(AlignmentType? alignmentType) =>
+            !alignmentType.HasValue
+                ? null
+                : alignmentType.Value.HasFlag(AlignmentType.Left)
+                    ? -1
+                    : alignmentType.Value.HasFlag(AlignmentType.Right)
+                        ? 1
+                        : alignmentType.Value.HasFlag(AlignmentType.Center)
+                            ? 0
+                            : null;
+
+        static int? getYAlignment(AlignmentType? alignmentType) =>
+            !alignmentType.HasValue
+                ? null
+                : alignmentType.Value.HasFlag(AlignmentType.Bottom)
+                    ? -1
+                    : alignmentType.Value.HasFlag(AlignmentType.Top)
+                        ? 1
+                        : alignmentType.Value.HasFlag(AlignmentType.Center)
+                            ? 0
+                            : null;
+
+        static float normalize(float value) =>
+            (1 + value) / 2;
+
         var previous = new Rect<int>();
         var size     = this.Size;
+        var stack    = this.Style.Stack ?? StackType.Horizontal;
 
         foreach (var child in this.nodesToDistribute)
         {
-            var style = (child as Element)?.Style;
+            var childStyle = (child as Element)?.Style;
 
-            var x = previous.Size.Width + previous.Position.X;
-            var y = style?.Baseline.HasValue ?? false
-                ? -((size.Height - child.Size.Height) * (1 - (1 + style.Baseline.Value) / 2))
-                : -(size.Height - child.Size.Height * child.BaseLine - size.Height * (1 - this.BaseLine));
+            Vector2<float> position;
 
-            var position = new Vector2<float>(x, y);
+            var margin       = childStyle?.Margin ?? new();
+            var offsetScaleX = childStyle?.Align?.X ?? getXAlignment(childStyle?.Alignment);
+            var offsetScaleY = childStyle?.Align?.Y ?? getYAlignment(childStyle?.Alignment) ?? (stack == StackType.Horizontal ? this.Style.Baseline : null);
 
+            if (stack == StackType.Horizontal)
+            {
+                var offsetX  = previous.Position.X + previous.Size.Width;
+                var isInline = !offsetScaleY.HasValue && margin.Vertical == 0;
+
+                var x = offsetX + (size.Width - offsetX - child.Size.Width) * normalize(offsetScaleX ?? -1);
+                var y = isInline
+                    ? -(size.Height - child.Size.Height * child.Baseline - size.Height * (1 - this.Baseline))
+                    : -((size.Height - child.Size.Height - margin.Vertical) * (1 - normalize(offsetScaleY ?? 1)));
+
+                position = new(margin.Left + x, -margin.Top + y);
+                // position = new(x, y);
+            }
+            else
+            {
+                var x = previous.Size.Width  + previous.Position.X;
+                var y = previous.Size.Height + previous.Position.Y;
+
+                position = new(x, y);
+            }
             if (child is Element element)
             {
                 element.dispositionTransform = element.dispositionTransform with { Position = position };
@@ -251,7 +297,8 @@ public abstract class Element : Node2D, IEnumerable<Element>
                 child.LocalTransform = child.LocalTransform with { Position = position };
             }
 
-            previous = new(child.Size, position);
+            previous = new(child.Size.Cast<int>(), position + new Vector2<float>(margin.Right, -margin.Bottom));
+            // previous = new(child.Size.Cast<int>(), position);
         }
 
         this.nodesToDistribute.Clear();
@@ -317,7 +364,7 @@ public abstract class Element : Node2D, IEnumerable<Element>
     protected override void OnBoundsChanged() =>
         this.ParentElement?.RequestUpdate();
 
-    internal void UpdateLayout()
+    internal virtual void UpdateLayout()
     {
         this.CalculateLayout();
         this.UpdateDisposition();
