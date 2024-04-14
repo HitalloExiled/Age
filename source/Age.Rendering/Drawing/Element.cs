@@ -128,10 +128,10 @@ public abstract class Element : Node2D, IEnumerable<Element>
         var hightest = 0f;
         var size     = this.Style.Size ?? new Size<uint>();
 
+
         foreach (var child in this.Enumerate<Node2D>())
         {
-            var childStyle = (child as Element)?.Style;
-            var margin     = childStyle?.Margin ?? new(0);
+            var margin = (child as Element)?.Style?.Margin ?? new(0);
 
             if (stackMode == StackType.Horizontal)
             {
@@ -262,31 +262,32 @@ public abstract class Element : Node2D, IEnumerable<Element>
         {
             var childStyle = (child as Element)?.Style;
 
-            Vector2<float> position;
-
             var margin       = childStyle?.Margin ?? new();
             var offsetScaleX = childStyle?.Align?.X ?? getXAlignment(childStyle?.Alignment);
             var offsetScaleY = childStyle?.Align?.Y ?? getYAlignment(childStyle?.Alignment) ?? (stack == StackType.Horizontal ? this.Style.Baseline : null);
 
+            Vector2<float> position;
+
             if (stack == StackType.Horizontal)
             {
                 var offsetX  = previous.Position.X + previous.Size.Width;
-                var isInline = !offsetScaleY.HasValue && margin.Vertical == 0;
+                var isInline = !offsetScaleY.HasValue && childStyle?.Margin == null;
 
-                var x = offsetX + (size.Width - offsetX - child.Size.Width) * normalize(offsetScaleX ?? -1);
+                var x = offsetX + (size.Width - child.Size.Width - offsetX - margin.Horizontal) * normalize(offsetScaleX ?? -1);
                 var y = isInline
                     ? -(size.Height - child.Size.Height * child.Baseline - size.Height * (1 - this.Baseline))
                     : -((size.Height - child.Size.Height - margin.Vertical) * (1 - normalize(offsetScaleY ?? 1)));
 
                 position = new(margin.Left + x, -margin.Top + y);
-                // position = new(x, y);
             }
             else
             {
-                var x = previous.Size.Width  + previous.Position.X;
-                var y = previous.Size.Height + previous.Position.Y;
+                var offsetY = -previous.Position.Y + previous.Size.Height;
 
-                position = new(x, y);
+                var x = (size.Width - child.Size.Width - margin.Horizontal) * (1 - normalize(-offsetScaleX ?? 1));
+                var y = -(offsetY + (size.Height - child.Size.Height - offsetY - margin.Vertical) * normalize(-offsetScaleY ?? -1));
+
+                position = new(margin.Left + x, -margin.Top + y);
             }
             if (child is Element element)
             {

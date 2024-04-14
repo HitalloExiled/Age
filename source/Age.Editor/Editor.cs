@@ -37,8 +37,10 @@ public class Editor : Node
             Name  = "Root",
             Style = new()
             {
-                Margin    = new(20),
-                Alignment = AlignmentType.Center | AlignmentType.Top
+                Stack = StackType.Vertical,
+                // Margin = new(20),
+                // Alignment = AlignmentType.Center | AlignmentType.Top
+                Size = new(500, 500)
             }
         };
 
@@ -49,10 +51,11 @@ public class Editor : Node
             Name  = "Status",
             Text  =
             """
-            Frame
+            Frame.......................
             """,
             Style = style with
             {
+                Align       = new(),
                 Margin      = new(10),
                 BorderColor = Color.Red,
                 Color       = Color.Margenta,
@@ -68,6 +71,7 @@ public class Editor : Node
             Text  = "Text",
             Style = style with
             {
+                Align      = new(),
                 FontSize   = 48,
                 FontFamily = "Impact",
             }
@@ -75,17 +79,17 @@ public class Editor : Node
 
         root.AppendChild(parentSpan);
 
-        var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
-        var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
-        var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { FontSize = 48, FontFamily = "Verdana", Color = Color.Blue } };
-        var childSpan4 = new Span() { Text = "Hello",         Style = style with { Margin = new(4, 0) } };
-        var childSpan5 = new Span() { Text = "World!!!",      Style = style with { Margin = new(4, 0) } };
+        // var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
+        // var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
+        // var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { FontSize = 48, FontFamily = "Verdana", Color = Color.Blue } };
+        // var childSpan4 = new Span() { Text = "Hello",         Style = style with { Margin = new(4, 0) } };
+        // var childSpan5 = new Span() { Text = "World!!!",      Style = style with { Margin = new(4, 0) } };
 
-        parentSpan.AppendChild(childSpan1);
-        parentSpan.AppendChild(childSpan2);
-        parentSpan.AppendChild(childSpan3);
-        parentSpan.AppendChild(childSpan4);
-        parentSpan.AppendChild(childSpan5);
+        // parentSpan.AppendChild(childSpan1);
+        // parentSpan.AppendChild(childSpan2);
+        // parentSpan.AppendChild(childSpan3);
+        // parentSpan.AppendChild(childSpan4);
+        // parentSpan.AppendChild(childSpan5);
     }
 
     protected override void OnInitialize() =>
@@ -120,27 +124,27 @@ public class Editor : Node
 
         this.timeElapsed += deltaTime * 1000;
 
-        // if (this.timeElapsed > 16.66)
-        {
-            // this.statusText.LocalTransform = this.statusText.LocalTransform with { Position = new Point<int>((int)(double.Cos(this.delta) * 50), (int)(double.Sin(this.delta) * -50)) };
-            this.statusText.Text =
-                $"""
-                Frames:    {this.frames}
-                Delta Time: {Math.Round(deltaTime, 4)}
-                FPS: {fps}
-                    Avg: {avgFps}
-                    Min: {this.minFps}
-                    Max: {this.maxFps}
+        // // if (this.timeElapsed > 16.66)
+        // {
+        //     // this.statusText.LocalTransform = this.statusText.LocalTransform with { Position = new Point<int>((int)(double.Cos(this.delta) * 50), (int)(double.Sin(this.delta) * -50)) };
+        //     this.statusText.Text =
+        //         $"""
+        //         Frames:    {this.frames}
+        //         Delta Time: {Math.Round(deltaTime, 4)}
+        //         FPS: {fps}
+        //             Avg: {avgFps}
+        //             Min: {this.minFps}
+        //             Max: {this.maxFps}
 
-                Frame Time: {frameTime}ms
-                    Min: {this.minFrameTime}ms
-                    Max: {this.maxFrameTime}ms
+        //         Frame Time: {frameTime}ms
+        //             Min: {this.minFrameTime}ms
+        //             Max: {this.maxFrameTime}ms
 
-                Size: {this.statusText.Size};
-                """;
+        //         Size: {this.statusText.Size};
+        //         """;
 
-            this.timeElapsed = 0;
-        }
+        //     this.timeElapsed = 0;
+        // }
 
         this.frames++;
     }
