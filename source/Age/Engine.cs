@@ -9,12 +9,12 @@ namespace Age;
 
 public class Engine : IDisposable
 {
-    private const bool   FPS_UNLOCKED = true;
-    private const ushort TARGET_FPS   = 60;
+    private const bool   FPS_LOCKED        = true;
+    private const ushort TARGET_FPS        = 60;
+    private const double TARGET_FRAME_TIME = 1000.0 / TARGET_FPS;
 
     private readonly Container      container;
-    private readonly VulkanRenderer renderer = new();
-    private readonly double         targetFrameTime = 1000.0 / TARGET_FPS;
+    private readonly VulkanRenderer renderer  = new();
 
     private bool disposed;
 
@@ -67,33 +67,37 @@ public class Engine : IDisposable
     {
         this.Running = true;
 
-        var watch = new Stopwatch();
+        var previous  = 0D;
+        var frameTime = 0D;
+        var current   = 0D;
+
+        var watch = Stopwatch.StartNew();
 
         while (this.Running)
         {
-            watch.Restart();
+            frameTime += current - previous;
 
-            this.container.RenderingService.Render(Window.Windows);
-
-            var frameTime = watch.Elapsed.TotalMilliseconds;
-
-            if (!FPS_UNLOCKED && frameTime < this.targetFrameTime)
+            if (!FPS_LOCKED || frameTime >= TARGET_FRAME_TIME)
             {
-                var remaining = this.targetFrameTime - frameTime;
+                var deltaTime = frameTime / 1000;
 
-                Thread.Sleep(new TimeSpan((long)(remaining * TimeSpan.TicksPerMillisecond) / 2));
+                foreach (var window in Window.Windows)
+                {
+                    window.DoEvents();
+                    window.Tree.Update(deltaTime);
+                }
+
+                this.container.RenderingService.Render(Window.Windows);
+
+                this.Running = Window.Windows.Any(x => !x.Closed);
+
+                frameTime = 0;
             }
 
-            var deltaTime = watch.Elapsed.TotalMilliseconds / 1000;
-
-            foreach (var window in Window.Windows)
-            {
-                window.DoEvents();
-                window.Tree.Update(deltaTime);
-            }
-
-            this.Running = Window.Windows.Any(x => !x.Closed);
-
+            previous = current;
+            current  = watch.Elapsed.TotalMilliseconds;
         }
+
+        watch.Stop();
     }
 }

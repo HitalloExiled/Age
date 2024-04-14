@@ -1,3 +1,4 @@
+using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Drawing;
 using Age.Rendering.Drawing.Elements;
@@ -7,8 +8,8 @@ namespace Age.Editor;
 
 public class Editor : Node
 {
-    private readonly Canvas canvas;
-    private readonly Span   statusText;
+    private readonly Canvas  canvas;
+    private readonly Span    statusText;
 
     private ulong  frames;
     private double minFps = double.MaxValue;
@@ -54,8 +55,8 @@ public class Editor : Node
             {
                 Margin      = new(10),
                 BorderColor = Color.Red,
-                Color    = Color.Margenta,
-                FontSize = 24,
+                Color       = Color.Margenta,
+                FontSize    = 24,
             }
         };
 
@@ -87,6 +88,9 @@ public class Editor : Node
         parentSpan.AppendChild(childSpan5);
     }
 
+    protected override void OnInitialize() =>
+        Logger.Debug(this.statusText.Size.ToString());
+
     protected override void OnUpdate(double deltaTime)
     {
         this.delta = this.increasing
@@ -116,7 +120,7 @@ public class Editor : Node
 
         this.timeElapsed += deltaTime * 1000;
 
-        if (this.timeElapsed > 8.33)
+        // if (this.timeElapsed > 16.66)
         {
             // this.statusText.LocalTransform = this.statusText.LocalTransform with { Position = new Point<int>((int)(double.Cos(this.delta) * 50), (int)(double.Sin(this.delta) * -50)) };
             this.statusText.Text =
