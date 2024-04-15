@@ -1,4 +1,3 @@
-using System.Net.Sockets;
 using System.Text;
 using Age.Numerics;
 using Age.Rendering.Commands;
@@ -7,13 +6,12 @@ using Age.Rendering.Drawing.Styling;
 
 namespace Age.Rendering.Drawing;
 
-public abstract class Element : Node2D, IEnumerable<Element>
+public abstract class Element : ContainerNode, IEnumerable<Element>
 {
-    private readonly List<Node2D> nodesToDistribute = [];
+    private readonly List<ContainerNode> nodesToDistribute = [];
 
     private Canvas?     canvas;
     private Transform2D dispositionTransform = new();
-    private bool        hasPendingUpdate;
     private Style       style = new();
     private Transform2D styleTransform       = new();
     private string?     text;
@@ -31,14 +29,17 @@ public abstract class Element : Node2D, IEnumerable<Element>
         get => this.canvas;
         internal set
         {
-            this.canvas = value;
-
-            foreach (var item in this.Enumerate<Element>())
+            if (this.canvas != value)
             {
-                item.Canvas = value;
-            }
+                this.canvas = value;
 
-            this.RequestUpdate();
+                foreach (var item in this.Enumerate<Element>())
+                {
+                    item.Canvas = value;
+                }
+
+                this.RequestUpdate();
+            }
         }
     }
 
@@ -95,10 +96,7 @@ public abstract class Element : Node2D, IEnumerable<Element>
 
                 this.text = value;
 
-                if (this.IsConnected)
-                {
-                    this.RequestUpdate();
-                }
+                this.RequestUpdate();
             }
         }
     }
@@ -108,6 +106,7 @@ public abstract class Element : Node2D, IEnumerable<Element>
         get => this.styleTransform * this.dispositionTransform * base.Transform;
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
+    public bool HasPendingUpdate { get; private set; }
 
     public Element() =>
         this.style.Changed += this.OnStyleChanged;
@@ -129,7 +128,7 @@ public abstract class Element : Node2D, IEnumerable<Element>
         var hightest    = 0f;
         var contentSize = new Size<uint>();
 
-        foreach (var child in this.Enumerate<Node2D>())
+        foreach (var child in this.Enumerate<ContainerNode>())
         {
             var childStyle = (child as Element)?.Style;
             var margin     = childStyle?.Margin ?? new(0);
@@ -199,24 +198,10 @@ public abstract class Element : Node2D, IEnumerable<Element>
         command.Color = this.Style.BorderColor ?? new(0.75f, 0.75f, 0.75f, 1);
     }
 
-    private void RequestUpdate()
-    {
-        if (this.canvas != null && !this.hasPendingUpdate)
-        {
-            this.hasPendingUpdate = true;
-            this.canvas.RequestUpdate(this);
-            Container.Singleton.RenderingService.RequestDraw();
-        }
-    }
-
     private void OnStyleChanged()
     {
         this.UpdateStyleTransform();
-
-        if (this.IsConnected)
-        {
-            this.RequestUpdate();
-        }
+        this.RequestUpdate();
     }
 
     private void UpdateDisposition()
@@ -256,7 +241,7 @@ public abstract class Element : Node2D, IEnumerable<Element>
         var contentSize = this.ContentSize;
         var stack       = this.Style.Stack ?? StackType.Horizontal;
 
-        Node2D? lastChild = null;
+        ContainerNode? lastChild = null;
 
         for (var i = 0; i < this.nodesToDistribute.Count; i++)
         {
@@ -331,6 +316,15 @@ public abstract class Element : Node2D, IEnumerable<Element>
     private void UpdateStyleTransform() =>
         this.styleTransform = this.styleTransform with { Position = this.style.Position ?? default };
 
+    internal protected virtual void RequestUpdate()
+    {
+        if (!this.HasPendingUpdate)
+        {
+            this.HasPendingUpdate = true;
+            this.ParentElement?.RequestUpdate();
+        }
+    }
+
     protected override void OnChildAppended(Node child)
     {
         if (child is Element childElement)
@@ -390,9 +384,17 @@ public abstract class Element : Node2D, IEnumerable<Element>
 
     internal virtual void UpdateLayout()
     {
-        this.CalculateLayout();
-        this.UpdateDisposition();
+        if (this.HasPendingUpdate)
+        {
+            foreach (var child in this)
+            {
+                (child as Element)?.UpdateLayout();
+            }
 
-        this.hasPendingUpdate = false;
+            this.CalculateLayout();
+            this.UpdateDisposition();
+
+            this.HasPendingUpdate = false;
+        }
     }
 }

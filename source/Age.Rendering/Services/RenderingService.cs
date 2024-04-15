@@ -9,7 +9,6 @@ using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Flags;
 using Age.Numerics;
 using Age.Rendering.Storage;
-using Age.Rendering.Drawing.Elements;
 using System.Runtime.CompilerServices;
 
 namespace Age.Rendering.Services;
@@ -189,16 +188,9 @@ internal class RenderingService : IDisposable
         this.renderer.BindPipeline(this.diffuseShader);
         this.renderer.BindIndexBuffer(this.indexBuffer);
 
-        foreach (var node in window.Tree.Traverse(true))
+        foreach (var node in window.Tree.Traverse<Node2D>())
         {
-            if (node is Canvas canvas)
-            {
-                canvas.UpdateLayout();
-            }
-            else if (node is Node2D node2D)
-            {
-                this.Render(window, node2D, false);
-            }
+            this.Render(window, node, false);
         }
 
         #pragma warning disable IDE0035, CS0162

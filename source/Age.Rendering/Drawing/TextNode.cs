@@ -1,6 +1,6 @@
 namespace Age.Rendering.Drawing.Elements;
 
-public class TextNode : Node2D
+public class TextNode : ContainerNode
 {
     private string? value;
 

@@ -69,7 +69,7 @@ public class Engine : IDisposable
 
         var previous  = 0D;
         var frameTime = 0D;
-        var current   = 0D;
+        var current   = TARGET_FRAME_TIME;
 
         var watch = Stopwatch.StartNew();
 

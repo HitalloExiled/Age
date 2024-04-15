@@ -7,7 +7,6 @@ namespace Age.Rendering.Drawing;
 [DebuggerDisplay("NodeName: {NodeName}, Name: {Name}, IsConnected: {IsConnected}")]
 public abstract class Node : IEnumerable<Node>
 {
-    private bool      initialized;
     private NodeTree? tree;
 
     public Node? FirstChild      { get; private set; }
@@ -66,10 +65,13 @@ public abstract class Node : IEnumerable<Node>
     protected virtual void OnDisconnected()
     { }
 
-    protected virtual void OnInitialize()
+    protected virtual void OnChildRemoved(Node child)
     { }
 
-    protected virtual void OnChildRemoved(Node child)
+    protected virtual void OnPreUpdate(double deltaTime)
+    { }
+
+    protected virtual void OnPostUpdate(double deltaTime)
     { }
 
     protected virtual void OnUpdate(double deltaTime)
@@ -258,12 +260,7 @@ public abstract class Node : IEnumerable<Node>
 
     public void Update(double deltaTime)
     {
-        if (!this.initialized)
-        {
-            this.initialized = true;
-
-            this.OnInitialize();
-        }
+        this.OnPreUpdate(deltaTime);
 
         foreach (var child in this)
         {
@@ -271,5 +268,7 @@ public abstract class Node : IEnumerable<Node>
         }
 
         this.OnUpdate(deltaTime);
+
+        this.OnPostUpdate(deltaTime);
     }
 }
