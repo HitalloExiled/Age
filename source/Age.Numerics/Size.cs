@@ -15,6 +15,9 @@ public record struct Size<T> where T : INumber<T>
         this.Height = height;
     }
 
+    public Size(T value) : this(value, value)
+    { }
+
     public readonly Size<U> Cast<U>() where U : INumber<U> =>
         new(U.CreateChecked(this.Width), U.CreateChecked(this.Height));
 

@@ -10,7 +10,8 @@ public abstract class Node2D : Node
 
     internal List<DrawCommand> Commands { get; set; } = [];
 
-    internal float Baseline { get; set; } = 1;
+    internal float      Baseline    { get; set; } = 1;
+    internal Size<uint> ContentSize { get; set; }
 
     public Size<uint> Size
     {

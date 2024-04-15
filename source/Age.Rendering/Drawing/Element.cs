@@ -125,13 +125,14 @@ public abstract class Element : Node2D, IEnumerable<Element>
     {
         var stackMode = this.Style.Stack ?? StackType.Horizontal;
 
-        var hightest = 0f;
-        var size     = this.Style.Size ?? new Size<uint>();
-
+        var hightest    = 0f;
+        var contentSize = new Size<uint>();
 
         foreach (var child in this.Enumerate<Node2D>())
         {
-            var margin = (child as Element)?.Style?.Margin ?? new(0);
+            var childStyle = (child as Element)?.Style;
+            var margin     = childStyle?.Margin ?? new(0);
+            var alignment  = childStyle?.Alignment ?? AlignmentType.BaseLine;
 
             if (stackMode == StackType.Horizontal)
             {
@@ -140,38 +141,33 @@ public abstract class Element : Node2D, IEnumerable<Element>
                     textNode.Draw();
                 }
 
-                if (child.Size.Height > hightest)
+                if (childStyle?.Align == null && alignment == AlignmentType.BaseLine && child.Size.Height > hightest)
                 {
                     this.Baseline = child.Baseline;
 
                     hightest = child.Size.Height;
                 }
 
-                if (!this.Style.Size.HasValue)
-                {
-                    size.Height  = uint.Max(size.Height, margin.Top + child.Size.Height + margin.Bottom);
-                    size.Width  += margin.Left + child.Size.Width + margin.Right;
-                }
+                contentSize.Height  = uint.Max(contentSize.Height, margin.Top + child.Size.Height + margin.Bottom);
+                contentSize.Width  += margin.Left + child.Size.Width + margin.Right;
             }
             else
             {
-                if (!this.Style.Size.HasValue)
-                {
-                    size.Height += margin.Top + child.Size.Height + margin.Bottom;
-                    size.Width   = uint.Max(size.Width, margin.Left + child.Size.Width + margin.Right);
-                }
+                contentSize.Height += margin.Top + child.Size.Height + margin.Bottom;
+                contentSize.Width   = uint.Max(contentSize.Width, margin.Left + child.Size.Width + margin.Right);
             }
 
             this.nodesToDistribute.Add(child);
         }
 
-        this.Size = this.Style.MinSize.HasValue && this.Style.MaxSize.HasValue
-            ? size.Range(this.Style.MinSize.Value, this.Style.MaxSize.Value)
+        this.ContentSize = contentSize;
+        this.Size        = this.Style.MinSize.HasValue && this.Style.MaxSize.HasValue
+            ? contentSize.Range(this.Style.MinSize.Value, this.Style.MaxSize.Value)
             : this.Style.MinSize.HasValue
-                ? size.Max(this.Style.MinSize.Value)
+                ? contentSize.Max(this.Style.MinSize.Value)
                 : this.Style.MaxSize.HasValue
-                    ? size.Min(this.Style.MaxSize.Value)
-                    : size;
+                    ? contentSize.Min(this.Style.MaxSize.Value)
+                    :  this.Style.Size ?? contentSize;
 
         this.ApplyStyle();
     }
@@ -254,41 +250,68 @@ public abstract class Element : Node2D, IEnumerable<Element>
         static float normalize(float value) =>
             (1 + value) / 2;
 
-        var previous = new Rect<int>();
-        var size     = this.Size;
-        var stack    = this.Style.Stack ?? StackType.Horizontal;
+        var offset      = new Point<float>();
+        var size        = this.Size;
+        var contentSize = this.ContentSize;
+        var stack       = this.Style.Stack ?? StackType.Horizontal;
 
-        foreach (var child in this.nodesToDistribute)
+        var reserved = size.Cast<float>() / this.nodesToDistribute.Count;
+
+        for (var i = 0; i < this.nodesToDistribute.Count; i++)
         {
+            var child = this.nodesToDistribute[i];
             var childStyle = (child as Element)?.Style;
 
             var margin       = childStyle?.Margin ?? new();
+            var hasMargin    = childStyle?.Margin != null;
             var offsetScaleX = childStyle?.Align?.X ?? getXAlignment(childStyle?.Alignment);
             var offsetScaleY = childStyle?.Align?.Y ?? getYAlignment(childStyle?.Alignment) ?? (stack == StackType.Horizontal ? this.Style.Baseline : null);
 
             Vector2<float> position;
+            Size<float>    usedSpace;
 
             if (stack == StackType.Horizontal)
             {
-                var offsetX  = previous.Position.X + previous.Size.Width;
-                var isInline = !offsetScaleY.HasValue && childStyle?.Margin == null;
+                var factorX  = normalize(offsetScaleX ?? -1);
+                var factorY  = 1 - normalize(offsetScaleY ?? (hasMargin ? 0 : 1));
+                var isInline = !offsetScaleY.HasValue && !hasMargin && (childStyle?.Stack ?? StackType.Horizontal) == StackType.Horizontal;
+                var canAlign = offsetScaleX.HasValue && size.Width > contentSize.Width;
 
-                var x = offsetX + (size.Width - child.Size.Width - offsetX - margin.Horizontal) * normalize(offsetScaleX ?? -1);
+                var x = canAlign ? Math.Max(0, reserved.Width - child.Size.Width - margin.Horizontal) * factorX : 0;
                 var y = isInline
-                    ? -(size.Height - child.Size.Height * child.Baseline - size.Height * (1 - this.Baseline))
-                    : -((size.Height - child.Size.Height - margin.Vertical) * (1 - normalize(offsetScaleY ?? 1)));
+                    ? size.Height - child.Size.Height * child.Baseline - size.Height * (1 - this.Baseline)
+                    : (size.Height - child.Size.Height - margin.Vertical) * factorY;
 
-                position = new(margin.Left + x, -margin.Top + y);
+                position  = new(x + offset.X + margin.Left, -(y + margin.Top));
+                usedSpace = canAlign
+                    ? new(float.Max(child.Size.Width, reserved.Width - x), child.Size.Height)
+                    : child.Size.Cast<float>();
+
+                if (usedSpace.Width > reserved.Width)
+                {
+                    reserved.Width = (size.Width - usedSpace.Width - offset.X) / (this.nodesToDistribute.Count - (i + 1));
+                }
             }
             else
             {
-                var offsetY = -previous.Position.Y + previous.Size.Height;
+                var factorX  = 1 - normalize(-offsetScaleX ?? (hasMargin ? 0 : 1));
+                var factorY  = normalize(-offsetScaleY ?? -1);
+                var canAlign = offsetScaleY.HasValue && size.Height > contentSize.Height;
 
-                var x = (size.Width - child.Size.Width - margin.Horizontal) * (1 - normalize(-offsetScaleX ?? 1));
-                var y = -(offsetY + (size.Height - child.Size.Height - offsetY - margin.Vertical) * normalize(-offsetScaleY ?? -1));
+                var x = (size.Width - child.Size.Width - margin.Horizontal) * factorX;
+                var y = canAlign ? Math.Max(0, reserved.Height - child.Size.Height - margin.Vertical) * factorY : 0;
 
-                position = new(margin.Left + x, -margin.Top + y);
+                position  = new(margin.Left + x, -(y + offset.Y + margin.Top));
+                usedSpace = canAlign
+                    ? new(child.Size.Width, float.Max(child.Size.Height, reserved.Height - y))
+                    : child.Size.Cast<float>();
+
+                if (usedSpace.Height > reserved.Height)
+                {
+                    reserved.Height = (size.Height - usedSpace.Height - offset.Y) / (this.nodesToDistribute.Count - (i + 1));
+                }
             }
+
             if (child is Element element)
             {
                 element.dispositionTransform = element.dispositionTransform with { Position = position };
@@ -298,8 +321,8 @@ public abstract class Element : Node2D, IEnumerable<Element>
                 child.LocalTransform = child.LocalTransform with { Position = position };
             }
 
-            previous = new(child.Size.Cast<int>(), position + new Vector2<float>(margin.Right, -margin.Bottom));
-            // previous = new(child.Size.Cast<int>(), position);
+            offset.X = position.X + margin.Right   + usedSpace.Width;
+            offset.Y = -position.Y + margin.Bottom + usedSpace.Height;
         }
 
         this.nodesToDistribute.Clear();

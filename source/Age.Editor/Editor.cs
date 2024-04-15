@@ -37,10 +37,9 @@ public class Editor : Node
             Name  = "Root",
             Style = new()
             {
-                Stack = StackType.Vertical,
+                Baseline = 0,
                 // Margin = new(20),
                 // Alignment = AlignmentType.Center | AlignmentType.Top
-                Size = new(500, 500)
             }
         };
 
@@ -51,19 +50,119 @@ public class Editor : Node
             Name  = "Status",
             Text  =
             """
-            Frame.......................
+            I
             """,
             Style = style with
             {
                 Align       = new(),
-                Margin      = new(10),
                 BorderColor = Color.Red,
                 Color       = Color.Margenta,
                 FontSize    = 24,
+                Margin      = new(10),
+                Size        = new(25),
             }
         };
 
-        root.AppendChild(this.statusText);
+        // root.AppendChild(this.statusText);
+
+        var boxH = new Span()
+        {
+            Name  = "BoxH",
+            Style = new()
+            {
+                Stack = StackType.Horizontal,
+                Size  = new(150)
+            }
+        };
+
+        var boxV = new Span()
+        {
+            Name  = "BoxV",
+            Style = new()
+            {
+                Stack = StackType.Vertical,
+                Size  = new(150)
+            }
+        };
+
+        root.AppendChild(boxH);
+        root.AppendChild(boxV);
+
+        const uint BLOCK_SIZE = 25;
+
+        var ah = new Span()
+        {
+            Style = new()
+            {
+                Alignment   = AlignmentType.Center | AlignmentType.Bottom,
+                BorderColor = Color.Red,
+                Color       = Color.Red,
+                Size        = new(BLOCK_SIZE),
+            }
+        };
+
+        var bh = new Span()
+        {
+            Style = new()
+            {
+                Alignment   = AlignmentType.Center,
+                BorderColor = Color.Green,
+                Color       = Color.Green,
+                Size        = new(100),
+            }
+        };
+
+        var ch = new Span()
+        {
+            Style = new()
+            {
+                Alignment   = AlignmentType.Center | AlignmentType.Top,
+                BorderColor = Color.Blue,
+                Color       = Color.Blue,
+                Size        = new(BLOCK_SIZE),
+            }
+        };
+
+        var av = new Span()
+        {
+            Style = new()
+            {
+                Alignment   = AlignmentType.Center | AlignmentType.Left,
+                BorderColor = Color.Red,
+                Color       = Color.Red,
+                Size        = new(BLOCK_SIZE),
+            }
+        };
+
+        var bv = new Span()
+        {
+            Style = new()
+            {
+                Alignment   = AlignmentType.Center,
+                BorderColor = Color.Green,
+                Color       = Color.Green,
+                Size        = new(100),
+            }
+        };
+
+        var cv = new Span()
+        {
+            Style = new()
+            {
+                Alignment   = AlignmentType.Center | AlignmentType.Right,
+                BorderColor = Color.Blue,
+                Color       = Color.Blue,
+                Size        = new(BLOCK_SIZE),
+            }
+        };
+
+        boxH.AppendChild(ah);
+        boxH.AppendChild(bh);
+        boxH.AppendChild(ch);
+
+        boxV.AppendChild(av);
+        boxV.AppendChild(bv);
+        boxV.AppendChild(cv);
 
         var parentSpan = new Span()
         {
@@ -72,24 +171,25 @@ public class Editor : Node
             Style = style with
             {
                 Align      = new(),
-                FontSize   = 48,
+                FontSize   = 24,
                 FontFamily = "Impact",
+                // Size       = new(100),
             }
         };
 
         root.AppendChild(parentSpan);
 
-        // var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
-        // var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
-        // var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { FontSize = 48, FontFamily = "Verdana", Color = Color.Blue } };
-        // var childSpan4 = new Span() { Text = "Hello",         Style = style with { Margin = new(4, 0) } };
-        // var childSpan5 = new Span() { Text = "World!!!",      Style = style with { Margin = new(4, 0) } };
+        var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
+        var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
+        var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { FontSize = 48, FontFamily = "Verdana", Color = Color.Blue } };
+        var childSpan4 = new Span() { Text = "Hello",         Style = style with { Alignment = AlignmentType.Top, Margin = new(4) } };
+        var childSpan5 = new Span() { Text = "World!!!",      Style = style with { Alignment = AlignmentType.Bottom, Margin = new(4) } };
 
-        // parentSpan.AppendChild(childSpan1);
-        // parentSpan.AppendChild(childSpan2);
-        // parentSpan.AppendChild(childSpan3);
-        // parentSpan.AppendChild(childSpan4);
-        // parentSpan.AppendChild(childSpan5);
+        parentSpan.AppendChild(childSpan1);
+        parentSpan.AppendChild(childSpan2);
+        parentSpan.AppendChild(childSpan3);
+        parentSpan.AppendChild(childSpan4);
+        parentSpan.AppendChild(childSpan5);
     }
 
     protected override void OnInitialize() =>
