@@ -51,6 +51,9 @@ public record struct Size<T> where T : INumber<T>
     public static Size<T> operator *(Size<T> left, Size<T> right) =>
         new(left.Width * right.Width, left.Height * right.Height);
 
+    public static implicit operator Size<T>(Point<T> point) =>
+        new(point.X, point.Y);
+
     public static implicit operator Size<T>(Vector2<float> vector) =>
         new(T.CreateChecked(vector.X), T.CreateChecked(vector.Y));
 

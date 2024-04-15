@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using System.Text;
 using Age.Numerics;
 using Age.Rendering.Commands;
@@ -251,14 +252,16 @@ public abstract class Element : Node2D, IEnumerable<Element>
             (1 + value) / 2;
 
         var offset      = new Point<float>();
-        var size        = this.Size;
+        var size        = this.Size.Cast<float>();
         var contentSize = this.ContentSize;
         var stack       = this.Style.Stack ?? StackType.Horizontal;
 
-        var reserved = size.Cast<float>() / this.nodesToDistribute.Count;
+        Node2D? lastChild = null;
 
         for (var i = 0; i < this.nodesToDistribute.Count; i++)
         {
+            var reserved = (size - offset) / (this.nodesToDistribute.Count - i); //  size.Cast<float>() / this.nodesToDistribute.Count;
+
             var child = this.nodesToDistribute[i];
             var childStyle = (child as Element)?.Style;
 
@@ -274,7 +277,7 @@ public abstract class Element : Node2D, IEnumerable<Element>
             {
                 var factorX  = normalize(offsetScaleX ?? -1);
                 var factorY  = 1 - normalize(offsetScaleY ?? (hasMargin ? 0 : 1));
-                var isInline = !offsetScaleY.HasValue && !hasMargin && (childStyle?.Stack ?? StackType.Horizontal) == StackType.Horizontal;
+                var isInline = !offsetScaleY.HasValue && !hasMargin;
                 var canAlign = offsetScaleX.HasValue && size.Width > contentSize.Width;
 
                 var x = canAlign ? Math.Max(0, reserved.Width - child.Size.Width - margin.Horizontal) * factorX : 0;
@@ -286,11 +289,6 @@ public abstract class Element : Node2D, IEnumerable<Element>
                 usedSpace = canAlign
                     ? new(float.Max(child.Size.Width, reserved.Width - x), child.Size.Height)
                     : child.Size.Cast<float>();
-
-                if (usedSpace.Width > reserved.Width)
-                {
-                    reserved.Width = (size.Width - usedSpace.Width - offset.X) / (this.nodesToDistribute.Count - (i + 1));
-                }
             }
             else
             {
@@ -305,11 +303,6 @@ public abstract class Element : Node2D, IEnumerable<Element>
                 usedSpace = canAlign
                     ? new(child.Size.Width, float.Max(child.Size.Height, reserved.Height - y))
                     : child.Size.Cast<float>();
-
-                if (usedSpace.Height > reserved.Height)
-                {
-                    reserved.Height = (size.Height - usedSpace.Height - offset.Y) / (this.nodesToDistribute.Count - (i + 1));
-                }
             }
 
             if (child is Element element)
@@ -323,6 +316,13 @@ public abstract class Element : Node2D, IEnumerable<Element>
 
             offset.X = position.X + margin.Right   + usedSpace.Width;
             offset.Y = -position.Y + margin.Bottom + usedSpace.Height;
+
+            lastChild = child;
+        }
+
+        if (stack == StackType.Vertical && lastChild != null)
+        {
+            this.Baseline = (offset.Y - lastChild.Size.Height * (1 - lastChild.Baseline)) / this.Size.Height;
         }
 
         this.nodesToDistribute.Clear();
