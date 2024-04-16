@@ -130,31 +130,34 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
         foreach (var child in this.Enumerate<ContainerNode>())
         {
+            if (child is TextNode textNode)
+            {
+                textNode.Draw();
+            }
+
             var childStyle = (child as Element)?.Style;
             var margin     = childStyle?.Margin ?? new(0);
             var alignment  = childStyle?.Alignment ?? AlignmentType.BaseLine;
+            var totalSize  = new Size<uint>(child.Size.Width + margin.Horizontal, child.Size.Height + margin.Vertical);
 
             if (stackMode == StackType.Horizontal)
             {
-                if (child is TextNode textNode)
+                if (childStyle?.Align == null && alignment == AlignmentType.BaseLine && totalSize.Height > hightest)
                 {
-                    textNode.Draw();
+                    this.Baseline = childStyle?.Margin == null
+                        ? child.Baseline
+                        : (margin.Top + child.Size.Height * child.Baseline) / totalSize.Height;
+
+                    hightest = totalSize.Height;
                 }
 
-                if (childStyle?.Align == null && alignment == AlignmentType.BaseLine && child.Size.Height > hightest)
-                {
-                    this.Baseline = child.Baseline;
-
-                    hightest = child.Size.Height;
-                }
-
-                contentSize.Height  = uint.Max(contentSize.Height, margin.Top + child.Size.Height + margin.Bottom);
-                contentSize.Width  += margin.Left + child.Size.Width + margin.Right;
+                contentSize.Height  = uint.Max(contentSize.Height, totalSize.Height);
+                contentSize.Width  += totalSize.Width;
             }
             else
             {
-                contentSize.Height += margin.Top + child.Size.Height + margin.Bottom;
-                contentSize.Width   = uint.Max(contentSize.Width, margin.Left + child.Size.Width + margin.Right);
+                contentSize.Height += totalSize.Height;
+                contentSize.Width   = uint.Max(contentSize.Width, totalSize.Width);
             }
 
             this.nodesToDistribute.Add(child);
@@ -267,7 +270,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
                 var x = canAlign ? Math.Max(0, reserved.Width - child.Size.Width - margin.Horizontal) * factorX : 0;
                 var y = isInline
-                    ? size.Height - child.Size.Height * child.Baseline - size.Height * (1 - this.Baseline)
+                    ? size.Height - size.Height * this.Baseline - child.Size.Height * (1 - child.Baseline)
                     : (size.Height - child.Size.Height - margin.Vertical) * factorY;
 
                 position  = new(x + offset.X + margin.Left, -(y + margin.Top));
@@ -307,7 +310,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
         if (stack == StackType.Vertical && lastChild != null)
         {
-            this.Baseline = (offset.Y - lastChild.Size.Height * (1 - lastChild.Baseline)) / this.Size.Height;
+            this.Baseline = 1 - (offset.Y - lastChild.Size.Height * lastChild.Baseline) / this.Size.Height;
         }
 
         this.nodesToDistribute.Clear();

@@ -55,7 +55,7 @@ public class Boxes : Element
             Name  = "bh",
             Style = new()
             {
-                // Alignment   = AlignmentType.Center,
+                Alignment   = AlignmentType.Top,
                 BorderColor = Color.Green,
                 Color       = Color.Green,
                 Size        = new(100),

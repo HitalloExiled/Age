@@ -201,7 +201,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
             }
         }
 
-        textNode.Baseline   = -offset.Y / (float)maxSize.Height;
+        textNode.Baseline   = 1 - -offset.Y / (float)maxSize.Height;
         textNode.LineHeight = lineHeight;
         textNode.Size       = maxSize;
 

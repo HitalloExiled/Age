@@ -48,7 +48,8 @@ public class Editor : Node
             Name  = "Status",
             Text  =
             """
-            I
+            Frame
+            Frame
             """,
             Style = style with
             {
@@ -56,8 +57,8 @@ public class Editor : Node
                 BorderColor = Color.Red,
                 Color       = Color.Margenta,
                 FontSize    = 24,
-                // Margin      = new(10),
-                // Size        = new(25),
+                Margin      = new(10),
+                // Size        = new(100),
             }
         };
 
@@ -73,7 +74,7 @@ public class Editor : Node
                 // Align      = new(),
                 FontSize   = 24,
                 FontFamily = "Impact",
-                // Size       = new(100),
+                // Size       = new(50),
             }
         };
 
