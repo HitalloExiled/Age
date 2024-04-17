@@ -67,9 +67,14 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             foreach (var item in this.Traverse<TextNode>(true))
             {
                 builder.Append(item.Value);
+
+                if (this.Style.Stack == StackType.Vertical)
+                {
+                    builder.Append('\n');
+                }
             }
 
-            return builder.ToString();
+            return builder.ToString().TrimEnd();
         }
         set
         {

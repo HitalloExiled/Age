@@ -10,14 +10,14 @@ public class Editor : Node
     private readonly Canvas canvas;
     private readonly Span   statusText;
 
-    private ulong  frames;
-    private double minFps = double.MaxValue;
-    private double maxFps;
-    private double totalFps;
-    private double maxFrameTime;
-    private double minFrameTime = double.MaxValue;
     private double delta;
+    private ulong  frames;
     private bool   increasing = true;
+    private double maxFps;
+    private double maxFrameTime;
+    private double minFps = double.MaxValue;
+    private double minFrameTime = double.MaxValue;
+    private double totalFps;
 
     public override string NodeName { get; } = nameof(Editor);
 
@@ -92,6 +92,9 @@ public class Editor : Node
         parentSpan.AppendChild(childSpan4);
         parentSpan.AppendChild(childSpan5);
     }
+
+    protected override void OnInitialize() =>
+        Console.WriteLine(this.statusText.Size);
 
     protected override void OnUpdate(double deltaTime)
     {

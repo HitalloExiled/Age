@@ -74,8 +74,6 @@ public abstract class ShaderResources : IDisposable
 
                 var result = compiler.CompileIntoSpv(source, shaderKind, Path.GetFileName(filename), "main");
 
-                var timestamp = DateTime.Now;
-
                 if (result.CompilationStatus == CompilationStatus.Success)
                 {
                     this.Stages[shaderStage] = result.Bytes;

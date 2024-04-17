@@ -71,6 +71,11 @@ public class Engine : IDisposable
         var frameTime = 0D;
         var current   = TARGET_FRAME_TIME;
 
+        foreach (var window in Window.Windows)
+        {
+            window.Tree.Initialize();
+        }
+
         var watch = Stopwatch.StartNew();
 
         while (this.Running)

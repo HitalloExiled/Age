@@ -68,6 +68,9 @@ public abstract class Node : IEnumerable<Node>
     protected virtual void OnChildRemoved(Node child)
     { }
 
+    protected virtual void OnInitialize()
+    { }
+
     protected virtual void OnPreUpdate(double deltaTime)
     { }
 
@@ -257,6 +260,16 @@ public abstract class Node : IEnumerable<Node>
 
     public override string ToString() =>
         $"<{this.NodeName} name='{this.Name}'>";
+
+    public void Initialize()
+    {
+        foreach (var child in this)
+        {
+            child.Initialize();
+        }
+
+        this.OnInitialize();
+    }
 
     public void Update(double deltaTime)
     {

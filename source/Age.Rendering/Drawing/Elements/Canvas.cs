@@ -51,6 +51,9 @@ public sealed class Canvas : Element
         }
     }
 
-    protected override void OnPreUpdate(double deltaTime) =>
+    protected override void OnInitialize() =>
+        this.UpdateLayout();
+
+    protected override void OnPostUpdate(double deltaTime) =>
         this.UpdateLayout();
 }
