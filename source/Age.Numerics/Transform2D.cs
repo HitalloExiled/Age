@@ -37,9 +37,15 @@ public record struct Transform2D
     public Transform2D(float positionX, float positionY, float rotation, float scaleX, float scaleY) : this(new(positionX, positionY), rotation, new(scaleX, scaleY))
     { }
 
+    public static Transform2D Translated(in Vector2<float> offset) =>
+        new() { Position = offset };
+
     public readonly Transform2D Inverse() =>
         new(this.matrix.Inverse());
 
     public static Transform2D operator *(in Transform2D left, in Transform2D right) =>
         new(left.matrix * right.matrix);
+
+    public static implicit operator Matrix3x2<float>(in Transform2D transform) =>
+        transform.matrix;
 }

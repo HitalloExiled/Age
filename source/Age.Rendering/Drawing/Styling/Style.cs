@@ -19,8 +19,10 @@ public record Style
     private Margin?        margin;
     private Size<uint>?    maxSize;
     private Size<uint>?    minSize;
+    private Point<float>?  pivot;
     private Point<int>?    position;
     private PositionType?  positionType;
+    private float?         rotation;
     private Size<uint>?    size;
     private StackType?     stack;
 
@@ -108,6 +110,12 @@ public record Style
         set => this.Set(ref this.minSize, value);
     }
 
+    public Point<float>? Pivot
+    {
+        get => this.pivot;
+        set => this.Set(ref this.pivot, value);
+    }
+
     public Point<int>? Position
     {
         get => this.position;
@@ -118,6 +126,12 @@ public record Style
     {
         get => this.positionType;
         set => this.Set(ref this.positionType, value);
+    }
+
+    public float? Rotation
+    {
+        get => this.rotation;
+        set => this.Set(ref this.rotation, value);
     }
 
     public Size<uint>? Size

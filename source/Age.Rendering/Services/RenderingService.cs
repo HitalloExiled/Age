@@ -7,9 +7,8 @@ using Age.Rendering.Shaders;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Flags;
-using Age.Numerics;
 using Age.Rendering.Storage;
-using System.Runtime.CompilerServices;
+using Age.Numerics;
 
 namespace Age.Rendering.Services;
 
@@ -115,9 +114,7 @@ internal class RenderingService : IDisposable
 
         var windowSize = window.ClientSize.Cast<float>();
 
-        var position = node.Transform.Position;
-
-        ref var nodePosition = ref Unsafe.As<Vector2<float>, Point<float>>(ref position);
+        var transform = (Matrix3x2<float>)node.Transform;
 
         foreach (var command in node.Commands)
         {
@@ -127,13 +124,11 @@ internal class RenderingService : IDisposable
                     {
                         var uniformSet = this.textureStorage.GetUniformSet(this.diffuseShader, rectDrawCommand.SampledTexture.Texture, rectDrawCommand.SampledTexture.Sampler);
 
-                        var rect = rectDrawCommand.Rect;
-                        rect.Position += nodePosition;
-
                         var constant = new CanvasShader.PushConstant
                         {
                             ViewportSize = windowSize,
-                            Rect         = rect,
+                            Transform    = transform,
+                            Rect         = rectDrawCommand.Rect,
                             UV           = rectDrawCommand.SampledTexture.UV,
                             Color        = rectDrawCommand.Color,
                         };

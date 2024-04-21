@@ -36,11 +36,11 @@ public record struct Size<T> where T : INumber<T>
     public static Size<T> operator +(Size<T> left, Size<T> right) =>
         new(left.Width + right.Width, left.Height + right.Height);
 
-    public static Size<T> operator -(Size<T> size, T value) =>
-        new(size.Width - value, size.Height - value);
-
     public static Size<T> operator -(Size<T> left, Size<T> right) =>
         new(left.Width - right.Width, left.Height - right.Height);
+
+    public static Size<T> operator -(Size<T> size, T value) =>
+        new(size.Width - value, size.Height - value);
 
     public static Size<T> operator /(Size<T> left, Size<T> right) =>
         new(left.Width / right.Width, left.Height / right.Height);

@@ -10,11 +10,29 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 {
     private readonly List<ContainerNode> nodesToDistribute = [];
 
-    private Canvas?     canvas;
-    private Transform2D dispositionTransform = new();
-    private Style       style = new();
-    private Transform2D styleTransform       = new();
-    private string?     text;
+    private Canvas?        canvas;
+    private Vector2<float> offset;
+    private Style          style = new();
+    private Transform2D    styleTransform = new();
+    private string?        text;
+
+    private Vector2<float> StylePivot
+    {
+        get
+        {
+            if (this.Size == default)
+            {
+                return default;
+            }
+
+            var pivot = this.Style.Pivot ?? new();
+
+            pivot = (pivot + 1) / 2;
+            pivot.Y = 1 - pivot.Y;
+
+            return pivot * this.Size.Cast<float>() * new Size<float>(1, -1);
+        }
+    }
 
     public Element? ParentElement => this.Parent as Element;
 
@@ -108,9 +126,14 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
     public override Transform2D Transform
     {
-        get => this.styleTransform * this.dispositionTransform * base.Transform;
+        get => base.Transform
+            * Transform2D.Translated(this.offset)
+            * Transform2D.Translated(this.StylePivot)
+            * this.styleTransform
+            * Transform2D.Translated(-this.StylePivot);
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
+
     public bool HasPendingUpdate { get; private set; }
 
     public Element() =>
@@ -253,7 +276,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
         for (var i = 0; i < this.nodesToDistribute.Count; i++)
         {
-            var reserved = (size - offset) / (this.nodesToDistribute.Count - i); //  size.Cast<float>() / this.nodesToDistribute.Count;
+            var reserved = (size - (Size<float>)offset) / (this.nodesToDistribute.Count - i);
 
             var child = this.nodesToDistribute[i];
             var childStyle = (child as Element)?.Style;
@@ -300,7 +323,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
             if (child is Element element)
             {
-                element.dispositionTransform = element.dispositionTransform with { Position = position };
+                element.offset = position;
             }
             else
             {
@@ -322,7 +345,11 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
     }
 
     private void UpdateStyleTransform() =>
-        this.styleTransform = this.styleTransform with { Position = this.style.Position ?? default };
+        this.styleTransform = this.styleTransform with
+        {
+            Position = this.style.Position ?? this.styleTransform.Position,
+            Rotation = this.style.Rotation ?? this.styleTransform.Rotation,
+        };
 
     internal protected virtual void RequestUpdate()
     {
@@ -387,7 +414,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    protected override void OnBoundsChanged() =>
+    protected override void OnTransformChanged() =>
         this.ParentElement?.RequestUpdate();
 
     internal virtual void UpdateLayout()

@@ -8,15 +8,15 @@ layout(location = 0) out vec4 outColor;
 
 layout(push_constant) uniform Data
 {
-    vec2  ViewportSize;
-    vec2  Size;
-    vec2  Position;
-    vec2  UV[4];
-    float Color[4];
+    vec2  viewport;
+    mat2  rotation;
+    vec2  position;
+    vec2  size;
+    vec2  offset;
+    vec2  uv[4];
+    float color[4];
 } data;
 
-
 void main() {
-    // outColor = vec4(0.0, 0.0, 0.0, 1.0);
-    outColor = vec4(data.Color[0], data.Color[1], data.Color[2], data.Color[3]);
+    outColor = vec4(data.color[0], data.color[1], data.color[2], data.color[3]);
 }

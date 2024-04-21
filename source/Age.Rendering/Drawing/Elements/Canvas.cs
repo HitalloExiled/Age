@@ -10,7 +10,7 @@ public sealed class Canvas : Element
         this.Style = new()
         {
             Baseline = 1,
-            Position = new(PADDING, -PADDING),
+            // Position = new(PADDING, -PADDING),
         };
 
     private void OnWindowSizeChanged() =>

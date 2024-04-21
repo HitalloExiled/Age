@@ -157,17 +157,17 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     public override readonly string ToString() =>
         $"[{this.M11}, {this.M12}], [{this.M21}, {this.M22}], [{this.M31}, {this.M32}]";
 
-    public static Matrix3x2<T> operator *(in Matrix3x2<T> left, in Matrix3x2<T> right)
+    public static Matrix3x2<T> operator *(in Matrix3x2<T> a, in Matrix3x2<T> b)
     {
-        Unsafe.SkipInit<Matrix3x2<T>>(out var result);
+        Unsafe.SkipInit<Matrix3x2<T>>(out var c);
 
-        result.M11 = left.M11 * right.M11 + left.M21 * right.M12;
-        result.M12 = left.M12 * right.M11 + left.M22 * right.M12;
-        result.M21 = left.M11 * right.M21 + left.M21 * right.M22;
-        result.M22 = left.M12 * right.M21 + left.M22 * right.M22;
-        result.M31 = left.M11 * right.M31 + left.M21 * right.M32 + left.M31;
-        result.M32 = left.M12 * right.M31 + left.M22 * right.M32 + left.M32;
+        c.M11 = a.M11 * b.M11 + a.M21 * b.M12;
+        c.M12 = a.M12 * b.M11 + a.M22 * b.M12;
+        c.M21 = a.M11 * b.M21 + a.M21 * b.M22;
+        c.M22 = a.M12 * b.M21 + a.M22 * b.M22;
+        c.M31 = a.M11 * b.M31 + a.M21 * b.M32 + a.M31;
+        c.M32 = a.M12 * b.M31 + a.M22 * b.M32 + a.M32;
 
-        return result;
+        return c;
     }
 }

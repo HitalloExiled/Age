@@ -22,6 +22,8 @@ public unsafe partial class VulkanRenderer : IDisposable
     private const ushort MAX_DESCRIPTORS_PER_POOL        = 64;
     private const ushort FRAMES_BETWEEN_PENDING_DISPOSES = 2;
 
+    private readonly object padlock = new();
+
     private readonly Queue<IDisposable> pendingDisposes = new();
 
     private ushort framesUntilPendingDispose;
@@ -600,9 +602,13 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         void action()
         {
+
             this.CreateShader<TShaderResources, TVertexInput, TPushConstant>(shaderResources, shader.RenderPass, out var pipeline, out var pipelineLayout, out var descriptorSetLayout);
 
-            this.DeferredDispose(shader.Update(pipeline, pipelineLayout, descriptorSetLayout));
+            lock (this.padlock)
+            {
+                this.DeferredDispose(shader.Update(pipeline, pipelineLayout, descriptorSetLayout));
+            }
         }
 
         shader.Changed += action;

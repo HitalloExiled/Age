@@ -24,7 +24,7 @@
                 "searchMicrosoftSymbolServer": false,
                 "searchNuGetOrgSymbolServer": false,
             },
-            "enableStepFiltering": true,
+            "enableStepFiltering": false,
         },
         {
             // Use IntelliSense to find out which attributes exist for C# debugging

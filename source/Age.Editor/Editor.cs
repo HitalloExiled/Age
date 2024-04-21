@@ -18,6 +18,9 @@ public class Editor : Node
     private double minFps = double.MaxValue;
     private double minFrameTime = double.MaxValue;
     private double totalFps;
+    private readonly Element a;
+    private readonly Element b;
+    private readonly Element c;
 
     public override string NodeName { get; } = nameof(Editor);
 
@@ -30,18 +33,74 @@ public class Editor : Node
 
         this.AppendChild(this.canvas = new Canvas());
 
-        var root = new Span()
+        // var root = new Span()
+        // {
+        //     Text  = "Some Text...",
+        //     Name  = "Root",
+        //     Style = new()
+        //     {
+        //         // Baseline = 0,
+        //         FontSize    = 24,
+        //         BorderColor = Color.Red,
+        //         // Alignment = AlignmentType.Center | AlignmentType.Top
+        //         Size        = new(200, 100),
+        //     }
+        // };
+
+        // this.canvas.AppendChild(root);
+
+
+
+        this.a = new Span()
         {
-            Name  = "Root",
+            Text  = "A...",
+            Name  = "A",
             Style = new()
             {
-                // Baseline = 0,
-                // Margin = new(20),
-                // Alignment = AlignmentType.Center | AlignmentType.Top
+                FontSize    = 24,
+                BorderColor = Color.Red,
+                Size        = new(200, 100),
             }
         };
 
-        this.canvas.AppendChild(root);
+        this.a.Transform = this.a.Transform with { Rotation = Angle.Radians<float>(-5) };
+
+        this.b = new Span()
+        {
+            Text  = "B...",
+            Name  = "B",
+            Style = new()
+            {
+                FontSize    = 24,
+                BorderColor = Color.Green,
+                Size        = new(200, 100),
+            }
+        };
+
+        this.b.LocalTransform = this.b.LocalTransform with { Scale = new(0.5f) };
+        this.b.Pivot = new(300, -50);
+
+        this.c = new Span()
+        {
+            Text  = "C...",
+            Name  = "C",
+            Style = new()
+            {
+                FontSize    = 24,
+                BorderColor = Color.Blue,
+                Size        = new(100, 50),
+            }
+        };
+
+        // this.c.LocalTransform = this.c.LocalTransform with { /* Rotation = RADIANS * 45,  */Position = new(100, 0) };
+        this.c.Style.Pivot    = new(-1, 1);
+        this.c.Style.Align    = new(1, -1);
+        this.c.Style.Position = new(50, 50);
+
+        this.canvas.AppendChild(this.a);
+        // this.canvas.AppendChild(b);
+        this.canvas.AppendChild(this.b);
+        this.b.AppendChild(this.c);
 
         this.statusText = new Span()
         {
@@ -62,35 +121,35 @@ public class Editor : Node
             }
         };
 
-        root.AppendChild(this.statusText);
-        root.AppendChild(new Boxes());
+        // root.AppendChild(this.statusText);
+        // root.AppendChild(new Boxes());
 
-        var parentSpan = new Span()
-        {
-            Name  = "Parent",
-            Text  = "Text",
-            Style = style with
-            {
-                // Align      = new(),
-                FontSize   = 24,
-                FontFamily = "Impact",
-                // Size       = new(50),
-            }
-        };
+        // var parentSpan = new Span()
+        // {
+        //     Name  = "Parent",
+        //     Text  = "Text",
+        //     Style = style with
+        //     {
+        //         // Align      = new(),
+        //         FontSize   = 24,
+        //         FontFamily = "Impact",
+        //         // Size       = new(50),
+        //     }
+        // };
 
-        root.AppendChild(parentSpan);
+        // root.AppendChild(parentSpan);
 
-        var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
-        var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
-        var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { FontSize = 48, FontFamily = "Verdana", Color = Color.Blue } };
-        var childSpan4 = new Span() { Text = "Hello",         Style = style with { Alignment = AlignmentType.Top, Margin = new(4) } };
-        var childSpan5 = new Span() { Text = "World!!!",      Style = style with { Alignment = AlignmentType.Bottom, Margin = new(4) } };
+        // var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
+        // var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
+        // var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { FontSize = 48, FontFamily = "Verdana", Color = Color.Blue } };
+        // var childSpan4 = new Span() { Text = "Hello",         Style = style with { Alignment = AlignmentType.Top, Margin = new(4) } };
+        // var childSpan5 = new Span() { Text = "World!!!",      Style = style with { Alignment = AlignmentType.Bottom, Margin = new(4) } };
 
-        parentSpan.AppendChild(childSpan1);
-        parentSpan.AppendChild(childSpan2);
-        parentSpan.AppendChild(childSpan3);
-        parentSpan.AppendChild(childSpan4);
-        parentSpan.AppendChild(childSpan5);
+        // parentSpan.AppendChild(childSpan1);
+        // parentSpan.AppendChild(childSpan2);
+        // parentSpan.AppendChild(childSpan3);
+        // parentSpan.AppendChild(childSpan4);
+        // parentSpan.AppendChild(childSpan5);
     }
 
     protected override void OnInitialize() =>
@@ -99,8 +158,8 @@ public class Editor : Node
     protected override void OnUpdate(double deltaTime)
     {
         this.delta = this.increasing
-            ? double.Min(this.delta + deltaTime, 1)
-            : double.Max(this.delta - deltaTime, -1);
+            ? double.Min(this.delta + deltaTime * 0.1f, 1)
+            : double.Max(this.delta - deltaTime * 0.1f, -1);
 
         if (this.increasing && this.delta == 1)
         {
@@ -124,6 +183,11 @@ public class Editor : Node
 
         this.maxFrameTime = Math.Max(this.maxFrameTime, frameTime);
         this.minFrameTime = Math.Min(this.minFrameTime, frameTime);
+
+        this.b.LocalTransform = this.b.LocalTransform with { Rotation = Angle.Radians<float>(90) * (float)this.delta };
+        // this.c.LocalTransform = this.c.LocalTransform with {  Rotation = RADIANS * 45 * (float)this.delta };
+        // this.b.Style.Rotation = RADIANS * 90 * (float)this.delta;
+        this.c.Style.Rotation = Angle.Radians<float>(45) * (float)this.delta;
 
         // this.statusText.LocalTransform = this.statusText.LocalTransform with { Position = new Point<int>((int)(double.Cos(this.delta) * 50), (int)(double.Sin(this.delta) * -50)) };
         this.statusText.Text =

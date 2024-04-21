@@ -4,20 +4,19 @@
     "dotnetCoreExplorer.codeLens": false,
     // "csharp.semanticHighlighting.enabled": false
     "files.exclude": {
-        "**/.git": true,
-        "**/.svn": true,
-        "**/.hg": true,
-        "**/CVS": true,
-        "**/.DS_Store": true,
-        "**/Thumbs.db": true,
-        "**/*.spv": true,
-        "**/TestResults": true,
-        "**/bin": true,
-        "**/obj": true,
-        ".coverage": true,
-        "**/*.bkp": true,
-        ".vs": true
+        "**/.git": false,
+        "**/.svn": false,
+        "**/.hg": false,
+        "**/CVS": false,
+        "**/.DS_Store": false,
+        "**/Thumbs.db": false,
+        "**/*.spv": false,
+        "**/TestResults": false,
+        "**/bin": false,
+        "**/obj": false,
+        ".coverage": false,
+        "**/*.bkp": false
     },
     "explorerExclude.backup": {},
-    "shadered.executablePath": "C:\\Program Files\\SHADERed\\SHADERed.exe"
+    "glsllint.glslangValidatorArgs": "-V"
 }
