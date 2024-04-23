@@ -7,8 +7,8 @@ public record struct Margin
     public uint Bottom;
     public uint Left;
 
-    public uint Horizontal => Left + Right;
-    public uint Vertical   => Top + Bottom;
+    public readonly uint Horizontal => this.Left + this.Right;
+    public readonly uint Vertical   => this.Top + this.Bottom;
 
     public Margin(uint top, uint right, uint bottom, uint left)
     {

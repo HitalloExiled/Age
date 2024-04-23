@@ -105,7 +105,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         this.M12 == T.Zero &&
         this.M32 == T.Zero;
 
-    public Matrix3x2(Vector2<T> column1, Vector2<T> column2, Vector2<T> column3)
+    public Matrix3x2(in Vector2<T> column1, in Vector2<T> column2, in Vector2<T> column3)
     {
         this.M11 = column1.X;
         this.M12 = column1.Y;
@@ -115,7 +115,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         this.M32 = column3.Y;
     }
 
-    public Matrix3x2(Vector2<T> translation, T rotation, Vector2<T> scale)
+    public Matrix3x2(in Vector2<T> translation, T rotation, in Vector2<T> scale)
     {
         Unsafe.SkipInit(out this);
 
