@@ -642,7 +642,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         var samples = VkSampleCountFlags.N1;
         var tiling  = VkImageTiling.Optimal;
         var usage   = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
-        var format  = textureCreate.ColorMode == ColorMode.GrayScale ? VkFormat.R8G8Unorm : VkFormat.B8G8R8A8Srgb;
+        var format  = textureCreate.ColorMode == ColorMode.Grayscale ? VkFormat.R8G8Unorm : VkFormat.B8G8R8A8Srgb;
 
         this.CreateImage(
             textureCreate.Width,

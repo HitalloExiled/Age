@@ -57,13 +57,14 @@ public class Editor : Node
             Name  = "A",
             Style = new()
             {
-                FontSize    = 24,
-                BorderColor = Color.Red,
-                Size        = new(200, 100),
+                FontSize     = 48,
+                BorderColor  = Color.Red,
+                BorderRadius = 20,
+                BorderSize   = 2,
+                Size         = new(200, 100),
+                Margin       = new(50),
             }
         };
-
-        this.a.Transform = this.a.Transform with { Rotation = Angle.Radians<float>(-5) };
 
         this.b = new Span()
         {
@@ -73,6 +74,8 @@ public class Editor : Node
             {
                 FontSize    = 24,
                 BorderColor = Color.Green,
+                BorderRadius = 20,
+                BorderSize   = 2,
                 Size        = new(200, 100),
             }
         };
@@ -86,9 +89,11 @@ public class Editor : Node
             Name  = "C",
             Style = new()
             {
-                FontSize    = 24,
-                BorderColor = Color.Blue,
-                Size        = new(100, 50),
+                FontSize     = 24,
+                BorderColor  = Color.Blue,
+                BorderRadius = 20,
+                BorderSize   = 2,
+                Size         = new(100, 50),
             }
         };
 

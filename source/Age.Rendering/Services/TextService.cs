@@ -81,9 +81,9 @@ internal partial class TextService(RenderingService renderingService, TextureSto
             var axisSize = uint.Max(fontSize * 8, 256);
             var size     = new Size<uint>(axisSize, axisSize);
 
-            var texture = textureStorage.CreateTexture(size, ColorMode.GrayScale, Enums.TextureType.N2D);
+            var texture = textureStorage.CreateTexture(size, ColorMode.Grayscale, Enums.TextureType.N2D);
 
-            this.atlases[hashcode] = atlas = new(size, ColorMode.GrayScale, texture);
+            this.atlases[hashcode] = atlas = new(size, ColorMode.Grayscale, texture);
         }
 
         return atlas;
@@ -179,6 +179,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
                 {
                     Rect           = new(size, position),
                     Color          = color,
+                    ColorMode      = ColorMode.Grayscale,
                     SampledTexture = new(atlas.Texture, this.sampler, uv),
                 };
 

@@ -268,7 +268,7 @@ public unsafe partial class VulkanContext : IDisposable
                 ImageArrayLayers      = 1,
                 ImageColorSpace       = this.surfaceFormat.ColorSpace,
                 ImageExtent           = extent,
-                PresentMode           = VkPresentModeKHR.Immediate,
+                PresentMode           = VkPresentModeKHR.Fifo,
                 ImageFormat           = this.surfaceFormat.Format,
                 ImageUsage            = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst,
                 ImageSharingMode      = VkSharingMode.Exclusive,

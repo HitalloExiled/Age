@@ -17,5 +17,7 @@ public partial class CanvasShader
         public Rect<float>      Rect;
         public UVRect           UV;
         public Color            Color;
+        public bool             Grayscale;
+        public Border           Border;
     }
 }

@@ -43,7 +43,7 @@ public class TextureAtlas(Size<uint> size, ColorMode colorMode, Texture texture)
 
                 var span = this.Bitmap.Buffer.AsSpan(destinationIndex).Cast<byte, uint>();
 
-                span[0] = this.Bitmap.ColorMode == ColorMode.GrayScale ? pixels[sourceIndex] >> 16 : pixels[sourceIndex];
+                span[0] = this.Bitmap.ColorMode == ColorMode.Grayscale ? pixels[sourceIndex] >> 16 : pixels[sourceIndex];
 
                 sourceCursor.X++;
             }
@@ -69,7 +69,7 @@ public class TextureAtlas(Size<uint> size, ColorMode colorMode, Texture texture)
         {
             var value = Unsafe.As<byte, uint>(ref this.Bitmap.Buffer[i * this.Bitmap.BytesPerPixel]);
 
-            buffer[i] = this.Bitmap.ColorMode == ColorMode.GrayScale ? value << 16 : value;
+            buffer[i] = this.Bitmap.ColorMode == ColorMode.Grayscale ? value << 16 : value;
         }
 
         return buffer;

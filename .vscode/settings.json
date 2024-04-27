@@ -4,18 +4,18 @@
     "dotnetCoreExplorer.codeLens": false,
     // "csharp.semanticHighlighting.enabled": false
     "files.exclude": {
-        "**/.git": false,
-        "**/.svn": false,
-        "**/.hg": false,
-        "**/CVS": false,
-        "**/.DS_Store": false,
-        "**/Thumbs.db": false,
-        "**/*.spv": false,
-        "**/TestResults": false,
-        "**/bin": false,
-        "**/obj": false,
-        ".coverage": false,
-        "**/*.bkp": false
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/*.spv": true,
+        "**/TestResults": true,
+        "**/bin": true,
+        "**/obj": true,
+        ".coverage": true,
+        "**/*.bkp": true
     },
     "explorerExclude.backup": {},
     "glsllint.glslangValidatorArgs": "-V"

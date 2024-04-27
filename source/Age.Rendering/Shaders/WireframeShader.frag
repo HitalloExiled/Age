@@ -15,6 +15,10 @@ layout(push_constant) uniform Data
     vec2  offset;
     vec2  uv[4];
     float color[4];
+    uint  border_size;
+    uint  border_radius;
+    float border_color[4];
+    uint  border_position;
 } data;
 
 void main() {

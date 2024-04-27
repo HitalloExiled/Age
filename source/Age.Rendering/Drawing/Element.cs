@@ -225,8 +225,15 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             command = (RectDrawCommand)this.Commands[0];
         }
 
-        command.Rect  = new(this.Size.Cast<float>(), default);
-        command.Color = this.Style.BorderColor ?? new(0.75f, 0.75f, 0.75f, 1);
+        command.Rect      = new(this.Size.Cast<float>(), default);
+        command.ColorMode = ColorMode.RGBA;
+        command.Border    = new()
+        {
+            Color     = this.Style.BorderColor ?? new(0.75f, 0.75f, 0.75f, 1),
+            Position  = Shaders.CanvasShader.BorderPosition.All,
+            Radius    = this.Style.BorderRadius ?? 0,
+            Size      = this.Style.BorderSize ?? 0,
+        };
     }
 
     private void OnStyleChanged()

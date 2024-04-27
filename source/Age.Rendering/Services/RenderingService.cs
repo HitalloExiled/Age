@@ -14,7 +14,7 @@ namespace Age.Rendering.Services;
 
 internal class RenderingService : IDisposable
 {
-    private const bool DRAW_WIREFRAME = true;
+    private const bool DRAW_WIREFRAME = false;
 
     private readonly Shader         diffuseShader;
     private readonly IndexBuffer    indexBuffer;
@@ -126,11 +126,13 @@ internal class RenderingService : IDisposable
 
                         var constant = new CanvasShader.PushConstant
                         {
-                            ViewportSize = windowSize,
-                            Transform    = transform,
-                            Rect         = rectDrawCommand.Rect,
-                            UV           = rectDrawCommand.SampledTexture.UV,
+                            Border       = rectDrawCommand.Border,
                             Color        = rectDrawCommand.Color,
+                            Grayscale    = rectDrawCommand.ColorMode == ColorMode.Grayscale,
+                            Rect         = rectDrawCommand.Rect,
+                            Transform    = transform,
+                            UV           = rectDrawCommand.SampledTexture.UV,
+                            ViewportSize = windowSize,
                         };
 
                         if (uniformSet != null && uniformSet != lastUniformSet)
@@ -183,7 +185,7 @@ internal class RenderingService : IDisposable
         this.renderer.BindPipeline(this.diffuseShader);
         this.renderer.BindIndexBuffer(this.indexBuffer);
 
-        foreach (var node in window.Tree.Traverse<Node2D>())
+        foreach (var node in window.Tree.Traverse<Node2D>(true))
         {
             this.Render(window, node, false);
         }
