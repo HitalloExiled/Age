@@ -33,36 +33,36 @@ public class Editor : Node
 
         this.AppendChild(this.canvas = new Canvas());
 
-        // var root = new Span()
-        // {
-        //     Text  = "Some Text...",
-        //     Name  = "Root",
-        //     Style = new()
-        //     {
-        //         // Baseline = 0,
-        //         FontSize    = 24,
-        //         BorderColor = Color.Red,
-        //         // Alignment = AlignmentType.Center | AlignmentType.Top
-        //         Size        = new(200, 100),
-        //     }
-        // };
+        var root = new Span()
+        {
+            Name  = "Root",
+            Style = new()
+            {
+                // Baseline = 0,
+                FontSize  = 24,
+                Alignment = AlignmentType.Center,
+            }
+        };
 
-        // this.canvas.AppendChild(root);
-
-
+        this.canvas.AppendChild(root);
 
         this.a = new Span()
         {
-            Text  = "A...",
+            Text  = "It's Magic!!!",
             Name  = "A",
             Style = new()
             {
-                FontSize     = 48,
-                BorderColor  = Color.Red,
-                BorderRadius = 20,
-                BorderSize   = 2,
-                Size         = new(200, 100),
-                Margin       = new(50),
+                FontSize = 48,
+                Border   = new()
+                {
+                    Top    = new(2, Color.Red),
+                    Right  = new(40, Color.Green),
+                    Bottom = new(30, Color.Blue),
+                    Left   = new(40, Color.Yellow),
+                    Radius = new(60),
+                },
+                Size     = new(400, 200),
+                Margin   = new(50),
             }
         };
 
@@ -72,11 +72,9 @@ public class Editor : Node
             Name  = "B",
             Style = new()
             {
-                FontSize    = 24,
-                BorderColor = Color.Green,
-                BorderRadius = 20,
-                BorderSize   = 2,
-                Size        = new(200, 100),
+                FontSize = 24,
+                Border   = new(2, 20, Color.Green),
+                Size     = new(200, 100),
             }
         };
 
@@ -89,11 +87,9 @@ public class Editor : Node
             Name  = "C",
             Style = new()
             {
-                FontSize     = 24,
-                BorderColor  = Color.Blue,
-                BorderRadius = 20,
-                BorderSize   = 2,
-                Size         = new(100, 50),
+                FontSize = 24,
+                Border   = new(2, 20, Color.Blue),
+                Size     = new(100, 50),
             }
         };
 
@@ -102,10 +98,10 @@ public class Editor : Node
         this.c.Style.Align    = new(1, -1);
         this.c.Style.Position = new(50, 50);
 
-        this.canvas.AppendChild(this.a);
+        root.AppendChild(this.a);
         // this.canvas.AppendChild(b);
-        this.canvas.AppendChild(this.b);
-        this.b.AppendChild(this.c);
+        // root.AppendChild(this.b);
+        // this.b.AppendChild(this.c);
 
         this.statusText = new Span()
         {
@@ -118,10 +114,10 @@ public class Editor : Node
             Style = style with
             {
                 // Align       = new(),
-                BorderColor = Color.Red,
-                Color       = Color.Margenta,
-                FontSize    = 24,
-                Margin      = new(10),
+                Border   = new(1, 0, Color.Red),
+                Color    = Color.Margenta,
+                FontSize = 24,
+                Margin   = new(10),
                 // Size        = new(100),
             }
         };

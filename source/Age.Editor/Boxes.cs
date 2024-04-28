@@ -43,7 +43,7 @@ public class Boxes : Element
             Style = new()
             {
                 // Alignment   = AlignmentType.Center | AlignmentType.Bottom,
-                BorderColor = Color.Red,
+                // BorderColor = Color.Red,
                 Color       = Color.Red,
                 Size        = new(BLOCK_SIZE),
             }
@@ -56,7 +56,7 @@ public class Boxes : Element
             Style = new()
             {
                 Alignment   = AlignmentType.Top,
-                BorderColor = Color.Green,
+                // BorderColor = Color.Green,
                 Color       = Color.Green,
                 Size        = new(100),
             }
@@ -69,7 +69,7 @@ public class Boxes : Element
             Style = new()
             {
                 // Alignment   = AlignmentType.Center | AlignmentType.Top,
-                BorderColor = Color.Blue,
+                // BorderColor = Color.Blue,
                 Color       = Color.Blue,
                 Size        = new(BLOCK_SIZE),
             }
@@ -82,7 +82,7 @@ public class Boxes : Element
             Style = new()
             {
                 // Alignment   = AlignmentType.Center,
-                BorderColor = Color.Red,
+                // BorderColor = Color.Red,
                 Color       = Color.Red,
                 Size        = new(BLOCK_SIZE),
             }
@@ -95,7 +95,7 @@ public class Boxes : Element
             Style = new()
             {
                 Alignment   = AlignmentType.Center/*  | AlignmentType.Top */,
-                BorderColor = Color.Green,
+                // BorderColor = Color.Green,
                 Color       = Color.Green,
                 Size        = new(BLOCK_SIZE),
             }
@@ -108,7 +108,7 @@ public class Boxes : Element
             Style = new()
             {
                 // Alignment   = AlignmentType.Center,
-                BorderColor = Color.Blue,
+                // BorderColor = Color.Blue,
                 Color       = Color.Blue,
                 Size        = new(BLOCK_SIZE),
             }

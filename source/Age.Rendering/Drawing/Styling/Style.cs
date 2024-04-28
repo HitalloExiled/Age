@@ -10,9 +10,7 @@ public record Style
     private AlignmentType? alignment;
     private Color?         backgroundColor;
     private float?         baseline;
-    private Color?         borderColor;
-    private uint?          borderRadius;
-    private uint?          borderSize;
+    private Border?        border;
     private Color?         color;
     private string?        fontFamily;
     private ushort?        fontSize;
@@ -50,22 +48,10 @@ public record Style
         set => this.Set(ref this.baseline, value);
     }
 
-    public Color? BorderColor
+    public Border? Border
     {
-        get => this.borderColor;
-        set => this.Set(ref this.borderColor, value);
-    }
-
-    public uint? BorderSize
-    {
-        get => this.borderSize;
-        set => this.Set(ref this.borderSize, value);
-    }
-
-    public uint? BorderRadius
-    {
-        get => this.borderRadius;
-        set => this.Set(ref this.borderRadius, value);
+        get => this.border;
+        set => this.Set(ref this.border, value);
     }
 
     public Color? BackgroundColor1

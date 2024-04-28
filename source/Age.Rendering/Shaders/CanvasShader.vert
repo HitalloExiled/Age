@@ -6,29 +6,34 @@ layout(location = 0) in vec2 inPosition;
 
 layout(location = 0) out vec2 outFragTexCoord;
 
+struct Rect
+{
+    vec2 size;
+    vec2 position;
+};
+
+struct Transform
+{
+    mat2 rotation;
+    vec2 position;
+};
+
 layout(push_constant) uniform Data
 {
-    vec2  viewport;
-    mat2  rotation;
-    vec2  position;
-    vec2  size;
-    vec2  offset;
-    vec2  uv[4];
-    float color[4];
-    uint  border_size;
-    uint  border_radius;
-    float border_color[4];
-    uint  border_position;
+    vec2      viewport;
+    Transform transform;
+    Rect      rect;
+    vec2      uv[4];
 } data;
 
 void main()
 {
     vec2 vertex = inPosition / 2 + 0.5;
     vertex.y *= -1;
-    vertex *= data.size;
-    vertex += data.offset;
-    vertex = data.rotation * vertex;
-    vertex += data.position;
+    vertex *= data.rect.size;
+    vertex += data.rect.position;
+    vertex =  data.transform.rotation * vertex;
+    vertex += data.transform.position;
     vertex.y *= -1;
     vertex /= data.viewport;
     vertex = vertex * 2 - 1;

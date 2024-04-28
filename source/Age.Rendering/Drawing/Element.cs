@@ -147,8 +147,6 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    private void ApplyStyle() => this.DrawBorder();
-
     private void CalculateLayout()
     {
         var stackMode = this.Style.Stack ?? StackType.Horizontal;
@@ -200,7 +198,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
                     ? contentSize.Min(this.Style.MaxSize.Value)
                     :  this.Style.Size ?? contentSize;
 
-        this.ApplyStyle();
+        this.DrawBorder();
     }
 
     private void DrawBorder()
@@ -227,13 +225,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
         command.Rect      = new(this.Size.Cast<float>(), default);
         command.ColorMode = ColorMode.RGBA;
-        command.Border    = new()
-        {
-            Color     = this.Style.BorderColor ?? new(0.75f, 0.75f, 0.75f, 1),
-            Position  = Shaders.CanvasShader.BorderPosition.All,
-            Radius    = this.Style.BorderRadius ?? 0,
-            Size      = this.Style.BorderSize ?? 0,
-        };
+        command.Border    = this.Style.Border ?? default;
     }
 
     private void OnStyleChanged()
