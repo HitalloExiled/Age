@@ -55,8 +55,8 @@ public class Editor : Node
                 FontSize = 48,
                 Border   = new()
                 {
-                    Top    = new(2, Color.Red),
-                    Right  = new(40, Color.Green),
+                    Top    = new(10, Color.Red),
+                    Right  = new(20, Color.Green),
                     Bottom = new(30, Color.Blue),
                     Left   = new(40, Color.Yellow),
                     Radius = new(60),
@@ -99,7 +99,7 @@ public class Editor : Node
         this.c.Style.Position = new(50, 50);
 
         root.AppendChild(this.a);
-        // this.canvas.AppendChild(b);
+        // // this.canvas.AppendChild(b);
         // root.AppendChild(this.b);
         // this.b.AppendChild(this.c);
 

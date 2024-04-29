@@ -83,12 +83,43 @@ bool intersects(vec2 position, Rect rect)
     return position.x >= rect.position.x && position.x <= rect.position.x + rect.size.x && position.y >= rect.position.y && position.y <= rect.position.y + rect.size.y;
 }
 
+vec2 cubic_bezier(vec2 p0, vec2 p1, vec2 p2, vec2 p3, float t) {
+    mat4 M = mat4(
+         1.0,  0.0,  0.0, 0.0,
+        -3.0,  3.0,  0.0, 0.0,
+         3.0, -6.0,  3.0, 0.0,
+        -1.0,  3.0, -3.0, 1.0
+    );
+
+    vec4 T = vec4(1.0, t, t * t, t * t * t);
+
+    vec4 result = M * T;
+
+    float x = dot(result, vec4(p0.x, p1.x, p2.x, p3.x));
+    float y = dot(result, vec4(p0.y, p1.y, p2.y, p3.y));
+
+    return vec2(x, y);
+}
+
+vec2 quadratic_bezier(vec2 p0, vec2 p1, vec2 p2, float t)
+{
+    vec2 q0 = mix(p0, p1, t);
+    vec2 q1 = mix(p1, p2, t);
+
+    return mix(q0, q1, t);
+}
+
 void get_corners(out Rect left_top, out Rect top_right, out Rect right_bottom, out Rect bottom_left)
 {
     left_top     = Rect(vec2(data.border.left.thickness,  data.border.top.thickness),    vec2(0));
     top_right    = Rect(vec2(data.border.right.thickness, data.border.top.thickness),    vec2(data.rect.size.x - data.border.right.thickness, 0));
     right_bottom = Rect(vec2(data.border.right.thickness, data.border.bottom.thickness), vec2(data.rect.size.x - data.border.right.thickness, data.rect.size.y - data.border.bottom.thickness));
     bottom_left  = Rect(vec2(data.border.left.thickness,  data.border.bottom.thickness), vec2(0, data.rect.size.y - data.border.bottom.thickness));
+}
+
+uint get_min_radius(uint radius)
+{
+    return uint(min(radius, min(data.rect.size.x, data.rect.size.y)));
 }
 
 vec2 get_max(vec2 vector)
@@ -201,70 +232,120 @@ bool is_corner(vec2 position, out uint corner)
 
 bool is_inside_radius(vec2 position, uint corner, out vec4 color)
 {
-    uint thickness;
-    uint radius;
-    vec2 direction;
-
     switch (corner)
     {
         case CORNER_LEFT_TOP:
         {
-            radius    = data.border.radius.left_top;
-            direction = position - vec2(radius);
+            uint radius    = get_min_radius(data.border.radius.left_top);
+            vec2 direction = position - vec2(radius);
 
             float factor = dot(normalize(direction), vec2(-1, 0));
-
-            thickness = uint(mix(data.border.top.thickness, data.border.left.thickness, factor));
 
             color = mix(to_vec4(data.border.top.color), to_vec4(data.border.left.color), factor);
 
-            break;
+            if (length(direction) < radius)
+            {
+                vec2 p1 = vec2(radius,                     data.border.top.thickness);
+                vec2 p2 = vec2(data.border.left.thickness, data.border.top.thickness);
+                vec2 p3 = vec2(data.border.left.thickness, radius);
+
+                vec2 curve = quadratic_bezier(p1, p2, p3, position.y / radius);
+
+                Rect inner_corner = Rect(
+                    vec2(radius - data.border.left.thickness, radius - data.border.top.thickness),
+                    vec2(data.border.left.thickness, data.border.top.thickness)
+                );
+
+                return !intersects(position, inner_corner) || position.x < curve.x;
+            }
+
+            return false;
+
         }
         case CORNER_TOP_RIGHT:
         {
-            radius    = data.border.radius.top_right;
-            direction = position - vec2(data.rect.size.x - radius, radius);
+            uint radius    = get_min_radius(data.border.radius.top_right);
+            vec2 direction = position - vec2(data.rect.size.x - radius, radius);
 
             float factor = dot(normalize(direction), vec2(1, 0));
 
-            thickness = uint(mix(data.border.top.thickness, data.border.right.thickness, factor));
-            color     = mix(to_vec4(data.border.top.color), to_vec4(data.border.right.color), factor);
+            color = mix(to_vec4(data.border.top.color), to_vec4(data.border.right.color), factor);
 
-            break;
+            if (length(direction) < radius)
+            {
+                vec2 p1 = vec2(data.rect.size.x - radius,                      data.border.top.thickness);
+                vec2 p2 = vec2(data.rect.size.x - data.border.right.thickness, data.border.top.thickness);
+                vec2 p3 = vec2(data.rect.size.x - data.border.right.thickness, radius);
+
+                vec2 curve = quadratic_bezier(p1, p2, p3, position.y / radius);
+
+                Rect inner_corner = Rect(
+                    vec2(radius - data.border.right.thickness, radius - data.border.top.thickness),
+                    vec2(data.rect.size.x - radius, data.border.top.thickness)
+                );
+
+                return !intersects(position, inner_corner) || position.x > curve.x;
+            }
+
+            return false;
         }
         case CORNER_RIGHT_BOTTOM:
         {
-            radius    = data.border.radius.right_bottom;
-            direction = position - vec2(data.rect.size.x - radius, data.rect.size.y - radius);
+            uint radius    = get_min_radius(data.border.radius.right_bottom);
+            vec2 direction = position - vec2(data.rect.size.x - radius, data.rect.size.y - radius);
 
             float factor = dot(normalize(direction), vec2(1, 0));
 
-            thickness = uint(mix(data.border.bottom.thickness, data.border.right.thickness, factor));
-            color     = mix(to_vec4(data.border.bottom.color), to_vec4(data.border.right.color), factor);
+            color = mix(to_vec4(data.border.bottom.color), to_vec4(data.border.right.color), factor);
 
-            break;
+            if (length(direction) < radius)
+            {
+                vec2 p1 = vec2(data.rect.size.x - radius,                      data.rect.size.y - data.border.bottom.thickness);
+                vec2 p2 = vec2(data.rect.size.x - data.border.right.thickness, data.rect.size.y - data.border.bottom.thickness);
+                vec2 p3 = vec2(data.rect.size.x - data.border.right.thickness, data.rect.size.y - radius);
+
+                vec2 curve = quadratic_bezier(p1, p2, p3, (data.rect.size.y - position.y) / radius);
+
+                Rect inner_corner = Rect(
+                    vec2(radius - data.border.right.thickness, radius - data.border.bottom.thickness),
+                    vec2(data.rect.size.x - radius, data.rect.size.y - radius)
+                );
+
+                return !intersects(position, inner_corner) || position.x > curve.x;
+            }
+
+            return false;
         }
         case CORNER_BOTTOM_LEFT:
         {
-            radius    = data.border.radius.bottom_left;
-            direction = position - vec2(radius, data.rect.size.y - radius);
+            uint radius    = get_min_radius(data.border.radius.bottom_left);
+            vec2 direction = position - vec2(radius, data.rect.size.y - radius);
 
             float factor = dot(normalize(direction), vec2(-1, 0));
 
-            thickness = uint(mix(data.border.bottom.thickness, data.border.left.thickness, factor));
-            color     = mix(to_vec4(data.border.bottom.color), to_vec4(data.border.left.color), factor);
+            color = mix(to_vec4(data.border.bottom.color), to_vec4(data.border.left.color), factor);
 
-            break;
+            if (length(direction) < radius)
+            {
+                vec2 p1 = vec2(radius,                     data.rect.size.y - data.border.bottom.thickness);
+                vec2 p2 = vec2(data.border.left.thickness, data.rect.size.y - data.border.bottom.thickness);
+                vec2 p3 = vec2(data.border.left.thickness, data.rect.size.y - radius);
+
+                vec2 curve = quadratic_bezier(p1, p2, p3, (data.rect.size.y - position.y) / radius);
+
+                Rect inner_corner = Rect(
+                    vec2(radius - data.border.right.thickness, radius - data.border.bottom.thickness),
+                    vec2(data.border.left.thickness, data.rect.size.y - radius)
+                );
+
+                return !intersects(position, inner_corner) || position.x < curve.x;
+            }
+
+            return false;
         }
     }
 
-    float len = length(direction);
-
-    radius = uint(min(radius, min(data.rect.size.x, data.rect.size.y)));
-
-    return radius >= thickness
-        ? len > radius - thickness && len <= radius
-        : len <= radius;
+    return false;
 }
 
 void main()

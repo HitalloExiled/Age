@@ -602,7 +602,6 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         void action()
         {
-
             this.CreateShader<TShaderResources, TVertexInput, TPushConstant>(shaderResources, shader.RenderPass, out var pipeline, out var pipelineLayout, out var descriptorSetLayout);
 
             lock (this.padlock)

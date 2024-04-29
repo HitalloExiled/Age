@@ -631,7 +631,7 @@ public unsafe partial class VulkanContext : IDisposable
         {
             Semaphores  = semaphores,
             Size        = size,
-            Value     = surface,
+            Value       = surface,
             Swapchain   = swapchain,
         };
 
