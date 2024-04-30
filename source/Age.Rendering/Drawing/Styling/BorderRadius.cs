@@ -15,6 +15,14 @@ public record struct BorderRadius
         this.BottomLeft  = radius;
     }
 
+    public BorderRadius(uint top, uint bottom)
+    {
+        this.LeftTop     = top;
+        this.TopRight    = top;
+        this.RightBottom = bottom;
+        this.BottomLeft  = bottom;
+    }
+
     public BorderRadius(uint leftTop, uint topRight, uint rightBottom, uint bottomLeft)
     {
         this.LeftTop     = leftTop;

@@ -55,11 +55,11 @@ public class Editor : Node
                 FontSize = 48,
                 Border   = new()
                 {
-                    Top    = new(10, Color.Red),
-                    Right  = new(20, Color.Green),
-                    Bottom = new(30, Color.Blue),
-                    Left   = new(40, Color.Yellow),
-                    Radius = new(60),
+                    Top    = new(4, Color.Red),
+                    Right  = new(0, Color.Green),
+                    Bottom = new(0, Color.Blue),
+                    Left   = new(0, Color.Yellow),
+                    Radius = new(0, 20),
                 },
                 Size     = new(400, 200),
                 Margin   = new(50),

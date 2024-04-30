@@ -10,6 +10,8 @@
 #define BORDER_BOTTOM 3
 #define BORDER_LEFT   4
 
+#define CURVE_FACTOR 3
+
 layout(binding = 0) uniform sampler2D texSampler;
 
 layout(location = 0) in vec2 inFragTexCoord;
@@ -173,7 +175,7 @@ bool intersects_borders(vec2 position, uint border)
 
 bool is_border(vec2 position, out BorderSide side)
 {
-    if (position.y >= 0 && position.y < data.border.top.thickness && !intersects_borders(position, BORDER_TOP))
+    if (position.y >= 0 && position.y <= data.border.top.thickness && !intersects_borders(position, BORDER_TOP))
     {
         side = data.border.top;
     }
@@ -185,7 +187,7 @@ bool is_border(vec2 position, out BorderSide side)
     {
         side = data.border.bottom;
     }
-    else if (position.x >= 0 && position.x < data.border.left.thickness && !intersects_borders(position, BORDER_LEFT))
+    else if (position.x >= 0 && position.x <= data.border.left.thickness && !intersects_borders(position, BORDER_LEFT))
     {
         side = data.border.left;
     }
@@ -199,12 +201,10 @@ bool is_border(vec2 position, out BorderSide side)
 
 bool is_corner(vec2 position, out uint corner)
 {
-    float min_side = min(data.rect.size.x, data.rect.size.y);
-
-    uint left_top_radius     = uint(min(data.border.radius.left_top,     min_side));
-    uint top_right_radius    = uint(min(data.border.radius.top_right,    min_side));
-    uint right_bottom_radius = uint(min(data.border.radius.right_bottom, min_side));
-    uint bottom_left_radius  = uint(min(data.border.radius.bottom_left,  min_side));
+    uint left_top_radius     = get_min_radius(data.border.radius.left_top);
+    uint top_right_radius    = get_min_radius(data.border.radius.top_right);
+    uint right_bottom_radius = get_min_radius(data.border.radius.right_bottom);
+    uint bottom_left_radius  = get_min_radius(data.border.radius.bottom_left);
 
     if (position.x >= 0 && position.x < left_top_radius && position.y >= 0 && position.y <= left_top_radius)
     {
@@ -232,6 +232,13 @@ bool is_corner(vec2 position, out uint corner)
 
 bool is_inside_radius(vec2 position, uint corner, out vec4 color, out bool is_outside)
 {
+    Rect left_top;
+    Rect top_right;
+    Rect right_bottom;
+    Rect bottom_left;
+
+    get_corners(left_top, top_right, right_bottom, bottom_left);
+
     switch (corner)
     {
         case CORNER_LEFT_TOP:
@@ -239,27 +246,27 @@ bool is_inside_radius(vec2 position, uint corner, out vec4 color, out bool is_ou
             uint radius    = get_min_radius(data.border.radius.left_top);
             vec2 direction = position - vec2(radius);
 
-            float factor = dot(normalize(direction), vec2(-1, 0));
+            float top_range = left_top.position.x + position.y / left_top.size.y * left_top.size.x;
 
-            color = mix(to_vec4(data.border.top.color), to_vec4(data.border.left.color), factor);
+            color = position.x > top_range ? to_vec4(data.border.top.color) : to_vec4(data.border.left.color);
 
             if (!(is_outside = length(direction) > radius))
             {
-                vec2 p1 = vec2(radius,                     data.border.top.thickness);
-                vec2 p2 = vec2(data.border.left.thickness, data.border.top.thickness);
-                vec2 p3 = vec2(data.border.left.thickness, radius);
+                if (data.border.top.thickness + data.border.left.thickness == 0)
+                {
+                    return false;
+                }
 
-                vec2 curve = quadratic_bezier(p1, p2, p3, (position.y - data.border.top.thickness) / (radius - data.border.top.thickness));
+                if (radius > data.border.top.thickness || radius > data.border.left.thickness)
+                {
+                    float influence = 1 - (position.y - data.border.top.thickness) / (radius - data.border.top.thickness);
+                    float curve = data.border.left.thickness + (radius - data.border.left.thickness) * pow(influence, CURVE_FACTOR);
 
-                return position.x < curve.x;
+                    return position.x < curve;
+                }
 
-                // float influence = 1 - (position.y - data.border.top.thickness) / (radius - data.border.top.thickness);
-                // float curve = data.border.left.thickness + (radius - data.border.left.thickness) * pow(influence, 3);
-
-                // return position.x < curve;
+                return true;
             }
-
-            return false;
 
         }
         case CORNER_TOP_RIGHT:
@@ -267,66 +274,81 @@ bool is_inside_radius(vec2 position, uint corner, out vec4 color, out bool is_ou
             uint radius    = get_min_radius(data.border.radius.top_right);
             vec2 direction = position - vec2(data.rect.size.x - radius, radius);
 
-            float factor = dot(normalize(direction), vec2(1, 0));
+            float top_range = top_right.position.x + position.y / -top_right.size.y * top_right.size.x + top_right.size.x;
 
-            color = mix(to_vec4(data.border.top.color), to_vec4(data.border.right.color), factor);
+            color = position.x < top_range ? to_vec4(data.border.top.color) : to_vec4(data.border.right.color);
 
             if (!(is_outside = length(direction) > radius))
             {
-                vec2 p1 = vec2(data.rect.size.x - radius,                      data.border.top.thickness);
-                vec2 p2 = vec2(data.rect.size.x - data.border.right.thickness, data.border.top.thickness);
-                vec2 p3 = vec2(data.rect.size.x - data.border.right.thickness, radius);
+                if (data.border.top.thickness + data.border.right.thickness == 0)
+                {
+                    return false;
+                }
 
-                vec2 curve = quadratic_bezier(p1, p2, p3, (position.y - data.border.top.thickness) / (radius - data.border.top.thickness));
+                if (radius > data.border.top.thickness || radius > data.border.left.thickness)
+                {
+                    float influence = 1 - (position.y - data.border.top.thickness) / (radius - data.border.top.thickness);
+                    float curve = data.rect.size.x - data.border.right.thickness - (radius - data.border.right.thickness) * pow(influence, CURVE_FACTOR);
 
-                return position.x > curve.x;
+                    return position.x > curve;
+                }
+
+                return true;
             }
-
-            return false;
         }
         case CORNER_RIGHT_BOTTOM:
         {
             uint radius    = get_min_radius(data.border.radius.right_bottom);
             vec2 direction = position - vec2(data.rect.size.x - radius, data.rect.size.y - radius);
 
-            float factor = dot(normalize(direction), vec2(1, 0));
+            float bottom_range = right_bottom.position.x + (data.rect.size.y - position.y) / -right_bottom.size.y * right_bottom.size.x + right_bottom.size.x;
 
-            color = mix(to_vec4(data.border.bottom.color), to_vec4(data.border.right.color), factor);
+            color = position.x < bottom_range ? to_vec4(data.border.bottom.color) : to_vec4(data.border.right.color);
 
             if (!(is_outside = length(direction) > radius))
             {
-                vec2 p1 = vec2(data.rect.size.x - radius,                      data.rect.size.y - data.border.bottom.thickness);
-                vec2 p2 = vec2(data.rect.size.x - data.border.right.thickness, data.rect.size.y - data.border.bottom.thickness);
-                vec2 p3 = vec2(data.rect.size.x - data.border.right.thickness, data.rect.size.y - radius);
+                if (data.border.bottom.thickness + data.border.right.thickness == 0)
+                {
+                    return false;
+                }
 
-                vec2 curve = quadratic_bezier(p1, p2, p3, (data.rect.size.y - position.y - data.border.bottom.thickness) / (radius - data.border.bottom.thickness));
+                if (radius > data.border.bottom.thickness || radius > data.border.right.thickness)
+                {
+                    float influence = 1 - (data.rect.size.y - position.y - data.border.bottom.thickness) / (radius - data.border.bottom.thickness);
+                    float curve = data.rect.size.x - data.border.right.thickness - (radius - data.border.right.thickness) * pow(influence, CURVE_FACTOR);
 
-                return position.x > curve.x;
+                    return position.x > curve;
+                }
+
+                return true;
             }
-
-            return false;
         }
         case CORNER_BOTTOM_LEFT:
         {
             uint radius    = get_min_radius(data.border.radius.bottom_left);
             vec2 direction = position - vec2(radius, data.rect.size.y - radius);
 
-            float factor = dot(normalize(direction), vec2(-1, 0));
+            float bottom_range = bottom_left.position.x + (data.rect.size.y - position.y) / bottom_left.size.y * bottom_left.size.x;
 
-            color = mix(to_vec4(data.border.bottom.color), to_vec4(data.border.left.color), factor);
+            color = position.x > bottom_range ? to_vec4(data.border.bottom.color) : to_vec4(data.border.left.color);
 
             if (!(is_outside = length(direction) > radius))
             {
-                vec2 p1 = vec2(radius,                     data.rect.size.y - data.border.bottom.thickness);
-                vec2 p2 = vec2(data.border.left.thickness, data.rect.size.y - data.border.bottom.thickness);
-                vec2 p3 = vec2(data.border.left.thickness, data.rect.size.y - radius);
+                if (data.border.bottom.thickness + data.border.right.thickness == 0)
+                {
+                    return false;
+                }
 
-                vec2 curve = quadratic_bezier(p1, p2, p3, (data.rect.size.y - position.y - data.border.bottom.thickness) / (radius - data.border.bottom.thickness));
+                if (radius > data.border.bottom.thickness || radius > data.border.left.thickness)
+                {
+                    float influence = 1 - (data.rect.size.y - position.y - data.border.bottom.thickness) / (radius - data.border.bottom.thickness);
+                    float curve     = data.border.left.thickness + (radius - data.border.left.thickness) * pow(influence, CURVE_FACTOR);
 
-                return position.x < curve.x;
+                    return position.x < curve;
+                }
+
+                return true;
             }
-
-            return false;
         }
     }
 
@@ -367,12 +389,12 @@ void main()
             }
             else if (is_outside)
             {
-                // color = vec4(0);
-                color = vec4(0, 1, 1, 1);
+                color = vec4(0);
+                // color = vec4(0, 1, 1, 1);
             }
             else
             {
-                color = vec4(1, 0, 1, 1);
+                // color = vec4(1, 0, 1, 1);
             }
         }
         else if (is_border(position, side))
