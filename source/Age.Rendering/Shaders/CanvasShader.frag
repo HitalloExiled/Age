@@ -230,7 +230,7 @@ bool is_corner(vec2 position, out uint corner)
     return true;
 }
 
-bool is_inside_radius(vec2 position, uint corner, out vec4 color)
+bool is_inside_radius(vec2 position, uint corner, out vec4 color, out bool is_outside)
 {
     switch (corner)
     {
@@ -243,20 +243,20 @@ bool is_inside_radius(vec2 position, uint corner, out vec4 color)
 
             color = mix(to_vec4(data.border.top.color), to_vec4(data.border.left.color), factor);
 
-            if (length(direction) < radius)
+            if (!(is_outside = length(direction) > radius))
             {
                 vec2 p1 = vec2(radius,                     data.border.top.thickness);
                 vec2 p2 = vec2(data.border.left.thickness, data.border.top.thickness);
                 vec2 p3 = vec2(data.border.left.thickness, radius);
 
-                vec2 curve = quadratic_bezier(p1, p2, p3, position.y / radius);
+                vec2 curve = quadratic_bezier(p1, p2, p3, (position.y - data.border.top.thickness) / (radius - data.border.top.thickness));
 
-                Rect inner_corner = Rect(
-                    vec2(radius - data.border.left.thickness, radius - data.border.top.thickness),
-                    vec2(data.border.left.thickness, data.border.top.thickness)
-                );
+                return position.x < curve.x;
 
-                return !intersects(position, inner_corner) || position.x < curve.x;
+                // float influence = 1 - (position.y - data.border.top.thickness) / (radius - data.border.top.thickness);
+                // float curve = data.border.left.thickness + (radius - data.border.left.thickness) * pow(influence, 3);
+
+                // return position.x < curve;
             }
 
             return false;
@@ -271,20 +271,15 @@ bool is_inside_radius(vec2 position, uint corner, out vec4 color)
 
             color = mix(to_vec4(data.border.top.color), to_vec4(data.border.right.color), factor);
 
-            if (length(direction) < radius)
+            if (!(is_outside = length(direction) > radius))
             {
                 vec2 p1 = vec2(data.rect.size.x - radius,                      data.border.top.thickness);
                 vec2 p2 = vec2(data.rect.size.x - data.border.right.thickness, data.border.top.thickness);
                 vec2 p3 = vec2(data.rect.size.x - data.border.right.thickness, radius);
 
-                vec2 curve = quadratic_bezier(p1, p2, p3, position.y / radius);
+                vec2 curve = quadratic_bezier(p1, p2, p3, (position.y - data.border.top.thickness) / (radius - data.border.top.thickness));
 
-                Rect inner_corner = Rect(
-                    vec2(radius - data.border.right.thickness, radius - data.border.top.thickness),
-                    vec2(data.rect.size.x - radius, data.border.top.thickness)
-                );
-
-                return !intersects(position, inner_corner) || position.x > curve.x;
+                return position.x > curve.x;
             }
 
             return false;
@@ -298,20 +293,15 @@ bool is_inside_radius(vec2 position, uint corner, out vec4 color)
 
             color = mix(to_vec4(data.border.bottom.color), to_vec4(data.border.right.color), factor);
 
-            if (length(direction) < radius)
+            if (!(is_outside = length(direction) > radius))
             {
                 vec2 p1 = vec2(data.rect.size.x - radius,                      data.rect.size.y - data.border.bottom.thickness);
                 vec2 p2 = vec2(data.rect.size.x - data.border.right.thickness, data.rect.size.y - data.border.bottom.thickness);
                 vec2 p3 = vec2(data.rect.size.x - data.border.right.thickness, data.rect.size.y - radius);
 
-                vec2 curve = quadratic_bezier(p1, p2, p3, (data.rect.size.y - position.y) / radius);
+                vec2 curve = quadratic_bezier(p1, p2, p3, (data.rect.size.y - position.y - data.border.bottom.thickness) / (radius - data.border.bottom.thickness));
 
-                Rect inner_corner = Rect(
-                    vec2(radius - data.border.right.thickness, radius - data.border.bottom.thickness),
-                    vec2(data.rect.size.x - radius, data.rect.size.y - radius)
-                );
-
-                return !intersects(position, inner_corner) || position.x > curve.x;
+                return position.x > curve.x;
             }
 
             return false;
@@ -325,20 +315,15 @@ bool is_inside_radius(vec2 position, uint corner, out vec4 color)
 
             color = mix(to_vec4(data.border.bottom.color), to_vec4(data.border.left.color), factor);
 
-            if (length(direction) < radius)
+            if (!(is_outside = length(direction) > radius))
             {
                 vec2 p1 = vec2(radius,                     data.rect.size.y - data.border.bottom.thickness);
                 vec2 p2 = vec2(data.border.left.thickness, data.rect.size.y - data.border.bottom.thickness);
                 vec2 p3 = vec2(data.border.left.thickness, data.rect.size.y - radius);
 
-                vec2 curve = quadratic_bezier(p1, p2, p3, (data.rect.size.y - position.y) / radius);
+                vec2 curve = quadratic_bezier(p1, p2, p3, (data.rect.size.y - position.y - data.border.bottom.thickness) / (radius - data.border.bottom.thickness));
 
-                Rect inner_corner = Rect(
-                    vec2(radius - data.border.right.thickness, radius - data.border.bottom.thickness),
-                    vec2(data.border.left.thickness, data.rect.size.y - radius)
-                );
-
-                return !intersects(position, inner_corner) || position.x < curve.x;
+                return position.x < curve.x;
             }
 
             return false;
@@ -375,9 +360,19 @@ void main()
         if (is_corner(position, corner))
         {
             vec4 corner_color;
-            if (is_inside_radius(position, corner, corner_color))
+            bool is_outside;
+            if (is_inside_radius(position, corner, corner_color, is_outside))
             {
                 color = corner_color;
+            }
+            else if (is_outside)
+            {
+                // color = vec4(0);
+                color = vec4(0, 1, 1, 1);
+            }
+            else
+            {
+                color = vec4(1, 0, 1, 1);
             }
         }
         else if (is_border(position, side))
