@@ -6,6 +6,7 @@ using Age.Rendering.Drawing.Elements;
 using Age.Rendering.Resources;
 using Age.Rendering.Storage;
 using SkiaSharp;
+using static Age.Rendering.Shaders.CanvasShader;
 
 namespace Age.Rendering.Services;
 
@@ -181,6 +182,7 @@ internal partial class TextService(RenderingService renderingService, TextureSto
                     Color          = color,
                     ColorMode      = ColorMode.Grayscale,
                     SampledTexture = new(atlas.Texture, this.sampler, uv),
+                    Flags          = Flags.Grayscale | Flags.MultiplyColor,
                 };
 
                 textNode.Commands.Add(command);

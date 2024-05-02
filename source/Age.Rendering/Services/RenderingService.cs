@@ -126,13 +126,13 @@ internal class RenderingService : IDisposable
 
                         var constant = new CanvasShader.PushConstant
                         {
-                            Border       = rectDrawCommand.Border,
-                            Color        = rectDrawCommand.Color,
-                            Grayscale    = rectDrawCommand.ColorMode == ColorMode.Grayscale,
-                            Rect         = rectDrawCommand.Rect,
-                            Transform    = transform,
-                            UV           = rectDrawCommand.SampledTexture.UV,
-                            ViewportSize = windowSize,
+                            Border    = rectDrawCommand.Border,
+                            Color     = rectDrawCommand.Color,
+                            Flags     = rectDrawCommand.Flags,
+                            Rect      = rectDrawCommand.Rect,
+                            Transform = transform,
+                            UV        = rectDrawCommand.SampledTexture.UV,
+                            Viewport  = windowSize,
                         };
 
                         if (uniformSet != null && uniformSet != lastUniformSet)

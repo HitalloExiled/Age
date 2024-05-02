@@ -13,12 +13,17 @@ public partial class CanvasShader
         static unsafe uint        IPushConstant.Size   { get; } = (uint)sizeof(PushConstant);
         static VkShaderStageFlags IPushConstant.Stages { get; } = VkShaderStageFlags.Vertex | VkShaderStageFlags.Fragment;
 
-        public Size<float>      ViewportSize;
+        // [16-bytes boundary]
+        public Color Color;
+
+        // [8-bytes boundary]
+        public Size<float>      Viewport;
         public Matrix3x2<float> Transform;
         public Rect<float>      Rect;
         public UVRect           UV;
-        public Color            Color;
-        public bool             Grayscale;
         public Border           Border;
+
+        // [4-bytes boundary]
+        public Flags Flags;
     }
 }

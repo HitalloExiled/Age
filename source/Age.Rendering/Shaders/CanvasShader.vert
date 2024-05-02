@@ -18,8 +18,11 @@ struct Transform
     vec2 position;
 };
 
-layout(push_constant) uniform Data
+layout(push_constant, std430) uniform Data
 {
+    layout(offset = 16)
+
+    // [8-bytes boundary]
     vec2      viewport;
     Transform transform;
     Rect      rect;

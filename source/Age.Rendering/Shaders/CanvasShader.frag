@@ -12,6 +12,9 @@
 
 #define CURVE_FACTOR 3
 
+#define FLAGS_GRAYSCALE      1 << 0
+#define FLAGS_MULTIPLY_COLOR 1 << 1
+
 layout(binding = 0) uniform sampler2D texSampler;
 
 layout(location = 0) in vec2 inFragTexCoord;
@@ -59,15 +62,20 @@ struct Line
     vec2 end;
 };
 
-layout(push_constant) uniform Data
+layout(push_constant, std430) uniform Data
 {
+    // [16-bytes boundary]
+    vec4 color;
+
+    // [8-bytes boundary]
     vec2      viewport;
     Transform transform;
     Rect      rect;
     vec2      uv[4];
-    float     color[4];
-    bool      grayscale;
     Border    border;
+
+    // [4-bytes boundary]
+    uint flags;
 } data;
 
 vec4 to_vec4(float elements[4])
@@ -359,8 +367,8 @@ void main()
 {
     vec4 texture_color = texture(texSampler, inFragTexCoord);
 
-    vec4 color = data.grayscale
-        ? vec4(1 - texture_color.rrr, texture_color.g) * to_vec4(data.color)
+    vec4 color = has_flag(data.flags, FLAGS_GRAYSCALE | FLAGS_MULTIPLY_COLOR)
+        ? vec4(1 - texture_color.rrr, texture_color.g) * data.color
         : to_vec4(float[](data.border.top.color[0], data.border.top.color[1], data.border.top.color[2], 0.2));
 
     bool has_border = data.border.top.thickness
