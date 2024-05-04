@@ -2,7 +2,7 @@ using Age.Numerics;
 
 namespace Age.Rendering.Drawing.Styling;
 
-public record Style
+public partial record Style
 {
     public event Action? Changed;
 
@@ -11,6 +11,7 @@ public record Style
     private Color?         backgroundColor;
     private float?         baseline;
     private Border?        border;
+    private BoxSizing?     boxSizing;
     private Color?         color;
     private string?        fontFamily;
     private ushort?        fontSize;
@@ -54,10 +55,10 @@ public record Style
         set => this.Set(ref this.border, value);
     }
 
-    public Color? BackgroundColor1
+    public BoxSizing? BoxSizing
     {
-        get => this.backgroundColor;
-        set => this.Set(ref this.backgroundColor, value);
+        get => this.boxSizing;
+        set => this.Set(ref this.boxSizing, value);
     }
 
     public Color? Color

@@ -9,7 +9,7 @@ public record Framebuffer : Disposable
 
     protected override void OnDispose()
     {
-        Value.Dispose();
-        ImageView.Dispose();
+        this.Value.Dispose();
+        this.ImageView.Dispose();
     }
 }

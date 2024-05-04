@@ -180,9 +180,8 @@ internal partial class TextService(RenderingService renderingService, TextureSto
                 {
                     Rect           = new(size, position),
                     Color          = color,
-                    ColorMode      = ColorMode.Grayscale,
                     SampledTexture = new(atlas.Texture, this.sampler, uv),
-                    Flags          = Flags.Grayscale | Flags.MultiplyColor,
+                    Flags          = Flags.GrayscaleTexture | Flags.MultiplyColor,
                 };
 
                 textNode.Commands.Add(command);

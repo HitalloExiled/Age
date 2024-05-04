@@ -55,31 +55,42 @@ public class Editor : Node
                 FontSize = 48,
                 Border   = new()
                 {
-                    Top    = new(4, Color.Red),
-                    Right  = new(0, Color.Green),
-                    Bottom = new(0, Color.Blue),
-                    Left   = new(0, Color.Yellow),
+                    Top    = new(20, Color.Red),
+                    Right  = new(20, Color.Green),
+                    Bottom = new(20, Color.Blue),
+                    Left   = new(20, Color.Yellow),
                     Radius = new(0, 20),
                 },
-                Size     = new(400, 200),
-                Margin   = new(50),
+                BackgroundColor = new Color(1, 0, 1, 0.25f),
+                // Size            = new(400, 200),
+                Margin          = new(50),
             }
         };
 
         this.b = new Span()
         {
-            Text  = "B...",
-            Name  = "B",
+            Text  = "It's Magic!!!",
+            Name  = "A",
             Style = new()
             {
-                FontSize = 24,
-                Border   = new(2, 20, Color.Green),
-                Size     = new(200, 100),
+                FontSize = 48,
+                Border   = new()
+                {
+                    Top    = new(20, Color.Red),
+                    Right  = new(20, Color.Green),
+                    Bottom = new(20, Color.Blue),
+                    Left   = new(20, Color.Yellow),
+                    Radius = new(0, 20),
+                },
+                BoxSizing       = BoxSizing.Border,
+                BackgroundColor = new Color(1, 0, 1, 0.25f),
+                // Size            = new(400, 200),
+                Margin          = new(50),
             }
         };
 
-        this.b.LocalTransform = this.b.LocalTransform with { Scale = new(0.5f) };
-        this.b.Pivot = new(300, -50);
+        // this.b.LocalTransform = this.b.LocalTransform with { Scale = new(0.5f) };
+        // this.b.Pivot = new(300, -50);
 
         this.c = new Span()
         {
@@ -100,7 +111,7 @@ public class Editor : Node
 
         root.AppendChild(this.a);
         // // this.canvas.AppendChild(b);
-        // root.AppendChild(this.b);
+        root.AppendChild(this.b);
         // this.b.AppendChild(this.c);
 
         this.statusText = new Span()

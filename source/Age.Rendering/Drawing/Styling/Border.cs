@@ -16,5 +16,6 @@ public record struct Border
         this.Right  = new(thickness, color);
         this.Bottom = new(thickness, color);
         this.Left   = new(thickness, color);
+        this.Radius = new(radius);
     }
 }

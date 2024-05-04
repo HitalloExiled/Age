@@ -10,9 +10,8 @@ public partial record RectDrawCommand() : DrawCommand(DrawCommandType.Rect)
 {
     public required SampledTexture SampledTexture { get; init; }
 
-    public Border             Border    { get; set; }
-    public Color              Color     { get; set; }
-    public ColorMode          ColorMode { get; set; }
-    public CanvasShader.Flags Flags     { get; set; }
-    public Rect<float>        Rect      { get; set; }
+    public Border             Border { get; set; }
+    public Color              Color  { get; set; }
+    public CanvasShader.Flags Flags  { get; set; }
+    public Rect<float>        Rect   { get; set; }
 }

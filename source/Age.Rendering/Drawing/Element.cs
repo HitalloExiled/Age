@@ -3,6 +3,7 @@ using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing.Elements;
 using Age.Rendering.Drawing.Styling;
+using static Age.Rendering.Shaders.CanvasShader;
 
 namespace Age.Rendering.Drawing;
 
@@ -15,6 +16,14 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
     private Style          style = new();
     private Transform2D    styleTransform = new();
     private string?        text;
+
+    private Margin BorderMargin =>
+        new(
+            this.Style.Border?.Top.Thickness ?? 0,
+            this.Style.Border?.Right.Thickness ?? 0,
+            this.Style.Border?.Bottom.Thickness ?? 0,
+            this.Style.Border?.Left.Thickness ?? 0
+        );
 
     private Vector2<float> StylePivot
     {
@@ -151,7 +160,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
     {
         var stackMode = this.Style.Stack ?? StackType.Horizontal;
 
-        var hightest    = 0f;
+        var hightest = 0f;
         var contentSize = new Size<uint>();
 
         foreach (var child in this.Enumerate<ContainerNode>())
@@ -162,9 +171,9 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             }
 
             var childStyle = (child as Element)?.Style;
-            var margin     = childStyle?.Margin ?? new(0);
-            var alignment  = childStyle?.Alignment ?? AlignmentType.BaseLine;
-            var totalSize  = new Size<uint>(child.Size.Width + margin.Horizontal, child.Size.Height + margin.Vertical);
+            var margin = childStyle?.Margin ?? new(0);
+            var alignment = childStyle?.Alignment ?? AlignmentType.BaseLine;
+            var totalSize = new Size<uint>(child.Size.Width + margin.Horizontal, child.Size.Height + margin.Vertical);
 
             if (stackMode == StackType.Horizontal)
             {
@@ -177,26 +186,36 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
                     hightest = totalSize.Height;
                 }
 
-                contentSize.Height  = uint.Max(contentSize.Height, totalSize.Height);
-                contentSize.Width  += totalSize.Width;
+                contentSize.Height = uint.Max(contentSize.Height, totalSize.Height);
+                contentSize.Width += totalSize.Width;
             }
             else
             {
                 contentSize.Height += totalSize.Height;
-                contentSize.Width   = uint.Max(contentSize.Width, totalSize.Width);
+                contentSize.Width = uint.Max(contentSize.Width, totalSize.Width);
             }
 
             this.nodesToDistribute.Add(child);
         }
 
         this.ContentSize = contentSize;
-        this.Size        = this.Style.MinSize.HasValue && this.Style.MaxSize.HasValue
+
+        var size = this.Style.MinSize.HasValue && this.Style.MaxSize.HasValue
             ? contentSize.Range(this.Style.MinSize.Value, this.Style.MaxSize.Value)
             : this.Style.MinSize.HasValue
                 ? contentSize.Max(this.Style.MinSize.Value)
                 : this.Style.MaxSize.HasValue
                     ? contentSize.Min(this.Style.MaxSize.Value)
-                    :  this.Style.Size ?? contentSize;
+                    : this.Style.Size ?? contentSize;
+
+        if (this.Style.BoxSizing != BoxSizing.Border)
+        {
+            var borderMargin = this.BorderMargin;
+
+            size += new Size<uint>(borderMargin.Horizontal, borderMargin.Vertical);
+        }
+
+        this.Size = size;
 
         this.DrawBorder();
     }
@@ -223,9 +242,10 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             command = (RectDrawCommand)this.Commands[0];
         }
 
-        command.Rect      = new(this.Size.Cast<float>(), default);
-        command.ColorMode = ColorMode.RGBA;
-        command.Border    = this.Style.Border ?? default;
+        command.Rect   = new(this.Size.Cast<float>(), default);
+        command.Flags  = Flags.ColorAsBackground;
+        command.Border = this.Style.Border ?? default;
+        command.Color  = this.Style.BackgroundColor ?? default;
     }
 
     private void OnStyleChanged()
@@ -271,13 +291,22 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         var contentSize = this.ContentSize;
         var stack       = this.Style.Stack ?? StackType.Horizontal;
 
+        if (this.Style.BoxSizing != BoxSizing.Border)
+        {
+            var borderMargin = this.BorderMargin;
+
+            size -= new Size<float>(borderMargin.Horizontal, borderMargin.Vertical);
+            offset.X += borderMargin.Left;
+            offset.Y += -borderMargin.Top;
+        }
+
         ContainerNode? lastChild = null;
 
         for (var i = 0; i < this.nodesToDistribute.Count; i++)
         {
             var reserved = (size - (Size<float>)offset) / (this.nodesToDistribute.Count - i);
 
-            var child = this.nodesToDistribute[i];
+            var child      = this.nodesToDistribute[i];
             var childStyle = (child as Element)?.Style;
 
             var margin       = childStyle?.Margin ?? new();
@@ -300,7 +329,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
                     ? size.Height - size.Height * this.Baseline - child.Size.Height * (1 - child.Baseline)
                     : (size.Height - child.Size.Height - margin.Vertical) * factorY;
 
-                position  = new(x + offset.X + margin.Left, -(y + margin.Top));
+                position  = new(x + offset.X + margin.Left, -(y + margin.Top) + offset.Y);
                 usedSpace = canAlign
                     ? new(float.Max(child.Size.Width, reserved.Width - x), child.Size.Height)
                     : child.Size.Cast<float>();

@@ -12,8 +12,9 @@
 
 #define CURVE_FACTOR 3
 
-#define FLAGS_GRAYSCALE      1 << 0
-#define FLAGS_MULTIPLY_COLOR 1 << 1
+#define FLAGS_GRAYSCALE_TEXTURE   1 << 0
+#define FLAGS_MULTIPLY_COLOR      1 << 1
+#define FLAGS_COLOR_AS_BACKGROUND 1 << 2
 
 layout(binding = 0) uniform sampler2D texSampler;
 
@@ -367,9 +368,12 @@ void main()
 {
     vec4 texture_color = texture(texSampler, inFragTexCoord);
 
-    vec4 color = has_flag(data.flags, FLAGS_GRAYSCALE | FLAGS_MULTIPLY_COLOR)
-        ? vec4(1 - texture_color.rrr, texture_color.g) * data.color
-        : to_vec4(float[](data.border.top.color[0], data.border.top.color[1], data.border.top.color[2], 0.2));
+    vec4 color =
+        has_flag(data.flags, FLAGS_COLOR_AS_BACKGROUND)
+            ? data.color
+            : has_flag(data.flags, FLAGS_GRAYSCALE_TEXTURE | FLAGS_MULTIPLY_COLOR)
+                ? vec4(1 - texture_color.rrr, texture_color.g) * data.color
+                : to_vec4(float[](data.border.top.color[0], data.border.top.color[1], data.border.top.color[2], 0.2));
 
     bool has_border = data.border.top.thickness
         + data.border.right.thickness
