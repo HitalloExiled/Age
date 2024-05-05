@@ -34,6 +34,13 @@ public record struct Vector3<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
         this.Z = z;
     }
 
+    public Vector3(in Vector2<T> vector2, T z)
+    {
+        this.X = vector2.X;
+        this.Y = vector2.Y;
+        this.Z = z;
+    }
+
     public T this[int index]
     {
         get

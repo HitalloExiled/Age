@@ -1,19 +1,20 @@
 using Age.Numerics;
 using Age.Rendering.Enums;
+using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.Rendering.Vulkan.Uniforms;
 
 namespace Age.Rendering.Storage;
 
-internal class TextureStorage : IDisposable
+internal class TextureStorage : ITextureStorage
 {
     private readonly Dictionary<Texture, UniformSet> textureSets = [];
-    private readonly VulkanRenderer                  renderer;
+    private readonly VulkanRenderer renderer;
 
-    public Texture DefaultTexture;
-    public Sampler DefaultSampler;
-    private bool   disposed;
+    public Texture DefaultTexture { get; }
+    public Sampler DefaultSampler { get; }
+    private bool disposed;
 
     public TextureStorage(VulkanRenderer renderer)
     {
@@ -55,11 +56,11 @@ internal class TextureStorage : IDisposable
     {
         var textureCreate = new TextureCreate
         {
-            Depth       = 1,
-            Width       = size.Width,
-            Height      = size.Height,
+            Depth = 1,
+            Width = size.Width,
+            Height = size.Height,
             TextureType = textureType,
-            ColorMode   = colorMode,
+            ColorMode = colorMode,
         };
 
         return this.renderer.CreateTexture(textureCreate);
@@ -82,7 +83,7 @@ internal class TextureStorage : IDisposable
             var uniform = new CombinedImageSamplerUniform
             {
                 Binding = 0,
-                Images  =
+                Images =
                 [
                     new()
                     {

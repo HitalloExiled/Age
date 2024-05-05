@@ -33,4 +33,28 @@ public record struct Color
             (byte)Math.Ceiling(this.B * 255),
             (byte)Math.Ceiling(this.A * 255),
         ];
+
+    public static Color operator +(Color color, float value) =>
+        new(color.R + value, color.G + value, color.B + value, color.A + value);
+
+    public static Color operator +(Color left, Color right) =>
+        new(left.R + right.R, left.G + right.G, left.B + right.B, left.A + right.A);
+
+    public static Color operator -(Color color, float value) =>
+        new(color.R - value, color.G - value, color.B - value, color.A - value);
+
+    public static Color operator -(Color left, Color right) =>
+        new(left.R - right.R, left.G - right.G, left.B - right.B, left.A - right.A);
+
+    public static Color operator *(Color color, float value) =>
+        new(color.R * value, color.G * value, color.B * value, color.A * value);
+
+    public static Color operator *(Color left, Color right) =>
+        new(left.R * right.R, left.G * right.G, left.B * right.B, left.A * right.A);
+
+    public static Color operator /(Color color, float value) =>
+        new(color.R / value, color.G / value, color.B / value, color.A / value);
+
+    public static Color operator /(Color left, Color right) =>
+        new(left.R / right.R, left.G / right.G, left.B / right.B, left.A / right.A);
 }

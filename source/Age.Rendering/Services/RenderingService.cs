@@ -12,26 +12,26 @@ using Age.Numerics;
 
 namespace Age.Rendering.Services;
 
-internal class RenderingService : IDisposable
+internal class RenderingService : IRenderingService
 {
     private const bool DRAW_WIREFRAME = false;
 
-    private readonly Shader         diffuseShader;
-    private readonly IndexBuffer    indexBuffer;
+    private readonly Shader diffuseShader;
+    private readonly IndexBuffer indexBuffer;
     private readonly VulkanRenderer renderer;
     private readonly TextureStorage textureStorage;
-    private readonly VertexBuffer   vertexBuffer;
-    private readonly IndexBuffer    wireframeIndexBuffer;
-    private readonly Shader         wireframeShader;
+    private readonly VertexBuffer vertexBuffer;
+    private readonly IndexBuffer wireframeIndexBuffer;
+    private readonly Shader wireframeShader;
 
     private RenderPass renderPass;
 
-    private int  changes;
+    private int changes;
     private bool disposed;
 
     public RenderingService(VulkanRenderer renderer, TextureStorage textureStorage)
     {
-        this.renderer       = renderer;
+        this.renderer = renderer;
         this.textureStorage = textureStorage;
 
         var colorPassCreateInfo = new RenderPass.CreateInfo
@@ -66,11 +66,11 @@ internal class RenderingService : IDisposable
             new(-1,  1),
         };
 
-        this.vertexBuffer         = renderer.CreateVertexBuffer(vertices);
-        this.indexBuffer          = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
+        this.vertexBuffer = renderer.CreateVertexBuffer(vertices);
+        this.indexBuffer = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
         this.wireframeIndexBuffer = renderer.CreateIndexBuffer([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
-        this.diffuseShader        = renderer.CreateShaderAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
-        this.wireframeShader      = renderer.CreateShaderAndWatch<WireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
+        this.diffuseShader = renderer.CreateShaderAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
+        this.wireframeShader = renderer.CreateShaderAndWatch<WireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
 
         this.diffuseShader.Changed += this.RequestDrawIncremental;
         this.wireframeShader.Changed += this.RequestDrawIncremental;
@@ -81,7 +81,7 @@ internal class RenderingService : IDisposable
 
             this.renderPass = renderer.Context.CreateRenderPass(colorPassCreateInfo);
 
-            this.diffuseShader.RenderPass   = this.renderPass;
+            this.diffuseShader.RenderPass = this.renderPass;
             this.wireframeShader.RenderPass = this.renderPass;
 
             this.RequestDrawIncremental();
@@ -126,13 +126,13 @@ internal class RenderingService : IDisposable
 
                         var constant = new CanvasShader.PushConstant
                         {
-                            Border    = rectDrawCommand.Border,
-                            Color     = rectDrawCommand.Color,
-                            Flags     = rectDrawCommand.Flags,
-                            Rect      = rectDrawCommand.Rect,
+                            Border = rectDrawCommand.Border,
+                            Color = rectDrawCommand.Color,
+                            Flags = rectDrawCommand.Flags,
+                            Rect = rectDrawCommand.Rect,
                             Transform = transform,
-                            UV        = rectDrawCommand.SampledTexture.UV,
-                            Viewport  = windowSize,
+                            UV = rectDrawCommand.SampledTexture.UV,
+                            Viewport = windowSize,
                         };
 
                         if (uniformSet != null && uniformSet != lastUniformSet)
@@ -190,7 +190,7 @@ internal class RenderingService : IDisposable
             this.Render(window, node, false);
         }
 
-        #pragma warning disable IDE0035, CS0162
+#pragma warning disable IDE0035, CS0162
         if (DRAW_WIREFRAME)
         {
             this.renderer.BindPipeline(this.wireframeShader);
@@ -201,7 +201,7 @@ internal class RenderingService : IDisposable
                 this.Render(window, node, true);
             }
         }
-        #pragma warning restore IDE0035, CS0162
+#pragma warning restore IDE0035, CS0162
 
         this.renderer.EndRenderPass();
     }

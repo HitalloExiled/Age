@@ -16,6 +16,18 @@ public unsafe record struct NativeArray(int Lenght = 1) : IDisposable
     public readonly T Get<T>(int offset) where T : unmanaged => ((T*)this.handler)[offset];
     public readonly T Set<T>(int offset, T value) where T : unmanaged => ((T*)this.handler)[offset] = value;
 
+    public static T* ToPointer<T>(IList<T> values) where T : unmanaged
+    {
+        var ptr = (T*)NativeMemory.Alloc((uint)(sizeof(T) * values.Count));
+
+        for (var i = 0; i < values.Count; i++)
+        {
+            ptr[i] = values[i];
+        }
+
+        return ptr;
+    }
+
     public static implicit operator nint(NativeArray value) => value.handler;
 }
 

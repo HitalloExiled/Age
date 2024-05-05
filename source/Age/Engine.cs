@@ -1,6 +1,8 @@
 using System.Diagnostics;
+using Age.Internal;
 using Age.Numerics;
 using Age.Rendering;
+using Age.Rendering.Drawing;
 using Age.Rendering.Services;
 using Age.Rendering.Storage;
 using Age.Rendering.Vulkan;
@@ -10,11 +12,13 @@ namespace Age;
 public class Engine : IDisposable
 {
     private const bool   FPS_LOCKED        = true;
+    private const bool   DRAW_BVH          = true;
     private const ushort TARGET_FPS        = 60;
     private const double TARGET_FRAME_TIME = 1000.0 / TARGET_FPS;
 
-    private readonly Container      container;
-    private readonly VulkanRenderer renderer  = new();
+    private readonly Dictionary<NodeTree, BvhTree> bvhMap = [];
+    private readonly Container                     container;
+    private readonly VulkanRenderer                renderer  = new();
 
     private bool disposed;
 
@@ -74,6 +78,7 @@ public class Engine : IDisposable
         foreach (var window in Window.Windows)
         {
             window.Tree.Initialize();
+            window.SizeChanged += () => window.Tree.HasChanges = true;
         }
 
         var watch = Stopwatch.StartNew();
@@ -81,6 +86,31 @@ public class Engine : IDisposable
         while (this.Running)
         {
             frameTime += current - previous;
+
+            foreach (var window in Window.Windows)
+            {
+                if (window.Tree.HasChanges)
+                {
+                    if (!this.bvhMap.TryGetValue(window.Tree, out var bvhTree))
+                    {
+                        this.bvhMap[window.Tree] = bvhTree = new();
+                    }
+
+                    bvhTree.Build(window.Tree);
+
+                    if (DRAW_BVH)
+                    {
+                        foreach (var node in window.Tree.Enumerate<BvhDebugNode>())
+                        {
+                            node.Remove();
+                        }
+
+                        window.Tree.AppendChild(bvhTree.Draw());
+                    }
+
+                    window.Tree.HasChanges = false;
+                }
+            }
 
             if (!FPS_LOCKED || frameTime >= TARGET_FRAME_TIME)
             {

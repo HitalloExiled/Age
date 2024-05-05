@@ -18,6 +18,9 @@ public record struct Point<T> where T : INumber<T>
         this.Y = y;
     }
 
+    public readonly Point<U> Cast<U>() where U : INumber<U> =>
+        new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
+
     public static Point<T> operator +(Point<T> point, T value) =>
         new(point.X + value, point.Y + value);
 

@@ -333,6 +333,8 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
                 usedSpace = canAlign
                     ? new(float.Max(child.Size.Width, reserved.Width - x), child.Size.Height)
                     : child.Size.Cast<float>();
+
+                offset.X = position.X + margin.Right   + usedSpace.Width;
             }
             else
             {
@@ -347,6 +349,8 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
                 usedSpace = canAlign
                     ? new(child.Size.Width, float.Max(child.Size.Height, reserved.Height - y))
                     : child.Size.Cast<float>();
+
+                offset.Y = -position.Y + margin.Bottom + usedSpace.Height;
             }
 
             if (child is Element element)
@@ -357,9 +361,6 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             {
                 child.LocalTransform = child.LocalTransform with { Position = position };
             }
-
-            offset.X = position.X + margin.Right   + usedSpace.Width;
-            offset.Y = -position.Y + margin.Bottom + usedSpace.Height;
 
             lastChild = child;
         }
@@ -384,7 +385,15 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         if (!this.HasPendingUpdate)
         {
             this.HasPendingUpdate = true;
-            this.ParentElement?.RequestUpdate();
+
+            if (this.ParentElement != null)
+            {
+                this.ParentElement.RequestUpdate();
+            }
+            else if (this.Tree != null)
+            {
+                this.Tree.HasChanges = true;
+            }
         }
     }
 

@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\source\Age\Age.csproj" />
     <ProjectReference Include="..\..\source\Age.Core\Age.Core.csproj" />
     <ProjectReference Include="..\..\source\Age.Numerics\Age.Numerics.csproj" />
     <ProjectReference Include="..\..\source\Age.Platforms\Age.Platforms.csproj" />

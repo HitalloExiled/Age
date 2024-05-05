@@ -4,8 +4,9 @@ namespace Age.Rendering.Drawing;
 
 public sealed class NodeTree(IWindow window) : Node
 {
-    public override string NodeName { get; } = nameof(NodeTree);
-    public IWindow Window => window;
+    internal bool HasChanges { get; set; } = true;
 
-    public void UpdatedTree() => throw new NotImplementedException();
+    public override string NodeName { get; } = nameof(NodeTree);
+
+    public IWindow Window => window;
 }

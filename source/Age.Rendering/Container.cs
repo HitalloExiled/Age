@@ -1,5 +1,4 @@
-using Age.Rendering.Services;
-using Age.Rendering.Storage;
+using Age.Rendering.Interfaces;
 
 namespace Age.Rendering;
 
@@ -11,9 +10,9 @@ internal class Container : IDisposable
 
     public static Container Singleton => singleton ?? throw new NullReferenceException($"{nameof(Container)} not initialized");
 
-    public required RenderingService RenderingService { get; init; }
-    public required TextService      TextService      { get; init; }
-    public required TextureStorage   TextureStorage   { get; init; }
+    public required IRenderingService RenderingService { get; init; }
+    public required ITextService      TextService      { get; init; }
+    public required ITextureStorage   TextureStorage   { get; init; }
 
     public Container()
     {

@@ -105,6 +105,14 @@ public abstract class Node : IEnumerable<Node>
         }
     }
 
+    public void AppendChildren(IEnumerable<Node> children)
+    {
+        foreach (var child in children)
+        {
+            this.AppendChild(child);
+        }
+    }
+
     public IEnumerable<T> Enumerate<T>() where T : Node
     {
         foreach (var node in this)

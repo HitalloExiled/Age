@@ -33,6 +33,27 @@ public class Editor : Node
 
         this.AppendChild(this.canvas = new Canvas());
 
+        this.statusText = new Span()
+        {
+            Name  = "Status",
+            Text  =
+            """
+            Frame
+            Frame
+            """,
+            Style = style with
+            {
+                // Align       = new(),
+                // Border   = new(1, 0, Color.Red),
+                Color    = Color.Margenta,
+                FontSize = 24,
+                // Margin   = new(10),
+                // Size        = new(100),
+            }
+        };
+
+        this.canvas.AppendChild(this.statusText);
+
         var root = new Span()
         {
             Name  = "Root",
@@ -40,7 +61,7 @@ public class Editor : Node
             {
                 // Baseline = 0,
                 FontSize  = 24,
-                Alignment = AlignmentType.Center,
+                Alignment = AlignmentType.Center | AlignmentType.Left,
             }
         };
 
@@ -63,14 +84,14 @@ public class Editor : Node
                 },
                 BackgroundColor = new Color(1, 0, 1, 0.25f),
                 // Size            = new(400, 200),
-                Margin          = new(50),
+                // Margin          = new(50),
             }
         };
 
         this.b = new Span()
         {
             Text  = "It's Magic!!!",
-            Name  = "A",
+            Name  = "B",
             Style = new()
             {
                 FontSize = 48,
@@ -84,8 +105,9 @@ public class Editor : Node
                 },
                 BoxSizing       = BoxSizing.Border,
                 BackgroundColor = new Color(1, 0, 1, 0.25f),
+                Position        = new(100),
                 // Size            = new(400, 200),
-                Margin          = new(50),
+                // Margin          = new(50),
             }
         };
 
@@ -105,63 +127,44 @@ public class Editor : Node
         };
 
         // this.c.LocalTransform = this.c.LocalTransform with { /* Rotation = RADIANS * 45,  */Position = new(100, 0) };
-        this.c.Style.Pivot    = new(-1, 1);
-        this.c.Style.Align    = new(1, -1);
-        this.c.Style.Position = new(50, 50);
+        // this.c.Style.Pivot    = new(-1, 1);
+        // this.c.Style.Align    = new(1, -1);
+        // this.c.Style.Position = new(50, 50);
 
         root.AppendChild(this.a);
-        // // this.canvas.AppendChild(b);
         root.AppendChild(this.b);
+        // // this.canvas.AppendChild(b);
         // this.b.AppendChild(this.c);
 
-        this.statusText = new Span()
+
+        root.AppendChild(new Boxes());
+
+        var parentSpan = new Span()
         {
-            Name  = "Status",
-            Text  =
-            """
-            Frame
-            Frame
-            """,
+            Name  = "Parent",
+            Text  = "Text",
             Style = style with
             {
-                // Align       = new(),
-                Border   = new(1, 0, Color.Red),
-                Color    = Color.Margenta,
-                FontSize = 24,
-                Margin   = new(10),
-                // Size        = new(100),
+                // Align      = new(),
+                FontSize   = 24,
+                FontFamily = "Impact",
+                // Size       = new(50),
             }
         };
 
-        // root.AppendChild(this.statusText);
-        // root.AppendChild(new Boxes());
+        root.AppendChild(parentSpan);
 
-        // var parentSpan = new Span()
-        // {
-        //     Name  = "Parent",
-        //     Text  = "Text",
-        //     Style = style with
-        //     {
-        //         // Align      = new(),
-        //         FontSize   = 24,
-        //         FontFamily = "Impact",
-        //         // Size       = new(50),
-        //     }
-        // };
+        var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
+        var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
+        var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { FontSize = 48, FontFamily = "Verdana", Color = Color.Blue } };
+        var childSpan4 = new Span() { Text = "Hello",         Style = style with { Alignment = AlignmentType.Top, Margin = new(4) } };
+        var childSpan5 = new Span() { Text = "World!!!",      Style = style with { Alignment = AlignmentType.Bottom, Margin = new(4) } };
 
-        // root.AppendChild(parentSpan);
-
-        // var childSpan1 = new Span() { Name = "X", Text = "X", Style = style with { FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
-        // var childSpan2 = new Span() { Name = "Y", Text = "Y", Style = style with { FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
-        // var childSpan3 = new Span() { Name = "Z", Text = "Z", Style = style with { FontSize = 48, FontFamily = "Verdana", Color = Color.Blue } };
-        // var childSpan4 = new Span() { Text = "Hello",         Style = style with { Alignment = AlignmentType.Top, Margin = new(4) } };
-        // var childSpan5 = new Span() { Text = "World!!!",      Style = style with { Alignment = AlignmentType.Bottom, Margin = new(4) } };
-
-        // parentSpan.AppendChild(childSpan1);
-        // parentSpan.AppendChild(childSpan2);
-        // parentSpan.AppendChild(childSpan3);
-        // parentSpan.AppendChild(childSpan4);
-        // parentSpan.AppendChild(childSpan5);
+        parentSpan.AppendChild(childSpan1);
+        parentSpan.AppendChild(childSpan2);
+        parentSpan.AppendChild(childSpan3);
+        parentSpan.AppendChild(childSpan4);
+        parentSpan.AppendChild(childSpan5);
     }
 
     protected override void OnInitialize() =>
@@ -196,24 +199,24 @@ public class Editor : Node
         this.maxFrameTime = Math.Max(this.maxFrameTime, frameTime);
         this.minFrameTime = Math.Min(this.minFrameTime, frameTime);
 
-        this.b.LocalTransform = this.b.LocalTransform with { Rotation = Angle.Radians<float>(90) * (float)this.delta };
+        // this.b.LocalTransform = this.b.LocalTransform with { Rotation = Angle.Radians<float>(90) * (float)this.delta };
         // this.c.LocalTransform = this.c.LocalTransform with {  Rotation = RADIANS * 45 * (float)this.delta };
         // this.b.Style.Rotation = RADIANS * 90 * (float)this.delta;
-        this.c.Style.Rotation = Angle.Radians<float>(45) * (float)this.delta;
+        // this.c.Style.Rotation = Angle.Radians<float>(45) * (float)this.delta;
 
         // this.statusText.LocalTransform = this.statusText.LocalTransform with { Position = new Point<int>((int)(double.Cos(this.delta) * 50), (int)(double.Sin(this.delta) * -50)) };
-        this.statusText.Text =
-            $"""
-            Frames:    {this.frames}
-            Delta Time: {Math.Round(deltaTime, 4)}
-            FPS: {fps}
-                Avg: {avgFps}
-                Min: {this.minFps}
-                Max: {this.maxFps}
+        // this.statusText.Text =
+        //     $"""
+        //     Frames:    {this.frames}
+        //     Delta Time: {Math.Round(deltaTime, 4)}
+        //     FPS: {fps}
+        //         Avg: {avgFps}
+        //         Min: {this.minFps}
+        //         Max: {this.maxFps}
 
-            Frame Time: {frameTime}ms
-                Min: {this.minFrameTime}ms
-                Max: {this.maxFrameTime}ms
-            """;
+        //     Frame Time: {frameTime}ms
+        //         Min: {this.minFrameTime}ms
+        //         Max: {this.maxFrameTime}ms
+        //     """;
     }
 }

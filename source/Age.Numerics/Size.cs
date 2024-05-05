@@ -9,6 +9,8 @@ public record struct Size<T> where T : INumber<T>
     public T Width;
     public T Height;
 
+    public readonly T Area => this.Width * this.Height;
+
     public Size(T width, T height)
     {
         this.Width  = width;

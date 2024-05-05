@@ -17,6 +17,9 @@ public record struct Vector2<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
     public T X;
     public T Y;
 
+    public readonly Vector2<T> InvertedX => new(-this.X, this.Y);
+    public readonly Vector2<T> InvertedY => new(this.X, -this.Y);
+
     public Vector2(T value)
     {
         this.X = value;
