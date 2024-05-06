@@ -8,38 +8,39 @@ namespace Age.Internal;
 
 public unsafe class BvhTree
 {
-    private const int MAX_ELEMENTS = 2;
+    private const int MAX_ELEMENTS = 4;
     private readonly BvhNode<ContainerNode> root = new();
 
-    private static Rect<float> GetIntersection(ContainerNode node, in Rect<float> rect) =>
-        rect.Intersection(new(node.Size.Cast<float>(), node.Transform.Position));
-
-    private static AABB<float> GetBounding(Span<ContainerNode> nodes)
+    private static AABB<float> GetBounding(Span<ContainerNode> nodes, Dictionary<ContainerNode, int> depths)
     {
         var aabb = new AABB<float>();
 
         foreach (var node in nodes)
         {
-            aabb.Extends(new(node.Size, 1), new(node.Transform.Position.InvertedY, 0));
+            aabb.Extends(new(node.Size, 1), new(node.Transform.Position.InvertedY, depths[node]));
         }
 
         return aabb;
     }
 
-    private static void Split(BvhNode<ContainerNode> bvhNode, Span<ContainerNode> nodes)
+    private static void Split(BvhNode<ContainerNode> bvhNode, Span<ContainerNode> nodes, Dictionary<ContainerNode, int> depths)
     {
-        var rect = bvhNode.AABB.Size.X > bvhNode.AABB.Size.Y
-            ? new Rect<float>(
+        var particion = bvhNode.AABB.Size.X > bvhNode.AABB.Size.Y
+            ? new AABB<float>(
                 bvhNode.AABB.Size.X / 2,
                 bvhNode.AABB.Size.Y,
+                bvhNode.AABB.Size.Z,
                 bvhNode.AABB.Position.X,
-                bvhNode.AABB.Position.Y
+                bvhNode.AABB.Position.Y,
+                bvhNode.AABB.Position.Z
             )
-            : new Rect<float>(
+            : new AABB<float>(
                 bvhNode.AABB.Size.X,
                 bvhNode.AABB.Size.Y / 2,
+                bvhNode.AABB.Size.Z,
                 bvhNode.AABB.Position.X,
-                bvhNode.AABB.Position.Y
+                bvhNode.AABB.Position.Y,
+                bvhNode.AABB.Position.Z
             );
 
         var leftNodes  = new List<ContainerNode>();
@@ -49,11 +50,12 @@ public unsafe class BvhTree
 
         foreach (var node in nodes)
         {
-            var intersection = GetIntersection(node, rect);
 
-            var aabb = new AABB<float>(new(node.Size, 1), new(node.Transform.Position.InvertedY, 0));
+            var aabb = new AABB<float>(new(node.Size, 1), new(node.Transform.Position.InvertedY, depths[node]));
 
-            if (intersection.Area > aabb.Volume / 2)
+            var intersection = particion.Intersection(aabb);
+
+            if (intersection.Volume > aabb.Volume / 2)
             {
                 leftNodes.Add(node);
                 leftAABB.Extends(aabb);
@@ -78,19 +80,21 @@ public unsafe class BvhTree
         }
         else if (leftAABB == bvhNode.AABB)
         {
-            var sortedElements = leftNodes.OrderBy(x => x.Transform.Position.X).ToArray().AsSpan();
+            var sortedElements = leftNodes
+                .OrderByDescending(static x => x.Size.Area)
+                .ThenBy(static x => x.Transform.Position.X)
+                .ToArray()
+                .AsSpan();
 
-            var size = Math.Min(MAX_ELEMENTS, sortedElements.Length);
-
-            var elements = sortedElements[..size];
-            var remains  = sortedElements[size..];
+            var elements = sortedElements[..MAX_ELEMENTS];
+            var remains  = sortedElements[MAX_ELEMENTS..];
 
             bvhNode.Left = new()
             {
                 AABB = leftAABB,
                 Left = new()
                 {
-                    AABB     = GetBounding(elements),
+                    AABB     = GetBounding(elements, depths),
                     Elements = elements.ToArray(),
                 },
             };
@@ -99,10 +103,10 @@ public unsafe class BvhTree
             {
                 bvhNode.Left.Right = new()
                 {
-                    AABB = GetBounding(remains),
+                    AABB = GetBounding(remains, depths),
                 };
 
-                Split(bvhNode.Left.Right, remains);
+                Split(bvhNode.Left.Right, remains, depths);
             }
         }
         else if (leftNodes.Count > MAX_ELEMENTS)
@@ -112,9 +116,8 @@ public unsafe class BvhTree
                 AABB = leftAABB
             };
 
-            Split(bvhNode.Left, leftNodes.AsSpan());
+            Split(bvhNode.Left, leftNodes.AsSpan(), depths);
         }
-
 
         if (rightNodes.Count is > 0 and <= MAX_ELEMENTS)
         {
@@ -126,19 +129,21 @@ public unsafe class BvhTree
         }
         else if (rightAABB == bvhNode.AABB)
         {
-            var sortedElements = rightNodes.OrderByDescending(x => x.Transform.Position.X).ToArray().AsSpan();
+            var sortedElements = rightNodes
+                .OrderByDescending(static x => x.Size.Area)
+                .ThenByDescending(static x => x.Transform.Position.X)
+                .ToArray()
+                .AsSpan();
 
-            var size = Math.Min(MAX_ELEMENTS, sortedElements.Length);
-
-            var elements = sortedElements[..size];
-            var remains  = sortedElements[size..];
+            var elements = sortedElements[..MAX_ELEMENTS];
+            var remains  = sortedElements[MAX_ELEMENTS..];
 
             bvhNode.Right = new()
             {
                 AABB  = rightAABB,
                 Right = new()
                 {
-                    AABB     = GetBounding(elements),
+                    AABB     = GetBounding(elements, depths),
                     Elements = elements.ToArray(),
                 }
             };
@@ -147,10 +152,10 @@ public unsafe class BvhTree
             {
                 bvhNode.Right.Left = new()
                 {
-                    AABB = GetBounding(remains),
+                    AABB = GetBounding(remains, depths),
                 };
 
-                Split(bvhNode.Right.Left, remains);
+                Split(bvhNode.Right.Left, remains, depths);
             }
         }
         else if (rightNodes.Count > MAX_ELEMENTS)
@@ -160,17 +165,35 @@ public unsafe class BvhTree
                 AABB = rightAABB
             };
 
-            Split(bvhNode.Right, rightNodes.AsSpan());
+            Split(bvhNode.Right, rightNodes.AsSpan(), depths);
+        }
+
+#if DEBUG
+        if (bvhNode.Left != null && bvhNode.Right != null && bvhNode.Elements.Length > 0 || bvhNode.Elements.Length > MAX_ELEMENTS)
+        {
+            throw new Exception();
+        }
+#endif
+    }
+
+    private static IEnumerable<(ContainerNode, int)> Traverse(Node node, int depth = 0)
+    {
+        foreach (var child in node)
+        {
+            if (child is ContainerNode containerNode)
+            {
+                yield return (containerNode, depth);
+            }
+
+            foreach (var pair in Traverse(child, depth + 1))
+            {
+                yield return pair;
+            }
         }
     }
 
     internal static BvhDebugNode Draw(BvhNode<ContainerNode> bvhNode, Color color)
     {
-        if (bvhNode.Left != null && bvhNode.Right != null && bvhNode.Elements.Length > 0)
-        {
-            throw new Exception();
-        }
-
         var node = new BvhDebugNode
         {
             Commands =
@@ -212,17 +235,20 @@ public unsafe class BvhTree
 
     public void Build(NodeTree tree)
     {
+        var depths = new Dictionary<ContainerNode, int>();
+
         var aabb  = new AABB<float>();
         var nodes = new List<ContainerNode>();
 
-        foreach (var node in tree.Traverse<ContainerNode>(true))
+        foreach (var (node, depth) in Traverse(tree))
         {
             if (node is not Element element || element.Style.Border != null)
             {
+                depths[node] = depth;
                 nodes.Add(node);
-            }
 
-            aabb.Extends(new(node.Size, 1), new(node.Transform.Position.InvertedY, 0));
+                aabb.Extends(new(node.Size, 1), new(node.Transform.Position.InvertedY, depth));
+            }
         }
 
         nodes.TrimExcess();
@@ -232,6 +258,9 @@ public unsafe class BvhTree
 
         this.root.AABB = aabb;
 
-        Split(this.root, nodes.AsSpan());
+        if (nodes.Count > 0)
+        {
+            Split(this.root, nodes.AsSpan(), depths);
+        }
     }
 }

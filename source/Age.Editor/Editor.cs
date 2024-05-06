@@ -114,17 +114,17 @@ public class Editor : Node
         // this.b.LocalTransform = this.b.LocalTransform with { Scale = new(0.5f) };
         // this.b.Pivot = new(300, -50);
 
-        // this.c = new Span()
-        // {
-        //     Text  = "C...",
-        //     Name  = "C",
-        //     Style = new()
-        //     {
-        //         FontSize = 24,
-        //         Border   = new(2, 20, Color.Blue),
-        //         Size     = new(100, 50),
-        //     }
-        // };
+        var c = new Span()
+        {
+            Text  = "C...",
+            Name  = "C",
+            Style = new()
+            {
+                FontSize = 24,
+                Border   = new(4, 10, Color.Blue),
+                Size     = new(100, 50),
+            }
+        };
 
         // this.c.LocalTransform = this.c.LocalTransform with { /* Rotation = RADIANS * 45,  */Position = new(100, 0) };
         // this.c.Style.Pivot    = new(-1, 1);
@@ -134,9 +134,11 @@ public class Editor : Node
         root.AppendChild(a);
         root.AppendChild(b);
         // // this.canvas.AppendChild(b);
-        // this.b.AppendChild(this.c);
+        root.AppendChild(c);
 
 
+        root.AppendChild(new Boxes());
+        root.AppendChild(new Boxes());
         root.AppendChild(new Boxes());
 
         var parentSpan = new Span()

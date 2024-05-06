@@ -7,7 +7,6 @@ namespace Age.Internal;
 public record BvhNode<T>
 {
     public AABB<float> AABB     { get; set; }
-    public BvhNode<T>? Root     { get; set; }
     public BvhNode<T>? Left     { get; set; }
     public BvhNode<T>? Right    { get; set; }
     public T[]         Elements { get; set; } = [];

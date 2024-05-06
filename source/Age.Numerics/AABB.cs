@@ -17,6 +17,9 @@ public record struct AABB<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITr
         this.Position = position;
     }
 
+    public AABB(T width, T height, T depth, T x, T y, T z) : this(new(width, height, depth), new(x, y, z))
+    { }
+
     public void Extends(in AABB<T> extends)
     {
         if (this == default)
@@ -41,6 +44,19 @@ public record struct AABB<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITr
 
     public void Extends(in Vector3<T> size, in Vector3<T> position) =>
         this.Extends(new(size, position));
+
+    public readonly AABB<T> Intersection(in AABB<T> other)
+    {
+        var x = T.Max(this.Position.X, other.Position.X);
+        var y = T.Max(this.Position.Y, other.Position.Y);
+        var z = T.Max(this.Position.Z, other.Position.Z);
+
+        var width  = T.Min(this.Size.X + this.Position.X, other.Size.X + other.Position.X) - x;
+        var height = T.Min(this.Size.Y + this.Position.Y, other.Size.Y + other.Position.Y) - y;
+        var depth  = T.Min(this.Size.Z + this.Position.Z, other.Size.Z + other.Position.Z) - z;
+
+        return new(width, height, depth, x, y, z);
+    }
 
     public readonly AABB<T> Merged(in AABB<T> other)
     {
