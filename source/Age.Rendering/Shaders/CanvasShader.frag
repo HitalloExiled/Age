@@ -373,7 +373,7 @@ void main()
             ? data.color
             : has_flag(data.flags, FLAGS_GRAYSCALE_TEXTURE | FLAGS_MULTIPLY_COLOR)
                 ? vec4(1 - texture_color.rrr, texture_color.g) * data.color
-                : to_vec4(float[](data.border.top.color[0], data.border.top.color[1], data.border.top.color[2], 0.2));
+                : texture_color;
 
     bool has_border = data.border.top.thickness
         + data.border.right.thickness
