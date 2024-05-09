@@ -114,7 +114,7 @@ internal class RenderingService : IRenderingService
 
         var windowSize = window.ClientSize.Cast<float>();
 
-        var transform = (Matrix3x2<float>)node.Transform;
+        var transform = (Matrix3x2<float>)node.TransformCache;
 
         foreach (var command in node.Commands)
         {

@@ -202,7 +202,7 @@ public class Editor : Node
         this.minFrameTime = Math.Min(this.minFrameTime, frameTime);
 
         // this.b.LocalTransform = this.b.LocalTransform with { Rotation = Angle.Radians<float>(90) * (float)this.delta };
-        // this.c.LocalTransform = this.c.LocalTransform with {  Rotation = RADIANS * 45 * (float)this.delta };
+        // this.c.LocalTransform = this.c.LocalTransform with { Rotation = RADIANS * 45 * (float)this.delta };
         // this.b.Style.Rotation = RADIANS * 90 * (float)this.delta;
         // this.c.Style.Rotation = Angle.Radians<float>(45) * (float)this.delta;
 

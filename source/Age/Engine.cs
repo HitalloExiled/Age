@@ -122,6 +122,8 @@ public class Engine : IDisposable
                     window.Tree.Update(deltaTime);
                 }
 
+                Node2D.CacheVersion++;
+
                 this.container.RenderingService.Render(Window.Windows);
 
                 this.Running = Window.Windows.Any(x => !x.Closed);

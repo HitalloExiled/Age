@@ -1,4 +1,5 @@
 using System.Text;
+using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing.Elements;
@@ -11,11 +12,12 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 {
     private readonly List<ContainerNode> nodesToDistribute = [];
 
-    private Canvas?        canvas;
-    private Vector2<float> offset;
-    private Style          style = new();
-    private Transform2D    styleTransform = new();
-    private string?        text;
+    private Canvas?                 canvas;
+    private Vector2<float>          offset;
+    private Style                   style = new();
+    private Transform2D             styleTransform = new();
+    private string?                 text;
+    private CacheValue<Transform2D> transformCache;
 
     private Margin BorderMargin =>
         new(
@@ -40,6 +42,29 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             pivot.Y = 1 - pivot.Y;
 
             return pivot * this.Size.Cast<float>() * new Size<float>(1, -1);
+        }
+    }
+
+    private Transform2D PivotedTransform =>
+        Transform2D.Translated(this.offset)
+            * Transform2D.Translated(this.StylePivot)
+            * this.styleTransform
+            * Transform2D.Translated(-this.StylePivot);
+
+    internal protected override Transform2D TransformCache
+    {
+        get
+        {
+            if (this.transformCache.Version != CacheVersion)
+            {
+                this.transformCache = new()
+                {
+                    Value   = base.TransformCache * this.PivotedTransform,
+                    Version = CacheVersion
+                };
+            }
+
+            return this.transformCache.Value;
         }
     }
 

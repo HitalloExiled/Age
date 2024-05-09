@@ -1,3 +1,4 @@
+using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Commands;
 
@@ -5,12 +6,34 @@ namespace Age.Rendering.Drawing;
 
 public abstract class Node2D : Node
 {
-    private Transform2D    localTransform = new();
-    private Vector2<float> pivot;
+    internal static int CacheVersion { get; set; } = 1;
 
-    private Transform2D ParentTransform => (this.Parent as Node2D)?.Transform ?? new();
+    private Transform2D             localTransform = new();
+    private Vector2<float>          pivot;
+    private CacheValue<Transform2D> transformCache;
+
+    private Transform2D ParentTransform      => (this.Parent as Node2D)?.Transform ?? new();
+    private Transform2D ParentTransformCache => (this.Parent as Node2D)?.TransformCache ?? new();
+    private Transform2D PivotedTransform     => Transform2D.Translated(this.Pivot) * this.LocalTransform * Transform2D.Translated(-this.Pivot);
 
     internal List<DrawCommand> Commands { get; set; } = [];
+
+    internal protected virtual Transform2D TransformCache
+    {
+        get
+        {
+            if (this.transformCache.Version != CacheVersion)
+            {
+                this.transformCache = new()
+                {
+                    Value   = this.ParentTransformCache * this.PivotedTransform,
+                    Version = CacheVersion
+                };
+            }
+
+            return this.transformCache.Value;
+        }
+    }
 
     public virtual Transform2D LocalTransform
     {
@@ -26,10 +49,7 @@ public abstract class Node2D : Node
 
     public virtual Transform2D Transform
     {
-        get => this.ParentTransform
-            * Transform2D.Translated(this.Pivot)
-            * this.LocalTransform
-            * Transform2D.Translated(-this.Pivot);
+        get => this.ParentTransform * this.PivotedTransform;
         set => this.LocalTransform = value * this.ParentTransform.Inverse();
     }
 
