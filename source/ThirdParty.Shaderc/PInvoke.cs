@@ -77,6 +77,12 @@ internal unsafe static partial class PInvoke
     internal static partial shaderc_compile_options_t shaderc_compile_options_initialize();
 
     /// <summary>
+    /// Sets includer callback functions.
+    /// </summary>
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial void shaderc_compile_options_set_include_callbacks(shaderc_compile_options_t options, shaderc_include_resolve_fn? resolver, shaderc_include_result_release_fn? result_releaser, void* user_data);
+
+    /// <summary>
     /// Releases the compilation options. It is invalid to use the given
     /// shaderc_compile_options_t object in any future calls. It is safe to pass
     /// NULL to this function, and doing such will have no effect.
