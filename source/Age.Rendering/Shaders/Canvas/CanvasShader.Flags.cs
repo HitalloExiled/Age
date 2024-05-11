@@ -1,4 +1,4 @@
-namespace Age.Rendering.Shaders;
+namespace Age.Rendering.Shaders.Canvas;
 
 public partial class CanvasShader
 {

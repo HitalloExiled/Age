@@ -111,7 +111,7 @@
         {
             "label": "shader:compile",
             "windows": {
-                "command": "glslc ${file} -o ${file}.spv;"
+                "command": "glslc ${file} -o ${file}.spv -S;"
             },
             "options": {
                 "cwd": "${workspaceFolder}"

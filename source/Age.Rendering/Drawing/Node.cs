@@ -9,6 +9,8 @@ public abstract class Node : IEnumerable<Node>
 {
     private NodeTree? tree;
 
+    internal uint ObjectId { get; set; }
+
     public Node? FirstChild      { get; private set; }
     public Node? LastChild       { get; private set; }
     public Node? NextSibling     { get; private set; }
@@ -38,10 +40,15 @@ public abstract class Node : IEnumerable<Node>
 
                 if (this.tree != null)
                 {
+                    this.tree.Nodes.Add(this);
+
+                    this.ObjectId = (uint)this.tree.Nodes.Count;
+
                     this.OnConnected();
                 }
                 else
                 {
+                    this.ObjectId = 0;
                     this.OnDisconnected();
                 }
             }
@@ -279,17 +286,19 @@ public abstract class Node : IEnumerable<Node>
         this.OnInitialize();
     }
 
-    public void Update(double deltaTime)
+    public void Update(double deltaTime, Action<Node>? callback = null)
     {
         this.OnPreUpdate(deltaTime);
 
         foreach (var child in this)
         {
-            child.Update(deltaTime);
+            child.Update(deltaTime, callback);
         }
 
         this.OnUpdate(deltaTime);
 
         this.OnPostUpdate(deltaTime);
+
+        callback?.Invoke(this);
     }
 }

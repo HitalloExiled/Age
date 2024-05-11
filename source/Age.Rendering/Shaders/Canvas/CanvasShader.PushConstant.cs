@@ -3,7 +3,7 @@ using Age.Rendering.Drawing.Styling;
 using Age.Rendering.Interfaces;
 using ThirdParty.Vulkan.Flags;
 
-namespace Age.Rendering.Shaders;
+namespace Age.Rendering.Shaders.Canvas;
 
 public partial class CanvasShader
 {

@@ -4,7 +4,7 @@ using Age.Rendering.Interfaces;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 
-namespace Age.Rendering.Shaders;
+namespace Age.Rendering.Shaders.Canvas;
 
 public partial class CanvasShader
 {

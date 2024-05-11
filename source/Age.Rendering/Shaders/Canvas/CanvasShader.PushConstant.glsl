@@ -1,6 +1,9 @@
 #ifndef CANVAS_SHADER_PUSH_CONSTANT
 #define CANVAS_SHADER_PUSH_CONSTANT
 
+#include "../Includes/Rect.glsl"
+#include "../Includes/Transform.glsl"
+
 struct BorderSide
 {
     uint  thickness;
@@ -22,18 +25,6 @@ struct Border
     BorderSide   bottom;
     BorderSide   left;
     BorderRadius radius;
-};
-
-struct Rect
-{
-    vec2 size;
-    vec2 position;
-};
-
-struct Transform
-{
-    mat2 rotation;
-    vec2 position;
 };
 
 struct Line

@@ -4,7 +4,7 @@ using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing.Elements;
 using Age.Rendering.Drawing.Styling;
-using static Age.Rendering.Shaders.CanvasShader;
+using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Rendering.Drawing;
 
@@ -267,10 +267,11 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             command = (RectDrawCommand)this.Commands[0];
         }
 
-        command.Rect   = new(this.Size.Cast<float>(), default);
-        command.Flags  = Flags.ColorAsBackground;
-        command.Border = this.Style.Border ?? default;
-        command.Color  = this.Style.BackgroundColor ?? default;
+        command.ObjectId = this.ObjectId;
+        command.Rect     = new(this.Size.Cast<float>(), default);
+        command.Flags    = Flags.ColorAsBackground;
+        command.Border   = this.Style.Border ?? default;
+        command.Color    = this.Style.BackgroundColor ?? default;
     }
 
     private void OnStyleChanged()
@@ -411,14 +412,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         {
             this.HasPendingUpdate = true;
 
-            if (this.ParentElement != null)
-            {
-                this.ParentElement.RequestUpdate();
-            }
-            else if (this.Tree != null)
-            {
-                this.Tree.HasChanges = true;
-            }
+            this.ParentElement?.RequestUpdate();
         }
     }
 

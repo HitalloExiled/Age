@@ -1,12 +1,12 @@
 using ThirdParty.Vulkan.Enums;
 
-namespace Age.Rendering.Shaders;
+namespace Age.Rendering.Shaders.Canvas;
 
 public partial class CanvasShader : ShaderResources<CanvasShader.Vertex, CanvasShader.PushConstant>
 {
     public override string              Name              { get; } = nameof(CanvasShader);
     public override VkPrimitiveTopology PrimitiveTopology { get; } = VkPrimitiveTopology.TriangleList;
 
-    public CanvasShader() : base([$"{nameof(CanvasShader)}.vert", $"{nameof(CanvasShader)}.frag"])
+    public CanvasShader() : base([$"Canvas/{nameof(CanvasShader)}.vert", $"Canvas/{nameof(CanvasShader)}.frag"])
     { }
 }

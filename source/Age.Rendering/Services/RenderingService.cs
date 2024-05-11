@@ -1,14 +1,14 @@
+using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing;
 using Age.Rendering.Interfaces;
-using Age.Rendering.Vulkan;
 using Age.Rendering.Resources;
-using Age.Rendering.Shaders;
-using ThirdParty.Vulkan.Enums;
-using ThirdParty.Vulkan;
-using ThirdParty.Vulkan.Flags;
+using Age.Rendering.Shaders.Canvas;
 using Age.Rendering.Storage;
-using Age.Numerics;
+using Age.Rendering.Vulkan;
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Flags;
+using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Services;
 
@@ -69,8 +69,8 @@ internal class RenderingService : IRenderingService
         this.vertexBuffer = renderer.CreateVertexBuffer(vertices);
         this.indexBuffer = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
         this.wireframeIndexBuffer = renderer.CreateIndexBuffer([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
-        this.diffuseShader = renderer.CreateShaderAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
-        this.wireframeShader = renderer.CreateShaderAndWatch<WireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
+        this.diffuseShader = renderer.CreateShaderAndWatch<CanvasObjectIdShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
+        this.wireframeShader = renderer.CreateShaderAndWatch<CanvasWireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
 
         this.diffuseShader.Changed += this.RequestDrawIncremental;
         this.wireframeShader.Changed += this.RequestDrawIncremental;
@@ -126,13 +126,15 @@ internal class RenderingService : IRenderingService
 
                         var constant = new CanvasShader.PushConstant
                         {
-                            Border = rectDrawCommand.Border,
-                            Color = rectDrawCommand.Color,
-                            Flags = rectDrawCommand.Flags,
-                            Rect = rectDrawCommand.Rect,
+                            Border    = rectDrawCommand.Border,
+                            // Color     = rectDrawCommand.Color,
+                            // Color     = node.ObjectId << 8 | 255,
+                            Color     = rectDrawCommand.ObjectId << 8 | 255,
+                            Flags     = rectDrawCommand.Flags,
+                            Rect      = rectDrawCommand.Rect,
                             Transform = transform,
-                            UV = rectDrawCommand.SampledTexture.UV,
-                            Viewport = windowSize,
+                            UV        = rectDrawCommand.SampledTexture.UV,
+                            Viewport  = windowSize,
                         };
 
                         if (uniformSet != null && uniformSet != lastUniformSet)

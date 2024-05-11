@@ -6,7 +6,7 @@ using Age.Rendering.Drawing.Elements;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using SkiaSharp;
-using static Age.Rendering.Shaders.CanvasShader;
+using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Rendering.Services;
 
@@ -62,10 +62,10 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
 
             this.glyphs[hashcode] = glyph = new()
             {
-                Atlas = atlas,
+                Atlas     = atlas,
                 Character = character,
-                Position = position + PADDING,
-                Size = new((uint)bounds.Width, (uint)bounds.Height),
+                Position  = position + PADDING,
+                Size      = new((uint)bounds.Width, (uint)bounds.Height),
             };
         }
 
@@ -116,11 +116,10 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
             return;
         }
 
-        var style = textNode.ParentElement.Style;
+        var style      = textNode.ParentElement.Style;
         var fontFamily = style.FontFamily ?? "Segoi UI";
-        var fontSize = style.FontSize ?? 16;
-        var commands = textNode.Commands;
-
+        var fontSize   = style.FontSize ?? 16;
+        var commands   = textNode.Commands;
 
         var typeface = SKTypeface.FromFamilyName(fontFamily);
 
@@ -146,9 +145,9 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
         font.GetGlyphWidths(glyphs, glyphsWidths, glyphsBounds, paint);
 
         var lineHeight = (uint)float.Round(-metrics.Ascent + metrics.Descent);
-        var baseLine = (int)float.Round(metrics.Ascent);
-        var offset = new Point<int>(0, baseLine);
-        var maxSize = new Size<uint>(0, lineHeight);
+        var baseLine   = (int)float.Round(metrics.Ascent);
+        var offset     = new Point<int>(0, baseLine);
+        var maxSize    = new Size<uint>(0, lineHeight);
 
         commands.Clear();
 
@@ -177,10 +176,11 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
 
                 var command = new RectDrawCommand
                 {
-                    Rect = new(size, position),
-                    Color = color,
+                    ObjectId       = (uint)(textNode.ObjectId | (i + 1u << 16)),
+                    Rect           = new(size, position),
+                    Color          = color,
                     SampledTexture = new(atlas.Texture, this.sampler, uv),
-                    Flags = Flags.GrayscaleTexture | Flags.MultiplyColor,
+                    Flags          = Flags.GrayscaleTexture | Flags.MultiplyColor,
                 };
 
                 textNode.Commands.Add(command);

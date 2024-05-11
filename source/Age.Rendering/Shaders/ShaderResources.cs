@@ -9,7 +9,6 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Shaders;
 
-
 public abstract class ShaderResources : IDisposable
 {
     private const int DEBOUNCE_DELAY = 50;
@@ -17,7 +16,7 @@ public abstract class ShaderResources : IDisposable
     public event Action? Changed;
 
     private static readonly string            shadersPath = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age.Rendering/Shaders") : Path.Join(AppContext.BaseDirectory, $"Shaders"));
-    private static readonly FileSystemWatcher watcher     = new(shadersPath) { EnableRaisingEvents = true };
+    private static readonly FileSystemWatcher watcher     = new(shadersPath) { EnableRaisingEvents = true, IncludeSubdirectories = true };
 
     private readonly Dictionary<string, CancellationTokenSource>    cancellationTokenSources = [];
     private readonly HashSet<string>                                files                    = [];
@@ -37,21 +36,20 @@ public abstract class ShaderResources : IDisposable
     {
         foreach (var file in files)
         {
-            var (absolute, relative) = Path.IsPathRooted(file)
-                ? (file, Path.GetRelativePath(shadersPath, file))
-                : (Path.GetFullPath(Path.Join(shadersPath, file)), file);
+            var filepath = Path.IsPathRooted(file) ? file : Path.GetFullPath(Path.Join(shadersPath, file));
+            var filename = Path.GetFileName(filepath);
 
-            if (!watcher.Filters.Contains(relative))
+            if (!watcher.Filters.Contains(filename))
             {
-                watcher.Filters.Add(relative);
+                watcher.Filters.Add(filename);
             }
 
-            this.cancellationTokenSources[absolute] = new();
-            this.shaderIncludes[absolute] = [];
-            this.locks[absolute] = new();
+            this.cancellationTokenSources[filepath] = new();
+            this.shaderIncludes[filepath] = [];
+            this.locks[filepath] = new();
 
-            this.CompileShader(absolute);
-            this.files.Add(absolute);
+            this.CompileShader(filepath);
+            this.files.Add(filepath);
         }
 
         watcher.Changed += this.OnFileChanged;
@@ -66,9 +64,12 @@ public abstract class ShaderResources : IDisposable
 
         void action(Task task)
         {
-            if (task.IsCompletedSuccessfully && this.CompileShader(filepath, trigger))
+            lock (this.locks[filepath])
             {
-                this.Changed?.Invoke();
+                if (task.IsCompletedSuccessfully && this.CompileShader(filepath, trigger))
+                {
+                    this.Changed?.Invoke();
+                }
             }
         }
 
@@ -78,88 +79,87 @@ public abstract class ShaderResources : IDisposable
 
     private bool CompileShader(string filepath, string? trigger = null)
     {
-        var padlock = this.locks[filepath];
-
-        lock (padlock)
+        var (shaderStage, shaderKind) = Path.GetExtension(filepath) switch
         {
-            var (shaderStage, shaderKind) = Path.GetExtension(filepath) switch
+            ".frag" => (VkShaderStageFlags.Fragment, ShaderKind.FragmentShader),
+            ".vert" => (VkShaderStageFlags.Vertex,   ShaderKind.VertexShader),
+            _ => throw new InvalidOperationException()
+        };
+
+        try
+        {
+            var source   = File.ReadAllBytes(filepath);
+            var checksum = MD5.HashData(source);
+
+            var canCompile = trigger != null
+                ? !this.shaderIncludes[filepath].TryGetValue(trigger, out var includeHash) || !includeHash.AsSpan().SequenceEqual(MD5.HashData(File.ReadAllBytes(trigger)))
+                : !this.hashes.TryGetValue(filepath, out var shaderHash) || !shaderHash.AsSpan().SequenceEqual(checksum);
+
+            if (canCompile)
             {
-                ".frag" => (VkShaderStageFlags.Fragment, ShaderKind.FragmentShader),
-                ".vert" => (VkShaderStageFlags.Vertex,   ShaderKind.VertexShader),
-                _ => throw new InvalidOperationException()
-            };
+                this.hashes[filepath] = checksum;
 
-            try
-            {
-                var source   = File.ReadAllBytes(filepath);
-                var checksum = MD5.HashData(source);
+                Logger.Trace($"Compiling Shader {this.Name}.{shaderStage} [{filepath}]");
 
-                var canCompile = trigger != null
-                    ? !this.shaderIncludes[filepath].TryGetValue(trigger, out var includeHash) || !includeHash.AsSpan().SequenceEqual(MD5.HashData(File.ReadAllBytes(trigger)))
-                    : !this.hashes.TryGetValue(filepath, out var shaderHash) || !shaderHash.AsSpan().SequenceEqual(checksum);
-
-                if (canCompile)
+                foreach (var include in this.shaderIncludes[filepath])
                 {
-                    this.hashes[filepath] = checksum;
+                    watcher.Filters.Remove(Path.GetRelativePath(shadersPath, include.Key));
+                }
 
-                    Logger.Trace($"Compiling Shader {this.Name}.{shaderStage} [{filepath}]");
+                foreach (var includeShader in this.includeShaders.Values)
+                {
+                    includeShader.Remove(filepath);
+                }
 
-                    foreach (var include in this.shaderIncludes[filepath])
+                this.shaderIncludes[filepath].Clear();
+
+                using var compiler = new Compiler();
+                using var options  = new CompilerOptions { IncludeResolver = this.GetIncludeResolver(filepath) };
+
+                var result = compiler.CompileIntoSpv(source, shaderKind, filepath, "main", options);
+
+                foreach (var include in this.shaderIncludes[filepath])
+                {
+                    var filename = Path.GetFileName(include.Key);
+
+                    if (!watcher.Filters.Contains(filename))
                     {
-                        watcher.Filters.Remove(Path.GetRelativePath(shadersPath, include.Key));
-                    }
-
-                    foreach (var includeShader in this.includeShaders.Values)
-                    {
-                        includeShader.Remove(filepath);
-                    }
-
-                    this.shaderIncludes[filepath].Clear();
-
-                    using var compiler = new Compiler();
-                    using var options  = new CompilerOptions { IncludeResolver = this.GetIncludeResolver(filepath) };
-
-                    var result = compiler.CompileIntoSpv(source, shaderKind, filepath, "main", options);
-
-                    foreach (var include in this.shaderIncludes[filepath])
-                    {
-                        var relativeIncludePath = Path.GetRelativePath(shadersPath, include.Key);
-
-                        if (!watcher.Filters.Contains(relativeIncludePath))
-                        {
-                            watcher.Filters.Add(relativeIncludePath);
-                        }
-                    }
-
-                    if (result.CompilationStatus == CompilationStatus.Success)
-                    {
-                        this.Stages[shaderStage] = result.Bytes;
-
-                        Logger.Trace($"Shader {this.Name}.{shaderStage} [{filepath}] compiled with {(result.Warnings > 0 ? $"{result.Warnings} warnings" : "success")}.");
-
-                        return true;
-                    }
-                    else
-                    {
-                        Logger.Error(result.ErrorMessage);
+                        watcher.Filters.Add(filename);
                     }
                 }
-            }
-            catch (Exception exception)
-            {
-                Logger.Error(exception.Message);
-            }
 
-            return false;
+                if (result.CompilationStatus == CompilationStatus.Success)
+                {
+                    this.Stages[shaderStage] = result.Bytes;
+
+                    Logger.Info($"Shader {this.Name}.{shaderStage} [{filepath}] compiled with {(result.Warnings > 0 ? $"{result.Warnings} warnings" : "success")}.");
+
+                    return true;
+                }
+                else
+                {
+                    Logger.Error(result.ErrorMessage);
+                }
+            }
         }
+        catch (Exception exception)
+        {
+            Logger.Error(exception.Message);
+        }
+
+        return false;
     }
 
     private IncludeResolve GetIncludeResolver(string shaderfile) =>
         (requestedSource, type, requestingSource, includeDepth) =>
         {
+            Logger.Trace($"Resolving include \"{requestedSource}\" requested by \"{requestingSource}\"");
+
             var filepath = type == IncludeType.Relative
                 ? Path.GetFullPath(Path.Join(Path.GetDirectoryName(requestingSource), requestedSource))
                 : requestedSource;
+
+            Logger.Trace($"Include resolved to \"{filepath}\"");
 
             if (!this.includeShaders.TryGetValue(filepath, out var shaders))
             {
@@ -168,8 +168,7 @@ public abstract class ShaderResources : IDisposable
 
             shaders.Add(shaderfile);
 
-            var content           = File.ReadAllBytes(filepath);
-            this.hashes[filepath] = MD5.HashData(content);
+            var content = File.ReadAllBytes(filepath);
 
             this.shaderIncludes[shaderfile][filepath] = MD5.HashData(content);
 

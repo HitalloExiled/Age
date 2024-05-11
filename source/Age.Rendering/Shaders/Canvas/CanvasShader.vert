@@ -1,7 +1,5 @@
 #version 450
 
-#define PI 3.1415926535897932384626433832795
-
 layout(location = 0) in vec2 inPosition;
 
 layout(location = 0) out vec2 outFragTexCoord;

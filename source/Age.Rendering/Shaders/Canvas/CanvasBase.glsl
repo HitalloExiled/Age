@@ -1,4 +1,8 @@
-#version 450
+#ifndef CANVAS_COMMON
+#define CANVAS_COMMON
+
+#include "../Includes/Common.glsl"
+#include "./CanvasShader.PushConstant.glsl"
 
 #define CORNER_LEFT_TOP     1
 #define CORNER_TOP_RIGHT    2
@@ -21,49 +25,6 @@ layout(binding = 0) uniform sampler2D texSampler;
 layout(location = 0) in vec2 inFragTexCoord;
 
 layout(location = 0) out vec4 outColor;
-
-#include "./CanvasShader.PushConstant.glsl"
-
-vec4 to_vec4(float elements[4])
-{
-    return vec4(elements[0], elements[1], elements[2], elements[3]);
-}
-
-bool has_flag(uint value, uint flag)
-{
-    return (value & flag) == flag;
-}
-
-bool intersects(vec2 position, Rect rect)
-{
-    return position.x >= rect.position.x && position.x <= rect.position.x + rect.size.x && position.y >= rect.position.y && position.y <= rect.position.y + rect.size.y;
-}
-
-vec2 cubic_bezier(vec2 p0, vec2 p1, vec2 p2, vec2 p3, float t) {
-    mat4 M = mat4(
-         1.0,  0.0,  0.0, 0.0,
-        -3.0,  3.0,  0.0, 0.0,
-         3.0, -6.0,  3.0, 0.0,
-        -1.0,  3.0, -3.0, 1.0
-    );
-
-    vec4 T = vec4(1.0, t, t * t, t * t * t);
-
-    vec4 result = M * T;
-
-    float x = dot(result, vec4(p0.x, p1.x, p2.x, p3.x));
-    float y = dot(result, vec4(p0.y, p1.y, p2.y, p3.y));
-
-    return vec2(x, y);
-}
-
-vec2 quadratic_bezier(vec2 p0, vec2 p1, vec2 p2, float t)
-{
-    vec2 q0 = mix(p0, p1, t);
-    vec2 q1 = mix(p1, p2, t);
-
-    return mix(q0, q1, t);
-}
 
 void get_corners(out Rect left_top, out Rect top_right, out Rect right_bottom, out Rect bottom_left)
 {
@@ -309,56 +270,4 @@ bool is_inside_radius(vec2 position, uint corner, out vec4 color, out bool is_ou
     return false;
 }
 
-void main()
-{
-    vec4 texture_color = texture(texSampler, inFragTexCoord);
-
-    vec4 color =
-        has_flag(data.flags, FLAGS_COLOR_AS_BACKGROUND)
-            ? data.color
-            : has_flag(data.flags, FLAGS_GRAYSCALE_TEXTURE | FLAGS_MULTIPLY_COLOR)
-                ? vec4(1 - texture_color.rrr, texture_color.g) * data.color
-                : texture_color;
-
-    bool has_border = data.border.top.thickness
-        + data.border.right.thickness
-        + data.border.bottom.thickness
-        + data.border.left.thickness
-        + data.border.radius.left_top
-        + data.border.radius.top_right
-        + data.border.radius.right_bottom
-        + data.border.radius.bottom_left > 0;
-
-    if (has_border)
-    {
-        vec2 position = data.rect.size * inFragTexCoord;
-
-        BorderSide side;
-        uint corner;
-
-        if (is_corner(position, corner))
-        {
-            vec4 corner_color;
-            bool is_outside;
-            if (is_inside_radius(position, corner, corner_color, is_outside))
-            {
-                color = corner_color;
-            }
-            else if (is_outside)
-            {
-                color = vec4(0);
-                // color = vec4(0, 1, 1, 1);
-            }
-            else
-            {
-                // color = vec4(1, 0, 1, 1);
-            }
-        }
-        else if (is_border(position, side))
-        {
-            color = to_vec4(side.color);
-        }
-    }
-
-    outColor = color;
-}
+#endif
