@@ -21,7 +21,7 @@ public unsafe class CompilerOptions : IDisposable
         var result = fn.Invoke(
             Marshal.PtrToStringAnsi((nint)requestedSource)!,
             (IncludeType)type,
-            Marshal.PtrToStringAnsi((nint)requestedSource)!,
+            Marshal.PtrToStringAnsi((nint)requestingSource)!,
             includeDepth
         );
 

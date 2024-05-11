@@ -6,28 +6,7 @@ layout(location = 0) in vec2 inPosition;
 
 layout(location = 0) out vec2 outFragTexCoord;
 
-struct Rect
-{
-    vec2 size;
-    vec2 position;
-};
-
-struct Transform
-{
-    mat2 rotation;
-    vec2 position;
-};
-
-layout(push_constant, std430) uniform Data
-{
-    layout(offset = 16)
-
-    // [8-bytes boundary]
-    vec2      viewport;
-    Transform transform;
-    Rect      rect;
-    vec2      uv[4];
-} data;
+#include "./CanvasShader.PushConstant.glsl"
 
 void main()
 {
