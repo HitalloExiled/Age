@@ -176,7 +176,7 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
 
                 var command = new RectDrawCommand
                 {
-                    ObjectId       = (uint)(textNode.ObjectId | (i + 1u << 16)),
+                    ObjectId       = (uint)(textNode.ObjectId | (i + 1u) << 16),
                     Rect           = new(size, position),
                     Color          = color,
                     SampledTexture = new(atlas.Texture, this.sampler, uv),

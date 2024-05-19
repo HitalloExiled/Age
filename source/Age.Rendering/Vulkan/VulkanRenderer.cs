@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using Age.Core;
 using Age.Core.Interop;
+using Age.Numerics;
 using Age.Rendering.Enums;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
@@ -16,6 +17,8 @@ using ThirdParty.Vulkan.Flags;
 using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Rendering.Vulkan;
+
+#pragma warning disable CA1822 // TODO Remove;
 
 public unsafe partial class VulkanRenderer : IDisposable
 {
@@ -78,31 +81,13 @@ public unsafe partial class VulkanRenderer : IDisposable
     private DescriptorPool CreateDescriptorPool(VkDescriptorType descriptorType) =>
         DescriptorPool.CreateDescriptorPool(this.Context.Device, descriptorType);
 
-    private void CreateImage(uint width, uint height, VkSampleCountFlags samples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, out VkImage image, out Allocation allocation)
+    private void CreateImage(in VkImageCreateInfo createInfo, out VkImage image, out Allocation allocation)
     {
-        var imageCreateInfo = new VkImageCreateInfo
-        {
-            ArrayLayers = 1,
-            Extent      = new()
-            {
-                Depth  = 1,
-                Height = height,
-                Width  = width,
-            },
-            Format        = format,
-            ImageType     = VkImageType.N2D,
-            InitialLayout = VkImageLayout.Undefined,
-            MipLevels     = 1,
-            Samples       = samples,
-            Tiling        = tiling,
-            Usage         = usage,
-        };
-
-        image = this.Context.Device.CreateImage(imageCreateInfo);
+        image = this.Context.Device.CreateImage(createInfo);
 
         image.GetMemoryRequirements(out var memRequirements);
 
-        var memoryType = this.Context.FindMemoryType(memRequirements.MemoryTypeBits, properties);
+        var memoryType = this.Context.FindMemoryType(memRequirements.MemoryTypeBits, VkMemoryPropertyFlags.DeviceLocal);
 
         var memoryAllocateInfo = new VkMemoryAllocateInfo
         {
@@ -116,6 +101,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         allocation = new()
         {
+            Alignment  = memRequirements.Alignment,
             Memory     = deviceMemory,
             Memorytype = memoryType,
             Offset     = 0,
@@ -157,24 +143,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         }
     }
 
-    private VkFramebuffer CreateFrameBuffer(VkRenderPass renderPass, VkImageView imageView, VkExtent2D extent)
-    {
-        var imageViewHandle = imageView.Handle;
-
-        var createInfo = new VkFramebufferCreateInfo
-        {
-            AttachmentCount = 1,
-            Height          = extent.Height,
-            Layers          = 1,
-            PAttachments    = &imageViewHandle,
-            Width           = extent.Width,
-            RenderPass      = renderPass.Handle,
-        };
-
-        return this.Context.Device.CreateFramebuffer(createInfo);
-    }
-
-    private void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, ulong size)
+    public void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, ulong size)
     {
         var commandBuffer = this.Context.BeginSingleTimeCommands();
 
@@ -188,7 +157,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         this.Context.EndSingleTimeCommands(commandBuffer);
     }
 
-    private void CopyBufferToImage(VkBuffer buffer, VkImage image, uint width, uint height)
+    public void CopyBufferToImage(VkBuffer buffer, VkImage image, uint width, uint height)
     {
         var commandBuffer = this.Context.BeginSingleTimeCommands();
 
@@ -207,7 +176,26 @@ public unsafe partial class VulkanRenderer : IDisposable
             }
         };
 
-        commandBuffer.CopyBufferToImage(buffer, image, VkImageLayout.TransferDstOptimal, bufferImageCopy);
+        commandBuffer.CopyBufferToImage(buffer, image, VkImageLayout.TransferDstOptimal, [bufferImageCopy]);
+
+        this.Context.EndSingleTimeCommands(commandBuffer);
+    }
+
+    public void CopyImageToBuffer(Image image, Buffer buffer, VkExtent3D extent)
+    {
+        var commandBuffer = this.Context.BeginSingleTimeCommands();
+
+        var bufferImageCopy = new VkBufferImageCopy
+        {
+            ImageExtent      = extent,
+            ImageSubresource = new()
+            {
+                AspectMask = VkImageAspectFlags.Color,
+                LayerCount = 1,
+            }
+        };
+
+        commandBuffer.CopyImageToBuffer(image.Value, VkImageLayout.TransferSrcOptimal, buffer.Value, [bufferImageCopy]);
 
         this.Context.EndSingleTimeCommands(commandBuffer);
     }
@@ -329,6 +317,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
                 var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
                 {
+                    AlphaBlendOp   = VkBlendOp.Add,
                     BlendEnable    = true,
                     ColorWriteMask = VkColorComponentFlags.R
                         | VkColorComponentFlags.G
@@ -342,6 +331,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                 var pipelineColorBlendStateCreateInfo = new VkPipelineColorBlendStateCreateInfo
                 {
                     AttachmentCount = 1,
+                    LogicOp         = VkLogicOp.Copy,
                     PAttachments    = &pipelineColorBlendAttachmentState,
                 };
 
@@ -402,7 +392,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         }
     }
 
-    private void TransitionImageLayout(
+    public void TransitionImageLayout(
         VkImage              image,
         VkImageLayout        oldLayout,
         VkImageLayout        newLayout,
@@ -464,19 +454,22 @@ public unsafe partial class VulkanRenderer : IDisposable
         }
     }
 
-    public void BeginRenderPass(RenderPass renderPass, in VkExtent2D extent, uint framebuffer)
+    public void BeginRenderPass(RenderPass renderPass, uint framebufferIndex, Color clearColor) =>
+        this.BeginRenderPass(this.Context.Frame.CommandBuffer, renderPass, framebufferIndex, clearColor);
+
+    public void BeginRenderPass(VkCommandBuffer commandBuffer, RenderPass renderPass, uint framebufferIndex, Color clearColor)
     {
         var clearValues = new VkClearValue[2];
 
-        clearValues[0].Color.Float32[0] = 1;
-        clearValues[0].Color.Float32[1] = 1;
-        clearValues[0].Color.Float32[2] = 1;
-        clearValues[0].Color.Float32[3] = 1;
+        clearValues[0].Color.Float32[0] = clearColor.R;
+        clearValues[0].Color.Float32[1] = clearColor.G;
+        clearValues[0].Color.Float32[2] = clearColor.B;
+        clearValues[0].Color.Float32[3] = clearColor.A;
 
         clearValues[1].DepthStencil = new()
         {
             Depth   = 1.0f,
-            Stencil = 0
+            Stencil = 1
         };
 
         fixed (VkClearValue* pClearValues = clearValues)
@@ -484,7 +477,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             var renderPassBeginInfo = new VkRenderPassBeginInfo
             {
                 ClearValueCount = (uint)clearValues.Length,
-                Framebuffer     = renderPass.Framebuffers[framebuffer].Value.Handle,
+                Framebuffer     = renderPass.Framebuffers[framebufferIndex].Value.Handle,
                 PClearValues    = pClearValues,
                 RenderArea      = new()
                 {
@@ -493,29 +486,41 @@ public unsafe partial class VulkanRenderer : IDisposable
                         X = 0,
                         Y = 0
                     },
-                    Extent = extent,
+                    Extent = renderPass.Extent,
                 },
                 RenderPass = renderPass.Value.Handle,
             };
 
-            this.Context.Frame.CommandBuffer.BeginRenderPass(renderPassBeginInfo, VkSubpassContents.Inline);
+            commandBuffer.BeginRenderPass(renderPassBeginInfo, VkSubpassContents.Inline);
         }
     }
 
     public void BindIndexBuffer(IndexBuffer indexBuffer) =>
-        this.Context.Frame.CommandBuffer.BindIndexBuffer(indexBuffer.Buffer.Value, 0, indexBuffer.Type);
+        this.BindIndexBuffer(this.Context.Frame.CommandBuffer, indexBuffer);
+
+    public void BindIndexBuffer(VkCommandBuffer commandBuffer, IndexBuffer indexBuffer) =>
+        commandBuffer.BindIndexBuffer(indexBuffer.Buffer.Value, 0, indexBuffer.Type);
 
     public void BindPipeline(Shader shader) =>
-        this.Context.Frame.CommandBuffer.BindPipeline(shader.PipelineBindPoint, shader.Pipeline);
+        this.BindPipeline(this.Context.Frame.CommandBuffer, shader);
 
-    public void BindVertexBuffer(VertexBuffer vertexBuffer) =>
-        this.Context.Frame.CommandBuffer.BindVertexBuffers(0, 1, [vertexBuffer.Buffer.Value], [0]);
+    public void BindPipeline(VkCommandBuffer commandBuffer, Shader shader) =>
+        commandBuffer.BindPipeline(shader.PipelineBindPoint, shader.Pipeline);
 
-    public void BindVertexBuffer(VertexBuffer[] vertexBuffers) =>
-        this.Context.Frame.CommandBuffer.BindVertexBuffers(0, 1, [.. vertexBuffers.Select(x => x.Buffer.Value)], new ulong[vertexBuffers.Length]);
+    public void BindVertexBuffers(VertexBuffer vertexBuffer) =>
+        this.BindVertexBuffers(this.Context.Frame.CommandBuffer, vertexBuffer);
+
+    public void BindVertexBuffers(VkCommandBuffer commandBuffer, VertexBuffer vertexBuffer) =>
+        commandBuffer.BindVertexBuffers(0, 1, [vertexBuffer.Buffer.Value], [0]);
+
+    public void BindVertexBuffer(VkCommandBuffer commandBuffer, VertexBuffer[] vertexBuffers) =>
+        commandBuffer.BindVertexBuffers(0, 1, [.. vertexBuffers.Select(x => x.Buffer.Value)], new ulong[vertexBuffers.Length]);
 
     public void BindUniformSet(UniformSet uniformSet) =>
-        this.Context.Frame.CommandBuffer.BindDescriptorSets(uniformSet.Shader.PipelineBindPoint, uniformSet.Shader.PipelineLayout, 0, uniformSet.DescriptorSets, []);
+        this.BindUniformSet(this.Context.Frame.CommandBuffer, uniformSet);
+
+    public void BindUniformSet(VkCommandBuffer commandBuffer, UniformSet uniformSet) =>
+        commandBuffer.BindDescriptorSets(uniformSet.Shader.PipelineBindPoint, uniformSet.Shader.PipelineLayout, 0, uniformSet.DescriptorSets, []);
 
     public Buffer CreateBuffer(ulong size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
     {
@@ -547,6 +552,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         {
             Allocation = new()
             {
+                Alignment  = memRequirements.Alignment,
                 Memory     = memory,
                 Memorytype = memoryType,
                 Offset     = 0,
@@ -554,6 +560,18 @@ public unsafe partial class VulkanRenderer : IDisposable
             },
             Value = buffer,
             Usage = usage,
+        };
+    }
+
+    public Image CreateImage(in VkImageCreateInfo createInfo)
+    {
+        this.CreateImage(createInfo, out var image, out var allocation);
+
+        return new()
+        {
+            Value      = image,
+            Allocation = allocation,
+            Extent     = createInfo.Extent,
         };
     }
 
@@ -641,19 +659,27 @@ public unsafe partial class VulkanRenderer : IDisposable
         var samples = VkSampleCountFlags.N1;
         var tiling  = VkImageTiling.Optimal;
         var usage   = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
-        var format  = textureCreate.ColorMode == ColorMode.Grayscale ? VkFormat.R8G8Unorm : VkFormat.B8G8R8A8Srgb;
+        var format  = textureCreate.ColorMode == ColorMode.Grayscale ? VkFormat.R8G8Unorm : VkFormat.B8G8R8A8Unorm;
 
-        this.CreateImage(
-            textureCreate.Width,
-            textureCreate.Height,
-            samples,
-            format,
-            tiling,
-            usage,
-            VkMemoryPropertyFlags.DeviceLocal,
-            out var image,
-            out var allocation
-        );
+        var imageCreateInfo = new VkImageCreateInfo
+        {
+            ArrayLayers   = 1,
+            Extent        = new()
+            {
+                Width  = textureCreate.Width,
+                Height = textureCreate.Height,
+                Depth  = textureCreate.Depth
+            },
+            Format        = format,
+            ImageType     = VkImageType.N2D,
+            InitialLayout = VkImageLayout.Undefined,
+            MipLevels     = 1,
+            Samples       = samples,
+            Tiling        = tiling,
+            Usage         = usage,
+        };
+
+        this.CreateImage(imageCreateInfo, out var image, out var allocation);
 
         this.TransitionImageLayout(
             image,
@@ -827,10 +853,16 @@ public unsafe partial class VulkanRenderer : IDisposable
     }
 
     public void Draw(VertexBuffer vertexBuffer, uint instanceCount = 1, uint firstVertex = 0, uint firstInstance = 0) =>
-        this.Context.Frame.CommandBuffer.Draw(vertexBuffer.Size, instanceCount, firstVertex, firstInstance);
+        this.Draw(this.Context.Frame.CommandBuffer, vertexBuffer, instanceCount, firstVertex, firstInstance);
+
+    public void Draw(VkCommandBuffer commandBuffer, VertexBuffer vertexBuffer, uint instanceCount = 1, uint firstVertex = 0, uint firstInstance = 0) =>
+        commandBuffer.Draw(vertexBuffer.Size, instanceCount, firstVertex, firstInstance);
 
     public void DrawIndexed(IndexBuffer indexBuffer, uint instanceCount = 1, uint firstIndex = 0, int vertexOffset = 0, uint firstInstance = 0) =>
-        this.Context.Frame.CommandBuffer.DrawIndexed(indexBuffer.Size, instanceCount, firstIndex, vertexOffset, firstInstance);
+        this.DrawIndexed(this.Context.Frame.CommandBuffer, indexBuffer, instanceCount, firstIndex, vertexOffset, firstInstance);
+
+    public void DrawIndexed(VkCommandBuffer commandBuffer, IndexBuffer indexBuffer, uint instanceCount = 1, uint firstIndex = 0, int vertexOffset = 0, uint firstInstance = 0) =>
+        commandBuffer.DrawIndexed(indexBuffer.Size, instanceCount, firstIndex, vertexOffset, firstInstance);
 
     public void EndFrame()
     {
@@ -845,13 +877,20 @@ public unsafe partial class VulkanRenderer : IDisposable
     public void EndRenderPass() =>
         this.Context.Frame.CommandBuffer.EndRenderPass();
 
+    public void EndRenderPass(VkCommandBuffer commandBuffer) =>
+        commandBuffer.EndRenderPass();
+
     public void PushConstant<T>(Shader shader, in T constant) where T : unmanaged, IPushConstant =>
         this.Context.Frame.CommandBuffer.PushConstants(shader.PipelineLayout, T.Stages, constant);
 
-    public void SetViewport(Surface surface)
-    {
-        var commandBuffer = this.Context.Frame.CommandBuffer;
+    public void PushConstant<T>(VkCommandBuffer commandBuffer, Shader shader, in T constant) where T : unmanaged, IPushConstant =>
+        commandBuffer.PushConstants(shader.PipelineLayout, T.Stages, constant);
 
+    public void SetViewport(Surface surface) =>
+        this.SetViewport(this.Context.Frame.CommandBuffer, surface);
+
+    public void SetViewport(VkCommandBuffer commandBuffer, Surface surface)
+    {
         var viewport = new VkViewport
         {
             X        = 0,

@@ -282,30 +282,6 @@ public unsafe partial class VulkanContext : IDisposable
             var swapchain = this.swapchainExtension.CreateSwapchain(swapchainCreateInfo);
             var images    = swapchain.GetImages();
 
-            var imageViews   = new VkImageView[images.Length];
-            var framebuffers = new VkFramebuffer[images.Length];
-
-            var renderPassCreateInfo = new RenderPass.CreateInfo
-            {
-                ColorAttachments =
-                [
-                    new()
-                    {
-                        Layout = VkImageLayout.ColorAttachmentOptimal,
-                        Color  = new VkAttachmentDescription
-                        {
-                            FinalLayout    = VkImageLayout.PresentSrcKHR,
-                            Format         = this.surfaceFormat.Format,
-                            InitialLayout  = VkImageLayout.Undefined,
-                            LoadOp         = VkAttachmentLoadOp.Clear,
-                            Samples        = VkSampleCountFlags.N1,
-                            StencilLoadOp  = VkAttachmentLoadOp.Clear,
-                            StencilStoreOp = VkAttachmentStoreOp.DontCare,
-                        }
-                    }
-                ],
-            };
-
             return new Swapchain
             {
                 Extent = extent,
@@ -396,7 +372,7 @@ public unsafe partial class VulkanContext : IDisposable
             }
         };
 
-        commandBuffer.CopyBufferToImage(buffer, image, VkImageLayout.TransferDstOptimal, bufferImageCopy);
+        commandBuffer.CopyImageToBuffer(image, VkImageLayout.TransferDstOptimal, buffer, [bufferImageCopy]);
 
         this.EndSingleTimeCommands(commandBuffer);
     }
@@ -518,32 +494,6 @@ public unsafe partial class VulkanContext : IDisposable
         return commandBuffer;
     }
 
-    public RenderPass CreateRenderPass(VkFormat format)
-    {
-        var createInfo = new RenderPass.CreateInfo
-        {
-            ColorAttachments =
-            [
-                new()
-                {
-                    Layout = VkImageLayout.ColorAttachmentOptimal,
-                    Color  = new VkAttachmentDescription
-                    {
-                        Samples        = VkSampleCountFlags.N1,
-                        FinalLayout    = VkImageLayout.PresentSrcKHR,
-                        Format         = format,
-                        InitialLayout  = VkImageLayout.Undefined,
-                        LoadOp         = VkAttachmentLoadOp.Clear,
-                        StencilLoadOp  = VkAttachmentLoadOp.Clear,
-                        StencilStoreOp = VkAttachmentStoreOp.DontCare,
-                    }
-                }
-            ]
-        };
-
-        return this.CreateRenderPass(createInfo);
-    }
-
     public RenderPass CreateRenderPass(in RenderPass.CreateInfo createInfo)
     {
         var attachmentDescription = new List<VkAttachmentDescription>();
@@ -555,25 +505,32 @@ public unsafe partial class VulkanContext : IDisposable
             colorAttachments.Add(new() { Attachment = (uint)attachmentDescription.Count, Layout = attachment.Layout });
             attachmentDescription.Add(attachment.Color);
 
-            if (!attachment.Resolve.Equals(default(VkAttachmentDescription)))
+            if (attachment.Resolve.HasValue)
             {
                 resolveAttachments.Add(new() { Attachment = (uint)attachmentDescription.Count, Layout = attachment.Layout });
-                attachmentDescription.Add(attachment.Color);
+                attachmentDescription.Add(attachment.Resolve.Value);
             }
         }
 
-        fixed (VkAttachmentDescription* pAttachments            = CollectionsMarshal.AsSpan(attachmentDescription))
-        fixed (VkAttachmentReference*   pColorAttachments       = CollectionsMarshal.AsSpan(colorAttachments))
-        fixed (VkAttachmentReference*   pResolveAttachments     = CollectionsMarshal.AsSpan(resolveAttachments))
-        fixed (VkAttachmentReference*   pDepthStencilAttachment = &createInfo.DepthStencilAttachment)
+        fixed (VkAttachmentDescription* pAttachments        = CollectionsMarshal.AsSpan(attachmentDescription))
+        fixed (VkAttachmentReference*   pColorAttachments   = CollectionsMarshal.AsSpan(colorAttachments))
+        fixed (VkAttachmentReference*   pResolveAttachments = CollectionsMarshal.AsSpan(resolveAttachments))
         {
+            var depthStencilAttachment  = createInfo.DepthStencilAttachment.GetValueOrDefault();
+            var pDepthStencilAttachment = createInfo.DepthStencilAttachment.HasValue ? &depthStencilAttachment : null;
+
             var subpass = new VkSubpassDescription
             {
                 PipelineBindPoint       = VkPipelineBindPoint.Graphics,
                 PColorAttachments       = pColorAttachments,
                 PResolveAttachments     = pResolveAttachments,
                 ColorAttachmentCount    = (uint)colorAttachments.Count,
-                PDepthStencilAttachment = NullIfDefault(pDepthStencilAttachment),
+                PDepthStencilAttachment = pDepthStencilAttachment,
+            };
+
+            var subpassDependency = new VkSubpassDependency
+            {
+
             };
 
             var renderPassCreateInfo = new VkRenderPassCreateInfo
@@ -586,13 +543,12 @@ public unsafe partial class VulkanContext : IDisposable
 
             var renderPass = this.device.CreateRenderPass(renderPassCreateInfo);
 
-            var framebuffers = new Framebuffer[MAX_FRAMES_IN_FLIGHT];
-            var swapchain    = Surface.Entries[0].Swapchain;
+            var framebuffers = new Framebuffer[createInfo.Images.Length];
 
-            for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+            for (var i = 0; i < createInfo.Images.Length; i++)
             {
-                var imageView   = this.CreateImageView(swapchain.Images[i], swapchain.Format, VkImageAspectFlags.Color);
-                var framebuffer = this.CreateFrameBuffer(renderPass, imageView, swapchain.Extent);
+                var imageView   = this.CreateImageView(createInfo.Images[i], createInfo.Format, VkImageAspectFlags.Color);
+                var framebuffer = this.CreateFrameBuffer(renderPass, imageView, createInfo.Extent);
 
                 framebuffers[i] = new()
                 {
@@ -605,6 +561,7 @@ public unsafe partial class VulkanContext : IDisposable
             {
                 Value        = renderPass,
                 Framebuffers = framebuffers,
+                Extent       = createInfo.Extent,
             };
         }
     }

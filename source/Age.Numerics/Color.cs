@@ -60,9 +60,9 @@ public record struct Color
 
     public static implicit operator Color(uint value) =>
         new(
-            (value >> 24 & 255) / 255f,
-            (value >> 16 & 255) / 255f,
+            (value       & 255) / 255f,
             (value >> 8  & 255) / 255f,
-            (value       & 255) / 255f
+            (value >> 16 & 255) / 255f,
+            (value >> 24 & 255) / 255f
         );
 }

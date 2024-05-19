@@ -270,13 +270,13 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             ImageOffset = new(),
             ImageExtent = new()
             {
-                Width = (uint)width,
+                Width  = (uint)width,
                 Height = (uint)height,
-                Depth = 1
+                Depth  = 1
             },
         };
 
-        commandBuffer.CopyBufferToImage(buffer, image, VkImageLayout.TransferDstOptimal, region);
+        commandBuffer.CopyBufferToImage(buffer, image, VkImageLayout.TransferDstOptimal, [region]);
 
         this.EndSingleTimeCommands(commandBuffer);
     }
@@ -1161,7 +1161,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
                 out this.uniformBuffersMemory[i]
             );
 
-            this.uniformBuffersMemory[i].Map(0, (ulong)sizeof(UniformBufferObject), 0, this.uniformBuffersMapped[i]);
+            this.uniformBuffersMemory[i].Map(0, (ulong)sizeof(UniformBufferObject), 0, out this.uniformBuffersMapped[i]);
         }
     }
 

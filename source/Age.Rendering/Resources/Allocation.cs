@@ -5,6 +5,7 @@ namespace Age.Rendering.Resources;
 
 public record Allocation : Disposable
 {
+    public required ulong          Alignment  { get; init; }
     public required VkDeviceMemory Memory     { get; init; }
     public required uint           Memorytype { get; init; }
     public required ulong          Offset     { get; init; }

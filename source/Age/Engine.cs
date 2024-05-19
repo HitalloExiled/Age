@@ -74,6 +74,7 @@ public class Engine : IDisposable
 
         foreach (var window in Window.Windows)
         {
+            window.SizeChanged += () => this.container.RenderingService.GetObjectIdBuffer(window);
             window.Tree.Initialize();
         }
 

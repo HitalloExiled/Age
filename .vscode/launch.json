@@ -1,44 +1,15 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+
     "version": "0.2.0",
     "configurations": [
         {
-            // Use IntelliSense to find out which attributes exist for C# debugging
-            // Use hover for the description of the existing attributes
-            // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
             "name": "Launch Editor",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/source/Age.Editor/bin/Debug/net8.0/Age.Editor.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
-            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
-            "console": "internalConsole",
-            "stopAtEntry": false,
-            "justMyCode": true,
-            "symbolOptions": {
-                "searchMicrosoftSymbolServer": false,
-                "searchNuGetOrgSymbolServer": false,
-            },
-            "enableStepFiltering": false,
-        },
-        {
-            // Use IntelliSense to find out which attributes exist for C# debugging
-            // Use hover for the description of the existing attributes
-            // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
-            "name": "Launch Playground",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/source/Age.Playground/bin/Debug/net8.0/Age.Playground.exe",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false,
             "justMyCode": true,
@@ -49,10 +20,21 @@
             "enableStepFiltering": true,
         },
         {
-            "type": "shadered",
+            "name": "Launch Playground",
+            "type": "coreclr",
             "request": "launch",
-            "name": "Debug Shaders",
-            "program": "${workspaceFolder}/source/Age.Rendering/Age.Rendering.sprj"
-        }
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/source/Age.Playground/bin/Debug/net8.0/Age.Playground.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "justMyCode": true,
+            "symbolOptions": {
+                "searchMicrosoftSymbolServer": false,
+                "searchNuGetOrgSymbolServer": false,
+            },
+            "enableStepFiltering": true,
+        },
     ]
 }

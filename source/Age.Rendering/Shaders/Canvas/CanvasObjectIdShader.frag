@@ -26,13 +26,9 @@ void main()
         {
             vec4 corner_color;
             bool is_outside;
-            if (is_inside_radius(position, corner, corner_color, is_outside))
+            if (!is_inside_radius(position, corner, corner_color, is_outside) && is_outside)
             {
-                // color = corner_color;
-            }
-            else if (is_outside)
-            {
-                color = vec4(0);
+                discard;
             }
         }
     }

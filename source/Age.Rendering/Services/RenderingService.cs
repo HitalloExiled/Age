@@ -1,3 +1,5 @@
+#define DUMP_IMAGES
+
 using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing;
@@ -9,54 +11,34 @@ using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
+using System.Diagnostics.CodeAnalysis;
+using SkiaSharp;
 
 namespace Age.Rendering.Services;
 
-internal class RenderingService : IRenderingService
+internal partial class RenderingService : IRenderingService
 {
     private const bool DRAW_WIREFRAME = false;
 
-    private readonly Shader diffuseShader;
-    private readonly IndexBuffer indexBuffer;
+    private readonly Shader         diffuseShader;
+    private readonly IndexBuffer    indexBuffer;
+    private readonly Shader         objectIdShader;
     private readonly VulkanRenderer renderer;
     private readonly TextureStorage textureStorage;
-    private readonly VertexBuffer vertexBuffer;
-    private readonly IndexBuffer wireframeIndexBuffer;
-    private readonly Shader wireframeShader;
+    private readonly VertexBuffer   vertexBuffer;
+    private readonly IndexBuffer    wireframeIndexBuffer;
+    private readonly Shader         wireframeShader;
 
-    private RenderPass renderPass;
-
-    private int changes;
-    private bool disposed;
+    private RenderPass canvasRenderPass;
+    private int        changes;
+    private bool       disposed;
+    private Image      objectIdImage;
+    private RenderPass objectIdRenderPass;
 
     public RenderingService(VulkanRenderer renderer, TextureStorage textureStorage)
     {
-        this.renderer = renderer;
+        this.renderer       = renderer;
         this.textureStorage = textureStorage;
-
-        var colorPassCreateInfo = new RenderPass.CreateInfo
-        {
-            ColorAttachments =
-            [
-                new()
-                {
-                    Layout = VkImageLayout.ColorAttachmentOptimal,
-                    Color  = new VkAttachmentDescription
-                    {
-                        Format         = renderer.Context.ScreenFormat,
-                        Samples        = VkSampleCountFlags.N1,
-                        InitialLayout  = VkImageLayout.Undefined,
-                        FinalLayout    = VkImageLayout.PresentSrcKHR,
-                        LoadOp         = VkAttachmentLoadOp.Clear,
-                        StoreOp        = VkAttachmentStoreOp.Store,
-                        StencilLoadOp  = VkAttachmentLoadOp.Clear,
-                        StencilStoreOp = VkAttachmentStoreOp.Store,
-                    },
-                }
-            ],
-        };
-
-        this.renderPass = renderer.Context.CreateRenderPass(colorPassCreateInfo);
 
         var vertices = new CanvasShader.Vertex[4]
         {
@@ -66,26 +48,137 @@ internal class RenderingService : IRenderingService
             new(-1,  1),
         };
 
-        this.vertexBuffer = renderer.CreateVertexBuffer(vertices);
-        this.indexBuffer = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
+        this.vertexBuffer         = renderer.CreateVertexBuffer(vertices);
+        this.indexBuffer          = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
         this.wireframeIndexBuffer = renderer.CreateIndexBuffer([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
-        this.diffuseShader = renderer.CreateShaderAndWatch<CanvasObjectIdShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
-        this.wireframeShader = renderer.CreateShaderAndWatch<CanvasWireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
+
+        this.CreateRenderPasses();
+
+        this.diffuseShader   = renderer.CreateShaderAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.canvasRenderPass);
+        this.wireframeShader = renderer.CreateShaderAndWatch<CanvasWireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.canvasRenderPass);
+        this.objectIdShader  = renderer.CreateShaderAndWatch<CanvasObjectIdShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.objectIdRenderPass);
 
         this.diffuseShader.Changed += this.RequestDrawIncremental;
         this.wireframeShader.Changed += this.RequestDrawIncremental;
+        this.objectIdShader.Changed += this.RequestDrawIncremental;
 
-        this.renderer.Context.SwapchainRecreated += () =>
+        this.renderer.Context.SwapchainRecreated += this.OnSwapchainRecreated;
+    }
+
+#if DUMP_IMAGES
+    private static void SaveToFile(uint[] data, VkExtent3D extent)
+    {
+        static SKColor convert(uint value) => new(value);
+
+        var pixels = data.Select(convert).ToArray();
+
+        var bitmap = new SKBitmap((int)extent.Width, (int)extent.Height)
         {
-            this.renderPass.Dispose();
-
-            this.renderPass = renderer.Context.CreateRenderPass(colorPassCreateInfo);
-
-            this.diffuseShader.RenderPass = this.renderPass;
-            this.wireframeShader.RenderPass = this.renderPass;
-
-            this.RequestDrawIncremental();
+            Pixels = pixels
         };
+
+        var skimage = SKImage.FromBitmap(bitmap);
+
+        try
+        {
+            using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"ObjectId.png"));
+
+            skimage.Encode(SKEncodedImageFormat.Png, 100).SaveTo(stream);
+        }
+        catch
+        {
+
+        }
+    }
+#endif
+
+    [MemberNotNull(nameof(objectIdImage), nameof(canvasRenderPass), nameof(objectIdRenderPass))]
+    private void CreateRenderPasses()
+    {
+        var swapchain = Surface.Entries[0].Swapchain;
+
+        var colorPassCreateInfo = new RenderPass.CreateInfo
+        {
+            Images = swapchain.Images,
+            Format = swapchain.Format,
+            Extent = swapchain.Extent,
+            ColorAttachments =
+            [
+                new()
+                {
+                    Layout = VkImageLayout.ColorAttachmentOptimal,
+                    Color  = new VkAttachmentDescription
+                    {
+                        Format         = swapchain.Format,
+                        Samples        = VkSampleCountFlags.N1,
+                        InitialLayout  = VkImageLayout.Undefined,
+                        FinalLayout    = VkImageLayout.PresentSrcKHR,
+                        LoadOp         = VkAttachmentLoadOp.Clear,
+                        StoreOp        = VkAttachmentStoreOp.Store,
+                        StencilLoadOp  = VkAttachmentLoadOp.DontCare,
+                        StencilStoreOp = VkAttachmentStoreOp.DontCare
+                    },
+                }
+            ],
+        };
+
+        var imageCreateInfo = new VkImageCreateInfo
+        {
+            ArrayLayers   = 1,
+            Extent        = new() { Width = swapchain.Extent.Width, Height = swapchain.Extent.Height, Depth = 1 },
+            Format        = swapchain.Format,
+            ImageType     = VkImageType.N2D,
+            InitialLayout = VkImageLayout.Undefined,
+            MipLevels     = 1,
+            Samples       = VkSampleCountFlags.N1,
+            Tiling        = VkImageTiling.Optimal,
+            Usage         = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.Sampled | VkImageUsageFlags.ColorAttachment,
+        };
+
+        this.objectIdImage = this.renderer.CreateImage(imageCreateInfo);
+
+        var objectIdPassCreateInfo = new RenderPass.CreateInfo
+        {
+            Images = [this.objectIdImage.Value],
+            Format = swapchain.Format,
+            Extent = swapchain.Extent,
+            ColorAttachments =
+            [
+                new()
+                {
+                    Layout = VkImageLayout.ColorAttachmentOptimal,
+                    Color  = new VkAttachmentDescription
+                    {
+                        Format         = swapchain.Format,
+                        Samples        = VkSampleCountFlags.N1,
+                        InitialLayout  = VkImageLayout.Undefined,
+                        FinalLayout    = VkImageLayout.TransferSrcOptimal,
+                        LoadOp         = VkAttachmentLoadOp.Clear,
+                        StoreOp        = VkAttachmentStoreOp.Store,
+                        StencilLoadOp  = VkAttachmentLoadOp.DontCare,
+                        StencilStoreOp = VkAttachmentStoreOp.DontCare
+                    },
+                }
+            ],
+        };
+
+        this.canvasRenderPass   = this.renderer.Context.CreateRenderPass(colorPassCreateInfo);
+        this.objectIdRenderPass = this.renderer.Context.CreateRenderPass(objectIdPassCreateInfo);
+    }
+
+    private void OnSwapchainRecreated()
+    {
+        this.canvasRenderPass.Dispose();
+        this.objectIdRenderPass.Dispose();
+        this.objectIdImage.Dispose();
+
+        this.CreateRenderPasses();
+
+        this.diffuseShader.RenderPass = this.canvasRenderPass;
+        this.wireframeShader.RenderPass = this.canvasRenderPass;
+        this.objectIdShader.RenderPass = this.objectIdRenderPass;
+
+        this.RequestDrawIncremental();
     }
 
     protected virtual void Dispose(bool disposing)
@@ -94,9 +187,12 @@ internal class RenderingService : IRenderingService
         {
             if (disposing)
             {
-                this.renderer.DeferredDispose(this.renderPass);
+                this.renderer.DeferredDispose(this.objectIdImage);
+                this.renderer.DeferredDispose(this.canvasRenderPass);
+                this.renderer.DeferredDispose(this.objectIdRenderPass);
                 this.renderer.DeferredDispose(this.diffuseShader);
                 this.renderer.DeferredDispose(this.wireframeShader);
+                this.renderer.DeferredDispose(this.objectIdShader);
                 this.renderer.DeferredDispose(this.indexBuffer);
                 this.renderer.DeferredDispose(this.vertexBuffer);
                 this.renderer.DeferredDispose(this.wireframeIndexBuffer);
@@ -108,7 +204,7 @@ internal class RenderingService : IRenderingService
         }
     }
 
-    private void Render(IWindow window, Node2D node, bool isWireframe)
+    private void RenderCanvas(IWindow window, Node2D node, RenderFlags flags)
     {
         UniformSet? lastUniformSet = default;
 
@@ -122,14 +218,10 @@ internal class RenderingService : IRenderingService
             {
                 case RectDrawCommand rectDrawCommand:
                     {
-                        var uniformSet = this.textureStorage.GetUniformSet(this.diffuseShader, rectDrawCommand.SampledTexture.Texture, rectDrawCommand.SampledTexture.Sampler);
-
                         var constant = new CanvasShader.PushConstant
                         {
                             Border    = rectDrawCommand.Border,
-                            // Color     = rectDrawCommand.Color,
-                            // Color     = node.ObjectId << 8 | 255,
-                            Color     = rectDrawCommand.ObjectId << 8 | 255,
+                            Color     = rectDrawCommand.Color,
                             Flags     = rectDrawCommand.Flags,
                             Rect      = rectDrawCommand.Rect,
                             Transform = transform,
@@ -137,15 +229,17 @@ internal class RenderingService : IRenderingService
                             Viewport  = windowSize,
                         };
 
-                        if (uniformSet != null && uniformSet != lastUniformSet)
+                        if (!flags.HasFlag(RenderFlags.Wireframe))
                         {
-                            this.renderer.BindUniformSet(uniformSet);
+                            var uniformSet = this.textureStorage.GetUniformSet(this.diffuseShader, rectDrawCommand.SampledTexture.Texture, rectDrawCommand.SampledTexture.Sampler);
 
-                            lastUniformSet = uniformSet;
-                        }
+                            if (uniformSet != null && uniformSet != lastUniformSet)
+                            {
+                                this.renderer.BindUniformSet(uniformSet);
 
-                        if (!isWireframe)
-                        {
+                                lastUniformSet = uniformSet;
+                            }
+
                             this.renderer.PushConstant(this.diffuseShader, constant);
                             this.renderer.DrawIndexed(this.indexBuffer);
                         }
@@ -160,6 +254,55 @@ internal class RenderingService : IRenderingService
                     throw new Exception();
             }
         }
+    }
+
+    private void RenderObjectIds(IWindow window)
+    {
+        var commandBuffer = this.renderer.Context.BeginSingleTimeCommands();
+
+        this.renderer.SetViewport(commandBuffer, window.Surface);
+        this.renderer.BindIndexBuffer(commandBuffer, this.indexBuffer);
+        this.renderer.BindVertexBuffers(commandBuffer, this.vertexBuffer);
+        this.renderer.BindPipeline(commandBuffer, this.objectIdShader);
+
+        this.renderer.BeginRenderPass(commandBuffer, this.objectIdRenderPass, 0, Color.White);
+
+        var windowSize = window.ClientSize.Cast<float>();
+
+        foreach (var node in window.Tree.Traverse<Node2D>(true))
+        {
+            var transform = (Matrix3x2<float>)node.TransformCache;
+
+            foreach (var command in node.Commands)
+            {
+                switch (command)
+                {
+                    case RectDrawCommand rectDrawCommand:
+                        {
+                            var constant = new CanvasShader.PushConstant
+                            {
+                                Border    = rectDrawCommand.Border,
+                                Color     = node.ObjectId | 0b_11111111_00000000_00000000_00000000,
+                                Flags     = rectDrawCommand.Flags,
+                                Rect      = rectDrawCommand.Rect,
+                                Transform = transform,
+                                UV        = rectDrawCommand.SampledTexture.UV,
+                                Viewport  = windowSize,
+                            };
+
+                            this.renderer.PushConstant(commandBuffer, this.objectIdShader, constant);
+                            this.renderer.DrawIndexed(commandBuffer, this.indexBuffer);
+
+                            break;
+                        }
+                    default:
+                        throw new Exception();
+                }
+            }
+        }
+
+        this.renderer.EndRenderPass(commandBuffer);
+        this.renderer.Context.EndSingleTimeCommands(commandBuffer);
     }
 
     private void RequestDrawIncremental() =>
@@ -177,35 +320,26 @@ internal class RenderingService : IRenderingService
     public void DestroySampler(Sampler sampler) =>
         this.renderer.DeferredDispose(sampler);
 
-    public void Render(IWindow window)
+    public unsafe uint[] GetObjectIdBuffer(IWindow window)
     {
-        this.renderer.BeginRenderPass(this.renderPass, window.Surface.Swapchain.Extent, window.Surface.CurrentBuffer);
-        this.renderer.SetViewport(window.Surface);
+        // var image = this.objectIdImage[window.Surface.CurrentBuffer];
+        var image = this.objectIdImage;
 
-        this.renderer.BindVertexBuffer(this.vertexBuffer);
+        var size = image.Extent.Width * image.Extent.Height * sizeof(uint);
 
-        this.renderer.BindPipeline(this.diffuseShader);
-        this.renderer.BindIndexBuffer(this.indexBuffer);
+        using var buffer = this.renderer.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
-        foreach (var node in window.Tree.Traverse<Node2D>(true))
-        {
-            this.Render(window, node, false);
-        }
+        this.renderer.CopyImageToBuffer(image, buffer, image.Extent);
 
-#pragma warning disable IDE0035, CS0162
-        if (DRAW_WIREFRAME)
-        {
-            this.renderer.BindPipeline(this.wireframeShader);
-            this.renderer.BindIndexBuffer(this.wireframeIndexBuffer);
+        buffer.Allocation.Memory.Map(0, size, 0, out var data);
 
-            foreach (var node in window.Tree.Traverse<Node2D>(true))
-            {
-                this.Render(window, node, true);
-            }
-        }
-#pragma warning restore IDE0035, CS0162
+        var pixels = new Span<uint>((uint*)data, (int)(size / 4)).ToArray();
 
-        this.renderer.EndRenderPass();
+#if DUMP_IMAGES
+        SaveToFile(pixels, image.Extent);
+#endif
+
+        return pixels;
     }
 
     public void RequestDraw()
@@ -216,10 +350,48 @@ internal class RenderingService : IRenderingService
         }
     }
 
+    public void Render(IWindow window)
+    {
+        this.renderer.SetViewport(window.Surface);
+        this.renderer.BindIndexBuffer(this.indexBuffer);
+        this.renderer.BindVertexBuffers(this.vertexBuffer);
+
+        this.renderer.BeginRenderPass(this.canvasRenderPass, window.Surface.CurrentBuffer, Color.White);
+        this.renderer.BindPipeline(this.diffuseShader);
+
+        foreach (var node in window.Tree.Traverse<Node2D>(true))
+        {
+            this.RenderCanvas(window, node, default);
+        }
+
+#pragma warning disable IDE0035, CS0162
+        if (DRAW_WIREFRAME)
+        {
+            this.renderer.BindPipeline(this.wireframeShader);
+            this.renderer.BindIndexBuffer(this.wireframeIndexBuffer);
+
+            foreach (var node in window.Tree.Traverse<Node2D>(true))
+            {
+                this.RenderCanvas(window, node, RenderFlags.Wireframe);
+            }
+        }
+#pragma warning restore IDE0035, CS0162
+
+        this.renderer.EndRenderPass();
+    }
+
     public void Render(IEnumerable<IWindow> windows)
     {
         if (this.changes > 0)
         {
+            foreach (var window in windows)
+            {
+                if (window.Visible && !window.Minimized && !window.Closed)
+                {
+                    this.RenderObjectIds(window);
+                }
+            }
+
             this.renderer.BeginFrame();
 
             foreach (var window in windows)

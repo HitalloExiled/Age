@@ -5,18 +5,21 @@ namespace Age.Rendering.Resources;
 
 public partial record RenderPass
 {
-    public partial struct CreateInfo
+    public readonly ref partial struct CreateInfo
     {
-        public struct ColorAttachment
+        public readonly struct ColorAttachment
         {
-            public VkImageLayout           Layout;
-            public VkAttachmentDescription Color;
-            public VkAttachmentDescription Resolve;
+            public VkImageLayout            Layout  { get; init; }
+            public VkAttachmentDescription  Color   { get; init; }
+            public VkAttachmentDescription? Resolve { get; init; }
         };
 
-        public ColorAttachment[] ColorAttachments = [];
+        public required VkImage[]  Images { get; init; }
+        public required VkFormat   Format { get; init; }
+        public required VkExtent2D Extent { get; init; }
 
-        public VkAttachmentReference DepthStencilAttachment;
+        public Span<ColorAttachment>  ColorAttachments       { get; init; } = [];
+        public VkAttachmentReference? DepthStencilAttachment { get; init; }
 
         public CreateInfo() { }
     }

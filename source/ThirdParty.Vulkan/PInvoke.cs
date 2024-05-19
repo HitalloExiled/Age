@@ -97,6 +97,12 @@ internal unsafe static partial class PInvoke
     public static partial void vkCmdCopyBufferToImage(VkHandle<VkCommandBuffer> commandBuffer, VkHandle<VkBuffer> srcBuffer, VkHandle<VkImage> dstImage, VkImageLayout dstImageLayout, uint regionCount, VkBufferImageCopy* pRegions);
 
     /// <summary>
+    /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdCopyImageToBuffer.html">vkCmdCopyImageToBuffer</see>
+    /// </summary>
+    [LibraryImport(PLATFORM_PATH)]
+    public static partial void vkCmdCopyImageToBuffer(VkHandle<VkCommandBuffer> commandBuffer, VkHandle<VkImage> srcImage, VkImageLayout srcImageLayout, VkHandle<VkBuffer> dstBuffer, uint regionCount, VkBufferImageCopy* pRegions);
+
+    /// <summary>
     /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdDraw.html">vkCmdDraw</see>
     /// </summary>
     [LibraryImport(PLATFORM_PATH)]

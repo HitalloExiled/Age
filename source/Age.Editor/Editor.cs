@@ -80,7 +80,7 @@ public class Editor : Node
                     Right  = new(20, Color.Green),
                     Bottom = new(20, Color.Blue),
                     Left   = new(20, Color.Yellow),
-                    Radius = new(0, 20),
+                    Radius = new(50),
                 },
                 BackgroundColor = new Color(1, 0, 1, 0.25f),
                 // Size            = new(400, 200),
@@ -207,18 +207,18 @@ public class Editor : Node
         // this.c.Style.Rotation = Angle.Radians<float>(45) * (float)this.delta;
 
         // this.statusText.LocalTransform = this.statusText.LocalTransform with { Position = new Point<int>((int)(double.Cos(this.delta) * 50), (int)(double.Sin(this.delta) * -50)) };
-        this.statusText.Text =
-            $"""
-            Frames:    {this.frames}
-            Delta Time: {Math.Round(deltaTime, 4)}
-            FPS: {fps}
-                Avg: {avgFps}
-                Min: {this.minFps}
-                Max: {this.maxFps}
+        // this.statusText.Text =
+        //     $"""
+        //     Frames:    {this.frames}
+        //     Delta Time: {Math.Round(deltaTime, 4)}
+        //     FPS: {fps}
+        //         Avg: {avgFps}
+        //         Min: {this.minFps}
+        //         Max: {this.maxFps}
 
-            Frame Time: {frameTime}ms
-                Min: {this.minFrameTime}ms
-                Max: {this.maxFrameTime}ms
-            """;
+        //     Frame Time: {frameTime}ms
+        //         Min: {this.minFrameTime}ms
+        //         Max: {this.maxFrameTime}ms
+        //     """;
     }
 }

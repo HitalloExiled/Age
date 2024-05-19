@@ -117,11 +117,20 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
     }
 
     /// <inheritdoc cref="PInvoke.vkCmdCopyBufferToImage" />
-    public void CopyBufferToImage(VkBuffer sourceBuffer, VkImage destinationImage, VkImageLayout transferDstOptimal, params VkBufferImageCopy[] regions)
+    public void CopyBufferToImage(VkBuffer sourceBuffer, VkImage destinationImage, VkImageLayout transferDstOptimal, Span<VkBufferImageCopy> regions)
     {
         fixed (VkBufferImageCopy* pRegions = regions)
         {
             PInvoke.vkCmdCopyBufferToImage(this.handle, sourceBuffer.Handle, destinationImage.Handle, transferDstOptimal, (uint)regions.Length, pRegions);
+        }
+    }
+
+    /// <inheritdoc cref="PInvoke.vkCmdCopyBufferToImage" />
+    public void CopyImageToBuffer(VkImage srcImage, VkImageLayout srcImageLayout, VkBuffer dstBuffer, Span<VkBufferImageCopy> regions)
+    {
+        fixed (VkBufferImageCopy* pRegions = regions)
+        {
+            PInvoke.vkCmdCopyImageToBuffer(this.handle, srcImage.Handle, srcImageLayout, dstBuffer.Handle, (uint)regions.Length, pRegions);
         }
     }
 
@@ -143,12 +152,12 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
 
     /// <inheritdoc cref="PInvoke.vkCmdPipelineBarrier" />
     public void PipelineBarrier(
-        VkPipelineStageFlags    srcStageMask,
-        VkPipelineStageFlags    dstStageMask,
-        VkDependencyFlags       dependencyFlags,
-        VkMemoryBarrier[]       memoryBarriers,
-        VkBufferMemoryBarrier[] bufferMemoryBarriers,
-        VkImageMemoryBarrier[]  imageMemoryBarriers
+        VkPipelineStageFlags        srcStageMask,
+        VkPipelineStageFlags        dstStageMask,
+        VkDependencyFlags           dependencyFlags,
+        Span<VkMemoryBarrier>       memoryBarriers,
+        Span<VkBufferMemoryBarrier> bufferMemoryBarriers,
+        Span<VkImageMemoryBarrier>  imageMemoryBarriers
     )
     {
         fixed (VkMemoryBarrier*       pMemoryBarriers       = memoryBarriers)
