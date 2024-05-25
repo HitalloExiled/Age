@@ -4,12 +4,16 @@ namespace Age.Rendering.Resources;
 
 public record Framebuffer : Disposable
 {
-    public required VkFramebuffer Value     { get; init; }
-    public required VkImageView   ImageView { get; init; }
+    public required VkFramebuffer Value      { get; init; }
+    public required VkImageView[] ImageViews { get; init; } = [];
 
     protected override void OnDispose()
     {
         this.Value.Dispose();
-        this.ImageView.Dispose();
+
+        foreach (var imageView in this.ImageViews)
+        {
+            imageView.Dispose();
+        }
     }
 }

@@ -9,7 +9,7 @@ public unsafe class NativeArrayTests
     {
         using var pointer = new NativeArray(sizeof(int) * 4);
 
-        var ptr = pointer.As<int>();
+        var ptr = pointer.AsPointer<int>();
 
         ptr[0] = 1;
         ptr[1] = 2;
@@ -39,7 +39,7 @@ public unsafe class NativeArrayTests
     {
         var pointer = new NativeArray<int>(4);
 
-        int* ptr = pointer;
+        var ptr = pointer.AsPointer();
 
         ptr[0] = 1;
         ptr[1] = 2;
@@ -68,7 +68,7 @@ public unsafe class NativeArrayTests
         var pointer = new NativeArray<int>(4);
         pointer.Dispose();
 
-        Assert.Throws<NullReferenceException>(() => pointer[0] == 1);
+        Assert.Throws<ObjectDisposedException>(() => pointer[0] == 1);
     }
 
     [Fact]
@@ -77,6 +77,6 @@ public unsafe class NativeArrayTests
         var pointer = new NativeArray(sizeof(int) * 4);
         pointer.Dispose();
 
-        Assert.Throws<NullReferenceException>(() => pointer.Set(0, 1));
+        Assert.Throws<ObjectDisposedException>(() => pointer.Set(0, 1));
     }
 }

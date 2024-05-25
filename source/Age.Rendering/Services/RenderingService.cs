@@ -18,7 +18,7 @@ namespace Age.Rendering.Services;
 
 internal partial class RenderingService : IRenderingService
 {
-    private const bool DRAW_WIREFRAME = false;
+    private const bool DRAW_WIREFRAME = true;
 
     private readonly Shader         diffuseShader;
     private readonly IndexBuffer    indexBuffer;
@@ -99,27 +99,36 @@ internal partial class RenderingService : IRenderingService
 
         var colorPassCreateInfo = new RenderPass.CreateInfo
         {
-            Images = swapchain.Images,
-            Format = swapchain.Format,
-            Extent = swapchain.Extent,
-            ColorAttachments =
+            FrameBufferCount = swapchain.Images.Length,
+            Extent           = swapchain.Extent,
+            SubPasses =
             [
                 new()
                 {
-                    Layout = VkImageLayout.ColorAttachmentOptimal,
-                    Color  = new VkAttachmentDescription
-                    {
-                        Format         = swapchain.Format,
-                        Samples        = VkSampleCountFlags.N1,
-                        InitialLayout  = VkImageLayout.Undefined,
-                        FinalLayout    = VkImageLayout.PresentSrcKHR,
-                        LoadOp         = VkAttachmentLoadOp.Clear,
-                        StoreOp        = VkAttachmentStoreOp.Store,
-                        StencilLoadOp  = VkAttachmentLoadOp.DontCare,
-                        StencilStoreOp = VkAttachmentStoreOp.DontCare
-                    },
+                    PipelineBindPoint = VkPipelineBindPoint.Graphics,
+                    Format            = swapchain.Format,
+                    Images            = swapchain.Images,
+                    ImageAspect       = VkImageAspectFlags.Color,
+                    ColorAttachments =
+                    [
+                        new()
+                        {
+                            Layout = VkImageLayout.ColorAttachmentOptimal,
+                            Color  = new VkAttachmentDescription
+                            {
+                                Format         = swapchain.Format,
+                                Samples        = VkSampleCountFlags.N1,
+                                InitialLayout  = VkImageLayout.Undefined,
+                                FinalLayout    = VkImageLayout.PresentSrcKHR,
+                                LoadOp         = VkAttachmentLoadOp.Clear,
+                                StoreOp        = VkAttachmentStoreOp.Store,
+                                StencilLoadOp  = VkAttachmentLoadOp.DontCare,
+                                StencilStoreOp = VkAttachmentStoreOp.DontCare
+                            },
+                        }
+                    ],
                 }
-            ],
+            ]
         };
 
         var imageCreateInfo = new VkImageCreateInfo
@@ -139,31 +148,40 @@ internal partial class RenderingService : IRenderingService
 
         var objectIdPassCreateInfo = new RenderPass.CreateInfo
         {
-            Images = [this.objectIdImage.Value],
-            Format = swapchain.Format,
-            Extent = swapchain.Extent,
-            ColorAttachments =
+            FrameBufferCount = 1,
+            Extent           = swapchain.Extent,
+            SubPasses        =
             [
                 new()
                 {
-                    Layout = VkImageLayout.ColorAttachmentOptimal,
-                    Color  = new VkAttachmentDescription
-                    {
-                        Format         = swapchain.Format,
-                        Samples        = VkSampleCountFlags.N1,
-                        InitialLayout  = VkImageLayout.Undefined,
-                        FinalLayout    = VkImageLayout.TransferSrcOptimal,
-                        LoadOp         = VkAttachmentLoadOp.Clear,
-                        StoreOp        = VkAttachmentStoreOp.Store,
-                        StencilLoadOp  = VkAttachmentLoadOp.DontCare,
-                        StencilStoreOp = VkAttachmentStoreOp.DontCare
-                    },
+                    PipelineBindPoint = VkPipelineBindPoint.Graphics,
+                    Images            = [this.objectIdImage.Value],
+                    ImageAspect       = VkImageAspectFlags.Color,
+                    Format            = swapchain.Format,
+                    ColorAttachments  =
+                    [
+                        new()
+                        {
+                            Layout = VkImageLayout.ColorAttachmentOptimal,
+                            Color  = new VkAttachmentDescription
+                            {
+                                Format         = swapchain.Format,
+                                Samples        = VkSampleCountFlags.N1,
+                                InitialLayout  = VkImageLayout.Undefined,
+                                FinalLayout    = VkImageLayout.TransferSrcOptimal,
+                                LoadOp         = VkAttachmentLoadOp.Clear,
+                                StoreOp        = VkAttachmentStoreOp.Store,
+                                StencilLoadOp  = VkAttachmentLoadOp.DontCare,
+                                StencilStoreOp = VkAttachmentStoreOp.DontCare
+                            },
+                        }
+                    ],
                 }
-            ],
+            ]
         };
 
-        this.canvasRenderPass   = this.renderer.Context.CreateRenderPass(colorPassCreateInfo);
-        this.objectIdRenderPass = this.renderer.Context.CreateRenderPass(objectIdPassCreateInfo);
+        this.canvasRenderPass   = this.renderer.CreateRenderPass(colorPassCreateInfo);
+        this.objectIdRenderPass = this.renderer.CreateRenderPass(objectIdPassCreateInfo);
     }
 
     private void OnSwapchainRecreated()
@@ -256,18 +274,20 @@ internal partial class RenderingService : IRenderingService
         }
     }
 
-    private void RenderObjectIds(IWindow window)
+    private void Render(IWindow window, Span<RenderContext> contexts)
     {
-        var commandBuffer = this.renderer.Context.BeginSingleTimeCommands();
-
-        this.renderer.SetViewport(commandBuffer, window.Surface);
-        this.renderer.BindIndexBuffer(commandBuffer, this.indexBuffer);
-        this.renderer.BindVertexBuffers(commandBuffer, this.vertexBuffer);
-        this.renderer.BindPipeline(commandBuffer, this.objectIdShader);
-
-        this.renderer.BeginRenderPass(commandBuffer, this.objectIdRenderPass, 0, Color.White);
+        foreach (var context in contexts)
+        {
+            this.renderer.SetViewport(context.CommandBuffer, window.Surface);
+            this.renderer.BindIndexBuffer(context.CommandBuffer, context.IndexBuffer);
+            this.renderer.BindVertexBuffers(context.CommandBuffer, context.VertexBuffer);
+            this.renderer.BindPipeline(context.CommandBuffer, context.Shader);
+            this.renderer.BeginRenderPass(context.CommandBuffer, context.RenderPass, 0, Color.White);
+        }
 
         var windowSize = window.ClientSize.Cast<float>();
+
+        UniformSet? lastUniformSet = null;
 
         foreach (var node in window.Tree.Traverse<Node2D>(true))
         {
@@ -282,7 +302,6 @@ internal partial class RenderingService : IRenderingService
                             var constant = new CanvasShader.PushConstant
                             {
                                 Border    = rectDrawCommand.Border,
-                                Color     = node.ObjectId | 0b_11111111_00000000_00000000_00000000,
                                 Flags     = rectDrawCommand.Flags,
                                 Rect      = rectDrawCommand.Rect,
                                 Transform = transform,
@@ -290,8 +309,29 @@ internal partial class RenderingService : IRenderingService
                                 Viewport  = windowSize,
                             };
 
-                            this.renderer.PushConstant(commandBuffer, this.objectIdShader, constant);
-                            this.renderer.DrawIndexed(commandBuffer, this.indexBuffer);
+                            foreach (var context in contexts)
+                            {
+                                if (context.Shader == this.diffuseShader)
+                                {
+                                    var uniformSet = this.textureStorage.GetUniformSet(this.diffuseShader, rectDrawCommand.SampledTexture.Texture, rectDrawCommand.SampledTexture.Sampler);
+
+                                    if (uniformSet != null && uniformSet != lastUniformSet)
+                                    {
+                                        this.renderer.BindUniformSet(uniformSet);
+
+                                        lastUniformSet = uniformSet;
+                                    }
+
+                                    constant.Color = rectDrawCommand.Color;
+                                }
+                                else
+                                {
+                                    constant.Color = node.ObjectId | 0b_11111111_00000000_00000000_00000000;
+                                }
+
+                                this.renderer.PushConstant(context.CommandBuffer, context.Shader, constant);
+                                this.renderer.DrawIndexed(context.CommandBuffer, context.IndexBuffer);
+                            }
 
                             break;
                         }
@@ -301,8 +341,10 @@ internal partial class RenderingService : IRenderingService
             }
         }
 
-        this.renderer.EndRenderPass(commandBuffer);
-        this.renderer.Context.EndSingleTimeCommands(commandBuffer);
+        foreach (var context in contexts)
+        {
+            this.renderer.EndRenderPass(context.CommandBuffer);
+        }
     }
 
     private void RequestDrawIncremental() =>
@@ -322,7 +364,6 @@ internal partial class RenderingService : IRenderingService
 
     public unsafe uint[] GetObjectIdBuffer(IWindow window)
     {
-        // var image = this.objectIdImage[window.Surface.CurrentBuffer];
         var image = this.objectIdImage;
 
         var size = image.Extent.Width * image.Extent.Height * sizeof(uint);
@@ -384,13 +425,49 @@ internal partial class RenderingService : IRenderingService
     {
         if (this.changes > 0)
         {
-            foreach (var window in windows)
-            {
-                if (window.Visible && !window.Minimized && !window.Closed)
+            var commandBuffer = this.renderer.Context.BeginSingleTimeCommands();
+
+            Span<RenderContext> contexts =
+            [
+                new RenderContext
                 {
-                    this.RenderObjectIds(window);
-                }
+                    CommandBuffer = commandBuffer,
+                    Flags         = default,
+                    IndexBuffer   = this.indexBuffer,
+                    RenderPass    = this.objectIdRenderPass,
+                    Shader        = this.objectIdShader,
+                    VertexBuffer  = this.vertexBuffer,
+                    Next          = [],
+                },
+                new RenderContext
+                {
+                    CommandBuffer = this.renderer.Context.Frame.CommandBuffer,
+                    Flags         = default,
+                    IndexBuffer   = this.indexBuffer,
+                    RenderPass    = this.canvasRenderPass,
+                    Shader        = this.diffuseShader,
+                    VertexBuffer  = this.vertexBuffer,
+                },
+            ];
+
+    #pragma warning disable IDE0035, CS0162
+            if (DRAW_WIREFRAME)
+            {
+                contexts[1].Next =
+                [
+                    new RenderContext
+                    {
+                        CommandBuffer = this.renderer.Context.Frame.CommandBuffer,
+                        Flags         = RenderFlags.Wireframe,
+                        IndexBuffer   = this.wireframeIndexBuffer,
+                        RenderPass    = this.canvasRenderPass,
+                        Shader        = this.wireframeShader,
+                        VertexBuffer  = this.vertexBuffer,
+                        Next          = [],
+                    },
+                ];
             }
+#pragma warning restore IDE0035, CS0162
 
             this.renderer.BeginFrame();
 
@@ -398,11 +475,13 @@ internal partial class RenderingService : IRenderingService
             {
                 if (window.Visible && !window.Minimized && !window.Closed)
                 {
-                    this.Render(window);
+                    this.Render(window, contexts);
                 }
             }
 
             this.renderer.EndFrame();
+
+            this.renderer.Context.EndSingleTimeCommands(commandBuffer);
 
             this.changes--;
         }

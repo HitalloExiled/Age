@@ -307,21 +307,29 @@ public unsafe partial class VulkanContext : IDisposable
         surfaceFormat = surfaceFormats[0];
     }
 
-    private VkFramebuffer CreateFrameBuffer(VkRenderPass renderPass, VkImageView imageView, VkExtent2D extent)
+    public VkFramebuffer CreateFrameBuffer(VkRenderPass renderPass, Span<VkImageView> attachments, VkExtent2D extent)
     {
-        var imageViewHandle = imageView.Handle;
+        var attachmentHandles = new VkHandle<VkImageView>[attachments.Length];
 
-        var createInfo = new VkFramebufferCreateInfo
+        for (var i = 0; i < attachments.Length; i++)
         {
-            AttachmentCount = 1,
-            Height          = extent.Height,
-            Layers          = 1,
-            PAttachments    = &imageViewHandle,
-            Width           = extent.Width,
-            RenderPass      = renderPass.Handle,
-        };
+            attachmentHandles[i] = attachments[i].Handle;
+        }
 
-        return this.device.CreateFramebuffer(createInfo);
+        fixed (VkHandle<VkImageView>* pAttachments = attachmentHandles)
+        {
+            var createInfo = new VkFramebufferCreateInfo
+            {
+                AttachmentCount = (uint)attachmentHandles.Length,
+                Height          = extent.Height,
+                Layers          = 1,
+                PAttachments    = pAttachments,
+                Width           = extent.Width,
+                RenderPass      = renderPass.Handle,
+            };
+
+            return this.device.CreateFramebuffer(createInfo);
+        }
     }
 
     private void CreateSyncObjects()
@@ -492,78 +500,6 @@ public unsafe partial class VulkanContext : IDisposable
         commandBuffer.Begin(VkCommandBufferUsageFlags.OneTimeSubmit);
 
         return commandBuffer;
-    }
-
-    public RenderPass CreateRenderPass(in RenderPass.CreateInfo createInfo)
-    {
-        var attachmentDescription = new List<VkAttachmentDescription>();
-        var colorAttachments      = new List<VkAttachmentReference>(createInfo.ColorAttachments.Length);
-        var resolveAttachments    = new List<VkAttachmentReference>(createInfo.ColorAttachments.Length);
-
-        foreach (var attachment in createInfo.ColorAttachments)
-        {
-            colorAttachments.Add(new() { Attachment = (uint)attachmentDescription.Count, Layout = attachment.Layout });
-            attachmentDescription.Add(attachment.Color);
-
-            if (attachment.Resolve.HasValue)
-            {
-                resolveAttachments.Add(new() { Attachment = (uint)attachmentDescription.Count, Layout = attachment.Layout });
-                attachmentDescription.Add(attachment.Resolve.Value);
-            }
-        }
-
-        fixed (VkAttachmentDescription* pAttachments        = CollectionsMarshal.AsSpan(attachmentDescription))
-        fixed (VkAttachmentReference*   pColorAttachments   = CollectionsMarshal.AsSpan(colorAttachments))
-        fixed (VkAttachmentReference*   pResolveAttachments = CollectionsMarshal.AsSpan(resolveAttachments))
-        {
-            var depthStencilAttachment  = createInfo.DepthStencilAttachment.GetValueOrDefault();
-            var pDepthStencilAttachment = createInfo.DepthStencilAttachment.HasValue ? &depthStencilAttachment : null;
-
-            var subpass = new VkSubpassDescription
-            {
-                PipelineBindPoint       = VkPipelineBindPoint.Graphics,
-                PColorAttachments       = pColorAttachments,
-                PResolveAttachments     = pResolveAttachments,
-                ColorAttachmentCount    = (uint)colorAttachments.Count,
-                PDepthStencilAttachment = pDepthStencilAttachment,
-            };
-
-            var subpassDependency = new VkSubpassDependency
-            {
-
-            };
-
-            var renderPassCreateInfo = new VkRenderPassCreateInfo
-            {
-                AttachmentCount = (uint)attachmentDescription.Count,
-                PAttachments    = pAttachments,
-                PSubpasses      = &subpass,
-                SubpassCount    = 1,
-            };
-
-            var renderPass = this.device.CreateRenderPass(renderPassCreateInfo);
-
-            var framebuffers = new Framebuffer[createInfo.Images.Length];
-
-            for (var i = 0; i < createInfo.Images.Length; i++)
-            {
-                var imageView   = this.CreateImageView(createInfo.Images[i], createInfo.Format, VkImageAspectFlags.Color);
-                var framebuffer = this.CreateFrameBuffer(renderPass, imageView, createInfo.Extent);
-
-                framebuffers[i] = new()
-                {
-                    Value     = framebuffer,
-                    ImageView = imageView,
-                };
-            }
-
-            return new()
-            {
-                Value        = renderPass,
-                Framebuffers = framebuffers,
-                Extent       = createInfo.Extent,
-            };
-        }
     }
 
     public virtual Surface CreateSurface(VkSurfaceKHR surface, Size<uint> size)

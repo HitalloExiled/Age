@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Age.Core;
 using Age.Core.Interop;
@@ -514,7 +515,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         commandBuffer.BindVertexBuffers(0, 1, [vertexBuffer.Buffer.Value], [0]);
 
     public void BindVertexBuffer(VkCommandBuffer commandBuffer, VertexBuffer[] vertexBuffers) =>
-        commandBuffer.BindVertexBuffers(0, 1, [.. vertexBuffers.Select(x => x.Buffer.Value)], new ulong[vertexBuffers.Length]);
+        commandBuffer.BindVertexBuffers(0, 1, [..vertexBuffers.Select(x => x.Buffer.Value)], new ulong[vertexBuffers.Length]);
 
     public void BindUniformSet(UniformSet uniformSet) =>
         this.BindUniformSet(this.Context.Frame.CommandBuffer, uniformSet);
@@ -575,6 +576,18 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
+    public Image[] CreateImage(in VkImageCreateInfo createInfo, int count)
+    {
+        var images = new Image[count];
+
+        for (var i = 0; i < count; i++)
+        {
+            images[i] = this.CreateImage(createInfo);
+        }
+
+        return images;
+    }
+
     public IndexBuffer CreateIndexBuffer(IList<ushort> indices) =>
         this.CreateIndexBuffer(indices, VkIndexType.Uint16);
 
@@ -599,6 +612,106 @@ public unsafe partial class VulkanRenderer : IDisposable
             Type   = indexType,
             Size   = (uint)indices.Count,
         };
+    }
+
+    public RenderPass CreateRenderPass(in RenderPass.CreateInfo createInfo)
+    {
+        using var disposables = new Disposables();
+
+        using var subpassDescriptions     = new NativeList<VkSubpassDescription>();
+        using var attachmentDescriptions  = new NativeList<VkAttachmentDescription>();
+        using var depthStencilAttachments = new NativeList<VkAttachmentDescription>();
+
+        foreach (var subpass in createInfo.SubPasses)
+        {
+            var colorAttachments   = new NativeList<VkAttachmentReference>(subpass.ColorAttachments.Length);
+            var resolveAttachments = new NativeList<VkAttachmentReference>();
+
+            disposables.Add(colorAttachments);
+            disposables.Add(resolveAttachments);
+
+            foreach (var attachment in subpass.ColorAttachments)
+            {
+                colorAttachments.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = attachment.Layout });
+                attachmentDescriptions.Add(attachment.Color);
+
+                if (attachment.Resolve.HasValue)
+                {
+                    resolveAttachments.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = attachment.Layout });
+                    attachmentDescriptions.Add(attachment.Resolve.Value);
+                }
+            }
+
+            VkAttachmentReference* pDepthStencilAttachment = null;
+
+            if (subpass.DepthStencilAttachment.HasValue)
+            {
+                pDepthStencilAttachment = (VkAttachmentReference*)Unsafe.AsPointer(ref depthStencilAttachments.Add());
+
+                *pDepthStencilAttachment = subpass.DepthStencilAttachment.Value;
+            }
+
+            var subpassDescription = new VkSubpassDescription
+            {
+                PipelineBindPoint       = subpass.PipelineBindPoint,
+                PColorAttachments       = colorAttachments.AsPointer(),
+                PResolveAttachments     = resolveAttachments.AsPointer(),
+                ColorAttachmentCount    = (uint)colorAttachments.Count,
+                PDepthStencilAttachment = pDepthStencilAttachment,
+            };
+
+            subpassDescriptions.Add(subpassDescription);
+        }
+
+        fixed (VkSubpassDependency* pDependencies = createInfo.SubpassDependencies)
+        {
+            var renderPassCreateInfo = new VkRenderPassCreateInfo
+            {
+                AttachmentCount = (uint)attachmentDescriptions.Count,
+                PAttachments    = attachmentDescriptions.AsPointer(),
+                DependencyCount = (uint)createInfo.SubpassDependencies.Length,
+                PDependencies   = pDependencies,
+                SubpassCount    = (uint)subpassDescriptions.Count,
+                PSubpasses      = subpassDescriptions.AsPointer(),
+            };
+
+            var renderPass = this.Context.Device.CreateRenderPass(renderPassCreateInfo);
+
+            var framebuffers = new Framebuffer[createInfo.FrameBufferCount];
+
+            for (var framebufferIndex = 0; framebufferIndex < createInfo.FrameBufferCount; framebufferIndex++)
+            {
+                var imageViews = new VkImageView[createInfo.SubPasses.Length];
+
+                for (var subpassIndex = 0; subpassIndex < createInfo.SubPasses.Length; subpassIndex++)
+                {
+                    var subpass = createInfo.SubPasses[subpassIndex];
+
+                    if (subpass.Images.Length < createInfo.FrameBufferCount)
+                    {
+                        throw new InvalidOperationException($"SubPass at [{subpassIndex}] must have the size specified by {nameof(RenderPass.CreateInfo.FrameBufferCount)} property: {createInfo.FrameBufferCount}");
+                    }
+
+                    imageViews[subpassIndex] = this.CreateImageView(subpass.Images[framebufferIndex], subpass.Format, subpass.ImageAspect);
+                }
+
+                var framebuffer = this.Context.CreateFrameBuffer(renderPass, imageViews.AsSpan(), createInfo.Extent);
+
+                framebuffers[framebufferIndex] = new()
+                {
+                    Value      = framebuffer,
+                    ImageViews = imageViews,
+                };
+            }
+
+            return new()
+            {
+                Value        = renderPass,
+                Framebuffers = framebuffers,
+                Extent       = createInfo.Extent,
+                SubPasses    = createInfo.SubPasses.Length,
+            };
+        }
     }
 
     public Shader CreateShader<TShaderResources, TVertexInput, TPushConstant>(TShaderResources shaderResources, RenderPass renderPass)
@@ -760,7 +873,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                         DescriptorType  = VkDescriptorType.CombinedImageSampler,
                         DstBinding      = uniform.Binding,
                         DstSet          = descriptorSets[0].Handle,
-                        PImageInfo      = pImageInfo,
+                        PImageInfo      = pImageInfo.AsPointer(),
                     };
 
                     writes.Add(writeDescriptorSet);
@@ -786,7 +899,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                         DescriptorType  = VkDescriptorType.UniformBuffer,
                         DstBinding      = uniform.Binding,
                         DstSet          = descriptorSets[0].Handle,
-                        PBufferInfo     = pBufferInfo,
+                        PBufferInfo     = pBufferInfo.AsPointer(),
                     };
 
                     writes.Add(writeDescriptorSet);

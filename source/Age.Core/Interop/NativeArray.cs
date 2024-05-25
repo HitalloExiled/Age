@@ -2,19 +2,55 @@ using System.Runtime.InteropServices;
 
 namespace Age.Core.Interop;
 
-public unsafe record struct NativeArray(int Lenght = 1) : IDisposable
+public unsafe class NativeArray(int lenght = 1) : IDisposable
 {
-    private nint handler = (nint)NativeMemory.Alloc((uint)Lenght);
+    private void* buffer = NativeMemory.Alloc((uint)lenght);
+    private bool disposed;
+
+    private int Length => lenght;
+
+    private void CheckOffset(int index)
+    {
+        if (index >= lenght)
+        {
+            throw new IndexOutOfRangeException();
+        }
+    }
+
+    private void CheckDisposed() =>
+        ObjectDisposedException.ThrowIf(this.disposed, this);
 
     public void Dispose()
     {
-        NativeMemory.Free((void*)this.handler);
-        this.handler = default;
+        if (!this.disposed)
+        {
+            this.disposed = true;
+
+            NativeMemory.Free(this.buffer);
+            this.buffer = default;
+        }
+
+        GC.SuppressFinalize(this);
     }
 
-    public readonly T* As<T>() where T : unmanaged => (T*)this.handler;
-    public readonly T Get<T>(int offset) where T : unmanaged => ((T*)this.handler)[offset];
-    public readonly T Set<T>(int offset, T value) where T : unmanaged => ((T*)this.handler)[offset] = value;
+    public void* AsPointer() => this.buffer;
+    public T* AsPointer<T>() where T : unmanaged => (T*)this.buffer;
+
+    public ref T Get<T>(int offset) where T : unmanaged
+    {
+        this.CheckDisposed();
+        this.CheckOffset(offset);
+
+        return ref ((T*)this.buffer)[offset];
+    }
+
+    public T Set<T>(int offset, in T value) where T : unmanaged
+    {
+        this.CheckDisposed();
+        this.CheckOffset(offset);
+
+        return ((T*)this.buffer)[offset] = value;
+    }
 
     public static T* ToPointer<T>(IList<T> values) where T : unmanaged
     {
@@ -28,33 +64,65 @@ public unsafe record struct NativeArray(int Lenght = 1) : IDisposable
         return ptr;
     }
 
-    public static implicit operator nint(NativeArray value) => value.handler;
+    public static implicit operator nint(NativeArray value) => new(value.buffer);
 }
 
-public unsafe record struct NativeArray<T>(int Lenght = 1) : IDisposable where T : unmanaged
+public unsafe class NativeArray<T>(int lenght = 1) : IDisposable where T : unmanaged
 {
-    private nint handler = (nint)NativeMemory.Alloc((uint)(sizeof(T) * Lenght));
+    private bool disposed;
+    private T* buffer = (T*)NativeMemory.Alloc((uint)(sizeof(T) * lenght));
 
     public NativeArray(IList<T> values) : this(values.Count)
     {
         for (var i = 0; i < values.Count; i++)
         {
-            ((T*)this.handler)[i] = values[i];
+            this.buffer[i] = values[i];
         }
     }
 
-    public readonly T this[int index]
+    public T this[int index]
     {
-        get => ((T*)this.handler)[index];
-        set => ((T*)this.handler)[index] = value;
+        get
+        {
+            this.CheckDisposed();
+            this.CheckIndex(index);
+
+            return this.buffer[index];
+        }
+        set
+        {
+            this.CheckDisposed();
+            this.CheckIndex(index);
+
+            this.buffer[index] = value;
+        }
     }
+
+    ~NativeArray() => this.Dispose();
+
+    private void CheckDisposed() =>
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
+    private void CheckIndex(int index)
+    {
+        if (index >= lenght)
+        {
+            throw new IndexOutOfRangeException();
+        }
+    }
+
+    public T* AsPointer() => this.buffer;
 
     public void Dispose()
     {
-        NativeMemory.Free((void*)this.handler);
+        if (!this.disposed)
+        {
+            this.disposed = true;
 
-        this.handler = default;
+            NativeMemory.Free(this.buffer);
+            this.buffer = default;
+        }
+
+        GC.SuppressFinalize(this);
     }
-
-    public static implicit operator T*(NativeArray<T> value) => (T*)value.handler;
 }

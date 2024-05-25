@@ -27,4 +27,11 @@ public unsafe static class PointerHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T* NullIfDefault<T>(T* pointer) where T : unmanaged =>
         (*pointer).Equals(default(T)) ? null : pointer;
+
+    public static unsafe T* GetValuePointer<T>(T?* pointer) where T : unmanaged
+    {
+        var offset = Marshal.OffsetOf<T?>("value");
+
+        return pointer->HasValue ? (T*)&((byte*)pointer)[offset] : null;
+    }
 }
