@@ -2,7 +2,7 @@ using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public record Sampler : Disposable
+public class Sampler : Disposable
 {
     public required VkSampler Value { get; init; }
 

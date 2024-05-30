@@ -29,6 +29,7 @@ public unsafe partial class VulkanContext : IDisposable
     private readonly VkSemaphore[]             renderingFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
     private readonly VkSurfaceExtensionKHR     surfaceExtension;
 
+    private VkCommandPool           commandPool = null!;
     private ushort                  currentFrame;
     private VkDevice                device = null!;
     private bool                    deviceInitialized;
@@ -65,6 +66,8 @@ public unsafe partial class VulkanContext : IDisposable
 
     public VkDevice Device       => this.device;
     public VkFormat ScreenFormat => this.surfaceFormat.Format;
+
+    public VkQueue GraphicsQueue => this.graphicsQueue;
 
     public unsafe VulkanContext()
     {
@@ -173,26 +176,6 @@ public unsafe partial class VulkanContext : IDisposable
         return validationLayers.Overlaps(properties.Select(x => Marshal.PtrToStringAnsi((nint)x.LayerName)!));
     }
 
-    private void SetupFrames()
-    {
-        for (ushort i = 0; i < this.frames.Length; i++)
-        {
-            var createInfo = new VkCommandPoolCreateInfo
-            {
-                Flags            = VkCommandPoolCreateFlags.ResetCommandBuffer,
-                QueueFamilyIndex = this.graphicsQueueIndex,
-            };
-
-            var commandPool   = this.device.CreateCommandPool(createInfo);
-            var commandBuffer = commandPool.AllocateCommand(VkCommandBufferLevel.Primary);
-
-            this.frames[i].Fence         = this.fences[i];
-            this.frames[i].CommandBuffer = commandBuffer;
-            this.frames[i].CommandPool   = commandPool;
-            this.frames[i].Index         = i;
-        }
-    }
-
     private void CreateDevice(out VkDevice device, out VkSwapchainExtensionKHR swapchainExtension, out VkQueue graphicsQueue, out VkQueue presentationQueue)
     {
         var queuePriorities  = 1f;
@@ -292,21 +275,6 @@ public unsafe partial class VulkanContext : IDisposable
         }
     }
 
-    private void GetSurfaceCapabilities(VkSurfaceKHR surface, out VkSurfaceFormatKHR surfaceFormat)
-    {
-        var surfaceFormats = surface.GetFormats(this.physicalDevice);
-
-        foreach (var availableFormat in surfaceFormats)
-        {
-            if (availableFormat.Format == VkFormat.B8G8R8A8Srgb && availableFormat.ColorSpace == VkColorSpaceKHR.SrgbNonlinear)
-            {
-                surfaceFormat = availableFormat;
-            }
-        }
-
-        surfaceFormat = surfaceFormats[0];
-    }
-
     public VkFramebuffer CreateFrameBuffer(VkRenderPass renderPass, Span<VkImageView> attachments, VkExtent2D extent)
     {
         var attachmentHandles = new VkHandle<VkImageView>[attachments.Length];
@@ -385,19 +353,19 @@ public unsafe partial class VulkanContext : IDisposable
         this.EndSingleTimeCommands(commandBuffer);
     }
 
-    public uint FindMemoryType(uint typeFilter, VkMemoryPropertyFlags properties)
+    private void GetSurfaceCapabilities(VkSurfaceKHR surface, out VkSurfaceFormatKHR surfaceFormat)
     {
-        this.physicalDevice.GetMemoryProperties(out var memProperties);
+        var surfaceFormats = surface.GetFormats(this.physicalDevice);
 
-        for (var i = 0u; i < memProperties.MemoryTypeCount; i++)
+        foreach (var availableFormat in surfaceFormats)
         {
-            if ((typeFilter & (1 << (int)i)) != 0 && ((VkMemoryType*)memProperties.MemoryTypes)[i].PropertyFlags.HasFlag(properties))
+            if (availableFormat.Format == VkFormat.B8G8R8A8Srgb && availableFormat.ColorSpace == VkColorSpaceKHR.SrgbNonlinear)
             {
-                return i;
+                surfaceFormat = availableFormat;
             }
         }
 
-        throw new Exception("Failed to find suitable memory type");
+        surfaceFormat = surfaceFormats[0];
     }
 
     private void InitializeDevice(VkSurfaceKHR surface)
@@ -406,7 +374,7 @@ public unsafe partial class VulkanContext : IDisposable
         this.CreateDevice(out this.device, out this.swapchainExtension, out this.graphicsQueue, out this.presentationQueue);
         this.CreateSyncObjects();
         this.GetSurfaceCapabilities(surface, out this.surfaceFormat);
-        this.SetupFrames();
+        this.SetupCommands();
     }
 
     private void PickPhysicalDevice(VkSurfaceKHR surface, out VkPhysicalDevice physicalDevice, out uint graphicsQueueIndex, out uint presentationQueueIndex)
@@ -465,6 +433,29 @@ public unsafe partial class VulkanContext : IDisposable
         }
     }
 
+    private void SetupCommands()
+    {
+        var createInfo = new VkCommandPoolCreateInfo
+        {
+            Flags            = VkCommandPoolCreateFlags.ResetCommandBuffer,
+            QueueFamilyIndex = this.graphicsQueueIndex,
+        };
+
+        this.commandPool = this.device.CreateCommandPool(createInfo);
+
+        for (ushort i = 0; i < this.frames.Length; i++)
+        {
+
+            var commandPool   = this.device.CreateCommandPool(createInfo);
+            var commandBuffer = commandPool.AllocateCommand(VkCommandBufferLevel.Primary);
+
+            this.frames[i].Fence         = this.fences[i];
+            this.frames[i].CommandBuffer = commandBuffer;
+            this.frames[i].CommandPool   = commandPool;
+            this.frames[i].Index         = i;
+        }
+    }
+
     protected virtual void Dispose(bool disposing)
     {
         if (!this.disposed)
@@ -477,6 +468,8 @@ public unsafe partial class VulkanContext : IDisposable
                 this.fences[i].Dispose();
             }
 
+            this.commandPool.Dispose();
+
             foreach (var frame in this.frames)
             {
                 frame.CommandBuffer.Dispose();
@@ -484,9 +477,7 @@ public unsafe partial class VulkanContext : IDisposable
             }
 
             this.device.Dispose();
-
             this.debugUtilsMessenger?.Dispose();
-
             this.instance.Dispose();
 
             this.disposed = true;
@@ -537,6 +528,9 @@ public unsafe partial class VulkanContext : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    public VkCommandBuffer AllocateCommand(VkCommandBufferLevel commandBufferLevel) =>
+        this.commandPool.AllocateCommand(commandBufferLevel);
+
     public void EndSingleTimeCommands(VkCommandBuffer commandBuffer)
     {
         commandBuffer.End();
@@ -554,6 +548,24 @@ public unsafe partial class VulkanContext : IDisposable
 
         commandBuffer.Dispose();
     }
+
+    public uint FindMemoryType(uint typeFilter, VkMemoryPropertyFlags properties)
+    {
+        this.physicalDevice.GetMemoryProperties(out var memProperties);
+
+        for (var i = 0u; i < memProperties.MemoryTypeCount; i++)
+        {
+            if ((typeFilter & (1 << (int)i)) != 0 && ((VkMemoryType*)memProperties.MemoryTypes)[i].PropertyFlags.HasFlag(properties))
+            {
+                return i;
+            }
+        }
+
+        throw new Exception("Failed to find suitable memory type");
+    }
+
+    public void GetPhysicalDeviceProperties(out VkPhysicalDeviceProperties properties) =>
+        this.physicalDevice.GetProperties(out properties);
 
     public void PrepareBuffers()
     {
@@ -596,9 +608,6 @@ public unsafe partial class VulkanContext : IDisposable
 
         this.Frame.BufferPrepared = true;
     }
-
-    public void GetPhysicalDeviceProperties(out VkPhysicalDeviceProperties properties) =>
-        this.physicalDevice.GetProperties(out properties);
 
     public void SwapBuffers()
     {

@@ -3,7 +3,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public record Buffer : Disposable
+public class Buffer : Disposable
 {
     public required Allocation         Allocation { get; init; }
     public required VkBuffer           Value      { get; init; }

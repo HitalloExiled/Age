@@ -2,7 +2,7 @@ using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public partial record RenderPass : Disposable
+public partial class RenderPass : Disposable
 {
     public required VkRenderPass  Value        { get; init; }
     public required VkExtent2D    Extent       { get; init; }

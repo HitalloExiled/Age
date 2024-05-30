@@ -3,7 +3,7 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Rendering.Resources;
 
-public record Swapchain : Disposable
+public class Swapchain : Disposable
 {
     public required VkExtent2D      Extent { get; init; }
     public required VkFormat        Format { get; init; }

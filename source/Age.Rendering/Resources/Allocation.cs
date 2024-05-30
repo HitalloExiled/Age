@@ -3,7 +3,7 @@ using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public record Allocation : Disposable
+public class Allocation : Disposable
 {
     public required ulong          Alignment  { get; init; }
     public required VkDeviceMemory Memory     { get; init; }

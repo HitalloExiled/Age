@@ -3,7 +3,7 @@ using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public record Texture : Disposable
+public class Texture : Disposable
 {
     public required Allocation  Allocation  { get; init; }
     public required VkExtent3D  Extent      { get; init; }

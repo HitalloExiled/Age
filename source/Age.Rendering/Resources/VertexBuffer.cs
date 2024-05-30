@@ -1,6 +1,6 @@
 namespace Age.Rendering.Resources;
 
-public record VertexBuffer : Disposable
+public class VertexBuffer : Disposable
 {
     public required Buffer Buffer { get; init; }
     public required uint   Size   { get; init; }

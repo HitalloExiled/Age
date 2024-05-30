@@ -5,7 +5,7 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Rendering.Resources;
 
-public record Shader : Disposable
+public class Shader : Disposable
 {
     public event Action? Changed;
 

@@ -20,14 +20,15 @@ internal partial class RenderingService : IRenderingService
 {
     private const bool DRAW_WIREFRAME = true;
 
-    private readonly Shader         diffuseShader;
-    private readonly IndexBuffer    indexBuffer;
-    private readonly Shader         objectIdShader;
-    private readonly VulkanRenderer renderer;
-    private readonly TextureStorage textureStorage;
-    private readonly VertexBuffer   vertexBuffer;
-    private readonly IndexBuffer    wireframeIndexBuffer;
-    private readonly Shader         wireframeShader;
+    private readonly Shader                           diffuseShader;
+    private readonly IndexBuffer                      indexBuffer;
+    private readonly Shader                           objectIdShader;
+    private readonly VulkanRenderer                   renderer;
+    private readonly Dictionary<IWindow, RenderGraph> renderGraphs = [];
+    private readonly TextureStorage                   textureStorage;
+    private readonly VertexBuffer                     vertexBuffer;
+    private readonly IndexBuffer                      wireframeIndexBuffer;
+    private readonly Shader                           wireframeShader;
 
     private RenderPass canvasRenderPass;
     private int        changes;
@@ -197,6 +198,11 @@ internal partial class RenderingService : IRenderingService
         this.objectIdShader.RenderPass = this.objectIdRenderPass;
 
         this.RequestDrawIncremental();
+
+        foreach (var pass in this.renderGraphs.Values.SelectMany(x => x.Passes))
+        {
+            pass.Recreate();
+        }
     }
 
     protected virtual void Dispose(bool disposing)
@@ -205,6 +211,7 @@ internal partial class RenderingService : IRenderingService
         {
             if (disposing)
             {
+                this.renderer.DeferredDispose(this.renderGraphs.Values);
                 this.renderer.DeferredDispose(this.objectIdImage);
                 this.renderer.DeferredDispose(this.canvasRenderPass);
                 this.renderer.DeferredDispose(this.objectIdRenderPass);
@@ -281,8 +288,8 @@ internal partial class RenderingService : IRenderingService
             this.renderer.SetViewport(context.CommandBuffer, window.Surface);
             this.renderer.BindIndexBuffer(context.CommandBuffer, context.IndexBuffer);
             this.renderer.BindVertexBuffers(context.CommandBuffer, context.VertexBuffer);
+            this.renderer.BeginRenderPass(context.CommandBuffer, context.Shader, context.Shader == this.diffuseShader ? window.Surface.CurrentBuffer : 0, Color.White);
             this.renderer.BindPipeline(context.CommandBuffer, context.Shader);
-            this.renderer.BeginRenderPass(context.CommandBuffer, context.RenderPass, 0, Color.White);
         }
 
         var windowSize = window.ClientSize.Cast<float>();
@@ -383,6 +390,9 @@ internal partial class RenderingService : IRenderingService
         return pixels;
     }
 
+    public void RegisterRenderGraph(IWindow window, RenderGraph renderGraph) =>
+        this.renderGraphs[window] = renderGraph;
+
     public void RequestDraw()
     {
         if (this.changes == 0)
@@ -397,7 +407,7 @@ internal partial class RenderingService : IRenderingService
         this.renderer.BindIndexBuffer(this.indexBuffer);
         this.renderer.BindVertexBuffers(this.vertexBuffer);
 
-        this.renderer.BeginRenderPass(this.canvasRenderPass, window.Surface.CurrentBuffer, Color.White);
+        this.renderer.BeginRenderPass(this.diffuseShader, window.Surface.CurrentBuffer, Color.White);
         this.renderer.BindPipeline(this.diffuseShader);
 
         foreach (var node in window.Tree.Traverse<Node2D>(true))
@@ -425,66 +435,93 @@ internal partial class RenderingService : IRenderingService
     {
         if (this.changes > 0)
         {
-            var commandBuffer = this.renderer.Context.BeginSingleTimeCommands();
-
-            Span<RenderContext> contexts =
-            [
-                new RenderContext
-                {
-                    CommandBuffer = commandBuffer,
-                    Flags         = default,
-                    IndexBuffer   = this.indexBuffer,
-                    RenderPass    = this.objectIdRenderPass,
-                    Shader        = this.objectIdShader,
-                    VertexBuffer  = this.vertexBuffer,
-                    Next          = [],
-                },
-                new RenderContext
-                {
-                    CommandBuffer = this.renderer.Context.Frame.CommandBuffer,
-                    Flags         = default,
-                    IndexBuffer   = this.indexBuffer,
-                    RenderPass    = this.canvasRenderPass,
-                    Shader        = this.diffuseShader,
-                    VertexBuffer  = this.vertexBuffer,
-                },
-            ];
-
-    #pragma warning disable IDE0035, CS0162
-            if (DRAW_WIREFRAME)
-            {
-                contexts[1].Next =
-                [
-                    new RenderContext
-                    {
-                        CommandBuffer = this.renderer.Context.Frame.CommandBuffer,
-                        Flags         = RenderFlags.Wireframe,
-                        IndexBuffer   = this.wireframeIndexBuffer,
-                        RenderPass    = this.canvasRenderPass,
-                        Shader        = this.wireframeShader,
-                        VertexBuffer  = this.vertexBuffer,
-                        Next          = [],
-                    },
-                ];
-            }
-#pragma warning restore IDE0035, CS0162
-
             this.renderer.BeginFrame();
 
             foreach (var window in windows)
             {
                 if (window.Visible && !window.Minimized && !window.Closed)
                 {
-                    this.Render(window, contexts);
+                    var renderGraph = this.renderGraphs[window];
+
+                    foreach (var pass in renderGraph.Passes)
+                    {
+                        pass.Execute();
+                    }
                 }
             }
 
             this.renderer.EndFrame();
 
-            this.renderer.Context.EndSingleTimeCommands(commandBuffer);
-
             this.changes--;
         }
+
+//     public void Render(IEnumerable<IWindow> windows)
+//     {
+//         if (this.changes > 0)
+//         {
+//             var commandBuffer = this.renderer.Context.BeginSingleTimeCommands();
+//             this.renderer.BeginFrame();
+
+//             Span<RenderContext> contexts =
+//             [
+//                 new RenderContext
+//                 {
+//                     CommandBuffer = commandBuffer,
+//                     Flags         = default,
+//                     IndexBuffer   = this.indexBuffer,
+//                     RenderPass    = this.objectIdRenderPass,
+//                     Shader        = this.objectIdShader,
+//                     VertexBuffer  = this.vertexBuffer,
+//                     Next          = [],
+//                 },
+//                 new RenderContext
+//                 {
+//                     CommandBuffer = this.renderer.Context.Frame.CommandBuffer,
+//                     Flags         = default,
+//                     IndexBuffer   = this.indexBuffer,
+//                     RenderPass    = this.canvasRenderPass,
+//                     Shader        = this.diffuseShader,
+//                     VertexBuffer  = this.vertexBuffer,
+//                 },
+//             ];
+
+//     #pragma warning disable IDE0035, CS0162
+//             if (DRAW_WIREFRAME)
+//             {
+//                 contexts[1].Next =
+//                 [
+//                     new RenderContext
+//                     {
+//                         CommandBuffer = this.renderer.Context.Frame.CommandBuffer,
+//                         Flags         = RenderFlags.Wireframe,
+//                         IndexBuffer   = this.wireframeIndexBuffer,
+//                         RenderPass    = this.canvasRenderPass,
+//                         Shader        = this.wireframeShader,
+//                         VertexBuffer  = this.vertexBuffer,
+//                         Next          = [],
+//                     },
+//                 ];
+//             }
+// #pragma warning restore IDE0035, CS0162
+
+//             foreach (var window in windows)
+//             {
+//                 if (window.Visible && !window.Minimized && !window.Closed)
+//                 {
+//                     this.Render(window, contexts);
+//                 }
+//             }
+
+//             this.renderer.EndFrame();
+
+//             try
+//             {
+//                 this.renderer.Context.EndSingleTimeCommands(commandBuffer);
+//             }
+//             catch { }
+
+//             this.changes--;
+//         }
     }
 
     public void UpdateTexture(Texture texture, byte[] data) =>

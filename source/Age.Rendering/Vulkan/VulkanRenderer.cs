@@ -455,10 +455,10 @@ public unsafe partial class VulkanRenderer : IDisposable
         }
     }
 
-    public void BeginRenderPass(RenderPass renderPass, uint framebufferIndex, Color clearColor) =>
-        this.BeginRenderPass(this.Context.Frame.CommandBuffer, renderPass, framebufferIndex, clearColor);
+    public void BeginRenderPass(Shader shader, uint framebufferIndex, Color clearColor) =>
+        this.BeginRenderPass(this.Context.Frame.CommandBuffer, shader, framebufferIndex, clearColor);
 
-    public void BeginRenderPass(VkCommandBuffer commandBuffer, RenderPass renderPass, uint framebufferIndex, Color clearColor)
+    public void BeginRenderPass(VkCommandBuffer commandBuffer, Shader shader, uint framebufferIndex, Color clearColor)
     {
         var clearValues = new VkClearValue[2];
 
@@ -478,7 +478,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             var renderPassBeginInfo = new VkRenderPassBeginInfo
             {
                 ClearValueCount = (uint)clearValues.Length,
-                Framebuffer     = renderPass.Framebuffers[framebufferIndex].Value.Handle,
+                Framebuffer     = shader.RenderPass.Framebuffers[framebufferIndex].Value.Handle,
                 PClearValues    = pClearValues,
                 RenderArea      = new()
                 {
@@ -487,9 +487,9 @@ public unsafe partial class VulkanRenderer : IDisposable
                         X = 0,
                         Y = 0
                     },
-                    Extent = renderPass.Extent,
+                    Extent = shader.RenderPass.Extent,
                 },
-                RenderPass = renderPass.Value.Handle,
+                RenderPass = shader.RenderPass.Value.Handle,
             };
 
             commandBuffer.BeginRenderPass(renderPassBeginInfo, VkSubpassContents.Inline);
@@ -709,7 +709,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                 Value        = renderPass,
                 Framebuffers = framebuffers,
                 Extent       = createInfo.Extent,
-                SubPasses    = createInfo.SubPasses.Length,
+                SubPasses    = createInfo.SubPasses.Length - 1,
             };
         }
     }

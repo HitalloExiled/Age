@@ -11,4 +11,5 @@ internal interface IRenderingService : IDisposable
     void Render(IEnumerable<IWindow> windows);
     void RequestDraw();
     void UpdateTexture(Texture texture, byte[] data);
+    void RegisterRenderGraph(IWindow window, RenderGraph renderGraph);
 }

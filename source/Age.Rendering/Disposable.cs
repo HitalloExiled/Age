@@ -1,6 +1,6 @@
 namespace Age.Rendering;
 
-public abstract record Disposable : IDisposable
+public abstract class Disposable : IDisposable
 {
     private bool disposed;
 

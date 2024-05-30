@@ -2,7 +2,7 @@ using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public record UniformSet : Disposable
+public class UniformSet : Disposable
 {
     public required DescriptorPool    DescriptorPool { get; init; }
     public required VkDescriptorSet[] DescriptorSets { get; init; }

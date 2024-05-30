@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Age.Numerics;
 using Age.Rendering;
 using Age.Rendering.Drawing;
+using Age.Rendering.RenderPasses;
 using Age.Rendering.Services;
 using Age.Rendering.Storage;
 using Age.Rendering.Vulkan;
@@ -31,6 +32,18 @@ public class Engine : IDisposable
         var textureStorage   = new TextureStorage(this.renderer);
         var renderingService = new RenderingService(this.renderer, textureStorage);
         var textService      = new TextService(renderingService, textureStorage);
+
+        var renderGraph = new RenderGraph
+        {
+            Name   = "Canvas",
+            Passes =
+            [
+                new CanvasIdRenderGraphPass(this.renderer, this.Window),
+                new CanvasRenderGraphPass(this.renderer, this.Window, textureStorage),
+            ]
+        };
+
+        renderingService.RegisterRenderGraph(this.Window, renderGraph);
 
         this.container = new()
         {
@@ -74,7 +87,7 @@ public class Engine : IDisposable
 
         foreach (var window in Window.Windows)
         {
-            window.SizeChanged += () => this.container.RenderingService.GetObjectIdBuffer(window);
+            // window.SizeChanged += () => this.container.RenderingService.GetObjectIdBuffer(window);
             window.Tree.Initialize();
         }
 

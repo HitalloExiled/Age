@@ -5,7 +5,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public record DescriptorPool : Disposable
+public class DescriptorPool : Disposable
 {
     private const ushort MAX_DESCRIPTORS_PER_POOL = 64;
 

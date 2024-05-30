@@ -2,7 +2,7 @@ using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public record Framebuffer : Disposable
+public class Framebuffer : Disposable
 {
     public required VkFramebuffer Value      { get; init; }
     public required VkImageView[] ImageViews { get; init; } = [];

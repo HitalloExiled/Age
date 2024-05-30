@@ -4,7 +4,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public partial record RenderPass
+public partial class RenderPass
 {
     public readonly ref partial struct CreateInfo
     {
