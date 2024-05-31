@@ -1,20 +1,23 @@
 // #define DUMP_IMAGES
+using Age.Core;
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing.Elements;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
+using Age.Rendering.Vulkan;
 using SkiaSharp;
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Rendering.Services;
 
-internal partial class TextService(IRenderingService renderingService, ITextureStorage textureStorage) : ITextService
+internal partial class TextService(VulkanRenderer renderer, ITextureStorage textureStorage) : ITextService
 {
     private readonly Dictionary<int, TextureAtlas> atlases = [];
     private readonly Dictionary<int, Glyph> glyphs = [];
-    private readonly Sampler sampler = renderingService.CreateSampler();
+    private readonly Sampler sampler = renderer.CreateSampler();
+    private readonly ObjectPool<RectDrawCommand> rectDrawCommandPool = new(static () => new RectDrawCommand());
 
     private bool disposed;
 
@@ -79,7 +82,7 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
         if (!this.atlases.TryGetValue(hashcode, out var atlas))
         {
             var axisSize = uint.Max(fontSize * 8, 256);
-            var size = new Size<uint>(axisSize, axisSize);
+            var size     = new Size<uint>(axisSize, axisSize);
 
             var texture = textureStorage.CreateTexture(size, ColorMode.Grayscale, Enums.TextureType.N2D);
 
@@ -87,6 +90,16 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
         }
 
         return atlas;
+    }
+
+    private void ReleaseCommands(List<DrawCommand> commands)
+    {
+        foreach (var command in commands)
+        {
+            this.rectDrawCommandPool.Return((RectDrawCommand)command);
+        }
+
+        commands.Clear();
     }
 
     protected virtual void Dispose(bool disposing)
@@ -100,7 +113,7 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
                     textureStorage.FreeTexture(atlas.Texture);
                 }
 
-                renderingService.DestroySampler(this.sampler);
+                renderer.DeferredDispose(this.sampler);
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
@@ -117,7 +130,7 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
         }
 
         var style      = textNode.ParentElement.Style;
-        var fontFamily = style.FontFamily ?? "Segoi UI";
+        var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
         var fontSize   = style.FontSize ?? 16;
         var commands   = textNode.Commands;
 
@@ -125,22 +138,22 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
 
         var paint = new SKPaint
         {
-            Color = SKColors.Black,
-            IsAntialias = true,
-            TextAlign = SKTextAlign.Left,
-            TextSize = fontSize,
-            Typeface = typeface,
+            Color        = SKColors.Black,
+            IsAntialias  = true,
+            TextAlign    = SKTextAlign.Left,
+            TextSize     = fontSize,
+            Typeface     = typeface,
             SubpixelText = true,
         };
 
-        var atlas = this.GetAtlas(typeface.FamilyName, fontSize);
+        var atlas  = this.GetAtlas(typeface.FamilyName, fontSize);
         var glyphs = typeface.GetGlyphs(text);
-        var font = paint.ToFont();
+        var font   = paint.ToFont();
 
         font.GetFontMetrics(out var metrics);
 
-        var glyphsBounds = new SKRect[glyphs.Length];
-        var glyphsWidths = new float[glyphs.Length];
+        Span<SKRect> glyphsBounds = stackalloc SKRect[glyphs.Length];
+        Span<float>  glyphsWidths = stackalloc float[glyphs.Length];
 
         font.GetGlyphWidths(glyphs, glyphsWidths, glyphsBounds, paint);
 
@@ -149,7 +162,7 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
         var offset     = new Point<int>(0, baseLine);
         var maxSize    = new Size<uint>(0, lineHeight);
 
-        commands.Clear();
+        this.ReleaseCommands(commands);
 
         for (var i = 0; i < text.Length; i++)
         {
@@ -159,10 +172,10 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
             {
                 ref readonly var bounds = ref glyphsBounds[i];
 
-                var glyph = this.DrawGlyph(atlas, character, typeface.FamilyName, fontSize, bounds, paint);
-                var size = new Size<float>(bounds.Width, bounds.Height);
+                var glyph    = this.DrawGlyph(atlas, character, typeface.FamilyName, fontSize, bounds, paint);
+                var size     = new Size<float>(bounds.Width, bounds.Height);
                 var position = new Point<float>(float.Round(offset.X + bounds.Left), float.Round(offset.Y - bounds.Top));
-                var color = style.Color ?? new();
+                var color    = style.Color ?? new();
 
                 var atlasSize = new Point<float>(atlas.Size.Width, atlas.Size.Height);
 
@@ -174,14 +187,13 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
                     P4 = new Point<float>(glyph.Position.X, glyph.Position.Y + glyph.Size.Height) / atlasSize,
                 };
 
-                var command = new RectDrawCommand
-                {
-                    ObjectId       = (uint)(textNode.ObjectId | (i + 1u) << 16),
-                    Rect           = new(size, position),
-                    Color          = color,
-                    SampledTexture = new(atlas.Texture, this.sampler, uv),
-                    Flags          = Flags.GrayscaleTexture | Flags.MultiplyColor,
-                };
+                var command = this.rectDrawCommandPool.Get();
+
+                command.ObjectId       = (uint)(textNode.ObjectId | (i + 1u) << 16);
+                command.Rect           = new(size, position);
+                command.Color          = color;
+                command.Flags          = Flags.GrayscaleTexture | Flags.MultiplyColor;
+                command.SampledTexture = new(atlas.Texture, this.sampler, uv);
 
                 textNode.Commands.Add(command);
 
@@ -208,15 +220,13 @@ internal partial class TextService(IRenderingService renderingService, ITextureS
 
         if (atlas.IsDirty)
         {
-            renderingService.UpdateTexture(atlas.Texture, atlas.Bitmap.Buffer);
+            renderer.UpdateTexture(atlas.Texture, atlas.Bitmap.Buffer);
 
             atlas.IsDirty = false;
 #if DUMP_IMAGES
             SaveToFile(fontFamily, atlas);
 #endif
         }
-
-        renderingService.RequestDraw();
     }
 
     public void Dispose()

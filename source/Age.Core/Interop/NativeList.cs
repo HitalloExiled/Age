@@ -1,8 +1,9 @@
+using System.Collections;
 using System.Runtime.InteropServices;
 
 namespace Age.Core.Interop;
 
-public unsafe class NativeList<T> : IDisposable where T : unmanaged
+public unsafe class NativeList<T> : IDisposable, IEnumerable<T> where T : unmanaged
 {
     private int  capacity;
     private T*   buffer;
@@ -156,4 +157,17 @@ public unsafe class NativeList<T> : IDisposable where T : unmanaged
 
     public T* AsPointer() => this.buffer;
     public Span<T> AsSpan() => new(this.buffer, this.Count);
+
+    public IEnumerator<T> GetEnumerator()
+    {
+        var span = this.AsSpan().ToArray();
+
+        for (var i = 0; i < this.Count; i++)
+        {
+            yield return span[i];
+        }
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() =>
+        this.GetEnumerator();
 }

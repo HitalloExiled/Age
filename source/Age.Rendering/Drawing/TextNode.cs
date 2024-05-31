@@ -37,6 +37,7 @@ public class TextNode : ContainerNode
         else
         {
             Container.Singleton.TextService.DrawText(this, this.value);
+            Container.Singleton.RenderingService.RequestDraw();
         }
     }
 }

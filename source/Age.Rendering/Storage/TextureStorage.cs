@@ -23,7 +23,7 @@ internal class TextureStorage : ITextureStorage
         const int DEFAULT_SIZE = 8;
 
         this.DefaultTexture = this.CreateTexture(new(DEFAULT_SIZE, DEFAULT_SIZE), ColorMode.RGBA, TextureType.N2D);
-        this.DefaultSampler = new() { Value = renderer.CreateSampler() };
+        this.DefaultSampler = renderer.CreateSampler();
 
         var bytesPerColor = (int)ColorMode.RGBA;
 

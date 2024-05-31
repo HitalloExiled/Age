@@ -11,7 +11,7 @@ namespace Age;
 
 public class Engine : IDisposable
 {
-    private const bool   FPS_LOCKED        = true;
+    private const bool   FPS_LOCKED        = false;
     private const ushort TARGET_FPS        = 60;
     private const double TARGET_FRAME_TIME = 1000.0 / TARGET_FPS;
 
@@ -30,15 +30,19 @@ public class Engine : IDisposable
         this.Window = new Window(name, windowSize, windowPosition);
 
         var textureStorage   = new TextureStorage(this.renderer);
-        var renderingService = new RenderingService(this.renderer, textureStorage);
-        var textService      = new TextService(renderingService, textureStorage);
+        var renderingService = new RenderingService(this.renderer);
+        var textService      = new TextService(this.renderer, textureStorage);
+
+        var canvasIdRenderGraphPass = new CanvasIdRenderGraphPass(this.renderer, this.Window);
+
+        this.Window.SizeChanged += () => canvasIdRenderGraphPass.Image.GetBuffer();
 
         var renderGraph = new RenderGraph
         {
             Name   = "Canvas",
             Passes =
             [
-                new CanvasIdRenderGraphPass(this.renderer, this.Window),
+                canvasIdRenderGraphPass,
                 new CanvasRenderGraphPass(this.renderer, this.Window, textureStorage),
             ]
         };
@@ -87,7 +91,6 @@ public class Engine : IDisposable
 
         foreach (var window in Window.Windows)
         {
-            // window.SizeChanged += () => this.container.RenderingService.GetObjectIdBuffer(window);
             window.Tree.Initialize();
         }
 

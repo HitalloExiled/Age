@@ -36,8 +36,8 @@ public abstract class ShaderResources : IDisposable
     {
         foreach (var file in files)
         {
-            var filepath = Path.IsPathRooted(file) ? file : Path.GetFullPath(Path.Join(shadersPath, file));
-            var filename = Path.GetFileName(filepath);
+            var filepath = string.Intern(Path.IsPathRooted(file) ? file : Path.GetFullPath(Path.Join(shadersPath, file)));
+            var filename = string.Intern(Path.GetFileName(filepath));
 
             if (!watcher.Filters.Contains(filename))
             {
@@ -120,7 +120,7 @@ public abstract class ShaderResources : IDisposable
 
                 foreach (var include in this.shaderIncludes[filepath])
                 {
-                    var filename = Path.GetFileName(include.Key);
+                    var filename = string.Intern(Path.GetFileName(include.Key));
 
                     if (!watcher.Filters.Contains(filename))
                     {

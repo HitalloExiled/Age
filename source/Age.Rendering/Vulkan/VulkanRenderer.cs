@@ -568,12 +568,7 @@ public unsafe partial class VulkanRenderer : IDisposable
     {
         this.CreateImage(createInfo, out var image, out var allocation);
 
-        return new()
-        {
-            Value      = image,
-            Allocation = allocation,
-            Extent     = createInfo.Extent,
-        };
+        return new(this, image, createInfo.Extent, allocation);
     }
 
     public Image[] CreateImage(in VkImageCreateInfo createInfo, int count)
@@ -746,7 +741,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         return shader;
     }
 
-    public VkSampler CreateSampler()
+    public Sampler CreateSampler()
     {
         this.Context.GetPhysicalDeviceProperties(out var properties);
 
@@ -764,7 +759,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             MipmapMode    = VkSamplerMipmapMode.Linear,
         };
 
-        return this.Context.Device.CreateSampler(createInfo);
+        return new(this, this.Context.Device.CreateSampler(createInfo));
     }
 
     public Texture CreateTexture(TextureCreate textureCreate)

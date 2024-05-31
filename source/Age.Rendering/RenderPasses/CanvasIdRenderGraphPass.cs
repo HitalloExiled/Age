@@ -16,8 +16,9 @@ public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
     private readonly VkCommandBuffer commandBuffer;
     private readonly Shader          shader;
 
-    private Image      image;
     private RenderPass renderPass;
+
+    public Image       Image;
 
     protected override VkCommandBuffer CommandBuffer => this.commandBuffer;
     protected override uint            CurrentBuffer { get; }
@@ -54,7 +55,7 @@ public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
         this.commandBuffer.Begin(VkCommandBufferUsageFlags.OneTimeSubmit);
     }
 
-    [MemberNotNull(nameof(image), nameof(renderPass))]
+    [MemberNotNull(nameof(Image), nameof(renderPass))]
     protected override void Create()
     {
         var imageCreateInfo = new VkImageCreateInfo
@@ -75,7 +76,7 @@ public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
             Usage         = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.Sampled | VkImageUsageFlags.ColorAttachment,
         };
 
-        this.image = this.Renderer.CreateImage(imageCreateInfo);
+        this.Image = this.Renderer.CreateImage(imageCreateInfo);
 
         var createInfo = new RenderPass.CreateInfo
         {
@@ -86,7 +87,7 @@ public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
                 new()
                 {
                     PipelineBindPoint = VkPipelineBindPoint.Graphics,
-                    Images            = [this.image.Value],
+                    Images            = [this.Image.Value],
                     ImageAspect       = VkImageAspectFlags.Color,
                     Format            = this.Window.Surface.Swapchain.Format,
                     ColorAttachments  =
@@ -122,7 +123,7 @@ public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
     protected override void Destroy()
     {
         this.renderPass.Dispose();
-        this.image.Dispose();
+        this.Image.Dispose();
     }
 
     protected override void OnDispose()
@@ -137,7 +138,7 @@ public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
         var constant = new CanvasShader.PushConstant
         {
             Border    = command.Border,
-            Color     = command.Color,
+            Color     = command.ObjectId | 0b_11111111_00000000_00000000_00000000,
             Flags     = command.Flags,
             Rect      = command.Rect,
             Transform = transform,

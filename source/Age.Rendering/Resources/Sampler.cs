@@ -1,10 +1,12 @@
+using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public class Sampler : Disposable
+public class Sampler : Resource<VkSampler>
 {
-    public required VkSampler Value { get; init; }
+    internal Sampler(VulkanRenderer renderer, VkSampler sampler) : base(renderer, sampler)
+    { }
 
     protected override void OnDispose() =>
         this.Value.Dispose();

@@ -16,7 +16,7 @@ public abstract class Node2D : Node
     private Transform2D ParentTransformCache => (this.Parent as Node2D)?.TransformCache ?? new();
     private Transform2D PivotedTransform     => Transform2D.Translated(this.Pivot) * this.LocalTransform * Transform2D.Translated(-this.Pivot);
 
-    internal List<DrawCommand> Commands { get; set; } = [];
+    internal List<DrawCommand> Commands { get; init; } = [];
 
     internal protected virtual Transform2D TransformCache
     {
