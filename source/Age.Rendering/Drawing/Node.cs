@@ -1,11 +1,12 @@
 using System.Collections;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Rendering.Drawing;
 
 [DebuggerDisplay("NodeName: {NodeName}, Name: {Name}, IsConnected: {IsConnected}")]
-public abstract class Node : IEnumerable<Node>
+public abstract partial class Node : IEnumerable<Node>
 {
     private NodeTree? tree;
 
