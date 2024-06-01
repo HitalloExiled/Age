@@ -33,6 +33,9 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         this.shader = renderer.CreateShaderAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
     }
 
+    protected override void BeforeExecute() =>
+        this.lastUniformSet = null;
+
     [MemberNotNull(nameof(renderPass))]
     protected override void Create()
     {
