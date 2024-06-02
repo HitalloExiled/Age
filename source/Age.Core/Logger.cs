@@ -19,19 +19,21 @@ public static partial class Logger
 
             Console.Write($"[{timestamp:HH:mm:ss.fff}]");
 
-            Console.ForegroundColor = level switch
+            var (name, color) = level switch
             {
-                LogLevel.None    => ConsoleColor.White,
-                LogLevel.Fatal   => ConsoleColor.DarkRed,
-                LogLevel.Error   => ConsoleColor.Red,
-                LogLevel.Warning => ConsoleColor.DarkYellow,
-                LogLevel.Info    => ConsoleColor.DarkBlue,
-                LogLevel.Debug   => ConsoleColor.Green,
-                LogLevel.Trace   => ConsoleColor.Cyan,
-                _ => ConsoleColor.White,
+                LogLevel.None    => (nameof(LogLevel.None),    ConsoleColor.White),
+                LogLevel.Fatal   => (nameof(LogLevel.Fatal),   ConsoleColor.DarkRed),
+                LogLevel.Error   => (nameof(LogLevel.Error),   ConsoleColor.Red),
+                LogLevel.Warning => (nameof(LogLevel.Warning), ConsoleColor.DarkYellow),
+                LogLevel.Info    => (nameof(LogLevel.Info),    ConsoleColor.DarkBlue),
+                LogLevel.Debug   => (nameof(LogLevel.Debug),   ConsoleColor.Green),
+                LogLevel.Trace   => (nameof(LogLevel.Trace),   ConsoleColor.Cyan),
+                _                => ("Node",                   ConsoleColor.White),
             };
 
-            Console.Write($" {level}");
+            Console.ForegroundColor = color;
+
+            Console.Write($" {name}");
 
             Console.ForegroundColor = ConsoleColor.Gray;
 

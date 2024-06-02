@@ -18,7 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="./Shaders/*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="./Shaders/**/*.glsl" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="./Shaders/**/*.frag" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="./Shaders/**/*.vert" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
