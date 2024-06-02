@@ -1,7 +1,7 @@
 using System.Collections;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Age.Rendering.Drawing;
 
@@ -18,7 +18,7 @@ public abstract partial class Node : IEnumerable<Node>
     public Node? Parent          { get; private set; }
     public Node? PreviousSibling { get; private set; }
 
-    public Node[] Children => [.. this];
+    public Node[] Children => [..this];
 
     public abstract string NodeName { get; }
 
@@ -242,7 +242,7 @@ public abstract partial class Node : IEnumerable<Node>
         this.LastChild  = null;
     }
 
-    public IEnumerable<Node> Traverse(bool topDown = false)
+    /* public IEnumerable<Node> Traverse(bool topDown = false)
     {
         foreach (var child in this)
         {
@@ -261,6 +261,86 @@ public abstract partial class Node : IEnumerable<Node>
                 yield return child;
             }
         }
+    } */
+
+    public IEnumerable<Node> Traverse(bool topDown = false)
+    {
+        var isParent = topDown;
+        Node? current;
+
+        current = topDown ? this.FirstChild : getDeepest(this);
+
+        while (current != null)
+        {
+            yield return current;
+
+            if (topDown)
+            {
+                if (isParent && current.FirstChild != null)
+                {
+                    current = current.FirstChild;
+                }
+                else if (current.NextSibling != null)
+                {
+                    current  = current.NextSibling;
+                    isParent = false;
+                }
+                else if (current.Parent != null && current.Parent != this)
+                {
+                    var next = current;
+
+                    while (next != null)
+                    {
+                        if (next.Parent?.NextSibling != null)
+                        {
+                            next = next.Parent.NextSibling;
+
+                            break;
+                        }
+                        else
+                        {
+                            next = next.Parent;
+                        }
+                    }
+
+                    current  = next;
+                    isParent = true;
+                }
+                else
+                {
+                    current = null;
+                }
+            }
+            else
+            {
+                if (current.NextSibling != null)
+                {
+                    current  = isParent ? getDeepest(current.NextSibling) : current.NextSibling;
+                    isParent = false;
+                }
+                else if (current.Parent != null && current.Parent != this)
+                {
+                    current  = current.Parent;
+                    isParent = true;
+                }
+                else
+                {
+                    current = null;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Node getDeepest(Node node)
+        {
+            while (node.FirstChild != null)
+            {
+                node = node.FirstChild;
+            }
+
+            return node;
+        }
+
     }
 
     public IEnumerable<T> Traverse<T>(bool topDown = false) where T : Node

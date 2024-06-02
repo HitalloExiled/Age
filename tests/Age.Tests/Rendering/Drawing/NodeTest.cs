@@ -170,6 +170,75 @@ public class NodeTest
 
         var nodes = new List<Node>();
 
+        Span[] expected =
+        [
+            child11,
+            child12,
+            child13,
+            child1,
+            child21,
+            child22,
+            child2,
+            child31,
+            child3,
+        ];
+
+        foreach (var node in parent.Traverse())
+        {
+            nodes.Add(node);
+        }
+
+        Assert.Equal(expected, nodes);
+
+        nodes.Clear();
+
+        expected =
+        [
+            child1,
+            child11,
+            child12,
+            child13,
+            child2,
+            child21,
+            child22,
+            child3,
+            child31,
+        ];
+
+        foreach (var node in parent.Traverse(true))
+        {
+            nodes.Add(node);
+        }
+
+        Assert.Equal(expected, nodes);
+    }
+
+    [Fact]
+    public void TraverseTraverseEnumerator()
+    {
+        var child11 = new Span { Name = "1.1.1" };
+        var child12 = new Span { Name = "1.1.2" };
+        var child13 = new Span { Name = "1.1.3" };
+
+        var child21 = new Span { Name = "1.2.1" };
+        var child22 = new Span { Name = "1.2.2" };
+
+        var child31 = new Span { Name = "1.3.1" };
+
+        var child1 = new Span { Name = "1.1" };
+        child1.AppendChildren([child11, child12, child13]);
+
+        var child2 = new Span { Name = "1.2" };
+        child2.AppendChildren([child21, child22]);
+
+        var child3 = new Span { Name = "1.3" };
+        child3.AppendChild(child31);
+
+        var parent = new Span { Name = "1" };
+        parent.AppendChildren([child1, child2, child3]);
+
+        var nodes = new List<Node>();
+
         var enumerator = new Node.TraverseEnumerator(parent);
 
         Span[] expected =
