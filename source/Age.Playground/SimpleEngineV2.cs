@@ -3,7 +3,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Age.Numerics;
-using Age.Platforms.Abstractions;
 using SkiaSharp;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan;
@@ -27,7 +26,6 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     private readonly VkSemaphore[]          imageAvailableSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
     private readonly List<uint>             indices                  = [];
     private readonly VkFence[]              inFlightFences           = new VkFence[MAX_FRAMES_IN_FLIGHT];
-    private readonly WavefrontLoader        wavefrontLoader          = new(new FileSystem());
     private readonly VkSemaphore[]          renderFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
     private readonly VkBuffer[]             uniformBuffers           = new VkBuffer[MAX_FRAMES_IN_FLIGHT];
     private readonly nint[]                 uniformBuffersMapped     = new nint[MAX_FRAMES_IN_FLIGHT];
@@ -1601,7 +1599,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
     private void LoadModel()
     {
-        var data = this.wavefrontLoader.Load(Path.Join(AppContext.BaseDirectory, "Models", "viking_room.obj"));
+        var data = WavefrontLoader.Load(Path.Join(AppContext.BaseDirectory, "Models", "viking_room.obj"));
 
         var uniqueVertices = new Dictionary<Vertex, uint>();
 

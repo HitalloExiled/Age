@@ -107,6 +107,7 @@ public class Engine : IDisposable
                 foreach (var window in Window.Windows)
                 {
                     window.DoEvents();
+                    window.Tree.ResetCache();
                     window.Tree.Update(deltaTime);
                 }
 

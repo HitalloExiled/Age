@@ -77,7 +77,10 @@ internal partial class RenderingService : IRenderingService
 
                     foreach (var pass in renderGraph.Passes)
                     {
-                        pass.Execute();
+                        if (!pass.Disabled)
+                        {
+                            pass.Execute();
+                        }
                     }
                 }
             }

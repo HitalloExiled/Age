@@ -10,7 +10,6 @@ public partial class RenderPass
     {
         public readonly struct ColorAttachment
         {
-            public VkImageLayout            Layout  { get; init; }
             public VkAttachmentDescription  Color   { get; init; }
             public VkAttachmentDescription? Resolve { get; init; }
         };
@@ -22,7 +21,7 @@ public partial class RenderPass
             public required VkFormat            Format                 { get; init; }
             public required VkPipelineBindPoint PipelineBindPoint      { get; init; }
             public ColorAttachment[]            ColorAttachments       { get; init; } = [];
-            public VkAttachmentReference?       DepthStencilAttachment { get; init; }
+            public VkAttachmentDescription?     DepthStencilAttachment { get; init; }
 
             public SubPass() { }
         }

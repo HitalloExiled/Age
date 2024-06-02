@@ -1,13 +1,12 @@
 using Age.Resources.Loaders.Wavefront.Parsers;
-using Age.Platforms.Abstractions.Interfaces;
 
 namespace Age.Resources.Loaders.Wavefront;
 
-public class MtlLoader(IFileSystem fileSystem)
+public class MtlLoader
 {
     public virtual IList<Material> Load(string filepath)
     {
-        using var reader = new StreamReader(fileSystem.File.OpenRead(filepath))!;
+        using var reader = new StreamReader(File.OpenRead(filepath))!;
 
         return new MtlParser(filepath, reader).Parse();
     }

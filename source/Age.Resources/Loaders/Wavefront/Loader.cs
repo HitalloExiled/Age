@@ -1,15 +1,14 @@
 using Age.Resources.Loaders.Wavefront.Parsers;
-using Age.Platforms.Abstractions.Interfaces;
 
 namespace Age.Resources.Loaders.Wavefront;
 
-public class Loader(IFileSystem fileSystem)
+public static class Loader
 {
-    public Data Load(string filepath, ObjParser.Options? options = null)
+    public static Data Load(string filepath, ObjParser.Options? options = null)
     {
-        using var reader = new StreamReader(fileSystem.File.OpenRead(filepath))!;
+        using var reader = new StreamReader(File.OpenRead(filepath))!;
 
-        var mtlLoader = new MtlLoader(fileSystem);
+        var mtlLoader = new MtlLoader();
 
         return new ObjParser(filepath, reader, mtlLoader, options).Parse();
     }

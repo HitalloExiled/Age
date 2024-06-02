@@ -6,18 +6,10 @@ namespace Age.Rendering;
 public abstract class RenderGraphPass(VulkanRenderer renderer, IWindow window) : Disposable
 {
     protected VulkanRenderer Renderer { get; } = renderer;
-    protected IWindow        Window { get; }   = window;
+    protected IWindow        Window   { get; } = window;
 
-    protected abstract void Create();
-    protected abstract void Destroy();
+    public bool Disabled { get; set; }
+
     public abstract void Execute();
-
-    public void Recreate()
-    {
-        this.Destroy();
-        this.Create();
-    }
-
-    protected override void OnDispose() =>
-        this.Destroy();
+    public abstract void Recreate();
 }

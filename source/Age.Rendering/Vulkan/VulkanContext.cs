@@ -564,6 +564,25 @@ public unsafe partial class VulkanContext : IDisposable
         throw new Exception("Failed to find suitable memory type");
     }
 
+    public VkFormat FindSupportedFormat(Span<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+    {
+        foreach (var format in candidates)
+        {
+            this.physicalDevice.GetFormatProperties(format, out var props);
+
+            if (tiling == VkImageTiling.Linear && props.LinearTilingFeatures.HasFlag(features))
+            {
+                return format;
+            }
+            else if (tiling == VkImageTiling.Optimal && props.OptimalTilingFeatures.HasFlag(features))
+            {
+                return format;
+            }
+        }
+
+        throw new Exception("failed to find supported format!");
+    }
+
     public void GetPhysicalDeviceProperties(out VkPhysicalDeviceProperties properties) =>
         this.physicalDevice.GetProperties(out properties);
 
