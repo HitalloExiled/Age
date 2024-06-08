@@ -7,4 +7,10 @@ public class VertexBuffer : Disposable
 
     protected override void OnDispose() =>
         this.Buffer.Dispose();
+
+    public void Update<T>(T data) where T : unmanaged =>
+        this.Buffer.Update(data);
+
+    public void Update<T>(Span<T> data) where T : unmanaged =>
+        this.Buffer.Update(data);
 }

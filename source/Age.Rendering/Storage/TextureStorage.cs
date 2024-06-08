@@ -7,7 +7,7 @@ using Age.Rendering.Vulkan.Uniforms;
 
 namespace Age.Rendering.Storage;
 
-internal class TextureStorage : ITextureStorage
+public class TextureStorage : ITextureStorage
 {
     private readonly Dictionary<Texture, UniformSet> textureSets = [];
     private readonly VulkanRenderer renderer;
@@ -35,7 +35,7 @@ internal class TextureStorage : ITextureStorage
             colorBuffer.CopyTo(imageBuffer[i..(i + bytesPerColor)]);
         }
 
-        this.renderer.UpdateTexture(this.DefaultTexture, imageBuffer);
+        this.DefaultTexture.Update(imageBuffer);
     }
 
     public void Dispose()

@@ -220,7 +220,7 @@ internal partial class TextService(VulkanRenderer renderer, ITextureStorage text
 
         if (atlas.IsDirty)
         {
-            renderer.UpdateTexture(atlas.Texture, atlas.Bitmap.Buffer);
+            atlas.Texture.Update(atlas.Bitmap.Buffer);
 
             atlas.IsDirty = false;
 #if DUMP_IMAGES

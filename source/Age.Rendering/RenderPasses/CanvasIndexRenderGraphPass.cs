@@ -10,21 +10,24 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.RenderPasses;
 
-public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
+public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 {
-    private readonly VkCommandBuffer commandBuffer;
-    private readonly IndexBuffer     indexBuffer;
-    private readonly VertexBuffer    vertexBuffer;
+    private readonly CommandBuffer commandBuffer;
+    private readonly IndexBuffer   indexBuffer;
+    private readonly RenderPass    renderPass;
+    private readonly VertexBuffer  vertexBuffer;
 
-    private RenderPass renderPass;
-    public Image       Image;
+    private Image       image;
+    private Framebuffer framebuffer;
 
-    protected override VkCommandBuffer CommandBuffer  => this.commandBuffer;
-    protected override RenderResources[] Resources       { get; } = [];
-    protected override uint            CurrentBuffer  { get; }
-    protected override RenderPass      RenderPass     => this.renderPass;
+    public Image Image => this.image;
 
-    public CanvasIdRenderGraphPass(VulkanRenderer renderer, IWindow window) : base(renderer, window)
+    protected override CommandBuffer     CommandBuffer => this.commandBuffer;
+    protected override Framebuffer       Framebuffer   => this.framebuffer;
+    protected override RenderPass        RenderPass    => this.renderPass;
+    protected override RenderResources[] Resources     { get; } = [];
+
+    public CanvasIndexRenderGraphPass(VulkanRenderer renderer, IWindow window) : base(renderer, window)
     {
         var vertices = new CanvasShader.Vertex[4]
         {
@@ -36,11 +39,12 @@ public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.vertexBuffer  = renderer.CreateVertexBuffer(vertices.AsSpan());
         this.indexBuffer   = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
-        this.commandBuffer = renderer.Context.AllocateCommand(VkCommandBufferLevel.Primary);
+        this.commandBuffer = renderer.AllocateCommand(VkCommandBufferLevel.Primary);
+        this.renderPass    = this.CreateRenderPass();
 
-        this.Create(out this.Image, out this.renderPass);
+        this.CreateFramebuffer(out this.image, out this.framebuffer);
 
-        var shader = renderer.CreateShaderAndWatch<CanvasObjectIdShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
+        var shader = renderer.CreateShaderAndWatch<CanvasIndexShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
 
         shader.Changed += this.NotifyChanged;
 
@@ -50,14 +54,14 @@ public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
         ];
     }
 
-    private void Create(out Image image, out RenderPass renderPass)
+    private void CreateFramebuffer(out Image image, out Framebuffer framebuffer)
     {
         var clientSize = this.Window.ClientSize;
 
         var imageCreateInfo = new VkImageCreateInfo
         {
-            ArrayLayers   = 1,
-            Extent        = new()
+            ArrayLayers = 1,
+            Extent      = new()
             {
                 Width  = clientSize.Width,
                 Height = clientSize.Height,
@@ -74,22 +78,32 @@ public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
 
         image = this.Renderer.CreateImage(imageCreateInfo);
 
-        var createInfo = new RenderPass.CreateInfo
+        var framebufferCreateInfo = new FramebufferCreateInfo
         {
-            FrameBufferCount = 1,
-            Extent           = new()
-            {
-                Width  = clientSize.Width,
-                Height = clientSize.Height,
-            },
+            RenderPass  = this.renderPass,
+            Attachments =
+            [
+                new FramebufferCreateInfo.Attachment
+                {
+                    Image       = image,
+                    Format      = this.Window.Surface.Swapchain.Format,
+                    ImageAspect = VkImageAspectFlags.Color
+                }
+            ],
+        };
+
+        framebuffer = this.Renderer.CreateFramebuffer(framebufferCreateInfo);
+    }
+
+    private RenderPass CreateRenderPass()
+    {
+        var createInfo = new RenderPassCreateInfo
+        {
             SubPasses =
             [
                 new()
                 {
                     PipelineBindPoint = VkPipelineBindPoint.Graphics,
-                    Images            = [this.Image.Value],
-                    ImageAspect       = VkImageAspectFlags.Color,
-                    Format            = this.Window.Surface.Swapchain.Format,
                     ColorAttachments  =
                     [
                         new()
@@ -111,14 +125,20 @@ public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
             ]
         };
 
-        renderPass = this.Renderer.CreateRenderPass(createInfo);
+        return this.Renderer.CreateRenderPass(createInfo);
+    }
+
+    private void DisposeFramebuffer()
+    {
+        this.image.Dispose();
+        this.framebuffer.Dispose();
     }
 
     protected unsafe override void AfterExecute()
     {
         this.commandBuffer.End();
 
-        var commandBufferHandle = this.commandBuffer.Handle;
+        var commandBufferHandle = this.commandBuffer.Value.Handle;
 
         var submitInfo = new VkSubmitInfo
         {
@@ -126,8 +146,8 @@ public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
             PCommandBuffers    = &commandBufferHandle
         };
 
-        this.Renderer.Context.GraphicsQueue.Submit(submitInfo);
-        this.Renderer.Context.GraphicsQueue.WaitIdle();
+        this.Renderer.GraphicsQueue.Submit(submitInfo);
+        this.Renderer.GraphicsQueue.WaitIdle();
     }
 
     protected override void BeforeExecute()
@@ -149,28 +169,22 @@ public class CanvasIdRenderGraphPass : CanvasBaseRenderGraphPass
             Viewport  = viewport,
         };
 
-        this.Renderer.PushConstant(this.CommandBuffer, resource.Shader, constant);
-        this.Renderer.DrawIndexed(this.CommandBuffer, resource.IndexBuffer);
+        this.CommandBuffer.PushConstant(resource.Shader, constant);
+        this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
     }
 
     protected override void OnDispose()
     {
+        this.DisposeFramebuffer();
+
         this.renderPass.Dispose();
-        this.Image.Dispose();
         this.commandBuffer.Dispose();
         this.Resources[0].Dispose();
     }
 
     public override void Recreate()
     {
-        this.renderPass.Dispose();
-        this.Image.Dispose();
-
-        this.Create(out this.Image, out this.renderPass);
-
-        for (var i = 0; i < this.Resources.Length; i++)
-        {
-            this.Resources[i].Shader.RenderPass = this.renderPass;
-        }
+        this.DisposeFramebuffer();
+        this.CreateFramebuffer(out this.image, out this.framebuffer);
     }
 }

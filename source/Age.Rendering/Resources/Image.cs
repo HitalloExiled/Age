@@ -1,72 +1,131 @@
-#define DUMP_IMAGES
-
+using System.Diagnostics.CodeAnalysis;
 using Age.Rendering.Vulkan;
-using SkiaSharp;
 using ThirdParty.Vulkan;
+using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
 public class Image : Resource<VkImage>
 {
-    public Allocation Allocation { get; }
-    public VkExtent3D Extent     { get; }
+    [MemberNotNullWhen(false, nameof(Allocation))]
+    public bool IsBorrowed { get; private set; }
 
-    internal Image(VulkanRenderer renderer, VkImage image, VkExtent3D extent, Allocation allocation) : base(renderer, image)
-    {
-        this.Extent     = extent;
-        this.Allocation = allocation;
-    }
+    public Allocation? Allocation { get; init; }
+    public VkExtent3D  Extent     { get; init; }
+
+    internal Image(VulkanRenderer renderer, VkImage image) : base(renderer, image) { }
+
+    internal static Image From(VulkanRenderer renderer, VkImage image, VkExtent3D extent) =>
+        new(renderer, image)
+        {
+            IsBorrowed = true,
+            Extent     = extent,
+        };
 
     protected override void OnDispose()
     {
-        this.Allocation.Dispose();
-        this.Value.Dispose();
+        if (!this.IsBorrowed)
+        {
+            this.Allocation.Dispose();
+            this.Value.Dispose();
+        }
     }
 
-#if DUMP_IMAGES
-    private static void SaveToFile(uint[] data, VkExtent3D extent)
+    public void CopyToBuffer(Buffer buffer)
     {
-        static SKColor convert(uint value) => new(value);
+        var commandBuffer = this.Renderer.BeginSingleTimeCommands();
 
-        var pixels = data.Select(convert).ToArray();
-
-        var bitmap = new SKBitmap((int)extent.Width, (int)extent.Height)
+        var bufferImageCopy = new VkBufferImageCopy
         {
-            Pixels = pixels
+            ImageExtent      = this.Extent,
+            ImageSubresource = new()
+            {
+                AspectMask = VkImageAspectFlags.Color,
+                LayerCount = 1,
+            }
         };
 
-        var skimage = SKImage.FromBitmap(bitmap);
+        commandBuffer.Value.CopyImageToBuffer(this.Value, VkImageLayout.TransferSrcOptimal, buffer.Value, [bufferImageCopy]);
 
-        try
-        {
-            using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"ObjectId.png"));
-
-            skimage.Encode(SKEncodedImageFormat.Png, 100).SaveTo(stream);
-        }
-        catch
-        {
-
-        }
+        this.Renderer.EndSingleTimeCommands(commandBuffer);
     }
-#endif
 
-    public unsafe uint[] GetBuffer()
+    public unsafe uint[] ReadBuffer()
     {
         var size = this.Extent.Width * this.Extent.Height * sizeof(uint);
 
         using var buffer = this.Renderer.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
-        this.Renderer.CopyImageToBuffer(this, buffer, this.Extent);
+        this.CopyToBuffer(buffer);
 
         buffer.Allocation.Memory.Map(0, size, 0, out var data);
 
         var pixels = new Span<uint>((uint*)data, (int)(size / 4)).ToArray();
 
-#if DUMP_IMAGES
-        SaveToFile(pixels, this.Extent);
-#endif
-
         return pixels;
+    }
+
+    public void TransitionImageLayout(
+        VkImageLayout        oldLayout,
+        VkImageLayout        newLayout,
+        VkAccessFlags        srcAccessMask,
+        VkAccessFlags        dstAccessMask,
+        VkPipelineStageFlags sourceStage,
+        VkPipelineStageFlags destinationStage
+    )
+    {
+        var commandBuffer = this.Renderer.BeginSingleTimeCommands();
+
+        var imageMemoryBarrier = new VkImageMemoryBarrier
+        {
+            DstAccessMask       = dstAccessMask,
+            DstQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
+            Image               = this.Value.Handle,
+            NewLayout           = newLayout,
+            OldLayout           = oldLayout,
+            SrcAccessMask       = srcAccessMask,
+            SrcQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
+            SubresourceRange    = new()
+            {
+                AspectMask = VkImageAspectFlags.Color,
+                LayerCount = 1,
+                LevelCount = 1,
+            }
+        };
+
+        commandBuffer.Value.PipelineBarrier(sourceStage, destinationStage, default, [], [], [imageMemoryBarrier]);
+
+        this.Renderer.EndSingleTimeCommands(commandBuffer);
+    }
+
+
+    public void Update(Span<byte> data)
+    {
+        var buffer = this.Renderer.CreateBuffer((ulong)data.Length, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+
+        buffer.Allocation.Memory.Write(0, 0, data);
+
+        this.TransitionImageLayout(
+            VkImageLayout.Undefined,
+            VkImageLayout.TransferDstOptimal,
+            default,
+            VkAccessFlags.TransferWrite,
+            VkPipelineStageFlags.TopOfPipe,
+            VkPipelineStageFlags.Transfer
+        );
+
+        this.Renderer.CopyBufferToImage(buffer.Value, this, this.Extent.Width, this.Extent.Height);
+
+        this.TransitionImageLayout(
+            VkImageLayout.TransferDstOptimal,
+            VkImageLayout.ShaderReadOnlyOptimal,
+            VkAccessFlags.TransferWrite,
+            VkAccessFlags.ShaderRead,
+            VkPipelineStageFlags.Transfer,
+            VkPipelineStageFlags.FragmentShader
+        );
+
+        buffer.Dispose();
     }
 }

@@ -1,70 +1,101 @@
 using Age.Core.Extensions;
+using Age.Numerics;
+using Age.Rendering.Enums;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Shaders;
+using Age.Rendering.Storage;
 using Age.Rendering.Vulkan;
-using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
+using ThirdParty.Vulkan;
+
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
+using Buffer          = Age.Rendering.Resources.Buffer;
 
 namespace Age.Rendering.RenderPasses;
 
-public class GeometryRenderGraphPass : RenderGraphPass
+public partial class GeometryRenderGraphPass : RenderGraphPass
 {
-    private readonly VertexBuffer vertexBuffer;
-    private readonly IndexBuffer  indexBuffer;
-    private readonly Shader       shader;
-    private readonly RenderPass   renderPass;
-    private readonly Image        texture;
 
-    public GeometryRenderGraphPass(VulkanRenderer renderer, IWindow window) : base(renderer, window)
+    private readonly Framebuffer[] framebuffers = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly Image[]       images = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly IndexBuffer   indexBuffer;
+    private readonly RenderPass    renderPass;
+    private readonly Sampler       sampler;
+    private readonly Shader        shader;
+    private readonly Texture       texture;
+    private readonly Buffer[]      uniformBuffers = new Buffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly nint[]        uniformBuffersMapped = new nint[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly UniformSet    uniformSet;
+    private readonly VertexBuffer  vertexBuffer;
+
+    public unsafe GeometryRenderGraphPass(VulkanRenderer renderer, IWindow window, TextureStorage textureStorage) : base(renderer, window)
     {
+        this.texture = this.LoadTexture();
         this.LoadModel(out this.vertexBuffer, out this.indexBuffer);
 
-        (this.renderPass, this.texture) = this.CreateRenderPass();
-        this.shader     = renderer.CreateShader<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new(), this.renderPass);
+        this.renderPass = this.CreateRenderPass();
+        this.shader = renderer.CreateShader<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new(), this.renderPass);
+        this.sampler = textureStorage.DefaultSampler;
+        this.uniformSet = textureStorage.GetUniformSet(this.shader, this.texture, this.sampler);
+
+        this.CreateFrameBuffers();
     }
 
-    private (RenderPass, Image) CreateRenderPass()
+    private unsafe void CreateFrameBuffers()
     {
-        var imageCreateInfo = new VkImageCreateInfo
+        for (var i = 0; i < VulkanContext.MAX_FRAMES_IN_FLIGHT; i++)
         {
-            ArrayLayers   = 1,
-            Extent        = new()
+            var size = (ulong)sizeof(UniformBufferObject);
+
+            this.uniformBuffers[i] = this.Renderer.CreateBuffer(size, VkBufferUsageFlags.UniformBuffer, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+            this.uniformBuffers[i].Allocation.Memory.Map(0, size, 0, out this.uniformBuffersMapped[i]);
+
+            var createInfo = new FramebufferCreateInfo
             {
-                Width  = default,
-                Height = default,
-                Depth  = 1,
-            },
-            Format        = this.Window.Surface.Swapchain.Format,
-            ImageType     = VkImageType.N2D,
-            InitialLayout = VkImageLayout.Undefined,
-            MipLevels     = 1,
-            Samples       = VkSampleCountFlags.N1,
-            Tiling        = VkImageTiling.Optimal,
-            Usage         = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.Sampled | VkImageUsageFlags.ColorAttachment,
+                RenderPass = this.renderPass,
+                Attachments =
+                [
+                    new FramebufferCreateInfo.Attachment
+                    {
+                        Image       = this.images[i],
+                        Format      = this.Window.Surface.Swapchain.Format,
+                        ImageAspect = VkImageAspectFlags.Color,
+                    },
+                ]
+            };
+
+            this.framebuffers[i] = this.Renderer.CreateFramebuffer(createInfo);
+        }
+    }
+
+    private unsafe Texture LoadTexture()
+    {
+        var textureCreate = new TextureCreate
+        {
+            ColorMode = ColorMode.RGBA,
+            Width       = 1024,
+            Height      = 768,
+            Depth       = 1,
+            TextureType = TextureType.N2D,
         };
 
-        var image = this.Renderer.CreateImage(imageCreateInfo);
+        return this.Renderer.CreateTexture(textureCreate);
+    }
 
-        this.Renderer.UpdateImage(image, []);
-
-        var createInfo = new RenderPass.CreateInfo
+    private RenderPass CreateRenderPass()
+    {
+        var createInfo = new RenderPassCreateInfo
         {
-            Extent           = default,
-            FrameBufferCount = 1,
             SubPasses =
             [
-                new RenderPass.CreateInfo.SubPass()
+                new RenderPassCreateInfo.SubPass()
                 {
-                    Format            = this.Window.Surface.Swapchain.Format,
-                    ImageAspect       = VkImageAspectFlags.Color,
-                    Images            = [image],
                     PipelineBindPoint = VkPipelineBindPoint.Graphics,
                     ColorAttachments  =
                     [
-                        new RenderPass.CreateInfo.ColorAttachment()
+                        new RenderPassCreateInfo.ColorAttachment()
                         {
                             Color = new VkAttachmentDescription()
                             {
@@ -92,7 +123,7 @@ public class GeometryRenderGraphPass : RenderGraphPass
                     ],
                     DepthStencilAttachment = new VkAttachmentDescription
                     {
-                        Format         = this.Renderer.Context.FindSupportedFormat([VkFormat.D32Sfloat, VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint], VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment),
+                        Format         = this.Renderer.FindSupportedFormat([VkFormat.D32Sfloat, VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint], VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment),
                         Samples        = VkSampleCountFlags.N1,
                         LoadOp         = VkAttachmentLoadOp.Clear,
                         StoreOp        = VkAttachmentStoreOp.DontCare,
@@ -105,7 +136,7 @@ public class GeometryRenderGraphPass : RenderGraphPass
             ],
         };
 
-        return (this.Renderer.CreateRenderPass(createInfo), image);
+        return this.Renderer.CreateRenderPass(createInfo);
     }
 
     private void LoadModel(out VertexBuffer vertexBuffer, out IndexBuffer indexBuffer)
@@ -145,7 +176,17 @@ public class GeometryRenderGraphPass : RenderGraphPass
 
     public override void Execute()
     {
-        throw new NotImplementedException();
+        var commandBuffer = this.Renderer.CurrentCommandBuffer;
+        var framebuffer   = this.framebuffers[this.Window.Surface.CurrentBuffer];
+
+        commandBuffer.BeginRenderPass(this.renderPass, framebuffer, Color.Black);
+        commandBuffer.BindPipeline(this.shader);
+        commandBuffer.BindUniformSet(this.uniformSet);
+        commandBuffer.BindVertexBuffer([this.vertexBuffer]);
+        commandBuffer.BindIndexBuffer(this.indexBuffer);
+        commandBuffer.DrawIndexed(this.indexBuffer);
+
+        commandBuffer.EndRenderPass();
     }
 
     public override void Recreate()
@@ -157,5 +198,11 @@ public class GeometryRenderGraphPass : RenderGraphPass
         this.indexBuffer.Dispose();
         this.renderPass.Dispose();
         this.shader.Dispose();
+        this.texture.Dispose();
+
+        for (var i = 0; i < this.uniformBuffers.Length; i++)
+        {
+            this.uniformBuffers[i].Dispose();
+        }
     }
 }

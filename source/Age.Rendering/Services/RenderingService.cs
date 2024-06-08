@@ -8,14 +8,14 @@ internal partial class RenderingService : IRenderingService
     private readonly VulkanRenderer                   renderer;
     private readonly Dictionary<IWindow, RenderGraph> renderGraphs = [];
 
-    private int        changes;
-    private bool       disposed;
+    private int  changes;
+    private bool disposed;
 
     public RenderingService(VulkanRenderer renderer)
     {
         this.renderer = renderer;
 
-        this.renderer.Context.SwapchainRecreated += this.OnSwapchainRecreated;
+        this.renderer.SwapchainRecreated += this.OnSwapchainRecreated;
     }
 
     private void OnSwapchainRecreated()

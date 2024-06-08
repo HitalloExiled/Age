@@ -13,18 +13,20 @@ namespace Age.Rendering.RenderPasses;
 
 internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 {
-    private readonly TextureStorage textureStorage;
+    private readonly Framebuffer[]  framebuffers = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
     private readonly IndexBuffer    indexBuffer;
-    private readonly IndexBuffer    wireframeIndexBuffer;
+    private readonly RenderPass     renderPass;
+    private readonly TextureStorage textureStorage;
     private readonly VertexBuffer   vertexBuffer;
+    private readonly IndexBuffer    wireframeIndexBuffer;
 
-    private RenderPass  renderPass; // TODO implements renderPassReuse
     private UniformSet? lastUniformSet;
 
-    protected override VkCommandBuffer CommandBuffer  => this.Renderer.Context.Frame.CommandBuffer;
-    protected override RenderResources[] Resources       { get; } = [];
-    protected override uint            CurrentBuffer  => this.Window.Surface.CurrentBuffer;
-    protected override RenderPass      RenderPass     => this.renderPass;
+    protected override CommandBuffer CommandBuffer  => this.Renderer.CurrentCommandBuffer;
+
+    protected override Framebuffer       Framebuffer => this.framebuffers[this.Window.Surface.CurrentBuffer];
+    protected override RenderPass        RenderPass  => this.renderPass;
+    protected override RenderResources[] Resources     { get; } = [];
 
     public CanvasRenderGraphPass(VulkanRenderer renderer, IWindow window, TextureStorage textureStorage) : base(renderer, window)
     {
@@ -55,6 +57,8 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             new(canvasShader,          this.vertexBuffer, this.indexBuffer),
             new(canvasWireframeShader, this.vertexBuffer, this.wireframeIndexBuffer),
         ];
+
+        this.CreateFrameBuffers();
     }
 
     protected override void BeforeExecute() =>
@@ -62,18 +66,13 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
     private RenderPass CreateRenderPass()
     {
-        var createInfo = new RenderPass.CreateInfo
+        var createInfo = new RenderPassCreateInfo
         {
-            FrameBufferCount = this.Window.Surface.Swapchain.Images.Length,
-            Extent           = this.Window.Surface.Swapchain.Extent,
             SubPasses =
             [
                 new()
                 {
                     PipelineBindPoint = VkPipelineBindPoint.Graphics,
-                    Format            = this.Window.Surface.Swapchain.Format,
-                    Images            = this.Window.Surface.Swapchain.Images,
-                    ImageAspect       = VkImageAspectFlags.Color,
                     ColorAttachments  =
                     [
                         new()
@@ -98,6 +97,43 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         return this.Renderer.CreateRenderPass(createInfo);
     }
 
+    private void CreateFrameBuffers()
+    {
+        var extent = new VkExtent3D
+        {
+            Width  = this.Window.Surface.Swapchain.Extent.Width,
+            Height = this.Window.Surface.Swapchain.Extent.Height,
+            Depth  = 1,
+        };
+
+        for (var i = 0; i < this.Window.Surface.Swapchain.Images.Length; i++)
+        {
+            var createInfo = new FramebufferCreateInfo
+            {
+                RenderPass  = this.renderPass,
+                Attachments =
+                [
+                    new FramebufferCreateInfo.Attachment
+                    {
+                        Image       = Image.From(this.Renderer, this.Window.Surface.Swapchain.Images[i], extent),
+                        Format      = this.Window.Surface.Swapchain.Format,
+                        ImageAspect = VkImageAspectFlags.Color,
+                    },
+                ]
+            };
+
+            this.framebuffers[i] = this.Renderer.CreateFramebuffer(createInfo);
+        }
+    }
+
+    private void DisposeFrameBuffers()
+    {
+        for (var i = 0; i < this.framebuffers.Length; i++)
+        {
+            this.framebuffers[i].Dispose();
+        }
+    }
+
     protected override void ExecuteCommand(RenderResources resource, RectDrawCommand command, in Size<float> viewport, in Matrix3x2<float> transform)
     {
         var constant = new CanvasShader.PushConstant
@@ -115,17 +151,19 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
         if (uniformSet != null && uniformSet != this.lastUniformSet)
         {
-            this.Renderer.BindUniformSet(this.CommandBuffer, uniformSet);
+            this.CommandBuffer.BindUniformSet(uniformSet);
 
             this.lastUniformSet = uniformSet;
         }
 
-        this.Renderer.PushConstant(this.CommandBuffer, resource.Shader, constant);
-        this.Renderer.DrawIndexed(this.CommandBuffer,  resource.IndexBuffer);
+        this.CommandBuffer.PushConstant(resource.Shader, constant);
+        this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
     }
 
     protected override void OnDispose()
     {
+        this.DisposeFrameBuffers();
+
         for (var i = 0; i < this.Resources.Length; i++)
         {
             this.Resources[i].Dispose();
@@ -136,13 +174,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
     public override void Recreate()
     {
-        this.renderPass.Dispose();
-
-        this.renderPass = this.CreateRenderPass();
-
-        for (var i = 0; i < this.Resources.Length; i++)
-        {
-            this.Resources[i].Shader.RenderPass = this.renderPass;
-        }
+        this.DisposeFrameBuffers();
+        this.CreateFrameBuffers();
     }
 }

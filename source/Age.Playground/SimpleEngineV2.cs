@@ -733,7 +733,6 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         );
 
         stagingBufferMemory.Write(0, 0, [.. this.indices]);
-        stagingBufferMemory.Unmap();
 
         this.CreateBuffer(
             bufferSize,
@@ -1091,7 +1090,6 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         );
 
         stagingBufferMemory.Write(0, 0, pixels);
-        stagingBufferMemory.Unmap();
 
         this.CreateImage(
             (uint)bitmap.Width,
@@ -1176,7 +1174,6 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         );
 
         stagingBufferMemory.Write(0, 0, this.vertices.ToArray());
-        stagingBufferMemory.Unmap();
 
         this.CreateBuffer(
             bufferSize,

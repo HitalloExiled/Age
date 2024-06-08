@@ -8,28 +8,14 @@ using ThirdParty.Vulkan;
 
 namespace Age.Rendering.RenderPasses;
 
-public abstract class CanvasBaseRenderGraphPass(VulkanRenderer renderer, IWindow window) : RenderGraphPass(renderer, window)
+public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer, IWindow window) : RenderGraphPass(renderer, window)
 {
-    protected struct RenderResources(Shader shader, VertexBuffer vertexBuffer, IndexBuffer indexBuffer)
-    {
-        public Shader       Shader       = shader;
-        public VertexBuffer VertexBuffer = vertexBuffer;
-        public IndexBuffer  IndexBuffer  = indexBuffer;
-
-        public readonly void Dispose()
-        {
-            this.Shader.Dispose();
-            this.VertexBuffer.Dispose();
-            this.IndexBuffer.Dispose();
-        }
-    }
-
     public event Action? Changed;
 
-    protected abstract VkCommandBuffer   CommandBuffer  { get; }
-    protected abstract RenderResources[] Resources { get; }
-    protected abstract RenderPass        RenderPass     { get; }
-    protected abstract uint              CurrentBuffer  { get; }
+    protected abstract CommandBuffer     CommandBuffer { get; }
+    protected abstract RenderResources[] Resources     { get; }
+    protected abstract RenderPass        RenderPass    { get; }
+    protected abstract Framebuffer       Framebuffer   { get; }
 
     protected abstract void ExecuteCommand(RenderResources resource, RectDrawCommand command, in Size<float> viewport, in Matrix3x2<float> transform);
 
@@ -47,14 +33,14 @@ public abstract class CanvasBaseRenderGraphPass(VulkanRenderer renderer, IWindow
         var viewportFloat = viewport.Cast<float>();
         var extent        = Unsafe.As<Size<uint>, VkExtent2D>(ref viewport);
 
-        this.Renderer.SetViewport(this.CommandBuffer, extent);
-        this.Renderer.BeginRenderPass(this.CommandBuffer, this.RenderPass, this.CurrentBuffer, Color.White);
+        this.CommandBuffer.SetViewport(extent);
+        this.CommandBuffer.BeginRenderPass(this.RenderPass, this.Framebuffer, Color.White);
 
         foreach (var resource in this.Resources)
         {
-            this.Renderer.BindPipeline(this.CommandBuffer,      resource.Shader);
-            this.Renderer.BindVertexBuffers(this.CommandBuffer, resource.VertexBuffer);
-            this.Renderer.BindIndexBuffer(this.CommandBuffer,   resource.IndexBuffer);
+            this.CommandBuffer.BindPipeline(resource.Shader);
+            this.CommandBuffer.BindVertexBuffers(resource.VertexBuffer);
+            this.CommandBuffer.BindIndexBuffer(resource.IndexBuffer);
 
             foreach (var entry in this.Window.Tree.EnumerateCommands())
             {
@@ -69,7 +55,7 @@ public abstract class CanvasBaseRenderGraphPass(VulkanRenderer renderer, IWindow
             }
         }
 
-        this.Renderer.EndRenderPass(this.CommandBuffer);
+        this.CommandBuffer.EndRenderPass();
 
         this.AfterExecute();
     }

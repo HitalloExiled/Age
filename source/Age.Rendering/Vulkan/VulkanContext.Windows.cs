@@ -12,7 +12,7 @@ using ThirdParty.Vulkan.Extensions;
 
 namespace Age.Rendering.Vulkan;
 
-public unsafe partial class VulkanContext : IDisposable
+internal unsafe partial class VulkanContext : IDisposable
 {
     private readonly string[] platformExtensions = [VkWin32SurfaceExtensionKHR.Name];
 

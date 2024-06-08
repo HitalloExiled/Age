@@ -1,20 +1,24 @@
 using Age.Rendering.Enums;
+using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public class Texture : Disposable
+public class Texture : Resource
 {
-    public required Allocation  Allocation  { get; init; }
-    public required VkExtent3D  Extent      { get; init; }
-    public required VkImage     Image       { get; init; }
+    public required Image       Image       { get; init; }
     public required VkImageView ImageView   { get; init; }
     public required TextureType TextureType { get; init; }
 
+    internal Texture(VulkanRenderer renderer) : base(renderer)
+    { }
+
     protected override void OnDispose()
     {
-        this.Allocation.Memory.Dispose();
         this.Image.Dispose();
         this.ImageView.Dispose();
     }
+
+    public void Update(Span<byte> data) =>
+        this.Image.Update(data);
 }

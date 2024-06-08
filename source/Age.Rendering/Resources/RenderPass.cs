@@ -4,18 +4,9 @@ namespace Age.Rendering.Resources;
 
 public partial class RenderPass : Disposable
 {
-    public required VkRenderPass  Value        { get; init; }
-    public required VkExtent2D    Extent       { get; init; }
-    public required Framebuffer[] Framebuffers { get; init; }
-    public required int           SubPasses    { get; init; }
+    public required VkRenderPass  Value     { get; init; }
+    public required int           SubPasses { get; init; }
 
-    protected override void OnDispose()
-    {
+    protected override void OnDispose() =>
         this.Value.Dispose();
-
-        foreach (var frameBuffer in this.Framebuffers)
-        {
-            frameBuffer.Dispose();
-        }
-    }
 }

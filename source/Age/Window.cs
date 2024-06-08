@@ -30,7 +30,7 @@ public class Window : Platforms.Display.Window, IWindow
     {
         base.PlatformCreate(title, size, position, parent);
 
-        this.Surface = renderer.Context.CreateSurface(this.Handle, this.ClientSize);
+        this.Surface = renderer.CreateSurface(this.Handle, this.ClientSize);
 
         this.SizeChanged += () =>
         {

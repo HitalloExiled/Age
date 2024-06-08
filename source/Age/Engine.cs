@@ -6,6 +6,7 @@ using Age.Rendering.RenderPasses;
 using Age.Rendering.Services;
 using Age.Rendering.Storage;
 using Age.Rendering.Vulkan;
+using SkiaSharp;
 
 namespace Age;
 
@@ -33,9 +34,35 @@ public class Engine : IDisposable
         var renderingService = new RenderingService(this.renderer);
         var textService      = new TextService(this.renderer, textureStorage);
 
-        var canvasIdRenderGraphPass = new CanvasIdRenderGraphPass(this.renderer, this.Window);
+        var canvasIdRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
 
-        this.Window.SizeChanged += () => canvasIdRenderGraphPass.Image.GetBuffer();
+        this.Window.SizeChanged += () =>
+        {
+            var image = canvasIdRenderGraphPass.Image;
+            var data  = canvasIdRenderGraphPass.Image.ReadBuffer();
+
+            static SKColor convert(uint value) => new(value);
+
+            var pixels = data.Select(convert).ToArray();
+
+            var bitmap = new SKBitmap((int)image.Extent.Width, (int)image.Extent.Height)
+            {
+                Pixels = pixels
+            };
+
+            var skimage = SKImage.FromBitmap(bitmap);
+
+            try
+            {
+                using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), "CanvasIndex.png"));
+
+                skimage.Encode(SKEncodedImageFormat.Png, 100).SaveTo(stream);
+            }
+            catch
+            {
+
+            }
+        };
 
         var renderGraph = new RenderGraph
         {

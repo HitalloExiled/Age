@@ -12,7 +12,7 @@ using static Age.Core.Interop.PointerHelper;
 
 namespace Age.Rendering.Vulkan;
 
-public unsafe partial class VulkanContext : IDisposable
+internal unsafe partial class VulkanContext : IDisposable
 {
     public event Action? SwapchainRecreated;
 
@@ -646,11 +646,11 @@ public unsafe partial class VulkanContext : IDisposable
 
         for (var i = 0; i < visibleSurfaces.Length; i++)
         {
-            var context = visibleSurfaces[i];
+            var surface = visibleSurfaces[i];
 
-            imageIndices[i]   = context.CurrentBuffer;
-            swapchains[i]     = context.Swapchain.Value.Handle;
-            waitSemaphores[i] = context.Semaphores[this.currentFrame].Handle;
+            imageIndices[i]   = surface.CurrentBuffer;
+            swapchains[i]     = surface.Swapchain.Value.Handle;
+            waitSemaphores[i] = surface.Semaphores[this.currentFrame].Handle;
             waitStages[i]     = VkPipelineStageFlags.ColorAttachmentOutput;
         }
 
@@ -695,13 +695,13 @@ public unsafe partial class VulkanContext : IDisposable
                 for (var i = 0; i < results.Length; i++)
                 {
                     var result  = results[i];
-                    var context = Surface.Entries[i];
+                    var surface = Surface.Entries[i];
 
                     if (result is VkResult.ErrorOutOfDateKHR or VkResult.SuboptimalKHR)
                     {
                         Logger.Trace("Vulkan queue submit: Swapchain is out of date, recreating.");
 
-                        this.RecreateSwapchain(context);
+                        this.RecreateSwapchain(surface);
                     }
                     else
                     {

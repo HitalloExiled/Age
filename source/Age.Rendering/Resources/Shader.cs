@@ -11,12 +11,14 @@ public class Shader : Disposable
 
     private readonly ShaderResources shaderResources;
 
-    public string                Name                => this.shaderResources.Name;
+    public string Name => this.shaderResources.Name;
+
+    public VkPipelineBindPoint PipelineBindPoint { get; }
+    public RenderPass          RenderPass        { get; }
+
     public VkDescriptorSetLayout DescriptorSetLayout { get; private set; }
     public VkPipeline            Pipeline            { get; private set; }
-    public VkPipelineBindPoint   PipelineBindPoint   { get; private set; }
     public VkPipelineLayout      PipelineLayout      { get; private set; }
-    public RenderPass            RenderPass          { get; set; }
 
     public Shader(ShaderResources shaderResources, VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline, VkPipelineLayout pipelineLayout, VkDescriptorSetLayout descriptorSetLayout, RenderPass renderPass)
     {
