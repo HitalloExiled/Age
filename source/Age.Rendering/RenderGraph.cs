@@ -8,6 +8,8 @@ public class RenderGraph : IDisposable
 
     public required RenderGraphPass[] Passes { get; init; }
 
+    public bool Disabled { get; set; }
+
     public void Dispose()
     {
         if (!this.disposed)
@@ -21,5 +23,27 @@ public class RenderGraph : IDisposable
         }
 
         GC.SuppressFinalize(this);
+    }
+
+    public void Execute()
+    {
+        if (!this.Disabled)
+        {
+            foreach (var pass in this.Passes)
+            {
+                if (!pass.Disabled)
+                {
+                    pass.Execute();
+                }
+            }
+        }
+    }
+
+    public void Recreate()
+    {
+        foreach (var pass in this.Passes)
+        {
+            pass.Recreate();
+        }
     }
 }

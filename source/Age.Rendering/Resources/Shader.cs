@@ -1,4 +1,3 @@
-using Age.Core;
 using Age.Rendering.Shaders;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
@@ -16,19 +15,16 @@ public class Shader : Disposable
     public VkPipelineBindPoint PipelineBindPoint { get; }
     public RenderPass          RenderPass        { get; }
 
-    public VkDescriptorSetLayout DescriptorSetLayout { get; private set; }
-    public VkPipeline            Pipeline            { get; private set; }
-    public VkPipelineLayout      PipelineLayout      { get; private set; }
+    public required VkDescriptorSetLayout DescriptorSetLayout { get; set; }
+    public required VkPipeline            Pipeline            { get; set; }
+    public required VkPipelineLayout      PipelineLayout      { get; set; }
+    public required VkDescriptorType[]    UniformBindings     { get; set; }
 
-    public Shader(ShaderResources shaderResources, VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline, VkPipelineLayout pipelineLayout, VkDescriptorSetLayout descriptorSetLayout, RenderPass renderPass)
+    internal Shader(VkPipelineBindPoint pipelineBindPoint, ShaderResources shaderResources, RenderPass renderPass)
     {
-        this.shaderResources = shaderResources;
-
-        this.PipelineBindPoint   = pipelineBindPoint;
-        this.Pipeline            = pipeline;
-        this.PipelineLayout      = pipelineLayout;
-        this.DescriptorSetLayout = descriptorSetLayout;
-        this.RenderPass          = renderPass;
+        this.PipelineBindPoint = pipelineBindPoint;
+        this.shaderResources   = shaderResources;
+        this.RenderPass        = renderPass;
 
         shaderResources.Changed += this.OnResourcesChanged;
     }
@@ -43,17 +39,6 @@ public class Shader : Disposable
         this.DescriptorSetLayout.Dispose();
         this.RenderPass.Dispose();
         this.shaderResources.Dispose();
-    }
-
-    public IDisposable Update(VkPipeline pipeline, VkPipelineLayout pipelineLayout, VkDescriptorSetLayout descriptorSetLayout)
-    {
-        var disposables = new Disposables(this.Pipeline, this.PipelineLayout, this.DescriptorSetLayout);
-
-        this.Pipeline            = pipeline;
-        this.PipelineLayout      = pipelineLayout;
-        this.DescriptorSetLayout = descriptorSetLayout;
-
-        return disposables;
     }
 }
 

@@ -72,9 +72,9 @@ public unsafe class NativeArray<T>(int lenght = 1) : IDisposable where T : unman
     private bool disposed;
     private T* buffer = (T*)NativeMemory.Alloc((uint)(sizeof(T) * lenght));
 
-    public NativeArray(IList<T> values) : this(values.Count)
+    public NativeArray(Span<T> values) : this(values.Length)
     {
-        for (var i = 0; i < values.Count; i++)
+        for (var i = 0; i < values.Length; i++)
         {
             this.buffer[i] = values[i];
         }

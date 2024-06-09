@@ -9,11 +9,31 @@ public class Buffer(VulkanRenderer renderer, VkBuffer value) : Resource<VkBuffer
     public required Allocation         Allocation { get; init; }
     public required VkBufferUsageFlags Usage      { get; init; }
 
+    private void Copy(Buffer source, Buffer destination)
+    {
+        var commandBuffer = this.Renderer.BeginSingleTimeCommands();
+
+        var copyRegion = new VkBufferCopy
+        {
+            Size = source.Allocation.Size,
+        };
+
+        commandBuffer.Value.CopyBuffer(source, destination, copyRegion);
+
+        this.Renderer.EndSingleTimeCommands(commandBuffer);
+    }
+
     protected override void OnDispose()
     {
         this.Allocation.Dispose();
         this.Value.Dispose();
     }
+
+    public void CopyFrom(Buffer source) =>
+        this.Copy(source, this);
+
+    public void CopyTo(Buffer destination) =>
+        this.Copy(this, destination);
 
     public void Update<T>(T data) where T : unmanaged =>
         this.Update([data]);
@@ -24,7 +44,7 @@ public class Buffer(VulkanRenderer renderer, VkBuffer value) : Resource<VkBuffer
 
         stagingBuffer.Allocation.Memory.Write(0, 0, data);
 
-        this.Renderer.CopyBuffer(stagingBuffer, this, this.Allocation.Size);
+        this.Copy(stagingBuffer, this);
 
         stagingBuffer.Dispose();
     }

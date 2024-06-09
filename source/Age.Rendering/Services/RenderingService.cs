@@ -18,13 +18,16 @@ internal partial class RenderingService : IRenderingService
         this.renderer.SwapchainRecreated += this.OnSwapchainRecreated;
     }
 
+    private void RequestDrawIncremental() =>
+        this.changes++;
+
     private void OnSwapchainRecreated()
     {
         this.RequestDrawIncremental();
 
-        foreach (var pass in this.renderGraphs.Values.SelectMany(x => x.Passes))
+        foreach (var renderGraph in this.renderGraphs.Values)
         {
-            pass.Recreate();
+            renderGraph.Recreate();
         }
     }
 
@@ -42,9 +45,6 @@ internal partial class RenderingService : IRenderingService
             this.disposed = true;
         }
     }
-
-    private void RequestDrawIncremental() =>
-        this.changes++;
 
     public void Dispose()
     {
@@ -73,15 +73,7 @@ internal partial class RenderingService : IRenderingService
             {
                 if (window.Visible && !window.Minimized && !window.Closed)
                 {
-                    var renderGraph = this.renderGraphs[window];
-
-                    foreach (var pass in renderGraph.Passes)
-                    {
-                        if (!pass.Disabled)
-                        {
-                            pass.Execute();
-                        }
-                    }
+                    this.renderGraphs[window].Execute();
                 }
             }
 

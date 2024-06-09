@@ -2,7 +2,7 @@ using Age.Rendering.Enums;
 
 namespace Age.Rendering.Vulkan;
 
-public record TextureCreate
+public readonly struct TextureCreateInfo
 {
     public required ColorMode   ColorMode   { get; init; }
     public required uint        Depth       { get; init; }

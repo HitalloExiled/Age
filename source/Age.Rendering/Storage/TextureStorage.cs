@@ -54,7 +54,7 @@ public class TextureStorage : ITextureStorage
 
     public Texture CreateTexture(Size<uint> size, ColorMode colorMode, TextureType textureType)
     {
-        var textureCreate = new TextureCreate
+        var textureCreate = new TextureCreateInfo
         {
             Depth = 1,
             Width = size.Width,
@@ -83,14 +83,8 @@ public class TextureStorage : ITextureStorage
             var uniform = new CombinedImageSamplerUniform
             {
                 Binding = 0,
-                Images =
-                [
-                    new()
-                    {
-                        Sampler = sampler,
-                        Texture = texture,
-                    }
-                ]
+                Sampler = sampler,
+                Texture = texture,
             };
 
             this.textureSets[texture] = uniformSet = this.renderer.CreateUniformSet(shader, [uniform]);

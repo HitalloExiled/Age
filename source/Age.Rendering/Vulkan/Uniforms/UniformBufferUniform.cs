@@ -1,12 +1,11 @@
-using Age.Rendering.Enums;
-
+using ThirdParty.Vulkan.Enums;
 using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Rendering.Vulkan.Uniforms;
 
 public record UniformBufferUniform : Uniform
 {
-    public override UniformType Type => UniformType.UniformBuffer;
+    public override VkDescriptorType Type => VkDescriptorType.UniformBuffer;
 
     public required Buffer Buffer { get; init; }
 }

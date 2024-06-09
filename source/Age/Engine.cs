@@ -3,10 +3,12 @@ using Age.Numerics;
 using Age.Rendering;
 using Age.Rendering.Drawing;
 using Age.Rendering.RenderPasses;
+using Age.Rendering.Resources;
 using Age.Rendering.Services;
 using Age.Rendering.Storage;
 using Age.Rendering.Vulkan;
 using SkiaSharp;
+using ThirdParty.Vulkan.Flags;
 
 namespace Age;
 
@@ -34,34 +36,18 @@ public class Engine : IDisposable
         var renderingService = new RenderingService(this.renderer);
         var textService      = new TextService(this.renderer, textureStorage);
 
-        var canvasIdRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
+        var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
+        var geometryRenderGraphPass    = new GeometryRenderGraphPass(this.renderer, this.Window, textureStorage);
 
         this.Window.SizeChanged += () =>
         {
-            var image = canvasIdRenderGraphPass.Image;
-            var data  = canvasIdRenderGraphPass.Image.ReadBuffer();
+            var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
+            var geometryColorImage    = geometryRenderGraphPass.ColorImage;
+            var geometryDepthImage    = geometryRenderGraphPass.DepthImage;
 
-            static SKColor convert(uint value) => new(value);
-
-            var pixels = data.Select(convert).ToArray();
-
-            var bitmap = new SKBitmap((int)image.Extent.Width, (int)image.Extent.Height)
-            {
-                Pixels = pixels
-            };
-
-            var skimage = SKImage.FromBitmap(bitmap);
-
-            try
-            {
-                using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), "CanvasIndex.png"));
-
-                skimage.Encode(SKEncodedImageFormat.Png, 100).SaveTo(stream);
-            }
-            catch
-            {
-
-            }
+            SaveImage(geometryColorImage, VkImageAspectFlags.Color, "Geometry.Color.png");
+            SaveImage(geometryDepthImage, VkImageAspectFlags.Depth, "Geometry.Depth.png");
+            SaveImage(canvasIndexImage,   VkImageAspectFlags.Color, "CanvasIndex.png");
         };
 
         var renderGraph = new RenderGraph
@@ -69,7 +55,8 @@ public class Engine : IDisposable
             Name   = "Canvas",
             Passes =
             [
-                canvasIdRenderGraphPass,
+                geometryRenderGraphPass,
+                canvasIndexRenderGraphPass,
                 new CanvasRenderGraphPass(this.renderer, this.Window, textureStorage),
             ]
         };
@@ -84,6 +71,33 @@ public class Engine : IDisposable
         };
 
         this.Window.SizeChanged += this.container.RenderingService.RequestDraw;
+    }
+
+    private static void SaveImage(Image image, VkImageAspectFlags aspectMask, string filename)
+    {
+        var data = image.ReadBuffer(aspectMask);
+
+        static SKColor convert(uint value) => new(value);
+
+        var pixels = data.Select(convert).ToArray();
+
+        var bitmap = new SKBitmap((int)image.Extent.Width, (int)image.Extent.Height)
+        {
+            Pixels = pixels
+        };
+
+        var skimage = SKImage.FromBitmap(bitmap);
+
+        try
+        {
+            using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), filename));
+
+            skimage.Encode(SKEncodedImageFormat.Png, 100).SaveTo(stream);
+        }
+        catch
+        {
+
+        }
     }
 
     protected virtual void Dispose(bool disposing)

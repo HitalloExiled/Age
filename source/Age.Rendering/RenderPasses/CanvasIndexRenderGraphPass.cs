@@ -20,7 +20,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
     private Image       image;
     private Framebuffer framebuffer;
 
-    public Image Image => this.image;
+    public Image ColorImage => this.image;
 
     protected override CommandBuffer     CommandBuffer => this.commandBuffer;
     protected override Framebuffer       Framebuffer   => this.framebuffer;

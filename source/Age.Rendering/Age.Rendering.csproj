@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="./Assets/**/*"       CopyToOutputDirectory="PreserveNewest" />
     <None Include="./Shaders/**/*.glsl" CopyToOutputDirectory="PreserveNewest" />
     <None Include="./Shaders/**/*.frag" CopyToOutputDirectory="PreserveNewest" />
     <None Include="./Shaders/**/*.vert" CopyToOutputDirectory="PreserveNewest" />

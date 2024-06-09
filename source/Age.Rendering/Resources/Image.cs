@@ -12,15 +12,16 @@ public class Image : Resource<VkImage>
     public bool IsBorrowed { get; private set; }
 
     public Allocation? Allocation { get; init; }
-    public VkExtent3D  Extent     { get; init; }
+
+    public required VkExtent3D         Extent { get; init; }
 
     internal Image(VulkanRenderer renderer, VkImage image) : base(renderer, image) { }
 
     internal static Image From(VulkanRenderer renderer, VkImage image, VkExtent3D extent) =>
         new(renderer, image)
         {
-            IsBorrowed = true,
             Extent     = extent,
+            IsBorrowed = true,
         };
 
     protected override void OnDispose()
@@ -32,32 +33,13 @@ public class Image : Resource<VkImage>
         }
     }
 
-    public void CopyToBuffer(Buffer buffer)
-    {
-        var commandBuffer = this.Renderer.BeginSingleTimeCommands();
-
-        var bufferImageCopy = new VkBufferImageCopy
-        {
-            ImageExtent      = this.Extent,
-            ImageSubresource = new()
-            {
-                AspectMask = VkImageAspectFlags.Color,
-                LayerCount = 1,
-            }
-        };
-
-        commandBuffer.Value.CopyImageToBuffer(this.Value, VkImageLayout.TransferSrcOptimal, buffer.Value, [bufferImageCopy]);
-
-        this.Renderer.EndSingleTimeCommands(commandBuffer);
-    }
-
-    public unsafe uint[] ReadBuffer()
+    public unsafe uint[] ReadBuffer(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
     {
         var size = this.Extent.Width * this.Extent.Height * sizeof(uint);
 
         using var buffer = this.Renderer.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
-        this.CopyToBuffer(buffer);
+        this.CopyToBuffer(buffer, aspectMask);
 
         buffer.Allocation.Memory.Map(0, size, 0, out var data);
 
@@ -99,6 +81,43 @@ public class Image : Resource<VkImage>
         this.Renderer.EndSingleTimeCommands(commandBuffer);
     }
 
+    public void CopyFromBuffer(Buffer buffer)
+    {
+        var commandBuffer = this.Renderer.BeginSingleTimeCommands();
+
+        var bufferImageCopy = new VkBufferImageCopy
+        {
+            ImageExtent      = this.Extent,
+            ImageSubresource = new()
+            {
+                AspectMask = VkImageAspectFlags.Color,
+                LayerCount = 1,
+            }
+        };
+
+        commandBuffer.Value.CopyBufferToImage(buffer, this, VkImageLayout.TransferDstOptimal, [bufferImageCopy]);
+
+        this.Renderer.EndSingleTimeCommands(commandBuffer);
+    }
+
+    public void CopyToBuffer(Buffer buffer, VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
+    {
+        var commandBuffer = this.Renderer.BeginSingleTimeCommands();
+
+        var bufferImageCopy = new VkBufferImageCopy
+        {
+            ImageExtent      = this.Extent,
+            ImageSubresource = new()
+            {
+                AspectMask = aspectMask,
+                LayerCount = 1,
+            }
+        };
+
+        commandBuffer.Value.CopyImageToBuffer(this, VkImageLayout.TransferSrcOptimal, buffer.Value, [bufferImageCopy]);
+
+        this.Renderer.EndSingleTimeCommands(commandBuffer);
+    }
 
     public void Update(Span<byte> data)
     {
@@ -115,7 +134,7 @@ public class Image : Resource<VkImage>
             VkPipelineStageFlags.Transfer
         );
 
-        this.Renderer.CopyBufferToImage(buffer.Value, this, this.Extent.Width, this.Extent.Height);
+        this.CopyFromBuffer(buffer);
 
         this.TransitionImageLayout(
             VkImageLayout.TransferDstOptimal,

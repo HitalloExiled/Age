@@ -32,6 +32,6 @@ _ReSharper*/
 packages/
 .coverage
 *.spv
-!source/Age.Playground/Models/*.obj
+!**/*.obj
 *.bkp
 *.dtmp

@@ -13,9 +13,9 @@ public readonly struct RenderPassCreateInfo
 
     public readonly struct SubPass
     {
-        public required VkPipelineBindPoint PipelineBindPoint    { get; init; }
-        public ColorAttachment[]          ColorAttachments       { get; init; } = [];
-        public VkAttachmentDescription?  DepthStencilAttachment  { get; init; }
+        public required VkPipelineBindPoint PipelineBindPoint      { get; init; }
+        public ColorAttachment[]            ColorAttachments       { get; init; } = [];
+        public VkAttachmentDescription?     DepthStencilAttachment { get; init; }
 
         public SubPass() { }
     }

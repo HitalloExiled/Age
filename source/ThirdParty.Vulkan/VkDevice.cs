@@ -16,8 +16,8 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
 {
     private readonly HashSet<string> enabledExtensions = [];
 
-    internal VkPhysicalDevice PhysicalDevice { get; }
-    internal VkInstance       Instance       => this.PhysicalDevice.Instance;
+    public VkPhysicalDevice PhysicalDevice { get; }
+    public VkInstance       Instance       => this.PhysicalDevice.Instance;
 
     internal VkDevice(VkPhysicalDevice physicalDevice, in VkDeviceCreateInfo createInfo)
     {

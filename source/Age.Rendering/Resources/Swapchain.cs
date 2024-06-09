@@ -5,10 +5,10 @@ namespace Age.Rendering.Resources;
 
 public class Swapchain : Disposable
 {
-    public required VkExtent2D      Extent { get; init; }
-    public required VkFormat        Format { get; init; }
-    public required VkImage[]       Images { get; init; }
-    public required VkSwapchainKHR  Value  { get; init; }
+    public required VkExtent2D      Extent       { get; init; }
+    public required VkFormat        Format       { get; init; }
+    public required VkImage[]       Images       { get; init; }
+    public required VkSwapchainKHR  Value        { get; init; }
 
     protected override void OnDispose() =>
         this.Value.Dispose();
