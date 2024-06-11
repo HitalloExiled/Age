@@ -13,7 +13,7 @@ public class Image : Resource<VkImage>
 
     public Allocation? Allocation { get; init; }
 
-    public required VkExtent3D         Extent { get; init; }
+    public required VkExtent3D Extent { get; init; }
 
     internal Image(VulkanRenderer renderer, VkImage image) : base(renderer, image) { }
 

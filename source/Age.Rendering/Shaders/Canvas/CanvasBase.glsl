@@ -16,9 +16,9 @@
 
 #define CURVE_FACTOR 3
 
-#define FLAGS_GRAYSCALE_TEXTURE   1 << 0
-#define FLAGS_MULTIPLY_COLOR      1 << 1
-#define FLAGS_COLOR_AS_BACKGROUND 1 << 2
+#define FLAGS_GRAYSCALE_TEXTURE     1 << 0
+#define FLAGS_MULTIPLY_COLOR        1 << 1
+#define FLAGS_COLOR_AS_BACKGROUND   1 << 2
 
 layout(binding = 0) uniform sampler2D texSampler;
 

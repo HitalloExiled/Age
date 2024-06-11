@@ -10,9 +10,8 @@ internal class Container : IDisposable
 
     public static Container Singleton => singleton ?? throw new NullReferenceException($"{nameof(Container)} not initialized");
 
-    public required IRenderingService RenderingService { get; init; }
-    public required ITextService      TextService      { get; init; }
-    public required ITextureStorage   TextureStorage   { get; init; }
+    public required ITextService    TextService    { get; init; }
+    public required ITextureStorage TextureStorage { get; init; }
 
     public Container()
     {
@@ -30,7 +29,6 @@ internal class Container : IDisposable
         {
             this.TextService.Dispose();
             this.TextureStorage.Dispose();
-            this.RenderingService.Dispose();
 
             this.disposed = true;
         }

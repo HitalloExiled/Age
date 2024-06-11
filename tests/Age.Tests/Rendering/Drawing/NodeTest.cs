@@ -147,31 +147,34 @@ public class NodeTest
     [Fact]
     public void Traverse()
     {
-        var child11 = new Span { Name = "1.1.1" };
-        var child12 = new Span { Name = "1.1.2" };
-        var child13 = new Span { Name = "1.1.3" };
+        var child11 = new Span { Name = "$.1.1" };
+        var child12 = new Span { Name = "$.1.2" };
+        var child13 = new Span { Name = "$.1.3" };
 
-        var child21 = new Span { Name = "1.2.1" };
-        var child22 = new Span { Name = "1.2.2" };
+        var child21 = new Span { Name = "$.2.1" };
+        var child22 = new Span { Name = "$.2.2" };
 
-        var child31 = new Span { Name = "1.3.1" };
+        var child31 = new Span { Name = "$.3.1" };
 
-        var child1 = new Span { Name = "1.1" };
+        var child0 = new Span { Name = "$.0" };
+
+        var child1 = new Span { Name = "$.1" };
         child1.AppendChildren([child11, child12, child13]);
 
-        var child2 = new Span { Name = "1.2" };
+        var child2 = new Span { Name = "$.2" };
         child2.AppendChildren([child21, child22]);
 
-        var child3 = new Span { Name = "1.3" };
+        var child3 = new Span { Name = "$.3" };
         child3.AppendChild(child31);
 
-        var parent = new Span { Name = "1" };
-        parent.AppendChildren([child1, child2, child3]);
+        var parent = new Span { Name = "$" };
+        parent.AppendChildren([child0, child1, child2, child3]);
 
-        var nodes = new List<Node>();
+        var nodes = new List<string>();
 
-        Span[] expected =
-        [
+        var expected = new Span[]
+        {
+            child0,
             child11,
             child12,
             child13,
@@ -181,19 +184,22 @@ public class NodeTest
             child2,
             child31,
             child3,
-        ];
+        }
+        .Select(x => x.Name)
+        .ToArray();
 
         foreach (var node in parent.Traverse())
         {
-            nodes.Add(node);
+            nodes.Add(node.Name!);
         }
 
         Assert.Equal(expected, nodes);
 
         nodes.Clear();
 
-        expected =
-        [
+        expected = new Span[]
+        {
+            child0,
             child1,
             child11,
             child12,
@@ -203,11 +209,13 @@ public class NodeTest
             child22,
             child3,
             child31,
-        ];
+        }
+         .Select(x  => x.Name)
+         .ToArray();
 
         foreach (var node in parent.Traverse(true))
         {
-            nodes.Add(node);
+            nodes.Add(node.Name!);
         }
 
         Assert.Equal(expected, nodes);

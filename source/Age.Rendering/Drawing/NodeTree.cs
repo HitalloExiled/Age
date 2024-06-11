@@ -14,6 +14,8 @@ public sealed class NodeTree(IWindow window) : Node
 
     public override string NodeName { get; } = nameof(NodeTree);
 
+    public bool IsDirty { get; internal set; }
+
     public IWindow Window => window;
 
     internal IEnumerable<CommandEntry> EnumerateCommands()
@@ -27,17 +29,20 @@ public sealed class NodeTree(IWindow window) : Node
         }
         else
         {
-            foreach (var node in this.Window.Tree.Traverse<Node2D>(true))
+            foreach (var node in this.Window.Tree.Traverse(true))
             {
-                var transform = (Matrix3x2<float>)node.TransformCache;
-
-                foreach (var command in node.Commands)
+                if (node is Node2D node2D)
                 {
-                    var entry = new CommandEntry(transform, command);
+                    var transform = (Matrix3x2<float>)node2D.TransformCache;
 
-                    this.commandEntriesCache.Add(entry);
+                    foreach (var command in node2D.Commands)
+                    {
+                        var entry = new CommandEntry(transform, command);
 
-                    yield return entry;
+                        this.commandEntriesCache.Add(entry);
+
+                        yield return entry;
+                    }
                 }
             }
         }

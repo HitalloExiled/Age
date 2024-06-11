@@ -38,6 +38,7 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
 
     public Image ColorImage => this.colorImages[this.Window.Surface.CurrentBuffer];
     public Image DepthImage => this.depthImages[this.Window.Surface.CurrentBuffer];
+    public Texture Texture  => this.texture;
 
     public unsafe GeometryRenderGraphPass(VulkanRenderer renderer, IWindow window, TextureStorage textureStorage) : base(renderer, window)
     {

@@ -22,7 +22,7 @@ public sealed class Canvas : Element
 
         if (this.IsConnected)
         {
-            Container.Singleton.RenderingService.RequestDraw();
+            this.Tree.IsDirty = true;
         }
     }
 

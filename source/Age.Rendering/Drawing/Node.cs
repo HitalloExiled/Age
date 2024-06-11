@@ -24,7 +24,7 @@ public abstract partial class Node : IEnumerable<Node>
 
     public string? Name { get; set; }
 
-    [MemberNotNullWhen(true, nameof(IsConnected))]
+
     public NodeTree? Tree
     {
         get => this.tree;
@@ -56,6 +56,7 @@ public abstract partial class Node : IEnumerable<Node>
         }
     }
 
+    [MemberNotNullWhen(true, nameof(Tree))]
     public bool IsConnected => this.Tree != null;
 
     IEnumerator IEnumerable.GetEnumerator() =>
@@ -242,30 +243,8 @@ public abstract partial class Node : IEnumerable<Node>
         this.LastChild  = null;
     }
 
-    /* public IEnumerable<Node> Traverse(bool topDown = false)
-    {
-        foreach (var child in this)
-        {
-            if (topDown)
-            {
-                yield return child;
-            }
-
-            foreach (var item in child.Traverse(topDown))
-            {
-                yield return item;
-            }
-
-            if (!topDown)
-            {
-                yield return child;
-            }
-        }
-    } */
-
     public IEnumerable<Node> Traverse(bool topDown = false)
     {
-        var isParent = topDown;
         Node? current;
 
         current = topDown ? this.FirstChild : getDeepest(this);
@@ -276,16 +255,15 @@ public abstract partial class Node : IEnumerable<Node>
 
             if (topDown)
             {
-                if (isParent && current.FirstChild != null)
+                if (current.FirstChild != null)
                 {
                     current = current.FirstChild;
                 }
                 else if (current.NextSibling != null)
                 {
-                    current  = current.NextSibling;
-                    isParent = false;
+                    current = current.NextSibling;
                 }
-                else if (current.Parent != null && current.Parent != this)
+                else if (current.Parent != null)
                 {
                     var next = current;
 
@@ -303,8 +281,7 @@ public abstract partial class Node : IEnumerable<Node>
                         }
                     }
 
-                    current  = next;
-                    isParent = true;
+                    current = next;
                 }
                 else
                 {
@@ -313,20 +290,11 @@ public abstract partial class Node : IEnumerable<Node>
             }
             else
             {
-                if (current.NextSibling != null)
-                {
-                    current  = isParent ? getDeepest(current.NextSibling) : current.NextSibling;
-                    isParent = false;
-                }
-                else if (current.Parent != null && current.Parent != this)
-                {
-                    current  = current.Parent;
-                    isParent = true;
-                }
-                else
-                {
-                    current = null;
-                }
+                current = current.NextSibling != null
+                    ? getDeepest(current.NextSibling)
+                    : current.Parent != this
+                        ? current.Parent
+                        : null;
             }
         }
 

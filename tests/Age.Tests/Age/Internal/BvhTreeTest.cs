@@ -12,17 +12,13 @@ public class BvhTreeTest
     public void Build()
     {
         var textureStorageMock   = new Mock<ITextureStorage>();
-        var renderingServiceMock = new Mock<IRenderingService>();
         var textServiceMock      = new Mock<ITextService>();
 
         using var container = new global::Age.Rendering.Container()
         {
-            RenderingService = renderingServiceMock.Object,
             TextService      = textServiceMock.Object,
             TextureStorage   = textureStorageMock.Object,
         };
-
-        renderingServiceMock.Setup(x => x.RequestDraw()).Callback(() => { });
 
         var windowMock = new Mock<IWindow>();
 

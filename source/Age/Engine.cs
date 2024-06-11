@@ -7,6 +7,7 @@ using Age.Rendering.Resources;
 using Age.Rendering.Services;
 using Age.Rendering.Storage;
 using Age.Rendering.Vulkan;
+using Age.Services;
 using SkiaSharp;
 using ThirdParty.Vulkan.Flags;
 
@@ -18,8 +19,9 @@ public class Engine : IDisposable
     private const ushort TARGET_FPS        = 60;
     private const double TARGET_FRAME_TIME = 1000.0 / TARGET_FPS;
 
-    private readonly Container      container;
-    private readonly VulkanRenderer renderer  = new();
+    private readonly Container        container;
+    private readonly VulkanRenderer   renderer  = new();
+    private readonly RenderingService renderingService;
 
     private bool disposed;
 
@@ -30,11 +32,11 @@ public class Engine : IDisposable
     {
         Window.Register(this.renderer);
 
-        this.Window = new Window(name, windowSize, windowPosition);
+        this.renderingService = new RenderingService(this.renderer);
+        this.Window           = new Window(name, windowSize, windowPosition);
 
-        var textureStorage   = new TextureStorage(this.renderer);
-        var renderingService = new RenderingService(this.renderer);
-        var textService      = new TextService(this.renderer, textureStorage);
+        var textureStorage = new TextureStorage(this.renderer);
+        var textService    = new TextService(this.renderer, textureStorage);
 
         var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
         var geometryRenderGraphPass    = new GeometryRenderGraphPass(this.renderer, this.Window, textureStorage);
@@ -61,16 +63,22 @@ public class Engine : IDisposable
             ]
         };
 
-        renderingService.RegisterRenderGraph(this.Window, renderGraph);
+        this.renderingService.RegisterRenderGraph(this.Window, renderGraph);
 
         this.container = new()
         {
-            RenderingService = renderingService,
-            TextService      = textService,
-            TextureStorage   = textureStorage,
+            TextService    = textService,
+            TextureStorage = textureStorage,
         };
 
-        this.Window.SizeChanged += this.container.RenderingService.RequestDraw;
+        this.Window.SizeChanged += this.renderingService.RequestDraw;
+
+        var viewport = new Viewport
+        {
+            Texture = geometryRenderGraphPass.Texture,
+        };
+
+        this.Window.Tree.AppendChild(viewport);
     }
 
     private static void SaveImage(Image image, VkImageAspectFlags aspectMask, string filename)
@@ -108,6 +116,7 @@ public class Engine : IDisposable
             {
                 Platforms.Display.Window.CloseAll();
 
+                this.renderingService.Dispose();
                 this.container.Dispose();
                 this.renderer.Dispose();
             }
@@ -147,14 +156,21 @@ public class Engine : IDisposable
 
                 foreach (var window in Window.Windows)
                 {
+                    window.Tree.IsDirty = false;
+
                     window.DoEvents();
                     window.Tree.ResetCache();
                     window.Tree.Update(deltaTime);
+
+                    if (window.Tree.IsDirty)
+                    {
+                        this.renderingService.RequestDraw();
+                    }
                 }
 
                 Node2D.CacheVersion++;
 
-                this.container.RenderingService.Render(Window.Windows);
+                this.renderingService.Render(Window.Windows);
 
                 this.Running = Window.Windows.Any(x => !x.Closed);
 

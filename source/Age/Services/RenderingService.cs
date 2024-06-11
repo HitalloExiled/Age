@@ -1,7 +1,9 @@
+using Age.Interfaces;
+using Age.Rendering;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Vulkan;
 
-namespace Age.Rendering.Services;
+namespace Age.Services;
 
 internal partial class RenderingService : IRenderingService
 {
@@ -52,7 +54,7 @@ internal partial class RenderingService : IRenderingService
         GC.SuppressFinalize(this);
     }
 
-    public void RegisterRenderGraph(IWindow window, RenderGraph renderGraph) =>
+    public void RegisterRenderGraph(Window window, RenderGraph renderGraph) =>
         this.renderGraphs[window] = renderGraph;
 
     public void RequestDraw()
@@ -63,7 +65,7 @@ internal partial class RenderingService : IRenderingService
         }
     }
 
-    public void Render(IEnumerable<IWindow> windows)
+    public void Render(IEnumerable<Window> windows)
     {
         if (this.changes > 0)
         {
