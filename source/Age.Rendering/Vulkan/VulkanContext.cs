@@ -240,6 +240,7 @@ internal unsafe partial class VulkanContext : IDisposable
     private Swapchain CreateSwapchain(VkSurfaceKHR surface, Size<uint> size)
     {
         this.surfaceExtension.GetPhysicalDeviceSurfaceCapabilities(this.physicalDevice, surface, out var surfaceCapabilities);
+
         var extent = ChooseSwapExtent(size, surfaceCapabilities);
 
         fixed (uint* pQueueFamilyIndices = &this.presentationQueueIndex)
@@ -266,10 +267,11 @@ internal unsafe partial class VulkanContext : IDisposable
 
             return new Swapchain
             {
-                Extent = extent,
-                Format = this.surfaceFormat.Format,
-                Images = images,
-                Value  = swapchain,
+                Extent     = extent,
+                Format     = this.surfaceFormat.Format,
+                Images     = images,
+                ImageUsage = swapchainCreateInfo.ImageUsage,
+                Value      = swapchain,
             };
         }
     }

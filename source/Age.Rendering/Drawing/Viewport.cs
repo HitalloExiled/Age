@@ -9,7 +9,7 @@ public class Viewport : Node2D
 {
     public override string NodeName => nameof(Viewport);
 
-    private Texture?     texture;
+    private Texture?   texture;
     private Size<uint> size;
 
     public Texture? Texture

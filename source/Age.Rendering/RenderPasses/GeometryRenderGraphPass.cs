@@ -1,6 +1,5 @@
 using Age.Core.Extensions;
 using Age.Numerics;
-using Age.Rendering.Enums;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Shaders;
@@ -128,13 +127,13 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
                     new FramebufferCreateInfo.Attachment
                     {
                         Image       = colorImages[i],
-                        Format      = this.Window.Surface.Swapchain.Format,
+                        Format      = colorImageCreateInfo.Format,
                         ImageAspect = VkImageAspectFlags.Color,
                     },
                     new FramebufferCreateInfo.Attachment
                     {
                         Image       = depthImages[i],
-                        Format      = this.depthFormat,
+                        Format      = depthImageCreateInfo.Format,
                         ImageAspect = VkImageAspectFlags.Depth,
                     },
                 ]
@@ -271,11 +270,11 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
 
         var textureCreateInfo = new TextureCreateInfo
         {
-            ColorMode   = ColorMode.RGBA,
+            Format      = VkFormat.B8G8R8A8Unorm,
             Width       = (uint)bitmap.Width,
             Height      = (uint)bitmap.Height,
             Depth       = 1,
-            TextureType = TextureType.N2D,
+            ImageType   = VkImageType.N2D,
         };
 
         var texture = this.Renderer.CreateTexture(textureCreateInfo, pixels);

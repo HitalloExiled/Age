@@ -1,8 +1,8 @@
 using Age.Numerics;
-using Age.Rendering.Enums;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
+using ThirdParty.Vulkan.Enums;
 
 namespace Age.Rendering.Storage;
 
@@ -23,11 +23,11 @@ public class TextureStorage : ITextureStorage
 
         var textureCreateInfo = new TextureCreateInfo
         {
-            ColorMode   = ColorMode.RGBA,
-            TextureType = TextureType.N2D,
-            Width       = DEFAULT_SIZE,
-            Height      = DEFAULT_SIZE,
-            Depth       = 1,
+            Format    = VkFormat.B8G8R8A8Unorm,
+            ImageType = VkImageType.N2D,
+            Width     = DEFAULT_SIZE,
+            Height    = DEFAULT_SIZE,
+            Depth     = 1,
         };
 
         this.DefaultTexture = this.renderer.CreateTexture(textureCreateInfo);

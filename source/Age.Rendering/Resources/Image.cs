@@ -8,25 +8,29 @@ namespace Age.Rendering.Resources;
 
 public class Image : Resource<VkImage>
 {
-    [MemberNotNullWhen(false, nameof(Allocation))]
-    public bool IsBorrowed { get; private set; }
+    [MemberNotNullWhen(true, nameof(Allocation))]
+    private bool OwnsHandler { get; set; } = true;
 
     public Allocation? Allocation { get; init; }
 
-    public required VkExtent3D Extent { get; init; }
+    public required VkExtent3D        Extent { get; init; }
+    public required VkImageType       Type   { get; init; }
+    public required VkImageUsageFlags Usage  { get; init; }
 
     internal Image(VulkanRenderer renderer, VkImage image) : base(renderer, image) { }
 
-    internal static Image From(VulkanRenderer renderer, VkImage image, VkExtent3D extent) =>
+    internal static Image From(VulkanRenderer renderer, VkImage image, VkExtent3D extent, VkImageType type, VkImageUsageFlags usage) =>
         new(renderer, image)
         {
-            Extent     = extent,
-            IsBorrowed = true,
+            Extent      = extent,
+            Type        = type,
+            OwnsHandler = false,
+            Usage       = usage,
         };
 
     protected override void OnDispose()
     {
-        if (!this.IsBorrowed)
+        if (this.OwnsHandler)
         {
             this.Allocation.Dispose();
             this.Value.Dispose();

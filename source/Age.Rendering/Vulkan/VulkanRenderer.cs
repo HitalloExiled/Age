@@ -464,6 +464,8 @@ public unsafe partial class VulkanRenderer : IDisposable
                 Size       = memRequirements.Size,
             },
             Extent = createInfo.Extent,
+            Type   = createInfo.ImageType,
+            Usage  = createInfo.Usage,
         };
     }
 
@@ -682,24 +684,23 @@ public unsafe partial class VulkanRenderer : IDisposable
     public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
         this.context.CreateSurface(handle, clientSize);
 
-    public Texture CreateTexture(in TextureCreateInfo textureCreate)
+    public Texture CreateTexture(in TextureCreateInfo textureCreateInfo)
     {
         var samples = VkSampleCountFlags.N1;
         var tiling  = VkImageTiling.Optimal;
         var usage   = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
-        var format  = textureCreate.ColorMode == ColorMode.Grayscale ? VkFormat.R8G8Unorm : VkFormat.B8G8R8A8Unorm;
 
         var imageCreateInfo = new VkImageCreateInfo
         {
             ArrayLayers   = 1,
             Extent        = new()
             {
-                Width  = textureCreate.Width,
-                Height = textureCreate.Height,
-                Depth  = textureCreate.Depth
+                Width  = textureCreateInfo.Width,
+                Height = textureCreateInfo.Height,
+                Depth  = textureCreateInfo.Depth
             },
-            Format        = format,
-            ImageType     = VkImageType.N2D,
+            Format        = textureCreateInfo.Format,
+            ImageType     = textureCreateInfo.ImageType,
             InitialLayout = VkImageLayout.Undefined,
             MipLevels     = 1,
             Samples       = samples,
@@ -718,13 +719,25 @@ public unsafe partial class VulkanRenderer : IDisposable
             VkPipelineStageFlags.Transfer
         );
 
+        var imageView = this.CreateImageView(image, textureCreateInfo.Format, VkImageAspectFlags.Color);
+
+        var texture = new Texture(this, true)
+        {
+            Image     = image,
+            ImageView = imageView,
+        };
+
+        return texture;
+    }
+
+    public Texture CreateTexture(Image image, VkFormat format = VkFormat.B8G8R8A8Unorm)
+    {
         var imageView = this.CreateImageView(image, format, VkImageAspectFlags.Color);
 
-        var texture = new Texture(this)
+        var texture = new Texture(this, false)
         {
-            Image       = image,
-            ImageView   = imageView,
-            TextureType = textureCreate.TextureType,
+            Image     = image,
+            ImageView = imageView,
         };
 
         return texture;

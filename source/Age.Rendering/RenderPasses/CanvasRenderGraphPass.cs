@@ -16,7 +16,6 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
     private readonly Framebuffer[]                   framebuffers = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
     private readonly IndexBuffer                     indexBuffer;
     private readonly RenderPass                      renderPass;
-    private readonly Sampler                         sampler;
     private readonly Dictionary<Texture, UniformSet> uniformSets = [];
     private readonly VertexBuffer                    vertexBuffer;
     private readonly IndexBuffer                     wireframeIndexBuffer;
@@ -44,7 +43,6 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         this.wireframeIndexBuffer = renderer.CreateIndexBuffer([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
 
         this.renderPass = this.CreateRenderPass();
-        this.sampler    = renderer.CreateSampler();
 
         var canvasShader          = renderer.CreateShaderAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
         var canvasWireframeShader = renderer.CreateShaderAndWatch<CanvasWireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
@@ -115,7 +113,13 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                 [
                     new FramebufferCreateInfo.Attachment
                     {
-                        Image       = Image.From(this.Renderer, this.Window.Surface.Swapchain.Images[i], extent),
+                        Image = Image.From(
+                            this.Renderer,
+                            this.Window.Surface.Swapchain.Images[i],
+                            extent,
+                            VkImageType.N2D,
+                            this.Window.Surface.Swapchain.ImageUsage
+                        ),
                         Format      = this.Window.Surface.Swapchain.Format,
                         ImageAspect = VkImageAspectFlags.Color,
                     },
@@ -152,7 +156,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             var combinedImageSamplerUniform = new CombinedImageSamplerUniform
             {
                 Binding = 0,
-                Sampler = this.sampler,
+                Sampler = command.SampledTexture.Sampler,
                 Texture = command.SampledTexture.Texture,
             };
 
@@ -184,7 +188,6 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             uniformSet.Dispose();
         }
 
-        this.sampler.Dispose();
         this.renderPass.Dispose();
     }
 

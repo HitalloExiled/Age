@@ -8,6 +8,7 @@ using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using SkiaSharp;
+using ThirdParty.Vulkan.Enums;
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Rendering.Services;
@@ -86,11 +87,11 @@ internal partial class TextService(VulkanRenderer renderer) : ITextService
 
             var textureCreateInfo = new TextureCreateInfo
             {
-                ColorMode   = ColorMode.Grayscale,
-                TextureType = Enums.TextureType.N2D,
-                Width       = size.Width,
-                Height      = size.Height,
-                Depth       = 1,
+                Format     = VkFormat.R8G8Unorm,
+                ImageType  = VkImageType.N2D,
+                Width      = size.Width,
+                Height     = size.Height,
+                Depth      = 1,
             };
 
             var texture = renderer.CreateTexture(textureCreateInfo);
