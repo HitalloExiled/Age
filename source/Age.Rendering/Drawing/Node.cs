@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 
 namespace Age.Rendering.Drawing;
 
@@ -133,16 +132,8 @@ public abstract partial class Node : IEnumerable<Node>
         }
     }
 
-    public IEnumerator<Node> GetEnumerator()
-    {
-        if (this.FirstChild != null)
-        {
-            for (var child = this.FirstChild; child != null; child = child.NextSibling)
-            {
-                yield return child;
-            }
-        }
-    }
+    public IEnumerator<Node> GetEnumerator() =>
+        new Enumerator(this);
 
     public void Remove() =>
         this.Parent?.RemoveChild(this);
@@ -243,73 +234,8 @@ public abstract partial class Node : IEnumerable<Node>
         this.LastChild  = null;
     }
 
-    public IEnumerable<Node> Traverse(bool topDown = false)
-    {
-        Node? current;
-
-        current = topDown ? this.FirstChild : getDeepest(this);
-
-        while (current != null)
-        {
-            yield return current;
-
-            if (topDown)
-            {
-                if (current.FirstChild != null)
-                {
-                    current = current.FirstChild;
-                }
-                else if (current.NextSibling != null)
-                {
-                    current = current.NextSibling;
-                }
-                else if (current.Parent != null)
-                {
-                    var next = current;
-
-                    while (next != null)
-                    {
-                        if (next.Parent?.NextSibling != null)
-                        {
-                            next = next.Parent.NextSibling;
-
-                            break;
-                        }
-                        else
-                        {
-                            next = next.Parent;
-                        }
-                    }
-
-                    current = next;
-                }
-                else
-                {
-                    current = null;
-                }
-            }
-            else
-            {
-                current = current.NextSibling != null
-                    ? getDeepest(current.NextSibling)
-                    : current.Parent != this
-                        ? current.Parent
-                        : null;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static Node getDeepest(Node node)
-        {
-            while (node.FirstChild != null)
-            {
-                node = node.FirstChild;
-            }
-
-            return node;
-        }
-
-    }
+    public IEnumerable<Node> Traverse(bool topDown = false) =>
+        new TraverseEnumerator(this, topDown);
 
     public IEnumerable<T> Traverse<T>(bool topDown = false) where T : Node
     {

@@ -224,33 +224,34 @@ public class NodeTest
     [Fact]
     public void TraverseTraverseEnumerator()
     {
-        var child11 = new Span { Name = "1.1.1" };
-        var child12 = new Span { Name = "1.1.2" };
-        var child13 = new Span { Name = "1.1.3" };
+        var child11 = new Span { Name = "$.1.1" };
+        var child12 = new Span { Name = "$.1.2" };
+        var child13 = new Span { Name = "$.1.3" };
 
-        var child21 = new Span { Name = "1.2.1" };
-        var child22 = new Span { Name = "1.2.2" };
+        var child21 = new Span { Name = "$.2.1" };
+        var child22 = new Span { Name = "$.2.2" };
 
-        var child31 = new Span { Name = "1.3.1" };
+        var child31 = new Span { Name = "$.3.1" };
 
-        var child1 = new Span { Name = "1.1" };
+        var child0 = new Span { Name = "$.0" };
+
+        var child1 = new Span { Name = "$.1" };
         child1.AppendChildren([child11, child12, child13]);
 
-        var child2 = new Span { Name = "1.2" };
+        var child2 = new Span { Name = "$.2" };
         child2.AppendChildren([child21, child22]);
 
-        var child3 = new Span { Name = "1.3" };
+        var child3 = new Span { Name = "$.3" };
         child3.AppendChild(child31);
 
-        var parent = new Span { Name = "1" };
-        parent.AppendChildren([child1, child2, child3]);
+        var parent = new Span { Name = "$" };
+        parent.AppendChildren([child0, child1, child2, child3]);
 
-        var nodes = new List<Node>();
+        var nodes = new List<string>();
 
-        var enumerator = new Node.TraverseEnumerator(parent);
-
-        Span[] expected =
-        [
+        var expected = new Span[]
+        {
+            child0,
             child11,
             child12,
             child13,
@@ -260,12 +261,15 @@ public class NodeTest
             child2,
             child31,
             child3,
-            parent,
-        ];
+        }
+        .Select(x => x.Name)
+        .ToArray();
+
+        var enumerator = new Node.TraverseEnumerator(parent, false);
 
         while (enumerator.MoveNext())
         {
-            nodes.Add(enumerator.Current);
+            nodes.Add(enumerator.Current.Name!);
         }
 
         Assert.Equal(expected, nodes);
@@ -274,9 +278,9 @@ public class NodeTest
 
         enumerator = new Node.TraverseEnumerator(parent, true);
 
-        expected =
-        [
-            parent,
+        expected = new Span[]
+        {
+            child0,
             child1,
             child11,
             child12,
@@ -286,11 +290,13 @@ public class NodeTest
             child22,
             child3,
             child31,
-        ];
+        }
+         .Select(x  => x.Name)
+         .ToArray();
 
         while (enumerator.MoveNext())
         {
-            nodes.Add(enumerator.Current);
+            nodes.Add(enumerator.Current.Name!);
         }
 
         Assert.Equal(expected, nodes);
