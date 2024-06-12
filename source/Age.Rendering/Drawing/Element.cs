@@ -448,7 +448,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
             if (elementChild == this.LastElementChild)
             {
-                this.FirstElementChild = elementChild.PreviousElementSibling;
+                this.LastElementChild = elementChild.PreviousElementSibling;
             }
 
             if (elementChild.PreviousElementSibling != null)
