@@ -219,9 +219,11 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
 
     private void DisposeFrameBuffers()
     {
-        foreach (var framebuffer in this.framebuffers)
+        for (var i = 0; i < this.framebuffers.Length; i++)
         {
-            framebuffer.Dispose();
+            this.colorImages[i].Dispose();
+            this.depthImages[i].Dispose();
+            this.framebuffers[i].Dispose();
         }
     }
 
