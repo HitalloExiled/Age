@@ -3,7 +3,6 @@ using Age.Rendering.Enums;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
-using Age.Rendering.Vulkan.Uniforms;
 
 namespace Age.Rendering.Storage;
 
@@ -22,7 +21,16 @@ public class TextureStorage : ITextureStorage
 
         const int DEFAULT_SIZE = 8;
 
-        this.DefaultTexture = this.CreateTexture(new(DEFAULT_SIZE, DEFAULT_SIZE), ColorMode.RGBA, TextureType.N2D);
+        var textureCreateInfo = new TextureCreateInfo
+        {
+            ColorMode   = ColorMode.RGBA,
+            TextureType = TextureType.N2D,
+            Width       = DEFAULT_SIZE,
+            Height      = DEFAULT_SIZE,
+            Depth       = 1,
+        };
+
+        this.DefaultTexture = this.renderer.CreateTexture(textureCreateInfo);
         this.DefaultSampler = renderer.CreateSampler();
 
         var bytesPerColor = (int)ColorMode.RGBA;
@@ -50,46 +58,5 @@ public class TextureStorage : ITextureStorage
         }
 
         GC.SuppressFinalize(this);
-    }
-
-    public Texture CreateTexture(Size<uint> size, ColorMode colorMode, TextureType textureType)
-    {
-        var textureCreate = new TextureCreateInfo
-        {
-            Depth = 1,
-            Width = size.Width,
-            Height = size.Height,
-            TextureType = textureType,
-            ColorMode = colorMode,
-        };
-
-        return this.renderer.CreateTexture(textureCreate);
-    }
-
-    public void FreeTexture(Texture texture)
-    {
-        this.renderer.DeferredDispose(texture);
-
-        if (this.textureSets.Remove(texture, out var uniformSet))
-        {
-            uniformSet.Dispose();
-        }
-    }
-
-    public UniformSet GetUniformSet(Shader shader, Texture texture, Sampler sampler)
-    {
-        if (!this.textureSets.TryGetValue(texture, out var uniformSet))
-        {
-            var uniform = new CombinedImageSamplerUniform
-            {
-                Binding = 0,
-                Sampler = sampler,
-                Texture = texture,
-            };
-
-            this.textureSets[texture] = uniformSet = this.renderer.CreateUniformSet(shader, [uniform]);
-        }
-
-        return uniformSet;
     }
 }

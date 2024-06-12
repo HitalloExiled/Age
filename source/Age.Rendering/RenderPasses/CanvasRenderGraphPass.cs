@@ -3,8 +3,8 @@ using Age.Rendering.Commands;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Shaders.Canvas;
-using Age.Rendering.Storage;
 using Age.Rendering.Vulkan;
+using Age.Rendering.Vulkan.Uniforms;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -13,12 +13,13 @@ namespace Age.Rendering.RenderPasses;
 
 internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 {
-    private readonly Framebuffer[]  framebuffers = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
-    private readonly IndexBuffer    indexBuffer;
-    private readonly RenderPass     renderPass;
-    private readonly TextureStorage textureStorage;
-    private readonly VertexBuffer   vertexBuffer;
-    private readonly IndexBuffer    wireframeIndexBuffer;
+    private readonly Framebuffer[]                   framebuffers = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly IndexBuffer                     indexBuffer;
+    private readonly RenderPass                      renderPass;
+    private readonly Sampler                         sampler;
+    private readonly Dictionary<Texture, UniformSet> uniformSets = [];
+    private readonly VertexBuffer                    vertexBuffer;
+    private readonly IndexBuffer                     wireframeIndexBuffer;
 
     private UniformSet? lastUniformSet;
 
@@ -28,10 +29,8 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
     protected override RenderPass        RenderPass  => this.renderPass;
     protected override RenderResources[] Resources     { get; } = [];
 
-    public CanvasRenderGraphPass(VulkanRenderer renderer, IWindow window, TextureStorage textureStorage) : base(renderer, window)
+    public CanvasRenderGraphPass(VulkanRenderer renderer, IWindow window) : base(renderer, window)
     {
-        this.textureStorage = textureStorage;
-
         var vertices = new CanvasShader.Vertex[4]
         {
             new(-1, -1),
@@ -45,6 +44,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         this.wireframeIndexBuffer = renderer.CreateIndexBuffer([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
 
         this.renderPass = this.CreateRenderPass();
+        this.sampler    = renderer.CreateSampler();
 
         var canvasShader          = renderer.CreateShaderAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
         var canvasWireframeShader = renderer.CreateShaderAndWatch<CanvasWireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
@@ -147,7 +147,17 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             Viewport  = viewport,
         };
 
-        var uniformSet = this.textureStorage.GetUniformSet(resource.Shader, command.SampledTexture.Texture, command.SampledTexture.Sampler);
+        if (!this.uniformSets.TryGetValue(command.SampledTexture.Texture, out var uniformSet))
+        {
+            var combinedImageSamplerUniform = new CombinedImageSamplerUniform
+            {
+                Binding = 0,
+                Sampler = this.sampler,
+                Texture = command.SampledTexture.Texture,
+            };
+
+            this.uniformSets[command.SampledTexture.Texture] = uniformSet = this.Renderer.CreateUniformSet(resource.Shader, [combinedImageSamplerUniform]);
+        }
 
         if (uniformSet != null && uniformSet != this.lastUniformSet)
         {
@@ -169,6 +179,12 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             this.Resources[i].Dispose();
         }
 
+        foreach (var uniformSet in this.uniformSets.Values)
+        {
+            uniformSet.Dispose();
+        }
+
+        this.sampler.Dispose();
         this.renderPass.Dispose();
     }
 

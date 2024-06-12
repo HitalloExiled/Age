@@ -11,20 +11,19 @@ public class BvhTreeTest
     [Fact]
     public void Build()
     {
-        var textureStorageMock   = new Mock<ITextureStorage>();
-        var textServiceMock      = new Mock<ITextService>();
+        var textureStorageMock = new Mock<ITextureStorage>();
+        var textServiceMock    = new Mock<ITextService>();
 
         using var container = new global::Age.Rendering.Container()
         {
-            TextService      = textServiceMock.Object,
-            TextureStorage   = textureStorageMock.Object,
+            TextService    = textServiceMock.Object,
+            TextureStorage = textureStorageMock.Object,
         };
 
         var windowMock = new Mock<IWindow>();
 
         windowMock.SetupAdd(x => x.SizeChanged += It.IsAny<Action>());
         windowMock.SetupGet(x => x.ClientSize).Returns(new Size<uint>(800, 600));
-
 
         var window = windowMock.Object;
 

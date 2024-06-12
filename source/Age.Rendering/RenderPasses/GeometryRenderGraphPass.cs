@@ -4,7 +4,6 @@ using Age.Rendering.Enums;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Shaders;
-using Age.Rendering.Storage;
 using Age.Rendering.Vulkan.Uniforms;
 using Age.Rendering.Vulkan;
 using SkiaSharp;
@@ -40,10 +39,10 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
     public Image DepthImage => this.depthImages[this.Window.Surface.CurrentBuffer];
     public Texture Texture  => this.texture;
 
-    public unsafe GeometryRenderGraphPass(VulkanRenderer renderer, IWindow window, TextureStorage textureStorage) : base(renderer, window)
+    public unsafe GeometryRenderGraphPass(VulkanRenderer renderer, IWindow window) : base(renderer, window)
     {
         this.depthFormat    = renderer.FindSupportedFormat([VkFormat.D32Sfloat, VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint], VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
-        this.sampler        = textureStorage.DefaultSampler;
+        this.sampler        = renderer.CreateSampler();
         this.renderPass     = this.CreateRenderPass();
         this.uniformBuffers = this.CreateUniformBuffers();
         this.texture        = this.LoadTexture();
@@ -311,6 +310,7 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
         this.renderPass.Dispose();
         this.shader.Dispose();
         this.texture.Dispose();
+        this.sampler.Dispose();
 
         for (var i = 0; i < Math.Max(this.framebuffers.Length, VulkanContext.MAX_FRAMES_IN_FLIGHT); i++)
         {

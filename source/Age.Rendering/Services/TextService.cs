@@ -12,7 +12,7 @@ using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Rendering.Services;
 
-internal partial class TextService(VulkanRenderer renderer, ITextureStorage textureStorage) : ITextService
+internal partial class TextService(VulkanRenderer renderer) : ITextService
 {
     private readonly Dictionary<int, TextureAtlas> atlases = [];
     private readonly Dictionary<int, Glyph> glyphs = [];
@@ -84,7 +84,16 @@ internal partial class TextService(VulkanRenderer renderer, ITextureStorage text
             var axisSize = uint.Max(fontSize * 8, 256);
             var size     = new Size<uint>(axisSize, axisSize);
 
-            var texture = textureStorage.CreateTexture(size, ColorMode.Grayscale, Enums.TextureType.N2D);
+            var textureCreateInfo = new TextureCreateInfo
+            {
+                ColorMode   = ColorMode.Grayscale,
+                TextureType = Enums.TextureType.N2D,
+                Width       = size.Width,
+                Height      = size.Height,
+                Depth       = 1,
+            };
+
+            var texture = renderer.CreateTexture(textureCreateInfo);
 
             this.atlases[hashcode] = atlas = new(size, ColorMode.Grayscale, texture);
         }
@@ -110,7 +119,8 @@ internal partial class TextService(VulkanRenderer renderer, ITextureStorage text
             {
                 foreach (var atlas in this.atlases.Values)
                 {
-                    textureStorage.FreeTexture(atlas.Texture);
+                    atlas.Texture.Dispose();
+                    renderer.DeferredDispose(atlas.Texture);
                 }
 
                 renderer.DeferredDispose(this.sampler);

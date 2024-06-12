@@ -35,17 +35,17 @@ public class Engine : IDisposable
         this.renderingService = new RenderingService(this.renderer);
         this.Window           = new Window(name, windowSize, windowPosition);
 
+        var textService    = new TextService(this.renderer);
         var textureStorage = new TextureStorage(this.renderer);
-        var textService    = new TextService(this.renderer, textureStorage);
 
         var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
-        var geometryRenderGraphPass    = new GeometryRenderGraphPass(this.renderer, this.Window, textureStorage);
+        var geometryRenderGraphPass    = new GeometryRenderGraphPass(this.renderer, this.Window);
 
         this.Window.SizeChanged += () =>
         {
-            var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
-            var geometryColorImage    = geometryRenderGraphPass.ColorImage;
-            var geometryDepthImage    = geometryRenderGraphPass.DepthImage;
+            var canvasIndexImage   = canvasIndexRenderGraphPass.ColorImage;
+            var geometryColorImage = geometryRenderGraphPass.ColorImage;
+            var geometryDepthImage = geometryRenderGraphPass.DepthImage;
 
             SaveImage(geometryColorImage, VkImageAspectFlags.Color, "Geometry.Color.png");
             SaveImage(geometryDepthImage, VkImageAspectFlags.Depth, "Geometry.Depth.png");
@@ -59,7 +59,7 @@ public class Engine : IDisposable
             [
                 geometryRenderGraphPass,
                 canvasIndexRenderGraphPass,
-                new CanvasRenderGraphPass(this.renderer, this.Window, textureStorage),
+                new CanvasRenderGraphPass(this.renderer, this.Window),
             ]
         };
 
