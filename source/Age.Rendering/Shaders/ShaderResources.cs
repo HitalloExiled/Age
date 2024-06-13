@@ -27,8 +27,11 @@ public abstract class ShaderResources : IDisposable
 
     private bool disposed;
 
-    public abstract string              Name              { get; }
-    public abstract VkPrimitiveTopology PrimitiveTopology { get; }
+    public abstract string              Name                 { get; }
+    public abstract VkPrimitiveTopology PrimitiveTopology    { get; }
+
+    public VkFrontFace        FrontFace            { get; init; } = VkFrontFace.Clockwise;
+    public VkSampleCountFlags RasterizationSamples { get; init; } = VkSampleCountFlags.N1;
 
     public Dictionary<VkShaderStageFlags, byte[]> Stages { get; } = [];
 
@@ -217,3 +220,4 @@ public abstract class ShaderResources : IDisposable
 public abstract class ShaderResources<TVertexInput, TPushConstant>(string[] files) : ShaderResources(files)
 where TVertexInput : IVertexInput
 where TPushConstant : IPushConstant;
+

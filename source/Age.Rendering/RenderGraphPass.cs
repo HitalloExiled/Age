@@ -5,6 +5,8 @@ namespace Age.Rendering;
 
 public abstract class RenderGraphPass(VulkanRenderer renderer, IWindow window) : Disposable
 {
+    public event Action? Recreated;
+
     protected VulkanRenderer Renderer { get; } = renderer;
     protected IWindow        Window   { get; } = window;
 
@@ -12,4 +14,7 @@ public abstract class RenderGraphPass(VulkanRenderer renderer, IWindow window) :
 
     public abstract void Execute();
     public abstract void Recreate();
+
+    public void NotifyRecreated() =>
+        this.Recreated?.Invoke();
 }

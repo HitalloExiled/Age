@@ -27,19 +27,18 @@ public class CommandBuffer : Resource<VkCommandBuffer>
 
     public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, Color clearColor)
     {
-        var clearValues = new VkClearValue[2];
+        var clearValue = new VkClearValue();
 
-        clearValues[0].Color.Float32[0] = clearColor.R;
-        clearValues[0].Color.Float32[1] = clearColor.G;
-        clearValues[0].Color.Float32[2] = clearColor.B;
-        clearValues[0].Color.Float32[3] = clearColor.A;
+        clearValue.Color.Float32[0] = clearColor.R;
+        clearValue.Color.Float32[1] = clearColor.G;
+        clearValue.Color.Float32[2] = clearColor.B;
+        clearValue.Color.Float32[3] = clearColor.A;
 
-        clearValues[1].DepthStencil = new()
-        {
-            Depth   = 1.0f,
-            Stencil = 1
-        };
+        this.BeginRenderPass(renderPass, framebuffer, [clearValue]);
+    }
 
+    public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, Span<VkClearValue> clearValues)
+    {
         fixed (VkClearValue* pClearValues = clearValues)
         {
             var renderPassBeginInfo = new VkRenderPassBeginInfo

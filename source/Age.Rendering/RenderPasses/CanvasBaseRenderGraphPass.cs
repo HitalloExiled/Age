@@ -38,19 +38,22 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
         foreach (var resource in this.Resources)
         {
-            this.CommandBuffer.BindPipeline(resource.Shader);
-            this.CommandBuffer.BindVertexBuffers(resource.VertexBuffer);
-            this.CommandBuffer.BindIndexBuffer(resource.IndexBuffer);
-
-            foreach (var entry in this.Window.Tree.EnumerateCommands())
+            if (resource.Enabled)
             {
-                switch (entry.Command)
+                this.CommandBuffer.BindPipeline(resource.Shader);
+                this.CommandBuffer.BindVertexBuffers(resource.VertexBuffer);
+                this.CommandBuffer.BindIndexBuffer(resource.IndexBuffer);
+
+                foreach (var entry in this.Window.Tree.EnumerateCommands())
                 {
-                    case RectDrawCommand rectDrawCommand:
-                        this.ExecuteCommand(resource, rectDrawCommand, viewportFloat, entry.Transform);
-                        break;
-                    default:
-                        throw new Exception();
+                    switch (entry.Command)
+                    {
+                        case RectDrawCommand rectDrawCommand:
+                            this.ExecuteCommand(resource, rectDrawCommand, viewportFloat, entry.Transform);
+                            break;
+                        default:
+                            throw new Exception();
+                    }
                 }
             }
         }

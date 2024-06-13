@@ -195,7 +195,9 @@ internal unsafe partial class VulkanContext : IDisposable
 
         var enabledFeatures = new VkPhysicalDeviceFeatures
         {
-            GeometryShader = true,
+            SamplerAnisotropy = true,
+            SampleRateShading = true,
+            GeometryShader    = true,
         };
 
         fixed (VkDeviceQueueCreateInfo* pQueueCreateInfos = queueCreateInfos)

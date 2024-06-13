@@ -1,6 +1,5 @@
 using Age.Numerics;
 using Age.Rendering.Commands;
-using Age.Rendering.Drawing.Styling;
 using Age.Rendering.Resources;
 
 namespace Age.Rendering.Drawing;
@@ -45,7 +44,6 @@ public class Viewport : Node2D
                 command = (RectDrawCommand)this.Commands[0];
             }
 
-            command.Border         = new Border(1, 0, Color.Red);
             command.Rect           = new Rect<float>(value.Image.Extent.Width, value.Image.Extent.Height, 0, 0);
             command.SampledTexture = new(value, Container.Singleton.TextureStorage.DefaultSampler, UVRect.Normalized);
         }

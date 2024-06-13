@@ -44,6 +44,7 @@ public class RenderGraph : IDisposable
         foreach (var pass in this.Passes)
         {
             pass.Recreate();
+            pass.NotifyRecreated();
         }
     }
 }

@@ -50,7 +50,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.Resources =
         [
-            new RenderResources(shader, this.vertexBuffer, this.indexBuffer)
+            new RenderResources(shader, this.vertexBuffer, this.indexBuffer, true)
         ];
     }
 
@@ -86,7 +86,6 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
                 new FramebufferCreateInfo.Attachment
                 {
                     Image       = image,
-                    Format      = this.Window.Surface.Swapchain.Format,
                     ImageAspect = VkImageAspectFlags.Color
                 }
             ],

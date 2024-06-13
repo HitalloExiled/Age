@@ -52,8 +52,8 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.Resources =
         [
-            new(canvasShader,          this.vertexBuffer, this.indexBuffer),
-            new(canvasWireframeShader, this.vertexBuffer, this.wireframeIndexBuffer),
+            new(canvasShader,          this.vertexBuffer, this.indexBuffer, true),
+            new(canvasWireframeShader, this.vertexBuffer, this.wireframeIndexBuffer, false),
         ];
 
         this.CreateFrameBuffers();
@@ -117,10 +117,10 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                             this.Renderer,
                             this.Window.Surface.Swapchain.Images[i],
                             extent,
+                            this.Window.Surface.Swapchain.Format,
                             VkImageType.N2D,
                             this.Window.Surface.Swapchain.ImageUsage
                         ),
-                        Format      = this.Window.Surface.Swapchain.Format,
                         ImageAspect = VkImageAspectFlags.Color,
                     },
                 ]

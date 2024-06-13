@@ -290,13 +290,15 @@ public unsafe partial class VulkanRenderer : IDisposable
 
                 var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
                 {
-                    RasterizationSamples = VkSampleCountFlags.N1,
+                    SampleShadingEnable  = true,
+                    RasterizationSamples = shaderResources.RasterizationSamples,
+                    MinSampleShading     = 1,
                 };
 
                 var pipelineRasterizationStateCreateInfo = new VkPipelineRasterizationStateCreateInfo
                 {
                     CullMode    = VkCullModeFlags.Back,
-                    FrontFace   = VkFrontFace.Clockwise,
+                    FrontFace   = shaderResources.FrontFace,
                     LineWidth   = 1,
                     PolygonMode = VkPolygonMode.Fill,
                 };
@@ -464,6 +466,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                 Size       = memRequirements.Size,
             },
             Extent = createInfo.Extent,
+            Format = createInfo.Format,
             Type   = createInfo.ImageType,
             Usage  = createInfo.Usage,
         };
@@ -583,7 +586,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         for (var i = 0; i < createInfo.Attachments.Length; i++)
         {
-            imageViews[i] = this.CreateImageView(createInfo.Attachments[i].Image, createInfo.Attachments[i].Format, createInfo.Attachments[i].ImageAspect);
+            imageViews[i] = this.CreateImageView(createInfo.Attachments[i].Image, createInfo.Attachments[i].Image.Format, createInfo.Attachments[i].ImageAspect);
         }
 
         var extent = new VkExtent2D
@@ -730,9 +733,9 @@ public unsafe partial class VulkanRenderer : IDisposable
         return texture;
     }
 
-    public Texture CreateTexture(Image image, VkFormat format = VkFormat.B8G8R8A8Unorm)
+    public Texture CreateTexture(Image image)
     {
-        var imageView = this.CreateImageView(image, format, VkImageAspectFlags.Color);
+        var imageView = this.CreateImageView(image, image.Format, VkImageAspectFlags.Color);
 
         var texture = new Texture(this, false)
         {
@@ -927,6 +930,27 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public VkFormat FindSupportedFormat(Span<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features) =>
         this.context.FindSupportedFormat(candidates, tiling, features);
+
+    public VkSampleCountFlags GetMaxUsableSampleCount()
+    {
+        this.context.Device.PhysicalDevice.GetProperties(out var physicalDeviceProperties);
+
+        var counts = physicalDeviceProperties.Limits.FramebufferColorSampleCounts & physicalDeviceProperties.Limits.FramebufferDepthSampleCounts;
+
+        return counts.HasFlag(VkSampleCountFlags.N64)
+            ? VkSampleCountFlags.N64
+            : counts.HasFlag(VkSampleCountFlags.N32)
+                ? VkSampleCountFlags.N32
+                : counts.HasFlag(VkSampleCountFlags.N16)
+                    ? VkSampleCountFlags.N16
+                    : counts.HasFlag(VkSampleCountFlags.N8)
+                        ? VkSampleCountFlags.N8
+                        : counts.HasFlag(VkSampleCountFlags.N4)
+                            ? VkSampleCountFlags.N4
+                            : counts.HasFlag(VkSampleCountFlags.N2)
+                                ? VkSampleCountFlags.N2
+                                : VkSampleCountFlags.N1;
+    }
 
     public void WaitIdle() =>
         this.context.Device.WaitIdle();

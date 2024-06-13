@@ -14,15 +14,17 @@ public class Image : Resource<VkImage>
     public Allocation? Allocation { get; init; }
 
     public required VkExtent3D        Extent { get; init; }
+    public required VkFormat          Format { get; init; }
     public required VkImageType       Type   { get; init; }
     public required VkImageUsageFlags Usage  { get; init; }
 
     internal Image(VulkanRenderer renderer, VkImage image) : base(renderer, image) { }
 
-    internal static Image From(VulkanRenderer renderer, VkImage image, VkExtent3D extent, VkImageType type, VkImageUsageFlags usage) =>
+    internal static Image From(VulkanRenderer renderer, VkImage image, VkExtent3D extent, VkFormat format, VkImageType type, VkImageUsageFlags usage) =>
         new(renderer, image)
         {
             Extent      = extent,
+            Format      = format,
             Type        = type,
             OwnsHandler = false,
             Usage       = usage,

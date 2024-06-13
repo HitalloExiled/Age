@@ -23,7 +23,8 @@ public class Engine : IDisposable
     private readonly VulkanRenderer   renderer  = new();
     private readonly RenderingService renderingService;
 
-    private bool disposed;
+    private bool    disposed;
+    private Texture viewportTexture;
 
     public Window Window { get; }
     public bool Running { get; private set; }
@@ -44,12 +45,12 @@ public class Engine : IDisposable
         this.Window.SizeChanged += () =>
         {
             var canvasIndexImage   = canvasIndexRenderGraphPass.ColorImage;
-            var geometryColorImage = geometryRenderGraphPass.ColorImage;
-            var geometryDepthImage = geometryRenderGraphPass.DepthImage;
+            // var geometryColorImage = geometryRenderGraphPass.ColorImage;
+            // var geometryDepthImage = geometryRenderGraphPass.DepthImage;
 
-            SaveImage(geometryColorImage, VkImageAspectFlags.Color, "Geometry.Color.png");
-            SaveImage(geometryDepthImage, VkImageAspectFlags.Depth, "Geometry.Depth.png");
-            SaveImage(canvasIndexImage,   VkImageAspectFlags.Color, "CanvasIndex.png");
+            // SaveImage(geometryColorImage, VkImageAspectFlags.Color, "./.debug/Geometry.Color.png");
+            // SaveImage(geometryDepthImage, VkImageAspectFlags.Depth, "./.debug/Geometry.Depth.png");
+            SaveImage(canvasIndexImage,   VkImageAspectFlags.Color, "./.debug/CanvasIndex.png");
         };
 
         var renderGraph = new RenderGraph
@@ -75,7 +76,14 @@ public class Engine : IDisposable
 
         var viewport = new Viewport
         {
-            Texture = geometryRenderGraphPass.Texture,
+            Texture = this.viewportTexture = this.renderer.CreateTexture(geometryRenderGraphPass.ColorImage),
+        };
+
+        geometryRenderGraphPass.Recreated += () =>
+        {
+            this.viewportTexture.Dispose();
+
+            viewport.Texture = this.viewportTexture = this.renderer.CreateTexture(geometryRenderGraphPass.ColorImage);
         };
 
         this.Window.Tree.AppendChild(viewport);
@@ -116,6 +124,7 @@ public class Engine : IDisposable
             {
                 Platforms.Display.Window.CloseAll();
 
+                this.viewportTexture.Dispose();
                 this.renderingService.Dispose();
                 this.container.Dispose();
                 this.renderer.Dispose();
