@@ -2,7 +2,7 @@ using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Interfaces;
 
-namespace Age.Rendering.Drawing;
+namespace Age.Rendering.Scene;
 
 public sealed class NodeTree(IWindow window) : Node
 {

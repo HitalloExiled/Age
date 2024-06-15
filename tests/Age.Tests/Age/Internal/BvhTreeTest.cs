@@ -1,8 +1,10 @@
 using Age.Internal;
 using Age.Numerics;
+using Age.Rendering;
 using Age.Rendering.Drawing;
 using Age.Rendering.Drawing.Elements;
 using Age.Rendering.Interfaces;
+using Age.Rendering.Scene;
 
 namespace Age.Tests.Age.Internal;
 
@@ -14,7 +16,7 @@ public class BvhTreeTest
         var textureStorageMock = new Mock<ITextureStorage>();
         var textServiceMock    = new Mock<ITextService>();
 
-        using var container = new global::Age.Rendering.Container()
+        using var container = new Container()
         {
             TextService    = textServiceMock.Object,
             TextureStorage = textureStorageMock.Object,

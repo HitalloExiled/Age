@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace Age.Rendering.Drawing;
+namespace Age.Rendering.Scene;
 
 public abstract partial class Node
 {

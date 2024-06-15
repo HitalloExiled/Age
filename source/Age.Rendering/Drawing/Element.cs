@@ -4,6 +4,7 @@ using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing.Elements;
 using Age.Rendering.Drawing.Styling;
+using Age.Rendering.Scene;
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Rendering.Drawing;

@@ -1,7 +1,7 @@
 using Age.Numerics;
-using Age.Rendering.Drawing;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
+using Age.Rendering.Scene;
 using Age.Rendering.Vulkan;
 
 namespace Age;

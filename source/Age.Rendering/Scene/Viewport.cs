@@ -2,7 +2,7 @@ using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Resources;
 
-namespace Age.Rendering.Drawing;
+namespace Age.Rendering.Scene;
 
 public class Viewport : Node2D
 {

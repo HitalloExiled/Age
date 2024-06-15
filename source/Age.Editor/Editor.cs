@@ -2,6 +2,7 @@ using Age.Numerics;
 using Age.Rendering.Drawing;
 using Age.Rendering.Drawing.Elements;
 using Age.Rendering.Drawing.Styling;
+using Age.Rendering.Scene;
 
 namespace Age.Editor;
 

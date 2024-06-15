@@ -1,4 +1,6 @@
-namespace Age.Rendering.Drawing.Elements;
+using Age.Rendering.Scene;
+
+namespace Age.Rendering.Drawing;
 
 public sealed class Canvas : Element
 {

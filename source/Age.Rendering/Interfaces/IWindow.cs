@@ -1,6 +1,6 @@
 using Age.Numerics;
-using Age.Rendering.Drawing;
 using Age.Rendering.Resources;
+using Age.Rendering.Scene;
 
 namespace Age.Rendering.Interfaces;
 

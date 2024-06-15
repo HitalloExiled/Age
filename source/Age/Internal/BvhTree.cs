@@ -3,6 +3,7 @@ using Age.Numerics;
 using Age.Rendering;
 using Age.Rendering.Commands;
 using Age.Rendering.Drawing;
+using Age.Rendering.Scene;
 
 namespace Age.Internal;
 

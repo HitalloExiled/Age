@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using Age.Numerics;
 using Age.Rendering;
-using Age.Rendering.Drawing;
 using Age.Rendering.RenderPasses;
 using Age.Rendering.Resources;
+using Age.Rendering.Scene;
 using Age.Rendering.Services;
 using Age.Rendering.Storage;
 using Age.Rendering.Vulkan;

@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
 
-namespace Age.Rendering.Drawing;
+namespace Age.Rendering.Scene;
 
 public abstract partial class Node
 {
