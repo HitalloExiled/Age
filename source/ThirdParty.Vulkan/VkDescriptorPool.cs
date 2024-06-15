@@ -43,9 +43,9 @@ public unsafe partial class VkDescriptorPool : VkDeviceResource<VkDescriptorPool
         return descriptorSets;
     }
 
-    public void FreeDescriptorSets(VkDescriptorSet[] descriptorSets)
+    public void FreeDescriptorSets(Span<VkDescriptorSet> descriptorSets)
     {
-        fixed (VkHandle<VkDescriptorSet>* pDescriptorSets = ToHandlers(descriptorSets))
+        fixed (VkHandle<VkDescriptorSet>* pDescriptorSets = VkHandle.GetHandles(descriptorSets))
         {
             VkException.Check(PInvoke.vkFreeDescriptorSets(this.Device.Handle, this.Handle, (uint)descriptorSets.Length, pDescriptorSets));
         }

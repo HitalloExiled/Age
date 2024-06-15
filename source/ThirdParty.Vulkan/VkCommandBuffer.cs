@@ -63,9 +63,9 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
     }
 
     /// <inheritdoc cref="PInvoke.vkCmdBindDescriptorSets" />
-    public void BindDescriptorSets(VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint firstSet, VkDescriptorSet[] descriptorSets, uint[] dynamicOffsets)
+    public void BindDescriptorSets(VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint firstSet, Span<VkDescriptorSet> descriptorSets, Span<uint> dynamicOffsets)
     {
-        fixed (VkHandle<VkDescriptorSet>* pDescriptorSets = ToHandlers(descriptorSets))
+        fixed (VkHandle<VkDescriptorSet>* pDescriptorSets = VkHandle.GetHandles(descriptorSets))
         fixed (uint*                      pDynamicOffsets = dynamicOffsets)
         {
             PInvoke.vkCmdBindDescriptorSets(this.handle, pipelineBindPoint, layout.Handle, firstSet, (uint)descriptorSets.Length, pDescriptorSets, (uint)dynamicOffsets.Length, pDynamicOffsets);
@@ -89,9 +89,9 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
     }
 
     /// <inheritdoc cref="PInvoke.vkCmdBindVertexBuffers" />
-    public void BindVertexBuffers(uint firstBinding, uint bindingCount, VkBuffer[] vertexBuffers, ulong[] offsets)
+    public void BindVertexBuffers(uint firstBinding, uint bindingCount, Span<VkBuffer> vertexBuffers, Span<ulong> offsets)
     {
-        fixed (VkHandle<VkBuffer>* pVertexBuffers = ToHandlers(vertexBuffers))
+        fixed (VkHandle<VkBuffer>* pVertexBuffers = VkHandle.GetHandles(vertexBuffers))
         fixed (ulong*              pOffsets       = offsets)
         {
             PInvoke.vkCmdBindVertexBuffers(this.handle, firstBinding, bindingCount, pVertexBuffers, pOffsets);

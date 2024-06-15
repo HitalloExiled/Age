@@ -199,7 +199,7 @@ public unsafe class BvhTree
         {
             Commands =
             [
-                new RectDrawCommand
+                new RectCommand
                 {
                     Border         = new(2, 0, color * new Color(1, 1, 1, 1)),
                     Flags          = Rendering.Shaders.Canvas.CanvasShader.Flags.ColorAsBackground,
@@ -234,7 +234,7 @@ public unsafe class BvhTree
     internal BvhDebugNode Draw() =>
         Draw(this.root, Color.Green);
 
-    public void Build(NodeTree tree)
+    public void Build(SceneTree tree)
     {
         var depths = new Dictionary<ContainerNode, int>();
 

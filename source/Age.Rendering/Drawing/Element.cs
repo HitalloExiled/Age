@@ -248,29 +248,21 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
     private void DrawBorder()
     {
-        RectDrawCommand command;
-
-        if (this.Commands.Count == 0)
+        if (this.SingleCommand is not RectCommand command)
         {
-            command = new()
+            this.SingleCommand = command = new()
             {
+                Flags          = Flags.ColorAsBackground,
                 SampledTexture = new(
                     Container.Singleton.TextureStorage.DefaultTexture,
                     Container.Singleton.TextureStorage.DefaultSampler,
                     UVRect.Normalized
                 ),
             };
-
-            this.Commands.Add(command);
-        }
-        else
-        {
-            command = (RectDrawCommand)this.Commands[0];
         }
 
         command.ObjectId = this.ObjectId;
         command.Rect     = new(this.Size.Cast<float>(), default);
-        command.Flags    = Flags.ColorAsBackground;
         command.Border   = this.Style.Border ?? default;
         command.Color    = this.Style.BackgroundColor ?? default;
     }

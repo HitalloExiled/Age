@@ -38,6 +38,7 @@ public class Engine : IDisposable
 
         var textService    = new TextService(this.renderer);
         var textureStorage = new TextureStorage(this.renderer);
+        var shaderStorage  = new ShaderStorage(this.renderer);
 
         var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
         var geometryRenderGraphPass    = new GeometryRenderGraphPass(this.renderer, this.Window);
@@ -55,14 +56,17 @@ public class Engine : IDisposable
 
         var renderGraph = new RenderGraph
         {
-            Name   = "Canvas",
+            Name   = "Default",
             Passes =
             [
                 geometryRenderGraphPass,
                 canvasIndexRenderGraphPass,
+                new SceneRenderGraphPass(this.renderer, this.Window),
                 new CanvasRenderGraphPass(this.renderer, this.Window),
             ]
         };
+
+        RenderGraph.Active = renderGraph;
 
         this.renderingService.RegisterRenderGraph(this.Window, renderGraph);
 
@@ -70,20 +74,21 @@ public class Engine : IDisposable
         {
             TextService    = textService,
             TextureStorage = textureStorage,
+            ShaderStorage  = shaderStorage,
         };
 
         this.Window.SizeChanged += this.renderingService.RequestDraw;
 
-        var viewport = new Viewport
+        var viewport = new OldViewport
         {
-            Texture = this.viewportTexture = this.renderer.CreateTexture(geometryRenderGraphPass.ColorImage),
+            Texture = this.viewportTexture = this.renderer.CreateTexture(geometryRenderGraphPass.ColorImage, false),
         };
 
         geometryRenderGraphPass.Recreated += () =>
         {
             this.viewportTexture.Dispose();
 
-            viewport.Texture = this.viewportTexture = this.renderer.CreateTexture(geometryRenderGraphPass.ColorImage);
+            viewport.Texture = this.viewportTexture = this.renderer.CreateTexture(geometryRenderGraphPass.ColorImage, false);
         };
 
         this.Window.Tree.AppendChild(viewport);

@@ -68,7 +68,7 @@ public class CommandBuffer : Resource<VkCommandBuffer>
     public void BindPipeline(Shader shader) =>
         this.Value.BindPipeline(shader.PipelineBindPoint, shader.Pipeline);
 
-    public void BindVertexBuffers(VertexBuffer vertexBuffer) =>
+    public void BindVertexBuffer(VertexBuffer vertexBuffer) =>
         this.Value.BindVertexBuffers(0, 1, [vertexBuffer.Buffer.Value], [0]);
 
     public void BindVertexBuffer(Span<VertexBuffer> vertexBuffers)

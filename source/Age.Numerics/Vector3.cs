@@ -124,6 +124,9 @@ public record struct Vector3<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
     public static implicit operator Vector2<T>(Vector3<T> vector) =>
         new(vector.X, vector.Y);
 
+    public static implicit operator Vector4<T>(Vector3<T> vector) =>
+        new(vector.X, vector.Y, vector.Z, T.Zero);
+
     public override readonly string ToString()
         => $"{{ X = {this.X}, Y = {this.Y}, Z = {this.Z} }}";
 }

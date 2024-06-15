@@ -3,16 +3,16 @@ using Age.Numerics;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Shaders;
-using Age.Rendering.Vulkan.Uniforms;
 using Age.Rendering.Vulkan;
 using SkiaSharp;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
 
-using Buffer = Age.Rendering.Resources.Buffer;
+using Buffer          = Age.Rendering.Resources.Buffer;
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
 using System.Runtime.InteropServices;
+using Age.Rendering.Uniforms;
 
 namespace Age.Rendering.RenderPasses;
 
@@ -36,10 +36,12 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
     public Image ColorImage  => this.resources.ResolveImage;
     public Image DepthImage  => this.resources.DepthImage;
 
+    public override RenderPass RenderPass => this.renderPass;
+
     public unsafe GeometryRenderGraphPass(VulkanRenderer renderer, IWindow window) : base(renderer, window)
     {
-        this.depthFormat    = renderer.FindSupportedFormat([VkFormat.D32Sfloat, VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint], VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
-        this.sampleCount    = renderer.GetMaxUsableSampleCount();
+        this.depthFormat    = renderer.DepthBufferFormat;
+        this.sampleCount    = renderer.MaxUsableSampleCount;
         this.sampler        = renderer.CreateSampler();
         this.renderPass     = this.CreateRenderPass();
         this.uniformBuffers = this.CreateUniformBuffers();

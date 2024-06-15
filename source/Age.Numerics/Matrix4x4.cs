@@ -4,8 +4,8 @@ using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("[{Column1}], [{Column2}], [{Column3}], [{Column4}]")]
-public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
+[DebuggerDisplay("[{M11}, {M12}, {M13}, {M14}], [{M21}, {M22}, {M23}, {M24}], [{M31}, {M32}, {M33}, {M34}], [{M41}, {M42}, {M43}, {M44}]")]
+public struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIeee754<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public static Matrix4x4<T> Identity => new(
         new(T.One,  T.Zero, T.Zero, T.Zero),
@@ -31,6 +31,30 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
 	public T M43;
 	public T M44;
 
+    public Vector4<T> X
+    {
+        get => Unsafe.As<T, Vector4<T>>(ref this.M11);
+        set => Unsafe.As<T, Vector4<T>>(ref this.M11) = value;
+    }
+
+    public Vector4<T> Y
+    {
+        get => Unsafe.As<T, Vector4<T>>(ref this.M21);
+        set => Unsafe.As<T, Vector4<T>>(ref this.M21) = value;
+    }
+
+    public Vector4<T> Z
+    {
+        get => Unsafe.As<T, Vector4<T>>(ref this.M31);
+        set => Unsafe.As<T, Vector4<T>>(ref this.M31) = value;
+    }
+
+    public Vector4<T> W
+    {
+        get => Unsafe.As<T, Vector4<T>>(ref this.M41);
+        set => Unsafe.As<T, Vector4<T>>(ref this.M41) = value;
+    }
+
     public T this[int row, int column]
     {
         get
@@ -48,6 +72,14 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
             Unsafe.Add(ref Unsafe.As<T, Vector4<T>>(ref this.M11), row)[column] = value;
         }
     }
+
+    public readonly T Determinant =>
+        this.M11 * this.M22 * this.M33 * this.M44 - this.M11 * this.M22 * this.M34 * this.M43 - this.M11 * this.M32 * this.M23 * this.M44 + this.M11 * this.M32 * this.M24 * this.M43 +
+        this.M11 * this.M42 * this.M23 * this.M34 - this.M11 * this.M42 * this.M24 * this.M33 - this.M21 * this.M12 * this.M33 * this.M44 + this.M21 * this.M12 * this.M34 * this.M43 +
+        this.M21 * this.M32 * this.M13 * this.M44 - this.M21 * this.M32 * this.M14 * this.M43 - this.M21 * this.M42 * this.M13 * this.M34 + this.M21 * this.M42 * this.M14 * this.M33 +
+        this.M31 * this.M12 * this.M23 * this.M44 - this.M31 * this.M12 * this.M24 * this.M43 - this.M31 * this.M22 * this.M13 * this.M44 + this.M31 * this.M22 * this.M14 * this.M43 +
+        this.M31 * this.M42 * this.M13 * this.M24 - this.M31 * this.M42 * this.M14 * this.M23 - this.M41 * this.M12 * this.M23 * this.M34 + this.M41 * this.M12 * this.M24 * this.M33 +
+        this.M41 * this.M22 * this.M13 * this.M34 - this.M41 * this.M22 * this.M14 * this.M33 - this.M41 * this.M32 * this.M13 * this.M24 + this.M41 * this.M32 * this.M14 * this.M23;
 
     public readonly bool IsIdentity =>
         this.M11 == T.One  &&
@@ -87,7 +119,7 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
         this.M44 = m44;
     }
 
-    public Matrix4x4(Vector4<T> column1, Vector4<T> column2, Vector4<T> column3, Vector4<T> column4)
+    public Matrix4x4(in Vector4<T> column1, in Vector4<T> column2, in Vector4<T> column3, in Vector4<T> column4)
     {
         this.M11 = column1.X;
         this.M12 = column2.X;
@@ -107,7 +139,23 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
         this.M44 = column4.W;
     }
 
-    public static Matrix4x4<T> LookAt(Vector3<T> eye, Vector3<T> center, Vector3<T> up)
+    public Matrix4x4(in Vector3<T> position)
+    {
+        Unsafe.SkipInit(out this);
+
+        ref var x = ref Unsafe.As<T, Vector4<T>>(ref this.M11);
+        ref var y = ref Unsafe.As<T, Vector4<T>>(ref this.M21);
+        ref var z = ref Unsafe.As<T, Vector4<T>>(ref this.M31);
+        ref var w = ref Unsafe.As<T, Vector4<T>>(ref this.M41);
+
+        x.X = T.One;
+        y.Y = T.One;
+        z.Z = T.One;
+
+        w = new(position.X, position.Y, position.Z, T.One);
+    }
+
+    public static Matrix4x4<T> LookAt(in Vector3<T> eye, in Vector3<T> center, in Vector3<T> up)
     {
         var zaxis = (eye - center).Normalized;
         var xaxis = up.Cross(zaxis).Normalized;
@@ -186,7 +234,7 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
         return result;
     }
 
-    public static Matrix4x4<T> Rotate(Vector3<T> axis, T angle)
+    public static Matrix4x4<T> Rotate(in Vector3<T> axis, T angle)
     {
         var x   = axis.X;
         var y   = axis.Y;
@@ -213,5 +261,69 @@ public struct Matrix4x4<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrig
         identity.M33 = zz + cos * (T.One - zz);
 
         return identity;
+    }
+
+    public readonly Matrix4x4<T> Inverse()
+    {
+        var determinant = this.Determinant;
+
+        if (MathX.IsZeroApprox(determinant))
+        {
+            return default;
+        }
+
+        Unsafe.SkipInit<Matrix4x4<T>>(out var result);
+
+        var reciprocal = T.One / determinant;
+
+        result.M11 = (this.M22 * this.M33 * this.M44 - this.M22 * this.M34 * this.M43 - this.M32 * this.M23 * this.M44 + this.M32 * this.M24 * this.M43 + this.M42 * this.M23 * this.M34 - this.M42 * this.M24 * this.M33) * reciprocal;
+        result.M12 = (-this.M12 * this.M33 * this.M44 + this.M12 * this.M34 * this.M43 + this.M32 * this.M13 * this.M44 - this.M32 * this.M14 * this.M43 - this.M42 * this.M13 * this.M34 + this.M42 * this.M14 * this.M33) * reciprocal;
+        result.M13 = (this.M12 * this.M23 * this.M44 - this.M12 * this.M24 * this.M43 - this.M22 * this.M13 * this.M44 + this.M22 * this.M14 * this.M43 + this.M42 * this.M13 * this.M24 - this.M42 * this.M14 * this.M23) * reciprocal;
+        result.M14 = (-this.M12 * this.M23 * this.M34 + this.M12 * this.M24 * this.M33 + this.M22 * this.M13 * this.M34 - this.M22 * this.M14 * this.M33 - this.M32 * this.M13 * this.M24 + this.M32 * this.M14 * this.M23) * reciprocal;
+
+        result.M21 = (-this.M21 * this.M33 * this.M44 + this.M21 * this.M34 * this.M43 + this.M31 * this.M23 * this.M44 - this.M31 * this.M24 * this.M43 - this.M41 * this.M23 * this.M34 + this.M41 * this.M24 * this.M33) * reciprocal;
+        result.M22 = (this.M11 * this.M33 * this.M44 - this.M11 * this.M34 * this.M43 - this.M31 * this.M13 * this.M44 + this.M31 * this.M14 * this.M43 + this.M41 * this.M13 * this.M34 - this.M41 * this.M14 * this.M33) * reciprocal;
+        result.M23 = (-this.M11 * this.M23 * this.M44 + this.M11 * this.M24 * this.M43 + this.M21 * this.M13 * this.M44 - this.M21 * this.M14 * this.M43 - this.M41 * this.M13 * this.M24 + this.M41 * this.M14 * this.M23) * reciprocal;
+        result.M24 = (this.M11 * this.M23 * this.M34 - this.M11 * this.M24 * this.M33 - this.M21 * this.M13 * this.M34 + this.M21 * this.M14 * this.M33 + this.M31 * this.M13 * this.M24 - this.M31 * this.M14 * this.M23) * reciprocal;
+
+        result.M31 = (this.M21 * this.M32 * this.M44 - this.M21 * this.M34 * this.M42 - this.M31 * this.M22 * this.M44 + this.M31 * this.M24 * this.M42 + this.M41 * this.M22 * this.M34 - this.M41 * this.M24 * this.M32) * reciprocal;
+        result.M32 = (-this.M11 * this.M32 * this.M44 + this.M11 * this.M34 * this.M42 + this.M31 * this.M12 * this.M44 - this.M31 * this.M14 * this.M42 - this.M41 * this.M12 * this.M34 + this.M41 * this.M14 * this.M32) * reciprocal;
+        result.M33 = (this.M11 * this.M22 * this.M44 - this.M11 * this.M24 * this.M42 - this.M21 * this.M12 * this.M44 + this.M21 * this.M14 * this.M42 + this.M41 * this.M12 * this.M24 - this.M41 * this.M14 * this.M22) * reciprocal;
+        result.M34 = (-this.M11 * this.M22 * this.M34 + this.M11 * this.M24 * this.M32 + this.M21 * this.M12 * this.M34 - this.M21 * this.M14 * this.M32 - this.M31 * this.M12 * this.M24 + this.M31 * this.M14 * this.M22) * reciprocal;
+
+        result.M41 = (-this.M21 * this.M32 * this.M43 + this.M21 * this.M33 * this.M42 + this.M31 * this.M22 * this.M43 - this.M31 * this.M23 * this.M42 - this.M41 * this.M22 * this.M33 + this.M41 * this.M23 * this.M32) * reciprocal;
+        result.M42 = (this.M11 * this.M32 * this.M43 - this.M11 * this.M33 * this.M42 - this.M31 * this.M12 * this.M43 + this.M31 * this.M13 * this.M42 + this.M41 * this.M12 * this.M33 - this.M41 * this.M13 * this.M32) * reciprocal;
+        result.M43 = (-this.M11 * this.M22 * this.M43 + this.M11 * this.M23 * this.M42 + this.M21 * this.M12 * this.M43 - this.M21 * this.M13 * this.M42 - this.M41 * this.M12 * this.M23 + this.M41 * this.M13 * this.M22) * reciprocal;
+        result.M44 = (this.M11 * this.M22 * this.M33 - this.M11 * this.M23 * this.M32 - this.M21 * this.M12 * this.M33 + this.M21 * this.M13 * this.M32 + this.M31 * this.M12 * this.M23 - this.M31 * this.M13 * this.M22) * reciprocal;
+
+        return result;
+    }
+
+    public static Matrix4x4<T> operator *(in Matrix4x4<T> a, in Matrix4x4<T> b)
+    {
+        Unsafe.SkipInit<Matrix4x4<T>>(out var c);
+
+        c.M11 = a.M11 * b.M11 + a.M12 * b.M21 + a.M13 * b.M31 + a.M14 * b.M41;
+        c.M12 = a.M11 * b.M12 + a.M12 * b.M22 + a.M13 * b.M32 + a.M14 * b.M42;
+        c.M13 = a.M11 * b.M13 + a.M12 * b.M23 + a.M13 * b.M33 + a.M14 * b.M43;
+        c.M14 = a.M11 * b.M14 + a.M12 * b.M24 + a.M13 * b.M34 + a.M14 * b.M44;
+
+        c.M21 = a.M21 * b.M11 + a.M22 * b.M21 + a.M23 * b.M31 + a.M24 * b.M41;
+        c.M22 = a.M21 * b.M12 + a.M22 * b.M22 + a.M23 * b.M32 + a.M24 * b.M42;
+        c.M23 = a.M21 * b.M13 + a.M22 * b.M23 + a.M23 * b.M33 + a.M24 * b.M43;
+        c.M24 = a.M21 * b.M14 + a.M22 * b.M24 + a.M23 * b.M34 + a.M24 * b.M44;
+
+        c.M31 = a.M31 * b.M11 + a.M32 * b.M21 + a.M33 * b.M31 + a.M34 * b.M41;
+        c.M32 = a.M31 * b.M12 + a.M32 * b.M22 + a.M33 * b.M32 + a.M34 * b.M42;
+        c.M33 = a.M31 * b.M13 + a.M32 * b.M23 + a.M33 * b.M33 + a.M34 * b.M43;
+        c.M34 = a.M31 * b.M14 + a.M32 * b.M24 + a.M33 * b.M34 + a.M34 * b.M44;
+
+        c.M41 = a.M41 * b.M11 + a.M42 * b.M21 + a.M43 * b.M31 + a.M44 * b.M41;
+        c.M42 = a.M41 * b.M12 + a.M42 * b.M22 + a.M43 * b.M32 + a.M44 * b.M42;
+        c.M43 = a.M41 * b.M13 + a.M42 * b.M23 + a.M43 * b.M33 + a.M44 * b.M43;
+        c.M44 = a.M41 * b.M14 + a.M42 * b.M24 + a.M43 * b.M34 + a.M44 * b.M44;
+
+
+        return c;
     }
 }

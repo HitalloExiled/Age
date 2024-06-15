@@ -1,12 +1,11 @@
 using Age.Numerics;
 using Age.Rendering.Drawing.Styling;
-using Age.Rendering.Enums;
 using Age.Rendering.Resources;
 using Age.Rendering.Shaders.Canvas;
 
 namespace Age.Rendering.Commands;
 
-public partial record RectDrawCommand() : DrawCommand(DrawCommandType.Rect)
+public partial record RectCommand : Command
 {
     public Border             Border         { get; set; }
     public Color              Color          { get; set; }

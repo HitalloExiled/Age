@@ -5,10 +5,10 @@ namespace Age.Rendering.Vulkan;
 
 public ref struct FramebufferCreateInfo
 {
-    public struct Attachment
+    public struct Attachment(Image image, VkImageAspectFlags imageAspect)
     {
-        public required Image              Image;
-        public required VkImageAspectFlags ImageAspect;
+        public Image              Image       = image;
+        public VkImageAspectFlags ImageAspect = imageAspect;
     }
 
     public required RenderPass       RenderPass;

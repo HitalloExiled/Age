@@ -15,11 +15,13 @@ public class BvhTreeTest
     {
         var textureStorageMock = new Mock<ITextureStorage>();
         var textServiceMock    = new Mock<ITextService>();
+        var shaderStorageMock  = new Mock<IShaderStorage>();
 
         using var container = new Container()
         {
             TextService    = textServiceMock.Object,
             TextureStorage = textureStorageMock.Object,
+            ShaderStorage  = shaderStorageMock.Object,
         };
 
         var windowMock = new Mock<IWindow>();
@@ -29,7 +31,7 @@ public class BvhTreeTest
 
         var window = windowMock.Object;
 
-        var nodeTree = new NodeTree(window);
+        var nodeTree = new SceneTree(window);
         var canvas   = new Canvas();
 
         var root   = new Span() { Name = "Root", Style = new() { Size = new(400, 200) } };

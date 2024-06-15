@@ -16,7 +16,26 @@ public abstract class Node2D : Node
     private Transform2D ParentTransformCache => (this.Parent as Node2D)?.TransformCache ?? new();
     private Transform2D PivotedTransform     => Transform2D.Translated(this.Pivot) * this.LocalTransform * Transform2D.Translated(-this.Pivot);
 
-    internal List<DrawCommand> Commands { get; init; } = [];
+    protected Command? SingleCommand
+    {
+        get => this.Commands.Count == 1 ? this.Commands[0] : null;
+        set
+        {
+            if (value == null)
+            {
+                this.Commands.Clear();
+            }
+            else if (this.Commands.Count == 1)
+            {
+                this.Commands[0] = value;
+            }
+            else
+            {
+                this.Commands.Clear();
+                this.Commands.Add(value);
+            }
+        }
+    }
 
     internal protected virtual Transform2D TransformCache
     {
@@ -34,6 +53,8 @@ public abstract class Node2D : Node
             return this.transformCache.Value;
         }
     }
+
+    internal List<Command> Commands { get; init; } = [];
 
     public virtual Transform2D LocalTransform
     {
@@ -58,7 +79,13 @@ public abstract class Node2D : Node
         if (!Equals(field, value))
         {
             field = value;
+
             this.OnTransformChanged();
+
+            if (this.IsConnected)
+            {
+                this.Tree.IsDirty = true;
+            }
         }
     }
 

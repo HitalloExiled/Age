@@ -24,8 +24,9 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
     protected override CommandBuffer     CommandBuffer => this.commandBuffer;
     protected override Framebuffer       Framebuffer   => this.framebuffer;
-    protected override RenderPass        RenderPass    => this.renderPass;
     protected override RenderResources[] Resources     { get; } = [];
+
+    public override RenderPass RenderPass => this.renderPass;
 
     public CanvasIndexRenderGraphPass(VulkanRenderer renderer, IWindow window) : base(renderer, window)
     {
@@ -155,7 +156,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         this.commandBuffer.Begin(VkCommandBufferUsageFlags.OneTimeSubmit);
     }
 
-    protected override void ExecuteCommand(RenderResources resource, RectDrawCommand command, in Size<float> viewport, in Matrix3x2<float> transform)
+    protected override void ExecuteCommand(RenderResources resource, RectCommand command, in Size<float> viewport, in Matrix3x2<float> transform)
     {
         var constant = new CanvasShader.PushConstant
         {

@@ -3,8 +3,8 @@ using Age.Rendering.Commands;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Shaders.Canvas;
+using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
-using Age.Rendering.Vulkan.Uniforms;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -25,8 +25,9 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
     protected override CommandBuffer CommandBuffer  => this.Renderer.CurrentCommandBuffer;
 
     protected override Framebuffer       Framebuffer => this.framebuffers[this.Window.Surface.CurrentBuffer];
-    protected override RenderPass        RenderPass  => this.renderPass;
     protected override RenderResources[] Resources     { get; } = [];
+
+    public override RenderPass RenderPass => this.renderPass;
 
     public CanvasRenderGraphPass(VulkanRenderer renderer, IWindow window) : base(renderer, window)
     {
@@ -138,7 +139,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         }
     }
 
-    protected override void ExecuteCommand(RenderResources resource, RectDrawCommand command, in Size<float> viewport, in Matrix3x2<float> transform)
+    protected override void ExecuteCommand(RenderResources resource, RectCommand command, in Size<float> viewport, in Matrix3x2<float> transform)
     {
         var constant = new CanvasShader.PushConstant
         {

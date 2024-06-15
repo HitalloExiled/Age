@@ -1,6 +1,6 @@
 using ThirdParty.Vulkan.Enums;
 
-namespace Age.Rendering;
+namespace Age.Rendering.Uniforms;
 
 public abstract record Uniform
 {

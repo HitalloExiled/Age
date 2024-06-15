@@ -34,8 +34,8 @@ public sealed class Canvas : Element
         this.OnWindowSizeChanged();
     }
 
-    protected override void OnDisconnected() =>
-        this.Tree!.Window.SizeChanged -= this.OnWindowSizeChanged;
+    protected override void OnDisconnected(SceneTree tree) =>
+        tree.Window.SizeChanged -= this.OnWindowSizeChanged;
 
     protected override void OnChildAppended(Node child)
     {

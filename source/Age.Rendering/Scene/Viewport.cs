@@ -1,59 +1,72 @@
 using Age.Numerics;
-using Age.Rendering.Commands;
+using Age.Rendering.RenderPasses;
 using Age.Rendering.Resources;
+using Age.Rendering.Vulkan;
+using ThirdParty.Vulkan.Enums;
 
 namespace Age.Rendering.Scene;
 
-public class Viewport : Node2D
+public class Viewport(Size<uint> size) : Node2D, IDisposable
 {
+    private bool disposed;
+
+    private RenderTarget renderTarget = CreateRenderTarget(size);
+
     public override string NodeName => nameof(Viewport);
 
-    private Texture?   texture;
-    private Size<uint> size;
-
-    public Texture? Texture
-    {
-        get => this.texture;
-        internal set => this.SetTexture(value);
-    }
+    public RenderTarget RenderTarget => this.renderTarget;
 
     public Size<uint> Size
     {
-        get => this.size;
-        internal set => this.Set(ref this.size, value);
-    }
-
-    private void SetTexture(Texture? value)
-    {
-        this.Set(ref this.texture, value);
-
-        if (value == null)
+        get => new(this.renderTarget.Size.Width, this.renderTarget.Size.Height);
+        set
         {
-            this.Commands.Clear();
-        }
-        else
-        {
-            RectDrawCommand command;
-
-            if (this.Commands.Count == 0)
+            if (!value.Equals(this.renderTarget.Size))
             {
-                this.Commands.Add(command = new RectDrawCommand());
+                this.renderTarget = CreateRenderTarget(value);
             }
-            else
-            {
-                command = (RectDrawCommand)this.Commands[0];
-            }
-
-            command.Rect           = new Rect<float>(value.Image.Extent.Width, value.Image.Extent.Height, 0, 0);
-            command.SampledTexture = new(value, Container.Singleton.TextureStorage.DefaultSampler, UVRect.Normalized);
         }
     }
 
-    protected override void OnTransformChanged()
+    ~Viewport() =>
+        this.Dispose(disposing: false);
+
+    private static RenderTarget CreateRenderTarget(Size<uint> size)
     {
-        if (this.IsConnected)
+        if (RenderGraph.Active == null)
         {
-            this.Tree.IsDirty = true;
+            throw new InvalidOperationException("There no active RenderGraph");
         }
+
+        var renderPass = RenderGraph.Active.GetRenderPass<SceneRenderGraphPass>()
+            ?? throw new InvalidOperationException($"Can't find any {nameof(SceneRenderGraphPass)} on {RenderGraph.Active.Name} RenderGraph");
+
+        var renderTargetCreateInfo = new RenderTargetCreateInfo
+        {
+            Extent     = new() { Width = size.Width, Height = size.Height },
+            Format     = VkFormat.B8G8R8A8Unorm,
+            RenderPass = renderPass,
+        };
+
+        return VulkanRenderer.Singleton.CreateRenderTarget(renderTargetCreateInfo);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
+            { }
+
+            this.disposed = true;
+        }
+    }
+
+
+
+    public void Dispose()
+    {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

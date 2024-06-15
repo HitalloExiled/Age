@@ -14,10 +14,9 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
     protected abstract CommandBuffer     CommandBuffer { get; }
     protected abstract RenderResources[] Resources     { get; }
-    protected abstract RenderPass        RenderPass    { get; }
     protected abstract Framebuffer       Framebuffer   { get; }
 
-    protected abstract void ExecuteCommand(RenderResources resource, RectDrawCommand command, in Size<float> viewport, in Matrix3x2<float> transform);
+    protected abstract void ExecuteCommand(RenderResources resource, RectCommand command, in Size<float> viewport, in Matrix3x2<float> transform);
 
     protected void NotifyChanged() =>
         this.Changed?.Invoke();
@@ -41,18 +40,18 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
             if (resource.Enabled)
             {
                 this.CommandBuffer.BindPipeline(resource.Shader);
-                this.CommandBuffer.BindVertexBuffers(resource.VertexBuffer);
+                this.CommandBuffer.BindVertexBuffer(resource.VertexBuffer);
                 this.CommandBuffer.BindIndexBuffer(resource.IndexBuffer);
 
-                foreach (var entry in this.Window.Tree.EnumerateCommands())
+                foreach (var entry in this.Window.Tree.Enumerate2DCommands())
                 {
                     switch (entry.Command)
                     {
-                        case RectDrawCommand rectDrawCommand:
-                            this.ExecuteCommand(resource, rectDrawCommand, viewportFloat, entry.Transform);
+                        case RectCommand rectCommand:
+                            this.ExecuteCommand(resource, rectCommand, viewportFloat, entry.Transform);
                             break;
                         default:
-                            throw new Exception();
+                            break;
                     }
                 }
             }

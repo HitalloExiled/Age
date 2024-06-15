@@ -10,7 +10,7 @@ public interface IWindow
 
     Size<uint> ClientSize { get; }
     bool       Closed     { get; }
-    NodeTree   Tree       { get; }
+    SceneTree  Tree       { get; }
     bool       Minimized  { get; }
     Surface    Surface    { get; }
     bool       Visible    { get; }

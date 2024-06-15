@@ -5,17 +5,17 @@ namespace Age.Rendering.Resources;
 
 public class Texture : Resource
 {
-    private readonly bool ownsImage;
+    private readonly bool imageOwner;
 
     public required Image       Image       { get; init; }
     public required VkImageView ImageView   { get; init; }
 
-    internal Texture(VulkanRenderer renderer, bool ownsImage) : base(renderer) =>
-        this.ownsImage = ownsImage;
+    internal Texture(VulkanRenderer renderer, bool imageOwner) : base(renderer) =>
+        this.imageOwner = imageOwner;
 
     protected override void OnDispose()
     {
-        if (this.ownsImage)
+        if (this.imageOwner)
         {
             this.Image.Dispose();
         }

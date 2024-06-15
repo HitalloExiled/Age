@@ -7,7 +7,7 @@ namespace Age.Rendering.Scene;
 [DebuggerDisplay("NodeName: {NodeName}, Name: {Name}, IsConnected: {IsConnected}")]
 public abstract partial class Node : IEnumerable<Node>
 {
-    private NodeTree? tree;
+    private SceneTree? tree;
 
     internal uint ObjectId { get; set; }
 
@@ -23,8 +23,7 @@ public abstract partial class Node : IEnumerable<Node>
 
     public string? Name { get; set; }
 
-
-    public NodeTree? Tree
+    public SceneTree? Tree
     {
         get => this.tree;
         private set
@@ -33,23 +32,31 @@ public abstract partial class Node : IEnumerable<Node>
             {
                 this.tree = value;
 
-                for (var child = this.FirstChild; child != null; child = child.NextSibling)
+                static void setTree(Node node, SceneTree? tree)
                 {
-                    child.Tree = this.tree;
+                    var oldTree = node.tree;
+                    node.tree = tree;
+
+                    if (tree != null)
+                    {
+                        tree.Nodes.Add(node);
+
+                        node.ObjectId = (uint)tree.Nodes.Count;
+
+                        node.OnConnected();
+                    }
+                    else if (oldTree != null)
+                    {
+                        node.ObjectId = 0;
+                        node.OnDisconnected(oldTree);
+                    }
                 }
 
-                if (this.tree != null)
-                {
-                    this.tree.Nodes.Add(this);
+                setTree(this, value);
 
-                    this.ObjectId = (uint)this.tree.Nodes.Count;
-
-                    this.OnConnected();
-                }
-                else
+                foreach (var child in this.Traverse(true))
                 {
-                    this.ObjectId = 0;
-                    this.OnDisconnected();
+                    setTree(child, value);
                 }
             }
         }
@@ -70,7 +77,7 @@ public abstract partial class Node : IEnumerable<Node>
     protected virtual void OnConnected()
     { }
 
-    protected virtual void OnDisconnected()
+    protected virtual void OnDisconnected(SceneTree tree)
     { }
 
     protected virtual void OnChildRemoved(Node child)
@@ -106,10 +113,10 @@ public abstract partial class Node : IEnumerable<Node>
                 this.FirstChild = this.LastChild = child;
             }
 
-            child.Tree = this is NodeTree tree ? tree : this.Tree;
+            child.Tree = this is SceneTree tree ? tree : this.Tree;
 
-            this.OnChildAppended(child);
             child.OnAdopted();
+            this.OnChildAppended(child);
         }
     }
 
@@ -146,16 +153,16 @@ public abstract partial class Node : IEnumerable<Node>
 
             do
             {
-                var child = next;
+                var current = next;
 
-                next = child.NextSibling;
+                next = current.NextSibling;
 
-                child.PreviousSibling = null;
-                child.NextSibling     = null;
-                child.Parent          = null;
-                child.Tree            = null;
+                current.PreviousSibling = null;
+                current.NextSibling     = null;
+                current.Parent          = null;
+                current.Tree            = null;
 
-                this.OnChildRemoved(child);
+                this.OnChildRemoved(current);
             }
             while (next != null);
 
@@ -192,10 +199,16 @@ public abstract partial class Node : IEnumerable<Node>
                 child.NextSibling.PreviousSibling = null;
             }
 
-            child.Tree            = null;
             child.PreviousSibling = null;
             child.NextSibling     = null;
             child.Parent          = null;
+
+            child.tree  = null;
+
+            foreach (var node in this.Traverse(true))
+            {
+                node.tree = null;
+            }
 
             this.OnChildRemoved(child);
         }

@@ -25,9 +25,9 @@ public unsafe partial class VkDeviceMemory : VkDeviceResource<VkDeviceMemory>
     }
 
     /// <inheritdoc cref="PInvoke.vkMapMemory" />
-    public void Map(ulong offset, ulong size, uint flags, out nint pData)
+    public void Map(ulong offset, ulong size, uint flags, out nint handle)
     {
-        fixed (nint* ppData = &pData)
+        fixed (nint* ppData = &handle)
         {
             PInvoke.vkMapMemory(this.Device.Handle, this.handle, offset, size, flags, (void**)ppData);
         }

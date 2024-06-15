@@ -1,7 +1,7 @@
 using ThirdParty.Vulkan.Enums;
 using Buffer = Age.Rendering.Resources.Buffer;
 
-namespace Age.Rendering.Vulkan.Uniforms;
+namespace Age.Rendering.Uniforms;
 
 public record UniformBufferUniform : Uniform
 {

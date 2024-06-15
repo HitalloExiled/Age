@@ -10,7 +10,7 @@ public class Window : Platforms.Display.Window, IWindow
 {
     public new static IEnumerable<Window> Windows => Platforms.Display.Window.Windows.Cast<Window>();
 
-    public NodeTree Tree { get; }
+    public SceneTree Tree { get; }
 
     private static VulkanRenderer renderer = null!;
 

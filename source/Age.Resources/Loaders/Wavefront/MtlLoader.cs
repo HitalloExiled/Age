@@ -13,13 +13,13 @@ public class MtlLoader
 
     public virtual bool TryLoad(string filepath, out IList<Material> materials)
     {
-        try
+        if (File.Exists(filepath))
         {
             materials = this.Load(filepath);
 
             return true;
         }
-        catch
+        else
         {
             materials = [];
 

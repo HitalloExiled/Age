@@ -18,7 +18,7 @@ internal partial class TextService(VulkanRenderer renderer) : ITextService
     private readonly Dictionary<int, TextureAtlas> atlases = [];
     private readonly Dictionary<int, Glyph> glyphs = [];
     private readonly Sampler sampler = renderer.CreateSampler();
-    private readonly ObjectPool<RectDrawCommand> rectDrawCommandPool = new(static () => new RectDrawCommand());
+    private readonly ObjectPool<RectCommand> rectCommandPool = new(static () => new RectCommand());
 
     private bool disposed;
 
@@ -102,11 +102,11 @@ internal partial class TextService(VulkanRenderer renderer) : ITextService
         return atlas;
     }
 
-    private void ReleaseCommands(List<DrawCommand> commands)
+    private void ReleaseCommands(List<Command> commands)
     {
         foreach (var command in commands)
         {
-            this.rectDrawCommandPool.Return((RectDrawCommand)command);
+            this.rectCommandPool.Return((RectCommand)command);
         }
 
         commands.Clear();
@@ -198,7 +198,7 @@ internal partial class TextService(VulkanRenderer renderer) : ITextService
                     P4 = new Point<float>(glyph.Position.X, glyph.Position.Y + glyph.Size.Height) / atlasSize,
                 };
 
-                var command = this.rectDrawCommandPool.Get();
+                var command = this.rectCommandPool.Get();
 
                 command.ObjectId       = (uint)(textNode.ObjectId | (i + 1u) << 16);
                 command.Rect           = new(size, position);

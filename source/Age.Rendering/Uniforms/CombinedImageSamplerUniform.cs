@@ -1,7 +1,7 @@
 using Age.Rendering.Resources;
 using ThirdParty.Vulkan.Enums;
 
-namespace Age.Rendering.Vulkan.Uniforms;
+namespace Age.Rendering.Uniforms;
 
 public partial record CombinedImageSamplerUniform : Uniform
 {

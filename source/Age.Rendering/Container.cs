@@ -12,6 +12,7 @@ internal class Container : IDisposable
 
     public required ITextService    TextService    { get; init; }
     public required ITextureStorage TextureStorage { get; init; }
+    public required IShaderStorage  ShaderStorage { get; init; }
 
     public Container()
     {
@@ -29,6 +30,7 @@ internal class Container : IDisposable
         {
             this.TextService.Dispose();
             this.TextureStorage.Dispose();
+            this.ShaderStorage.Dispose();
 
             this.disposed = true;
         }

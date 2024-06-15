@@ -46,26 +46,26 @@ public unsafe partial class VkFence : VkDeviceResource<VkFence>
     {
         foreach (var group in fences.GroupBy(x => x.Device))
         {
-            Reset(group.Key.Handle, ToHandlers(group.ToArray()));
+            Reset(group.Key.Handle, VkHandle.GetHandles(group.ToArray().AsSpan()));
         }
     }
 
     /// <inheritdoc cref="PInvoke.vkResetFences" />
-    public static void Reset(VkDevice device, VkFence[] fences) =>
-        Reset(device.Handle, ToHandlers(fences));
+    public static void Reset(VkDevice device, Span<VkFence> fences) =>
+        Reset(device.Handle, VkHandle.GetHandles(fences));
 
     /// <inheritdoc cref="PInvoke.vkWaitForFences" />
     public static void Wait(VkFence[] fences, bool waitAll, ulong timeout)
     {
         foreach (var group in fences.GroupBy(x => x.Device))
         {
-            Wait(group.Key.Handle, ToHandlers(group.ToArray()), waitAll, timeout);
+            Wait(group.Key.Handle, VkHandle.GetHandles(group.ToArray().AsSpan()), waitAll, timeout);
         }
     }
 
     /// <inheritdoc cref="PInvoke.vkWaitForFences" />
-    public static void Wait(VkDevice device, VkFence[] fences, bool waitAll, ulong timeout) =>
-        Wait(device.Handle, ToHandlers(fences), waitAll, timeout);
+    public static void Wait(VkDevice device, Span<VkFence> fences, bool waitAll, ulong timeout) =>
+        Wait(device.Handle, VkHandle.GetHandles(fences), waitAll, timeout);
 
     protected override void OnDispose()
     {

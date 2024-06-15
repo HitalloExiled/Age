@@ -61,10 +61,10 @@ public unsafe partial class VkCommandPool : VkDeviceResource<VkCommandPool>
         return commands;
     }
 
-    public void FreeCommandBuffers(params VkCommandBuffer[] commandBuffers)
+    public void FreeCommandBuffers(Span<VkCommandBuffer> commandBuffers)
     {
         fixed (VkHandle<VkCommandPool>*   pHandle         = &this.handle)
-        fixed (VkHandle<VkCommandBuffer>* pCommandBuffers = ToHandlers(commandBuffers))
+        fixed (VkHandle<VkCommandBuffer>* pCommandBuffers = VkHandle.GetHandles(commandBuffers))
         {
             PInvoke.vkFreeCommandBuffers(this.Device.Handle, this.handle, (uint)commandBuffers.Length, pCommandBuffers);
         }

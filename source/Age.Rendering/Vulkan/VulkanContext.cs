@@ -14,6 +14,7 @@ namespace Age.Rendering.Vulkan;
 
 internal unsafe partial class VulkanContext : IDisposable
 {
+    public event Action? DeviceInitialized;
     public event Action? SwapchainRecreated;
 
     public const ushort MAX_FRAMES_IN_FLIGHT = 2;
@@ -280,12 +281,7 @@ internal unsafe partial class VulkanContext : IDisposable
 
     public VkFramebuffer CreateFrameBuffer(VkRenderPass renderPass, Span<VkImageView> attachments, VkExtent2D extent)
     {
-        var attachmentHandles = new VkHandle<VkImageView>[attachments.Length];
-
-        for (var i = 0; i < attachments.Length; i++)
-        {
-            attachmentHandles[i] = attachments[i].Handle;
-        }
+        var attachmentHandles = VkHandle.GetHandles(attachments);
 
         fixed (VkHandle<VkImageView>* pAttachments = attachmentHandles)
         {
@@ -340,6 +336,8 @@ internal unsafe partial class VulkanContext : IDisposable
         this.CreateSyncObjects();
         this.GetSurfaceCapabilities(surface, out this.surfaceFormat);
         this.SetupFrameData();
+
+        this.DeviceInitialized?.Invoke();
     }
 
     private void PickPhysicalDevice(VkSurfaceKHR surface, out VkPhysicalDevice physicalDevice, out uint graphicsQueueIndex, out uint presentationQueueIndex)
