@@ -46,11 +46,11 @@ public class Engine : IDisposable
         this.Window.SizeChanged += () =>
         {
             var canvasIndexImage   = canvasIndexRenderGraphPass.ColorImage;
-            // var geometryColorImage = geometryRenderGraphPass.ColorImage;
-            // var geometryDepthImage = geometryRenderGraphPass.DepthImage;
+            var geometryColorImage = geometryRenderGraphPass.ColorImage;
+            var geometryDepthImage = geometryRenderGraphPass.DepthImage;
 
-            // SaveImage(geometryColorImage, VkImageAspectFlags.Color, "./.debug/Geometry.Color.png");
-            // SaveImage(geometryDepthImage, VkImageAspectFlags.Depth, "./.debug/Geometry.Depth.png");
+            SaveImage(geometryColorImage, VkImageAspectFlags.Color, "./.debug/Geometry.Color.png");
+            SaveImage(geometryDepthImage, VkImageAspectFlags.Depth, "./.debug/Geometry.Depth.png");
             SaveImage(canvasIndexImage,   VkImageAspectFlags.Color, "./.debug/CanvasIndex.png");
         };
 
@@ -60,8 +60,8 @@ public class Engine : IDisposable
             Passes =
             [
                 geometryRenderGraphPass,
-                canvasIndexRenderGraphPass,
                 new SceneRenderGraphPass(this.renderer, this.Window),
+                canvasIndexRenderGraphPass,
                 new CanvasRenderGraphPass(this.renderer, this.Window),
             ]
         };
@@ -77,9 +77,10 @@ public class Engine : IDisposable
             ShaderStorage  = shaderStorage,
         };
 
-        this.Window.SizeChanged += this.renderingService.RequestDraw;
+        this.Window.SizeChanged  += this.renderingService.RequestDraw;
+        this.Window.WindowClosed += this.Window.Tree.Destroy;
 
-        var viewport = new OldViewport
+        var viewport = new ViewportOld
         {
             Texture = this.viewportTexture = this.renderer.CreateTexture(geometryRenderGraphPass.ColorImage, false),
         };

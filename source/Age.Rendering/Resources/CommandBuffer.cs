@@ -1,6 +1,5 @@
 using Age.Numerics;
 using Age.Rendering.Interfaces;
-using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -11,7 +10,7 @@ public class CommandBuffer : Resource<VkCommandBuffer>
 {
     private readonly bool disposable;
 
-    internal CommandBuffer(VulkanRenderer renderer, VkCommandBuffer value, bool disposable) : base(renderer, value) =>
+    internal CommandBuffer(VkCommandBuffer value, bool disposable) : base(value) =>
         this.disposable = disposable;
 
     protected override void OnDispose()

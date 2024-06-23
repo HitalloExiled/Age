@@ -1,12 +1,16 @@
+using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Scene;
 using Age.Rendering.Scene.Resources;
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
 
+using static Age.Rendering.Shaders.GeometryShader;
+
 namespace Age.Editor;
 
 public class DemoScene : Scene3D
 {
+    private readonly Mesh mesh;
     public override string NodeName { get; } = nameof(DemoScene);
 
     public DemoScene()
@@ -19,7 +23,7 @@ public class DemoScene : Scene3D
         };
 
         this.AppendChild(this.Camera);
-        this.AppendChild(LoadMesh());
+        this.AppendChild(this.mesh = LoadMesh());
     }
 
     private static Mesh LoadMesh()
@@ -54,7 +58,16 @@ public class DemoScene : Scene3D
             }
         }
 
-        return new([..vertices], [..indices])
+        // vertices =
+        // [
+        //     new(new(-1, -1, 1), default, new(1,  1)),
+        //     new(new( 1, -1, 1), default, new(0,  1)),
+        //     new(new( 1,  1, 1), default, new(0,  0)),
+        // ];
+
+        // indices = [2, 1, 0];
+
+        return new(vertices.AsSpan(), indices.AsSpan())
         {
             Material = new()
             {
@@ -62,4 +75,7 @@ public class DemoScene : Scene3D
             }
         };
     }
+
+    protected override void OnDestroy() =>
+        this.mesh.Material.Diffuse.Dispose();
 }

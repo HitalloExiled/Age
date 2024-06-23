@@ -22,7 +22,7 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
     internal VkDevice(VkPhysicalDevice physicalDevice, in VkDeviceCreateInfo createInfo)
     {
         this.PhysicalDevice    = physicalDevice;
-        this.enabledExtensions = [.. NativeStringArray.ToArray(createInfo.PpEnabledExtensionNames, createInfo.EnabledExtensionCount)];
+        this.enabledExtensions = [..NativeStringArray.ToArray(createInfo.PpEnabledExtensionNames, createInfo.EnabledExtensionCount)];
 
         fixed (VkHandle<VkDevice>*    pHandle     = &this.handle)
         fixed (VkDeviceCreateInfo*    pCreateInfo = &createInfo)
@@ -89,9 +89,9 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
         new VkGraphicsPipeline(this, createInfo, pipelineCache);
 
     /// <inheritdoc cref="PInvoke.vkCreateGraphicsPipelines" />
-    public VkPipeline[] CreateGraphicsPipelines(VkPipelineCache pipelineCache, VkGraphicsPipelineCreateInfo[] createInfos)
+    public VkPipeline[] CreateGraphicsPipelines(VkPipelineCache pipelineCache, Span<VkGraphicsPipelineCreateInfo> createInfos)
     {
-        var vkPipelines = new VkHandle<VkPipeline>[createInfos.Length];
+        Span<VkHandle<VkPipeline>> vkPipelines = stackalloc VkHandle<VkPipeline>[createInfos.Length];
 
         fixed (VkGraphicsPipelineCreateInfo* pCreateInfo = createInfos)
         fixed (VkHandle<VkPipeline>*         pPipelines  = vkPipelines)
@@ -159,7 +159,7 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
     }
 
     /// <inheritdoc cref="PInvoke.vkUpdateDescriptorSets" />
-    public void UpdateDescriptorSets(VkWriteDescriptorSet[] descriptorWrites, VkCopyDescriptorSet[] descriptorCopies)
+    public void UpdateDescriptorSets(Span<VkWriteDescriptorSet> descriptorWrites, Span<VkCopyDescriptorSet> descriptorCopies)
     {
         fixed (VkWriteDescriptorSet* pDescriptorWrites = descriptorWrites)
         fixed (VkCopyDescriptorSet*  pDescriptorCopies = descriptorCopies)

@@ -83,6 +83,9 @@ public abstract partial class Node : IEnumerable<Node>
     protected virtual void OnChildRemoved(Node child)
     { }
 
+    protected virtual void OnDestroy()
+    { }
+
     protected virtual void OnInitialize()
     { }
 
@@ -128,6 +131,16 @@ public abstract partial class Node : IEnumerable<Node>
         }
     }
 
+    public void Destroy()
+    {
+        foreach (var child in this.Traverse())
+        {
+            child.OnDestroy();
+        }
+
+        this.OnDestroy();
+    }
+
     public IEnumerable<T> Enumerate<T>() where T : Node
     {
         foreach (var node in this)
@@ -141,6 +154,16 @@ public abstract partial class Node : IEnumerable<Node>
 
     public IEnumerator<Node> GetEnumerator() =>
         new Enumerator(this);
+
+    public void Initialize()
+    {
+        foreach (var child in this.Traverse())
+        {
+            child.OnInitialize();
+        }
+
+        this.OnInitialize();
+    }
 
     public void Remove() =>
         this.Parent?.RemoveChild(this);
@@ -264,29 +287,17 @@ public abstract partial class Node : IEnumerable<Node>
     public override string ToString() =>
         $"<{this.NodeName} name='{this.Name}'>";
 
-    public void Initialize()
+    public void Update(double deltaTime)
     {
-        foreach (var child in this)
+        foreach (var child in this.Traverse())
         {
-            child.Initialize();
+            child.OnPreUpdate(deltaTime);
+            child.OnUpdate(deltaTime);
+            child.OnPostUpdate(deltaTime);
         }
 
-        this.OnInitialize();
-    }
-
-    public void Update(double deltaTime, Action<Node>? callback = null)
-    {
         this.OnPreUpdate(deltaTime);
-
-        foreach (var child in this)
-        {
-            child.Update(deltaTime, callback);
-        }
-
         this.OnUpdate(deltaTime);
-
         this.OnPostUpdate(deltaTime);
-
-        callback?.Invoke(this);
     }
 }

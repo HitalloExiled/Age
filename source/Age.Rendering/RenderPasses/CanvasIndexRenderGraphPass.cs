@@ -47,8 +47,6 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
         var shader = renderer.CreateShaderAndWatch<CanvasIndexShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
 
-        shader.Changed += this.NotifyChanged;
-
         this.Resources =
         [
             new RenderResources(shader, this.vertexBuffer, this.indexBuffer, true)

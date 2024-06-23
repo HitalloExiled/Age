@@ -14,12 +14,12 @@ public class Editor : Node
         this.AppendChild(this.canvas);
         this.canvas.AppendChild(new FrameStatus());
 
-        var viewport = new EditorViewport3D();
-        var scene    = new DemoScene();
+        var editorViewport3D = new EditorViewport3D();
+        var scene            = new DemoScene();
 
-        scene.Camera!.RenderTarget = viewport.RenderTarget;
+        scene.Camera!.RenderTarget = editorViewport3D.RenderTarget;
 
-        this.canvas.AppendChild(viewport);
+        this.canvas.AppendChild(editorViewport3D);
         this.canvas.AppendChild(scene);
     }
 }

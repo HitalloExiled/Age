@@ -1,4 +1,6 @@
 using Age.Numerics;
+using Age.Rendering.Commands;
+using Age.Rendering.Drawing;
 using Age.Rendering.RenderPasses;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
@@ -6,33 +8,38 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Rendering.Scene;
 
-public class Viewport(Size<uint> size) : Node2D, IDisposable
+public class Viewport : Element, IDisposable
 {
     private bool disposed;
 
-    private RenderTarget renderTarget = CreateRenderTarget(size);
+    private RenderTarget renderTarget;
+
+    public Viewport(Size<uint> size) =>
+        this.renderTarget = this.CreateRenderTarget(size);
 
     public override string NodeName => nameof(Viewport);
 
     public RenderTarget RenderTarget => this.renderTarget;
 
-    public Size<uint> Size
+    public Size<uint> ViewSize
     {
         get => new(this.renderTarget.Size.Width, this.renderTarget.Size.Height);
         set
         {
             if (!value.Equals(this.renderTarget.Size))
             {
-                this.renderTarget = CreateRenderTarget(value);
+                this.renderTarget = this.CreateRenderTarget(value);
             }
         }
     }
 
     ~Viewport() =>
-        this.Dispose(disposing: false);
+        this.Dispose(false);
 
-    private static RenderTarget CreateRenderTarget(Size<uint> size)
+    private RenderTarget CreateRenderTarget(Size<uint> size)
     {
+        this.Style.MinSize = size;
+
         if (RenderGraph.Active == null)
         {
             throw new InvalidOperationException("There no active RenderGraph");
@@ -48,7 +55,17 @@ public class Viewport(Size<uint> size) : Node2D, IDisposable
             RenderPass = renderPass,
         };
 
-        return VulkanRenderer.Singleton.CreateRenderTarget(renderTargetCreateInfo);
+        var renderTarget = VulkanRenderer.Singleton.CreateRenderTarget(renderTargetCreateInfo);
+
+        if (this.SingleCommand is not RectCommand command)
+        {
+            this.SingleCommand = command = new();
+        }
+
+        command.Rect           = new Rect<float>(renderTarget.Texture.Image.Extent.Width, renderTarget.Texture.Image.Extent.Height, 0, 0);
+        command.SampledTexture = new(renderTarget.Texture, Container.Singleton.TextureStorage.DefaultSampler, UVRect.Normalized);
+
+        return renderTarget;
     }
 
     protected virtual void Dispose(bool disposing)
@@ -58,11 +75,14 @@ public class Viewport(Size<uint> size) : Node2D, IDisposable
             if (disposing)
             { }
 
+            this.RenderTarget.Dispose();
+
             this.disposed = true;
         }
     }
 
-
+    protected override void OnDestroy() =>
+        this.Dispose();
 
     public void Dispose()
     {

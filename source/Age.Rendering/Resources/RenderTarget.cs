@@ -2,12 +2,16 @@ using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public class RenderTarget : Disposable
+public class RenderTarget(Texture texture, Framebuffer framebuffer) : Resource
 {
-    public required Framebuffer Framebuffer { get; init; }
+    public Texture     Texture     { get; } = texture;
+    public Framebuffer Framebuffer { get; } = framebuffer;
 
     public VkExtent2D Size => this.Framebuffer.Extent;
 
-    protected override void OnDispose() =>
+    protected override void OnDispose()
+    {
         this.Framebuffer.Dispose();
+        this.Texture.Dispose();
+    }
 }

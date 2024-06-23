@@ -2,11 +2,11 @@ namespace Age.Core;
 
 public class DisposableAction(Action action) : IDisposable
 {
-    public bool disposed;
+    private bool disposed;
 
     public void Dispose()
     {
-        if (!disposed)
+        if (!this.disposed)
         {
             action.Invoke();
             this.disposed = true;

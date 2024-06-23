@@ -8,8 +8,8 @@ namespace Age.Rendering.Storage;
 
 public class TextureStorage : ITextureStorage
 {
-    private readonly Dictionary<Texture, UniformSet> textureSets = [];
     private readonly VulkanRenderer renderer;
+    private readonly Dictionary<string, Texture> textures = [];
 
     public Texture DefaultTexture { get; }
     public Sampler DefaultSampler { get; }
@@ -46,13 +46,16 @@ public class TextureStorage : ITextureStorage
         this.DefaultTexture.Update(imageBuffer);
     }
 
+    public void Add(string name, Texture texture) =>
+        this.textures[name] = texture;
+
     public void Dispose()
     {
         if (!this.disposed)
         {
             this.renderer.DeferredDispose(this.DefaultTexture);
             this.renderer.DeferredDispose(this.DefaultSampler);
-            this.renderer.DeferredDispose(this.textureSets.Values);
+            this.renderer.DeferredDispose(this.textures.Values);
 
             this.disposed = true;
         }

@@ -5,13 +5,12 @@ using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Scene.Resources;
 using Age.Rendering.Scene;
+using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
-
-using Buffer = Age.Rendering.Resources.Buffer;
-using Age.Rendering.Uniforms;
+using System.Runtime.InteropServices;
 
 namespace Age.Rendering.RenderPasses;
 
@@ -19,8 +18,8 @@ public partial class SceneRenderGraphPass : RenderGraphPass
 {
     private readonly struct FrameResource
     {
-        public Dictionary<int, UniformSet>          UniformSets   { get; } = [];
-        public Dictionary<Camera3D, (nint, Buffer)> CameraBuffers { get; } = [];
+        public Dictionary<int, UniformSet>     UniformSets { get; } = [];
+        public Dictionary<Camera3D, UboHandle> CameraUbo   { get; } = [];
 
         public FrameResource() { }
     }
@@ -29,6 +28,7 @@ public partial class SceneRenderGraphPass : RenderGraphPass
     private readonly FrameResource[]    frameResources = new FrameResource[VulkanContext.MAX_FRAMES_IN_FLIGHT];
     private readonly RenderPass         renderPass;
     private readonly VkSampleCountFlags sampleCount;
+    private readonly DateTime           startTime = DateTime.UtcNow;
 
     public override RenderPass RenderPass => this.renderPass;
 
@@ -99,25 +99,40 @@ public partial class SceneRenderGraphPass : RenderGraphPass
         return this.Renderer.CreateRenderPass(createInfo);
     }
 
-    private unsafe (nint Handle, Buffer Buffer) GetCameraBuffer(Camera3D camera)
+    private unsafe UboHandle UpdateCameraUbo(Camera3D camera, VkExtent2D viewport)
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
 
         var size = (ulong)sizeof(UniformBufferObject);
 
-        if (!frameResource.CameraBuffers.TryGetValue(camera, out var cameraBuffer))
+        if (!frameResource.CameraUbo.TryGetValue(camera, out var cameraBuffer))
         {
             var buffer = this.Renderer.CreateBuffer(size, VkBufferUsageFlags.UniformBuffer, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
             buffer.Allocation.Memory.Map(0, size, 0, out var handle);
 
-            frameResource.CameraBuffers[camera] = cameraBuffer = (handle, buffer);
+            frameResource.CameraUbo[camera] = cameraBuffer = new(handle, buffer);
         }
+
+        var now = DateTime.UtcNow;
+
+        var time = Math.Max(0, (float)(now - this.startTime).TotalMilliseconds / 1000);
+
+        var ubo = new UniformBufferObject
+        {
+            Model      = Matrix4x4<float>.Rotate(new(0, 0, 1), time * (float)(90 * Angle.RADIANS)),
+            View       = Matrix4x4<float>.LookAt(new(2), new(0), new(0, 0, 1)),
+            Projection = Matrix4x4<float>.PerspectiveFov((float)(45 * Angle.RADIANS), viewport.Width / (float)viewport.Height, 0.1f, 10)
+        };
+
+        ubo.Projection[1, 1] *= -1;
+
+        Marshal.StructureToPtr(ubo, cameraBuffer.Handle, true);
 
         return cameraBuffer;
     }
 
-    private unsafe UniformSet GetUniformSet(Camera3D camera, Material material)
+    private unsafe UniformSet GetUniformSet(Camera3D camera, UboHandle cameraBuffer, Material material)
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
 
@@ -125,8 +140,6 @@ public partial class SceneRenderGraphPass : RenderGraphPass
 
         if (!frameResource.UniformSets.TryGetValue(hashcode, out var uniformSet))
         {
-            var cameraBuffer = this.GetCameraBuffer(camera);
-
             var combinedImageSampler = new CombinedImageSamplerUniform
             {
                 Binding = 1,
@@ -140,20 +153,32 @@ public partial class SceneRenderGraphPass : RenderGraphPass
                 Buffer  = cameraBuffer.Buffer,
             };
 
-            frameResource.UniformSets[hashcode] = uniformSet = this.Renderer.CreateUniformSet(material.Shader, [uniformBuffer, combinedImageSampler]);
+            frameResource.UniformSets[hashcode] = uniformSet = new UniformSet(material.Shader, [uniformBuffer, combinedImageSampler]);
         }
 
         return uniformSet;
     }
 
-    protected override void OnDispose()
-    { }
+    protected unsafe override void OnDispose()
+    {
+        this.renderPass.Dispose();
+
+        foreach (var resource in this.frameResources)
+        {
+            foreach (var ubo in resource.CameraUbo.Values)
+            {
+                this.Renderer.DeferredDispose(ubo.Buffer);
+
+                NativeMemory.Free((void*)ubo.Handle);
+            }
+
+            this.Renderer.DeferredDispose(resource.UniformSets.Values);
+        }
+    }
 
     public unsafe override void Execute()
     {
         var commandBuffer = this.Renderer.CurrentCommandBuffer;
-
-        commandBuffer.SetViewport(this.Window.Surface.Swapchain.Extent);
 
         var color = Color.Black;
 
@@ -175,20 +200,24 @@ public partial class SceneRenderGraphPass : RenderGraphPass
 
                 if (camera?.RenderTarget != null)
                 {
-                    commandBuffer.BeginRenderPass(this.renderPass, camera.RenderTarget.Framebuffer, [colorClearValue, default, depthClearValue]);
+                    commandBuffer.SetViewport(camera.RenderTarget.Size);
 
                     var renderTarget = camera.RenderTarget;
+
+                    var cameraUbo = this.UpdateCameraUbo(camera, renderTarget.Size);
 
                     foreach (var entry in this.Window.Tree.Enumerate3DCommands())
                     {
                         switch (entry.Command)
                         {
                             case MeshCommand meshCommand:
+                                commandBuffer.BeginRenderPass(meshCommand.Material.Shader.RenderPass, camera.RenderTarget.Framebuffer, [colorClearValue, default, depthClearValue]);
                                 commandBuffer.BindPipeline(meshCommand.Material.Shader);
-                                commandBuffer.BindUniformSet(this.GetUniformSet(camera, meshCommand.Material));
+                                commandBuffer.BindUniformSet(this.GetUniformSet(camera, cameraUbo, meshCommand.Material));
                                 commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
                                 commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);
                                 commandBuffer.DrawIndexed(meshCommand.IndexBuffer);
+                                commandBuffer.EndRenderPass();
 
                                 break;
                             default:
@@ -196,7 +225,6 @@ public partial class SceneRenderGraphPass : RenderGraphPass
                         }
                     }
 
-                    commandBuffer.EndRenderPass();
                 }
             }
         }
@@ -205,3 +233,4 @@ public partial class SceneRenderGraphPass : RenderGraphPass
     public override void Recreate()
     { }
 }
+

@@ -10,16 +10,11 @@ namespace Age.Rendering.RenderPasses;
 
 public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer, IWindow window) : RenderGraphPass(renderer, window)
 {
-    public event Action? Changed;
-
     protected abstract CommandBuffer     CommandBuffer { get; }
     protected abstract RenderResources[] Resources     { get; }
     protected abstract Framebuffer       Framebuffer   { get; }
 
     protected abstract void ExecuteCommand(RenderResources resource, RectCommand command, in Size<float> viewport, in Matrix3x2<float> transform);
-
-    protected void NotifyChanged() =>
-        this.Changed?.Invoke();
 
     protected virtual void AfterExecute() { }
     protected virtual void BeforeExecute() { }

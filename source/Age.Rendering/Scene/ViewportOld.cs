@@ -4,9 +4,9 @@ using Age.Rendering.Resources;
 
 namespace Age.Rendering.Scene;
 
-public class OldViewport : Node2D
+public class ViewportOld : Node2D
 {
-    public override string NodeName => nameof(OldViewport);
+    public override string NodeName => nameof(ViewportOld);
 
     private Texture?   texture;
     private Size<uint> size;

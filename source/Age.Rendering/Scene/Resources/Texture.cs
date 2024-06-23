@@ -6,15 +6,24 @@ using Age.Numerics;
 
 namespace Age.Rendering.Scene.Resources;
 
-public class Texture(Image image, bool imageOwner) : Disposable
+public class Texture : Disposable
 {
     public static Texture Default { get; } = CreateDefaultTexture();
 
-    private readonly bool imageOwner = imageOwner;
+    private readonly bool imageOwner;
 
-    private readonly TextureResource resource = VulkanRenderer.Singleton.CreateTexture(image, imageOwner);
+    private readonly TextureResource resource;
 
-    public Image Image { get; } = image;
+    public Texture(Image image, bool imageOwner)
+    {
+        this.imageOwner = imageOwner;
+        this.resource   = VulkanRenderer.Singleton.CreateTexture(image, imageOwner);
+        this.Image      = image;
+
+        Container.Singleton.TextureStorage.Add(Guid.NewGuid().ToString(), this.resource);
+    }
+
+    public Image Image { get; }
 
     internal SamplerResource Sampler { get; set; } = Container.Singleton.TextureStorage.DefaultSampler;
 
@@ -33,7 +42,11 @@ public class Texture(Image image, bool imageOwner) : Disposable
 
         var image = new Image(imageBuffer, new((uint)DEFAULT_SIZE));
 
-        return new Texture(image, true);
+        var texture = new Texture(image, true);
+
+        Container.Singleton.TextureStorage.Add("Default", texture);
+
+        return texture;
     }
 
     public static Texture FromImage(Image image) =>

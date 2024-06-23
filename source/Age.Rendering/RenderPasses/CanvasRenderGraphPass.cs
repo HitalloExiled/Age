@@ -48,9 +48,6 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         var canvasShader          = renderer.CreateShaderAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
         var canvasWireframeShader = renderer.CreateShaderAndWatch<CanvasWireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
 
-        canvasShader.Changed          += this.NotifyChanged;
-        canvasWireframeShader.Changed += this.NotifyChanged;
-
         this.Resources =
         [
             new(canvasShader,          this.vertexBuffer, this.indexBuffer, true),
@@ -115,7 +112,6 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                     new FramebufferCreateInfo.Attachment
                     {
                         Image = Image.From(
-                            this.Renderer,
                             this.Window.Surface.Swapchain.Images[i],
                             extent,
                             this.Window.Surface.Swapchain.Format,
@@ -161,7 +157,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                 Texture = command.SampledTexture.Texture,
             };
 
-            this.uniformSets[command.SampledTexture.Texture] = uniformSet = this.Renderer.CreateUniformSet(resource.Shader, [combinedImageSamplerUniform]);
+            this.uniformSets[command.SampledTexture.Texture] = uniformSet = new UniformSet(resource.Shader, [combinedImageSamplerUniform]);
         }
 
         if (uniformSet != null && uniformSet != this.lastUniformSet)

@@ -1,8 +1,6 @@
-using Age.Rendering.Vulkan;
-
 namespace Age.Rendering.Resources;
 
-public class RenderPipeline(VulkanRenderer renderer) : Resource(renderer)
+public class RenderPipeline : Resource
 {
     public required RenderPass  RenderPass  { get; init; }
     public required Framebuffer Framebuffer { get; init; }

@@ -18,10 +18,10 @@ public class Image : Resource<VkImage>
     public required VkImageType       Type   { get; init; }
     public required VkImageUsageFlags Usage  { get; init; }
 
-    internal Image(VulkanRenderer renderer, VkImage image) : base(renderer, image) { }
+    internal Image(VkImage image) : base(image) { }
 
-    internal static Image From(VulkanRenderer renderer, VkImage image, VkExtent3D extent, VkFormat format, VkImageType type, VkImageUsageFlags usage) =>
-        new(renderer, image)
+    internal static Image From(VkImage image, VkExtent3D extent, VkFormat format, VkImageType type, VkImageUsageFlags usage) =>
+        new(image)
         {
             Extent      = extent,
             Format      = format,
@@ -43,7 +43,7 @@ public class Image : Resource<VkImage>
     {
         var size = this.Extent.Width * this.Extent.Height * sizeof(uint);
 
-        using var buffer = this.Renderer.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+        using var buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
         this.CopyToBuffer(buffer, aspectMask);
 
@@ -63,7 +63,7 @@ public class Image : Resource<VkImage>
         VkPipelineStageFlags destinationStage
     )
     {
-        var commandBuffer = this.Renderer.BeginSingleTimeCommands();
+        var commandBuffer = VulkanRenderer.Singleton.BeginSingleTimeCommands();
 
         var imageMemoryBarrier = new VkImageMemoryBarrier
         {
@@ -84,12 +84,12 @@ public class Image : Resource<VkImage>
 
         commandBuffer.Value.PipelineBarrier(sourceStage, destinationStage, default, [], [], [imageMemoryBarrier]);
 
-        this.Renderer.EndSingleTimeCommands(commandBuffer);
+        VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
     }
 
     public void CopyFromBuffer(Buffer buffer)
     {
-        var commandBuffer = this.Renderer.BeginSingleTimeCommands();
+        var commandBuffer = VulkanRenderer.Singleton.BeginSingleTimeCommands();
 
         var bufferImageCopy = new VkBufferImageCopy
         {
@@ -103,12 +103,12 @@ public class Image : Resource<VkImage>
 
         commandBuffer.Value.CopyBufferToImage(buffer, this, VkImageLayout.TransferDstOptimal, [bufferImageCopy]);
 
-        this.Renderer.EndSingleTimeCommands(commandBuffer);
+        VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
     }
 
     public void CopyToBuffer(Buffer buffer, VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
     {
-        var commandBuffer = this.Renderer.BeginSingleTimeCommands();
+        var commandBuffer = VulkanRenderer.Singleton.BeginSingleTimeCommands();
 
         var bufferImageCopy = new VkBufferImageCopy
         {
@@ -122,12 +122,12 @@ public class Image : Resource<VkImage>
 
         commandBuffer.Value.CopyImageToBuffer(this, VkImageLayout.TransferSrcOptimal, buffer.Value, [bufferImageCopy]);
 
-        this.Renderer.EndSingleTimeCommands(commandBuffer);
+        VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
     }
 
     public void Update(Span<byte> data)
     {
-        var buffer = this.Renderer.CreateBuffer((ulong)data.Length, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+        var buffer = VulkanRenderer.Singleton.CreateBuffer((ulong)data.Length, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
         buffer.Allocation.Memory.Write(0, 0, data);
 

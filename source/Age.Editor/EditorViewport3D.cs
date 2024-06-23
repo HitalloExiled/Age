@@ -24,9 +24,7 @@ public class EditorViewport3D : Element, IDisposable
             MinSize = new Size<uint>(400)
         };
 
-        this.viewport = new Viewport(new(400));
-
-        this.AppendChild(this.viewport);
+        this.AppendChild(this.viewport = new Viewport(new(400)));
     }
 
     ~EditorViewport3D() =>
@@ -43,6 +41,9 @@ public class EditorViewport3D : Element, IDisposable
             this.disposed = true;
         }
     }
+
+    protected override void OnDestroy() =>
+        this.Dispose();
 
     public void Dispose()
     {

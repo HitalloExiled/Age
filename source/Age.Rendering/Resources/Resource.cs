@@ -1,20 +1,38 @@
-using Age.Rendering.Vulkan;
+using Age.Core.Extensions;
 
 namespace Age.Rendering.Resources;
 
-public abstract class Resource : Disposable
+public abstract class Resource : IDisposable
 {
-    protected VulkanRenderer Renderer { get; }
+    private bool disposed;
 
-    internal Resource(VulkanRenderer renderer) =>
-        this.Renderer = renderer;
+    public List<Resource> Dependencies { get; init; } = [];
+
+    protected abstract void OnDispose();
+
+    public void Dispose()
+    {
+        if (!this.disposed)
+        {
+            this.disposed = true;
+
+            foreach (var dependency in this.Dependencies.AsSpan())
+            {
+                dependency.Dispose();
+            }
+
+            this.OnDispose();
+        }
+
+        GC.SuppressFinalize(this);
+    }
 }
 
 public abstract class Resource<T> : Resource
 {
     public T Value { get; }
 
-    internal Resource(VulkanRenderer renderer, T value) : base(renderer) =>
+    internal Resource(T value) =>
         this.Value = value;
 
     public static implicit operator T(Resource<T> value) => value.Value;

@@ -51,10 +51,10 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
         this.resources = this.CreateFrameBuffers();
 
         this.shader      = renderer.CreateShader<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = this.sampleCount, FrontFace = VkFrontFace.CounterClockwise }, this.renderPass);
-        this.uniformSets = this.CreateUniformSets(this.shader, this.uniformBuffers, this.sampler, this.texture);
+        this.uniformSets = CreateUniformSets(this.shader, this.uniformBuffers, this.sampler, this.texture);
     }
 
-    private unsafe UniformSet[] CreateUniformSets(Shader shader, Buffer[] uniformBuffers, Sampler sampler, Texture texture)
+    private static unsafe UniformSet[] CreateUniformSets(Shader shader, Buffer[] uniformBuffers, Sampler sampler, Texture texture)
     {
         var combinedImageSampler = new CombinedImageSamplerUniform
         {
@@ -73,7 +73,7 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
                 Buffer  = uniformBuffers[i],
             };
 
-            uniformSets[i] = this.Renderer.CreateUniformSet(shader, [uniformBuffer, combinedImageSampler]);
+            uniformSets[i] = new UniformSet(shader, [uniformBuffer, combinedImageSampler]);
         }
 
         return uniformSets;
@@ -253,7 +253,7 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
         }
 
         vertexBuffer = this.Renderer.CreateVertexBuffer(vertices.AsSpan());
-        indexBuffer  = this.Renderer.CreateIndexBuffer(indices);
+        indexBuffer  = this.Renderer.CreateIndexBuffer(indices.AsSpan());
     }
 
     private unsafe Texture LoadTexture()

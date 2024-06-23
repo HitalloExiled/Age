@@ -26,7 +26,7 @@ public class FrameStatus : Element
             Name  = "Status",
             Style = new()
             {
-                Color    = Color.White,
+                Color    = Color.Margenta,
                 FontSize = 12,
                 MinSize  = new(110, 30)
             }

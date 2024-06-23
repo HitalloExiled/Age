@@ -7,7 +7,6 @@ using Age.Numerics;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Shaders;
-using Age.Rendering.Uniforms;
 using ThirdParty.SpirvCross;
 using ThirdParty.SpirvCross.Enums;
 using ThirdParty.Vulkan;
@@ -49,7 +48,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
             if (!this.commandBuffers.TryGetValue(vkCommandBuffer, out var commandBuffer))
             {
-                this.commandBuffers[vkCommandBuffer] = commandBuffer = new(this, vkCommandBuffer, false);
+                this.commandBuffers[vkCommandBuffer] = commandBuffer = new(vkCommandBuffer, false);
             }
 
             return commandBuffer;
@@ -103,9 +102,6 @@ public unsafe partial class VulkanRenderer : IDisposable
             return descriptorPool.AllocateDescriptorSets(descriptorSetAllocateInfo);
         }
     }
-
-    private DescriptorPool CreateDescriptorPool(VkDescriptorType descriptorType) =>
-        DescriptorPool.CreateDescriptorPool(this.context.Device, descriptorType);
 
     private VkImageView CreateImageView(Image image, VkImageAspectFlags aspect)
     {
@@ -409,7 +405,7 @@ public unsafe partial class VulkanRenderer : IDisposable
     }
 
     public CommandBuffer AllocateCommand(VkCommandBufferLevel commandBufferLevel) =>
-        new(this, this.context.AllocateCommand(commandBufferLevel), true);
+        new(this.context.AllocateCommand(commandBufferLevel), true);
 
     public void BeginFrame()
     {
@@ -429,7 +425,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         commandBuffer.Begin(VkCommandBufferUsageFlags.OneTimeSubmit);
 
-        return new(this, commandBuffer, true);
+        return new(commandBuffer, true);
     }
 
     public Buffer CreateBuffer(ulong size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
@@ -458,7 +454,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         buffer.BindMemory(memory, 0);
 
-        return new(this, buffer)
+        return new(buffer)
         {
             Allocation = new()
             {
@@ -471,6 +467,9 @@ public unsafe partial class VulkanRenderer : IDisposable
             Usage = usage,
         };
     }
+
+    public DescriptorPool CreateDescriptorPool(VkDescriptorType descriptorType) =>
+        DescriptorPool.CreateDescriptorPool(this.context.Device, descriptorType);
 
     public Image CreateImage(in VkImageCreateInfo createInfo)
     {
@@ -490,7 +489,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         image.BindMemory(deviceMemory, 0);
 
-        return new(this, image)
+        return new(image)
         {
             Allocation = new()
             {
@@ -519,15 +518,15 @@ public unsafe partial class VulkanRenderer : IDisposable
         return images;
     }
 
-    public IndexBuffer CreateIndexBuffer(IList<ushort> indices) =>
+    public IndexBuffer CreateIndexBuffer(Span<ushort> indices) =>
         this.CreateIndexBuffer(indices, VkIndexType.Uint16);
 
-    public IndexBuffer CreateIndexBuffer(IList<uint> indices) =>
+    public IndexBuffer CreateIndexBuffer(Span<uint> indices) =>
         this.CreateIndexBuffer(indices, VkIndexType.Uint32);
 
-    public IndexBuffer CreateIndexBuffer<T>(IList<T> indices, VkIndexType indexType) where T : unmanaged, INumber<T>
+    public IndexBuffer CreateIndexBuffer<T>(Span<T> indices, VkIndexType indexType) where T : unmanaged, INumber<T>
     {
-        var bufferSize = (ulong)(sizeof(T) * indices.Count);
+        var bufferSize = (ulong)(sizeof(T) * indices.Length);
 
         var buffer = this.CreateBuffer(
             bufferSize,
@@ -541,7 +540,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         {
             Buffer = buffer,
             Type   = indexType,
-            Size   = (uint)indices.Count,
+            Size   = (uint)indices.Length,
         };
     }
 
@@ -562,7 +561,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         var framebuffer = this.context.CreateFrameBuffer(createInfo.RenderPass.Value, imageViews.AsSpan(), extent);
 
-        return new(this, framebuffer)
+        return new(framebuffer)
         {
             ImageViews = imageViews,
             Extent     = extent,
@@ -733,7 +732,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         var framebuffer = this.CreateFramebuffer(framebufferCreateInfo);
 
-        return new(this)
+        return new()
         {
             RenderPass  = renderPass,
             Framebuffer = framebuffer,
@@ -761,6 +760,10 @@ public unsafe partial class VulkanRenderer : IDisposable
             Tiling        = VkImageTiling.Optimal,
         };
 
+        var images = new List<Image>();
+
+        Image? output = null;
+
         foreach (var subPass in createInfo.RenderPass.SubPasses)
         {
             foreach (var colorAttachments in subPass.ColorAttachments)
@@ -769,9 +772,11 @@ public unsafe partial class VulkanRenderer : IDisposable
 
                 colorImageCreateInfo.Format  = colorAttachments.Color.Format;
                 colorImageCreateInfo.Samples = colorAttachments.Color.Samples;
-                colorImageCreateInfo.Usage  |= VkImageUsageFlags.TransientAttachment | VkImageUsageFlags.ColorAttachment;
+                colorImageCreateInfo.Usage   = VkImageUsageFlags.TransientAttachment | VkImageUsageFlags.ColorAttachment;
 
-                var colorImage = this.CreateImage(colorImageCreateInfo);
+                var colorImage = output = this.CreateImage(colorImageCreateInfo);
+
+                images.Add(colorImage);
 
                 attachments.Add(new FramebufferCreateInfo.Attachment(colorImage, VkImageAspectFlags.Color));
 
@@ -783,7 +788,9 @@ public unsafe partial class VulkanRenderer : IDisposable
                     resolveImageCreateInfo.Samples = colorAttachments.Resolve.Value.Samples;
                     resolveImageCreateInfo.Usage   = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
 
-                    var resolveImage = this.CreateImage(resolveImageCreateInfo);
+                    var resolveImage = output = this.CreateImage(resolveImageCreateInfo);
+
+                    images.Add(resolveImage);
 
                     attachments.Add(new FramebufferCreateInfo.Attachment(resolveImage, VkImageAspectFlags.Color));
                 }
@@ -799,8 +806,20 @@ public unsafe partial class VulkanRenderer : IDisposable
 
                 var depthImage = this.CreateImage(depthImageCreateInfo);
 
+                images.Add(depthImage);
+
                 attachments.Add(new FramebufferCreateInfo.Attachment(depthImage, VkImageAspectFlags.Depth));
             }
+        }
+
+        if (output == null)
+        {
+            foreach (var image in images.AsSpan())
+            {
+                image.Dispose();
+            }
+
+            throw new InvalidOperationException($"No valid color attachment founded on provided render pass");
         }
 
         var framebufferCreateInfo = new FramebufferCreateInfo
@@ -811,11 +830,11 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         var framebuffer = this.CreateFramebuffer(framebufferCreateInfo);
 
-        return new()
+        return new(this.CreateTexture(output, true), framebuffer)
         {
-            Framebuffer = framebuffer,
+            Dependencies = [..images]
         };
-    }
+        }
 
     public Shader CreateShader<TShaderResources, TVertexInput, TPushConstant>(TShaderResources shaderResources, RenderPass renderPass)
     where TShaderResources : ShaderResources<TVertexInput, TPushConstant>
@@ -894,7 +913,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             MipmapMode    = VkSamplerMipmapMode.Linear,
         };
 
-        return new(this, this.context.Device.CreateSampler(createInfo));
+        return new(this.context.Device.CreateSampler(createInfo));
     }
 
     public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
@@ -937,7 +956,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         var imageView = this.CreateImageView(image, VkImageAspectFlags.Color);
 
-        var texture = new Texture(this, true)
+        var texture = new Texture(true)
         {
             Image     = image,
             ImageView = imageView,
@@ -950,7 +969,7 @@ public unsafe partial class VulkanRenderer : IDisposable
     {
         var imageView = this.CreateImageView(image, VkImageAspectFlags.Color);
 
-        var texture = new Texture(this, owner)
+        var texture = new Texture(owner)
         {
             Image     = image,
             ImageView = imageView,
@@ -966,110 +985,6 @@ public unsafe partial class VulkanRenderer : IDisposable
         texture.Update(data);
 
         return texture;
-    }
-
-    public UniformSet CreateUniformSet(Shader shader, Span<Uniform> uniforms)
-    {
-        using var disposables = new Disposables();
-
-        VkDescriptorType poolKey = default;
-
-        foreach (var uniform in uniforms)
-        {
-            if (uniform.Binding > shader.UniformBindings.Length || shader.UniformBindings[uniform.Binding] != uniform.Type)
-            {
-                throw new InvalidOperationException($"The provided shader expects that binding {uniform.Binding} to be of type {shader.UniformBindings[uniform.Binding]}");
-            }
-
-            poolKey |= uniform.Type;
-        }
-
-        var writes = new List<VkWriteDescriptorSet>();
-
-        var descriptorPool = this.CreateDescriptorPool(poolKey);
-
-        var descriptorSetLayoutHandle = shader.DescriptorSetLayout.Handle;
-
-        var descriptorSetAllocateInfo = new VkDescriptorSetAllocateInfo
-        {
-            DescriptorSetCount = 1,
-            PSetLayouts        = &descriptorSetLayoutHandle,
-        };
-
-        var descriptorSets = descriptorPool.Value.AllocateDescriptorSets(descriptorSetAllocateInfo);
-
-        foreach (var uniform in uniforms)
-        {
-            switch (uniform)
-            {
-                case CombinedImageSamplerUniform combinedImageSampler:
-                {
-                    var descriptorImageInfo = new VkDescriptorImageInfo
-                    {
-                        Sampler     = combinedImageSampler.Sampler.Value.Handle,
-                        ImageView   = combinedImageSampler.Texture.ImageView.Handle,
-                        ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
-                    };
-
-                    var pImageInfo = new NativeArray<VkDescriptorImageInfo>([descriptorImageInfo]);
-
-                    disposables.Add(pImageInfo);
-
-                    var writeDescriptorSet = new VkWriteDescriptorSet
-                    {
-                        DescriptorCount = 1,
-                        DescriptorType  = VkDescriptorType.CombinedImageSampler,
-                        DstBinding      = uniform.Binding,
-                        DstSet          = descriptorSets[0].Handle,
-                        PImageInfo      = pImageInfo.AsPointer(),
-                    };
-
-                    writes.Add(writeDescriptorSet);
-
-                    break;
-                }
-                case UniformBufferUniform uniformBuffer:
-                {
-                    var descriptorBufferInfo = new VkDescriptorBufferInfo
-                    {
-                        Buffer = uniformBuffer.Buffer.Value.Handle,
-                        Offset = uniformBuffer.Buffer.Allocation.Offset,
-                        Range  = uniformBuffer.Buffer.Allocation.Size,
-                    };
-
-                    var pBufferInfo = new NativeArray<VkDescriptorBufferInfo>([descriptorBufferInfo]);
-
-                    disposables.Add(pBufferInfo);
-
-                    var writeDescriptorSet = new VkWriteDescriptorSet
-                    {
-                        DescriptorCount = 1,
-                        DescriptorType  = VkDescriptorType.UniformBuffer,
-                        DstBinding      = uniform.Binding,
-                        DstSet          = descriptorSets[0].Handle,
-                        PBufferInfo     = pBufferInfo.AsPointer(),
-                    };
-
-                    writes.Add(writeDescriptorSet);
-
-                    break;
-                }
-                default:
-                    throw new Exception();
-            }
-
-        }
-
-        this.context.Device.UpdateDescriptorSets([..writes], []);
-
-        var uniformSet = new UniformSet()
-        {
-            DescriptorPool = descriptorPool,
-            DescriptorSets = descriptorSets,
-            Shader         = shader,
-        };
-
-        return uniformSet;
     }
 
     public VertexBuffer CreateVertexBuffer<T>(Span<T> data) where T : unmanaged
@@ -1143,6 +1058,9 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public VkFormat FindSupportedFormat(Span<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features) =>
         this.context.FindSupportedFormat(candidates, tiling, features);
+
+    public void UpdateDescriptorSets(Span<VkWriteDescriptorSet> descriptorWrites, Span<VkCopyDescriptorSet> descriptorCopies) =>
+        this.context.Device.UpdateDescriptorSets(descriptorWrites, descriptorCopies);
 
     public void WaitIdle() =>
         this.context.Device.WaitIdle();

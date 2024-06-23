@@ -3,10 +3,11 @@ using Age.Rendering.RenderPasses;
 using Age.Rendering.Resources;
 using Age.Rendering.Shaders;
 using Age.Rendering.Vulkan;
+using ThirdParty.Vulkan.Enums;
 
 namespace Age.Rendering.Storage;
 
-public class ShaderStorage(VulkanRenderer renderer) : Resource(renderer), IShaderStorage
+public class ShaderStorage(VulkanRenderer renderer) : Disposable, IShaderStorage
 {
     private readonly Dictionary<string, Shader> shaders = [];
 
@@ -18,9 +19,9 @@ public class ShaderStorage(VulkanRenderer renderer) : Resource(renderer), IShade
             {
                 case nameof(GeometryShader):
                     {
-                        var renderPass = RenderGraph.Active?.GetRenderPass<GeometryRenderGraphPass>() ?? throw new InvalidOperationException();
+                        var renderPass = RenderGraph.Active?.GetRenderPass<SceneRenderGraphPass>() ?? throw new InvalidOperationException();
 
-                        shader = this.Renderer.CreateShader<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = this.Renderer.MaxUsableSampleCount, FrontFace = ThirdParty.Vulkan.Enums.VkFrontFace.CounterClockwise }, renderPass);
+                        this.shaders[name] = shader = renderer.CreateShader<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = renderer.MaxUsableSampleCount, FrontFace = VkFrontFace.CounterClockwise }, renderPass);
 
                         break;
                     }
@@ -30,11 +31,6 @@ public class ShaderStorage(VulkanRenderer renderer) : Resource(renderer), IShade
         return shader ?? throw new InvalidOperationException($"Shader {name} not found");
     }
 
-    protected override void OnDispose()
-    {
-        foreach (var shader in this.shaders.Values)
-        {
-            shader.Dispose();
-        }
-    }
+    protected override void OnDispose() =>
+        renderer.DeferredDispose(this.shaders.Values);
 }

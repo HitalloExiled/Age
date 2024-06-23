@@ -103,7 +103,6 @@ public class DescriptorPool : Disposable
         typeEntries.Clear();
     }
 
-
     protected override void OnDispose() =>
         this.Value.Dispose();
 

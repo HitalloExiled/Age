@@ -6,4 +6,6 @@ internal interface ITextureStorage : IDisposable
 {
     Texture DefaultTexture { get; }
     Sampler DefaultSampler { get; }
+
+    void Add(string name, Texture texture);
 }
