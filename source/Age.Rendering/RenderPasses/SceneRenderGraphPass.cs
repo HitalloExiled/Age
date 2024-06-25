@@ -134,9 +134,10 @@ public partial class SceneRenderGraphPass : RenderGraphPass
         {
             var combinedImageSampler = new CombinedImageSamplerUniform
             {
-                Binding = 1,
-                Sampler = material.Diffuse.Sampler,
-                Texture = material.Diffuse,
+                Binding     = 1,
+                Sampler     = material.Diffuse.Sampler,
+                Texture     = material.Diffuse,
+                ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
             };
 
             var uniformBuffer = new UniformBufferUniform

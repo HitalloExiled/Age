@@ -7,6 +7,7 @@ public partial record CombinedImageSamplerUniform : Uniform
 {
     public override VkDescriptorType Type => VkDescriptorType.CombinedImageSampler;
 
-    public required Texture Texture { get; init; }
-    public required Sampler Sampler { get; init; }
+    public required VkImageLayout ImageLayout { get; init; }
+    public required Sampler       Sampler     { get; init; }
+    public required Texture       Texture     { get; init; }
 }

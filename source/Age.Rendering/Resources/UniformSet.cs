@@ -72,7 +72,7 @@ public class UniformSet : Resource
                     {
                         Sampler     = combinedImageSampler.Sampler.Value.Handle,
                         ImageView   = combinedImageSampler.Texture.ImageView.Handle,
-                        ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
+                        ImageLayout = combinedImageSampler.ImageLayout,
                     };
 
                     var pImageInfo = new NativeArray<VkDescriptorImageInfo>([descriptorImageInfo]);

@@ -152,9 +152,10 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         {
             var combinedImageSamplerUniform = new CombinedImageSamplerUniform
             {
-                Binding = 0,
-                Sampler = command.SampledTexture.Sampler,
-                Texture = command.SampledTexture.Texture,
+                Binding     = 0,
+                Sampler     = command.SampledTexture.Sampler,
+                Texture     = command.SampledTexture.Texture,
+                ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
             };
 
             this.uniformSets[command.SampledTexture.Texture] = uniformSet = new UniformSet(resource.Pipeline, [combinedImageSamplerUniform]);

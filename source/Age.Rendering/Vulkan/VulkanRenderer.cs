@@ -137,15 +137,15 @@ public unsafe partial class VulkanRenderer : IDisposable
         }
     }
 
-    private void CreatePipeline<TShaderResources, TVertexInput, TPushConstant>(
-        TShaderResources          shaderResources,
+    private void CreatePipeline<TShader, TVertexInput, TPushConstant>(
+        TShader          shaderResources,
         RenderPass                renderPass,
         out VkPipeline            pipeline,
         out VkPipelineLayout      pipelineLayout,
         out VkDescriptorSetLayout descriptorSetLayout,
         out VkDescriptorType[]    uniformBindings
     )
-    where TShaderResources : Shader<TVertexInput, TPushConstant>
+    where TShader : Shader<TVertexInput, TPushConstant>
     where TVertexInput     : IVertexInput
     where TPushConstant    : IPushConstant
     {
@@ -834,14 +834,14 @@ public unsafe partial class VulkanRenderer : IDisposable
         {
             Dependencies = [..images]
         };
-        }
+    }
 
-    public Pipeline CreatePipeline<TShaderResources, TVertexInput, TPushConstant>(TShaderResources shader, RenderPass renderPass)
-    where TShaderResources : Shader<TVertexInput, TPushConstant>
-    where TVertexInput     : IVertexInput
-    where TPushConstant    : IPushConstant
+    public Pipeline CreatePipeline<TShader, TVertexInput, TPushConstant>(TShader shader, RenderPass renderPass)
+    where TShader       : Shader<TVertexInput, TPushConstant>
+    where TVertexInput  : IVertexInput
+    where TPushConstant : IPushConstant
     {
-        this.CreatePipeline<TShaderResources, TVertexInput, TPushConstant>(
+        this.CreatePipeline<TShader, TVertexInput, TPushConstant>(
             shader,
             renderPass,
             out var pipeline,
@@ -858,16 +858,16 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public Pipeline CreatePipelineAndWatch<TShaderResources, TVertexInput, TPushConstant>(TShaderResources shader, RenderPass renderPass)
-    where TShaderResources : Shader<TVertexInput, TPushConstant>
-    where TVertexInput     : IVertexInput
-    where TPushConstant    : IPushConstant
+    public Pipeline CreatePipelineAndWatch<TShader, TVertexInput, TPushConstant>(TShader shader, RenderPass renderPass)
+    where TShader       : Shader<TVertexInput, TPushConstant>
+    where TVertexInput  : IVertexInput
+    where TPushConstant : IPushConstant
     {
-        var pipeline = this.CreatePipeline<TShaderResources, TVertexInput, TPushConstant>(shader, renderPass);
+        var pipeline = this.CreatePipeline<TShader, TVertexInput, TPushConstant>(shader, renderPass);
 
         void action()
         {
-            this.CreatePipeline<TShaderResources, TVertexInput, TPushConstant>(
+            this.CreatePipeline<TShader, TVertexInput, TPushConstant>(
                 shader,
                 renderPass,
                 out var vkPipeline,

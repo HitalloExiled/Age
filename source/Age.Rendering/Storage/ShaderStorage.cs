@@ -21,7 +21,7 @@ public class ShaderStorage(VulkanRenderer renderer) : Disposable, IShaderStorage
                     {
                         var renderPass = RenderGraph.Active?.GetRenderPass<SceneRenderGraphPass>() ?? throw new InvalidOperationException();
 
-                        this.pipelines[name] = shader = renderer.CreatePipeline<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = renderer.MaxUsableSampleCount, FrontFace = VkFrontFace.CounterClockwise }, renderPass);
+                        this.pipelines[name] = shader = renderer.CreatePipelineAndWatch<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = renderer.MaxUsableSampleCount, FrontFace = VkFrontFace.CounterClockwise }, renderPass);
 
                         break;
                     }

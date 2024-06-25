@@ -50,7 +50,7 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
         this.LoadModel(out this.vertexBuffer, out this.indexBuffer);
         this.resources = this.CreateFrameBuffers();
 
-        this.pipeline      = renderer.CreatePipeline<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = this.sampleCount, FrontFace = VkFrontFace.CounterClockwise }, this.renderPass);
+        this.pipeline      = renderer.CreatePipelineAndWatch<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = this.sampleCount, FrontFace = VkFrontFace.CounterClockwise }, this.renderPass);
         this.uniformSets = CreateUniformSets(this.pipeline, this.uniformBuffers, this.sampler, this.texture);
     }
 
@@ -58,9 +58,10 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
     {
         var combinedImageSampler = new CombinedImageSamplerUniform
         {
-            Binding = 1,
-            Sampler = sampler,
-            Texture = texture,
+            Binding     = 1,
+            Sampler     = sampler,
+            Texture     = texture,
+            ImageLayout = VkImageLayout.ShaderReadOnlyOptimal
         };
 
         var uniformSets = new UniformSet[VulkanContext.MAX_FRAMES_IN_FLIGHT];
