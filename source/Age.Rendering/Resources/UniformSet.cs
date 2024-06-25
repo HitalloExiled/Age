@@ -10,20 +10,20 @@ namespace Age.Rendering.Resources;
 
 public class UniformSet : Resource
 {
-    public Shader Shader { get; }
+    public Pipeline Pipeline { get; }
 
     public DescriptorPool    DescriptorPool { get; }
     public VkDescriptorSet[] DescriptorSets { get; }
 
-    public unsafe UniformSet(Shader shader, Span<Uniform> uniforms)
+    public unsafe UniformSet(Pipeline pipeline, Span<Uniform> uniforms)
     {
-        this.Shader = shader;
+        this.Pipeline = pipeline;
 
-        var poolKey = CreatePoolKey(shader, uniforms);
+        var poolKey = CreatePoolKey(pipeline, uniforms);
 
         this.DescriptorPool = VulkanRenderer.Singleton.CreateDescriptorPool(poolKey);
 
-        var descriptorSetLayoutHandle = shader.DescriptorSetLayout.Handle;
+        var descriptorSetLayoutHandle = pipeline.DescriptorSetLayout.Handle;
 
         var descriptorSetAllocateInfo = new VkDescriptorSetAllocateInfo
         {
@@ -36,15 +36,15 @@ public class UniformSet : Resource
         this.Update(uniforms);
     }
 
-    private static unsafe VkDescriptorType CreatePoolKey(Shader shader, Span<Uniform> uniforms)
+    private static unsafe VkDescriptorType CreatePoolKey(Pipeline pipeline, Span<Uniform> uniforms)
     {
         VkDescriptorType poolKey = default;
 
         foreach (var uniform in uniforms)
         {
-            if (uniform.Binding > shader.UniformBindings.Length || shader.UniformBindings[uniform.Binding] != uniform.Type)
+            if (uniform.Binding > pipeline.UniformBindings.Length || pipeline.UniformBindings[uniform.Binding] != uniform.Type)
             {
-                throw new InvalidOperationException($"The provided shader expects that binding {uniform.Binding} to be of type {shader.UniformBindings[uniform.Binding]}");
+                throw new InvalidOperationException($"The provided shader expects that binding {uniform.Binding} to be of type {pipeline.UniformBindings[uniform.Binding]}");
             }
 
             poolKey |= uniform.Type;

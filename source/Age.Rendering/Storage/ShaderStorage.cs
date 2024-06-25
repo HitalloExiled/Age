@@ -9,11 +9,11 @@ namespace Age.Rendering.Storage;
 
 public class ShaderStorage(VulkanRenderer renderer) : Disposable, IShaderStorage
 {
-    private readonly Dictionary<string, Shader> shaders = [];
+    private readonly Dictionary<string, Pipeline> pipelines = [];
 
-    public Shader GetShader(string name)
+    public Pipeline GetShaderPipeline(string name)
     {
-        if (!this.shaders.TryGetValue(name, out var shader))
+        if (!this.pipelines.TryGetValue(name, out var shader))
         {
             switch (name)
             {
@@ -21,7 +21,7 @@ public class ShaderStorage(VulkanRenderer renderer) : Disposable, IShaderStorage
                     {
                         var renderPass = RenderGraph.Active?.GetRenderPass<SceneRenderGraphPass>() ?? throw new InvalidOperationException();
 
-                        this.shaders[name] = shader = renderer.CreateShader<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = renderer.MaxUsableSampleCount, FrontFace = VkFrontFace.CounterClockwise }, renderPass);
+                        this.pipelines[name] = shader = renderer.CreatePipeline<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = renderer.MaxUsableSampleCount, FrontFace = VkFrontFace.CounterClockwise }, renderPass);
 
                         break;
                     }
@@ -32,5 +32,5 @@ public class ShaderStorage(VulkanRenderer renderer) : Disposable, IShaderStorage
     }
 
     protected override void OnDispose() =>
-        renderer.DeferredDispose(this.shaders.Values);
+        renderer.DeferredDispose(this.pipelines.Values);
 }

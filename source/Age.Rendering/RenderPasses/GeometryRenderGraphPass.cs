@@ -23,7 +23,7 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
     private readonly RenderPass         renderPass;
     private readonly VkSampleCountFlags sampleCount;
     private readonly Sampler            sampler;
-    private readonly Shader             shader;
+    private readonly Pipeline           pipeline;
     private readonly DateTime           startTime = DateTime.UtcNow;
     private readonly Texture            texture;
     private readonly Buffer[]           uniformBuffers;
@@ -50,11 +50,11 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
         this.LoadModel(out this.vertexBuffer, out this.indexBuffer);
         this.resources = this.CreateFrameBuffers();
 
-        this.shader      = renderer.CreateShader<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = this.sampleCount, FrontFace = VkFrontFace.CounterClockwise }, this.renderPass);
-        this.uniformSets = CreateUniformSets(this.shader, this.uniformBuffers, this.sampler, this.texture);
+        this.pipeline      = renderer.CreatePipeline<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = this.sampleCount, FrontFace = VkFrontFace.CounterClockwise }, this.renderPass);
+        this.uniformSets = CreateUniformSets(this.pipeline, this.uniformBuffers, this.sampler, this.texture);
     }
 
-    private static unsafe UniformSet[] CreateUniformSets(Shader shader, Buffer[] uniformBuffers, Sampler sampler, Texture texture)
+    private static unsafe UniformSet[] CreateUniformSets(Pipeline pipeline, Buffer[] uniformBuffers, Sampler sampler, Texture texture)
     {
         var combinedImageSampler = new CombinedImageSamplerUniform
         {
@@ -73,7 +73,7 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
                 Buffer  = uniformBuffers[i],
             };
 
-            uniformSets[i] = new UniformSet(shader, [uniformBuffer, combinedImageSampler]);
+            uniformSets[i] = new UniformSet(pipeline, [uniformBuffer, combinedImageSampler]);
         }
 
         return uniformSets;
@@ -301,7 +301,7 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
         this.vertexBuffer.Dispose();
         this.indexBuffer.Dispose();
         this.renderPass.Dispose();
-        this.shader.Dispose();
+        this.pipeline.Dispose();
         this.texture.Dispose();
         this.sampler.Dispose();
         this.resources.Dispose();
@@ -333,7 +333,7 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
         depthClearValue.DepthStencil.Depth = 1;
 
         commandBuffer.BeginRenderPass(this.renderPass, this.resources.Framebuffer, [colorClearValue, default, depthClearValue]);
-        commandBuffer.BindPipeline(this.shader);
+        commandBuffer.BindPipeline(this.pipeline);
         commandBuffer.BindUniformSet(this.uniformSets[this.Renderer.CurrentFrame]);
         commandBuffer.BindVertexBuffer([this.vertexBuffer]);
         commandBuffer.BindIndexBuffer(this.indexBuffer);

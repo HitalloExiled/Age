@@ -137,7 +137,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         }
     }
 
-    private void CreateShader<TShaderResources, TVertexInput, TPushConstant>(
+    private void CreatePipeline<TShaderResources, TVertexInput, TPushConstant>(
         TShaderResources          shaderResources,
         RenderPass                renderPass,
         out VkPipeline            pipeline,
@@ -145,7 +145,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         out VkDescriptorSetLayout descriptorSetLayout,
         out VkDescriptorType[]    uniformBindings
     )
-    where TShaderResources : ShaderResources<TVertexInput, TPushConstant>
+    where TShaderResources : Shader<TVertexInput, TPushConstant>
     where TVertexInput     : IVertexInput
     where TPushConstant    : IPushConstant
     {
@@ -836,13 +836,13 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
         }
 
-    public Shader CreateShader<TShaderResources, TVertexInput, TPushConstant>(TShaderResources shaderResources, RenderPass renderPass)
-    where TShaderResources : ShaderResources<TVertexInput, TPushConstant>
+    public Pipeline CreatePipeline<TShaderResources, TVertexInput, TPushConstant>(TShaderResources shader, RenderPass renderPass)
+    where TShaderResources : Shader<TVertexInput, TPushConstant>
     where TVertexInput     : IVertexInput
     where TPushConstant    : IPushConstant
     {
-        this.CreateShader<TShaderResources, TVertexInput, TPushConstant>(
-            shaderResources,
+        this.CreatePipeline<TShaderResources, TVertexInput, TPushConstant>(
+            shader,
             renderPass,
             out var pipeline,
             out var pipelineLayout,
@@ -850,49 +850,48 @@ public unsafe partial class VulkanRenderer : IDisposable
             out var uniformBindings
         );
 
-        return new(VkPipelineBindPoint.Graphics, shaderResources, renderPass)
+        return new(pipeline, VkPipelineBindPoint.Graphics, shader, renderPass)
         {
             DescriptorSetLayout = descriptorSetLayout,
-            Pipeline            = pipeline,
-            PipelineLayout      = pipelineLayout,
+            Layout              = pipelineLayout,
             UniformBindings     = uniformBindings,
         };
     }
 
-    public Shader CreateShaderAndWatch<TShaderResources, TVertexInput, TPushConstant>(TShaderResources shaderResources, RenderPass renderPass)
-    where TShaderResources : ShaderResources<TVertexInput, TPushConstant>
+    public Pipeline CreatePipelineAndWatch<TShaderResources, TVertexInput, TPushConstant>(TShaderResources shader, RenderPass renderPass)
+    where TShaderResources : Shader<TVertexInput, TPushConstant>
     where TVertexInput     : IVertexInput
     where TPushConstant    : IPushConstant
     {
-        var shader = this.CreateShader<TShaderResources, TVertexInput, TPushConstant>(shaderResources, renderPass);
+        var pipeline = this.CreatePipeline<TShaderResources, TVertexInput, TPushConstant>(shader, renderPass);
 
         void action()
         {
-            this.CreateShader<TShaderResources, TVertexInput, TPushConstant>(
-                shaderResources,
-                shader.RenderPass,
-                out var pipeline,
-                out var pipelineLayout,
-                out var descriptorSetLayout,
+            this.CreatePipeline<TShaderResources, TVertexInput, TPushConstant>(
+                shader,
+                renderPass,
+                out var vkPipeline,
+                out var vkPipelineLayout,
+                out var vkDescriptorSetLayout,
                 out var uniformBindings
             );
 
             lock (this.padlock)
             {
-                IDisposable disposables = new Disposables(shader.Pipeline, shader.PipelineLayout, shader.DescriptorSetLayout);
+                IDisposable disposables = new Disposables(pipeline.Value, pipeline.Layout, pipeline.DescriptorSetLayout);
 
-                shader.Pipeline            = pipeline;
-                shader.PipelineLayout      = pipelineLayout;
-                shader.DescriptorSetLayout = descriptorSetLayout;
-                shader.UniformBindings     = uniformBindings;
+                pipeline.Value               = vkPipeline;
+                pipeline.Layout              = vkPipelineLayout;
+                pipeline.DescriptorSetLayout = vkDescriptorSetLayout;
+                pipeline.UniformBindings     = uniformBindings;
 
                 this.DeferredDispose(disposables);
             }
         }
 
-        shader.Changed += action;
+        pipeline.Changed += action;
 
-        return shader;
+        return pipeline;
     }
 
     public Sampler CreateSampler()

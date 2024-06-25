@@ -4,5 +4,5 @@ namespace Age.Rendering.Interfaces;
 
 public interface IShaderStorage : IDisposable
 {
-    Shader GetShader(string name);
+    Pipeline GetShaderPipeline(string name);
 }

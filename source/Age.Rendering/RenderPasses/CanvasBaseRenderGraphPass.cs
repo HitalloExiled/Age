@@ -34,7 +34,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         {
             if (resource.Enabled)
             {
-                this.CommandBuffer.BindPipeline(resource.Shader);
+                this.CommandBuffer.BindPipeline(resource.Pipeline);
                 this.CommandBuffer.BindVertexBuffer(resource.VertexBuffer);
                 this.CommandBuffer.BindIndexBuffer(resource.IndexBuffer);
 

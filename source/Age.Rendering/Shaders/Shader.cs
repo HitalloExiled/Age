@@ -9,7 +9,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Shaders;
 
-public abstract class ShaderResources : IDisposable
+public abstract class Shader : IDisposable
 {
     private const int DEBOUNCE_DELAY = 50;
 
@@ -35,7 +35,7 @@ public abstract class ShaderResources : IDisposable
 
     public Dictionary<VkShaderStageFlags, byte[]> Stages { get; } = [];
 
-    protected ShaderResources(string[] files)
+    protected Shader(string[] files)
     {
         foreach (var file in files)
         {
@@ -217,7 +217,7 @@ public abstract class ShaderResources : IDisposable
     }
 }
 
-public abstract class ShaderResources<TVertexInput, TPushConstant>(string[] files) : ShaderResources(files)
+public abstract class Shader<TVertexInput, TPushConstant>(string[] files) : Shader(files)
 where TVertexInput : IVertexInput
 where TPushConstant : IPushConstant;
 

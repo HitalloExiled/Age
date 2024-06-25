@@ -45,13 +45,13 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.renderPass = this.CreateRenderPass();
 
-        var canvasShader          = renderer.CreateShaderAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
-        var canvasWireframeShader = renderer.CreateShaderAndWatch<CanvasWireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
+        var canvasPipeline          = renderer.CreatePipelineAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
+        var canvasWireframePipeline = renderer.CreatePipelineAndWatch<CanvasWireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
 
         this.Resources =
         [
-            new(canvasShader,          this.vertexBuffer, this.indexBuffer, true),
-            new(canvasWireframeShader, this.vertexBuffer, this.wireframeIndexBuffer, false),
+            new(canvasPipeline,          this.vertexBuffer, this.indexBuffer, true),
+            new(canvasWireframePipeline, this.vertexBuffer, this.wireframeIndexBuffer, false),
         ];
 
         this.CreateFrameBuffers();
@@ -157,7 +157,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                 Texture = command.SampledTexture.Texture,
             };
 
-            this.uniformSets[command.SampledTexture.Texture] = uniformSet = new UniformSet(resource.Shader, [combinedImageSamplerUniform]);
+            this.uniformSets[command.SampledTexture.Texture] = uniformSet = new UniformSet(resource.Pipeline, [combinedImageSamplerUniform]);
         }
 
         if (uniformSet != null && uniformSet != this.lastUniformSet)
@@ -167,7 +167,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             this.lastUniformSet = uniformSet;
         }
 
-        this.CommandBuffer.PushConstant(resource.Shader, constant);
+        this.CommandBuffer.PushConstant(resource.Pipeline, constant);
         this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
     }
 

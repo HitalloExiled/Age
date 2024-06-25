@@ -46,11 +46,11 @@ public class Engine : IDisposable
         this.Window.SizeChanged += () =>
         {
             var canvasIndexImage   = canvasIndexRenderGraphPass.ColorImage;
-            var geometryColorImage = geometryRenderGraphPass.ColorImage;
-            var geometryDepthImage = geometryRenderGraphPass.DepthImage;
+            // var geometryColorImage = geometryRenderGraphPass.ColorImage;
+            // var geometryDepthImage = geometryRenderGraphPass.DepthImage;
 
-            SaveImage(geometryColorImage, VkImageAspectFlags.Color, "./.debug/Geometry.Color.png");
-            SaveImage(geometryDepthImage, VkImageAspectFlags.Depth, "./.debug/Geometry.Depth.png");
+            // SaveImage(geometryColorImage, VkImageAspectFlags.Color, "./.debug/Geometry.Color.png");
+            // SaveImage(geometryDepthImage, VkImageAspectFlags.Depth, "./.debug/Geometry.Depth.png");
             SaveImage(canvasIndexImage,   VkImageAspectFlags.Color, "./.debug/CanvasIndex.png");
         };
 
@@ -60,8 +60,8 @@ public class Engine : IDisposable
             Passes =
             [
                 geometryRenderGraphPass,
-                new SceneRenderGraphPass(this.renderer, this.Window),
                 canvasIndexRenderGraphPass,
+                new SceneRenderGraphPass(this.renderer, this.Window),
                 new CanvasRenderGraphPass(this.renderer, this.Window),
             ]
         };
