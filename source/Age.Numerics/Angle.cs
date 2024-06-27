@@ -15,6 +15,9 @@ public static class Angle
     public static double Radians(double degrees) =>
         RADIANS * degrees;
 
+    public static float Radians(float degrees) =>
+        (float)RADIANS * degrees;
+
     public static T Radians<T>(T degrees) where T : IFloatingPoint<T> =>
         T.CreateSaturating(RADIANS) * degrees;
 }

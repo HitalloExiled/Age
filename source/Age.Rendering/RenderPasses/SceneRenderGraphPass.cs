@@ -95,7 +95,7 @@ public partial class SceneRenderGraphPass : RenderGraphPass
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
 
-        var size = (ulong)sizeof(UniformBufferObject);
+        var size = (uint)sizeof(UniformBufferObject);
 
         if (!frameResource.CameraUbo.TryGetValue(camera, out var cameraBuffer))
         {
@@ -112,12 +112,12 @@ public partial class SceneRenderGraphPass : RenderGraphPass
 
         var ubo = new UniformBufferObject
         {
-            Model      = Matrix4x4<float>.Rotate(new(0, 0, 1), time * (float)(90 * Angle.RADIANS)),
-            View       = Matrix4x4<float>.LookAt(new(2), new(0), new(0, 0, 1)),
-            Projection = Matrix4x4<float>.PerspectiveFov((float)(45 * Angle.RADIANS), viewport.Width / (float)viewport.Height, 0.1f, 10)
+            Model = Matrix4x4<float>.Rotated(new(0, 0, 1), time * (float)(90 * Angle.RADIANS)),
+            View  = Matrix4x4<float>.LookingAt(new(2), new(0), new(0, 0, 1)),
+            Proj  = Matrix4x4<float>.PerspectiveFov((float)(45 * Angle.RADIANS), viewport.Width / (float)viewport.Height, 0.1f, 10)
         };
 
-        ubo.Projection[1, 1] *= -1;
+        ubo.Proj[1, 1] *= -1;
 
         Marshal.StructureToPtr(ubo, cameraBuffer.Handle, true);
 

@@ -31,8 +31,6 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
 		}
 	}
 
-    public readonly T Angle => T.CreateChecked(2) * T.Acos(this.W);
-
     public readonly Vector3<T> Axis
     {
         get
@@ -45,32 +43,9 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
         }
     }
 
-    public readonly Quaternion<T> Inverse
-    {
-        get
-        {
-            var invMagnitudeSquared = T.One / (this.W * this.W + this.X * this.X + this.Y * this.Y + this.Z * this.Z);
-
-            return new Quaternion<T>(
-                this.W * invMagnitudeSquared,
-                -this.X * invMagnitudeSquared,
-                -this.Y * invMagnitudeSquared,
-                -this.Z * invMagnitudeSquared
-            );
-        }
-    }
-
-    public readonly T Length        => T.Sqrt(this.LengthSquared);
-    public readonly T LengthSquared => Quaternion.Dot(this, this);
-
-    public readonly Quaternion<T> Normalized
-    {
-        get
-        {
-            var length = this.Length;
-            return new(this.X / length, this.Y / length, this.Z / length, this.W / length);
-        }
-    }
+    public readonly T             Length        => T.Sqrt(this.LengthSquared);
+    public readonly T             LengthSquared => Quaternion<T>.Dot(this, this);
+    public readonly Quaternion<T> Normalized    => this / this.Length;
 
     public Quaternion(T x, T y, T z, T w)
     {
@@ -80,95 +55,48 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
         this.W = w;
     }
 
-    public Quaternion(Vector3<T> vector, T scalar) : this(vector.X, vector.Y, vector.Z, scalar) { }
-
-    public readonly T Dot(Quaternion<T> other) =>
-        Quaternion.Dot(this, other);
-
-    public static Quaternion<T> FromAngleAxis(Vector3<T> axis, T angle)
+    public Quaternion(in Vector3<T> axis, T radians)
     {
-        var halfAngle    = angle / T.CreateChecked(2);
-        var sinHalfAngle = T.Sin(halfAngle);
+        var halfAngle    = radians * T.CreateChecked(0.5);
+		var sinHalfAngle = T.Sin(halfAngle);
 
-        return new Quaternion<T>(axis.X * sinHalfAngle, axis.Y * sinHalfAngle, axis.Z * sinHalfAngle, T.Cos(halfAngle));
+		this.X = axis.X * sinHalfAngle;
+		this.Y = axis.Y * sinHalfAngle;
+		this.Z = axis.Z * sinHalfAngle;
+		this.W = T.Cos(halfAngle);
     }
 
-    // public static Quaternion<T> FromRotationMatrix(in Matrix3x3<T> matrix)
-    // {
-    //     var trace = matrix.M11 + matrix.M22 + matrix.M33;
+    public static T Dot(in Quaternion<T> left, in Quaternion<T> right) =>
+        left.X * right.X + left.Y * right.Y + left.Z * right.Z + left.W * right.W;
 
-    //     Unsafe.SkipInit<Quaternion<T>>(out var result);
+    public readonly T Dot(in Quaternion<T> other) =>
+        Quaternion<T>.Dot(this, other);
 
-    //     if (trace > T.Zero)
-    //     {
-    //         var s = T.Sqrt(trace + T.One) * T.CreateChecked(2);
-    //         result.X = (matrix.M32 - matrix.M32) / s;
-    //         result.Y = (matrix.M31 - matrix.M31) / s;
-    //         result.Z = (matrix.M12 - matrix.M21) / s;
-    //         result.W = T.CreateChecked(0.25) * s;
-    //     }
-    //     else if (matrix.M11 > matrix.M22 && matrix.M11 > matrix.M33)
-    //     {
-    //         var s = T.Sqrt(T.One + matrix.M11 - matrix.M22 - matrix.M33) * T.CreateChecked(2);
-    //         result.X = T.CreateChecked(0.25) * s;
-    //         result.Y = (matrix.M21 + matrix.M12) / s;
-    //         result.Z = (matrix.M31 + matrix.M31) / s;
-    //         result.W = (matrix.M32 - matrix.M32) / s;
-    //     }
-    //     else if (matrix.M22 > matrix.M33)
-    //     {
-    //         var s = T.Sqrt(T.One + matrix.M22 - matrix.M11 - matrix.M33) * T.CreateChecked(2);
-    //         result.X = (matrix.M21 + matrix.M12) / s;
-    //         result.Y = T.CreateChecked(0.25) * s;
-    //         result.Z = (matrix.M32 + matrix.M32) / s;
-    //         result.W = (matrix.M31 - matrix.M31) / s;
-    //     }
-    //     else
-    //     {
-    //         var s = T.Sqrt(T.One + matrix.M33 - matrix.M11 - matrix.M22) * T.CreateChecked(2);
-    //         result.X = (matrix.M31 + matrix.M31) / s;
-    //         result.Y = (matrix.M32 + matrix.M32) / s;
-    //         result.Z = T.CreateChecked(0.25) * s;
-    //         result.W = (matrix.M12 - matrix.M21) / s;
-    //     }
+    public override readonly int GetHashCode() =>
+        this.X.GetHashCode() ^ (this.Y.GetHashCode() << 2) ^ (this.Z.GetHashCode() >> 2) ^ (this.W.GetHashCode() >> 1);
 
-    //     return result;
-    // }
+    public readonly Quaternion<T> Inversed() =>
+        Conjugate(this) / this.LengthSquared;
 
-    // public readonly Matrix3x3<T> ToRotationMatrix()
-    // {
-    //     Unsafe.SkipInit<Matrix3x3<T>>(out var rotationMatrix);
+    public override readonly string ToString() =>
+        $"{{ X = {this.X}, Y = {this.Y}, Z = {this.Z}, W = {this.W} }}";
 
-    //     var xx = this.X * this.X;
-    //     var xy = this.X * this.Y;
-    //     var xz = this.X * this.Z;
-    //     var xw = this.X * this.W;
-    //     var yy = this.Y * this.Y;
-    //     var yz = this.Y * this.Z;
-    //     var yw = this.Y * this.W;
-    //     var zz = this.Z * this.Z;
-    //     var zw = this.Z * this.W;
+    public static Quaternion<T> Conjugate(in Quaternion<T> value) =>
+        value * new Vector4<T>(-T.One, -T.One, -T.One, T.One);
 
-    //     var one = T.One;
-    //     var two = T.CreateChecked(2);
+    public static bool IsApproxEqual(in Quaternion<T> left, in Quaternion<T> right) =>
+        MathX.IsApprox(left.X, right.X)
+        && MathX.IsApprox(left.Y, right.Y)
+        && MathX.IsApprox(left.Z, right.Z)
+        && MathX.IsApprox(left.W, right.W);
 
-    //     rotationMatrix.M11 = one - two * (yy + zz);
-    //     rotationMatrix.M21 = two * (xy - zw);
-    //     rotationMatrix.M31 = two * (xz + yw);
-    //     rotationMatrix.M12 = two * (xy + zw);
-    //     rotationMatrix.M22 = one - two * (xx + zz);
-    //     rotationMatrix.M32 = two * (yz - xw);
-    //     rotationMatrix.M31 = two * (xz - yw);
-    //     rotationMatrix.M32 = two * (yz + xw);
-    //     rotationMatrix.M33 = one - two * (xx + yy);
+    public static Quaternion<T> operator +(in Quaternion<T> left, in Quaternion<T> right) =>
+        new(left.X + right.X, left.Y + right.Y, left.Z + right.Z, left.W + right.W);
 
-    //     return rotationMatrix;
-    // }
+    public static Quaternion<T> operator -(in Quaternion<T> value) =>
+        new(-value.X, -value.Y, -value.Z, -value.W);
 
-    public override readonly string ToString()
-        => $"{{ X = {this.X}, Y = {this.Y}, Z = {this.Z}, W = {this.W} }}";
-
-    public static Quaternion<T> operator *(Quaternion<T> left, Quaternion<T> right) =>
+    public static Quaternion<T> operator *(in Quaternion<T> left, in Quaternion<T> right) =>
         new(
             left.W * right.W - left.X * right.X - left.Y * right.Y - left.Z * right.Z,
             left.W * right.X + left.X * right.W + left.Y * right.Z - left.Z * right.Y,
@@ -176,12 +104,38 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
             left.W * right.Z + left.X * right.Y - left.Y * right.X + left.Z * right.W
         );
 
-    public static Quaternion<T> operator /(Quaternion<T> left, Quaternion<T> right) =>
-        left * right.Inverse;
-}
+    public static Quaternion<T> operator *(in Quaternion<T> left, in Vector4<T> right) =>
+        new(left.X * right.X, left.Y * right.Y, left.Z * right.Z, left.W * right.W);
 
-public static class Quaternion
-{
-    public static T Dot<T>(Quaternion<T> left, Quaternion<T> right) where T : IFloatingPoint<T>, IFloatingPointIeee754<T>, IRootFunctions<T>, ITrigonometricFunctions<T> =>
-        left.X * right.X + left.Y * right.Y + left.Z * right.Z + left.W * right.W;
+    public static Quaternion<T> operator *(in Quaternion<T> left, T multiplier) =>
+        new(left.X * multiplier, left.Y * multiplier, left.Z * multiplier, left.W * multiplier);
+
+    public static Quaternion<T> operator /(in Quaternion<T> left, in Quaternion<T> right)
+    {
+        var denominator        = right.X * right.X + right.Y * right.Y + right.Z * right.Z + right.W * right.W;
+        var inverseDenominator = T.One / denominator;
+
+        var inverseX2 = (T.Zero - right.X) * inverseDenominator;
+        var inverseY2 = (T.Zero - right.Y) * inverseDenominator;
+        var inverseZ2 = (T.Zero - right.Z) * inverseDenominator;
+        var inverseW2 = right.W * inverseDenominator;
+
+        var crossX = left.Y * inverseZ2 - left.Z * inverseY2;
+        var crossY = left.Z * inverseX2 - left.X * inverseZ2;
+        var crossZ = left.X * inverseY2 - left.Y * inverseX2;
+
+        var dotProduct = left.X * inverseX2 + left.Y * inverseY2 + left.Z * inverseZ2;
+
+        Unsafe.SkipInit(out Quaternion<T> result);
+
+        result.X = left.X * inverseW2 + inverseX2 * left.W + crossX;
+        result.Y = left.Y * inverseW2 + inverseY2 * left.W + crossY;
+        result.Z = left.Z * inverseW2 + inverseZ2 * left.W + crossZ;
+        result.W = left.W * inverseW2 - dotProduct;
+
+        return result;
+    }
+
+    public static Quaternion<T> operator /(in Quaternion<T> left, T divisor) =>
+        new(left.X / divisor, left.Y / divisor, left.Z / divisor, left.W / divisor);
 }

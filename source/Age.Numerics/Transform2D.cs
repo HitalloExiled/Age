@@ -10,7 +10,7 @@ public record struct Transform2D
     public Vector2<float> Position
     {
         readonly get => this.matrix.Translation;
-        set          => this.matrix.Translation = new(value.X, value.Y);
+        set          => this.matrix.Translation = value;
     }
 
     public float Rotation
@@ -22,7 +22,7 @@ public record struct Transform2D
     public Vector2<float> Scale
     {
         readonly get => this.matrix.Scale;
-        set          => this.matrix.Scale = new(value.X, value.Y);
+        set          => this.matrix.Scale = value;
     }
 
     public Transform2D() =>

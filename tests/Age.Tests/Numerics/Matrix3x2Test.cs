@@ -47,7 +47,6 @@ public class Matrix3x2Test
         rotateAndAssert(45);
         rotateAndAssert(90);
         rotateAndAssert(135);
-        rotateAndAssert(135);
         rotateAndAssert(180);
         rotateAndAssert(225);
         rotateAndAssert(270);

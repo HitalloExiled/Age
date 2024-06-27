@@ -9,12 +9,9 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
 {
     public static Matrix3x2<T> Identity => new(Vector3<T>.Right, Vector3<T>.Up, Vector3<T>.Front);
 
-    public T M11;
-    public T M12;
-    public T M21;
-    public T M22;
-    public T M31;
-    public T M32;
+    public T M11, M12;
+    public T M21, M22;
+    public T M31, M32;
 
     public T this[int column, int row]
     {

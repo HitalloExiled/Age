@@ -78,14 +78,6 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     private VkSwapchainExtensionKHR   swapchainExtension    = null!;
     private PlatformWindow            window                = null!;
 
-    public SimpleEngineV2()
-    {
-        for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-        {
-            this.uniformBuffersMapped[i] = (nint)NativeMemory.Alloc((uint)sizeof(UniformBufferObject));
-        }
-    }
-
     private static VkPresentModeKHR ChooseSwapPresentMode(VkPresentModeKHR[] availablePresentModes)
     {
         foreach (var availablePresentMode in availablePresentModes)
@@ -1853,8 +1845,8 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         var ubo = new UniformBufferObject
         {
-            Model = Matrix4x4<float>.Rotate(new(0, 0, 1), time * (float)(90 * RADIANS)),
-            View  = Matrix4x4<float>.LookAt(new(2), new(0), new(0, 0, 1)),
+            Model = Matrix4x4<float>.Rotated(new(0, 0, 1), time * (float)(90 * RADIANS)),
+            View  = Matrix4x4<float>.LookingAt(new(2), new(0), new(0, 0, 1)),
             Proj  = Matrix4x4<float>.PerspectiveFov((float)(45 * RADIANS), this.swapChainExtent.Width / (float)this.swapChainExtent.Height, 0.1f, 10)
         };
 
