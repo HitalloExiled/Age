@@ -7,5 +7,5 @@ public record MeshCommand : Command
 {
     public required IndexBuffer  IndexBuffer  { get; set; }
     public required VertexBuffer VertexBuffer { get; set; }
-    public required Material     Material     { get; set; }
+    public required Mesh         Mesh         { get; set; }
 }

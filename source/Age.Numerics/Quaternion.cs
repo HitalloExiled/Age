@@ -66,6 +66,9 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
 		this.W = T.Cos(halfAngle);
     }
 
+    public static Quaternion<T> Conjugate(in Quaternion<T> value) =>
+        value * new Vector4<T>(-T.One, -T.One, -T.One, T.One);
+
     public static T Dot(in Quaternion<T> left, in Quaternion<T> right) =>
         left.X * right.X + left.Y * right.Y + left.Z * right.Z + left.W * right.W;
 
@@ -80,15 +83,6 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
 
     public override readonly string ToString() =>
         $"{{ X = {this.X}, Y = {this.Y}, Z = {this.Z}, W = {this.W} }}";
-
-    public static Quaternion<T> Conjugate(in Quaternion<T> value) =>
-        value * new Vector4<T>(-T.One, -T.One, -T.One, T.One);
-
-    public static bool IsApproxEqual(in Quaternion<T> left, in Quaternion<T> right) =>
-        MathX.IsApprox(left.X, right.X)
-        && MathX.IsApprox(left.Y, right.Y)
-        && MathX.IsApprox(left.Z, right.Z)
-        && MathX.IsApprox(left.W, right.W);
 
     public static Quaternion<T> operator +(in Quaternion<T> left, in Quaternion<T> right) =>
         new(left.X + right.X, left.Y + right.Y, left.Z + right.Z, left.W + right.W);

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Age.Numerics;
 using Mat4x4 = System.Numerics.Matrix4x4;
 
@@ -5,31 +6,13 @@ namespace Age.Tests.Numerics;
 
 public class Matrix4x4Tests
 {
-    private static bool Compare(Mat4x4 expected, Matrix4x4<float> actual) =>
-        expected[0, 0] == actual[0, 0] &&
-        expected[0, 1] == actual[0, 1] &&
-        expected[0, 2] == actual[0, 2] &&
-        expected[0, 3] == actual[0, 3] &&
-        expected[1, 0] == actual[1, 0] &&
-        expected[1, 1] == actual[1, 1] &&
-        expected[1, 2] == actual[1, 2] &&
-        expected[1, 3] == actual[1, 3] &&
-        expected[2, 0] == actual[2, 0] &&
-        expected[2, 1] == actual[2, 1] &&
-        expected[2, 2] == actual[2, 2] &&
-        expected[2, 3] == actual[2, 3] &&
-        expected[3, 0] == actual[3, 0] &&
-        expected[3, 1] == actual[3, 1] &&
-        expected[3, 2] == actual[3, 2] &&
-        expected[3, 3] == actual[3, 3];
-
     [Fact]
     public void Constructor()
     {
         var actual   = new Matrix4x4<float>(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4);
         var expected = new Mat4x4(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4);
 
-        Assert.True(Compare(expected, actual));
+        Assert.Equal(Unsafe.As<Mat4x4, Matrix4x4<float>>(ref expected), actual);
     }
 
     [Fact]
@@ -38,7 +21,7 @@ public class Matrix4x4Tests
         var actual   = new Matrix4x4<float>(new(1, 1, 1, 1), new(2, 2, 2, 2), new(3, 3, 3, 3), new(4, 4, 4, 4));
         var expected = new Mat4x4(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4);
 
-        Assert.True(Compare(expected, actual));
+        Assert.Equal(Unsafe.As<Mat4x4, Matrix4x4<float>>(ref expected), actual);
     }
 
     [Fact]
@@ -57,12 +40,12 @@ public class Matrix4x4Tests
     }
 
     [Fact]
-    public void LookAt()
+    public void LookingAt()
     {
         var actual   = Matrix4x4<float>.LookingAt(new(2), new(), new(0, 0, 1));
         var expected = Mat4x4.CreateLookAt(new(2), new(), new(0, 0, 1));
 
-        Assert.True(Compare(expected, actual));
+        Assert.Equal(Unsafe.As<Mat4x4, Matrix4x4<float>>(ref expected), actual);
     }
 
     [Fact]
@@ -71,7 +54,7 @@ public class Matrix4x4Tests
         var actual   = Matrix4x4<float>.Perspective(800, 400, 0.1f, 10);
         var expected = Mat4x4.CreatePerspective(800, 400, 0.1f, 10);
 
-        Assert.True(Compare(expected, actual));
+        Assert.Equal(Unsafe.As<Mat4x4, Matrix4x4<float>>(ref expected), actual);
     }
 
     [Fact]
@@ -80,7 +63,7 @@ public class Matrix4x4Tests
         var actual   = Matrix4x4<float>.Perspective(800, 400, 0.1f, float.PositiveInfinity);
         var expected = Mat4x4.CreatePerspective(800, 400, 0.1f, float.PositiveInfinity);
 
-        Assert.True(Compare(expected, actual));
+        Assert.Equal(Unsafe.As<Mat4x4, Matrix4x4<float>>(ref expected), actual);
     }
 
     [Fact]
@@ -89,7 +72,7 @@ public class Matrix4x4Tests
         var actual   = Matrix4x4<float>.PerspectiveFov(Angle.Radians(45), 800 / 400, 0.1f, 10);
         var expected = Mat4x4.CreatePerspectiveFieldOfView(Angle.Radians(45), 800 / 400, 0.1f, 10);
 
-        Assert.True(Compare(expected, actual));
+        Assert.Equal(Unsafe.As<Mat4x4, Matrix4x4<float>>(ref expected), actual);
     }
 
     [Fact]
@@ -98,7 +81,7 @@ public class Matrix4x4Tests
         var actual   = Matrix4x4<float>.PerspectiveFov(Angle.Radians(45), 800 / 400, 0.1f, float.PositiveInfinity);
         var expected = Mat4x4.CreatePerspectiveFieldOfView(Angle.Radians(45), 800 / 400, 0.1f, float.PositiveInfinity);
 
-        Assert.True(Compare(expected, actual));
+        Assert.Equal(Unsafe.As<Mat4x4, Matrix4x4<float>>(ref expected), actual);
     }
 
     [Fact]
@@ -107,7 +90,7 @@ public class Matrix4x4Tests
         var actual   = Matrix4x4<float>.Rotated(new(0, 0, 1), Angle.Radians(90));
         var expected = Mat4x4.CreateFromAxisAngle(new(0, 0, 1), Angle.Radians(90));
 
-        Assert.True(Compare(expected, actual));
+        Assert.Equal(Unsafe.As<Mat4x4, Matrix4x4<float>>(ref expected), actual);
     }
 
     [Fact]

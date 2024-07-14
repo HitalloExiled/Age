@@ -81,6 +81,10 @@ public sealed class SceneTree(IWindow window) : Node
         }
     }
 
-    internal void ResetCache() =>
+    internal void ResetCache()
+    {
         this.command2DEntriesCache.Clear();
+        this.command3DEntriesCache.Clear();
+    }
+
 }

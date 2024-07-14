@@ -11,6 +11,7 @@ using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
 using System.Runtime.InteropServices;
+using Age.Rendering.Extensions;
 
 namespace Age.Rendering.RenderPasses;
 
@@ -91,30 +92,28 @@ public partial class SceneRenderGraphPass : RenderGraphPass
         return this.Renderer.CreateRenderPass(createInfo);
     }
 
-    private unsafe UboHandle UpdateCameraUbo(Camera3D camera, VkExtent2D viewport)
+    private unsafe UboHandle UpdateUbo(Camera3D camera, Mesh mesh, in Matrix4x4<float> transform, in VkExtent2D viewport)
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
 
         var size = (uint)sizeof(UniformBufferObject);
 
-        if (!frameResource.CameraUbo.TryGetValue(camera, out var cameraBuffer))
+        var hashcode = camera.GetHashCode() ^ mesh.GetHashCode();
+
+        if (!frameResource.Ubo.TryGetValue(hashcode, out var cameraBuffer))
         {
             var buffer = this.Renderer.CreateBuffer(size, VkBufferUsageFlags.UniformBuffer, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
             buffer.Allocation.Memory.Map(0, size, 0, out var handle);
 
-            frameResource.CameraUbo[camera] = cameraBuffer = new(handle, buffer);
+            frameResource.Ubo[hashcode] = cameraBuffer = new(handle, buffer);
         }
-
-        var now = DateTime.UtcNow;
-
-        var time = Math.Max(0, (float)(now - this.startTime).TotalMilliseconds / 1000);
 
         var ubo = new UniformBufferObject
         {
-            Model = Matrix4x4<float>.Rotated(new(0, 0, 1), time * (float)(90 * Angle.RADIANS)),
-            View  = Matrix4x4<float>.LookingAt(new(2), new(0), new(0, 0, 1)),
-            Proj  = Matrix4x4<float>.PerspectiveFov((float)(45 * Angle.RADIANS), viewport.Width / (float)viewport.Height, 0.1f, 10)
+            Model = transform,
+            View  = camera.TransformCache.Inverse(),
+            Proj  = Matrix4x4<float>.PerspectiveFov(camera.FoV, viewport.Width / (float)viewport.Height, camera.Near, camera.Far)
         };
 
         ubo.Proj[1, 1] *= -1;
@@ -158,7 +157,7 @@ public partial class SceneRenderGraphPass : RenderGraphPass
 
         foreach (var resource in this.frameResources)
         {
-            foreach (var ubo in resource.CameraUbo.Values)
+            foreach (var ubo in resource.Ubo.Values)
             {
                 this.Renderer.DeferredDispose(ubo.Buffer);
 
@@ -189,36 +188,34 @@ public partial class SceneRenderGraphPass : RenderGraphPass
         {
             if (scene is Scene3D scene3D)
             {
-                var camera = scene3D.Camera;
-
-                if (camera?.RenderTarget != null)
+                foreach (var camera in scene.Cameras)
                 {
-                    commandBuffer.BeginRenderPass(this.RenderPass, camera.RenderTarget.Framebuffer, [colorClearValue, default, depthClearValue]);
-                    commandBuffer.SetViewport(camera.RenderTarget.Size);
-
-                    var renderTarget = camera.RenderTarget;
-
-                    var cameraUbo = this.UpdateCameraUbo(camera, renderTarget.Size);
-
-                    foreach (var entry in this.Window.Tree.Enumerate3DCommands())
+                    foreach (var renderTarget in camera.RenderTargets)
                     {
-                        switch (entry.Command)
-                        {
-                            case MeshCommand meshCommand:
-                                commandBuffer.BindPipeline(meshCommand.Material.Pipeline);
-                                commandBuffer.BindUniformSet(this.GetUniformSet(camera, cameraUbo, meshCommand.Material));
-                                commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
-                                commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);
-                                commandBuffer.DrawIndexed(meshCommand.IndexBuffer);
+                        commandBuffer.BeginRenderPass(this.RenderPass, renderTarget.Framebuffer, [colorClearValue, default, depthClearValue]);
+                        commandBuffer.SetViewport(renderTarget.Size.ToExtent2D());
 
-                                break;
-                            default:
-                                break;
+                        foreach (var entry in this.Window.Tree.Enumerate3DCommands())
+                        {
+                            switch (entry.Command)
+                            {
+                                case MeshCommand meshCommand:
+                                    var ubo = this.UpdateUbo(camera, meshCommand.Mesh, entry.Transform, renderTarget.Size.ToExtent2D());
+
+                                    commandBuffer.BindPipeline(meshCommand.Mesh.Material.Pipeline);
+                                    commandBuffer.BindUniformSet(this.GetUniformSet(camera, ubo, meshCommand.Mesh.Material));
+                                    commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
+                                    commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);
+                                    commandBuffer.DrawIndexed(meshCommand.IndexBuffer);
+
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
 
                         commandBuffer.EndRenderPass();
                     }
-
                 }
             }
         }

@@ -12,6 +12,7 @@ using ThirdParty.Vulkan.Flags;
 using PlatformWindow = Age.Platforms.Display.Window;
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
 using Age.Core.Interop;
+using System.Runtime.CompilerServices;
 
 namespace Age.Playground;
 
@@ -1837,17 +1838,19 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
     private void UpdateUniformBuffer(uint currentImage)
     {
-        const double RADIANS = 0.017453292519943295;
-
         var now = DateTime.UtcNow;
 
         var time = Math.Max(0, (float)(now - startTime).TotalMilliseconds / 1000);
 
+        var model = System.Numerics.Matrix4x4.CreateRotationZ(time * Angle.Radians(90));
+        var view  = System.Numerics.Matrix4x4.CreateLookAt(new(2), new(0), new(0, 0, 1));
+        var proj  = System.Numerics.Matrix4x4.CreatePerspectiveFieldOfView(Angle.Radians(45), this.swapChainExtent.Width / (float)this.swapChainExtent.Height, 0.1f, 10);
+
         var ubo = new UniformBufferObject
         {
-            Model = Matrix4x4<float>.Rotated(new(0, 0, 1), time * (float)(90 * RADIANS)),
-            View  = Matrix4x4<float>.LookingAt(new(2), new(0), new(0, 0, 1)),
-            Proj  = Matrix4x4<float>.PerspectiveFov((float)(45 * RADIANS), this.swapChainExtent.Width / (float)this.swapChainExtent.Height, 0.1f, 10)
+            Model = Unsafe.As<System.Numerics.Matrix4x4, Matrix4x4<float>>(ref model),
+            View  = Unsafe.As<System.Numerics.Matrix4x4, Matrix4x4<float>>(ref view),
+            Proj  = Unsafe.As<System.Numerics.Matrix4x4, Matrix4x4<float>>(ref proj),
         };
 
         ubo.Proj[1, 1] *= -1;

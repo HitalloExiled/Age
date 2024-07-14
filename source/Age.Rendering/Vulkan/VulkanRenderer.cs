@@ -739,7 +739,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public RenderTarget CreateRenderTarget(in RenderTargetCreateInfo createInfo)
+    public RenderTargetOld CreateRenderTarget(in RenderTargetCreateInfo createInfo)
     {
         var attachments = new List<FramebufferCreateInfo.Attachment>();
 

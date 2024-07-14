@@ -6,30 +6,17 @@ namespace Age.Rendering.Scene.Resources;
 public class Mesh : Node3D, IDisposable
 {
     private bool disposed;
-    private Material material = new();
 
     public override string NodeName { get; } = nameof(Mesh);
 
-    public Material Material
-    {
-        get => this.material;
-        set
-        {
-            this.material = value;
-
-            if (this.SingleCommand is MeshCommand command)
-            {
-                command.Material = value;
-            }
-        }
-    }
+    public Material Material { get; set; } = new();
 
     public Mesh(Span<Vertex> vertices, Span<uint> indices) =>
         this.SingleCommand = new MeshCommand
         {
             VertexBuffer = Renderer.CreateVertexBuffer(vertices),
             IndexBuffer  = Renderer.CreateIndexBuffer(indices),
-            Material     = this.Material,
+            Mesh         = this,
         };
 
     protected override void OnDestroy() =>

@@ -184,6 +184,7 @@ public class Engine : IDisposable
                 }
 
                 Node2D.CacheVersion++;
+                Node3D.CacheVersion++;
 
                 this.renderingService.Render(Window.Windows);
 

@@ -376,6 +376,14 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
         return result;
     }
 
+    public readonly Matrix4x4<U> Cast<U>() where U : IFloatingPoint<U>, IFloatingPointIeee754<U>, IRootFunctions<U>, ITrigonometricFunctions<U> =>
+        new(
+            U.CreateChecked(this.M11), U.CreateChecked(this.M12), U.CreateChecked(this.M13), U.CreateChecked(this.M14),
+            U.CreateChecked(this.M21), U.CreateChecked(this.M22), U.CreateChecked(this.M23), U.CreateChecked(this.M24),
+            U.CreateChecked(this.M31), U.CreateChecked(this.M32), U.CreateChecked(this.M33), U.CreateChecked(this.M34),
+            U.CreateChecked(this.M41), U.CreateChecked(this.M42), U.CreateChecked(this.M43), U.CreateChecked(this.M44)
+        );
+
     public readonly Matrix4x4<T> Inverse()
     {
         var determinant = this.Determinant;
@@ -389,28 +397,39 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
         var reciprocal = T.One / determinant;
 
-        result.M11 = (this.M22 * this.M33 * this.M44 - this.M22 * this.M34 * this.M43 - this.M32 * this.M23 * this.M44 + this.M32 * this.M24 * this.M43 + this.M42 * this.M23 * this.M34 - this.M42 * this.M24 * this.M33) * reciprocal;
+        result.M11 = (this.M22  * this.M33 * this.M44 - this.M22 * this.M34 * this.M43 - this.M32 * this.M23 * this.M44 + this.M32 * this.M24 * this.M43 + this.M42 * this.M23 * this.M34 - this.M42 * this.M24 * this.M33) * reciprocal;
         result.M12 = (-this.M12 * this.M33 * this.M44 + this.M12 * this.M34 * this.M43 + this.M32 * this.M13 * this.M44 - this.M32 * this.M14 * this.M43 - this.M42 * this.M13 * this.M34 + this.M42 * this.M14 * this.M33) * reciprocal;
-        result.M13 = (this.M12 * this.M23 * this.M44 - this.M12 * this.M24 * this.M43 - this.M22 * this.M13 * this.M44 + this.M22 * this.M14 * this.M43 + this.M42 * this.M13 * this.M24 - this.M42 * this.M14 * this.M23) * reciprocal;
+        result.M13 = (this.M12  * this.M23 * this.M44 - this.M12 * this.M24 * this.M43 - this.M22 * this.M13 * this.M44 + this.M22 * this.M14 * this.M43 + this.M42 * this.M13 * this.M24 - this.M42 * this.M14 * this.M23) * reciprocal;
         result.M14 = (-this.M12 * this.M23 * this.M34 + this.M12 * this.M24 * this.M33 + this.M22 * this.M13 * this.M34 - this.M22 * this.M14 * this.M33 - this.M32 * this.M13 * this.M24 + this.M32 * this.M14 * this.M23) * reciprocal;
 
         result.M21 = (-this.M21 * this.M33 * this.M44 + this.M21 * this.M34 * this.M43 + this.M31 * this.M23 * this.M44 - this.M31 * this.M24 * this.M43 - this.M41 * this.M23 * this.M34 + this.M41 * this.M24 * this.M33) * reciprocal;
-        result.M22 = (this.M11 * this.M33 * this.M44 - this.M11 * this.M34 * this.M43 - this.M31 * this.M13 * this.M44 + this.M31 * this.M14 * this.M43 + this.M41 * this.M13 * this.M34 - this.M41 * this.M14 * this.M33) * reciprocal;
+        result.M22 = (this.M11  * this.M33 * this.M44 - this.M11 * this.M34 * this.M43 - this.M31 * this.M13 * this.M44 + this.M31 * this.M14 * this.M43 + this.M41 * this.M13 * this.M34 - this.M41 * this.M14 * this.M33) * reciprocal;
         result.M23 = (-this.M11 * this.M23 * this.M44 + this.M11 * this.M24 * this.M43 + this.M21 * this.M13 * this.M44 - this.M21 * this.M14 * this.M43 - this.M41 * this.M13 * this.M24 + this.M41 * this.M14 * this.M23) * reciprocal;
-        result.M24 = (this.M11 * this.M23 * this.M34 - this.M11 * this.M24 * this.M33 - this.M21 * this.M13 * this.M34 + this.M21 * this.M14 * this.M33 + this.M31 * this.M13 * this.M24 - this.M31 * this.M14 * this.M23) * reciprocal;
+        result.M24 = (this.M11  * this.M23 * this.M34 - this.M11 * this.M24 * this.M33 - this.M21 * this.M13 * this.M34 + this.M21 * this.M14 * this.M33 + this.M31 * this.M13 * this.M24 - this.M31 * this.M14 * this.M23) * reciprocal;
 
-        result.M31 = (this.M21 * this.M32 * this.M44 - this.M21 * this.M34 * this.M42 - this.M31 * this.M22 * this.M44 + this.M31 * this.M24 * this.M42 + this.M41 * this.M22 * this.M34 - this.M41 * this.M24 * this.M32) * reciprocal;
+        result.M31 = (this.M21  * this.M32 * this.M44 - this.M21 * this.M34 * this.M42 - this.M31 * this.M22 * this.M44 + this.M31 * this.M24 * this.M42 + this.M41 * this.M22 * this.M34 - this.M41 * this.M24 * this.M32) * reciprocal;
         result.M32 = (-this.M11 * this.M32 * this.M44 + this.M11 * this.M34 * this.M42 + this.M31 * this.M12 * this.M44 - this.M31 * this.M14 * this.M42 - this.M41 * this.M12 * this.M34 + this.M41 * this.M14 * this.M32) * reciprocal;
-        result.M33 = (this.M11 * this.M22 * this.M44 - this.M11 * this.M24 * this.M42 - this.M21 * this.M12 * this.M44 + this.M21 * this.M14 * this.M42 + this.M41 * this.M12 * this.M24 - this.M41 * this.M14 * this.M22) * reciprocal;
+        result.M33 = (this.M11  * this.M22 * this.M44 - this.M11 * this.M24 * this.M42 - this.M21 * this.M12 * this.M44 + this.M21 * this.M14 * this.M42 + this.M41 * this.M12 * this.M24 - this.M41 * this.M14 * this.M22) * reciprocal;
         result.M34 = (-this.M11 * this.M22 * this.M34 + this.M11 * this.M24 * this.M32 + this.M21 * this.M12 * this.M34 - this.M21 * this.M14 * this.M32 - this.M31 * this.M12 * this.M24 + this.M31 * this.M14 * this.M22) * reciprocal;
 
         result.M41 = (-this.M21 * this.M32 * this.M43 + this.M21 * this.M33 * this.M42 + this.M31 * this.M22 * this.M43 - this.M31 * this.M23 * this.M42 - this.M41 * this.M22 * this.M33 + this.M41 * this.M23 * this.M32) * reciprocal;
-        result.M42 = (this.M11 * this.M32 * this.M43 - this.M11 * this.M33 * this.M42 - this.M31 * this.M12 * this.M43 + this.M31 * this.M13 * this.M42 + this.M41 * this.M12 * this.M33 - this.M41 * this.M13 * this.M32) * reciprocal;
+        result.M42 = (this.M11  * this.M32 * this.M43 - this.M11 * this.M33 * this.M42 - this.M31 * this.M12 * this.M43 + this.M31 * this.M13 * this.M42 + this.M41 * this.M12 * this.M33 - this.M41 * this.M13 * this.M32) * reciprocal;
         result.M43 = (-this.M11 * this.M22 * this.M43 + this.M11 * this.M23 * this.M42 + this.M21 * this.M12 * this.M43 - this.M21 * this.M13 * this.M42 - this.M41 * this.M12 * this.M23 + this.M41 * this.M13 * this.M22) * reciprocal;
-        result.M44 = (this.M11 * this.M22 * this.M33 - this.M11 * this.M23 * this.M32 - this.M21 * this.M12 * this.M33 + this.M21 * this.M13 * this.M32 + this.M31 * this.M12 * this.M23 - this.M31 * this.M13 * this.M22) * reciprocal;
+        result.M44 = (this.M11  * this.M22 * this.M33 - this.M11 * this.M23 * this.M32 - this.M21 * this.M12 * this.M33 + this.M21 * this.M13 * this.M32 + this.M31 * this.M12 * this.M23 - this.M31 * this.M13 * this.M22) * reciprocal;
 
         return result;
     }
+
+    public readonly Matrix4x4<T> Transposed() =>
+        new(
+            this.M11, this.M21, this.M31, this.M41,
+            this.M12, this.M22, this.M32, this.M42,
+            this.M13, this.M23, this.M33, this.M43,
+            this.M14, this.M24, this.M34, this.M44
+        );
+
+    public override readonly string ToString() =>
+        $"[{this.M11}, {this.M12}, {this.M13}, {this.M14}], [{this.M21}, {this.M22}, {this.M23}, {this.M24}], [{this.M31}, {this.M32}, {this.M33}, {this.M34}], [{this.M41}, {this.M42}, {this.M43}, {this.M44}]";
 
     public static Matrix4x4<T> operator *(in Matrix4x4<T> a, in Matrix4x4<T> b)
     {

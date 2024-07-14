@@ -1,7 +1,10 @@
 
 
+using System.Diagnostics;
+
 namespace Age.Numerics;
 
+[DebuggerDisplay("{matrix}")]
 public record struct Transform3D
 {
     private Matrix4x4<float> matrix;
@@ -33,18 +36,24 @@ public record struct Transform3D
     public Transform3D(in Vector3<float> position, Quaternion<float> rotation, Vector3<float> scale) =>
         this.matrix = new(position, rotation, scale);
 
-    public readonly Transform3D LookingAt(Vector3<float> position, Vector3<float> up) =>
-        new(Matrix4x4<float>.LookingAt(position, this.matrix.Translation, up));
+    public readonly Transform3D LookingAt(Vector3<float> target, Vector3<float> up) =>
+        new(Matrix4x4<float>.LookingAt(this.Position, target, up).Inverse());
 
     public static Transform3D Translated(Vector3<float> offset) =>
-        new(offset, default, Vector3<float>.One);
+        new(offset, Quaternion<float>.Identity, Vector3<float>.One);
 
     public readonly Transform3D Inverse() =>
         new(this.matrix.Inverse());
+
+    public override readonly string ToString() =>
+        this.matrix.ToString();
 
     public static Transform3D operator *(in Transform3D left, in Transform3D right) =>
         new(left.matrix * right.matrix);
 
     public static implicit operator Matrix4x4<float>(in Transform3D transform) =>
         transform.matrix;
+
+    public static implicit operator Transform3D(in Matrix4x4<float> matrix) =>
+        new(matrix);
 }

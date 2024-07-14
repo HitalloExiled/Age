@@ -9,7 +9,7 @@ using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
 
-using Buffer          = Age.Rendering.Resources.Buffer;
+using Buffer = Age.Rendering.Resources.Buffer;
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
 using System.Runtime.InteropServices;
 using Age.Rendering.Uniforms;
@@ -287,9 +287,9 @@ public partial class GeometryRenderGraphPass : RenderGraphPass
 
         var ubo = new UniformBufferObject
         {
-            Model = Matrix4x4<float>.Rotated(new(0, 0, 1), time * (float)(90 * Angle.RADIANS)),
+            Model = Matrix4x4<float>.Rotated(new(0, 0, 1), time * Angle.Radians(90)),
             View  = Matrix4x4<float>.LookingAt(new(2), new(0), new(0, 0, 1)),
-            Proj  = Matrix4x4<float>.PerspectiveFov((float)(45 * Angle.RADIANS), extent.Width / (float)extent.Height, 0.1f, 10)
+            Proj  = Matrix4x4<float>.PerspectiveFov(Angle.Radians(45), extent.Width / (float)extent.Height, 0.1f, 10),
         };
 
         ubo.Proj[1, 1] *= -1;
