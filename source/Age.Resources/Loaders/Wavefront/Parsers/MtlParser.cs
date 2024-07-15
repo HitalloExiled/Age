@@ -11,7 +11,7 @@ public partial class MtlParser(string filepath, StreamReader reader) : Parser(re
 
     private Token NextToken()
     {
-        var unrestricted = this.Lookahead.Type == TokenType.Identifier && this.Lookahead.Value == "newmtl";
+        var unrestricted = this.Lookahead.Type == TokenType.Identifier && this.Lookahead.Value is "newmtl" or "map_Kd";
 
         return this.NextToken(unrestricted);
     }
@@ -230,7 +230,7 @@ public partial class MtlParser(string filepath, StreamReader reader) : Parser(re
 
                 this.context.CurrentMaterial.TransmitColor = this.ParseColor(0);
             }
-            else
+            else if (!this.MatchNewLine())
             {
                 this.ParseTextureMap();
             }
