@@ -90,13 +90,17 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
     public static Quaternion<T> operator -(in Quaternion<T> value) =>
         new(-value.X, -value.Y, -value.Z, -value.W);
 
-    public static Quaternion<T> operator *(in Quaternion<T> left, in Quaternion<T> right) =>
-        new(
-            left.W * right.W - left.X * right.X - left.Y * right.Y - left.Z * right.Z,
-            left.W * right.X + left.X * right.W + left.Y * right.Z - left.Z * right.Y,
-            left.W * right.Y - left.X * right.Z + left.Y * right.W + left.Z * right.X,
-            left.W * right.Z + left.X * right.Y - left.Y * right.X + left.Z * right.W
-        );
+    public static Quaternion<T> operator *(in Quaternion<T> left, in Quaternion<T> right)
+    {
+        Unsafe.SkipInit<Quaternion<T>>(out var result);
+
+        result.X = left.W * right.X + left.X * right.W + left.Y * right.Z - left.Z * right.Y;
+        result.Y = left.W * right.Y - left.X * right.Z + left.Y * right.W + left.Z * right.X;
+        result.Z = left.W * right.Z + left.X * right.Y - left.Y * right.X + left.Z * right.W;
+        result.W = left.W * right.W - left.X * right.X - left.Y * right.Y - left.Z * right.Z;
+
+        return result;
+    }
 
     public static Quaternion<T> operator *(in Quaternion<T> left, in Vector4<T> right) =>
         new(left.X * right.X, left.Y * right.Y, left.Z * right.Z, left.W * right.W);

@@ -80,6 +80,8 @@ public class Engine : IDisposable
         this.Window.SizeChanged  += this.renderingService.RequestDraw;
         this.Window.WindowClosed += this.Window.Tree.Destroy;
 
+        Input.ListenInputEvents(this.Window);
+
         var viewport = new ViewportOld
         {
             Texture = this.viewportTexture = this.renderer.CreateTexture(geometryRenderGraphPass.ColorImage, false),
@@ -163,6 +165,8 @@ public class Engine : IDisposable
 
         while (this.Running)
         {
+            Input.Update();
+
             frameTime += current - previous;
 
             if (!FPS_LOCKED || frameTime >= TARGET_FRAME_TIME)

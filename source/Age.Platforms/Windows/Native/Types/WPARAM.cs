@@ -7,6 +7,9 @@ namespace Age.Platforms.Windows.Native.Types;
 public unsafe readonly record struct WPARAM(nint Value = default)
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static implicit operator nint(WPARAM value) => value.Value;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static implicit operator void*(WPARAM value) => (void*)value.Value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

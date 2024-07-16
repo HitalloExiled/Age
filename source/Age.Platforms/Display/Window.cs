@@ -2,10 +2,24 @@ using Age.Numerics;
 
 namespace Age.Platforms.Display;
 
+public delegate void KeyEvent(Key key);
+public delegate void MouseClickEvent(MouseButton button);
+public delegate void MouseMoveEvent(short x, short y);
+public delegate void MouseWhellEvent(float delta, MouseKeyStates keysState);
+
 public partial class Window : IDisposable
 {
-    public event Action? SizeChanged;
-    public event Action? WindowClosed;
+    public event MouseClickEvent? ClickDown;
+    public event MouseClickEvent? ClickUp;
+    public event MouseClickEvent? DoubleClick;
+    public event KeyEvent?        KeyDown;
+    public event KeyEvent?        KeyPress;
+    public event KeyEvent?        KeyUp;
+    public event MouseClickEvent? Click;
+    public event MouseMoveEvent?  MouseMove;
+    public event MouseWhellEvent? MouseWhell;
+    public event Action?          SizeChanged;
+    public event Action?          WindowClosed;
 
     private static string? className;
 

@@ -2,10 +2,11 @@ using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Scene;
 using Age.Rendering.Scene.Resources;
+using Age.Platforms.Display;
+
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
 
 using static Age.Rendering.Shaders.GeometryShader;
-using Age.Core;
 
 namespace Age.Editor;
 
@@ -26,34 +27,16 @@ public class DemoScene : Scene3D
         this.RedCamera = new()
         {
             Transform = Transform3D.Translated(new(10, 0, 0)),
-            // Transform = new Matrix4x4<double>(
-            //     1.0,  0.0,  0.0, 0.0,
-            //     0.0,  1.0,  0.0, 0.0,
-            //     0.0,  0.0,  1.0, 0.0,
-            //     5.0,  0.0,  0.0, 1.0
-            // ).Cast<float>(),
         };
 
         this.GreenCamera = new()
         {
             Transform = Transform3D.Translated(new(0, 10, 0)),
-            // Transform = new Matrix4x4<double>(
-            //     1.0,  0.0,  0.0, 0.0,
-            //     0.0,  1.0,  0.0, 0.0,
-            //     0.0,  0.0,  1.0, 0.0,
-            //     0.0,  5.0,  0.0, 1.0
-            // ).Cast<float>(),
         };
 
         this.BlueCamera = new()
         {
             Transform = Transform3D.Translated(new(0, 0, 10)),
-            // Transform = new Matrix4x4<double>(
-            //     -1.0,  0.0,  0.0, 0.0,
-            //      0.0,  1.0,  0.0, 0.0,
-            //      0.0,  0.0, -1.0, 0.0,
-            //      0.0,  0.0,  5.0, 1.0
-            // ).Cast<float>(),
         };
 
         this.AppendChild(this.RedCamera);
@@ -66,22 +49,9 @@ public class DemoScene : Scene3D
         this.AppendChild(this.axis);
         this.AppendChild(this.mesh);
 
-        // this.AppendChild(this.mesh = LoadMesh("cone.obj", "Grid.png"));
-
-        this.axis.Transform = new(new(0, 1, 0), new Quaternion<float>(Vector3<float>.Up, Angle.Radians(-45)), Vector3<float>.One);
-
         this.RedCamera.LookAt(this.mesh, Vector3<float>.Up);
         this.GreenCamera.LookAt(this.mesh, Vector3<float>.Right);
         this.BlueCamera.LookAt(this.mesh, Vector3<float>.Up);
-
-        Logger.Info($"RedCamera: {this.RedCamera.Transform}");
-        Logger.Info($"RedCamera Inverse {this.RedCamera.Transform.Inverse()}");
-
-        Logger.Info($"GreenCamera: {this.GreenCamera.Transform}");
-        Logger.Info($"GreenCamera Inverse: {this.GreenCamera.Transform.Inverse()}");
-
-        Logger.Info($"BlueCamera: {this.BlueCamera.Transform}");
-        Logger.Info($"BlueCamera Inverse: {this.BlueCamera.Transform.Inverse()}");
     }
 
     private static Mesh LoadMesh(string modelName, string textureName)
@@ -116,15 +86,6 @@ public class DemoScene : Scene3D
             }
         }
 
-        // vertices =
-        // [
-        //     new(new(-1, -1, 1), default, new(1,  1)),
-        //     new(new( 1, -1, 1), default, new(0,  1)),
-        //     new(new( 1,  1, 1), default, new(0,  0)),
-        // ];
-
-        // indices = [2, 1, 0];
-
         return new(vertices.AsSpan(), indices.AsSpan())
         {
             Name     = modelName,
@@ -147,6 +108,39 @@ public class DemoScene : Scene3D
         this.axis.Transform = this.axis.Transform with
         {
             Rotation = new(Vector3<float>.Up, Angle.Radians(angle))
+        };
+
+        var input = Vector3<float>.Zero;
+
+        if (Input.IsKeyPressed(Key.A))
+        {
+            input.X = -1;
+        }
+        else if (Input.IsKeyPressed(Key.D))
+        {
+            input.X = 1;
+        }
+
+        if (Input.IsKeyPressed(Key.W))
+        {
+            input.Z = -1;
+        }
+        else if (Input.IsKeyPressed(Key.S))
+        {
+            input.Z = 1;
+        }
+
+        if (Input.IsKeyJustPressed(Key.Space))
+        {
+            Console.WriteLine("Jump!!!");
+        }
+
+        var mouseWheel = Input.GetMouseWheel();
+
+        this.mesh.Transform = this.mesh.Transform with
+        {
+            Position = this.mesh.Transform.Position + input.Normalized * (float)deltaTime,
+            Rotation = this.mesh.Transform.Rotation * new Quaternion<float>(Vector3<float>.Up, Angle.Radians(5 * mouseWheel))
         };
     }
 }

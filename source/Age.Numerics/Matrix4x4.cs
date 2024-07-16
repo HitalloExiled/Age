@@ -117,7 +117,8 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
                 result.Z = half * scalar;
                 result.W = (this.M12 - this.M21) * inverseScalar;
             }
-            return result;
+
+            return result.Normalized;
         }
         set => ApplyRotatationWithScale(ref this, value, this.Scale);
     }
@@ -222,8 +223,25 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
         this.M44 = T.One;
     }
 
-    private static void ApplyRotatationWithScale(ref Matrix4x4<T> matrix, in Quaternion<T> rotation, in Vector3<T> scale)
+    private static void SetDiagonal(ref Matrix4x4<T> matrix, Vector3<T> vector3)
     {
+        matrix.M11 = vector3.X;
+        matrix.M12 = T.Zero;
+        matrix.M13 = T.Zero;
+
+        matrix.M21 = T.Zero;
+        matrix.M22 = vector3.Y;
+        matrix.M23 = T.Zero;
+
+        matrix.M31 = T.Zero;
+        matrix.M32 = T.Zero;
+        matrix.M33 = vector3.Z;
+    }
+
+    private static void ApplyRotatationWithScale(ref Matrix4x4<T> matrix, in Quaternion<T> rotation, Vector3<T> scale)
+    {
+        SetDiagonal(ref matrix, scale);
+
         var xx = rotation.X * rotation.X;
         var xy = rotation.X * rotation.Y;
         var xz = rotation.X * rotation.Z;
@@ -237,19 +255,19 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
         var one = T.One;
         var two = T.CreateChecked(2);
 
-        matrix.M11 = (one - two * (yy + zz)) * scale.X;
-        matrix.M12 = two * (xy + zw)         * scale.X;
-        matrix.M13 = two * (xz - yw)         * scale.X;
+        matrix.M11 = one - two * (yy + zz);
+        matrix.M12 = two * (xy + zw);
+        matrix.M13 = two * (xz - yw);
         matrix.M14 = T.Zero;
 
-        matrix.M21 = two * (xy - zw)         * scale.Y;
-        matrix.M22 = (one - two * (xx + zz)) * scale.Y;
-        matrix.M23 = two * (yz + xw)         * scale.Y;
+        matrix.M21 = two * (xy - zw);
+        matrix.M22 = one - two * (xx + zz);
+        matrix.M23 = two * (yz + xw);
         matrix.M24 = T.Zero;
 
-        matrix.M31 = two * (xz + yw)         * scale.Z;
-        matrix.M32 = two * (yz - xw)         * scale.Z;
-        matrix.M33 = (one - two * (xx + yy)) * scale.Z;
+        matrix.M31 = two * (xz + yw);
+        matrix.M32 = two * (yz - xw);
+        matrix.M33 = one - two * (xx + yy);
         matrix.M34 = T.Zero;
     }
 

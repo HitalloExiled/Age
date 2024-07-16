@@ -36,6 +36,12 @@ public record struct Transform3D
     public Transform3D(in Vector3<float> position, Quaternion<float> rotation, Vector3<float> scale) =>
         this.matrix = new(position, rotation, scale);
 
+    public Transform3D(in Vector3<float> position) =>
+        this.matrix = new(position, Quaternion<float>.Identity, Vector3<float>.One);
+
+    public Transform3D(in Vector3<float> position, Quaternion<float> rotation) =>
+        this.matrix = new(position, rotation, Vector3<float>.One);
+
     public readonly Transform3D LookingAt(Vector3<float> target, Vector3<float> up) =>
         new(Matrix4x4<float>.LookingAt(this.Position, target, up).Inverse());
 
