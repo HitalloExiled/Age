@@ -1,8 +1,8 @@
 using Age.Numerics;
-using Age.Rendering.Drawing;
-using Age.Rendering.Drawing.Elements;
-using Age.Rendering.Drawing.Styling;
-using Age.Rendering.Scene;
+using Age.Drawing;
+using Age.Drawing.Elements;
+using Age.Drawing.Styling;
+using Age.Scene;
 
 namespace Age.Editor;
 

@@ -1,12 +1,11 @@
 using Age.Numerics;
-using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
-using Age.Rendering.Scene;
 using Age.Rendering.Vulkan;
+using Age.Scene;
 
 namespace Age;
 
-public class Window : Platforms.Display.Window, IWindow
+public class Window : Platforms.Display.Window
 {
     public new static IEnumerable<Window> Windows => Platforms.Display.Window.Windows.Cast<Window>();
 

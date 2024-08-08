@@ -1,17 +1,14 @@
-using Age.Interfaces;
-using Age.Rendering;
-using Age.Rendering.Interfaces;
+using Age.Core;
 using Age.Rendering.Vulkan;
 
 namespace Age.Services;
 
-internal partial class RenderingService : IRenderingService
+internal partial class RenderingService : Disposable
 {
-    private readonly VulkanRenderer                   renderer;
-    private readonly Dictionary<IWindow, RenderGraph> renderGraphs = [];
+    private readonly VulkanRenderer                  renderer;
+    private readonly Dictionary<Window, RenderGraph> renderGraphs = [];
 
-    private int  changes;
-    private bool disposed;
+    private int changes;
 
     public RenderingService(VulkanRenderer renderer)
     {
@@ -33,26 +30,8 @@ internal partial class RenderingService : IRenderingService
         }
     }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!this.disposed)
-        {
-            if (disposing)
-            {
-                this.renderer.DeferredDispose(this.renderGraphs.Values);
-            }
-
-            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-            // TODO: set large fields to null
-            this.disposed = true;
-        }
-    }
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
-    }
+    protected override void OnDispose() =>
+        this.renderer.DeferredDispose(this.renderGraphs.Values);
 
     public void RegisterRenderGraph(Window window, RenderGraph renderGraph) =>
         this.renderGraphs[window] = renderGraph;

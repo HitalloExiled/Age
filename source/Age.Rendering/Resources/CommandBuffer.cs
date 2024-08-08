@@ -1,8 +1,8 @@
 using Age.Numerics;
 using Age.Rendering.Interfaces;
-using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
+using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 

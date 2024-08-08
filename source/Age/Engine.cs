@@ -1,13 +1,11 @@
 using System.Diagnostics;
 using Age.Numerics;
-using Age.Rendering;
-using Age.Rendering.RenderPasses;
 using Age.Rendering.Resources;
-using Age.Rendering.Scene;
-using Age.Rendering.Services;
-using Age.Rendering.Storage;
 using Age.Rendering.Vulkan;
+using Age.RenderPasses;
+using Age.Scene;
 using Age.Services;
+using Age.Storage;
 using SkiaSharp;
 using ThirdParty.Vulkan.Flags;
 
@@ -19,13 +17,17 @@ public class Engine : IDisposable
     private const ushort TARGET_FPS        = 60;
     private const double TARGET_FRAME_TIME = 1000.0 / TARGET_FPS;
 
-    private readonly Container        container;
     private readonly VulkanRenderer   renderer  = new();
     private readonly RenderingService renderingService;
 
     private bool disposed;
 
     public Window Window { get; }
+
+    private readonly TextService textService;
+    private readonly TextureStorage textureStorage;
+    private readonly ShaderStorage shaderStorage;
+
     public bool Running { get; private set; }
 
     public Engine(string name, Size<uint> windowSize, Point<int> windowPosition)
@@ -33,11 +35,11 @@ public class Engine : IDisposable
         Window.Register(this.renderer);
 
         this.renderingService = new RenderingService(this.renderer);
-        this.Window           = new Window(name, windowSize, windowPosition);
 
-        var textService    = new TextService(this.renderer);
-        var textureStorage = new TextureStorage(this.renderer);
-        var shaderStorage  = new ShaderStorage(this.renderer);
+        this.Window           = new Window(name, windowSize, windowPosition);
+        this.textService      = new TextService(this.renderer);
+        this.textureStorage   = new TextureStorage(this.renderer);
+        this.shaderStorage    = new ShaderStorage(this.renderer);
 
         var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
 
@@ -61,13 +63,6 @@ public class Engine : IDisposable
         RenderGraph.Active = renderGraph;
 
         this.renderingService.RegisterRenderGraph(this.Window, renderGraph);
-
-        this.container = new()
-        {
-            TextService    = textService,
-            TextureStorage = textureStorage,
-            ShaderStorage  = shaderStorage,
-        };
 
         this.Window.SizeChanged  += this.renderingService.RequestDraw;
         this.Window.WindowClosed += this.Window.Tree.Destroy;
@@ -111,7 +106,9 @@ public class Engine : IDisposable
                 Platforms.Display.Window.CloseAll();
 
                 this.renderingService.Dispose();
-                this.container.Dispose();
+                this.textService.Dispose();
+                this.textureStorage.Dispose();
+                this.shaderStorage.Dispose();
                 this.renderer.Dispose();
             }
 

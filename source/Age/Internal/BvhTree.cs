@@ -1,10 +1,10 @@
+using Age.Commands;
 using Age.Core.Extensions;
+using Age.Drawing;
+using Age.Drawing.Styling;
 using Age.Numerics;
-using Age.Rendering;
-using Age.Rendering.Commands;
-using Age.Rendering.Drawing;
-using Age.Rendering.Scene;
-
+using Age.Scene;
+using Age.Storage;
 namespace Age.Internal;
 
 public unsafe class BvhTree
@@ -201,7 +201,7 @@ public unsafe class BvhTree
             [
                 new RectCommand
                 {
-                    Border         = new(2, 0, color * new Color(1, 1, 1, 1)),
+                    Border         = new Border(2, 0, color * new Color(1, 1, 1, 1)),
                     Flags          = Rendering.Shaders.Canvas.CanvasShader.Flags.ColorAsBackground,
                     Rect           = new(
                         bvhNode.AABB.Size.X,
@@ -210,8 +210,8 @@ public unsafe class BvhTree
                         -bvhNode.AABB.Position.Y
                     ),
                     SampledTexture = new(
-                        Container.Singleton.TextureStorage.DefaultTexture,
-                        Container.Singleton.TextureStorage.DefaultSampler,
+                        TextureStorage.Singleton.DefaultTexture,
+                        TextureStorage.Singleton.DefaultSampler,
                         UVRect.Normalized
                     ),
                 }

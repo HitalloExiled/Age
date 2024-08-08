@@ -1,7 +1,7 @@
 using Age.Core.Extensions;
 using Age.Numerics;
-using Age.Rendering.Scene;
-using Age.Rendering.Scene.Resources;
+using Age.Scene;
+using Age.Resources;
 using Age.Platforms.Display;
 
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;

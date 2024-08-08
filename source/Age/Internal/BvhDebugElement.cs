@@ -1,4 +1,4 @@
-using Age.Rendering.Scene;
+using Age.Scene;
 
 namespace Age.Internal;
 

@@ -13,6 +13,11 @@ insert_final_newline     = true
 
 [*.cs]
 
+# usings
+
+dotnet_sort_system_directives_first     = true:suggestion
+dotnet_separate_import_directive_groups = true:suggestion
+
 # styles
 
 dotnet_naming_style.upper_case_style.capitalization  = all_upper

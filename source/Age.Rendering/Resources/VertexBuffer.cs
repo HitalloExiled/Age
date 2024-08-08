@@ -1,3 +1,5 @@
+using Age.Core;
+
 namespace Age.Rendering.Resources;
 
 public class VertexBuffer : Disposable
