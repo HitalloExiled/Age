@@ -45,19 +45,22 @@ public partial class Window
                 case User32.WINDOW_MESSAGE.WM_KEYDOWN:
                     window.KeyDown?.Invoke((Key)wParam.Value);
                     window.KeyPress?.Invoke((Key)wParam.Value);
-                    return 0;
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_KEYUP:
                     window.KeyUp?.Invoke((Key)wParam.Value);
                     window.KeyPress?.Invoke((Key)wParam.Value);
-                    return 0;
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_MOUSEMOVE:
                     {
                         var x = GetXLParam(lParam);
                         var y = GetYLParam(lParam);
 
                         window.MouseMove?.Invoke(x, y);
-                        return 0;
                     }
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_MOUSEWHEEL:
                     {
                         var keys  = (MouseKeyStates)GetKeyStateWParam(wParam);
@@ -66,39 +69,49 @@ public partial class Window
 
 
                         window.MouseWhell?.Invoke(delta, keys);
-                        return 0;
                     }
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_LBUTTONDBLCLK:
                     window.DoubleClick?.Invoke(MouseButton.Left);
-                    return 0;
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_LBUTTONDOWN:
                     window.ClickDown?.Invoke(MouseButton.Left);
                     window.Click?.Invoke(MouseButton.Left);
-                    return 0;
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_LBUTTONUP:
                     window.ClickUp?.Invoke(MouseButton.Left);
                     window.Click?.Invoke(MouseButton.Left);
-                    return 0;
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_MBUTTONDBLCLK:
                     window.DoubleClick?.Invoke(MouseButton.Middle);
-                    return 0;
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_MBUTTONDOWN:
                     window.ClickDown?.Invoke(MouseButton.Middle);
-                    return 0;
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_MBUTTONUP:
                     window.ClickUp?.Invoke(MouseButton.Middle);
-                    return 0;
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_RBUTTONDBLCLK:
                     window.DoubleClick?.Invoke(MouseButton.Right);
-                    return 0;
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_RBUTTONDOWN:
                     window.ClickDown?.Invoke(MouseButton.Right);
                     window.Click?.Invoke(MouseButton.Right);
-                    return 0;
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_RBUTTONUP:
                     window.ClickUp?.Invoke(MouseButton.Right);
                     window.Click?.Invoke(MouseButton.Right);
-                    return 0;
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_SIZE:
                     {
                         User32.GetWindowPlacement(hwnd, out var placement);
@@ -116,7 +129,7 @@ public partial class Window
                         }
                     }
 
-                    return 0;
+                    break;
                 case User32.WINDOW_MESSAGE.WM_MOVING:
                     {
                         User32.GetWindowPlacement(hwnd, out var placement);
@@ -124,11 +137,11 @@ public partial class Window
                         window.position = new(placement.rcNormalPosition.left, placement.rcNormalPosition.top);
                     }
 
-                    return 0;
+                    break;
                 case User32.WINDOW_MESSAGE.WM_CLOSE:
                     window.Close();
 
-                    return User32.DefWindowProcW(hwnd, msg, wParam, lParam);
+                    break;
                 default:
                     break;
             }

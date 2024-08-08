@@ -23,16 +23,6 @@ public class RenderTarget : Resource
     public VkFormat   Format => this.Texture.Image.Format;
     public Size<uint> Size   => this.Texture.Image.Extent.ToSize();
 
-    public RenderTarget(Texture texture, Framebuffer framebuffer, Image[] attachments)
-    {
-        this.Texture     = texture;
-        this.Framebuffer = framebuffer;
-
-        this.Attachments[0] = attachments[0];
-        this.Attachments[1] = attachments[1];
-        this.Attachments[2] = attachments[2];
-    }
-
     public RenderTarget(in Size<uint> size, VkFormat format = VkFormat.B8G8R8A8Unorm) =>
         this.Update(size, format);
 
@@ -105,6 +95,11 @@ public class RenderTarget : Resource
     {
         this.Texture.Dispose();
         this.Framebuffer.Dispose();
+
+        foreach (var attachments in this.Attachments)
+        {
+            attachments.Dispose();
+        }
     }
 
     [MemberNotNull(nameof(Framebuffer), nameof(Texture))]

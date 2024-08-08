@@ -24,9 +24,9 @@ public class Engine : IDisposable
 
     public Window Window { get; }
 
-    private readonly TextService textService;
+    private readonly TextService    textService;
     private readonly TextureStorage textureStorage;
-    private readonly ShaderStorage shaderStorage;
+    private readonly ShaderStorage  shaderStorage;
 
     public bool Running { get; private set; }
 
@@ -65,7 +65,6 @@ public class Engine : IDisposable
         this.renderingService.RegisterRenderGraph(this.Window, renderGraph);
 
         this.Window.SizeChanged  += this.renderingService.RequestDraw;
-        this.Window.WindowClosed += this.Window.Tree.Destroy;
 
         Input.ListenInputEvents(this.Window);
     }
@@ -150,13 +149,17 @@ public class Engine : IDisposable
                 foreach (var window in Window.Windows)
                 {
                     window.DoEvents();
-                    window.Tree.ResetCache();
-                    window.Tree.Update(deltaTime);
 
-                    if (window.Tree.IsDirty)
+                    if (!window.Closed)
                     {
-                        this.renderingService.RequestDraw();
-                        window.Tree.IsDirty = false;
+                        window.Tree.ResetCache();
+                        window.Tree.Update(deltaTime);
+
+                        if (window.Tree.IsDirty)
+                        {
+                            this.renderingService.RequestDraw();
+                            window.Tree.IsDirty = false;
+                        }
                     }
                 }
 

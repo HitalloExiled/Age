@@ -32,6 +32,8 @@ public sealed class NodeTree
     {
         this.window = window;
         this.Root   = new() { Tree = this };
+
+        this.Window.WindowClosed += this.Destroy;
     }
 
     [MemberNotNull(nameof(buffer))]
@@ -140,8 +142,11 @@ public sealed class NodeTree
         this.command3DEntriesCache.Clear();
     }
 
-    public void Destroy() =>
+    public void Destroy()
+    {
         this.Root.Destroy();
+        this.buffer.Dispose();
+    }
 
     internal void Initialize()
     {

@@ -160,8 +160,6 @@ public partial class SceneRenderGraphPass : RenderGraphPass
             foreach (var ubo in resource.Ubo.Values)
             {
                 this.Renderer.DeferredDispose(ubo.Buffer);
-
-                NativeMemory.Free((void*)ubo.Handle);
             }
 
             this.Renderer.DeferredDispose(resource.UniformSets.Values);
