@@ -43,19 +43,18 @@ public partial class Window
             switch (msg)
             {
                 case User32.WINDOW_MESSAGE.WM_KEYDOWN:
-                    //Console.WriteLine($"WM_KEYDOWN: {(Key)wParam.Value}[{(int)wParam.Value}]");
                     window.KeyDown?.Invoke((Key)wParam.Value);
+                    window.KeyPress?.Invoke((Key)wParam.Value);
                     return 0;
                 case User32.WINDOW_MESSAGE.WM_KEYUP:
-                    //Console.WriteLine($"WM_KEYUP: {(Key)wParam.Value}[{(int)wParam.Value}]");
                     window.KeyUp?.Invoke((Key)wParam.Value);
+                    window.KeyPress?.Invoke((Key)wParam.Value);
                     return 0;
                 case User32.WINDOW_MESSAGE.WM_MOUSEMOVE:
                     {
                         var x = GetXLParam(lParam);
                         var y = GetYLParam(lParam);
 
-                        //Console.WriteLine($"WM_MOUSEHOVER: [{x}, {y}]");
                         window.MouseMove?.Invoke(x, y);
                         return 0;
                     }
@@ -65,46 +64,40 @@ public partial class Window
                         var whell = GetWheelDeltaWParam(wParam);
                         var delta = whell / (float)User32.WHEEL_DELTA;
 
-                        //Console.WriteLine($"WM_MOUSEWHEEL - keys: {keys}, whell: {whell}, delta: {delta}");
 
                         window.MouseWhell?.Invoke(delta, keys);
                         return 0;
                     }
                 case User32.WINDOW_MESSAGE.WM_LBUTTONDBLCLK:
-                    //Console.WriteLine($"WM_LBUTTONDBLCLK {msg}");
                     window.DoubleClick?.Invoke(MouseButton.Left);
                     return 0;
                 case User32.WINDOW_MESSAGE.WM_LBUTTONDOWN:
-                    //Console.WriteLine($"WM_LBUTTONDOWN {msg}");
                     window.ClickDown?.Invoke(MouseButton.Left);
+                    window.Click?.Invoke(MouseButton.Left);
                     return 0;
                 case User32.WINDOW_MESSAGE.WM_LBUTTONUP:
-                    //Console.WriteLine($"WM_LBUTTONUP {msg}");
                     window.ClickUp?.Invoke(MouseButton.Left);
+                    window.Click?.Invoke(MouseButton.Left);
                     return 0;
                 case User32.WINDOW_MESSAGE.WM_MBUTTONDBLCLK:
-                    //Console.WriteLine($"WM_MBUTTONDBLCLK {msg}");
                     window.DoubleClick?.Invoke(MouseButton.Middle);
                     return 0;
                 case User32.WINDOW_MESSAGE.WM_MBUTTONDOWN:
-                    //Console.WriteLine($"WM_MBUTTONDOWN {msg}");
                     window.ClickDown?.Invoke(MouseButton.Middle);
                     return 0;
                 case User32.WINDOW_MESSAGE.WM_MBUTTONUP:
-                    //Console.WriteLine($"WM_MBUTTONUP {msg}");
                     window.ClickUp?.Invoke(MouseButton.Middle);
                     return 0;
                 case User32.WINDOW_MESSAGE.WM_RBUTTONDBLCLK:
-                    //Console.WriteLine($"WM_RBUTTONDBLCLK {msg}");
                     window.DoubleClick?.Invoke(MouseButton.Right);
                     return 0;
                 case User32.WINDOW_MESSAGE.WM_RBUTTONDOWN:
-                    //Console.WriteLine($"WM_RBUTTONDOWN {msg}");
                     window.ClickDown?.Invoke(MouseButton.Right);
+                    window.Click?.Invoke(MouseButton.Right);
                     return 0;
                 case User32.WINDOW_MESSAGE.WM_RBUTTONUP:
-                    //Console.WriteLine($"WM_RBUTTONUP {msg}");
                     window.ClickUp?.Invoke(MouseButton.Right);
+                    window.Click?.Invoke(MouseButton.Right);
                     return 0;
                 case User32.WINDOW_MESSAGE.WM_SIZE:
                     {

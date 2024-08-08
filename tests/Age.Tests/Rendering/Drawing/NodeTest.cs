@@ -175,31 +175,6 @@ public class NodeTest
         var expected = new Span[]
         {
             child0,
-            child11,
-            child12,
-            child13,
-            child1,
-            child21,
-            child22,
-            child2,
-            child31,
-            child3,
-        }
-        .Select(x => x.Name)
-        .ToArray();
-
-        foreach (var node in parent.Traverse())
-        {
-            nodes.Add(node.Name!);
-        }
-
-        Assert.Equal(expected, nodes);
-
-        nodes.Clear();
-
-        expected = new Span[]
-        {
-            child0,
             child1,
             child11,
             child12,
@@ -213,7 +188,7 @@ public class NodeTest
          .Select(x  => x.Name)
          .ToArray();
 
-        foreach (var node in parent.Traverse(true))
+        foreach (var node in parent.Traverse())
         {
             nodes.Add(node.Name!);
         }
@@ -249,36 +224,9 @@ public class NodeTest
 
         var nodes = new List<string>();
 
+        var enumerator = new Node.TraverseEnumerator(parent);
+
         var expected = new Span[]
-        {
-            child0,
-            child11,
-            child12,
-            child13,
-            child1,
-            child21,
-            child22,
-            child2,
-            child31,
-            child3,
-        }
-        .Select(x => x.Name)
-        .ToArray();
-
-        var enumerator = new Node.TraverseEnumerator(parent, false);
-
-        while (enumerator.MoveNext())
-        {
-            nodes.Add(enumerator.Current.Name!);
-        }
-
-        Assert.Equal(expected, nodes);
-
-        nodes.Clear();
-
-        enumerator = new Node.TraverseEnumerator(parent, true);
-
-        expected = new Span[]
         {
             child0,
             child1,

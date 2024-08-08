@@ -4,22 +4,27 @@ using Age.Rendering.Interfaces;
 
 namespace Age.Rendering.Scene;
 
-public sealed class SceneTree(IWindow window) : Node
+public sealed class NodeTree
 {
-    private readonly List<Command2DEntry> command2DEntriesCache = [];
-    private readonly List<Command3DEntry> command3DEntriesCache = [];
-
     public record struct Command2DEntry(Matrix3x2<float> Transform, Command Command);
     public record struct Command3DEntry(Matrix4x4<float> Transform, Command Command);
+
+    private readonly List<Command2DEntry> command2DEntriesCache = [];
+    private readonly List<Command3DEntry> command3DEntriesCache = [];
+    private readonly IWindow window;
 
     internal List<Node>    Nodes    { get; } = [];
     internal List<Scene3D> Scenes3D { get; } = [];
 
-    public override string NodeName { get; } = nameof(SceneTree);
+    public bool    IsDirty { get; internal set; }
+    public Root    Root    { get; } = new();
+    public IWindow Window  => this.window;
 
-    public bool IsDirty { get; internal set; }
-
-    public IWindow Window => window;
+    public NodeTree(IWindow window)
+    {
+        this.window = window;
+        this.Root   = new() { Tree = this };
+    }
 
     internal IEnumerable<Command2DEntry> Enumerate2DCommands()
     {
@@ -32,7 +37,7 @@ public sealed class SceneTree(IWindow window) : Node
         }
         else
         {
-            foreach (var node in this.Traverse(true))
+            foreach (var node in this.Root.Traverse())
             {
                 if (node is Node2D node2D)
                 {
@@ -62,7 +67,7 @@ public sealed class SceneTree(IWindow window) : Node
         }
         else
         {
-            foreach (var node in this.Traverse(true))
+            foreach (var node in this.Root.Traverse())
             {
                 if (node is Node3D node3D)
                 {
@@ -87,4 +92,32 @@ public sealed class SceneTree(IWindow window) : Node
         this.command3DEntriesCache.Clear();
     }
 
+    public void Destroy() =>
+        this.Root.Destroy();
+
+    internal void Initialize()
+    {
+        foreach (var node in this.Root.Traverse())
+        {
+            node.Initialize();
+        }
+
+        foreach (var node in this.Root.Traverse())
+        {
+            node.LateUpdate();
+        }
+    }
+
+    public void Update(double deltaTime)
+    {
+        foreach (var node in this.Root.Traverse())
+        {
+            node.Update(deltaTime);
+        }
+
+        foreach (var node in this.Root.Traverse())
+        {
+            node.LateUpdate();
+        }
+    }
 }

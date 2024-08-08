@@ -3,7 +3,6 @@ using Age.Numerics;
 using Age.Rendering.RenderPasses;
 using Age.Rendering.Scene;
 using Age.Rendering.Vulkan;
-using SkiaSharp;
 using ThirdParty.Vulkan.Flags;
 
 using Buffer = Age.Rendering.Resources.Buffer;
@@ -34,6 +33,9 @@ public sealed class Canvas : Element
         this.UpdateBuffer();
     }
 
+    private void OnWindowSizeChanged() =>
+        this.Style.Size = this.Tree!.Window.ClientSize - PADDING * 2;
+
     [MemberNotNull(nameof(buffer))]
     private unsafe void UpdateBuffer()
     {
@@ -45,9 +47,6 @@ public sealed class Canvas : Element
 
         this.buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
     }
-
-    private void OnWindowSizeChanged() =>
-        this.Style.Size = this.Tree!.Window.ClientSize - PADDING * 2;
 
     private unsafe void OnMouseMove(short x, short y)
     {
@@ -64,15 +63,15 @@ public sealed class Canvas : Element
             var index = x + y * image.Extent.Width;
             var pixel = imageIndex[(int)index];
 
-            var id = pixel & 0x0000FFFF;
+            var id = (int)(pixel & 0x0000FFFF) - 1;
 
             this.buffer.Allocation.Memory.Unmap();
 
-            Console.WriteLine($"Element Index: {id} at [{x}, {y}], pixel: {Convert.ToString(id, 16).PadLeft(8, '0')}: color: {(Color)pixel}, SkColor: {(SKColor)pixel}, {Convert.ToString(id, 2)}, position: {index}");
+            Console.WriteLine($"Element Index: {id}, Pixel Index: {index}, Color: {(Color)pixel}, Mouse Position: [{x}, {y}]");
 
-            if (id > 0 && id <= this.Tree.Nodes.Count)
+            if (id > -1 && id < this.Tree.Nodes.Count)
             {
-                Console.WriteLine(this.Tree.Nodes[(int)(id - 1)].ToString());
+                Console.WriteLine(this.Tree.Nodes[id].ToString());
             }
         }
     }
@@ -87,15 +86,15 @@ public sealed class Canvas : Element
         }
     }
 
-    protected override void OnConnected()
+    protected override void OnConnected(NodeTree tree)
     {
-        this.Tree!.Window.MouseMove   += this.OnMouseMove;
-        this.Tree!.Window.SizeChanged += this.OnWindowSizeChanged;
+        tree.Window.MouseMove   += this.OnMouseMove;
+        tree.Window.SizeChanged += this.OnWindowSizeChanged;
 
         this.OnWindowSizeChanged();
     }
 
-    protected override void OnDisconnected(SceneTree tree)
+    protected override void OnDisconnected(NodeTree tree)
     {
         tree.Window.MouseMove   -= this.OnMouseMove;
         tree.Window.SizeChanged -= this.OnWindowSizeChanged;
@@ -123,9 +122,6 @@ public sealed class Canvas : Element
         this.buffer.Dispose();
     }
 
-    protected override void OnInitialize() =>
-        this.UpdateLayout();
-
-    protected override void OnPostUpdate(double deltaTime) =>
+    public override void LateUpdate() =>
         this.UpdateLayout();
 }

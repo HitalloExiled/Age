@@ -96,7 +96,7 @@ public class DemoScene : Scene3D
         };
     }
 
-    protected override void OnUpdate(double deltaTime)
+    public override void Update(double deltaTime)
     {
         var angle = this.angle += 10 * (float)deltaTime;
 

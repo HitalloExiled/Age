@@ -31,7 +31,7 @@ public class BvhTreeTest
 
         var window = windowMock.Object;
 
-        var nodeTree = new SceneTree(window);
+        var nodeTree = new NodeTree(window);
         var canvas   = new Canvas();
 
         var root   = new Span() { Name = "Root", Style = new() { Size = new(400, 200) } };
@@ -42,7 +42,7 @@ public class BvhTreeTest
         var rootC3C1 = new Span() { Name = "Root->C3->C1", Style = new() { Size = new(40) } };
         var rootC3C2 = new Span() { Name = "Root->C3->C2", Style = new() { Size = new(40), Position = new(0, -10) } };
 
-        nodeTree.AppendChild(canvas);
+        nodeTree.Root.AppendChild(canvas);
         canvas.AppendChild(root);
         root.AppendChildren([rootC1, rootC2, rootC3]);
         rootC3C1.AppendChildren([rootC3C1, rootC3C2]);

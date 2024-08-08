@@ -24,11 +24,12 @@ public class FrameStatus : Element
         this.statusText = new Span()
         {
             Name  = "Status",
+            Text  = "Frame",
             Style = new()
             {
-                Color    = Color.Margenta,
-                FontSize = 12,
-                MinSize  = new(110, 30),
+                Color           = Color.Margenta,
+                FontSize        = 12,
+                MinSize         = new(110, 30),
                 BackgroundColor = new Color(1, 1, 0)
             }
         };
@@ -36,7 +37,7 @@ public class FrameStatus : Element
         this.AppendChild(this.statusText);
     }
 
-    protected override void OnUpdate(double deltaTime)
+    public override void Update(double deltaTime)
     {
         this.delta = this.increasing
             ? double.Min(this.delta + deltaTime * 0.1f, 1)

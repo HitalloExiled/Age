@@ -7,9 +7,9 @@ namespace Age.Rendering.Scene;
 [DebuggerDisplay("NodeName: {NodeName}, Name: {Name}, IsConnected: {IsConnected}")]
 public abstract partial class Node : IEnumerable<Node>
 {
-    private SceneTree? tree;
+    private NodeTree? tree;
 
-    internal uint ObjectId { get; set; }
+    internal int Index { get; set; }
 
     public Node? FirstChild      { get; private set; }
     public Node? LastChild       { get; private set; }
@@ -23,38 +23,43 @@ public abstract partial class Node : IEnumerable<Node>
 
     public string? Name { get; set; }
 
-    public SceneTree? Tree
+    public NodeTree? Tree
     {
         get => this.tree;
-        private set
+        internal set
         {
             if (value != this.tree)
             {
-                this.tree = value;
-
-                static void setTree(Node node, SceneTree? tree)
+                static void setTree(Node node, NodeTree? tree)
                 {
                     var oldTree = node.tree;
+
                     node.tree = tree;
 
                     if (tree != null)
                     {
+                        node.Index = tree.Nodes.Count;
+
                         tree.Nodes.Add(node);
 
-                        node.ObjectId = (uint)tree.Nodes.Count;
-
-                        node.OnConnected();
+                        node.OnConnected(tree);
                     }
                     else if (oldTree != null)
                     {
-                        node.ObjectId = 0;
+                        node.Index = -1;
+
                         node.OnDisconnected(oldTree);
+                    }
+
+                    if (node.Index > -1)
+                    {
+                        oldTree?.Nodes.RemoveAt(node.Index);
                     }
                 }
 
                 setTree(this, value);
 
-                foreach (var child in this.Traverse(true))
+                foreach (var child in this.Traverse())
                 {
                     setTree(child, value);
                 }
@@ -74,28 +79,16 @@ public abstract partial class Node : IEnumerable<Node>
     protected virtual void OnChildAppended(Node child)
     { }
 
-    protected virtual void OnConnected()
+    protected virtual void OnConnected(NodeTree tree)
     { }
 
-    protected virtual void OnDisconnected(SceneTree tree)
+    protected virtual void OnDisconnected(NodeTree tree)
     { }
 
     protected virtual void OnChildRemoved(Node child)
     { }
 
     protected virtual void OnDestroy()
-    { }
-
-    protected virtual void OnInitialize()
-    { }
-
-    protected virtual void OnPreUpdate(double deltaTime)
-    { }
-
-    protected virtual void OnPostUpdate(double deltaTime)
-    { }
-
-    protected virtual void OnUpdate(double deltaTime)
     { }
 
     public void AppendChild(Node child)
@@ -116,7 +109,7 @@ public abstract partial class Node : IEnumerable<Node>
                 this.FirstChild = this.LastChild = child;
             }
 
-            child.Tree = this is SceneTree tree ? tree : this.Tree;
+            child.Tree = this.Tree;
 
             child.OnAdopted();
             this.OnChildAppended(child);
@@ -155,15 +148,11 @@ public abstract partial class Node : IEnumerable<Node>
     public IEnumerator<Node> GetEnumerator() =>
         new Enumerator(this);
 
-    public void Initialize()
-    {
-        foreach (var child in this.Traverse())
-        {
-            child.OnInitialize();
-        }
+    public virtual void Initialize()
+    { }
 
-        this.OnInitialize();
-    }
+    public virtual void LateUpdate()
+    { }
 
     public void Remove() =>
         this.Parent?.RemoveChild(this);
@@ -228,7 +217,7 @@ public abstract partial class Node : IEnumerable<Node>
 
             child.tree  = null;
 
-            foreach (var node in this.Traverse(true))
+            foreach (var node in this.Traverse())
             {
                 node.tree = null;
             }
@@ -270,34 +259,12 @@ public abstract partial class Node : IEnumerable<Node>
         this.LastChild  = null;
     }
 
-    public IEnumerable<Node> Traverse(bool topDown = false) =>
-        new TraverseEnumerator(this, topDown);
-
-    public IEnumerable<T> Traverse<T>(bool topDown = false) where T : Node
-    {
-        foreach (var node in this.Traverse(topDown))
-        {
-            if (node is T t)
-            {
-                yield return t;
-            }
-        }
-    }
+    public IEnumerable<Node> Traverse() =>
+        new TraverseEnumerator(this);
 
     public override string ToString() =>
         $"<{this.NodeName} name='{this.Name}'>";
 
-    public void Update(double deltaTime)
-    {
-        foreach (var child in this.Traverse())
-        {
-            child.OnPreUpdate(deltaTime);
-            child.OnUpdate(deltaTime);
-            child.OnPostUpdate(deltaTime);
-        }
-
-        this.OnPreUpdate(deltaTime);
-        this.OnUpdate(deltaTime);
-        this.OnPostUpdate(deltaTime);
-    }
+    public virtual void Update(double deltaTime)
+    { }
 }

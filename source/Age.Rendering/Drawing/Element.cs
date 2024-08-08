@@ -86,9 +86,12 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             {
                 this.canvas = value;
 
-                foreach (var item in this.Enumerate<Element>())
+                foreach (var node in this.Traverse())
                 {
-                    item.Canvas = value;
+                    if (node is Element element)
+                    {
+                        element.Canvas = value;
+                    }
                 }
 
                 this.RequestUpdate();
@@ -117,13 +120,16 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         {
             var builder = new StringBuilder();
 
-            foreach (var item in this.Traverse<TextNode>(true))
+            foreach (var node in this.Traverse())
             {
-                builder.Append(item.Value);
-
-                if (this.Style.Stack == StackType.Vertical)
+                if (node is TextNode textNode)
                 {
-                    builder.Append('\n');
+                    builder.Append(textNode.Value);
+
+                    if (this.Style.Stack == StackType.Vertical)
+                    {
+                        builder.Append('\n');
+                    }
                 }
             }
 
@@ -161,15 +167,11 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
     public override Transform2D Transform
     {
-        get => base.Transform
-            * Transform2D.Translated(this.offset)
-            * Transform2D.Translated(this.StylePivot)
-            * this.styleTransform
-            * Transform2D.Translated(-this.StylePivot);
+        get => base.Transform * this.PivotedTransform;
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
 
-    public bool HasPendingUpdate { get; private set; }
+    public bool HasPendingUpdate { get; internal set; }
 
     public Element() =>
         this.style.Changed += this.OnStyleChanged;
@@ -182,7 +184,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    private void CalculateLayout()
+    internal void CalculateLayout()
     {
         var stackMode = this.Style.Stack ?? StackType.Horizontal;
 
@@ -197,9 +199,9 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             }
 
             var childStyle = (child as Element)?.Style;
-            var margin = childStyle?.Margin ?? new(0);
-            var alignment = childStyle?.Alignment ?? AlignmentType.BaseLine;
-            var totalSize = new Size<uint>(child.Size.Width + margin.Horizontal, child.Size.Height + margin.Vertical);
+            var margin     = childStyle?.Margin ?? new(0);
+            var alignment  = childStyle?.Alignment ?? AlignmentType.BaseLine;
+            var totalSize  = new Size<uint>(child.Size.Width + margin.Horizontal, child.Size.Height + margin.Vertical);
 
             if (stackMode == StackType.Horizontal)
             {
@@ -261,7 +263,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             };
         }
 
-        command.ObjectId = this.ObjectId;
+        command.ObjectId = (uint)(this.Index + 1);
         command.Rect     = new(this.Size.Cast<float>(), default);
         command.Border   = this.Style.Border ?? default;
         command.Color    = this.Style.BackgroundColor ?? default;
@@ -273,7 +275,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         this.RequestUpdate();
     }
 
-    private void UpdateDisposition()
+    internal void UpdateDisposition()
     {
         if (this.nodesToDistribute.Count == 0)
         {
@@ -353,7 +355,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
                     ? new(float.Max(child.Size.Width, reserved.Width - x), child.Size.Height)
                     : child.Size.Cast<float>();
 
-                offset.X = position.X + margin.Right   + usedSpace.Width;
+                offset.X = position.X + margin.Right + usedSpace.Width;
             }
             else
             {

@@ -41,11 +41,11 @@ public class Engine : IDisposable
 
         var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
 
-        this.Window.SizeChanged += () =>
-        {
-            var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
-            SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "./.debug/CanvasIndex.png");
-        };
+        // this.Window.SizeChanged += () =>
+        // {
+        //     var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
+        //     SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "./.debug/CanvasIndex.png");
+        // };
 
         var renderGraph = new RenderGraph
         {
@@ -152,8 +152,6 @@ public class Engine : IDisposable
 
                 foreach (var window in Window.Windows)
                 {
-                    window.Tree.IsDirty = false;
-
                     window.DoEvents();
                     window.Tree.ResetCache();
                     window.Tree.Update(deltaTime);
@@ -161,13 +159,14 @@ public class Engine : IDisposable
                     if (window.Tree.IsDirty)
                     {
                         this.renderingService.RequestDraw();
+                        window.Tree.IsDirty = false;
                     }
                 }
 
+                this.renderingService.Render(Window.Windows);
+
                 Node2D.CacheVersion++;
                 Node3D.CacheVersion++;
-
-                this.renderingService.Render(Window.Windows);
 
                 this.Running = Window.Windows.Any(x => !x.Closed);
 

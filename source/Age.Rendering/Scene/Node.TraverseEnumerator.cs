@@ -1,14 +1,12 @@
 using System.Collections;
-using System.Runtime.CompilerServices;
 
 namespace Age.Rendering.Scene;
 
 public abstract partial class Node
 {
-	public struct TraverseEnumerator(Node root, bool topDown = false) : IEnumerator<Node>, IEnumerable<Node>
+	public struct TraverseEnumerator(Node root) : IEnumerator<Node>, IEnumerable<Node>
     {
-        private readonly Node root    = root;
-        private readonly bool topDown = topDown;
+        private readonly Node root  = root;
 
         private bool  first = true;
         private Node? current;
@@ -22,25 +20,14 @@ public abstract partial class Node
 
         public readonly IEnumerator<Node> GetEnumerator() => this;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Node GetDeepest(Node node)
-        {
-            while (node.FirstChild != null)
-            {
-                node = node.FirstChild;
-            }
-
-            return node;
-        }
-
         public bool MoveNext()
         {
             if (this.first)
             {
-                this.current = this.topDown ? this.root.FirstChild : GetDeepest(this.root);
+                this.current = this.root.FirstChild;
                 this.first   = false;
             }
-            else if (this.topDown)
+            else
             {
                 if (this.current!.FirstChild != null)
                 {
@@ -71,14 +58,6 @@ public abstract partial class Node
                 {
                     this.current = null;
                 }
-            }
-            else
-            {
-                this.current = this.current!.NextSibling != null
-                    ? GetDeepest(this.current.NextSibling)
-                    : this.current!.Parent != this.root
-                        ? this.current.Parent
-                        : null;
             }
 
             return this.current != null;

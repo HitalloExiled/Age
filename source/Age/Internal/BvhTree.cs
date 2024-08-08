@@ -234,14 +234,14 @@ public unsafe class BvhTree
     internal BvhDebugNode Draw() =>
         Draw(this.root, Color.Green);
 
-    public void Build(SceneTree tree)
+    public void Build(NodeTree tree)
     {
         var depths = new Dictionary<ContainerNode, int>();
 
         var aabb  = new AABB<float>();
         var nodes = new List<ContainerNode>();
 
-        foreach (var (node, depth) in Traverse(tree))
+        foreach (var (node, depth) in Traverse(tree.Root))
         {
             if (node is not Element element || element.Style.Border != null)
             {

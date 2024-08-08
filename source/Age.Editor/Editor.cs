@@ -1,5 +1,7 @@
 using Age.Numerics;
 using Age.Rendering.Drawing;
+using Age.Rendering.Drawing.Elements;
+using Age.Rendering.Drawing.Styling;
 using Age.Rendering.Scene;
 
 namespace Age.Editor;
@@ -15,8 +17,18 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.canvas.AppendChild(new FrameStatus());
-        // this.canvas.AppendChild(this.status = new() { Style = new() { Color = Color.Green } });
+
+        var verticalStack = new Span() { Style = new() { Stack = StackType.Vertical } };
+        var header        = new Span() { Name = "Header" };
+        var viewports     = new Span() { Name = "Viewports" };
+
+        this.canvas.AppendChild(verticalStack);
+
+        verticalStack.AppendChild(header);
+        verticalStack.AppendChild(viewports);
+
+        header.AppendChild(new FrameStatus());
+        header.AppendChild(new Playground() { Style = new() { Alignment = AlignmentType.Bottom } });
 
         this.scene = new DemoScene();
 
@@ -32,10 +44,10 @@ public class Editor : Node
         this.scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
         this.scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
 
-        this.canvas.AppendChild(redViewport);
-        this.canvas.AppendChild(greenViewport);
-        this.canvas.AppendChild(blueViewport);
-        this.canvas.AppendChild(this.scene);
+        viewports.AppendChild(redViewport);
+        viewports.AppendChild(greenViewport);
+        viewports.AppendChild(blueViewport);
+        this.AppendChild(this.scene);
     }
 
     // protected override void OnUpdate(double deltaTime) =>

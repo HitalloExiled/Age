@@ -200,7 +200,7 @@ internal partial class TextService(VulkanRenderer renderer) : ITextService
 
                 var command = this.rectCommandPool.Get();
 
-                command.ObjectId       = (uint)(textNode.ObjectId | (i + 1u) << 16);
+                command.ObjectId       = (uint)((textNode.Index + 1u) | (i + 1u) << 16);
                 command.Rect           = new(size, position);
                 command.Color          = color;
                 command.Flags          = Flags.GrayscaleTexture | Flags.MultiplyColor;

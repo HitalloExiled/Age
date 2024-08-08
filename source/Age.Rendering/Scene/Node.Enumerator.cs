@@ -7,7 +7,7 @@ public abstract partial class Node
     public struct Enumerator(Node node) : IEnumerator<Node>
     {
         private Node? current;
-        private bool  first   = true;
+        private bool  first = true;
 
         public readonly Node Current => this.current ?? throw new InvalidOperationException();
         public readonly Node Node    => node;
