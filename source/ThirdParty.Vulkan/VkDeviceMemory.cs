@@ -33,6 +33,24 @@ public unsafe partial class VkDeviceMemory : VkDeviceResource<VkDeviceMemory>
         }
     }
 
+    /// <inheritdoc cref="PInvoke.vkMapMemory" />
+    public void Map<T>(ulong offset, uint flags, out T* pData) where T : unmanaged
+    {
+        fixed (T** ppData = &pData)
+        {
+            PInvoke.vkMapMemory(this.Device.Handle, this.handle, offset, (ulong)Marshal.SizeOf<T>(), flags, (void**)ppData);
+        }
+    }
+
+    /// <inheritdoc cref="PInvoke.vkMapMemory" />
+    public void Map<T>(ulong offset, ulong size, uint flags, out T* pData) where T : unmanaged
+    {
+        fixed (T** ppData = &pData)
+        {
+            PInvoke.vkMapMemory(this.Device.Handle, this.handle, offset, (ulong)Marshal.SizeOf<T>() * size, flags, (void**)ppData);
+        }
+    }
+
     /// <inheritdoc cref="PInvoke.vkUnmapMemory" />
     public void Unmap() =>
         PInvoke.vkUnmapMemory(this.Device.Handle, this.handle);
@@ -54,13 +72,5 @@ public unsafe partial class VkDeviceMemory : VkDeviceResource<VkDeviceMemory>
         NativeMemory.Free(ppData);
 
         PInvoke.vkUnmapMemory(this.Device.Handle, this.Handle);
-    }
-
-    public void Map<T>(ulong offset, uint flags, in T* pData) where T : unmanaged
-    {
-        fixed (T** ppData = &pData)
-        {
-            PInvoke.vkMapMemory(this.Device.Handle, this.handle, offset, (ulong)Marshal.SizeOf<T>(), flags, (void**)ppData);
-        }
     }
 }

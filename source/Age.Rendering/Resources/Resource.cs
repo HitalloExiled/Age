@@ -1,12 +1,8 @@
-using Age.Core.Extensions;
-
 namespace Age.Rendering.Resources;
 
 public abstract class Resource : IDisposable
 {
     private bool disposed;
-
-    public List<Resource> Dependencies { get; init; } = [];
 
     protected abstract void OnDispose();
 
@@ -15,11 +11,6 @@ public abstract class Resource : IDisposable
         if (!this.disposed)
         {
             this.disposed = true;
-
-            foreach (var dependency in this.Dependencies.AsSpan())
-            {
-                dependency.Dispose();
-            }
 
             this.OnDispose();
         }

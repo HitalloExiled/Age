@@ -34,6 +34,9 @@ public record struct Color
             (byte)Math.Ceiling(this.A * 255),
         ];
 
+    public override readonly string ToString() =>
+        $"#{Convert.ToString((uint)this, 16)}";
+
     public static Color operator +(Color color, float value) =>
         new(color.R + value, color.G + value, color.B + value, color.A + value);
 
@@ -65,4 +68,10 @@ public record struct Color
             (value >> 16 & 255) / 255f,
             (value >> 24 & 255) / 255f
         );
+
+    public static implicit operator uint(Color value) =>
+        (uint)Math.Min(value.R * 255, 255)
+        | ((uint)Math.Min(value.G * 255, 255) <<  8)
+        | ((uint)Math.Min(value.B * 255, 255) << 16)
+        | ((uint)Math.Min(value.A * 255, 255) << 24);
 }

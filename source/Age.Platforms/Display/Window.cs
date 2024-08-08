@@ -1,11 +1,11 @@
 using Age.Numerics;
 
-namespace Age.Platforms.Display;
+using KeyEvent        = System.Action<Age.Platforms.Display.Key>;
+using MouseClickEvent = System.Action<Age.Platforms.Display.MouseButton>;
+using MouseMoveEvent  = System.Action<short, short>;
+using MouseWhellEvent = System.Action<float, Age.Platforms.Display.MouseKeyStates>;
 
-public delegate void KeyEvent(Key key);
-public delegate void MouseClickEvent(MouseButton button);
-public delegate void MouseMoveEvent(short x, short y);
-public delegate void MouseWhellEvent(float delta, MouseKeyStates keysState);
+namespace Age.Platforms.Display;
 
 public partial class Window : IDisposable
 {

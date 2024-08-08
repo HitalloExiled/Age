@@ -1,30 +1,46 @@
-using Age.Rendering.Resources;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Rendering;
 
 public class RenderGraph : IDisposable
 {
-    private bool disposed;
+    private static RenderGraph? active;
+    public static RenderGraph Active
+    {
+        get => active ?? throw new InvalidOperationException("There no active RenderGraph");
+        set => active = value;
+    }
 
-    public static RenderGraph? Active { get; set; }
+    private bool disposed;
 
     public required string Name { get; init; }
 
     public required RenderGraphPass[] Passes { get; init; }
 
+    public bool HasStarted { get; private set; }
+
     public bool Disabled { get; set; }
 
-    public RenderPass? GetRenderPass<T>() where T : RenderGraphPass
+    public T GetRenderGraphPass<T>() where T : RenderGraphPass =>
+        this.TryGetRenderGraphPass<T>(out var renderPass)
+            ? renderPass
+            : throw new InvalidOperationException($"Can't find any {nameof(T)} on {this.Name} RenderGraph");
+
+    public bool TryGetRenderGraphPass<T>([NotNullWhen(true)] out T? renderPass) where T : RenderGraphPass
     {
         foreach (var pass in this.Passes)
         {
-            if (pass is T)
+            if (pass is T requestedPass)
             {
-                return pass.RenderPass;
+                renderPass = requestedPass;
+
+                return true;
             }
         }
 
-        return null;
+        renderPass = null;
+
+        return false;
     }
 
     public void Dispose()
@@ -44,6 +60,8 @@ public class RenderGraph : IDisposable
 
     public void Execute()
     {
+        this.HasStarted = true;
+
         if (!this.Disabled)
         {
             foreach (var pass in this.Passes)

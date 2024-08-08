@@ -739,7 +739,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public RenderTargetOld CreateRenderTarget(in RenderTargetCreateInfo createInfo)
+    public RenderTarget CreateRenderTarget(in RenderTargetCreateInfo createInfo)
     {
         var attachments = new List<FramebufferCreateInfo.Attachment>();
 
@@ -830,10 +830,7 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         var framebuffer = this.CreateFramebuffer(framebufferCreateInfo);
 
-        return new(this.CreateTexture(output, true), framebuffer)
-        {
-            Dependencies = [..images]
-        };
+        return new(this.CreateTexture(output, true), framebuffer, [..images]);
     }
 
     public Pipeline CreatePipeline<TShader, TVertexInput, TPushConstant>(TShader shader, RenderPass renderPass)

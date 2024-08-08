@@ -28,7 +28,8 @@ public class FrameStatus : Element
             {
                 Color    = Color.Margenta,
                 FontSize = 12,
-                MinSize  = new(110, 30)
+                MinSize  = new(110, 30),
+                BackgroundColor = new Color(1, 1, 0)
             }
         };
 

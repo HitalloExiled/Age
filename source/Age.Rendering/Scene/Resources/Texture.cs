@@ -32,6 +32,8 @@ public class Texture : Disposable
         const short DEFAULT_SIZE    = 8;
         const short BYTES_PER_COLOR = 4;
 
+        var margenta = Color.Margenta;
+
         Span<byte> colorBuffer = Color.Margenta.ToByteArray();
         Span<byte> imageBuffer = stackalloc byte[DEFAULT_SIZE * DEFAULT_SIZE * BYTES_PER_COLOR];
 

@@ -35,6 +35,8 @@ public class TextureStorage : ITextureStorage
 
         var bytesPerColor = (int)ColorMode.RGBA;
 
+        var margenta = Color.Margenta;
+
         Span<byte> colorBuffer = Color.Margenta.ToByteArray();
         Span<byte> imageBuffer = stackalloc byte[DEFAULT_SIZE * DEFAULT_SIZE * bytesPerColor];
 

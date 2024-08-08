@@ -1,5 +1,7 @@
+using System.Dynamic;
 using Age.Numerics;
 using Age.Rendering.Commands;
+using Age.Rendering.Converters;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
 using Age.Rendering.Shaders.Canvas;
@@ -22,6 +24,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
     public Image ColorImage => this.image;
 
+    protected override Color             ClearColor    { get; } = Color.Black;
     protected override CommandBuffer     CommandBuffer => this.commandBuffer;
     protected override Framebuffer       Framebuffer   => this.framebuffer;
     protected override RenderResources[] Resources     { get; } = [];
@@ -53,6 +56,8 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         ];
     }
 
+
+
     private void CreateFramebuffer(out Image image, out Framebuffer framebuffer)
     {
         var clientSize = this.Window.ClientSize;
@@ -72,10 +77,14 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             MipLevels     = 1,
             Samples       = VkSampleCountFlags.N1,
             Tiling        = VkImageTiling.Optimal,
-            Usage         = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.Sampled | VkImageUsageFlags.ColorAttachment,
+            Usage         = VkImageUsageFlags.TransferDst | VkImageUsageFlags.TransferSrc | VkImageUsageFlags.Sampled | VkImageUsageFlags.ColorAttachment,
         };
 
         image = this.Renderer.CreateImage(imageCreateInfo);
+
+        Span<byte> pixels = new byte[(int)(clientSize.Width * clientSize.Height * 4)];
+
+        image.Update(pixels);
 
         var framebufferCreateInfo = new FramebufferCreateInfo
         {
@@ -146,6 +155,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.Renderer.GraphicsQueue.Submit(submitInfo);
         this.Renderer.GraphicsQueue.WaitIdle();
+        this.ColorImage.Initialized = true;
     }
 
     protected override void BeforeExecute()
@@ -159,7 +169,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         var constant = new CanvasShader.PushConstant
         {
             Border    = command.Border,
-            Color     = command.ObjectId | 0b_11111111_00000000_00000000_00000000,
+            Color     = ColorFormatConverter.RGBAtoBGRA(command.ObjectId | 0xff000000),
             Flags     = command.Flags,
             Rect      = command.Rect,
             Transform = transform,

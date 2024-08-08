@@ -23,8 +23,7 @@ public class Engine : IDisposable
     private readonly VulkanRenderer   renderer  = new();
     private readonly RenderingService renderingService;
 
-    private bool    disposed;
-    private Texture viewportTexture;
+    private bool disposed;
 
     public Window Window { get; }
     public bool Running { get; private set; }
@@ -41,17 +40,11 @@ public class Engine : IDisposable
         var shaderStorage  = new ShaderStorage(this.renderer);
 
         var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
-        var geometryRenderGraphPass    = new GeometryRenderGraphPass(this.renderer, this.Window);
 
         this.Window.SizeChanged += () =>
         {
-            var canvasIndexImage   = canvasIndexRenderGraphPass.ColorImage;
-            // var geometryColorImage = geometryRenderGraphPass.ColorImage;
-            // var geometryDepthImage = geometryRenderGraphPass.DepthImage;
-
-            // SaveImage(geometryColorImage, VkImageAspectFlags.Color, "./.debug/Geometry.Color.png");
-            // SaveImage(geometryDepthImage, VkImageAspectFlags.Depth, "./.debug/Geometry.Depth.png");
-            SaveImage(canvasIndexImage,   VkImageAspectFlags.Color, "./.debug/CanvasIndex.png");
+            var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
+            SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "./.debug/CanvasIndex.png");
         };
 
         var renderGraph = new RenderGraph
@@ -59,7 +52,6 @@ public class Engine : IDisposable
             Name   = "Default",
             Passes =
             [
-                geometryRenderGraphPass,
                 canvasIndexRenderGraphPass,
                 new SceneRenderGraphPass(this.renderer, this.Window),
                 new CanvasRenderGraphPass(this.renderer, this.Window),
@@ -81,20 +73,6 @@ public class Engine : IDisposable
         this.Window.WindowClosed += this.Window.Tree.Destroy;
 
         Input.ListenInputEvents(this.Window);
-
-        var viewport = new ViewportOld
-        {
-            Texture = this.viewportTexture = this.renderer.CreateTexture(geometryRenderGraphPass.ColorImage, false),
-        };
-
-        geometryRenderGraphPass.Recreated += () =>
-        {
-            this.viewportTexture.Dispose();
-
-            viewport.Texture = this.viewportTexture = this.renderer.CreateTexture(geometryRenderGraphPass.ColorImage, false);
-        };
-
-        this.Window.Tree.AppendChild(viewport);
     }
 
     private static void SaveImage(Image image, VkImageAspectFlags aspectMask, string filename)
@@ -132,7 +110,6 @@ public class Engine : IDisposable
             {
                 Platforms.Display.Window.CloseAll();
 
-                this.viewportTexture.Dispose();
                 this.renderingService.Dispose();
                 this.container.Dispose();
                 this.renderer.Dispose();

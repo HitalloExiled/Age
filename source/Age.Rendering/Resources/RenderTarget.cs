@@ -12,24 +12,27 @@ namespace Age.Rendering.Resources;
 public class RenderTarget : Resource
 {
     internal Framebuffer Framebuffer { get; private set; }
+    internal Image[]     Attachments { get; private set; } = new Image[3];
 
     public Texture Texture { get; private set; }
 
-    public VkFormat   Format => Texture.Image.Format;
-    public Size<uint> Size   => Texture.Image.Extent.ToSize();
+    public VkFormat   Format => this.Texture.Image.Format;
+    public Size<uint> Size   => this.Texture.Image.Extent.ToSize();
+
+    public RenderTarget(Texture texture, Framebuffer framebuffer, Image[] attachments)
+    {
+        this.Texture     = texture;
+        this.Framebuffer = framebuffer;
+        this.Attachments = attachments;
+    }
 
     public RenderTarget(in Size<uint> size, VkFormat format = VkFormat.B8G8R8A8Unorm) =>
         this.Update(size, format);
 
-    private static (Framebuffer framebuffer, Texture texture) CreateResources(in Size<uint> size, VkFormat format)
+    [MemberNotNull(nameof(Framebuffer), nameof(Texture))]
+    private void CreateResources(in Size<uint> size, VkFormat format)
     {
-        if (RenderGraph.Active == null)
-        {
-            throw new InvalidOperationException("There no active RenderGraph");
-        }
-
-        var renderPass = RenderGraph.Active.GetRenderPass<SceneRenderGraphPass>()
-            ?? throw new InvalidOperationException($"Can't find any {nameof(SceneRenderGraphPass)} on {RenderGraph.Active.Name} RenderGraph");
+        var pass = RenderGraph.Active.GetRenderGraphPass<SceneRenderGraphPass>();
 
         var colorImageCreateInfo = new VkImageCreateInfo
         {
@@ -62,7 +65,7 @@ public class RenderTarget : Resource
 
         var framebufferCreateInfo = new FramebufferCreateInfo
         {
-            RenderPass  = renderPass,
+            RenderPass  = pass.RenderPass,
             Attachments =
             [
                 new FramebufferCreateInfo.Attachment
@@ -83,10 +86,12 @@ public class RenderTarget : Resource
             ]
         };
 
-        var texture     = VulkanRenderer.Singleton.CreateTexture(resolveImage, true);
-        var framebuffer = VulkanRenderer.Singleton.CreateFramebuffer(framebufferCreateInfo);
+        this.Texture     = VulkanRenderer.Singleton.CreateTexture(resolveImage, true);
+        this.Framebuffer = VulkanRenderer.Singleton.CreateFramebuffer(framebufferCreateInfo);
 
-        return (framebuffer, texture);
+        this.Attachments[0] = colorImage;
+        this.Attachments[1] = resolveImage;
+        this.Attachments[2] = depthImage;
     }
 
     protected override void OnDispose()
@@ -101,6 +106,11 @@ public class RenderTarget : Resource
         this.Framebuffer?.Dispose();
         this.Texture?.Dispose();
 
-        (Framebuffer, Texture) = CreateResources(size, format);
+        foreach (var attachment in this.Attachments)
+        {
+            attachment?.Dispose();
+        }
+
+        this.CreateResources(size, format);
     }
 }

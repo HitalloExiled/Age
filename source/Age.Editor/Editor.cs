@@ -20,9 +20,9 @@ public class Editor : Node
 
         this.scene = new DemoScene();
 
-        var redViewport   = new Viewport(new(200));
-        var greenViewport = new Viewport(new(200));
-        var blueViewport  = new Viewport(new(200));
+        var redViewport   = new Viewport(new(200)) { Name = "Red" };
+        var greenViewport = new Viewport(new(200)) { Name = "Green" };
+        var blueViewport  = new Viewport(new(200)) { Name = "Blue" };
 
         redViewport.Style.Border   = new(1, 0, Color.Red);
         greenViewport.Style.Border = new(1, 0, Color.Green);
