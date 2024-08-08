@@ -10,7 +10,7 @@ public partial class RenderPass : Disposable
     public required VkRenderPass  Value     { get; init; }
     public required SubPass[]     SubPasses { get; init; }
 
-    protected override void OnDispose() =>
+    protected override void Disposed() =>
         this.Value.Dispose();
 
     public class SubPass

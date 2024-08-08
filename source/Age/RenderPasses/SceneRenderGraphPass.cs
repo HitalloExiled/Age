@@ -151,7 +151,7 @@ public partial class SceneRenderGraphPass : RenderGraphPass
         return uniformSet;
     }
 
-    protected unsafe override void OnDispose()
+    protected unsafe override void Disposed()
     {
         this.renderPass.Dispose();
 

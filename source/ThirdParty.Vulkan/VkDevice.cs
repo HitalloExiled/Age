@@ -32,7 +32,7 @@ public unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
         }
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {

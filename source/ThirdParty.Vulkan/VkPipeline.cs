@@ -10,7 +10,7 @@ public unsafe abstract class VkPipeline : VkDeviceResource<VkPipeline>
     internal VkPipeline(VkDevice device) : base(device) { }
     internal VkPipeline(VkHandle<VkPipeline> handle, VkDevice device) : base(handle, device) { }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {

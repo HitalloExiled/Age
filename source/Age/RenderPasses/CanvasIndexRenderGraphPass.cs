@@ -174,7 +174,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         this.DisposeFramebuffer();
 

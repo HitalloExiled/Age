@@ -28,17 +28,17 @@ public sealed class Canvas : Element
         }
     }
 
-    protected override void OnConnected(NodeTree tree)
+    protected override void Connected(NodeTree tree)
     {
         tree.Window.SizeChanged += this.OnWindowSizeChanged;
 
         this.OnWindowSizeChanged();
     }
 
-    protected override void OnDisconnected(NodeTree tree) =>
+    protected override void Disconnected(NodeTree tree) =>
         tree.Window.SizeChanged -= this.OnWindowSizeChanged;
 
-    protected override void OnChildAppended(Node child)
+    protected override void ChildAppended(Node child)
     {
         if (child is Element element)
         {
@@ -46,7 +46,7 @@ public sealed class Canvas : Element
         }
     }
 
-    protected override void OnChildRemoved(Node child)
+    protected override void ChildRemoved(Node child)
     {
         if (child is Element element)
         {

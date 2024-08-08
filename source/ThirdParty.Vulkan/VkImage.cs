@@ -32,7 +32,7 @@ public unsafe partial class VkImage : VkDeviceResource<VkImage>
         }
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         if (!this.reserved)
         {

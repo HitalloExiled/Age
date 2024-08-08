@@ -67,7 +67,7 @@ public unsafe partial class VkInstance : DisposableManagedHandle<VkInstance>
         return properties;
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Allocator)
         {

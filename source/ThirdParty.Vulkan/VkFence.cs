@@ -67,7 +67,7 @@ public unsafe partial class VkFence : VkDeviceResource<VkFence>
     public static void Wait(VkDevice device, Span<VkFence> fences, bool waitAll, ulong timeout) =>
         Wait(device.Handle, VkHandle.GetHandles(fences), waitAll, timeout);
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {

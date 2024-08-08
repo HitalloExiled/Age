@@ -14,7 +14,7 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
         this.commandPool = commandPool;
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         fixed (VkHandle<VkCommandBuffer>* pHandle = &this.handle)
         {

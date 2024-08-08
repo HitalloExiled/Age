@@ -8,7 +8,7 @@ public unsafe partial class VkDescriptorSet : DisposableManagedHandle<VkDescript
     internal VkDescriptorSet(VkHandle<VkDescriptorSet> handle, VkDescriptorPool descriptorPool) : base(handle) =>
         this.descriptorPool = descriptorPool;
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         var handle = this.handle;
 

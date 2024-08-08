@@ -14,7 +14,7 @@ public unsafe partial class VkShaderModule : VkDeviceResource<VkShaderModule>
         }
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {

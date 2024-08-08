@@ -14,7 +14,7 @@ public unsafe partial class VkImageView : VkDeviceResource<VkImageView>
         }
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {

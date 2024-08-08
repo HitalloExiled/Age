@@ -16,7 +16,7 @@ public unsafe class VkBuffer : VkDeviceResource<VkBuffer>
         }
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {

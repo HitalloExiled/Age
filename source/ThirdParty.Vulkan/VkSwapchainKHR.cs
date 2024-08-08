@@ -9,7 +9,7 @@ public partial class VkSwapchainKHR : DisposableManagedHandle<VkSwapchainKHR>
     internal VkSwapchainKHR(VkHandle<VkSwapchainKHR> handle, VkSwapchainExtensionKHR extension) : base(handle) =>
         this.extension = extension;
 
-    protected override void OnDispose() =>
+    protected override void Disposed() =>
         this.extension.DestroySwapchain(this);
 
     /// <inheritdoc cref="VkSwapchainExtensionKHR.AcquireNextImage" />

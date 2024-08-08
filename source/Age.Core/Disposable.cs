@@ -4,7 +4,7 @@ public abstract class Disposable : IDisposable
 {
     private bool disposed;
 
-    protected abstract void OnDispose();
+    protected abstract void Disposed();
 
     public void Dispose()
     {
@@ -12,7 +12,7 @@ public abstract class Disposable : IDisposable
         {
             this.disposed = true;
 
-            this.OnDispose();
+            this.Disposed();
         }
 
         GC.SuppressFinalize(this);

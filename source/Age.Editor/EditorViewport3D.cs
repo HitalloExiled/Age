@@ -5,11 +5,9 @@ using Age.Scene;
 
 namespace Age.Editor;
 
-public class EditorViewport3D : Element, IDisposable
+public class EditorViewport3D : Element
 {
     public override string NodeName { get; } = nameof(EditorViewport3D);
-
-    private bool disposed;
 
     public Viewport Viewport { get; }
 
@@ -22,29 +20,5 @@ public class EditorViewport3D : Element, IDisposable
         };
 
         this.AppendChild(this.Viewport = new Viewport(new(400)));
-    }
-
-    ~EditorViewport3D() =>
-        this.Dispose(false);
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!this.disposed)
-        {
-            if (disposing)
-            { }
-
-            this.Viewport.Dispose();
-            this.disposed = true;
-        }
-    }
-
-    protected override void OnDestroy() =>
-        this.Dispose();
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 }

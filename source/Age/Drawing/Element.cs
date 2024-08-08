@@ -413,7 +413,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    protected override void OnChildAppended(Node child)
+    protected override void ChildAppended(Node child)
     {
         if (child is Element childElement)
         {
@@ -434,7 +434,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    protected override void OnChildRemoved(Node child)
+    protected override void ChildRemoved(Node child)
     {
         if (child is Element elementChild)
         {

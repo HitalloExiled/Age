@@ -7,7 +7,7 @@ public class VertexBuffer : Disposable
     public required Buffer Buffer { get; init; }
     public required uint   Size   { get; init; }
 
-    protected override void OnDispose() =>
+    protected override void Disposed() =>
         this.Buffer.Dispose();
 
     public void Update<T>(T data) where T : unmanaged =>

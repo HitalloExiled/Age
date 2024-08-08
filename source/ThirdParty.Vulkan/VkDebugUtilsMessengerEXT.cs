@@ -9,6 +9,6 @@ public unsafe partial class VkDebugUtilsMessengerEXT : DisposableManagedHandle<V
     internal VkDebugUtilsMessengerEXT(VkHandle<VkDebugUtilsMessengerEXT> handle, VkDebugUtilsExtensionEXT extension) : base(handle) =>
         this.extension = extension;
 
-    protected override void OnDispose() =>
+    protected override void Disposed() =>
         this.extension.DestroyDebugUtilsMessenger(this);
 }

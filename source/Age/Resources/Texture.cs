@@ -63,7 +63,7 @@ public class Texture : Disposable
         return new(image, true);
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         if (this.imageOwner)
         {

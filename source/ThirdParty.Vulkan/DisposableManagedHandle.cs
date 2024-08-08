@@ -7,13 +7,13 @@ public abstract class DisposableManagedHandle<T> : ManagedHandle<T>, IDisposable
     internal DisposableManagedHandle() : base() { }
     internal DisposableManagedHandle(VkHandle<T> handle) : base(handle) { }
 
-    protected abstract void OnDispose();
+    protected abstract void Disposed();
 
     protected virtual void Dispose(bool disposing)
     {
         if (!this.disposed)
         {
-            this.OnDispose();
+            this.Disposed();
             this.disposed = true;
         }
     }

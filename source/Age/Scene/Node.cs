@@ -42,13 +42,13 @@ public abstract partial class Node : IEnumerable<Node>
 
                         tree.Nodes.Add(node);
 
-                        node.OnConnected(tree);
+                        node.Connected(tree);
                     }
                     else if (oldTree != null)
                     {
                         node.Index = -1;
 
-                        node.OnDisconnected(oldTree);
+                        node.Disconnected(oldTree);
                     }
 
                     if (node.Index > -1)
@@ -73,22 +73,22 @@ public abstract partial class Node : IEnumerable<Node>
     IEnumerator IEnumerable.GetEnumerator() =>
         this.GetEnumerator();
 
-    protected virtual void OnAdopted()
+    protected virtual void Adopted()
     { }
 
-    protected virtual void OnChildAppended(Node child)
+    protected virtual void ChildAppended(Node child)
     { }
 
-    protected virtual void OnConnected(NodeTree tree)
+    protected virtual void ChildRemoved(Node child)
     { }
 
-    protected virtual void OnDisconnected(NodeTree tree)
+    protected virtual void Connected(NodeTree tree)
     { }
 
-    protected virtual void OnChildRemoved(Node child)
+    protected virtual void Destroyed()
     { }
 
-    protected virtual void OnDestroy()
+    protected virtual void Disconnected(NodeTree tree)
     { }
 
     public void AppendChild(Node child)
@@ -111,8 +111,8 @@ public abstract partial class Node : IEnumerable<Node>
 
             child.Tree = this.Tree;
 
-            child.OnAdopted();
-            this.OnChildAppended(child);
+            child.Adopted();
+            this.ChildAppended(child);
         }
     }
 
@@ -126,12 +126,12 @@ public abstract partial class Node : IEnumerable<Node>
 
     public void Destroy()
     {
+        this.Destroyed();
+
         foreach (var child in this.Traverse())
         {
-            child.OnDestroy();
+            child.Destroyed();
         }
-
-        this.OnDestroy();
     }
 
     public IEnumerable<T> Enumerate<T>() where T : Node
@@ -147,15 +147,6 @@ public abstract partial class Node : IEnumerable<Node>
 
     public IEnumerator<Node> GetEnumerator() =>
         new Enumerator(this);
-
-    public virtual void Initialize()
-    { }
-
-    public virtual void LateUpdate()
-    { }
-
-    public void Remove() =>
-        this.Parent?.RemoveChild(this);
 
     public void RemoveChildren()
     {
@@ -174,7 +165,7 @@ public abstract partial class Node : IEnumerable<Node>
                 current.Parent          = null;
                 current.Tree            = null;
 
-                this.OnChildRemoved(current);
+                this.ChildRemoved(current);
             }
             while (next != null);
 
@@ -222,7 +213,7 @@ public abstract partial class Node : IEnumerable<Node>
                 node.tree = null;
             }
 
-            this.OnChildRemoved(child);
+            this.ChildRemoved(child);
         }
     }
 
@@ -246,7 +237,7 @@ public abstract partial class Node : IEnumerable<Node>
             child.Parent          = null;
             child.Tree            = null;
 
-            this.OnChildRemoved(child);
+            this.ChildRemoved(child);
 
             if (child == end)
             {
@@ -264,6 +255,12 @@ public abstract partial class Node : IEnumerable<Node>
 
     public override string ToString() =>
         $"<{this.NodeName} name='{this.Name}'>";
+
+    public virtual void Initialize()
+    { }
+
+    public virtual void LateUpdate()
+    { }
 
     public virtual void Update(double deltaTime)
     { }

@@ -6,10 +6,8 @@ using static Age.Rendering.Shaders.GeometryShader;
 
 namespace Age.Resources;
 
-public class Mesh : Node3D, IDisposable
+public class Mesh : Node3D
 {
-    private bool disposed;
-
     public override string NodeName { get; } = nameof(Mesh);
 
     public Material Material { get; set; } = new();
@@ -22,22 +20,12 @@ public class Mesh : Node3D, IDisposable
             Mesh         = this,
         };
 
-    protected override void OnDestroy() =>
-        this.Dispose();
-
-    public void Dispose()
+    protected override void Destroyed()
     {
-        if (!this.disposed)
+        if (this.SingleCommand is MeshCommand command)
         {
-            if (this.SingleCommand is MeshCommand command)
-            {
-                command.IndexBuffer.Dispose();
-                command.VertexBuffer.Dispose();
-            }
-
-            this.disposed = true;
+            command.IndexBuffer.Dispose();
+            command.VertexBuffer.Dispose();
         }
-
-        GC.SuppressFinalize(this);
     }
 }

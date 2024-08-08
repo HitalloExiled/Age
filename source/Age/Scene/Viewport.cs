@@ -6,10 +6,10 @@ using Age.Storage;
 
 namespace Age.Scene;
 
-public class Viewport : Element, IDisposable
-{
-    private bool disposed;
+#pragma warning disable CA1001
 
+public class Viewport : Element
+{
     private readonly RenderTarget renderTarget;
 
     public override string NodeName => nameof(Viewport);
@@ -37,9 +37,6 @@ public class Viewport : Element, IDisposable
         this.UpdateCommand();
     }
 
-    ~Viewport() =>
-        this.Dispose(false);
-
     private void UpdateCommand()
     {
         if (this.SingleCommand is not RectCommand command)
@@ -51,25 +48,6 @@ public class Viewport : Element, IDisposable
         command.SampledTexture = new(this.renderTarget.Texture, TextureStorage.Singleton.DefaultSampler, UVRect.Normalized);
     }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!this.disposed)
-        {
-            if (disposing)
-            { }
-
-            this.RenderTarget.Dispose();
-
-            this.disposed = true;
-        }
-    }
-
-    protected override void OnDestroy() =>
-        this.Dispose();
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
-    }
+    protected override void Destroyed() =>
+        this.RenderTarget.Dispose();
 }

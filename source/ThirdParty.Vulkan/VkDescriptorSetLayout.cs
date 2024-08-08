@@ -14,7 +14,7 @@ public unsafe partial class VkDescriptorSetLayout : VkDeviceResource<VkDescripto
         }
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         fixed (VkAllocationCallbacks* pAllocator = &this.Instance.Allocator)
         {

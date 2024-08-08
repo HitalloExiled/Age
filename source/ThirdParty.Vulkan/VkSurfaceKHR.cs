@@ -13,7 +13,7 @@ public unsafe class VkSurfaceKHR : DisposableManagedHandle<VkSurfaceKHR>
     internal VkSurfaceKHR(VkHandle<VkSurfaceKHR> handle, VkSurfaceExtensionKHR extension) : base(handle) =>
         this.extension = extension;
 
-    protected override void OnDispose() =>
+    protected override void Disposed() =>
         this.extension.DestroySurface(this);
 
     /// <inheritdoc cref="VkSurfaceExtensionKHR.GetPhysicalDeviceSurfaceCapabilities" />

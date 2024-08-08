@@ -55,7 +55,7 @@ public class Image : Disposable
         return new(buffer.ToArray(), new((uint)bitmap.Width, (uint)bitmap.Height));
     }
 
-    protected override void OnDispose() =>
+    protected override void Disposed() =>
         this.resource.Dispose();
 
     public static implicit operator ImageResource(Image value) => value.resource;

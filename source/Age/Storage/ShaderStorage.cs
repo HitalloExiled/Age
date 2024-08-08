@@ -44,6 +44,6 @@ public class ShaderStorage : Disposable
         return shader ?? throw new InvalidOperationException($"Shader {name} not found");
     }
 
-    protected override void OnDispose() =>
+    protected override void Disposed() =>
         renderer.DeferredDispose(this.pipelines.Values);
 }

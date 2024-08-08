@@ -8,7 +8,7 @@ namespace Age.Editor;
 
 public class Editor : Node
 {
-    private readonly Canvas canvas = new();
+    private readonly Canvas    canvas = new();
     private readonly DemoScene scene;
 
     public override string NodeName { get; } = nameof(Editor);
@@ -40,12 +40,13 @@ public class Editor : Node
         blueViewport.Style.Border  = new(1, 0, Color.Blue);
 
         this.scene.RedCamera.RenderTargets.Add(redViewport.RenderTarget);
-        // this.scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
+        this.scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
         this.scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
 
         viewports.AppendChild(redViewport);
         viewports.AppendChild(greenViewport);
         viewports.AppendChild(blueViewport);
+
         this.AppendChild(this.scene);
     }
 
