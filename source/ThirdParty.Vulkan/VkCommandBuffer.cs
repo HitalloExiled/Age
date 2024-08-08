@@ -107,6 +107,16 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
         }
     }
 
+    /// <inheritdoc cref="PInvoke.vkCmdClearColorImage" />
+    public void ClearColorImage(VkImage image, VkImageLayout imageLayout, in VkClearColorValue color, Span<VkImageSubresourceRange> ranges)
+    {
+        fixed (VkClearColorValue*       pColor  = &color)
+        fixed (VkImageSubresourceRange* pRanges = ranges)
+        {
+            PInvoke.vkCmdClearColorImage(this.handle, image.Handle, imageLayout, pColor, (uint)ranges.Length, pRanges);
+        }
+    }
+
     /// <inheritdoc cref="PInvoke.vkCmdCopyBuffer" />
     public void CopyBuffer(VkBuffer source, VkBuffer destination, params VkBufferCopy[] regions)
     {

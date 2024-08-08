@@ -41,11 +41,11 @@ public class Engine : IDisposable
 
         var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
 
-        // this.Window.SizeChanged += () =>
-        // {
-        //     var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
-        //     SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "./.debug/CanvasIndex.png");
-        // };
+        this.Window.SizeChanged += () =>
+        {
+            var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
+            SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "./.debug/CanvasIndex.png");
+        };
 
         var renderGraph = new RenderGraph
         {

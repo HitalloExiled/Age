@@ -41,7 +41,7 @@ public class Editor : Node
         blueViewport.Style.Border  = new(1, 0, Color.Blue);
 
         this.scene.RedCamera.RenderTargets.Add(redViewport.RenderTarget);
-        this.scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
+        // this.scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
         this.scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
 
         viewports.AppendChild(redViewport);

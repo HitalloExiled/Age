@@ -79,11 +79,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             Usage         = VkImageUsageFlags.TransferDst | VkImageUsageFlags.TransferSrc | VkImageUsageFlags.Sampled | VkImageUsageFlags.ColorAttachment,
         };
 
-        image = this.Renderer.CreateImage(imageCreateInfo);
-
-        Span<byte> pixels = new byte[(int)(clientSize.Width * clientSize.Height * 4)];
-
-        image.Update(pixels);
+        image = this.Renderer.CreateImage(imageCreateInfo, Color.Black);
 
         var framebufferCreateInfo = new FramebufferCreateInfo
         {
@@ -119,7 +115,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
                                 Format         = this.Window.Surface.Swapchain.Format,
                                 Samples        = VkSampleCountFlags.N1,
                                 InitialLayout  = VkImageLayout.Undefined,
-                                FinalLayout    = VkImageLayout.TransferSrcOptimal,
+                                FinalLayout    = VkImageLayout.General,
                                 LoadOp         = VkAttachmentLoadOp.Clear,
                                 StoreOp        = VkAttachmentStoreOp.Store,
                                 StencilLoadOp  = VkAttachmentLoadOp.DontCare,
@@ -154,7 +150,6 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.Renderer.GraphicsQueue.Submit(submitInfo);
         this.Renderer.GraphicsQueue.WaitIdle();
-        this.ColorImage.Initialized = true;
     }
 
     protected override void BeforeExecute()

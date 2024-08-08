@@ -44,17 +44,17 @@ public class RenderTarget : Resource
             MipLevels     = 1,
             Samples       = VulkanRenderer.Singleton.MaxUsableSampleCount,
             Tiling        = VkImageTiling.Optimal,
-            Usage         = VkImageUsageFlags.TransientAttachment | VkImageUsageFlags.ColorAttachment,
+            Usage         = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled,
         };
 
-        var colorImage = VulkanRenderer.Singleton.CreateImage(colorImageCreateInfo);
+        var colorImage = VulkanRenderer.Singleton.CreateImage(colorImageCreateInfo, Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
 
         var resolveImageCreateInfo = colorImageCreateInfo;
 
         resolveImageCreateInfo.Usage   = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
         resolveImageCreateInfo.Samples = VkSampleCountFlags.N1;
 
-        var resolveImage = VulkanRenderer.Singleton.CreateImage(resolveImageCreateInfo);
+        var resolveImage = VulkanRenderer.Singleton.CreateImage(resolveImageCreateInfo, Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
 
         var depthImageCreateInfo = colorImageCreateInfo;
 

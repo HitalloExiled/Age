@@ -111,12 +111,13 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                 [
                     new FramebufferCreateInfo.Attachment
                     {
-                        Image = Image.From(
+                        Image = new(
                             this.Window.Surface.Swapchain.Images[i],
                             extent,
                             this.Window.Surface.Swapchain.Format,
                             VkImageType.N2D,
-                            this.Window.Surface.Swapchain.ImageUsage
+                            this.Window.Surface.Swapchain.ImageUsage,
+                            VkImageLayout.PresentSrcKHR
                         ),
                         ImageAspect = VkImageAspectFlags.Color,
                     },

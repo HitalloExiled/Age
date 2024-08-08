@@ -263,7 +263,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             };
         }
 
-        command.ObjectId = (uint)(this.Index + 1);
+        command.ObjectId = this.Style.Border.HasValue || this.Style.BackgroundColor.HasValue ? (uint)(this.Index + 1) : 0;
         command.Rect     = new(this.Size.Cast<float>(), default);
         command.Border   = this.Style.Border ?? default;
         command.Color    = this.Style.BackgroundColor ?? default;

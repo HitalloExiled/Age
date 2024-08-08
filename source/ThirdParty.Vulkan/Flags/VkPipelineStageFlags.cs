@@ -1,8 +1,5 @@
 namespace ThirdParty.Vulkan.Flags;
 
-/// <summary>
-/// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPipelineStageFlagBits.html">VkPipelineStageFlagBits</see>
-/// </summary>
 [Flags]
 public enum VkPipelineStageFlags
 {
@@ -23,20 +20,20 @@ public enum VkPipelineStageFlags
     Host                             = 0x00004000,
     AllGraphics                      = 0x00008000,
     AllCommands                      = 0x00010000,
-    N                                = 0,
-    TransformFeedbackBit             = 0x01000000,
-    ConditionalRenderingBit          = 0x00040000,
-    AccelerationStructureBuildBit    = 0x02000000,
-    RayTracingShaderBit              = 0x00200000,
-    FragmentDensityProcessBit        = 0x00800000,
-    FragmentShadingRateAttachmentBit = 0x00400000,
-    CommandPreprocessBi              = 0x00020000,
-    TaskShaderBit                    = 0x00080000,
-    MeshShaderBit                    = 0x00100000,
-    ShadingRateImageBi               = FragmentShadingRateAttachmentBit,
-    RayTracingShaderBi               = RayTracingShaderBit,
-    AccelerationStructureBuildBi     = AccelerationStructureBuildBit,
-    TaskShaderBi                     = TaskShaderBit,
-    MeshShaderBi                     = MeshShaderBit,
-    None                             = N,
+    None                             = 0,
+    TransformFeedbackEXT             = 0x01000000,
+    ConditionalRenderingEXT          = 0x00040000,
+    AccelerationStructureBuildKHR    = 0x02000000,
+    RayTracingShaderKHR              = 0x00200000,
+    FragmentDensityProcessEXT        = 0x00800000,
+    FragmentShadingRateAttachmentKHR = 0x00400000,
+    CommandPreprocessNV              = 0x00020000,
+    TaskShaderEXT                    = 0x00080000,
+    MeshShaderEXT                    = 0x00100000,
+    ShadingRateImageNV               = FragmentShadingRateAttachmentKHR,
+    RayTracingShaderNV               = RayTracingShaderKHR,
+    AccelerationStructureBuildNV     = AccelerationStructureBuildKHR,
+    TaskShaderNV                     = TaskShaderEXT,
+    MeshShaderNV                     = MeshShaderEXT,
+    NoneKHR                          = None,
 }

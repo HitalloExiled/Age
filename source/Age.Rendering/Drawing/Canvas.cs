@@ -52,7 +52,7 @@ public sealed class Canvas : Element
     {
         var image = this.canvasIndexRenderGraphPass.ColorImage;
 
-        if (this.IsConnected && image.Initialized && x < image.Extent.Width && y < image.Extent.Height)
+        if (this.IsConnected && x < image.Extent.Width && y < image.Extent.Height)
         {
             image.CopyToBuffer(this.buffer);
 

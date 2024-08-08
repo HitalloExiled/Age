@@ -138,7 +138,7 @@ public unsafe partial class VulkanRenderer : IDisposable
     }
 
     private void CreatePipeline<TShader, TVertexInput, TPushConstant>(
-        TShader          shaderResources,
+        TShader                   shaderResources,
         RenderPass                renderPass,
         out VkPipeline            pipeline,
         out VkPipelineLayout      pipelineLayout,
@@ -471,7 +471,10 @@ public unsafe partial class VulkanRenderer : IDisposable
     public DescriptorPool CreateDescriptorPool(VkDescriptorType descriptorType) =>
         DescriptorPool.CreateDescriptorPool(this.context.Device, descriptorType);
 
-    public Image CreateImage(in VkImageCreateInfo createInfo)
+    public Image CreateImage(in VkImageCreateInfo createInfo, VkImageLayout finalLayout) =>
+        this.CreateImage(createInfo, null, finalLayout);
+
+    public Image CreateImage(in VkImageCreateInfo createInfo, in Color? clearColor = null, VkImageLayout? finalLayout = null)
     {
         var image = this.context.Device.CreateImage(createInfo);
 
@@ -489,9 +492,15 @@ public unsafe partial class VulkanRenderer : IDisposable
 
         image.BindMemory(deviceMemory, 0);
 
-        return new(image)
-        {
-            Allocation = new()
+        return new(
+            image,
+            createInfo.Extent,
+            createInfo.Format,
+            createInfo.ImageType,
+            createInfo.Usage,
+            createInfo.InitialLayout,
+            finalLayout ?? createInfo.InitialLayout,
+            new()
             {
                 Alignment  = memRequirements.Alignment,
                 Memory     = deviceMemory,
@@ -499,11 +508,8 @@ public unsafe partial class VulkanRenderer : IDisposable
                 Offset     = 0,
                 Size       = memRequirements.Size,
             },
-            Extent = createInfo.Extent,
-            Format = createInfo.Format,
-            Type   = createInfo.ImageType,
-            Usage  = createInfo.Usage,
-        };
+            clearColor
+        );
     }
 
     public Image[] CreateImage(in VkImageCreateInfo createInfo, int count)
@@ -939,16 +945,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             Usage         = usage,
         };
 
-        var image = this.CreateImage(imageCreateInfo);
-
-        image.TransitionImageLayout(
-            VkImageLayout.Undefined,
-            VkImageLayout.TransferDstOptimal,
-            default,
-            VkAccessFlags.TransferWrite,
-            VkPipelineStageFlags.TopOfPipe,
-            VkPipelineStageFlags.Transfer
-        );
+        var image = this.CreateImage(imageCreateInfo, VkImageLayout.TransferDstOptimal);
 
         var imageView = this.CreateImageView(image, VkImageAspectFlags.Color);
 

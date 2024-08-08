@@ -85,6 +85,9 @@ public class CommandBuffer : Resource<VkCommandBuffer>
     public void BindUniformSet(UniformSet uniformSet) =>
         this.Value.BindDescriptorSets(uniformSet.Pipeline.BindPoint, uniformSet.Pipeline.Layout, 0, uniformSet.DescriptorSets, []);
 
+    public void ClearImageColor(Image image, VkImageLayout imageLayout, VkClearColorValue color, Span<VkImageSubresourceRange> ranges) =>
+        this.Value.ClearColorImage(image, imageLayout, color, ranges);
+
     public void Draw(VertexBuffer vertexBuffer, uint instanceCount = 1, uint firstVertex = 0, uint firstInstance = 0) =>
         this.Value.Draw(vertexBuffer.Size, instanceCount, firstVertex, firstInstance);
 

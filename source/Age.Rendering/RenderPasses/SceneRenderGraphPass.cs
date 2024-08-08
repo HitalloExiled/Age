@@ -58,8 +58,8 @@ public partial class SceneRenderGraphPass : RenderGraphPass
                                 StoreOp        = VkAttachmentStoreOp.Store,
                                 StencilLoadOp  = VkAttachmentLoadOp.DontCare,
                                 StencilStoreOp = VkAttachmentStoreOp.DontCare,
-                                InitialLayout  = VkImageLayout.Undefined,
-                                FinalLayout    = VkImageLayout.ColorAttachmentOptimal,
+                                InitialLayout  = VkImageLayout.ShaderReadOnlyOptimal,
+                                FinalLayout    = VkImageLayout.ShaderReadOnlyOptimal,
                             },
                             Resolve = new VkAttachmentDescription
                             {
@@ -69,7 +69,7 @@ public partial class SceneRenderGraphPass : RenderGraphPass
                                 StoreOp        = VkAttachmentStoreOp.Store,
                                 StencilLoadOp  = VkAttachmentLoadOp.DontCare,
                                 StencilStoreOp = VkAttachmentStoreOp.DontCare,
-                                InitialLayout  = VkImageLayout.Undefined,
+                                InitialLayout  = VkImageLayout.ShaderReadOnlyOptimal,
                                 FinalLayout    = VkImageLayout.ShaderReadOnlyOptimal,
                             }
                         }
