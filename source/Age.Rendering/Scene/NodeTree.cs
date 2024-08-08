@@ -1,6 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using Age.Numerics;
 using Age.Rendering.Commands;
 using Age.Rendering.Interfaces;
+using Age.Rendering.RenderPasses;
+using Age.Rendering.Vulkan;
+using ThirdParty.Vulkan.Flags;
+using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Rendering.Scene;
 
@@ -13,6 +18,9 @@ public sealed class NodeTree
     private readonly List<Command3DEntry> command3DEntriesCache = [];
     private readonly IWindow window;
 
+    private Buffer                     buffer = null!;
+    private CanvasIndexRenderGraphPass canvasIndexRenderGraphPass = null!;
+
     internal List<Node>    Nodes    { get; } = [];
     internal List<Scene3D> Scenes3D { get; } = [];
 
@@ -24,6 +32,46 @@ public sealed class NodeTree
     {
         this.window = window;
         this.Root   = new() { Tree = this };
+    }
+
+    [MemberNotNull(nameof(buffer))]
+    private unsafe void UpdateBuffer()
+    {
+        this.buffer?.Dispose();
+
+        var image = this.canvasIndexRenderGraphPass.ColorImage;
+
+        var size = image.Extent.Width * image.Extent.Height * sizeof(uint);
+
+        this.buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+    }
+
+    private unsafe void OnMouseMove(short x, short y)
+    {
+        var image = this.canvasIndexRenderGraphPass.ColorImage;
+
+        if (x < image.Extent.Width && y < image.Extent.Height)
+        {
+            image.CopyToBuffer(this.buffer);
+
+            this.buffer.Allocation.Memory.Map(0, (uint)this.buffer.Allocation.Size, 0, out var imageIndexBuffer);
+
+            var imageIndex = new Span<uint>((uint*)imageIndexBuffer, (int)this.buffer.Allocation.Size / sizeof(uint));
+
+            var index = x + y * image.Extent.Width;
+            var pixel = imageIndex[(int)index];
+
+            var id = (int)(pixel & 0x0000FFFF) - 1;
+
+            this.buffer.Allocation.Memory.Unmap();
+
+            Console.WriteLine($"Element Index: {id}, Pixel Index: {index}, Color: {(Color)pixel}, Mouse Position: [{x}, {y}]");
+
+            if (id > -1 && id < this.Nodes.Count)
+            {
+                Console.WriteLine(this.Nodes[id].ToString());
+            }
+        }
     }
 
     internal IEnumerable<Command2DEntry> Enumerate2DCommands()
@@ -97,6 +145,13 @@ public sealed class NodeTree
 
     internal void Initialize()
     {
+        this.canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasIndexRenderGraphPass>();
+        this.canvasIndexRenderGraphPass.Recreated += this.UpdateBuffer;
+
+        this.UpdateBuffer();
+
+        this.window.MouseMove += this.OnMouseMove;
+
         foreach (var node in this.Root.Traverse())
         {
             node.Initialize();

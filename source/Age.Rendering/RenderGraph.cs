@@ -5,6 +5,7 @@ namespace Age.Rendering;
 public class RenderGraph : IDisposable
 {
     private static RenderGraph? active;
+
     public static RenderGraph Active
     {
         get => active ?? throw new InvalidOperationException("There no active RenderGraph");

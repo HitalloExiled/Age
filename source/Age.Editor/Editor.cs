@@ -9,7 +9,6 @@ namespace Age.Editor;
 public class Editor : Node
 {
     private readonly Canvas canvas = new();
-    // private readonly Span   status;
     private readonly DemoScene scene;
 
     public override string NodeName { get; } = nameof(Editor);
