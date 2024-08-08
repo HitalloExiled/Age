@@ -1,4 +1,4 @@
-namespace Age.Drawing.Styling;
+namespace Age.Styling;
 
 public record struct BorderRadius
 {

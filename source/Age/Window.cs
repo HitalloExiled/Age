@@ -31,10 +31,10 @@ public class Window : Platforms.Display.Window
 
         this.Surface = renderer.CreateSurface(this.Handle, this.ClientSize);
 
-        this.SizeChanged += () =>
+        this.Resized += () =>
         {
             this.Surface.Size   = this.ClientSize;
-            this.Surface.Hidden = this.Minimized || !this.Visible;
+            this.Surface.Hidden = this.IsMinimized || !this.IsVisible;
         };
     }
 

@@ -4,7 +4,7 @@ namespace Age;
 
 internal struct KeyState(Key key, ulong iteration)
 {
-    public Key  Key        = key;
+    public Key   Key       = key;
     public ulong Iteration = iteration;
 }
 
@@ -22,19 +22,19 @@ public static class Input
     private static void OnKeyUp(Key key) =>
         keyStates[key] = 0;
 
-    private static void OnClickDown(MouseButton mouseButton) =>
-        mouseButtonsStates.TryAdd(mouseButton, currentIteration);
+    private static void OnMouseDown(in MouseEvent eventArgs) =>
+        mouseButtonsStates.TryAdd(eventArgs.Button, currentIteration);
 
-    private static void OnClickUp(MouseButton mouseButton) =>
-        mouseButtonsStates[mouseButton] = 0;
+    private static void OnClickUp(in MouseEvent eventArgs) =>
+        mouseButtonsStates[eventArgs.Button] = 0;
 
-    private static void OnMouseWheel(float delta, MouseKeyStates _) =>
-        mouseWheel = delta;
+    private static void OnMouseWheel(in MouseEvent eventArgs) =>
+        mouseWheel = eventArgs.Delta;
 
     internal static void ListenInputEvents(Window window)
     {
-        window.ClickDown  += OnClickDown;
-        window.ClickUp    += OnClickUp;
+        window.MouseDown  += OnMouseDown;
+        window.MouseUp    += OnClickUp;
         window.KeyDown    += OnKeyDown;
         window.KeyUp      += OnKeyUp;
         window.MouseWhell += OnMouseWheel;
@@ -42,8 +42,8 @@ public static class Input
 
     internal static void UnlistenInputEvents(Window window)
     {
-        window.ClickDown  -= OnClickDown;
-        window.ClickUp    -= OnClickUp;
+        window.MouseDown  -= OnMouseDown;
+        window.MouseUp    -= OnClickUp;
         window.KeyDown    -= OnKeyDown;
         window.KeyUp      -= OnKeyUp;
         window.MouseWhell -= OnMouseWheel;

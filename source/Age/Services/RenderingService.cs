@@ -52,7 +52,7 @@ internal partial class RenderingService : Disposable
 
             foreach (var window in windows)
             {
-                if (window.Visible && !window.Minimized && !window.Closed)
+                if (window.IsVisible && !window.IsMinimized && !window.IsClosed)
                 {
                     this.renderGraphs[window].Execute();
                 }

@@ -1566,7 +1566,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
     {
         this.window = new PlatformWindow("Age*", new(600, 400), new());
 
-        this.window.SizeChanged += () => this.framebufferResized = true;
+        this.window.Resized += () => this.framebufferResized = true;
     }
 
     private bool IsDeviceSuitable(VkPhysicalDevice physicalDevice)
@@ -1624,12 +1624,12 @@ public unsafe partial class SimpleEngineV2 : IDisposable
         {
             this.window.DoEvents();
 
-            if (!this.window.Closed)
+            if (!this.window.IsClosed)
             {
                 this.DrawFrame();
             }
         }
-        while (!this.window.Closed);
+        while (!this.window.IsClosed);
 
         this.device.WaitIdle();
     }
@@ -1747,7 +1747,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
     private void RecreateSwapChain()
     {
-        while (this.window.Minimized)
+        while (this.window.IsMinimized)
         {
             this.window.DoEvents();
         }

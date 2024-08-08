@@ -80,7 +80,7 @@ public abstract class Node2D : Node
         {
             field = value;
 
-            this.OnTransformChanged();
+            this.TransformChanged();
 
             if (this.IsConnected)
             {
@@ -89,6 +89,6 @@ public abstract class Node2D : Node
         }
     }
 
-    protected virtual void OnTransformChanged()
+    protected virtual void TransformChanged()
     { }
 }

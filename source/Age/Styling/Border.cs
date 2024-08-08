@@ -1,7 +1,7 @@
 using Age.Numerics;
 using Age.Rendering.Shaders.Canvas;
 
-namespace Age.Drawing.Styling;
+namespace Age.Styling;
 
 public record struct Border
 {

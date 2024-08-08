@@ -25,16 +25,31 @@ public partial class Window
     public static short HiWord(nint value) => HiWord((uint)value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static short GetXLParam(LPARAM lParam) => LoWord(lParam);
+    private static ushort GetXLParam(LPARAM lParam) => (ushort)LoWord(lParam);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static short GetYLParam(LPARAM lParam) => HiWord(lParam);
+    private static ushort GetYLParam(LPARAM lParam) => (ushort)HiWord(lParam);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static int GetKeyStateWParam(WPARAM wParam) => LoWord(wParam);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static int GetWheelDeltaWParam(WPARAM wParam) => HiWord(wParam);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static MouseEvent GetMouseEventArgs(MouseButton button, User32.WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam) =>
+        new()
+        {
+            X         = GetXLParam(lParam),
+            Y         = GetYLParam(lParam),
+            Button    = button,
+            KeyStates = (MouseKeyStates)GetKeyStateWParam(wParam),
+            Delta     = msg == User32.WINDOW_MESSAGE.WM_MOUSEWHEEL ? (GetWheelDeltaWParam(wParam) / (float)User32.WHEEL_DELTA) : 0,
+        };
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static bool IsPrimaryButtonLeft() =>
+        User32.GetSystemMetrics(User32.SYSTEM_METRIC.SM_SWAPBUTTON) == 0;
 
     private static LRESULT WndProc(HWND hwnd, User32.WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam)
     {
@@ -53,71 +68,90 @@ public partial class Window
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_MOUSEMOVE:
-                    {
-                        var x = GetXLParam(lParam);
-                        var y = GetYLParam(lParam);
-
-                        window.MouseMove?.Invoke(x, y);
-                    }
+                    window.MouseMove?.Invoke(GetMouseEventArgs(MouseButton.None, msg, wParam, lParam));
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_MOUSEWHEEL:
-                    {
-                        var keys  = (MouseKeyStates)GetKeyStateWParam(wParam);
-                        var whell = GetWheelDeltaWParam(wParam);
-                        var delta = whell / (float)User32.WHEEL_DELTA;
-
-
-                        window.MouseWhell?.Invoke(delta, keys);
-                    }
+                    window.MouseWhell?.Invoke(GetMouseEventArgs(MouseButton.None, msg, wParam, lParam));
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_LBUTTONDBLCLK:
-                    window.DoubleClick?.Invoke(MouseButton.Left);
+                    window.DoubleClick?.Invoke(GetMouseEventArgs(MouseButton.Left, msg, wParam, lParam));
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_LBUTTONDOWN:
-                    window.ClickDown?.Invoke(MouseButton.Left);
-                    window.Click?.Invoke(MouseButton.Left);
+                    window.MouseDown?.Invoke(GetMouseEventArgs(MouseButton.Left, msg, wParam, lParam));
+
+                    if (IsPrimaryButtonLeft())
+                    {
+                        window.Click?.Invoke(GetMouseEventArgs(MouseButton.Left, msg, wParam, lParam));
+                    }
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_LBUTTONUP:
-                    window.ClickUp?.Invoke(MouseButton.Left);
-                    window.Click?.Invoke(MouseButton.Left);
+                    window.MouseUp?.Invoke(GetMouseEventArgs(MouseButton.Left, msg, wParam, lParam));
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_MBUTTONDBLCLK:
-                    window.DoubleClick?.Invoke(MouseButton.Middle);
+                    window.DoubleClick?.Invoke(GetMouseEventArgs(MouseButton.Middle, msg, wParam, lParam));
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_MBUTTONDOWN:
-                    window.ClickDown?.Invoke(MouseButton.Middle);
+                    window.MouseDown?.Invoke(GetMouseEventArgs(MouseButton.Middle, msg, wParam, lParam));
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_MBUTTONUP:
-                    window.ClickUp?.Invoke(MouseButton.Middle);
+                    window.MouseUp?.Invoke(GetMouseEventArgs(MouseButton.Middle, msg, wParam, lParam));
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_RBUTTONDBLCLK:
-                    window.DoubleClick?.Invoke(MouseButton.Right);
+                    window.DoubleClick?.Invoke(GetMouseEventArgs(MouseButton.Right, msg, wParam, lParam));
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_RBUTTONDOWN:
-                    window.ClickDown?.Invoke(MouseButton.Right);
-                    window.Click?.Invoke(MouseButton.Right);
+                    window.MouseDown?.Invoke(GetMouseEventArgs(MouseButton.Right, msg, wParam, lParam));
+
+                    if (!IsPrimaryButtonLeft())
+                    {
+                        window.Click?.Invoke(GetMouseEventArgs(MouseButton.Right, msg, wParam, lParam));
+                    }
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_RBUTTONUP:
-                    window.ClickUp?.Invoke(MouseButton.Right);
-                    window.Click?.Invoke(MouseButton.Right);
+                    window.MouseUp?.Invoke(GetMouseEventArgs(MouseButton.Right, msg, wParam, lParam));
+
+                    break;
+                case User32.WINDOW_MESSAGE.WM_CONTEXTMENU:
+                    {
+                        if (window.Context != null)
+                        {
+                            var x = GetXLParam(lParam);
+                            var y = GetYLParam(lParam);
+
+                            var point = new POINT { x = x, y = y };
+
+                            User32.ScreenToClient(hwnd, point);
+
+                            var contextEvent = new ContextEvent
+                            {
+                                X       = (ushort)point.x,
+                                Y       = (ushort)point.y,
+                                ScreenX = x,
+                                ScreenY = y,
+                            };
+
+                            window.Context.Invoke(contextEvent);
+                        }
+                    }
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_SIZE:
+                    if (window.Resized != null)
                     {
                         User32.GetWindowPlacement(hwnd, out var placement);
 
-                        window.Maximized = placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMAXIMIZED;
-                        window.Minimized = placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMINIMIZED;
+                        window.IsMaximized = placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMAXIMIZED;
+                        window.IsMinimized = placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMINIMIZED;
 
                         var size = PlatformGetWindowSize(hwnd);
 
@@ -125,7 +159,7 @@ public partial class Window
                         {
                             window.size = size;
 
-                            window.SizeChanged?.Invoke();
+                            window.Resized.Invoke();
                         }
                     }
 
@@ -164,7 +198,7 @@ public partial class Window
                 hInstance     = default,
                 lpszClassName = lpszClassName,
                 lpszMenuName  = null,
-                style         = 0,
+                style         = User32.CLASS_STYLES.CS_DBLCLKS,
                 lpfnWndProc   = new(WndProc),
             };
 
@@ -179,7 +213,7 @@ public partial class Window
     {
         User32.GetClientRect(hwnd, out var rect);
 
-        return new((uint)(rect.right - rect.left), (uint)(rect.bottom - rect.top));
+        return new((uint)rect.right, (uint)rect.bottom);
     }
 
     protected static Size<uint> PlatformGetWindowSize(HWND hwnd)
@@ -193,11 +227,11 @@ public partial class Window
     {
         foreach (var child in this.Children)
         {
-            child.Closed = true;
+            child.IsClosed = true;
 
             WindowsMap.Remove(child.Handle);
 
-            child.WindowClosed?.Invoke();
+            child.Closed?.Invoke();
         }
 
         User32.DestroyWindow(this.Handle);
@@ -237,7 +271,7 @@ public partial class Window
 
     protected void PlatformDoEvents()
     {
-        while (User32.PeekMessageW(out var msg, this.Handle, 0, 0, User32.PEEK_MESSAGE.PM_REMOVE) && !this.Closed)
+        while (User32.PeekMessageW(out var msg, this.Handle, 0, 0, User32.PEEK_MESSAGE.PM_REMOVE) && !this.IsClosed)
         {
             User32.TranslateMessage(msg);
             User32.DispatchMessageW(msg);

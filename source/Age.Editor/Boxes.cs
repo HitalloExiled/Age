@@ -1,7 +1,6 @@
 using Age.Numerics;
-using Age.Drawing;
-using Age.Drawing.Elements;
-using Age.Drawing.Styling;
+using Age.Elements;
+using Age.Styling;
 
 namespace Age.Editor;
 

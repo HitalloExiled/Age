@@ -1,6 +1,6 @@
 using Age.Scene;
 
-namespace Age.Drawing;
+namespace Age.Elements;
 
 public sealed class Canvas : Element
 {
@@ -30,13 +30,13 @@ public sealed class Canvas : Element
 
     protected override void Connected(NodeTree tree)
     {
-        tree.Window.SizeChanged += this.OnWindowSizeChanged;
+        tree.Window.Resized += this.OnWindowSizeChanged;
 
         this.OnWindowSizeChanged();
     }
 
     protected override void Disconnected(NodeTree tree) =>
-        tree.Window.SizeChanged -= this.OnWindowSizeChanged;
+        tree.Window.Resized -= this.OnWindowSizeChanged;
 
     protected override void ChildAppended(Node child)
     {

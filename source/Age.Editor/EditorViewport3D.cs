@@ -1,5 +1,5 @@
-using Age.Drawing.Styling;
-using Age.Drawing;
+using Age.Styling;
+using Age.Elements;
 using Age.Numerics;
 using Age.Scene;
 

@@ -1,18 +1,48 @@
 using Age.Commands;
 using Age.Core;
-using Age.Drawing.Elements;
-using Age.Drawing.Styling;
+using Age.Styling;
 using Age.Numerics;
 using Age.Scene;
 using Age.Storage;
 using System.Text;
 
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
+using Age.Platforms.Display;
 
-namespace Age.Drawing;
+namespace Age.Elements;
+
+public struct MouseEvent
+{
+    public ushort         X;
+    public ushort         Y;
+    public MouseButton    Button;
+    public MouseKeyStates KeyStates;
+    public float          Delta;
+    public Element        Target;
+}
+
+public struct ContextEvent
+{
+    public ushort  X;
+    public ushort  Y;
+    public ushort  ScreenX;
+    public ushort  ScreenY;
+    public Element Target;
+}
+
+public delegate void ContextEventHandler(in ContextEvent mouseEvent);
+public delegate void MouseEventHandler(in MouseEvent mouseEvent);
 
 public abstract class Element : ContainerNode, IEnumerable<Element>
 {
+    public event MouseEventHandler?   Blured;
+    public event MouseEventHandler?   Clicked;
+    public event ContextEventHandler? Context;
+    public event MouseEventHandler?   Focused;
+    public event MouseEventHandler?   MouseMoved;
+    public event MouseEventHandler?   MouseOut;
+    public event MouseEventHandler?   MouseOver;
+
     private readonly List<ContainerNode> nodesToDistribute = [];
 
     private Canvas?                 canvas;
@@ -71,6 +101,8 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
+    internal bool HasPendingUpdate { get; set; }
+
     public Element? ParentElement => this.Parent as Element;
 
     public Element? FirstElementChild { get; private set; }
@@ -100,6 +132,8 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             }
         }
     }
+
+    public bool IsFocused { get; internal set; }
 
     public Style Style
     {
@@ -172,8 +206,6 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         get => base.Transform * this.PivotedTransform;
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
-
-    public bool HasPendingUpdate { get; internal set; }
 
     public Element() =>
         this.style.Changed += this.OnStyleChanged;
@@ -467,8 +499,35 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    protected override void OnTransformChanged() =>
+    protected override void TransformChanged() =>
         this.ParentElement?.RequestUpdate();
+
+    internal void InvokeBlur(in MouseEvent mouseEvent)
+    {
+        this.IsFocused = false;
+        this.Blured?.Invoke(mouseEvent);
+    }
+
+    internal void InvokeClick(in MouseEvent mouseEvent) =>
+        this.Clicked?.Invoke(mouseEvent);
+
+    internal void InvokeContext(in ContextEvent contextEvent) =>
+        this.Context?.Invoke(contextEvent);
+
+    internal void InvokeFocus(in MouseEvent mouseEvent)
+    {
+        this.IsFocused = true;
+        this.Focused?.Invoke(mouseEvent);
+    }
+
+    internal void InvokeMouseMoved(in MouseEvent mouseEvent) =>
+        this.MouseMoved?.Invoke(mouseEvent);
+
+    internal void InvokeMouseOut(in MouseEvent mouseEvent) =>
+        this.MouseOut?.Invoke(mouseEvent);
+
+    internal void InvokeMouseOver(in MouseEvent mouseEvent) =>
+        this.MouseOver?.Invoke(mouseEvent);
 
     internal virtual void UpdateLayout()
     {
@@ -484,5 +543,14 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
             this.HasPendingUpdate = false;
         }
+    }
+
+    public void Click() =>
+        this.Clicked?.Invoke(new() { Target = this });
+
+    public void Focus()
+    {
+        this.IsFocused = true;
+        this.Focused?.Invoke(new() { Target = this });
     }
 }

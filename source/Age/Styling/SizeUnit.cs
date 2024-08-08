@@ -1,4 +1,4 @@
-namespace Age.Drawing.Styling;
+namespace Age.Styling;
 
 public readonly struct SizeUnit(float value, UnitType type)
 {

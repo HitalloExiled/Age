@@ -1,7 +1,7 @@
 using Age.Numerics;
 using Age.Scene;
 
-namespace Age.Drawing;
+namespace Age.Elements;
 
 public abstract class ContainerNode : Node2D
 {

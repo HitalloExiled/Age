@@ -44,21 +44,12 @@ internal static unsafe partial class User32
     public static partial LRESULT CallWindowProcW(WNDPROC lpPrevWndFunc, HWND hWnd, WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam);
 
     /// <summary>
-    /// The ClientToScreen function converts the client-area coordinates of a specified point to screen coordinates.
+    /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-clienttoscreen"></see>
     /// </summary>
-    /// <param name="hWnd">A handle to the window whose client area is used for the conversion.</param>
-    /// <param name="lpPoint">A pointer to a <see cref="POINT"/> structure that contains the client coordinates to be converted. The new screen coordinates are copied into this structure if the function succeeds.</param>
-    /// <returns>
-    /// If the function succeeds, the return value is nonzero.
-    /// If the function fails, the return value is zero.
-    /// </returns>
-    /// <remarks>
-    /// <para>The <see cref="ClientToScreen"/> function replaces the client-area coordinates in the <see cref="POINT"/> structure with the screen coordinates. The screen coordinates are relative to the upper-left corner of the screen. Note, a screen-coordinate point that is above the window's client area has a negative y-coordinate. Similarly, a screen coordinate to the left of a client area has a negative x-coordinate.</para>
-    /// <para>All coordinates are device coordinates.</para>
-    /// </remarks>
     [LibraryImport(nameof(User32))]
     public static partial BOOL ClientToScreen(HWND hWnd, LPPOINT lpPoint);
 
+    /// <inheritdoc cref="ClientToScreen(HWND, LPPOINT)" />
     [LibraryImport(nameof(User32))]
     public static partial BOOL ClientToScreen(HWND hWnd, ref POINT lpPoint);
 
@@ -80,61 +71,8 @@ internal static unsafe partial class User32
     }
 
     /// <summary>
-    /// Creates an overlapped, pop-up, or child window with an extended window style; otherwise, this function is identical to the CreateWindow function.
-    /// For more information about creating a window and for full descriptions of the other parameters of <see cref="CreateWindowEx"/>, see <see cref="CreateWindow"/>.
+    /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-createwindowexw"></see>
     /// </summary>
-    /// <param name="dwExStyle">The extended window style of the window being created.</param>
-    /// <param name="lpClassName">
-    /// A null-terminated string or a class atom created by a previous call to the <see cref="RegisterClass"/> or <see cref="RegisterClassEx"/> function.
-    /// The atom must be in the low-order word of lpClassName; the high-order word must be zero. If lpClassName is a string, it specifies the window class name.
-    /// The class name can be any name registered with <see cref="RegisterClass"/> or <see cref="RegisterClassEx"/>, provided that the module that registers the class is also the module that creates the window.
-    /// The class name can also be any of the predefined system class names.
-    /// </param>
-    /// <param name="lpWindowName">
-    /// The window name. If the window style specifies a title bar, the window title pointed to by lpWindowName is displayed in the title bar.
-    /// When using CreateWindow to create controls, such as buttons, check boxes, and static controls, use lpWindowName to specify the text of the control. When creating a static control with the SS_ICON style,
-    /// use lpWindowName to specify the icon name or identifier. To specify an identifier, use the syntax "#num".
-    /// </param>
-    /// <param name="dwStyle">The style of the window being created. This parameter can be a combination of the window style values, plus the control styles indicated in the Remarks section.</param>
-    /// <param name="x">
-    /// <para>The initial horizontal position of the window. For an overlapped or pop-up window, the x parameter is the initial x-coordinate of the window's upper-left corner, in screen coordinates.
-    /// For a child window, x is the x-coordinate of the upper-left corner of the window relative to the upper-left corner of the parent window's client area. If x is set to <see cref="CW_USEDEFAULT"/>,
-    /// the system selects the default position for the window's upper-left corner and ignores the y parameter. <see cref="CW_USEDEFAULT"/> is valid only for overlapped windows; if it is specified for a pop-up or child window,
-    /// the x and y parameters are set to zero.</para>
-    /// <para>If an overlapped window is created with the WS_VISIBLE style bit set and the x parameter is set to <see cref="CW_USEDEFAULT"/>, then the y parameter determines how the window is shown. If the y parameter is <see cref="CW_USEDEFAULT"/>,
-    /// then the window manager calls ShowWindow with the SW_SHOW flag after the window has been created. If the y parameter is some other value, then the window manager calls ShowWindow with that value as the nCmdShow parameter.</para>
-    /// </param>
-    /// <param name="y">The initial vertical position of the window. For an overlapped or pop-up window, the y parameter is the initial y-coordinate of the window's upper-left corner, in screen coordinates. For a child window,
-    /// y is the initial y-coordinate of the upper-left corner of the child window relative to the upper-left corner of the parent window's client area. For a list box y is the initial y-coordinate of the upper-left corner of the list box's client area relative to the upper-left corner of the parent window's client area.</param>
-    /// <param name="nWidth">The width, in device units, of the window. For overlapped windows, nWidth is the window's width, in screen coordinates, or <see cref="CW_USEDEFAULT"/>. If nWidth is <see cref="CW_USEDEFAULT"/>, the system selects a default width and height for the window; the default width extends from the initial x-coordinates to the right edge of the screen;
-    /// the default height extends from the initial y-coordinate to the top of the icon area. <see cref="CW_USEDEFAULT"/> is valid only for overlapped windows; if <see cref="CW_USEDEFAULT"/> is specified for a pop-up or child window, the nWidth and nHeight parameter are set to zero.</param>
-    /// <param name="nHeight">The height, in device units, of the window. For overlapped windows, nHeight is the window's height, in screen coordinates. If the nWidth parameter is set to <see cref="CW_USEDEFAULT"/>, the system ignores nHeight.</param>
-    /// <param name="hWndParent">
-    /// <para>A handle to the parent or owner window of the window being created. To create a child window or an owned window, supply a valid window handle. This parameter is optional for pop-up windows.</para>
-    /// <para>To create a message-only window, supply HWND_MESSAGE or a handle to an existing message-only window.</para>
-    /// </param>
-    /// <param name="hMenu">A handle to a menu, or specifies a child-window identifier, depending on the window style. For an overlapped or pop-up window, hMenu identifies the menu to be used with the window; it can be NULL if the class menu is to be used. For a child window,
-    /// hMenu specifies the child-window identifier, an integer value used by a dialog box control to notify its parent about events. The application determines the child-window identifier; it must be unique for all child windows with the same parent window.</param>
-    /// <param name="hInstance">A handle to the instance of the module to be associated with the window.</param>
-    /// <param name="lpParam">
-    /// <para>Pointer to a value to be passed to the window through the <see cref="CREATESTRUCT"/> structure (lpCreateParams member) pointed to by the lParam param of the WM_CREATE message. This message is sent to the created window by this function before it returns.</para>
-    /// <para>If an application calls CreateWindow to create a MDI client window, lpParam should point to a <see cref="CLIENTCREATESTRUCT"/> structure. If an MDI client window calls CreateWindow to create an MDI child window, lpParam should point to a <see cref="MDICREATESTRUCT"/> structure. lpParam may be NULL if no additional data is needed.</para>
-    /// </param>
-    /// <returns>
-    /// <para>If the function succeeds, the return value is a handle to the new window.</para>
-    /// <para>If the function fails, the return value is NULL. To get extended error information, call GetLastError.</para>
-    /// <para>This function typically fails for one of the following reasons:</para>
-    /// <list type="bullet">
-    /// <item>an invalid parameter value</item>
-    /// <item>the system class was registered by a different module</item>
-    /// <item>The <see cref="WH_CBT"/> hook is installed and returns a failure code</item>
-    /// <item>if one of the controls in the dialog template is not registered, or its window window procedure fails <see cref="WINDOW_MESSAGE.WM_CREATE"/> or <see cref="WINDOW_MESSAGE.WM_NCCREATE"/></item>
-    /// </list>
-    /// </returns>
-    /// <remarks>
-    /// <para>The <see cref="CreateWindowEx"/> function sends <see cref="WINDOW_MESSAGE.WM_NCCREATE"/>, <see cref="WINDOW_MESSAGE.WM_NCCALCSIZE"/>, and <see cref="WINDOW_MESSAGE.WM_CREATE"/> messages to the window being created.</para>
-    /// <para>If the created window is a child window, its default position is at the bottom of the Z-order. If the created window is a top-level window, its default position is at the top of the Z-order (but beneath all topmost windows unless the created window is itself topmost).</para>
-    /// </remarks>
     [LibraryImport(nameof(User32))]
     public static partial HWND CreateWindowExW(
         WINDOW_STYLES_EX dwExStyle,
@@ -151,6 +89,9 @@ internal static unsafe partial class User32
         LPVOID           lpParam
     );
 
+    /// <summary>
+    /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-createwindowexw"></see>
+    /// </summary>
     public static HWND CreateWindowExW<T>(
         WINDOW_STYLES_EX dwExStyle,
         string?          className,
@@ -188,53 +129,20 @@ internal static unsafe partial class User32
     }
 
     /// <summary>
-    /// Calls the default window procedure to provide default processing for any window messages that an application does not process.
-    /// This function ensures that every message is processed. DefWindowProc is called with the same parameters received by the window procedure.
+    /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-defwindowprocw"></see>
     /// </summary>
-    /// <param name="hWnd">A handle to the window procedure that received the message.</param>
-    /// <param name="uMsg">The message.</param>
-    /// <param name="wParam">Additional message information. The content of this parameter depends on the value of the Msg parameter.</param>
-    /// <param name="lParam">Additional message information. The content of this parameter depends on the value of the Msg parameter.</param>
-    /// <returns>The return value is the result of the message processing and depends on the message.</returns>
     [LibraryImport(nameof(User32))]
     public static partial LRESULT DefWindowProcW(HWND hWnd, WINDOW_MESSAGE uMsg, WPARAM wParam, LPARAM lParam);
 
     /// <summary>
-    /// <para>
-    /// Destroys the specified window. The function sends <see cref="WINDOW_MESSAGE.WM_DESTROY"/> and <see cref="WINDOW_MESSAGE.WM_NCDESTROY"/> messages to the window to deactivate it and remove the keyboard focus from it.
-    /// The function also destroys the window's menu, flushes the thread message queue, destroys timers, removes clipboard ownership, and breaks the clipboard viewer chain (if the window is at the top of the viewer chain).
-    /// </para>
-    /// <para>
-    /// If the specified window is a parent or owner window, DestroyWindow automatically destroys the associated child or owned windows when it destroys the parent or owner window. The function first destroys child or owned windows,
-    /// and then it destroys the parent or owner window.
-    /// </para>
-    /// <para>DestroyWindow also destroys modeless dialog boxes created by the CreateDialog function.</para>
+    /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-destroywindow"></see>
     /// </summary>
-    /// <param name="hWnd">A handle to the window to be destroyed.</param>
-    /// <returns>
-    /// <para>If the function succeeds, the return value is nonzero.</para>
-    /// <para>If the function fails, the return value is zero. To get extended error information, call <see cref="Kernel32.GetLastError"/>.</para>
-    /// </returns>
-    /// <remarks>
-    /// <para>A thread cannot use DestroyWindow to destroy a window created by a different thread.</para>
-    /// <para>If the window being destroyed is a child window that does not have the <see cref="WINDOW_STYLES_EX.WS_EX_NOPARENTNOTIFY"/> style, a <see cref="WINDOW_MESSAGE.WM_PARENTNOTIFY"/> message is sent to the parent.</para>
-    /// </remarks>
-    /// <example>For an example, see <see href="https://learn.microsoft.com/en-us/windows/desktop/winmsg/using-windows">Destroying a Window</see>.</example>
     [LibraryImport(nameof(User32))]
     public static partial BOOL DestroyWindow(HWND hWnd);
 
     /// <summary>
-    /// Dispatches a message to a window procedure. It is typically used to dispatch a message retrieved by the GetMessage function.
+    /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-dispatchmessagew"></see>
     /// </summary>
-    /// <param name="lpMsg">A pointer to a structure that contains the message.</param>
-    /// <returns>The return value specifies the value returned by the window procedure. Although its meaning depends on the message being dispatched, the return value generally is ignored.</returns>
-    /// <remarks>
-    /// <para>The MSG structure must contain valid message values. If the lpmsg parameter points to a WM_TIMER message and the lParam parameter of the WM_TIMER message is not NULL, lParam points to a function that is called instead of the window procedure.</para>
-    /// <para>Note that the application is responsible for retrieving and dispatching input messages to the dialog box. Most applications use the main message loop for this. However, to permit the user to move to and to select controls by using the keyboard, the application must call IsDialogMessage. For more information, see Dialog Box Keyboard Interface.</para>
-    /// </remarks>
-    /// <example>
-    /// For an example, see <see href="https://learn.microsoft.com/en-us/windows/desktop/winmsg/using-messages-and-message-queues">Creating a Message Loop</see>.
-    /// </example>
     [LibraryImport(nameof(User32))]
     public static partial LRESULT DispatchMessageW(in MSG lpMsg);
 
@@ -330,8 +238,11 @@ internal static unsafe partial class User32
         }
     }
 
+    /// <summary>
+    /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics"></see>
+    /// </summary>
     [LibraryImport(nameof(User32))]
-    public static partial int GetSystemMetrics(SYSTEM_METRIC smIndex);
+    public static partial int GetSystemMetrics(SYSTEM_METRIC nIndex);
 
     [LibraryImport(nameof(User32))]
     public static partial BOOL GetUpdateRect(HWND hWnd, LPRECT lpRect, BOOL bErase);

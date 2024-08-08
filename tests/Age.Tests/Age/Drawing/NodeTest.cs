@@ -1,7 +1,7 @@
-using Age.Drawing.Elements;
+using Age.Elements;
 using Age.Scene;
 
-namespace Age.Tests.Age.Drawing;
+namespace Age.Tests.Age.Elements;
 
 public class NodeTest
 {

@@ -1,4 +1,4 @@
-namespace Age.Drawing.Elements;
+namespace Age.Elements;
 
 public class Span : Element
 {

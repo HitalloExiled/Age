@@ -1,6 +1,6 @@
 using Age.Services;
 
-namespace Age.Drawing.Elements;
+namespace Age.Elements;
 
 public class TextNode : ContainerNode
 {

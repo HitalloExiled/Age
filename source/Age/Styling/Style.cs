@@ -1,6 +1,6 @@
 using Age.Numerics;
 
-namespace Age.Drawing.Styling;
+namespace Age.Styling;
 
 public partial record Style
 {

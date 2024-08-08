@@ -1,25 +1,25 @@
 using Age.Numerics;
 
-using KeyEvent        = System.Action<Age.Platforms.Display.Key>;
-using MouseClickEvent = System.Action<Age.Platforms.Display.MouseButton>;
-using MouseMoveEvent  = System.Action<short, short>;
-using MouseWhellEvent = System.Action<float, Age.Platforms.Display.MouseKeyStates>;
-
 namespace Age.Platforms.Display;
+
+public delegate void MouseEventHandler(in MouseEvent mouseEvent);
+public delegate void ContextEventHandler(in ContextEvent mouseEvent);
+public delegate void KeyEventHandler(Key key);
 
 public partial class Window : IDisposable
 {
-    public event MouseClickEvent? ClickDown;
-    public event MouseClickEvent? ClickUp;
-    public event MouseClickEvent? DoubleClick;
-    public event KeyEvent?        KeyDown;
-    public event KeyEvent?        KeyPress;
-    public event KeyEvent?        KeyUp;
-    public event MouseClickEvent? Click;
-    public event MouseMoveEvent?  MouseMove;
-    public event MouseWhellEvent? MouseWhell;
-    public event Action?          SizeChanged;
-    public event Action?          WindowClosed;
+    public event MouseEventHandler?   Click;
+    public event Action?              Closed;
+    public event ContextEventHandler? Context;
+    public event MouseEventHandler?   DoubleClick;
+    public event KeyEventHandler?     KeyDown;
+    public event KeyEventHandler?     KeyPress;
+    public event KeyEventHandler?     KeyUp;
+    public event MouseEventHandler?   MouseDown;
+    public event MouseEventHandler?   MouseMove;
+    public event MouseEventHandler?   MouseUp;
+    public event MouseEventHandler?   MouseWhell;
+    public event Action?              Resized;
 
     private static string? className;
 
@@ -39,11 +39,11 @@ public partial class Window : IDisposable
     public Size<uint> ClientSize => this.PlatformGetClientSize();
     public Window?    Parent     { get; }
 
-    public bool Closed    { get; private set; }
-    public nint Handle    { get; private set; }
-    public bool Maximized { get; private set; }
-    public bool Minimized { get; private set; }
-    public bool Visible   { get; private set; } = true;
+    public nint Handle      { get; private set; }
+    public bool IsClosed    { get; private set; }
+    public bool IsMaximized { get; private set; }
+    public bool IsMinimized { get; private set; }
+    public bool IsVisible   { get; private set; } = true;
 
     public Point<int> Position { get => this.position; set => this.PlatformSetPosition(value); }
     public Size<uint> Size     { get => this.size;     set => this.PlatformSetSize(value); }
@@ -108,14 +108,14 @@ public partial class Window : IDisposable
 
     public void Close()
     {
-        if (!this.Closed)
+        if (!this.IsClosed)
         {
             this.PlatformClose();
 
             this.Parent?.Children.Remove(this);
-            WindowClosed?.Invoke();
+            Closed?.Invoke();
 
-            this.Closed = true;
+            this.IsClosed = true;
         }
     }
 
@@ -126,38 +126,38 @@ public partial class Window : IDisposable
     {
         this.PlatformHide();
 
-        this.Visible = false;
+        this.IsVisible = false;
     }
 
     public void Maximize()
     {
         this.PlatformMaximize();
 
-        this.Maximized = true;
-        this.Minimized = false;
+        this.IsMaximized = true;
+        this.IsMinimized = false;
     }
 
     public void Minimize()
     {
         this.PlatformMinimize();
 
-        this.Maximized = false;
-        this.Minimized = true;
+        this.IsMaximized = false;
+        this.IsMinimized = true;
     }
 
     public void Restore()
     {
         this.PlatformRestore();
 
-        this.Maximized = false;
-        this.Minimized = false;
+        this.IsMaximized = false;
+        this.IsMinimized = false;
     }
 
     public void Show()
     {
         this.PlatformShow();
 
-        this.Visible = true;
+        this.IsVisible = true;
     }
 
     public void Dispose()

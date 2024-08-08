@@ -34,16 +34,16 @@ public class Engine : IDisposable
     {
         Window.Register(this.renderer);
 
-        this.renderingService = new RenderingService(this.renderer);
 
         this.Window           = new Window(name, windowSize, windowPosition);
+        this.renderingService = new RenderingService(this.renderer);
+        this.shaderStorage    = new ShaderStorage(this.renderer);
         this.textService      = new TextService(this.renderer);
         this.textureStorage   = new TextureStorage(this.renderer);
-        this.shaderStorage    = new ShaderStorage(this.renderer);
 
         var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
 
-        this.Window.SizeChanged += () =>
+        this.Window.Resized += () =>
         {
             var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
             SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "./.debug/CanvasIndex.png");
@@ -64,7 +64,7 @@ public class Engine : IDisposable
 
         this.renderingService.RegisterRenderGraph(this.Window, renderGraph);
 
-        this.Window.SizeChanged  += this.renderingService.RequestDraw;
+        this.Window.Resized  += this.renderingService.RequestDraw;
 
         Input.ListenInputEvents(this.Window);
     }
@@ -150,7 +150,7 @@ public class Engine : IDisposable
                 {
                     window.DoEvents();
 
-                    if (!window.Closed)
+                    if (!window.IsClosed)
                     {
                         window.Tree.ResetCache();
                         window.Tree.Update(deltaTime);
@@ -168,7 +168,7 @@ public class Engine : IDisposable
                 Node2D.CacheVersion++;
                 Node3D.CacheVersion++;
 
-                this.Running = Window.Windows.Any(x => !x.Closed);
+                this.Running = Window.Windows.Any(x => !x.IsClosed);
 
                 frameTime = 0;
             }

@@ -1,4 +1,5 @@
 using Age.Commands;
+using Age.Elements;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
 using Age.RenderPasses;
@@ -20,6 +21,8 @@ public sealed class NodeTree
 
     private Buffer                     buffer = null!;
     private CanvasIndexRenderGraphPass canvasIndexRenderGraphPass = null!;
+    private Element?                   lastFocusedElement;
+    private Element?                   lastSelectedElement;
 
     internal List<Node>    Nodes    { get; } = [];
     internal List<Scene3D> Scenes3D { get; } = [];
@@ -33,22 +36,29 @@ public sealed class NodeTree
         this.window = window;
         this.Root   = new() { Tree = this };
 
-        this.Window.WindowClosed += this.Destroy;
+        this.Window.Closed += this.Destroy;
     }
 
-    [MemberNotNull(nameof(buffer))]
-    private unsafe void UpdateBuffer()
-    {
-        this.buffer?.Dispose();
+    private static MouseEvent CreateEventTarget(Element target, in Platforms.Display.MouseEvent mouseEvent) =>
+        new()
+        {
+            Target    = target,
+            Button    = mouseEvent.Button,
+            Delta     = mouseEvent.Delta,
+            KeyStates = mouseEvent.KeyStates,
+            X         = mouseEvent.X,
+            Y         = mouseEvent.Y,
+        };
 
-        var image = this.canvasIndexRenderGraphPass.ColorImage;
+    private Element? GetElement(ushort x, ushort y) =>
+        this.GetNode(x, y) switch
+        {
+            Element  element  => element,
+            TextNode textNode => textNode.ParentElement,
+            _ => null,
+        };
 
-        var size = image.Extent.Width * image.Extent.Height * sizeof(uint);
-
-        this.buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
-    }
-
-    private unsafe void OnMouseMove(short x, short y)
+    private unsafe Node? GetNode(ushort x, ushort y)
     {
         var image = this.canvasIndexRenderGraphPass.ColorImage;
 
@@ -67,12 +77,98 @@ public sealed class NodeTree
 
             this.buffer.Allocation.Memory.Unmap();
 
-            Console.WriteLine($"Element Index: {id}, Pixel Index: {index}, Color: {(Color)pixel}, Mouse Position: [{x}, {y}]");
+            // Console.WriteLine($"Element Index: {id}, Pixel Index: {index}, Color: {(Color)pixel}, Mouse Position: [{x}, {y}]");
 
             if (id > -1 && id < this.Nodes.Count)
             {
-                Console.WriteLine(this.Nodes[id].ToString());
+                return this.Nodes[id];
             }
+        }
+
+        return null;
+    }
+
+    [MemberNotNull(nameof(buffer))]
+    private unsafe void UpdateBuffer()
+    {
+        this.buffer?.Dispose();
+
+        var image = this.canvasIndexRenderGraphPass.ColorImage;
+
+        var size = image.Extent.Width * image.Extent.Height * sizeof(uint);
+
+        this.buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+    }
+
+    private void OnContextMenu(in Platforms.Display.ContextEvent contextEvent)
+    {
+        var element = this.GetElement(contextEvent.X, contextEvent.Y);
+
+        if (element != null)
+        {
+            var eventTarget = new ContextEvent
+            {
+                X       = contextEvent.X,
+                Y       = contextEvent.Y,
+                ScreenX = contextEvent.ScreenX,
+                ScreenY = contextEvent.ScreenY,
+                Target  = element
+            };
+
+            element.InvokeContext(eventTarget);
+        }
+
+    }
+
+    private void OnMouseClick(in Platforms.Display.MouseEvent mouseEvent)
+    {
+        var element = this.GetElement(mouseEvent.X, mouseEvent.Y);
+
+        if (element != null)
+        {
+            var eventTarget = CreateEventTarget(element, mouseEvent);
+
+            element.InvokeClick(eventTarget);
+
+            if (element != this.lastFocusedElement)
+            {
+                element.InvokeFocus(eventTarget);
+
+                this.lastFocusedElement?.InvokeBlur(CreateEventTarget(this.lastFocusedElement, mouseEvent));
+            }
+
+            this.lastFocusedElement = element;
+        }
+        else
+        {
+            this.lastFocusedElement?.InvokeBlur(CreateEventTarget(this.lastFocusedElement, mouseEvent));
+            this.lastFocusedElement = null;
+        }
+    }
+
+    private unsafe void OnMouseMove(in Platforms.Display.MouseEvent mouseEvent)
+    {
+        var element = this.GetElement(mouseEvent.X, mouseEvent.Y);
+
+        if (element != null)
+        {
+            var eventTarget = CreateEventTarget(element, mouseEvent);
+
+            element.InvokeMouseMoved(eventTarget);
+
+            if (element != this.lastSelectedElement)
+            {
+                element.InvokeMouseOver(eventTarget);
+
+                this.lastSelectedElement?.InvokeMouseOut(CreateEventTarget(this.lastSelectedElement, mouseEvent));
+            }
+
+            this.lastSelectedElement = element;
+        }
+        else
+        {
+            this.lastSelectedElement?.InvokeMouseOut(CreateEventTarget(this.lastSelectedElement, mouseEvent));
+            this.lastSelectedElement = null;
         }
     }
 
@@ -144,6 +240,10 @@ public sealed class NodeTree
 
     public void Destroy()
     {
+        this.window.Click     -= this.OnMouseClick;
+        this.window.Context   -= this.OnContextMenu;
+        this.window.MouseMove -= this.OnMouseMove;
+
         this.Root.Destroy();
         this.buffer.Dispose();
     }
@@ -155,7 +255,9 @@ public sealed class NodeTree
 
         this.UpdateBuffer();
 
-        this.window.MouseMove += this.OnMouseMove;
+        this.window.Click       += this.OnMouseClick;
+        this.window.Context += this.OnContextMenu;
+        this.window.MouseMove   += this.OnMouseMove;
 
         foreach (var node in this.Root.Traverse())
         {
