@@ -18,7 +18,7 @@ public class Editor : Node
 
         var verticalStack = new Span() { Style = new() { Stack = StackType.Vertical } };
         var header        = new Span() { Name = "Header" };
-        var viewports     = new Span() { Name = "Viewports" };
+        var viewports     = new Span() { Name = "Viewports", Style = new() { Alignment = AlignmentType.Center } };
 
         this.canvas.AppendChild(verticalStack);
 
@@ -26,25 +26,35 @@ public class Editor : Node
         verticalStack.AppendChild(viewports);
 
         header.AppendChild(new FrameStatus());
-        header.AppendChild(new Playground() { Style = new() { Alignment = AlignmentType.Bottom } });
+        // header.AppendChild(new Playground() { Style = new() { Alignment = AlignmentType.Bottom } });
 
         this.scene = new DemoScene();
 
+        var freeViewport  = new Viewport(new(600)) { Name = "Red" };
         var redViewport   = new Viewport(new(200)) { Name = "Red" };
         var greenViewport = new Viewport(new(200)) { Name = "Green" };
         var blueViewport  = new Viewport(new(200)) { Name = "Blue" };
 
+        freeViewport.Style.Border  = new(1, 0, Color.White);
         redViewport.Style.Border   = new(1, 0, Color.Red);
         greenViewport.Style.Border = new(1, 0, Color.Green);
         blueViewport.Style.Border  = new(1, 0, Color.Blue);
 
+        freeViewport.Style.BoxSizing = redViewport.Style.BoxSizing = greenViewport.Style.BoxSizing = blueViewport.Style.BoxSizing = BoxSizing.Border;
+
+        this.scene.FreeCamera.RenderTargets.Add(freeViewport.RenderTarget);
         this.scene.RedCamera.RenderTargets.Add(redViewport.RenderTarget);
         this.scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
         this.scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
 
-        viewports.AppendChild(redViewport);
-        viewports.AppendChild(greenViewport);
-        viewports.AppendChild(blueViewport);
+        var sideViews = new Span() { Style = new() { Stack = StackType.Vertical, Alignment = AlignmentType.Center } };
+
+        sideViews.AppendChild(redViewport);
+        sideViews.AppendChild(greenViewport);
+        sideViews.AppendChild(blueViewport);
+
+        viewports.AppendChild(freeViewport);
+        viewports.AppendChild(sideViews);
 
         this.AppendChild(this.scene);
     }

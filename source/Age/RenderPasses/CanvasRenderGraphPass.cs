@@ -21,7 +21,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
     private UniformSet? lastUniformSet;
 
-    protected override Color             ClearColor    { get; } = Color.White;
+    protected override Color             ClearColor    { get; } = Color.Black;
     protected override CommandBuffer     CommandBuffer => this.Renderer.CurrentCommandBuffer;
     protected override Framebuffer       Framebuffer   => this.framebuffers[this.Window.Surface.CurrentBuffer];
     protected override RenderResources[] Resources     { get; } = [];

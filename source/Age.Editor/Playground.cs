@@ -45,13 +45,13 @@ public class Playground : Element
 
         root.AppendChild(a);
 
-        a.Blured     += (in MouseEvent mouseEvent) => Console.WriteLine($"[{mouseEvent.Target.Name}] Blured");
-        a.Clicked    += (in MouseEvent mouseEvent) => Console.WriteLine($"[{mouseEvent.Target.Name}] Clicked");
-        a.Context    += (in MouseEvent mouseEvent) => Console.WriteLine($"[{mouseEvent.Target.Name}] ContextMenu");
-        a.Focused    += (in MouseEvent mouseEvent) => Console.WriteLine($"[{mouseEvent.Target.Name}] Focused");
-        a.MouseMoved += (in MouseEvent mouseEvent) => Console.WriteLine($"[{mouseEvent.Target.Name}] MouseMoved");
-        a.MouseOut   += (in MouseEvent mouseEvent) => Console.WriteLine($"[{mouseEvent.Target.Name}] MouseOut");
-        a.MouseOver  += (in MouseEvent mouseEvent) => Console.WriteLine($"[{mouseEvent.Target.Name}] MouseOver");
+        a.Blured     += (in MouseEvent mouseEvent)     => Console.WriteLine($"[{mouseEvent.Target.Name}] Blured");
+        a.Clicked    += (in MouseEvent mouseEvent)     => Console.WriteLine($"[{mouseEvent.Target.Name}] Clicked");
+        a.Context    += (in ContextEvent contextEvent) => Console.WriteLine($"[{contextEvent.Target.Name}] ContextMenu");
+        a.Focused    += (in MouseEvent mouseEvent)     => Console.WriteLine($"[{mouseEvent.Target.Name}] Focused");
+        a.MouseMoved += (in MouseEvent mouseEvent)     => Console.WriteLine($"[{mouseEvent.Target.Name}] MouseMoved");
+        a.MouseOut   += (in MouseEvent mouseEvent)     => Console.WriteLine($"[{mouseEvent.Target.Name}] MouseOut");
+        a.MouseOver  += (in MouseEvent mouseEvent)     => Console.WriteLine($"[{mouseEvent.Target.Name}] MouseOver");
 
         var b = new Span()
         {

@@ -27,6 +27,10 @@ public record struct Transform3D
         set          => this.matrix.Scale = value;
     }
 
+    public Vector3<float> Right   => this.matrix.X;
+    public Vector3<float> Up      => this.matrix.Y;
+    public Vector3<float> Forward => this.matrix.Z;
+
     public Transform3D() =>
         this.matrix = Matrix4x4<float>.Identity;
 

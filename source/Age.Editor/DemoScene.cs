@@ -16,6 +16,7 @@ public class DemoScene : Scene3D
     private readonly Mesh axis;
     private readonly Mesh mesh;
 
+    public Camera3D FreeCamera  { get; }
     public Camera3D BlueCamera  { get; }
     public Camera3D RedCamera   { get; }
     public Camera3D GreenCamera { get; }
@@ -24,6 +25,11 @@ public class DemoScene : Scene3D
 
     public DemoScene()
     {
+        this.FreeCamera = new()
+        {
+            Transform = Transform3D.Translated(new(10, 0, 10)),
+        };
+
         this.RedCamera = new()
         {
             Transform = Transform3D.Translated(new(10, 0, 0)),
@@ -39,6 +45,7 @@ public class DemoScene : Scene3D
             Transform = Transform3D.Translated(new(0, 0, 10)),
         };
 
+        this.AppendChild(this.FreeCamera);
         this.AppendChild(this.RedCamera);
         this.AppendChild(this.GreenCamera);
         this.AppendChild(this.BlueCamera);
@@ -49,9 +56,34 @@ public class DemoScene : Scene3D
         this.AppendChild(this.axis);
         this.AppendChild(this.mesh);
 
+        this.FreeCamera.LookAt(this.mesh, Vector3<float>.Up);
         this.RedCamera.LookAt(this.mesh, Vector3<float>.Up);
         this.GreenCamera.LookAt(this.mesh, Vector3<float>.Right);
         this.BlueCamera.LookAt(this.mesh, Vector3<float>.Up);
+
+        this.FreeCamera.Transform = this.FreeCamera.Transform with
+        {
+            Position = this.FreeCamera.Transform.Position with
+            {
+                Y = 1,
+            }
+        };
+
+        this.RedCamera.Transform = this.RedCamera.Transform with
+        {
+            Position = this.RedCamera.Transform.Position with
+            {
+                Y = 1,
+            }
+        };
+
+        this.BlueCamera.Transform = this.BlueCamera.Transform with
+        {
+            Position = this.BlueCamera.Transform.Position with
+            {
+                Y = 1,
+            }
+        };
     }
 
     private static Mesh LoadMesh(string modelName, string textureName)
@@ -121,13 +153,22 @@ public class DemoScene : Scene3D
             input.X = 1;
         }
 
+        if (Input.IsKeyPressed(Key.Q))
+        {
+            input.Y = -1;
+        }
+        else if (Input.IsKeyPressed(Key.E))
+        {
+            input.Y = 1;
+        }
+
         if (Input.IsKeyPressed(Key.W))
         {
-            input.Z = -1;
+            input.Z = 1;
         }
         else if (Input.IsKeyPressed(Key.S))
         {
-            input.Z = 1;
+            input.Z = -1;
         }
 
         if (Input.IsKeyJustPressed(Key.Space))
@@ -135,12 +176,16 @@ public class DemoScene : Scene3D
             Console.WriteLine("Jump!!!");
         }
 
+        input = input.Normalized;
+
         var mouseWheel = Input.GetMouseWheel();
 
-        this.mesh.Transform = this.mesh.Transform with
+        var movement = -this.FreeCamera.Transform.Forward * input.Z + this.FreeCamera.Transform.Right * input.X + Vector3<float>.Up * input.Y;
+
+        this.FreeCamera.Transform = this.FreeCamera.Transform with
         {
-            Position = this.mesh.Transform.Position + input.Normalized * (float)deltaTime,
-            Rotation = this.mesh.Transform.Rotation * new Quaternion<float>(Vector3<float>.Up, Angle.Radians(5 * mouseWheel))
+            Position = this.FreeCamera.Transform.Position + movement * (float)deltaTime,
+            Rotation = this.FreeCamera.Transform.Rotation * new Quaternion<float>(Vector3<float>.Up, Angle.Radians(5 * mouseWheel))
         };
     }
 }
