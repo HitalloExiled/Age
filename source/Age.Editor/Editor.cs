@@ -1,14 +1,14 @@
-using Age.Numerics;
 using Age.Elements;
 using Age.Styling;
 using Age.Scene;
+using Age.Numerics;
 
 namespace Age.Editor;
 
 public class Editor : Node
 {
     private readonly Canvas    canvas = new();
-    private readonly DemoScene scene;
+    // private readonly DemoScene scene;
 
     public override string NodeName { get; } = nameof(Editor);
 
@@ -16,47 +16,97 @@ public class Editor : Node
     {
         this.AppendChild(this.canvas);
 
-        var verticalStack = new Span() { Style = new() { Stack = StackType.Vertical } };
-        var header        = new Span() { Name = "Header" };
-        var viewports     = new Span() { Name = "Viewports", Style = new() { Alignment = AlignmentType.Center } };
+        var a = new Span()
+        {
+            Name  = "A",
+            Style = new()
+            {
+                Color  = Color.White,
+                Border = new(1, 0, Color.Red),
+                Size   = new(Unit.Pixel(100), Unit.Pixel(100)),
+            }
+        };
 
-        this.canvas.AppendChild(verticalStack);
+        var b = new Span()
+        {
+            Name  = "B",
+            Style = new()
+            {
+                Alignment = AlignmentType.Center,
+                Color  = Color.White,
+                Border = new(1, 0, Color.Green),
+                Size   = new(Unit.Percentage(50), Unit.Percentage(50)),
+            }
+        };
 
-        verticalStack.AppendChild(header);
-        verticalStack.AppendChild(viewports);
+        var c = new Span()
+        {
+            Name  = "C",
+            Style = new()
+            {
+                Color  = Color.White,
+                Border = new(1, 0, Color.Blue),
+                Size   = new(Unit.Percentage(50), Unit.Percentage(50)),
+            }
+        };
 
-        header.AppendChild(new FrameStatus());
-        // header.AppendChild(new Playground() { Style = new() { Alignment = AlignmentType.Bottom } });
+        var d = new Span()
+        {
+            Name  = "D",
+            Style = new()
+            {
+                Color  = Color.White,
+                Border = new(1, 0, Color.White),
+                Size   = new(Unit.Percentage(50), Unit.Percentage(50)),
+            }
+        };
 
-        this.scene = new DemoScene();
+        this.canvas.AppendChild(a);
+        a.AppendChild(b);
+        b.AppendChild(c);
+        c.AppendChild(d);
 
-        var freeViewport  = new Viewport(new(600)) { Name = "Red" };
-        var redViewport   = new Viewport(new(200)) { Name = "Red" };
-        var greenViewport = new Viewport(new(200)) { Name = "Green" };
-        var blueViewport  = new Viewport(new(200)) { Name = "Blue" };
+        // var verticalStack = new Span() { Style = new() { Stack = StackType.Vertical } };
+        // var header        = new Span() { Name = "Header" };
+        // var viewports     = new Span() { Name = "Viewports", Style = new() { Alignment = AlignmentType.Center } };
 
-        freeViewport.Style.Border  = new(1, 0, Color.White);
-        redViewport.Style.Border   = new(1, 0, Color.Red);
-        greenViewport.Style.Border = new(1, 0, Color.Green);
-        blueViewport.Style.Border  = new(1, 0, Color.Blue);
+        // this.canvas.AppendChild(verticalStack);
 
-        freeViewport.Style.BoxSizing = redViewport.Style.BoxSizing = greenViewport.Style.BoxSizing = blueViewport.Style.BoxSizing = BoxSizing.Border;
+        // verticalStack.AppendChild(header);
+        // verticalStack.AppendChild(viewports);
 
-        this.scene.FreeCamera.RenderTargets.Add(freeViewport.RenderTarget);
-        this.scene.RedCamera.RenderTargets.Add(redViewport.RenderTarget);
-        this.scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
-        this.scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
+        // header.AppendChild(new FrameStatus());
+        // this.canvas.AppendChild(new Playground());
 
-        var sideViews = new Span() { Style = new() { Stack = StackType.Vertical, Alignment = AlignmentType.Center } };
+        // this.scene = new DemoScene();
 
-        sideViews.AppendChild(redViewport);
-        sideViews.AppendChild(greenViewport);
-        sideViews.AppendChild(blueViewport);
+        // var freeViewport  = new Viewport(new(600)) { Name = "Red" };
+        // var redViewport   = new Viewport(new(200)) { Name = "Red" };
+        // var greenViewport = new Viewport(new(200)) { Name = "Green" };
+        // var blueViewport  = new Viewport(new(200)) { Name = "Blue" };
 
-        viewports.AppendChild(freeViewport);
-        viewports.AppendChild(sideViews);
+        // freeViewport.Style.Border  = new(1, 0, Color.White);
+        // redViewport.Style.Border   = new(1, 0, Color.Red);
+        // greenViewport.Style.Border = new(1, 0, Color.Green);
+        // blueViewport.Style.Border  = new(1, 0, Color.Blue);
 
-        this.AppendChild(this.scene);
+        // freeViewport.Style.BoxSizing = redViewport.Style.BoxSizing = greenViewport.Style.BoxSizing = blueViewport.Style.BoxSizing = BoxSizing.Border;
+
+        // this.scene.FreeCamera.RenderTargets.Add(freeViewport.RenderTarget);
+        // this.scene.RedCamera.RenderTargets.Add(redViewport.RenderTarget);
+        // this.scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
+        // this.scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
+
+        // var sideViews = new Span() { Style = new() { Stack = StackType.Vertical, Alignment = AlignmentType.Center } };
+
+        // sideViews.AppendChild(redViewport);
+        // sideViews.AppendChild(greenViewport);
+        // sideViews.AppendChild(blueViewport);
+
+        // viewports.AppendChild(freeViewport);
+        // viewports.AppendChild(sideViews);
+
+        // this.AppendChild(this.scene);
     }
 
     // protected override void OnUpdate(double deltaTime) =>

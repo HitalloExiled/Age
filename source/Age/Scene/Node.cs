@@ -134,17 +134,6 @@ public abstract partial class Node : IEnumerable<Node>
         }
     }
 
-    public IEnumerable<T> Enumerate<T>() where T : Node
-    {
-        foreach (var node in this)
-        {
-            if (node is T t)
-            {
-                yield return t;
-            }
-        }
-    }
-
     public IEnumerator<Node> GetEnumerator() =>
         new Enumerator(this);
 

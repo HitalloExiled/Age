@@ -1,4 +1,5 @@
 using Age.Scene;
+using Age.Styling;
 
 namespace Age.Elements;
 
@@ -16,7 +17,7 @@ public sealed class Canvas : Element
         };
 
     private void OnWindowSizeChanged() =>
-        this.Style.Size = this.Tree!.Window.ClientSize - PADDING * 2;
+        this.Style.Size = SizeUnit.Pixel(this.Tree!.Window.ClientSize - PADDING * 2);
 
     internal protected override void RequestUpdate()
     {

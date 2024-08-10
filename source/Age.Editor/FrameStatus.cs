@@ -1,5 +1,6 @@
 using Age.Elements;
 using Age.Numerics;
+using Age.Styling;
 
 namespace Age.Editor;
 
@@ -28,7 +29,7 @@ public class FrameStatus : Element
             {
                 Color           = Color.Green,
                 FontSize        = 12,
-                MinSize         = new(110, 30),
+                MinSize         = SizeUnit.Pixel(110, 30),
                 // BackgroundColor = new Color(1, 1, 0)
             }
         };

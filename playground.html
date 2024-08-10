@@ -4,52 +4,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
-        .border
-        {
-            border-bottom: 5px solid green;
-            border-left: 10px solid red;
-            border-bottom-left-radius: 10px;
+        .a {
+            display: block;
+            border: 1px solid red;
+            width: 100px;
+            height: 100px;
         }
 
-        .block
-        {
+        .b {
             display: block;
+            border: 1px solid green;
+            width: 50%;
+            height: 50%;
         }
 
-        .root
-        {
+        .c {
             display: block;
-            min-width:  100px;
-            min-height: 100px;
-            max-width:  100px;
-            max-height: 100px;
-            /* background-color: rgb(126, 126, 126); */
-            border:     1px solid rgb(126, 126, 126);
-        }
-        .parent
-        {
-            margin:     1px;
-            display:    inline-block;
-            min-width:  25px;
-            min-height: 25px;
-            border:     1px solid red;
-            /* left:       1px; */
-            /* top:        10px; */
-            position: relative;
+            border: 1px solid blue;
+            width: 50%;
+            height: 50%;
         }
     </style>
 </head>
 <body>
-    <span class="root">
-        <span class="parent block">
-            <span class="border" style="color: red">X</span>
-            <span class="border" style="color: green">Y</span>
-            <span class="border" style="color: blue">Z</span>
-        </span>
-        <span class="parent">
-            <span class="border" style="color: red">X</span>
-            <span class="border" style="color: green">Y</span>
-            <span class="border" style="color: blue; position: fixed; left: 0; top: 0;">Z</span>
+    <span class="a">
+        <span class="b">
+            <span class="c">
+            </span>
         </span>
     </span>
 </body>

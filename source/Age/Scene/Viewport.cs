@@ -3,6 +3,7 @@ using Age.Elements;
 using Age.Numerics;
 using Age.Resources;
 using Age.Storage;
+using Age.Styling;
 
 namespace Age.Scene;
 
@@ -23,7 +24,7 @@ public class Viewport : Element
         {
             if (this.renderTarget.Size != value)
             {
-                this.Style.MinSize = value;
+                this.Style.MinSize = SizeUnit.Pixel(value);
                 this.renderTarget.Update(value);
                 this.UpdateCommand();
             }
@@ -32,7 +33,7 @@ public class Viewport : Element
 
     public Viewport(in Size<uint> size)
     {
-        this.Style.MinSize = size;
+        this.Style.MinSize = SizeUnit.Pixel(size);
         this.renderTarget = new(size);
         this.UpdateCommand();
     }

@@ -16,13 +16,13 @@ public partial record Style
     private string?        fontFamily;
     private ushort?        fontSize;
     private Margin?        margin;
-    private Size<uint>?    maxSize;
-    private Size<uint>?    minSize;
+    private SizeUnit?      maxSize;
+    private SizeUnit?      minSize;
     private Point<float>?  pivot;
     private Point<int>?    position;
     private PositionType?  positionType;
     private float?         rotation;
-    private Size<uint>?    size;
+    private SizeUnit?      size;
     private StackType?     stack;
 
     public Point<int>? Align
@@ -85,13 +85,13 @@ public partial record Style
         set => this.Set(ref this.margin, value);
     }
 
-    public Size<uint>? MaxSize
+    public SizeUnit? MaxSize
     {
         get => this.maxSize;
         set => this.Set(ref this.maxSize, value);
     }
 
-    public Size<uint>? MinSize
+    public SizeUnit? MinSize
     {
         get => this.minSize;
         set => this.Set(ref this.minSize, value);
@@ -121,7 +121,7 @@ public partial record Style
         set => this.Set(ref this.rotation, value);
     }
 
-    public Size<uint>? Size
+    public SizeUnit? Size
     {
         get => this.size;
         set => this.Set(ref this.size, value);

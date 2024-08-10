@@ -1,40 +1,28 @@
+using System.Text;
 using Age.Commands;
 using Age.Core;
-using Age.Styling;
 using Age.Numerics;
 using Age.Scene;
 using Age.Storage;
-using System.Text;
-
+using Age.Styling;
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
-using Age.Platforms.Display;
 
 namespace Age.Elements;
-
-public struct MouseEvent
-{
-    public ushort         X;
-    public ushort         Y;
-    public MouseButton    Button;
-    public MouseKeyStates KeyStates;
-    public float          Delta;
-    public Element        Target;
-}
-
-public struct ContextEvent
-{
-    public ushort  X;
-    public ushort  Y;
-    public ushort  ScreenX;
-    public ushort  ScreenY;
-    public Element Target;
-}
 
 public delegate void ContextEventHandler(in ContextEvent mouseEvent);
 public delegate void MouseEventHandler(in MouseEvent mouseEvent);
 
 public abstract class Element : ContainerNode, IEnumerable<Element>
 {
+    [Flags]
+    private enum Dimensions
+    {
+        None   = 0,
+        Width  = 1 << 0,
+        Height = 1 << 1,
+        All    = Width | Height,
+    }
+
     public event MouseEventHandler?   Blured;
     public event MouseEventHandler?   Clicked;
     public event ContextEventHandler? Context;
@@ -43,22 +31,21 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
     public event MouseEventHandler?   MouseOut;
     public event MouseEventHandler?   MouseOver;
 
-    private readonly List<ContainerNode> nodesToDistribute = [];
+    private readonly List<ContainerNode> nodesToDistribute        = [];
+    private readonly List<Element>       pendingChildCalculations = [];
 
     private Canvas?                 canvas;
     private Vector2<float>          offset;
+    private Dimensions          pendingCalculation;
     private Style                   style = new();
     private Transform2D             styleTransform = new();
     private string?                 text;
     private CacheValue<Transform2D> transformCache;
-
-    private Margin BorderMargin =>
-        new(
-            this.Style.Border?.Top.Thickness ?? 0,
-            this.Style.Border?.Right.Thickness ?? 0,
-            this.Style.Border?.Bottom.Thickness ?? 0,
-            this.Style.Border?.Left.Thickness ?? 0
-        );
+    private Transform2D PivotedTransform =>
+        Transform2D.Translated(this.offset)
+            * Transform2D.Translated(this.StylePivot)
+            * this.styleTransform
+            * Transform2D.Translated(-this.StylePivot);
 
     private Vector2<float> StylePivot
     {
@@ -78,12 +65,6 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    private Transform2D PivotedTransform =>
-        Transform2D.Translated(this.offset)
-            * Transform2D.Translated(this.StylePivot)
-            * this.styleTransform
-            * Transform2D.Translated(-this.StylePivot);
-
     internal protected override Transform2D TransformCache
     {
         get
@@ -92,7 +73,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             {
                 this.transformCache = new()
                 {
-                    Value   = base.TransformCache * this.PivotedTransform,
+                    Value = base.TransformCache * this.PivotedTransform,
                     Version = CacheVersion
                 };
             }
@@ -106,10 +87,10 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
     public Element? ParentElement => this.Parent as Element;
 
     public Element? FirstElementChild { get; private set; }
-    public Element? LastElementChild  { get; private set; }
+    public Element? LastElementChild { get; private set; }
 
     public Element? PreviousElementSibling { get; private set; }
-    public Element? NextElementSibling     { get; private set; }
+    public Element? NextElementSibling { get; private set; }
 
     public Canvas? Canvas
     {
@@ -210,6 +191,46 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
     public Element() =>
         this.style.Changed += this.OnStyleChanged;
 
+    ~Element() =>
+        this.style.Changed -= this.OnStyleChanged;
+
+    private static uint GetAbsoluteValue(in Unit unit) =>
+        unit.Type == UnitType.Pixel ? (uint)unit.Value : 0;
+
+    private static Size<uint> GetAbsoluteValue(in SizeUnit unitSize) =>
+        new(GetAbsoluteValue(unitSize.Width), GetAbsoluteValue(unitSize.Height));
+
+    private static Margin GetBorderMargin(Style? style) =>
+        new(
+            style?.Border?.Top.Thickness ?? 0,
+            style?.Border?.Right.Thickness ?? 0,
+            style?.Border?.Bottom.Thickness ?? 0,
+            style?.Border?.Left.Thickness ?? 0
+        );
+
+    private static uint GetRelativeValue(in Unit unit, uint avaliable) =>
+        unit.Type == UnitType.Pixel ? (uint)unit.Value : (uint)(unit.Value * avaliable);
+
+    private static uint GetRelativeValueInRange(uint avaliable, in Unit min, in Unit max) =>
+        uint.Max(uint.Min(avaliable, GetRelativeValue(min, avaliable)), GetRelativeValue(max, avaliable));
+
+    private static Dimensions GetLazyDimensions(Style? style)
+    {
+        var lazyDimension = Dimensions.None;
+
+        if (style is { Size.Width.Type: UnitType.Percentage } or { MinSize.Width.Type: UnitType.Percentage } or { MaxSize.Width.Type: UnitType.Percentage })
+        {
+            lazyDimension |= Dimensions.Width;
+        }
+
+        if (style is { Size.Height.Type:    UnitType.Percentage } or { MinSize.Height.Type: UnitType.Percentage } or { MaxSize.Height.Type: UnitType.Percentage })
+        {
+            lazyDimension |= Dimensions.Height;
+        }
+
+        return lazyDimension;
+    }
+
     IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
     {
         for (var childElement = this.FirstElementChild; childElement != null; childElement = childElement.NextElementSibling)
@@ -218,89 +239,167 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    internal void CalculateLayout()
+    private void CalculateLayout()
     {
         var stackMode = this.Style.Stack ?? StackType.Horizontal;
 
-        var hightest = 0f;
+        var hightest    = 0f;
         var contentSize = new Size<uint>();
 
-        foreach (var child in this.Enumerate<ContainerNode>())
+        this.pendingCalculation = GetLazyDimensions(this.Style);
+
+        foreach (var node in this)
         {
-            if (child is TextNode textNode)
+            if (node is ContainerNode child)
             {
-                textNode.Draw();
-            }
-
-            var childStyle = (child as Element)?.Style;
-            var margin     = childStyle?.Margin ?? new(0);
-            var alignment  = childStyle?.Alignment ?? AlignmentType.BaseLine;
-            var totalSize  = new Size<uint>(child.Size.Width + margin.Horizontal, child.Size.Height + margin.Vertical);
-
-            if (stackMode == StackType.Horizontal)
-            {
-                if (childStyle?.Align == null && alignment == AlignmentType.BaseLine && totalSize.Height > hightest)
+                if (node is TextNode textNode)
                 {
-                    this.Baseline = childStyle?.Margin == null
-                        ? child.Baseline
-                        : (margin.Top + child.Size.Height * child.Baseline) / totalSize.Height;
-
-                    hightest = totalSize.Height;
+                    textNode.Draw();
                 }
 
-                contentSize.Height = uint.Max(contentSize.Height, totalSize.Height);
-                contentSize.Width += totalSize.Width;
-            }
-            else
-            {
-                contentSize.Height += totalSize.Height;
-                contentSize.Width = uint.Max(contentSize.Width, totalSize.Width);
-            }
+                var childStyle = (child as Element)?.Style;
+                var margin     = childStyle?.Margin ?? new(0);
+                var totalSize  = new Size<uint>(child.Size.Width + margin.Horizontal, child.Size.Height + margin.Vertical);
 
-            this.nodesToDistribute.Add(child);
+                var lazyCalculation = GetLazyDimensions(childStyle);
+
+                if (lazyCalculation != Dimensions.None)
+                {
+                    var element = (Element)child;
+
+                    element.pendingCalculation = lazyCalculation;
+                    this.pendingChildCalculations.Add(element);
+                }
+
+                if (stackMode == StackType.Horizontal)
+                {
+                    if (!lazyCalculation.HasFlag(Dimensions.Width))
+                    {
+                        contentSize.Width += totalSize.Width;
+
+                        if (!lazyCalculation.HasFlag(Dimensions.Height))
+                        {
+                            UpdateBaseline(this, child, ref hightest);
+
+                            contentSize.Height = uint.Max(contentSize.Height, totalSize.Height);
+                        }
+                    }
+                }
+                else
+                {
+                    if (!lazyCalculation.HasFlag(Dimensions.Height))
+                    {
+                        contentSize.Height += totalSize.Height;
+
+                        if (!lazyCalculation.HasFlag(Dimensions.Width))
+                        {
+                            contentSize.Width = uint.Max(contentSize.Width, totalSize.Width);
+                        }
+                    }
+                }
+
+                this.nodesToDistribute.Add(child);
+            }
         }
 
         this.ContentSize = contentSize;
 
         var size = this.Style.MinSize.HasValue && this.Style.MaxSize.HasValue
-            ? contentSize.Range(this.Style.MinSize.Value, this.Style.MaxSize.Value)
+            ? contentSize.Range(GetAbsoluteValue(this.Style.MinSize.Value), GetAbsoluteValue(this.Style.MaxSize.Value))
             : this.Style.MinSize.HasValue
-                ? contentSize.Max(this.Style.MinSize.Value)
+                ? contentSize.Max(GetAbsoluteValue(this.Style.MinSize.Value))
                 : this.Style.MaxSize.HasValue
-                    ? contentSize.Min(this.Style.MaxSize.Value)
-                    : this.Style.Size ?? contentSize;
+                    ? contentSize.Min(GetAbsoluteValue(this.Style.MaxSize.Value))
+                    : this.Style.Size.HasValue
+                        ? GetAbsoluteValue(this.Style.Size.Value)
+                        : contentSize;
 
-        if (this.Style.BoxSizing != BoxSizing.Border)
+        if (this.pendingCalculation != Dimensions.All)
         {
-            var borderMargin = this.BorderMargin;
+            this.CalculatePendingLayouts(size);
 
-            size += new Size<uint>(borderMargin.Horizontal, borderMargin.Vertical);
+            this.UpdateSize(size);
         }
-
-        this.Size = size;
-
-        this.DrawBorder();
     }
 
-    private void DrawBorder()
+    private void CalculatePendingLayouts(in Size<uint> parentSize)
     {
-        if (this.SingleCommand is not RectCommand command)
+        foreach (var child in this.pendingChildCalculations.ToArray())
         {
-            this.SingleCommand = command = new()
-            {
-                Flags          = Flags.ColorAsBackground,
-                SampledTexture = new(
-                    TextureStorage.Singleton.DefaultTexture,
-                    TextureStorage.Singleton.DefaultSampler,
-                    UVRect.Normalized
-                ),
-            };
-        }
+            var size = child.Size;
 
-        command.ObjectId = this.Style.Border.HasValue || this.Style.BackgroundColor.HasValue ? (uint)(this.Index + 1) : 0;
-        command.Rect     = new(this.Size.Cast<float>(), default);
-        command.Border   = this.Style.Border ?? default;
-        command.Color    = this.Style.BackgroundColor ?? default;
+            if (!this.pendingCalculation.HasFlag(Dimensions.Width) && child.pendingCalculation.HasFlag(Dimensions.Width))
+            {
+                size.Width = child.Style switch
+                {
+                    { Size.Width.Type: UnitType.Percentage } =>
+                        GetRelativeValue(child.Style.Size.Value.Width, parentSize.Width),
+
+                    { MinSize.Width.Type: UnitType.Percentage, MaxSize.Width.Type: UnitType.Percentage } =>
+                        GetRelativeValueInRange(parentSize.Width, child.Style.MinSize.Value.Width, child.Style.MaxSize.Value.Width),
+
+                    { MinSize.Width.Type: UnitType.Percentage } =>
+                        uint.Min(parentSize.Width, GetRelativeValue(child.Style.MinSize.Value.Width, parentSize.Width)),
+
+                    { MaxSize.Width.Type: UnitType.Percentage } =>
+                        uint.Max(parentSize.Width, GetRelativeValue(child.Style.MaxSize.Value.Width, parentSize.Width)),
+
+                    _ => size.Width,
+                };
+
+                child.pendingCalculation &= ~Dimensions.Width;
+            }
+
+            if (!this.pendingCalculation.HasFlag(Dimensions.Height) && child.pendingCalculation.HasFlag(Dimensions.Height))
+            {
+                size.Height = child.Style switch
+                {
+                    { Size.Height.Type: UnitType.Percentage } =>
+                        GetRelativeValue(child.Style.Size.Value.Height, parentSize.Height),
+
+                    { MinSize.Height.Type: UnitType.Percentage, MaxSize.Height.Type: UnitType.Percentage } =>
+                        GetRelativeValueInRange(parentSize.Height, child.Style.MinSize.Value.Height, child.Style.MaxSize.Value.Height),
+
+                    { MinSize.Height.Type: UnitType.Percentage } =>
+                        uint.Min(parentSize.Height, GetRelativeValue(child.Style.MinSize.Value.Height, parentSize.Height)),
+
+                    { MaxSize.Height.Type: UnitType.Percentage } =>
+                        uint.Max(parentSize.Height, GetRelativeValue(child.Style.MaxSize.Value.Height, parentSize.Height)),
+
+                    _ => size.Height,
+                };
+
+                child.pendingCalculation &= ~Dimensions.Height;
+            }
+
+            child.CalculatePendingLayouts(size);
+
+            child.UpdateSize(size);
+
+            if (child.pendingCalculation == Dimensions.None)
+            {
+                child.UpdateDisposition();
+
+                this.pendingChildCalculations.Remove(child);
+            }
+        }
+    }
+
+    private static void UpdateBaseline(Element parent, ContainerNode child, ref float hightest)
+    {
+        var style     = (child as Element)?.Style;
+        var margin    = style?.Margin ?? new(0);
+        var alignment = style?.Alignment ?? AlignmentType.BaseLine;
+        var totalSize = new Size<uint>(child.Size.Width + margin.Horizontal, child.Size.Height + margin.Vertical);
+
+        if (style?.Align == null && alignment == AlignmentType.BaseLine && totalSize.Height > hightest)
+        {
+            parent.Baseline = style?.Margin == null
+                ? child.Baseline
+                : (margin.Top + child.Size.Height * child.Baseline) / totalSize.Height;
+
+            hightest = totalSize.Height;
+        }
     }
 
     private void OnStyleChanged()
@@ -309,7 +408,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         this.RequestUpdate();
     }
 
-    internal void UpdateDisposition()
+    private void UpdateDisposition()
     {
         if (this.nodesToDistribute.Count == 0)
         {
@@ -348,7 +447,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
         if (this.Style.BoxSizing != BoxSizing.Border)
         {
-            var borderMargin = this.BorderMargin;
+            var borderMargin = GetBorderMargin(this.Style);
 
             size -= new Size<float>(borderMargin.Horizontal, borderMargin.Vertical);
             offset.X += borderMargin.Left;
@@ -359,18 +458,19 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
 
         for (var i = 0; i < this.nodesToDistribute.Count; i++)
         {
-            var reserved = (size - (Size<float>)offset) / (this.nodesToDistribute.Count - i);
+            var reserved = size / (this.nodesToDistribute.Count - i);
 
-            var child      = this.nodesToDistribute[i];
+            var child = this.nodesToDistribute[i];
             var childStyle = (child as Element)?.Style;
 
+            var borderMargin = GetBorderMargin(childStyle);
             var margin       = childStyle?.Margin ?? new();
             var hasMargin    = childStyle?.Margin != null;
             var offsetScaleX = childStyle?.Align?.X ?? getXAlignment(childStyle?.Alignment);
             var offsetScaleY = childStyle?.Align?.Y ?? getYAlignment(childStyle?.Alignment) ?? (stack == StackType.Horizontal ? this.Style.Baseline : null);
 
             Vector2<float> position;
-            Size<float>    usedSpace;
+            Size<float> usedSpace;
 
             if (stack == StackType.Horizontal)
             {
@@ -379,12 +479,12 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
                 var isInline = !offsetScaleY.HasValue && !hasMargin;
                 var canAlign = offsetScaleX.HasValue && size.Width > contentSize.Width;
 
-                var x = canAlign ? Math.Max(0, reserved.Width - child.Size.Width - margin.Horizontal) * factorX : 0;
+                var x = canAlign ? Math.Max(0, reserved.Width - child.Size.Width - margin.Horizontal - borderMargin.Horizontal) * factorX : 0;
                 var y = isInline
                     ? size.Height - size.Height * this.Baseline - child.Size.Height * (1 - child.Baseline)
                     : (size.Height - child.Size.Height - margin.Vertical) * factorY;
 
-                position  = new(x + offset.X + margin.Left, -(y + margin.Top) + offset.Y);
+                position = new(x + offset.X + margin.Left, -(y + margin.Top) + offset.Y);
                 usedSpace = canAlign
                     ? new(float.Max(child.Size.Width, reserved.Width - x), child.Size.Height)
                     : child.Size.Cast<float>();
@@ -398,7 +498,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
                 var canAlign = offsetScaleY.HasValue && size.Height > contentSize.Height;
 
                 var x = (size.Width - child.Size.Width - margin.Horizontal) * factorX;
-                var y = canAlign ? Math.Max(0, reserved.Height - child.Size.Height - margin.Vertical) * factorY : 0;
+                var y = canAlign ? Math.Max(0, reserved.Height - child.Size.Height - margin.Vertical - borderMargin.Vertical) * factorY : 0;
 
                 position  = new(margin.Left + x, -(y + offset.Y + margin.Top));
                 usedSpace = canAlign
@@ -426,6 +526,46 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
         }
 
         this.nodesToDistribute.Clear();
+    }
+
+    private void UpdateRect()
+    {
+        if (this.SingleCommand is not RectCommand command)
+        {
+            this.SingleCommand = command = new()
+            {
+                Flags = Flags.ColorAsBackground,
+                SampledTexture = new(
+                    TextureStorage.Singleton.DefaultTexture,
+                    TextureStorage.Singleton.DefaultSampler,
+                    UVRect.Normalized
+                ),
+            };
+        }
+
+        command.ObjectId = this.Style.Border.HasValue || this.Style.BackgroundColor.HasValue ? (uint)(this.Index + 1) : 0;
+        command.Rect     = new(this.Size.Cast<float>(), default);
+        command.Border   = this.Style.Border ?? default;
+        command.Color    = this.Style.BackgroundColor ?? default;
+    }
+
+    private void UpdateSize(Size<uint> size)
+    {
+        var borderMargin = GetBorderMargin(this.Style);
+
+        if (!this.pendingCalculation.HasFlag(Dimensions.Width))
+        {
+            size.Width += borderMargin.Horizontal;
+        }
+
+        if (!this.pendingCalculation.HasFlag(Dimensions.Height))
+        {
+            size.Height += borderMargin.Vertical;
+        }
+
+        this.Size = size;
+
+        this.UpdateRect();
     }
 
     private void UpdateStyleTransform() =>
@@ -495,7 +635,7 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             }
 
             elementChild.PreviousElementSibling = null;
-            elementChild.NextElementSibling     = null;
+            elementChild.NextElementSibling = null;
         }
     }
 
@@ -539,7 +679,11 @@ public abstract class Element : ContainerNode, IEnumerable<Element>
             }
 
             this.CalculateLayout();
-            this.UpdateDisposition();
+
+            if (this.pendingCalculation == Dimensions.None)
+            {
+                this.UpdateDisposition();
+            }
 
             this.HasPendingUpdate = false;
         }
