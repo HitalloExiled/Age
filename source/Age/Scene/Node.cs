@@ -93,6 +93,11 @@ public abstract partial class Node : IEnumerable<Node>
 
     public void AppendChild(Node child)
     {
+        if (child == this)
+        {
+            throw new InvalidOperationException("Cant add node to itself");
+        }
+
         if (child.Parent != this)
         {
             child.Parent = this;

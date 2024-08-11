@@ -1,19 +1,19 @@
 // #define DUMP_IMAGES
-using Age.Core;
+using Age.Commands;
 using Age.Core.Extensions;
-using Age.Numerics;
+using Age.Core;
 using Age.Elements;
+using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using SkiaSharp;
 using ThirdParty.Vulkan.Enums;
 
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
-using Age.Commands;
 
 namespace Age.Services;
 
-internal partial class TextService
+internal partial class TextService : IDisposable
 {
     private static TextService? singleton;
 
@@ -112,7 +112,7 @@ internal partial class TextService
                 Depth      = 1,
             };
 
-            var texture = renderer.CreateTexture(textureCreateInfo);
+            var texture = this.renderer.CreateTexture(textureCreateInfo);
 
             this.atlases[hashcode] = atlas = new(size, ColorMode.Grayscale, texture);
         }
@@ -139,14 +139,12 @@ internal partial class TextService
                 foreach (var atlas in this.atlases.Values)
                 {
                     atlas.Texture.Dispose();
-                    renderer.DeferredDispose(atlas.Texture);
+                    this.renderer.DeferredDispose(atlas.Texture);
                 }
 
-                renderer.DeferredDispose(this.sampler);
+                this.renderer.DeferredDispose(this.sampler);
             }
 
-            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-            // TODO: set large fields to null
             this.disposed = true;
         }
     }

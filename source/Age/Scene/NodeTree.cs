@@ -255,9 +255,9 @@ public sealed class NodeTree
 
         this.UpdateBuffer();
 
-        this.window.Click       += this.OnMouseClick;
-        this.window.Context += this.OnContextMenu;
-        this.window.MouseMove   += this.OnMouseMove;
+        this.window.Click     += this.OnMouseClick;
+        this.window.Context   += this.OnContextMenu;
+        this.window.MouseMove += this.OnMouseMove;
 
         foreach (var node in this.Root.Traverse())
         {

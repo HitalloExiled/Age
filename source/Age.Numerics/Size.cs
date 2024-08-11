@@ -1,9 +1,7 @@
-using System.Diagnostics;
 using System.Numerics;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("\\{ Width: {Width}, Height: {Height} \\}")]
 public record struct Size<T> where T : INumber<T>
 {
     public T Width;
@@ -31,6 +29,9 @@ public record struct Size<T> where T : INumber<T>
 
     public readonly Size<T> Range(Size<T> min, Size<T> max) =>
         new(T.Max(T.Min(this.Width, min.Width), max.Width), T.Max(T.Min(this.Height, min.Height), max.Height));
+
+    public override readonly string ToString() =>
+        $"Width: {this.Width}, Height: {this.Height}";
 
     public static Size<T> operator +(Size<T> size, T value) =>
         new(size.Width + value, size.Height + value);

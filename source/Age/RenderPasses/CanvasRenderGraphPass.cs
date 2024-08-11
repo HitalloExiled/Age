@@ -4,6 +4,7 @@ using Age.Rendering.Resources;
 using Age.Rendering.Shaders.Canvas;
 using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
+using Age.Services;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -52,6 +53,9 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             new(canvasPipeline,          this.vertexBuffer, this.indexBuffer, true),
             new(canvasWireframePipeline, this.vertexBuffer, this.wireframeIndexBuffer, false),
         ];
+
+        canvasPipeline.Changed += RenderingService.Singleton.RequestDraw;
+        canvasWireframePipeline.Changed += RenderingService.Singleton.RequestDraw;
 
         this.CreateFrameBuffers();
     }
@@ -179,6 +183,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         for (var i = 0; i < this.Resources.Length; i++)
         {
             this.Resources[i].Dispose();
+            this.Resources[i].Pipeline.Changed -= RenderingService.Singleton.RequestDraw;
         }
 
         foreach (var uniformSet in this.uniformSets.Values)

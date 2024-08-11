@@ -57,7 +57,7 @@ bool intersects_borders(vec2 position, uint border)
     {
         case BORDER_TOP:
         {
-            float start = left_top.position.x + position.y / left_top.size.y * left_top.size.x;
+            float start = left_top.position.x  + position.y / left_top.size.y   * left_top.size.x;
             float end   = top_right.position.x + position.y / -top_right.size.y * top_right.size.x + top_right.size.x;
 
             return position.x < start || position.x > end;
@@ -71,7 +71,7 @@ bool intersects_borders(vec2 position, uint border)
         }
         case BORDER_BOTTOM:
         {
-            float start = bottom_left.position.x  + (data.rect.size.y - position.y) / bottom_left.size.y * bottom_left.size.x;
+            float start = bottom_left.position.x  + (data.rect.size.y - position.y) / bottom_left.size.y   * bottom_left.size.x;
             float end   = right_bottom.position.x + (data.rect.size.y - position.y) / -right_bottom.size.y * right_bottom.size.x + right_bottom.size.x;
 
             return position.x < start || position.x > end;

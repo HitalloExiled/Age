@@ -143,6 +143,7 @@ public class DemoScene : Scene3D
         };
 
         var input = Vector3<float>.Zero;
+        var rotation = 0f;
 
         if (Input.IsKeyPressed(Key.A))
         {
@@ -171,21 +172,29 @@ public class DemoScene : Scene3D
             input.Z = -1;
         }
 
+        if (Input.IsKeyPressed(Key.Left))
+        {
+            rotation = 20;
+        }
+        else if (Input.IsKeyPressed(Key.Right))
+        {
+            rotation = -20;
+        }
+
         if (Input.IsKeyJustPressed(Key.Space))
         {
             Console.WriteLine("Jump!!!");
         }
 
         input = input.Normalized;
-
-        var mouseWheel = Input.GetMouseWheel();
+        rotation = (float)(rotation * deltaTime);
 
         var movement = -this.FreeCamera.Transform.Forward * input.Z + this.FreeCamera.Transform.Right * input.X + Vector3<float>.Up * input.Y;
 
         this.FreeCamera.Transform = this.FreeCamera.Transform with
         {
             Position = this.FreeCamera.Transform.Position + movement * (float)deltaTime,
-            Rotation = this.FreeCamera.Transform.Rotation * new Quaternion<float>(Vector3<float>.Up, Angle.Radians(5 * mouseWheel))
+            Rotation = this.FreeCamera.Transform.Rotation * new Quaternion<float>(Vector3<float>.Up, Angle.Radians(rotation))
         };
     }
 }

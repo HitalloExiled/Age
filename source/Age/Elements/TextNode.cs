@@ -46,4 +46,7 @@ public class TextNode : ContainerNode
             }
         }
     }
+
+    public override string ToString() =>
+        this.value ?? "";
 }

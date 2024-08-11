@@ -34,7 +34,6 @@ public class Engine : IDisposable
     {
         Window.Register(this.renderer);
 
-
         this.Window           = new Window(name, windowSize, windowPosition);
         this.renderingService = new RenderingService(this.renderer);
         this.shaderStorage    = new ShaderStorage(this.renderer);
@@ -64,7 +63,7 @@ public class Engine : IDisposable
 
         this.renderingService.RegisterRenderGraph(this.Window, renderGraph);
 
-        this.Window.Resized  += this.renderingService.RequestDraw;
+        this.Window.Resized += this.renderingService.RequestDraw;
 
         Input.ListenInputEvents(this.Window);
     }

@@ -5,6 +5,10 @@ namespace Age.Services;
 
 internal partial class RenderingService : Disposable
 {
+    private static RenderingService? singleton;
+
+    public static RenderingService Singleton => singleton ?? throw new NullReferenceException();
+
     private readonly VulkanRenderer                  renderer;
     private readonly Dictionary<Window, RenderGraph> renderGraphs = [];
 
@@ -12,8 +16,14 @@ internal partial class RenderingService : Disposable
 
     public RenderingService(VulkanRenderer renderer)
     {
-        this.renderer = renderer;
+        if (singleton != null)
+        {
+            throw new InvalidOperationException($"Only one single instace of {nameof(RenderingService)} is allowed");
+        }
 
+        singleton = this;
+
+        this.renderer = renderer;
         this.renderer.SwapchainRecreated += this.OnSwapchainRecreated;
     }
 
