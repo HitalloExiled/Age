@@ -57,29 +57,29 @@ bool intersects_borders(vec2 position, uint border)
     {
         case BORDER_TOP:
         {
-            float start = left_top.position.x  + position.y / left_top.size.y   * left_top.size.x;
-            float end   = top_right.position.x + position.y / -top_right.size.y * top_right.size.x + top_right.size.x;
+            float start = left_top.position.x  + uint(position.y / left_top.size.y)   * left_top.size.x;
+            float end   = top_right.position.x + uint(position.y / -top_right.size.y) * top_right.size.x + top_right.size.x;
 
             return position.x < start || position.x > end;
         }
         case BORDER_RIGHT:
         {
-            float start = top_right.position.y    + (data.rect.size.x - position.x) / top_right.size.x     * top_right.size.y;
-            float end   = right_bottom.position.y + (data.rect.size.x - position.x) / -right_bottom.size.x * right_bottom.size.y + right_bottom.size.y;
+            float start = top_right.position.y    + uint((data.rect.size.x - position.x) / top_right.size.x)     * top_right.size.y;
+            float end   = right_bottom.position.y + uint((data.rect.size.x - position.x) / -right_bottom.size.x) * right_bottom.size.y + right_bottom.size.y;
 
             return position.y < start || position.y > end;
         }
         case BORDER_BOTTOM:
         {
-            float start = bottom_left.position.x  + (data.rect.size.y - position.y) / bottom_left.size.y   * bottom_left.size.x;
-            float end   = right_bottom.position.x + (data.rect.size.y - position.y) / -right_bottom.size.y * right_bottom.size.x + right_bottom.size.x;
+            float start = (bottom_left.position.x  + uint((data.rect.size.y - position.y) / bottom_left.size.y)   * bottom_left.size.x);
+            float end   = (right_bottom.position.x + uint((data.rect.size.y - position.y) / -right_bottom.size.y) * right_bottom.size.x + right_bottom.size.x);
 
             return position.x < start || position.x > end;
         }
         case BORDER_LEFT:
         {
-            float start = left_top.position.y    + position.x / left_top.size.x     * left_top.size.y;
-            float end   = bottom_left.position.y + position.x / -bottom_left.size.x * bottom_left.size.y + bottom_left.size.y;
+            float start = left_top.position.y    + uint(position.x / left_top.size.x)     * left_top.size.y;
+            float end   = bottom_left.position.y + uint(position.x / -bottom_left.size.x) * bottom_left.size.y + bottom_left.size.y;
 
             return position.y < start || position.y > end;
         }
