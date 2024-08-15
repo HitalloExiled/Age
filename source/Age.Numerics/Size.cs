@@ -31,7 +31,7 @@ public record struct Size<T> where T : INumber<T>
         new(T.Max(T.Min(this.Width, min.Width), max.Width), T.Max(T.Min(this.Height, min.Height), max.Height));
 
     public override readonly string ToString() =>
-        $"Width: {this.Width}, Height: {this.Height}";
+        $"{{ Width: {this.Width}, Height: {this.Height} }}";
 
     public static Size<T> operator +(Size<T> size, T value) =>
         new(size.Width + value, size.Height + value);

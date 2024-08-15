@@ -1,10 +1,8 @@
-using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("\\{ Size: {Size}, Position: {Position} \\}")]
 public record struct Rect<T> where T : INumber<T>
 {
     public Size<T>  Size;
@@ -55,6 +53,9 @@ public record struct Rect<T> where T : INumber<T>
 
     public readonly Rect<T> InvertedY() =>
         new(this.Size, new(this.Position.X, -this.Position.Y));
+
+    public override readonly string ToString() =>
+        $"{{ Size: {this.Size}, Position: {this.Position} }}";
 }
 
 public static class Rect

@@ -30,6 +30,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     private Transform2D             styleTransform = new();
     private string?                 text;
     private CacheValue<Transform2D> transformCache;
+    private bool hasPendingUpdate;
 
     private Transform2D PivotedTransform =>
         Transform2D.Translated(this.offset)
@@ -187,8 +188,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     private static uint GetAbsoluteValue(in Unit unit) =>
         unit.Type == UnitType.Pixel ? (uint)unit.Value : 0;
 
-    private static Size<uint> GetAbsoluteValue(in SizeUnit unitSize) =>
-        new(GetAbsoluteValue(unitSize.Width), GetAbsoluteValue(unitSize.Height));
+    private static uint GetAbsoluteValueInRange(uint avaliable, in Unit min, in Unit max) =>
+        uint.Max(uint.Min(avaliable, GetAbsoluteValue(min)), GetAbsoluteValue(max));
 
     private static Size<uint> GetBorderSize(Style? style) =>
         new(
@@ -239,10 +240,10 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             if (node is ContainerNode child)
             {
-                if (node is TextNode textNode)
-                {
-                    textNode.Draw();
-                }
+                // if (node is TextNode textNode)
+                // {
+                //     textNode.Draw();
+                // }
 
                 var childStyle = (child as Element)?.Style;
                 var margin     = childStyle?.Margin ?? new(0);
@@ -291,24 +292,44 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         var size = this.ContentSize = contentSize;
 
-        if (this.Style.Size.HasValue)
+        if (this.Style.Size?.Width.HasValue ?? false)
         {
-            size = GetAbsoluteValue(this.Style.Size.Value);
+            size.Width = GetAbsoluteValue(this.Style.Size.Value.Width.Value);
         }
-        else if (this.Style.MinSize.HasValue && this.Style.MaxSize.HasValue)
+        else if ((this.Style.MinSize?.Width.HasValue ?? false) && (this.Style.MaxSize?.Width.HasValue ?? false))
         {
-            size = contentSize.Range(GetAbsoluteValue(this.Style.MinSize.Value), GetAbsoluteValue(this.Style.MaxSize.Value));
+            size.Width = GetAbsoluteValueInRange(size.Width, this.Style.MinSize.Value.Width.Value, this.Style.MaxSize.Value.Width.Value);
         }
-        else if (this.Style.MinSize.HasValue)
+        else if (this.Style.MinSize?.Width.HasValue ?? false)
         {
-            size = contentSize.Max(GetAbsoluteValue(this.Style.MinSize.Value));
+            size.Width = uint.Max(size.Width, GetAbsoluteValue(this.Style.MinSize.Value.Width.Value));
         }
-        else if (this.Style.MaxSize.HasValue)
+        else if (this.Style.MaxSize?.Width.HasValue ?? false)
         {
-            size = contentSize.Min(GetAbsoluteValue(this.Style.MaxSize.Value));
+            size.Width = uint.Min(size.Width, GetAbsoluteValue(this.Style.MaxSize.Value.Width.Value));
+        }
+
+        if (this.Style.Size?.Height.HasValue ?? false)
+        {
+            size.Height = GetAbsoluteValue(this.Style.Size.Value.Height.Value);
+        }
+        else if ((this.Style.MinSize?.Height.HasValue ?? false) && (this.Style.MaxSize?.Height.HasValue ?? false))
+        {
+            size.Height = GetAbsoluteValueInRange(size.Height, this.Style.MinSize.Value.Height.Value, this.Style.MaxSize.Value.Height.Value);
+        }
+        else if (this.Style.MinSize?.Height.HasValue ?? false)
+        {
+            size.Height = uint.Max(size.Height, GetAbsoluteValue(this.Style.MinSize.Value.Height.Value));
+        }
+        else if (this.Style.MaxSize?.Height.HasValue ?? false)
+        {
+            size.Height = uint.Min(size.Height, GetAbsoluteValue(this.Style.MaxSize.Value.Height.Value));
         }
 
         var border = GetBorderSize(this.Style);
+
+        this.layoutInfo.Size   = size;
+        this.layoutInfo.Border = border;
 
         if (this.Style.BoxSizing != BoxSizing.Border)
         {
@@ -327,7 +348,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         if (this.layoutInfo.PendingCalculation != PendingCalculation.All)
         {
-            this.CalculatePendingLayouts(size - border);
+            this.CalculatePendingLayouts();
         }
 
         this.Size = size;
@@ -335,40 +356,38 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.UpdateRect();
     }
 
-    private void CalculatePendingLayouts(in Size<uint> parentSize)
+    private void CalculatePendingLayouts()
     {
         foreach (var child in this.layoutInfo.PendingChildCalculations.ToArray())
         {
-            var size = child.Size;
-
             if (!this.layoutInfo.PendingCalculation.HasFlag(PendingCalculation.Width) && child.layoutInfo.PendingCalculation.HasFlag(PendingCalculation.Width))
             {
-                if (child.Style.Size?.Width.Type == UnitType.Percentage)
+                if (child.Style.Size?.Width?.Type == UnitType.Percentage)
                 {
-                    size.Width = GetRelativeValue(child.Style.Size.Value.Width, parentSize.Width);
+                    child.layoutInfo.Size.Width = GetRelativeValue(child.Style.Size.Value.Width.Value, this.layoutInfo.Size.Width);
                 }
-                else if (child.Style.MinSize?.Width.Type == UnitType.Percentage && child.Style.MaxSize?.Width.Type == UnitType.Percentage)
+                else if (child.Style.MinSize?.Width?.Type == UnitType.Percentage && child.Style.MaxSize?.Width?.Type == UnitType.Percentage)
                 {
-                    size.Width = GetRelativeValueInRange(parentSize.Width, child.Style.MinSize.Value.Width, child.Style.MaxSize.Value.Width);
+                    child.layoutInfo.Size.Width = GetRelativeValueInRange(this.layoutInfo.Size.Width, child.Style.MinSize.Value.Width.Value, child.Style.MaxSize.Value.Width.Value);
                 }
-                else if (child.Style.MinSize?.Width.Type == UnitType.Percentage)
+                else if (child.Style.MinSize?.Width?.Type == UnitType.Percentage)
                 {
-                    size.Width = uint.Min(parentSize.Width, GetRelativeValue(child.Style.MinSize.Value.Width, parentSize.Width));
+                    child.layoutInfo.Size.Width = uint.Min(this.layoutInfo.Size.Width, GetRelativeValue(child.Style.MinSize.Value.Width.Value, this.layoutInfo.Size.Width));
                 }
-                else if (child.Style.MaxSize?.Width.Type == UnitType.Percentage)
+                else if (child.Style.MaxSize?.Width?.Type == UnitType.Percentage)
                 {
-                    size.Width = uint.Max(parentSize.Width, GetRelativeValue(child.Style.MaxSize.Value.Width, parentSize.Width));
+                    child.layoutInfo.Size.Width = uint.Max(this.layoutInfo.Size.Width, GetRelativeValue(child.Style.MaxSize.Value.Width.Value, this.layoutInfo.Size.Width));
                 }
 
                 if (this.Style.Stack != StackType.Vertical)
                 {
-                    if (size.Width < this.layoutInfo.AvaliableSpace.Width)
+                    if (child.layoutInfo.Size.Width < this.layoutInfo.AvaliableSpace.Width)
                     {
-                        this.layoutInfo.AvaliableSpace.Width -= size.Width;
+                        this.layoutInfo.AvaliableSpace.Width -= child.layoutInfo.Size.Width;
                     }
                     else
                     {
-                        size.Width = this.layoutInfo.AvaliableSpace.Width;
+                        child.layoutInfo.Size.Width = this.layoutInfo.AvaliableSpace.Width;
 
                         this.layoutInfo.AvaliableSpace.Width = 0;
                     }
@@ -378,38 +397,38 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
                 this.ContentSize = this.ContentSize with
                 {
-                    Width = this.ContentSize.Width + size.Width
+                    Width = this.ContentSize.Width + child.layoutInfo.Size.Width
                 };
             }
 
             if (!this.layoutInfo.PendingCalculation.HasFlag(PendingCalculation.Height) && child.layoutInfo.PendingCalculation.HasFlag(PendingCalculation.Height))
             {
-                if (child.Style.Size?.Height.Type == UnitType.Percentage)
+                if (child.Style.Size?.Height?.Type == UnitType.Percentage)
                 {
-                    size.Height = GetRelativeValue(child.Style.Size.Value.Height, parentSize.Height);
+                    child.layoutInfo.Size.Height = GetRelativeValue(child.Style.Size.Value.Height.Value, this.layoutInfo.Size.Height);
                 }
-                else if (child.Style.MinSize?.Height.Type == UnitType.Percentage && child.Style.MaxSize?.Height.Type == UnitType.Percentage)
+                else if (child.Style.MinSize?.Height?.Type == UnitType.Percentage && child.Style.MaxSize?.Height?.Type == UnitType.Percentage)
                 {
-                    size.Height = GetRelativeValueInRange(parentSize.Height, child.Style.MinSize.Value.Height, child.Style.MaxSize.Value.Height);
+                    child.layoutInfo.Size.Height = GetRelativeValueInRange(this.layoutInfo.Size.Height, child.Style.MinSize.Value.Height.Value, child.Style.MaxSize.Value.Height.Value);
                 }
-                else if (child.Style.MinSize?.Height.Type == UnitType.Percentage)
+                else if (child.Style.MinSize?.Height?.Type == UnitType.Percentage)
                 {
-                    size.Height = uint.Min(parentSize.Height, GetRelativeValue(child.Style.MinSize.Value.Height, parentSize.Height));
+                    child.layoutInfo.Size.Height = uint.Min(this.layoutInfo.Size.Height, GetRelativeValue(child.Style.MinSize.Value.Height.Value, this.layoutInfo.Size.Height));
                 }
-                else if (child.Style.MaxSize?.Height.Type == UnitType.Percentage)
+                else if (child.Style.MaxSize?.Height?.Type == UnitType.Percentage)
                 {
-                    size.Height = uint.Max(parentSize.Height, GetRelativeValue(child.Style.MaxSize.Value.Height, parentSize.Height));
+                    child.layoutInfo.Size.Height = uint.Max(this.layoutInfo.Size.Height, GetRelativeValue(child.Style.MaxSize.Value.Height.Value, this.layoutInfo.Size.Height));
                 }
 
                 if (this.Style.Stack == StackType.Vertical)
                 {
-                    if (size.Height < this.layoutInfo.AvaliableSpace.Height)
+                    if (child.layoutInfo.Size.Height < this.layoutInfo.AvaliableSpace.Height)
                     {
-                        this.layoutInfo.AvaliableSpace.Height -= size.Height;
+                        this.layoutInfo.AvaliableSpace.Height -= child.layoutInfo.Size.Height;
                     }
                     else
                     {
-                        size.Height = this.layoutInfo.AvaliableSpace.Height;
+                        child.layoutInfo.Size.Height = this.layoutInfo.AvaliableSpace.Height;
 
                         this.layoutInfo.AvaliableSpace.Height = 0;
                     }
@@ -421,24 +440,23 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
                 this.ContentSize = this.ContentSize with
                 {
-                    Height = this.ContentSize.Height + size.Height
+                    Height = this.ContentSize.Height + child.layoutInfo.Size.Height
                 };
             }
 
-            var border = GetBorderSize(child.Style);
-
-            child.layoutInfo.AvaliableSpace = (size - border - child.ContentSize).Max(default);
+            child.layoutInfo.AvaliableSpace = (child.layoutInfo.Size - child.layoutInfo.Border - child.ContentSize).Max(default);
 
             // Console.WriteLine($"Element: {child.Name}, Size: {size}, Border: {border}");
 
-            child.CalculatePendingLayouts(size - border);
-
-            child.Size = size;
+            child.CalculatePendingLayouts();
 
             if (child.layoutInfo.PendingCalculation == PendingCalculation.None)
             {
+                child.Size = child.layoutInfo.Size + (this.Style.BoxSizing != BoxSizing.Border ? child.layoutInfo.Border : default);
+
                 child.UpdateRect();
                 child.UpdateDisposition();
+                child.HasPendingUpdate = false;
 
                 this.layoutInfo.PendingChildCalculations.Remove(child);
             }
@@ -501,11 +519,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             (1 + value) / 2;
 
         var offset      = new Point<float>();
-        var size        = this.Size.Cast<float>();
+        var size        = this.layoutInfo.Size.Cast<float>();
         var contentSize = this.ContentSize;
         var stack       = this.Style.Stack ?? StackType.Horizontal;
-
-        size -= GetBorderSize(this.Style).Cast<float>();
 
         offset.X += this.Style.Border?.Left.Thickness ?? 0;
         offset.Y -= this.Style.Border?.Top.Thickness ?? 0;

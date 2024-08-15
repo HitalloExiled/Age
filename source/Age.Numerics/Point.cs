@@ -1,9 +1,7 @@
-using System.Diagnostics;
 using System.Numerics;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("\\{ X: {X}, Y: {Y} \\}")]
 public record struct Point<T> where T : INumber<T>
 {
     public T X;
@@ -20,6 +18,9 @@ public record struct Point<T> where T : INumber<T>
 
     public readonly Point<U> Cast<U>() where U : INumber<U> =>
         new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
+
+    public override readonly string ToString() =>
+        $"{{ X: {this.X}, Y: {this.Y} }}";
 
     public static Point<T> operator +(Point<T> point, T value) =>
         new(point.X + value, point.Y + value);

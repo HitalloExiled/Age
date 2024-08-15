@@ -241,9 +241,9 @@ internal partial class TextService : IDisposable
             }
         }
 
-        textNode.Baseline = 1 - -offset.Y / (float)maxSize.Height;
+        textNode.Baseline   = 1 - -offset.Y / (float)maxSize.Height;
         textNode.LineHeight = lineHeight;
-        textNode.Size = maxSize;
+        textNode.Size       = maxSize;
 
         if (atlas.IsDirty)
         {

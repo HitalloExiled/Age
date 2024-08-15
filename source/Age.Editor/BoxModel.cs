@@ -10,7 +10,7 @@ public class BoxModel : Element
 
     public BoxModel()
     {
-        const int BORDER_SIZE = 20;
+        const int BORDER_SIZE = 10;
         this.Name = "BoxModel";
         this.Style.Border = new(BORDER_SIZE, 0, Color.Red);
         this.Style.Size      = SizeUnit.Percentage(100);
@@ -33,8 +33,9 @@ public class BoxModel : Element
             Name  = "StackText",
             Style = new()
             {
-                Color  = Color.White,
-                Border = new(10, 0, Color.Margenta),
+                Alignment = AlignmentType.Center,
+                Color     = Color.White,
+                Border    = new(10, 0, Color.Margenta),
             }
         };
 
@@ -65,9 +66,10 @@ public class BoxModel : Element
             Name  = "BoxCL",
             Style = new()
             {
-                Color  = Color.White,
-                Border = new(BORDER_SIZE, 0, Color.Yellow),
-                Size   = SizeUnit.Pixel(50),
+                Alignment = AlignmentType.Center,
+                Color     = Color.White,
+                Border    = new(BORDER_SIZE, 0, Color.Yellow),
+                Size      = SizeUnit.Pixel(50),
             }
         };
 

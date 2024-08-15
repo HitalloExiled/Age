@@ -10,8 +10,10 @@ public abstract partial class Element
         public readonly List<Element>       PendingChildCalculations = [];
 
         public Size<uint>         AvaliableSpace;
+        public Size<uint>         Border;
         public uint               HightestChild;
         public PendingCalculation PendingCalculation;
+        public Size<uint>         Size;
 
         public LayoutInfo() { }
     }

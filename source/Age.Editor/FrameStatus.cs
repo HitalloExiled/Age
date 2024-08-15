@@ -27,9 +27,10 @@ public class FrameStatus : Element
             Text  = "Frame",
             Style = new()
             {
-                Color           = Color.Green,
-                FontSize        = 12,
-                MinSize         = SizeUnit.Pixel(110, 30),
+                Color    = Color.Green,
+                FontSize = 12,
+                Border   = new(1, 0, Color.Green),
+                MinSize  = SizeUnit.Pixel(110, 30),
                 // BackgroundColor = new Color(1, 1, 0)
             }
         };

@@ -52,5 +52,4 @@ public record struct Border
                 BottomLeft  = value.Radius.BottomLeft,
             }
         };
-
 }

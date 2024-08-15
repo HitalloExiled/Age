@@ -14,18 +14,53 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.canvas.AppendChild(new BoxModel());
-        // this.CreateDemoScene();
+        // this.canvas.AppendChild(new BoxModel());
+        this.CreateDemoScene();
     }
 
     private void CreateDemoScene()
     {
-        var verticalStack = new Span() { Style = new() { Stack = StackType.Vertical } };
-        var header        = new Span() { Name = "Header" };
-        var viewports     = new Span() { Name = "Viewports", Style = new() { Alignment = AlignmentType.Center } };
+        var root = new Span
+        {
+            Name = "Root",
+            Style = new()
+            {
+                Size = SizeUnit.Percentage(100),
+                Border = new(1, default, Color.Margenta),
+            }
+        };
 
-        this.canvas.AppendChild(verticalStack);
+        var verticalStack = new Span()
+        {
+            Style = new()
+            {
+                Stack = StackType.Vertical,
+                Size  = SizeUnit.Percentage(100),
+            }
+        };
 
+        var header = new Span
+        {
+            Name  = "Header",
+            Style = new()
+            {
+                Size   = new(Unit.Percentage(100), null),
+                Border = new(1, default, Color.Red),
+            }
+        };
+
+        var viewports = new Span
+        {
+            Name = "Viewports",
+            Style = new()
+            {
+                Alignment = AlignmentType.Center,
+                Border    = new(1, default, Color.Blue),
+            }
+        };
+
+        this.canvas.AppendChild(root);
+        root.AppendChild(verticalStack);
         verticalStack.AppendChild(header);
         verticalStack.AppendChild(viewports);
 
