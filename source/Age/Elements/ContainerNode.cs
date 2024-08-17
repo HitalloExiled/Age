@@ -9,11 +9,12 @@ public abstract class ContainerNode : Node2D
 
     internal float Baseline { get; set; } = 1;
 
-    public Size<uint> ContentSize { get; internal set; }
-
     public Size<uint> Size
     {
         get => this.size;
-        internal set => this.Set(ref this.size, value);
+        internal set => this.Set(ref this.size, value, this.SizeChanged);
     }
+
+    protected virtual void SizeChanged()
+    { }
 }

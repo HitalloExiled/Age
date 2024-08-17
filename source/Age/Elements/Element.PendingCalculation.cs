@@ -5,7 +5,7 @@ namespace Age.Elements;
 public abstract partial class Element
 {
     [Flags]
-    private enum PendingCalculation
+    private enum LazyCalculation
     {
         None   = 0,
         Width  = 1 << 0,

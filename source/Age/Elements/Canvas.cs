@@ -39,22 +39,6 @@ public sealed class Canvas : Element
     protected override void Disconnected(NodeTree tree) =>
         tree.Window.Resized -= this.OnWindowSizeChanged;
 
-    protected override void ChildAppended(Node child)
-    {
-        if (child is Element element)
-        {
-            element.Canvas = this;
-        }
-    }
-
-    protected override void ChildRemoved(Node child)
-    {
-        if (child is Element element)
-        {
-            element.Canvas = null;
-        }
-    }
-
     public override void LateUpdate() =>
         this.UpdateLayout();
 }

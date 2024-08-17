@@ -59,13 +59,13 @@ public abstract class Node2D : Node
     public virtual Transform2D LocalTransform
     {
         get => this.localTransform;
-        set => this.Set(ref this.localTransform, value);
+        set => this.Set(ref this.localTransform, value, this.TransformChanged);
     }
 
     public virtual Vector2<float> Pivot
     {
         get => this.pivot;
-        set => this.Set(ref this.pivot, value);
+        set => this.Set(ref this.pivot, value, this.TransformChanged);
     }
 
     public virtual Transform2D Transform
@@ -74,13 +74,13 @@ public abstract class Node2D : Node
         set => this.LocalTransform = value * this.ParentTransform.Inverse();
     }
 
-    protected void Set<T>(ref T field, in T value)
+    protected void Set<T>(ref T field, in T value, Action callback)
     {
         if (!Equals(field, value))
         {
             field = value;
 
-            this.TransformChanged();
+            callback.Invoke();
 
             if (this.IsConnected)
             {

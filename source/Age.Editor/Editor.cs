@@ -32,10 +32,12 @@ public class Editor : Node
 
         var verticalStack = new Span()
         {
+            Name  = "VStack",
             Style = new()
             {
-                Stack = StackType.Vertical,
-                Size  = SizeUnit.Percentage(100),
+                Stack  = StackType.Vertical,
+                Size   = SizeUnit.Percentage(100),
+                Border = new(1, default, Color.Yellow),
             }
         };
 
@@ -49,52 +51,67 @@ public class Editor : Node
             }
         };
 
+        var content = new Span
+        {
+            Name  = "Content",
+            Style = new()
+            {
+                Size   = new(Unit.Percentage(100)),
+                Border = new(1, default, Color.Green),
+            }
+        };
+
         var viewports = new Span
         {
-            Name = "Viewports",
+            Name  = "Viewports",
             Style = new()
             {
                 Alignment = AlignmentType.Center,
                 Border    = new(1, default, Color.Blue),
+                Size      = new(400),
             }
         };
 
-        this.canvas.AppendChild(root);
-        root.AppendChild(verticalStack);
-        verticalStack.AppendChild(header);
-        verticalStack.AppendChild(viewports);
-
-        header.AppendChild(new FrameStatus());
         // this.canvas.AppendChild(new Playground());
 
-        var scene = new DemoScene();
+        // var scene = new DemoScene();
 
-        var freeViewport  = new Viewport(new(600)) { Name = "Red" };
-        var redViewport   = new Viewport(new(200)) { Name = "Red" };
-        var greenViewport = new Viewport(new(200)) { Name = "Green" };
-        var blueViewport  = new Viewport(new(200)) { Name = "Blue" };
+        // var freeViewport  = new Viewport(new(300)) { Name = "Red" };
+        // var redViewport   = new Viewport(new(100)) { Name = "Red" };
+        // var greenViewport = new Viewport(new(100)) { Name = "Green" };
+        // var blueViewport  = new Viewport(new(100)) { Name = "Blue" };
 
-        freeViewport.Style.Border  = new(1, 0, Color.White);
-        redViewport.Style.Border   = new(1, 0, Color.Red);
-        greenViewport.Style.Border = new(1, 0, Color.Green);
-        blueViewport.Style.Border  = new(1, 0, Color.Blue);
+        // freeViewport.Style.Border  = new(1, 0, Color.White);
+        // redViewport.Style.Border   = new(1, 0, Color.Red);
+        // greenViewport.Style.Border = new(1, 0, Color.Green);
+        // blueViewport.Style.Border  = new(1, 0, Color.Blue);
 
-        freeViewport.Style.BoxSizing = redViewport.Style.BoxSizing = greenViewport.Style.BoxSizing = blueViewport.Style.BoxSizing = BoxSizing.Border;
+        // freeViewport.Style.BoxSizing = redViewport.Style.BoxSizing = greenViewport.Style.BoxSizing = blueViewport.Style.BoxSizing = BoxSizing.Border;
 
-        scene.FreeCamera.RenderTargets.Add(freeViewport.RenderTarget);
-        scene.RedCamera.RenderTargets.Add(redViewport.RenderTarget);
-        scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
-        scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
+        // scene.FreeCamera.RenderTargets.Add(freeViewport.RenderTarget);
+        // scene.RedCamera.RenderTargets.Add(redViewport.RenderTarget);
+        // scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
+        // scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
 
         var sideViews = new Span() { Style = new() { Stack = StackType.Vertical, Alignment = AlignmentType.Center } };
 
-        sideViews.AppendChild(redViewport);
-        sideViews.AppendChild(greenViewport);
-        sideViews.AppendChild(blueViewport);
+        this.canvas.AppendChild(root);
+        // this.AppendChild(scene);
 
-        viewports.AppendChild(freeViewport);
-        viewports.AppendChild(sideViews);
+            root.AppendChild(verticalStack);
 
-        this.AppendChild(scene);
+                verticalStack.AppendChild(header);
+                    header.AppendChild(new FrameStatus());
+
+                verticalStack.AppendChild(content);
+                    content.AppendChild(viewports);
+
+                        // viewports.AppendChild(freeViewport);
+                        // viewports.AppendChild(sideViews);
+
+                            // sideViews.AppendChild(redViewport);
+                            // sideViews.AppendChild(greenViewport);
+                            // sideViews.AppendChild(blueViewport);
+
     }
 }

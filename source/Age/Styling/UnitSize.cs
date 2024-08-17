@@ -17,6 +17,15 @@ public record struct SizeUnit
         this.Height = height;
     }
 
+    public SizeUnit(uint? value) : this(value, value)
+    { }
+
+    public SizeUnit(uint? width, uint? height)
+    {
+        this.Width  = width.HasValue  ? Unit.Pixel(width.Value) : null;
+        this.Height = height.HasValue ? Unit.Pixel(height.Value) : null;
+    }
+
     public static SizeUnit Pixel(float value) =>
         new(Unit.Pixel(value));
 

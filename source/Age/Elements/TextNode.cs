@@ -4,6 +4,7 @@ namespace Age.Elements;
 
 public class TextNode : ContainerNode
 {
+    private bool    isDirty;
     private string? value;
 
     public override string NodeName { get; } = nameof(TextNode);
@@ -20,9 +21,9 @@ public class TextNode : ContainerNode
 
     private void UpdateText(string? value)
     {
-        var parent = this.ParentElement;
+        this.isDirty = true;
 
-        if (parent != null && parent.IsConnected && value != this.value)
+        if (value != this.value && (this.ParentElement?.IsConnected ?? false))
         {
             this.Draw();
         }
@@ -32,19 +33,24 @@ public class TextNode : ContainerNode
 
     internal void Draw()
     {
-        if (string.IsNullOrEmpty(this.value))
+        if (this.isDirty == true)
         {
-            this.Commands.Clear();
-        }
-        else
-        {
-            TextService.Singleton.DrawText(this, this.value);
-
-            if (this.IsConnected)
+            if (string.IsNullOrEmpty(this.value))
             {
-                this.Tree.IsDirty = true;
+                this.Commands.Clear();
+            }
+            else
+            {
+                TextService.Singleton.DrawText(this, this.value);
+
+                if (this.IsConnected)
+                {
+                    this.Tree.IsDirty = true;
+                }
             }
         }
+
+        this.isDirty = false;
     }
 
     public override string ToString() =>

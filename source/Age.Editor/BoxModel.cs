@@ -10,7 +10,7 @@ public class BoxModel : Element
 
     public BoxModel()
     {
-        const int BORDER_SIZE = 10;
+        const int BORDER_SIZE = 4;
         this.Name = "BoxModel";
         this.Style.Border = new(BORDER_SIZE, 0, Color.Red);
         this.Style.Size      = SizeUnit.Percentage(100);
@@ -118,15 +118,14 @@ public class BoxModel : Element
         };
 
         this.AppendChild(stackL);
-
-        stackL.AppendChild(stackText);
-        stackL.AppendChild(boxAL);
-        stackL.AppendChild(boxBL);
-        stackL.AppendChild(boxCL);
+            stackL.AppendChild(stackText);
+            stackL.AppendChild(boxAL);
+            stackL.AppendChild(boxBL);
+            stackL.AppendChild(boxCL);
 
         this.AppendChild(stackR);
-        stackR.AppendChild(boxAR);
-        stackR.AppendChild(boxBR);
-        stackR.AppendChild(boxCR);
+            stackR.AppendChild(boxAR);
+            stackR.AppendChild(boxBR);
+            stackR.AppendChild(boxCR);
     }
 }
