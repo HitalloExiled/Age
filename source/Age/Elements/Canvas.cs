@@ -13,11 +13,12 @@ public sealed class Canvas : Element
         this.Style = new()
         {
             Baseline = 1,
-            Position = new(PADDING, -PADDING),
+            // Position = new(PADDING, -PADDING),
         };
 
     private void OnWindowSizeChanged() =>
-        this.Style.Size = SizeUnit.Pixel(this.Tree!.Window.ClientSize - PADDING * 2);
+        // this.Style.Size = SizeUnit.Pixel(this.Tree!.Window.ClientSize - PADDING * 2);
+        this.Style.Size = SizeUnit.Pixel(this.Tree!.Window.ClientSize);
 
     internal protected override void RequestUpdate()
     {

@@ -233,7 +233,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     private static float Normalize(float value) =>
         (1 + value) / 2;
 
-
     IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
     {
         for (var childElement = this.FirstElementChild; childElement != null; childElement = childElement.NextElementSibling)
@@ -241,7 +240,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             yield return childElement;
         }
     }
-
     private void CalculateLayout()
     {
         var stackMode   = this.Style.Stack ?? StackType.Horizontal;
@@ -263,6 +261,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 }
                 else if (child is Element element)
                 {
+                    element.UpdateLayout();
+
                     var margin = element.Style.Margin ?? new(0);
 
                     childSize.Width  = margin.Horizontal;
@@ -361,22 +361,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             }
         }
 
-        var border = new Size<uint>();
-
-        if (this.Style.BoxSizing != BoxSizing.Border)
-        {
-            if (!this.layoutInfo.LazyCalculation.HasFlag(LazyCalculation.Width))
-            {
-                border.Width += this.layoutInfo.Border.Width;
-            }
-
-            if (!this.layoutInfo.LazyCalculation.HasFlag(LazyCalculation.Height))
-            {
-                border.Height += this.layoutInfo.Border.Height;
-            }
-        }
-
-        this.Size = size + border;
+        this.Size = this.layoutInfo.Size + (this.Style.BoxSizing != BoxSizing.Border ? this.layoutInfo.Border : default);
     }
 
     private void CalculatePendingLayouts()
@@ -385,7 +370,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         foreach (var child in this.layoutInfo.Dependents)
         {
-            var size = new Size<uint>();
+            var size = child.layoutInfo.Size;
 
             if (child.layoutInfo.LazyCalculation.HasFlag(LazyCalculation.Width))
             {
@@ -406,29 +391,27 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                     size.Width = uint.Max(this.layoutInfo.Size.Width, (uint)(child.Style.MaxSize.Value.Width.Value.Value * this.layoutInfo.Size.Width));
                 }
 
-                var totalWidth = size.Width + child.layoutInfo.Border.Width;
-
                 if (this.Style.Stack != StackType.Vertical)
                 {
-                    if (totalWidth < this.layoutInfo.AvaliableSpace.Width)
+                    if (size.Width < this.layoutInfo.AvaliableSpace.Width)
                     {
-                        this.layoutInfo.AvaliableSpace.Width -= totalWidth;
+                        this.layoutInfo.AvaliableSpace.Width -= size.Width;
                     }
                     else
                     {
-                        totalWidth = this.layoutInfo.AvaliableSpace.Width;
+                        size.Width = this.layoutInfo.AvaliableSpace.Width;
 
                         this.layoutInfo.AvaliableSpace.Width = 0;
-
-                        size.Width = totalWidth - child.layoutInfo.Border.Width;
                     }
+
+                    contentDynamicSize.Width += size.Width;
+                }
+                else
+                {
+                    contentDynamicSize.Width = uint.Max(size.Width, contentDynamicSize.Width);
                 }
 
-                contentDynamicSize.Width += totalWidth;
-            }
-            else
-            {
-                size.Width = child.layoutInfo.Size.Width;
+                size.Width -= child.layoutInfo.Border.Width;
             }
 
             if (child.layoutInfo.LazyCalculation.HasFlag(LazyCalculation.Height))
@@ -450,29 +433,27 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                     size.Height = uint.Max(this.layoutInfo.Size.Height, (uint)(child.Style.MaxSize.Value.Height.Value.Value * this.layoutInfo.Size.Height));
                 }
 
-                var totalHeight = size.Height + child.layoutInfo.Border.Height;
-
                 if (this.Style.Stack == StackType.Vertical)
                 {
                     if (size.Height < this.layoutInfo.AvaliableSpace.Height)
                     {
-                        this.layoutInfo.AvaliableSpace.Height -= totalHeight;
+                        this.layoutInfo.AvaliableSpace.Height -= size.Height;
                     }
                     else
                     {
-                        totalHeight = this.layoutInfo.AvaliableSpace.Height;
+                        size.Height = this.layoutInfo.AvaliableSpace.Height;
 
                         this.layoutInfo.AvaliableSpace.Height = 0;
-
-                        size.Height = totalHeight - child.layoutInfo.Border.Height;
                     }
+
+                    contentDynamicSize.Height += size.Height;
+                }
+                else
+                {
+                    contentDynamicSize.Height = uint.Max(size.Height, contentDynamicSize.Height);
                 }
 
-                contentDynamicSize.Height += totalHeight;
-            }
-            else
-            {
-                size.Height = child.layoutInfo.Size.Height;
+                size.Height -= child.layoutInfo.Border.Height;
             }
 
             if (size != child.layoutInfo.Size)
@@ -485,16 +466,16 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                     ? size.Height - child.layoutInfo.ContentStaticSize.Height
                     : 0;
 
-                Console.WriteLine($"[{this.Name}].Size: {this.layoutInfo.Size}, Element: {child.Name}, Size: {size}, Border: {child.layoutInfo.Border}");
+                Console.WriteLine($"Element: {child.Name}, Size: {size}, Border: {child.layoutInfo.Border} :: [{this.Name}].Size: {this.layoutInfo.Size}");
                 child.layoutInfo.Size = size;
                 child.CalculatePendingLayouts();
             }
 
-            child.Size = size + child.layoutInfo.Border;
-
-            this.UpdateBaseline(child);
+            child.Size = child.layoutInfo.Size + child.layoutInfo.Border;
             child.UpdateDisposition();
             child.HasPendingUpdate = false;
+
+            this.UpdateBaseline(child);
         }
 
         this.layoutInfo.ContentDynamicSize += contentDynamicSize;
@@ -545,8 +526,19 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         var offset      = new Point<float>();
         var size        = this.layoutInfo.Size.Cast<float>();
-        var contentSize = this.layoutInfo.ContentStaticSize + this.layoutInfo.ContentDynamicSize;
+        var contentSize = new Size<uint>();
         var stack       = this.Style.Stack ?? StackType.Horizontal;
+
+        if (stack == StackType.Horizontal)
+        {
+            contentSize.Width  = this.layoutInfo.ContentStaticSize.Width + this.layoutInfo.ContentDynamicSize.Width;
+            contentSize.Height = uint.Max(this.layoutInfo.ContentStaticSize.Height, this.layoutInfo.ContentDynamicSize.Height);
+        }
+        else
+        {
+            contentSize.Width  = uint.Max(this.layoutInfo.ContentStaticSize.Width, this.layoutInfo.ContentDynamicSize.Width);
+            contentSize.Height = this.layoutInfo.ContentStaticSize.Height + this.layoutInfo.ContentDynamicSize.Height;
+        }
 
         offset.X += this.Style.Border?.Left.Thickness ?? 0;
         offset.Y -= this.Style.Border?.Top.Thickness ?? 0;
@@ -784,11 +776,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         if (this.HasPendingUpdate)
         {
-            foreach (var child in this)
-            {
-                (child as Element)?.UpdateLayout();
-            }
-
             this.CalculateLayout();
 
             if (this.layoutInfo.LazyCalculation == LazyCalculation.None)

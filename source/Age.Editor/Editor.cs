@@ -7,6 +7,7 @@ namespace Age.Editor;
 
 public class Editor : Node
 {
+    const uint BORDER_SIZE = 10;
     private readonly Canvas canvas = new();
 
     public override string NodeName { get; } = nameof(Editor);
@@ -26,7 +27,7 @@ public class Editor : Node
             Style = new()
             {
                 Size = SizeUnit.Percentage(100),
-                Border = new(1, default, Color.Margenta),
+                Border = new(BORDER_SIZE, default, Color.Margenta),
             }
         };
 
@@ -37,7 +38,7 @@ public class Editor : Node
             {
                 Stack  = StackType.Vertical,
                 Size   = SizeUnit.Percentage(100),
-                Border = new(1, default, Color.Yellow),
+                Border = new(BORDER_SIZE, default, Color.Yellow),
             }
         };
 
@@ -47,7 +48,7 @@ public class Editor : Node
             Style = new()
             {
                 Size   = new(Unit.Percentage(100), null),
-                Border = new(1, default, Color.Red),
+                Border = new(BORDER_SIZE, default, Color.Red),
             }
         };
 
@@ -57,7 +58,7 @@ public class Editor : Node
             Style = new()
             {
                 Size   = new(Unit.Percentage(100)),
-                Border = new(1, default, Color.Green),
+                Border = new(BORDER_SIZE, default, Color.Green),
             }
         };
 
@@ -67,7 +68,7 @@ public class Editor : Node
             Style = new()
             {
                 Alignment = AlignmentType.Center,
-                Border    = new(1, default, Color.Blue),
+                Border    = new(BORDER_SIZE, default, Color.Blue),
                 Size      = new(400),
             }
         };
@@ -104,7 +105,7 @@ public class Editor : Node
                     header.AppendChild(new FrameStatus());
 
                 verticalStack.AppendChild(content);
-                    content.AppendChild(viewports);
+                    // content.AppendChild(viewports);
 
                         // viewports.AppendChild(freeViewport);
                         // viewports.AppendChild(sideViews);

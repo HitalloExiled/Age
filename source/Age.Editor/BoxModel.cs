@@ -10,7 +10,7 @@ public class BoxModel : Element
 
     public BoxModel()
     {
-        const int BORDER_SIZE = 4;
+        const int BORDER_SIZE = 10;
         this.Name = "BoxModel";
         this.Style.Border = new(BORDER_SIZE, 0, Color.Red);
         this.Style.Size      = SizeUnit.Percentage(100);

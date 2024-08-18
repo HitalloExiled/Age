@@ -19,6 +19,8 @@ public class FrameStatus : Element
     private double minFrameTime = double.MaxValue;
     private double totalFps;
 
+    public bool Enabled { get; set; } = true;
+
     public FrameStatus()
     {
         this.statusText = new Span()
@@ -67,18 +69,21 @@ public class FrameStatus : Element
         this.maxFrameTime = Math.Max(this.maxFrameTime, frameTime);
         this.minFrameTime = Math.Min(this.minFrameTime, frameTime);
 
-        this.statusText.Text =
-            $"""
-            Frames:    {this.frames}
-            Delta Time: {Math.Round(deltaTime, 4)}
-            FPS: {fps}
-                Avg: {avgFps}
-                Min: {this.minFps}
-                Max: {this.maxFps}
+        if (this.Enabled)
+        {
+            this.statusText.Text =
+                $"""
+                Frames:    {this.frames}
+                Delta Time: {Math.Round(deltaTime, 4)}
+                FPS: {fps}
+                    Avg: {avgFps}
+                    Min: {this.minFps}
+                    Max: {this.maxFps}
 
-            Frame Time: {frameTime}ms
-                Min: {this.minFrameTime}ms
-                Max: {this.maxFrameTime}ms
-            """;
+                Frame Time: {frameTime}ms
+                    Min: {this.minFrameTime}ms
+                    Max: {this.maxFrameTime}ms
+                """;
+        }
     }
 }
