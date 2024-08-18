@@ -5,11 +5,14 @@ namespace Age.Elements;
 public abstract partial class Element
 {
     [Flags]
-    private enum LazyCalculation
+    private enum Dependency
     {
-        None   = 0,
-        Width  = 1 << 0,
-        Height = 1 << 1,
-        All    = Width | Height,
+        None         = 0,
+        ChildWidth   = 1 << 0,
+        ChildHeight  = 1 << 1,
+        ParentWidth  = 1 << 2,
+        ParentHeight = 1 << 3,
+        AllChild     = ChildWidth | ChildHeight,
+        AllParent    = ParentWidth | ParentHeight,
     }
 }

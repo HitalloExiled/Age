@@ -191,21 +191,29 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             (style?.Border?.Top.Thickness ?? 0) + (style?.Border?.Bottom.Thickness ?? 0)
         );
 
-    private static LazyCalculation GetLazyCalculation(Style? style)
+    private static Dependency GetDependencies(Style? style)
     {
-        var lazyDimension = LazyCalculation.None;
+        var dependency = Dependency.None;
 
-        if (style?.Size?.Width?.Type == UnitType.Percentage || style?.MinSize?.Width?.Type == UnitType.Percentage || style?.MaxSize?.Width?.Type == UnitType.Percentage)
+        if (style?.Size?.Width == null && style?.MinSize?.Width == null && style?.MaxSize?.Width == null)
         {
-            lazyDimension |= LazyCalculation.Width;
+            dependency |= Dependency.ChildWidth;
+        }
+        else if (style?.Size?.Width?.Type == UnitType.Percentage || style?.MinSize?.Width?.Type == UnitType.Percentage || style?.MaxSize?.Width?.Type == UnitType.Percentage)
+        {
+            dependency |= Dependency.ParentWidth;
         }
 
-        if (style?.Size?.Height?.Type == UnitType.Percentage || style?.MinSize?.Height?.Type == UnitType.Percentage || style?.MaxSize?.Height?.Type == UnitType.Percentage)
+        if (style?.Size?.Height == null && style?.MinSize?.Height == null && style?.MaxSize?.Height == null)
         {
-            lazyDimension |= LazyCalculation.Height;
+            dependency |= Dependency.ChildHeight;
+        }
+        else if (style?.Size?.Height?.Type == UnitType.Percentage || style?.MinSize?.Height?.Type == UnitType.Percentage || style?.MaxSize?.Height?.Type == UnitType.Percentage)
+        {
+            dependency |= Dependency.ParentHeight;
         }
 
-        return lazyDimension;
+        return dependency;
     }
 
     private static int? GetYAlignment(AlignmentType? alignmentType) =>
@@ -268,17 +276,22 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                     childSize.Width  = margin.Horizontal;
                     childSize.Height = margin.Vertical;
 
-                    if (element.layoutInfo.LazyCalculation != LazyCalculation.All)
+                    if (this.layoutInfo.Dependencies.HasFlag(Dependency.ChildWidth))
                     {
-                        if (!element.layoutInfo.LazyCalculation.HasFlag(LazyCalculation.Width))
-                        {
-                            childSize.Width += child.Size.Width;
-                        }
+                        childSize.Width += element.layoutInfo.Border.Width;
+                    }
+                    else if (!element.layoutInfo.Dependencies.HasFlag(Dependency.ParentWidth))
+                    {
+                        childSize.Width += element.Size.Width;
+                    }
 
-                        if (!element.layoutInfo.LazyCalculation.HasFlag(LazyCalculation.Height))
-                        {
-                            childSize.Height += child.Size.Height;
-                        }
+                    if (this.layoutInfo.Dependencies.HasFlag(Dependency.ChildHeight))
+                    {
+                        childSize.Height += element.layoutInfo.Border.Height;
+                    }
+                    else if (!element.layoutInfo.Dependencies.HasFlag(Dependency.ParentHeight))
+                    {
+                        childSize.Height += element.Size.Height;
                     }
                 }
 
@@ -301,53 +314,78 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         var size = this.layoutInfo.Size;
 
-        if (!this.layoutInfo.LazyCalculation.HasFlag(LazyCalculation.Width))
+        if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ParentWidth))
         {
             size.Width = contentSize.Width;
         }
 
-        if (!this.layoutInfo.LazyCalculation.HasFlag(LazyCalculation.Height))
+        if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ParentHeight))
         {
             size.Height = contentSize.Height;
         }
 
-        if (this.Style.Size?.Width?.Type == UnitType.Pixel)
+        var resolvedWidth  = true;
+        var resolvedHeight = true;
+
+        if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ChildWidth))
         {
-            size.Width = (uint)this.Style.Size.Value.Width.Value.Value;
-        }
-        else if (this.Style.MinSize?.Width?.Type == UnitType.Pixel && this.Style.MaxSize?.Width?.Type == UnitType.Pixel)
-        {
-            size.Width = uint.Max(uint.Min(size.Width, (uint)this.Style.MinSize.Value.Width.Value.Value), (uint)this.Style.MaxSize.Value.Width.Value.Value);
-        }
-        else if (this.Style.MinSize?.Width?.Type == UnitType.Pixel)
-        {
-            size.Width = uint.Max(size.Width, (uint)this.Style.MinSize.Value.Width.Value.Value);
-        }
-        else if (this.Style.MaxSize?.Width?.Type == UnitType.Pixel)
-        {
-            size.Width = uint.Max(size.Width, (uint)this.Style.MaxSize.Value.Width.Value.Value);
+            if (this.Style.Size?.Width?.Type == UnitType.Pixel)
+            {
+                size.Width = (uint)this.Style.Size.Value.Width.Value.Value;
+            }
+            else if (this.Style.MinSize?.Width?.Type == UnitType.Pixel && this.Style.MaxSize?.Width?.Type == UnitType.Pixel)
+            {
+                size.Width = uint.Max(uint.Min(size.Width, (uint)this.Style.MinSize.Value.Width.Value.Value), (uint)this.Style.MaxSize.Value.Width.Value.Value);
+            }
+            else if (this.Style.MinSize?.Width?.Type == UnitType.Pixel)
+            {
+                size.Width = uint.Max(size.Width, (uint)this.Style.MinSize.Value.Width.Value.Value);
+            }
+            else if (this.Style.MaxSize?.Width?.Type == UnitType.Pixel)
+            {
+                size.Width = uint.Max(size.Width, (uint)this.Style.MaxSize.Value.Width.Value.Value);
+            }
+            else
+            {
+                resolvedWidth = false;
+            }
         }
 
-        if (this.Style.Size?.Height?.Type == UnitType.Pixel)
+        if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ChildHeight))
         {
-            size.Height = (uint)this.Style.Size.Value.Height.Value.Value;
-        }
-        else if (this.Style.MinSize?.Height?.Type == UnitType.Pixel && this.Style.MaxSize?.Height?.Type == UnitType.Pixel)
-        {
-            size.Height = uint.Max(uint.Min(size.Height, (uint)this.Style.MinSize.Value.Height.Value.Value), (uint)this.Style.MaxSize.Value.Height.Value.Value);
-        }
-        else if (this.Style.MinSize?.Height?.Type == UnitType.Pixel)
-        {
-            size.Height = uint.Max(size.Height, (uint)this.Style.MinSize.Value.Height.Value.Value);
-        }
-        else if (this.Style.MaxSize?.Height?.Type == UnitType.Pixel)
-        {
-            size.Height = uint.Max(size.Height, (uint)this.Style.MaxSize.Value.Height.Value.Value);
+            if (this.Style.Size?.Height?.Type == UnitType.Pixel)
+            {
+                size.Height = (uint)this.Style.Size.Value.Height.Value.Value;
+            }
+            else if (this.Style.MinSize?.Height?.Type == UnitType.Pixel && this.Style.MaxSize?.Height?.Type == UnitType.Pixel)
+            {
+                size.Height = uint.Max(uint.Min(size.Height, (uint)this.Style.MinSize.Value.Height.Value.Value), (uint)this.Style.MaxSize.Value.Height.Value.Value);
+            }
+            else if (this.Style.MinSize?.Height?.Type == UnitType.Pixel)
+            {
+                size.Height = uint.Max(size.Height, (uint)this.Style.MinSize.Value.Height.Value.Value);
+            }
+            else if (this.Style.MaxSize?.Height?.Type == UnitType.Pixel)
+            {
+                size.Height = uint.Max(size.Height, (uint)this.Style.MaxSize.Value.Height.Value.Value);
+            }
+            else
+            {
+                resolvedHeight = true;
+            }
         }
 
         if (this.Style.BoxSizing == BoxSizing.Border)
         {
-            size -= this.layoutInfo.Border;
+            if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ChildWidth))
+            {
+                size.Width -= this.layoutInfo.Border.Width;
+            }
+
+            if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ChildHeight))
+            {
+                size.Height -= this.layoutInfo.Border.Height;
+            }
         }
 
         this.layoutInfo.AvaliableSpace = size - contentSize;
@@ -356,7 +394,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             this.layoutInfo.Size = size;
 
-            if (this.layoutInfo.LazyCalculation == LazyCalculation.None)
+            if (resolvedWidth && resolvedHeight)
             {
                 this.CalculatePendingLayouts();
             }
@@ -377,7 +415,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             var size = child.layoutInfo.Size;
 
-            if (child.layoutInfo.LazyCalculation.HasFlag(LazyCalculation.Width))
+            if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ChildWidth) && child.layoutInfo.Dependencies.HasFlag(Dependency.ParentWidth))
             {
                 if (child.Style.Size?.Width?.Type == UnitType.Percentage)
                 {
@@ -419,7 +457,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 size.Width -= child.layoutInfo.Border.Width;
             }
 
-            if (child.layoutInfo.LazyCalculation.HasFlag(LazyCalculation.Height))
+            if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ChildHeight) && child.layoutInfo.Dependencies.HasFlag(Dependency.ParentHeight))
             {
                 if (child.Style.Size?.Height?.Type == UnitType.Percentage)
                 {
@@ -492,11 +530,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.RequestUpdate();
 
         this.layoutInfo.Border          = GetBorderSize(this.Style);
-        this.layoutInfo.LazyCalculation = GetLazyCalculation(this.Style);
+        this.layoutInfo.Dependencies = GetDependencies(this.Style);
 
         if (this.ParentElement != null)
         {
-            if (this.layoutInfo.LazyCalculation != LazyCalculation.None)
+            if (this.layoutInfo.Dependencies != Dependency.None)
             {
                 this.ParentElement.layoutInfo.Dependents.Add(this);
             }
@@ -687,7 +725,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                     this.FirstElementChild = this.LastElementChild = childElement;
                 }
 
-                if (childElement.layoutInfo.LazyCalculation != LazyCalculation.None)
+                if (childElement.layoutInfo.Dependencies != Dependency.None)
                 {
                     this.layoutInfo.Dependents.Add(childElement);
                 }
@@ -783,7 +821,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             this.CalculateLayout();
 
-            if (this.layoutInfo.LazyCalculation == LazyCalculation.None)
+            if (this.layoutInfo.Dependencies == Dependency.None)
             {
                 this.UpdateDisposition();
             }
