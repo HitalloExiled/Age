@@ -23,17 +23,17 @@ public class TextNode : ContainerNode
     {
         this.isDirty = true;
 
-        if (value != this.value && (this.ParentElement?.IsConnected ?? false))
+        if (value != this.value)
         {
+            this.value = value;
+
             this.Draw();
         }
-
-        this.value = value;
     }
 
     internal void Draw()
     {
-        if (this.isDirty == true)
+        if (this.isDirty && (this.ParentElement?.IsConnected ?? false))
         {
             if (string.IsNullOrEmpty(this.value))
             {
@@ -48,9 +48,9 @@ public class TextNode : ContainerNode
                     this.Tree.IsDirty = true;
                 }
             }
-        }
 
-        this.isDirty = false;
+            this.isDirty = false;
+        }
     }
 
     public override string ToString() =>

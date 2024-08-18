@@ -2,28 +2,33 @@ using Age.Numerics;
 using Age.Elements;
 using Age.Styling;
 
-namespace Age.Editor;
+namespace Age.Editor.Tests;
 
-public class BoxModel : Element
+public class BoxModelTest
 {
-    public override string NodeName { get; } = nameof(BoxModel);
-
-    public BoxModel()
+    public static void Setup(Canvas canvas)
     {
         const int BORDER_SIZE = 10;
-        this.Name = "BoxModel";
-        this.Style.Border = new(BORDER_SIZE, 0, Color.Red);
-        this.Style.Size      = SizeUnit.Percentage(100);
-        this.Style.BoxSizing = BoxSizing.Border;
+
+        var boxModel = new Span
+        {
+            Name = "BoxModel",
+            Style = new()
+            {
+                Border = new(BORDER_SIZE, 0, Color.Red),
+                Size      = SizeUnit.Percentage(100),
+                BoxSizing = BoxSizing.Border
+            }
+        };
 
         var stackL = new Span
         {
             Name = "StackL",
             Style = new()
             {
-                Stack     = StackType.Vertical,
-                Border    = new(BORDER_SIZE, 0, Color.Green),
-                Size      = new(Unit.Percentage(50), Unit.Percentage(100)),
+                Stack  = StackType.Vertical,
+                Border = new(BORDER_SIZE, 0, Color.Green),
+                Size   = new(Unit.Percentage(50), Unit.Percentage(100)),
             }
         };
 
@@ -117,15 +122,16 @@ public class BoxModel : Element
             }
         };
 
-        this.AppendChild(stackL);
-            stackL.AppendChild(stackText);
-            stackL.AppendChild(boxAL);
-            stackL.AppendChild(boxBL);
-            stackL.AppendChild(boxCL);
+        canvas.AppendChild(boxModel);
+            boxModel.AppendChild(stackL);
+                stackL.AppendChild(stackText);
+                stackL.AppendChild(boxAL);
+                stackL.AppendChild(boxBL);
+                stackL.AppendChild(boxCL);
 
-        this.AppendChild(stackR);
-            stackR.AppendChild(boxAR);
-            stackR.AppendChild(boxBR);
-            stackR.AppendChild(boxCR);
+            boxModel.AppendChild(stackR);
+                stackR.AppendChild(boxAR);
+                stackR.AppendChild(boxBR);
+                stackR.AppendChild(boxCR);
     }
 }

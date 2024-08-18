@@ -345,6 +345,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             size.Height = uint.Max(size.Height, (uint)this.Style.MaxSize.Value.Height.Value.Value);
         }
 
+        if (this.Style.BoxSizing == BoxSizing.Border)
+        {
+            size -= this.layoutInfo.Border;
+        }
+
         this.layoutInfo.AvaliableSpace = size - contentSize;
 
         if (this.layoutInfo.Size != size)
@@ -361,7 +366,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             }
         }
 
-        this.Size = this.layoutInfo.Size + (this.Style.BoxSizing != BoxSizing.Border ? this.layoutInfo.Border : default);
+        this.Size = this.layoutInfo.Size + this.layoutInfo.Border;
     }
 
     private void CalculatePendingLayouts()
