@@ -24,7 +24,7 @@ public class Viewport : Element
         {
             if (this.renderTarget.Size != value)
             {
-                this.Style.MinSize = SizeUnit.Pixel(value);
+                this.Style.MinSize = new((Pixel)value.Width, (Pixel)value.Height);
                 this.renderTarget.Update(value);
                 this.UpdateCommand();
             }
@@ -33,8 +33,8 @@ public class Viewport : Element
 
     public Viewport(in Size<uint> size)
     {
-        this.Style.MinSize = SizeUnit.Pixel(size);
-        this.renderTarget = new(size);
+        this.Style.MinSize = new((Pixel)size.Width, (Pixel)size.Height);
+        this.renderTarget  = new(size);
         this.UpdateCommand();
     }
 

@@ -18,7 +18,7 @@ public sealed class Canvas : Element
 
     private void OnWindowSizeChanged() =>
         // this.Style.Size = SizeUnit.Pixel(this.Tree!.Window.ClientSize - PADDING * 2);
-        this.Style.Size = SizeUnit.Pixel(this.Tree!.Window.ClientSize);
+        this.Style.Size = new((Pixel)this.Tree!.Window.ClientSize.Width, (Pixel)this.Tree!.Window.ClientSize.Height);
 
     internal protected override void RequestUpdate()
     {

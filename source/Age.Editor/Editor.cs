@@ -15,8 +15,8 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        // Tests.BoxModelTest.Setup(this.canvas);
-        Tests.BoxSizingTest.Setup(this.canvas);
+        Tests.BoxModelTest.Setup(this.canvas);
+        // Tests.BoxSizingTest.Setup(this.canvas);
         // Tests.MarginTest.Setup(this.canvas);
         // this.CreateDemoScene();
     }
@@ -28,7 +28,7 @@ public class Editor : Node
             Name = "Root",
             Style = new()
             {
-                Size = SizeUnit.Percentage(100),
+                Size = new((Percentage)100),
                 Border = new(BORDER_SIZE, default, Color.Margenta),
             }
         };
@@ -39,7 +39,7 @@ public class Editor : Node
             Style = new()
             {
                 Stack  = StackType.Vertical,
-                Size   = SizeUnit.Percentage(100),
+                Size   = new((Percentage)100),
                 Border = new(BORDER_SIZE, default, Color.Yellow),
             }
         };
@@ -49,7 +49,7 @@ public class Editor : Node
             Name  = "Header",
             Style = new()
             {
-                Size   = new(Unit.Percentage(100), null),
+                Size   = new((Percentage)100, null),
                 Border = new(BORDER_SIZE, default, Color.Red),
             }
         };
@@ -59,7 +59,7 @@ public class Editor : Node
             Name  = "Content",
             Style = new()
             {
-                Size   = new(Unit.Percentage(100)),
+                Size   = new((Percentage)100),
                 Border = new(BORDER_SIZE, default, Color.Green),
             }
         };
@@ -71,7 +71,7 @@ public class Editor : Node
             {
                 Alignment = AlignmentType.Center,
                 Border    = new(BORDER_SIZE, default, Color.Blue),
-                Size      = new(400),
+                Size      = new((Pixel)400),
             }
         };
 

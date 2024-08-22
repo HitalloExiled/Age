@@ -199,7 +199,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             dependency |= Dependency.ChildWidth;
         }
-        else if (style?.Size?.Width?.Type == UnitType.Percentage || style?.MinSize?.Width?.Type == UnitType.Percentage || style?.MaxSize?.Width?.Type == UnitType.Percentage)
+        else if (style?.Size?.Width?.Kind == UnitKind.Percentage || style?.MinSize?.Width?.Kind == UnitKind.Percentage || style?.MaxSize?.Width?.Kind == UnitKind.Percentage)
         {
             dependency |= Dependency.ParentWidth;
         }
@@ -208,7 +208,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             dependency |= Dependency.ChildHeight;
         }
-        else if (style?.Size?.Height?.Type == UnitType.Percentage || style?.MinSize?.Height?.Type == UnitType.Percentage || style?.MaxSize?.Height?.Type == UnitType.Percentage)
+        else if (style?.Size?.Height?.Kind == UnitKind.Percentage || style?.MinSize?.Height?.Kind == UnitKind.Percentage || style?.MaxSize?.Height?.Kind == UnitKind.Percentage)
         {
             dependency |= Dependency.ParentHeight;
         }
@@ -329,21 +329,21 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ChildWidth))
         {
-            if (this.Style.Size?.Width?.Type == UnitType.Pixel)
+            if (this.Style.Size?.Width?.TryGetPixel(out var pixel) ?? false)
             {
-                size.Width = (uint)this.Style.Size.Value.Width.Value.Value;
+                size.Width = pixel;
             }
-            else if (this.Style.MinSize?.Width?.Type == UnitType.Pixel && this.Style.MaxSize?.Width?.Type == UnitType.Pixel)
+            else if ((this.Style.MinSize?.Width?.TryGetPixel(out var min) ?? false) && (this.Style.MaxSize?.Width?.TryGetPixel(out var max) ?? false))
             {
-                size.Width = uint.Max(uint.Min(size.Width, (uint)this.Style.MinSize.Value.Width.Value.Value), (uint)this.Style.MaxSize.Value.Width.Value.Value);
+                size.Width = uint.Max(uint.Min(size.Width, min), max);
             }
-            else if (this.Style.MinSize?.Width?.Type == UnitType.Pixel)
+            else if (this.Style.MinSize?.Width?.TryGetPixel(out min) ?? false)
             {
-                size.Width = uint.Max(size.Width, (uint)this.Style.MinSize.Value.Width.Value.Value);
+                size.Width = uint.Max(size.Width, min);
             }
-            else if (this.Style.MaxSize?.Width?.Type == UnitType.Pixel)
+            else if (this.Style.MaxSize?.Width?.TryGetPixel(out max) ?? false)
             {
-                size.Width = uint.Max(size.Width, (uint)this.Style.MaxSize.Value.Width.Value.Value);
+                size.Width = uint.Max(size.Width, max);
             }
             else
             {
@@ -353,21 +353,21 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ChildHeight))
         {
-            if (this.Style.Size?.Height?.Type == UnitType.Pixel)
+            if (this.Style.Size?.Height?.TryGetPixel(out var pixel) ?? false)
             {
-                size.Height = (uint)this.Style.Size.Value.Height.Value.Value;
+                size.Height = pixel;
             }
-            else if (this.Style.MinSize?.Height?.Type == UnitType.Pixel && this.Style.MaxSize?.Height?.Type == UnitType.Pixel)
+            else if ((this.Style.MinSize?.Height?.TryGetPixel(out var min) ?? false) && (this.Style.MaxSize?.Height?.TryGetPixel(out var max) ?? false))
             {
-                size.Height = uint.Max(uint.Min(size.Height, (uint)this.Style.MinSize.Value.Height.Value.Value), (uint)this.Style.MaxSize.Value.Height.Value.Value);
+                size.Height = uint.Max(uint.Min(size.Height, min), max);
             }
-            else if (this.Style.MinSize?.Height?.Type == UnitType.Pixel)
+            else if (this.Style.MinSize?.Height?.TryGetPixel(out min) ?? false)
             {
-                size.Height = uint.Max(size.Height, (uint)this.Style.MinSize.Value.Height.Value.Value);
+                size.Height = uint.Max(size.Height, min);
             }
-            else if (this.Style.MaxSize?.Height?.Type == UnitType.Pixel)
+            else if (this.Style.MaxSize?.Height?.TryGetPixel(out max) ?? false)
             {
-                size.Height = uint.Max(size.Height, (uint)this.Style.MaxSize.Value.Height.Value.Value);
+                size.Height = uint.Max(size.Height, max);
             }
             else
             {
@@ -417,21 +417,21 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
             if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ChildWidth) && child.layoutInfo.Dependencies.HasFlag(Dependency.ParentWidth))
             {
-                if (child.Style.Size?.Width?.Type == UnitType.Percentage)
+                if (child.Style.Size?.Width?.TryGetPercentage(out var percentage) ?? false)
                 {
-                    size.Width = (uint)(child.Style.Size.Value.Width.Value.Value * this.layoutInfo.Size.Width);
+                    size.Width = (uint)(this.layoutInfo.Size.Width * percentage);
                 }
-                else if (child.Style.MinSize?.Width?.Type == UnitType.Percentage && child.Style.MaxSize?.Width?.Type == UnitType.Percentage)
+                else if ((child.Style.MinSize?.Width?.TryGetPercentage(out var min) ?? false) && (child.Style.MaxSize?.Width?.TryGetPercentage(out var max) ?? false))
                 {
-                    size.Width = uint.Max(uint.Min(this.layoutInfo.Size.Width, (uint)(child.Style.MinSize.Value.Width.Value.Value * this.layoutInfo.Size.Width)), (uint)(child.Style.MaxSize.Value.Width.Value.Value * this.layoutInfo.Size.Width));
+                    size.Width = uint.Max(uint.Min(this.layoutInfo.Size.Width, (uint)(this.layoutInfo.Size.Width * min)), (uint)(this.layoutInfo.Size.Width * max));
                 }
-                else if (child.Style.MinSize?.Width?.Type == UnitType.Percentage)
+                else if (child.Style.MinSize?.Width?.TryGetPercentage(out min) ?? false)
                 {
-                    size.Width = uint.Min(this.layoutInfo.Size.Width, (uint)(child.Style.MinSize.Value.Width.Value.Value * this.layoutInfo.Size.Width));
+                    size.Width = uint.Min(this.layoutInfo.Size.Width, (uint)(this.layoutInfo.Size.Width * min));
                 }
-                else if (child.Style.MaxSize?.Width?.Type == UnitType.Percentage)
+                else if (child.Style.MaxSize?.Width?.TryGetPercentage(out max) ?? false)
                 {
-                    size.Width = uint.Max(this.layoutInfo.Size.Width, (uint)(child.Style.MaxSize.Value.Width.Value.Value * this.layoutInfo.Size.Width));
+                    size.Width = uint.Max(this.layoutInfo.Size.Width, (uint)(this.layoutInfo.Size.Width * max));
                 }
 
                 if (this.Style.Stack != StackType.Vertical)
@@ -459,21 +459,21 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
             if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ChildHeight) && child.layoutInfo.Dependencies.HasFlag(Dependency.ParentHeight))
             {
-                if (child.Style.Size?.Height?.Type == UnitType.Percentage)
+                if (child.Style.Size?.Height?.TryGetPercentage(out var percentage) ?? false)
                 {
-                    size.Height = (uint)(child.Style.Size.Value.Height.Value.Value * this.layoutInfo.Size.Height);
+                    size.Height = (uint)(this.layoutInfo.Size.Height * percentage);
                 }
-                else if (child.Style.MinSize?.Height?.Type == UnitType.Percentage && child.Style.MaxSize?.Height?.Type == UnitType.Percentage)
+                else if ((child.Style.MinSize?.Height?.TryGetPercentage(out var min) ?? false) && (child.Style.MaxSize?.Height?.TryGetPercentage(out var max) ?? false))
                 {
-                    size.Height = uint.Max(uint.Min(this.layoutInfo.Size.Height, (uint)(child.Style.MinSize.Value.Height.Value.Value * this.layoutInfo.Size.Height)), (uint)(child.Style.MaxSize.Value.Height.Value.Value * this.layoutInfo.Size.Height));
+                    size.Height = uint.Max(uint.Min(this.layoutInfo.Size.Height, (uint)(this.layoutInfo.Size.Height * min)), (uint)(this.layoutInfo.Size.Height * max));
                 }
-                else if (child.Style.MinSize?.Height?.Type == UnitType.Percentage)
+                else if (child.Style.MinSize?.Height?.TryGetPercentage(out min) ?? false)
                 {
-                    size.Height = uint.Min(this.layoutInfo.Size.Height, (uint)(child.Style.MinSize.Value.Height.Value.Value * this.layoutInfo.Size.Height));
+                    size.Height = uint.Min(this.layoutInfo.Size.Height, (uint)(this.layoutInfo.Size.Height * min));
                 }
-                else if (child.Style.MaxSize?.Height?.Type == UnitType.Percentage)
+                else if (child.Style.MaxSize?.Height?.TryGetPercentage(out max) ?? false)
                 {
-                    size.Height = uint.Max(this.layoutInfo.Size.Height, (uint)(child.Style.MaxSize.Value.Height.Value.Value * this.layoutInfo.Size.Height));
+                    size.Height = uint.Max(this.layoutInfo.Size.Height, (uint)(this.layoutInfo.Size.Height * max));
                 }
 
                 if (this.Style.Stack == StackType.Vertical)

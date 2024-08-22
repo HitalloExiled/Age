@@ -17,7 +17,7 @@ public class Playground : Element
             {
                 Alignment = AlignmentType.Center,
                 Border    = new(1, 0, Color.Red),
-                Size      = SizeUnit.Pixel(200, 200),
+                Size      = new((Pixel)200, (Pixel)200),
             }
         };
 
@@ -33,7 +33,7 @@ public class Playground : Element
                 // Baseline  = 1,
                 Color     = Color.White,
                 Border    = new(1, 0, Color.Green),
-                Size      = new(Unit.Percentage(50), Unit.Percentage(50)),
+                Size      = new((Percentage)50, (Percentage)50),
             }
         };
 
@@ -49,7 +49,7 @@ public class Playground : Element
                 // Baseline  = 1,
                 Color     = Color.White,
                 Border    = new(1, 0, Color.Blue),
-                Size      = new(Unit.Percentage(50), Unit.Percentage(50)),
+                Size      = new((Percentage)50, (Percentage)50),
             }
         };
 

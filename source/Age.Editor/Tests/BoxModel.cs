@@ -15,8 +15,8 @@ public class BoxModelTest
             Name = "BoxModel",
             Style = new()
             {
-                Border = new(BORDER_SIZE, 0, Color.Red),
-                Size      = SizeUnit.Percentage(100),
+                Border    = new(BORDER_SIZE, 0, Color.Red),
+                Size      = new((Percentage)100),
                 BoxSizing = BoxSizing.Border
             }
         };
@@ -28,7 +28,7 @@ public class BoxModelTest
             {
                 Stack  = StackType.Vertical,
                 Border = new(BORDER_SIZE, 0, Color.Green),
-                Size   = new(Unit.Percentage(50), Unit.Percentage(100)),
+                Size   = new((Percentage)50, (Percentage)100),
             }
         };
 
@@ -51,7 +51,7 @@ public class BoxModelTest
             {
                 Color  = Color.White,
                 Border = new(BORDER_SIZE, 0, Color.Cyan),
-                Size   = new(Unit.Percentage(100), Unit.Percentage(50)),
+                Size   = new((Percentage)100, (Percentage)50),
             }
         };
 
@@ -62,7 +62,7 @@ public class BoxModelTest
             {
                 Color  = Color.White,
                 Border = new(BORDER_SIZE, 0, Color.White),
-                Size   = new(Unit.Percentage(100), Unit.Percentage(50)),
+                Size   = new((Percentage)100, (Percentage)50),
             }
         };
 
@@ -74,7 +74,7 @@ public class BoxModelTest
                 Alignment = AlignmentType.Center,
                 Color     = Color.White,
                 Border    = new(BORDER_SIZE, 0, Color.Yellow),
-                Size      = SizeUnit.Pixel(50),
+                Size      = new((Pixel)50),
             }
         };
 
@@ -85,7 +85,7 @@ public class BoxModelTest
             {
                 Stack  = StackType.Vertical,
                 Border = new(BORDER_SIZE, 0, Color.Blue),
-                Size   = new(Unit.Percentage(100), Unit.Percentage(100)),
+                Size   = new((Percentage)100, (Percentage)100),
             }
         };
 
@@ -96,7 +96,7 @@ public class BoxModelTest
             {
                 Color  = Color.White,
                 Border = new(BORDER_SIZE, 0, Color.Cyan),
-                Size   = SizeUnit.Pixel(50),
+                Size   = new((Pixel)50),
             }
         };
 
@@ -107,7 +107,7 @@ public class BoxModelTest
             {
                 Color  = Color.White,
                 Border = new(BORDER_SIZE, 0, Color.White),
-                Size   = SizeUnit.Percentage(100),
+                Size   = new((Percentage)100),
             }
         };
 
@@ -118,7 +118,7 @@ public class BoxModelTest
             {
                 Color  = Color.White,
                 Border = new(BORDER_SIZE, 0, Color.Yellow),
-                Size   = SizeUnit.Pixel(50),
+                Size   = new((Pixel)50),
             }
         };
 

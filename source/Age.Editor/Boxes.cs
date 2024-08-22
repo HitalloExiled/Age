@@ -16,7 +16,7 @@ public class Boxes : Element
             Style = new()
             {
                 Stack = StackType.Horizontal,
-                Size  = SizeUnit.Pixel(150)
+                Size  = new((Pixel)150),
             }
         };
 
@@ -26,7 +26,7 @@ public class Boxes : Element
             Style = new()
             {
                 Stack = StackType.Vertical,
-                Size  = SizeUnit.Pixel(150)
+                Size  = new((Pixel)150),
             }
         };
 
@@ -44,7 +44,7 @@ public class Boxes : Element
                 // Alignment   = AlignmentType.Center | AlignmentType.Bottom,
                 // BorderColor = Color.Red,
                 Color       = Color.Red,
-                Size        = SizeUnit.Pixel(BLOCK_SIZE),
+                Size        = new((Pixel)BLOCK_SIZE),
             }
         };
 
@@ -57,7 +57,7 @@ public class Boxes : Element
                 Alignment   = AlignmentType.Top,
                 // BorderColor = Color.Green,
                 Color       = Color.Green,
-                Size        = SizeUnit.Pixel(100),
+                Size        = new((Pixel)100),
             }
         };
 
@@ -70,7 +70,7 @@ public class Boxes : Element
                 // Alignment   = AlignmentType.Center | AlignmentType.Top,
                 // BorderColor = Color.Blue,
                 Color       = Color.Blue,
-                Size        = SizeUnit.Pixel(BLOCK_SIZE),
+                Size        = new((Pixel)BLOCK_SIZE),
             }
         };
 
@@ -83,7 +83,7 @@ public class Boxes : Element
                 // Alignment   = AlignmentType.Center,
                 // BorderColor = Color.Red,
                 Color       = Color.Red,
-                Size        = SizeUnit.Pixel(BLOCK_SIZE),
+                Size        = new((Pixel)BLOCK_SIZE),
             }
         };
 
@@ -96,7 +96,7 @@ public class Boxes : Element
                 Alignment   = AlignmentType.Center/*  | AlignmentType.Top */,
                 // BorderColor = Color.Green,
                 Color       = Color.Green,
-                Size        = SizeUnit.Pixel(BLOCK_SIZE),
+                Size        = new((Pixel)BLOCK_SIZE),
             }
         };
 
@@ -109,7 +109,7 @@ public class Boxes : Element
                 // Alignment   = AlignmentType.Center,
                 // BorderColor = Color.Blue,
                 Color       = Color.Blue,
-                Size        = SizeUnit.Pixel(BLOCK_SIZE),
+                Size        = new((Pixel)BLOCK_SIZE),
             }
         };
 

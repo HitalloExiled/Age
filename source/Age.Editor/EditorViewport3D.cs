@@ -16,7 +16,7 @@ public class EditorViewport3D : Element
         this.Style = new()
         {
             Border  = new Border(1, 0, Color.Red),
-            MinSize = SizeUnit.Pixel(100)
+            MinSize = new((Pixel)100),
         };
 
         this.AppendChild(this.Viewport = new Viewport(new(400)));

@@ -16,7 +16,7 @@ public class MarginTest
             Style = new()
             {
                 Border    = new(BORDER_SIZE, 0, Color.Red),
-                Size      = SizeUnit.Pixel(100),
+                Size      = new((Pixel)100),
                 BoxSizing = BoxSizing.Border,
             }
         };
@@ -29,7 +29,7 @@ public class MarginTest
                 // Margin = new(20),
                 // Stack  = StackType.Vertical,
                 Border = new(BORDER_SIZE, 0, Color.Green),
-                Size   = new(Unit.Percentage(100)),
+                Size   = new((Percentage)100),
             }
         };
 

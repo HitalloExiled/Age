@@ -12,7 +12,7 @@ public class BoxSizingTest
 
         var bsc = new Span
         {
-            Name = "BSC",
+            Name  = "BSC",
             Style = new()
             {
                 Border    = new(BORDER_SIZE, 0, Color.Cyan),
@@ -22,59 +22,59 @@ public class BoxSizingTest
 
         var bscA100 = new Span
         {
-            Name = "BSC-A100",
+            Name  = "BSC-A100",
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.White),
-                Size   = new(Unit.Percentage(100)),
+                Size   = new((Percentage)100),
             }
         };
 
         var bscw100 = new Span
         {
-            Name = "BSCw100",
+            Name  = "BSCw100",
             Style = new()
             {
                 Border    = new(BORDER_SIZE, 0, Color.Cyan),
-                Size      = new(100, null),
+                Size      = new((Pixel)100, null),
                 BoxSizing = BoxSizing.Content,
             }
         };
 
         var bscw100A100 = new Span
         {
-            Name = "BSCw100-A100",
+            Name  = "BSCw100-A100",
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.White),
-                Size   = new(Unit.Percentage(100)),
+                Size   = new((Percentage)100),
             }
         };
 
         var bsch100 = new Span
         {
-            Name = "BSCh100",
+            Name  = "BSCh100",
             Style = new()
             {
                 Border    = new(BORDER_SIZE, 0, Color.Cyan),
-                Size      = new(null, 100),
+                Size      = new(null, (Pixel)100),
                 BoxSizing = BoxSizing.Content,
             }
         };
 
         var bsch100A100 = new Span
         {
-            Name = "BSCh100-A100",
+            Name  = "BSCh100-A100",
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.White),
-                Size   = new(Unit.Percentage(100)),
+                Size   = new((Percentage)100),
             }
         };
 
         var bsb = new Span
         {
-            Name = "BSB",
+            Name  = "BSB",
             Style = new()
             {
                 Border    = new(BORDER_SIZE, 0, Color.Margenta),
@@ -84,84 +84,84 @@ public class BoxSizingTest
 
         var bsbA100 = new Span
         {
-            Name = "BSB-A100",
+            Name  = "BSB-A100",
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.White),
-                Size   = new(Unit.Percentage(100)),
+                Size   = new((Percentage)100),
             }
         };
 
         var bsbw100 = new Span
         {
-            Name = "BSBw100",
+            Name  = "BSBw100",
             Style = new()
             {
                 Border    = new(BORDER_SIZE, 0, Color.Margenta),
-                Size      = new(100, null),
+                Size      = new((Pixel)100, null),
                 BoxSizing = BoxSizing.Border,
             }
         };
 
         var bsbw100A100 = new Span
         {
-            Name = "BSBw100-A100",
+            Name  = "BSBw100-A100",
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.White),
-                Size   = new(Unit.Percentage(100)),
+                Size   = new((Percentage)100),
             }
         };
 
         var bsbh100 = new Span
         {
-            Name = "BSCh100",
+            Name  = "BSCh100",
             Style = new()
             {
                 Border    = new(BORDER_SIZE, 0, Color.Margenta),
-                Size      = new(null, 100),
+                Size      = new(null, (Pixel)100),
                 BoxSizing = BoxSizing.Border,
             }
         };
 
         var bsbh100A100 = new Span
         {
-            Name = "BSBh100-A100",
+            Name  = "BSBh100-A100",
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.White),
-                Size   = new(Unit.Percentage(100)),
+                Size   = new((Percentage)100),
             }
         };
 
         var bsc100 = new Span
         {
-            Name = "BSC100",
+            Name  = "BSC100",
             Style = new()
             {
                 Border    = new(BORDER_SIZE, 0, Color.Red),
-                Size      = SizeUnit.Pixel(100),
+                Size      = new((Pixel)100),
                 BoxSizing = BoxSizing.Content,
             }
         };
 
         var bsc100A = new Span
         {
-            Name = "BSC100-A",
+            Name  = "BSC100-A",
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red * 0.9f),
-                Size   = new(Unit.Percentage(50)),
+                Size   = new((Percentage)50),
             }
         };
 
         var bsc100B = new Span
         {
-            Name = "BSC100-B",
+            Name  = "BSC100-B",
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red * 0.8f),
-                Size   = new(Unit.Percentage(50)),
+                Size   = new((Percentage)50),
             }
         };
 
@@ -171,60 +171,60 @@ public class BoxSizingTest
             Style = new()
             {
                 Border    = new(BORDER_SIZE, 0, Color.Green),
-                Size      = SizeUnit.Pixel(100),
+                Size      = new((Pixel)100),
                 BoxSizing = BoxSizing.Border,
             }
         };
 
         var bsb100A = new Span
         {
-            Name = "BSB100-A",
+            Name  = "BSB100-A",
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green * 0.9f),
-                Size   = new(Unit.Percentage(50)),
+                Size   = new((Percentage)50),
             }
         };
 
         var bsb100B = new Span
         {
-            Name = "BSB100-B",
+            Name  = "BSB100-B",
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green * 0.8f),
-                Size   = new(Unit.Percentage(50)),
+                Size   = new((Percentage)50),
             }
         };
 
         var bsc100v = new Span
         {
-            Name = "BSC100v",
+            Name  = "BSC100v",
             Style = new()
             {
                 Stack     = StackType.Vertical,
                 Border    = new(BORDER_SIZE, 0, Color.Red),
-                Size      = SizeUnit.Pixel(100),
+                Size      = new((Pixel)100),
                 BoxSizing = BoxSizing.Content,
             }
         };
 
         var bscv100A = new Span
         {
-            Name = "BSC100v-A",
+            Name  = "BSC100v-A",
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red * 0.9f),
-                Size   = new(Unit.Percentage(50)),
+                Size   = new((Percentage)50),
             }
         };
 
         var bscv100B = new Span
         {
-            Name = "BSC100v-B",
+            Name  = "BSC100v-B",
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red * 0.8f),
-                Size   = new(Unit.Percentage(50)),
+                Size   = new((Percentage)50),
             }
         };
 
@@ -235,7 +235,7 @@ public class BoxSizingTest
             {
                 Stack     = StackType.Vertical,
                 Border    = new(BORDER_SIZE, 0, Color.Green),
-                Size      = SizeUnit.Pixel(100),
+                Size      = new((Pixel)100),
                 BoxSizing = BoxSizing.Border,
             }
         };
@@ -246,7 +246,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green * 0.9f),
-                Size   = new(Unit.Percentage(50)),
+                Size   = new((Percentage)50),
             }
         };
 
@@ -256,7 +256,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green * 0.8f),
-                Size   = new(Unit.Percentage(50)),
+                Size   = new((Percentage)50),
             }
         };
 
