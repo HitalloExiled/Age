@@ -2,15 +2,12 @@ namespace Age.Styling;
 
 public record struct Margin
 {
-    public uint Top;
-    public uint Right;
-    public uint Bottom;
-    public uint Left;
+    public Unit? Top;
+    public Unit? Right;
+    public Unit? Bottom;
+    public Unit? Left;
 
-    public readonly uint Horizontal => this.Left + this.Right;
-    public readonly uint Vertical   => this.Top + this.Bottom;
-
-    public Margin(uint top, uint right, uint bottom, uint left)
+    public Margin(Unit? top, Unit? right, Unit? bottom, Unit? left)
     {
         this.Top    = top;
         this.Right  = right;
@@ -18,9 +15,9 @@ public record struct Margin
         this.Left   = left;
     }
 
-    public Margin(uint horizontal, uint vertical) : this(vertical, horizontal, vertical, horizontal)
+    public Margin(Unit? horizontal, Unit? vertical) : this(vertical, horizontal, vertical, horizontal)
     { }
 
-    public Margin(uint value) : this(value, value, value, value)
+    public Margin(Unit? value) : this(value, value, value, value)
     { }
 }

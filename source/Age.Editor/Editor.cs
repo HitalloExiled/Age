@@ -16,8 +16,8 @@ public class Editor : Node
     {
         this.AppendChild(this.canvas);
         Tests.BoxModelTest.Setup(this.canvas);
-        // Tests.BoxSizingTest.Setup(this.canvas);
         // Tests.MarginTest.Setup(this.canvas);
+        // Tests.BoxSizingTest.Setup(this.canvas);
         // this.CreateDemoScene();
     }
 
