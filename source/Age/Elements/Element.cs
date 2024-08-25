@@ -185,45 +185,57 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     ~Element() =>
         this.style.Changed -= this.OnStyleChanged;
 
-    private static Size<uint> GetBorderSize(Style? style) =>
-        new(
-            (style?.Border?.Right.Thickness ?? 0) + (style?.Border?.Left.Thickness ?? 0),
-            (style?.Border?.Top.Thickness ?? 0) + (style?.Border?.Bottom.Thickness ?? 0)
-        );
-
-    private static Dependency GetDependencies(Style? style)
+    private void UpdateLayoutInfo()
     {
-        var dependency = Dependency.None;
+        this.layoutInfo.Border = new ()
+        {
+            Top    = this.Style.Border?.Top.Thickness ?? 0,
+            Right  = this.Style.Border?.Right.Thickness ?? 0,
+            Bottom = this.Style.Border?.Bottom.Thickness ?? 0,
+            Left   = this.Style.Border?.Left.Thickness ?? 0,
+        };
 
-        if (style?.Margin?.Top?.Kind == UnitKind.Percentage || style?.Margin?.Bottom?.Kind == UnitKind.Percentage)
-        {
-            dependency |= Dependency.ParentMarginVertical;
-        }
+        this.layoutInfo.ParentDependent = Dependency.None;
 
-        if (style?.Margin?.Left?.Kind == UnitKind.Percentage || style?.Margin?.Right?.Kind == UnitKind.Percentage)
+        if (this.Style.Size?.Width == null && this.Style.MinSize?.Width == null && this.Style.MaxSize?.Width == null)
         {
-            dependency |= Dependency.ParentMarginHorizontal;
+            this.layoutInfo.ContentDependent |= Dependency.Width;
         }
-
-        if (style?.Size?.Width == null && style?.MinSize?.Width == null && style?.MaxSize?.Width == null)
+        else if (this.Style.Size?.Width?.Kind == UnitKind.Percentage || this.Style.MinSize?.Width?.Kind == UnitKind.Percentage || this.Style.MaxSize?.Width?.Kind == UnitKind.Percentage)
         {
-            dependency |= Dependency.ContentWidth;
-        }
-        else if (style?.Size?.Width?.Kind == UnitKind.Percentage || style?.MinSize?.Width?.Kind == UnitKind.Percentage || style?.MaxSize?.Width?.Kind == UnitKind.Percentage)
-        {
-            dependency |= Dependency.ParentWidth;
+            this.layoutInfo.ParentDependent |= Dependency.Width;
         }
 
-        if (style?.Size?.Height == null && style?.MinSize?.Height == null && style?.MaxSize?.Height == null)
+        if (this.Style.Size?.Height == null && this.Style.MinSize?.Height == null && this.Style.MaxSize?.Height == null)
         {
-            dependency |= Dependency.ContentHeight;
+            this.layoutInfo.ContentDependent |= Dependency.Height;
         }
-        else if (style?.Size?.Height?.Kind == UnitKind.Percentage || style?.MinSize?.Height?.Kind == UnitKind.Percentage || style?.MaxSize?.Height?.Kind == UnitKind.Percentage)
+        else if (this.Style.Size?.Height?.Kind == UnitKind.Percentage || this.Style.MinSize?.Height?.Kind == UnitKind.Percentage || this.Style.MaxSize?.Height?.Kind == UnitKind.Percentage)
         {
-            dependency |= Dependency.ParentHeight;
+            this.layoutInfo.ParentDependent |= Dependency.Height;
         }
 
-        return dependency;
+        if (this.Style.Margin?.Top?.Kind == UnitKind.Percentage || this.Style.Margin?.Right?.Kind == UnitKind.Percentage || this.Style.Margin?.Bottom?.Kind == UnitKind.Percentage || this.Style.Margin?.Left?.Kind == UnitKind.Percentage)
+        {
+            this.layoutInfo.ParentDependent |= Dependency.Margin;
+        }
+
+        if (this.Style.Padding?.Top?.Kind == UnitKind.Percentage || this.Style.Padding?.Right?.Kind == UnitKind.Percentage || this.Style.Padding?.Bottom?.Kind == UnitKind.Percentage || this.Style.Padding?.Left?.Kind == UnitKind.Percentage)
+        {
+            this.layoutInfo.ParentDependent |= Dependency.Padding;
+        }
+
+        if (this.ParentElement != null)
+        {
+            if (this.layoutInfo.ParentDependent != Dependency.None)
+            {
+                this.ParentElement.layoutInfo.Dependents.Add(this);
+            }
+            else
+            {
+                this.ParentElement.layoutInfo.Dependents.Remove(this);
+            }
+        }
     }
 
     private static int? GetYAlignment(AlignmentType? alignmentType) =>
@@ -285,22 +297,22 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                     childSize.Width  = element.layoutInfo.Margin.Horizontal;
                     childSize.Height = element.layoutInfo.Margin.Vertical;
 
-                    if (this.layoutInfo.Dependencies.HasFlag(Dependency.ContentWidth) || !element.layoutInfo.Dependencies.HasFlag(Dependency.ParentWidth))
+                    if (this.layoutInfo.ContentDependent.HasFlag(Dependency.Width) || !element.layoutInfo.ParentDependent.HasFlag(Dependency.Width))
                     {
-                        childSize.Width += element.layoutInfo.Border.Width;
+                        childSize.Width += element.layoutInfo.Border.Horizontal;
                     }
 
-                    if (!element.layoutInfo.Dependencies.HasFlag(Dependency.ParentWidth))
+                    if (!element.layoutInfo.ParentDependent.HasFlag(Dependency.Width))
                     {
                         childSize.Width += element.layoutInfo.Size.Width;
                     }
 
-                    if (this.layoutInfo.Dependencies.HasFlag(Dependency.ContentHeight) || !element.layoutInfo.Dependencies.HasFlag(Dependency.ParentHeight))
+                    if (this.layoutInfo.ContentDependent.HasFlag(Dependency.Height) || !element.layoutInfo.ParentDependent.HasFlag(Dependency.Height))
                     {
-                        childSize.Height += element.layoutInfo.Border.Height;
+                        childSize.Height += element.layoutInfo.Border.Vertical;
                     }
 
-                    if (!element.layoutInfo.Dependencies.HasFlag(Dependency.ParentHeight))
+                    if (!element.layoutInfo.ParentDependent.HasFlag(Dependency.Height))
                     {
                         childSize.Height += element.layoutInfo.Size.Height;
                     }
@@ -321,49 +333,71 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             }
         }
 
-        CalculatePendingMargin(ref contentSize);
+        if (this.layoutInfo.ContentDependent.HasFlag(Dependency.Width) || this.layoutInfo.ContentDependent.HasFlag(Dependency.Height))
+        {
+            this.CalculatePendingMargin(ref contentSize);
+        }
 
         this.layoutInfo.ContentStaticSize = contentSize;
 
         var size = this.layoutInfo.Size;
 
-        if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ParentWidth))
+        if (!this.layoutInfo.ParentDependent.HasFlag(Dependency.Width))
         {
             size.Width = contentSize.Width;
         }
 
-        if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ParentHeight))
+        if (!this.layoutInfo.ParentDependent.HasFlag(Dependency.Height))
         {
             size.Height = contentSize.Height;
         }
 
-        var resolvedMargin  = !this.layoutInfo.Dependencies.HasFlag(Dependency.ParentMarginVertical) && !this.layoutInfo.Dependencies.HasFlag(Dependency.ParentMarginHorizontal);
-        var resolvedPadding = !this.layoutInfo.Dependencies.HasFlag(Dependency.ParentPaddingVertical) && !this.layoutInfo.Dependencies.HasFlag(Dependency.ParentPaddingHorizontal);
+        var resolvedMargin  = !this.layoutInfo.ParentDependent.HasFlag(Dependency.Margin);
+        var resolvedPadding = !this.layoutInfo.ParentDependent.HasFlag(Dependency.Padding);
+        var resolvedWidth   = true;
+        var resolvedHeight  = true;
 
-        var resolvedWidth  = true;
-        var resolvedHeight = true;
+        if (this.Style.Padding?.Top?.TryGetPixel(out var top) ?? false)
+        {
+            this.layoutInfo.Padding.Top = top;
+        }
 
-        if (this.Style.Margin?.Top?.TryGetPixel(out var top) ?? false)
+        if (this.Style.Padding?.Right?.TryGetPixel(out var right) ?? false)
+        {
+            this.layoutInfo.Padding.Right = right;
+        }
+
+        if (this.Style.Padding?.Bottom?.TryGetPixel(out var bottom) ?? false)
+        {
+            this.layoutInfo.Padding.Bottom = bottom;
+        }
+
+        if (this.Style.Padding?.Left?.TryGetPixel(out var left) ?? false)
+        {
+            this.layoutInfo.Padding.Left = left;
+        }
+
+        if (this.Style.Margin?.Top?.TryGetPixel(out top) ?? false)
         {
             this.layoutInfo.Margin.Top = top;
         }
 
-        if (this.Style.Margin?.Right?.TryGetPixel(out var right) ?? false)
+        if (this.Style.Margin?.Right?.TryGetPixel(out right) ?? false)
         {
             this.layoutInfo.Margin.Right = right;
         }
 
-        if (this.Style.Margin?.Bottom?.TryGetPixel(out var bottom) ?? false)
+        if (this.Style.Margin?.Bottom?.TryGetPixel(out bottom) ?? false)
         {
             this.layoutInfo.Margin.Bottom = bottom;
         }
 
-        if (this.Style.Margin?.Left?.TryGetPixel(out var left) ?? false)
+        if (this.Style.Margin?.Left?.TryGetPixel(out left) ?? false)
         {
             this.layoutInfo.Margin.Left = left;
         }
 
-        if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ContentWidth))
+        if (!this.layoutInfo.ContentDependent.HasFlag(Dependency.Width))
         {
             if (this.Style.Size?.Width?.TryGetPixel(out var pixel) ?? false)
             {
@@ -387,7 +421,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             }
         }
 
-        if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ContentHeight))
+        if (!this.layoutInfo.ContentDependent.HasFlag(Dependency.Height))
         {
             if (this.Style.Size?.Height?.TryGetPixel(out var pixel) ?? false)
             {
@@ -413,14 +447,14 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         if (this.Style.BoxSizing == BoxSizing.Border)
         {
-            if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ContentWidth))
+            if (!this.layoutInfo.ContentDependent.HasFlag(Dependency.Width))
             {
-                size.Width -= this.layoutInfo.Border.Width;
+                size.Width -= this.layoutInfo.Border.Horizontal;
             }
 
-            if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ContentHeight))
+            if (!this.layoutInfo.ContentDependent.HasFlag(Dependency.Height))
             {
-                size.Height -= this.layoutInfo.Border.Height;
+                size.Height -= this.layoutInfo.Border.Vertical;
             }
         }
 
@@ -440,91 +474,138 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             }
         }
 
-        this.Size = this.layoutInfo.Size + this.layoutInfo.Border;
+        this.Size = this.layoutInfo.Size
+            + new Size<uint>(this.layoutInfo.Padding.Horizontal, this.layoutInfo.Padding.Vertical)
+            + new Size<uint>(this.layoutInfo.Border.Horizontal, this.layoutInfo.Border.Vertical);
     }
 
     private void CalculatePendingMargin(ref Size<uint> size)
     {
-        if (this.layoutInfo.Dependencies.HasFlag(Dependency.ContentWidth) || this.layoutInfo.Dependencies.HasFlag(Dependency.ContentHeight))
-        {
-            var contentSize = size;
+        var contentSize = size;
 
-            foreach (var child in this.layoutInfo.Dependents)
+        foreach (var child in this.layoutInfo.Dependents)
+        {
+            if (child.layoutInfo.ParentDependent.HasFlag(Dependency.Padding) || child.layoutInfo.ParentDependent.HasFlag(Dependency.Margin))
             {
-                if (this.layoutInfo.Dependencies.HasFlag(Dependency.ContentWidth))
+                if (!this.layoutInfo.ParentDependent.HasFlag(Dependency.Width))
                 {
                     this.CalculatePendingMarginHorizontal(child, size, ref contentSize);
                 }
 
-                if (this.layoutInfo.Dependencies.HasFlag(Dependency.ContentHeight))
+                if (!this.layoutInfo.ParentDependent.HasFlag(Dependency.Height))
                 {
                     this.CalculatePendingMarginVertical(child, size, ref contentSize);
                 }
             }
+        }
 
-            size = contentSize;
+        size = contentSize;
+    }
+
+    private void CalculatePendingPadding(in Size<uint> size)
+    {
+        foreach (var child in this.layoutInfo.Dependents)
+        {
+            if (child.layoutInfo.ParentDependent.HasFlag(Dependency.Padding) || child.layoutInfo.ParentDependent.HasFlag(Dependency.Margin))
+            {
+                if (!this.layoutInfo.ParentDependent.HasFlag(Dependency.Width))
+                {
+                    this.CalculatePendingPaddingHorizontal(child, size);
+                }
+
+                if (!this.layoutInfo.ParentDependent.HasFlag(Dependency.Height))
+                {
+                    this.CalculatePendingPaddingVertical(child, size);
+                }
+            }
         }
     }
 
     private void CalculatePendingMarginHorizontal(Element element, in Size<uint> size, ref Size<uint> contentSize)
     {
-        if (element.layoutInfo.Dependencies.HasFlag(Dependency.ParentMarginHorizontal))
+        var horizontal = 0u;
+
+        if (element.Style.Margin?.Left?.TryGetPercentage(out var left) ?? false)
         {
-            var horizontal = 0u;
+            element.layoutInfo.Margin.Left = (uint)(size.Width * left);
 
-            if (element.Style.Margin?.Left?.TryGetPercentage(out var leftMargin) ?? false)
-            {
-                element.layoutInfo.Margin.Left = (uint)(size.Width * leftMargin);
+            horizontal += element.layoutInfo.Margin.Left;
+        }
 
-                horizontal += element.layoutInfo.Margin.Left;
-            }
+        if (element.Style.Margin?.Right?.TryGetPercentage(out var right) ?? false)
+        {
+            element.layoutInfo.Margin.Right = (uint)(size.Width * right);
 
-            if (element.Style.Margin?.Right?.TryGetPercentage(out var marginRight) ?? false)
-            {
-                element.layoutInfo.Margin.Right = (uint)(size.Width * marginRight);
+            horizontal += element.layoutInfo.Margin.Right;
+        }
 
-                horizontal += element.layoutInfo.Margin.Right;
-            }
-
+        if (horizontal > 0)
+        {
             if (this.Style.Stack != StackType.Vertical)
             {
                 contentSize.Width += horizontal;
             }
             else
             {
-                contentSize.Width = uint.Max(element.layoutInfo.Size.Width + element.layoutInfo.Border.Width + horizontal, contentSize.Width);
+                contentSize.Width = uint.Max(element.layoutInfo.Size.Width + element.layoutInfo.Border.Horizontal + horizontal, contentSize.Width);
             }
         }
     }
 
     private void CalculatePendingMarginVertical(Element element, in Size<uint> size, ref Size<uint> contentSize)
     {
-        if (element.layoutInfo.Dependencies.HasFlag(Dependency.ParentMarginVertical))
+        var vertical = 0u;
+
+        if (element.Style.Margin?.Top?.TryGetPercentage(out var top) ?? false)
         {
-            var vertical = 0u;
+            element.layoutInfo.Margin.Top = (uint)(size.Height * top);
 
-            if (element.Style.Margin?.Top?.TryGetPercentage(out var marginTop) ?? false)
-            {
-                element.layoutInfo.Margin.Top = (uint)(size.Height * marginTop);
+            vertical += element.layoutInfo.Margin.Top;
+        }
 
-                vertical += element.layoutInfo.Margin.Top;
-            }
+        if (element.Style.Margin?.Bottom?.TryGetPercentage(out var bottom) ?? false)
+        {
+            element.layoutInfo.Margin.Bottom = (uint)(size.Height * bottom);
 
-            if (element.Style.Margin?.Bottom?.TryGetPercentage(out var marginBotton) ?? false)
-            {
-                element.layoutInfo.Margin.Bottom = (uint)(size.Height * marginBotton);
+            vertical += element.layoutInfo.Margin.Bottom;
+        }
 
-                vertical += element.layoutInfo.Margin.Bottom;
-            }
-
+        if (vertical > 0)
+        {
             if (this.Style.Stack == StackType.Vertical)
             {
                 contentSize.Height += vertical;
             }
             else
             {
-                contentSize.Height = uint.Max(element.layoutInfo.Size.Height + element.layoutInfo.Border.Height + vertical, contentSize.Height);
+                contentSize.Height = uint.Max(element.layoutInfo.Size.Height + element.layoutInfo.Border.Vertical + vertical, contentSize.Height);
             }
+        }
+    }
+
+    private void CalculatePendingPaddingHorizontal(Element element, in Size<uint> size)
+    {
+        if (element.Style.Padding?.Left?.TryGetPercentage(out var left) ?? false)
+        {
+            element.layoutInfo.Padding.Left = (uint)(size.Width * left);
+        }
+
+        if (element.Style.Padding?.Right?.TryGetPercentage(out var right) ?? false)
+        {
+            element.layoutInfo.Padding.Right = (uint)(size.Width * right);
+        }
+    }
+
+    private void CalculatePendingPaddingVertical(Element element, in Size<uint> size)
+    {
+        if (element.Style.Padding?.Top?.TryGetPercentage(out var top) ?? false)
+        {
+            element.layoutInfo.Padding.Top = (uint)(size.Width * top);
+        }
+
+        if (element.Style.Padding?.Bottom?.TryGetPercentage(out var bottom) ?? false)
+        {
+            element.layoutInfo.Padding.Bottom = (uint)(size.Width * bottom);
         }
     }
 
@@ -536,11 +617,12 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             var size = child.layoutInfo.Size;
 
-            if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ContentWidth))
+            if (!this.layoutInfo.ContentDependent.HasFlag(Dependency.Width))
             {
-                this.CalculatePendingMarginHorizontal(child, size, ref contentDynamicSize);
+                this.CalculatePendingPaddingHorizontal(child, this.layoutInfo.Size);
+                this.CalculatePendingMarginHorizontal(child, this.layoutInfo.Size, ref contentDynamicSize);
 
-                if (child.layoutInfo.Dependencies.HasFlag(Dependency.ParentWidth))
+                if (child.layoutInfo.ParentDependent.HasFlag(Dependency.Width))
                 {
                     if (child.Style.Size?.Width?.TryGetPercentage(out var percentage) ?? false)
                     {
@@ -558,6 +640,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                     {
                         size.Width = uint.Max(this.layoutInfo.Size.Width, (uint)(this.layoutInfo.Size.Width * max));
                     }
+
+                    size.Width -= child.layoutInfo.Padding.Horizontal;
 
                     if (this.Style.Stack != StackType.Vertical)
                     {
@@ -579,15 +663,16 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                         contentDynamicSize.Width = uint.Max(size.Width, contentDynamicSize.Width);
                     }
 
-                    size.Width -= child.layoutInfo.Border.Width;
+                    size.Width -= child.layoutInfo.Border.Horizontal;
                 }
             }
 
-            if (!this.layoutInfo.Dependencies.HasFlag(Dependency.ContentHeight))
+            if (!this.layoutInfo.ContentDependent.HasFlag(Dependency.Height))
             {
-                this.CalculatePendingMarginVertical(child, size, ref contentDynamicSize);
+                this.CalculatePendingPaddingVertical(child, this.layoutInfo.Size);
+                this.CalculatePendingMarginVertical(child, this.layoutInfo.Size, ref contentDynamicSize);
 
-                if (child.layoutInfo.Dependencies.HasFlag(Dependency.ParentHeight))
+                if (child.layoutInfo.ParentDependent.HasFlag(Dependency.Height))
                 {
                     if (child.Style.Size?.Height?.TryGetPercentage(out var percentage) ?? false)
                     {
@@ -605,6 +690,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                     {
                         size.Height = uint.Max(this.layoutInfo.Size.Height, (uint)(this.layoutInfo.Size.Height * max));
                     }
+
+                    size.Height -= child.layoutInfo.Padding.Vertical;
 
                     if (this.Style.Stack == StackType.Vertical)
                     {
@@ -626,7 +713,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                         contentDynamicSize.Height = uint.Max(size.Height, contentDynamicSize.Height);
                     }
 
-                    size.Height -= child.layoutInfo.Border.Height;
+                    size.Height -= child.layoutInfo.Border.Vertical;
                 }
             }
 
@@ -647,7 +734,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 child.CalculatePendingLayouts();
             }
 
-            child.Size = child.layoutInfo.Size + child.layoutInfo.Border;
+            child.Size = child.layoutInfo.TotalSize;
+
             child.UpdateDisposition();
             child.HasPendingUpdate = false;
 
@@ -661,27 +749,15 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         this.UpdateStyleTransform();
         this.RequestUpdate();
+        this.UpdateLayoutInfo();
 
-        this.layoutInfo.Border       = GetBorderSize(this.Style);
-        this.layoutInfo.Dependencies = GetDependencies(this.Style);
 
-        if (this.ParentElement != null)
-        {
-            if (this.layoutInfo.Dependencies is not Dependency.None and not (Dependency.ContentWidth | Dependency.ContentHeight) and not Dependency.ContentWidth and not Dependency.ContentHeight)
-            {
-                this.ParentElement.layoutInfo.Dependents.Add(this);
-            }
-            else
-            {
-                this.ParentElement.layoutInfo.Dependents.Remove(this);
-            }
-        }
     }
 
     private void UpdateBaseline(ContainerNode child)
     {
         Style?    style  = null;
-        RawMargin margin = default;
+        RectEdges margin = default;
 
         if (child is Element element)
         {
@@ -723,8 +799,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             contentSize.Height = this.layoutInfo.ContentStaticSize.Height + this.layoutInfo.ContentDynamicSize.Height;
         }
 
-        offset.X += this.Style.Border?.Left.Thickness ?? 0;
-        offset.Y -= this.Style.Border?.Top.Thickness ?? 0;
+        offset.X += this.layoutInfo.Border.Left + this.layoutInfo.Padding.Left;
+        offset.Y -= this.layoutInfo.Border.Top  + this.layoutInfo.Padding.Top;
 
         ContainerNode? lastChild = null;
 
@@ -739,9 +815,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
             var reserved   = size / (this.layoutInfo.RenderableNodesCount - i);
 
-            Size<uint> border     = default;
-            Style?     childStyle = null;
-            RawMargin  margin     = default;
+            RectEdges border     = default;
+            Style?    childStyle = null;
+            RectEdges margin     = default;
 
             if (child is Element element)
             {
@@ -764,7 +840,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 var isInline = !offsetScaleY.HasValue && !hasMargin;
                 var canAlign = offsetScaleX.HasValue && size.Width > contentSize.Width;
 
-                var x = canAlign ? (float)(Math.Max(0, reserved.Width - child.Size.Width - margin.Horizontal - border.Width) * factorX) : 0;
+                var x = canAlign ? (float)(Math.Max(0, reserved.Width - child.Size.Width - margin.Horizontal - border.Horizontal) * factorX) : 0;
                 var y = isInline
                     ? (float)(size.Height - size.Height * this.Baseline - child.Size.Height * (1 - child.Baseline))
                     : (float)((size.Height - child.Size.Height - margin.Vertical) * factorY);
@@ -786,7 +862,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
                 if (canAlign)
                 {
-                    y = (float)(Math.Max(0, reserved.Height - child.Size.Height - margin.Vertical - border.Height) * factorY);
+                    y = (float)(Math.Max(0, reserved.Height - child.Size.Height - margin.Vertical - border.Vertical) * factorY);
                 }
 
                 usedSpace = canAlign ? new(child.Size.Width, float.Max(child.Size.Height, reserved.Height - y)) : child.Size.Cast<float>();
@@ -873,7 +949,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                     this.FirstElementChild = this.LastElementChild = childElement;
                 }
 
-                if (childElement.layoutInfo.Dependencies != Dependency.None)
+                if (childElement.layoutInfo.ParentDependent != Dependency.None)
                 {
                     this.layoutInfo.Dependents.Add(childElement);
                 }
@@ -969,7 +1045,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             this.CalculateLayout();
 
-            if (this.layoutInfo.Dependencies == Dependency.None)
+            if (this.layoutInfo.ParentDependent == Dependency.None)
             {
                 this.UpdateDisposition();
             }

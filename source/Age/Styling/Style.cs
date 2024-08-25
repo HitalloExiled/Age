@@ -18,6 +18,7 @@ public partial record Style
     private Margin?        margin;
     private SizeUnit?      maxSize;
     private SizeUnit?      minSize;
+    private Margin?        padding;
     private Point<float>?  pivot;
     private Point<int>?    position;
     private PositionType?  positionType;
@@ -95,6 +96,12 @@ public partial record Style
     {
         get => this.minSize;
         set => this.Set(ref this.minSize, value);
+    }
+
+    public Margin? Padding
+    {
+        get => this.padding;
+        set => this.Set(ref this.padding, value);
     }
 
     public Point<float>? Pivot

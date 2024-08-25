@@ -9,19 +9,27 @@ public abstract partial class Element
         public readonly HashSet<Element> Dependents = [];
 
         public Size<uint> AvaliableSpace;
-        public Size<uint> Border;
         public Size<uint> ContentDynamicSize;
         public Size<uint> ContentStaticSize;
-        public Dependency Dependencies;
-        public uint       HightestChild;
-        public RawMargin  Margin;
-        public uint       RenderableNodesCount;
         public Size<uint> Size;
+        public RectEdges  Border;
+        public RectEdges  Margin;
+        public RectEdges  Padding;
+        public Dependency ContentDependent;
+        public Dependency ParentDependent;
+        public uint       HightestChild;
+        public uint       RenderableNodesCount;
+
+        public readonly Size<uint> TotalSize =>
+            new(
+                this.Size.Width + this.Padding.Horizontal + this.Border.Horizontal,
+                this.Size.Height + this.Padding.Vertical + this.Border.Vertical
+            );
 
         public LayoutInfo() { }
     }
 
-    private record struct RawMargin
+    private record struct RectEdges
     {
         public uint Top;
         public uint Right;
