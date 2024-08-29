@@ -1,0 +1,20 @@
+using Age.Numerics;
+using Age.Scene;
+
+namespace Age.Elements;
+
+public abstract class ContainerNode : Node2D
+{
+    private Size<uint> size;
+
+    internal float Baseline { get; set; } = 1;
+
+    public Size<uint> Size
+    {
+        get => this.size;
+        internal set => this.Set(ref this.size, value, this.SizeChanged);
+    }
+
+    protected virtual void SizeChanged()
+    { }
+}

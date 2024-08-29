@@ -32,4 +32,7 @@ _ReSharper*/
 packages/
 .coverage
 *.spv
-!source/Age/Models/*.obj
+!**/*.obj
+*.bkp
+*.dtmp
+.debug/*

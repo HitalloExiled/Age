@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <PublishAot>true</PublishAot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
+    <ProjectReference Include="..\Age.Numerics\Age.Numerics.csproj" />
+    <ProjectReference Include="..\Age.Platforms\Age.Platforms.csproj" />
+    <ProjectReference Include="..\Age.Resources\Age.Resources.csproj" />
+    <ProjectReference Include="..\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj" />
+    <ProjectReference Include="..\Age\Age.csproj" />
+    <ProjectReference Include="..\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="./Models/*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="./Shaders/*.spv" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="./Textures/*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="2.88.8" />
+  </ItemGroup>
+</Project>
