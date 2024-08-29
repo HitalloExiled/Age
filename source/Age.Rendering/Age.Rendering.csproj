@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,10 +12,6 @@
     <ProjectReference Include="..\ThirdParty.Shaderc\ThirdParty.Shaderc.csproj" />
     <ProjectReference Include="..\ThirdParty.SpirvCross\ThirdParty.SpirvCross.csproj" />
     <ProjectReference Include="..\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="SkiaSharp" Version="2.88.7" />
   </ItemGroup>
 
   <ItemGroup>
