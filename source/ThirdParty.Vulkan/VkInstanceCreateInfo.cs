@@ -10,7 +10,7 @@ namespace ThirdParty.Vulkan;
 /// </summary>
 public unsafe struct VkInstanceCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
     public void*                 PNext;
     public VkInstanceCreateFlags Flags;
@@ -21,5 +21,5 @@ public unsafe struct VkInstanceCreateInfo
     public byte**                PpEnabledExtensionNames;
 
     public VkInstanceCreateInfo() =>
-        this.sType = VkStructureType.InstanceCreateInfo;
+        this.SType = VkStructureType.InstanceCreateInfo;
 }

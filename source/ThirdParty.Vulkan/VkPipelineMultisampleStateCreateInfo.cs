@@ -8,7 +8,7 @@ namespace ThirdParty.Vulkan;
 /// </summary>
 public unsafe struct VkPipelineMultisampleStateCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
     public void*                                 PNext;
     public VkPipelineMultisampleStateCreateFlags Flags;
@@ -20,5 +20,5 @@ public unsafe struct VkPipelineMultisampleStateCreateInfo
     public VkBool32                              AlphaToOneEnable;
 
     public VkPipelineMultisampleStateCreateInfo() =>
-        this.sType = VkStructureType.PipelineMultisampleStateCreateInfo;
+        this.SType = VkStructureType.PipelineMultisampleStateCreateInfo;
 }

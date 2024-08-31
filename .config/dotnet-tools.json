@@ -6,7 +6,15 @@
       "version": "5.2.0",
       "commands": [
         "reportgenerator"
-      ]
+      ],
+      "rollForward": false
+    },
+    "roslynator.dotnet.cli": {
+      "version": "0.8.9",
+      "commands": [
+        "roslynator"
+      ],
+      "rollForward": false
     }
   }
 }

@@ -7,7 +7,7 @@ namespace ThirdParty.Vulkan;
 /// </summary>
 public unsafe struct VkApplicationInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
     public void* PNext;
     public byte* PApplicationName;
@@ -17,5 +17,5 @@ public unsafe struct VkApplicationInfo
     public uint  ApiVersion;
 
     public VkApplicationInfo() =>
-        this.sType = VkStructureType.ApplicationInfo;
+        this.SType = VkStructureType.ApplicationInfo;
 }

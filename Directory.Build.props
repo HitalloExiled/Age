@@ -8,5 +8,6 @@
     <IlcDisableReflection>true</IlcDisableReflection>
     <IsAotCompatible>true</IsAotCompatible>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
 </Project>

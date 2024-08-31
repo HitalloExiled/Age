@@ -2,6 +2,8 @@ using Age.Core.Interop;
 
 namespace Age.Tests.Core.Interop;
 
+#pragma warning disable xUnit2024 // TODO Remove;
+
 public class PointerHelperTest
 {
     [Fact]

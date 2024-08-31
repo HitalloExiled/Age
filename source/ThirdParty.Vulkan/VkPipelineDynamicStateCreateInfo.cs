@@ -7,7 +7,7 @@ namespace ThirdParty.Vulkan;
 /// </summary>
 public unsafe struct VkPipelineDynamicStateCreateInfo
 {
-    public readonly VkStructureType sType;
+    public readonly VkStructureType SType;
 
     public void*                             PNext;
     public VkPipelineDynamicStateCreateFlags Flags;
@@ -15,5 +15,5 @@ public unsafe struct VkPipelineDynamicStateCreateInfo
     public VkDynamicState*                   PDynamicStates;
 
     public VkPipelineDynamicStateCreateInfo() =>
-        this.sType = VkStructureType.PipelineDynamicStateCreateInfo;
+        this.SType = VkStructureType.PipelineDynamicStateCreateInfo;
 }

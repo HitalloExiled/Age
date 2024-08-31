@@ -345,6 +345,9 @@ dotnet_diagnostic.IDE1006.severity = suggestion # Remove unnecessary suppression
 [**/obj/**.cs]
 dotnet_diagnostic.CS8019.severity = none
 
+[**/Native/**.cs]
+dotnet_diagnostic.IDE1006.severity = none
+
 [*.{csproj,xml,yml,yaml}]
 indent_style = space
 indent_size  = 2

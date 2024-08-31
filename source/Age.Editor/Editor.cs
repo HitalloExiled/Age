@@ -7,7 +7,7 @@ namespace Age.Editor;
 
 public class Editor : Node
 {
-    const uint BORDER_SIZE = 10;
+    private const uint BORDER_SIZE = 10;
     private readonly Canvas canvas = new();
 
     public override string NodeName { get; } = nameof(Editor);
@@ -26,10 +26,10 @@ public class Editor : Node
     {
         var root = new Span
         {
-            Name = "Root",
+            Name  = "Root",
             Style = new()
             {
-                Size = new((Percentage)100),
+                Size   = new((Percentage)100),
                 Border = new(BORDER_SIZE, default, Color.Margenta),
             }
         };

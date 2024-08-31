@@ -7,11 +7,7 @@ public unsafe class NativeListTests
     [Fact]
     public void Add()
     {
-        using var list = new NativeList<int>();
-
-        list.Add(1);
-        list.Add(2);
-        list.Add(3);
+        using var list = new NativeList<int> { 1, 2, 3 };
 
         Assert.Equal(4, list.Capacity);
         Assert.Equal(3, list.Count);

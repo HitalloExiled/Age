@@ -34,7 +34,7 @@ public class ShaderStorage : Disposable
                     {
                         var pass = RenderGraph.Active.GetRenderGraphPass<SceneRenderGraphPass>();
 
-                        this.pipelines[name] = shader = renderer.CreatePipelineAndWatch<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = renderer.MaxUsableSampleCount, FrontFace = VkFrontFace.CounterClockwise }, pass.RenderPass);
+                        this.pipelines[name] = shader = this.renderer.CreatePipelineAndWatch<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = this.renderer.MaxUsableSampleCount, FrontFace = VkFrontFace.CounterClockwise }, pass.RenderPass);
 
                         break;
                     }
@@ -45,5 +45,5 @@ public class ShaderStorage : Disposable
     }
 
     protected override void Disposed() =>
-        renderer.DeferredDispose(this.pipelines.Values);
+        this.renderer.DeferredDispose(this.pipelines.Values);
 }

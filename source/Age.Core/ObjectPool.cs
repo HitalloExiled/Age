@@ -4,9 +4,9 @@ namespace Age.Core;
 
 public class ObjectPool<T>(Func<T> generator) where T : class
 {
-    private readonly ConcurrentBag<T> entries = new();
+    private readonly ConcurrentBag<T> entries = [];
 
-    public T Get() => entries.TryTake(out T? item) ? item : generator.Invoke();
+    public T Get() => this.entries.TryTake(out var item) ? item : generator.Invoke();
 
-    public void Return(T item) => entries.Add(item);
+    public void Return(T item) => this.entries.Add(item);
 }
