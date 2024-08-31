@@ -16,7 +16,9 @@ public abstract class Node2D : Node
     private Transform2D ParentTransformCache => (this.Parent as Node2D)?.TransformCache ?? new();
     private Transform2D PivotedTransform     => Transform2D.Translated(this.Pivot) * this.LocalTransform * Transform2D.Translated(-this.Pivot);
 
-    protected Command? SingleCommand
+    internal List<Command> Commands { get; init; } = [];
+
+    internal Command? SingleCommand
     {
         get => this.Commands.Count == 1 ? this.Commands[0] : null;
         set
@@ -53,8 +55,6 @@ public abstract class Node2D : Node
             return this.transformCache.Value;
         }
     }
-
-    internal List<Command> Commands { get; init; } = [];
 
     public virtual Transform2D LocalTransform
     {

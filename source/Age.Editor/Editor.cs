@@ -15,11 +15,11 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        // Tests.BoxModelTest.Setup(this.canvas);
+        Tests.BoxModelTest.Setup(this.canvas);
         // Tests.MarginTest.Setup(this.canvas);
         // Tests.PaddingTest.Setup(this.canvas);
         // Tests.BoxSizingTest.Setup(this.canvas);
-        this.CreateDemoScene();
+        // this.CreateDemoScene();
     }
 
     private void CreateDemoScene()
