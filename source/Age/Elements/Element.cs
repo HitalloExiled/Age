@@ -134,7 +134,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 {
                     builder.Append(textNode.Value);
 
-                    if (this.Style.Stack == StackType.Vertical)
+                    if (this.Style.Stack == StackKind.Vertical)
                     {
                         builder.Append('\n');
                     }
@@ -211,7 +211,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    private static void CalculatePendingMarginHorizontal(Element element, StackType stackType, in Size<uint> size, ref Size<uint> contentSize)
+    private static void CalculatePendingMarginHorizontal(Element element, StackKind stack, in Size<uint> size, ref Size<uint> contentSize)
     {
         var horizontal = 0u;
 
@@ -231,7 +231,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         if (horizontal > 0)
         {
-            if (stackType == StackType.Horizontal)
+            if (stack == StackKind.Horizontal)
             {
                 contentSize.Width += horizontal;
             }
@@ -242,7 +242,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    private static void CalculatePendingMarginVertical(Element element, StackType stackType, in Size<uint> size, ref Size<uint> contentSize)
+    private static void CalculatePendingMarginVertical(Element element, StackKind stack, in Size<uint> size, ref Size<uint> contentSize)
     {
         var vertical = 0u;
 
@@ -262,7 +262,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         if (vertical > 0)
         {
-            if (stackType == StackType.Vertical)
+            if (stack == StackKind.Vertical)
             {
                 contentSize.Height += vertical;
             }
@@ -308,7 +308,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     private void CalculateLayout()
     {
-        var stackMode   = this.Style.Stack ?? StackType.Horizontal;
+        var stack       = this.Style.Stack ?? StackKind.Horizontal;
         var contentSize = new Size<uint>();
 
         this.layoutInfo.HightestChild = 0;
@@ -353,7 +353,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                     }
                 }
 
-                if (stackMode == StackType.Horizontal)
+                if (stack == StackKind.Horizontal)
                 {
                     contentSize.Width += childSize.Width;
                     contentSize.Height = uint.Max(contentSize.Height, childSize.Height);
@@ -518,7 +518,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         var contentSize = size;
 
-        var stackType = this.Style.Stack ?? StackType.Horizontal;
+        var stack = this.Style.Stack ?? StackKind.Horizontal;
 
         foreach (var child in this.layoutInfo.Dependents)
         {
@@ -526,12 +526,12 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             {
                 if (!this.layoutInfo.ParentDependent.HasFlag(Dependency.Width))
                 {
-                    CalculatePendingMarginHorizontal(child, stackType, size, ref contentSize);
+                    CalculatePendingMarginHorizontal(child, stack, size, ref contentSize);
                 }
 
                 if (!this.layoutInfo.ParentDependent.HasFlag(Dependency.Height))
                 {
-                    CalculatePendingMarginVertical(child, stackType, size, ref contentSize);
+                    CalculatePendingMarginVertical(child, stack, size, ref contentSize);
                 }
             }
         }
@@ -562,7 +562,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         var contentDynamicSize = new Size<uint>();
 
-        var stackType = this.Style.Stack ?? StackType.Horizontal;
+        var stack = this.Style.Stack ?? StackKind.Horizontal;
 
         foreach (var child in this.layoutInfo.Dependents)
         {
@@ -571,7 +571,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             if (!this.layoutInfo.ContentDependent.HasFlag(Dependency.Width))
             {
                 CalculatePendingPaddingHorizontal(child, this.layoutInfo.Size);
-                CalculatePendingMarginHorizontal(child, stackType, this.layoutInfo.Size, ref contentDynamicSize);
+                CalculatePendingMarginHorizontal(child, stack, this.layoutInfo.Size, ref contentDynamicSize);
 
                 if (child.layoutInfo.ParentDependent.HasFlag(Dependency.Width))
                 {
@@ -594,7 +594,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
                     size.Width -= child.layoutInfo.Padding.Horizontal;
 
-                    if (stackType == StackType.Horizontal)
+                    if (stack == StackKind.Horizontal)
                     {
                         if (size.Width < this.layoutInfo.AvaliableSpace.Width)
                         {
@@ -621,7 +621,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             if (!this.layoutInfo.ContentDependent.HasFlag(Dependency.Height))
             {
                 CalculatePendingPaddingVertical(child, this.layoutInfo.Size);
-                CalculatePendingMarginVertical(child, stackType, this.layoutInfo.Size, ref contentDynamicSize);
+                CalculatePendingMarginVertical(child, stack, this.layoutInfo.Size, ref contentDynamicSize);
 
                 if (child.layoutInfo.ParentDependent.HasFlag(Dependency.Height))
                 {
@@ -644,7 +644,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
                     size.Height -= child.layoutInfo.Padding.Vertical;
 
-                    if (stackType == StackType.Vertical)
+                    if (stack == StackKind.Vertical)
                     {
                         if (size.Height < this.layoutInfo.AvaliableSpace.Height)
                         {
@@ -701,8 +701,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.UpdateStyleTransform();
         this.RequestUpdate();
         this.UpdateLayoutInfo();
-
-
     }
 
     private void UpdateBaseline(ContainerNode child)
@@ -737,9 +735,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         var offset      = new Point<float>();
         var size        = this.layoutInfo.Size.Cast<float>();
         var contentSize = new Size<uint>();
-        var stack       = this.Style.Stack ?? StackType.Horizontal;
+        var stack       = this.Style.Stack ?? StackKind.Horizontal;
 
-        if (stack == StackType.Horizontal)
+        if (stack == StackKind.Horizontal)
         {
             contentSize.Width  = this.layoutInfo.ContentStaticSize.Width + this.layoutInfo.ContentDynamicSize.Width;
             contentSize.Height = uint.Max(this.layoutInfo.ContentStaticSize.Height, this.layoutInfo.ContentDynamicSize.Height);
@@ -779,12 +777,12 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
             var hasMargin    = childStyle?.Margin != null;
             var offsetScaleX = childStyle?.Align?.X ?? GetXAlignment(childStyle?.Alignment);
-            var offsetScaleY = childStyle?.Align?.Y ?? GetYAlignment(childStyle?.Alignment) ?? (stack == StackType.Horizontal ? this.Style.Baseline : null);
+            var offsetScaleY = childStyle?.Align?.Y ?? GetYAlignment(childStyle?.Alignment) ?? (stack == StackKind.Horizontal ? this.Style.Baseline : null);
 
             Vector2<float> position;
             Size<float>    usedSpace;
 
-            if (stack == StackType.Horizontal)
+            if (stack == StackKind.Horizontal)
             {
                 var factorX  = Normalize(offsetScaleX ?? -1);
                 var factorY  = 1 - Normalize(offsetScaleY ?? (hasMargin ? 0 : 1));
@@ -835,7 +833,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             lastChild = child;
         }
 
-        if (stack == StackType.Vertical && lastChild != null)
+        if (stack == StackKind.Vertical && lastChild != null)
         {
             // TODO - Analyse use case
             // this.Baseline = 1 - (offset.Y - lastChild.Size.Height * lastChild.Baseline) / this.Size.Height;
@@ -844,7 +842,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     private void UpdateLayoutInfo()
     {
-        this.layoutInfo.Border = new ()
+        this.layoutInfo.Border = new()
         {
             Top    = this.Style.Border?.Top.Thickness ?? 0,
             Right  = this.Style.Border?.Right.Thickness ?? 0,

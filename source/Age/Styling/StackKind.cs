@@ -1,6 +1,6 @@
 namespace Age.Styling;
 
-public enum StackType
+public enum StackKind
 {
     Vertical,
     Horizontal,

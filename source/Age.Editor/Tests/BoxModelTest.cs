@@ -26,7 +26,7 @@ public class BoxModelTest
             Name = "StackL",
             Style = new()
             {
-                Stack  = StackType.Vertical,
+                Stack  = StackKind.Vertical,
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Size   = new((Percentage)50, (Percentage)100),
             }
@@ -83,7 +83,7 @@ public class BoxModelTest
             Name = "StackR",
             Style = new()
             {
-                Stack  = StackType.Vertical,
+                Stack  = StackKind.Vertical,
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Size   = new((Percentage)100, (Percentage)100),
             }

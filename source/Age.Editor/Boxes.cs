@@ -15,7 +15,7 @@ public class Boxes : Element
             Name  = "BoxH",
             Style = new()
             {
-                Stack = StackType.Horizontal,
+                Stack = StackKind.Horizontal,
                 Size  = new((Pixel)150),
             }
         };
@@ -25,7 +25,7 @@ public class Boxes : Element
             Name  = "BoxV",
             Style = new()
             {
-                Stack = StackType.Vertical,
+                Stack = StackKind.Vertical,
                 Size  = new((Pixel)150),
             }
         };

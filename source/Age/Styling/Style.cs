@@ -24,7 +24,7 @@ public partial record Style
     private PositionType?  positionType;
     private float?         rotation;
     private SizeUnit?      size;
-    private StackType?     stack;
+    private StackKind?     stack;
 
     public Point<int>? Align
     {
@@ -134,7 +134,7 @@ public partial record Style
         set => this.Set(ref this.size, value);
     }
 
-    public StackType? Stack
+    public StackKind? Stack
     {
         get => this.stack;
         set => this.Set(ref this.stack, value);

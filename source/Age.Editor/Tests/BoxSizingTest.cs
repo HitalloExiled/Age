@@ -202,7 +202,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border    = new(BORDER_SIZE, 0, Color.Red),
-                Stack     = StackType.Vertical,
+                Stack     = StackKind.Vertical,
                 Size      = new((Pixel)100),
                 BoxSizing = BoxSizing.Content,
             }
@@ -233,7 +233,7 @@ public class BoxSizingTest
             Name  = "BSB100v",
             Style = new()
             {
-                Stack     = StackType.Vertical,
+                Stack     = StackKind.Vertical,
                 Border    = new(BORDER_SIZE, 0, Color.Green),
                 Size      = new((Pixel)100),
                 BoxSizing = BoxSizing.Border,

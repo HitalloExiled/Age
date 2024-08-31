@@ -17,9 +17,9 @@ public class Editor : Node
         this.AppendChild(this.canvas);
         // Tests.BoxModelTest.Setup(this.canvas);
         // Tests.MarginTest.Setup(this.canvas);
-        Tests.PaddingTest.Setup(this.canvas);
+        // Tests.PaddingTest.Setup(this.canvas);
         // Tests.BoxSizingTest.Setup(this.canvas);
-        // this.CreateDemoScene();
+        this.CreateDemoScene();
     }
 
     private void CreateDemoScene()
@@ -39,7 +39,7 @@ public class Editor : Node
             Name  = "VStack",
             Style = new()
             {
-                Stack  = StackType.Vertical,
+                Stack  = StackKind.Vertical,
                 Size   = new((Percentage)100),
                 Border = new(BORDER_SIZE, default, Color.Yellow),
             }
@@ -97,7 +97,7 @@ public class Editor : Node
         // scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
         // scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
 
-        var sideViews = new Span() { Style = new() { Stack = StackType.Vertical, Alignment = AlignmentType.Center } };
+        var sideViews = new Span() { Style = new() { Stack = StackKind.Vertical, Alignment = AlignmentType.Center } };
 
         this.canvas.AppendChild(root);
         // this.AppendChild(scene);
@@ -108,14 +108,14 @@ public class Editor : Node
                     header.AppendChild(new FrameStatus());
 
                 verticalStack.AppendChild(content);
-                    // content.AppendChild(viewports);
+                    content.AppendChild(viewports);
 
                         // viewports.AppendChild(freeViewport);
                         // viewports.AppendChild(sideViews);
 
-                            // sideViews.AppendChild(redViewport);
-                            // sideViews.AppendChild(greenViewport);
-                            // sideViews.AppendChild(blueViewport);
+                        //     sideViews.AppendChild(redViewport);
+                        //     sideViews.AppendChild(greenViewport);
+                        //     sideViews.AppendChild(blueViewport);
 
     }
 }
