@@ -852,7 +852,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             Left   = this.Style.Border?.Left.Thickness ?? 0,
         };
 
-        this.layoutInfo.ParentDependent = Dependency.None;
+        this.layoutInfo.ContentDependent = Dependency.None;
+        this.layoutInfo.ParentDependent  = Dependency.None;
 
         if (this.Style.Size?.Width == null && this.Style.MinSize?.Width == null && this.Style.MaxSize?.Width == null)
         {
