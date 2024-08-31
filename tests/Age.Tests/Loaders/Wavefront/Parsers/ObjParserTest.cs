@@ -2,14 +2,11 @@ using System.Text;
 using Age.Resources.Loaders.Wavefront;
 using Age.Resources.Loaders.Wavefront.Exceptions;
 using Age.Resources.Loaders.Wavefront.Parsers;
-using Age.Platforms.Abstractions.Interfaces;
 
 namespace Age.Tests.Loaders.Wavefront.Parsers;
 
 public partial class ObjParserTest : ParserTest
 {
-    private static readonly IFileSystem fileSystem = new Mock<IFileSystem>().Object;
-
     [Theory]
     [MemberData(nameof(Scenarios.Valid), MemberType = typeof(Scenarios))]
     public void ValidScenarios(ValidScenario scenario)
@@ -19,7 +16,7 @@ public partial class ObjParserTest : ParserTest
             return;
         }
 
-        var mtlLoaderMock = new Mock<MtlLoader>(fileSystem);
+        var mtlLoaderMock = new Mock<MtlLoader>();
 
         void tryLoad(string _, out IList<Material> materials) => materials = scenario.Materials;
 
@@ -46,7 +43,7 @@ public partial class ObjParserTest : ParserTest
         }
 
         using var reader = new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes(scenario.Source)));
-        var parser       = new ObjParser(GetFullPath("test_object.obj"), reader, new Mock<MtlLoader>(fileSystem).Object);
+        var parser       = new ObjParser(GetFullPath("test_object.obj"), reader, new Mock<MtlLoader>().Object);
 
         var expected = scenario.Expected;
         var actual   = Assert.Throws<ParseException>(parser.Parse);

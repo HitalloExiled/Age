@@ -11,7 +11,7 @@ public partial class MtlParser(string filepath, StreamReader reader) : Parser(re
 
     private Token NextToken()
     {
-        var unrestricted = this.Lookahead.Type == TokenType.Identifier && this.Lookahead.Value is "newmtl" or "map_Kd";
+        var unrestricted = this.Lookahead.Type == TokenType.Identifier && this.Lookahead.Value is "newmtl";
 
         return this.NextToken(unrestricted);
     }

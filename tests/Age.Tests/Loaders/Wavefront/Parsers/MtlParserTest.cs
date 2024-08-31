@@ -19,7 +19,7 @@ public partial class MtlParserTest : ParserTest
         var parser       = new MtlParser(GetFullPath("test_object.mtl"), reader);
 
         var expected = scenario.Expected;
-        var actual   = parser.Parse();
+        var actual   = parser.Parse().ToArray();
 
         Assert.Equivalent(expected, actual, true);
     }

@@ -186,7 +186,7 @@ public class DemoScene : Scene3D
             Console.WriteLine("Jump!!!");
         }
 
-        input = input.Normalized;
+        input = input.Normalized();
         rotation = (float)(rotation * deltaTime);
 
         var movement = -this.FreeCamera.Transform.Forward * input.Z + this.FreeCamera.Transform.Right * input.X + Vector3<float>.Up * input.Y;

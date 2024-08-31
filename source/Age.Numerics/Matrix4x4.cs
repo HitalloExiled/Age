@@ -139,9 +139,9 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
             ref var y = ref Unsafe.As<T, Vector3<T>>(ref this.M21);
             ref var z = ref Unsafe.As<T, Vector3<T>>(ref this.M31);
 
-            x = x.Normalized * value.X;
-            y = y.Normalized * value.Y;
-            z = z.Normalized * value.Z;
+            x = x.Normalized() * value.X;
+            y = y.Normalized() * value.Y;
+            z = z.Normalized() * value.Z;
         }
     }
 
@@ -273,8 +273,8 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public static Matrix4x4<T> LookingAt(in Vector3<T> eye, in Vector3<T> center, in Vector3<T> up)
     {
-        var zaxis = (eye - center).Normalized;
-        var xaxis = up.Cross(zaxis).Normalized;
+        var zaxis = (eye - center).Normalized();
+        var xaxis = up.Cross(zaxis).Normalized();
         var yaxis = zaxis.Cross(xaxis);
 
         Unsafe.SkipInit(out Matrix4x4<T> result);

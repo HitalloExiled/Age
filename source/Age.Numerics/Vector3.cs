@@ -69,12 +69,6 @@ public record struct Vector3<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
         get => this.Dot(this);
     }
 
-    public readonly Vector3<T> Normalized
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        get => this.Length is T length && length > T.Zero ? this / length : default;
-    }
-
     public Vector2<T> AsVector2() =>
         Unsafe.As<Vector3<T>, Vector2<T>>(ref this);
 
@@ -87,6 +81,10 @@ public record struct Vector3<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public readonly T Dot(Vector3<T> other) =>
         this.X * other.X + this.Y * other.Y + this.Z * other.Z;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public readonly Vector3<T> Normalized() =>
+        this.Length is T length && length > T.Zero ? this / length : default;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Vector3<T> operator +(Vector3<T> vector, T value) =>

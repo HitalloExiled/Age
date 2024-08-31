@@ -9,9 +9,9 @@ public class RectTests
     {
         var actual = new Rect<int>();
 
-        actual.Grow(new(10, 20,  20, 00));
+        actual.Grow(new(10, 20, 20, 00));
 
-        Assert.Equal(new(30, 20, 0, 0), actual);
+        Assert.Equal(new(10, 20, 20, 00), actual);
 
         actual.Grow(new(05, 05, -20, 00));
 

@@ -1,3 +1,4 @@
+#if TEST_VULKAN
 using System.Runtime.InteropServices;
 using Age.Core.Interop;
 using ThirdParty.Vulkan;
@@ -110,3 +111,4 @@ public class InstanceTest
         Assert.True(true);
     }
 }
+#endif

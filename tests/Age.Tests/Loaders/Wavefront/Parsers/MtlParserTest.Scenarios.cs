@@ -186,7 +186,7 @@ public partial class MtlParserTest
             },
         ];
 
-        public static IEnumerable<object[]> Valid   => valid.Select(x => new[] { x });
-        public static IEnumerable<object[]> Invalid => invalid.Select(x => new[] { x });
+        public static TheoryData<ValidScenario>   Valid   => new(valid);
+        public static TheoryData<InvalidScenario> Invalid => new(invalid);
     }
 }

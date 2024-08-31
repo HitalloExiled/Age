@@ -51,7 +51,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public T Rotation
     {
-        get => Vector2.Angle(Unsafe.As<T, Vector2<T>>(ref this.M11).Normalized, Vector3<T>.Right);
+        get => Vector2.Angle(Unsafe.As<T, Vector2<T>>(ref this.M11).Normalized(), Vector3<T>.Right);
         set
         {
             var scale = this.Scale;
@@ -81,8 +81,8 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
             ref var x = ref Unsafe.As<T, Vector2<T>>(ref this.M11);
             ref var y = ref Unsafe.As<T, Vector2<T>>(ref this.M21);
 
-            x = x.Normalized * value.X;
-            y = y.Normalized * value.Y;
+            x = x.Normalized() * value.X;
+            y = y.Normalized() * value.Y;
         }
     }
 

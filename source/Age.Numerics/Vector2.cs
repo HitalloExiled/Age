@@ -51,13 +51,14 @@ public record struct Vector2<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
     public readonly T Length        => T.Sqrt(this.LengthSquared);
     public readonly T LengthSquared => this.Dot(this);
 
-    public readonly Vector2<T> Normalized => this.Length is T length && length > T.Zero ? this / length : default;
-
     public readonly T CrossProduct(in Vector2<T> other) =>
         Vector2.CrossProduct(this, other);
 
     public readonly T Dot(in Vector2<T> other) =>
         Vector2.Dot(this, other);
+
+    public readonly Vector2<T> Normalized() =>
+        this.Length is T length && length > T.Zero ? this / length : default;
 
     public readonly Point<U> ToPoint<U>() where U : INumber<U> =>
         new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
