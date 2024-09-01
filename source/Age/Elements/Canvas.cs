@@ -31,5 +31,5 @@ public sealed class Canvas : Element
         tree.Window.Resized -= this.OnWindowSizeChanged;
 
     public override void LateUpdate() =>
-        this.BoxModel.UpdateLayout();
+        this.Layout.Update();
 }

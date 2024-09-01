@@ -1,0 +1,34 @@
+using Age.Numerics;
+using Age.Scene;
+
+namespace Age.Elements.Layouts;
+
+internal abstract class Layout
+{
+    protected bool  HasPendingUpdate { get; set; }
+
+    public float      BaseLine { get; internal set; } = 1;
+    public Size<uint> Size     { get; internal set; }
+
+    public abstract Layout? Parent { get; }
+    public abstract Node    Target { get; }
+
+    public abstract void Update();
+
+    public void RequestUpdate()
+    {
+        if (!this.HasPendingUpdate)
+        {
+            this.HasPendingUpdate = true;
+
+            if (this.Parent != null)
+            {
+                this.Parent.RequestUpdate();
+            }
+            else if (this.Target.IsConnected)
+            {
+                this.Target.Tree.IsDirty = true;
+            }
+        }
+    }
+}

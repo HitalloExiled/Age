@@ -1,5 +1,6 @@
 using System.Text;
 using Age.Core;
+using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Scene;
 using Age.Styling;
@@ -20,34 +21,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     public event MouseEventHandler?   MouseOver;
 
     private Canvas?                 canvas;
-    internal Vector2<float>          offset;
     private Style                   style = new();
     private string?                 text;
     private CacheValue<Transform2D> transformCache;
-
-    private Transform2D PivotedTransform =>
-        Transform2D.Translated(this.offset)
-            * Transform2D.Translated(this.StylePivot)
-            * this.BoxModel.StyleTransform
-            * Transform2D.Translated(-this.StylePivot);
-
-    private Vector2<float> StylePivot
-    {
-        get
-        {
-            if (this.Size == default)
-            {
-                return default;
-            }
-
-            var pivot = this.Style.Pivot ?? new();
-
-            pivot = (pivot + 1) / 2;
-            pivot.Y = 1 - pivot.Y;
-
-            return pivot * this.Size.Cast<float>() * new Size<float>(1, -1);
-        }
-    }
 
     internal protected override Transform2D TransformCache
     {
@@ -57,7 +33,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             {
                 this.transformCache = new()
                 {
-                    Value = base.TransformCache * this.PivotedTransform,
+                    Value = base.TransformCache * this.Layout.Transform,
                     Version = CacheVersion
                 };
             }
@@ -66,7 +42,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    internal BoxModel BoxModel { get; }
+    internal override BoxLayout Layout { get; }
 
     internal bool HasPendingUpdate { get; set; }
 
@@ -95,7 +71,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                     }
                 }
 
-                this.BoxModel.RequestUpdate();
+                this.Layout.RequestUpdate();
             }
         }
     }
@@ -109,11 +85,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             if (this.style != value)
             {
-                this.style.Changed -= this.BoxModel.StyleChanged;
+                this.style.Changed -= this.Layout.StyleChanged;
                 this.style = value;
-                this.style.Changed += this.BoxModel.StyleChanged;
+                this.style.Changed += this.Layout.StyleChanged;
 
-                this.BoxModel.StyleChanged();
+                this.Layout.StyleChanged();
             }
         }
     }
@@ -164,25 +140,25 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
                 this.text = value;
 
-                this.BoxModel.RequestUpdate();
+                this.Layout.RequestUpdate();
             }
         }
     }
 
     public override Transform2D Transform
     {
-        get => base.Transform * this.PivotedTransform;
+        get => base.Transform * this.Layout.Transform;
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
 
     public Element()
     {
-        this.BoxModel = new(this);
-        this.style.Changed += this.BoxModel.StyleChanged;
+        this.Layout = new(this);
+        this.style.Changed += this.Layout.StyleChanged;
     }
 
     ~Element() =>
-        this.style.Changed -= this.BoxModel.StyleChanged;
+        this.style.Changed -= this.Layout.StyleChanged;
 
     IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
     {
@@ -212,10 +188,10 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                     this.FirstElementChild = this.LastElementChild = element;
                 }
 
-                this.BoxModel.ChildElementAppended(element);
+                this.Layout.AddDependent(element);
             }
 
-            this.BoxModel.IncreaseRenderableNodes();
+            this.Layout.IncreaseRenderableNodes();
         }
     }
 
@@ -254,16 +230,13 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 element.PreviousElementSibling = null;
                 element.NextElementSibling = null;
 
-                this.BoxModel.ChildElementRemoved(element);
+                this.Layout.RemoveDependent(element);
             }
 
-            this.BoxModel.DecreaseRenderableNodes();
+            this.Layout.DecreaseRenderableNodes();
 
         }
     }
-
-    protected override void SizeChanged() =>
-        this.BoxModel.SizeChanged();
 
     internal void InvokeBlur(in MouseEvent mouseEvent)
     {
