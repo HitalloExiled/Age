@@ -513,12 +513,12 @@ internal partial class BoxLayout(Element target) : Layout
 
                 dependent.content = size;
                 dependent.CalculatePendingLayouts();
+                dependent.UpdateDisposition();
             }
 
-            dependent.UpdateLayoutSize();
-            dependent.UpdateDisposition();
-
             dependent.HasPendingUpdate = false;
+
+            dependent.UpdateLayoutSize();
 
             this.UpdateBaseline(dependent.Target);
         }
