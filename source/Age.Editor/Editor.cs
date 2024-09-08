@@ -9,6 +9,7 @@ public class Editor : Node
 {
     private const uint BORDER_SIZE = 10;
     private readonly Canvas canvas = new();
+    private float borderSize = Tests.InlineText.BorderSize;
 
     public override string NodeName { get; } = nameof(Editor);
 
@@ -18,8 +19,8 @@ public class Editor : Node
         // Tests.BoxModelTest.Setup(this.canvas);
         // Tests.MarginTest.Setup(this.canvas);
         // Tests.PaddingTest.Setup(this.canvas);
-        // Tests.BoxSizingTest.Setup(this.canvas);
-        this.CreateDemoScene();
+        Tests.InlineText.Setup(this.canvas);
+        // this.CreateDemoScene();
     }
 
     private void CreateDemoScene()
@@ -118,4 +119,35 @@ public class Editor : Node
                         //     sideViews.AppendChild(blueViewport);
 
     }
+
+    private void HandleBorders(double deltaTime)
+    {
+        var borderSize = Tests.InlineText.BorderSize; float.Ceiling(this.borderSize);
+
+        if (Input.IsKeyPressed(Platforms.Display.Key.Add))
+        {
+            this.borderSize = float.Min(100, this.borderSize + 10 * (float)deltaTime);
+
+            borderSize = (uint)float.Ceiling(this.borderSize);
+        }
+
+        if (Input.IsKeyPressed(Platforms.Display.Key.Subtract))
+        {
+            this.borderSize = float.Max(0, this.borderSize - 10 * (float)deltaTime);
+
+            borderSize = (uint)float.Ceiling(this.borderSize);
+        }
+
+
+        if (borderSize != Tests.InlineText.BorderSize)
+        {
+            this.canvas.RemoveChildren();
+
+            Tests.InlineText.BorderSize = borderSize;
+            Tests.InlineText.Setup(this.canvas);
+        }
+    }
+
+    public override void Update(double deltaTime) =>
+        this.HandleBorders(deltaTime);
 }

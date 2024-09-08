@@ -1,5 +1,4 @@
 using System.Text;
-using Age.Core;
 using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Scene;
@@ -20,27 +19,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     public event MouseEventHandler?   MouseOut;
     public event MouseEventHandler?   MouseOver;
 
-    private Canvas?                 canvas;
-    private Style                   style = new();
-    private string?                 text;
-    private CacheValue<Transform2D> transformCache;
-
-    internal protected override Transform2D TransformCache
-    {
-        get
-        {
-            if (this.transformCache.Version != CacheVersion)
-            {
-                this.transformCache = new()
-                {
-                    Value = base.TransformCache * this.Layout.Transform,
-                    Version = CacheVersion
-                };
-            }
-
-            return this.transformCache.Value;
-        }
-    }
+    private Canvas? canvas;
+    private Style   style = new();
+    private string? text;
 
     internal override BoxLayout Layout { get; }
 

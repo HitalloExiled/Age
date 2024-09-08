@@ -1,10 +1,8 @@
 using System.Collections;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Scene;
 
-[DebuggerDisplay("NodeName: {NodeName}, Name: {Name}, IsConnected: {IsConnected}")]
 public abstract partial class Node : IEnumerable<Node>
 {
     private NodeTree? tree;

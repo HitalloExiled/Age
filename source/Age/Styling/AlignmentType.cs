@@ -3,7 +3,7 @@ namespace Age.Styling;
 [Flags]
 public enum AlignmentType
 {
-    BaseLine = 0,
+    None     = 0,
     Center   = 1 << 0,
     Left     = 1 << 1,
     Right    = 1 << 2,

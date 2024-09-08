@@ -122,8 +122,9 @@
             "args": [
                 "watch",
                 "run",
+                "--no-hot-reload",
                 "--project",
-                "${workspaceFolder}/Age.sln"
+                "${workspaceFolder}/source/Age.Editor"
             ],
             "problemMatcher": "$msCompile"
         },

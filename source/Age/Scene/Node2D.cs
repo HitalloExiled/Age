@@ -71,7 +71,7 @@ public abstract class Node2D : Node
     public virtual Transform2D Transform
     {
         get => this.ParentTransform * this.PivotedTransform;
-        set => this.LocalTransform = value * this.ParentTransform.Inverse();
+        set => this.LocalTransform = this.ParentTransform.Inverse() * value * this.PivotedTransform.Inverse();
     }
 
     protected void Set<T>(ref T field, in T value, Action callback)

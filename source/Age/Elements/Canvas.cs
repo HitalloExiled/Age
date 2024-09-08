@@ -24,6 +24,8 @@ public sealed class Canvas : Element
     {
         tree.Window.Resized += this.OnWindowSizeChanged;
 
+        tree.IsDirty = this.Layout.HasPendingUpdate;
+
         this.OnWindowSizeChanged();
     }
 

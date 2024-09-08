@@ -243,7 +243,7 @@ internal partial class TextService : IDisposable
 
         textNode.Layout.BaseLine   = 1 - -offset.Y / (float)maxSize.Height;
         textNode.Layout.LineHeight = lineHeight;
-        textNode.Layout.Size       = maxSize;
+        textNode.Layout.Size       = textNode.Layout.Content = maxSize;
 
         if (atlas.IsDirty)
         {

@@ -5,13 +5,16 @@ namespace Age.Elements.Layouts;
 
 internal abstract class Layout
 {
-    protected bool  HasPendingUpdate { get; set; }
+    public bool HasPendingUpdate { get; protected set; }
 
-    public float      BaseLine { get; internal set; } = 1;
-    public Size<uint> Size     { get; internal set; }
+    public float          BaseLine { get; internal set; } = -1;
+    public Size<uint>     Content  { get; internal set; }
+    public Vector2<float> Offset   { get; internal set; }
+    public Size<uint>     Size     { get; internal set; }
 
-    public abstract Layout? Parent { get; }
-    public abstract Node    Target { get; }
+    public abstract Layout?    Parent { get; }
+    public abstract Node       Target { get; }
+    public virtual Transform2D Transform => Transform2D.Translated(this.Offset);
 
     public abstract void Update();
 

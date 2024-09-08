@@ -6,7 +6,6 @@ public partial record Style
 {
     public event Action? Changed;
 
-    private Point<int>?    align;
     private AlignmentType? alignment;
     private Color?         backgroundColor;
     private float?         baseline;
@@ -25,12 +24,6 @@ public partial record Style
     private float?         rotation;
     private SizeUnit?      size;
     private StackKind?     stack;
-
-    public Point<int>? Align
-    {
-        get => this.align;
-        set => this.Set(ref this.align, value);
-    }
 
     public AlignmentType? Alignment
     {

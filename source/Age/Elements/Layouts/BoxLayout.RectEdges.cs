@@ -11,5 +11,8 @@ internal partial class BoxLayout
 
         public readonly uint Horizontal => this.Left + this.Right;
         public readonly uint Vertical   => this.Top + this.Bottom;
+
+        public override readonly string ToString() =>
+            $"{{ Top: {this.Top}, Right: {this.Right}, Bottom: {this.Bottom}, Left: {this.Left} }}";
     }
 }
