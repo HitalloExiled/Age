@@ -2,6 +2,7 @@ using Age.Elements;
 using Age.Styling;
 using Age.Scene;
 using Age.Numerics;
+using Age.Platforms.Display;
 
 namespace Age.Editor;
 
@@ -16,6 +17,7 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
+        // this.canvas.AppendChild(new FrameStatus());
         // Tests.BoxModelTest.Setup(this.canvas);
         // Tests.MarginTest.Setup(this.canvas);
         // Tests.PaddingTest.Setup(this.canvas);
@@ -124,14 +126,14 @@ public class Editor : Node
     {
         var borderSize = Tests.InlineText.BorderSize; float.Ceiling(this.borderSize);
 
-        if (Input.IsKeyPressed(Platforms.Display.Key.Add))
+        if (Input.IsKeyPressed(Key.Add))
         {
             this.borderSize = float.Min(100, this.borderSize + 10 * (float)deltaTime);
 
             borderSize = (uint)float.Ceiling(this.borderSize);
         }
 
-        if (Input.IsKeyPressed(Platforms.Display.Key.Subtract))
+        if (Input.IsKeyPressed(Key.Subtract))
         {
             this.borderSize = float.Max(0, this.borderSize - 10 * (float)deltaTime);
 
@@ -139,7 +141,7 @@ public class Editor : Node
         }
 
 
-        if (borderSize != Tests.InlineText.BorderSize)
+        if (borderSize != Tests.InlineText.BorderSize || Input.IsKeyPressed(Key.Control) && Input.IsKeyJustPressed(Key.R))
         {
             this.canvas.RemoveChildren();
 

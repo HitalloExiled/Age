@@ -4,7 +4,6 @@ namespace Age.Elements.Layouts;
 
 internal class TextLayout(TextNode target): Layout
 {
-    private bool isDirty;
     private string? text;
 
     public override TextNode   Target => target;
@@ -21,15 +20,14 @@ internal class TextLayout(TextNode target): Layout
             {
                 this.text = value;
 
-                this.isDirty = true;
-                this.Update();
+                this.RequestUpdate();
             }
         }
     }
 
     public override void Update()
     {
-        if (this.isDirty && (this.Target.ParentElement?.IsConnected ?? false))
+        if (this.HasPendingUpdate)
         {
             if (string.IsNullOrEmpty(this.text))
             {
@@ -37,21 +35,10 @@ internal class TextLayout(TextNode target): Layout
             }
             else
             {
-                var size = this.Size;
-
                 TextService.Singleton.DrawText(this.Target, this.text);
-
-                if (this.Size != size)
-                {
-                    this.Parent?.RequestUpdate();
-                }
-                else if (this.Target.IsConnected)
-                {
-                    this.Target.Tree.IsDirty = true;
-                }
             }
 
-            this.isDirty = false;
+            this.HasPendingUpdate = false;
         }
     }
 }

@@ -138,7 +138,7 @@ internal partial class BoxLayout(Element target) : Layout
         }
     }
 
-    private static Point<float> GetAlignment(StackKind stack, Layout layout, AlignmentType alignmentType)
+    private static Point<float> GetAlignment(Layout layout, AlignmentType alignmentType)
     {
         var x = alignmentType.HasFlag(AlignmentType.Right)
             ? 1
@@ -147,14 +147,12 @@ internal partial class BoxLayout(Element target) : Layout
                 : -1;
 
         var y = alignmentType.HasFlag(AlignmentType.Bottom)
-            ? -1
+            ? 1
             : alignmentType.HasFlag(AlignmentType.Center)
                 ? 0
-                : 1;
+                : -1;
 
-        return stack == StackKind.Horizontal
-            ? new(Normalize(x), 1 - Normalize(y))
-            : new(Normalize(x), Normalize(y));
+        return new(Normalize(x), Normalize(y));
     }
 
     private static float Normalize(float value) =>
@@ -644,7 +642,7 @@ internal partial class BoxLayout(Element target) : Layout
                 continue;
             }
 
-            var reserved = (size - new Size<float>(offset.X, -offset.Y)) / (this.renderableNodesCount - i);
+            var reserved = (size - new Size<float>(offset.X - (this.border.Left + this.padding.Left), -offset.Y - (this.border.Top + this.padding.Top))) / (this.renderableNodesCount - i);
 
             var alignmentType = AlignmentType.None;
 
@@ -655,13 +653,13 @@ internal partial class BoxLayout(Element target) : Layout
 
             if (child is Element element)
             {
-                alignmentType = element.Style?.Alignment ?? AlignmentType.None;
-                margin        = element.Layout.margin;
-                border        = element.Layout.border;
+                alignmentType  = element.Style?.Alignment ?? AlignmentType.None;
+                margin         = element.Layout.margin;
+                border         = element.Layout.border;
                 contentOffsetY = element.Layout.margin.Top + element.Layout.border.Top + element.Layout.padding.Top;
             }
 
-            var alignment = GetAlignment(stack, child.Layout, alignmentType);
+            var alignment = GetAlignment(child.Layout, alignmentType);
 
             Vector2<float> position;
 
@@ -672,19 +670,19 @@ internal partial class BoxLayout(Element target) : Layout
                 var hasHorizontalAlignment = alignmentType.HasFlag(AlignmentType.Left) || alignmentType.HasFlag(AlignmentType.Center) || alignmentType.HasFlag(AlignmentType.Right);
 
                 var x = hasHorizontalAlignment
-                    ? (float)(Math.Max(0, reserved.Width - child.Layout.Size.Width - margin.Horizontal - border.Horizontal) * alignment.X)
+                    ? (float)(Math.Max(0, reserved.Width - child.Layout.Size.Width) * alignment.X)
                     : 0;
 
                 var y = isInline
                     ? (float)(lineHeight - (contentOffsetY + child.Layout.Content.Height * (1 - child.Layout.BaseLine)))
                     : (float)((size.Height - child.Layout.Size.Height - margin.Vertical) * alignment.Y);
 
-                var usedSpace = hasHorizontalAlignment
+                var width = hasHorizontalAlignment
                     ? float.Max(child.Layout.Size.Width, reserved.Width - x)
                     : child.Layout.Size.Width;
 
                 position = new(float.Ceiling(x + offset.X + margin.Left), -float.Ceiling(y - offset.Y - -margin.Top));
-                offset.X = position.X + margin.Right + usedSpace;
+                offset.X = position.X + width + margin.Right;
             }
             else
             {
@@ -692,15 +690,15 @@ internal partial class BoxLayout(Element target) : Layout
 
                 var x = (size.Width - child.Layout.Size.Width - margin.Horizontal) * alignment.X;
                 var y = hasVerticalAlignment
-                    ? (float)(Math.Max(0, reserved.Height - child.Layout.Size.Height - margin.Vertical - border.Vertical) * alignment.Y)
+                    ? (float)(Math.Max(0, reserved.Height - child.Layout.Content.Height) * alignment.Y)
                     : 0;
 
-                var usedSpace = hasVerticalAlignment
+                var height = hasVerticalAlignment
                     ? float.Max(child.Layout.Size.Height, reserved.Height - y)
                     : child.Layout.Size.Height;
 
                 position = new(float.Ceiling(x + offset.X + margin.Left), -float.Ceiling(y - offset.Y - -margin.Top));
-                offset.Y = position.Y + -(margin.Bottom + usedSpace);
+                offset.Y = position.Y - height - margin.Bottom;
             }
 
             child.Layout.Offset = position;

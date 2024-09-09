@@ -2,7 +2,7 @@
   "profiles": {
     "Age.Editor": {
       "commandName": "Project",
-      "workingDirectory": "C:\\Users\\rafael.franca\\Projects\\Age"
+      "workingDirectory": "../.."
     }
   }
 }
