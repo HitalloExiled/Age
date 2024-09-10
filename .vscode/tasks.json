@@ -122,7 +122,6 @@
             "args": [
                 "watch",
                 "run",
-                "--no-hot-reload",
                 "--project",
                 "${workspaceFolder}/source/Age.Editor"
             ],

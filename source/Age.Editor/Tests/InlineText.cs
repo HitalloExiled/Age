@@ -46,6 +46,44 @@ public class InlineText
         var horizontal_b_child2 = new Span { Name = "Y", Text = "Y", Style = new() { Border = new(BorderSize, 0, Color.Green), FontSize = 12, FontFamily = "Lucida Console", Color = Color.Green } };
         var horizontal_b_child3 = new Span { Name = "Z", Text = "Z", Style = new() { Border = new(BorderSize, 0, Color.Blue),  FontSize = 24, FontFamily = "Verdana",        Color = Color.Blue } };
 
+        var horizontal_c_container = new Span
+        {
+            Name  = "horizontal_c_container",
+            Style = new()
+            {
+                Border     = new(BorderSize, 0, Color.Margenta),
+                Color      = Color.White,
+                FontFamily = "Impact",
+                FontSize   = 24,
+                Stack      = StackKind.Horizontal,
+            }
+        };
+
+        var horizontal_c_child1 = new Span
+        {
+            Name  = "horizontal_c_child1",
+            Style = new()
+            {
+                Size   = new((Pixel)100),
+                Margin = new((Pixel)10),
+                Border = new(BorderSize, 0, Color.Cyan),
+                Alignment = AlignmentType.Left,
+            }
+        };
+
+        var horizontal_c_child2 = new Span
+        {
+            Name  = "horizontal_c_child2",
+            Style = new()
+            {
+                Size   = new((Pixel)100),
+                Margin = new((Pixel)10),
+                Border = new(BorderSize, 0, Color.Cyan),
+                Alignment = AlignmentType.Right,
+
+            }
+        };
+
         var vertical_a_container = new Span
         {
             Name  = "vertical_a_container",
@@ -163,7 +201,7 @@ public class InlineText
                 Margin = new((Pixel)10),
                 Border = new(BorderSize, 0, Color.Cyan),
                 Alignment = AlignmentType.Bottom,
-               
+
             }
         };
 
@@ -178,6 +216,10 @@ public class InlineText
             horizontal_b_container.AppendChild(horizontal_b_child1);
             horizontal_b_container.AppendChild(horizontal_b_child2);
             horizontal_b_container.AppendChild(horizontal_b_child3);
+
+        canvas.AppendChild(horizontal_c_container);
+            horizontal_c_container.AppendChild(horizontal_c_child1);
+            horizontal_c_container.AppendChild(horizontal_c_child2);
 
         canvas.AppendChild(vertical_a_container);
             vertical_a_container.AppendChild(vertical_a_child1);

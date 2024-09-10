@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace Age.Scene;
 
@@ -245,8 +246,22 @@ public abstract partial class Node : IEnumerable<Node>
     public IEnumerable<Node> Traverse() =>
         new TraverseEnumerator(this);
 
-    public override string ToString() =>
-        $"<{this.NodeName} name='{this.Name}'>";
+    public override string ToString()
+    {
+        var builder = new StringBuilder(255);
+
+        builder.Append('<');
+        builder.Append(this.NodeName);
+
+        if (!string.IsNullOrEmpty(this.Name))
+        {
+            builder.Append($" name='{this.Name}'");
+        }
+
+        builder.Append('>');
+
+        return builder.ToString();
+    }
 
     public virtual void Initialize()
     { }
