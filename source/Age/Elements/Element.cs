@@ -66,9 +66,13 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             if (this.style != value)
             {
-                this.style.Changed -= this.Layout.StyleChanged;
+                if (this.IsConnected)
+                {
+                    this.style.Changed -= this.Layout.StyleChanged;
+                    value.Changed += this.Layout.StyleChanged;
+                }
+
                 this.style = value;
-                this.style.Changed += this.Layout.StyleChanged;
 
                 this.Layout.StyleChanged();
             }
@@ -132,11 +136,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
 
-    public Element()
-    {
+    public Element() =>
         this.Layout = new(this);
-        this.style.Changed += this.Layout.StyleChanged;
-    }
 
     ~Element() =>
         this.style.Changed -= this.Layout.StyleChanged;
@@ -148,6 +149,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             yield return childElement;
         }
     }
+
+    protected override void Connected(NodeTree tree) =>
+        this.style.Changed += this.Layout.StyleChanged;
 
     protected override void ChildAppended(Node child)
     {
@@ -218,6 +222,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         }
     }
+
+    protected override void Disconnected(NodeTree tree) =>
+        this.style.Changed -= this.Layout.StyleChanged;
 
     internal void InvokeBlur(in MouseEvent mouseEvent)
     {
