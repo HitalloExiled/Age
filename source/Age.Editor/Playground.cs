@@ -15,7 +15,7 @@ public class Playground : Element
             Name  = "Root",
             Style = new()
             {
-                Alignment = AlignmentType.Center,
+                Alignment = AlignmentKind.Center,
                 Border    = new(1, 0, Color.Red),
                 Size      = new((Pixel)200, (Pixel)200),
             }
@@ -27,7 +27,7 @@ public class Playground : Element
             // Text  = "Text",
             Style = new()
             {
-                Alignment = AlignmentType.Center,
+                Alignment = AlignmentKind.Center,
                 // Align     = new(1, 1),
                 // Margin    = new(0),
                 // Baseline  = 1,
@@ -43,7 +43,7 @@ public class Playground : Element
             // Text  = "Text",
             Style = new()
             {
-                Alignment = AlignmentType.Center,
+                Alignment = AlignmentKind.Center,
                 // Align     = new(1, 1),
                 // Margin    = new(0),
                 // Baseline  = 1,

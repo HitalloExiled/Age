@@ -13,15 +13,16 @@ public sealed class Canvas : Element
         this.Style = new()
         {
             Baseline = 1,
-            // Position = new(PADDING, -PADDING),
+            // Padding = new((Pixel)PADDING),
         };
 
     private void OnWindowSizeChanged() =>
-        // this.Style.Size = SizeUnit.Pixel(this.Tree!.Window.ClientSize - PADDING * 2);
         this.Style.Size = new((Pixel)this.Tree!.Window.ClientSize.Width, (Pixel)this.Tree!.Window.ClientSize.Height);
 
     protected override void Connected(NodeTree tree)
     {
+        base.Connected(tree);
+
         tree.Window.Resized += this.OnWindowSizeChanged;
 
         tree.IsDirty = this.Layout.HasPendingUpdate;
@@ -29,8 +30,12 @@ public sealed class Canvas : Element
         this.OnWindowSizeChanged();
     }
 
-    protected override void Disconnected(NodeTree tree) =>
+    protected override void Disconnected(NodeTree tree)
+    {
+        base.Disconnected(tree);
+
         tree.Window.Resized -= this.OnWindowSizeChanged;
+    }
 
     public override void LateUpdate() =>
         this.Layout.Update();

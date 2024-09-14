@@ -68,13 +68,13 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             {
                 if (this.IsConnected)
                 {
-                    this.style.Changed -= this.Layout.StyleChanged;
-                    value.Changed += this.Layout.StyleChanged;
+                    this.style.Changed -= this.Layout.UpdateState;
+                    value.Changed += this.Layout.UpdateState;
                 }
 
                 this.style = value;
 
-                this.Layout.StyleChanged();
+                this.Layout.UpdateState();
             }
         }
     }
@@ -139,9 +139,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     public Element() =>
         this.Layout = new(this);
 
-    ~Element() =>
-        this.style.Changed -= this.Layout.StyleChanged;
-
     IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
     {
         for (var childElement = this.FirstElementChild; childElement != null; childElement = childElement.NextElementSibling)
@@ -151,7 +148,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     }
 
     protected override void Connected(NodeTree tree) =>
-        this.style.Changed += this.Layout.StyleChanged;
+        this.style.Changed += this.Layout.UpdateState;
 
     protected override void ChildAppended(Node child)
     {
@@ -224,7 +221,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     }
 
     protected override void Disconnected(NodeTree tree) =>
-        this.style.Changed -= this.Layout.StyleChanged;
+        this.style.Changed -= this.Layout.UpdateState;
 
     internal void InvokeBlur(in MouseEvent mouseEvent)
     {

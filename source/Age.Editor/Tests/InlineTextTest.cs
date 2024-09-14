@@ -4,18 +4,32 @@ using Age.Styling;
 
 namespace Age.Editor.Tests;
 
-public class InlineText
+public class InlineTextTest
 {
     public static uint BorderSize { get; set; } = 1;
 
     public static void Setup(Canvas canvas)
     {
+        var vertical_text = new Span()
+        {
+            Name  = "vertical_text",
+            Text  = "Vertical\nText",
+            Style = new()
+            {
+                Border     = new(BorderSize, 0, Color.Margenta),
+                Color      = Color.White,
+                FontFamily = "Impact",
+                FontSize   = 12,
+            }
+        };
+
         var horizontal_a_container = new Span()
         {
             Name  = "horizontal_container",
             Text  = "Horizontal",
             Style = new()
             {
+                Padding    = new((Pixel)20),
                 Border     = new(BorderSize, 0, Color.Margenta),
                 Color      = Color.White,
                 FontFamily = "Impact",
@@ -23,11 +37,11 @@ public class InlineText
             }
         };
 
-        var horizontal_a_child1 = new Span { Name = "X",     Text = "X",        Style = new() { Border = new(BorderSize * 2, 0,     Color.Red),      FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red, Margin = new(null, (Pixel)10) } };
+        var horizontal_a_child1 = new Span { Name = "X",     Text = "X",        Style = new() { Border = new(BorderSize * 2, 0, Color.Red),  FontSize = 48, FontFamily = "Helvetica Neue",     Color = Color.Red, Margin = new(null, (Pixel)10) } };
         var horizontal_a_child2 = new Span { Name = "Y",     Text = "Y",        Style = new() { Border = new(BorderSize / 2, 0, Color.Green),    FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
         var horizontal_a_child3 = new Span { Name = "Z",     Text = "Z",        Style = new() { Border = new(BorderSize, 0,     Color.Blue),     FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } };
-        var horizontal_a_child4 = new Span { Name = "Hello", Text = "Hello",    Style = new() { Border = new(BorderSize, 0,     Color.Margenta), Color = Color.White, Alignment = AlignmentType.Top,    Margin = new((Pixel)4) } };
-        var horizontal_a_child5 = new Span { Name = "World", Text = "World!!!", Style = new() { Border = new(BorderSize, 0,     Color.Margenta), Color = Color.White, Alignment = AlignmentType.Bottom, Margin = new((Pixel)4) } };
+        var horizontal_a_child4 = new Span { Name = "Hello", Text = "Hello",    Style = new() { Border = new(BorderSize, 0,     Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Begin, Margin = new((Pixel)4) } };
+        var horizontal_a_child5 = new Span { Name = "World", Text = "World!!!", Style = new() { Border = new(BorderSize, 0,     Color.Margenta), Color = Color.White, Alignment = AlignmentKind.End,   Margin = new((Pixel)4) } };
 
         var horizontal_b_container = new Span()
         {
@@ -64,10 +78,10 @@ public class InlineText
             Name  = "horizontal_c_child1",
             Style = new()
             {
-                Size   = new((Pixel)100),
-                Margin = new((Pixel)10),
-                Border = new(BorderSize, 0, Color.Cyan),
-                Alignment = AlignmentType.Left,
+                Size      = new((Pixel)100),
+                Margin    = new((Pixel)10),
+                Border    = new(BorderSize, 0, Color.Cyan),
+                Alignment = AlignmentKind.Left,
             }
         };
 
@@ -79,7 +93,7 @@ public class InlineText
                 Size   = new((Pixel)100),
                 Margin = new((Pixel)10),
                 Border = new(BorderSize, 0, Color.Cyan),
-                Alignment = AlignmentType.Right,
+                Alignment = AlignmentKind.Right,
 
             }
         };
@@ -101,8 +115,8 @@ public class InlineText
         var vertical_a_child1 = new Span { Name = "X", Text = "X", Style = new() { Border = new(BorderSize, 0, Color.Red),   FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
         var vertical_a_child2 = new Span { Name = "Y", Text = "Y", Style = new() { Border = new(BorderSize, 0, Color.Green), FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
         var vertical_a_child3 = new Span { Name = "Z", Text = "Z", Style = new() { Border = new(BorderSize, 0, Color.Blue),  FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } };
-        var vertical_a_child4 = new Span { Text = "Hello",         Style = new() { Border = new(BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentType.Top,    Margin = new((Pixel)10) } };
-        var vertical_a_child5 = new Span { Text = "World!!!",      Style = new() { Border = new(BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentType.Bottom, Margin = new((Pixel)10) } };
+        var vertical_a_child4 = new Span { Text = "Hello",         Style = new() { Border = new(BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Top,    Margin = new((Pixel)10) } };
+        var vertical_a_child5 = new Span { Text = "World!!!",      Style = new() { Border = new(BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Bottom, Margin = new((Pixel)10) } };
 
         var vertical_b_container = new Span
         {
@@ -164,8 +178,8 @@ public class InlineText
         var vertical_c_child2 = new Span { Name = "X", Text = "X", Style = new() { Border = new(BorderSize, 0, Color.Red),   FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
         var vertical_c_child3 = new Span { Name = "Y", Text = "Y", Style = new() { Border = new(BorderSize, 0, Color.Green), FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
         var vertical_c_child4 = new Span { Name = "Z", Text = "Z", Style = new() { Border = new(BorderSize, 0, Color.Blue),  FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } };
-        var vertical_c_child5 = new Span { Text = "Hello",         Style = new() { Border = new(BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentType.Left,  Margin = new((Pixel)5) } };
-        var vertical_c_child6 = new Span { Text = "World!!!",      Style = new() { Border = new(BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentType.Right, Margin = new((Pixel)5) } };
+        var vertical_c_child5 = new Span { Text = "Hello",         Style = new() { Border = new(BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Begin, Margin = new((Pixel)5) } };
+        var vertical_c_child6 = new Span { Text = "World!!!",      Style = new() { Border = new(BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.End,   Margin = new((Pixel)5) } };
 
         var vertical_d_container = new Span
         {
@@ -185,10 +199,10 @@ public class InlineText
             Name  = "vertical_d_child1",
             Style = new()
             {
-                Size   = new((Pixel)100),
-                Margin = new((Pixel)10),
-                Border = new(BorderSize, 0, Color.Cyan),
-                Alignment = AlignmentType.Top,
+                Size      = new((Pixel)100),
+                Margin    = new((Pixel)10),
+                Border    = new(BorderSize, 0, Color.Cyan),
+                Alignment = AlignmentKind.Top,
             }
         };
 
@@ -197,15 +211,19 @@ public class InlineText
             Name  = "vertical_d_child2",
             Style = new()
             {
-                Size   = new((Pixel)100),
-                Margin = new((Pixel)10),
-                Border = new(BorderSize, 0, Color.Cyan),
-                Alignment = AlignmentType.Bottom,
+                Size      = new((Pixel)100),
+                Margin    = new((Pixel)10),
+                Border    = new(BorderSize, 0, Color.Cyan),
+                Alignment = AlignmentKind.Bottom,
 
             }
         };
 
-         canvas.AppendChild(horizontal_a_container);
+        canvas.AppendChild(new FrameStatus());
+
+        canvas.AppendChild(vertical_text);
+
+        canvas.AppendChild(horizontal_a_container);
             horizontal_a_container.AppendChild(horizontal_a_child1);
             horizontal_a_container.AppendChild(horizontal_a_child2);
             horizontal_a_container.AppendChild(horizontal_a_child3);

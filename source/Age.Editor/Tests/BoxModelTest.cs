@@ -34,11 +34,11 @@ public class BoxModelTest
 
         var stackText = new Span
         {
-            Text = "This elements should be stacked vertically...",
+            Text  = "This elements should be stacked vertically...",
             Name  = "StackText",
             Style = new()
             {
-                Alignment = AlignmentType.Center,
+                Alignment = AlignmentKind.Center,
                 Color     = Color.White,
                 Border    = new(10, 0, Color.Margenta),
             }
@@ -71,7 +71,7 @@ public class BoxModelTest
             Name  = "BoxCL",
             Style = new()
             {
-                Alignment = AlignmentType.Center,
+                Alignment = AlignmentKind.Center,
                 Color     = Color.White,
                 Border    = new(BORDER_SIZE, 0, Color.Yellow),
                 Size      = new((Pixel)50),
@@ -129,7 +129,7 @@ public class BoxModelTest
                 stackL.AppendChild(boxBL);
                 stackL.AppendChild(boxCL);
 
-            boxModel.AppendChild(stackR);
+        boxModel.AppendChild(stackR);
                 stackR.AppendChild(boxAR);
                 stackR.AppendChild(boxBR);
                 stackR.AppendChild(boxCR);

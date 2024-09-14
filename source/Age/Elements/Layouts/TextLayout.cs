@@ -35,7 +35,12 @@ internal class TextLayout(TextNode target): Layout
             }
             else
             {
-                TextService.Singleton.DrawText(this.Target, this.text);
+                var info = TextService.Singleton.DrawText(this.Target, this.text);
+
+                //target.Layout.BaseLine   = 1 - -info.End / (float)info.Boundings.Height;
+                target.Layout.BaseLine   = 1 - -info.Start / (float)info.Boundings.Height;
+                target.Layout.LineHeight = info.LineHeight;
+                target.Layout.Size       = target.Layout.Content = info.Boundings;
             }
 
             this.HasPendingUpdate = false;

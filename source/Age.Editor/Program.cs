@@ -1,4 +1,4 @@
-﻿using Age;
+using Age;
 using Age.Core;
 using Age.Editor;
 

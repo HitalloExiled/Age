@@ -10,7 +10,10 @@ public class Editor : Node
 {
     private const uint BORDER_SIZE = 10;
     private readonly Canvas canvas = new();
-    private float borderSize = Tests.InlineText.BorderSize;
+
+    private readonly Action<Canvas> setup;
+
+    private float borderSize = Tests.InlineTextTest.BorderSize;
 
     public override string NodeName { get; } = nameof(Editor);
 
@@ -18,10 +21,12 @@ public class Editor : Node
     {
         this.AppendChild(this.canvas);
         // this.canvas.AppendChild(new FrameStatus());
-        // Tests.BoxModelTest.Setup(this.canvas);
-        // Tests.MarginTest.Setup(this.canvas);
-        // Tests.PaddingTest.Setup(this.canvas);
-        Tests.InlineText.Setup(this.canvas);
+        //this.setup = Tests.BoxModelTest.Setup;
+        //this.setup = Tests.MarginTest.Setup;
+        //this.setup = Tests.PaddingTest.Setup;
+        this.setup = Tests.InlineTextTest.Setup;
+
+        this.setup.Invoke(this.canvas);
         // this.CreateDemoScene();
     }
 
@@ -73,7 +78,7 @@ public class Editor : Node
             Name  = "Viewports",
             Style = new()
             {
-                Alignment = AlignmentType.Center,
+                Alignment = AlignmentKind.Center,
                 Border    = new(BORDER_SIZE, default, Color.Blue),
                 Size      = new((Pixel)400),
             }
@@ -100,7 +105,7 @@ public class Editor : Node
         // scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
         // scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
 
-        var sideViews = new Span() { Style = new() { Stack = StackKind.Vertical, Alignment = AlignmentType.Center } };
+        var sideViews = new Span() { Style = new() { Stack = StackKind.Vertical, Alignment = AlignmentKind.Center } };
 
         this.canvas.AppendChild(root);
         // this.AppendChild(scene);
@@ -124,7 +129,7 @@ public class Editor : Node
 
     private void HandleBorders(double deltaTime)
     {
-        var borderSize = Tests.InlineText.BorderSize; float.Ceiling(this.borderSize);
+        var borderSize = Tests.InlineTextTest.BorderSize; float.Ceiling(this.borderSize);
 
         if (Input.IsKeyPressed(Key.Add))
         {
@@ -141,14 +146,28 @@ public class Editor : Node
         }
 
 
-        if (borderSize != Tests.InlineText.BorderSize || Input.IsKeyPressed(Key.Control) && Input.IsKeyJustPressed(Key.R))
+        if (borderSize != Tests.InlineTextTest.BorderSize || Input.IsKeyPressed(Key.Control) && Input.IsKeyJustPressed(Key.R))
         {
-            this.canvas.RemoveChildren();
+            Tests.InlineTextTest.BorderSize = borderSize;
 
-            Tests.InlineText.BorderSize = borderSize;
-            Tests.InlineText.Setup(this.canvas);
+            this.Reload();
         }
     }
+
+    private void Reload()
+    {
+        this.canvas.RemoveChildren();        
+
+        this.setup.Invoke(this.canvas);
+    }
+
+#if DEBUG
+    protected override void Connected(NodeTree tree) =>
+        HotReloadService.ApplicationUpdated += this.Reload;
+
+    protected override void Disconnected(NodeTree tree) =>
+        HotReloadService.ApplicationUpdated -= this.Reload;
+#endif
 
     public override void Update(double deltaTime) =>
         this.HandleBorders(deltaTime);

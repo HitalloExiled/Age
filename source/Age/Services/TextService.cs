@@ -15,6 +15,14 @@ namespace Age.Services;
 
 internal partial class TextService : IDisposable
 {
+    public struct TextDrawInfo
+    {
+        public Size<uint> Boundings;
+        public float      LineHeight;
+        public int        Start;
+        public int        End;
+    }
+
     private static TextService? singleton;
 
     public static TextService Singleton => singleton ?? throw new NullReferenceException();
@@ -149,11 +157,11 @@ internal partial class TextService : IDisposable
         }
     }
 
-    public void DrawText(TextNode textNode, string text)
+    public TextDrawInfo DrawText(TextNode textNode, string text)
     {
         if (textNode.ParentElement == null)
         {
-            return;
+            return default;
         }
 
         var style      = textNode.ParentElement.Style;
@@ -186,10 +194,16 @@ internal partial class TextService : IDisposable
 
         var lineHeight = (uint)float.Round(-metrics.Ascent + metrics.Descent);
         var baseLine   = (int)float.Round(metrics.Ascent);
-        var offset     = new Point<int>(0, baseLine);
-        var maxSize    = new Size<uint>(0, lineHeight);
+        var cursor     = new Point<int>(0, baseLine);
+        var boundings    = new Size<uint>(0, lineHeight);
 
         this.ReleaseCommands(commands);
+
+        var textDrawInfo = new TextDrawInfo
+        {
+            Start      = cursor.Y,
+            LineHeight = lineHeight,
+        };
 
         for (var i = 0; i < text.Length; i++)
         {
@@ -201,7 +215,7 @@ internal partial class TextService : IDisposable
 
                 var glyph    = this.DrawGlyph(atlas, character, typeface.FamilyName, fontSize, bounds, paint);
                 var size     = new Size<float>(bounds.Width, bounds.Height);
-                var position = new Point<float>(float.Round(offset.X + bounds.Left), float.Round(offset.Y - bounds.Top));
+                var position = new Point<float>(float.Round(cursor.X + bounds.Left), float.Round(cursor.Y - bounds.Top));
                 var color    = style.Color ?? new();
 
                 var atlasSize = new Point<float>(atlas.Size.Width, atlas.Size.Height);
@@ -224,26 +238,22 @@ internal partial class TextService : IDisposable
 
                 textNode.Commands.Add(command);
 
-                maxSize.Width = uint.Max(maxSize.Width, (uint)float.Round(position.X + bounds.Right));
-                offset.X += (int)float.Round(glyphsWidths[i]);
+                boundings.Width = uint.Max(boundings.Width, (uint)float.Round(position.X + bounds.Right));
+                cursor.X += (int)float.Round(glyphsWidths[i]);
 
             }
             else if (character == '\n')
             {
-                offset.X = 0;
-                offset.Y -= (int)(lineHeight + -metrics.Leading);
+                cursor.X = 0;
+                cursor.Y -= (int)(lineHeight + -metrics.Leading);
 
-                maxSize.Height += lineHeight + (uint)metrics.Leading;
+                boundings.Height += lineHeight + (uint)metrics.Leading;
             }
             else
             {
-                offset.X += (int)float.Round(glyphsWidths[i]);
+                cursor.X += (int)float.Round(glyphsWidths[i]);
             }
         }
-
-        textNode.Layout.BaseLine   = 1 - -offset.Y / (float)maxSize.Height;
-        textNode.Layout.LineHeight = lineHeight;
-        textNode.Layout.Size       = textNode.Layout.Content = maxSize;
 
         if (atlas.IsDirty)
         {
@@ -253,7 +263,12 @@ internal partial class TextService : IDisposable
 #if DUMP_IMAGES
             SaveToFile(fontFamily, atlas);
 #endif
-        }
+        }        
+        
+        textDrawInfo.End       = cursor.Y;
+        textDrawInfo.Boundings = boundings;
+
+        return textDrawInfo;
     }
 
     public void Dispose()

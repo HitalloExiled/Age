@@ -6,26 +6,27 @@ public partial record Style
 {
     public event Action? Changed;
 
-    private AlignmentType? alignment;
-    private Color?         backgroundColor;
-    private float?         baseline;
-    private Border?        border;
-    private BoxSizing?     boxSizing;
-    private Color?         color;
-    private string?        fontFamily;
-    private ushort?        fontSize;
-    private Margin?        margin;
-    private SizeUnit?      maxSize;
-    private SizeUnit?      minSize;
-    private Margin?        padding;
-    private Point<float>?  pivot;
-    private Point<int>?    position;
-    private PositionType?  positionType;
-    private float?         rotation;
-    private SizeUnit?      size;
-    private StackKind?     stack;
+    private AlignmentKind?     alignment;
+    private Color?             backgroundColor;
+    private float?             baseline;
+    private Border?            border;
+    private BoxSizing?         boxSizing;
+    private Color?             color;
+    private string?            fontFamily;
+    private ushort?            fontSize;
+    private Margin?            margin;
+    private SizeUnit?          maxSize;
+    private SizeUnit?          minSize;
+    private Margin?            padding;
+    private Point<float>?      pivot;
+    private Point<int>?        position;
+    private PositionType?      positionType;
+    private float?             rotation;
+    private SizeUnit?          size;
+    private StackKind?         stack;
+    private TextAlignmentKind? textAlignment;
 
-    public AlignmentType? Alignment
+    public AlignmentKind? Alignment
     {
         get => this.alignment;
         set => this.Set(ref this.alignment, value);
@@ -133,17 +134,34 @@ public partial record Style
         set => this.Set(ref this.stack, value);
     }
 
+    public TextAlignmentKind? TextAlignment
+    {
+        get => this.textAlignment;
+        set => this.Set(ref this.textAlignment, value);
+    }
+
     public static Style Merge(Style left, Style right) =>
         new()
         {
-            Alignment    = left.Alignment    ?? right.Alignment,
-            FontFamily   = left.FontFamily   ?? right.FontFamily,
-            FontSize     = left.FontSize     ?? right.FontSize,
-            MaxSize      = left.MaxSize      ?? right.MaxSize,
-            MinSize      = left.MinSize      ?? right.MinSize,
-            Position     = left.Position     ?? right.Position,
-            PositionType = left.PositionType ?? right.PositionType,
-            Size         = left.Size         ?? right.Size,
+            Alignment       = left.Alignment       ?? right.Alignment,
+            BackgroundColor = left.BackgroundColor ?? right.BackgroundColor,
+            Baseline        = left.Baseline        ?? right.Baseline,
+            Border          = left.Border          ?? right.Border,
+            BoxSizing       = left.BoxSizing       ?? right.BoxSizing,
+            Color           = left.Color           ?? right.Color,
+            FontFamily      = left.FontFamily      ?? right.FontFamily,
+            FontSize        = left.FontSize        ?? right.FontSize,
+            Margin          = left.Margin          ?? right.Margin,
+            MaxSize         = left.MaxSize         ?? right.MaxSize,
+            MinSize         = left.MinSize         ?? right.MinSize,
+            Padding         = left.Padding         ?? right.Padding,
+            Pivot           = left.Pivot           ?? right.Pivot,
+            Position        = left.Position        ?? right.Position,
+            PositionType    = left.PositionType    ?? right.PositionType,
+            Rotation        = left.Rotation        ?? right.Rotation,
+            Size            = left.Size            ?? right.Size,
+            Stack           = left.Stack           ?? right.Stack,
+            TextAlignment   = left.TextAlignment   ?? right.TextAlignment,
         };
 
     private void Set<T>(ref T? field, T? value)

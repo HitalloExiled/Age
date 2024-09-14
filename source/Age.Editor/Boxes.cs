@@ -54,7 +54,7 @@ public class Boxes : Element
             Name  = "bh",
             Style = new()
             {
-                Alignment   = AlignmentType.Top,
+                Alignment   = AlignmentKind.Top,
                 // BorderColor = Color.Green,
                 Color       = Color.Green,
                 Size        = new((Pixel)100),
@@ -93,7 +93,7 @@ public class Boxes : Element
             Name  = "bv",
             Style = new()
             {
-                Alignment   = AlignmentType.Center/*  | AlignmentType.Top */,
+                Alignment   = AlignmentKind.Center/*  | AlignmentType.Top */,
                 // BorderColor = Color.Green,
                 Color       = Color.Green,
                 Size        = new((Pixel)BLOCK_SIZE),
