@@ -1,4 +1,5 @@
 using Age.Commands;
+using Age.Extensions;
 using Age.Numerics;
 using Age.Storage;
 using Age.Styling;
@@ -12,17 +13,28 @@ internal partial class BoxLayout(Element target) : Layout
     private readonly HashSet<BoxLayout> dependents = [];
 
     private Transform2D    styleTransform = new();
-    private Size<uint>     avaliableSpace;
-    private Size<uint>     contentDynamicSize;
-    private Size<uint>     contentStaticSize;
+    private Size<uint>     content;
+    private Size<uint>     staticContent;
     private RectEdges      border;
     private RectEdges      margin;
     private RectEdges      padding;
     private Dependency     contentDependent;
     private Dependency     parentDependent;
-    private uint           hightestChildHeight;
-    private ContainerNode? hightestChildNode;
+    private uint           hightestInlineChildHeight;
+    private ContainerNode? hightestInlineChildNode;
     private uint           renderableNodesCount;
+
+    private Size<uint> Boundings =>
+        new(
+            this.Size.Width  + this.padding.Horizontal + this.border.Horizontal,
+            this.Size.Height + this.padding.Vertical   + this.border.Vertical
+        );
+
+    private Size<uint> BoundingsWithMargin =>
+        new(
+            this.Size.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
+            this.Size.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
+        );
 
     public override BoxLayout? Parent => target.ParentElement?.Layout;
     public override Element    Target => target;
@@ -102,7 +114,7 @@ internal partial class BoxLayout(Element target) : Layout
             }
             else
             {
-                contentSize.Width = uint.Max(layout.Content.Width + layout.border.Horizontal + horizontal, contentSize.Width);
+                contentSize.Width = uint.Max(layout.Size.Width + layout.border.Horizontal + horizontal, contentSize.Width);
             }
         }
     }
@@ -133,28 +145,52 @@ internal partial class BoxLayout(Element target) : Layout
             }
             else
             {
-                contentSize.Height = uint.Max(layout.Content.Height + layout.border.Vertical + vertical, contentSize.Height);
+                contentSize.Height = uint.Max(layout.Size.Height + layout.border.Vertical + vertical, contentSize.Height);
             }
         }
     }
 
-    private static Point<float> GetAlignment(StackKind stack, Layout layout, AlignmentKind alignmentKind)
+    private static Point<float> GetAlignment(StackKind stack, Layout layout, AlignmentKind alignmentKind, out bool hasHorizontalAlignment, out bool hasVerticalAlignment)
     {
-        var x = alignmentKind.HasFlag(AlignmentKind.Left) || stack == StackKind.Vertical && alignmentKind.HasFlag(AlignmentKind.Begin)
-            ? -1
-            : alignmentKind.HasFlag(AlignmentKind.Right) || stack == StackKind.Vertical && alignmentKind.HasFlag(AlignmentKind.End)
-                ? 1
-                : alignmentKind.HasFlag(AlignmentKind.Center)
-                    ? 0
-                    : -1;
+        var x = -1;
+        var y = -1;
 
-        var y = alignmentKind.HasFlag(AlignmentKind.Top) || stack == StackKind.Horizontal && alignmentKind.HasFlag(AlignmentKind.Begin)
-            ? -1
-            : alignmentKind.HasFlag(AlignmentKind.Bottom) || stack == StackKind.Horizontal && alignmentKind.HasFlag(AlignmentKind.End)
-                ? 1
-                : alignmentKind.HasFlag(AlignmentKind.Center)
-                    ? 0
-                    : -1;
+        hasHorizontalAlignment = true;
+        hasVerticalAlignment   = true;
+
+        if (alignmentKind.HasFlag(AlignmentKind.Left) || stack == StackKind.Vertical && alignmentKind.HasFlag(AlignmentKind.Begin))
+        {
+            x = -1;
+        }
+        else if (alignmentKind.HasFlag(AlignmentKind.Right) || stack == StackKind.Vertical && alignmentKind.HasFlag(AlignmentKind.End))
+        {
+            x = 1;
+        }
+        else if (alignmentKind.HasFlag(AlignmentKind.Center))
+        {
+            x = 0;
+        }
+        else
+        {
+            hasHorizontalAlignment = false;
+        }
+
+        if (alignmentKind.HasFlag(AlignmentKind.Top) || stack == StackKind.Horizontal && alignmentKind.HasFlag(AlignmentKind.Begin))
+        {
+            y = -1;
+        }
+        else if (alignmentKind.HasFlag(AlignmentKind.Bottom) || stack == StackKind.Horizontal && alignmentKind.HasFlag(AlignmentKind.End))
+        {
+            y = 1;
+        }
+        else if (alignmentKind.HasFlag(AlignmentKind.Center))
+        {
+            y = 0;
+        }
+        else
+        {
+            hasVerticalAlignment = false;
+        }
 
         return new(Normalize(x), Normalize(y));
     }
@@ -166,8 +202,9 @@ internal partial class BoxLayout(Element target) : Layout
     {
         var stack = this.Target.Style.Stack ?? StackKind.Horizontal;
 
-        this.contentStaticSize   = new Size<uint>();
-        this.hightestChildHeight = 0;
+        this.content       = new Size<uint>();
+        this.staticContent = new Size<uint>();
+        this.hightestInlineChildHeight = 0;
 
         foreach (var node in this.Target)
         {
@@ -175,54 +212,47 @@ internal partial class BoxLayout(Element target) : Layout
             {
                 child.Layout.Update();
 
-                var childSize = new Size<uint>();
+                Size<uint> childSize;
 
-                if (node is TextNode textNode)
+                var dependencies = Dependency.None;
+
+                if (child is Element element)
                 {
-                    childSize = textNode.Layout.Size;
+                    childSize    = element.Layout.BoundingsWithMargin;
+                    dependencies = element.Layout.parentDependent;
                 }
-                else if (child is Element element)
+                else
                 {
-                    childSize.Width  = element.Layout.padding.Horizontal + element.Layout.margin.Horizontal;
-                    childSize.Height = element.Layout.padding.Vertical   + element.Layout.margin.Vertical;
-
-                    if (this.contentDependent.HasFlag(Dependency.Width) || !element.Layout.parentDependent.HasFlag(Dependency.Width))
-                    {
-                        childSize.Width += element.Layout.border.Horizontal;
-                    }
-
-                    if (!element.Layout.parentDependent.HasFlag(Dependency.Width))
-                    {
-                        childSize.Width += element.Layout.Content.Width;
-                    }
-
-                    if (this.contentDependent.HasFlag(Dependency.Height) || !element.Layout.parentDependent.HasFlag(Dependency.Height))
-                    {
-                        childSize.Height += element.Layout.border.Vertical;
-                    }
-
-                    if (!element.Layout.parentDependent.HasFlag(Dependency.Height))
-                    {
-                        childSize.Height += element.Layout.Content.Height;
-                    }
+                    childSize = child.Layout.Size;
                 }
 
                 if (stack == StackKind.Horizontal)
                 {
-                    contentStaticSize.Width += childSize.Width;
-                    contentStaticSize.Height = uint.Max(contentStaticSize.Height, childSize.Height);
+                    if (!dependencies.HasFlag(Dependency.Width))
+                    {
+                        this.staticContent.Width += childSize.Width;
+                        this.staticContent.Height = uint.Max(this.staticContent.Height, childSize.Height);
+                    }
 
-                    this.CheckHightestChild(stack, child);
+                    this.content.Width += childSize.Width;
+                    this.content.Height = uint.Max(this.content.Height, childSize.Height);
+
+                    this.CheckHightestInlineChild(stack, child);
                 }
                 else
                 {
-                    contentStaticSize.Width = uint.Max(contentStaticSize.Width, childSize.Width);
-                    contentStaticSize.Height += childSize.Height;
+                    if (!dependencies.HasFlag(Dependency.Height))
+                    {
+                        this.staticContent.Width   = uint.Max(this.staticContent.Width, childSize.Width);
+                        this.staticContent.Height += childSize.Height;
+                    }
+
+                    this.content.Width   = uint.Max(this.content.Width, childSize.Width);
+                    this.content.Height += childSize.Height;
 
                     if (child == this.Target.FirstChild)
                     {
-                        this.CheckHightestChild(stack, child);
-
+                        this.CheckHightestInlineChild(stack, child);
                     }
                 }
             }
@@ -230,25 +260,13 @@ internal partial class BoxLayout(Element target) : Layout
 
         if (this.contentDependent.HasFlag(Dependency.Width) || this.contentDependent.HasFlag(Dependency.Height))
         {
-            this.CalculatePendingMargin(ref contentStaticSize);
-        }
-
-        var content = this.Content;
-
-        if (!this.parentDependent.HasFlag(Dependency.Width))
-        {
-            content.Width = contentStaticSize.Width;
-        }
-
-        if (!this.parentDependent.HasFlag(Dependency.Height))
-        {
-            content.Height = contentStaticSize.Height;
+            this.CalculatePendingMargin(ref this.content);
         }
 
         var resolvedMargin  = !this.parentDependent.HasFlag(Dependency.Margin);
         var resolvedPadding = !this.parentDependent.HasFlag(Dependency.Padding);
-        var resolvedWidth   = true;
-        var resolvedHeight  = true;
+        var resolvedWidth   = !this.parentDependent.HasFlag(Dependency.Width);
+        var resolvedHeight  = !this.parentDependent.HasFlag(Dependency.Height);
 
         if (this.Target.Style.Padding?.Top?.TryGetPixel(out var top) ?? false)
         {
@@ -290,27 +308,50 @@ internal partial class BoxLayout(Element target) : Layout
             this.margin.Left = left;
         }
 
+        var size = this.content;
+
         if (!this.contentDependent.HasFlag(Dependency.Width))
         {
             if (this.Target.Style.Size?.Width?.TryGetPixel(out var pixel) ?? false)
             {
-                content.Width = pixel;
+                size.Width = pixel;
+
+                resolvedWidth = true;
             }
             else if ((this.Target.Style.MinSize?.Width?.TryGetPixel(out var min) ?? false) && (this.Target.Style.MaxSize?.Width?.TryGetPixel(out var max) ?? false))
             {
-                content.Width = uint.Max(uint.Min(content.Width, min), max);
+                resolvedWidth = true;
+
+                if (size.Width < min)
+                {
+                    size.Width = min;
+                }
+                else if (size.Width > max)
+                {
+                    size.Width = max;
+                }
+                else
+                {
+                    resolvedWidth = false;
+                }
             }
             else if (this.Target.Style.MinSize?.Width?.TryGetPixel(out min) ?? false)
             {
-                content.Width = uint.Max(content.Width, min);
+                if (size.Width < min)
+                {
+                    size.Width = min;
+
+                    resolvedWidth = true;
+                }
             }
             else if (this.Target.Style.MaxSize?.Width?.TryGetPixel(out max) ?? false)
             {
-                content.Width = uint.Max(content.Width, max);
-            }
-            else
-            {
-                resolvedWidth = false;
+                if (size.Width > max)
+                {
+                    size.Width = max;
+
+                    resolvedWidth = true;
+                }
             }
         }
 
@@ -318,46 +359,65 @@ internal partial class BoxLayout(Element target) : Layout
         {
             if (this.Target.Style.Size?.Height?.TryGetPixel(out var pixel) ?? false)
             {
-                content.Height = pixel;
+                size.Height = pixel;
+
+                resolvedHeight = true;
             }
             else if ((this.Target.Style.MinSize?.Height?.TryGetPixel(out var min) ?? false) && (this.Target.Style.MaxSize?.Height?.TryGetPixel(out var max) ?? false))
             {
-                content.Height = uint.Max(uint.Min(content.Height, min), max);
+                resolvedHeight = true;
+
+                if (size.Height < min)
+                {
+                    size.Height = min;
+                }
+                else if (size.Height > max)
+                {
+                    size.Height = max;
+                }
+                else
+                {
+                    resolvedHeight = false;
+                }
             }
             else if (this.Target.Style.MinSize?.Height?.TryGetPixel(out min) ?? false)
             {
-                content.Height = uint.Max(content.Height, min);
+                if (size.Height < min)
+                {
+                    size.Height = min;
+
+                    resolvedHeight = true;
+                }
             }
             else if (this.Target.Style.MaxSize?.Height?.TryGetPixel(out max) ?? false)
             {
-                content.Height = uint.Max(content.Height, max);
-            }
-            else
-            {
-                resolvedHeight = false;
+                if (size.Height > max)
+                {
+                    size.Height = max;
+
+                    resolvedHeight = true;
+                }
             }
         }
 
         if (this.Target.Style.BoxSizing == BoxSizing.Border)
         {
-            if (!this.contentDependent.HasFlag(Dependency.Width) && content.Width >= this.border.Horizontal)
+            if (!this.contentDependent.HasFlag(Dependency.Width))
             {
-                content.Width -= this.border.Horizontal;
+                size.Width = size.Width.ClampSubtract(this.border.Horizontal);
             }
 
-            if (!this.contentDependent.HasFlag(Dependency.Height) && content.Width >= this.border.Vertical)
+            if (!this.contentDependent.HasFlag(Dependency.Height))
             {
-                content.Height -= this.border.Vertical;
+                size.Height = size.Height.ClampSubtract(this.border.Horizontal);
             }
         }
 
-        this.avaliableSpace = content - contentStaticSize;
-
-        if (this.Content != content || this.Target is Canvas)
+        if (this.Size != size || this.Target is Canvas)
         {
-            this.Parent?.RequestUpdate();
+            this.Size = size;
 
-            this.Content = content;
+            this.Parent?.RequestUpdate();
 
             if (resolvedWidth && resolvedHeight && resolvedMargin && resolvedPadding)
             {
@@ -365,7 +425,7 @@ internal partial class BoxLayout(Element target) : Layout
             }
         }
 
-        this.UpdateLayoutSize();
+        this.UpdateRect();
     }
 
     private void CalculatePendingMargin(ref Size<uint> size)
@@ -395,151 +455,272 @@ internal partial class BoxLayout(Element target) : Layout
 
     private void CalculatePendingLayouts()
     {
-        var contentDynamicSize = new Size<uint>();
-
-        var stack = this.Target.Style.Stack ?? StackKind.Horizontal;
+        var content        = this.content;
+        var avaliableSpace = this.Size.ClampSubtract(this.staticContent);
+        var stack          = this.Target.Style.Stack ?? StackKind.Horizontal;
 
         foreach (var dependent in this.dependents)
         {
-            var content = dependent.Content;
+            var size    = dependent.Size;
             var padding = dependent.padding;
 
-            if (!this.contentDependent.HasFlag(Dependency.Width))
+            if (!this.contentDependent.HasFlag(Dependency.Width) || stack == StackKind.Vertical)
             {
-                CalculatePendingPaddingHorizontal(dependent, this.Content, ref padding);
-                CalculatePendingMarginHorizontal(dependent, stack, this.Content, ref contentDynamicSize);
+                CalculatePendingPaddingHorizontal(dependent, this.Size, ref padding);
+                CalculatePendingMarginHorizontal(dependent, stack, this.Size, ref content);
 
                 if (dependent.parentDependent.HasFlag(Dependency.Width))
                 {
+                    var modified = false;
+
                     if (dependent.Target.Style.Size?.Width?.TryGetPercentage(out var percentage) ?? false)
                     {
-                        content.Width = (uint)(this.Content.Width * percentage);
+                        size.Width = (uint)(this.Size.Width * percentage);
+
+                        if ((dependent.Target.Style.MinSize?.Width?.TryGetPixel(out var min) ?? false) && (this.Target.Style.MaxSize?.Width?.TryGetPixel(out var max) ?? false))
+                        {
+                            if (size.Width < min)
+                            {
+                                size.Width = min;
+                            }
+                            else if (size.Width > max)
+                            {
+                                size.Width = max;
+                            }
+                        }
+                        else if (dependent.Target.Style.MinSize?.Width?.TryGetPixel(out min) ?? false)
+                        {
+                            if (size.Width < min)
+                            {
+                                size.Width = min;
+                            }
+                        }
+                        else if (dependent.Target.Style.MaxSize?.Width?.TryGetPixel(out max) ?? false)
+                        {
+                            if (size.Width > max)
+                            {
+                                size.Width = max;
+                            }
+                        }
+
+                        modified = true;
                     }
                     else if ((dependent.Target.Style.MinSize?.Width?.TryGetPercentage(out var min) ?? false) && (dependent.Target.Style.MaxSize?.Width?.TryGetPercentage(out var max) ?? false))
                     {
-                        content.Width = uint.Max(uint.Min(this.Content.Width, (uint)(this.Content.Width * min)), (uint)(this.Content.Width * max));
+                        var minValue = (uint)(this.Size.Width * min);
+                        var maxValue = (uint)(this.Size.Width * max);
+
+                        modified = true;
+
+                        if (size.Width < minValue)
+                        {
+                            size.Width = minValue;
+                        }
+                        else if (size.Width > maxValue)
+                        {
+                            size.Width = maxValue;
+                        }
+                        else
+                        {
+                            modified = false;
+                        }
                     }
                     else if (dependent.Target.Style.MinSize?.Width?.TryGetPercentage(out min) ?? false)
                     {
-                        content.Width = uint.Min(this.Content.Width, (uint)(this.Content.Width * min));
+                        var minValue = (uint)(this.Size.Width * min);
+
+                        if (size.Width < minValue)
+                        {
+                            size.Width = minValue;
+
+                            modified = true;
+                        }
                     }
                     else if (dependent.Target.Style.MaxSize?.Width?.TryGetPercentage(out max) ?? false)
                     {
-                        content.Width = uint.Max(this.Content.Width, (uint)(this.Content.Width * max));
+                        var maxValue = (uint)(this.Size.Width * max);
+
+                        if (size.Width > maxValue)
+                        {
+                            size.Width = maxValue;
+
+                            modified = true;
+                        }
                     }
 
-                    content.Width -= dependent.padding.Horizontal;
-
-                    if (stack == StackKind.Horizontal)
+                    if (modified)
                     {
-                        if (content.Width < this.avaliableSpace.Width)
+                        content.Width -= dependent.BoundingsWithMargin.Width;
+
+                        if (stack == StackKind.Horizontal)
                         {
-                            this.avaliableSpace.Width -= content.Width;
+                            if (size.Width < avaliableSpace.Width)
+                            {
+                                avaliableSpace.Width -= size.Width;
+                            }
+                            else
+                            {
+                                size.Width = avaliableSpace.Width;
+
+                                avaliableSpace.Width = 0;
+                            }
+
+                            content.Width += size.Width;
                         }
                         else
                         {
-                            content.Width = this.avaliableSpace.Width;
-
-                            this.avaliableSpace.Width = 0;
+                            content.Width = uint.Max(size.Width, content.Width);
                         }
 
-                        contentDynamicSize.Width += content.Width;
+                        size.Width = size.Width
+                            .ClampSubtract(dependent.border.Horizontal)
+                            .ClampSubtract(dependent.padding.Horizontal)
+                            .ClampSubtract(dependent.margin.Horizontal);
                     }
-                    else
-                    {
-                        contentDynamicSize.Width = uint.Max(content.Width, contentDynamicSize.Width);
-                    }
-
-                    content.Width -= dependent.border.Horizontal;
                 }
             }
 
-            if (!this.contentDependent.HasFlag(Dependency.Height))
+            if (!this.contentDependent.HasFlag(Dependency.Height) || stack == StackKind.Horizontal)
             {
-                CalculatePendingPaddingVertical(dependent, this.Content, ref padding);
-                CalculatePendingMarginVertical(dependent, stack, this.Content, ref contentDynamicSize);
+                CalculatePendingPaddingVertical(dependent, this.Size, ref padding);
+                CalculatePendingMarginVertical(dependent, stack, this.Size, ref content);
 
                 if (dependent.parentDependent.HasFlag(Dependency.Height))
                 {
+                    var modified = false;
+
                     if (dependent.Target.Style.Size?.Height?.TryGetPercentage(out var percentage) ?? false)
                     {
-                        content.Height = (uint)(this.Content.Height * percentage);
+                        size.Height = (uint)(this.Size.Height * percentage);
+
+                        if ((dependent.Target.Style.MinSize?.Height?.TryGetPixel(out var min) ?? false) && (this.Target.Style.MaxSize?.Height?.TryGetPixel(out var max) ?? false))
+                        {
+                            if (size.Height < min)
+                            {
+                                size.Height = min;
+                            }
+                            else if (size.Height > max)
+                            {
+                                size.Height = max;
+                            }
+                        }
+                        else if (dependent.Target.Style.MinSize?.Height?.TryGetPixel(out min) ?? false)
+                        {
+                            if (size.Height < min)
+                            {
+                                size.Height = min;
+                            }
+                        }
+                        else if (dependent.Target.Style.MaxSize?.Height?.TryGetPixel(out max) ?? false)
+                        {
+                            if (size.Height > max)
+                            {
+                                size.Height = max;
+                            }
+                        }
+
+                        modified = true;
                     }
                     else if ((dependent.Target.Style.MinSize?.Height?.TryGetPercentage(out var min) ?? false) && (dependent.Target.Style.MaxSize?.Height?.TryGetPercentage(out var max) ?? false))
                     {
-                        content.Height = uint.Max(uint.Min(this.Content.Height, (uint)(this.Content.Height * min)), (uint)(this.Content.Height * max));
-                    }
-                    else if (dependent.Target.Style.MinSize?.Height?.TryGetPercentage(out min) ?? false)
-                    {
-                        content.Height = uint.Min(this.Content.Height, (uint)(this.Content.Height * min));
-                    }
-                    else if (dependent.Target.Style.MaxSize?.Height?.TryGetPercentage(out max) ?? false)
-                    {
-                        content.Height = uint.Max(this.Content.Height, (uint)(this.Content.Height * max));
-                    }
+                        var minValue = (uint)(this.Size.Height * min);
+                        var maxValue = (uint)(this.Size.Height * max);
 
-                    content.Height -= dependent.padding.Vertical;
+                        modified = true;
 
-                    if (stack == StackKind.Vertical)
-                    {
-                        if (content.Height < this.avaliableSpace.Height)
+                        if (size.Height < minValue)
                         {
-                            this.avaliableSpace.Height -= content.Height;
+                            size.Height = minValue;
+                        }
+                        else if (size.Height > maxValue)
+                        {
+                            size.Height = maxValue;
                         }
                         else
                         {
-                            content.Height = this.avaliableSpace.Height;
-
-                            this.avaliableSpace.Height = 0;
+                            modified = false;
                         }
+                    }
+                    else if (dependent.Target.Style.MinSize?.Height?.TryGetPercentage(out min) ?? false)
+                    {
+                        var minValue = (uint)(this.Size.Height * min);
 
-                        contentDynamicSize.Height += content.Height;
+                        if (size.Height < minValue)
+                        {
+                            size.Height = minValue;
+
+                            modified = true;
+                        }
+                    }
+                    else if (dependent.Target.Style.MaxSize?.Height?.TryGetPercentage(out max) ?? false)
+                    {
+                        var maxValue = (uint)(this.Size.Height * max);
+
+                        if (size.Height > maxValue)
+                        {
+                            size.Height = maxValue;
+
+                            modified = true;
+                        }
                     }
                     else
                     {
-                        contentDynamicSize.Height = uint.Max(content.Height, contentDynamicSize.Height);
+                        modified = false;
                     }
 
-                    content.Height -= dependent.border.Vertical;
+                    if (modified)
+                    {
+                        content.Height -= dependent.BoundingsWithMargin.Height;
+
+                        if (stack == StackKind.Vertical)
+                        {
+                            if (size.Height < avaliableSpace.Height)
+                            {
+                                avaliableSpace.Height -= size.Height;
+                            }
+                            else
+                            {
+                                size.Height = avaliableSpace.Height;
+
+                                avaliableSpace.Height = 0;
+                            }
+
+                            content.Height += size.Height;
+                        }
+                        else
+                        {
+                            content.Height = uint.Max(size.Height, content.Height);
+                        }
+
+                        size.Height = size.Height
+                            .ClampSubtract(dependent.border.Vertical)
+                            .ClampSubtract(dependent.padding.Vertical)
+                            .ClampSubtract(dependent.margin.Vertical);
+                    }
                 }
             }
 
-            if (content != dependent.Content || padding != dependent.padding)
+            if (size != dependent.Size || padding != dependent.padding)
             {
-                dependent.avaliableSpace.Width = content.Width > dependent.contentStaticSize.Width
-                    ? content.Width - dependent.contentStaticSize.Width
-                    : 0;
-
-                dependent.avaliableSpace.Height = content.Height > dependent.contentStaticSize.Height
-                    ? content.Height - dependent.contentStaticSize.Height
-                    : 0;
-
                 dependent.padding = padding;
-                dependent.Content = content;
+                dependent.Size    = size;
 
                 dependent.CalculatePendingLayouts();
                 dependent.UpdateDisposition();
             }
 
+            dependent.UpdateRect();
             dependent.HasPendingUpdate = false;
 
-            dependent.UpdateLayoutSize();
-
-            this.CheckHightestChild(stack, dependent.Target);
+            this.CheckHightestInlineChild(stack, dependent.Target);
         }
 
-        this.contentDynamicSize += contentDynamicSize;
+        this.content = content;
     }
 
-    private Size<uint> GetTotalSize() =>
-        new(
-            this.Content.Width + this.padding.Horizontal + this.border.Horizontal,
-            this.Content.Height + this.padding.Vertical + this.border.Vertical
-        );
-
-    private void CheckHightestChild(StackKind stack, ContainerNode child)
+    private void CheckHightestInlineChild(StackKind stack, ContainerNode child)
     {
-        if (child.Layout.BaseLine < 0)
+        if (!child.Layout.IsInline || child.Layout.BaseLine < 0)
         {
             return;
         }
@@ -547,30 +728,35 @@ internal partial class BoxLayout(Element target) : Layout
         if (child is Element element)
         {
             var hasAlignment = element.Style.Alignment.HasValue
-                && !element.Style.Alignment.Value.HasFlag(AlignmentKind.Top)
-                && !element.Style.Alignment.Value.HasFlag(AlignmentKind.Bottom)
-                && (stack == StackKind.Horizontal || !element.Style.Alignment.Value.HasFlag(AlignmentKind.Center));
+                && (
+                    element.Style.Alignment.Value == AlignmentKind.Center
+                    || element.Style.Alignment.Value.HasFlag(AlignmentKind.Top)
+                    || element.Style.Alignment.Value.HasFlag(AlignmentKind.Bottom)
+                    || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.Begin)
+                    || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.Center)
+                    || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.End)
+                );
 
             var totalSize = new Size<uint>(element.Layout.Size.Width + element.Layout.margin.Horizontal, element.Layout.Size.Height + element.Layout.margin.Vertical);
 
-            if (!hasAlignment && totalSize.Height > this.hightestChildHeight)
+            if (!hasAlignment && totalSize.Height > this.hightestInlineChildHeight)
             {
-                this.hightestChildHeight = totalSize.Height;
-                this.hightestChildNode   = element;
+                this.hightestInlineChildHeight = totalSize.Height;
+                this.hightestInlineChildNode   = element;
             }
         }
-        else if (child.Layout.Size.Height > this.hightestChildHeight)
+        else if (child.Layout.Size.Height > this.hightestInlineChildHeight)
         {
-            this.hightestChildHeight = child.Layout.Size.Height;
-            this.hightestChildNode   = child;
+            this.hightestInlineChildHeight = child.Layout.Size.Height;
+            this.hightestInlineChildNode   = child;
         }
     }
 
     private void UpdateBaseline(StackKind stack)
     {
-        if (this.hightestChildNode != null)
+        if (this.hightestInlineChildNode != null)
         {
-            if (this.hightestChildNode is Element element)
+            if (this.hightestInlineChildNode is Element element)
             {
                 if (stack == StackKind.Horizontal)
                 {
@@ -578,26 +764,26 @@ internal partial class BoxLayout(Element target) : Layout
 
                     this.BaseLine = offset == 0
                         ? element.Layout.BaseLine
-                        : (offset + element.Layout.Content.Height * element.Layout.BaseLine) / this.hightestChildHeight;
+                        : (offset + element.Layout.Size.Height * element.Layout.BaseLine) / this.hightestInlineChildHeight;
                 }
                 else
                 {
-                    var offset = -this.hightestChildNode.Layout.Offset.Y - this.border.Top + element.Layout.border.Top + element.Layout.padding.Top;
+                    var offset = -this.hightestInlineChildNode.Layout.Offset.Y - this.border.Top + element.Layout.border.Top + element.Layout.padding.Top;
 
-                    this.BaseLine = 1 - (float)(offset + this.hightestChildNode.Layout.Content.Height * (1 - this.hightestChildNode.Layout.BaseLine)) / this.Content.Height;
+                    this.BaseLine = 1 - (float)(offset + this.hightestInlineChildNode.Layout.Size.Height * (1 - this.hightestInlineChildNode.Layout.BaseLine)) / this.Size.Height;
                 }
             }
             else
             {
                 if (stack == StackKind.Horizontal)
                 {
-                    this.BaseLine = (float)this.hightestChildNode.Layout.BaseLine;
+                    this.BaseLine = (float)this.hightestInlineChildNode.Layout.BaseLine;
                 }
                 else
                 {
-                    var offset = -this.hightestChildNode.Layout.Offset.Y - this.border.Top;
+                    var offset = -this.hightestInlineChildNode.Layout.Offset.Y - this.border.Top;
 
-                    this.BaseLine = 1 - (float)(offset + this.hightestChildNode.Layout.Content.Height * (1 - this.hightestChildNode.Layout.BaseLine)) / this.Content.Height;
+                    this.BaseLine = 1 - (float)(offset + this.hightestInlineChildNode.Layout.Size.Height * (1 - this.hightestInlineChildNode.Layout.BaseLine)) / this.Size.Height;
                 }
             }
         }
@@ -610,10 +796,9 @@ internal partial class BoxLayout(Element target) : Layout
             return;
         }
 
-        var cursor      = new Point<float>();
-        var size        = this.Content.Cast<float>();
-        var contentSize = new Size<uint>();
-        var stack       = this.Target.Style.Stack ?? StackKind.Horizontal;
+        var cursor = new Point<float>();
+        var size   = this.Size.Cast<float>();
+        var stack  = this.Target.Style.Stack ?? StackKind.Horizontal;
 
         var lineHeight = size.Height;
 
@@ -625,24 +810,12 @@ internal partial class BoxLayout(Element target) : Layout
             {
                 lineHeight = size.Height * (1 - this.BaseLine);
             }
-
-            contentSize.Width  = this.contentStaticSize.Width + this.contentDynamicSize.Width;
-            contentSize.Height = uint.Max(this.contentStaticSize.Height, this.contentDynamicSize.Height);
-        }
-        else
-        {
-            contentSize.Width  = uint.Max(this.contentStaticSize.Width, this.contentDynamicSize.Width);
-            contentSize.Height = this.contentStaticSize.Height + this.contentDynamicSize.Height;
         }
 
-        var freeSpace = size - contentSize.Cast<float>();
+        var avaliableSpace = size - this.content.Cast<float>();
 
-        var initialOffet = new Point<uint>(this.border.Left + this.padding.Left, this.border.Top  + this.padding.Top);
-
-        cursor.X += initialOffet.X;
-        cursor.Y -= initialOffet.Y;
-
-        var i = 0;
+        cursor.X += this.padding.Left + this.border.Left;
+        cursor.Y -= this.padding.Top  + this.border.Top;
 
         foreach (var node in this.Target)
         {
@@ -653,97 +826,75 @@ internal partial class BoxLayout(Element target) : Layout
 
             var alignmentType = AlignmentKind.None;
 
-            RectEdges border = default;
-            RectEdges margin = default;
+            RectEdges border  = default;
+            RectEdges margin  = default;
+            RectEdges padding = default;
 
-            var childSize      = child.Layout.Size;
-            var contentOffsetY = 0u;
+            var childBoundings = child.Layout.Size;
+            var contentOffset  = new Point<uint>();
 
             if (child is Element element)
             {
-                alignmentType  = element.Style?.Alignment ?? AlignmentKind.None;
-                margin         = element.Layout.margin;
-                border         = element.Layout.border;
-                contentOffsetY = element.Layout.margin.Top + element.Layout.border.Top + element.Layout.padding.Top;
-                childSize = new(
-                    element.Layout.Content.Width  + element.Layout.margin.Horizontal + element.Layout.border.Horizontal + element.Layout.padding.Horizontal,
-                    element.Layout.Content.Height + element.Layout.margin.Vertical   + element.Layout.border.Vertical   + element.Layout.padding.Vertical
+                alignmentType = element.Style?.Alignment ?? AlignmentKind.None;
+                margin        = element.Layout.margin;
+                border        = element.Layout.border;
+                padding       = element.Layout.padding;
+                contentOffset = new(
+                    element.Layout.margin.Top  + element.Layout.border.Top  + element.Layout.padding.Top,
+                    element.Layout.margin.Left + element.Layout.border.Left + element.Layout.padding.Left
                 );
+
+                childBoundings = element.Layout.Boundings;
             }
 
-            var alignment = GetAlignment(stack, child.Layout, alignmentType);
+            var alignment = GetAlignment(stack, child.Layout, alignmentType, out var hasHorizontalAlignment, out var hasVerticalAlignment);
 
             Vector2<float> offset;
 
+
             if (stack == StackKind.Horizontal)
             {
-                var isInline = alignmentType == AlignmentKind.None && child.Layout.BaseLine > 0;
+                avaliableSpace.Width += childBoundings.Width;
 
-                var hasHorizontalAlignment =
-                    alignmentType.HasFlag(AlignmentKind.Begin)
-                    || alignmentType.HasFlag(AlignmentKind.Left)
-                    || alignmentType.HasFlag(AlignmentKind.Center)
-                    || alignmentType.HasFlag(AlignmentKind.Right)
-                    || alignmentType.HasFlag(AlignmentKind.End);
-
-                var x = hasHorizontalAlignment
-                    ? float.Max(0, freeSpace.Width - childSize.Width) * alignment.X
-                    : 0;
-
-                var y = isInline
-                    ? (lineHeight - (contentOffsetY + child.Layout.Content.Height * (1 - child.Layout.BaseLine)))
-                    : ((size.Height - childSize.Height) * alignment.Y);
-
-                offset = new(float.Ceiling(cursor.X + margin.Left + x), -float.Ceiling(-cursor.Y + margin.Top + y));
+                var x = hasHorizontalAlignment ? avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X : 0;
+                var y = child.Layout.IsInline && !hasVerticalAlignment && child.Layout.BaseLine > 0
+                    ? lineHeight.ClampSubtract(contentOffset.Y + child.Layout.Size.Height * (1 - child.Layout.BaseLine))
+                    : size.Height.ClampSubtract(childBoundings.Height) * alignment.Y;
 
                 var usedSpace = hasHorizontalAlignment
-                    ? float.Max(child.Layout.Size.Width, x - freeSpace.Width - margin.Horizontal)
-                    : child.Layout.Size.Width;
+                    ? float.Max(childBoundings.Width, avaliableSpace.Width - x)
+                    : childBoundings.Width;
+
+                avaliableSpace.Width = avaliableSpace.Width.ClampSubtract(usedSpace);
+
+                offset = new(float.Ceiling(cursor.X + x + margin.Left), -float.Ceiling(-cursor.Y + y + margin.Top));
 
                 cursor.X = offset.X + usedSpace + margin.Right;
             }
             else
             {
-                var hasVerticalAlignment =
-                    alignmentType.HasFlag(AlignmentKind.Begin)
-                    || alignmentType.HasFlag(AlignmentKind.Top)
-                    || alignmentType.HasFlag(AlignmentKind.Center)
-                    || alignmentType.HasFlag(AlignmentKind.Bottom)
-                    || alignmentType.HasFlag(AlignmentKind.End);
+                avaliableSpace.Height += childBoundings.Height;
 
-                var x = (size.Width - childSize.Width) * alignment.X;
-                var y = hasVerticalAlignment
-                    ? float.Max(0, freeSpace.Height - childSize.Height) * alignment.Y
-                    : 0;
-
-                offset = new(float.Ceiling(cursor.X + margin.Left + x), -float.Ceiling(-cursor.Y + margin.Top + y));
+                var x = size.Width.ClampSubtract(childBoundings.Width) * alignment.X;
+                var y = hasVerticalAlignment ? avaliableSpace.Height.ClampSubtract(childBoundings.Height) * alignment.Y : 0;
 
                 var usedSpace = hasVerticalAlignment
-                    ? float.Max(child.Layout.Size.Height, y - freeSpace.Height - margin.Vertical)
-                    : child.Layout.Size.Height;
+                    ? float.Max(childBoundings.Height, avaliableSpace.Height - y)
+                    : childBoundings.Height;
+
+                offset = new(float.Ceiling(cursor.X + x + margin.Left), -float.Ceiling(-cursor.Y + y + margin.Top));
+
+                avaliableSpace.Height = avaliableSpace.Height.ClampSubtract(usedSpace);
 
                 cursor.Y = offset.Y - usedSpace - margin.Bottom;
             }
 
             child.Layout.Offset = offset;
-
-            i++;
         }
 
         if (stack == StackKind.Vertical)
         {
             this.UpdateBaseline(stack);
-        }
-    }
-
-    private void UpdateLayoutSize()
-    {
-        var size = this.GetTotalSize();
-
-        if (size != this.Size)
-        {
-            this.Size = size;
-            this.UpdateRect();
         }
     }
 
@@ -763,9 +914,47 @@ internal partial class BoxLayout(Element target) : Layout
         }
 
         command.ObjectId = this.Target.Style.Border.HasValue || this.Target.Style.BackgroundColor.HasValue ? (uint)(this.Target.Index + 1) : 0;
-        command.Rect     = new(this.Size.Cast<float>(), default);
+        command.Rect     = new(this.Boundings.Cast<float>(), default);
         command.Border   = this.Target.Style.Border ?? default;
         command.Color    = this.Target.Style.BackgroundColor ?? default;
+    }
+
+    public void AddDependent(Element element)
+    {
+        if (element.Layout.parentDependent != Dependency.None)
+        {
+            this.dependents.Add(element.Layout);
+        }
+    }
+
+    public void DecreaseRenderableNodes()
+    {
+        this.renderableNodesCount--;
+        this.RequestUpdate();
+    }
+
+    public void IncreaseRenderableNodes()
+    {
+        this.renderableNodesCount++;
+        this.RequestUpdate();
+    }
+
+    public void RemoveDependent(Element element) =>
+        this.dependents.Remove(element.Layout);
+
+    public override void Update()
+    {
+        if (this.HasPendingUpdate)
+        {
+            this.CalculateLayout();
+
+            if (this.parentDependent == Dependency.None)
+            {
+                this.UpdateDisposition();
+            }
+
+            this.HasPendingUpdate = false;
+        }
     }
 
     public void UpdateState()
@@ -828,46 +1017,5 @@ internal partial class BoxLayout(Element target) : Layout
         }
 
         this.RequestUpdate();
-    }
-
-    
-        
-
-    public void AddDependent(Element element)
-    {
-        if (element.Layout.parentDependent != Dependency.None)
-        {
-            this.dependents.Add(element.Layout);
-        }
-    }
-
-    public void DecreaseRenderableNodes()
-    {
-        this.renderableNodesCount--;
-        this.RequestUpdate();
-    }
-
-    public void IncreaseRenderableNodes()
-    {
-        this.renderableNodesCount++;
-        this.RequestUpdate();
-    }
-
-    public void RemoveDependent(Element element) =>
-        this.dependents.Remove(element.Layout);
-
-    public override void Update()
-    {
-        if (this.HasPendingUpdate)
-        {
-            this.CalculateLayout();
-
-            if (this.parentDependent == Dependency.None)
-            {
-                this.UpdateDisposition();
-            }
-
-            this.HasPendingUpdate = false;
-        }
     }
 }

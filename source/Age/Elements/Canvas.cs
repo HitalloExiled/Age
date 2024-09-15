@@ -5,14 +5,13 @@ namespace Age.Elements;
 
 public sealed class Canvas : Element
 {
-    private const ushort PADDING = 8;
+    // private const ushort PADDING = 8;
 
     public override string NodeName { get; } = nameof(Canvas);
 
     public Canvas() =>
         this.Style = new()
         {
-            Baseline = 1,
             // Padding = new((Pixel)PADDING),
         };
 

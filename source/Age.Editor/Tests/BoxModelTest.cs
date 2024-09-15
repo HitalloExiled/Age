@@ -6,16 +6,14 @@ namespace Age.Editor.Tests;
 
 public class BoxModelTest
 {
-    public static void Setup(Canvas canvas)
+    public static void Setup(Canvas canvas, in TestContext testContext)
     {
-        const int BORDER_SIZE = 10;
-
         var boxModel = new Span
         {
             Name = "BoxModel",
             Style = new()
             {
-                Border    = new(BORDER_SIZE, 0, Color.Red),
+                Border    = new(testContext.BorderSize, 0, Color.Red),
                 Size      = new((Percentage)100),
                 BoxSizing = BoxSizing.Border
             }
@@ -27,7 +25,7 @@ public class BoxModelTest
             Style = new()
             {
                 Stack  = StackKind.Vertical,
-                Border = new(BORDER_SIZE, 0, Color.Green),
+                Border = new(testContext.BorderSize, 0, Color.Green),
                 Size   = new((Percentage)50, (Percentage)100),
             }
         };
@@ -50,7 +48,7 @@ public class BoxModelTest
             Style = new()
             {
                 Color  = Color.White,
-                Border = new(BORDER_SIZE, 0, Color.Cyan),
+                Border = new(testContext.BorderSize, 0, Color.Cyan),
                 Size   = new((Percentage)100, (Percentage)50),
             }
         };
@@ -61,7 +59,7 @@ public class BoxModelTest
             Style = new()
             {
                 Color  = Color.White,
-                Border = new(BORDER_SIZE, 0, Color.White),
+                Border = new(testContext.BorderSize, 0, Color.White),
                 Size   = new((Percentage)100, (Percentage)50),
             }
         };
@@ -73,7 +71,7 @@ public class BoxModelTest
             {
                 Alignment = AlignmentKind.Center,
                 Color     = Color.White,
-                Border    = new(BORDER_SIZE, 0, Color.Yellow),
+                Border    = new(testContext.BorderSize, 0, Color.Yellow),
                 Size      = new((Pixel)50),
             }
         };
@@ -84,7 +82,7 @@ public class BoxModelTest
             Style = new()
             {
                 Stack  = StackKind.Vertical,
-                Border = new(BORDER_SIZE, 0, Color.Blue),
+                Border = new(testContext.BorderSize, 0, Color.Blue),
                 Size   = new((Percentage)100, (Percentage)100),
             }
         };
@@ -95,7 +93,7 @@ public class BoxModelTest
             Style = new()
             {
                 Color  = Color.White,
-                Border = new(BORDER_SIZE, 0, Color.Cyan),
+                Border = new(testContext.BorderSize, 0, Color.Cyan),
                 Size   = new((Pixel)50),
             }
         };
@@ -106,7 +104,7 @@ public class BoxModelTest
             Style = new()
             {
                 Color  = Color.White,
-                Border = new(BORDER_SIZE, 0, Color.White),
+                Border = new(testContext.BorderSize, 0, Color.White),
                 Size   = new((Percentage)100),
             }
         };
@@ -117,21 +115,21 @@ public class BoxModelTest
             Style = new()
             {
                 Color  = Color.White,
-                Border = new(BORDER_SIZE, 0, Color.Yellow),
+                Border = new(testContext.BorderSize, 0, Color.Yellow),
                 Size   = new((Pixel)50),
             }
         };
 
         canvas.AppendChild(boxModel);
             boxModel.AppendChild(stackL);
-                stackL.AppendChild(stackText);
-                stackL.AppendChild(boxAL);
-                stackL.AppendChild(boxBL);
-                stackL.AppendChild(boxCL);
+            stackL.AppendChild(stackText);
+            stackL.AppendChild(boxAL);
+            stackL.AppendChild(boxBL);
+            stackL.AppendChild(boxCL);
 
         boxModel.AppendChild(stackR);
-                stackR.AppendChild(boxAR);
-                stackR.AppendChild(boxBR);
-                stackR.AppendChild(boxCR);
+            stackR.AppendChild(boxAR);
+            stackR.AppendChild(boxBR);
+            stackR.AppendChild(boxCR);
     }
 }

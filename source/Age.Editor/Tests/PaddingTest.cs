@@ -6,16 +6,14 @@ namespace Age.Editor.Tests;
 
 public class PaddingTest
 {
-    public static void Setup(Canvas canvas)
+    public static void Setup(Canvas canvas, in TestContext testContext)
     {
-        const int BORDER_SIZE = 10;
-
         var container_no_padding = new Span
         {
             Name  = "no_padding_container",
             Style = new()
             {
-                Border = new(BORDER_SIZE, 0, Color.Margenta),
+                Border = new(testContext.BorderSize, 0, Color.Margenta),
             }
         };
 
@@ -24,7 +22,7 @@ public class PaddingTest
             Name = "no_padding_content",
             Style = new()
             {
-                Border = new(BORDER_SIZE, 0, Color.Margenta * 0.8f),
+                Border = new(testContext.BorderSize, 0, Color.Margenta * 0.8f),
                 Size   = new((Pixel)100),
             }
         };
@@ -34,7 +32,7 @@ public class PaddingTest
             Name  = "container_padding_px10_100px",
             Style = new()
             {
-                Border  = new(BORDER_SIZE, 0, Color.Red),
+                Border  = new(testContext.BorderSize, 0, Color.Red),
                 Padding = new((Pixel)10),
             }
         };
@@ -44,7 +42,7 @@ public class PaddingTest
             Name  = "content_padding_px10_100px",
             Style = new()
             {
-                Border = new(BORDER_SIZE, 0, Color.Red * 0.8f),
+                Border = new(testContext.BorderSize, 0, Color.Red * 0.8f),
                 Size   = new((Pixel)100),
             }
         };
@@ -54,7 +52,7 @@ public class PaddingTest
             Name  = "container_padding_px10_100pc",
             Style = new()
             {
-                Border  = new(BORDER_SIZE, 0, Color.Green),
+                Border  = new(testContext.BorderSize, 0, Color.Green),
                 Padding = new((Pixel)10),
             }
         };
@@ -65,7 +63,7 @@ public class PaddingTest
             Style = new()
             {
 
-                Border = new(BORDER_SIZE, 0, Color.Green * 0.8f),
+                Border = new(testContext.BorderSize, 0, Color.Green * 0.8f),
                 Size   = new((Percentage)100),
             }
         };
@@ -85,7 +83,7 @@ public class PaddingTest
             Name  = "container_padding_pc10_100pc",
             Style = new()
             {
-                Border  = new(BORDER_SIZE, 0, Color.Blue),
+                Border  = new(testContext.BorderSize, 0, Color.Blue),
                 Padding = new((Percentage)10),
             }
         };
@@ -96,7 +94,7 @@ public class PaddingTest
             Style = new()
             {
 
-                Border = new(BORDER_SIZE, 0, Color.Blue * 0.8f),
+                Border = new(testContext.BorderSize, 0, Color.Blue * 0.8f),
                 Size   = new((Pixel)100),
             }
         };
@@ -116,7 +114,7 @@ public class PaddingTest
             Name  = "container_padding_100pc_pc10_100pc",
             Style = new()
             {
-                Border  = new(BORDER_SIZE, 0, Color.Cyan),
+                Border  = new(testContext.BorderSize, 0, Color.Cyan),
                 Padding = new((Percentage)10),
                 Size    = new((Percentage)100),
             }
@@ -128,7 +126,7 @@ public class PaddingTest
             Style = new()
             {
 
-                Border = new(BORDER_SIZE, 0, Color.Cyan * 0.8f),
+                Border = new(testContext.BorderSize, 0, Color.Cyan * 0.8f),
                 Size   = new((Pixel)100),
             }
         };
@@ -139,7 +137,7 @@ public class PaddingTest
             Style = new()
             {
                 Color   = Color.White,
-                Border  = new(BORDER_SIZE, 0, Color.White * 0.8f),
+                Border  = new(testContext.BorderSize, 0, Color.White * 0.8f),
                 Padding = new((Pixel)20, (Pixel)10),
             }
         };

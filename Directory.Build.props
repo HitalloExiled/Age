@@ -5,8 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <!-- <IlcDisableReflection>true</IlcDisableReflection>
-    <IsAotCompatible>true</IsAotCompatible> -->
+    <IlcDisableReflection>true</IlcDisableReflection>
+    <IsAotCompatible>true</IsAotCompatible>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>

@@ -40,7 +40,7 @@ internal class TextLayout(TextNode target): Layout
                 //target.Layout.BaseLine   = 1 - -info.End / (float)info.Boundings.Height;
                 target.Layout.BaseLine   = 1 - -info.Start / (float)info.Boundings.Height;
                 target.Layout.LineHeight = info.LineHeight;
-                target.Layout.Size       = target.Layout.Content = info.Boundings;
+                target.Layout.Size       = info.Boundings;
             }
 
             this.HasPendingUpdate = false;

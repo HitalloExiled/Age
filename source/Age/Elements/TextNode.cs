@@ -17,7 +17,7 @@ public class TextNode : ContainerNode
     }
 
     public TextNode() =>
-        this.Layout = new(this);
+        this.Layout = new(this) { IsInline = true };
 
     public override string ToString() =>
         this.Value ?? "";
