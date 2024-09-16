@@ -144,37 +144,35 @@ public class Editor : Node
         var borderSize = float.Ceiling(this.borderSize);
         var scale      = this.scale;
 
-        var reload = Input.IsKeyPressed(Key.Control) && Input.IsKeyJustPressed(Key.R);
+        var reload = true;
 
         if (Input.IsKeyJustPressed(Key.Num1))
         {
-            this.setup = BoxModelTest.Setup;
-            reload = true;
+            this.setup = AlignmentTest.Setup;
         }
         else if (Input.IsKeyJustPressed(Key.Num2))
         {
-            this.setup = BoxSizingTest.Setup;
-            reload = true;
+            this.setup = BoxModelTest.Setup;
         }
         else if (Input.IsKeyJustPressed(Key.Num3))
         {
-            this.setup = DivTest.Setup;
-            reload = true;
+            this.setup = BoxSizingTest.Setup;
         }
         else if (Input.IsKeyJustPressed(Key.Num4))
         {
             this.setup = InlineTextTest.Setup;
-            reload = true;
-        }
-        else if (Input.IsKeyJustPressed(Key.Num5))
-        {
-            this.setup = MarginTest.Setup;
-            reload = true;
         }
         else if (Input.IsKeyJustPressed(Key.Num6))
         {
+            this.setup = MarginTest.Setup;
+        }
+        else if (Input.IsKeyJustPressed(Key.Num7))
+        {
             this.setup = PaddingTest.Setup;
-            reload = true;
+        }
+        else
+        {
+            reload = Input.IsKeyPressed(Key.Control) && Input.IsKeyJustPressed(Key.R);
         }
 
         if (Input.IsKeyPressed(Key.Add))

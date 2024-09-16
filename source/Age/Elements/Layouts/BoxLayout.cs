@@ -12,16 +12,23 @@ internal partial class BoxLayout(Element target) : Layout
 {
     private readonly HashSet<BoxLayout> dependents = [];
 
-    private Transform2D    styleTransform = new();
-    private Size<uint>     content;
-    private Size<uint>     staticContent;
-    private RectEdges      border;
-    private RectEdges      margin;
-    private RectEdges      padding;
+    // 24-bytes
+    private Transform2D styleTransform = new();
+
+    // 16-bytes
+    private RawRectEdges border;
+    private RawRectEdges margin;
+    private RawRectEdges padding;
+
+    // 8-bytes
+    private Size<uint> content;
+    private Size<uint> staticContent;
+
+    // 4-bytes
     private Dependency     contentDependent;
-    private Dependency     parentDependent;
     private uint           hightestInlineChildHeight;
     private ContainerNode? hightestInlineChildNode;
+    private Dependency     parentDependent;
     private uint           renderableNodesCount;
 
     private Size<uint> Boundings =>
@@ -62,7 +69,7 @@ internal partial class BoxLayout(Element target) : Layout
         }
     }
 
-    private static void CalculatePendingPaddingHorizontal(BoxLayout layout, in Size<uint> size, ref RectEdges padding)
+    private static void CalculatePendingPaddingHorizontal(BoxLayout layout, in Size<uint> size, ref RawRectEdges padding)
     {
         if (layout.Target.Style.Padding?.Left?.TryGetPercentage(out var left) ?? false)
         {
@@ -75,7 +82,7 @@ internal partial class BoxLayout(Element target) : Layout
         }
     }
 
-    private static void CalculatePendingPaddingVertical(BoxLayout layout, in Size<uint> size, ref RectEdges padding)
+    private static void CalculatePendingPaddingVertical(BoxLayout layout, in Size<uint> size, ref RawRectEdges padding)
     {
         if (layout.Target.Style.Padding?.Top?.TryGetPercentage(out var top) ?? false)
         {
@@ -824,26 +831,17 @@ internal partial class BoxLayout(Element target) : Layout
                 continue;
             }
 
-            var alignmentType = AlignmentKind.None;
-
-            RectEdges border  = default;
-            RectEdges margin  = default;
-            RectEdges padding = default;
-
+            var alignmentType  = AlignmentKind.None;
             var childBoundings = child.Layout.Size;
-            var contentOffset  = new Point<uint>();
+            var contentOffsetY = 0u;
+
+            RawRectEdges margin  = default;
 
             if (child is Element element)
             {
-                alignmentType = element.Style?.Alignment ?? AlignmentKind.None;
-                margin        = element.Layout.margin;
-                border        = element.Layout.border;
-                padding       = element.Layout.padding;
-                contentOffset = new(
-                    element.Layout.margin.Top  + element.Layout.border.Top  + element.Layout.padding.Top,
-                    element.Layout.margin.Left + element.Layout.border.Left + element.Layout.padding.Left
-                );
-
+                alignmentType  = element.Style?.Alignment ?? AlignmentKind.None;
+                margin         = element.Layout.margin;
+                contentOffsetY = element.Layout.margin.Top  + element.Layout.border.Top  + element.Layout.padding.Top;
                 childBoundings = element.Layout.Boundings;
             }
 
@@ -851,14 +849,13 @@ internal partial class BoxLayout(Element target) : Layout
 
             Vector2<float> offset;
 
-
             if (stack == StackKind.Horizontal)
             {
                 avaliableSpace.Width += childBoundings.Width;
 
                 var x = hasHorizontalAlignment ? avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X : 0;
                 var y = child.Layout.IsInline && !hasVerticalAlignment && child.Layout.BaseLine > 0
-                    ? lineHeight.ClampSubtract(contentOffset.Y + child.Layout.Size.Height * (1 - child.Layout.BaseLine))
+                    ? lineHeight.ClampSubtract(contentOffsetY + child.Layout.Size.Height * (1 - child.Layout.BaseLine))
                     : size.Height.ClampSubtract(childBoundings.Height) * alignment.Y;
 
                 var usedSpace = hasHorizontalAlignment

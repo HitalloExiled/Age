@@ -5,10 +5,13 @@ namespace Age.Styling;
 
 public record struct Border
 {
-    public BorderSide   Top;
-    public BorderSide   Right;
-    public BorderSide   Bottom;
-    public BorderSide   Left;
+    // 20-bytes
+    public BorderSide Top;
+    public BorderSide Right;
+    public BorderSide Bottom;
+    public BorderSide Left;
+
+    // 16-bytes
     public BorderRadius Radius;
 
     public Border(uint thickness, uint radius, in Color color)

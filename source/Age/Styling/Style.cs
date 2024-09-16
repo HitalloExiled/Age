@@ -6,23 +6,32 @@ public partial record Style
 {
     public event Action? Changed;
 
+    // 96-bytes
+    private Border? border;
+
+    // 32-bytes
+    private RectEdges? margin;
+    private RectEdges? padding;
+
+    // 16-bytes
+    private Color?    backgroundColor;
+    private Color?    color;
+    private SizeUnit? maxSize;
+    private SizeUnit? minSize;
+    private SizeUnit? size;
+
+    // 8-bytes
+    private Point<float>? pivot;
+    private Point<int>?   position;
+
+    // 4-bytes
     private AlignmentKind?     alignment;
-    private Color?             backgroundColor;
     private float?             baseline;
-    private Border?            border;
     private BoxSizing?         boxSizing;
-    private Color?             color;
     private string?            fontFamily;
     private ushort?            fontSize;
-    private Margin?            margin;
-    private SizeUnit?          maxSize;
-    private SizeUnit?          minSize;
-    private Margin?            padding;
-    private Point<float>?      pivot;
-    private Point<int>?        position;
     private PositionType?      positionType;
     private float?             rotation;
-    private SizeUnit?          size;
     private StackKind?         stack;
     private TextAlignmentKind? textAlignment;
 
@@ -74,7 +83,7 @@ public partial record Style
         set => this.Set(ref this.fontSize, value);
     }
 
-    public Margin? Margin
+    public RectEdges? Margin
     {
         get => this.margin;
         set => this.Set(ref this.margin, value);
@@ -92,7 +101,7 @@ public partial record Style
         set => this.Set(ref this.minSize, value);
     }
 
-    public Margin? Padding
+    public RectEdges? Padding
     {
         get => this.padding;
         set => this.Set(ref this.padding, value);

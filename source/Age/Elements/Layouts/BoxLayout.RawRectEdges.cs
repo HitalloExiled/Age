@@ -2,7 +2,7 @@ namespace Age.Elements.Layouts;
 
 internal partial class BoxLayout
 {
-    public record struct RectEdges
+    public record struct RawRectEdges
     {
         public uint Top;
         public uint Right;
