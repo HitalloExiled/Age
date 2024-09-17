@@ -162,11 +162,11 @@ public class Editor : Node
         {
             this.setup = InlineTextTest.Setup;
         }
-        else if (Input.IsKeyJustPressed(Key.Num6))
+        else if (Input.IsKeyJustPressed(Key.Num5))
         {
             this.setup = MarginTest.Setup;
         }
-        else if (Input.IsKeyJustPressed(Key.Num7))
+        else if (Input.IsKeyJustPressed(Key.Num6))
         {
             this.setup = PaddingTest.Setup;
         }

@@ -1,3 +1,4 @@
+using System.Xml.Linq;
 using Age.Commands;
 using Age.Extensions;
 using Age.Numerics;
@@ -744,7 +745,7 @@ internal partial class BoxLayout(Element target) : Layout
                     || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.End)
                 );
 
-            var totalSize = new Size<uint>(element.Layout.Size.Width + element.Layout.margin.Horizontal, element.Layout.Size.Height + element.Layout.margin.Vertical);
+            var totalSize = element.Layout.BoundingsWithMargin;
 
             if (!hasAlignment && totalSize.Height > this.hightestInlineChildHeight)
             {
@@ -763,35 +764,24 @@ internal partial class BoxLayout(Element target) : Layout
     {
         if (this.hightestInlineChildNode != null)
         {
-            if (this.hightestInlineChildNode is Element element)
+            if (stack == StackKind.Horizontal)
             {
-                if (stack == StackKind.Horizontal)
-                {
-                    var offset = element.Layout.margin.Top + element.Layout.border.Top + element.Layout.padding.Top;
+                var offset = (this.hightestInlineChildNode is Element element)
+                    ? element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top
+                    : 0;
 
-                    this.BaseLine = offset == 0
-                        ? element.Layout.BaseLine
-                        : (offset + element.Layout.Size.Height * element.Layout.BaseLine) / this.hightestInlineChildHeight;
-                }
-                else
-                {
-                    var offset = -this.hightestInlineChildNode.Layout.Offset.Y - this.border.Top + element.Layout.border.Top + element.Layout.padding.Top;
-
-                    this.BaseLine = 1 - (float)(offset + this.hightestInlineChildNode.Layout.Size.Height * (1 - this.hightestInlineChildNode.Layout.BaseLine)) / this.Size.Height;
-                }
+                this.BaseLine = (offset + this.hightestInlineChildNode.Layout.Size.Height * this.hightestInlineChildNode.Layout.BaseLine) / this.Size.Height;
             }
             else
             {
-                if (stack == StackKind.Horizontal)
-                {
-                    this.BaseLine = (float)this.hightestInlineChildNode.Layout.BaseLine;
-                }
-                else
-                {
-                    var offset = -this.hightestInlineChildNode.Layout.Offset.Y - this.border.Top;
+                var offset = -this.hightestInlineChildNode.Layout.Offset.Y - this.border.Top;
 
-                    this.BaseLine = 1 - (float)(offset + this.hightestInlineChildNode.Layout.Size.Height * (1 - this.hightestInlineChildNode.Layout.BaseLine)) / this.Size.Height;
+                if (this.hightestInlineChildNode is Element element)
+                {
+                    offset += element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top;
                 }
+
+                this.BaseLine = 1 - (offset + this.hightestInlineChildNode.Layout.Size.Height * (1 - this.hightestInlineChildNode.Layout.BaseLine)) / this.Size.Height;
             }
         }
     }
@@ -841,8 +831,8 @@ internal partial class BoxLayout(Element target) : Layout
             {
                 alignmentType  = element.Style?.Alignment ?? AlignmentKind.None;
                 margin         = element.Layout.margin;
-                contentOffsetY = element.Layout.margin.Top  + element.Layout.border.Top  + element.Layout.padding.Top;
-                childBoundings = element.Layout.Boundings;
+                contentOffsetY = element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top;
+                childBoundings = element.Layout.BoundingsWithMargin;
             }
 
             var alignment = GetAlignment(stack, child.Layout, alignmentType, out var hasHorizontalAlignment, out var hasVerticalAlignment);
@@ -854,9 +844,11 @@ internal partial class BoxLayout(Element target) : Layout
                 avaliableSpace.Width += childBoundings.Width;
 
                 var x = hasHorizontalAlignment ? avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X : 0;
-                var y = child.Layout.IsInline && !hasVerticalAlignment && child.Layout.BaseLine > 0
-                    ? lineHeight.ClampSubtract(contentOffsetY + child.Layout.Size.Height * (1 - child.Layout.BaseLine))
-                    : size.Height.ClampSubtract(childBoundings.Height) * alignment.Y;
+                var y = hasVerticalAlignment
+                    ? size.Height.ClampSubtract(childBoundings.Height) * alignment.Y
+                    : child.Layout.IsInline && child.Layout.BaseLine > 0
+                        ? lineHeight - (contentOffsetY + child.Layout.Size.Height * (1 - child.Layout.BaseLine))
+                        : 0;
 
                 var usedSpace = hasHorizontalAlignment
                     ? float.Max(childBoundings.Width, avaliableSpace.Width - x)
@@ -866,7 +858,7 @@ internal partial class BoxLayout(Element target) : Layout
 
                 offset = new(float.Ceiling(cursor.X + x + margin.Left), -float.Ceiling(-cursor.Y + y + margin.Top));
 
-                cursor.X = offset.X + usedSpace + margin.Right;
+                cursor.X = offset.X + usedSpace - margin.Right;
             }
             else
             {
@@ -883,7 +875,7 @@ internal partial class BoxLayout(Element target) : Layout
 
                 avaliableSpace.Height = avaliableSpace.Height.ClampSubtract(usedSpace);
 
-                cursor.Y = offset.Y - usedSpace - margin.Bottom;
+                cursor.Y = offset.Y - usedSpace + margin.Bottom;
             }
 
             child.Layout.Offset = offset;

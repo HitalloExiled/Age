@@ -18,7 +18,7 @@ internal partial class TextService : IDisposable
     public struct TextDrawInfo
     {
         public Size<uint> Boundings;
-        public float      LineHeight;
+        public uint       LineHeight;
         public int        Start;
         public int        End;
     }
