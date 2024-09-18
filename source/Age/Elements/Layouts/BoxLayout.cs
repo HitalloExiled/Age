@@ -27,7 +27,6 @@ internal partial class BoxLayout(Element target) : Layout
 
     // 4-bytes
     private Dependency     contentDependent;
-    private uint           hightestInlineChildHeight;
     private ContainerNode? hightestInlineChildNode;
     private Dependency     parentDependent;
     private uint           renderableNodesCount;
@@ -212,7 +211,8 @@ internal partial class BoxLayout(Element target) : Layout
 
         this.content       = new Size<uint>();
         this.staticContent = new Size<uint>();
-        this.hightestInlineChildHeight = 0;
+
+        this.hightestInlineChildNode = null;
 
         foreach (var node in this.Target)
         {
@@ -728,35 +728,25 @@ internal partial class BoxLayout(Element target) : Layout
 
     private void CheckHightestInlineChild(StackKind stack, ContainerNode child)
     {
-        if (!child.Layout.IsInline || child.Layout.BaseLine < 0)
+        if (!child.Layout.IsInline)
         {
             return;
         }
 
-        if (child is Element element)
-        {
-            var hasAlignment = element.Style.Alignment.HasValue
-                && (
-                    element.Style.Alignment.Value == AlignmentKind.Center
-                    || element.Style.Alignment.Value.HasFlag(AlignmentKind.Top)
-                    || element.Style.Alignment.Value.HasFlag(AlignmentKind.Bottom)
-                    || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.Begin)
-                    || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.Center)
-                    || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.End)
-                );
+        var hasAlignment = child is Element element
+            && element.Style.Alignment.HasValue
+            && (
+                element.Style.Alignment.Value == AlignmentKind.Center
+                || element.Style.Alignment.Value.HasFlag(AlignmentKind.Top)
+                || element.Style.Alignment.Value.HasFlag(AlignmentKind.Bottom)
+                || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.Begin)
+                || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.Center)
+                || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.End)
+            );
 
-            var totalSize = element.Layout.BoundingsWithMargin;
-
-            if (!hasAlignment && totalSize.Height > this.hightestInlineChildHeight)
-            {
-                this.hightestInlineChildHeight = totalSize.Height;
-                this.hightestInlineChildNode   = element;
-            }
-        }
-        else if (child.Layout.Size.Height > this.hightestInlineChildHeight)
+        if (!hasAlignment && (this.hightestInlineChildNode == null || child.Layout.BaseLine < this.hightestInlineChildNode.Layout.BaseLine))
         {
-            this.hightestInlineChildHeight = child.Layout.Size.Height;
-            this.hightestInlineChildNode   = child;
+            this.hightestInlineChildNode = child;
         }
     }
 
@@ -764,25 +754,14 @@ internal partial class BoxLayout(Element target) : Layout
     {
         if (this.hightestInlineChildNode != null)
         {
-            if (stack == StackKind.Horizontal)
+            var offset = 0;
+
+            if (this.hightestInlineChildNode is Element element)
             {
-                var offset = (this.hightestInlineChildNode is Element element)
-                    ? element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top
-                    : 0;
-
-                this.BaseLine = (offset + this.hightestInlineChildNode.Layout.Size.Height * this.hightestInlineChildNode.Layout.BaseLine) / this.Size.Height;
+                offset = -(int)(element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top);
             }
-            else
-            {
-                var offset = -this.hightestInlineChildNode.Layout.Offset.Y - this.border.Top;
 
-                if (this.hightestInlineChildNode is Element element)
-                {
-                    offset += element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top;
-                }
-
-                this.BaseLine = 1 - (offset + this.hightestInlineChildNode.Layout.Size.Height * (1 - this.hightestInlineChildNode.Layout.BaseLine)) / this.Size.Height;
-            }
+            this.BaseLine = offset + this.hightestInlineChildNode.Layout.BaseLine;
         }
     }
 
@@ -797,17 +776,7 @@ internal partial class BoxLayout(Element target) : Layout
         var size   = this.Size.Cast<float>();
         var stack  = this.Target.Style.Stack ?? StackKind.Horizontal;
 
-        var lineHeight = size.Height;
-
-        if (stack == StackKind.Horizontal)
-        {
-            this.UpdateBaseline(stack);
-
-            if (this.BaseLine > 0)
-            {
-                lineHeight = size.Height * (1 - this.BaseLine);
-            }
-        }
+        this.UpdateBaseline(stack);
 
         var avaliableSpace = size - this.content.Cast<float>();
 
@@ -846,8 +815,8 @@ internal partial class BoxLayout(Element target) : Layout
                 var x = hasHorizontalAlignment ? avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X : 0;
                 var y = hasVerticalAlignment
                     ? size.Height.ClampSubtract(childBoundings.Height) * alignment.Y
-                    : child.Layout.IsInline && child.Layout.BaseLine > 0
-                        ? lineHeight - (contentOffsetY + child.Layout.Size.Height * (1 - child.Layout.BaseLine))
+                    : child.Layout.IsInline
+                        ? -this.BaseLine - (contentOffsetY + -child.Layout.BaseLine)
                         : 0;
 
                 var usedSpace = hasHorizontalAlignment
@@ -879,11 +848,6 @@ internal partial class BoxLayout(Element target) : Layout
             }
 
             child.Layout.Offset = offset;
-        }
-
-        if (stack == StackKind.Vertical)
-        {
-            this.UpdateBaseline(stack);
         }
     }
 

@@ -7,9 +7,9 @@ internal abstract class Layout
 {
     public bool HasPendingUpdate { get; protected set; }
 
-    public float          BaseLine   { get; internal set; } = -1;
     public Vector2<float> Offset     { get; internal set; }
     public Size<uint>     Size       { get; internal set; }
+    public int            BaseLine   { get; internal set; }
     public uint           LineHeight { get; set; }
     public bool           IsInline   { get; init; }
 
