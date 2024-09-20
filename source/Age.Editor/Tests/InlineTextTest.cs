@@ -18,7 +18,7 @@ public class InlineTextTest
             }
         };
 
-        var vertical_text = new Div()
+        var vertical_text = new Span()
         {
             Name  = "vertical_text",
             Text  = "Vertical\nText",

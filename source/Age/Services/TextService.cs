@@ -195,7 +195,7 @@ internal partial class TextService : IDisposable
         var lineHeight = (uint)float.Round(-metrics.Ascent + metrics.Descent);
         var baseLine   = (int)float.Round(metrics.Ascent);
         var cursor     = new Point<int>(0, baseLine);
-        var boundings    = new Size<uint>(0, lineHeight);
+        var boundings  = new Size<uint>(0, lineHeight);
 
         this.ReleaseCommands(commands);
 

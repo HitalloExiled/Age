@@ -30,14 +30,18 @@ internal class TextLayout(TextNode target): Layout
             if (string.IsNullOrEmpty(this.text))
             {
                 this.Target.Commands.Clear();
+
+                this.BaseLine   = -1;
+                this.LineHeight = 0;
+                this.Size       = default;
             }
             else
             {
                 var info = TextService.Singleton.DrawText(this.Target, this.text);
 
-                target.Layout.BaseLine   = info.Start;
-                target.Layout.LineHeight = info.LineHeight;
-                target.Layout.Size       = info.Boundings;
+                this.BaseLine   = -info.Start;
+                this.LineHeight = info.LineHeight;
+                this.Size       = info.Boundings;
             }
 
             this.HasPendingUpdate = false;

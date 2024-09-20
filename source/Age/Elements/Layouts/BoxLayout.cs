@@ -728,7 +728,7 @@ internal partial class BoxLayout(Element target) : Layout
 
     private void CheckHightestInlineChild(StackKind stack, ContainerNode child)
     {
-        if (!child.Layout.IsInline)
+        if (!child.Layout.IsInline || child.Layout.BaseLine == -1)
         {
             return;
         }
@@ -744,7 +744,7 @@ internal partial class BoxLayout(Element target) : Layout
                 || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.End)
             );
 
-        if (!hasAlignment && (this.hightestInlineChildNode == null || child.Layout.BaseLine < this.hightestInlineChildNode.Layout.BaseLine))
+        if (!hasAlignment && (this.hightestInlineChildNode == null || child.Layout.BaseLine > this.hightestInlineChildNode.Layout.BaseLine))
         {
             this.hightestInlineChildNode = child;
         }
@@ -752,13 +752,15 @@ internal partial class BoxLayout(Element target) : Layout
 
     private void UpdateBaseline(StackKind stack)
     {
+        this.BaseLine = -1;
+
         if (this.hightestInlineChildNode != null)
         {
             var offset = 0;
 
             if (this.hightestInlineChildNode is Element element)
             {
-                offset = -(int)(element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top);
+                offset = (int)(element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top);
             }
 
             this.BaseLine = offset + this.hightestInlineChildNode.Layout.BaseLine;
@@ -815,8 +817,8 @@ internal partial class BoxLayout(Element target) : Layout
                 var x = hasHorizontalAlignment ? avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X : 0;
                 var y = hasVerticalAlignment
                     ? size.Height.ClampSubtract(childBoundings.Height) * alignment.Y
-                    : child.Layout.IsInline
-                        ? -this.BaseLine - (contentOffsetY + -child.Layout.BaseLine)
+                    : child.Layout.IsInline && child.Layout.BaseLine > -1
+                        ? this.BaseLine - (contentOffsetY + child.Layout.BaseLine)
                         : 0;
 
                 var usedSpace = hasHorizontalAlignment
