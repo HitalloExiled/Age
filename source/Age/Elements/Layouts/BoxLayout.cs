@@ -95,22 +95,18 @@ internal partial class BoxLayout(Element target) : Layout
         }
     }
 
-    private static void CalculatePendingMarginHorizontal(BoxLayout layout, StackKind stack, in Size<uint> size, ref Size<uint> contentSize)
+    private static void CalculatePendingMarginHorizontal(BoxLayout layout, StackKind stack, in Size<uint> size, ref RawRectEdges margin, ref Size<uint> contentSize)
     {
         var horizontal = 0u;
 
         if (layout.Target.Style.Margin?.Left?.TryGetPercentage(out var left) ?? false)
         {
-            layout.margin.Left = (uint)(size.Width * left);
-
-            horizontal += layout.margin.Left;
+            horizontal += margin.Left = (uint)(size.Width * left);
         }
 
         if (layout.Target.Style.Margin?.Right?.TryGetPercentage(out var right) ?? false)
         {
-            layout.margin.Right = (uint)(size.Width * right);
-
-            horizontal += layout.margin.Right;
+            horizontal += margin.Right = (uint)(size.Width * right);
         }
 
         if (horizontal > 0)
@@ -121,27 +117,23 @@ internal partial class BoxLayout(Element target) : Layout
             }
             else
             {
-                contentSize.Width = uint.Max(layout.Size.Width + layout.border.Horizontal + horizontal, contentSize.Width);
+                contentSize.Width = uint.Max(layout.Size.Width + layout.padding.Horizontal + layout.border.Horizontal + horizontal, contentSize.Width);
             }
         }
     }
 
-    private static void CalculatePendingMarginVertical(BoxLayout layout, StackKind stack, in Size<uint> size, ref Size<uint> contentSize)
+    private static void CalculatePendingMarginVertical(BoxLayout layout, StackKind stack, in Size<uint> size, ref RawRectEdges margin, ref Size<uint> contentSize)
     {
         var vertical = 0u;
 
         if (layout.Target.Style.Margin?.Top?.TryGetPercentage(out var top) ?? false)
         {
-            layout.margin.Top = (uint)(size.Height * top);
-
-            vertical += layout.margin.Top;
+            vertical += margin.Top = (uint)(size.Height * top);
         }
 
         if (layout.Target.Style.Margin?.Bottom?.TryGetPercentage(out var bottom) ?? false)
         {
-            layout.margin.Bottom = (uint)(size.Height * bottom);
-
-            vertical += layout.margin.Bottom;
+            vertical += margin.Bottom = (uint)(size.Height * bottom);
         }
 
         if (vertical > 0)
@@ -152,7 +144,7 @@ internal partial class BoxLayout(Element target) : Layout
             }
             else
             {
-                contentSize.Height = uint.Max(layout.Size.Height + layout.border.Vertical + vertical, contentSize.Height);
+                contentSize.Height = uint.Max(layout.Size.Height + layout.padding.Vertical + layout.border.Vertical + vertical, contentSize.Height);
             }
         }
     }
@@ -446,15 +438,19 @@ internal partial class BoxLayout(Element target) : Layout
         {
             if (dependent.parentDependent.HasFlag(Dependency.Padding) || dependent.parentDependent.HasFlag(Dependency.Margin))
             {
+                var margin = dependent.margin;
+
                 if (!this.parentDependent.HasFlag(Dependency.Width))
                 {
-                    CalculatePendingMarginHorizontal(dependent, stack, size, ref contentSize);
+                    CalculatePendingMarginHorizontal(dependent, stack, size, ref margin, ref contentSize);
                 }
 
                 if (!this.parentDependent.HasFlag(Dependency.Height))
                 {
-                    CalculatePendingMarginVertical(dependent, stack, size, ref contentSize);
+                    CalculatePendingMarginVertical(dependent, stack, size, ref margin, ref contentSize);
                 }
+
+                dependent.margin = margin;
             }
         }
 
@@ -469,13 +465,17 @@ internal partial class BoxLayout(Element target) : Layout
 
         foreach (var dependent in this.dependents)
         {
-            var size    = dependent.Size;
+            var margin  = dependent.margin;
             var padding = dependent.padding;
+            var size    = dependent.Size;
 
             if (!this.contentDependent.HasFlag(Dependency.Width) || stack == StackKind.Vertical)
             {
-                CalculatePendingPaddingHorizontal(dependent, this.Size, ref padding);
-                CalculatePendingMarginHorizontal(dependent, stack, this.Size, ref content);
+                if (!this.contentDependent.HasFlag(Dependency.Width))
+                {
+                    CalculatePendingPaddingHorizontal(dependent, this.Size, ref padding);
+                    CalculatePendingMarginHorizontal(dependent, stack, this.Size, ref margin, ref content);
+                }
 
                 if (dependent.parentDependent.HasFlag(Dependency.Width))
                 {
@@ -590,8 +590,11 @@ internal partial class BoxLayout(Element target) : Layout
 
             if (!this.contentDependent.HasFlag(Dependency.Height) || stack == StackKind.Horizontal)
             {
-                CalculatePendingPaddingVertical(dependent, this.Size, ref padding);
-                CalculatePendingMarginVertical(dependent, stack, this.Size, ref content);
+                if (!this.contentDependent.HasFlag(Dependency.Height))
+                {
+                    CalculatePendingPaddingVertical(dependent, this.Size, ref padding);
+                    CalculatePendingMarginVertical(dependent, stack, this.Size, ref margin, ref content);
+                }
 
                 if (dependent.parentDependent.HasFlag(Dependency.Height))
                 {
@@ -708,10 +711,11 @@ internal partial class BoxLayout(Element target) : Layout
                 }
             }
 
-            if (size != dependent.Size || padding != dependent.padding)
+            if (size != dependent.Size || padding != dependent.padding || margin != dependent.margin)
             {
-                dependent.padding = padding;
                 dependent.Size    = size;
+                dependent.padding = padding;
+                dependent.margin  = margin;
 
                 dependent.CalculatePendingLayouts();
                 dependent.UpdateDisposition();
@@ -780,7 +784,7 @@ internal partial class BoxLayout(Element target) : Layout
 
         this.UpdateBaseline(stack);
 
-        var avaliableSpace = size - this.content.Cast<float>();
+        var avaliableSpace = size.ClampSubtract(this.content.Cast<float>());
 
         cursor.X += this.padding.Left + this.border.Left;
         cursor.Y -= this.padding.Top  + this.border.Top;
@@ -812,8 +816,6 @@ internal partial class BoxLayout(Element target) : Layout
 
             if (stack == StackKind.Horizontal)
             {
-                avaliableSpace.Width += childBoundings.Width;
-
                 var x = hasHorizontalAlignment ? avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X : 0;
                 var y = hasVerticalAlignment
                     ? size.Height.ClampSubtract(childBoundings.Height) * alignment.Y
@@ -822,7 +824,7 @@ internal partial class BoxLayout(Element target) : Layout
                         : 0;
 
                 var usedSpace = hasHorizontalAlignment
-                    ? float.Max(childBoundings.Width, avaliableSpace.Width - x)
+                    ? float.Max(childBoundings.Width, avaliableSpace.Width + childBoundings.Width - x)
                     : childBoundings.Width;
 
                 avaliableSpace.Width = avaliableSpace.Width.ClampSubtract(usedSpace);
@@ -833,13 +835,11 @@ internal partial class BoxLayout(Element target) : Layout
             }
             else
             {
-                avaliableSpace.Height += childBoundings.Height;
-
                 var x = size.Width.ClampSubtract(childBoundings.Width) * alignment.X;
                 var y = hasVerticalAlignment ? avaliableSpace.Height.ClampSubtract(childBoundings.Height) * alignment.Y : 0;
 
                 var usedSpace = hasVerticalAlignment
-                    ? float.Max(childBoundings.Height, avaliableSpace.Height - y)
+                    ? float.Max(childBoundings.Height, avaliableSpace.Height + childBoundings.Height - y)
                     : childBoundings.Height;
 
                 offset = new(float.Ceiling(cursor.X + x + margin.Left), -float.Ceiling(-cursor.Y + y + margin.Top));
