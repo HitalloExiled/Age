@@ -8,7 +8,7 @@ public class PaddingTest
 {
     public static void Setup(Canvas canvas, in TestContext testContext)
     {
-        var container_no_padding = new Span
+        var container_no_padding = new FlexBox
         {
             Name  = "no_padding_container",
             Style = new()
@@ -17,7 +17,7 @@ public class PaddingTest
             }
         };
 
-        var content_no_padding = new Span
+        var content_no_padding = new FlexBox
         {
             Name = "no_padding_content",
             Style = new()
@@ -27,7 +27,7 @@ public class PaddingTest
             }
         };
 
-        var container_padding_px10_100px = new Span
+        var container_padding_px10_100px = new FlexBox
         {
             Name  = "container_padding_px10_100px",
             Style = new()
@@ -37,7 +37,7 @@ public class PaddingTest
             }
         };
 
-        var content_padding_px10_100px = new Span
+        var content_padding_px10_100px = new FlexBox
         {
             Name  = "content_padding_px10_100px",
             Style = new()
@@ -47,7 +47,7 @@ public class PaddingTest
             }
         };
 
-        var container_padding_px10_100pc = new Span
+        var container_padding_px10_100pc = new FlexBox
         {
             Name  = "container_padding_px10_100pc",
             Style = new()
@@ -57,7 +57,7 @@ public class PaddingTest
             }
         };
 
-        var content_padding_px10_100pc = new Span
+        var content_padding_px10_100pc = new FlexBox
         {
             Name  = "content_padding_px10_100pc",
             Style = new()
@@ -68,7 +68,7 @@ public class PaddingTest
             }
         };
 
-        var host_padding_pc10_100pc = new Span
+        var host_padding_pc10_100pc = new FlexBox
         {
             Name  = "host_padding_pc10_100pc",
             Style = new()
@@ -78,7 +78,7 @@ public class PaddingTest
             }
         };
 
-        var container_padding_pc10_100pc = new Span
+        var container_padding_pc10_100pc = new FlexBox
         {
             Name  = "container_padding_pc10_100pc",
             Style = new()
@@ -88,7 +88,7 @@ public class PaddingTest
             }
         };
 
-        var content_padding_pc10_100pc = new Span
+        var content_padding_pc10_100pc = new FlexBox
         {
             Name  = "content_padding_pc10_100pc",
             Style = new()
@@ -99,7 +99,7 @@ public class PaddingTest
             }
         };
 
-        var host_padding_100pc_pc10_100pc = new Span
+        var host_padding_100pc_pc10_100pc = new FlexBox
         {
             Name  = "host_padding_100pc_pc10_100pc",
             Style = new()
@@ -109,7 +109,7 @@ public class PaddingTest
             }
         };
 
-        var container_padding_100pc_pc10_100pc = new Span
+        var container_padding_100pc_pc10_100pc = new FlexBox
         {
             Name  = "container_padding_100pc_pc10_100pc",
             Style = new()
@@ -120,7 +120,7 @@ public class PaddingTest
             }
         };
 
-        var content_padding_100pc_pc10_100pc = new Span
+        var content_padding_100pc_pc10_100pc = new FlexBox
         {
             Name  = "content_padding_100pc_pc10_100pc",
             Style = new()
@@ -131,7 +131,7 @@ public class PaddingTest
             }
         };
 
-        var text_with_padding = new Span
+        var text_with_padding = new FlexBox
         {
             Text = "Text With Padding",
             Style = new()

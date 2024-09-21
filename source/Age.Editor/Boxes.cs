@@ -10,7 +10,7 @@ public class Boxes : Element
 
     public Boxes()
     {
-        var boxH = new Span()
+        var boxH = new FlexBox()
         {
             Name  = "BoxH",
             Style = new()
@@ -20,7 +20,7 @@ public class Boxes : Element
             }
         };
 
-        var boxV = new Span()
+        var boxV = new FlexBox()
         {
             Name  = "BoxV",
             Style = new()
@@ -35,7 +35,7 @@ public class Boxes : Element
 
         const uint BLOCK_SIZE = 25;
 
-        var ah = new Span()
+        var ah = new FlexBox()
         {
             Text  = "ah",
             Name  = "ah",
@@ -48,7 +48,7 @@ public class Boxes : Element
             }
         };
 
-        var bh = new Span()
+        var bh = new FlexBox()
         {
             Text  = "bh",
             Name  = "bh",
@@ -61,7 +61,7 @@ public class Boxes : Element
             }
         };
 
-        var ch = new Span()
+        var ch = new FlexBox()
         {
             Text  = "ch",
             Name  = "ch",
@@ -74,7 +74,7 @@ public class Boxes : Element
             }
         };
 
-        var av = new Span()
+        var av = new FlexBox()
         {
             Text  = "av",
             Name  = "av",
@@ -87,7 +87,7 @@ public class Boxes : Element
             }
         };
 
-        var bv = new Span()
+        var bv = new FlexBox()
         {
             Text  = "bv",
             Name  = "bv",
@@ -100,7 +100,7 @@ public class Boxes : Element
             }
         };
 
-        var cv = new Span()
+        var cv = new FlexBox()
         {
             Text  = "cv",
             Name  = "cv",

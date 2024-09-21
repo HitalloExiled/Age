@@ -8,7 +8,7 @@ public class FrameStatus : Element
 {
     public override string NodeName { get; } = nameof(FrameStatus);
 
-    private readonly Span statusText;
+    private readonly FlexBox statusText;
 
     private double delta;
     private ulong  frames;
@@ -23,7 +23,7 @@ public class FrameStatus : Element
 
     public FrameStatus()
     {
-        this.statusText = new Span()
+        this.statusText = new FlexBox()
         {
             Name  = "Status",
             Text  = "Frame",

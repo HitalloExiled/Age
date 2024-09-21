@@ -9,7 +9,7 @@ public class AlignmentTest
     public static void Setup(Canvas canvas, in TestContext testContext)
     {
 
-        var horizontal_a_container = new Span()
+        var horizontal_a_container = new FlexBox()
         {
             Name  = "horizontal_a_container",
             Text  = "Horizonta A",
@@ -22,7 +22,7 @@ public class AlignmentTest
             }
         };
 
-        var horizontal_a_left = new Span()
+        var horizontal_a_left = new FlexBox()
         {
             Name  = "horizontal_a_left",
             Text  = "Left",
@@ -34,7 +34,7 @@ public class AlignmentTest
             }
         };
 
-        var horizontal_a_right = new Span()
+        var horizontal_a_right = new FlexBox()
         {
             Name  = "horizontal_a_right",
             Text  = "Right",
@@ -46,7 +46,7 @@ public class AlignmentTest
             }
         };
 
-        var horizontal_b_container = new Span()
+        var horizontal_b_container = new FlexBox()
         {
             Name  = "horizontal_b_container",
             Text  = "Horizonta B",
@@ -58,7 +58,7 @@ public class AlignmentTest
             }
         };
 
-        var horizontal_b_top = new Span()
+        var horizontal_b_top = new FlexBox()
         {
             Name  = "horizontal_b_top",
             Text  = "Top",
@@ -70,7 +70,7 @@ public class AlignmentTest
             }
         };
 
-        var horizontal_b_bottom = new Span()
+        var horizontal_b_bottom = new FlexBox()
         {
             Name  = "horizontal_b_bottom",
             Text  = "Down",

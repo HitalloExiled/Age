@@ -8,7 +8,7 @@ public class BoxSizingTest
 {
     public static void Setup(Canvas canvas, in TestContext testContext)
     {
-        var bsc = new Span
+        var bsc = new FlexBox
         {
             Name  = "BSC",
             Style = new()
@@ -18,7 +18,7 @@ public class BoxSizingTest
             }
         };
 
-        var bscA100 = new Span
+        var bscA100 = new FlexBox
         {
             Name  = "BSC-A100",
             Style = new()
@@ -28,7 +28,7 @@ public class BoxSizingTest
             }
         };
 
-        var bscw100 = new Span
+        var bscw100 = new FlexBox
         {
             Name  = "BSCw100",
             Style = new()
@@ -39,7 +39,7 @@ public class BoxSizingTest
             }
         };
 
-        var bscw100A100 = new Span
+        var bscw100A100 = new FlexBox
         {
             Name  = "BSCw100-A100",
             Style = new()
@@ -49,7 +49,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsch100 = new Span
+        var bsch100 = new FlexBox
         {
             Name  = "BSCh100",
             Style = new()
@@ -60,7 +60,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsch100A100 = new Span
+        var bsch100A100 = new FlexBox
         {
             Name  = "BSCh100-A100",
             Style = new()
@@ -70,7 +70,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsb = new Span
+        var bsb = new FlexBox
         {
             Name  = "BSB",
             Style = new()
@@ -80,7 +80,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsbA100 = new Span
+        var bsbA100 = new FlexBox
         {
             Name  = "BSB-A100",
             Style = new()
@@ -90,7 +90,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsbw100 = new Span
+        var bsbw100 = new FlexBox
         {
             Name  = "BSBw100",
             Style = new()
@@ -101,7 +101,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsbw100A100 = new Span
+        var bsbw100A100 = new FlexBox
         {
             Name  = "BSBw100-A100",
             Style = new()
@@ -111,7 +111,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsbh100 = new Span
+        var bsbh100 = new FlexBox
         {
             Name  = "BSCh100",
             Style = new()
@@ -122,7 +122,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsbh100A100 = new Span
+        var bsbh100A100 = new FlexBox
         {
             Name  = "BSBh100-A100",
             Style = new()
@@ -132,7 +132,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsc100 = new Span
+        var bsc100 = new FlexBox
         {
             Name  = "BSC100",
             Style = new()
@@ -143,7 +143,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsc100A = new Span
+        var bsc100A = new FlexBox
         {
             Name  = "BSC100-A",
             Style = new()
@@ -153,7 +153,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsc100B = new Span
+        var bsc100B = new FlexBox
         {
             Name  = "BSC100-B",
             Style = new()
@@ -163,7 +163,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsb100 = new Span
+        var bsb100 = new FlexBox
         {
             Name  = "BSB100",
             Style = new()
@@ -174,7 +174,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsb100A = new Span
+        var bsb100A = new FlexBox
         {
             Name  = "BSB100-A",
             Style = new()
@@ -184,7 +184,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsb100B = new Span
+        var bsb100B = new FlexBox
         {
             Name  = "BSB100-B",
             Style = new()
@@ -194,7 +194,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsc100v = new Span
+        var bsc100v = new FlexBox
         {
             Name  = "BSC100v",
             Style = new()
@@ -206,7 +206,7 @@ public class BoxSizingTest
             }
         };
 
-        var bscv100A = new Span
+        var bscv100A = new FlexBox
         {
             Name  = "BSC100v-A",
             Style = new()
@@ -216,7 +216,7 @@ public class BoxSizingTest
             }
         };
 
-        var bscv100B = new Span
+        var bscv100B = new FlexBox
         {
             Name  = "BSC100v-B",
             Style = new()
@@ -226,7 +226,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsb100v = new Span
+        var bsb100v = new FlexBox
         {
             Name  = "BSB100v",
             Style = new()
@@ -238,7 +238,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsbv100A = new Span
+        var bsbv100A = new FlexBox
         {
             Name  = "BSB100v-A",
             Style = new()
@@ -248,7 +248,7 @@ public class BoxSizingTest
             }
         };
 
-        var bsbv100B = new Span
+        var bsbv100B = new FlexBox
         {
             Name  = "BSB100v-B",
             Style = new()

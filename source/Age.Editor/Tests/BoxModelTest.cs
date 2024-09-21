@@ -8,7 +8,7 @@ public class BoxModelTest
 {
     public static void Setup(Canvas canvas, in TestContext testContext)
     {
-        var boxModel = new Span
+        var boxModel = new FlexBox
         {
             Name = "BoxModel",
             Style = new()
@@ -19,7 +19,7 @@ public class BoxModelTest
             }
         };
 
-        var stackL = new Span
+        var stackL = new FlexBox
         {
             Name = "StackL",
             Style = new()
@@ -30,7 +30,7 @@ public class BoxModelTest
             }
         };
 
-        var stackText = new Span
+        var stackText = new FlexBox
         {
             Text  = "This elements should be stacked vertically...",
             Name  = "StackText",
@@ -42,7 +42,7 @@ public class BoxModelTest
             }
         };
 
-        var boxAL = new Span
+        var boxAL = new FlexBox
         {
             Name  = "BoxAL",
             Style = new()
@@ -53,7 +53,7 @@ public class BoxModelTest
             }
         };
 
-        var boxBL = new Span
+        var boxBL = new FlexBox
         {
             Name  = "BoxBL",
             Style = new()
@@ -64,7 +64,7 @@ public class BoxModelTest
             }
         };
 
-        var boxCL = new Span
+        var boxCL = new FlexBox
         {
             Name  = "BoxCL",
             Style = new()
@@ -76,7 +76,7 @@ public class BoxModelTest
             }
         };
 
-        var stackR = new Span
+        var stackR = new FlexBox
         {
             Name = "StackR",
             Style = new()
@@ -87,7 +87,7 @@ public class BoxModelTest
             }
         };
 
-        var boxAR = new Span
+        var boxAR = new FlexBox
         {
             Name  = "BoxAR",
             Style = new()
@@ -98,7 +98,7 @@ public class BoxModelTest
             }
         };
 
-        var boxBR = new Span
+        var boxBR = new FlexBox
         {
             Name  = "BoxBR",
             Style = new()
@@ -109,7 +109,7 @@ public class BoxModelTest
             }
         };
 
-        var boxCR = new Span
+        var boxCR = new FlexBox
         {
             Name  = "BoxCR",
             Style = new()
