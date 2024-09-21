@@ -823,6 +823,8 @@ internal partial class BoxLayout(Element target) : Layout
 
             if (stack == StackKind.Horizontal)
             {
+                avaliableSpace.Width += childBoundings.Width;
+
                 var x = alignmentAxis.HasFlag(AlignmentAxis.Horizontal) ? avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X : 0;
                 var y = alignmentAxis.HasFlag(AlignmentAxis.Vertical)
                     ? size.Height.ClampSubtract(childBoundings.Height) * alignment.Y
@@ -831,7 +833,7 @@ internal partial class BoxLayout(Element target) : Layout
                         : 0;
 
                 var usedSpace = alignmentAxis.HasFlag(AlignmentAxis.Horizontal)
-                    ? float.Max(childBoundings.Width, avaliableSpace.Width + childBoundings.Width - x)
+                    ? float.Max(childBoundings.Width, avaliableSpace.Width - x)
                     : childBoundings.Width;
 
                 avaliableSpace.Width = avaliableSpace.Width.ClampSubtract(usedSpace);
@@ -842,11 +844,13 @@ internal partial class BoxLayout(Element target) : Layout
             }
             else
             {
+                avaliableSpace.Height += childBoundings.Height;
+
                 var x = size.Width.ClampSubtract(childBoundings.Width) * alignment.X;
                 var y = alignmentAxis.HasFlag(AlignmentAxis.Vertical) ? avaliableSpace.Height.ClampSubtract(childBoundings.Height) * alignment.Y : 0;
 
                 var usedSpace = alignmentAxis.HasFlag(AlignmentAxis.Vertical)
-                    ? float.Max(childBoundings.Height, avaliableSpace.Height + childBoundings.Height - y)
+                    ? float.Max(childBoundings.Height, avaliableSpace.Height - y)
                     : childBoundings.Height;
 
                 offset = new(float.Ceiling(cursor.X + x + margin.Left), -float.Ceiling(-cursor.Y + y + margin.Top));
