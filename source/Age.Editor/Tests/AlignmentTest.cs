@@ -15,9 +15,10 @@ public class AlignmentTest
             Text  = "Horizonta A",
             Style = new()
             {
-                Border   = new(testContext.BorderSize, 0, Color.Margenta),
-                Color    = Color.White,
-                FontSize = 32,
+                Border         = new(testContext.BorderSize, 0, Color.Margenta),
+                Color          = Color.White,
+                FontSize       = 32,
+                ItemsAlignment = ItemsAlignmentKind.Baseline,
             }
         };
 
@@ -50,7 +51,7 @@ public class AlignmentTest
             Name  = "horizontal_b_container",
             Text  = "Horizonta B",
             Style = new()
-            {                
+            {
                 Border   = new(testContext.BorderSize, 0, Color.Margenta),
                 FontSize = 32,
                 Color    = Color.White,

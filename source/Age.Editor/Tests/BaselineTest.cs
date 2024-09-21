@@ -4,7 +4,7 @@ using Age.Styling;
 
 namespace Age.Editor.Tests;
 
-public class InlineTextTest
+public class BaselineTest
 {
     public static void Setup(Canvas canvas, in TestContext testContext)
     {
@@ -24,6 +24,7 @@ public class InlineTextTest
             Text  = "Vertical\nText",
             Style = new()
             {
+                Alignment  = AlignmentKind.Baseline,
                 Border     = new(testContext.BorderSize, 0, Color.Margenta),
                 Color      = Color.White,
                 FontFamily = "Impact",
@@ -37,15 +38,16 @@ public class InlineTextTest
             Text  = "Horizontal",
             Style = new()
             {
-                Padding    = new((Pixel)20),
-                Border     = new(testContext.BorderSize, 0, Color.Cyan),
-                Color      = Color.White,
-                FontFamily = "Impact",
-                FontSize   = 24,
+                Padding        = new((Pixel)20),
+                Border         = new(testContext.BorderSize, 0, Color.Cyan),
+                Color          = Color.White,
+                FontFamily     = "Impact",
+                FontSize       = 24,
+                ItemsAlignment = ItemsAlignmentKind.Baseline,
             }
         };
 
-        var horizontal_a_child1 = new Span { Name = "X",     Text = "X",        Style = new() { Border = new(testContext.BorderSize * 2, 0, Color.Red),  FontSize = 48, FontFamily = "Helvetica Neue",     Color = Color.Red, Margin = new(null, (Pixel)5) } };
+        var horizontal_a_child1 = new Span { Name = "X",     Text = "X",        Style = new() { Border = new(testContext.BorderSize * 2, 0, Color.Red),  FontSize = 48, FontFamily = "Helvetica Neue",     Color = Color.Red, Margin = new(null, (Pixel)10) } };
         var horizontal_a_child2 = new Span { Name = "Y",     Text = "Y",        Style = new() { Border = new(testContext.BorderSize / 2, 0, Color.Green),    FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
         var horizontal_a_child3 = new Span { Name = "Z",     Text = "Z",        Style = new() { Border = new(testContext.BorderSize, 0,     Color.Blue),     FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } };
         var horizontal_a_child4 = new Span { Name = "Hello", Text = "Hello",    Style = new() { Border = new(testContext.BorderSize, 0,     Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Begin, Margin = new((Pixel)5) } };
@@ -57,10 +59,12 @@ public class InlineTextTest
             Text  = "Horizontal",
             Style = new()
             {
-                Border     = new(testContext.BorderSize, 0, Color.Margenta),
-                Color      = Color.White,
-                FontFamily = "Impact",
-                FontSize   = 12,
+                Alignment      = AlignmentKind.Baseline,
+                ItemsAlignment = ItemsAlignmentKind.Baseline,
+                Border         = new(testContext.BorderSize, 0, Color.Margenta),
+                Color          = Color.White,
+                FontFamily     = "Impact",
+                FontSize       = 12,
             }
         };
 
@@ -112,6 +116,7 @@ public class InlineTextTest
             // Text  = "Vertical",
             Style = new()
             {
+                Alignment  = AlignmentKind.Baseline,
                 Border     = new(testContext.BorderSize, 0, Color.Margenta),
                 Color      = Color.White,
                 FontFamily = "Impact",
@@ -174,6 +179,7 @@ public class InlineTextTest
             Name  = "vertical_c_container",
             Style = new()
             {
+                Alignment  = AlignmentKind.Baseline,
                 Border     = new(testContext.BorderSize, 0, Color.Cyan),
                 Color      = Color.White,
                 FontFamily = "Impact",
@@ -199,6 +205,8 @@ public class InlineTextTest
                 FontFamily = "Impact",
                 FontSize   = 24,
                 Stack      = StackKind.Vertical,
+                Alignment      = AlignmentKind.Baseline,
+                ItemsAlignment = ItemsAlignmentKind.Baseline,
             }
         };
 

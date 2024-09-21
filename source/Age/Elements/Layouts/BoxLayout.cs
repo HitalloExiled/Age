@@ -1,10 +1,11 @@
-using System.Xml.Linq;
+using System.Text.Json.Serialization;
 using Age.Commands;
 using Age.Extensions;
 using Age.Numerics;
+using Age.Platforms.Windows.Native.Types;
 using Age.Storage;
 using Age.Styling;
-
+using Microsoft.VisualBasic;
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Elements.Layouts;
@@ -149,46 +150,52 @@ internal partial class BoxLayout(Element target) : Layout
         }
     }
 
-    private static Point<float> GetAlignment(StackKind stack, Layout layout, AlignmentKind alignmentKind, out bool hasHorizontalAlignment, out bool hasVerticalAlignment)
+    private Point<float> GetAlignment(StackKind stack, AlignmentKind alignmentKind, out AlignmentAxis alignmentAxis)
     {
         var x = -1;
         var y = -1;
 
-        hasHorizontalAlignment = true;
-        hasVerticalAlignment   = true;
+        var itemsAlignment = this.Target.Style.ItemsAlignment ?? ItemsAlignmentKind.None;
 
-        if (alignmentKind.HasFlag(AlignmentKind.Left) || stack == StackKind.Vertical && alignmentKind.HasFlag(AlignmentKind.Begin))
+        alignmentAxis = AlignmentAxis.Horizontal | AlignmentAxis.Vertical;
+
+        if (alignmentKind.HasFlag(AlignmentKind.Left) || stack == StackKind.Vertical && (itemsAlignment == ItemsAlignmentKind.Begin || alignmentKind.HasFlag(AlignmentKind.Begin)))
         {
             x = -1;
         }
-        else if (alignmentKind.HasFlag(AlignmentKind.Right) || stack == StackKind.Vertical && alignmentKind.HasFlag(AlignmentKind.End))
+        else if (alignmentKind.HasFlag(AlignmentKind.Right) || stack == StackKind.Vertical && (itemsAlignment == ItemsAlignmentKind.End || alignmentKind.HasFlag(AlignmentKind.End)))
         {
             x = 1;
         }
-        else if (alignmentKind.HasFlag(AlignmentKind.Center))
+        else if (alignmentKind.HasFlag(AlignmentKind.Center) || stack == StackKind.Vertical && itemsAlignment == ItemsAlignmentKind.Center)
         {
             x = 0;
         }
         else
         {
-            hasHorizontalAlignment = false;
+            alignmentAxis &= ~AlignmentAxis.Horizontal;
         }
 
-        if (alignmentKind.HasFlag(AlignmentKind.Top) || stack == StackKind.Horizontal && alignmentKind.HasFlag(AlignmentKind.Begin))
+        if (alignmentKind.HasFlag(AlignmentKind.Top) || stack == StackKind.Horizontal && (itemsAlignment == ItemsAlignmentKind.Begin || alignmentKind.HasFlag(AlignmentKind.Begin)))
         {
             y = -1;
         }
-        else if (alignmentKind.HasFlag(AlignmentKind.Bottom) || stack == StackKind.Horizontal && alignmentKind.HasFlag(AlignmentKind.End))
+        else if (alignmentKind.HasFlag(AlignmentKind.Bottom) || stack == StackKind.Horizontal && (itemsAlignment == ItemsAlignmentKind.End || alignmentKind.HasFlag(AlignmentKind.End)))
         {
             y = 1;
         }
-        else if (alignmentKind.HasFlag(AlignmentKind.Center))
+        else if (alignmentKind.HasFlag(AlignmentKind.Center) || stack == StackKind.Horizontal && itemsAlignment == ItemsAlignmentKind.Center)
         {
             y = 0;
         }
         else
         {
-            hasVerticalAlignment = false;
+            if (itemsAlignment == ItemsAlignmentKind.Baseline || alignmentKind.HasFlag(AlignmentKind.Baseline))
+            {
+                alignmentAxis |= AlignmentAxis.Baseline;
+            }
+
+            alignmentAxis &= ~AlignmentAxis.Vertical;
         }
 
         return new(Normalize(x), Normalize(y));
@@ -732,7 +739,7 @@ internal partial class BoxLayout(Element target) : Layout
 
     private void CheckHightestInlineChild(StackKind stack, ContainerNode child)
     {
-        if (!child.Layout.IsInline || child.Layout.BaseLine == -1)
+        if (child.Layout.BaseLine == -1)
         {
             return;
         }
@@ -810,20 +817,20 @@ internal partial class BoxLayout(Element target) : Layout
                 childBoundings = element.Layout.BoundingsWithMargin;
             }
 
-            var alignment = GetAlignment(stack, child.Layout, alignmentType, out var hasHorizontalAlignment, out var hasVerticalAlignment);
+            var alignment = this.GetAlignment(stack, alignmentType, out var alignmentAxis);
 
             Vector2<float> offset;
 
             if (stack == StackKind.Horizontal)
             {
-                var x = hasHorizontalAlignment ? avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X : 0;
-                var y = hasVerticalAlignment
+                var x = alignmentAxis.HasFlag(AlignmentAxis.Horizontal) ? avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X : 0;
+                var y = alignmentAxis.HasFlag(AlignmentAxis.Vertical)
                     ? size.Height.ClampSubtract(childBoundings.Height) * alignment.Y
-                    : child.Layout.IsInline && child.Layout.BaseLine > -1
+                    : alignmentAxis.HasFlag(AlignmentAxis.Baseline) && child.Layout.BaseLine > -1
                         ? this.BaseLine - (contentOffsetY + child.Layout.BaseLine)
                         : 0;
 
-                var usedSpace = hasHorizontalAlignment
+                var usedSpace = alignmentAxis.HasFlag(AlignmentAxis.Horizontal)
                     ? float.Max(childBoundings.Width, avaliableSpace.Width + childBoundings.Width - x)
                     : childBoundings.Width;
 
@@ -836,9 +843,9 @@ internal partial class BoxLayout(Element target) : Layout
             else
             {
                 var x = size.Width.ClampSubtract(childBoundings.Width) * alignment.X;
-                var y = hasVerticalAlignment ? avaliableSpace.Height.ClampSubtract(childBoundings.Height) * alignment.Y : 0;
+                var y = alignmentAxis.HasFlag(AlignmentAxis.Vertical) ? avaliableSpace.Height.ClampSubtract(childBoundings.Height) * alignment.Y : 0;
 
-                var usedSpace = hasVerticalAlignment
+                var usedSpace = alignmentAxis.HasFlag(AlignmentAxis.Vertical)
                     ? float.Max(childBoundings.Height, avaliableSpace.Height + childBoundings.Height - y)
                     : childBoundings.Height;
 

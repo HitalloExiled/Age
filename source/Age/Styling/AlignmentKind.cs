@@ -4,11 +4,12 @@ namespace Age.Styling;
 public enum AlignmentKind
 {
     None     = 0,
-    Begin    = 1 << 0,
-    Center   = 1 << 1,
-    End      = 1 << 2,
-    Left     = 1 << 3,
-    Right    = 1 << 4,
-    Top      = 1 << 5,
-    Bottom   = 1 << 6,
+    Baseline = 1 << 0,
+    Begin    = 1 << 1,
+    Center   = 1 << 2,
+    End      = 1 << 3,
+    Left     = 1 << 4,
+    Right    = 1 << 5,
+    Top      = 1 << 6,
+    Bottom   = 1 << 7,
 }

@@ -21,19 +21,22 @@ public partial record Style
     private SizeUnit? size;
 
     // 8-bytes
+    private Unit?         baseline;
     private Point<float>? pivot;
     private Point<int>?   position;
 
     // 4-bytes
-    private AlignmentKind?     alignment;
-    private float?             baseline;
-    private BoxSizing?         boxSizing;
-    private string?            fontFamily;
-    private ushort?            fontSize;
-    private PositionType?      positionType;
-    private float?             rotation;
-    private StackKind?         stack;
-    private TextAlignmentKind? textAlignment;
+    private AlignmentKind?      alignment;
+    private BoxSizing?          boxSizing;
+    private string?             fontFamily;
+    private ItemsAlignmentKind? itemsAlignment;
+    private PositionType?       positionType;
+    private float?              rotation;
+    private StackKind?          stack;
+    private TextAlignmentKind?  textAlignment;
+
+    // 2-bytes
+    private ushort? fontSize;
 
     public AlignmentKind? Alignment
     {
@@ -47,7 +50,7 @@ public partial record Style
         set => this.Set(ref this.backgroundColor, value);
     }
 
-    public float? Baseline
+    public Unit? Baseline
     {
         get => this.baseline;
         set => this.Set(ref this.baseline, value);
@@ -81,6 +84,12 @@ public partial record Style
     {
         get => this.fontSize;
         set => this.Set(ref this.fontSize, value);
+    }
+
+    public ItemsAlignmentKind? ItemsAlignment
+    {
+        get => this.itemsAlignment;
+        set => this.Set(ref this.itemsAlignment, value);
     }
 
     public RectEdges? Margin

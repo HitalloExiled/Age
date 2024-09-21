@@ -152,15 +152,15 @@ public class Editor : Node
         }
         else if (Input.IsKeyJustPressed(Key.Num2))
         {
-            this.setup = BoxModelTest.Setup;
+            this.setup = BaselineTest.Setup;
         }
         else if (Input.IsKeyJustPressed(Key.Num3))
         {
-            this.setup = BoxSizingTest.Setup;
+            this.setup = BoxModelTest.Setup;
         }
         else if (Input.IsKeyJustPressed(Key.Num4))
         {
-            this.setup = InlineTextTest.Setup;
+            this.setup = BoxSizingTest.Setup;
         }
         else if (Input.IsKeyJustPressed(Key.Num5))
         {

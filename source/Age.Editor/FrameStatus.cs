@@ -72,19 +72,19 @@ public class FrameStatus : Element
 
         if (this.Enabled)
         {
-            //this.statusText.Text =
-            //    $"""
-            //    Frames:    {this.frames}
-            //    Delta Time: {Math.Round(deltaTime, 4)}
-            //    FPS: {fps}
-            //        Avg: {avgFps}
-            //        Min: {this.minFps}
-            //        Max: {this.maxFps}
+            this.statusText.Text =
+               $"""
+               Frames:    {this.frames}
+               Delta Time: {Math.Round(deltaTime, 4)}
+               FPS: {fps}
+                   Avg: {avgFps}
+                   Min: {this.minFps}
+                   Max: {this.maxFps}
 
-            //    Frame Time: {frameTime}ms
-            //        Min: {this.minFrameTime}ms
-            //        Max: {this.maxFrameTime}ms
-            //    """;
+               Frame Time: {frameTime}ms
+                   Min: {this.minFrameTime}ms
+                   Max: {this.maxFrameTime}ms
+               """;
         }
     }
 }
