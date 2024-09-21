@@ -96,6 +96,7 @@ public partial class Scanner(StreamReader reader)
 
         switch (next)
         {
+            case '.':
             case '-':
             case '/':
                 this.Advance();

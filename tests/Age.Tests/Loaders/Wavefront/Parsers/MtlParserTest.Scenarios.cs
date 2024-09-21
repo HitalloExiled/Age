@@ -60,7 +60,7 @@ public partial class MtlParserTest
                 Kt 0.5 0.5 0.5
                 map_Kd -o 1 1 1 -s 0.5 0.5 0.5 -bm 2 -type sphere diffuse.png
                 map_Ks specular.png
-                map_Ns specular_exponent.png
+                map_Ns ../specular_exponent.png
                 map_d alpha.png
                 refl reflection.png
                 map_Ke emission.png
@@ -108,7 +108,7 @@ public partial class MtlParserTest
                                 Translation    = new(1, 1, 1),
                             },
                             [TextureMapType.Specular]         = new() { ImagePath = GetFullPath("specular.png") },
-                            [TextureMapType.SpecularExponent] = new() { ImagePath = GetFullPath("specular_exponent.png") },
+                            [TextureMapType.SpecularExponent] = new() { ImagePath = GetFullPath("../specular_exponent.png") },
                             [TextureMapType.Alpha]            = new() { ImagePath = GetFullPath("alpha.png") },
                             [TextureMapType.Reflection]       = new() { ImagePath = GetFullPath("reflection.png") },
                             [TextureMapType.Emission]         = new() { ImagePath = GetFullPath("emission.png") },
