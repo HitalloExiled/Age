@@ -26,14 +26,15 @@ public partial record Style
     private Point<int>?   position;
 
     // 4-bytes
-    private AlignmentKind?      alignment;
-    private BoxSizing?          boxSizing;
-    private string?             fontFamily;
-    private ItemsAlignmentKind? itemsAlignment;
-    private PositionType?       positionType;
-    private float?              rotation;
-    private StackKind?          stack;
-    private TextAlignmentKind?  textAlignment;
+    private AlignmentKind?            alignment;
+    private BoxSizing?                boxSizing;
+    private ContentJustificationKind? contentJustification;
+    private string?                   fontFamily;
+    private ItemsAlignmentKind?       itemsAlignment;
+    private PositionKind?             positioning;
+    private float?                    rotation;
+    private StackKind?                stack;
+    private TextAlignmentKind?        textAlignment;
 
     // 2-bytes
     private ushort? fontSize;
@@ -72,6 +73,12 @@ public partial record Style
     {
         get => this.color;
         set => this.Set(ref this.color, value);
+    }
+
+    public ContentJustificationKind? ContentJustification
+    {
+        get => this.contentJustification;
+        set => this.Set(ref this.contentJustification, value);
     }
 
     public string? FontFamily
@@ -128,10 +135,10 @@ public partial record Style
         set => this.Set(ref this.position, value);
     }
 
-    public PositionType? PositionType
+    public PositionKind? Positioning
     {
-        get => this.positionType;
-        set => this.Set(ref this.positionType, value);
+        get => this.positioning;
+        set => this.Set(ref this.positioning, value);
     }
 
     public float? Rotation
@@ -161,25 +168,27 @@ public partial record Style
     public static Style Merge(Style left, Style right) =>
         new()
         {
-            Alignment       = left.Alignment       ?? right.Alignment,
-            BackgroundColor = left.BackgroundColor ?? right.BackgroundColor,
-            Baseline        = left.Baseline        ?? right.Baseline,
-            Border          = left.Border          ?? right.Border,
-            BoxSizing       = left.BoxSizing       ?? right.BoxSizing,
-            Color           = left.Color           ?? right.Color,
-            FontFamily      = left.FontFamily      ?? right.FontFamily,
-            FontSize        = left.FontSize        ?? right.FontSize,
-            Margin          = left.Margin          ?? right.Margin,
-            MaxSize         = left.MaxSize         ?? right.MaxSize,
-            MinSize         = left.MinSize         ?? right.MinSize,
-            Padding         = left.Padding         ?? right.Padding,
-            Pivot           = left.Pivot           ?? right.Pivot,
-            Position        = left.Position        ?? right.Position,
-            PositionType    = left.PositionType    ?? right.PositionType,
-            Rotation        = left.Rotation        ?? right.Rotation,
-            Size            = left.Size            ?? right.Size,
-            Stack           = left.Stack           ?? right.Stack,
-            TextAlignment   = left.TextAlignment   ?? right.TextAlignment,
+            alignment            = left.alignment            ?? right.alignment,
+            backgroundColor      = left.backgroundColor      ?? right.backgroundColor,
+            baseline             = left.baseline             ?? right.baseline,
+            border               = left.border               ?? right.border,
+            boxSizing            = left.boxSizing            ?? right.boxSizing,
+            color                = left.color                ?? right.color,
+            contentJustification = left.contentJustification ?? right.contentJustification,
+            fontFamily           = left.fontFamily           ?? right.fontFamily,
+            fontSize             = left.fontSize             ?? right.fontSize,
+            itemsAlignment       = left.itemsAlignment       ?? right.itemsAlignment,
+            margin               = left.margin               ?? right.margin,
+            maxSize              = left.maxSize              ?? right.maxSize,
+            minSize              = left.minSize              ?? right.minSize,
+            padding              = left.padding              ?? right.padding,
+            pivot                = left.pivot                ?? right.pivot,
+            position             = left.position             ?? right.position,
+            positioning         = left.positioning         ?? right.positioning,
+            rotation             = left.rotation             ?? right.rotation,
+            size                 = left.size                 ?? right.size,
+            stack                = left.stack                ?? right.stack,
+            textAlignment        = left.textAlignment        ?? right.textAlignment,
         };
 
     private void Set<T>(ref T? field, T? value)

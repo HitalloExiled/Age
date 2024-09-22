@@ -159,7 +159,7 @@ internal partial class BoxLayout(Element target) : Layout
 
         alignmentAxis = AlignmentAxis.Horizontal | AlignmentAxis.Vertical;
 
-        if (alignmentKind.HasFlag(AlignmentKind.Left) || stack == StackKind.Vertical && (itemsAlignment == ItemsAlignmentKind.Begin || alignmentKind.HasFlag(AlignmentKind.Begin)))
+        if (alignmentKind.HasFlag(AlignmentKind.Left) || stack == StackKind.Vertical && (itemsAlignment == ItemsAlignmentKind.Begin || alignmentKind.HasFlag(AlignmentKind.Start)))
         {
             x = -1;
         }
@@ -176,7 +176,7 @@ internal partial class BoxLayout(Element target) : Layout
             alignmentAxis &= ~AlignmentAxis.Horizontal;
         }
 
-        if (alignmentKind.HasFlag(AlignmentKind.Top) || stack == StackKind.Horizontal && (itemsAlignment == ItemsAlignmentKind.Begin || alignmentKind.HasFlag(AlignmentKind.Begin)))
+        if (alignmentKind.HasFlag(AlignmentKind.Top) || stack == StackKind.Horizontal && (itemsAlignment == ItemsAlignmentKind.Begin || alignmentKind.HasFlag(AlignmentKind.Start)))
         {
             y = -1;
         }
@@ -750,7 +750,7 @@ internal partial class BoxLayout(Element target) : Layout
                 element.Style.Alignment.Value == AlignmentKind.Center
                 || element.Style.Alignment.Value.HasFlag(AlignmentKind.Top)
                 || element.Style.Alignment.Value.HasFlag(AlignmentKind.Bottom)
-                || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.Begin)
+                || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.Start)
                 || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.Center)
                 || stack == StackKind.Vertical && element.Style.Alignment.Value.HasFlag(AlignmentKind.End)
             );
@@ -785,16 +785,21 @@ internal partial class BoxLayout(Element target) : Layout
             return;
         }
 
-        var cursor = new Point<float>();
-        var size   = this.Size.Cast<float>();
-        var stack  = this.Target.Style.Stack ?? StackKind.Horizontal;
+        var cursor               = new Point<float>();
+        var size                 = this.Size;
+        var stack                = this.Target.Style.Stack ?? StackKind.Horizontal;
+        var contentJustification = this.Target.Style.ContentJustification ?? ContentJustificationKind.None;
 
         this.UpdateBaseline(stack);
 
-        var avaliableSpace = size.ClampSubtract(this.content.Cast<float>());
+        var avaliableSpace = stack == StackKind.Horizontal
+            ? new Size<float>(size.Width.ClampSubtract(this.content.Width), size.Height)
+            : new Size<float>(size.Width, size.Height.ClampSubtract(this.content.Height));
 
         cursor.X += this.padding.Left + this.border.Left;
         cursor.Y -= this.padding.Top  + this.border.Top;
+
+        var index = 0;
 
         foreach (var node in this.Target)
         {
@@ -811,56 +816,123 @@ internal partial class BoxLayout(Element target) : Layout
 
             if (child is Element element)
             {
-                alignmentType  = element.Style?.Alignment ?? AlignmentKind.None;
                 margin         = element.Layout.margin;
                 contentOffsetY = element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top;
                 childBoundings = element.Layout.BoundingsWithMargin;
+                alignmentType  = element.Style.Alignment ?? AlignmentKind.None;
             }
 
             var alignment = this.GetAlignment(stack, alignmentType, out var alignmentAxis);
 
-            Vector2<float> offset;
+            var position  = new Vector2<float>();
+            var usedSpace = new Size<float>();
 
             if (stack == StackKind.Horizontal)
             {
-                avaliableSpace.Width += childBoundings.Width;
+                if (contentJustification == ContentJustificationKind.None)
+                {
+                    avaliableSpace.Width += childBoundings.Width;
+                }
 
-                var x = alignmentAxis.HasFlag(AlignmentAxis.Horizontal) ? avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X : 0;
-                var y = alignmentAxis.HasFlag(AlignmentAxis.Vertical)
-                    ? size.Height.ClampSubtract(childBoundings.Height) * alignment.Y
-                    : alignmentAxis.HasFlag(AlignmentAxis.Baseline) && child.Layout.BaseLine > -1
-                        ? this.BaseLine - (contentOffsetY + child.Layout.BaseLine)
-                        : 0;
+                if (contentJustification == ContentJustificationKind.None && alignmentAxis.HasFlag(AlignmentAxis.Horizontal))
+                {
+                    position.X = avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X;
+                }
+                else if (contentJustification == ContentJustificationKind.End && index == 0)
+                {
+                    position.X = avaliableSpace.Width;
+                }
+                else if (contentJustification == ContentJustificationKind.Center && index == 0)
+                {
+                    position.X = avaliableSpace.Width / 2;
+                }
+                else if (contentJustification == ContentJustificationKind.SpaceAround)
+                {
+                    position.X = (index == 0 ? 1 : 2) * avaliableSpace.Width / (this.renderableNodesCount * 2);
+                }
+                else if (contentJustification == ContentJustificationKind.SpaceBetween && index > 0)
+                {
+                    position.X = avaliableSpace.Width / (this.renderableNodesCount - 1);
+                }
+                else if (contentJustification == ContentJustificationKind.SpaceEvenly)
+                {
+                    position.X = avaliableSpace.Width / (this.renderableNodesCount + 1);
+                }
 
-                var usedSpace = alignmentAxis.HasFlag(AlignmentAxis.Horizontal)
-                    ? float.Max(childBoundings.Width, avaliableSpace.Width - x)
+                if (alignmentAxis.HasFlag(AlignmentAxis.Vertical))
+                {
+                    position.Y = size.Height.ClampSubtract(childBoundings.Height) * alignment.Y;
+                }
+                else if (alignmentAxis.HasFlag(AlignmentAxis.Baseline) && child.Layout.BaseLine > -1)
+                {
+                    position.Y = this.BaseLine - (contentOffsetY + child.Layout.BaseLine);
+                }
+
+                usedSpace.Width = alignmentAxis.HasFlag(AlignmentAxis.Horizontal)
+                    ? float.Max(childBoundings.Width, avaliableSpace.Width - position.X)
                     : childBoundings.Width;
 
-                avaliableSpace.Width = avaliableSpace.Width.ClampSubtract(usedSpace);
-
-                offset = new(float.Ceiling(cursor.X + x + margin.Left), -float.Ceiling(-cursor.Y + y + margin.Top));
-
-                cursor.X = offset.X + usedSpace - margin.Right;
+                if (contentJustification == ContentJustificationKind.None)
+                {
+                    avaliableSpace.Width = avaliableSpace.Width.ClampSubtract((uint)usedSpace.Width);
+                }
             }
             else
             {
-                avaliableSpace.Height += childBoundings.Height;
+                if (contentJustification == ContentJustificationKind.None)
+                {
+                    avaliableSpace.Height += childBoundings.Height;
+                }
 
-                var x = size.Width.ClampSubtract(childBoundings.Width) * alignment.X;
-                var y = alignmentAxis.HasFlag(AlignmentAxis.Vertical) ? avaliableSpace.Height.ClampSubtract(childBoundings.Height) * alignment.Y : 0;
+                position.X = size.Width.ClampSubtract(childBoundings.Width) * alignment.X;
 
-                var usedSpace = alignmentAxis.HasFlag(AlignmentAxis.Vertical)
-                    ? float.Max(childBoundings.Height, avaliableSpace.Height - y)
+                if (contentJustification == ContentJustificationKind.None && alignmentAxis.HasFlag(AlignmentAxis.Vertical))
+                {
+                    position.Y = (uint)(avaliableSpace.Height.ClampSubtract(childBoundings.Height) * alignment.Y);
+                }
+                else if (contentJustification == ContentJustificationKind.End && index == 0)
+                {
+                    position.Y = avaliableSpace.Height;
+                }
+                else if (contentJustification == ContentJustificationKind.Center && index == 0)
+                {
+                    position.Y = avaliableSpace.Height / 2;
+                }
+                else if (contentJustification == ContentJustificationKind.SpaceAround)
+                {
+                    position.Y = (index == 0 ? 1 : 2) * avaliableSpace.Height / (this.renderableNodesCount * 2);
+                }
+                else if (contentJustification == ContentJustificationKind.SpaceBetween && index > 0)
+                {
+                    position.Y = avaliableSpace.Height / (this.renderableNodesCount - 1);
+                }
+                else if (contentJustification == ContentJustificationKind.SpaceEvenly)
+                {
+                    position.Y = avaliableSpace.Height / (this.renderableNodesCount + 1);
+                }
+
+                usedSpace.Height = alignmentAxis.HasFlag(AlignmentAxis.Vertical)
+                    ? float.Max(childBoundings.Height, avaliableSpace.Height - position.Y)
                     : childBoundings.Height;
 
-                offset = new(float.Ceiling(cursor.X + x + margin.Left), -float.Ceiling(-cursor.Y + y + margin.Top));
-
-                avaliableSpace.Height = avaliableSpace.Height.ClampSubtract(usedSpace);
-
-                cursor.Y = offset.Y - usedSpace + margin.Bottom;
+                if (contentJustification == ContentJustificationKind.None)
+                {
+                    avaliableSpace.Height = avaliableSpace.Height.ClampSubtract((uint)usedSpace.Height);
+                }
             }
 
-            child.Layout.Offset = offset;
+            child.Layout.Offset = new(float.Round(cursor.X + position.X + margin.Left), -float.Round(-cursor.Y + position.Y + margin.Top));
+
+            if (stack == StackKind.Horizontal)
+            {
+                cursor.X = child.Layout.Offset.X + usedSpace.Width - margin.Right;
+            }
+            else
+            {
+                cursor.Y = child.Layout.Offset.Y - usedSpace.Height + margin.Bottom;
+            }
+
+            index++;
         }
     }
 

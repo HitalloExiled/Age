@@ -5,7 +5,7 @@ public enum AlignmentKind
 {
     None     = 0,
     Baseline = 1 << 0,
-    Begin    = 1 << 1,
+    Start    = 1 << 1,
     Center   = 1 << 2,
     End      = 1 << 3,
     Left     = 1 << 4,

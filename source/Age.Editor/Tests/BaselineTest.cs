@@ -50,7 +50,7 @@ public class BaselineTest
         var horizontal_a_child1 = new FlexBox { Name = "X",     Text = "X",        Style = new() { Border = new(testContext.BorderSize * 2, 0, Color.Red),  FontSize = 48, FontFamily = "Helvetica Neue",     Color = Color.Red, Margin = new(null, (Pixel)10) } };
         var horizontal_a_child2 = new FlexBox { Name = "Y",     Text = "Y",        Style = new() { Border = new(testContext.BorderSize / 2, 0, Color.Green),    FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
         var horizontal_a_child3 = new FlexBox { Name = "Z",     Text = "Z",        Style = new() { Border = new(testContext.BorderSize, 0,     Color.Blue),     FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } };
-        var horizontal_a_child4 = new FlexBox { Name = "Hello", Text = "Hello",    Style = new() { Border = new(testContext.BorderSize, 0,     Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Begin, Margin = new((Pixel)5) } };
+        var horizontal_a_child4 = new FlexBox { Name = "Hello", Text = "Hello",    Style = new() { Border = new(testContext.BorderSize, 0,     Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Start, Margin = new((Pixel)5) } };
         var horizontal_a_child5 = new FlexBox { Name = "World", Text = "World!!!", Style = new() { Border = new(testContext.BorderSize, 0,     Color.Margenta), Color = Color.White, Alignment = AlignmentKind.End,   Margin = new((Pixel)5) } };
 
         var horizontal_b_container = new FlexBox()
@@ -192,7 +192,7 @@ public class BaselineTest
         var vertical_c_child2 = new FlexBox { Name = "X", Text = "X", Style = new() { Border = new(testContext.BorderSize, 0, Color.Red),   FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
         var vertical_c_child3 = new FlexBox { Name = "Y", Text = "Y", Style = new() { Border = new(testContext.BorderSize, 0, Color.Green), FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
         var vertical_c_child4 = new FlexBox { Name = "Z", Text = "Z", Style = new() { Border = new(testContext.BorderSize, 0, Color.Blue),  FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } };
-        var vertical_c_child5 = new FlexBox { Text = "Hello",         Style = new() { Border = new(testContext.BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Begin, Margin = new((Pixel)5) } };
+        var vertical_c_child5 = new FlexBox { Text = "Hello",         Style = new() { Border = new(testContext.BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Start, Margin = new((Pixel)5) } };
         var vertical_c_child6 = new FlexBox { Text = "World!!!",      Style = new() { Border = new(testContext.BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.End,   Margin = new((Pixel)5) } };
 
         var vertical_d_container = new FlexBox
