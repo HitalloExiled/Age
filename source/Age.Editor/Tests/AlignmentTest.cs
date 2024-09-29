@@ -8,6 +8,15 @@ public class AlignmentTest
 {
     public static void Setup(Canvas canvas, in TestContext testContext)
     {
+        var root = new FlexBox()
+        {
+            Name  = "root",
+            Style = new()
+            {
+                Border         = new(testContext.BorderSize, 0, Color.Green),
+                ItemsAlignment = ItemsAlignmentKind.Baseline,
+            }
+        };
 
         var horizontal_a_container = new FlexBox()
         {
@@ -159,20 +168,22 @@ public class AlignmentTest
             }
         };
 
-        canvas.AppendChild(horizontal_a_container);
-            horizontal_a_container.AppendChild(horizontal_a_left);
-            horizontal_a_container.AppendChild(horizontal_a_right);
+        canvas.AppendChild(root);
 
-        canvas.AppendChild(horizontal_b_container);
-            horizontal_b_container.AppendChild(horizontal_b_top);
-            horizontal_b_container.AppendChild(horizontal_b_bottom);
+            root.AppendChild(horizontal_a_container);
+                horizontal_a_container.AppendChild(horizontal_a_left);
+                horizontal_a_container.AppendChild(horizontal_a_right);
 
-        canvas.AppendChild(vertical_a_container);
-            vertical_a_container.AppendChild(vertical_a_left);
-            vertical_a_container.AppendChild(vertical_a_right);
+            root.AppendChild(horizontal_b_container);
+                horizontal_b_container.AppendChild(horizontal_b_top);
+                horizontal_b_container.AppendChild(horizontal_b_bottom);
 
-        canvas.AppendChild(vertical_b_container);
-            vertical_b_container.AppendChild(vertical_b_top);
-            vertical_b_container.AppendChild(vertical_b_bottom);
+            root.AppendChild(vertical_a_container);
+                vertical_a_container.AppendChild(vertical_a_left);
+                vertical_a_container.AppendChild(vertical_a_right);
+
+            root.AppendChild(vertical_b_container);
+                vertical_b_container.AppendChild(vertical_b_top);
+                vertical_b_container.AppendChild(vertical_b_bottom);
     }
 }

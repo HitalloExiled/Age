@@ -173,7 +173,10 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 this.Layout.AddDependent(element);
             }
 
-            this.Layout.IncreaseRenderableNodes();
+            if (!containerNode.Layout.Hidden)
+            {
+                this.Layout.IncreaseRenderableNodes();
+            }
         }
     }
 
@@ -215,8 +218,10 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 this.Layout.RemoveDependent(element);
             }
 
-            this.Layout.DecreaseRenderableNodes();
-
+            if (!containerNode.Layout.Hidden)
+            {
+                this.Layout.DecreaseRenderableNodes();
+            }
         }
     }
 

@@ -14,7 +14,10 @@ internal abstract class Layout
 
     public abstract Layout?    Parent { get; }
     public abstract Node       Target { get; }
+
     public virtual Transform2D Transform => Transform2D.Translated(this.Offset);
+    public virtual bool        Hidden { get; set; }
+
 
     public abstract void Update();
 
@@ -34,4 +37,7 @@ internal abstract class Layout
             }
         }
     }
+
+    public override string ToString() =>
+        $"{{ Target: {Target} }}";
 }

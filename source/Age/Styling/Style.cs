@@ -36,6 +36,8 @@ public partial record Style
     private StackKind?                stack;
     private TextAlignmentKind?        textAlignment;
 
+    private bool? hidden;
+
     // 2-bytes
     private ushort? fontSize;
 
@@ -91,6 +93,12 @@ public partial record Style
     {
         get => this.fontSize;
         set => this.Set(ref this.fontSize, value);
+    }
+
+    public bool? Hidden
+    {
+        get => this.hidden;
+        set => this.Set(ref this.hidden, value);
     }
 
     public ItemsAlignmentKind? ItemsAlignment

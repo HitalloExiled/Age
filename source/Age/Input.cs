@@ -20,13 +20,13 @@ public static class Input
         keyStates.TryAdd(key, currentIteration);
 
     private static void OnKeyUp(Key key) =>
-        keyStates[key] = 0;
+        keyStates.Remove(key);
 
     private static void OnMouseDown(in MouseEvent eventArgs) =>
         mouseButtonsStates.TryAdd(eventArgs.Button, currentIteration);
 
     private static void OnClickUp(in MouseEvent eventArgs) =>
-        mouseButtonsStates[eventArgs.Button] = 0;
+        mouseButtonsStates.Remove(eventArgs.Button);
 
     private static void OnMouseWheel(in MouseEvent eventArgs) =>
         mouseWheel = eventArgs.Delta;
@@ -51,22 +51,6 @@ public static class Input
 
     internal static void Update()
     {
-        foreach (var (key, value) in keyStates.ToArray())
-        {
-            if (value == 0)
-            {
-                keyStates.Remove(key);
-            }
-        }
-
-        foreach (var (key, value) in mouseButtonsStates.ToArray())
-        {
-            if (value == 0)
-            {
-                mouseButtonsStates.Remove(key);
-            }
-        }
-
         currentIteration++;
         mouseWheel = 0;
     }

@@ -175,6 +175,10 @@ public class Editor : Node
         {
             this.setup = Playground.Setup;
         }
+        else if (Input.IsKeyJustPressed(Key.Space))
+        {
+            this.testContext.Hide = !this.testContext.Hide;
+        }
         else
         {
             reload = Input.IsKeyJustPressed(Key.R);

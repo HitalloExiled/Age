@@ -47,11 +47,72 @@ public class BaselineTest
             }
         };
 
-        var horizontal_a_child1 = new FlexBox { Name = "X",     Text = "X",        Style = new() { Border = new(testContext.BorderSize * 2, 0, Color.Red),  FontSize = 48, FontFamily = "Helvetica Neue",     Color = Color.Red, Margin = new(null, (Pixel)10) } };
-        var horizontal_a_child2 = new FlexBox { Name = "Y",     Text = "Y",        Style = new() { Border = new(testContext.BorderSize / 2, 0, Color.Green),    FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
-        var horizontal_a_child3 = new FlexBox { Name = "Z",     Text = "Z",        Style = new() { Border = new(testContext.BorderSize, 0,     Color.Blue),     FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } };
-        var horizontal_a_child4 = new FlexBox { Name = "Hello", Text = "Hello",    Style = new() { Border = new(testContext.BorderSize, 0,     Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Start, Margin = new((Pixel)5) } };
-        var horizontal_a_child5 = new FlexBox { Name = "World", Text = "World!!!", Style = new() { Border = new(testContext.BorderSize, 0,     Color.Margenta), Color = Color.White, Alignment = AlignmentKind.End,   Margin = new((Pixel)5) } };
+        var horizontal_a_child1 = new FlexBox
+        {
+            Name = "X",
+            Text = "X",
+            Style = new()
+            {
+                Border     = new(testContext.BorderSize * 2, 0, Color.Red),
+                Color      = Color.Red,
+                FontFamily = "Helvetica Neue",
+                FontSize   = 48,
+                Hidden     = testContext.Hide,
+                Margin     = new(null, (Pixel)10),
+            }
+        };
+
+        var horizontal_a_child2 = new FlexBox
+        {
+            Name = "Y",
+            Text = "Y",
+            Style = new()
+            {
+                Border     = new(testContext.BorderSize / 2, 0, Color.Green),
+                Color      = Color.Green,
+                FontFamily = "Lucida Console",
+                FontSize   = 24,
+            }
+        };
+
+        var horizontal_a_child3 = new FlexBox
+        {
+            Name = "Z",
+            Text = "Z",
+            Style = new()
+            {
+                Border     = new(testContext.BorderSize, 0,     Color.Blue),
+                Color      = Color.Blue,
+                FontFamily = "Verdana",
+                FontSize   = 48,
+            }
+        };
+
+        var horizontal_a_child4 = new FlexBox
+        {
+            Name = "Hello",
+            Text = "Hello",
+            Style = new()
+            {
+                Alignment = AlignmentKind.Start,
+                Border    = new(testContext.BorderSize, 0, Color.Margenta),
+                Color     = Color.White,
+                Margin    = new((Pixel)5)
+            }
+        };
+
+        var horizontal_a_child5 = new FlexBox
+        {
+            Name  = "World",
+            Text  = "World!!!",
+            Style = new()
+            {
+                Alignment = AlignmentKind.End,
+                Border    = new(testContext.BorderSize, 0, Color.Margenta),
+                Color     = Color.White,
+                Margin    = new((Pixel)5)
+            }
+        };
 
         var horizontal_b_container = new FlexBox()
         {
@@ -68,9 +129,44 @@ public class BaselineTest
             }
         };
 
-        var horizontal_b_child1 = new FlexBox { Name = "X", Text = "X", Style = new() { Border = new(testContext.BorderSize, 0, Color.Red),   FontSize = 24, FontFamily = "Helvetica Neue", Color = Color.Red } };
-        var horizontal_b_child2 = new FlexBox { Name = "Y", Text = "Y", Style = new() { Border = new(testContext.BorderSize, 0, Color.Green), FontSize = 12, FontFamily = "Lucida Console", Color = Color.Green } };
-        var horizontal_b_child3 = new FlexBox { Name = "Z", Text = "Z", Style = new() { Border = new(testContext.BorderSize, 0, Color.Blue),  FontSize = 24, FontFamily = "Verdana",        Color = Color.Blue } };
+        var horizontal_b_child1 = new FlexBox
+        {
+            Name = "X",
+            Text = "X",
+            Style = new()
+            {
+                Border     = new(testContext.BorderSize, 0, Color.Red),
+                Color      = Color.Red,
+                FontFamily = "Helvetica Neue",
+                FontSize   = 24,
+            }
+        };
+
+        var horizontal_b_child2 = new FlexBox
+        {
+            Name = "Y",
+            Text = "Y",
+            Style = new()
+            {
+                Border     = new(testContext.BorderSize, 0, Color.Green),
+                Color      = Color.Green,
+                FontFamily = "Lucida Console",
+                FontSize   = 12,
+            }
+        };
+
+        var horizontal_b_child3 = new FlexBox
+        {
+            Name = "Z",
+            Text = "Z",
+            Style = new()
+            {
+                Border     = new(testContext.BorderSize, 0, Color.Blue),
+                Color      = Color.Blue,
+                FontFamily = "Verdana",
+                FontSize   = 24,
+            }
+        };
 
         var horizontal_c_container = new FlexBox
         {
@@ -90,10 +186,10 @@ public class BaselineTest
             Name  = "horizontal_c_child1",
             Style = new()
             {
-                Size      = new((Pixel)100),
-                Margin    = new((Pixel)10),
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
                 Alignment = AlignmentKind.Left,
+                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Margin    = new((Pixel)10),
+                Size      = new((Pixel)100),
             }
         };
 
@@ -102,11 +198,10 @@ public class BaselineTest
             Name  = "horizontal_c_child2",
             Style = new()
             {
-                Size   = new((Pixel)100),
-                Margin = new((Pixel)10),
-                Border = new(testContext.BorderSize, 0, Color.Cyan),
                 Alignment = AlignmentKind.Right,
-
+                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Margin    = new((Pixel)10),
+                Size      = new((Pixel)100),
             }
         };
 
@@ -125,11 +220,68 @@ public class BaselineTest
             }
         };
 
-        var vertical_a_child1 = new FlexBox { Name = "X", Text = "X", Style = new() { Border = new(testContext.BorderSize, 0, Color.Red),   FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
-        var vertical_a_child2 = new FlexBox { Name = "Y", Text = "Y", Style = new() { Border = new(testContext.BorderSize, 0, Color.Green), FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
-        var vertical_a_child3 = new FlexBox { Name = "Z", Text = "Z", Style = new() { Border = new(testContext.BorderSize, 0, Color.Blue),  FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } };
-        var vertical_a_child4 = new FlexBox { Text = "Hello",         Style = new() { Border = new(testContext.BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Top,    Margin = new((Pixel)10) } };
-        var vertical_a_child5 = new FlexBox { Text = "World!!!",      Style = new() { Border = new(testContext.BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Bottom, Margin = new((Pixel)10) } };
+        var vertical_a_child1 = new FlexBox
+        {
+            Name = "X",
+            Text = "X",
+            Style = new()
+            {
+                Border     = new(testContext.BorderSize, 0, Color.Red),
+                Color      = Color.Red,
+                FontFamily = "Helvetica Neue",
+                FontSize   = 48,
+            }
+        };
+
+        var vertical_a_child2 = new FlexBox
+        {
+            Name = "Y",
+            Text = "Y",
+            Style = new()
+            {
+                Border     = new(testContext.BorderSize, 0, Color.Green),
+                Color      = Color.Green,
+                FontFamily = "Lucida Console",
+                FontSize   = 24,
+            }
+        };
+
+        var vertical_a_child3 = new FlexBox
+        {
+            Name = "Z",
+            Text = "Z",
+            Style = new()
+            {
+                Border     = new(testContext.BorderSize, 0, Color.Blue),
+                Color      = Color.Blue,
+                FontFamily = "Verdana",
+                FontSize   = 48,
+            }
+        };
+
+        var vertical_a_child4 = new FlexBox
+        {
+            Text = "Hello",
+            Style = new()
+            {
+                Alignment = AlignmentKind.Top,
+                Border    = new(testContext.BorderSize, 0, Color.Margenta),
+                Color     = Color.White,
+                Margin    = new((Pixel)10),
+            }
+        };
+
+        var vertical_a_child5 = new FlexBox
+        {
+            Text = "World!!!",
+            Style = new()
+            {
+                Alignment = AlignmentKind.Bottom,
+                Border    = new(testContext.BorderSize, 0, Color.Margenta),
+                Color     = Color.White,
+                Margin    = new((Pixel)10),
+            }
+        };
 
         var vertical_b_container = new FlexBox
         {
@@ -231,7 +383,6 @@ public class BaselineTest
                 Margin    = new((Pixel)10),
                 Border    = new(testContext.BorderSize, 0, Color.Cyan),
                 Alignment = AlignmentKind.Bottom,
-
             }
         };
 
