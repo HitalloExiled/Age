@@ -12,6 +12,8 @@ namespace Age.Scene;
 
 public sealed class NodeTree
 {
+    public event Action? Updated;
+
     public record struct Command2DEntry(Matrix3x2<float> Transform, Command Command);
     public record struct Command3DEntry(Matrix4x4<float> Transform, Command Command);
 
@@ -37,6 +39,66 @@ public sealed class NodeTree
         this.Root   = new() { Tree = this };
 
         this.Window.Closed += this.Destroy;
+    }
+
+    private void CallInitialize()
+    {
+        this.stack.Push(this.Root);
+
+        while (this.stack.Count > 0)
+        {
+            var current = this.stack.Pop();
+
+            foreach (var node in current)
+            {
+                if (!node.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+                {
+                    node.Initialize();
+
+                    this.stack.Push(node);
+                }
+            }
+        }
+    }
+
+    private void CallLateUpdate()
+    {
+        this.stack.Push(this.Root);
+
+        while (this.stack.Count > 0)
+        {
+            var current = this.stack.Pop();
+
+            foreach (var node in current)
+            {
+                if (!node.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+                {
+                    node.LateUpdate();
+
+                    this.stack.Push(node);
+                }
+            }
+        }
+    }
+
+    private void CallUpdate(double deltaTime)
+    {
+        this.stack.Push(this.Root);
+
+        while (this.stack.Count > 0)
+        {
+            var current = this.stack.Pop();
+
+            foreach (var node in current)
+            {
+                if (!node.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+                {
+                    node.Update(deltaTime);
+
+                    this.stack.Push(node);
+                }
+            }
+        }
     }
 
     private static MouseEvent CreateEventTarget(Element target, in Platforms.Display.MouseEvent mouseEvent) =>
@@ -292,27 +354,15 @@ public sealed class NodeTree
         this.Window.Context   += this.OnContextMenu;
         this.Window.MouseMove += this.OnMouseMove;
 
-        foreach (var node in this.Root.Traverse())
-        {
-            node.Initialize();
-        }
-
-        foreach (var node in this.Root.Traverse())
-        {
-            node.LateUpdate();
-        }
+        this.CallInitialize();
+        this.CallLateUpdate();
     }
 
     public void Update(double deltaTime)
     {
-        foreach (var node in this.Root.Traverse())
-        {
-            node.Update(deltaTime);
-        }
+        this.CallUpdate(deltaTime);
+        this.CallLateUpdate();
 
-        foreach (var node in this.Root.Traverse())
-        {
-            node.LateUpdate();
-        }
+        this.Updated?.Invoke();
     }
 }

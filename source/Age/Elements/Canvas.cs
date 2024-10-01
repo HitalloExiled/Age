@@ -23,6 +23,7 @@ public sealed class Canvas : Element
         base.Connected(tree);
 
         tree.Window.Resized += this.OnWindowSizeChanged;
+        tree.Updated += this.Layout.Update;
 
         tree.IsDirty = this.Layout.HasPendingUpdate;
 
@@ -34,8 +35,6 @@ public sealed class Canvas : Element
         base.Disconnected(tree);
 
         tree.Window.Resized -= this.OnWindowSizeChanged;
+        tree.Updated -= this.Layout.Update;
     }
-
-    public override void LateUpdate() =>
-        this.Layout.Update();
 }

@@ -267,8 +267,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
 
-    public Element() =>
+    public Element()
+    {
         this.Layout = new(this);
+        this.Flags  = NodeFlags.IgnoreUpdates;
+    }
 
     IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
     {

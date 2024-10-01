@@ -20,6 +20,8 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
 
     public abstract string NodeName { get; }
 
+    public NodeFlags Flags { get; protected set; }
+
     public string? Name { get; set; }
 
     public NodeTree? Tree
