@@ -23,6 +23,9 @@ internal class TextLayout(TextNode target): Layout
         }
     }
 
+    public override void Hide() =>
+        this.HasPendingUpdate = false;
+
     public override void Update()
     {
         if (this.HasPendingUpdate)

@@ -6,14 +6,16 @@ namespace Age.Editor.Tests;
 
 public class BaselineTest
 {
-    public static void Setup(Canvas canvas, in TestContext testContext)
+    public static void Setup(Canvas canvas)
     {
+        var borderSize = 10u;
+
         var box = new FlexBox()
         {
             Name  = "box",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Cyan),
+                Border = new(borderSize, 0, Color.Cyan),
                 Size   = new((Pixel)100),
             }
         };
@@ -25,7 +27,7 @@ public class BaselineTest
             Style = new()
             {
                 Alignment  = AlignmentKind.Baseline,
-                Border     = new(testContext.BorderSize, 0, Color.Margenta),
+                Border     = new(borderSize, 0, Color.Margenta),
                 Color      = Color.White,
                 FontFamily = "Impact",
                 FontSize   = 12,
@@ -39,7 +41,7 @@ public class BaselineTest
             Style = new()
             {
                 Padding        = new((Pixel)20),
-                Border         = new(testContext.BorderSize, 0, Color.Cyan),
+                Border         = new(borderSize, 0, Color.Cyan),
                 Color          = Color.White,
                 FontFamily     = "Impact",
                 FontSize       = 24,
@@ -53,11 +55,11 @@ public class BaselineTest
             Text = "X",
             Style = new()
             {
-                Border     = new(testContext.BorderSize * 2, 0, Color.Red),
+                Border     = new(borderSize * 2, 0, Color.Red),
                 Color      = Color.Red,
                 FontFamily = "Helvetica Neue",
                 FontSize   = 48,
-                Hidden     = testContext.Hide,
+                Hidden     = false,
                 Margin     = new(null, (Pixel)10),
             }
         };
@@ -68,7 +70,7 @@ public class BaselineTest
             Text = "Y",
             Style = new()
             {
-                Border     = new(testContext.BorderSize / 2, 0, Color.Green),
+                Border     = new(borderSize / 2, 0, Color.Green),
                 Color      = Color.Green,
                 FontFamily = "Lucida Console",
                 FontSize   = 24,
@@ -81,7 +83,7 @@ public class BaselineTest
             Text = "Z",
             Style = new()
             {
-                Border     = new(testContext.BorderSize, 0,     Color.Blue),
+                Border     = new(borderSize, 0,     Color.Blue),
                 Color      = Color.Blue,
                 FontFamily = "Verdana",
                 FontSize   = 48,
@@ -95,7 +97,7 @@ public class BaselineTest
             Style = new()
             {
                 Alignment = AlignmentKind.Start,
-                Border    = new(testContext.BorderSize, 0, Color.Margenta),
+                Border    = new(borderSize, 0, Color.Margenta),
                 Color     = Color.White,
                 Margin    = new((Pixel)5)
             }
@@ -108,7 +110,7 @@ public class BaselineTest
             Style = new()
             {
                 Alignment = AlignmentKind.End,
-                Border    = new(testContext.BorderSize, 0, Color.Margenta),
+                Border    = new(borderSize, 0, Color.Margenta),
                 Color     = Color.White,
                 Margin    = new((Pixel)5)
             }
@@ -122,7 +124,7 @@ public class BaselineTest
             {
                 Alignment      = AlignmentKind.Baseline,
                 ItemsAlignment = ItemsAlignmentKind.Baseline,
-                Border         = new(testContext.BorderSize, 0, Color.Margenta),
+                Border         = new(borderSize, 0, Color.Margenta),
                 Color          = Color.White,
                 FontFamily     = "Impact",
                 FontSize       = 12,
@@ -135,7 +137,7 @@ public class BaselineTest
             Text = "X",
             Style = new()
             {
-                Border     = new(testContext.BorderSize, 0, Color.Red),
+                Border     = new(borderSize, 0, Color.Red),
                 Color      = Color.Red,
                 FontFamily = "Helvetica Neue",
                 FontSize   = 24,
@@ -148,7 +150,7 @@ public class BaselineTest
             Text = "Y",
             Style = new()
             {
-                Border     = new(testContext.BorderSize, 0, Color.Green),
+                Border     = new(borderSize, 0, Color.Green),
                 Color      = Color.Green,
                 FontFamily = "Lucida Console",
                 FontSize   = 12,
@@ -161,7 +163,7 @@ public class BaselineTest
             Text = "Z",
             Style = new()
             {
-                Border     = new(testContext.BorderSize, 0, Color.Blue),
+                Border     = new(borderSize, 0, Color.Blue),
                 Color      = Color.Blue,
                 FontFamily = "Verdana",
                 FontSize   = 24,
@@ -173,7 +175,7 @@ public class BaselineTest
             Name  = "horizontal_c_container",
             Style = new()
             {
-                Border     = new(testContext.BorderSize, 0, Color.Margenta),
+                Border     = new(borderSize, 0, Color.Margenta),
                 Color      = Color.White,
                 FontFamily = "Impact",
                 FontSize   = 24,
@@ -187,7 +189,7 @@ public class BaselineTest
             Style = new()
             {
                 Alignment = AlignmentKind.Left,
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Margin    = new((Pixel)10),
                 Size      = new((Pixel)100),
             }
@@ -199,7 +201,7 @@ public class BaselineTest
             Style = new()
             {
                 Alignment = AlignmentKind.Right,
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Margin    = new((Pixel)10),
                 Size      = new((Pixel)100),
             }
@@ -212,7 +214,7 @@ public class BaselineTest
             Style = new()
             {
                 Alignment  = AlignmentKind.Baseline,
-                Border     = new(testContext.BorderSize, 0, Color.Margenta),
+                Border     = new(borderSize, 0, Color.Margenta),
                 Color      = Color.White,
                 FontFamily = "Impact",
                 FontSize   = 24,
@@ -226,7 +228,7 @@ public class BaselineTest
             Text = "X",
             Style = new()
             {
-                Border     = new(testContext.BorderSize, 0, Color.Red),
+                Border     = new(borderSize, 0, Color.Red),
                 Color      = Color.Red,
                 FontFamily = "Helvetica Neue",
                 FontSize   = 48,
@@ -239,7 +241,7 @@ public class BaselineTest
             Text = "Y",
             Style = new()
             {
-                Border     = new(testContext.BorderSize, 0, Color.Green),
+                Border     = new(borderSize, 0, Color.Green),
                 Color      = Color.Green,
                 FontFamily = "Lucida Console",
                 FontSize   = 24,
@@ -252,7 +254,7 @@ public class BaselineTest
             Text = "Z",
             Style = new()
             {
-                Border     = new(testContext.BorderSize, 0, Color.Blue),
+                Border     = new(borderSize, 0, Color.Blue),
                 Color      = Color.Blue,
                 FontFamily = "Verdana",
                 FontSize   = 48,
@@ -265,7 +267,7 @@ public class BaselineTest
             Style = new()
             {
                 Alignment = AlignmentKind.Top,
-                Border    = new(testContext.BorderSize, 0, Color.Margenta),
+                Border    = new(borderSize, 0, Color.Margenta),
                 Color     = Color.White,
                 Margin    = new((Pixel)10),
             }
@@ -277,7 +279,7 @@ public class BaselineTest
             Style = new()
             {
                 Alignment = AlignmentKind.Bottom,
-                Border    = new(testContext.BorderSize, 0, Color.Margenta),
+                Border    = new(borderSize, 0, Color.Margenta),
                 Color     = Color.White,
                 Margin    = new((Pixel)10),
             }
@@ -288,7 +290,7 @@ public class BaselineTest
             Name  = "vertical_b_container",
             Style = new()
             {
-                Border     = new(testContext.BorderSize, 0, Color.Margenta),
+                Border     = new(borderSize, 0, Color.Margenta),
                 Color      = Color.White,
                 FontFamily = "Impact",
                 FontSize   = 24,
@@ -302,7 +304,7 @@ public class BaselineTest
             Style = new()
             {
                 Size   = new((Pixel)10, (Pixel)200),
-                Border = new(testContext.BorderSize, 0, Color.Red),
+                Border = new(borderSize, 0, Color.Red),
             }
         };
 
@@ -312,7 +314,7 @@ public class BaselineTest
             Style = new()
             {
                 Size   = new((Pixel)10, (Pixel)100),
-                Border = new(testContext.BorderSize, 0, Color.Green),
+                Border = new(borderSize, 0, Color.Green),
             }
         };
 
@@ -322,7 +324,7 @@ public class BaselineTest
             Style = new()
             {
                 Size   = new((Pixel)10, (Pixel)50),
-                Border = new(testContext.BorderSize, 0, Color.Blue),
+                Border = new(borderSize, 0, Color.Blue),
             }
         };
 
@@ -332,7 +334,7 @@ public class BaselineTest
             Style = new()
             {
                 Alignment  = AlignmentKind.Baseline,
-                Border     = new(testContext.BorderSize, 0, Color.Cyan),
+                Border     = new(borderSize, 0, Color.Cyan),
                 Color      = Color.White,
                 FontFamily = "Impact",
                 FontSize   = 24,
@@ -340,19 +342,19 @@ public class BaselineTest
             }
         };
 
-        var vertical_c_child1 = new FlexBox { Name = "Vertical", Text = "Vertical", Style = new() { Border = new(testContext.BorderSize, 0, Color.Red), Margin = new(null, (Pixel)0), FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
-        var vertical_c_child2 = new FlexBox { Name = "X", Text = "X", Style = new() { Border = new(testContext.BorderSize, 0, Color.Red),   FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
-        var vertical_c_child3 = new FlexBox { Name = "Y", Text = "Y", Style = new() { Border = new(testContext.BorderSize, 0, Color.Green), FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
-        var vertical_c_child4 = new FlexBox { Name = "Z", Text = "Z", Style = new() { Border = new(testContext.BorderSize, 0, Color.Blue),  FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } };
-        var vertical_c_child5 = new FlexBox { Text = "Hello",         Style = new() { Border = new(testContext.BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Start, Margin = new((Pixel)5) } };
-        var vertical_c_child6 = new FlexBox { Text = "World!!!",      Style = new() { Border = new(testContext.BorderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.End,   Margin = new((Pixel)5) } };
+        var vertical_c_child1 = new FlexBox { Name = "Vertical", Text = "Vertical", Style = new() { Border = new(borderSize, 0, Color.Red), Margin = new(null, (Pixel)0), FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
+        var vertical_c_child2 = new FlexBox { Name = "X", Text = "X", Style = new() { Border = new(borderSize, 0, Color.Red),   FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } };
+        var vertical_c_child3 = new FlexBox { Name = "Y", Text = "Y", Style = new() { Border = new(borderSize, 0, Color.Green), FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } };
+        var vertical_c_child4 = new FlexBox { Name = "Z", Text = "Z", Style = new() { Border = new(borderSize, 0, Color.Blue),  FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } };
+        var vertical_c_child5 = new FlexBox { Text = "Hello",         Style = new() { Border = new(borderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Start, Margin = new((Pixel)5) } };
+        var vertical_c_child6 = new FlexBox { Text = "World!!!",      Style = new() { Border = new(borderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.End,   Margin = new((Pixel)5) } };
 
         var vertical_d_container = new FlexBox
         {
             Name  = "vertical_c_container",
             Style = new()
             {
-                Border     = new(testContext.BorderSize, 0, Color.Margenta),
+                Border     = new(borderSize, 0, Color.Margenta),
                 Color      = Color.White,
                 FontFamily = "Impact",
                 FontSize   = 24,
@@ -369,7 +371,7 @@ public class BaselineTest
             {
                 Size      = new((Pixel)100),
                 Margin    = new((Pixel)10),
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Alignment = AlignmentKind.Top,
             }
         };
@@ -381,7 +383,7 @@ public class BaselineTest
             {
                 Size      = new((Pixel)100),
                 Margin    = new((Pixel)10),
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Alignment = AlignmentKind.Bottom,
             }
         };

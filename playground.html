@@ -14,8 +14,9 @@
         .red {
             display: var(--display);
             border: var(--border) solid red;
-            font-size: 48;
-            font-family: 'Helvetica Neue';
+            font-size: 16;
+            height: 20px;
+            /* font-family: 'Helvetica Neue'; */
             /* width:  100px;
             height: 100px; */
             /* margin: 10px; */
@@ -24,8 +25,10 @@
         .green {
             display: var(--display);
             border: var(--border) solid green;
-            font-size: 24;
-            font-family: 'Lucida Console';
+            font-size: 16;
+            height: 20px;
+            margin: 100px;
+            /* font-family: 'Lucida Console'; */
             /* width:  50%;
             height: 50%; */
             /* margin: 10%;
@@ -36,34 +39,34 @@
             display: var(--display);
             border: var(--border) solid blue;
             font-family: Verdana;
-            font-size: 48;
+            font-size: 16;
+            height: 20px;
         }
 
         .stack {
-            display: var(--display);
-            border: 20px solid magenta;
-            font-size: 24;
-            font-family: Impact;
-            width:   20px;
-            height:  20px;
-            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            border: 10px solid magenta;
+            font-size: 16;
+            /* font-family: Impact; */
+            width:   200px;
+            height:  200px;
+            /* box-sizing: border-box; */
         }
 
         .stack-v {
-            display: inline-flex;
+            /* display: inline-flex;z */
             flex-direction: column;
             border: var(--border) solid magenta;
-            box-sizing: border-box;
+            /* box-sizing: border-box; */
         }
     </style>
 </head>
 <body>
     <span class="stack">
-        <!-- Horizontal
-        <span class="red">X</span>
-        <span class="green">Y</span>
-        <span class="blue">Z</span> -->
-        <!-- <span class="blue"></span> -->
+        <span class="red">01</span>
+        <span class="green">02</span>
+        <span class="blue">03</span>
     </span>
     <!-- <span class="stack-v">
         Vertical

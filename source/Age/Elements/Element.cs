@@ -1,16 +1,30 @@
 using System.Text;
 using Age.Elements.Layouts;
 using Age.Numerics;
+using Age.Platforms.Display;
 using Age.Scene;
 using Age.Styling;
 
+using Key = Age.Platforms.Display.Key;
+
 namespace Age.Elements;
+
+public struct KeyEvent
+{
+    public Key       Key;
+    public KeyStates Modifiers;
+    public bool      Holding;
+}
 
 public delegate void ContextEventHandler(in ContextEvent mouseEvent);
 public delegate void MouseEventHandler(in MouseEvent mouseEvent);
+public delegate void KeyEventHandler(in KeyEvent keyEvent);
 
 public abstract partial class Element : ContainerNode, IEnumerable<Element>
 {
+    private event KeyEventHandler? keyDown;
+    private event KeyEventHandler? keyUp;
+
     public event MouseEventHandler?   Blured;
     public event MouseEventHandler?   Clicked;
     public event ContextEventHandler? Context;
@@ -19,21 +33,138 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     public event MouseEventHandler?   MouseOut;
     public event MouseEventHandler?   MouseOver;
 
+    public event KeyEventHandler? KeyDown
+    {
+        add
+        {
+            lock(this.elementLock)
+            {
+                if (this.IsConnected && keyDown == null)
+                {
+                    this.Tree.Window.KeyDown += this.OnKeyDown;
+                }
+            }
+
+            keyDown += value;
+
+        }
+        remove
+        {
+            keyDown -= value;
+
+            lock(this.elementLock)
+            {
+                if (this.IsConnected && keyDown == null)
+                {
+                    this.Tree.Window.KeyDown -= this.OnKeyDown;
+                }
+            }
+        }
+    }
+
+    public event KeyEventHandler? KeyUp
+    {
+        add
+        {
+            lock(this.elementLock)
+            {
+                if (this.IsConnected && keyUp == null)
+                {
+                    this.Tree.Window.KeyUp += this.OnKeyUp;
+                }
+            }
+
+            keyUp += value;
+        }
+        remove
+        {
+            keyUp -= value;
+
+            lock(this.elementLock)
+            {
+                if (this.IsConnected && keyUp == null)
+                {
+                    this.Tree.Window.KeyUp -= this.OnKeyUp;
+                }
+            }
+        }
+    }
+
+    private readonly object elementLock = new();
+
     private Canvas? canvas;
     private Style   style = new();
     private string? text;
 
-    internal override BoxLayout Layout { get; }
+    protected bool IsFocusable { get; set; }
 
-    internal bool HasPendingUpdate { get; set; }
+    internal override BoxLayout Layout { get; }
 
     public Element? ParentElement => this.Parent as Element;
 
-    public Element? FirstElementChild { get; private set; }
-    public Element? LastElementChild  { get; private set; }
+    public Element? FirstElementChild
+    {
+        get
+        {
+            for (var node = this.FirstChild; node != this.LastChild; node = node?.NextSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
 
-    public Element? PreviousElementSibling { get; private set; }
-    public Element? NextElementSibling     { get; private set; }
+            return null;
+        }
+    }
+
+    public Element? NextElementSibling
+    {
+        get
+        {
+            for (var node = this.NextSibling; node != this.LastChild; node = node?.NextSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public Element? PreviousElementSibling
+    {
+        get
+        {
+            for (var node = this.PreviousSibling; node != this.FirstChild; node = node?.PreviousSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public Element? LastElementChild
+    {
+        get
+        {
+            for (var node = this.LastChild; node != this.FirstChild; node = node?.PreviousSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+    }
 
     public Canvas? Canvas
     {
@@ -74,7 +205,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
                 this.style = value;
 
-                this.Layout.UpdateState();
+                this.Layout.UpdateState(StyleProperty.All);
             }
         }
     }
@@ -141,14 +272,60 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
     {
-        for (var childElement = this.FirstElementChild; childElement != null; childElement = childElement.NextElementSibling)
+        foreach (var node in this)
         {
-            yield return childElement;
+            if (node is Element element)
+            {
+                yield return element;
+            }
         }
     }
 
-    protected override void Connected(NodeTree tree) =>
+    private void OnKeyDown(Key key)
+    {
+        if (this.IsFocused)
+        {
+            var keyEvent = new KeyEvent
+            {
+                Key       = key,
+                Holding   = !Input.IsKeyJustPressed(key),
+                Modifiers = Input.GetModifiers(),
+
+            };
+
+            this.keyDown?.Invoke(keyEvent);
+        }
+    }
+
+    private void OnKeyUp(Key key)
+    {
+        if (this.IsFocused)
+        {
+            var keyEvent = new KeyEvent
+            {
+                Key       = key,
+                Holding   = !Input.IsKeyJustPressed(key),
+                Modifiers = Input.GetModifiers(),
+            };
+
+            this.keyUp?.Invoke(keyEvent);
+        }
+    }
+
+    protected override void Connected(NodeTree tree)
+    {
         this.style.Changed += this.Layout.UpdateState;
+
+        if (this.keyDown != null)
+        {
+            tree.Window.KeyDown += this.OnKeyDown;
+        }
+
+        if (this.keyUp != null)
+        {
+            tree.Window.KeyUp += this.OnKeyUp;
+        }
+    }
 
     protected override void ChildAppended(Node child)
     {
@@ -158,25 +335,10 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             {
                 element.Canvas = this is Canvas canvas ? canvas : this.Canvas;
 
-                if (this.LastElementChild != null)
-                {
-                    this.LastElementChild.NextElementSibling = element;
-                    element.PreviousElementSibling = this.LastElementChild;
-
-                    this.LastElementChild = element;
-                }
-                else
-                {
-                    this.FirstElementChild = this.LastElementChild = element;
-                }
-
-                this.Layout.AddDependent(element);
+                this.Layout.ElementAppended(element);
             }
 
-            if (!containerNode.Layout.Hidden)
-            {
-                this.Layout.IncreaseRenderableNodes();
-            }
+            this.Layout.ContainerNodeAppended(containerNode);
         }
     }
 
@@ -188,50 +350,27 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             {
                 element.Canvas = null;
 
-                if (element == this.FirstElementChild)
-                {
-                    this.FirstElementChild = element.NextElementSibling;
-                }
-
-                if (element == this.LastElementChild)
-                {
-                    this.LastElementChild = element.PreviousElementSibling;
-                }
-
-                if (element.PreviousElementSibling != null)
-                {
-                    element.PreviousElementSibling.NextElementSibling = element.NextElementSibling;
-
-                    if (element.NextElementSibling != null)
-                    {
-                        element.NextElementSibling.PreviousElementSibling = element.PreviousElementSibling.NextElementSibling;
-                    }
-                }
-                else if (element.NextElementSibling != null)
-                {
-                    element.NextElementSibling.PreviousElementSibling = null;
-                }
-
-                element.PreviousElementSibling = null;
-                element.NextElementSibling = null;
-
-                this.Layout.RemoveDependent(element);
+                this.Layout.ElementRemoved(element);
             }
 
-            if (!containerNode.Layout.Hidden)
-            {
-                this.Layout.DecreaseRenderableNodes();
-            }
+            this.Layout.ContainerNodeRemoved(containerNode);
         }
     }
 
-    protected override void Disconnected(NodeTree tree) =>
-        this.style.Changed -= this.Layout.UpdateState;
+    protected override void Disconnected(NodeTree tree)
+    {
+        this.style.Changed  -= this.Layout.UpdateState;
+        tree.Window.KeyDown -= this.OnKeyDown;
+        tree.Window.KeyUp   -= this.OnKeyUp;
+    }
 
     internal void InvokeBlur(in MouseEvent mouseEvent)
     {
-        this.IsFocused = false;
-        this.Blured?.Invoke(mouseEvent);
+        if (this.IsFocusable)
+        {
+            this.IsFocused = false;
+            this.Blured?.Invoke(mouseEvent);
+        }
     }
 
     internal void InvokeClick(in MouseEvent mouseEvent) =>
@@ -242,8 +381,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     internal void InvokeFocus(in MouseEvent mouseEvent)
     {
-        this.IsFocused = true;
-        this.Focused?.Invoke(mouseEvent);
+        if (this.IsFocusable)
+        {
+            this.IsFocused = true;
+            this.Focused?.Invoke(mouseEvent);
+        }
     }
 
     internal void InvokeMouseMoved(in MouseEvent mouseEvent) =>

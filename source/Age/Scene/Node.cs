@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Age.Scene;
 
-public abstract partial class Node : IEnumerable<Node>
+public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
 {
     private NodeTree? tree;
 
@@ -271,4 +271,65 @@ public abstract partial class Node : IEnumerable<Node>
 
     public virtual void Update(double deltaTime)
     { }
+
+    public bool IsDescendent(Node other)
+    {
+        var parent = other;
+
+        while (parent != this.Parent)
+        {
+            parent = parent?.Parent;
+        }
+
+        return this.Parent == parent;
+    }
+
+    public int CompareTo(Node? other)
+    {
+        if (other == null)
+        {
+            return 1;
+        }
+        else if (this == other)
+        {
+            return 0;
+        }
+        else if (this.Parent == other.Parent)
+        {
+            if (this == other.PreviousSibling)
+            {
+                return -1;
+            }
+            else if (this == other.NextSibling)
+            {
+                return 1;
+            }
+            else
+            {
+                for (var node = this.PreviousSibling; node != this.FirstChild; node = node?.PreviousSibling)
+                {
+                    if (node == other)
+                    {
+                        return 1;
+                    }
+                }
+
+                return -1;
+            }
+        }
+        else if (other.Parent == this || this.Parent == null && other.Parent != null)
+        {
+            return -1;
+        }
+        else if (this.Parent == other || this.Parent != null && other.Parent == null)
+        {
+            return 1;
+        }
+        else if (this.Parent != null && other.Parent != null)
+        {
+            return this.Parent.CompareTo(other.Parent);
+        }
+
+        return 0;
+    }
 }

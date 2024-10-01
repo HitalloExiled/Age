@@ -6,14 +6,16 @@ namespace Age.Editor.Tests;
 
 public class MarginTest
 {
-    public static void Setup(Canvas canvas, in TestContext testContext)
+    public static void Setup(Canvas canvas)
     {
+        var borderSize = 10u;
+
         var box_noMargin = new FlexBox
         {
             Name  = "noMargin",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Margenta),
+                Border = new(borderSize, 0, Color.Margenta),
             }
         };
 
@@ -22,7 +24,7 @@ public class MarginTest
             Name = "noMargin",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Margenta * 0.8f),
+                Border = new(borderSize, 0, Color.Margenta * 0.8f),
                 Size   = new((Pixel)100),
             }
         };
@@ -32,7 +34,7 @@ public class MarginTest
             Name  = "box_pc50_px10",
             Style = new()
             {
-                Border    = new(testContext.BorderSize, 0, Color.Red),
+                Border    = new(borderSize, 0, Color.Red),
             }
         };
 
@@ -42,7 +44,7 @@ public class MarginTest
             Style = new()
             {
                 Margin = new((Pixel)10),
-                Border = new(testContext.BorderSize, 0, Color.Red * 0.8f),
+                Border = new(borderSize, 0, Color.Red * 0.8f),
                 Size   = new((Percentage)50),
             }
         };
@@ -52,7 +54,7 @@ public class MarginTest
             Name  = "box_px100_px10",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Green),
+                Border = new(borderSize, 0, Color.Green),
             }
         };
 
@@ -62,7 +64,7 @@ public class MarginTest
             Style = new()
             {
                 Margin = new((Pixel)10),
-                Border = new(testContext.BorderSize, 0, Color.Green * 0.8f),
+                Border = new(borderSize, 0, Color.Green * 0.8f),
                 Size   = new((Pixel)100),
             }
         };
@@ -72,7 +74,7 @@ public class MarginTest
             Name  = "box_px100_pc10",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Blue),
+                Border = new(borderSize, 0, Color.Blue),
             }
         };
 
@@ -82,7 +84,7 @@ public class MarginTest
             Style = new()
             {
                 Margin = new((Percentage)10),
-                Border = new(testContext.BorderSize, 0, Color.Blue * 0.8f),
+                Border = new(borderSize, 0, Color.Blue * 0.8f),
                 Size   = new((Pixel)100),
             }
         };
@@ -92,7 +94,7 @@ public class MarginTest
             Name  = "box_pc100_pc10",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Cyan),
+                Border = new(borderSize, 0, Color.Cyan),
             }
         };
 
@@ -102,7 +104,7 @@ public class MarginTest
             Style = new()
             {
                 Margin = new((Percentage)10),
-                Border = new(testContext.BorderSize, 0, Color.Cyan * 0.8f),
+                Border = new(borderSize, 0, Color.Cyan * 0.8f),
                 Size   = new((Percentage)100),
             }
         };

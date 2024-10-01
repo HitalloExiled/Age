@@ -6,14 +6,16 @@ namespace Age.Editor.Tests;
 
 public class BoxSizingTest
 {
-    public static void Setup(Canvas canvas, in TestContext testContext)
+    public static void Setup(Canvas canvas)
     {
+        var borderSize = 10u;
+
         var bsc = new FlexBox
         {
             Name  = "BSC",
             Style = new()
             {
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 BoxSizing = BoxSizing.Content,
             }
         };
@@ -23,7 +25,7 @@ public class BoxSizingTest
             Name  = "BSC-A100",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.White),
+                Border = new(borderSize, 0, Color.White),
                 Size   = new((Percentage)100),
             }
         };
@@ -33,7 +35,7 @@ public class BoxSizingTest
             Name  = "BSCw100",
             Style = new()
             {
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Size      = new((Pixel)100, null),
                 BoxSizing = BoxSizing.Content,
             }
@@ -44,7 +46,7 @@ public class BoxSizingTest
             Name  = "BSCw100-A100",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.White),
+                Border = new(borderSize, 0, Color.White),
                 Size   = new((Percentage)100),
             }
         };
@@ -54,7 +56,7 @@ public class BoxSizingTest
             Name  = "BSCh100",
             Style = new()
             {
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Size      = new(null, (Pixel)100),
                 BoxSizing = BoxSizing.Content,
             }
@@ -65,7 +67,7 @@ public class BoxSizingTest
             Name  = "BSCh100-A100",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.White),
+                Border = new(borderSize, 0, Color.White),
                 Size   = new((Percentage)100),
             }
         };
@@ -75,7 +77,7 @@ public class BoxSizingTest
             Name  = "BSB",
             Style = new()
             {
-                Border    = new(testContext.BorderSize, 0, Color.Margenta),
+                Border    = new(borderSize, 0, Color.Margenta),
                 BoxSizing = BoxSizing.Border,
             }
         };
@@ -85,7 +87,7 @@ public class BoxSizingTest
             Name  = "BSB-A100",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.White),
+                Border = new(borderSize, 0, Color.White),
                 Size   = new((Percentage)100),
             }
         };
@@ -95,7 +97,7 @@ public class BoxSizingTest
             Name  = "BSBw100",
             Style = new()
             {
-                Border    = new(testContext.BorderSize, 0, Color.Margenta),
+                Border    = new(borderSize, 0, Color.Margenta),
                 Size      = new((Pixel)100, null),
                 BoxSizing = BoxSizing.Border,
             }
@@ -106,7 +108,7 @@ public class BoxSizingTest
             Name  = "BSBw100-A100",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.White),
+                Border = new(borderSize, 0, Color.White),
                 Size   = new((Percentage)100),
             }
         };
@@ -116,7 +118,7 @@ public class BoxSizingTest
             Name  = "BSCh100",
             Style = new()
             {
-                Border    = new(testContext.BorderSize, 0, Color.Margenta),
+                Border    = new(borderSize, 0, Color.Margenta),
                 Size      = new(null, (Pixel)100),
                 BoxSizing = BoxSizing.Border,
             }
@@ -127,7 +129,7 @@ public class BoxSizingTest
             Name  = "BSBh100-A100",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.White),
+                Border = new(borderSize, 0, Color.White),
                 Size   = new((Percentage)100),
             }
         };
@@ -137,7 +139,7 @@ public class BoxSizingTest
             Name  = "BSC100",
             Style = new()
             {
-                Border    = new(testContext.BorderSize, 0, Color.Red),
+                Border    = new(borderSize, 0, Color.Red),
                 Size      = new((Pixel)100),
                 BoxSizing = BoxSizing.Content,
             }
@@ -148,7 +150,7 @@ public class BoxSizingTest
             Name  = "BSC100-A",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Red * 0.9f),
+                Border = new(borderSize, 0, Color.Red * 0.9f),
                 Size   = new((Percentage)50),
             }
         };
@@ -158,7 +160,7 @@ public class BoxSizingTest
             Name  = "BSC100-B",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Red * 0.8f),
+                Border = new(borderSize, 0, Color.Red * 0.8f),
                 Size   = new((Percentage)50),
             }
         };
@@ -168,7 +170,7 @@ public class BoxSizingTest
             Name  = "BSB100",
             Style = new()
             {
-                Border    = new(testContext.BorderSize, 0, Color.Green),
+                Border    = new(borderSize, 0, Color.Green),
                 Size      = new((Pixel)100),
                 BoxSizing = BoxSizing.Border,
             }
@@ -179,7 +181,7 @@ public class BoxSizingTest
             Name  = "BSB100-A",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Green * 0.9f),
+                Border = new(borderSize, 0, Color.Green * 0.9f),
                 Size   = new((Percentage)50),
             }
         };
@@ -189,7 +191,7 @@ public class BoxSizingTest
             Name  = "BSB100-B",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Green * 0.8f),
+                Border = new(borderSize, 0, Color.Green * 0.8f),
                 Size   = new((Percentage)50),
             }
         };
@@ -199,7 +201,7 @@ public class BoxSizingTest
             Name  = "BSC100v",
             Style = new()
             {
-                Border    = new(testContext.BorderSize, 0, Color.Red),
+                Border    = new(borderSize, 0, Color.Red),
                 Stack     = StackKind.Vertical,
                 Size      = new((Pixel)100),
                 BoxSizing = BoxSizing.Content,
@@ -211,7 +213,7 @@ public class BoxSizingTest
             Name  = "BSC100v-A",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Red * 0.9f),
+                Border = new(borderSize, 0, Color.Red * 0.9f),
                 Size   = new((Percentage)50),
             }
         };
@@ -221,7 +223,7 @@ public class BoxSizingTest
             Name  = "BSC100v-B",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Red * 0.8f),
+                Border = new(borderSize, 0, Color.Red * 0.8f),
                 Size   = new((Percentage)50),
             }
         };
@@ -232,7 +234,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Stack     = StackKind.Vertical,
-                Border    = new(testContext.BorderSize, 0, Color.Green),
+                Border    = new(borderSize, 0, Color.Green),
                 Size      = new((Pixel)100),
                 BoxSizing = BoxSizing.Border,
             }
@@ -243,7 +245,7 @@ public class BoxSizingTest
             Name  = "BSB100v-A",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Green * 0.9f),
+                Border = new(borderSize, 0, Color.Green * 0.9f),
                 Size   = new((Percentage)50),
             }
         };
@@ -253,7 +255,7 @@ public class BoxSizingTest
             Name  = "BSB100v-B",
             Style = new()
             {
-                Border = new(testContext.BorderSize, 0, Color.Green * 0.8f),
+                Border = new(borderSize, 0, Color.Green * 0.8f),
                 Size   = new((Percentage)50),
             }
         };

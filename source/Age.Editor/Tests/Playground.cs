@@ -8,7 +8,7 @@ public class Playground : Element
 {
     public override string NodeName { get; } = nameof(Playground);
 
-    public static void Setup(Canvas canvas, in TestContext testContext)
+    public static void Setup(Canvas canvas)
     {
         var root = new FlexBox()
         {

@@ -17,7 +17,7 @@ public sealed class NodeTree
 
     private readonly List<Command2DEntry> command2DEntriesCache = [];
     private readonly List<Command3DEntry> command3DEntriesCache = [];
-    private readonly Window window;
+    private readonly Stack<Node> stack                          = [];
 
     private Buffer                     buffer = null!;
     private CanvasIndexRenderGraphPass canvasIndexRenderGraphPass = null!;
@@ -29,11 +29,11 @@ public sealed class NodeTree
 
     public bool   IsDirty { get; internal set; }
     public Root   Root    { get; } = new();
-    public Window Window  => this.window;
+    public Window Window  { get; }
 
     public NodeTree(Window window)
     {
-        this.window = window;
+        this.Window = window;
         this.Root   = new() { Tree = this };
 
         this.Window.Closed += this.Destroy;
@@ -117,7 +117,6 @@ public sealed class NodeTree
 
             element.InvokeContext(eventTarget);
         }
-
     }
 
     private void OnMouseClick(in Platforms.Display.MouseEvent mouseEvent)
@@ -183,19 +182,36 @@ public sealed class NodeTree
         }
         else
         {
-            foreach (var node in this.Root.Traverse())
+            this.stack.Push(this.Root);
+
+            while (this.stack.Count > 0)
             {
-                if (node is Node2D node2D)
+                var current = this.stack.Pop();
+
+                foreach (var node in current)
                 {
-                    var transform = (Matrix3x2<float>)node2D.TransformCache;
-
-                    foreach (var command in node2D.Commands)
+                    if (node is Node2D node2D)
                     {
-                        var entry = new Command2DEntry(transform, command);
+                        if (node2D.Visible)
+                        {
+                            var transform = (Matrix3x2<float>)node2D.TransformCache;
 
-                        this.command2DEntriesCache.Add(entry);
+                            foreach (var command in node2D.Commands)
+                            {
+                                var entry = new Command2DEntry(transform, command);
 
-                        yield return entry;
+                                this.command2DEntriesCache.Add(entry);
+
+                                yield return entry;
+
+                            }
+
+                            this.stack.Push(node);
+                        }
+                    }
+                    else
+                    {
+                        this.stack.Push(node);
                     }
                 }
             }
@@ -213,19 +229,36 @@ public sealed class NodeTree
         }
         else
         {
-            foreach (var node in this.Root.Traverse())
+            this.stack.Push(this.Root);
+
+            while (this.stack.Count > 0)
             {
-                if (node is Node3D node3D)
+                var current = this.stack.Pop();
+
+                foreach (var node in current)
                 {
-                    var transform = (Matrix4x4<float>)node3D.TransformCache;
-
-                    foreach (var command in node3D.Commands)
+                    if (node is Node3D node3D)
                     {
-                        var entry = new Command3DEntry(transform, command);
+                        if (node3D.Visible)
+                        {
+                            var transform = (Matrix4x4<float>)node3D.TransformCache;
 
-                        this.command3DEntriesCache.Add(entry);
+                            foreach (var command in node3D.Commands)
+                            {
+                                var entry = new Command3DEntry(transform, command);
 
-                        yield return entry;
+                                this.command3DEntriesCache.Add(entry);
+
+                                yield return entry;
+
+                            }
+
+                            this.stack.Push(node);
+                        }
+                    }
+                    else
+                    {
+                        this.stack.Push(node);
                     }
                 }
             }
@@ -240,9 +273,9 @@ public sealed class NodeTree
 
     public void Destroy()
     {
-        this.window.Click     -= this.OnMouseClick;
-        this.window.Context   -= this.OnContextMenu;
-        this.window.MouseMove -= this.OnMouseMove;
+        this.Window.Click     -= this.OnMouseClick;
+        this.Window.Context   -= this.OnContextMenu;
+        this.Window.MouseMove -= this.OnMouseMove;
 
         this.Root.Destroy();
         this.buffer.Dispose();
@@ -255,9 +288,9 @@ public sealed class NodeTree
 
         this.UpdateBuffer();
 
-        this.window.Click     += this.OnMouseClick;
-        this.window.Context   += this.OnContextMenu;
-        this.window.MouseMove += this.OnMouseMove;
+        this.Window.Click     += this.OnMouseClick;
+        this.Window.Context   += this.OnContextMenu;
+        this.Window.MouseMove += this.OnMouseMove;
 
         foreach (var node in this.Root.Traverse())
         {

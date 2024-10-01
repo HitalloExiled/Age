@@ -1,19 +1,24 @@
 using Age.Numerics;
 using Age.Elements;
 using Age.Styling;
+using Age.Platforms.Display;
+using Age.Extensions;
 
 namespace Age.Editor.Tests;
 
 public class AlignmentTest
 {
-    public static void Setup(Canvas canvas, in TestContext testContext)
+    public static void Setup(Canvas canvas)
     {
+        var borderSize = 10u;
+        var marginSize = 10u;
+
         var root = new FlexBox()
         {
             Name  = "root",
             Style = new()
             {
-                Border         = new(testContext.BorderSize, 0, Color.Green),
+                Border         = new(borderSize, 0, Color.Green),
                 ItemsAlignment = ItemsAlignmentKind.Baseline,
             }
         };
@@ -24,7 +29,7 @@ public class AlignmentTest
             Text  = "Horizontal A",
             Style = new()
             {
-                Border         = new(testContext.BorderSize, 0, Color.Margenta),
+                Border         = new(borderSize, 0, Color.Margenta),
                 Color          = Color.White,
                 FontSize       = 32,
                 ItemsAlignment = ItemsAlignmentKind.Baseline,
@@ -38,7 +43,7 @@ public class AlignmentTest
             Style = new()
             {
                 Alignment = AlignmentKind.Left,
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
             }
         };
@@ -50,11 +55,95 @@ public class AlignmentTest
             Style = new()
             {
                 Alignment = AlignmentKind.Right,
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
-                Margin    = new((Pixel)testContext.MarginSize),
+                //Margin    = new((Pixel)marginSize),
             }
         };
+
+        var verticalPixelSize      = 30u;
+        var verticalPercentageSize = 100u;
+        var percentage             = false;
+
+        horizontal_a_right.KeyDown += (in KeyEvent keyEvent) =>
+        {
+            if (keyEvent.Holding)
+            {
+                return;
+            }
+
+            if (keyEvent.Modifiers.HasFlag(KeyStates.Control))
+            {
+                switch (keyEvent.Key)
+                {
+                    case Key.Add:
+                        borderSize++;
+
+                        break;
+
+                    case Key.Subtract:
+                        borderSize = borderSize.ClampSubtract(1);
+
+                        break;
+                    default:
+                        break;
+                }
+
+                horizontal_a_right.Style.Border = new(borderSize, 0, Color.Cyan);
+            }
+            else
+            {
+                var updateSize = false;
+
+                switch (keyEvent.Key)
+                {
+                    case Key.Space:
+                        horizontal_a_right.Style.Hidden = !(horizontal_a_right.Style.Hidden ?? false);
+                        break;
+
+                    case Key.Up:
+                        if (percentage)
+                        {
+                            verticalPercentageSize = uint.Min(verticalPercentageSize + 1, 100);
+                        }
+                        else
+                        {
+                            verticalPixelSize++;
+                        }
+                        updateSize = true;
+                        break;
+
+                    case Key.Down:
+                        if (percentage)
+                        {
+                            verticalPercentageSize = verticalPercentageSize.ClampSubtract(1);
+                        }
+                        else
+                        {
+                            verticalPixelSize = verticalPixelSize.ClampSubtract(1);
+                        }
+                        updateSize = true;
+                        break;
+
+                    case Key.X:
+                        percentage = !percentage;
+
+                        updateSize = true;
+                        break;
+                    default:
+                        break;
+                }
+
+                if (updateSize)
+                {
+                    horizontal_a_right.Style.Size = !percentage
+                        ? new(null, (Pixel)verticalPixelSize)
+                        : new(null, (Percentage)verticalPercentageSize);
+                }                
+            }            
+        };
+
+        horizontal_a_right.Focus();
 
         var horizontal_b_container = new FlexBox()
         {
@@ -62,7 +151,7 @@ public class AlignmentTest
             Text  = "Horizontal B",
             Style = new()
             {
-                Border   = new(testContext.BorderSize, 0, Color.Margenta),
+                Border   = new(borderSize, 0, Color.Margenta),
                 FontSize = 32,
                 Color    = Color.White,
             }
@@ -75,8 +164,8 @@ public class AlignmentTest
             Style = new()
             {
                 Alignment = AlignmentKind.Top,
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
-                Color     = Color.White,                
+                Border    = new(borderSize, 0, Color.Cyan),
+                Color     = Color.White,
             }
         };
 
@@ -87,9 +176,9 @@ public class AlignmentTest
             Style = new()
             {
                 Alignment = AlignmentKind.Bottom,
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
-                Margin    = new((Pixel)testContext.MarginSize),
+                Margin    = new((Pixel)marginSize),
             }
         };
 
@@ -99,7 +188,7 @@ public class AlignmentTest
             Text  = "Vertical A",
             Style = new()
             {
-                Border         = new(testContext.BorderSize, 0, Color.Margenta),
+                Border         = new(borderSize, 0, Color.Margenta),
                 Color          = Color.White,
                 FontSize       = 32,
                 ItemsAlignment = ItemsAlignmentKind.Baseline,
@@ -114,7 +203,7 @@ public class AlignmentTest
             Style = new()
             {
                 Alignment = AlignmentKind.Left,
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
             }
         };
@@ -126,7 +215,7 @@ public class AlignmentTest
             Style = new()
             {
                 Alignment = AlignmentKind.Right,
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
             }
         };
@@ -137,7 +226,7 @@ public class AlignmentTest
             Text  = "Vertical B",
             Style = new()
             {
-                Border   = new(testContext.BorderSize, 0, Color.Margenta),
+                Border   = new(borderSize, 0, Color.Margenta),
                 FontSize = 32,
                 Color    = Color.White,
                 Stack    = StackKind.Vertical,
@@ -151,7 +240,7 @@ public class AlignmentTest
             Style = new()
             {
                 Alignment = AlignmentKind.Top,
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
             }
         };
@@ -163,7 +252,7 @@ public class AlignmentTest
             Style = new()
             {
                 Alignment = AlignmentKind.Bottom,
-                Border    = new(testContext.BorderSize, 0, Color.Cyan),
+                Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
             }
         };

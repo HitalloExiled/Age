@@ -7,7 +7,7 @@ using Age.Editor.Tests;
 
 namespace Age.Editor;
 
-internal delegate void Setup(Canvas canvas, in TestContext context);
+internal delegate void Setup(Canvas canvas);
 
 public class Editor : Node
 {
@@ -16,25 +16,12 @@ public class Editor : Node
 
     private Setup setup;
 
-    private TestContext testContext;
-
-    private float borderSize = 10;
-    private float marginSize = 0;
-    private float scale      = 1;
-
     public override string NodeName { get; } = nameof(Editor);
 
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = BoxModelTest.Setup;
-
-        this.testContext = new()
-        {
-            BorderSize = (uint)this.borderSize,
-            Scale      = this.scale,
-            MarginSize = (uint)this.marginSize,
-        };
+        this.setup = AlignmentTest.Setup;
 
         this.Reload();
         // this.CreateDemoScene();
@@ -135,12 +122,8 @@ public class Editor : Node
 
     }
 
-    private void HandleBorders(double deltaTime)
+    private void HandleBorders()
     {
-        var borderSize = float.Ceiling(this.borderSize);
-        var marginSize = float.Ceiling(this.marginSize);
-        var scale      = this.scale;
-
         var reload = true;
 
         if (Input.IsKeyJustPressed(Key.Num1))
@@ -175,75 +158,22 @@ public class Editor : Node
         {
             this.setup = Playground.Setup;
         }
-        else if (Input.IsKeyJustPressed(Key.Space))
-        {
-            this.testContext.Hide = !this.testContext.Hide;
-        }
         else
         {
-            reload = Input.IsKeyJustPressed(Key.R);
-        }
-
-        if (Input.IsKeyPressed(Key.Add))
-        {
-            if (Input.IsKeyPressed(Key.Control))
-            {
-                this.borderSize = float.Min(100, this.borderSize + 10 * (float)deltaTime);
-
-                borderSize = (uint)float.Ceiling(this.borderSize);
-            }
-            if (Input.IsKeyPressed(Key.Shift))
-            {
-                this.marginSize = float.Min(100, this.marginSize + 10 * (float)deltaTime);
-
-                marginSize = (uint)float.Ceiling(this.marginSize);
-            }
-            else
-            {
-                this.scale = float.Min(100, this.scale + 10 * (float)deltaTime);
-            }
-
-            reload = true;
-        }
-
-        if (Input.IsKeyPressed(Key.Subtract))
-        {
-            if (Input.IsKeyPressed(Key.Control))
-            {
-                this.borderSize = float.Max(0, this.borderSize - 10 * (float)deltaTime);
-
-                borderSize = (uint)float.Ceiling(this.borderSize);
-            }
-            else if (Input.IsKeyPressed(Key.Shift))
-            {
-                this.marginSize = float.Max(0, this.marginSize - 10 * (float)deltaTime);
-
-                marginSize = (uint)float.Ceiling(this.marginSize);
-            }
-            else
-            {
-                this.scale = float.Max(1, this.scale - 10 * (float)deltaTime);
-            }
-
-            reload = true;
+            reload = Input.IsKeyJustPressed(Key.R) && Input.IsKeyPressed(Key.Control);
         }
 
         if (reload)
         {
-            this.testContext.BorderSize = (uint)borderSize;
-            this.testContext.MarginSize = (uint)marginSize;
-            this.testContext.Scale      = scale;
-
             this.Reload();
         }
     }
 
     private void Reload()
     {
-        this.canvas.Destroy();
         this.canvas.RemoveChildren();
 
-        this.setup.Invoke(this.canvas, this.testContext);
+        this.setup.Invoke(this.canvas);
     }
 
 #if DEBUG
@@ -255,5 +185,5 @@ public class Editor : Node
 #endif
 
     public override void Update(double deltaTime) =>
-        this.HandleBorders(deltaTime);
+        this.HandleBorders();
 }

@@ -74,6 +74,8 @@ public abstract class Node3D : Node
         set => this.LocalTransform = value * this.ParentTransform.Inverse();
     }
 
+    public bool Visible { get; set; } = true;
+
     protected void Set<T>(ref T field, in T value)
     {
         if (!Equals(field, value))

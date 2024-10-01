@@ -158,11 +158,18 @@ dotnet_naming_rule.method_rule.severity = suggestion
 
 # event
 
-dotnet_naming_symbols.event_symbols.applicable_kinds           = event
-dotnet_naming_symbols.event_symbols.applicable_accessibilities = *
+dotnet_naming_symbols.public_event_symbols.applicable_kinds           = event
+dotnet_naming_symbols.public_event_symbols.applicable_accessibilities = public
 
-dotnet_naming_rule.event_rule.symbols  = event_symbols
+dotnet_naming_rule.event_rule.symbols  = public_event_symbols
 dotnet_naming_rule.event_rule.style    = pascal_case_style
+dotnet_naming_rule.event_rule.severity = suggestion
+
+dotnet_naming_symbols.private_event_symbols.applicable_kinds           = event
+dotnet_naming_symbols.private_event_symbols.applicable_accessibilities = private
+
+dotnet_naming_rule.event_rule.symbols  = private_event_symbols
+dotnet_naming_rule.event_rule.style    = camel_case_style
 dotnet_naming_rule.event_rule.severity = suggestion
 
 # delegate
