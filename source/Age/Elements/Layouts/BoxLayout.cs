@@ -984,22 +984,6 @@ internal partial class BoxLayout(Element target) : Layout
         }
     }
 
-    public override void Hide()
-    {
-        if (this.HasPendingUpdate)
-        {
-            foreach (var node in this.Target)
-            {
-                if (node is ContainerNode containerNode)
-                {
-                    containerNode.Layout.Hide();
-                }
-            }
-
-            this.HasPendingUpdate = false;
-        }
-    }
-
     public override void Update()
     {
         if (this.HasPendingUpdate)
@@ -1013,12 +997,9 @@ internal partial class BoxLayout(Element target) : Layout
                     this.UpdateDisposition();
                 }
 
-                this.HasPendingUpdate = false;
             }
-            else
-            {
-                this.Hide();
-            }
+
+            this.HasPendingUpdate = false;
         }
     }
 
@@ -1132,9 +1113,19 @@ internal partial class BoxLayout(Element target) : Layout
             }
         }
 
-        this.Target.Visible = !(this.Hidden = hidden);
+        if (hidden)
+        {
+            this.RequestUpdate();
 
+            this.Hidden = hidden;
+        }
+        else
+        {
+            this.Hidden = hidden;
 
-        this.RequestUpdate();
+            this.RequestUpdate();
+        }
+
+        this.Target.Visible = !hidden;
     }
 }

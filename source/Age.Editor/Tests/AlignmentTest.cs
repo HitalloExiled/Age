@@ -36,6 +36,23 @@ public class AlignmentTest
             }
         };
 
+        horizontal_a_container.KeyDown += (in KeyEvent keyEvent) =>
+        {
+            if (keyEvent.Holding)
+            {
+                return;
+            }
+
+            switch (keyEvent.Key)
+            {
+                case Key.Space:
+                    horizontal_a_container.Style.Hidden = !(horizontal_a_container.Style.Hidden ?? false);
+                    break;
+            }
+        };
+
+        horizontal_a_container.Focus();
+
         var horizontal_a_left = new FlexBox()
         {
             Name  = "horizontal_a_left",
@@ -64,6 +81,7 @@ public class AlignmentTest
         var verticalPixelSize      = 30u;
         var verticalPercentageSize = 100u;
         var percentage             = false;
+        var text                   = "Changed";
 
         horizontal_a_right.KeyDown += (in KeyEvent keyEvent) =>
         {
@@ -78,13 +96,12 @@ public class AlignmentTest
                 {
                     case Key.Add:
                         borderSize++;
-
                         break;
 
                     case Key.Subtract:
                         borderSize = borderSize.ClampSubtract(1);
-
                         break;
+
                     default:
                         break;
                 }
@@ -99,6 +116,10 @@ public class AlignmentTest
                 {
                     case Key.Space:
                         horizontal_a_right.Style.Hidden = !(horizontal_a_right.Style.Hidden ?? false);
+                        break;
+
+                    case Key.C:
+                        horizontal_a_right.Text = text += "*";
                         break;
 
                     case Key.Up:
@@ -139,8 +160,8 @@ public class AlignmentTest
                     horizontal_a_right.Style.Size = !percentage
                         ? new(null, (Pixel)verticalPixelSize)
                         : new(null, (Percentage)verticalPercentageSize);
-                }                
-            }            
+                }
+            }
         };
 
         horizontal_a_right.Focus();

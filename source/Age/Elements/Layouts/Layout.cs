@@ -18,12 +18,11 @@ internal abstract class Layout
     public virtual Transform2D Transform => Transform2D.Translated(this.Offset);
     public virtual bool        Hidden { get; set; }
 
-    public abstract void Hide();
     public abstract void Update();
 
     public void RequestUpdate()
     {
-        if (!this.HasPendingUpdate)
+        if (!this.HasPendingUpdate && !this.Hidden)
         {
             this.HasPendingUpdate = true;
 

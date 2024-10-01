@@ -7,7 +7,7 @@ internal class TextLayout(TextNode target): Layout
     private string? text;
 
     public override TextNode   Target => target;
-    public override BoxLayout? Parent => target.ParentElement?.Layout;    
+    public override BoxLayout? Parent => target.ParentElement?.Layout;
 
     public string? Text
     {
@@ -22,9 +22,6 @@ internal class TextLayout(TextNode target): Layout
             }
         }
     }
-
-    public override void Hide() =>
-        this.HasPendingUpdate = false;
 
     public override void Update()
     {
