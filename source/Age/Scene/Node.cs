@@ -158,7 +158,12 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
                 current.PreviousSibling = null;
                 current.NextSibling     = null;
                 current.Parent          = null;
-                current.Tree            = null;
+
+                if (current.Tree != null)
+                {
+                    current.Disconnected(current.Tree);
+                    current.Tree = null;
+                }
 
                 this.ChildRemoved(current);
             }
@@ -223,18 +228,23 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
 
         do
         {
-            var child = next;
+            var current = next;
 
-            next = child.NextSibling;
+            next = current.NextSibling;
 
-            child.PreviousSibling = null;
-            child.NextSibling     = null;
-            child.Parent          = null;
-            child.Tree            = null;
+            current.PreviousSibling = null;
+            current.NextSibling     = null;
+            current.Parent          = null;
 
-            this.ChildRemoved(child);
+            if (current.Tree != null)
+            {
+                current.Disconnected(current.Tree);
+                current.Tree = null;
+            }
 
-            if (child == end)
+            this.ChildRemoved(current);
+
+            if (current == end)
             {
                 break;
             }
@@ -271,7 +281,7 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
     public virtual void LateUpdate()
     { }
 
-    public virtual void Update(double deltaTime)
+    public virtual void Update()
     { }
 
     public bool IsDescendent(Node other)

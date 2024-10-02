@@ -119,7 +119,6 @@ public class Editor : Node
                             sideViews.AppendChild(redViewport);
                             sideViews.AppendChild(greenViewport);
                             sideViews.AppendChild(blueViewport);
-
     }
 
     private void HandleBorders()
@@ -184,6 +183,6 @@ public class Editor : Node
         HotReloadService.ApplicationUpdated -= this.Reload;
 #endif
 
-    public override void Update(double deltaTime) =>
+    public override void Update() =>
         this.HandleBorders();
 }

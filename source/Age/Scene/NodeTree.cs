@@ -81,7 +81,7 @@ public sealed class NodeTree
         }
     }
 
-    private void CallUpdate(double deltaTime)
+    private void CallUpdate()
     {
         this.stack.Push(this.Root);
 
@@ -93,7 +93,7 @@ public sealed class NodeTree
             {
                 if (!node.Flags.HasFlag(NodeFlags.IgnoreUpdates))
                 {
-                    node.Update(deltaTime);
+                    node.Update();
 
                     this.stack.Push(node);
                 }
@@ -358,9 +358,9 @@ public sealed class NodeTree
         this.CallLateUpdate();
     }
 
-    public void Update(double deltaTime)
+    public void Update()
     {
-        this.CallUpdate(deltaTime);
+        this.CallUpdate();
         this.CallLateUpdate();
 
         this.Updated?.Invoke();

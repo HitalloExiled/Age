@@ -106,7 +106,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         get
         {
-            for (var node = this.FirstChild; node != this.LastChild; node = node?.NextSibling)
+            for (var node = this.FirstChild; node != null; node = node?.NextSibling)
             {
                 if (node is Element element)
                 {
@@ -122,7 +122,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         get
         {
-            for (var node = this.NextSibling; node != this.LastChild; node = node?.NextSibling)
+            for (var node = this.NextSibling; node != null; node = node?.NextSibling)
             {
                 if (node is Element element)
                 {
@@ -138,7 +138,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         get
         {
-            for (var node = this.PreviousSibling; node != this.FirstChild; node = node?.PreviousSibling)
+            for (var node = this.PreviousSibling; node != null; node = node?.PreviousSibling)
             {
                 if (node is Element element)
                 {
@@ -154,7 +154,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         get
         {
-            for (var node = this.LastChild; node != this.FirstChild; node = node?.PreviousSibling)
+            for (var node = this.LastChild; node != null; node = node?.PreviousSibling)
             {
                 if (node is Element element)
                 {
@@ -328,6 +328,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             tree.Window.KeyUp += this.OnKeyUp;
         }
+
+        if (!tree.IsDirty && !this.Layout.Hidden)
+        {
+            tree.IsDirty = true;
+        }
     }
 
     protected override void ChildAppended(Node child)
@@ -365,6 +370,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.style.Changed  -= this.Layout.UpdateState;
         tree.Window.KeyDown -= this.OnKeyDown;
         tree.Window.KeyUp   -= this.OnKeyUp;
+
+        if (!tree.IsDirty && !this.Layout.Hidden)
+        {
+            tree.IsDirty = true;
+        }
     }
 
     internal void InvokeBlur(in MouseEvent mouseEvent)

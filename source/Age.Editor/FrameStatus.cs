@@ -1,5 +1,6 @@
 using Age.Elements;
 using Age.Numerics;
+using Age.Scene;
 using Age.Styling;
 
 namespace Age.Editor;
@@ -11,7 +12,6 @@ public class FrameStatus : Element
     private readonly FlexBox statusText;
 
     private double delta;
-    private ulong  frames;
     private bool   increasing = true;
     private double maxFps;
     private double maxFrameTime;
@@ -41,11 +41,25 @@ public class FrameStatus : Element
         this.AppendChild(this.statusText);
     }
 
-    public override void Update(double deltaTime)
+    protected override void Connected(NodeTree tree)
+    {
+        base.Connected(tree);
+
+        tree.Updated += this.Update;
+    }
+
+    protected override void Disconnected(NodeTree tree)
+    {
+        base.Disconnected(tree);
+
+        tree.Updated -= this.Update;
+    }
+
+    public override void Update()
     {
         this.delta = this.increasing
-            ? double.Min(this.delta + deltaTime * 0.1f, 1)
-            : double.Max(this.delta - deltaTime * 0.1f, -1);
+            ? double.Min(this.delta + Time.DeltaTime * 0.1f, 1)
+            : double.Max(this.delta - Time.DeltaTime * 0.1f, -1);
 
         if (this.increasing && this.delta == 1)
         {
@@ -56,13 +70,12 @@ public class FrameStatus : Element
             this.increasing = true;
         }
 
-        this.frames++;
+        var fps = double.Round(Time.Fps, 2);
 
-        var fps       = Math.Round(1 / deltaTime, 2);
         this.totalFps += fps;
 
-        var frameTime = Math.Round(deltaTime * 1000, 2);
-        var avgFps    = Math.Round(this.totalFps / this.frames, 2);
+        var frameTime = Math.Round(Time.DeltaTime * 1000, 2);
+        var avgFps    = Math.Round(this.totalFps / Time.Frames, 2);
 
         this.maxFps = Math.Max(this.maxFps, fps);
         this.minFps = Math.Min(this.minFps, fps);
@@ -74,8 +87,8 @@ public class FrameStatus : Element
         {
             this.statusText.Text =
                $"""
-               Frames:    {this.frames}
-               Delta Time: {Math.Round(deltaTime, 4)}
+               Frames:    {Time.Frames}
+               Delta Time: {Math.Round(Time.DeltaTime, 4)}
                FPS: {fps}
                    Avg: {avgFps}
                    Min: {this.minFps}

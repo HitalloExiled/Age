@@ -128,9 +128,9 @@ public class DemoScene : Scene3D
         };
     }
 
-    public override void Update(double deltaTime)
+    public override void Update()
     {
-        var angle = this.angle += 10 * (float)deltaTime;
+        var angle = this.angle += 10 * (float)Time.DeltaTime;
 
         if (angle > 360)
         {
@@ -187,13 +187,13 @@ public class DemoScene : Scene3D
         }
 
         input = input.Normalized();
-        rotation = (float)(rotation * deltaTime);
+        rotation = (float)(rotation * Time.DeltaTime);
 
         var movement = -this.FreeCamera.Transform.Forward * input.Z + this.FreeCamera.Transform.Right * input.X + Vector3<float>.Up * input.Y;
 
         this.FreeCamera.Transform = this.FreeCamera.Transform with
         {
-            Position = this.FreeCamera.Transform.Position + movement * (float)deltaTime,
+            Position = this.FreeCamera.Transform.Position + movement * (float)Time.DeltaTime,
             Rotation = this.FreeCamera.Transform.Rotation * new Quaternion<float>(Vector3<float>.Up, Angle.Radians(rotation))
         };
     }
