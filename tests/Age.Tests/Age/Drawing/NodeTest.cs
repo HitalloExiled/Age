@@ -8,10 +8,10 @@ public class NodeTest
     [Fact]
     public void AppendAndRemove()
     {
-        var parent = new Span();
-        var child1 = new Span();
-        var child2 = new Span();
-        var child3 = new Span();
+        var parent = new FlexBox();
+        var child1 = new FlexBox();
+        var child2 = new FlexBox();
+        var child3 = new FlexBox();
 
         void appendAll()
         {
@@ -97,10 +97,10 @@ public class NodeTest
     [Fact]
     public void Clear()
     {
-        var parent = new Span();
-        var child1 = new Span();
-        var child2 = new Span();
-        var child3 = new Span();
+        var parent = new FlexBox();
+        var child1 = new FlexBox();
+        var child2 = new FlexBox();
+        var child3 = new FlexBox();
 
         parent.AppendChild(child1);
         parent.AppendChild(child2);
@@ -125,11 +125,11 @@ public class NodeTest
     [Fact]
     public void Enumerate()
     {
-        var child1 = new Span();
-        var child2 = new Span();
-        var child3 = new Span();
+        var child1 = new FlexBox();
+        var child2 = new FlexBox();
+        var child3 = new FlexBox();
 
-        var parent = new Span();
+        var parent = new FlexBox();
         parent.AppendChildren([child1, child2, child3]);
 
         var nodes = new List<Node>();
@@ -147,32 +147,32 @@ public class NodeTest
     [Fact]
     public void Traverse()
     {
-        var child11 = new Span { Name = "$.1.1" };
-        var child12 = new Span { Name = "$.1.2" };
-        var child13 = new Span { Name = "$.1.3" };
+        var child11 = new FlexBox { Name = "$.1.1" };
+        var child12 = new FlexBox { Name = "$.1.2" };
+        var child13 = new FlexBox { Name = "$.1.3" };
 
-        var child21 = new Span { Name = "$.2.1" };
-        var child22 = new Span { Name = "$.2.2" };
+        var child21 = new FlexBox { Name = "$.2.1" };
+        var child22 = new FlexBox { Name = "$.2.2" };
 
-        var child31 = new Span { Name = "$.3.1" };
+        var child31 = new FlexBox { Name = "$.3.1" };
 
-        var child0 = new Span { Name = "$.0" };
+        var child0 = new FlexBox { Name = "$.0" };
 
-        var child1 = new Span { Name = "$.1" };
+        var child1 = new FlexBox { Name = "$.1" };
         child1.AppendChildren([child11, child12, child13]);
 
-        var child2 = new Span { Name = "$.2" };
+        var child2 = new FlexBox { Name = "$.2" };
         child2.AppendChildren([child21, child22]);
 
-        var child3 = new Span { Name = "$.3" };
+        var child3 = new FlexBox { Name = "$.3" };
         child3.AppendChild(child31);
 
-        var parent = new Span { Name = "$" };
+        var parent = new FlexBox { Name = "$" };
         parent.AppendChildren([child0, child1, child2, child3]);
 
         var nodes = new List<string>();
 
-        var expected = new Span[]
+        var expected = new FlexBox[]
         {
             child0,
             child1,
@@ -199,34 +199,34 @@ public class NodeTest
     [Fact]
     public void TraverseTraverseEnumerator()
     {
-        var child11 = new Span { Name = "$.1.1" };
-        var child12 = new Span { Name = "$.1.2" };
-        var child13 = new Span { Name = "$.1.3" };
+        var child11 = new FlexBox { Name = "$.1.1" };
+        var child12 = new FlexBox { Name = "$.1.2" };
+        var child13 = new FlexBox { Name = "$.1.3" };
 
-        var child21 = new Span { Name = "$.2.1" };
-        var child22 = new Span { Name = "$.2.2" };
+        var child21 = new FlexBox { Name = "$.2.1" };
+        var child22 = new FlexBox { Name = "$.2.2" };
 
-        var child31 = new Span { Name = "$.3.1" };
+        var child31 = new FlexBox { Name = "$.3.1" };
 
-        var child0 = new Span { Name = "$.0" };
+        var child0 = new FlexBox { Name = "$.0" };
 
-        var child1 = new Span { Name = "$.1" };
+        var child1 = new FlexBox { Name = "$.1" };
         child1.AppendChildren([child11, child12, child13]);
 
-        var child2 = new Span { Name = "$.2" };
+        var child2 = new FlexBox { Name = "$.2" };
         child2.AppendChildren([child21, child22]);
 
-        var child3 = new Span { Name = "$.3" };
+        var child3 = new FlexBox { Name = "$.3" };
         child3.AppendChild(child31);
 
-        var parent = new Span { Name = "$" };
+        var parent = new FlexBox { Name = "$" };
         parent.AppendChildren([child0, child1, child2, child3]);
 
         var nodes = new List<string>();
 
         var enumerator = new Node.TraverseEnumerator(parent);
 
-        var expected = new Span[]
+        var expected = new FlexBox[]
         {
             child0,
             child1,

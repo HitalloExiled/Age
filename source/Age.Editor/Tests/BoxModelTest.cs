@@ -8,130 +8,130 @@ public class BoxModelTest
 {
     public static void Setup(Canvas canvas)
     {
-        const int BORDER_SIZE = 10;
+        var borderSize = 10u;
 
-        var boxModel = new Span
+        var boxModel = new FlexBox
         {
             Name = "BoxModel",
             Style = new()
             {
-                Border    = new(BORDER_SIZE, 0, Color.Red),
+                Border    = new(borderSize, 0, Color.Red),
                 Size      = new((Percentage)100),
                 BoxSizing = BoxSizing.Border
             }
         };
 
-        var stackL = new Span
+        var stackL = new FlexBox
         {
             Name = "StackL",
             Style = new()
             {
-                Stack  = StackType.Vertical,
-                Border = new(BORDER_SIZE, 0, Color.Green),
+                Stack  = StackKind.Vertical,
+                Border = new(borderSize, 0, Color.Green),
                 Size   = new((Percentage)50, (Percentage)100),
             }
         };
 
-        var stackText = new Span
+        var stackText = new FlexBox
         {
-            Text = "This elements should be stacked vertically...",
+            Text  = "This elements should be stacked vertically...",
             Name  = "StackText",
             Style = new()
             {
-                Alignment = AlignmentType.Center,
+                Alignment = AlignmentKind.Center,
                 Color     = Color.White,
                 Border    = new(10, 0, Color.Margenta),
             }
         };
 
-        var boxAL = new Span
+        var boxAL = new FlexBox
         {
             Name  = "BoxAL",
             Style = new()
             {
                 Color  = Color.White,
-                Border = new(BORDER_SIZE, 0, Color.Cyan),
+                Border = new(borderSize, 0, Color.Cyan),
                 Size   = new((Percentage)100, (Percentage)50),
             }
         };
 
-        var boxBL = new Span
+        var boxBL = new FlexBox
         {
             Name  = "BoxBL",
             Style = new()
             {
                 Color  = Color.White,
-                Border = new(BORDER_SIZE, 0, Color.White),
+                Border = new(borderSize, 0, Color.White),
                 Size   = new((Percentage)100, (Percentage)50),
             }
         };
 
-        var boxCL = new Span
+        var boxCL = new FlexBox
         {
             Name  = "BoxCL",
             Style = new()
             {
-                Alignment = AlignmentType.Center,
+                Alignment = AlignmentKind.Center,
                 Color     = Color.White,
-                Border    = new(BORDER_SIZE, 0, Color.Yellow),
+                Border    = new(borderSize, 0, Color.Yellow),
                 Size      = new((Pixel)50),
             }
         };
 
-        var stackR = new Span
+        var stackR = new FlexBox
         {
             Name = "StackR",
             Style = new()
             {
-                Stack  = StackType.Vertical,
-                Border = new(BORDER_SIZE, 0, Color.Blue),
+                Stack  = StackKind.Vertical,
+                Border = new(borderSize, 0, Color.Blue),
                 Size   = new((Percentage)100, (Percentage)100),
             }
         };
 
-        var boxAR = new Span
+        var boxAR = new FlexBox
         {
             Name  = "BoxAR",
             Style = new()
             {
                 Color  = Color.White,
-                Border = new(BORDER_SIZE, 0, Color.Cyan),
+                Border = new(borderSize, 0, Color.Cyan),
                 Size   = new((Pixel)50),
             }
         };
 
-        var boxBR = new Span
+        var boxBR = new FlexBox
         {
             Name  = "BoxBR",
             Style = new()
             {
                 Color  = Color.White,
-                Border = new(BORDER_SIZE, 0, Color.White),
+                Border = new(borderSize, 0, Color.White),
                 Size   = new((Percentage)100),
             }
         };
 
-        var boxCR = new Span
+        var boxCR = new FlexBox
         {
             Name  = "BoxCR",
             Style = new()
             {
                 Color  = Color.White,
-                Border = new(BORDER_SIZE, 0, Color.Yellow),
+                Border = new(borderSize, 0, Color.Yellow),
                 Size   = new((Pixel)50),
             }
         };
 
         canvas.AppendChild(boxModel);
             boxModel.AppendChild(stackL);
-                stackL.AppendChild(stackText);
-                stackL.AppendChild(boxAL);
-                stackL.AppendChild(boxBL);
-                stackL.AppendChild(boxCL);
+            stackL.AppendChild(stackText);
+            stackL.AppendChild(boxAL);
+            stackL.AppendChild(boxBL);
+            stackL.AppendChild(boxCL);
 
-            boxModel.AppendChild(stackR);
-                stackR.AppendChild(boxAR);
-                stackR.AppendChild(boxBR);
-                stackR.AppendChild(boxCR);
+        boxModel.AppendChild(stackR);
+            stackR.AppendChild(boxAR);
+            stackR.AppendChild(boxBR);
+            stackR.AppendChild(boxCR);
     }
 }

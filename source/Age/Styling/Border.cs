@@ -5,13 +5,16 @@ namespace Age.Styling;
 
 public record struct Border
 {
-    public BorderSide   Top;
-    public BorderSide   Right;
-    public BorderSide   Bottom;
-    public BorderSide   Left;
+    // 20-bytes
+    public BorderSide Top;
+    public BorderSide Right;
+    public BorderSide Bottom;
+    public BorderSide Left;
+
+    // 16-bytes
     public BorderRadius Radius;
 
-    public Border(uint thickness, uint radius, Color color)
+    public Border(uint thickness, uint radius, in Color color)
     {
         this.Top    = new(thickness, color);
         this.Right  = new(thickness, color);
@@ -19,6 +22,18 @@ public record struct Border
         this.Left   = new(thickness, color);
         this.Radius = new(radius);
     }
+
+    public Border(in BorderSide horizontal, in BorderSide vertical, in BorderRadius borderRadius)
+    {
+        this.Top    = vertical;
+        this.Right  = horizontal;
+        this.Bottom = vertical;
+        this.Left   = horizontal;
+        this.Radius = borderRadius;
+    }
+
+    public Border(in BorderSide horizontal, in BorderSide vertical, uint radius = 0) : this(horizontal, vertical, new BorderRadius(radius))
+    { }
 
     public static implicit operator CanvasShader.Border(in Border value) =>
         new()

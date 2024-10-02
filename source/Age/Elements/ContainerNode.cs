@@ -1,3 +1,5 @@
+using Age.Core;
+using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Scene;
 
@@ -5,16 +7,30 @@ namespace Age.Elements;
 
 public abstract class ContainerNode : Node2D
 {
-    private Size<uint> size;
+    internal abstract Layout Layout { get; }
 
-    internal float Baseline { get; set; } = 1;
+    private CacheValue<Transform2D> transformCache;
 
-    public Size<uint> Size
+    internal protected override Transform2D TransformCache
     {
-        get => this.size;
-        internal set => this.Set(ref this.size, value, this.SizeChanged);
+        get
+        {
+            if (this.transformCache.Version != CacheVersion)
+            {
+                this.transformCache = new()
+                {
+                    Value   = base.TransformCache * this.Layout.Transform,
+                    Version = CacheVersion
+                };
+            }
+
+            return this.transformCache.Value;
+        }
     }
 
-    protected virtual void SizeChanged()
-    { }
+    public override Transform2D Transform
+    {
+        get => base.Transform * this.Layout.Transform;
+        set => this.LocalTransform = base.Transform.Inverse() * value * this.Layout.Transform.Inverse();
+    }
 }

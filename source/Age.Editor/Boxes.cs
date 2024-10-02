@@ -10,22 +10,22 @@ public class Boxes : Element
 
     public Boxes()
     {
-        var boxH = new Span()
+        var boxH = new FlexBox()
         {
             Name  = "BoxH",
             Style = new()
             {
-                Stack = StackType.Horizontal,
+                Stack = StackKind.Horizontal,
                 Size  = new((Pixel)150),
             }
         };
 
-        var boxV = new Span()
+        var boxV = new FlexBox()
         {
             Name  = "BoxV",
             Style = new()
             {
-                Stack = StackType.Vertical,
+                Stack = StackKind.Vertical,
                 Size  = new((Pixel)150),
             }
         };
@@ -35,7 +35,7 @@ public class Boxes : Element
 
         const uint BLOCK_SIZE = 25;
 
-        var ah = new Span()
+        var ah = new FlexBox()
         {
             Text  = "ah",
             Name  = "ah",
@@ -48,20 +48,20 @@ public class Boxes : Element
             }
         };
 
-        var bh = new Span()
+        var bh = new FlexBox()
         {
             Text  = "bh",
             Name  = "bh",
             Style = new()
             {
-                Alignment   = AlignmentType.Top,
+                Alignment   = AlignmentKind.Top,
                 // BorderColor = Color.Green,
                 Color       = Color.Green,
                 Size        = new((Pixel)100),
             }
         };
 
-        var ch = new Span()
+        var ch = new FlexBox()
         {
             Text  = "ch",
             Name  = "ch",
@@ -74,7 +74,7 @@ public class Boxes : Element
             }
         };
 
-        var av = new Span()
+        var av = new FlexBox()
         {
             Text  = "av",
             Name  = "av",
@@ -87,20 +87,20 @@ public class Boxes : Element
             }
         };
 
-        var bv = new Span()
+        var bv = new FlexBox()
         {
             Text  = "bv",
             Name  = "bv",
             Style = new()
             {
-                Alignment   = AlignmentType.Center/*  | AlignmentType.Top */,
+                Alignment   = AlignmentKind.Center/*  | AlignmentType.Top */,
                 // BorderColor = Color.Green,
                 Color       = Color.Green,
                 Size        = new((Pixel)BLOCK_SIZE),
             }
         };
 
-        var cv = new Span()
+        var cv = new FlexBox()
         {
             Text  = "cv",
             Name  = "cv",

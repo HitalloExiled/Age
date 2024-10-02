@@ -124,6 +124,8 @@ public class Engine : IDisposable
     {
         this.Running = true;
 
+        Time.Start = DateTime.Now;
+
         var previous  = 0D;
         var frameTime = 0D;
         var current   = TARGET_FRAME_TIME;
@@ -143,7 +145,7 @@ public class Engine : IDisposable
 
             if (!FPS_LOCKED || frameTime >= TARGET_FRAME_TIME)
             {
-                var deltaTime = frameTime / 1000;
+                Time.DeltaTime = frameTime / 1000 * Time.Scale;
 
                 foreach (var window in Window.Windows)
                 {
@@ -152,7 +154,7 @@ public class Engine : IDisposable
                     if (!window.IsClosed)
                     {
                         window.Tree.ResetCache();
-                        window.Tree.Update(deltaTime);
+                        window.Tree.Update();
 
                         if (window.Tree.IsDirty)
                         {
@@ -163,6 +165,8 @@ public class Engine : IDisposable
                 }
 
                 this.renderingService.Render(Window.Windows);
+
+                Time.Frames++;
 
                 Node2D.CacheVersion++;
                 Node3D.CacheVersion++;

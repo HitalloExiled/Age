@@ -2,32 +2,32 @@ using Age.Numerics;
 using Age.Elements;
 using Age.Styling;
 
-namespace Age.Editor;
+namespace Age.Editor.Tests;
 
 public class Playground : Element
 {
     public override string NodeName { get; } = nameof(Playground);
 
-    public Playground()
+    public static void Setup(Canvas canvas)
     {
-        var root = new Span()
+        var root = new FlexBox()
         {
             Name  = "Root",
             Style = new()
             {
-                Alignment = AlignmentType.Center,
+                Alignment = AlignmentKind.Center,
                 Border    = new(1, 0, Color.Red),
                 Size      = new((Pixel)200, (Pixel)200),
             }
         };
 
-        var a = new Span()
+        var a = new FlexBox()
         {
             Name  = "A[Percentage]",
             // Text  = "Text",
             Style = new()
             {
-                Alignment = AlignmentType.Center,
+                Alignment = AlignmentKind.Center,
                 // Align     = new(1, 1),
                 // Margin    = new(0),
                 // Baseline  = 1,
@@ -37,13 +37,13 @@ public class Playground : Element
             }
         };
 
-        var b = new Span()
+        var b = new FlexBox()
         {
             Name  = "B[Percentage]",
             // Text  = "Text",
             Style = new()
             {
-                Alignment = AlignmentType.Center,
+                Alignment = AlignmentKind.Center,
                 // Align     = new(1, 1),
                 // Margin    = new(0),
                 // Baseline  = 1,
@@ -52,10 +52,6 @@ public class Playground : Element
                 Size      = new((Percentage)50, (Percentage)50),
             }
         };
-
-        this.AppendChild(root);
-        root.AppendChild(a);
-        a.AppendChild(b);
 
         // var a = new Span()
         // {
@@ -161,5 +157,9 @@ public class Playground : Element
         // parentSpan.AppendChild(childSpan3);
         // parentSpan.AppendChild(childSpan4);
         // parentSpan.AppendChild(childSpan5);
+
+        canvas.AppendChild(root);
+            root.AppendChild(a);
+                a.AppendChild(b);
     }
 }

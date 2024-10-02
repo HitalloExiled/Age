@@ -1,11 +1,11 @@
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
-namespace Age.Elements;
+namespace Age.Elements.Layouts;
 
-public abstract partial class Element
+internal partial class BoxLayout
 {
     [Flags]
-    private enum Dependency
+    public enum Dependency
     {
         None    = 0,
         Width   = 1 << 0,

@@ -1,6 +1,6 @@
 namespace Age.Styling;
 
-public enum PositionType
+public enum PositionKind
 {
     Local,
     Global,

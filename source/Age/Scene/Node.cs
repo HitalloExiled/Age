@@ -1,11 +1,10 @@
 using System.Collections;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace Age.Scene;
 
-[DebuggerDisplay("NodeName: {NodeName}, Name: {Name}, IsConnected: {IsConnected}")]
-public abstract partial class Node : IEnumerable<Node>
+public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
 {
     private NodeTree? tree;
 
@@ -20,6 +19,8 @@ public abstract partial class Node : IEnumerable<Node>
     public Node[] Children => [..this];
 
     public abstract string NodeName { get; }
+
+    public NodeFlags Flags { get; protected set; }
 
     public string? Name { get; set; }
 
@@ -157,7 +158,12 @@ public abstract partial class Node : IEnumerable<Node>
                 current.PreviousSibling = null;
                 current.NextSibling     = null;
                 current.Parent          = null;
-                current.Tree            = null;
+
+                if (current.Tree != null)
+                {
+                    current.Disconnected(current.Tree);
+                    current.Tree = null;
+                }
 
                 this.ChildRemoved(current);
             }
@@ -222,18 +228,23 @@ public abstract partial class Node : IEnumerable<Node>
 
         do
         {
-            var child = next;
+            var current = next;
 
-            next = child.NextSibling;
+            next = current.NextSibling;
 
-            child.PreviousSibling = null;
-            child.NextSibling     = null;
-            child.Parent          = null;
-            child.Tree            = null;
+            current.PreviousSibling = null;
+            current.NextSibling     = null;
+            current.Parent          = null;
 
-            this.ChildRemoved(child);
+            if (current.Tree != null)
+            {
+                current.Disconnected(current.Tree);
+                current.Tree = null;
+            }
 
-            if (child == end)
+            this.ChildRemoved(current);
+
+            if (current == end)
             {
                 break;
             }
@@ -247,8 +258,22 @@ public abstract partial class Node : IEnumerable<Node>
     public IEnumerable<Node> Traverse() =>
         new TraverseEnumerator(this);
 
-    public override string ToString() =>
-        $"<{this.NodeName} name='{this.Name}'>";
+    public override string ToString()
+    {
+        var builder = new StringBuilder(255);
+
+        builder.Append('<');
+        builder.Append(this.NodeName);
+
+        if (!string.IsNullOrEmpty(this.Name))
+        {
+            builder.Append($" name='{this.Name}'");
+        }
+
+        builder.Append('>');
+
+        return builder.ToString();
+    }
 
     public virtual void Initialize()
     { }
@@ -256,6 +281,67 @@ public abstract partial class Node : IEnumerable<Node>
     public virtual void LateUpdate()
     { }
 
-    public virtual void Update(double deltaTime)
+    public virtual void Update()
     { }
+
+    public bool IsDescendent(Node other)
+    {
+        var parent = other;
+
+        while (parent != this.Parent)
+        {
+            parent = parent?.Parent;
+        }
+
+        return this.Parent == parent;
+    }
+
+    public int CompareTo(Node? other)
+    {
+        if (other == null)
+        {
+            return 1;
+        }
+        else if (this == other)
+        {
+            return 0;
+        }
+        else if (this.Parent == other.Parent)
+        {
+            if (this == other.PreviousSibling)
+            {
+                return -1;
+            }
+            else if (this == other.NextSibling)
+            {
+                return 1;
+            }
+            else
+            {
+                for (var node = this.PreviousSibling; node != this.FirstChild; node = node?.PreviousSibling)
+                {
+                    if (node == other)
+                    {
+                        return 1;
+                    }
+                }
+
+                return -1;
+            }
+        }
+        else if (other.Parent == this || this.Parent == null && other.Parent != null)
+        {
+            return -1;
+        }
+        else if (this.Parent == other || this.Parent != null && other.Parent == null)
+        {
+            return 1;
+        }
+        else if (this.Parent != null && other.Parent != null)
+        {
+            return this.Parent.CompareTo(other.Parent);
+        }
+
+        return 0;
+    }
 }

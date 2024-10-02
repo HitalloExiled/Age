@@ -2,7 +2,7 @@ using Age.Platforms.Display;
 
 namespace Age;
 
-internal struct KeyState(Key key, ulong iteration)
+file struct KeyState(Key key, ulong iteration)
 {
     public Key   Key       = key;
     public ulong Iteration = iteration;
@@ -10,23 +10,23 @@ internal struct KeyState(Key key, ulong iteration)
 
 public static class Input
 {
-    private static readonly Dictionary<Key, ulong> keyStates = [];
-    private static readonly Dictionary<MouseButton, ulong> mouseButtonsStates = [];
+    private static readonly Dictionary<Key, ulong> keys = [];
+    private static readonly Dictionary<MouseButton, ulong> mouseButtons = [];
     private static float mouseWheel;
 
     private static uint currentIteration;
 
     private static void OnKeyDown(Key key) =>
-        keyStates.TryAdd(key, currentIteration);
+        keys.TryAdd(key, currentIteration);
 
     private static void OnKeyUp(Key key) =>
-        keyStates[key] = 0;
+        keys.Remove(key);
 
     private static void OnMouseDown(in MouseEvent eventArgs) =>
-        mouseButtonsStates.TryAdd(eventArgs.Button, currentIteration);
+        mouseButtons.TryAdd(eventArgs.Button, currentIteration);
 
     private static void OnClickUp(in MouseEvent eventArgs) =>
-        mouseButtonsStates[eventArgs.Button] = 0;
+        mouseButtons.Remove(eventArgs.Button);
 
     private static void OnMouseWheel(in MouseEvent eventArgs) =>
         mouseWheel = eventArgs.Delta;
@@ -51,43 +51,49 @@ public static class Input
 
     internal static void Update()
     {
-        foreach (var (key, value) in keyStates.ToArray())
-        {
-            if (value == 0)
-            {
-                keyStates.Remove(key);
-            }
-        }
-
-        foreach (var (key, value) in mouseButtonsStates.ToArray())
-        {
-            if (value == 0)
-            {
-                mouseButtonsStates.Remove(key);
-            }
-        }
-
         currentIteration++;
         mouseWheel = 0;
     }
 
+    public static KeyStates GetModifiers()
+    {
+        KeyStates modifiers = default;
+
+        if (keys.ContainsKey(Key.Shift))
+        {
+            modifiers |= KeyStates.Shift;
+        }
+
+        if (keys.ContainsKey(Key.Control))
+        {
+            modifiers |= KeyStates.Control;
+        }
+
+        // if (keys.ContainsKey(Key.Alt))
+        // {
+        //     modifiers |= KeyStates.Alt;
+        // }
+
+        return modifiers;
+    }
+
     public static bool IsKeyJustPressed(Key key) =>
-        keyStates.TryGetValue(key, out var iteration) && currentIteration - iteration == 0;
+        keys.TryGetValue(key, out var iteration) && currentIteration - iteration == 0;
 
     public static bool IsKeyPressed(Key key) =>
-        keyStates.TryGetValue(key, out var iteration) && iteration > 0;
+        keys.TryGetValue(key, out var iteration) && iteration > 0;
 
     public static bool IsKeyReleased(Key key) =>
-        keyStates.TryGetValue(key, out var iteration) && iteration == 0;
+        keys.TryGetValue(key, out var iteration) && iteration == 0;
 
     public static bool IsMouseButtonJustPressed(MouseButton mouseButton) =>
-        mouseButtonsStates.TryGetValue(mouseButton, out var iteration) && currentIteration - iteration == 0;
+        mouseButtons.TryGetValue(mouseButton, out var iteration) && currentIteration - iteration == 0;
 
     public static bool IsMouseButtonPressed(MouseButton mouseButton) =>
-        mouseButtonsStates.TryGetValue(mouseButton, out var iteration) && iteration > 0;
+        mouseButtons.TryGetValue(mouseButton, out var iteration) && iteration > 0;
 
     public static bool IsMouseButtonReleased(MouseButton mouseButton) =>
-        mouseButtonsStates.TryGetValue(mouseButton, out var iteration) && iteration == 0;
+        mouseButtons.TryGetValue(mouseButton, out var iteration) && iteration == 0;
 
     public static float GetMouseWheel() => mouseWheel;
 
