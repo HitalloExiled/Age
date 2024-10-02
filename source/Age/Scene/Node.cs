@@ -39,10 +39,6 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
 
                     if (tree != null)
                     {
-                        node.Index = tree.Nodes.Count;
-
-                        tree.Nodes.Add(node);
-
                         node.Connected(tree);
                     }
                     else if (oldTree != null)
@@ -50,11 +46,6 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
                         node.Index = -1;
 
                         node.Disconnected(oldTree);
-                    }
-
-                    if (node.Index > -1)
-                    {
-                        oldTree?.Nodes.RemoveAt(node.Index);
                     }
                 }
 
@@ -130,172 +121,6 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
         }
     }
 
-    public void Destroy()
-    {
-        this.Destroyed();
-
-        foreach (var child in this.Traverse())
-        {
-            child.Destroyed();
-        }
-    }
-
-    public IEnumerator<Node> GetEnumerator() =>
-        new Enumerator(this);
-
-    public void RemoveChildren()
-    {
-        if (this.FirstChild != null)
-        {
-            var next = this.FirstChild;
-
-            do
-            {
-                var current = next;
-
-                next = current.NextSibling;
-
-                current.PreviousSibling = null;
-                current.NextSibling     = null;
-                current.Parent          = null;
-
-                if (current.Tree != null)
-                {
-                    current.Disconnected(current.Tree);
-                    current.Tree = null;
-                }
-
-                this.ChildRemoved(current);
-            }
-            while (next != null);
-
-            this.FirstChild = null;
-            this.LastChild  = null;
-        }
-    }
-
-    public void RemoveChild(Node child)
-    {
-        if (child.Parent == this)
-        {
-            if (child == this.FirstChild)
-            {
-                this.FirstChild = child.NextSibling;
-            }
-
-            if (child == this.LastChild)
-            {
-                this.LastChild = child.PreviousSibling;
-            }
-
-            if (child.PreviousSibling != null)
-            {
-                child.PreviousSibling.NextSibling = child.NextSibling;
-
-                if (child.NextSibling != null)
-                {
-                    child.NextSibling.PreviousSibling = child.PreviousSibling.NextSibling;
-                }
-            }
-            else if (child.NextSibling != null)
-            {
-                child.NextSibling.PreviousSibling = null;
-            }
-
-            child.PreviousSibling = null;
-            child.NextSibling     = null;
-            child.Parent          = null;
-
-            child.tree  = null;
-
-            foreach (var node in this.Traverse())
-            {
-                node.tree = null;
-            }
-
-            this.ChildRemoved(child);
-        }
-    }
-
-    public void RemoveChildrenInRange(Node start, Node end)
-    {
-        if (start.Parent != this || end.Parent != this)
-        {
-            return;
-        }
-
-        var next = start;
-
-        do
-        {
-            var current = next;
-
-            next = current.NextSibling;
-
-            current.PreviousSibling = null;
-            current.NextSibling     = null;
-            current.Parent          = null;
-
-            if (current.Tree != null)
-            {
-                current.Disconnected(current.Tree);
-                current.Tree = null;
-            }
-
-            this.ChildRemoved(current);
-
-            if (current == end)
-            {
-                break;
-            }
-        }
-        while (next != null);
-
-        this.FirstChild = null;
-        this.LastChild  = null;
-    }
-
-    public IEnumerable<Node> Traverse() =>
-        new TraverseEnumerator(this);
-
-    public override string ToString()
-    {
-        var builder = new StringBuilder(255);
-
-        builder.Append('<');
-        builder.Append(this.NodeName);
-
-        if (!string.IsNullOrEmpty(this.Name))
-        {
-            builder.Append($" name='{this.Name}'");
-        }
-
-        builder.Append('>');
-
-        return builder.ToString();
-    }
-
-    public virtual void Initialize()
-    { }
-
-    public virtual void LateUpdate()
-    { }
-
-    public virtual void Update()
-    { }
-
-    public bool IsDescendent(Node other)
-    {
-        var parent = other;
-
-        while (parent != this.Parent)
-        {
-            parent = parent?.Parent;
-        }
-
-        return this.Parent == parent;
-    }
-
     public int CompareTo(Node? other)
     {
         if (other == null)
@@ -344,4 +169,159 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
 
         return 0;
     }
+
+    public void Destroy()
+    {
+        this.Destroyed();
+
+        foreach (var child in this.Traverse())
+        {
+            child.Destroyed();
+        }
+    }
+
+    public IEnumerator<Node> GetEnumerator() =>
+        new Enumerator(this);
+
+    public void RemoveChildren()
+    {
+        if (this.FirstChild != null)
+        {
+            var next = this.FirstChild;
+
+            do
+            {
+                var current = next;
+
+                next = current.NextSibling;
+
+                current.PreviousSibling = null;
+                current.NextSibling     = null;
+                current.Parent          = null;
+                current.Tree            = null;
+
+                this.ChildRemoved(current);
+            }
+            while (next != null);
+
+            this.FirstChild = null;
+            this.LastChild  = null;
+        }
+    }
+
+    public void RemoveChild(Node child)
+    {
+        if (child.Parent == this)
+        {
+            if (child == this.FirstChild)
+            {
+                this.FirstChild = child.NextSibling;
+            }
+
+            if (child == this.LastChild)
+            {
+                this.LastChild = child.PreviousSibling;
+            }
+
+            if (child.PreviousSibling != null)
+            {
+                child.PreviousSibling.NextSibling = child.NextSibling;
+
+                if (child.NextSibling != null)
+                {
+                    child.NextSibling.PreviousSibling = child.PreviousSibling.NextSibling;
+                }
+            }
+            else if (child.NextSibling != null)
+            {
+                child.NextSibling.PreviousSibling = null;
+            }
+
+            child.PreviousSibling = null;
+            child.NextSibling     = null;
+            child.Parent          = null;
+            child.Tree            = null;
+
+            this.ChildRemoved(child);
+        }
+    }
+
+    public void RemoveChildrenInRange(Node start, Node end)
+    {
+        if (start.Parent != this || end.Parent != this)
+        {
+            return;
+        }
+
+        var next = start;
+
+        do
+        {
+            var current = next;
+
+            next = current.NextSibling;
+
+            current.PreviousSibling = null;
+            current.NextSibling     = null;
+            current.Parent          = null;
+            current.Tree            = null;
+
+            this.ChildRemoved(current);
+
+            if (current == end)
+            {
+                break;
+            }
+        }
+        while (next != null);
+
+        this.FirstChild = null;
+        this.LastChild  = null;
+    }
+
+    public IEnumerable<Node> Reverse() =>
+        new ReverseEnumerator(this);
+
+    public IEnumerable<Node> Traverse() =>
+        new TraverseEnumerator(this);
+
+    public override string ToString()
+    {
+        var builder = new StringBuilder(255);
+
+        builder.Append('<');
+        builder.Append(this.NodeName);
+
+        if (!string.IsNullOrEmpty(this.Name))
+        {
+            builder.Append($" name='{this.Name}'");
+        }
+
+        builder.Append('>');
+
+        return builder.ToString();
+    }
+
+    public virtual void Initialize()
+    { }
+
+    public virtual void LateUpdate()
+    { }
+
+    public virtual void Update()
+    { }
+
+    public bool IsDescendent(Node other)
+    {
+        var parent = other;
+
+        while (parent != this.Parent)
+        {
+            parent = parent?.Parent;
+        }
+
+        return this.Parent == parent;
+    }
+
+
 }

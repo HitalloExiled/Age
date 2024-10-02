@@ -1,4 +1,3 @@
-using Age.Commands;
 using Age.Elements;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
@@ -10,12 +9,9 @@ using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Scene;
 
-public sealed class NodeTree
+public sealed partial class NodeTree
 {
     public event Action? Updated;
-
-    public record struct Command2DEntry(Matrix3x2<float> Transform, Command Command);
-    public record struct Command3DEntry(Matrix4x4<float> Transform, Command Command);
 
     private readonly List<Command2DEntry> command2DEntriesCache = [];
     private readonly List<Command3DEntry> command3DEntriesCache = [];
@@ -26,7 +22,7 @@ public sealed class NodeTree
     private Element?                   lastFocusedElement;
     private Element?                   lastSelectedElement;
 
-    internal List<Node>    Nodes    { get; } = [];
+    internal List<Node>    Nodes    { get; } = new(256);
     internal List<Scene3D> Scenes3D { get; } = [];
 
     public bool   IsDirty { get; internal set; }
@@ -49,12 +45,12 @@ public sealed class NodeTree
         {
             var current = this.stack.Pop();
 
-            foreach (var node in current)
+            if (!current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
             {
-                if (!node.Flags.HasFlag(NodeFlags.IgnoreUpdates))
-                {
-                    node.Initialize();
+                current.Initialize();
 
+                foreach (var node in current.Reverse())
+                {
                     this.stack.Push(node);
                 }
             }
@@ -69,12 +65,12 @@ public sealed class NodeTree
         {
             var current = this.stack.Pop();
 
-            foreach (var node in current)
+            if (!current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
             {
-                if (!node.Flags.HasFlag(NodeFlags.IgnoreUpdates))
-                {
-                    node.LateUpdate();
+                current.LateUpdate();
 
+                foreach (var node in current.Reverse())
+                {
                     this.stack.Push(node);
                 }
             }
@@ -89,12 +85,12 @@ public sealed class NodeTree
         {
             var current = this.stack.Pop();
 
-            foreach (var node in current)
+            if (!current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
             {
-                if (!node.Flags.HasFlag(NodeFlags.IgnoreUpdates))
-                {
-                    node.Update();
+                current.Update();
 
+                foreach (var node in current.Reverse())
+                {
                     this.stack.Push(node);
                 }
             }
@@ -111,6 +107,79 @@ public sealed class NodeTree
             X         = mouseEvent.X,
             Y         = mouseEvent.Y,
         };
+
+    private IEnumerable<CommandEntry> EnumerateCommands()
+    {
+        this.stack.Push(this.Root);
+
+        var index = 0;
+
+        while (this.stack.Count > 0)
+        {
+            var current = this.stack.Pop();
+
+            var visible = true;
+
+            if (current is Node2D node2D)
+            {
+                if (visible = node2D.Visible)
+                {
+                    var transform = (Matrix3x2<float>)node2D.TransformCache;
+
+                    foreach (var command in node2D.Commands)
+                    {
+                        var entry = new Command2DEntry(command, transform);
+
+                        this.command2DEntriesCache.Add(entry);
+
+                        yield return entry;
+                    }
+                }
+            }
+            else if (current is Node3D node3D)
+            {
+                if (visible = node3D.Visible)
+                {
+                    var transform = (Matrix4x4<float>)node3D.TransformCache;
+
+                    foreach (var command in node3D.Commands)
+                    {
+                        var entry = new Command3DEntry(command, transform);
+
+                        this.command3DEntriesCache.Add(entry);
+
+                        yield return entry;
+                    }
+                }
+            }
+
+            if (visible)
+            {
+                current.Index = index;
+
+                if (index == this.Nodes.Count)
+                {
+                    this.Nodes.Add(current);
+                }
+                else
+                {
+                    this.Nodes[index] = current;
+                }
+
+                index++;
+
+                foreach (var node in current.Reverse())
+                {
+                    this.stack.Push(node);
+                }
+            }
+        }
+
+        if (index < this.Nodes.Count)
+        {
+            this.Nodes.RemoveRange(index, this.Nodes.Count - index);
+        }
+    }
 
     private Element? GetElement(ushort x, ushort y) =>
         this.GetNode(x, y) switch
@@ -244,37 +313,11 @@ public sealed class NodeTree
         }
         else
         {
-            this.stack.Push(this.Root);
-
-            while (this.stack.Count > 0)
+            foreach (var entry in this.EnumerateCommands())
             {
-                var current = this.stack.Pop();
-
-                foreach (var node in current)
+                if (entry.TryGetCommand2DEntry(out var command2DEntry))
                 {
-                    if (node is Node2D node2D)
-                    {
-                        if (node2D.Visible)
-                        {
-                            var transform = (Matrix3x2<float>)node2D.TransformCache;
-
-                            foreach (var command in node2D.Commands)
-                            {
-                                var entry = new Command2DEntry(transform, command);
-
-                                this.command2DEntriesCache.Add(entry);
-
-                                yield return entry;
-
-                            }
-
-                            this.stack.Push(node);
-                        }
-                    }
-                    else
-                    {
-                        this.stack.Push(node);
-                    }
+                    yield return command2DEntry;
                 }
             }
         }
@@ -291,37 +334,11 @@ public sealed class NodeTree
         }
         else
         {
-            this.stack.Push(this.Root);
-
-            while (this.stack.Count > 0)
+            foreach (var entry in this.EnumerateCommands())
             {
-                var current = this.stack.Pop();
-
-                foreach (var node in current)
+                if (entry.TryGetCommand3DEntry(out var command3DEntry))
                 {
-                    if (node is Node3D node3D)
-                    {
-                        if (node3D.Visible)
-                        {
-                            var transform = (Matrix4x4<float>)node3D.TransformCache;
-
-                            foreach (var command in node3D.Commands)
-                            {
-                                var entry = new Command3DEntry(transform, command);
-
-                                this.command3DEntriesCache.Add(entry);
-
-                                yield return entry;
-
-                            }
-
-                            this.stack.Push(node);
-                        }
-                    }
-                    else
-                    {
-                        this.stack.Push(node);
-                    }
+                    yield return command3DEntry;
                 }
             }
         }

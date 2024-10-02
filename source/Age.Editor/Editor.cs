@@ -77,7 +77,6 @@ public class Editor : Node
             {
                 Alignment = AlignmentKind.Center,
                 Border    = new(BORDER_SIZE, default, Color.Blue),
-                // Size      = new((Pixel)400),
             }
         };
 
