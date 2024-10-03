@@ -93,7 +93,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     private readonly object elementLock = new();
 
     private Canvas? canvas;
-    private Style   style = new();
     private string? text;
 
     protected bool IsFocusable { get; set; }
@@ -192,22 +191,14 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     public Style Style
     {
-        get => this.style;
-        set
-        {
-            if (this.style != value)
-            {
-                if (this.IsConnected)
-                {
-                    this.style.Changed -= this.Layout.UpdateState;
-                    value.Changed += this.Layout.UpdateState;
-                }
+        get => this.Layout.Styles.Base ??= new();
+        set => this.Layout.Styles.Base = value;
+    }
 
-                this.style = value;
-
-                this.Layout.UpdateState(StyleProperty.All);
-            }
-        }
+    public StyledStates? StyledStates
+    {
+        get => this.Layout.Styles.StyledStates;
+        set => this.Layout.Styles.StyledStates = value;
     }
 
     public string? Text
@@ -222,7 +213,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 {
                     builder.Append(textNode.Value);
 
-                    if (this.Style.Stack == StackKind.Vertical)
+                    if (this.Layout.Styles.Current.Stack == StackKind.Vertical)
                     {
                         builder.Append('\n');
                     }
@@ -293,7 +284,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 Key       = key,
                 Holding   = !Input.IsKeyJustPressed(key),
                 Modifiers = Input.GetModifiers(),
-
             };
 
             this.keyDown?.Invoke(keyEvent);
@@ -317,8 +307,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     protected override void Connected(NodeTree tree)
     {
-        this.style.Changed += this.Layout.UpdateState;
-
         if (this.keyDown != null)
         {
             tree.Window.KeyDown += this.OnKeyDown;
@@ -367,7 +355,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     protected override void Disconnected(NodeTree tree)
     {
-        this.style.Changed  -= this.Layout.UpdateState;
         tree.Window.KeyDown -= this.OnKeyDown;
         tree.Window.KeyUp   -= this.OnKeyUp;
 
@@ -376,6 +363,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             tree.IsDirty = true;
         }
     }
+
+    protected override void IndexChanged() =>
+        this.Layout.IndexChanged();
 
     internal void InvokeBlur(in MouseEvent mouseEvent)
     {
@@ -404,17 +394,34 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     internal void InvokeMouseMoved(in MouseEvent mouseEvent) =>
         this.MouseMoved?.Invoke(mouseEvent);
 
-    internal void InvokeMouseOut(in MouseEvent mouseEvent) =>
+    internal void InvokeMouseOut(in MouseEvent mouseEvent)
+    {
+        this.Layout.Styles.RemoveState(StyleStateManager.State.Hovered);
         this.MouseOut?.Invoke(mouseEvent);
+    }
 
-    internal void InvokeMouseOver(in MouseEvent mouseEvent) =>
+    internal void InvokeMouseOver(in MouseEvent mouseEvent)
+    {
+        this.Layout.Styles.AddState(StyleStateManager.State.Hovered);
         this.MouseOver?.Invoke(mouseEvent);
+    }
 
-    public void Click() =>
+    public void Blur()
+    {
+        this.Layout.Styles.RemoveState(StyleStateManager.State.Focus);
+        this.IsFocused = false;
+        this.Blured?.Invoke(new() { Target = this });
+    }
+
+    public void Click()
+    {
+        this.Layout.Styles.AddState(StyleStateManager.State.Active);
         this.Clicked?.Invoke(new() { Target = this });
+    }
 
     public void Focus()
     {
+        this.Layout.Styles.AddState(StyleStateManager.State.Focus);
         this.IsFocused = true;
         this.Focused?.Invoke(new() { Target = this });
     }

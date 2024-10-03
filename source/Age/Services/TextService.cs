@@ -230,7 +230,6 @@ internal partial class TextService : IDisposable
 
                 var command = this.rectCommandPool.Get();
 
-                command.ObjectId       = (uint)((textNode.Index + 1u) | (i + 1u) << 16);
                 command.Rect           = new(size, position);
                 command.Color          = color;
                 command.Flags          = Flags.GrayscaleTexture | Flags.MultiplyColor;
@@ -263,8 +262,8 @@ internal partial class TextService : IDisposable
 #if DUMP_IMAGES
             SaveToFile(fontFamily, atlas);
 #endif
-        }        
-        
+        }
+
         textDrawInfo.End       = cursor.Y;
         textDrawInfo.Boundings = boundings;
 

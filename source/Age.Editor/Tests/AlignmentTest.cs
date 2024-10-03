@@ -33,6 +33,14 @@ public class AlignmentTest
                 Color          = Color.White,
                 FontSize       = 32,
                 ItemsAlignment = ItemsAlignmentKind.Baseline,
+            },
+            StyledStates = new()
+            {
+                Hovered = new()
+                {
+                    Border = new(borderSize, 0, Color.Red),
+                    Stack  = StackKind.Vertical,
+                }
             }
         };
 

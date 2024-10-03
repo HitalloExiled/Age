@@ -118,42 +118,7 @@ public sealed partial class NodeTree
         {
             var current = this.stack.Pop();
 
-            var visible = true;
-
-            if (current is Node2D node2D)
-            {
-                if (visible = node2D.Visible)
-                {
-                    var transform = (Matrix3x2<float>)node2D.TransformCache;
-
-                    foreach (var command in node2D.Commands)
-                    {
-                        var entry = new Command2DEntry(command, transform);
-
-                        this.command2DEntriesCache.Add(entry);
-
-                        yield return entry;
-                    }
-                }
-            }
-            else if (current is Node3D node3D)
-            {
-                if (visible = node3D.Visible)
-                {
-                    var transform = (Matrix4x4<float>)node3D.TransformCache;
-
-                    foreach (var command in node3D.Commands)
-                    {
-                        var entry = new Command3DEntry(command, transform);
-
-                        this.command3DEntriesCache.Add(entry);
-
-                        yield return entry;
-                    }
-                }
-            }
-
-            if (visible)
+            if (current.Visible)
             {
                 current.Index = index;
 
@@ -167,6 +132,33 @@ public sealed partial class NodeTree
                 }
 
                 index++;
+
+                if (current is Node2D node2D)
+                {
+                    var transform = (Matrix3x2<float>)node2D.TransformCache;
+
+                    foreach (var command in node2D.Commands)
+                    {
+                        var entry = new Command2DEntry(command, transform);
+
+                        this.command2DEntriesCache.Add(entry);
+
+                        yield return entry;
+                    }
+                }
+                else if (current is Node3D node3D)
+                {
+                    var transform = (Matrix4x4<float>)node3D.TransformCache;
+
+                    foreach (var command in node3D.Commands)
+                    {
+                        var entry = new Command3DEntry(command, transform);
+
+                        this.command3DEntriesCache.Add(entry);
+
+                        yield return entry;
+                    }
+                }
 
                 foreach (var node in current.Reverse())
                 {

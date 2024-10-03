@@ -19,6 +19,9 @@ public class TextNode : ContainerNode
     public TextNode() =>
         this.Layout = new(this);
 
+    protected override void IndexChanged() =>
+        this.Layout.IndexChanged();
+
     public override string ToString() =>
         this.Value ?? "";
 }

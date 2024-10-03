@@ -8,7 +8,20 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
 {
     private NodeTree? tree;
 
-    internal int Index { get; set; }
+    private int index;
+
+    internal int Index
+    {
+        get => this.index;
+        set
+        {
+            if (this.index != value)
+            {
+                this.index = value;
+                this.IndexChanged();
+            }
+        }
+    }
 
     public Node? FirstChild      { get; private set; }
     public Node? LastChild       { get; private set; }
@@ -23,6 +36,8 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
     public NodeFlags Flags { get; protected set; }
 
     public string? Name { get; set; }
+
+    public bool Visible { get; set; } = true;
 
     public NodeTree? Tree
     {
@@ -82,6 +97,8 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
 
     protected virtual void Disconnected(NodeTree tree)
     { }
+
+    protected virtual void IndexChanged() { }
 
     public void AppendChild(Node child)
     {

@@ -17,6 +17,8 @@ public abstract partial class Node
         public readonly void Dispose()
         { }
 
+        readonly IEnumerator IEnumerable.GetEnumerator() => this;
+
         public readonly IEnumerator<Node> GetEnumerator() => this;
 
         public bool MoveNext()
@@ -39,7 +41,5 @@ public abstract partial class Node
             this.last    = true;
             this.current = null;
         }
-
-        IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
     }
 }
