@@ -4,6 +4,7 @@ public static class Time
 {
     public static double   DeltaTime { get; internal set; }
     public static ulong    Frames    { get; internal set; }
+    public static ulong    Redraws   { get; internal set; }
     public static int      Scale     { get; internal set; } = 1;
     public static DateTime Start     { get; internal set; }
 

@@ -40,16 +40,17 @@ public partial class Window
     private static MouseEvent GetMouseEventArgs(MouseButton button, User32.WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam) =>
         new()
         {
-            X         = GetXLParam(lParam),
-            Y         = GetYLParam(lParam),
-            Button    = button,
-            KeyStates = (MouseKeyStates)GetKeyStateWParam(wParam),
-            Delta     = msg == User32.WINDOW_MESSAGE.WM_MOUSEWHEEL ? (GetWheelDeltaWParam(wParam) / (float)User32.WHEEL_DELTA) : 0,
+            X             = GetXLParam(lParam),
+            Y             = GetYLParam(lParam),
+            Button        = button,
+            PrimaryButton = GetPrimaryButton(),
+            KeyStates     = (MouseKeyStates)GetKeyStateWParam(wParam),
+            Delta         = msg == User32.WINDOW_MESSAGE.WM_MOUSEWHEEL ? (GetWheelDeltaWParam(wParam) / (float)User32.WHEEL_DELTA) : 0,
         };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static bool IsPrimaryButtonLeft() =>
-        User32.GetSystemMetrics(User32.SYSTEM_METRIC.SM_SWAPBUTTON) == 0;
+    private static MouseButton GetPrimaryButton() =>
+        User32.GetSystemMetrics(User32.SYSTEM_METRIC.SM_SWAPBUTTON) == 0 ? MouseButton.Left : MouseButton.Right;
 
     private static LRESULT WndProc(HWND hwnd, User32.WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam)
     {
@@ -75,73 +76,94 @@ public partial class Window
                     window.MouseWhell?.Invoke(GetMouseEventArgs(MouseButton.None, msg, wParam, lParam));
 
                     break;
-                case User32.WINDOW_MESSAGE.WM_LBUTTONDBLCLK:
-                    window.DoubleClick?.Invoke(GetMouseEventArgs(MouseButton.Left, msg, wParam, lParam));
 
-                    break;
                 case User32.WINDOW_MESSAGE.WM_LBUTTONDOWN:
-                    window.MouseDown?.Invoke(GetMouseEventArgs(MouseButton.Left, msg, wParam, lParam));
-
-                    if (IsPrimaryButtonLeft())
-                    {
-                        window.Click?.Invoke(GetMouseEventArgs(MouseButton.Left, msg, wParam, lParam));
-                    }
-
-                    break;
-                case User32.WINDOW_MESSAGE.WM_LBUTTONUP:
-                    window.MouseUp?.Invoke(GetMouseEventArgs(MouseButton.Left, msg, wParam, lParam));
-
-                    break;
-                case User32.WINDOW_MESSAGE.WM_MBUTTONDBLCLK:
-                    window.DoubleClick?.Invoke(GetMouseEventArgs(MouseButton.Middle, msg, wParam, lParam));
-
-                    break;
                 case User32.WINDOW_MESSAGE.WM_MBUTTONDOWN:
-                    window.MouseDown?.Invoke(GetMouseEventArgs(MouseButton.Middle, msg, wParam, lParam));
-
-                    break;
-                case User32.WINDOW_MESSAGE.WM_MBUTTONUP:
-                    window.MouseUp?.Invoke(GetMouseEventArgs(MouseButton.Middle, msg, wParam, lParam));
-
-                    break;
-                case User32.WINDOW_MESSAGE.WM_RBUTTONDBLCLK:
-                    window.DoubleClick?.Invoke(GetMouseEventArgs(MouseButton.Right, msg, wParam, lParam));
-
-                    break;
                 case User32.WINDOW_MESSAGE.WM_RBUTTONDOWN:
-                    window.MouseDown?.Invoke(GetMouseEventArgs(MouseButton.Right, msg, wParam, lParam));
-
-                    if (!IsPrimaryButtonLeft())
+                    if (window.MouseDown != null)
                     {
-                        window.Click?.Invoke(GetMouseEventArgs(MouseButton.Right, msg, wParam, lParam));
+                        User32.SetCapture(hwnd);
+
+                        var button = msg switch
+                        {
+                            User32.WINDOW_MESSAGE.WM_LBUTTONDOWN => MouseButton.Left,
+                            User32.WINDOW_MESSAGE.WM_MBUTTONDOWN => MouseButton.Middle,
+                            User32.WINDOW_MESSAGE.WM_RBUTTONDOWN => MouseButton.Right,
+                            _ => default,
+                        };
+
+                        window.MouseDown.Invoke(GetMouseEventArgs(button, msg, wParam, lParam));
                     }
 
                     break;
+                case User32.WINDOW_MESSAGE.WM_LBUTTONDBLCLK:
+                case User32.WINDOW_MESSAGE.WM_MBUTTONDBLCLK:
+                case User32.WINDOW_MESSAGE.WM_RBUTTONDBLCLK:
+                    if (window.MouseDown != null || window.DoubleClick != null)
+                    {
+                        var button = msg switch
+                        {
+                            User32.WINDOW_MESSAGE.WM_LBUTTONDBLCLK => MouseButton.Left,
+                            User32.WINDOW_MESSAGE.WM_MBUTTONDBLCLK => MouseButton.Middle,
+                            User32.WINDOW_MESSAGE.WM_RBUTTONDBLCLK => MouseButton.Right,
+                            _ => default,
+                        };
+
+                        User32.SetCapture(hwnd);
+
+                        var mouseEvent = GetMouseEventArgs(button, msg, wParam, lParam);
+
+                        window.MouseDown?.Invoke(mouseEvent);
+                        window.DoubleClick?.Invoke(mouseEvent);
+                    }
+
+                    break;
+
+                case User32.WINDOW_MESSAGE.WM_LBUTTONUP:
+                case User32.WINDOW_MESSAGE.WM_MBUTTONUP:
                 case User32.WINDOW_MESSAGE.WM_RBUTTONUP:
-                    window.MouseUp?.Invoke(GetMouseEventArgs(MouseButton.Right, msg, wParam, lParam));
+                    if (window.MouseUp != null || window.Click != null)
+                    {
+                        var button = msg switch
+                        {
+                            User32.WINDOW_MESSAGE.WM_LBUTTONUP => MouseButton.Left,
+                            User32.WINDOW_MESSAGE.WM_MBUTTONUP => MouseButton.Middle,
+                            User32.WINDOW_MESSAGE.WM_RBUTTONUP => MouseButton.Right,
+                            _ => default,
+                        };
+
+                        User32.ReleaseCapture();
+
+                        var mouseEvent = GetMouseEventArgs(button, msg, wParam, lParam);
+
+                        window.MouseUp?.Invoke(mouseEvent);
+
+                        if (button == mouseEvent.PrimaryButton)
+                        {
+                            window.Click?.Invoke(mouseEvent);
+                        }
+                    }
 
                     break;
                 case User32.WINDOW_MESSAGE.WM_CONTEXTMENU:
+                    if (window.Context != null)
                     {
-                        if (window.Context != null)
+                        var x = GetXLParam(lParam);
+                        var y = GetYLParam(lParam);
+
+                        var point = new POINT { x = x, y = y };
+
+                        User32.ScreenToClient(hwnd, point);
+
+                        var contextEvent = new ContextEvent
                         {
-                            var x = GetXLParam(lParam);
-                            var y = GetYLParam(lParam);
+                            X       = (ushort)point.x,
+                            Y       = (ushort)point.y,
+                            ScreenX = x,
+                            ScreenY = y,
+                        };
 
-                            var point = new POINT { x = x, y = y };
-
-                            User32.ScreenToClient(hwnd, point);
-
-                            var contextEvent = new ContextEvent
-                            {
-                                X       = (ushort)point.x,
-                                Y       = (ushort)point.y,
-                                ScreenX = x,
-                                ScreenY = y,
-                            };
-
-                            window.Context.Invoke(contextEvent);
-                        }
+                        window.Context.Invoke(contextEvent);
                     }
 
                     break;

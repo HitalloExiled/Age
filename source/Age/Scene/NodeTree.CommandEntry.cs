@@ -6,30 +6,22 @@ namespace Age.Scene;
 
 public sealed partial class NodeTree
 {
-    // [StructLayout(LayoutKind.Explicit, Pack = 8)]
-    public struct Command2DEntry(Command command, Matrix3x2<float> transform)
-    {
-        // [FieldOffset(0)]
-        public Command Command = command;
-
-        // [FieldOffset(8)]
-        public Matrix3x2<float> Transform = transform;
-    }
-
-    // [StructLayout(LayoutKind.Explicit, Pack = 8)]
-    public struct Command3DEntry(Command command, Matrix4x4<float> transform)
-    {
-        // [FieldOffset(0)]
-        public Command Command = command;
-
-        // [FieldOffset(8)]
-        public Matrix4x4<float> Transform = transform;
-    }
-
-    public enum CommandEntryKind
+    private enum CommandEntryKind
     {
         Command2DEntry,
         Command3DEntry,
+    }
+
+    public struct Command2DEntry(Command command, Matrix3x2<float> transform)
+    {
+        public Command Command = command;
+        public Matrix3x2<float> Transform = transform;
+    }
+
+    public struct Command3DEntry(Command command, Matrix4x4<float> transform)
+    {
+        public Command Command = command;
+        public Matrix4x4<float> Transform = transform;
     }
 
     [StructLayout(LayoutKind.Explicit)]
@@ -86,7 +78,5 @@ public sealed partial class NodeTree
 
         public static implicit operator CommandEntry(Command2DEntry value) => new(value);
         public static implicit operator CommandEntry(Command3DEntry value) => new(value);
-
-
     }
 }

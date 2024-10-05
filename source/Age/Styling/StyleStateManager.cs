@@ -37,14 +37,14 @@ internal partial class StyleStateManager
                     this.current.Data = this.Base.Data;
                 }
 
-                if (this.States.HasFlag(State.Active) && this.StyledStates?.Active != null)
+                if (this.States.HasFlag(State.Focus) && this.StyledStates?.Focus != null)
                 {
-                    this.current.Data.Append(this.StyledStates.Active.Data);
+                    this.current.Data.Append(this.StyledStates.Focus.Data);
                 }
 
-                if (this.States.HasFlag(State.Checked) && this.StyledStates?.Checked != null)
+                if (this.States.HasFlag(State.Hovered) && this.StyledStates?.Hovered != null)
                 {
-                    this.current.Data.Append(this.StyledStates.Checked.Data);
+                    this.current.Data.Append(this.StyledStates.Hovered.Data);
                 }
 
                 if (this.States.HasFlag(State.Disabled) && this.StyledStates?.Disabled != null)
@@ -57,14 +57,14 @@ internal partial class StyleStateManager
                     this.current.Data.Append(this.StyledStates.Enabled.Data);
                 }
 
-                if (this.States.HasFlag(State.Focus) && this.StyledStates?.Focus != null)
+                if (this.States.HasFlag(State.Checked) && this.StyledStates?.Checked != null)
                 {
-                    this.current.Data.Append(this.StyledStates.Focus.Data);
+                    this.current.Data.Append(this.StyledStates.Checked.Data);
                 }
 
-                if (this.States.HasFlag(State.Hovered) && this.StyledStates?.Hovered != null)
+                if (this.States.HasFlag(State.Active) && this.StyledStates?.Active != null)
                 {
-                    this.current.Data.Append(this.StyledStates.Hovered.Data);
+                    this.current.Data.Append(this.StyledStates.Active.Data);
                 }
             }
 

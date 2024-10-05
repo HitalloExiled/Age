@@ -1,5 +1,4 @@
 using Age.Elements;
-using Age.Scene;
 
 namespace Age.Tests.Age.Elements;
 

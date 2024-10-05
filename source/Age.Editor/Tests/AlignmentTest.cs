@@ -36,6 +36,14 @@ public class AlignmentTest
             },
             StyledStates = new()
             {
+                Active = new()
+                {
+                    Border = new(borderSize, 0, Color.White),
+                },
+                Focus = new()
+                {
+                    Border = new(borderSize, 0, Color.Cyan),
+                },
                 Hovered = new()
                 {
                     Border = new(borderSize, 0, Color.Red),

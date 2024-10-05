@@ -70,6 +70,8 @@ internal partial class RenderingService : Disposable
 
             this.renderer.EndFrame();
 
+            Time.Redraws++;
+
             this.changes--;
         }
     }

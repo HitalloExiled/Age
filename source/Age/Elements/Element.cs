@@ -28,6 +28,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     public event MouseEventHandler?   Blured;
     public event MouseEventHandler?   Clicked;
     public event ContextEventHandler? Context;
+    public event MouseEventHandler?   DoubleClicked;
     public event MouseEventHandler?   Focused;
     public event MouseEventHandler?   MouseMoved;
     public event MouseEventHandler?   MouseOut;
@@ -367,10 +368,14 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     protected override void IndexChanged() =>
         this.Layout.IndexChanged();
 
+    internal void InvokeActivate() =>
+        this.Layout.Styles.AddState(StyleStateManager.State.Active);
+
     internal void InvokeBlur(in MouseEvent mouseEvent)
     {
         if (this.IsFocusable)
         {
+            this.Layout.Styles.RemoveState(StyleStateManager.State.Focus);
             this.IsFocused = false;
             this.Blured?.Invoke(mouseEvent);
         }
@@ -378,14 +383,20 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     internal void InvokeClick(in MouseEvent mouseEvent) =>
         this.Clicked?.Invoke(mouseEvent);
-
     internal void InvokeContext(in ContextEvent contextEvent) =>
         this.Context?.Invoke(contextEvent);
+
+    internal void InvokeDeactivate() =>
+        this.Layout.Styles.RemoveState(StyleStateManager.State.Active);
+
+    internal void InvokeDoubleClick(in MouseEvent mouseEvent) =>
+        this.DoubleClicked?.Invoke(mouseEvent);
 
     internal void InvokeFocus(in MouseEvent mouseEvent)
     {
         if (this.IsFocusable)
         {
+            this.Layout.Styles.AddState(StyleStateManager.State.Focus);
             this.IsFocused = true;
             this.Focused?.Invoke(mouseEvent);
         }

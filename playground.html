@@ -63,6 +63,7 @@
     </style>
 </head>
 <body>
+    <button id="clicker">Click Me</button>
     <span class="stack">
         <span class="red">01</span>
         <span class="green">02</span>
@@ -76,4 +77,14 @@
         <span class="blue"></span>
     </span> -->
 </body>
+<script>
+    const clicker = document.querySelector('#clicker');
+
+    let clicks = 0;
+    let doubleClicks = 0;
+
+    clicker.addEventListener('click', () => console.log(`Clickes: ${++clicks}`))
+    clicker.addEventListener('blur', () => console.log(`Blured`))
+    clicker.addEventListener('dblclick', () => console.log(`Double clickes: ${++doubleClicks}`))
+</script>
 </html>

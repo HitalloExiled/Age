@@ -15,8 +15,9 @@ public sealed partial class NodeTree
 
     private readonly List<Command2DEntry> command2DEntriesCache = [];
     private readonly List<Command3DEntry> command3DEntriesCache = [];
-    private readonly Stack<Node> stack                          = [];
+    private readonly Stack<Node>          stack                 = [];
 
+    private ulong                      bufferVersion;
     private Buffer                     buffer = null!;
     private CanvasIndexRenderGraphPass canvasIndexRenderGraphPass = null!;
     private Element?                   lastFocusedElement;
@@ -187,7 +188,11 @@ public sealed partial class NodeTree
 
         if (x < image.Extent.Width && y < image.Extent.Height)
         {
-            image.CopyToBuffer(this.buffer);
+            if (this.bufferVersion != Time.Redraws)
+            {
+                image.CopyToBuffer(this.buffer);
+                this.bufferVersion = Time.Redraws;
+            }
 
             this.buffer.Allocation.Memory.Map(0, (uint)this.buffer.Allocation.Size, 0, out var imageIndexBuffer);
 
@@ -199,8 +204,6 @@ public sealed partial class NodeTree
             var id = (int)(pixel & 0x0000FFFF) - 1;
 
             this.buffer.Allocation.Memory.Unmap();
-
-            // Console.WriteLine($"Element Index: {id}, Pixel Index: {index}, Color: {(Color)pixel}, Mouse Position: [{x}, {y}]");
 
             if (id > -1 && id < this.Nodes.Count)
             {
@@ -223,7 +226,7 @@ public sealed partial class NodeTree
         this.buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
     }
 
-    private void OnContextMenu(in Platforms.Display.ContextEvent contextEvent)
+    private void OnContext(in Platforms.Display.ContextEvent contextEvent)
     {
         var element = this.GetElement(contextEvent.X, contextEvent.Y);
 
@@ -242,7 +245,7 @@ public sealed partial class NodeTree
         }
     }
 
-    private void OnMouseClick(in Platforms.Display.MouseEvent mouseEvent)
+    private void OnMouseDown(in Platforms.Display.MouseEvent mouseEvent)
     {
         var element = this.GetElement(mouseEvent.X, mouseEvent.Y);
 
@@ -250,7 +253,10 @@ public sealed partial class NodeTree
         {
             var eventTarget = CreateEventTarget(element, mouseEvent);
 
-            element.InvokeClick(eventTarget);
+            if (mouseEvent.Button == mouseEvent.PrimaryButton)
+            {
+                element.InvokeActivate();
+            }
 
             if (element != this.lastFocusedElement)
             {
@@ -266,6 +272,13 @@ public sealed partial class NodeTree
             this.lastFocusedElement?.InvokeBlur(CreateEventTarget(this.lastFocusedElement, mouseEvent));
             this.lastFocusedElement = null;
         }
+    }
+
+    private void OnDoubleClick(in Platforms.Display.MouseEvent mouseEvent)
+    {
+        var element = this.GetElement(mouseEvent.X, mouseEvent.Y);
+
+        element?.InvokeDoubleClick(CreateEventTarget(element, mouseEvent));
     }
 
     private unsafe void OnMouseMove(in Platforms.Display.MouseEvent mouseEvent)
@@ -291,6 +304,33 @@ public sealed partial class NodeTree
         {
             this.lastSelectedElement?.InvokeMouseOut(CreateEventTarget(this.lastSelectedElement, mouseEvent));
             this.lastSelectedElement = null;
+        }
+    }
+
+    private void OnMouseUp(in Platforms.Display.MouseEvent mouseEvent)
+    {
+        var element = this.GetElement(mouseEvent.X, mouseEvent.Y);
+
+        if (element != null)
+        {
+            var eventTarget = CreateEventTarget(element, mouseEvent);
+
+            if (mouseEvent.Button == mouseEvent.PrimaryButton)
+            {
+                element.InvokeDeactivate();
+            }
+
+            if (element == this.lastFocusedElement)
+            {
+                element.InvokeClick(eventTarget);
+            }
+
+            this.lastFocusedElement = element;
+        }
+        else
+        {
+            this.lastFocusedElement?.InvokeDeactivate();
+            this.lastFocusedElement = null;
         }
     }
 
@@ -344,9 +384,11 @@ public sealed partial class NodeTree
 
     public void Destroy()
     {
-        this.Window.Click     -= this.OnMouseClick;
-        this.Window.Context   -= this.OnContextMenu;
-        this.Window.MouseMove -= this.OnMouseMove;
+        this.Window.Context     -= this.OnContext;
+        this.Window.DoubleClick -= this.OnDoubleClick;
+        this.Window.MouseDown   -= this.OnMouseDown;
+        this.Window.MouseMove   -= this.OnMouseMove;
+        this.Window.MouseUp     -= this.OnMouseUp;
 
         this.Root.Destroy();
         this.buffer.Dispose();
@@ -359,9 +401,11 @@ public sealed partial class NodeTree
 
         this.UpdateBuffer();
 
-        this.Window.Click     += this.OnMouseClick;
-        this.Window.Context   += this.OnContextMenu;
-        this.Window.MouseMove += this.OnMouseMove;
+        this.Window.Context     += this.OnContext;
+        this.Window.DoubleClick += this.OnDoubleClick;
+        this.Window.MouseDown   += this.OnMouseDown;
+        this.Window.MouseMove   += this.OnMouseMove;
+        this.Window.MouseUp     += this.OnMouseUp;
 
         this.CallInitialize();
         this.CallLateUpdate();
