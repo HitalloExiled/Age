@@ -76,7 +76,7 @@ internal struct StyleData
         return target;
     }
 
-    public void Append(in StyleData source) =>
+    public void Merge(in StyleData source) =>
         Merge(ref this, source, this);
 }
 
@@ -84,147 +84,147 @@ public record Style
 {
     internal event Action<StyleProperty>? Changed;
 
-    internal StyleData Data;
+    private StyleData data;
 
     public AlignmentKind? Alignment
     {
-        get => this.Data.Alignment;
-        set => this.Set(ref this.Data.Alignment, value, StyleProperty.Alignment);
+        get => this.data.Alignment;
+        set => this.Set(ref this.data.Alignment, value, StyleProperty.Alignment);
     }
 
     public Color? BackgroundColor
     {
-        get => this.Data.BackgroundColor;
-        set => this.Set(ref this.Data.BackgroundColor, value, StyleProperty.BackgroundColor);
+        get => this.data.BackgroundColor;
+        set => this.Set(ref this.data.BackgroundColor, value, StyleProperty.BackgroundColor);
     }
 
     public Unit? Baseline
     {
-        get => this.Data.Baseline;
-        set => this.Set(ref this.Data.Baseline, value, StyleProperty.Baseline);
+        get => this.data.Baseline;
+        set => this.Set(ref this.data.Baseline, value, StyleProperty.Baseline);
     }
 
     public Border? Border
     {
-        get => this.Data.Border;
-        set => this.Set(ref this.Data.Border, value, StyleProperty.Border);
+        get => this.data.Border;
+        set => this.Set(ref this.data.Border, value, StyleProperty.Border);
     }
 
     public BoxSizing? BoxSizing
     {
-        get => this.Data.BoxSizing;
-        set => this.Set(ref this.Data.BoxSizing, value, StyleProperty.BoxSizing);
+        get => this.data.BoxSizing;
+        set => this.Set(ref this.data.BoxSizing, value, StyleProperty.BoxSizing);
     }
 
     public Color? Color
     {
-        get => this.Data.Color;
-        set => this.Set(ref this.Data.Color, value, StyleProperty.Color);
+        get => this.data.Color;
+        set => this.Set(ref this.data.Color, value, StyleProperty.Color);
     }
 
     public ContentJustificationKind? ContentJustification
     {
-        get => this.Data.ContentJustification;
-        set => this.Set(ref this.Data.ContentJustification, value, StyleProperty.ContentJustification);
+        get => this.data.ContentJustification;
+        set => this.Set(ref this.data.ContentJustification, value, StyleProperty.ContentJustification);
     }
 
     public string? FontFamily
     {
-        get => this.Data.FontFamily;
-        set => this.Set(ref this.Data.FontFamily, value, StyleProperty.FontFamily);
+        get => this.data.FontFamily;
+        set => this.Set(ref this.data.FontFamily, value, StyleProperty.FontFamily);
     }
 
     public ushort? FontSize
     {
-        get => this.Data.FontSize;
-        set => this.Set(ref this.Data.FontSize, value, StyleProperty.FontSize);
+        get => this.data.FontSize;
+        set => this.Set(ref this.data.FontSize, value, StyleProperty.FontSize);
     }
 
     public bool? Hidden
     {
-        get => this.Data.Hidden;
-        set => this.Set(ref this.Data.Hidden, value, StyleProperty.Hidden);
+        get => this.data.Hidden;
+        set => this.Set(ref this.data.Hidden, value, StyleProperty.Hidden);
     }
 
     public ItemsAlignmentKind? ItemsAlignment
     {
-        get => this.Data.ItemsAlignment;
-        set => this.Set(ref this.Data.ItemsAlignment, value, StyleProperty.ItemsAlignment);
+        get => this.data.ItemsAlignment;
+        set => this.Set(ref this.data.ItemsAlignment, value, StyleProperty.ItemsAlignment);
     }
 
     public RectEdges? Margin
     {
-        get => this.Data.Margin;
-        set => this.Set(ref this.Data.Margin, value, StyleProperty.Margin);
+        get => this.data.Margin;
+        set => this.Set(ref this.data.Margin, value, StyleProperty.Margin);
     }
 
     public SizeUnit? MaxSize
     {
-        get => this.Data.MaxSize;
-        set => this.Set(ref this.Data.MaxSize, value, StyleProperty.MaxSize);
+        get => this.data.MaxSize;
+        set => this.Set(ref this.data.MaxSize, value, StyleProperty.MaxSize);
     }
 
     public SizeUnit? MinSize
     {
-        get => this.Data.MinSize;
-        set => this.Set(ref this.Data.MinSize, value, StyleProperty.MinSize);
+        get => this.data.MinSize;
+        set => this.Set(ref this.data.MinSize, value, StyleProperty.MinSize);
     }
 
     public RectEdges? Padding
     {
-        get => this.Data.Padding;
-        set => this.Set(ref this.Data.Padding, value, StyleProperty.Padding);
+        get => this.data.Padding;
+        set => this.Set(ref this.data.Padding, value, StyleProperty.Padding);
     }
 
     public Point<float>? Pivot
     {
-        get => this.Data.Pivot;
-        set => this.Set(ref this.Data.Pivot, value, StyleProperty.Pivot);
+        get => this.data.Pivot;
+        set => this.Set(ref this.data.Pivot, value, StyleProperty.Pivot);
     }
 
     public Point<int>? Position
     {
-        get => this.Data.Position;
-        set => this.Set(ref this.Data.Position, value, StyleProperty.Position);
+        get => this.data.Position;
+        set => this.Set(ref this.data.Position, value, StyleProperty.Position);
     }
 
     public PositionKind? Positioning
     {
-        get => this.Data.Positioning;
-        set => this.Set(ref this.Data.Positioning, value, StyleProperty.Positioning);
+        get => this.data.Positioning;
+        set => this.Set(ref this.data.Positioning, value, StyleProperty.Positioning);
     }
 
     public float? Rotation
     {
-        get => this.Data.Rotation;
-        set => this.Set(ref this.Data.Rotation, value, StyleProperty.Rotation);
+        get => this.data.Rotation;
+        set => this.Set(ref this.data.Rotation, value, StyleProperty.Rotation);
     }
 
     public SizeUnit? Size
     {
-        get => this.Data.Size;
-        set => this.Set(ref this.Data.Size, value, StyleProperty.Size);
+        get => this.data.Size;
+        set => this.Set(ref this.data.Size, value, StyleProperty.Size);
     }
 
     public StackKind? Stack
     {
-        get => this.Data.Stack;
-        set => this.Set(ref this.Data.Stack, value, StyleProperty.Stack);
+        get => this.data.Stack;
+        set => this.Set(ref this.data.Stack, value, StyleProperty.Stack);
     }
 
     public TextAlignmentKind? TextAlignment
     {
-        get => this.Data.TextAlignment;
-        set => this.Set(ref this.Data.TextAlignment, value, StyleProperty.TextAlignment);
+        get => this.data.TextAlignment;
+        set => this.Set(ref this.data.TextAlignment, value, StyleProperty.TextAlignment);
     }
 
     private Style(StyleData data) =>
-        this.Data = data;
+        this.data = data;
 
     public Style() { }
 
     public static Style Merge(Style left, Style right) =>
-        new(StyleData.Merge(left.Data, right.Data));
+        new(StyleData.Merge(left.data, right.data));
 
     private void Set<T>(ref T? field, T? value, StyleProperty property)
     {
@@ -236,6 +236,12 @@ public record Style
         }
     }
 
-    public void Append(Style source) =>
-        this.Data.Append(source.Data);
+    public void Clear() =>
+        this.data = default;
+
+    public void Copy(Style source) =>
+        this.data = source.data;
+
+    public void Merge(Style source) =>
+        this.data.Merge(source.data);
 }

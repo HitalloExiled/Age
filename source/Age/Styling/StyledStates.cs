@@ -3,6 +3,7 @@ namespace Age.Styling;
 public class StyledStates
 {
     private Style? active;
+    private Style? @base;
     private Style? @checked;
     private Style? disabled;
     private Style? enabled;
@@ -10,6 +11,12 @@ public class StyledStates
     private Style? hovered;
 
     public event Action<StyleProperty>? Changed;
+
+    public Style? Base
+    {
+        get => this.@base;
+        set => this.Set(ref this.@base, value);
+    }
 
     public Style? Active
     {

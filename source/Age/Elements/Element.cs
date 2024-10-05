@@ -192,14 +192,18 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     public Style Style
     {
-        get => this.Layout.Styles.Base ??= new();
-        set => this.Layout.Styles.Base = value;
+        get => (this.Layout.State.Styles ??= new()).Base ??= new();
+        set
+        {
+            this.Layout.State.Styles ??= new();
+            this.Layout.State.Styles.Base = value;
+        }
     }
 
-    public StyledStates? StyledStates
+    public StyledStates? States
     {
-        get => this.Layout.Styles.StyledStates;
-        set => this.Layout.Styles.StyledStates = value;
+        get => this.Layout.State.Styles;
+        set => this.Layout.State.Styles = value;
     }
 
     public string? Text
@@ -214,7 +218,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 {
                     builder.Append(textNode.Value);
 
-                    if (this.Layout.Styles.Current.Stack == StackKind.Vertical)
+                    if (this.Layout.State.Style.Stack == StackKind.Vertical)
                     {
                         builder.Append('\n');
                     }
@@ -369,13 +373,13 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.Layout.IndexChanged();
 
     internal void InvokeActivate() =>
-        this.Layout.Styles.AddState(StyleStateManager.State.Active);
+        this.Layout.State.AddState(StyledStateManager.State.Active);
 
     internal void InvokeBlur(in MouseEvent mouseEvent)
     {
         if (this.IsFocusable)
         {
-            this.Layout.Styles.RemoveState(StyleStateManager.State.Focus);
+            this.Layout.State.RemoveState(StyledStateManager.State.Focus);
             this.IsFocused = false;
             this.Blured?.Invoke(mouseEvent);
         }
@@ -387,7 +391,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.Context?.Invoke(contextEvent);
 
     internal void InvokeDeactivate() =>
-        this.Layout.Styles.RemoveState(StyleStateManager.State.Active);
+        this.Layout.State.RemoveState(StyledStateManager.State.Active);
 
     internal void InvokeDoubleClick(in MouseEvent mouseEvent) =>
         this.DoubleClicked?.Invoke(mouseEvent);
@@ -396,7 +400,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         if (this.IsFocusable)
         {
-            this.Layout.Styles.AddState(StyleStateManager.State.Focus);
+            this.Layout.State.AddState(StyledStateManager.State.Focus);
             this.IsFocused = true;
             this.Focused?.Invoke(mouseEvent);
         }
@@ -407,32 +411,32 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     internal void InvokeMouseOut(in MouseEvent mouseEvent)
     {
-        this.Layout.Styles.RemoveState(StyleStateManager.State.Hovered);
+        this.Layout.State.RemoveState(StyledStateManager.State.Hovered);
         this.MouseOut?.Invoke(mouseEvent);
     }
 
     internal void InvokeMouseOver(in MouseEvent mouseEvent)
     {
-        this.Layout.Styles.AddState(StyleStateManager.State.Hovered);
+        this.Layout.State.AddState(StyledStateManager.State.Hovered);
         this.MouseOver?.Invoke(mouseEvent);
     }
 
     public void Blur()
     {
-        this.Layout.Styles.RemoveState(StyleStateManager.State.Focus);
+        this.Layout.State.RemoveState(StyledStateManager.State.Focus);
         this.IsFocused = false;
         this.Blured?.Invoke(new() { Target = this });
     }
 
     public void Click()
     {
-        this.Layout.Styles.AddState(StyleStateManager.State.Active);
+        this.Layout.State.AddState(StyledStateManager.State.Active);
         this.Clicked?.Invoke(new() { Target = this });
     }
 
     public void Focus()
     {
-        this.Layout.Styles.AddState(StyleStateManager.State.Focus);
+        this.Layout.State.AddState(StyledStateManager.State.Focus);
         this.IsFocused = true;
         this.Focused?.Invoke(new() { Target = this });
     }

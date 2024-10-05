@@ -1,6 +1,6 @@
 namespace Age.Styling;
 
-internal partial class StyleStateManager
+internal partial class StyledStateManager
 {
     [Flags]
     public enum State
