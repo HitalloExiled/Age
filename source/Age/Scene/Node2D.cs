@@ -74,8 +74,6 @@ public abstract class Node2D : Node
         set => this.LocalTransform = this.ParentTransform.Inverse() * value * this.PivotedTransform.Inverse();
     }
 
-    public bool Visible { get; set; } = true;
-
     protected void Set<T>(ref T field, in T value, Action callback)
     {
         if (!Equals(field, value))

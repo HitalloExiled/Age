@@ -5,6 +5,7 @@ public struct MouseEvent
     public ushort         X;
     public ushort         Y;
     public MouseButton    Button;
+    public MouseButton    PrimaryButton;
     public MouseKeyStates KeyStates;
     public float          Delta;
 };

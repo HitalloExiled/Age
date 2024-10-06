@@ -33,6 +33,22 @@ public class AlignmentTest
                 Color          = Color.White,
                 FontSize       = 32,
                 ItemsAlignment = ItemsAlignmentKind.Baseline,
+            },
+            States = new()
+            {
+                Active = new()
+                {
+                    Border = new(borderSize, 0, Color.White),
+                },
+                Focus = new()
+                {
+                    Border = new(borderSize, 0, Color.Cyan),
+                },
+                Hovered = new()
+                {
+                    Border = new(borderSize, 0, Color.Red),
+                    Stack  = StackKind.Vertical,
+                }
             }
         };
 
@@ -51,7 +67,7 @@ public class AlignmentTest
             }
         };
 
-        horizontal_a_container.Focus();
+        // horizontal_a_container.Focus();
 
         var horizontal_a_left = new FlexBox()
         {

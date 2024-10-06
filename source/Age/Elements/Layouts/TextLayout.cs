@@ -1,3 +1,4 @@
+using Age.Commands;
 using Age.Services;
 
 namespace Age.Elements.Layouts;
@@ -20,6 +21,16 @@ internal class TextLayout(TextNode target): Layout
 
                 this.RequestUpdate();
             }
+        }
+    }
+
+    public void IndexChanged()
+    {
+        for (var i = 0; i < this.Target.Commands.Count; i++)
+        {
+            var command = (RectCommand)this.Target.Commands[i];
+
+            command.ObjectId = (uint)((this.Target.Index + 1u) | (i + 1u) << 16);
         }
     }
 
