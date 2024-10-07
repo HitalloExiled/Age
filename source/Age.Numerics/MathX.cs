@@ -4,9 +4,11 @@ namespace Age.Numerics;
 
 public static class MathX
 {
+    private const float EPSILON = 0.00001f;
+
     public static bool IsZeroApprox<T>(T value) where T : IFloatingPoint<T> =>
-        value < T.CreateChecked(0.000001);
+        value < T.CreateChecked(EPSILON);
 
     public static bool IsApprox<T>(T left, T right) where T : IFloatingPoint<T> =>
-        T.Abs(left - right) < T.CreateChecked(0.000001);
+        T.Abs(left - right) < T.CreateChecked(EPSILON);
 }

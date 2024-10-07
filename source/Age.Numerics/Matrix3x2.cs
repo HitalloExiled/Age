@@ -51,20 +51,8 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public T Rotation
     {
-        get => Vector2.Angle(Unsafe.As<T, Vector2<T>>(ref this.M11).Normalized(), Vector3<T>.Right);
-        set
-        {
-            var scale = this.Scale;
-
-            ref var x = ref Unsafe.As<T, Vector2<T>>(ref this.M11);
-            ref var y = ref Unsafe.As<T, Vector2<T>>(ref this.M21);
-
-            var cos = T.Cos(value);
-            var sin = T.Sin(value);
-
-            x = new Vector2<T>(cos,  sin) * scale.X;
-            y = new Vector2<T>(-sin, cos) * scale.Y;
-        }
+        get => Vector2.Angle(Vector3<T>.Right, Unsafe.As<T, Vector2<T>>(ref this.M11).Normalized());
+        set => ApplyRotatation(ref this, value, this.Scale, default);
     }
 
     public Vector2<T> Scale
@@ -86,6 +74,12 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         }
     }
 
+    public Vector2<T> Skewing
+    {
+        readonly get => new(T.Atan(this.M21), T.Atan(this.M12));
+        set => ApplySkew(ref this, value, default);
+    }
+
     public Vector2<T> Translation
     {
         get => Unsafe.As<T, Vector2<T>>(ref this.M31);
@@ -96,10 +90,10 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public readonly bool IsIdentity =>
         this.M11 == T.One  &&
-        this.M22 == T.One  &&
-        this.M21 == T.Zero &&
-        this.M31 == T.Zero &&
         this.M12 == T.Zero &&
+        this.M21 == T.Zero &&
+        this.M22 == T.One  &&
+        this.M31 == T.Zero &&
         this.M32 == T.Zero;
 
     public Matrix3x2(in Vector2<T> column1, in Vector2<T> column2, in Vector2<T> column3)
@@ -128,6 +122,129 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         z = translation;
     }
 
+    private static Matrix3x2<T> ApplyRotatation(ref Matrix3x2<T> matrix, T radians, in Vector2<T> scale, in Vector2<T> origin)
+    {
+        var fradians = MathF.IEEERemainder(float.CreateChecked(radians), (float)Math.PI * 2f);
+
+        T cos;
+        T sin;
+
+        if (fradians > -1.7453294E-05f && fradians < 1.7453294E-05f)
+        {
+            cos = T.One;
+            sin = T.Zero;
+        }
+        else if (fradians > 1.570779f && fradians < 1.5708138f)
+        {
+            cos = T.Zero;
+            sin = T.One;
+        }
+        else if (fradians < -3.1415753f || fradians > 3.1415753f)
+        {
+            cos = -T.One;
+            sin = T.Zero;
+        }
+        else if (fradians > -1.5708138f && fradians < -1.570779f)
+        {
+            cos = T.Zero;
+            sin = -T.One;
+        }
+        else
+        {
+            var t = T.CreateChecked(fradians);
+
+            cos = T.Cos(t);
+            sin = T.Sin(t);
+        }
+
+        var translationX = origin.X * (T.One - cos) + origin.Y * sin;
+        var translationY = origin.Y * (T.One - cos) - origin.X * sin;
+
+        matrix.M11 = cos            * scale.X;
+        matrix.M12 = sin            * scale.X;
+        matrix.M21 = (T.Zero - sin) * scale.Y;
+        matrix.M22 = cos            * scale.Y;
+        matrix.M31 += translationX;
+        matrix.M32 += translationY;
+
+        return matrix;
+    }
+
+    public static void ApplySkew(ref Matrix3x2<T> matrix, in Vector2<T> radians, in Vector2<T> origin)
+    {
+        var skewX = T.Tan(radians.X);
+        var skewY = T.Tan(radians.Y);
+
+        var x = (T.Zero - origin.Y) * skewX;
+        var y = (T.Zero - origin.X) * skewY;
+
+        matrix.M12 = skewY;
+        matrix.M21 = skewX;
+        matrix.M31 += x;
+        matrix.M32 += y;
+    }
+
+    public static Matrix3x2<T> CreateRotated(T radians) =>
+        CreateRotated(radians, default);
+
+    public static Matrix3x2<T> CreateRotated(T radians, in Vector2<T> origin)
+    {
+        Unsafe.SkipInit(out Matrix3x2<T> matrix);
+
+        ApplyRotatation(ref matrix, radians, Vector2<T>.One, origin);
+
+        return matrix;
+    }
+
+    public static Matrix3x2<T> CreateScaled(in Vector2<T> scale) =>
+        CreateScaled(scale.X, scale.Y);
+
+    public static Matrix3x2<T> CreateScaled(T x, T y)
+    {
+        Unsafe.SkipInit(out Matrix3x2<T> matrix);
+
+        matrix.M11 = x;
+        matrix.M12 = T.Zero;
+        matrix.M21 = T.Zero;
+        matrix.M22 = y;
+        matrix.M31 = T.Zero;
+        matrix.M32 = T.Zero;
+
+        return matrix;
+    }
+
+    public static Matrix3x2<T> CreateSkewed(T radiansX, T radiansY, Vector2<T> origin) =>
+        CreateSkewed(new(radiansX, radiansY), origin);
+
+    public static Matrix3x2<T> CreateSkewed(in Vector2<T> radians, Vector2<T> origin)
+    {
+        Unsafe.SkipInit(out Matrix3x2<T> matrix);
+
+        matrix.M11 = T.One;
+        matrix.M22 = T.One;
+
+        ApplySkew(ref matrix, radians, origin);
+
+        return matrix;
+    }
+
+    public static Matrix3x2<T> CreateTranslated(in Vector2<T> translation) =>
+        CreateTranslated(translation.X, translation.Y);
+
+    public static Matrix3x2<T> CreateTranslated(T x, T y)
+    {
+        Unsafe.SkipInit(out Matrix3x2<T> matrix);
+
+        matrix.M11 = T.One;
+        matrix.M12 = T.Zero;
+        matrix.M21 = T.Zero;
+        matrix.M22 = T.One;
+        matrix.M31 = x;
+        matrix.M32 = y;
+
+        return matrix;
+    }
+
     public readonly Matrix3x2<T> Inverse()
     {
         var determinant = this.Determinant;
@@ -151,20 +268,40 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         return result;
     }
 
+    public readonly bool IsAprox(Matrix3x2<T> other) =>
+        MathX.IsApprox(this.M11, other.M11)
+        && MathX.IsApprox(this.M12, other.M12)
+        && MathX.IsApprox(this.M21, other.M21)
+        && MathX.IsApprox(this.M22, other.M22)
+        && MathX.IsApprox(this.M31, other.M31)
+        && MathX.IsApprox(this.M32, other.M32);
+
+    public void Rotate(T radians) =>
+        ApplyRotatation(ref this, radians, this.Scale, default);
+
+    public void Rotate(T radians, in Vector2<T> origin) =>
+        ApplyRotatation(ref this, radians, this.Scale, origin);
+
+    public void Skew(T radiansX, T radiansY, in Vector2<T> origin) =>
+        ApplySkew(ref this, new(radiansX, radiansY), origin);
+
+    public void Skew(in Vector2<T> radians, in Vector2<T> origin) =>
+        ApplySkew(ref this, radians, origin);
+
     public override readonly string ToString() =>
         $"[{this.M11}, {this.M12}], [{this.M21}, {this.M22}], [{this.M31}, {this.M32}]";
 
-    public static Matrix3x2<T> operator *(in Matrix3x2<T> a, in Matrix3x2<T> b)
+    public static Matrix3x2<T> operator *(in Matrix3x2<T> left, in Matrix3x2<T> right)
     {
-        Unsafe.SkipInit<Matrix3x2<T>>(out var c);
+        Unsafe.SkipInit(out Matrix3x2<T> result);
 
-        c.M11 = a.M11 * b.M11 + a.M21 * b.M12;
-        c.M12 = a.M12 * b.M11 + a.M22 * b.M12;
-        c.M21 = a.M11 * b.M21 + a.M21 * b.M22;
-        c.M22 = a.M12 * b.M21 + a.M22 * b.M22;
-        c.M31 = a.M11 * b.M31 + a.M21 * b.M32 + a.M31;
-        c.M32 = a.M12 * b.M31 + a.M22 * b.M32 + a.M32;
+        result.M11 = left.M11 * right.M11 + left.M12 * right.M21;
+        result.M12 = left.M11 * right.M12 + left.M12 * right.M22;
+	    result.M21 = left.M21 * right.M11 + left.M22 * right.M21;
+        result.M22 = left.M21 * right.M12 + left.M22 * right.M22;
+	    result.M31 = left.M31 * right.M11 + left.M32 * right.M21 + right.M31;
+        result.M32 = left.M31 * right.M12 + left.M32 * right.M22 + right.M32;
 
-        return c;
+        return result;
     }
 }
