@@ -30,7 +30,7 @@ public class Matrix3x2Test
         Assert.True(matrix.Scale.IsApprox(Vector2<float>.One));
     }
 
-    public static TheoryData<float> RotateData => new([0, 45, 90, 135, 180, 225, 270, 315, 359]);
+    public static TheoryData<float> RotateData => new([0, 45, 90, 135, 179, -179, -135, -90, -45]);
 
     [Theory]
     [MemberData(nameof(RotateData), MemberType = typeof(Matrix3x2Test))]
@@ -119,7 +119,7 @@ public class Matrix3x2Test
         Assert.True(matrix.Scale.IsApprox(Vector2<float>.One));
     }
 
-    public static TheoryData<(float, Vector2<float>)> RotateAndScaleData => new(
+    public static TheoryData<(float, Vector2<float>)> ScaleAndRotateData => new(
         [
             (0,  new(1, 1)),
             (45, new(0.5f, 0.5f)),
@@ -129,8 +129,8 @@ public class Matrix3x2Test
     );
 
     [Theory]
-    [MemberData(nameof(RotateAndScaleData), MemberType = typeof(Matrix3x2Test))]
-    public void RotateAndScale((float Rotation, Vector2<float> Scale) data)
+    [MemberData(nameof(ScaleAndRotateData), MemberType = typeof(Matrix3x2Test))]
+    public void ScaleAndRotate((float Rotation, Vector2<float> Scale) data)
     {
         var rotation = Angle.Radians(data.Rotation);
 
@@ -143,8 +143,8 @@ public class Matrix3x2Test
     }
 
     [Theory]
-    [MemberData(nameof(RotateAndScaleData), MemberType = typeof(Matrix3x2Test))]
-    public void UpdateRotatationAndScale((float Rotation, Vector2<float> Scale) data)
+    [MemberData(nameof(ScaleAndRotateData), MemberType = typeof(Matrix3x2Test))]
+    public void UpdateScaleAndRotatation((float Rotation, Vector2<float> Scale) data)
     {
         var rotation = Angle.Radians(data.Rotation);
 
@@ -157,7 +157,7 @@ public class Matrix3x2Test
         Assert.True(matrix.Scale.IsApprox(data.Scale));
     }
 
-    public static TheoryData<(Vector2<float>, float, Vector2<float>)> TranslateRotateAndScaleData => new(
+    public static TheoryData<(Vector2<float>, float, Vector2<float>)> ScaleRotateAndTranslateData => new(
         [
             (new(1, 1),           0, new(1, 1)),
             (new(0.5f, 0.5f),    45, new(0.5f, 0.5f)),
@@ -167,8 +167,8 @@ public class Matrix3x2Test
     );
 
     [Theory]
-    [MemberData(nameof(TranslateRotateAndScaleData), MemberType = typeof(Matrix3x2Test))]
-    public void TranslateRotateAndScale((Vector2<float> Translation, float Rotation, Vector2<float> Scale) data)
+    [MemberData(nameof(ScaleRotateAndTranslateData), MemberType = typeof(Matrix3x2Test))]
+    public void ScaleRotateAndTranslate((Vector2<float> Translation, float Rotation, Vector2<float> Scale) data)
     {
         var rotation = Angle.Radians(data.Rotation);
 
@@ -183,16 +183,16 @@ public class Matrix3x2Test
     }
 
     [Theory]
-    [MemberData(nameof(TranslateRotateAndScaleData), MemberType = typeof(Matrix3x2Test))]
-    public void UpdateTranslationRotationAndScale((Vector2<float> Translation, float Rotation, Vector2<float> Scale) data)
+    [MemberData(nameof(ScaleRotateAndTranslateData), MemberType = typeof(Matrix3x2Test))]
+    public void UpdateScaleRotateAndTranslate((Vector2<float> Translation, float Rotation, Vector2<float> Scale) data)
     {
         var rotation = Angle.Radians(data.Rotation);
 
         var matrix = Matrix3x2<float>.Identity;
 
         matrix.Translation = data.Translation;
-        matrix.Rotation    = rotation;
         matrix.Scale       = data.Scale;
+        matrix.Rotation    = rotation;
 
         Assert.Equal(data.Translation, matrix.Translation);
         Assert.True(MathX.IsApprox(matrix.Rotation, rotation));

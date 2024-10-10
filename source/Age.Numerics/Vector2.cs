@@ -63,6 +63,14 @@ public record struct Vector2<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
     public readonly Vector2<T> Normalized() =>
         this.Length is T length && length > T.Zero ? this / length : default;
 
+    public readonly Vector2<T> Rotated(T radians)
+    {
+        var cos = T.Cos(radians);
+        var sin = T.Sin(radians);
+
+        return new(this.X * cos - this.Y * sin, this.X * sin + this.Y * cos);
+    }
+
     public readonly Point<U> ToPoint<U>() where U : INumber<U> =>
         new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
 
@@ -88,6 +96,9 @@ public record struct Vector2<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
         new(left.X * right.X, left.Y * right.Y);
 
     public static Vector2<T> operator *(in Vector2<T> vector, T scalar) =>
+        new(vector.X * scalar, vector.Y * scalar);
+
+    public static Vector2<T> operator *(T scalar, in Vector2<T> vector) =>
         new(vector.X * scalar, vector.Y * scalar);
 
     public static Vector2<T> operator /(in Vector2<T> left, in Vector2<T> right) =>

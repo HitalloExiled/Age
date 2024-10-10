@@ -10,19 +10,19 @@ public record struct Transform2D
     public Vector2<float> Position
     {
         readonly get => this.matrix.Translation;
-        set          => this.matrix = Matrix3x2<float>.CreateTranslated(value) * this.matrix.Inverse();
+        set          => this.matrix.Translation = value;
     }
 
     public float Rotation
     {
         readonly get => this.matrix.Rotation;
-        set          => this.matrix = Matrix3x2<float>.CreateRotated(value) * this.matrix.Inverse();
+        set          => this.matrix.Rotation = value;
     }
 
     public Vector2<float> Scale
     {
         readonly get => this.matrix.Scale;
-        set          => this.matrix = Matrix3x2<float>.CreateScaled(value) * this.matrix.Inverse();
+        set          => this.matrix.Scale = value;
     }
 
     public Transform2D() =>
