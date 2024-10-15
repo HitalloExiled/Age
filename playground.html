@@ -23,11 +23,12 @@
         }
 
         .green {
-            display: var(--display);
+            display: flex;
             border: var(--border) solid green;
-            font-size: 16;
-            height: 20px;
-            margin: 100px;
+            border-radius: 50px;
+            /* font-size: 16; */
+            height: 100px;
+            width:  200px;
             /* font-family: 'Lucida Console'; */
             /* width:  50%;
             height: 50%; */
@@ -64,9 +65,12 @@
 </head>
 <body>
     <button id="clicker">Click Me</button>
+    <span class="green" style="border-color: red;">
+        <span class="green"></span>
+    </span>
+
     <span class="stack">
         <span class="red">01</span>
-        <span class="green">02</span>
         <span class="blue">03</span>
     </span>
     <!-- <span class="stack-v">

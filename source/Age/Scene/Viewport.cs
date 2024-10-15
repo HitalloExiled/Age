@@ -2,7 +2,6 @@ using Age.Commands;
 using Age.Elements;
 using Age.Numerics;
 using Age.Resources;
-using Age.Storage;
 using Age.Styling;
 
 namespace Age.Scene;
@@ -42,11 +41,15 @@ public class Viewport : Element
     {
         if (this.SingleCommand is not RectCommand command)
         {
-            this.SingleCommand = command = new();
+            this.SingleCommand = command = new()
+            {
+                Id       = this.GetHashCode(),
+                Diffuse  = default!,
+            };
         }
 
-        command.Rect           = new Rect<float>(this.renderTarget.Size.Cast<float>(), default);
-        command.SampledTexture = new(this.renderTarget.Texture, TextureStorage.Singleton.DefaultSampler, UVRect.Normalized);
+        command.Rect    = new Rect<float>(this.renderTarget.Size.Cast<float>(), default);
+        command.Diffuse = new(this.renderTarget.Texture, UVRect.Normalized);
     }
 
     protected override void Destroyed() =>

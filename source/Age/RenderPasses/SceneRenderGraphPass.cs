@@ -92,7 +92,7 @@ public partial class SceneRenderGraphPass : RenderGraphPass
         return this.Renderer.CreateRenderPass(createInfo);
     }
 
-    private unsafe UboHandle UpdateUbo(Camera3D camera, Mesh mesh, in Matrix4x4<float> transform, in VkExtent2D viewport)
+    private unsafe BufferHandlePair UpdateUbo(Camera3D camera, Mesh mesh, in Matrix4x4<float> transform, in VkExtent2D viewport)
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
 
@@ -123,7 +123,7 @@ public partial class SceneRenderGraphPass : RenderGraphPass
         return cameraBuffer;
     }
 
-    private unsafe UniformSet GetUniformSet(Camera3D camera, UboHandle cameraBuffer, Material material)
+    private unsafe UniformSet GetUniformSet(Camera3D camera, BufferHandlePair cameraBuffer, Material material)
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
 
@@ -134,7 +134,6 @@ public partial class SceneRenderGraphPass : RenderGraphPass
             var combinedImageSampler = new CombinedImageSamplerUniform
             {
                 Binding     = 1,
-                Sampler     = material.Diffuse.Sampler,
                 Texture     = material.Diffuse,
                 ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
             };

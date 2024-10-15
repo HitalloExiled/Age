@@ -27,7 +27,7 @@ public class Texture : Disposable
 
     public Image Image { get; }
 
-    internal SamplerResource Sampler { get; set; } = TextureStorage.Singleton.DefaultSampler;
+    internal SamplerResource Sampler { get; set; } = new();
 
     private static Texture CreateDefaultTexture()
     {

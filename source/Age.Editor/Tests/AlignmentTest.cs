@@ -78,6 +78,7 @@ public class AlignmentTest
                 Alignment = AlignmentKind.Left,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
+                Size      = new(null, (Percentage)100),
             }
         };
 

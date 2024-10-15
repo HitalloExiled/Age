@@ -179,7 +179,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 {
                     if (node is Element element)
                     {
-                        element.Canvas = value;
+                        element.canvas = value;
                     }
                 }
 
@@ -259,7 +259,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     public override Transform2D Transform
     {
-        get => base.Transform * this.Layout.Transform;
+        get => this.Layout.Transform * base.Transform;
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
 
@@ -326,6 +326,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             tree.IsDirty = true;
         }
+
+        this.Layout.ElementConnected(tree);
     }
 
     protected override void ChildAppended(Node child)
@@ -367,6 +369,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             tree.IsDirty = true;
         }
+
+        this.Layout.ElementDisconnected(tree);
     }
 
     protected override void IndexChanged() =>

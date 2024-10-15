@@ -1,6 +1,6 @@
 namespace Age.Numerics;
 
-public static class Common
+internal static class Common
 {
     public static void ThrowIfOutOfRange(int min, int max, int value)
     {

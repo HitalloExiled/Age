@@ -19,7 +19,7 @@ public abstract class ContainerNode : Node2D
             {
                 this.transformCache = new()
                 {
-                    Value   = base.TransformCache * this.Layout.Transform,
+                    Value   = this.Layout.Transform * base.TransformCache,
                     Version = CacheVersion
                 };
             }

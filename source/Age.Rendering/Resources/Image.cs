@@ -27,7 +27,7 @@ public class Image : Resource<VkImage>
         {
             VkImageAspectFlags aspect = default;
 
-            if (this.Usage.HasFlag(VkImageUsageFlags.ColorAttachment))
+            if (this.Usage.HasFlag(VkImageUsageFlags.ColorAttachment) || this.Usage.HasFlag(VkImageUsageFlags.Sampled))
             {
                 aspect |= VkImageAspectFlags.Color;
             }

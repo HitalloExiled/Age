@@ -17,7 +17,7 @@ internal partial class StyledStateManager
             if (this.states != value)
             {
                 this.states = value;
-                this.InvokeChanged();
+                this.isDirty = true;
             }
         }
     }

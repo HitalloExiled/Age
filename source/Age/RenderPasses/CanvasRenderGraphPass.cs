@@ -5,6 +5,7 @@ using Age.Rendering.Shaders.Canvas;
 using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
 using Age.Services;
+using Age.Storage;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -13,12 +14,12 @@ namespace Age.RenderPasses;
 
 internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 {
-    private readonly Framebuffer[]                   framebuffers = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
-    private readonly IndexBuffer                     indexBuffer;
-    private readonly RenderPass                      renderPass;
-    private readonly Dictionary<Texture, UniformSet> uniformSets = [];
-    private readonly VertexBuffer                    vertexBuffer;
-    private readonly IndexBuffer                     wireframeIndexBuffer;
+    private readonly Framebuffer[]                     framebuffers = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly IndexBuffer                       indexBuffer;
+    private readonly RenderPass                        renderPass;
+    private readonly Dictionary<int, UniformSet>       uniformSets = [];
+    private readonly VertexBuffer                      vertexBuffer;
+    private readonly IndexBuffer                       wireframeIndexBuffer;
 
     private UniformSet? lastUniformSet;
 
@@ -148,21 +149,29 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             Flags     = command.Flags,
             Rect      = command.Rect,
             Transform = transform,
-            UV        = command.SampledTexture.UV,
+            UV        = command.Diffuse.UV,
             Viewport  = viewport,
         };
 
-        if (!this.uniformSets.TryGetValue(command.SampledTexture.Texture, out var uniformSet))
+        var hashcode = HashCode.Combine(command.Id, command.Diffuse.GetHashCode(), command.Layer?.Texture.GetHashCode() ?? 0);
+
+        if (!this.uniformSets.TryGetValue(hashcode, out var uniformSet))
         {
-            var combinedImageSamplerUniform = new CombinedImageSamplerUniform
+            var diffuse = new CombinedImageSamplerUniform
             {
                 Binding     = 0,
-                Sampler     = command.SampledTexture.Sampler,
-                Texture     = command.SampledTexture.Texture,
+                Texture     = command.Diffuse.Texture,
                 ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
             };
 
-            this.uniformSets[command.SampledTexture.Texture] = uniformSet = new UniformSet(resource.Pipeline, [combinedImageSamplerUniform]);
+            var stencil = new CombinedImageSamplerUniform
+            {
+                Binding     = 1,
+                Texture     = command.Layer?.Texture ?? TextureStorage.Singleton.EmptyTexture,
+                ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
+            };
+
+            this.uniformSets[hashcode] = uniformSet = new UniformSet(resource.Pipeline, [diffuse, stencil]);
         }
 
         if (uniformSet != null && uniformSet != this.lastUniformSet)

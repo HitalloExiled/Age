@@ -1,12 +1,11 @@
 using System.Diagnostics;
+using Age.Internal;
 using Age.Numerics;
-using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.RenderPasses;
 using Age.Scene;
 using Age.Services;
 using Age.Storage;
-using SkiaSharp;
 using ThirdParty.Vulkan.Flags;
 
 namespace Age;
@@ -45,7 +44,7 @@ public class Engine : IDisposable
         this.Window.Resized += () =>
         {
             var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
-            SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "./.debug/CanvasIndex.png");
+            Common.SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "CanvasIndex.png");
         };
 
         var renderGraph = new RenderGraph
@@ -66,33 +65,6 @@ public class Engine : IDisposable
         this.Window.Resized += this.renderingService.RequestDraw;
 
         Input.ListenInputEvents(this.Window);
-    }
-
-    private static void SaveImage(Image image, VkImageAspectFlags aspectMask, string filename)
-    {
-        var data = image.ReadBuffer(aspectMask);
-
-        static SKColor convert(uint value) => new(value);
-
-        var pixels = data.Select(convert).ToArray();
-
-        var bitmap = new SKBitmap((int)image.Extent.Width, (int)image.Extent.Height)
-        {
-            Pixels = pixels
-        };
-
-        var skimage = SKImage.FromBitmap(bitmap);
-
-        try
-        {
-            using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), filename));
-
-            skimage.Encode(SKEncodedImageFormat.Png, 100).SaveTo(stream);
-        }
-        catch
-        {
-
-        }
     }
 
     protected virtual void Dispose(bool disposing)

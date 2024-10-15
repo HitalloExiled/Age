@@ -1,6 +1,7 @@
 using Age.Commands;
 using Age.Extensions;
 using Age.Numerics;
+using Age.Scene;
 using Age.Storage;
 using Age.Styling;
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
@@ -9,72 +10,119 @@ namespace Age.Elements.Layouts;
 
 internal partial class BoxLayout : Layout
 {
+    // 8-bytes alignment
+    private readonly List<Element> dependents = [];
+    private readonly Element       target;
 
-    // 24-bytes
-    private Transform2D styleTransform = new();
+    private Layer? layer;
+    private Layer? contentLayer;
 
-    // 16-bytes
+    // 4-bytes alignment
     private RawRectEdges border;
+    private Size<uint>   content;
     private RawRectEdges margin;
     private RawRectEdges padding;
+    private Size<uint>   staticContent;
+    private Dependency   contentDependent;
+    private bool         dependenciesHasChanged;
+    private Dependency   parentDependent;
+    private uint         renderableNodesCount;
 
-    // 8-bytes
-    private Size<uint> content;
-    private Size<uint> staticContent;
 
-    // 4-bytes
-    private readonly List<Element> dependents = [];
-    private readonly Element target;
-    private Dependency contentDependent;
-    private Dependency parentDependent;
-    private bool       dependenciesHasChanged;
-    private uint       renderableNodesCount;
+    public Size<uint> Boundings =>
+        new(
+            this.Size.Width  + this.padding.Horizontal + this.border.Horizontal,
+            this.Size.Height + this.padding.Vertical   + this.border.Vertical
+        );
+    public Size<uint> BoundingsWithMargin =>
+        new(
+            this.Size.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
+            this.Size.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
+        );
+
+    public RawRectEdges Border => this.border;
+
+    public Size<uint> InnerBoundings =>
+        new(
+            this.Size.Width  + this.padding.Horizontal,
+            this.Size.Height + this.padding.Vertical
+        );
+
+    public Layer? Layer
+    {
+        get => this.layer;
+        private set
+        {
+            if (this.layer != value)
+            {
+                static void set(BoxLayout layout, Layer? layer)
+                {
+                    var command = layout.GetRectCommand();
+
+                    if (layer != null)
+                    {
+                        command.Flags |= Flags.HasClipping;
+                    }
+                    else
+                    {
+                        command.Flags &= ~Flags.HasClipping;
+                    }
+
+                    layout.layer = command.Layer = layer;
+                }
+
+                if (this.contentLayer != null)
+                {
+                    this.layer?.RemoveChild(this.contentLayer);
+
+                    value?.AppendChild(this.contentLayer);
+
+                    set(this, value);
+                }
+                else
+                {
+                    set(this, value);
+
+                    var enumerator = this.target.GetTraverseEnumerator();
+
+                    while (enumerator.MoveNext())
+                    {
+                        var current = enumerator.UnsafeCurrent!;
+
+                        if (current is Element element)
+                        {
+                            if (element.Layout.Layer == value)
+                            {
+                                enumerator.SkipToNextSibling();
+                            }
+                            else if (element.Layout.contentLayer != null)
+                            {
+                                element.Layout.Layer = value;
+                            }
+                            else
+                            {
+                                set(element.Layout, value);
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+    //public Layer? ContentLayer => this.layer;
+
+    public StyledStateManager State { get; } = new();
+
+    public override BoxLayout?  Parent    => this.target.ParentElement?.Layout;
+    public override Element     Target    => this.target;
+    public override Transform2D Transform => (this.State.Style.Transform ?? new Transform2D()) * base.Transform;
 
     public BoxLayout(Element target)
     {
         this.target = target;
 
         this.State.Changed += this.UpdateState;
-    }
-
-    public StyledStateManager State { get; } = new();
-
-    private Size<uint> Boundings =>
-        new(
-            this.Size.Width  + this.padding.Horizontal + this.border.Horizontal,
-            this.Size.Height + this.padding.Vertical   + this.border.Vertical
-        );
-
-    private Size<uint> BoundingsWithMargin =>
-        new(
-            this.Size.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
-            this.Size.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
-        );
-
-    public override BoxLayout? Parent => this.target.ParentElement?.Layout;
-    public override Element    Target => this.target;
-
-    public override Transform2D Transform
-    {
-        get
-        {
-            var pivot = new Vector2<float>();
-
-            if (this.Size != default)
-            {
-                var stylePivot = this.State.Style.Pivot ?? new();
-
-                stylePivot = (stylePivot + 1) / 2;
-                stylePivot.Y = 1 - stylePivot.Y;
-
-                pivot = stylePivot * this.Size.Cast<float>() * new Size<float>(1, -1);
-            }
-
-            return base.Transform
-                * Transform2D.Translated(pivot)
-                * this.styleTransform
-                * Transform2D.Translated(-pivot);
-        }
     }
 
     private static void CalculatePendingPaddingHorizontal(BoxLayout layout, in Size<uint> size, ref RawRectEdges padding)
@@ -214,12 +262,9 @@ internal partial class BoxLayout : Layout
         {
             this.Target.SingleCommand = command = new()
             {
-                Flags = Flags.ColorAsBackground,
-                SampledTexture = new(
-                    TextureStorage.Singleton.DefaultTexture,
-                    TextureStorage.Singleton.DefaultSampler,
-                    UVRect.Normalized
-                ),
+                Id       = this.Target.GetHashCode(),
+                Flags    = Flags.ColorAsBackground,
+                Diffuse  = new(TextureStorage.Singleton.DefaultTexture, UVRect.Normalized),
             };
         }
 
@@ -964,6 +1009,21 @@ internal partial class BoxLayout : Layout
         command.Rect   = new(this.Boundings.Cast<float>(), default);
         command.Border = this.State.Style.Border ?? default;
         command.Color  = this.State.Style.BackgroundColor ?? default;
+        command.Layer  = this.Layer;
+
+        if (this.Layer != null)
+        {
+            command.Flags |= Flags.HasClipping;
+        }
+        else
+        {
+            command.Flags &= ~Flags.HasClipping;
+        }
+
+        if (this.State.Style.Overflow == OverflowKind.Clipping)
+        {
+            this.contentLayer!.MakeDirty();
+        }
     }
 
     private void UpdateState(StyleProperty property)
@@ -981,13 +1041,24 @@ internal partial class BoxLayout : Layout
             };
         }
 
-        if (property is StyleProperty.Position or StyleProperty.Rotation or StyleProperty.All)
+        if (property is StyleProperty.Overflow or StyleProperty.All)
         {
-            this.styleTransform = this.styleTransform with
+            if (this.State.Style.Overflow == OverflowKind.Clipping && this.contentLayer == null)
             {
-                Position = this.State.Style.Position ?? this.styleTransform.Position,
-                Rotation = this.State.Style.Rotation ?? this.styleTransform.Rotation,
-            };
+                this.contentLayer = new Layer(this.Target);
+
+                if (this.Parent?.Layer != null)
+                {
+                    this.Parent.Layer.AppendChild(this.contentLayer);
+                }
+            }
+            else if (this.contentLayer != null)
+            {
+                this.contentLayer.Remove();
+                this.contentLayer.Dispose();
+
+                this.contentLayer = null;
+            }
         }
 
         var oldParentDependent = this.parentDependent;
@@ -1094,14 +1165,29 @@ internal partial class BoxLayout : Layout
 
     public void ElementAppended(Element element)
     {
+        element.Layout.Layer = this.contentLayer ?? this.Layer;
+
         if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
         {
             this.dependents.Add(element);
         }
     }
 
+    public void ElementConnected(NodeTree tree)
+    {
+        if (this.contentLayer != null)
+        {
+            tree.Layers.Root ??= this.contentLayer;
+        }
+    }
+
+    internal void ElementDisconnected(NodeTree tree) =>
+        this.Layer?.Remove();
+
     public void ElementRemoved(Element element)
     {
+        element.Layout.Layer = null;
+
         if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
         {
             this.dependents.Remove(element);

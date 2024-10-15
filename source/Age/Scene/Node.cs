@@ -66,9 +66,9 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
 
                 setTree(this, value);
 
-                foreach (var child in this.Traverse())
+                foreach (var node in this.Traverse())
                 {
-                    setTree(child, value);
+                    setTree(node, value);
                 }
             }
         }
@@ -199,6 +199,9 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
 
     public IEnumerator<Node> GetEnumerator() =>
         new Enumerator(this);
+
+    public TraverseEnumerator GetTraverseEnumerator() =>
+        new(this);
 
     public void RemoveChildren()
     {

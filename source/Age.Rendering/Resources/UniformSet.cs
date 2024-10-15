@@ -17,11 +17,10 @@ public class UniformSet : Resource
 
     public unsafe UniformSet(Pipeline pipeline, Span<Uniform> uniforms)
     {
-        this.Pipeline = pipeline;
+        var key = CreatePoolKey(pipeline, uniforms);
 
-        var poolKey = CreatePoolKey(pipeline, uniforms);
-
-        this.DescriptorPool = VulkanRenderer.Singleton.CreateDescriptorPool(poolKey);
+        this.Pipeline       = pipeline;
+        this.DescriptorPool = DescriptorPool.CreateDescriptorPool(key);
 
         var descriptorSetLayoutHandle = pipeline.DescriptorSetLayout.Handle;
 
@@ -36,9 +35,9 @@ public class UniformSet : Resource
         this.Update(uniforms);
     }
 
-    private static unsafe VkDescriptorType CreatePoolKey(Pipeline pipeline, Span<Uniform> uniforms)
+    private static unsafe DescriptorPoolKey CreatePoolKey(Pipeline pipeline, Span<Uniform> uniforms)
     {
-        VkDescriptorType poolKey = default;
+        DescriptorPoolKey poolKey = default;
 
         foreach (var uniform in uniforms)
         {
@@ -47,7 +46,7 @@ public class UniformSet : Resource
                 throw new InvalidOperationException($"The provided shader expects that binding {uniform.Binding} to be of type {pipeline.UniformBindings[uniform.Binding]}");
             }
 
-            poolKey |= uniform.Type;
+            poolKey[uniform.Type]++;
         }
 
         return poolKey;
@@ -70,7 +69,7 @@ public class UniformSet : Resource
                 {
                     var descriptorImageInfo = new VkDescriptorImageInfo
                     {
-                        Sampler     = combinedImageSampler.Sampler.Value.Handle,
+                        Sampler     = combinedImageSampler.Texture.Sampler.Value.Handle,
                         ImageView   = combinedImageSampler.Texture.ImageView.Handle,
                         ImageLayout = combinedImageSampler.ImageLayout,
                     };

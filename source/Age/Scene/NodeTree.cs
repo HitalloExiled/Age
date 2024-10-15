@@ -9,7 +9,7 @@ using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Scene;
 
-public sealed partial class NodeTree
+public sealed partial class NodeTree : IDisposable
 {
     public event Action? Updated;
 
@@ -17,12 +17,14 @@ public sealed partial class NodeTree
     private readonly List<Command3DEntry> command3DEntriesCache = [];
     private readonly Stack<Node>          stack                 = [];
 
-    private ulong                      bufferVersion;
     private Buffer                     buffer = null!;
+    private ulong                      bufferVersion;
     private CanvasIndexRenderGraphPass canvasIndexRenderGraphPass = null!;
+    private bool                       disposed;
     private Element?                   lastFocusedElement;
     private Element?                   lastSelectedElement;
 
+    internal LayerTree     Layers = new();
     internal List<Node>    Nodes    { get; } = new(256);
     internal List<Scene3D> Scenes3D { get; } = [];
 
@@ -35,7 +37,7 @@ public sealed partial class NodeTree
         this.Window = window;
         this.Root   = new() { Tree = this };
 
-        this.Window.Closed += this.Destroy;
+        this.Window.Closed += this.Dispose;
     }
 
     private void CallInitialize()
@@ -382,19 +384,34 @@ public sealed partial class NodeTree
         this.command3DEntriesCache.Clear();
     }
 
-    public void Destroy()
+    private void Dispose(bool disposing)
     {
-        this.Window.Context     -= this.OnContext;
-        this.Window.DoubleClick -= this.OnDoubleClick;
-        this.Window.MouseDown   -= this.OnMouseDown;
-        this.Window.MouseMove   -= this.OnMouseMove;
-        this.Window.MouseUp     -= this.OnMouseUp;
+        if (!this.disposed)
+        {
+            if (disposing)
+            {
+                this.Window.Context     -= this.OnContext;
+                this.Window.DoubleClick -= this.OnDoubleClick;
+                this.Window.MouseDown   -= this.OnMouseDown;
+                this.Window.MouseMove   -= this.OnMouseMove;
+                this.Window.MouseUp     -= this.OnMouseUp;
 
-        this.Root.Destroy();
-        this.buffer.Dispose();
+                this.Root.Destroy();
+                this.buffer.Dispose();
+                this.Layers.Dispose();
+            }
+
+            this.disposed = true;
+        }
     }
 
-    internal void Initialize()
+    public void Dispose()
+    {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    public void Initialize()
     {
         this.canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasIndexRenderGraphPass>();
         this.canvasIndexRenderGraphPass.Recreated += this.UpdateBuffer;
@@ -417,5 +434,7 @@ public sealed partial class NodeTree
         this.CallLateUpdate();
 
         this.Updated?.Invoke();
+
+        this.Layers.Update();
     }
 }

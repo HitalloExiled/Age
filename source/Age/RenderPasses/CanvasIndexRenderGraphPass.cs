@@ -166,7 +166,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             Flags     = command.Flags,
             Rect      = command.Rect,
             Transform = transform,
-            UV        = command.SampledTexture.UV,
+            UV        = command.Diffuse.UV,
             Viewport  = viewport,
         };
 

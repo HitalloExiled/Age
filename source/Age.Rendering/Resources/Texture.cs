@@ -9,6 +9,8 @@ public class Texture : Resource
     public required Image       Image     { get; init; }
     public required VkImageView ImageView { get; init; }
 
+    public Sampler Sampler { get; } = new();
+
     internal Texture(bool imageOwner) =>
         this.imageOwner = imageOwner;
 
@@ -20,6 +22,7 @@ public class Texture : Resource
         }
 
         this.ImageView.Dispose();
+        this.Sampler.Dispose();
     }
 
     public void Update(Span<byte> data) =>

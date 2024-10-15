@@ -32,19 +32,20 @@ public unsafe partial class VulkanRenderer : IDisposable
     private readonly object padlock = new();
 
     private readonly Dictionary<VkCommandBuffer, CommandBuffer> commandBuffers = [];
-    private readonly VulkanContext                              context = new();
     private readonly Queue<IDisposable>                         pendingDisposes = new();
 
     private ushort framesUntilPendingDispose;
     private bool   disposed;
 
-    public uint CurrentFrame => this.context.Frame.Index;
+    internal VulkanContext Context { get; } = new();
+
+    public uint CurrentFrame => this.Context.Frame.Index;
 
     public CommandBuffer CurrentCommandBuffer
     {
         get
         {
-            var vkCommandBuffer = this.context.Frame.CommandBuffer;
+            var vkCommandBuffer = this.Context.Frame.CommandBuffer;
 
             if (!this.commandBuffers.TryGetValue(vkCommandBuffer, out var commandBuffer))
             {
@@ -55,7 +56,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         }
     }
 
-    public VkQueue GraphicsQueue => this.context.GraphicsQueue;
+    public VkQueue GraphicsQueue => this.Context.GraphicsQueue;
 
     public VkFormat           DepthBufferFormat   { get; private set; }
     public VkSampleCountFlags MaxUsableSampleCount { get; private set; }
@@ -64,8 +65,8 @@ public unsafe partial class VulkanRenderer : IDisposable
     {
         singleton = this;
 
-        this.context.SwapchainRecreated += () => this.SwapchainRecreated?.Invoke();
-        this.context.DeviceInitialized  += this.OnContextDeviceInitialized;
+        this.Context.SwapchainRecreated += () => this.SwapchainRecreated?.Invoke();
+        this.Context.DeviceInitialized  += this.OnContextDeviceInitialized;
     }
 
     private unsafe static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
@@ -118,7 +119,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             ViewType = VkImageViewType.N2D,
         };
 
-        var imageView = this.context.Device.CreateImageView(imageViewCreateInfo);
+        var imageView = this.Context.Device.CreateImageView(imageViewCreateInfo);
 
         return imageView;
     }
@@ -133,7 +134,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                 PCode    = (uint*)pCode,
             };
 
-            return this.context.Device.CreateShaderModule(createInfo);
+            return this.Context.Device.CreateShaderModule(createInfo);
         }
     }
 
@@ -243,7 +244,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                     BindingCount = (uint)bindings.Count,
                 };
 
-                descriptorSetLayout = this.context.Device.CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+                descriptorSetLayout = this.Context.Device.CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
                 var descriptorSetLayoutHandle = descriptorSetLayout.Handle;
 
@@ -255,7 +256,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                     PushConstantRangeCount = (uint)pushConstantRanges.Count,
                 };
 
-                pipelineLayout = this.context.Device.CreatePipelineLayout(pipelineLayoutCreateInfo);
+                pipelineLayout = this.Context.Device.CreatePipelineLayout(pipelineLayoutCreateInfo);
 
                 var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
                 {
@@ -342,7 +343,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                     PDepthStencilState  = &depthStencilState,
                 };
 
-                pipeline = this.context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);
+                pipeline = this.Context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);
             }
         }
     }
@@ -369,7 +370,7 @@ public unsafe partial class VulkanRenderer : IDisposable
     {
         this.DepthBufferFormat = this.FindSupportedFormat([VkFormat.D32Sfloat, VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint], VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
 
-        this.context.Device.PhysicalDevice.GetProperties(out var physicalDeviceProperties);
+        this.Context.Device.PhysicalDevice.GetProperties(out var physicalDeviceProperties);
 
         var counts = physicalDeviceProperties.Limits.FramebufferColorSampleCounts & physicalDeviceProperties.Limits.FramebufferDepthSampleCounts;
 
@@ -392,36 +393,36 @@ public unsafe partial class VulkanRenderer : IDisposable
     {
         if (!this.disposed)
         {
-            this.context.Device.WaitIdle();
+            this.Context.Device.WaitIdle();
 
             this.DisposePendingResources(true);
 
             DescriptorPool.Clear();
 
-            this.context.Dispose();
+            this.Context.Dispose();
 
             this.disposed = true;
         }
     }
 
     public CommandBuffer AllocateCommand(VkCommandBufferLevel commandBufferLevel) =>
-        new(this.context.AllocateCommand(commandBufferLevel), true);
+        new(this.Context.AllocateCommand(commandBufferLevel), true);
 
     public void BeginFrame()
     {
         this.DisposePendingResources();
 
-        this.context.PrepareBuffers();
+        this.Context.PrepareBuffers();
 
-        if (this.context.Frame.BufferPrepared)
+        if (this.Context.Frame.BufferPrepared)
         {
-            this.context.Frame.CommandBuffer.Begin();
+            this.Context.Frame.CommandBuffer.Begin();
         }
     }
 
     public CommandBuffer BeginSingleTimeCommands()
     {
-        var commandBuffer = this.context.Frame.CommandPool.AllocateCommand(VkCommandBufferLevel.Primary);
+        var commandBuffer = this.Context.Frame.CommandPool.AllocateCommand(VkCommandBufferLevel.Primary);
 
         commandBuffer.Begin(VkCommandBufferUsageFlags.OneTimeSubmit);
 
@@ -436,13 +437,13 @@ public unsafe partial class VulkanRenderer : IDisposable
             Usage = usage,
         };
 
-        var device = this.context.Device;
+        var device = this.Context.Device;
 
         var buffer = device.CreateBuffer(bufferCreateInfo);
 
         buffer.GetMemoryRequirements(out var memRequirements);
 
-        var memoryType = this.context.FindMemoryType(memRequirements.MemoryTypeBits, properties);
+        var memoryType = this.Context.FindMemoryType(memRequirements.MemoryTypeBits, properties);
 
         var memoryAllocateInfo = new VkMemoryAllocateInfo
         {
@@ -468,19 +469,16 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public DescriptorPool CreateDescriptorPool(VkDescriptorType descriptorType) =>
-        DescriptorPool.CreateDescriptorPool(this.context.Device, descriptorType);
-
     public Image CreateImage(in VkImageCreateInfo createInfo, VkImageLayout finalLayout) =>
         this.CreateImage(createInfo, null, finalLayout);
 
     public Image CreateImage(in VkImageCreateInfo createInfo, in Color? clearColor = null, VkImageLayout? finalLayout = null)
     {
-        var image = this.context.Device.CreateImage(createInfo);
+        var image = this.Context.Device.CreateImage(createInfo);
 
         image.GetMemoryRequirements(out var memRequirements);
 
-        var memoryType = this.context.FindMemoryType(memRequirements.MemoryTypeBits, VkMemoryPropertyFlags.DeviceLocal);
+        var memoryType = this.Context.FindMemoryType(memRequirements.MemoryTypeBits, VkMemoryPropertyFlags.DeviceLocal);
 
         var memoryAllocateInfo = new VkMemoryAllocateInfo
         {
@@ -488,7 +486,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             MemoryTypeIndex = memoryType,
         };
 
-        var deviceMemory = this.context.Device.AllocateMemory(memoryAllocateInfo);
+        var deviceMemory = this.Context.Device.AllocateMemory(memoryAllocateInfo);
 
         image.BindMemory(deviceMemory, 0);
 
@@ -565,7 +563,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             Height = createInfo.Attachments[0].Image.Extent.Height,
         };
 
-        var framebuffer = this.context.CreateFrameBuffer(createInfo.RenderPass.Value, imageViews.AsSpan(), extent);
+        var framebuffer = this.Context.CreateFrameBuffer(createInfo.RenderPass.Value, imageViews.AsSpan(), extent);
 
         return new(framebuffer)
         {
@@ -669,7 +667,7 @@ public unsafe partial class VulkanRenderer : IDisposable
                 PSubpasses      = subpassDescriptions.AsPointer(),
             };
 
-            var renderPass = this.context.Device.CreateRenderPass(renderPassCreateInfo);
+            var renderPass = this.Context.Device.CreateRenderPass(renderPassCreateInfo);
 
             return new()
             {
@@ -803,29 +801,8 @@ public unsafe partial class VulkanRenderer : IDisposable
         return pipeline;
     }
 
-    public Sampler CreateSampler()
-    {
-        this.context.Device.PhysicalDevice.GetProperties(out var properties);
-
-        var createInfo = new VkSamplerCreateInfo
-        {
-            AddressModeU  = VkSamplerAddressMode.Repeat,
-            AddressModeV  = VkSamplerAddressMode.Repeat,
-            AddressModeW  = VkSamplerAddressMode.Repeat,
-            BorderColor   = VkBorderColor.IntOpaqueBlack,
-            CompareOp     = VkCompareOp.Always,
-            MagFilter     = VkFilter.Linear,
-            MaxAnisotropy = properties.Limits.MaxSamplerAnisotropy,
-            MaxLod        = 1,
-            MinFilter     = VkFilter.Linear,
-            MipmapMode    = VkSamplerMipmapMode.Linear,
-        };
-
-        return new(this.context.Device.CreateSampler(createInfo));
-    }
-
     public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
-        this.context.CreateSurface(handle, clientSize);
+        this.Context.CreateSurface(handle, clientSize);
 
     public Texture CreateTexture(in TextureCreateInfo textureCreateInfo)
     {
@@ -929,12 +906,12 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public void EndFrame()
     {
-        if (this.context.Frame.BufferPrepared)
+        if (this.Context.Frame.BufferPrepared)
         {
-            this.context.Frame.CommandBuffer.End();
+            this.Context.Frame.CommandBuffer.End();
         }
 
-        this.context.SwapBuffers();
+        this.Context.SwapBuffers();
     }
 
     public void EndSingleTimeCommands(CommandBuffer commandBuffer)
@@ -949,18 +926,18 @@ public unsafe partial class VulkanRenderer : IDisposable
             PCommandBuffers    = &commandBufferHandle
         };
 
-        this.context.GraphicsQueue.Submit(submitInfo);
-        this.context.GraphicsQueue.WaitIdle();
+        this.Context.GraphicsQueue.Submit(submitInfo);
+        this.Context.GraphicsQueue.WaitIdle();
 
         commandBuffer.Dispose();
     }
 
     public VkFormat FindSupportedFormat(Span<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features) =>
-        this.context.FindSupportedFormat(candidates, tiling, features);
+        this.Context.FindSupportedFormat(candidates, tiling, features);
 
     public void UpdateDescriptorSets(Span<VkWriteDescriptorSet> descriptorWrites, Span<VkCopyDescriptorSet> descriptorCopies) =>
-        this.context.Device.UpdateDescriptorSets(descriptorWrites, descriptorCopies);
+        this.Context.Device.UpdateDescriptorSets(descriptorWrites, descriptorCopies);
 
     public void WaitIdle() =>
-        this.context.Device.WaitIdle();
+        this.Context.Device.WaitIdle();
 }

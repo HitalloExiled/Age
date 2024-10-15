@@ -18,12 +18,14 @@ public sealed class Canvas : Element
     private void OnWindowSizeChanged() =>
         this.Style.Size = new((Pixel)this.Tree!.Window.ClientSize.Width, (Pixel)this.Tree!.Window.ClientSize.Height);
 
+    private void OnUpdate() => this.Layout.Update();
+
     protected override void Connected(NodeTree tree)
     {
         base.Connected(tree);
 
         tree.Window.Resized += this.OnWindowSizeChanged;
-        tree.Updated += this.Layout.Update;
+        tree.Updated        += this.OnUpdate;
 
         this.OnWindowSizeChanged();
     }
@@ -33,6 +35,6 @@ public sealed class Canvas : Element
         base.Disconnected(tree);
 
         tree.Window.Resized -= this.OnWindowSizeChanged;
-        tree.Updated -= this.Layout.Update;
+        tree.Updated        -= this.OnUpdate;
     }
 }
