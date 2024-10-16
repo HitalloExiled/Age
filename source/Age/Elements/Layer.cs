@@ -6,6 +6,7 @@ using Age.Platforms.Windows.Native.Types;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.Storage;
+using Age.Styling;
 using SkiaSharp;
 using System.Collections;
 using System.Drawing;
@@ -38,7 +39,7 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
     public Layer? Parent          { get; private set; }
     public Layer? PreviousSibling { get; private set; }
 
-    public Transform2D Transform
+    private Transform2D Transform
     {
         get => this.transform;
         set
@@ -81,27 +82,28 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
 
     ~Layer() => this.Dispose(false);
 
-    private void UpdatePath()
+    private void UpdatePath(Size<uint> bounds, Border border)
     {
         this.path.Reset();
 
-        var border = this.Owner.Layout.State.Style.Border ?? default;
-        var bounds = this.Owner.Layout.Boundings;
-
         var minRadius = uint.Min(bounds.Width, bounds.Height) / 2;
 
-        bool tryCreateEllipse(uint radius, Point<uint> position, Size<uint> thickness, float startAngle)
+        border.Radius.LeftTop     = uint.Min(border.Radius.LeftTop,     minRadius);
+        border.Radius.TopRight    = uint.Min(border.Radius.TopRight,    minRadius);
+        border.Radius.RightBottom = uint.Min(border.Radius.RightBottom, minRadius);
+        border.Radius.BottomLeft  = uint.Min(border.Radius.BottomLeft,  minRadius);
+
+        bool tryCreateEllipse(uint radius, Point<uint> origin, Size<uint> thickness, float startAngle)
         {
-            var targetRadius = uint.Min(radius, minRadius);
-
-            if (targetRadius > thickness.Width && targetRadius > thickness.Height)
+            if (radius > thickness.Width && radius > thickness.Height)
             {
-                var diameter = targetRadius * 2;
-                var radiusX  = diameter - thickness.Width;
-                var radiusY  = diameter - thickness.Height;
-                var origin   = (new Point<uint>(bounds.Width, bounds.Height) - new Point<uint>(targetRadius)) * position;
+                origin.X = origin.X * (bounds.Width  - radius * 2) + radius;
+                origin.Y = origin.Y * (bounds.Height - radius * 2) + radius;
 
-                var rect = SKRect.Create(origin.X, origin.Y, radiusX, radiusY);
+                var radiusX = radius - thickness.Width;
+                var radiusY = radius - thickness.Height;
+
+                var rect = new SKRect(origin.X - radiusX, origin.Y - radiusY, origin.X + radiusX, origin.Y + radiusY);
 
                 this.path.ArcTo(rect, startAngle, 90, false);
 
@@ -120,7 +122,7 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
 
         if (border.Radius.RightBottom == 0 || !tryCreateEllipse(border.Radius.RightBottom, new(1, 1), new(border.Right.Thickness, border.Bottom.Thickness), 0))
         {
-            this.path.LineTo(bounds.Width - border.Right.Thickness, bounds.Height - border.Top.Thickness);
+            this.path.LineTo(bounds.Width - border.Right.Thickness, bounds.Height - border.Bottom.Thickness);
         }
 
         if (border.Radius.BottomLeft == 0 || !tryCreateEllipse(border.Radius.BottomLeft, new(0, 1), new(border.Left.Thickness, border.Bottom.Thickness), 90))
@@ -266,12 +268,12 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
     {
         if (this.isDirty)
         {
-            this.UpdatePath();
+            var bounds = this.Owner.Layout.Boundings;
+            var border = this.Owner.Layout.State.Style.Border ?? default;
 
-            var outter = this.Owner.Layout.Boundings;
-            var border = this.Owner.Layout.Border;
+            this.UpdatePath(bounds, border);
 
-            using var bitmap = new SKBitmap((int)outter.Width, (int)outter.Height);
+            using var bitmap = new SKBitmap((int)bounds.Width, (int)bounds.Height);
             using var canvas = new SKCanvas(bitmap);
             using var paint  = new SKPaint
             {
@@ -279,34 +281,18 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
                 Style = SKPaintStyle.Fill,
             };
 
-            var ownerTransform = this.Owner.TransformCache.Matrix;
-
-            ownerTransform.Translation = ownerTransform.Translation.InvertedY;
-
-            var contentTransform = new Transform2D(ownerTransform) * Transform2D.CreateTranslated(border.Left, border.Top);
-
-            this.path.Transform((this.Owner.TransformCache * Transform2D.CreateTranslated(border.Left, border.Top)).Matrix.ToSKMatrix());
-
             if (this.Parent != null)
             {
-                var parent = this.Parent;
+                using var parentClipping = new SKPath(this.Parent.path);
 
-                while (parent != null)
-                {
-                    using var parentClipping = new SKPath(parent.path);
-                    var parentBorder = this.Parent.Owner.Layout.Border;
+                var offset = (this.Owner.TransformCache.Inverse() * this.Parent.Owner.TransformCache).Matrix;
 
-                    var parentContentTransform = this.Parent.Owner.TransformCache * Transform2D.CreateTranslated(-parentBorder.Left, -parentBorder.Top);
+                offset.M32 = -offset.M32;
 
-                    parentClipping.Transform(parentContentTransform.Matrix.ToSKMatrix());
+                parentClipping.Transform(offset.ToSKMatrix());
 
-                    this.path.Op(parentClipping, SKPathOp.Intersect, this.path);
-
-                    parent = parent.Parent;
-                }
+                this.path.Op(parentClipping, SKPathOp.Intersect, this.path);
             }
-
-            //this.path.Transform((this.Owner.TransformCache * Transform2D.CreateTranslated(border.Left, border.Top)).Matrix.ToSKMatrix());
 
             canvas.DrawPath(this.path, paint);
 
@@ -321,14 +307,14 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
 
             Common.SaveImage(bitmap, $"{this.Owner.Name}.png");
 
-            if (this.texture == TextureStorage.Singleton.EmptyTexture || this.texture.Image.Extent.Width != outter.Width || this.texture.Image.Extent.Height != outter.Height)
+            if (this.texture == TextureStorage.Singleton.EmptyTexture || this.texture.Image.Extent.Width != bounds.Width || this.texture.Image.Extent.Height != bounds.Height)
             {
                 var textureInfo = new TextureCreateInfo
                 {
                     Depth     = 1,
                     Format    = VkFormat.R8Unorm,
-                    Width     = outter.Width,
-                    Height    = outter.Height,
+                    Width     = bounds.Width,
+                    Height    = bounds.Height,
                     ImageType = VkImageType.N2D,
                 };
 

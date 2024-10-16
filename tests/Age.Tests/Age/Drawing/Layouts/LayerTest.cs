@@ -17,21 +17,22 @@ public class LayerTest
 
         var minRadius = uint.Min(bounds.Width, bounds.Height) / 2;
 
-        bool tryCreateEllipse(uint radius, Point<uint> position, Size<uint> thickness, float startAngle)
+        border.Radius.LeftTop     = uint.Min(border.Radius.LeftTop,     minRadius);
+        border.Radius.TopRight    = uint.Min(border.Radius.TopRight,    minRadius);
+        border.Radius.RightBottom = uint.Min(border.Radius.RightBottom, minRadius);
+        border.Radius.BottomLeft  = uint.Min(border.Radius.BottomLeft,  minRadius);
+
+        bool tryCreateEllipse(uint radius, Point<uint> origin, Size<uint> thickness, float startAngle)
         {
-            var targetRadius = uint.Min(radius, minRadius);
-
-            if (targetRadius > thickness.Width && targetRadius > thickness.Height)
+            if (radius > thickness.Width && radius > thickness.Height)
             {
-                var diameter = targetRadius * 2;
-                var radiusX  = diameter - thickness.Width;
-                var radiusY  = diameter - thickness.Height;
-                var origin   = (new Point<uint>(bounds.Width, bounds.Height) - new Point<uint>(targetRadius)) * position;
+                origin.X = origin.X * (bounds.Width  - radius * 2) + radius;
+                origin.Y = origin.Y * (bounds.Height - radius * 2) + radius;
 
-                origin.X = position.X == 0 ? origin.X + thickness.Width : origin.X - thickness.Width;
-                origin.Y = position.Y == 0 ? origin.Y + thickness.Height : origin.Y - thickness.Height;
+                var radiusX = radius - thickness.Width;
+                var radiusY = radius - thickness.Height;
 
-                var rect = SKRect.Create(origin.X, origin.Y, radiusX, radiusY);
+                var rect = new SKRect(origin.X - radiusX, origin.Y - radiusY, origin.X + radiusX, origin.Y + radiusY);
 
                 path.ArcTo(rect, startAngle, 90, false);
 
@@ -87,10 +88,10 @@ public class LayerTest
             Left   = new(10, default),
             Radius =
             {
-                LeftTop     = 20,
+                LeftTop     = 10,
                 TopRight    = 20,
-                RightBottom = 0,
-                BottomLeft  = 0,
+                RightBottom = 30,
+                BottomLeft  = 40,
             }
         };
 
@@ -103,6 +104,15 @@ public class LayerTest
             Color = SKColors.Red,
             Style = SKPaintStyle.Fill,
         };
+
+        canvas.Scale(1, -1);
+        canvas.Translate(0, -size.Height);
+
+        var flipAndTranslateMatrix = SKMatrix.CreateScale(1, -1);
+
+        flipAndTranslateMatrix.TransY = size.Height;
+
+        path.Transform(flipAndTranslateMatrix);
 
         canvas.DrawPath(path, paint);
 

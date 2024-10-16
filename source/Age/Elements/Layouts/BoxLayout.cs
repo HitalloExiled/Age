@@ -71,38 +71,38 @@ internal partial class BoxLayout : Layout
                     layout.layer = command.Layer = layer;
                 }
 
+                var currentLayer = value;
+
                 if (this.contentLayer != null)
                 {
                     this.layer?.RemoveChild(this.contentLayer);
 
                     value?.AppendChild(this.contentLayer);
 
-                    set(this, value);
+                    currentLayer = this.contentLayer;
                 }
-                else
+
+                set(this, value);
+
+                var enumerator = this.target.GetTraverseEnumerator();
+
+                while (enumerator.MoveNext())
                 {
-                    set(this, value);
+                    var current = enumerator.UnsafeCurrent!;
 
-                    var enumerator = this.target.GetTraverseEnumerator();
-
-                    while (enumerator.MoveNext())
+                    if (current is Element element)
                     {
-                        var current = enumerator.UnsafeCurrent!;
-
-                        if (current is Element element)
+                        if (element.Layout.Layer == currentLayer)
                         {
-                            if (element.Layout.Layer == value)
-                            {
-                                enumerator.SkipToNextSibling();
-                            }
-                            else if (element.Layout.contentLayer != null)
-                            {
-                                element.Layout.Layer = value;
-                            }
-                            else
-                            {
-                                set(element.Layout, value);
-                            }
+                            enumerator.SkipToNextSibling();
+                        }
+                        else if (element.Layout.contentLayer != null)
+                        {
+                            element.Layout.Layer = currentLayer;
+                        }
+                        else
+                        {
+                            set(element.Layout, currentLayer);
                         }
                     }
                 }
@@ -110,7 +110,6 @@ internal partial class BoxLayout : Layout
             }
         }
     }
-    //public Layer? ContentLayer => this.layer;
 
     public StyledStateManager State { get; } = new();
 
