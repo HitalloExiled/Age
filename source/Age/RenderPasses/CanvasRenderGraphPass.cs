@@ -46,8 +46,8 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.renderPass = this.CreateRenderPass();
 
-        var canvasPipeline          = renderer.CreatePipelineAndWatch<CanvasShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
-        var canvasWireframePipeline = renderer.CreatePipelineAndWatch<CanvasWireframeShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
+        var canvasPipeline          = new CanvasShader(this.renderPass, true);
+        var canvasWireframePipeline = new CanvasWireframeShader(this.renderPass, true);
 
         this.Resources =
         [
@@ -171,7 +171,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                 ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
             };
 
-            this.uniformSets[hashcode] = uniformSet = new UniformSet(resource.Pipeline, [diffuse, stencil]);
+            this.uniformSets[hashcode] = uniformSet = new UniformSet(resource.Shader, [diffuse, stencil]);
         }
 
         if (uniformSet != null && uniformSet != this.lastUniformSet)
@@ -181,7 +181,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             this.lastUniformSet = uniformSet;
         }
 
-        this.CommandBuffer.PushConstant(resource.Pipeline, constant);
+        this.CommandBuffer.PushConstant(resource.Shader, constant);
         this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
     }
 
@@ -192,7 +192,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         for (var i = 0; i < this.Resources.Length; i++)
         {
             this.Resources[i].Dispose();
-            this.Resources[i].Pipeline.Changed -= RenderingService.Singleton.RequestDraw;
+            this.Resources[i].Shader.Changed -= RenderingService.Singleton.RequestDraw;
         }
 
         foreach (var uniformSet in this.uniformSets.Values)

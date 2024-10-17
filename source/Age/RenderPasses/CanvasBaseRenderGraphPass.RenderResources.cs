@@ -4,16 +4,16 @@ namespace Age.RenderPasses;
 
 public abstract partial class CanvasBaseRenderGraphPass
 {
-    protected struct RenderResources(Pipeline pipeline, VertexBuffer vertexBuffer, IndexBuffer indexBuffer, bool enabled)
+    protected struct RenderResources(Shader shader, VertexBuffer vertexBuffer, IndexBuffer indexBuffer, bool enabled)
     {
-        public Pipeline     Pipeline     = pipeline;
+        public Shader       Shader       = shader;
         public VertexBuffer VertexBuffer = vertexBuffer;
         public IndexBuffer  IndexBuffer  = indexBuffer;
         public bool         Enabled      = enabled;
 
         public readonly void Dispose()
         {
-            this.Pipeline.Dispose();
+            this.Shader.Dispose();
             this.VertexBuffer.Dispose();
             this.IndexBuffer.Dispose();
         }

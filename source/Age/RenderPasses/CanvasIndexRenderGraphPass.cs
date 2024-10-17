@@ -46,7 +46,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.CreateFramebuffer(out this.image, out this.framebuffer);
 
-        var shader = renderer.CreatePipelineAndWatch<CanvasIndexShader, CanvasShader.Vertex, CanvasShader.PushConstant>(new(), this.renderPass);
+        var shader = new CanvasIndexShader(renderPass, true);
 
         this.Resources =
         [
@@ -170,7 +170,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             Viewport  = viewport,
         };
 
-        this.CommandBuffer.PushConstant(resource.Pipeline, constant);
+        this.CommandBuffer.PushConstant(resource.Shader, constant);
         this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
     }
 

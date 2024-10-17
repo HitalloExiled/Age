@@ -5,14 +5,14 @@
 
 void main()
 {
-    // if (has_flag(data.flags, FLAGS_HAS_STENCIL))
-    // {
-    //     if (texture(stencil, inFragTexCoord).r < 0.5)
-    //     {
-    //         discard;
-    //         return;
-    //     }
-    // }
+    if (has_flag(data.flags, FLAGS_HAS_STENCIL))
+    {
+        if (texture(stencil, inFragTexCoord).r < 0.5)
+        {
+            discard;
+            return;
+        }
+    }
 
     vec4 texture_color = texture(diffuse, inFragTexCoord);
 

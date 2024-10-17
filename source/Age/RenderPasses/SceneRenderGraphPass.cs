@@ -144,7 +144,7 @@ public partial class SceneRenderGraphPass : RenderGraphPass
                 Buffer  = cameraBuffer.Buffer,
             };
 
-            frameResource.UniformSets[hashcode] = uniformSet = new UniformSet(material.Pipeline, [uniformBuffer, combinedImageSampler]);
+            frameResource.UniformSets[hashcode] = uniformSet = new UniformSet(material.Shader, [uniformBuffer, combinedImageSampler]);
         }
 
         return uniformSet;
@@ -199,7 +199,7 @@ public partial class SceneRenderGraphPass : RenderGraphPass
                                 case MeshCommand meshCommand:
                                     var ubo = this.UpdateUbo(camera, meshCommand.Mesh, entry.Transform, renderTarget.Size.ToExtent2D());
 
-                                    commandBuffer.BindPipeline(meshCommand.Mesh.Material.Pipeline);
+                                    commandBuffer.BindShader(meshCommand.Mesh.Material.Shader);
                                     commandBuffer.BindUniformSet(this.GetUniformSet(camera, ubo, meshCommand.Mesh.Material));
                                     commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
                                     commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);

@@ -138,216 +138,6 @@ public unsafe partial class VulkanRenderer : IDisposable
         }
     }
 
-    private void CreatePipeline<TShader, TVertexInput, TPushConstant>(
-        TShader                   shaderResources,
-        RenderPass                renderPass,
-        out VkPipeline            pipeline,
-        out VkPipelineLayout      pipelineLayout,
-        out VkDescriptorSetLayout descriptorSetLayout,
-        out VkDescriptorType[]    uniformBindings
-    )
-    where TShader : Shader<TVertexInput, TPushConstant>
-    where TVertexInput     : IVertexInput
-    where TPushConstant    : IPushConstant
-    {
-        fixed (byte* pName = "main"u8)
-        {
-            var bindings                       = new List<VkDescriptorSetLayoutBinding>();
-            var pipelineShaderStageCreateInfos = new List<VkPipelineShaderStageCreateInfo>();
-            var pushConstantRanges             = new List<VkPushConstantRange>();
-
-            if (TPushConstant.Size > 0)
-            {
-                var pushConstantRange = new VkPushConstantRange
-                {
-                    Size       = TPushConstant.Size,
-                    Offset     = TPushConstant.Offset,
-                    StageFlags = TPushConstant.Stages,
-                };
-
-                pushConstantRanges.Add(pushConstantRange);
-            }
-
-            using var disposables = new Disposables();
-            using var context     = new Context();
-
-            foreach (var stage in shaderResources.Stages)
-            {
-                var spirv     = context.ParseSpirv(stage.Value);
-                var compiler  = context.CreateCompiler(Backend.Glsl, spirv, CaptureMode.TakeOwnership);
-                var resources = compiler.CreateShaderResources();
-
-                foreach (var resource in resources.GetResourceListForType(ResorceType.SampledImage))
-                {
-                    var binding = compiler.GetDecoration(resource.Id, Decoration.Binding);
-
-                    var layout = new VkDescriptorSetLayoutBinding()
-                    {
-                        Binding         = binding,
-                        DescriptorCount = 1,
-                        DescriptorType  = VkDescriptorType.CombinedImageSampler,
-                        StageFlags      = stage.Key,
-                    };
-
-                    bindings.Add(layout);
-                }
-
-                foreach (var resource in resources.GetResourceListForType(ResorceType.UniformBuffer))
-                {
-                    var binding = compiler.GetDecoration(resource.Id, Decoration.Binding);
-
-                    var layout = new VkDescriptorSetLayoutBinding()
-                    {
-                        Binding         = binding,
-                        DescriptorCount = 1,
-                        DescriptorType  = VkDescriptorType.UniformBuffer,
-                        StageFlags      = stage.Key,
-                    };
-
-                    bindings.Add(layout);
-                }
-
-                var shaderModule = this.CreateShaderModule(stage.Value);
-
-                disposables.Add(shaderModule);
-
-                var createInfo = new VkPipelineShaderStageCreateInfo()
-                {
-                    Module = shaderModule.Handle,
-                    PName  = pName,
-                    Stage  = stage.Key,
-                };
-
-                pipelineShaderStageCreateInfos.Add(createInfo);
-            }
-
-            uniformBindings = bindings.OrderBy(x => x.Binding).Select(x => x.DescriptorType).ToArray();
-
-            var vertexInputAttributeDescription = TVertexInput.GetAttributes();
-            var vertexInputBindingDescription   = TVertexInput.GetBindings();
-
-            var dynamicStates = new VkDynamicState[]
-            {
-                VkDynamicState.Viewport,
-                VkDynamicState.Scissor,
-            };
-
-            fixed (VkDescriptorSetLayoutBinding*      pBindings                       = CollectionsMarshal.AsSpan(bindings))
-            fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription)
-            fixed (VkDynamicState*                    pDynamicStates                  = dynamicStates)
-            fixed (VkPipelineShaderStageCreateInfo*   pPipelineShaderStageCreateInfos = CollectionsMarshal.AsSpan(pipelineShaderStageCreateInfos))
-            fixed (VkPushConstantRange*               pPushConstantRanges             = CollectionsMarshal.AsSpan(pushConstantRanges))
-            {
-                var descriptorSetLayoutCreateInfo = new VkDescriptorSetLayoutCreateInfo
-                {
-                    PBindings    = pBindings,
-                    BindingCount = (uint)bindings.Count,
-                };
-
-                descriptorSetLayout = this.Context.Device.CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
-
-                var descriptorSetLayoutHandle = descriptorSetLayout.Handle;
-
-                var pipelineLayoutCreateInfo = new VkPipelineLayoutCreateInfo
-                {
-                    PSetLayouts            = &descriptorSetLayoutHandle,
-                    SetLayoutCount         = 1,
-                    PPushConstantRanges    = pPushConstantRanges,
-                    PushConstantRangeCount = (uint)pushConstantRanges.Count,
-                };
-
-                pipelineLayout = this.Context.Device.CreatePipelineLayout(pipelineLayoutCreateInfo);
-
-                var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
-                {
-                    Topology = shaderResources.PrimitiveTopology,
-                };
-
-                var pipelineVertexInputStateCreateInfo = new VkPipelineVertexInputStateCreateInfo
-                {
-                    PVertexAttributeDescriptions    = pVertexAttributeDescriptions,
-                    PVertexBindingDescriptions      = &vertexInputBindingDescription,
-                    VertexAttributeDescriptionCount = (uint)vertexInputAttributeDescription.Length,
-                    VertexBindingDescriptionCount   = 1,
-                };
-
-                var pipelineDynamicStateCreateInfo = new VkPipelineDynamicStateCreateInfo
-                {
-                    DynamicStateCount = (uint)dynamicStates.Length,
-                    PDynamicStates    = pDynamicStates,
-                };
-
-                var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
-                {
-                    AlphaBlendOp   = VkBlendOp.Add,
-                    BlendEnable    = true,
-                    ColorWriteMask = VkColorComponentFlags.R
-                        | VkColorComponentFlags.G
-                        | VkColorComponentFlags.B
-                        | VkColorComponentFlags.A,
-                    DstColorBlendFactor = VkBlendFactor.OneMinusSrcAlpha,
-                    SrcAlphaBlendFactor = VkBlendFactor.One,
-                    SrcColorBlendFactor = VkBlendFactor.SrcAlpha,
-                };
-
-                var pipelineColorBlendStateCreateInfo = new VkPipelineColorBlendStateCreateInfo
-                {
-                    AttachmentCount = 1,
-                    LogicOp         = VkLogicOp.Copy,
-                    PAttachments    = &pipelineColorBlendAttachmentState,
-                };
-
-                var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
-                {
-                    SampleShadingEnable  = true,
-                    RasterizationSamples = shaderResources.RasterizationSamples,
-                    MinSampleShading     = 1,
-                };
-
-                var pipelineRasterizationStateCreateInfo = new VkPipelineRasterizationStateCreateInfo
-                {
-                    CullMode    = VkCullModeFlags.Back,
-                    FrontFace   = shaderResources.FrontFace,
-                    LineWidth   = 1,
-                    PolygonMode = VkPolygonMode.Fill,
-                };
-
-                var pipelineViewportStateCreateInfo = new VkPipelineViewportStateCreateInfo
-                {
-                    ViewportCount = 1,
-                    ScissorCount  = 1,
-                };
-
-                var depthStencilState = new VkPipelineDepthStencilStateCreateInfo
-                {
-                    DepthTestEnable       = true,
-                    DepthWriteEnable      = true,
-                    DepthCompareOp        = VkCompareOp.Less,
-                    DepthBoundsTestEnable = false,
-                    StencilTestEnable     = false
-                };
-
-                var graphicsPipelineCreateInfo = new VkGraphicsPipelineCreateInfo
-                {
-                    Layout              = pipelineLayout.Handle,
-                    PColorBlendState    = &pipelineColorBlendStateCreateInfo,
-                    PDynamicState       = &pipelineDynamicStateCreateInfo,
-                    PInputAssemblyState = &inputAssembly,
-                    PMultisampleState   = &pipelineMultisampleStateCreateInfo,
-                    PRasterizationState = &pipelineRasterizationStateCreateInfo,
-                    PStages             = pPipelineShaderStageCreateInfos,
-                    PVertexInputState   = &pipelineVertexInputStateCreateInfo,
-                    PViewportState      = &pipelineViewportStateCreateInfo,
-                    StageCount          = (uint)pipelineShaderStageCreateInfos.Count,
-                    RenderPass          = renderPass.Value.Handle,
-                    PDepthStencilState  = &depthStencilState,
-                };
-
-                pipeline = this.Context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);
-            }
-        }
-    }
-
     private void DisposePendingResources(bool immediate = false)
     {
         if (this.pendingDisposes.Count > 0)
@@ -743,64 +533,6 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public Pipeline CreatePipeline<TShader, TVertexInput, TPushConstant>(TShader shader, RenderPass renderPass)
-    where TShader       : Shader<TVertexInput, TPushConstant>
-    where TVertexInput  : IVertexInput
-    where TPushConstant : IPushConstant
-    {
-        this.CreatePipeline<TShader, TVertexInput, TPushConstant>(
-            shader,
-            renderPass,
-            out var pipeline,
-            out var pipelineLayout,
-            out var descriptorSetLayout,
-            out var uniformBindings
-        );
-
-        return new(pipeline, VkPipelineBindPoint.Graphics, shader, renderPass)
-        {
-            DescriptorSetLayout = descriptorSetLayout,
-            Layout              = pipelineLayout,
-            UniformBindings     = uniformBindings,
-        };
-    }
-
-    public Pipeline CreatePipelineAndWatch<TShader, TVertexInput, TPushConstant>(TShader shader, RenderPass renderPass)
-    where TShader       : Shader<TVertexInput, TPushConstant>
-    where TVertexInput  : IVertexInput
-    where TPushConstant : IPushConstant
-    {
-        var pipeline = this.CreatePipeline<TShader, TVertexInput, TPushConstant>(shader, renderPass);
-
-        void action()
-        {
-            this.CreatePipeline<TShader, TVertexInput, TPushConstant>(
-                shader,
-                renderPass,
-                out var vkPipeline,
-                out var vkPipelineLayout,
-                out var vkDescriptorSetLayout,
-                out var uniformBindings
-            );
-
-            lock (this.padlock)
-            {
-                IDisposable disposables = new Disposables(pipeline.Value, pipeline.Layout, pipeline.DescriptorSetLayout);
-
-                pipeline.Value               = vkPipeline;
-                pipeline.Layout              = vkPipelineLayout;
-                pipeline.DescriptorSetLayout = vkDescriptorSetLayout;
-                pipeline.UniformBindings     = uniformBindings;
-
-                this.DeferredDispose(disposables);
-            }
-        }
-
-        pipeline.Changed += action;
-
-        return pipeline;
-    }
-
     public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
         this.Context.CreateSurface(handle, clientSize);
 
@@ -886,6 +618,16 @@ public unsafe partial class VulkanRenderer : IDisposable
         this.framesUntilPendingDispose = FRAMES_BETWEEN_PENDING_DISPOSES;
 
         this.pendingDisposes.Enqueue(disposable);
+    }
+
+    public void DeferredDispose(Span<IDisposable> disposables)
+    {
+        this.framesUntilPendingDispose = FRAMES_BETWEEN_PENDING_DISPOSES;
+
+        foreach (var disposable in disposables)
+        {
+            this.pendingDisposes.Enqueue(disposable);
+        }
     }
 
     public void DeferredDispose(IEnumerable<IDisposable> disposables)

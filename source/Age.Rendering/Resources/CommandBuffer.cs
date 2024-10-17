@@ -64,8 +64,8 @@ public class CommandBuffer : Resource<VkCommandBuffer>
     public void BindIndexBuffer(IndexBuffer indexBuffer) =>
         this.Value.BindIndexBuffer(indexBuffer.Buffer.Value, 0, indexBuffer.Type);
 
-    public void BindPipeline(Pipeline pipeline) =>
-        this.Value.BindPipeline(pipeline.BindPoint, pipeline.Value);
+    public void BindShader(Shader shader) =>
+        this.Value.BindPipeline(shader.BindPoint, shader.Pipeline);
 
     public void BindVertexBuffer(VertexBuffer vertexBuffer) =>
         this.Value.BindVertexBuffers(0, 1, [vertexBuffer.Buffer.Value], [0]);
@@ -83,7 +83,7 @@ public class CommandBuffer : Resource<VkCommandBuffer>
     }
 
     public void BindUniformSet(UniformSet uniformSet) =>
-        this.Value.BindDescriptorSets(uniformSet.Pipeline.BindPoint, uniformSet.Pipeline.Layout, 0, uniformSet.DescriptorSets, []);
+        this.Value.BindDescriptorSets(uniformSet.shader.BindPoint, uniformSet.shader.PipelineLayout, 0, uniformSet.DescriptorSets, []);
 
     public void ClearImageColor(Image image, VkImageLayout imageLayout, VkClearColorValue color, Span<VkImageSubresourceRange> ranges) =>
         this.Value.ClearColorImage(image, imageLayout, color, ranges);
@@ -103,8 +103,8 @@ public class CommandBuffer : Resource<VkCommandBuffer>
     public void Reset() =>
         this.Value.Reset();
 
-    public void PushConstant<T>(Pipeline pipeline, in T constant) where T : unmanaged, IPushConstant =>
-        this.Value.PushConstants(pipeline.Layout, T.Stages, constant);
+    public void PushConstant<T>(Shader shader, in T constant) where T : unmanaged, IPushConstant =>
+        this.Value.PushConstants(shader.PipelineLayout, T.Stages, constant);
 
     public void SetViewport(in VkExtent2D extent)
     {
