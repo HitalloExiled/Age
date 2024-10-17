@@ -99,6 +99,8 @@ internal partial class BoxLayout : Layout
                         else if (element.Layout.contentLayer != null)
                         {
                             element.Layout.Layer = currentLayer;
+
+                            enumerator.SkipToNextSibling();
                         }
                         else
                         {
