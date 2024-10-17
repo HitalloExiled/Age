@@ -7,6 +7,5 @@ public partial class CanvasShader
         GrayscaleTexture  = 1 << 0,
         MultiplyColor     = 1 << 1,
         ColorAsBackground = 1 << 2,
-        HasClipping       = 1 << 3,
     }
 }

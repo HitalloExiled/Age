@@ -207,7 +207,7 @@ public unsafe class BvhTree
                 bvhNode.AABB.Position.X,
                 -bvhNode.AABB.Position.Y
             ),
-            Diffuse  = new(TextureStorage.Singleton.DefaultTexture, UVRect.Normalized),
+            MappedTexture  = new(TextureStorage.Singleton.DefaultTexture, UVRect.Normalized),
         };
 
         if (bvhNode.Left != null)

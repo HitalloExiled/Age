@@ -44,12 +44,12 @@ public class Viewport : Element
             this.SingleCommand = command = new()
             {
                 Id       = this.GetHashCode(),
-                Diffuse  = default!,
+                MappedTexture  = default!,
             };
         }
 
         command.Rect    = new Rect<float>(this.renderTarget.Size.Cast<float>(), default);
-        command.Diffuse = new(this.renderTarget.Texture, UVRect.Normalized);
+        command.MappedTexture = new(this.renderTarget.Texture, UVRect.Normalized);
     }
 
     protected override void Destroyed() =>

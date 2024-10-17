@@ -4,10 +4,13 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public class Buffer(VkBuffer value) : Resource<VkBuffer>(value)
+public class Buffer(VkBuffer instance) : Resource<VkBuffer>
 {
+
     public required Allocation         Allocation { get; init; }
     public required VkBufferUsageFlags Usage      { get; init; }
+
+    public override VkBuffer Instance => instance;
 
     private static void Copy(Buffer source, Buffer destination)
     {
@@ -18,15 +21,15 @@ public class Buffer(VkBuffer value) : Resource<VkBuffer>(value)
             Size = source.Allocation.Size,
         };
 
-        commandBuffer.Value.CopyBuffer(source, destination, copyRegion);
+        commandBuffer.Instance.CopyBuffer(source, destination, copyRegion);
 
         VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         this.Allocation.Dispose();
-        this.Value.Dispose();
+        this.Instance.Dispose();
     }
 
     public void CopyFrom(Buffer source) =>

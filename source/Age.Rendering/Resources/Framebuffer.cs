@@ -7,12 +7,14 @@ public class Framebuffer : Resource<VkFramebuffer>
     public required VkExtent2D    Extent     { get; init; }
     public required VkImageView[] ImageViews { get; init; } = [];
 
-    internal Framebuffer(VkFramebuffer value) : base(value)
-    { }
+    public override VkFramebuffer Instance { get; }
 
-    protected override void OnDispose()
+    internal Framebuffer(VkFramebuffer instance) =>
+        this.Instance = instance;
+
+    protected override void Disposed()
     {
-        this.Value.Dispose();
+        this.Instance.Dispose();
 
         foreach (var imageView in this.ImageViews)
         {

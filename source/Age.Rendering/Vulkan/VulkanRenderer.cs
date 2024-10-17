@@ -58,7 +58,8 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public VkQueue GraphicsQueue => this.Context.GraphicsQueue;
 
-    public VkFormat           DepthBufferFormat   { get; private set; }
+    public VkFormat           DepthBufferFormat    { get; private set; }
+    public VkFormat           StencilBufferFormat  { get; private set; }
     public VkSampleCountFlags MaxUsableSampleCount { get; private set; }
 
     public VulkanRenderer()
@@ -109,7 +110,7 @@ public unsafe partial class VulkanRenderer : IDisposable
         var imageViewCreateInfo = new VkImageViewCreateInfo
         {
             Format           = image.Format,
-            Image            = image.Value.Handle,
+            Image            = image.Instance.Handle,
             SubresourceRange = new()
             {
                 AspectMask = aspect,
@@ -119,9 +120,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             ViewType = VkImageViewType.N2D,
         };
 
-        var imageView = this.Context.Device.CreateImageView(imageViewCreateInfo);
-
-        return imageView;
+        return this.Context.Device.CreateImageView(imageViewCreateInfo);
     }
 
     private VkShaderModule CreateShaderModule(byte[] buffer)
@@ -158,7 +157,8 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     private void OnContextDeviceInitialized()
     {
-        this.DepthBufferFormat = this.FindSupportedFormat([VkFormat.D32Sfloat, VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint], VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
+        this.DepthBufferFormat   = this.FindSupportedFormat([VkFormat.D32Sfloat, VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint],      VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
+        this.StencilBufferFormat = this.FindSupportedFormat([VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint, VkFormat.D16UnormS8Uint], VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
 
         this.Context.Device.PhysicalDevice.GetProperties(out var physicalDeviceProperties);
 
@@ -259,59 +259,6 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public Image CreateImage(in VkImageCreateInfo createInfo, VkImageLayout finalLayout) =>
-        this.CreateImage(createInfo, null, finalLayout);
-
-    public Image CreateImage(in VkImageCreateInfo createInfo, in Color? clearColor = null, VkImageLayout? finalLayout = null)
-    {
-        var image = this.Context.Device.CreateImage(createInfo);
-
-        image.GetMemoryRequirements(out var memRequirements);
-
-        var memoryType = this.Context.FindMemoryType(memRequirements.MemoryTypeBits, VkMemoryPropertyFlags.DeviceLocal);
-
-        var memoryAllocateInfo = new VkMemoryAllocateInfo
-        {
-            AllocationSize  = memRequirements.Size,
-            MemoryTypeIndex = memoryType,
-        };
-
-        var deviceMemory = this.Context.Device.AllocateMemory(memoryAllocateInfo);
-
-        image.BindMemory(deviceMemory, 0);
-
-        return new(
-            image,
-            createInfo.Extent,
-            createInfo.Format,
-            createInfo.ImageType,
-            createInfo.Usage,
-            createInfo.InitialLayout,
-            finalLayout ?? createInfo.InitialLayout,
-            new()
-            {
-                Alignment  = memRequirements.Alignment,
-                Memory     = deviceMemory,
-                Memorytype = memoryType,
-                Offset     = 0,
-                Size       = memRequirements.Size,
-            },
-            clearColor
-        );
-    }
-
-    public Image[] CreateImage(in VkImageCreateInfo createInfo, int count)
-    {
-        var images = new Image[count];
-
-        for (var i = 0; i < count; i++)
-        {
-            images[i] = this.CreateImage(createInfo);
-        }
-
-        return images;
-    }
-
     public IndexBuffer CreateIndexBuffer(Span<ushort> indices) =>
         this.CreateIndexBuffer(indices, VkIndexType.Uint16);
 
@@ -353,7 +300,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             Height = createInfo.Attachments[0].Image.Extent.Height,
         };
 
-        var framebuffer = this.Context.CreateFrameBuffer(createInfo.RenderPass.Value, imageViews.AsSpan(), extent);
+        var framebuffer = this.Context.CreateFrameBuffer(createInfo.RenderPass.Instance, imageViews.AsSpan(), extent);
 
         return new(framebuffer)
         {
@@ -362,176 +309,71 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public RenderPass CreateRenderPass(in RenderPassCreateInfo createInfo)
-    {
-        using var disposables = new Disposables();
+    // public RenderPipeline CreateRenderPipeline(in RenderPipelineCreateInfo createInfo)
+    // {
+    //     var subPasses   = new RenderPassCreateInfo.SubPass[createInfo.SubPasses.Length];
+    //     var attachments = new List<FramebufferCreateInfo.Attachment>();
 
-        using var subpassDescriptions     = new NativeList<VkSubpassDescription>();
-        using var attachmentDescriptions  = new NativeList<VkAttachmentDescription>();
-        using var depthStencilAttachments = new NativeList<VkAttachmentDescription>();
+    //     for (var subPassIndex = 0; subPassIndex < createInfo.SubPasses.Length; subPassIndex++)
+    //     {
+    //         ref var subPass      = ref createInfo.SubPasses[subPassIndex];
+    //         var colorAttachments = new RenderPassCreateInfo.ColorAttachment[subPass.ColorAttachments.Length];
 
-        var renderPassSubPasses = new List<RenderPass.SubPass>(createInfo.SubPasses.Length);
+    //         ref var renderPassSubPass = ref subPasses[subPassIndex];
 
-        foreach (var subpass in createInfo.SubPasses)
-        {
-            var colorAttachmentReferences        = new NativeList<VkAttachmentReference>(subpass.ColorAttachments.Length);
-            var resolveAttachmentReferences      = new NativeList<VkAttachmentReference>();
-            var depthStencilAttachmentReferences = new NativeList<VkAttachmentReference>();
+    //         for (var i = 0; i < subPass.ColorAttachments.Length; i++)
+    //         {
+    //             ref var colorAttachment = ref subPass.ColorAttachments[i];
 
-            var subPassColorAttachments = new NativeList<RenderPass.SubPass.ColorAttachment>(subpass.ColorAttachments.Length);
+    //             attachments.Add(new(this.CreateImage(colorAttachment.Color.Image), VkImageAspectFlags.Color));
 
-            disposables.Add(colorAttachmentReferences);
-            disposables.Add(resolveAttachmentReferences);
-            disposables.Add(depthStencilAttachmentReferences);
+    //             if (colorAttachment.Resolve.HasValue)
+    //             {
+    //                 attachments.Add(new(this.CreateImage(colorAttachment.Resolve.Value.Image), VkImageAspectFlags.Color));
+    //             }
 
-            foreach (var attachment in subpass.ColorAttachments)
-            {
-                colorAttachmentReferences.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = VkImageLayout.ColorAttachmentOptimal });
-                attachmentDescriptions.Add(attachment.Color);
+    //             colorAttachments[i] = new()
+    //             {
+    //                 Color   = colorAttachment.Color.Description,
+    //                 Resolve = colorAttachment.Resolve?.Description,
+    //             };
+    //         }
 
-                if (attachment.Resolve.HasValue)
-                {
-                    resolveAttachmentReferences.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = VkImageLayout.ColorAttachmentOptimal });
-                    attachmentDescriptions.Add(attachment.Resolve.Value);
-                }
+    //         if (subPass.DepthStencilAttachment.HasValue)
+    //         {
+    //             attachments.Add(new(this.CreateImage(subPass.DepthStencilAttachment.Value.Image), VkImageAspectFlags.Depth));
+    //         }
 
-                var subPassColorAttachment = new RenderPass.SubPass.ColorAttachment
-                {
-                    Color = new()
-                    {
-                        Format  = attachment.Color.Format,
-                        Samples = attachment.Color.Samples,
-                    },
-                    Resolve = attachment.Resolve.HasValue
-                        ? new()
-                        {
-                            Format  = attachment.Resolve.Value.Format,
-                            Samples = attachment.Resolve.Value.Samples,
-                        } : default,
-                };
+    //         subPasses[subPassIndex] = new()
+    //         {
+    //             PipelineBindPoint      = subPass.PipelineBindPoint,
+    //             ColorAttachments       = colorAttachments,
+    //             DepthStencilAttachment = subPass.DepthStencilAttachment?.Description,
+    //         };
+    //     }
 
-                subPassColorAttachments.Add(subPassColorAttachment);
-            }
+    //     var renderPassCreateInfo = new RenderPassCreateInfo
+    //     {
+    //         SubpassDependencies = createInfo.SubpassDependencies,
+    //         SubPasses           = subPasses,
+    //     };
 
-            if (subpass.DepthStencilAttachment.HasValue)
-            {
-                depthStencilAttachmentReferences.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = VkImageLayout.DepthStencilAttachmentOptimal });
-                attachmentDescriptions.Add(subpass.DepthStencilAttachment.Value);
-            }
+    //     var renderPass = this.CreateRenderPass(renderPassCreateInfo);
 
-            var subpassDescription = new VkSubpassDescription
-            {
-                PipelineBindPoint       = subpass.PipelineBindPoint,
-                PColorAttachments       = colorAttachmentReferences.AsPointer(),
-                PResolveAttachments     = resolveAttachmentReferences.AsPointer(),
-                ColorAttachmentCount    = (uint)colorAttachmentReferences.Count,
-                PDepthStencilAttachment = depthStencilAttachmentReferences.AsPointer(),
-            };
+    //     var framebufferCreateInfo = new FramebufferCreateInfo
+    //     {
+    //         RenderPass  = renderPass,
+    //         Attachments = [..attachments],
+    //     };
 
-            subpassDescriptions.Add(subpassDescription);
+    //     var framebuffer = this.CreateFramebuffer(framebufferCreateInfo);
 
-            var renderPassSubPass = new RenderPass.SubPass
-            {
-                PipelineBindPoint = subpass.PipelineBindPoint,
-                ColorAttachments  = [..subPassColorAttachments],
-                DepthStencilAttachment = subpass.DepthStencilAttachment.HasValue
-                    ? new()
-                    {
-                        Format  = subpass.DepthStencilAttachment.Value.Format,
-                        Samples = subpass.DepthStencilAttachment.Value.Samples,
-                    } : default,
-            };
-
-            renderPassSubPasses.Add(renderPassSubPass);
-        }
-
-        fixed (VkSubpassDependency* pDependencies = createInfo.SubpassDependencies)
-        {
-            var renderPassCreateInfo = new VkRenderPassCreateInfo
-            {
-                AttachmentCount = (uint)attachmentDescriptions.Count,
-                PAttachments    = attachmentDescriptions.AsPointer(),
-                DependencyCount = (uint)createInfo.SubpassDependencies.Length,
-                PDependencies   = pDependencies,
-                SubpassCount    = (uint)subpassDescriptions.Count,
-                PSubpasses      = subpassDescriptions.AsPointer(),
-            };
-
-            var renderPass = this.Context.Device.CreateRenderPass(renderPassCreateInfo);
-
-            return new()
-            {
-                Value     = renderPass,
-                SubPasses = [..renderPassSubPasses],
-            };
-        }
-    }
-
-    public RenderPipeline CreateRenderPipeline(in RenderPipelineCreateInfo createInfo)
-    {
-        var subPasses   = new RenderPassCreateInfo.SubPass[createInfo.SubPasses.Length];
-        var attachments = new List<FramebufferCreateInfo.Attachment>();
-
-        for (var subPassIndex = 0; subPassIndex < createInfo.SubPasses.Length; subPassIndex++)
-        {
-            ref var subPass      = ref createInfo.SubPasses[subPassIndex];
-            var colorAttachments = new RenderPassCreateInfo.ColorAttachment[subPass.ColorAttachments.Length];
-
-            ref var renderPassSubPass = ref subPasses[subPassIndex];
-
-            for (var i = 0; i < subPass.ColorAttachments.Length; i++)
-            {
-                ref var colorAttachment = ref subPass.ColorAttachments[i];
-
-                attachments.Add(new(this.CreateImage(colorAttachment.Color.Image), VkImageAspectFlags.Color));
-
-                if (colorAttachment.Resolve.HasValue)
-                {
-                    attachments.Add(new(this.CreateImage(colorAttachment.Resolve.Value.Image), VkImageAspectFlags.Color));
-                }
-
-                colorAttachments[i] = new()
-                {
-                    Color   = colorAttachment.Color.Description,
-                    Resolve = colorAttachment.Resolve?.Description,
-                };
-            }
-
-            if (subPass.DepthStencilAttachment.HasValue)
-            {
-                attachments.Add(new(this.CreateImage(subPass.DepthStencilAttachment.Value.Image), VkImageAspectFlags.Depth));
-            }
-
-            subPasses[subPassIndex] = new()
-            {
-                PipelineBindPoint      = subPass.PipelineBindPoint,
-                ColorAttachments       = colorAttachments,
-                DepthStencilAttachment = subPass.DepthStencilAttachment?.Description,
-            };
-        }
-
-        var renderPassCreateInfo = new RenderPassCreateInfo
-        {
-            SubpassDependencies = createInfo.SubpassDependencies,
-            SubPasses           = subPasses,
-        };
-
-        var renderPass = this.CreateRenderPass(renderPassCreateInfo);
-
-        var framebufferCreateInfo = new FramebufferCreateInfo
-        {
-            RenderPass  = renderPass,
-            Attachments = [..attachments],
-        };
-
-        var framebuffer = this.CreateFramebuffer(framebufferCreateInfo);
-
-        return new()
-        {
-            RenderPass  = renderPass,
-            Framebuffer = framebuffer,
-        };
-    }
+    //     return new()
+    //     {
+    //         RenderPass  = renderPass,
+    //         Framebuffer = framebuffer,
+    //     };
+    // }
 
     public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
         this.Context.CreateSurface(handle, clientSize);
@@ -560,7 +402,7 @@ public unsafe partial class VulkanRenderer : IDisposable
             Usage         = usage,
         };
 
-        var image = this.CreateImage(imageCreateInfo, VkImageLayout.TransferDstOptimal);
+        var image = new Image(imageCreateInfo, VkImageLayout.TransferDstOptimal);
 
         var imageView = this.CreateImageView(image, VkImageAspectFlags.Color);
 
@@ -660,7 +502,7 @@ public unsafe partial class VulkanRenderer : IDisposable
     {
         commandBuffer.End();
 
-        var commandBufferHandle = commandBuffer.Value.Handle;
+        var commandBufferHandle = commandBuffer.Instance.Handle;
 
         var submitInfo = new VkSubmitInfo
         {

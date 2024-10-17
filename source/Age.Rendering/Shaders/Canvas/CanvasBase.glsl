@@ -16,13 +16,11 @@
 
 #define CURVE_FACTOR 3
 
-#define FLAGS_GRAYSCALE_TEXTURE     1 << 0
-#define FLAGS_MULTIPLY_COLOR        1 << 1
-#define FLAGS_COLOR_AS_BACKGROUND   1 << 2
-#define FLAGS_HAS_STENCIL           1 << 3
+#define FLAGS_GRAYSCALE_TEXTURE   1 << 0
+#define FLAGS_MULTIPLY_COLOR      1 << 1
+#define FLAGS_COLOR_AS_BACKGROUND 1 << 2
 
 layout(binding = 0) uniform sampler2D diffuse;
-layout(binding = 1) uniform sampler2D stencil;
 
 layout(location = 0) in vec2 inFragTexCoord;
 

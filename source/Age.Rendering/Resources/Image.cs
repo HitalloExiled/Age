@@ -13,6 +13,8 @@ public class Image : Resource<VkImage>
     [MemberNotNullWhen(true, nameof(Allocation))]
     private bool HandlerOwner { get; set; } = true;
 
+    private readonly VkImage instance;
+
     public Allocation?       Allocation    { get; }
     public VkExtent3D        Extent        { get; }
     public VkFormat          Format        { get; }
@@ -20,6 +22,8 @@ public class Image : Resource<VkImage>
     public VkImageLayout     FinalLayout   { get; private set; }
     public VkImageType       Type          { get; }
     public VkImageUsageFlags Usage         { get; }
+
+    public override VkImage Instance => this.instance;
 
     public VkImageAspectFlags Aspect
     {
@@ -168,67 +172,84 @@ public class Image : Resource<VkImage>
             _ => 0,
         };
 
-    private Image(
-        VkImage           image,
-        bool              handlerOwner,
-        VkExtent3D        extent,
-        VkFormat          format,
-        VkImageType       type,
-        VkImageUsageFlags usage,
-        VkImageLayout     initialLayout,
-        VkImageLayout     finalLayout,
-        Allocation?       allocation,
-        in Color?         clearColor = null
-    ) : base(image)
+    internal Image(
+        VkImage              instance,
+        in VkImageCreateInfo createInfo
+    )
     {
-        this.HandlerOwner  = handlerOwner;
-        this.Extent        = extent;
-        this.Format        = format;
-        this.Type          = type;
-        this.Usage         = usage;
-        this.InitialLayout = initialLayout;
-        this.FinalLayout   = finalLayout;
-        this.Allocation    = allocation;
+        this.instance      = instance;
+        this.HandlerOwner  = false;
+        this.Extent        = createInfo.Extent;
+        this.Format        = createInfo.Format;
+        this.Type          = createInfo.ImageType;
+        this.Usage         = createInfo.Usage;
+        this.InitialLayout = createInfo.InitialLayout;
+    }
+
+    public Image(in VkImageCreateInfo createInfo, VkImageLayout finalLayout) : this(createInfo, null, finalLayout)
+    { }
+
+    public Image(in VkImageCreateInfo createInfo, in Color? clearColor = null, VkImageLayout finalLayout = default)
+    {
+        this.instance = VulkanRenderer.Singleton.Context.Device.CreateImage(createInfo);
+        this.instance.GetMemoryRequirements(out var memRequirements);
+
+        var memoryType = VulkanRenderer.Singleton.Context.FindMemoryType(memRequirements.MemoryTypeBits, VkMemoryPropertyFlags.DeviceLocal);
+
+        var memoryAllocateInfo = new VkMemoryAllocateInfo
+        {
+            AllocationSize  = memRequirements.Size,
+            MemoryTypeIndex = memoryType,
+        };
+
+        var deviceMemory = VulkanRenderer.Singleton.Context.Device.AllocateMemory(memoryAllocateInfo);
+
+        this.instance.BindMemory(deviceMemory, 0);
 
         if (clearColor.HasValue)
         {
-            this.ClearColor(clearColor.Value, finalLayout == initialLayout ? VkImageLayout.General : finalLayout);
+            this.ClearColor(clearColor.Value, finalLayout == createInfo.InitialLayout ? VkImageLayout.General : finalLayout);
         }
-        else if (finalLayout != initialLayout)
+        else if (finalLayout != createInfo.InitialLayout)
         {
-            this.TransitionLayout(initialLayout, finalLayout);
+            this.TransitionLayout(createInfo.InitialLayout, finalLayout);
         }
+
+        this.HandlerOwner  = true;
+        this.Extent        = createInfo.Extent;
+        this.Format        = createInfo.Format;
+        this.Type          = createInfo.ImageType;
+        this.Usage         = createInfo.Usage;
+        this.InitialLayout = createInfo.InitialLayout;
+        this.FinalLayout   = finalLayout;
+        this.Allocation    = new()
+        {
+            Alignment  = memRequirements.Alignment,
+            Memory     = deviceMemory,
+            Memorytype = memoryType,
+            Offset     = 0,
+            Size       = memRequirements.Size,
+        };
     }
 
-    internal Image(
-        VkImage           image,
-        VkExtent3D        extent,
-        VkFormat          format,
-        VkImageType       type,
-        VkImageUsageFlags usage,
-        VkImageLayout     initialLayout,
-        VkImageLayout     finalLayout,
-        Allocation        allocation,
-        in Color?         clearColor = null
-    ) : this(image, true, extent, format, type, usage, initialLayout, finalLayout, allocation, clearColor)
-    { }
+    public static Image[] Create(in VkImageCreateInfo createInfo, int count)
+    {
+        var images = new Image[count];
 
-    internal Image(
-        VkImage           image,
-        VkExtent3D        extent,
-        VkFormat          format,
-        VkImageType       type,
-        VkImageUsageFlags usage,
-        VkImageLayout     layout
-    ) : this(image, false, extent, format, type, usage, layout, layout, null, null)
-    { }
+        for (var i = 0; i < count; i++)
+        {
+            images[i] = new(createInfo);
+        }
 
-    protected override void OnDispose()
+        return images;
+    }
+
+    protected override void Disposed()
     {
         if (this.HandlerOwner)
         {
             this.Allocation.Dispose();
-            this.Value.Dispose();
+            this.instance.Dispose();
         }
     }
 
@@ -280,7 +301,7 @@ public class Image : Resource<VkImage>
             }
         };
 
-        commandBuffer.Value.CopyBufferToImage(buffer, this, VkImageLayout.TransferDstOptimal, [bufferImageCopy]);
+        commandBuffer.Instance.CopyBufferToImage(buffer, this.instance, VkImageLayout.TransferDstOptimal, [bufferImageCopy]);
     }
 
     public void CopyToBuffer(Buffer buffer, VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
@@ -308,7 +329,7 @@ public class Image : Resource<VkImage>
             }
         };
 
-        commandBuffer.Value.CopyImageToBuffer(this, VkImageLayout.TransferSrcOptimal, buffer.Value, [bufferImageCopy]);
+        commandBuffer.Instance.CopyImageToBuffer(this.instance, VkImageLayout.TransferSrcOptimal, buffer.Instance, [bufferImageCopy]);
     }
 
     public unsafe uint[] ReadBuffer(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
@@ -375,7 +396,7 @@ public class Image : Resource<VkImage>
         {
             DstAccessMask       = dstAccessMask,
             DstQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
-            Image               = this.Value.Handle,
+            Image               = this.instance.Handle,
             NewLayout           = newLayout,
             OldLayout           = oldLayout,
             SrcAccessMask       = srcAccessMask,
@@ -388,7 +409,7 @@ public class Image : Resource<VkImage>
             }
         };
 
-        commandBuffer.Value.PipelineBarrier(sourceStage, destinationStage, default, [], [], [imageMemoryBarrier]);
+        commandBuffer.Instance.PipelineBarrier(sourceStage, destinationStage, default, [], [], [imageMemoryBarrier]);
 
         this.FinalLayout = newLayout;
     }

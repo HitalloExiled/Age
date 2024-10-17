@@ -14,21 +14,24 @@ namespace Age.RenderPasses;
 
 internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 {
-    private readonly Framebuffer[]                     framebuffers = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
-    private readonly IndexBuffer                       indexBuffer;
-    private readonly RenderPass                        renderPass;
-    private readonly Dictionary<int, UniformSet>       uniformSets = [];
-    private readonly VertexBuffer                      vertexBuffer;
-    private readonly IndexBuffer                       wireframeIndexBuffer;
+    private readonly CanvasStencilMaskShader canvasStencilMaskShader;
+    private readonly Framebuffer[]           framebuffers  = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly IndexBuffer             indexBuffer;
+    private readonly RenderPass              renderPass;
+    private readonly Image[]                 stencilImages = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly VertexBuffer            vertexBuffer;
+    private readonly IndexBuffer             wireframeIndexBuffer;
 
     private UniformSet? lastUniformSet;
 
-    protected override Color             ClearColor    { get; } = Color.Black;
-    protected override CommandBuffer     CommandBuffer => this.Renderer.CurrentCommandBuffer;
-    protected override Framebuffer       Framebuffer   => this.framebuffers[this.Window.Surface.CurrentBuffer];
-    protected override RenderResources[] Resources     { get; } = [];
+    protected override CanvasStencilMaskShader CanvasStencilMaskShader => this.canvasStencilMaskShader;
+    protected override Color                   ClearColor              { get; } = Color.Black;
+    protected override CommandBuffer           CommandBuffer           => this.Renderer.CurrentCommandBuffer;
+    protected override Framebuffer             Framebuffer             => this.framebuffers[this.Window.Surface.CurrentBuffer];
+    protected override RenderResources[]       Resources               { get; } = [];
 
     public override RenderPass RenderPass => this.renderPass;
+
 
     public CanvasRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)
     {
@@ -46,17 +49,20 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.renderPass = this.CreateRenderPass();
 
+        this.canvasStencilMaskShader = new CanvasStencilMaskShader(this.renderPass, true);
+
         var canvasPipeline          = new CanvasShader(this.renderPass, true);
         var canvasWireframePipeline = new CanvasWireframeShader(this.renderPass, true);
 
         this.Resources =
         [
             new(canvasPipeline,          this.vertexBuffer, this.indexBuffer, true),
-            new(canvasWireframePipeline, this.vertexBuffer, this.wireframeIndexBuffer, false),
+            new(canvasWireframePipeline, this.vertexBuffer, this.wireframeIndexBuffer, true),
         ];
 
-        canvasPipeline.Changed += RenderingService.Singleton.RequestDraw;
-        canvasWireframePipeline.Changed += RenderingService.Singleton.RequestDraw;
+        this.canvasStencilMaskShader.Changed += RenderingService.Singleton.RequestDraw;
+        canvasPipeline.Changed               += RenderingService.Singleton.RequestDraw;
+        canvasWireframePipeline.Changed      += RenderingService.Singleton.RequestDraw;
 
         this.CreateFrameBuffers();
     }
@@ -86,15 +92,38 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                                 LoadOp         = VkAttachmentLoadOp.Clear,
                                 StoreOp        = VkAttachmentStoreOp.Store,
                                 StencilLoadOp  = VkAttachmentLoadOp.DontCare,
-                                StencilStoreOp = VkAttachmentStoreOp.DontCare
+                                StencilStoreOp = VkAttachmentStoreOp.DontCare,
                             },
                         }
                     ],
+                    // DepthStencilAttachment = new()
+                    // {
+                    //     Format         = VulkanRenderer.Singleton.StencilBufferFormat,
+                    //     Samples        = VkSampleCountFlags.N1,
+                    //     InitialLayout  = VkImageLayout.Undefined,
+                    //     FinalLayout    = VkImageLayout.DepthStencilAttachmentOptimal,
+                    //     LoadOp         = VkAttachmentLoadOp.Clear,
+                    //     StoreOp        = VkAttachmentStoreOp.DontCare,
+                    //     StencilLoadOp  = VkAttachmentLoadOp.Clear,
+                    //     StencilStoreOp = VkAttachmentStoreOp.Store
+                    // },
                 }
-            ]
+            ],
+            // SubpassDependencies =
+            // [
+            //     new()
+            //     {
+            //         SrcSubpass    = VkConstants.VK_SUBPASS_EXTERNAL,
+            //         DstSubpass    = 0,
+            //         SrcStageMask  = VkPipelineStageFlags.ColorAttachmentOutput,
+            //         SrcAccessMask = 0,
+            //         DstStageMask  = VkPipelineStageFlags.ColorAttachmentOutput,
+            //         DstAccessMask = VkAccessFlags.ColorAttachmentWrite,
+            //     }
+            // ]
         };
 
-        return this.Renderer.CreateRenderPass(createInfo);
+        return new(createInfo);
     }
 
     private void CreateFrameBuffers()
@@ -106,8 +135,23 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             Depth  = 1,
         };
 
+        var stencilImageCreateInfo = new VkImageCreateInfo
+        {
+            ArrayLayers   = 1,
+            Extent        = extent,
+            Format        = VulkanRenderer.Singleton.StencilBufferFormat,
+            ImageType     = VkImageType.N2D,
+            InitialLayout = VkImageLayout.Undefined,
+            MipLevels     = 1,
+            Samples       = VkSampleCountFlags.N1,
+            Tiling        = VkImageTiling.Optimal,
+            Usage         = VkImageUsageFlags.DepthStencilAttachment,
+        };
+
         for (var i = 0; i < this.Window.Surface.Swapchain.Images.Length; i++)
         {
+            this.stencilImages[i] = new Image(stencilImageCreateInfo);
+
             var createInfo = new FramebufferCreateInfo
             {
                 RenderPass  = this.renderPass,
@@ -117,14 +161,22 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                     {
                         Image = new(
                             this.Window.Surface.Swapchain.Images[i],
-                            extent,
-                            this.Window.Surface.Swapchain.Format,
-                            VkImageType.N2D,
-                            this.Window.Surface.Swapchain.ImageUsage,
-                            VkImageLayout.PresentSrcKHR
+                            new()
+                            {
+                                Extent        = extent,
+                                Format        = this.Window.Surface.Swapchain.Format,
+                                ImageType     = VkImageType.N2D,
+                                Usage         = this.Window.Surface.Swapchain.ImageUsage,
+                                InitialLayout = VkImageLayout.PresentSrcKHR,
+                            }
                         ),
                         ImageAspect = VkImageAspectFlags.Color,
                     },
+                    // new FramebufferCreateInfo.Attachment
+                    // {
+                    //     Image       = this.stencilImages[i],
+                    //     ImageAspect = VkImageAspectFlags.Stencil,
+                    // },
                 ]
             };
 
@@ -134,9 +186,10 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
     private void DisposeFrameBuffers()
     {
-        for (var i = 0; i < this.framebuffers.Length; i++)
+        for (var i = 0; i < VulkanContext.MAX_FRAMES_IN_FLIGHT; i++)
         {
-            this.framebuffers[i].Dispose();
+            VulkanRenderer.Singleton.DeferredDispose(this.stencilImages[i]);
+            VulkanRenderer.Singleton.DeferredDispose(this.framebuffers[i]);
         }
     }
 
@@ -149,29 +202,22 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             Flags     = command.Flags,
             Rect      = command.Rect,
             Transform = transform,
-            UV        = command.Diffuse.UV,
+            UV        = command.MappedTexture.UV,
             Viewport  = viewport,
         };
 
-        var hashcode = HashCode.Combine(command.Id, command.Diffuse.GetHashCode(), command.Layer?.Texture.GetHashCode() ?? 0);
+        var hashcode = command.MappedTexture.Texture.GetHashCode();
 
-        if (!this.uniformSets.TryGetValue(hashcode, out var uniformSet))
+        if (!this.UniformSets.TryGetValue(hashcode, out var uniformSet))
         {
             var diffuse = new CombinedImageSamplerUniform
             {
                 Binding     = 0,
-                Texture     = command.Diffuse.Texture,
+                Texture     = command.MappedTexture.Texture,
                 ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
             };
 
-            var stencil = new CombinedImageSamplerUniform
-            {
-                Binding     = 1,
-                Texture     = command.Layer?.Texture ?? TextureStorage.Singleton.EmptyTexture,
-                ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
-            };
-
-            this.uniformSets[hashcode] = uniformSet = new UniformSet(resource.Shader, [diffuse, stencil]);
+            this.UniformSets[hashcode] = uniformSet = new UniformSet(resource.Shader, [diffuse]);
         }
 
         if (uniformSet != null && uniformSet != this.lastUniformSet)
@@ -187,6 +233,8 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
     protected override void Disposed()
     {
+        base.Disposed();
+
         this.DisposeFrameBuffers();
 
         for (var i = 0; i < this.Resources.Length; i++)
@@ -195,11 +243,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             this.Resources[i].Shader.Changed -= RenderingService.Singleton.RequestDraw;
         }
 
-        foreach (var uniformSet in this.uniformSets.Values)
-        {
-            uniformSet.Dispose();
-        }
-
+        this.canvasStencilMaskShader.Dispose();
         this.renderPass.Dispose();
     }
 

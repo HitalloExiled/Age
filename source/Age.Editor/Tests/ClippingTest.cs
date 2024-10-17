@@ -88,20 +88,20 @@ public class ClippingTest
             }
         };
 
-        //canvas.AppendChild(n1_layer);
-        //    n1_layer.AppendChild(n2_a_layer);
-        //        n2_a_layer.AppendChild(n3_no_layer);
-        //            n3_no_layer.AppendChild(n4_layer);
-        //                n4_layer.AppendChild(n5_no_layer);
-
-        //n1_layer.AppendChild(n2_b_non_layer);
-
-
-                        n4_layer.AppendChild(n5_no_layer);
-                    n3_no_layer.AppendChild(n4_layer);
-                n2_a_layer.AppendChild(n3_no_layer);
-            n1_layer.AppendChild(n2_a_layer);
-            n1_layer.AppendChild(n2_b_non_layer);
         canvas.AppendChild(n1_layer);
+           n1_layer.AppendChild(n2_a_layer);
+            //    n2_a_layer.AppendChild(n3_no_layer);
+            //        n3_no_layer.AppendChild(n4_layer);
+            //            n4_layer.AppendChild(n5_no_layer);
+            // n1_layer.AppendChild(n2_b_non_layer);
+
+
+
+        //                 n4_layer.AppendChild(n5_no_layer);
+        //             n3_no_layer.AppendChild(n4_layer);
+        //         n2_a_layer.AppendChild(n3_no_layer);
+        //     n1_layer.AppendChild(n2_a_layer);
+        //     n1_layer.AppendChild(n2_b_non_layer);
+        // canvas.AppendChild(n1_layer);
     }
 }

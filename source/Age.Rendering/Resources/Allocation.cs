@@ -11,6 +11,6 @@ public class Allocation : Resource
     public required ulong          Offset     { get; init; }
     public required ulong          Size       { get; init; }
 
-    protected override void OnDispose() =>
+    protected override void Disposed() =>
         this.Memory.Dispose();
 }

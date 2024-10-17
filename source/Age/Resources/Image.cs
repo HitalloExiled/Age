@@ -39,7 +39,7 @@ public class Image : Disposable
             Usage         = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled,
         };
 
-        this.resource = VulkanRenderer.Singleton.CreateImage(imageCreateInfo);
+        this.resource = new ImageResource(imageCreateInfo);
 
         this.resource.Update(buffer);
     }
