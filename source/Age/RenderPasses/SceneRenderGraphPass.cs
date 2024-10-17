@@ -89,7 +89,7 @@ public partial class SceneRenderGraphPass : RenderGraphPass
             ],
         };
 
-        return this.Renderer.CreateRenderPass(createInfo);
+        return new(createInfo);
     }
 
     private unsafe BufferHandlePair UpdateUbo(Camera3D camera, Mesh mesh, in Matrix4x4<float> transform, in VkExtent2D viewport)

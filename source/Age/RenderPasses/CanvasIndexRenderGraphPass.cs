@@ -7,25 +7,28 @@ using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using Age.Converters;
+using Age.Services;
 
 namespace Age.RenderPasses;
 
 public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 {
-    private readonly CommandBuffer commandBuffer;
-    private readonly IndexBuffer   indexBuffer;
-    private readonly RenderPass    renderPass;
-    private readonly VertexBuffer  vertexBuffer;
+    private readonly CanvasStencilMaskShader canvasStencilMaskShader;
+    private readonly CommandBuffer           commandBuffer;
+    private readonly IndexBuffer             indexBuffer;
+    private readonly RenderPass              renderPass;
+    private readonly VertexBuffer            vertexBuffer;
 
     private Image       image;
     private Framebuffer framebuffer;
 
     public Image ColorImage => this.image;
 
-    protected override Color             ClearColor    { get; } = Color.Black;
-    protected override CommandBuffer     CommandBuffer => this.commandBuffer;
-    protected override Framebuffer       Framebuffer   => this.framebuffer;
-    protected override RenderResources[] Resources     { get; } = [];
+    protected override CanvasStencilMaskShader CanvasStencilMaskShader => this.canvasStencilMaskShader;
+    protected override Color                   ClearColor              { get; } = Color.Black;
+    protected override CommandBuffer           CommandBuffer           => this.commandBuffer;
+    protected override Framebuffer             Framebuffer             => this.framebuffer;
+    protected override RenderResources[]       Resources               { get; } = [];
 
     public override RenderPass RenderPass => this.renderPass;
 
@@ -46,15 +49,18 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.CreateFramebuffer(out this.image, out this.framebuffer);
 
-        var shader = new CanvasIndexShader(renderPass, true);
+        this.canvasStencilMaskShader = new CanvasStencilMaskShader(this.renderPass, true);
+
+        var shader = new CanvasIndexShader(this.renderPass, true);
 
         this.Resources =
         [
             new RenderResources(shader, this.vertexBuffer, this.indexBuffer, true)
         ];
+
+        this.canvasStencilMaskShader.Changed += RenderingService.Singleton.RequestDraw;
+        shader.Changed += RenderingService.Singleton.RequestDraw;
     }
-
-
 
     private void CreateFramebuffer(out Image image, out Framebuffer framebuffer)
     {
@@ -78,7 +84,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             Usage         = VkImageUsageFlags.TransferDst | VkImageUsageFlags.TransferSrc | VkImageUsageFlags.Sampled | VkImageUsageFlags.ColorAttachment,
         };
 
-        image = this.Renderer.CreateImage(imageCreateInfo, Color.Black);
+        image = new Image(imageCreateInfo, Color.Black);
 
         var framebufferCreateInfo = new FramebufferCreateInfo
         {
@@ -126,7 +132,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             ]
         };
 
-        return this.Renderer.CreateRenderPass(createInfo);
+        return new(createInfo);
     }
 
     private void DisposeFramebuffer()
@@ -139,7 +145,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
     {
         this.commandBuffer.End();
 
-        var commandBufferHandle = this.commandBuffer.Value.Handle;
+        var commandBufferHandle = this.commandBuffer.Instance.Handle;
 
         var submitInfo = new VkSubmitInfo
         {
@@ -166,7 +172,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             Flags     = command.Flags,
             Rect      = command.Rect,
             Transform = transform,
-            UV        = command.Diffuse.UV,
+            UV        = command.MappedTexture.UV,
             Viewport  = viewport,
         };
 
@@ -176,8 +182,11 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
     protected override void Disposed()
     {
+        base.Disposed();
+
         this.DisposeFramebuffer();
 
+        this.canvasStencilMaskShader.Dispose();
         this.renderPass.Dispose();
         this.commandBuffer.Dispose();
         this.Resources[0].Dispose();

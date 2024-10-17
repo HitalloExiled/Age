@@ -17,11 +17,25 @@ namespace Age.Rendering.Resources;
 
 public class ShaderCompilationException(string message) : Exception(message);
 
+public enum StencilKind
+{
+    None,
+    Mask,
+    Content,
+}
+
 public struct ShaderOptions
 {
-    public VkFrontFace        FrontFace;
-    public VkSampleCountFlags RasterizationSamples;
-    public bool               Watch;
+    #region 4-bytes alignment
+    public required VkSampleCountFlags RasterizationSamples;
+
+    public VkFrontFace FrontFace;
+    public StencilKind Stencil;
+    #endregion
+
+    #region 2-bytes alignment
+    public bool Watch;
+    #endregion
 }
 
 public abstract class Shader(RenderPass renderPass) : Resource
@@ -73,19 +87,6 @@ where TPushConstant : IPushConstant
     public override VkDescriptorType[]    UniformBindings     => this.uniformBindings;
 
     public Dictionary<VkShaderStageFlags, byte[]> Stages { get; } = [];
-
-    public Shader(RenderPass renderPass, Span<string> files, bool watch)
-    : this(
-        renderPass,
-        files,
-        new ShaderOptions()
-        {
-            Watch                = watch,
-            FrontFace            = VkFrontFace.Clockwise,
-            RasterizationSamples = VkSampleCountFlags.N1,
-        }
-    )
-    { }
 
     public Shader(RenderPass renderPass, Span<string> files, in ShaderOptions options) : base(renderPass)
     {
@@ -467,13 +468,28 @@ where TPushConstant : IPushConstant
                     ScissorCount  = 1,
                 };
 
+                var stencilOp = this.options.Stencil == StencilKind.None
+                    ? default
+                    : new VkStencilOpState
+                    {
+                        FailOp      = VkStencilOp.Keep,
+                        PassOp      = this.options.Stencil == StencilKind.Mask ? VkStencilOp.Replace : VkStencilOp.Keep,
+                        DepthFailOp = VkStencilOp.Keep,
+                        CompareOp   = VkCompareOp.Always,
+                        CompareMask = 0xFF,
+                        WriteMask   = this.options.Stencil == StencilKind.Mask ? 0xFFu : 0x00,
+                        Reference   = 1
+                    };
+
                 var depthStencilState = new VkPipelineDepthStencilStateCreateInfo
                 {
                     DepthTestEnable       = true,
                     DepthWriteEnable      = true,
                     DepthCompareOp        = VkCompareOp.Less,
                     DepthBoundsTestEnable = false,
-                    StencilTestEnable     = false
+                    StencilTestEnable     = this.options.Stencil != StencilKind.None,
+                    Front                 = stencilOp,
+                    Back                  = stencilOp,
                 };
 
                 var graphicsPipelineCreateInfo = new VkGraphicsPipelineCreateInfo
@@ -488,7 +504,7 @@ where TPushConstant : IPushConstant
                     PVertexInputState   = &pipelineVertexInputStateCreateInfo,
                     PViewportState      = &pipelineViewportStateCreateInfo,
                     StageCount          = (uint)pipelineShaderStageCreateInfos.Count,
-                    RenderPass          = this.RenderPass.Value.Handle,
+                    RenderPass          = this.RenderPass.Instance.Handle,
                     PDepthStencilState  = &depthStencilState,
                 };
 
@@ -497,7 +513,7 @@ where TPushConstant : IPushConstant
         }
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         foreach (var file in this.files)
         {

@@ -52,7 +52,7 @@ public class UniformSet : Resource
         return poolKey;
     }
 
-    protected override void OnDispose() =>
+    protected override void Disposed() =>
         this.DescriptorPool.FreeDescriptorSets(this.DescriptorSets);
 
     public unsafe void Update(Span<Uniform> uniforms)
@@ -95,7 +95,7 @@ public class UniformSet : Resource
                 {
                     var descriptorBufferInfo = new VkDescriptorBufferInfo
                     {
-                        Buffer = uniformBuffer.Buffer.Value.Handle,
+                        Buffer = uniformBuffer.Buffer.Instance.Handle,
                         Offset = uniformBuffer.Buffer.Allocation.Offset,
                         Range  = uniformBuffer.Buffer.Allocation.Size,
                     };

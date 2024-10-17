@@ -27,7 +27,7 @@ internal partial class TextService : IDisposable
     private readonly Dictionary<int, TextureAtlas> atlases = [];
     private readonly Dictionary<int, Glyph>        glyphs = [];
     private readonly VulkanRenderer                renderer;
-    private readonly ObjectPool<RectCommand>       rectCommandPool = new(static () => new() { Id = -1, Diffuse = default! });
+    private readonly ObjectPool<RectCommand>       rectCommandPool = new(static () => new() { Id = -1, MappedTexture = default! });
 
     private bool disposed;
 
@@ -215,7 +215,7 @@ internal partial class TextService : IDisposable
                 command.Rect     = new(size, position);
                 command.Color    = color;
                 command.Flags    = Flags.GrayscaleTexture | Flags.MultiplyColor;
-                command.Diffuse  = new(atlas.Texture, uv);
+                command.MappedTexture  = new(atlas.Texture, uv);
 
                 textNode.Commands.Add(command);
 

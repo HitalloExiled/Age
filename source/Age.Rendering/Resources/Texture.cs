@@ -14,7 +14,7 @@ public class Texture : Resource
     internal Texture(bool imageOwner) =>
         this.imageOwner = imageOwner;
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         if (this.imageOwner)
         {

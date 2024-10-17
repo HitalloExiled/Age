@@ -4,7 +4,7 @@ public abstract class Resource : IDisposable
 {
     private bool disposed;
 
-    protected abstract void OnDispose();
+    protected abstract void Disposed();
 
     public void Dispose()
     {
@@ -12,7 +12,7 @@ public abstract class Resource : IDisposable
         {
             this.disposed = true;
 
-            this.OnDispose();
+            this.Disposed();
         }
 
         GC.SuppressFinalize(this);
@@ -21,10 +21,7 @@ public abstract class Resource : IDisposable
 
 public abstract class Resource<T> : Resource
 {
-    public T Value { get; }
+    public abstract T Instance { get; }
 
-    internal Resource(T value) =>
-        this.Value = value;
-
-    public static implicit operator T(Resource<T> value) => value.Value;
+    public static implicit operator T(Resource<T> value) => value.Instance;
 }

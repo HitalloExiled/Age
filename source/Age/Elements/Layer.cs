@@ -2,36 +2,25 @@ using Age.Core.Extensions;
 using Age.Extensions;
 using Age.Internal;
 using Age.Numerics;
-using Age.Platforms.Windows.Native.Types;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.Storage;
 using Age.Styling;
 using SkiaSharp;
 using System.Collections;
-using System.Drawing;
+using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 
 namespace Age.Elements;
 
 internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
 {
-    // 8-bytes alignment
-    private readonly Element owner = owner;
-    private readonly SKPath  path  = new();
+    #region 8-bytes alignment
+    private readonly SKPath path = new();
 
-    private Texture    texture = TextureStorage.Singleton.EmptyTexture;
     private LayerTree? tree;
 
-    // 4-bytes alignment
-    private Transform2D transform;
-
-    // 2-bytes alignment
-    private bool disposed;
-    private bool isDirty;
-
-    public Element Owner   => this.owner;
-    public Texture Texture => this.texture;
+    public Element Owner { get; } = owner;
 
     public Layer? FirstChild      { get; private set; }
     public Layer? LastChild       { get; private set; }
@@ -39,19 +28,7 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
     public Layer? Parent          { get; private set; }
     public Layer? PreviousSibling { get; private set; }
 
-    private Transform2D Transform
-    {
-        get => this.transform;
-        set
-        {
-            if (this.transform != value)
-            {
-                this.transform = value;
-
-                this.MakeDirty();
-            }
-        }
-    }
+    public Texture Texture { get; private set; } = TextureStorage.Singleton.EmptyTexture;
 
     public LayerTree? Tree
     {
@@ -79,6 +56,30 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
             }
         }
     }
+    #endregion
+
+    #region 4-bytes alignment
+    private Transform2D transform;
+
+    internal Transform2D Transform
+    {
+        get => this.transform;
+        set
+        {
+            if (this.transform != value)
+            {
+                this.transform = value;
+
+                this.MakeDirty();
+            }
+        }
+    }
+    #endregion
+
+    #region 2-bytes alignment
+    private bool disposed;
+    private bool isDirty;
+    #endregion
 
     ~Layer() => this.Dispose(false);
 
@@ -296,29 +297,34 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
 
             canvas.DrawPath(this.path, paint);
 
-            var buffer = new byte[bitmap.Pixels.Length];
+            var length = bounds.Width * bounds.Height;
+
+            var bytesPerPixel = 2;
+
+            var buffer = new byte[length * bytesPerPixel];
 
             var pixels = bitmap.Pixels.AsSpan().Cast<SKColor, byte>();
 
-            for (var i = 0; i < buffer.Length; i++)
+            for (var i = 0; i < length; i += bytesPerPixel)
             {
-                buffer[i] = pixels[i * 4 + 2];
+                buffer[i]     = pixels[i * 4 + 2];
+                buffer[i + 1] = pixels[i * 4 + 3];
             }
 
             Common.SaveImage(bitmap, $"{this.Owner.Name}.png");
 
-            if (this.texture == TextureStorage.Singleton.EmptyTexture || this.texture.Image.Extent.Width != bounds.Width || this.texture.Image.Extent.Height != bounds.Height)
+            if (this.Texture == TextureStorage.Singleton.EmptyTexture || this.Texture.Image.Extent.Width != bounds.Width || this.Texture.Image.Extent.Height != bounds.Height)
             {
                 var textureInfo = new TextureCreateInfo
                 {
                     Depth     = 1,
-                    Format    = VkFormat.R8Unorm,
+                    Format    = VkFormat.R8G8Unorm,
                     Width     = bounds.Width,
                     Height    = bounds.Height,
                     ImageType = VkImageType.N2D,
                 };
 
-                this.texture = VulkanRenderer.Singleton.CreateTexture(textureInfo);
+                this.Texture = VulkanRenderer.Singleton.CreateTexture(textureInfo);
             }
 
             this.Texture.Update(buffer);

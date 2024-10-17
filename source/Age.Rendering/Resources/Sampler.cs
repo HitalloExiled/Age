@@ -29,7 +29,7 @@ public class Sampler : Resource
         this.Value = VulkanRenderer.Singleton.Context.Device.CreateSampler(createInfo);
     }
 
-    protected override void OnDispose() =>
+    protected override void Disposed() =>
         this.Value.Dispose();
 
     public static implicit operator VkSampler(Sampler value) => value.Value;

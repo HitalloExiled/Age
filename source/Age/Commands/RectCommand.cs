@@ -7,7 +7,7 @@ namespace Age.Commands;
 
 public partial record RectCommand : Command
 {
-    public required MappedTexture Diffuse  { get; set; }
+    public required MappedTexture MappedTexture { get; set; }
 
     internal Layer? Layer { get; set; }
 

@@ -59,15 +59,6 @@ internal partial class BoxLayout : Layout
                 {
                     var command = layout.GetRectCommand();
 
-                    if (layer != null)
-                    {
-                        command.Flags |= Flags.HasClipping;
-                    }
-                    else
-                    {
-                        command.Flags &= ~Flags.HasClipping;
-                    }
-
                     layout.layer = command.Layer = layer;
                 }
 
@@ -265,7 +256,7 @@ internal partial class BoxLayout : Layout
             {
                 Id       = this.Target.GetHashCode(),
                 Flags    = Flags.ColorAsBackground,
-                Diffuse  = new(TextureStorage.Singleton.DefaultTexture, UVRect.Normalized),
+                MappedTexture  = new(TextureStorage.Singleton.DefaultTexture, UVRect.Normalized),
             };
         }
 
@@ -1011,15 +1002,6 @@ internal partial class BoxLayout : Layout
         command.Border = this.State.Style.Border ?? default;
         command.Color  = this.State.Style.BackgroundColor ?? default;
         command.Layer  = this.Layer;
-
-        if (this.Layer != null)
-        {
-            command.Flags |= Flags.HasClipping;
-        }
-        else
-        {
-            command.Flags &= ~Flags.HasClipping;
-        }
 
         if (this.State.Style.Overflow == OverflowKind.Clipping)
         {
