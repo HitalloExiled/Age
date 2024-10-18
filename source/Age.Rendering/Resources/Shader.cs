@@ -26,15 +26,17 @@ public enum StencilKind
 
 public struct ShaderOptions
 {
-    #region 4-bytes alignment
+    #region 4-bytes
     public required VkSampleCountFlags RasterizationSamples;
 
     public VkFrontFace FrontFace;
     public StencilKind Stencil;
+    public uint        Subpass;
     #endregion
 
-    #region 2-bytes alignment
+    #region 2-bytes
     public bool Watch;
+
     #endregion
 }
 
@@ -468,22 +470,34 @@ where TPushConstant : IPushConstant
                     ScissorCount  = 1,
                 };
 
-                var stencilOp = this.options.Stencil == StencilKind.None
-                    ? default
-                    : new VkStencilOpState
+                var stencilOp = this.options.Stencil switch
+                {
+                    StencilKind.Mask => new VkStencilOpState
                     {
-                        FailOp      = VkStencilOp.Keep,
-                        PassOp      = this.options.Stencil == StencilKind.Mask ? VkStencilOp.Replace : VkStencilOp.Keep,
-                        DepthFailOp = VkStencilOp.Keep,
-                        CompareOp   = VkCompareOp.Always,
                         CompareMask = 0xFF,
-                        WriteMask   = this.options.Stencil == StencilKind.Mask ? 0xFFu : 0x00,
-                        Reference   = 1
-                    };
+                        CompareOp   = VkCompareOp.Always,
+                        DepthFailOp = VkStencilOp.Replace,
+                        FailOp      = VkStencilOp.Replace,
+                        PassOp      = VkStencilOp.Replace,
+                        Reference   = 1,
+                        WriteMask   = 0xFF,
+                    },
+                    StencilKind.Content => new VkStencilOpState
+                    {
+                        CompareMask = 0xFF,
+                        CompareOp   = VkCompareOp.Equal,
+                        DepthFailOp = VkStencilOp.Keep,
+                        FailOp      = VkStencilOp.Keep,
+                        PassOp      = VkStencilOp.Replace,
+                        Reference   = 1,
+                        WriteMask   = 0xFF,
+                    },
+                    _ => default
+                };
 
                 var depthStencilState = new VkPipelineDepthStencilStateCreateInfo
                 {
-                    DepthTestEnable       = true,
+                    DepthTestEnable       = this.options.Stencil == StencilKind.None,
                     DepthWriteEnable      = true,
                     DepthCompareOp        = VkCompareOp.Less,
                     DepthBoundsTestEnable = false,
@@ -506,6 +520,7 @@ where TPushConstant : IPushConstant
                     StageCount          = (uint)pipelineShaderStageCreateInfos.Count,
                     RenderPass          = this.RenderPass.Instance.Handle,
                     PDepthStencilState  = &depthStencilState,
+                    Subpass             = this.options.Subpass,
                 };
 
                 this.pipeline = VulkanRenderer.Singleton.Context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);

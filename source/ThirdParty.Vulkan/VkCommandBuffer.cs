@@ -107,6 +107,16 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
         }
     }
 
+    /// <inheritdoc cref="PInvoke.vkCmdClearAttachments" />
+    public void ClearAttachments(Span<VkClearAttachment> attachments, Span<VkClearRect> rects)
+    {
+        fixed (VkClearAttachment* pAttachments = attachments)
+        fixed (VkClearRect*       pRects       = rects)
+        {
+            PInvoke.vkCmdClearAttachments(this.handle, (uint)attachments.Length, pAttachments, (uint)rects.Length, pRects);
+        }
+    }
+
     /// <inheritdoc cref="PInvoke.vkCmdClearColorImage" />
     public void ClearColorImage(VkImage image, VkImageLayout imageLayout, in VkClearColorValue color, Span<VkImageSubresourceRange> ranges)
     {
@@ -159,6 +169,10 @@ public unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandB
     /// <inheritdoc cref="PInvoke.vkCmdEndRenderPass" />
     public void EndRenderPass() =>
         PInvoke.vkCmdEndRenderPass(this.handle);
+
+    /// <inheritdoc cref="PInvoke.vkCmdNextSubpass" />
+    public void NextSubPass(in VkSubpassContents contents) =>
+        PInvoke.vkCmdNextSubpass(this.handle, contents);
 
     /// <inheritdoc cref="PInvoke.vkCmdPipelineBarrier" />
     public void PipelineBarrier(

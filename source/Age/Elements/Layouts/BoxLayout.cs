@@ -10,14 +10,14 @@ namespace Age.Elements.Layouts;
 
 internal partial class BoxLayout : Layout
 {
-    // 8-bytes alignment
+    // 8-bytes
     private readonly List<Element> dependents = [];
     private readonly Element       target;
 
     private Layer? layer;
     private Layer? contentLayer;
 
-    // 4-bytes alignment
+    // 4-bytes
     private RawRectEdges border;
     private Size<uint>   content;
     private RawRectEdges margin;
@@ -48,10 +48,10 @@ internal partial class BoxLayout : Layout
             this.Size.Height + this.padding.Vertical
         );
 
-    public Layer? Layer
+    public override Layer? Layer
     {
         get => this.layer;
-        private set
+        set
         {
             if (this.layer != value)
             {
@@ -81,21 +81,28 @@ internal partial class BoxLayout : Layout
                 {
                     var current = enumerator.UnsafeCurrent!;
 
-                    if (current is Element element)
+                    if (current is ContainerNode containerNode)
                     {
-                        if (element.Layout.Layer == currentLayer)
+                        if (containerNode.Layout.Layer == currentLayer)
                         {
                             enumerator.SkipToNextSibling();
                         }
-                        else if (element.Layout.contentLayer != null)
+                        else if (current is Element element)
                         {
-                            element.Layout.Layer = currentLayer;
+                            if (element.Layout.contentLayer != null)
+                            {
+                                element.Layout.Layer = currentLayer;
 
-                            enumerator.SkipToNextSibling();
+                                enumerator.SkipToNextSibling();
+                            }
+                            else
+                            {
+                                set(element.Layout, currentLayer);
+                            }
                         }
                         else
                         {
-                            set(element.Layout, currentLayer);
+                            containerNode.Layout.Layer = currentLayer;
                         }
                     }
                 }

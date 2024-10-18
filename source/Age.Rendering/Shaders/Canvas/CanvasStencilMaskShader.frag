@@ -10,5 +10,9 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
     vec4 color = texture(diffuse, inFragTexCoord);
-    outColor = vec4(color.rrr, color.g);
+
+    if (color.r < 0.5)
+    {
+        discard;
+    }
 }

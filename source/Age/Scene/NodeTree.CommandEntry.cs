@@ -12,10 +12,10 @@ public sealed partial class NodeTree
         Command3DEntry,
     }
 
-    public struct Command2DEntry(Command command, Matrix3x2<float> transform)
+    public struct Command2DEntry(Command command, Transform2D transform)
     {
-        public Command Command = command;
-        public Matrix3x2<float> Transform = transform;
+        public Command     Command   = command;
+        public Transform2D Transform = transform;
     }
 
     public struct Command3DEntry(Command command, Matrix4x4<float> transform)

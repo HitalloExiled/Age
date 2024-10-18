@@ -19,10 +19,11 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
     private readonly RenderPass              renderPass;
     private readonly VertexBuffer            vertexBuffer;
 
-    private Image       image;
+    private Image       colorImage;
+    private Image       stencilImage;
     private Framebuffer framebuffer;
 
-    public Image ColorImage => this.image;
+    public Image ColorImage => this.colorImage;
 
     protected override CanvasStencilMaskShader CanvasStencilMaskShader => this.canvasStencilMaskShader;
     protected override Color                   ClearColor              { get; } = Color.Black;
@@ -47,7 +48,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         this.commandBuffer = renderer.AllocateCommand(VkCommandBufferLevel.Primary);
         this.renderPass    = this.CreateRenderPass();
 
-        this.CreateFramebuffer(out this.image, out this.framebuffer);
+        this.CreateFramebuffer(out this.colorImage, out this.stencilImage, out this.framebuffer);
 
         this.canvasStencilMaskShader = new CanvasStencilMaskShader(this.renderPass, true);
 
@@ -62,19 +63,19 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         shader.Changed += RenderingService.Singleton.RequestDraw;
     }
 
-    private void CreateFramebuffer(out Image image, out Framebuffer framebuffer)
+    private void CreateFramebuffer(out Image colorImage, out Image stencilImage, out Framebuffer framebuffer)
     {
-        var clientSize = this.Window.ClientSize;
-
-        var imageCreateInfo = new VkImageCreateInfo
+        var extent = new VkExtent3D
         {
-            ArrayLayers = 1,
-            Extent      = new()
-            {
-                Width  = clientSize.Width,
-                Height = clientSize.Height,
-                Depth  = 1,
-            },
+            Width  = this.Window.Surface.Swapchain.Extent.Width,
+            Height = this.Window.Surface.Swapchain.Extent.Height,
+            Depth  = 1,
+        };
+
+        var colorImageCreateInfo = new VkImageCreateInfo
+        {
+            ArrayLayers   = 1,
+            Extent        = extent,
             Format        = this.Window.Surface.Swapchain.Format,
             ImageType     = VkImageType.N2D,
             InitialLayout = VkImageLayout.Undefined,
@@ -84,7 +85,16 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             Usage         = VkImageUsageFlags.TransferDst | VkImageUsageFlags.TransferSrc | VkImageUsageFlags.Sampled | VkImageUsageFlags.ColorAttachment,
         };
 
-        image = new Image(imageCreateInfo, Color.Black);
+        colorImage = new Image(colorImageCreateInfo);
+
+        colorImage.ClearColor(Color.Black, VkImageLayout.General);
+
+        var stencilImageCreateInfo = colorImageCreateInfo;
+
+        stencilImageCreateInfo.Format = VulkanRenderer.Singleton.StencilBufferFormat;
+        stencilImageCreateInfo.Usage  = VkImageUsageFlags.DepthStencilAttachment;
+
+        stencilImage = new Image(stencilImageCreateInfo);
 
         var framebufferCreateInfo = new FramebufferCreateInfo
         {
@@ -93,13 +103,18 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             [
                 new FramebufferCreateInfo.Attachment
                 {
-                    Image       = image,
+                    Image       = colorImage,
                     ImageAspect = VkImageAspectFlags.Color
-                }
+                },
+                new FramebufferCreateInfo.Attachment
+                {
+                    Image       = stencilImage,
+                    ImageAspect = VkImageAspectFlags.Stencil
+                },
             ],
         };
 
-        framebuffer = this.Renderer.CreateFramebuffer(framebufferCreateInfo);
+        framebuffer = new(framebufferCreateInfo);
     }
 
     private RenderPass CreateRenderPass()
@@ -128,6 +143,29 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
                             },
                         }
                     ],
+                    DepthStencilAttachment = new()
+                    {
+                        Format         = VulkanRenderer.Singleton.StencilBufferFormat,
+                        Samples        = VkSampleCountFlags.N1,
+                        InitialLayout  = VkImageLayout.Undefined,
+                        FinalLayout    = VkImageLayout.DepthStencilAttachmentOptimal,
+                        LoadOp         = VkAttachmentLoadOp.Clear,
+                        StoreOp        = VkAttachmentStoreOp.DontCare,
+                        StencilLoadOp  = VkAttachmentLoadOp.Clear,
+                        StencilStoreOp = VkAttachmentStoreOp.Store
+                    },
+                },
+            ],
+            SubpassDependencies =
+            [
+                new()
+                {
+                    SrcSubpass    = VkConstants.VK_SUBPASS_EXTERNAL,
+                    DstSubpass    = 0,
+                    SrcStageMask  = VkPipelineStageFlags.FragmentShader,
+                    DstStageMask  = VkPipelineStageFlags.EarlyFragmentTests | VkPipelineStageFlags.LateFragmentTests,
+                    SrcAccessMask = VkAccessFlags.ShaderRead,
+                    DstAccessMask = VkAccessFlags.DepthStencilAttachmentWrite,
                 }
             ]
         };
@@ -137,7 +175,8 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
     private void DisposeFramebuffer()
     {
-        this.image.Dispose();
+        this.colorImage.Dispose();
+        this.stencilImage.Dispose();
         this.framebuffer.Dispose();
     }
 
@@ -163,7 +202,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         this.commandBuffer.Begin(VkCommandBufferUsageFlags.OneTimeSubmit);
     }
 
-    protected override void ExecuteCommand(RenderResources resource, RectCommand command, in Size<float> viewport, in Matrix3x2<float> transform)
+    protected override void ExecuteCommand(RenderResources resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
     {
         var constant = new CanvasShader.PushConstant
         {
@@ -195,6 +234,6 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
     public override void Recreate()
     {
         this.DisposeFramebuffer();
-        this.CreateFramebuffer(out this.image, out this.framebuffer);
+        this.CreateFramebuffer(out this.colorImage, out this.stencilImage, out this.framebuffer);
     }
 }

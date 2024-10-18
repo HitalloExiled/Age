@@ -79,6 +79,12 @@ internal unsafe static partial class PInvoke
     public static partial void vkCmdBlitImage(VkHandle<VkCommandBuffer> commandBuffer, VkHandle<VkImage> srcImage, VkImageLayout srcImageLayout, VkHandle<VkImage> dstImage, VkImageLayout dstImageLayout, uint regionCount, VkImageBlit* pRegions, VkFilter filter);
 
     /// <summary>
+    /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdClearAttachments.html">vkCmdClearAttachments</see>
+    /// </summary>
+    [LibraryImport(PLATFORM_PATH)]
+    public static partial void vkCmdClearAttachments(VkHandle<VkCommandBuffer> commandBuffer, uint attachmentCount, VkClearAttachment* pAttachments, uint rectCount, VkClearRect* pRects);
+
+    /// <summary>
     /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdClearColorImage.html">vkCmdClearColorImage</see>
     /// </summary>
     [LibraryImport(PLATFORM_PATH)]
@@ -461,6 +467,12 @@ internal unsafe static partial class PInvoke
     /// </summary>
     [LibraryImport(PLATFORM_PATH)]
     public static partial VkResult vkMapMemory(VkHandle<VkDevice> device, VkHandle<VkDeviceMemory> memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags, void** ppData);
+
+    /// <summary>
+    /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdNextSubpass.html">vkCmdNextSubpass</see>
+    /// </summary>
+    [LibraryImport(PLATFORM_PATH)]
+    public static partial void vkCmdNextSubpass(VkHandle<VkCommandBuffer> commandBuffer, VkSubpassContents contents);
 
     /// <summary>
     /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkQueueWaitIdle.html">vkQueueWaitIdle</see>

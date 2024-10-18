@@ -212,10 +212,11 @@ internal partial class TextService : IDisposable
 
                 var command = this.rectCommandPool.Get();
 
-                command.Rect     = new(size, position);
-                command.Color    = color;
-                command.Flags    = Flags.GrayscaleTexture | Flags.MultiplyColor;
-                command.MappedTexture  = new(atlas.Texture, uv);
+                command.Rect          = new(size, position);
+                command.Color         = color;
+                command.Flags         = Flags.GrayscaleTexture | Flags.MultiplyColor;
+                command.MappedTexture = new(atlas.Texture, uv);
+                command.Layer         = textNode.Layout.Layer;
 
                 textNode.Commands.Add(command);
 

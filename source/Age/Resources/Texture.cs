@@ -19,7 +19,7 @@ public class Texture : Disposable
     public Texture(Image image, bool imageOwner)
     {
         this.imageOwner = imageOwner;
-        this.resource   = VulkanRenderer.Singleton.CreateTexture(image, imageOwner);
+        this.resource   = new(image);
         this.Image      = image;
 
         TextureStorage.Singleton.Add(Guid.NewGuid().ToString(), this.resource);

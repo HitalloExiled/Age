@@ -11,6 +11,7 @@ internal abstract class Layout
     public Size<uint>     Size       { get; protected set; }
     public int            BaseLine   { get; protected set; } = -1;
     public uint           LineHeight { get; set; }
+    public virtual Layer? Layer { get; set; }
 
     public abstract Layout? Parent { get; }
     public abstract Node    Target { get; }

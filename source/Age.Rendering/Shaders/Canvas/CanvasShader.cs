@@ -9,20 +9,24 @@ public partial class CanvasShader : Shader<CanvasShader.Vertex, CanvasShader.Pus
     public override VkPipelineBindPoint BindPoint         { get; } = VkPipelineBindPoint.Graphics;
     public override VkPrimitiveTopology PrimitiveTopology { get; } = VkPrimitiveTopology.TriangleList;
 
-    protected CanvasShader(RenderPass renderPass, string fragmentShader, StencilKind stencil, bool watch)
+    protected CanvasShader(RenderPass renderPass, uint subpass, string fragmentShader, StencilKind stencil, bool watch)
     : base(
         renderPass,
         [$"Canvas/{nameof(CanvasShader)}.vert", fragmentShader],
         new()
         {
-            RasterizationSamples = ThirdParty.Vulkan.Flags.VkSampleCountFlags.N1,
             FrontFace            = VkFrontFace.Clockwise,
-            Watch                = watch,
+            RasterizationSamples = ThirdParty.Vulkan.Flags.VkSampleCountFlags.N1,
             Stencil              = stencil,
+            Subpass              = subpass,
+            Watch                = watch,
         }
     )
     { }
 
-    public CanvasShader(RenderPass renderPass, bool watch) : this(renderPass, $"Canvas/{nameof(CanvasShader)}.frag", default, watch)
+    public CanvasShader(RenderPass renderPass, bool watch) : this(renderPass, 0, watch)
+    { }
+
+    public CanvasShader(RenderPass renderPass, uint subpass, bool watch) : this(renderPass, subpass, $"Canvas/{nameof(CanvasShader)}.frag", StencilKind.Content, watch)
     { }
 }

@@ -6,9 +6,30 @@ namespace Age.Elements.Layouts;
 internal class TextLayout(TextNode target): Layout
 {
     private string? text;
+    private Layer? layer;
 
     public override TextNode   Target => target;
     public override BoxLayout? Parent => target.ParentElement?.Layout;
+
+    public override Layer? Layer
+    {
+        get => this.layer;
+        set
+        {
+            if (this.layer != value)
+            {
+                this.layer = value;
+
+                foreach (var command in target.Commands)
+                {
+                    if (command is RectCommand rectCommand)
+                    {
+                        rectCommand.Layer = this.layer;
+                    }
+                }
+            }
+        }
+    }
 
     public string? Text
     {

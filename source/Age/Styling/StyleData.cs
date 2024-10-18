@@ -5,7 +5,7 @@ namespace Age.Styling;
 
 internal struct StyleData
 {
-    // 4-bytes aligment
+    // 4-bytes
     public AlignmentKind?            Alignment;
     public Color?                    BackgroundColor;
     public Unit?                     Baseline;
@@ -26,7 +26,7 @@ internal struct StyleData
     public TextAlignmentKind?        TextAlignment;
     public Transform2D?              Transform;
 
-    // 2-bytes aligment
+    // 2-bytes
     public ushort? FontSize;
 
     // 1-byte aligment

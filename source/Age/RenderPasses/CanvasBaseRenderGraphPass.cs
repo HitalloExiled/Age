@@ -1,13 +1,13 @@
-using System.Runtime.CompilerServices;
-using Age.Numerics;
 using Age.Commands;
-using Age.Rendering.Resources;
-using Age.Rendering.Vulkan;
-using ThirdParty.Vulkan;
-using Age.Rendering.Shaders.Canvas;
 using Age.Elements;
+using Age.Numerics;
+using Age.Rendering.Resources;
+using Age.Rendering.Shaders.Canvas;
 using Age.Rendering.Uniforms;
+using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan;
+using ThirdParty.Vulkan.Flags;
 
 namespace Age.RenderPasses;
 
@@ -38,8 +38,6 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         }
 
         this.CommandBuffer.BindShader(this.CanvasStencilMaskShader);
-        this.CommandBuffer.BindVertexBuffer(vertexBuffer);
-        this.CommandBuffer.BindIndexBuffer(indexBuffer);
         this.CommandBuffer.BindUniformSet(uniformSet);
         this.CommandBuffer.PushConstant(this.CanvasStencilMaskShader, constant);
         this.CommandBuffer.DrawIndexed(indexBuffer);
@@ -60,22 +58,22 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
     {
         this.BeforeExecute();
 
-        var viewport      = this.Window.ClientSize;
-        var viewportFloat = viewport.Cast<float>();
-        var extent        = Unsafe.As<Size<uint>, VkExtent2D>(ref viewport);
+        var viewport = this.Window.ClientSize.Cast<float>();
+        var extent   = new VkExtent2D() { Width = (uint)viewport.Width, Height = (uint)viewport.Height };
 
-        Span<VkClearValue> clearValues = stackalloc VkClearValue[2];
+        Span<VkClearValue> clearValues  = stackalloc VkClearValue[2];
 
         clearValues[0].Color.Float32[0] = this.ClearColor.R;
         clearValues[0].Color.Float32[1] = this.ClearColor.G;
         clearValues[0].Color.Float32[2] = this.ClearColor.B;
         clearValues[0].Color.Float32[3] = this.ClearColor.A;
-        clearValues[1].DepthStencil.Depth = 1;
+        clearValues[1].DepthStencil.Depth   = 1;
+        clearValues[1].DepthStencil.Stencil = 1;
 
         this.CommandBuffer.SetViewport(extent);
-        this.CommandBuffer.BeginRenderPass(this.RenderPass, this.Framebuffer, [clearValues[0]]);
+        this.CommandBuffer.BeginRenderPass(this.RenderPass, this.Framebuffer, clearValues);
 
-        Layer? layer = null;
+        Layer? previousLayer = null;
 
         foreach (var resource in this.Resources)
         {
@@ -90,30 +88,41 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
                     switch (entry.Command)
                     {
                         case RectCommand rectCommand:
-                            if (rectCommand.Layer != null && rectCommand.Layer != layer)
+                            if (rectCommand.Layer != previousLayer)
                             {
-                                var constant = new CanvasShader.PushConstant
+                                if (rectCommand.Layer != null)
                                 {
-                                    Rect      = new(rectCommand.Layer.Texture.Image.Extent.Width, rectCommand.Layer.Texture.Image.Extent.Height, 0, 0),
-                                    Transform = rectCommand.Layer.Owner.TransformCache,
-                                    UV        = UVRect.Normalized,
-                                    Viewport  = viewportFloat,
-                                };
+                                    this.ClearStencilBuffer(extent, 0);
 
-                                this.DrawStencilLayer(constant, rectCommand.Layer, resource.VertexBuffer, resource.IndexBuffer);
+                                    var constant = new CanvasShader.PushConstant
+                                    {
+                                        Rect      = new(rectCommand.Layer.Size.Cast<float>(), default),
+                                        Transform = rectCommand.Layer.Owner.TransformCache,
+                                        UV        = UVRect.Normalized,
+                                        Viewport  = viewport,
+                                    };
 
-                                this.CommandBuffer.BindShader(resource.Shader);
+                                    this.DrawStencilLayer(constant, rectCommand.Layer, resource.VertexBuffer, resource.IndexBuffer);
+
+                                    this.CommandBuffer.BindShader(resource.Shader);
+                                }
+                                else
+                                {
+                                    this.ClearStencilBuffer(extent, 1);
+                                }
                             }
 
-                            layer = rectCommand.Layer;
+                            previousLayer = rectCommand.Layer;
 
-                            this.ExecuteCommand(resource, rectCommand, viewportFloat, entry.Transform);
+                            this.ExecuteCommand(resource, rectCommand, viewport, entry.Transform);
 
                             break;
                         default:
                             break;
                     }
                 }
+
+                this.ClearStencilBuffer(extent, 1);
             }
         }
 
@@ -122,5 +131,29 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         this.AfterExecute();
     }
 
-    protected abstract void ExecuteCommand(RenderResources resource, RectCommand command, in Size<float> viewport, in Matrix3x2<float> transform);
+    private unsafe void ClearStencilBuffer(VkExtent2D extent, uint value)
+    {
+        var clearValue = new VkClearValue();
+
+        clearValue.DepthStencil.Depth   = 1;
+        clearValue.DepthStencil.Stencil = value;
+
+        var attachment = new VkClearAttachment
+        {
+            AspectMask      = VkImageAspectFlags.Stencil,
+            ClearValue      = clearValue,
+            ColorAttachment = 0,
+        };
+
+        var rect = new VkClearRect
+        {
+            Rect           = new() { Extent = extent },
+            BaseArrayLayer = 0,
+            LayerCount     = 1,
+        };
+
+        this.CommandBuffer.ClearAttachments([attachment], [rect]);
+    }
+
+    protected abstract void ExecuteCommand(RenderResources resource, RectCommand command, in Size<float> viewport, in Transform2D transform);
 }

@@ -9,10 +9,22 @@ namespace Age;
 
 public class TextureAtlas : IDisposable
 {
+    #region 8-bytes
+    public Bitmap  Bitmap  { get; }
+    public Texture Texture { get; }
+    #endregion
+
+    #region 4-bytes
     private Point<uint> cursor;
-    private bool        disposed;
-    private bool        isDirty;
     private uint        maxHeight;
+    #endregion
+
+    #region 2-bytes
+    private bool disposed;
+    private bool isDirty;
+    #endregion
+
+    public Size<uint> Size => this.Bitmap.Size;
 
     public TextureAtlas(Size<uint> size, ColorMode colorMode)
     {
@@ -26,13 +38,8 @@ public class TextureAtlas : IDisposable
         };
 
         this.Bitmap  = new(size, colorMode);
-        this.Texture = VulkanRenderer.Singleton.CreateTexture(textureCreateInfo);
+        this.Texture = new(textureCreateInfo);
     }
-
-    public Size<uint> Size => this.Bitmap.Size;
-
-    public Bitmap  Bitmap  { get; }
-    public Texture Texture { get; }
 
     public Point<uint> Pack(Span<uint> pixels, Size<uint> size)
     {

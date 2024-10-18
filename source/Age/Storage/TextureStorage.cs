@@ -35,14 +35,14 @@ public class TextureStorage : Disposable
             Depth     = 1,
         };
 
-        this.DefaultTexture = this.renderer.CreateTexture(textureCreateInfo);
+        this.DefaultTexture = new(textureCreateInfo);
         this.DefaultTexture.Image.ClearColor(Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
 
         textureCreateInfo.Width  = 1;
         textureCreateInfo.Height = 1;
         textureCreateInfo.Format = VkFormat.R8Unorm;
 
-        this.EmptyTexture = this.renderer.CreateTexture(textureCreateInfo);
+        this.EmptyTexture = new(textureCreateInfo);
         this.EmptyTexture.Image.ClearColor(Color.White, VkImageLayout.ShaderReadOnlyOptimal);
     }
 

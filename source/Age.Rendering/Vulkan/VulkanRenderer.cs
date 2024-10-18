@@ -105,38 +105,6 @@ public unsafe partial class VulkanRenderer : IDisposable
         }
     }
 
-    private VkImageView CreateImageView(Image image, VkImageAspectFlags aspect)
-    {
-        var imageViewCreateInfo = new VkImageViewCreateInfo
-        {
-            Format           = image.Format,
-            Image            = image.Instance.Handle,
-            SubresourceRange = new()
-            {
-                AspectMask = aspect,
-                LayerCount = 1,
-                LevelCount = 1,
-            },
-            ViewType = VkImageViewType.N2D,
-        };
-
-        return this.Context.Device.CreateImageView(imageViewCreateInfo);
-    }
-
-    private VkShaderModule CreateShaderModule(byte[] buffer)
-    {
-        fixed (byte* pCode = buffer)
-        {
-            var createInfo = new VkShaderModuleCreateInfo
-            {
-                CodeSize = (uint)buffer.Length,
-                PCode    = (uint*)pCode,
-            };
-
-            return this.Context.Device.CreateShaderModule(createInfo);
-        }
-    }
-
     private void DisposePendingResources(bool immediate = false)
     {
         if (this.pendingDisposes.Count > 0)
@@ -285,30 +253,6 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public Framebuffer CreateFramebuffer(in FramebufferCreateInfo createInfo)
-    {
-        var imageViews = new VkImageView[createInfo.Attachments.Length];
-
-        for (var i = 0; i < createInfo.Attachments.Length; i++)
-        {
-            imageViews[i] = this.CreateImageView(createInfo.Attachments[i].Image, createInfo.Attachments[i].ImageAspect);
-        }
-
-        var extent = new VkExtent2D
-        {
-            Width  = createInfo.Attachments[0].Image.Extent.Width,
-            Height = createInfo.Attachments[0].Image.Extent.Height,
-        };
-
-        var framebuffer = this.Context.CreateFrameBuffer(createInfo.RenderPass.Instance, imageViews.AsSpan(), extent);
-
-        return new(framebuffer)
-        {
-            ImageViews = imageViews,
-            Extent     = extent,
-        };
-    }
-
     // public RenderPipeline CreateRenderPipeline(in RenderPipelineCreateInfo createInfo)
     // {
     //     var subPasses   = new RenderPassCreateInfo.SubPass[createInfo.SubPasses.Length];
@@ -377,66 +321,6 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
         this.Context.CreateSurface(handle, clientSize);
-
-    public Texture CreateTexture(in TextureCreateInfo textureCreateInfo)
-    {
-        var samples = VkSampleCountFlags.N1;
-        var tiling  = VkImageTiling.Optimal;
-        var usage   = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
-
-        var imageCreateInfo = new VkImageCreateInfo
-        {
-            ArrayLayers   = 1,
-            Extent        = new()
-            {
-                Width  = textureCreateInfo.Width,
-                Height = textureCreateInfo.Height,
-                Depth  = textureCreateInfo.Depth
-            },
-            Format        = textureCreateInfo.Format,
-            ImageType     = textureCreateInfo.ImageType,
-            InitialLayout = VkImageLayout.Undefined,
-            MipLevels     = 1,
-            Samples       = samples,
-            Tiling        = tiling,
-            Usage         = usage,
-        };
-
-        var image = new Image(imageCreateInfo, VkImageLayout.TransferDstOptimal);
-
-        var imageView = this.CreateImageView(image, VkImageAspectFlags.Color);
-
-        var texture = new Texture(true)
-        {
-            Image     = image,
-            ImageView = imageView,
-        };
-
-        return texture;
-    }
-
-    public Texture CreateTexture(Image image, bool owner)
-    {
-        var imageView = this.CreateImageView(image, VkImageAspectFlags.Color);
-
-        var texture = new Texture(owner)
-        {
-            Image     = image,
-            ImageView = imageView,
-        };
-
-        return texture;
-    }
-
-    public Texture CreateTexture(in TextureCreateInfo textureCreate, Span<byte> data)
-    {
-        var texture = this.CreateTexture(textureCreate);
-
-        texture.Update(data);
-
-        return texture;
-    }
-
     public VertexBuffer CreateVertexBuffer<T>(Span<T> data) where T : unmanaged
     {
         var size = (ulong)(data.Length * sizeof(T));

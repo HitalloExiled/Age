@@ -138,7 +138,7 @@ public sealed partial class NodeTree : IDisposable
 
                 if (current is Node2D node2D)
                 {
-                    var transform = (Matrix3x2<float>)node2D.TransformCache;
+                    var transform = node2D.TransformCache;
 
                     foreach (var command in node2D.Commands)
                     {

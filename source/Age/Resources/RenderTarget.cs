@@ -44,14 +44,16 @@ public class RenderTarget : Resource
             Usage         = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled,
         };
 
-        var colorImage = new ImageResource(colorImageCreateInfo, Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
+        var colorImage = new ImageResource(colorImageCreateInfo);
+        colorImage.ClearColor(Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
 
         var resolveImageCreateInfo = colorImageCreateInfo;
 
         resolveImageCreateInfo.Usage   = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
         resolveImageCreateInfo.Samples = VkSampleCountFlags.N1;
 
-        var resolveImage = new ImageResource(resolveImageCreateInfo, Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
+        var resolveImage = new ImageResource(resolveImageCreateInfo);
+        resolveImage.ClearColor(Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
 
         var depthImageCreateInfo = colorImageCreateInfo;
 
@@ -83,8 +85,8 @@ public class RenderTarget : Resource
             ]
         };
 
-        this.Texture     = VulkanRenderer.Singleton.CreateTexture(resolveImage, true);
-        this.Framebuffer = VulkanRenderer.Singleton.CreateFramebuffer(framebufferCreateInfo);
+        this.Texture     = new(resolveImage);
+        this.Framebuffer = new(framebufferCreateInfo);
 
         this.Attachments[0] = colorImage;
         this.Attachments[1] = resolveImage;

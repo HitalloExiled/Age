@@ -5,7 +5,6 @@ using Age.Rendering.Shaders.Canvas;
 using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
 using Age.Services;
-using Age.Storage;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -15,6 +14,7 @@ namespace Age.RenderPasses;
 internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 {
     private readonly CanvasStencilMaskShader canvasStencilMaskShader;
+    private readonly Image[]                 colorImages = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
     private readonly Framebuffer[]           framebuffers  = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
     private readonly IndexBuffer             indexBuffer;
     private readonly RenderPass              renderPass;
@@ -31,7 +31,6 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
     protected override RenderResources[]       Resources               { get; } = [];
 
     public override RenderPass RenderPass => this.renderPass;
-
 
     public CanvasRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)
     {
@@ -57,18 +56,84 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         this.Resources =
         [
             new(canvasPipeline,          this.vertexBuffer, this.indexBuffer, true),
-            new(canvasWireframePipeline, this.vertexBuffer, this.wireframeIndexBuffer, true),
+            new(canvasWireframePipeline, this.vertexBuffer, this.wireframeIndexBuffer, false),
         ];
 
         this.canvasStencilMaskShader.Changed += RenderingService.Singleton.RequestDraw;
         canvasPipeline.Changed               += RenderingService.Singleton.RequestDraw;
         canvasWireframePipeline.Changed      += RenderingService.Singleton.RequestDraw;
 
+        var extent = new VkExtent3D
+        {
+            Width  = this.Window.Surface.Swapchain.Extent.Width,
+            Height = this.Window.Surface.Swapchain.Extent.Height,
+            Depth  = 1,
+        };
+
         this.CreateFrameBuffers();
     }
 
     protected override void BeforeExecute() =>
         this.lastUniformSet = null;
+
+    private void CreateFrameBuffers()
+    {
+        var extent = new VkExtent3D
+        {
+            Width  = this.Window.Surface.Swapchain.Extent.Width,
+            Height = this.Window.Surface.Swapchain.Extent.Height,
+            Depth  = 1,
+        };
+
+        var stencilImageCreateInfo = new VkImageCreateInfo
+        {
+            ArrayLayers   = 1,
+            Extent        = extent,
+            Format        = VulkanRenderer.Singleton.StencilBufferFormat,
+            ImageType     = VkImageType.N2D,
+            InitialLayout = VkImageLayout.Undefined,
+            MipLevels     = 1,
+            Samples       = VkSampleCountFlags.N1,
+            Tiling        = VkImageTiling.Optimal,
+            Usage         = VkImageUsageFlags.DepthStencilAttachment,
+        };
+
+        for (var i = 0; i < this.Window.Surface.Swapchain.Images.Length; i++)
+        {
+            this.stencilImages[i] = new Image(stencilImageCreateInfo);
+            this.colorImages[i]   = new Image(
+                this.Window.Surface.Swapchain.Images[i],
+                new()
+                {
+                    Extent        = extent,
+                    Format        = this.Window.Surface.Swapchain.Format,
+                    ImageType     = VkImageType.N2D,
+                    Usage         = this.Window.Surface.Swapchain.ImageUsage,
+                    InitialLayout = VkImageLayout.ColorAttachmentOptimal,
+                }
+            );
+
+            var createInfo = new FramebufferCreateInfo
+            {
+                RenderPass  = this.renderPass,
+                Attachments =
+                [
+                    new FramebufferCreateInfo.Attachment
+                    {
+                        Image       = this.colorImages[i],
+                        ImageAspect = VkImageAspectFlags.Color,
+                    },
+                    new FramebufferCreateInfo.Attachment
+                    {
+                        Image       = this.stencilImages[i],
+                        ImageAspect = VkImageAspectFlags.Stencil,
+                    },
+                ]
+            };
+
+            this.framebuffers[i] = new(createInfo);
+        }
+    }
 
     private RenderPass CreateRenderPass()
     {
@@ -96,17 +161,17 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                             },
                         }
                     ],
-                    // DepthStencilAttachment = new()
-                    // {
-                    //     Format         = VulkanRenderer.Singleton.StencilBufferFormat,
-                    //     Samples        = VkSampleCountFlags.N1,
-                    //     InitialLayout  = VkImageLayout.Undefined,
-                    //     FinalLayout    = VkImageLayout.DepthStencilAttachmentOptimal,
-                    //     LoadOp         = VkAttachmentLoadOp.Clear,
-                    //     StoreOp        = VkAttachmentStoreOp.DontCare,
-                    //     StencilLoadOp  = VkAttachmentLoadOp.Clear,
-                    //     StencilStoreOp = VkAttachmentStoreOp.Store
-                    // },
+                    DepthStencilAttachment = new()
+                    {
+                        Format         = VulkanRenderer.Singleton.StencilBufferFormat,
+                        Samples        = VkSampleCountFlags.N1,
+                        InitialLayout  = VkImageLayout.Undefined,
+                        FinalLayout    = VkImageLayout.DepthStencilAttachmentOptimal,
+                        LoadOp         = VkAttachmentLoadOp.Clear,
+                        StoreOp        = VkAttachmentStoreOp.DontCare,
+                        StencilLoadOp  = VkAttachmentLoadOp.Clear,
+                        StencilStoreOp = VkAttachmentStoreOp.Store
+                    },
                 }
             ],
             // SubpassDependencies =
@@ -115,73 +180,15 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             //     {
             //         SrcSubpass    = VkConstants.VK_SUBPASS_EXTERNAL,
             //         DstSubpass    = 0,
-            //         SrcStageMask  = VkPipelineStageFlags.ColorAttachmentOutput,
-            //         SrcAccessMask = 0,
-            //         DstStageMask  = VkPipelineStageFlags.ColorAttachmentOutput,
-            //         DstAccessMask = VkAccessFlags.ColorAttachmentWrite,
+            //         SrcStageMask  = VkPipelineStageFlags.FragmentShader,
+            //         DstStageMask  = VkPipelineStageFlags.EarlyFragmentTests | VkPipelineStageFlags.LateFragmentTests,
+            //         SrcAccessMask = VkAccessFlags.ShaderRead,
+            //         DstAccessMask = VkAccessFlags.DepthStencilAttachmentWrite,
             //     }
             // ]
         };
 
         return new(createInfo);
-    }
-
-    private void CreateFrameBuffers()
-    {
-        var extent = new VkExtent3D
-        {
-            Width  = this.Window.Surface.Swapchain.Extent.Width,
-            Height = this.Window.Surface.Swapchain.Extent.Height,
-            Depth  = 1,
-        };
-
-        var stencilImageCreateInfo = new VkImageCreateInfo
-        {
-            ArrayLayers   = 1,
-            Extent        = extent,
-            Format        = VulkanRenderer.Singleton.StencilBufferFormat,
-            ImageType     = VkImageType.N2D,
-            InitialLayout = VkImageLayout.Undefined,
-            MipLevels     = 1,
-            Samples       = VkSampleCountFlags.N1,
-            Tiling        = VkImageTiling.Optimal,
-            Usage         = VkImageUsageFlags.DepthStencilAttachment,
-        };
-
-        for (var i = 0; i < this.Window.Surface.Swapchain.Images.Length; i++)
-        {
-            this.stencilImages[i] = new Image(stencilImageCreateInfo);
-
-            var createInfo = new FramebufferCreateInfo
-            {
-                RenderPass  = this.renderPass,
-                Attachments =
-                [
-                    new FramebufferCreateInfo.Attachment
-                    {
-                        Image = new(
-                            this.Window.Surface.Swapchain.Images[i],
-                            new()
-                            {
-                                Extent        = extent,
-                                Format        = this.Window.Surface.Swapchain.Format,
-                                ImageType     = VkImageType.N2D,
-                                Usage         = this.Window.Surface.Swapchain.ImageUsage,
-                                InitialLayout = VkImageLayout.PresentSrcKHR,
-                            }
-                        ),
-                        ImageAspect = VkImageAspectFlags.Color,
-                    },
-                    // new FramebufferCreateInfo.Attachment
-                    // {
-                    //     Image       = this.stencilImages[i],
-                    //     ImageAspect = VkImageAspectFlags.Stencil,
-                    // },
-                ]
-            };
-
-            this.framebuffers[i] = this.Renderer.CreateFramebuffer(createInfo);
-        }
     }
 
     private void DisposeFrameBuffers()
@@ -193,7 +200,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         }
     }
 
-    protected override void ExecuteCommand(RenderResources resource, RectCommand command, in Size<float> viewport, in Matrix3x2<float> transform)
+    protected override void ExecuteCommand(RenderResources resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
     {
         var constant = new CanvasShader.PushConstant
         {

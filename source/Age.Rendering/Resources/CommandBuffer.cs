@@ -69,11 +69,7 @@ public class CommandBuffer : Resource<VkCommandBuffer>
                 PClearValues    = pClearValues,
                 RenderArea      = new()
                 {
-                    Offset = new()
-                    {
-                        X = 0,
-                        Y = 0
-                    },
+                    Offset = default,
                     Extent = framebuffer.Extent,
                 },
                 RenderPass = renderPass.Instance.Handle,
@@ -107,6 +103,9 @@ public class CommandBuffer : Resource<VkCommandBuffer>
     public void BindUniformSet(UniformSet uniformSet) =>
         this.Instance.BindDescriptorSets(uniformSet.shader.BindPoint, uniformSet.shader.PipelineLayout, 0, uniformSet.DescriptorSets, []);
 
+    public void ClearAttachments(Span<VkClearAttachment> attachments, Span<VkClearRect> rects) =>
+        this.Instance.ClearAttachments(attachments, rects);
+
     public void ClearImageColor(Image image, VkImageLayout imageLayout, VkClearColorValue color, Span<VkImageSubresourceRange> ranges) =>
         this.Instance.ClearColorImage(image, imageLayout, color, ranges);
 
@@ -121,6 +120,9 @@ public class CommandBuffer : Resource<VkCommandBuffer>
 
     public void EndRenderPass() =>
         this.Instance.EndRenderPass();
+
+    public void NextSubPass() =>
+        this.Instance.NextSubPass(VkSubpassContents.Inline);
 
     public void Reset() =>
         this.Instance.Reset();

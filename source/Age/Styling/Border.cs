@@ -5,7 +5,7 @@ namespace Age.Styling;
 
 public record struct Border
 {
-    // 4-bytes aligment
+    // 4-bytes
     public BorderSide   Top;
     public BorderSide   Right;
     public BorderSide   Bottom;

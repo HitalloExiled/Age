@@ -37,10 +37,13 @@ public class ClippingTest
         var n2_a_layer = new FlexBox()
         {
             Name  = "n2_a_layer",
+            Text  = "Clipped Content",
             Style = new()
             {
-                Border    = new(borderSize, 30, new(0, 0, 1, 0.5f)),
-                Transform = Transform2D.CreateRotated(Angle.Radians(0)),
+                Border    = new(borderSize, 30, Color.Cyan),
+                Color     = Color.White,
+                FontSize  = 24,
+                Transform = Transform2D.CreateRotated(Angle.Radians(45)),
                 Overflow  = OverflowKind.Clipping,
                 Size      = new((Pixel)200, (Pixel)100),
             }
@@ -93,7 +96,7 @@ public class ClippingTest
             //    n2_a_layer.AppendChild(n3_no_layer);
             //        n3_no_layer.AppendChild(n4_layer);
             //            n4_layer.AppendChild(n5_no_layer);
-            // n1_layer.AppendChild(n2_b_non_layer);
+            canvas.AppendChild(n2_b_non_layer);
 
 
 

@@ -8,14 +8,13 @@ using Age.Storage;
 using Age.Styling;
 using SkiaSharp;
 using System.Collections;
-using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 
 namespace Age.Elements;
 
 internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
 {
-    #region 8-bytes alignment
+    #region 8-bytes
     private readonly SKPath path = new();
 
     private LayerTree? tree;
@@ -58,7 +57,7 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
     }
     #endregion
 
-    #region 4-bytes alignment
+    #region 4-bytes
     private Transform2D transform;
 
     internal Transform2D Transform
@@ -74,9 +73,11 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
             }
         }
     }
+
+    public Size<uint> Size { get; private set; }
     #endregion
 
-    #region 2-bytes alignment
+    #region 2-bytes
     private bool disposed;
     private bool isDirty;
     #endregion
@@ -278,7 +279,7 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
             using var canvas = new SKCanvas(bitmap);
             using var paint  = new SKPaint
             {
-                Color = SKColors.Red,
+                Color = SKColors.White,
                 Style = SKPaintStyle.Fill,
             };
 
@@ -297,18 +298,13 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
 
             canvas.DrawPath(this.path, paint);
 
-            var length = bounds.Width * bounds.Height;
+            var pixels = bitmap.Pixels.AsSpan();
 
-            var bytesPerPixel = 2;
+            var buffer = new byte[pixels.Length];
 
-            var buffer = new byte[length * bytesPerPixel];
-
-            var pixels = bitmap.Pixels.AsSpan().Cast<SKColor, byte>();
-
-            for (var i = 0; i < length; i += bytesPerPixel)
+            for (var i = 0; i < pixels.Length; i++)
             {
-                buffer[i]     = pixels[i * 4 + 2];
-                buffer[i + 1] = pixels[i * 4 + 3];
+                buffer[i] = pixels[i].Alpha;
             }
 
             Common.SaveImage(bitmap, $"{this.Owner.Name}.png");
@@ -317,17 +313,20 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
             {
                 var textureInfo = new TextureCreateInfo
                 {
-                    Depth     = 1,
-                    Format    = VkFormat.R8G8Unorm,
                     Width     = bounds.Width,
                     Height    = bounds.Height,
+                    Depth     = 1,
+                    // Format    = VkFormat.R8Unorm,
+                    Format    = VkFormat.B8G8R8A8Unorm,
                     ImageType = VkImageType.N2D,
                 };
 
-                this.Texture = VulkanRenderer.Singleton.CreateTexture(textureInfo);
+                this.Texture = new(textureInfo);
             }
 
-            this.Texture.Update(buffer);
+            this.Texture.Update(pixels.Cast<SKColor, byte>());
+
+            this.Size = bounds;
 
             this.isDirty = false;
         }
