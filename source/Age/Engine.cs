@@ -39,7 +39,7 @@ public class Engine : IDisposable
         this.textService      = new TextService(this.renderer);
         this.textureStorage   = new TextureStorage(this.renderer);
 
-        var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window) { Disabled = true };
+        var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
 
         this.Window.Resized += () =>
         {
