@@ -216,7 +216,7 @@ internal partial class TextService : IDisposable
                 command.Color         = color;
                 command.Flags         = Flags.GrayscaleTexture | Flags.MultiplyColor;
                 command.MappedTexture = new(atlas.Texture, uv);
-                command.Layer         = textNode.Layout.Layer;
+                command.StencilLayer         = textNode.Layout.StencilLayer;
 
                 textNode.Commands.Add(command);
 

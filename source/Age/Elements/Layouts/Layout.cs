@@ -5,19 +5,26 @@ namespace Age.Elements.Layouts;
 
 internal abstract class Layout
 {
-    public bool HasPendingUpdate { get; set; }
+    #region 8-bytes
+    public virtual StencilLayer? StencilLayer { get; set; }
+    #endregion
 
-    public Vector2<float> Offset     { get; internal set; }
-    public Size<uint>     Size       { get; protected set; }
+    #region 4-bytes
     public int            BaseLine   { get; protected set; } = -1;
     public uint           LineHeight { get; set; }
-    public virtual Layer? Layer { get; set; }
+    public Vector2<float> Offset     { get; internal set; }
+    public Size<uint>     Size       { get; protected set; }
+
+    public virtual Transform2D Transform => Transform2D.CreateTranslated(this.Offset);
+    #endregion
+
+    #region 1-byte
+    public bool HasPendingUpdate { get; set; }
+    public virtual bool Hidden { get; set; }
+    #endregion
 
     public abstract Layout? Parent { get; }
     public abstract Node    Target { get; }
-
-    public virtual Transform2D Transform => Transform2D.CreateTranslated(this.Offset);
-    public virtual bool        Hidden { get; set; }
 
     public abstract void Update();
 

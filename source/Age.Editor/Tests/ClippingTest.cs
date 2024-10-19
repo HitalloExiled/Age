@@ -15,47 +15,40 @@ public class ClippingTest
             Name  = "n1_layer",
             Style = new()
             {
-                Border   = new Border
-                {
-                    Top    = new(10, Color.Blue),
-                    Right  = new(10, Color.Blue),
-                    Bottom = new(10, Color.Blue),
-                    Left   = new(10, Color.Blue),
-                    Radius =
-                    {
-                        LeftTop     = 0,
-                        TopRight    = 40,
-                        RightBottom = 20,
-                        BottomLeft  = 0,
-                    }
-                },
+                Border    = new(borderSize, 60, Color.Red),
                 Overflow = OverflowKind.Clipping,
-                Size     = new((Pixel)100, (Pixel)200),
+                Size     = new((Pixel)100, (Pixel)100),
             }
         };
 
         var n2_a_layer = new FlexBox()
         {
             Name  = "n2_a_layer",
-            Text  = "Clipped Content",
+            // Text  = "Clipped Content",
             Style = new()
             {
-                Border    = new(borderSize, 30, Color.Cyan),
+                Border    = new(borderSize, 60, Color.Green),
                 Color     = Color.White,
                 FontSize  = 24,
-                Transform = Transform2D.CreateRotated(Angle.Radians(45)),
+                Transform = Transform2D.CreateTranslated(25, -40),
                 Overflow  = OverflowKind.Clipping,
-                Size      = new((Pixel)200, (Pixel)100),
+                Size      = new((Pixel)100, (Pixel)100),
             }
         };
 
         var n3_no_layer = new FlexBox()
         {
             Name  = "n3_no_layer",
+            Text  = "X\nY\nZ",
             Style = new()
             {
-                Border = new(borderSize, 50, Color.Green),
-                Size   = new((Pixel)200, (Pixel)100),
+                Color  = Color.White,
+                FontSize = 36,
+                ContentJustification = ContentJustificationKind.SpaceAround,
+                Border = new(borderSize, 60, Color.Blue),
+                //BackgroundColor = Color.Margenta,
+                Transform = Transform2D.CreateTranslated(25, 60),
+                Size   = new((Pixel)100, (Pixel)100),
             }
         };
 
@@ -65,8 +58,8 @@ public class ClippingTest
             Style = new()
             {
                 Border   = new(1, 0, Color.Blue),
-                Overflow = OverflowKind.Clipping,
-                Transform = Transform2D.CreateRotated(Angle.Radians(-15)),
+                // Overflow = OverflowKind.Clipping,
+                Transform = Transform2D.CreateTranslated(-20, 20),
                 Size     = new((Pixel)200, (Pixel)100),
             }
         };
@@ -93,10 +86,10 @@ public class ClippingTest
 
         canvas.AppendChild(n1_layer);
            n1_layer.AppendChild(n2_a_layer);
-            //    n2_a_layer.AppendChild(n3_no_layer);
-            //        n3_no_layer.AppendChild(n4_layer);
-            //            n4_layer.AppendChild(n5_no_layer);
-            canvas.AppendChild(n2_b_non_layer);
+               n2_a_layer.AppendChild(n3_no_layer);
+                //    n3_no_layer.AppendChild(n4_layer);
+                //        n4_layer.AppendChild(n5_no_layer);
+            //canvas.AppendChild(n2_b_non_layer);
 
 
 

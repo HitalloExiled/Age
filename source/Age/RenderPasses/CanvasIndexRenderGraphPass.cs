@@ -29,7 +29,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
     protected override Color                   ClearColor              { get; } = Color.Black;
     protected override CommandBuffer           CommandBuffer           => this.commandBuffer;
     protected override Framebuffer             Framebuffer             => this.framebuffer;
-    protected override RenderResources[]       Resources               { get; } = [];
+    protected override RenderPipelines[]       Pipelines               { get; } = [];
 
     public override RenderPass RenderPass => this.renderPass;
 
@@ -54,9 +54,9 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
         var shader = new CanvasIndexShader(this.renderPass, true);
 
-        this.Resources =
+        this.Pipelines =
         [
-            new RenderResources(shader, this.vertexBuffer, this.indexBuffer, true)
+            new RenderPipelines(shader, this.vertexBuffer, this.indexBuffer, true, false)
         ];
 
         this.canvasStencilMaskShader.Changed += RenderingService.Singleton.RequestDraw;
@@ -202,7 +202,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         this.commandBuffer.Begin(VkCommandBufferUsageFlags.OneTimeSubmit);
     }
 
-    protected override void ExecuteCommand(RenderResources resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
+    protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
     {
         var constant = new CanvasShader.PushConstant
         {
@@ -228,7 +228,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         this.canvasStencilMaskShader.Dispose();
         this.renderPass.Dispose();
         this.commandBuffer.Dispose();
-        this.Resources[0].Dispose();
+        this.Pipelines[0].Dispose();
     }
 
     public override void Recreate()

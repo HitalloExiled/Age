@@ -13,6 +13,7 @@ public sealed partial class NodeTree : IDisposable
 {
     public event Action? Updated;
 
+    #region 8-bytes
     private readonly List<Command2DEntry> command2DEntriesCache = [];
     private readonly List<Command3DEntry> command3DEntriesCache = [];
     private readonly Stack<Node>          stack                 = [];
@@ -20,17 +21,21 @@ public sealed partial class NodeTree : IDisposable
     private Buffer                     buffer = null!;
     private ulong                      bufferVersion;
     private CanvasIndexRenderGraphPass canvasIndexRenderGraphPass = null!;
-    private bool                       disposed;
     private Element?                   lastFocusedElement;
     private Element?                   lastSelectedElement;
 
-    internal LayerTree     Layers = new();
     internal List<Node>    Nodes    { get; } = new(256);
     internal List<Scene3D> Scenes3D { get; } = [];
 
-    public bool   IsDirty { get; internal set; }
     public Root   Root    { get; } = new();
     public Window Window  { get; }
+    #endregion
+
+    #region 2-bytes
+    private bool disposed;
+
+    public bool IsDirty { get; internal set; }
+    #endregion
 
     public NodeTree(Window window)
     {
@@ -398,7 +403,6 @@ public sealed partial class NodeTree : IDisposable
 
                 this.Root.Destroy();
                 this.buffer.Dispose();
-                this.Layers.Dispose();
             }
 
             this.disposed = true;
@@ -434,7 +438,5 @@ public sealed partial class NodeTree : IDisposable
         this.CallLateUpdate();
 
         this.Updated?.Invoke();
-
-        this.Layers.Update();
     }
 }

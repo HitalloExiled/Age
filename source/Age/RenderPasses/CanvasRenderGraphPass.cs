@@ -28,7 +28,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
     protected override Color                   ClearColor              { get; } = Color.Black;
     protected override CommandBuffer           CommandBuffer           => this.Renderer.CurrentCommandBuffer;
     protected override Framebuffer             Framebuffer             => this.framebuffers[this.Window.Surface.CurrentBuffer];
-    protected override RenderResources[]       Resources               { get; } = [];
+    protected override RenderPipelines[]       Pipelines               { get; } = [];
 
     public override RenderPass RenderPass => this.renderPass;
 
@@ -50,18 +50,18 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.canvasStencilMaskShader = new CanvasStencilMaskShader(this.renderPass, true);
 
-        var canvasPipeline          = new CanvasShader(this.renderPass, true);
-        var canvasWireframePipeline = new CanvasWireframeShader(this.renderPass, true);
+        var canvasShader          = new CanvasShader(this.renderPass, true);
+        var canvasWireframeShader = new CanvasWireframeShader(this.renderPass, true);
 
-        this.Resources =
+        this.Pipelines =
         [
-            new(canvasPipeline,          this.vertexBuffer, this.indexBuffer, true),
-            new(canvasWireframePipeline, this.vertexBuffer, this.wireframeIndexBuffer, false),
+            new(canvasShader,          this.vertexBuffer, this.indexBuffer, true, false),
+            new(canvasWireframeShader, this.vertexBuffer, this.wireframeIndexBuffer, false, true),
         ];
 
         this.canvasStencilMaskShader.Changed += RenderingService.Singleton.RequestDraw;
-        canvasPipeline.Changed               += RenderingService.Singleton.RequestDraw;
-        canvasWireframePipeline.Changed      += RenderingService.Singleton.RequestDraw;
+        canvasShader.Changed               += RenderingService.Singleton.RequestDraw;
+        canvasWireframeShader.Changed      += RenderingService.Singleton.RequestDraw;
 
         var extent = new VkExtent3D
         {
@@ -200,7 +200,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         }
     }
 
-    protected override void ExecuteCommand(RenderResources resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
+    protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
     {
         var constant = new CanvasShader.PushConstant
         {
@@ -244,10 +244,10 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.DisposeFrameBuffers();
 
-        for (var i = 0; i < this.Resources.Length; i++)
+        for (var i = 0; i < this.Pipelines.Length; i++)
         {
-            this.Resources[i].Dispose();
-            this.Resources[i].Shader.Changed -= RenderingService.Singleton.RequestDraw;
+            this.Pipelines[i].Dispose();
+            this.Pipelines[i].Shader.Changed -= RenderingService.Singleton.RequestDraw;
         }
 
         this.canvasStencilMaskShader.Dispose();

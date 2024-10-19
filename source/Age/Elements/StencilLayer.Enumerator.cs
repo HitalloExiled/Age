@@ -2,15 +2,15 @@ using System.Collections;
 
 namespace Age.Elements;
 
-internal partial class Layer
+internal partial class StencilLayer
 {
-    public struct Enumerator(Layer node) : IEnumerator<Layer>
+    public struct Enumerator(StencilLayer node) : IEnumerator<StencilLayer>
     {
-        private Layer? current;
+        private StencilLayer? current;
         private bool  first = true;
 
-        public readonly Layer Current => this.current ?? throw new InvalidOperationException();
-        public readonly Layer Node    => node;
+        public readonly StencilLayer Current => this.current ?? throw new InvalidOperationException();
+        public readonly StencilLayer Node    => node;
 
         readonly object IEnumerator.Current => this.Current;
 

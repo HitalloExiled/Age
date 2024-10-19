@@ -10,24 +10,34 @@ namespace Age.Elements.Layouts;
 
 internal partial class BoxLayout : Layout
 {
-    // 8-bytes
+    #region 8-bytes
     private readonly List<Element> dependents = [];
     private readonly Element       target;
 
-    private Layer? layer;
-    private Layer? contentLayer;
+    private StencilLayer? contentStencilLayer;
+    private StencilLayer? stencilLayer;
 
-    // 4-bytes
+    public override StencilLayer? StencilLayer
+    {
+        get => this.stencilLayer;
+        set => SetStencilLayer(this, value);
+    }
+    #endregion
+
+    #region 4-bytes
     private RawRectEdges border;
     private Size<uint>   content;
+    private Dependency   contentDependent;
     private RawRectEdges margin;
     private RawRectEdges padding;
-    private Size<uint>   staticContent;
-    private Dependency   contentDependent;
-    private bool         dependenciesHasChanged;
     private Dependency   parentDependent;
     private uint         renderableNodesCount;
+    private Size<uint>   staticContent;
+    #endregion
 
+    #region 1-byte
+    private bool dependenciesHasChanged;
+    #endregion
 
     public Size<uint> Boundings =>
         new(
@@ -47,69 +57,6 @@ internal partial class BoxLayout : Layout
             this.Size.Width  + this.padding.Horizontal,
             this.Size.Height + this.padding.Vertical
         );
-
-    public override Layer? Layer
-    {
-        get => this.layer;
-        set
-        {
-            if (this.layer != value)
-            {
-                static void set(BoxLayout layout, Layer? layer)
-                {
-                    var command = layout.GetRectCommand();
-
-                    layout.layer = command.Layer = layer;
-                }
-
-                var currentLayer = value;
-
-                if (this.contentLayer != null)
-                {
-                    this.layer?.RemoveChild(this.contentLayer);
-
-                    value?.AppendChild(this.contentLayer);
-
-                    currentLayer = this.contentLayer;
-                }
-
-                set(this, value);
-
-                var enumerator = this.target.GetTraverseEnumerator();
-
-                while (enumerator.MoveNext())
-                {
-                    var current = enumerator.UnsafeCurrent!;
-
-                    if (current is ContainerNode containerNode)
-                    {
-                        if (containerNode.Layout.Layer == currentLayer)
-                        {
-                            enumerator.SkipToNextSibling();
-                        }
-                        else if (current is Element element)
-                        {
-                            if (element.Layout.contentLayer != null)
-                            {
-                                element.Layout.Layer = currentLayer;
-
-                                enumerator.SkipToNextSibling();
-                            }
-                            else
-                            {
-                                set(element.Layout, currentLayer);
-                            }
-                        }
-                        else
-                        {
-                            containerNode.Layout.Layer = currentLayer;
-                        }
-                    }
-                }
-
-            }
-        }
-    }
 
     public StyledStateManager State { get; } = new();
 
@@ -204,6 +151,65 @@ internal partial class BoxLayout : Layout
         }
     }
 
+    private static void SetStencilLayer(BoxLayout layout, StencilLayer? value)
+    {
+        if (layout.stencilLayer != value)
+        {
+            static void set(BoxLayout layout, StencilLayer? layer)
+            {
+                var command = layout.GetRectCommand();
+
+                layout.stencilLayer = command.StencilLayer = layer;
+            }
+
+            var currentLayer = value;
+
+            if (layout.contentStencilLayer != null)
+            {
+                layout.stencilLayer?.RemoveChild(layout.contentStencilLayer);
+
+                value?.AppendChild(layout.contentStencilLayer);
+
+                currentLayer = layout.contentStencilLayer;
+            }
+
+            set(layout, value);
+
+            var enumerator = layout.target.GetTraverseEnumerator();
+
+            while (enumerator.MoveNext())
+            {
+                var current = enumerator.UnsafeCurrent!;
+
+                if (current is ContainerNode containerNode)
+                {
+                    if (containerNode.Layout.StencilLayer == currentLayer)
+                    {
+                        enumerator.SkipToNextSibling();
+                    }
+                    else if (current is Element element)
+                    {
+                        if (element.Layout.contentStencilLayer != null)
+                        {
+                            SetStencilLayer(element.Layout, currentLayer);
+
+                            enumerator.SkipToNextSibling();
+                        }
+                        else
+                        {
+                            set(element.Layout, currentLayer);
+                        }
+                    }
+                    else
+                    {
+                        containerNode.Layout.StencilLayer = currentLayer;
+                    }
+                }
+            }
+
+        }
+    }
+
     private Point<float> GetAlignment(StackKind stack, AlignmentKind alignmentKind, out AlignmentAxis alignmentAxis)
     {
         var x = -1;
@@ -261,9 +267,9 @@ internal partial class BoxLayout : Layout
         {
             this.Target.SingleCommand = command = new()
             {
-                Id       = this.Target.GetHashCode(),
-                Flags    = Flags.ColorAsBackground,
-                MappedTexture  = new(TextureStorage.Singleton.DefaultTexture, UVRect.Normalized),
+                Id            = this.Target.GetHashCode(),
+                Flags         = Flags.ColorAsBackground,
+                MappedTexture = new(TextureStorage.Singleton.DefaultTexture, UVRect.Normalized),
             };
         }
 
@@ -1008,11 +1014,11 @@ internal partial class BoxLayout : Layout
         command.Rect   = new(this.Boundings.Cast<float>(), default);
         command.Border = this.State.Style.Border ?? default;
         command.Color  = this.State.Style.BackgroundColor ?? default;
-        command.Layer  = this.Layer;
+        command.StencilLayer  = this.StencilLayer;
 
         if (this.State.Style.Overflow == OverflowKind.Clipping)
         {
-            this.contentLayer!.MakeDirty();
+            this.contentStencilLayer!.MakeDirty();
         }
     }
 
@@ -1033,21 +1039,21 @@ internal partial class BoxLayout : Layout
 
         if (property is StyleProperty.Overflow or StyleProperty.All)
         {
-            if (this.State.Style.Overflow == OverflowKind.Clipping && this.contentLayer == null)
+            if (this.State.Style.Overflow == OverflowKind.Clipping && this.contentStencilLayer == null)
             {
-                this.contentLayer = new Layer(this.Target);
+                this.contentStencilLayer = new StencilLayer(this.Target);
 
-                if (this.Parent?.Layer != null)
+                if (this.Parent?.StencilLayer != null)
                 {
-                    this.Parent.Layer.AppendChild(this.contentLayer);
+                    this.Parent.StencilLayer.AppendChild(this.contentStencilLayer);
                 }
             }
-            else if (this.contentLayer != null)
+            else if (this.contentStencilLayer != null)
             {
-                this.contentLayer.Remove();
-                this.contentLayer.Dispose();
+                this.contentStencilLayer.Remove();
+                this.contentStencilLayer.Dispose();
 
-                this.contentLayer = null;
+                this.contentStencilLayer = null;
             }
         }
 
@@ -1155,7 +1161,7 @@ internal partial class BoxLayout : Layout
 
     public void ElementAppended(Element element)
     {
-        element.Layout.Layer = this.contentLayer ?? this.Layer;
+        element.Layout.StencilLayer = this.contentStencilLayer ?? this.StencilLayer;
 
         if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
         {
@@ -1165,18 +1171,18 @@ internal partial class BoxLayout : Layout
 
     public void ElementConnected(NodeTree tree)
     {
-        if (this.contentLayer != null)
+        if (this.contentStencilLayer != null)
         {
-            tree.Layers.Root ??= this.contentLayer;
+
         }
     }
 
     internal void ElementDisconnected(NodeTree tree) =>
-        this.Layer?.Remove();
+        this.StencilLayer?.Remove();
 
     public void ElementRemoved(Element element)
     {
-        element.Layout.Layer = null;
+        element.Layout.StencilLayer = null;
 
         if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
         {

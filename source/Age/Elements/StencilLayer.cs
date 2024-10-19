@@ -1,3 +1,4 @@
+using System.Collections;
 using Age.Core.Extensions;
 using Age.Extensions;
 using Age.Internal;
@@ -7,54 +8,24 @@ using Age.Rendering.Vulkan;
 using Age.Storage;
 using Age.Styling;
 using SkiaSharp;
-using System.Collections;
 using ThirdParty.Vulkan.Enums;
 
 namespace Age.Elements;
 
-internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
+internal partial class StencilLayer(Element owner) : IDisposable, IEnumerable<StencilLayer>
 {
     #region 8-bytes
     private readonly SKPath path = new();
 
-    private LayerTree? tree;
-
     public Element Owner { get; } = owner;
 
-    public Layer? FirstChild      { get; private set; }
-    public Layer? LastChild       { get; private set; }
-    public Layer? NextSibling     { get; private set; }
-    public Layer? Parent          { get; private set; }
-    public Layer? PreviousSibling { get; private set; }
+    public StencilLayer? FirstChild      { get; private set; }
+    public StencilLayer? LastChild       { get; private set; }
+    public StencilLayer? NextSibling     { get; private set; }
+    public StencilLayer? Parent          { get; private set; }
+    public StencilLayer? PreviousSibling { get; private set; }
 
     public Texture Texture { get; private set; } = TextureStorage.Singleton.EmptyTexture;
-
-    public LayerTree? Tree
-    {
-        get => this.tree;
-        internal set
-        {
-            if (value != this.tree)
-            {
-                static void setTree(Layer layer, LayerTree? tree)
-                {
-                    layer.tree = tree;
-
-                    if (tree != null && !tree.IsDirty && layer.isDirty)
-                    {
-                        tree.IsDirty = true;
-                    }
-                }
-
-                setTree(this, value);
-
-                foreach (var child in this.Traverse())
-                {
-                    setTree(child, value);
-                }
-            }
-        }
-    }
     #endregion
 
     #region 4-bytes
@@ -77,12 +48,14 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
     public Size<uint> Size { get; private set; }
     #endregion
 
-    #region 2-bytes
+    #region 1-byte
     private bool disposed;
     private bool isDirty;
     #endregion
 
-    ~Layer() => this.Dispose(false);
+    ~StencilLayer() => this.Dispose(false);
+
+    IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
     private void UpdatePath(Size<uint> bounds, Border border)
     {
@@ -138,8 +111,6 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
         }
     }
 
-    IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-
     protected virtual void Dispose(bool disposing)
     {
         if (!this.disposed)
@@ -156,7 +127,7 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
         }
     }
 
-    public void AppendChild(Layer child)
+    public void AppendChild(StencilLayer child)
     {
         if (child == this)
         {
@@ -178,8 +149,6 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
             {
                 this.FirstChild = this.LastChild = child;
             }
-
-            child.Tree = this.Tree;
         }
     }
 
@@ -189,18 +158,11 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public IEnumerator<Layer> GetEnumerator() =>
+    public IEnumerator<StencilLayer> GetEnumerator() =>
         new Enumerator(this);
 
-    public void MakeDirty()
-    {
+    public void MakeDirty() =>
         this.isDirty = true;
-
-        if (this.Tree != null)
-        {
-            this.Tree.IsDirty = true;
-        }
-    }
 
     public void Remove()
     {
@@ -208,20 +170,16 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
         {
             var parent = this.Parent;
 
-            parent.RemoveChild(this, true);
+            parent.RemoveChild(this);
 
             foreach (var node in this)
             {
                 parent.AppendChild(node);
             }
         }
-        else if (this.Tree?.Root == this)
-        {
-            this.Tree.Root = null;
-        }
     }
 
-    public void RemoveChild(Layer child, bool keepTree = false)
+    public void RemoveChild(StencilLayer child)
     {
         if (child.Parent == this)
         {
@@ -252,23 +210,15 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
             child.PreviousSibling = null;
             child.NextSibling     = null;
             child.Parent          = null;
-
-            if (!keepTree)
-            {
-                child.Tree = null;
-            }
         }
     }
 
     public override string ToString() =>
         $"{{ Owner: {this.Owner} }}";
 
-    public IEnumerable<Layer> Traverse() =>
-        new TraverseEnumerator(this);
-
     public void Update()
     {
-        if (this.isDirty)
+        if (this.isDirty || this.transform != this.Owner.TransformCache)
         {
             var bounds = this.Owner.Layout.Boundings;
             var border = this.Owner.Layout.State.Style.Border ?? default;
@@ -307,8 +257,6 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
                 buffer[i] = pixels[i].Alpha;
             }
 
-            Common.SaveImage(bitmap, $"{this.Owner.Name}.png");
-
             if (this.Texture == TextureStorage.Singleton.EmptyTexture || this.Texture.Image.Extent.Width != bounds.Width || this.Texture.Image.Extent.Height != bounds.Height)
             {
                 var textureInfo = new TextureCreateInfo
@@ -316,19 +264,19 @@ internal partial class Layer(Element owner) : IEnumerable<Layer>, IDisposable
                     Width     = bounds.Width,
                     Height    = bounds.Height,
                     Depth     = 1,
-                    // Format    = VkFormat.R8Unorm,
-                    Format    = VkFormat.B8G8R8A8Unorm,
+                    Format    = VkFormat.R8Unorm,
                     ImageType = VkImageType.N2D,
                 };
 
                 this.Texture = new(textureInfo);
             }
 
-            this.Texture.Update(pixels.Cast<SKColor, byte>());
+            this.Texture.Update(buffer);
 
             this.Size = bounds;
 
             this.isDirty = false;
+            this.transform = this.Owner.TransformCache;
         }
     }
 }
