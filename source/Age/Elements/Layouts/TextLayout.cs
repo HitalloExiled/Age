@@ -6,23 +6,22 @@ namespace Age.Elements.Layouts;
 internal class TextLayout(TextNode target): Layout
 {
     private string? text;
-    private StencilLayer? stencilLayer;
 
     public override TextNode   Target => target;
     public override BoxLayout? Parent => target.ParentElement?.Layout;
 
     public override StencilLayer? StencilLayer
     {
-        get => this.stencilLayer;
+        get => base.StencilLayer;
         set
         {
-            if (this.stencilLayer != value)
+            if (base.StencilLayer != value)
             {
-                this.stencilLayer = value;
+                base.StencilLayer = value;
 
                 foreach (var command in target.Commands)
                 {
-                    command.StencilLayer = this.stencilLayer;
+                    command.StencilLayer = value;
                 }
             }
         }
@@ -41,6 +40,12 @@ internal class TextLayout(TextNode target): Layout
             }
         }
     }
+
+    public void Connected() =>
+        this.StencilLayer = this.Parent?.ContentStencilLayer;
+
+    public void Disconnected() =>
+        this.StencilLayer = null;
 
     public void IndexChanged()
     {

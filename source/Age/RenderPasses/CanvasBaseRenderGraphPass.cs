@@ -51,7 +51,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
     private void FillStencilBuffer(in VkExtent2D extent) =>
         this.ClearStencilBufferAttachment(extent, 1);
 
-    private void DrawStencilLayer(in Size<float> viewport, StencilLayer stencilLayer, IndexBuffer indexBuffer)
+    private void DrawStencilBuffer(in Size<float> viewport, StencilLayer stencilLayer, IndexBuffer indexBuffer)
     {
         stencilLayer.Update();
 
@@ -134,7 +134,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
                                 if (rectCommand.StencilLayer != null)
                                 {
                                     this.ClearStencilBuffer(extent);
-                                    this.DrawStencilLayer(viewport, rectCommand.StencilLayer, pipeline.IndexBuffer);
+                                    this.DrawStencilBuffer(viewport, rectCommand.StencilLayer, pipeline.IndexBuffer);
 
                                     this.CommandBuffer.BindShader(pipeline.Shader);
                                 }

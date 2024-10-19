@@ -91,14 +91,21 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    private readonly object elementLock = new();
+    private readonly Lock elementLock = new();
 
-    private Canvas? canvas;
+    #region 8-bytes
     private string? text;
 
+    internal override BoxLayout Layout { get; }
+
+    public Canvas? Canvas { get; private set; }
+    #endregion
+
+    #region 1-byte
     protected bool IsFocusable { get; set; }
 
-    internal override BoxLayout Layout { get; }
+    public bool IsFocused { get; internal set; }
+    #endregion
 
     public Element? ParentElement => this.Parent as Element;
 
@@ -165,30 +172,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             return null;
         }
     }
-
-    public Canvas? Canvas
-    {
-        get => this.canvas;
-        internal set
-        {
-            if (this.canvas != value)
-            {
-                this.canvas = value;
-
-                foreach (var node in this.Traverse())
-                {
-                    if (node is Element element)
-                    {
-                        element.canvas = value;
-                    }
-                }
-
-                this.Layout.RequestUpdate();
-            }
-        }
-    }
-
-    public bool IsFocused { get; internal set; }
 
     public Style Style
     {
@@ -327,20 +310,15 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             tree.IsDirty = true;
         }
 
-        this.Layout.ElementConnected(tree);
+        this.Canvas = this.ParentElement?.Canvas ?? this.Parent as Canvas;
+
+        this.Layout.Connected();
     }
 
     protected override void ChildAppended(Node child)
     {
         if (child is ContainerNode containerNode)
         {
-            if (containerNode is Element element)
-            {
-                element.Canvas = this is Canvas canvas ? canvas : this.Canvas;
-
-                this.Layout.ElementAppended(element);
-            }
-
             this.Layout.ContainerNodeAppended(containerNode);
         }
     }
@@ -349,19 +327,14 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         if (child is ContainerNode containerNode)
         {
-            if (containerNode is Element element)
-            {
-                element.Canvas = null;
-
-                this.Layout.ElementRemoved(element);
-            }
-
             this.Layout.ContainerNodeRemoved(containerNode);
         }
     }
 
     protected override void Disconnected(NodeTree tree)
     {
+        this.Canvas = null;
+
         tree.Window.KeyDown -= this.OnKeyDown;
         tree.Window.KeyUp   -= this.OnKeyUp;
 
@@ -370,7 +343,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             tree.IsDirty = true;
         }
 
-        this.Layout.ElementDisconnected(tree);
+        this.Layout.Disconnected();
     }
 
     protected override void IndexChanged() =>
@@ -391,6 +364,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     internal void InvokeClick(in MouseEvent mouseEvent) =>
         this.Clicked?.Invoke(mouseEvent);
+
     internal void InvokeContext(in ContextEvent contextEvent) =>
         this.Context?.Invoke(contextEvent);
 

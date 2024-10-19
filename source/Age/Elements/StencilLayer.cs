@@ -149,6 +149,25 @@ internal partial class StencilLayer(Element owner) : IDisposable, IEnumerable<St
             {
                 this.FirstChild = this.LastChild = child;
             }
+
+            child.MakeDirty();
+        }
+    }
+
+    public void Detach()
+    {
+        if (this.Parent != null)
+        {
+            var parent = this.Parent;
+
+            parent.RemoveChild(this);
+
+            foreach (var node in this)
+            {
+                parent.AppendChild(node);
+            }
+
+            this.MakeDirty();
         }
     }
 
@@ -163,21 +182,6 @@ internal partial class StencilLayer(Element owner) : IDisposable, IEnumerable<St
 
     public void MakeDirty() =>
         this.isDirty = true;
-
-    public void Remove()
-    {
-        if (this.Parent != null)
-        {
-            var parent = this.Parent;
-
-            parent.RemoveChild(this);
-
-            foreach (var node in this)
-            {
-                parent.AppendChild(node);
-            }
-        }
-    }
 
     public void RemoveChild(StencilLayer child)
     {
@@ -256,6 +260,8 @@ internal partial class StencilLayer(Element owner) : IDisposable, IEnumerable<St
             {
                 buffer[i] = pixels[i].Alpha;
             }
+
+            Common.SaveImage(bitmap, $"{this.Owner.Name}.png");
 
             if (this.Texture == TextureStorage.Singleton.EmptyTexture || this.Texture.Image.Extent.Width != bounds.Width || this.Texture.Image.Extent.Height != bounds.Height)
             {

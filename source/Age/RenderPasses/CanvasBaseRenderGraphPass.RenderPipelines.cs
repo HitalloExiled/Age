@@ -1,14 +1,15 @@
 using Age.Rendering.Resources;
+using Age.Rendering.Shaders.Canvas;
 
 namespace Age.RenderPasses;
 
 public abstract partial class CanvasBaseRenderGraphPass
 {
-    protected struct RenderPipelines(Shader shader, VertexBuffer vertexBuffer, IndexBuffer indexBuffer, bool enabled, bool ignoreStencil)
+    protected struct RenderPipelines(CanvasShader shader, VertexBuffer vertexBuffer, IndexBuffer indexBuffer, bool enabled, bool ignoreStencil)
     {
         #region 8-bytes
         public IndexBuffer  IndexBuffer   = indexBuffer;
-        public Shader       Shader        = shader;
+        public CanvasShader Shader        = shader;
         public VertexBuffer VertexBuffer  = vertexBuffer;
         #endregion
 

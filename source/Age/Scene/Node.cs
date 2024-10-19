@@ -197,6 +197,9 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
         }
     }
 
+    public void Detach() =>
+        this.Parent?.RemoveChild(this);
+
     public IEnumerator<Node> GetEnumerator() =>
         new Enumerator(this);
 

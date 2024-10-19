@@ -21,6 +21,11 @@ public class ClippingTest
             }
         };
 
+        n1_layer.Clicked += (in MouseEvent _) =>
+        {
+            n1_layer.Style.Overflow = n1_layer.Style.Overflow == OverflowKind.Clipping ? OverflowKind.None : OverflowKind.Clipping;
+        };
+
         var n2_a_layer = new FlexBox()
         {
             Name  = "n2_a_layer",
@@ -36,6 +41,14 @@ public class ClippingTest
             }
         };
 
+        n2_a_layer.Clicked += (in MouseEvent _) =>
+        {
+            n2_a_layer.Style.Overflow = n2_a_layer.Style.Overflow == OverflowKind.Clipping ? OverflowKind.None : OverflowKind.Clipping;
+        };
+
+        //n2_a_layer.Clicked += (in MouseEvent _) =>
+        //    n2_a_layer.Detach();
+
         var n3_no_layer = new FlexBox()
         {
             Name  = "n3_no_layer",
@@ -46,6 +59,7 @@ public class ClippingTest
                 FontSize = 36,
                 ContentJustification = ContentJustificationKind.SpaceAround,
                 Border = new(borderSize, 60, Color.Blue),
+                //Overflow  = OverflowKind.Clipping,
                 //BackgroundColor = Color.Margenta,
                 Transform = Transform2D.CreateTranslated(25, 60),
                 Size   = new((Pixel)100, (Pixel)100),
@@ -91,6 +105,7 @@ public class ClippingTest
                 //        n4_layer.AppendChild(n5_no_layer);
             //canvas.AppendChild(n2_b_non_layer);
 
+        
 
 
         //                 n4_layer.AppendChild(n5_no_layer);

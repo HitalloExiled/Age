@@ -1,4 +1,5 @@
 using Age.Elements.Layouts;
+using Age.Scene;
 
 namespace Age.Elements;
 
@@ -18,6 +19,12 @@ public class TextNode : ContainerNode
 
     public TextNode() =>
         this.Layout = new(this);
+
+    protected override void Connected(NodeTree tree) =>
+        this.Layout.Connected();
+
+    protected override void Disconnected(NodeTree tree) =>
+        this.Layout.Disconnected();
 
     protected override void IndexChanged() =>
         this.Layout.IndexChanged();

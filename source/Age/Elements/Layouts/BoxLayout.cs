@@ -1,9 +1,9 @@
 using Age.Commands;
 using Age.Extensions;
 using Age.Numerics;
-using Age.Scene;
 using Age.Storage;
 using Age.Styling;
+
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Elements.Layouts;
@@ -14,13 +14,21 @@ internal partial class BoxLayout : Layout
     private readonly List<Element> dependents = [];
     private readonly Element       target;
 
-    private StencilLayer? contentStencilLayer;
-    private StencilLayer? stencilLayer;
+    private StencilLayer? ownStencilLayer;
 
+    public StencilLayer? ContentStencilLayer => this.ownStencilLayer ?? this.StencilLayer;
     public override StencilLayer? StencilLayer
     {
-        get => this.stencilLayer;
-        set => SetStencilLayer(this, value);
+        get => base.StencilLayer;
+        set
+        {
+            if (base.StencilLayer != value)
+            {
+                var command = this.GetRectCommand();
+
+                base.StencilLayer = command.StencilLayer = value;
+            }
+        }
     }
     #endregion
 
@@ -151,30 +159,8 @@ internal partial class BoxLayout : Layout
         }
     }
 
-    private static void SetStencilLayer(BoxLayout layout, StencilLayer? value)
+    private static void SetStencilLayer(BoxLayout layout, StencilLayer? stencilLayer)
     {
-        if (layout.stencilLayer != value)
-        {
-            static void set(BoxLayout layout, StencilLayer? layer)
-            {
-                var command = layout.GetRectCommand();
-
-                layout.stencilLayer = command.StencilLayer = layer;
-            }
-
-            var currentLayer = value;
-
-            if (layout.contentStencilLayer != null)
-            {
-                layout.stencilLayer?.RemoveChild(layout.contentStencilLayer);
-
-                value?.AppendChild(layout.contentStencilLayer);
-
-                currentLayer = layout.contentStencilLayer;
-            }
-
-            set(layout, value);
-
             var enumerator = layout.target.GetTraverseEnumerator();
 
             while (enumerator.MoveNext())
@@ -183,31 +169,31 @@ internal partial class BoxLayout : Layout
 
                 if (current is ContainerNode containerNode)
                 {
-                    if (containerNode.Layout.StencilLayer == currentLayer)
+                    if (containerNode.Layout.StencilLayer == stencilLayer)
                     {
                         enumerator.SkipToNextSibling();
                     }
-                    else if (current is Element element)
+                    else if (current is Element element && element.Layout.ownStencilLayer != null)
                     {
-                        if (element.Layout.contentStencilLayer != null)
+                        if (stencilLayer != null)
                         {
-                            SetStencilLayer(element.Layout, currentLayer);
-
-                            enumerator.SkipToNextSibling();
+                            stencilLayer.AppendChild(element.Layout.ownStencilLayer);
                         }
                         else
                         {
-                            set(element.Layout, currentLayer);
+                            element.Layout.ownStencilLayer.Detach();
                         }
+
+                        element.Layout.StencilLayer = stencilLayer;
+
+                        enumerator.SkipToNextSibling();
                     }
                     else
                     {
-                        containerNode.Layout.StencilLayer = currentLayer;
+                        containerNode.Layout.StencilLayer = stencilLayer;
                     }
                 }
             }
-
-        }
     }
 
     private Point<float> GetAlignment(StackKind stack, AlignmentKind alignmentKind, out AlignmentAxis alignmentAxis)
@@ -1018,7 +1004,7 @@ internal partial class BoxLayout : Layout
 
         if (this.State.Style.Overflow == OverflowKind.Clipping)
         {
-            this.contentStencilLayer!.MakeDirty();
+            this.ownStencilLayer!.MakeDirty();
         }
     }
 
@@ -1037,24 +1023,26 @@ internal partial class BoxLayout : Layout
             };
         }
 
-        if (property is StyleProperty.Overflow or StyleProperty.All)
+        if (this.Target.IsConnected && property is StyleProperty.Overflow or StyleProperty.All)
         {
-            if (this.State.Style.Overflow == OverflowKind.Clipping && this.contentStencilLayer == null)
+            if (this.State.Style.Overflow == OverflowKind.Clipping)
             {
-                this.contentStencilLayer = new StencilLayer(this.Target);
-
-                if (this.Parent?.StencilLayer != null)
+                if (this.ownStencilLayer == null)
                 {
-                    this.Parent.StencilLayer.AppendChild(this.contentStencilLayer);
+                    this.ownStencilLayer = new StencilLayer(this.Target);
+
+                    this.StencilLayer?.AppendChild(this.ownStencilLayer);
                 }
             }
-            else if (this.contentStencilLayer != null)
+            else if (this.ownStencilLayer != null)
             {
-                this.contentStencilLayer.Remove();
-                this.contentStencilLayer.Dispose();
+                this.ownStencilLayer.Detach();
+                this.ownStencilLayer.Dispose();
 
-                this.contentStencilLayer = null;
+                this.ownStencilLayer = null;
             }
+
+            SetStencilLayer(this, this.ContentStencilLayer);
         }
 
         var oldParentDependent = this.parentDependent;
@@ -1159,35 +1147,24 @@ internal partial class BoxLayout : Layout
         this.Target.Visible = !hidden;
     }
 
-    public void ElementAppended(Element element)
+    public void Connected()
     {
-        element.Layout.StencilLayer = this.contentStencilLayer ?? this.StencilLayer;
+        this.StencilLayer = this.Parent?.ContentStencilLayer;
 
-        if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
-        {
-            this.dependents.Add(element);
-        }
+        this.UpdateState(StyleProperty.All);
     }
 
-    public void ElementConnected(NodeTree tree)
+    public void Disconnected()
     {
-        if (this.contentStencilLayer != null)
+        if (!this.Hidden && this.parentDependent != Dependency.None)
         {
-
+            this.Parent?.dependents.Remove(this.Target);
         }
-    }
 
-    internal void ElementDisconnected(NodeTree tree) =>
-        this.StencilLayer?.Remove();
-
-    public void ElementRemoved(Element element)
-    {
-        element.Layout.StencilLayer = null;
-
-        if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
-        {
-            this.dependents.Remove(element);
-        }
+        this.StencilLayer = null;
+        this.ownStencilLayer?.Detach();
+        this.ownStencilLayer?.Dispose();
+        this.ownStencilLayer = null;
     }
 
     public void ContainerNodeRemoved(ContainerNode containerNode)
