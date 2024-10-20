@@ -8,7 +8,7 @@ using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Elements.Layouts;
 
-internal partial class BoxLayout : Layout
+internal partial class BoxLayout : Layout, IDisposable
 {
     #region 8-bytes
     private readonly List<Element> dependents = [];
@@ -16,7 +16,8 @@ internal partial class BoxLayout : Layout
 
     private StencilLayer? ownStencilLayer;
 
-    public StencilLayer? ContentStencilLayer => this.ownStencilLayer ?? this.StencilLayer;
+    protected override StencilLayer? ContentStencilLayer => this.ownStencilLayer ?? this.StencilLayer;
+
     public override StencilLayer? StencilLayer
     {
         get => base.StencilLayer;
@@ -45,6 +46,7 @@ internal partial class BoxLayout : Layout
 
     #region 1-byte
     private bool dependenciesHasChanged;
+    private bool disposed;
     #endregion
 
     public Size<uint> Boundings =>
@@ -1147,24 +1149,17 @@ internal partial class BoxLayout : Layout
         this.Target.Visible = !hidden;
     }
 
-    public void Connected()
+    protected virtual void Dispose(bool disposing)
     {
-        this.StencilLayer = this.Parent?.ContentStencilLayer;
-
-        this.UpdateState(StyleProperty.All);
-    }
-
-    public void Disconnected()
-    {
-        if (!this.Hidden && this.parentDependent != Dependency.None)
+        if (!this.disposed)
         {
-            this.Parent?.dependents.Remove(this.Target);
-        }
+            if (disposing)
+            {
+                this.ownStencilLayer?.Dispose();
+            }
 
-        this.StencilLayer = null;
-        this.ownStencilLayer?.Detach();
-        this.ownStencilLayer?.Dispose();
-        this.ownStencilLayer = null;
+            this.disposed = true;
+        }
     }
 
     public void ContainerNodeRemoved(ContainerNode containerNode)
@@ -1185,13 +1180,56 @@ internal partial class BoxLayout : Layout
         }
     }
 
-    public void IndexChanged()
+    public void ElementAppended(Element element)
+    {
+        if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
+        {
+            this.dependents.Add(element);
+        }
+    }
+
+    public void ElementRemoved(Element element)
+    {
+        if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
+        {
+            this.dependents.Remove(element);
+        }
+    }
+
+    public void Dispose()
+    {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    public void TargetIndexed()
     {
         var command = this.GetRectCommand();
 
         command.ObjectId = this.Target.Index == -1
             ? default
             : this.State.Style.Border.HasValue || this.State.Style.BackgroundColor.HasValue ? (uint)(this.Target.Index + 1) : 0;
+    }
+
+    public override void TargetConnected()
+    {
+        base.TargetConnected();
+
+        this.UpdateState(StyleProperty.All);
+    }
+
+    public override void TargetDisconnected()
+    {
+        base.TargetDisconnected();
+
+        // if (!this.Hidden && this.parentDependent != Dependency.None)
+        // {
+        //     this.Parent?.dependents.Remove(this.Target);
+        // }
+
+        this.ownStencilLayer?.Detach();
+        this.ownStencilLayer?.Dispose();
+        this.ownStencilLayer = null;
     }
 
     public override void Update()

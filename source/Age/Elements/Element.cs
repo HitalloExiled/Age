@@ -312,13 +312,18 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         this.Canvas = this.ParentElement?.Canvas ?? this.Parent as Canvas;
 
-        this.Layout.Connected();
+        this.Layout.TargetConnected();
     }
 
     protected override void ChildAppended(Node child)
     {
         if (child is ContainerNode containerNode)
         {
+            if (containerNode is Element element)
+            {
+                this.Layout.ElementAppended(element);
+            }
+
             this.Layout.ContainerNodeAppended(containerNode);
         }
     }
@@ -327,6 +332,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         if (child is ContainerNode containerNode)
         {
+            if (containerNode is Element element)
+            {
+                this.Layout.ElementRemoved(element);
+            }
+
             this.Layout.ContainerNodeRemoved(containerNode);
         }
     }
@@ -343,11 +353,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             tree.IsDirty = true;
         }
 
-        this.Layout.Disconnected();
+        this.Layout.TargetDisconnected();
     }
 
-    protected override void IndexChanged() =>
-        this.Layout.IndexChanged();
+    protected override void Indexed() =>
+        this.Layout.TargetIndexed();
 
     internal void InvokeActivate() =>
         this.Layout.State.AddState(StyledStateManager.State.Active);
@@ -398,6 +408,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.Layout.State.AddState(StyledStateManager.State.Hovered);
         this.MouseOver?.Invoke(mouseEvent);
     }
+
+    protected override void Destroyed() =>
+        this.Layout.Dispose();
 
     public void Blur()
     {

@@ -41,13 +41,7 @@ internal class TextLayout(TextNode target): Layout
         }
     }
 
-    public void Connected() =>
-        this.StencilLayer = this.Parent?.ContentStencilLayer;
-
-    public void Disconnected() =>
-        this.StencilLayer = null;
-
-    public void IndexChanged()
+    public void TargetIndexed()
     {
         for (var i = 0; i < this.Target.Commands.Count; i++)
         {

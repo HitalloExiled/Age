@@ -6,6 +6,7 @@ namespace Age.Elements.Layouts;
 internal abstract class Layout
 {
     #region 8-bytes
+    protected virtual StencilLayer? ContentStencilLayer { get; }
     public virtual StencilLayer? StencilLayer { get; set; }
     #endregion
 
@@ -26,8 +27,6 @@ internal abstract class Layout
     public abstract Layout? Parent { get; }
     public abstract Node    Target { get; }
 
-    public abstract void Update();
-
     public void RequestUpdate()
     {
         if (!this.HasPendingUpdate && !this.Hidden)
@@ -45,6 +44,14 @@ internal abstract class Layout
         }
     }
 
+    public virtual void TargetConnected() =>
+        this.StencilLayer = this.Parent?.ContentStencilLayer;
+
+    public virtual void TargetDisconnected() =>
+        this.StencilLayer = null;
+
     public override string ToString() =>
         $"{{ Target: {this.Target} }}";
+
+    public abstract void Update();
 }

@@ -21,13 +21,13 @@ public class TextNode : ContainerNode
         this.Layout = new(this);
 
     protected override void Connected(NodeTree tree) =>
-        this.Layout.Connected();
+        this.Layout.TargetConnected();
 
     protected override void Disconnected(NodeTree tree) =>
-        this.Layout.Disconnected();
+        this.Layout.TargetDisconnected();
 
-    protected override void IndexChanged() =>
-        this.Layout.IndexChanged();
+    protected override void Indexed() =>
+        this.Layout.TargetIndexed();
 
     public override string ToString() =>
         this.Value ?? "";

@@ -18,7 +18,7 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
             if (this.index != value)
             {
                 this.index = value;
-                this.IndexChanged();
+                this.Indexed();
             }
         }
     }
@@ -98,7 +98,7 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
     protected virtual void Disconnected(NodeTree tree)
     { }
 
-    protected virtual void IndexChanged() { }
+    protected virtual void Indexed() { }
 
     public void AppendChild(Node child)
     {
