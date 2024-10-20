@@ -16,8 +16,23 @@ internal partial class StyledStateManager
         {
             if (this.states != value)
             {
+                static bool hasValue(Style? style, State state, State previous, State current) =>
+                    style != null && (previous.HasFlag(state) || current.HasFlag(state));
+
+                var shouldNotify =
+                    hasValue(this.Styles?.Focus,    State.Focus,    this.states, value)
+                 || hasValue(this.Styles?.Hovered,  State.Hovered,  this.states, value)
+                 || hasValue(this.Styles?.Disabled, State.Disabled, this.states, value)
+                 || hasValue(this.Styles?.Enabled,  State.Enabled,  this.states, value)
+                 || hasValue(this.Styles?.Checked,  State.Checked,  this.states, value)
+                 || hasValue(this.Styles?.Active,   State.Active,   this.states, value);
+
                 this.states = value;
-                this.isDirty = true;
+
+                if (shouldNotify)
+                {
+                    this.InvokeChanged();
+                }
             }
         }
     }
