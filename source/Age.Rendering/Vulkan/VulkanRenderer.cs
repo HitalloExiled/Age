@@ -2,13 +2,8 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using Age.Core;
 using Age.Core.Extensions;
-using Age.Core.Interop;
 using Age.Numerics;
-using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
-using Age.Rendering.Shaders;
-using ThirdParty.SpirvCross;
-using ThirdParty.SpirvCross.Enums;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -17,7 +12,6 @@ using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Rendering.Vulkan;
 
-#pragma warning disable CA1822 // TODO Remove;
 
 public unsafe partial class VulkanRenderer : IDisposable
 {
@@ -29,13 +23,10 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public static VulkanRenderer Singleton => singleton ?? throw new NullReferenceException();
 
-    private readonly object padlock = new();
-
     private readonly Dictionary<VkCommandBuffer, CommandBuffer> commandBuffers = [];
-    private readonly Queue<IDisposable>                         pendingDisposes = new();
+    private readonly List<PendingDisposable>                    pendingDisposes = [];
 
-    private ushort framesUntilPendingDispose;
-    private bool   disposed;
+    private bool disposed;
 
     internal VulkanContext Context { get; } = new();
 
@@ -107,18 +98,20 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     private void DisposePendingResources(bool immediate = false)
     {
-        if (this.pendingDisposes.Count > 0)
+        var span = this.pendingDisposes.AsSpan();
+
+        for (var i = 0; i < this.pendingDisposes.Count; i++)
         {
-            if (immediate || this.framesUntilPendingDispose == 0)
+            if (immediate || span[i].FramesRemaining == 0)
             {
-                while (this.pendingDisposes.Count > 0)
-                {
-                    this.pendingDisposes.Dequeue().Dispose();
-                }
+                span[i].Disposable.Dispose();
+                this.pendingDisposes.RemoveAt(i);
+
+                i--;
             }
             else
             {
-                this.framesUntilPendingDispose--;
+                span[i].FramesRemaining--;
             }
         }
     }
@@ -339,30 +332,22 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public void DeferredDispose(IDisposable disposable)
-    {
-        this.framesUntilPendingDispose = FRAMES_BETWEEN_PENDING_DISPOSES;
-
-        this.pendingDisposes.Enqueue(disposable);
-    }
+    public void DeferredDispose(IDisposable disposable) =>
+        this.pendingDisposes.Add(new(disposable, FRAMES_BETWEEN_PENDING_DISPOSES));
 
     public void DeferredDispose(Span<IDisposable> disposables)
     {
-        this.framesUntilPendingDispose = FRAMES_BETWEEN_PENDING_DISPOSES;
-
         foreach (var disposable in disposables)
         {
-            this.pendingDisposes.Enqueue(disposable);
+            this.DeferredDispose(disposable);
         }
     }
 
     public void DeferredDispose(IEnumerable<IDisposable> disposables)
     {
-        this.framesUntilPendingDispose = FRAMES_BETWEEN_PENDING_DISPOSES;
-
         foreach (var disposable in disposables)
         {
-            this.pendingDisposes.Enqueue(disposable);
+            this.DeferredDispose(disposable);
         }
     }
 
