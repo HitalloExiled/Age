@@ -60,8 +60,8 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         ];
 
         this.canvasStencilMaskShader.Changed += RenderingService.Singleton.RequestDraw;
-        canvasShader.Changed               += RenderingService.Singleton.RequestDraw;
-        canvasWireframeShader.Changed      += RenderingService.Singleton.RequestDraw;
+        canvasShader.Changed                 += RenderingService.Singleton.RequestDraw;
+        canvasWireframeShader.Changed        += RenderingService.Singleton.RequestDraw;
 
         var extent = new VkExtent3D
         {
@@ -213,9 +213,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             Viewport  = viewport,
         };
 
-        var hashcode = command.MappedTexture.Texture.GetHashCode();
-
-        if (!this.UniformSets.TryGetValue(hashcode, out var uniformSet))
+        if (!this.UniformSets.TryGetValue(command.MappedTexture.Texture, out var uniformSet))
         {
             var diffuse = new CombinedImageSamplerUniform
             {
@@ -224,7 +222,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                 ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
             };
 
-            this.UniformSets[hashcode] = uniformSet = new UniformSet(resource.Shader, [diffuse]);
+            this.UniformSets.Set(command.MappedTexture.Texture, uniformSet = new UniformSet(resource.Shader, [diffuse]));
         }
 
         if (uniformSet != null && uniformSet != this.lastUniformSet)
@@ -240,8 +238,6 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
     protected override void Disposed()
     {
-        base.Disposed();
-
         this.DisposeFrameBuffers();
 
         for (var i = 0; i < this.Pipelines.Length; i++)

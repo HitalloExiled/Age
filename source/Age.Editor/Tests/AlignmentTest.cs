@@ -67,7 +67,7 @@ public class AlignmentTest
             }
         };
 
-        // horizontal_a_container.Focus();
+        horizontal_a_container.Focus();
 
         var horizontal_a_left = new FlexBox()
         {

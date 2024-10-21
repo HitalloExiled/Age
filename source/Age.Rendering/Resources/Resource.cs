@@ -2,7 +2,10 @@ namespace Age.Rendering.Resources;
 
 public abstract class Resource : IDisposable
 {
+    internal List<ResourceCache.Entry> Dependencies { get; } = [];
+
     private bool disposed;
+
 
     protected abstract void Disposed();
 
@@ -13,6 +16,13 @@ public abstract class Resource : IDisposable
             this.disposed = true;
 
             this.Disposed();
+
+            foreach (var dependecy in this.Dependencies)
+            {
+                dependecy.Dispose();
+            }
+
+            this.Dependencies.Clear();
         }
 
         GC.SuppressFinalize(this);
