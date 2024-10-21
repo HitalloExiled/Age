@@ -17,7 +17,7 @@ public class ClippingTest
             {
                 Border    = new(borderSize, 60, Color.Red),
                 Overflow = OverflowKind.Clipping,
-                Size     = new((Pixel)100, (Pixel)100),
+                Size     = new((Percentage)10, (Percentage)10),
             }
         };
 
@@ -105,7 +105,7 @@ public class ClippingTest
                 //        n4_layer.AppendChild(n5_no_layer);
             //canvas.AppendChild(n2_b_non_layer);
 
-        
+
 
 
         //                 n4_layer.AppendChild(n5_no_layer);

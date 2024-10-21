@@ -25,7 +25,7 @@ internal partial class StencilLayer(Element owner) : IDisposable, IEnumerable<St
     public StencilLayer? Parent          { get; private set; }
     public StencilLayer? PreviousSibling { get; private set; }
 
-    public Texture Texture { get; private set; } = TextureStorage.Singleton.EmptyTexture;
+    public MappedTexture MappedTexture { get; private set; } = new(TextureStorage.Singleton.EmptyTexture, UVRect.Normalized);
     #endregion
 
     #region 4-bytes
@@ -111,15 +111,77 @@ internal partial class StencilLayer(Element owner) : IDisposable, IEnumerable<St
         }
     }
 
+    private void UpdateTexture(Size<uint> bounds, SKBitmap bitmap)
+    {
+        const float MIN_MARGIN_RATIO = 0.33333334f;
+        const float MAX_MARGIN_RATIO = 1;
+
+        var texture = this.MappedTexture.Texture;
+
+        var imageSize = new Size<uint>(texture.Image.Extent.Width, texture.Image.Extent.Height);
+
+        var isWithinMargin =
+            bounds.Width / (float)imageSize.Width is >= MIN_MARGIN_RATIO and <= MAX_MARGIN_RATIO
+            && bounds.Height / (float)imageSize.Height is >= MIN_MARGIN_RATIO and <= MAX_MARGIN_RATIO;
+
+        if (texture == TextureStorage.Singleton.EmptyTexture || !isWithinMargin)
+        {
+            imageSize = (bounds.Cast<float>() * 1.5f).Cast<uint>();
+
+            var textureInfo = new TextureCreateInfo
+            {
+                Depth     = 1,
+                Format    = VkFormat.R8Unorm,
+                Height    = imageSize.Height,
+                ImageType = VkImageType.N2D,
+                Width     = imageSize.Width,
+            };
+
+            texture = new(textureInfo);
+        }
+
+        var bufferSize = imageSize.Width * imageSize.Height;
+
+        var pixels = bitmap.Pixels.AsSpan();
+
+        var buffer = new byte[bufferSize];
+
+        for (var y = 0; y < bounds.Height; y++)
+        {
+            for (var x = 0; x < bounds.Width; x++)
+            {
+                var sourceIndex = (int)(x + bounds.Width * y);
+                var destinationIndex = (int)(x + imageSize.Width * y);
+
+                buffer[destinationIndex] = pixels[sourceIndex].Alpha;
+            }
+        }
+
+        texture.Update(buffer);
+
+        var uvX = bounds.Width / (float)imageSize.Width;
+        var uvY = bounds.Height / (float)imageSize.Height;
+
+        var uv = new UVRect()
+        {
+            P1 = new(0, 0),
+            P2 = new(uvX, 0),
+            P3 = new(uvX, uvY),
+            P4 = new(0, uvY),
+        };
+
+        this.MappedTexture = new(texture, uv);
+    }
+
     protected virtual void Dispose(bool disposing)
     {
         if (!this.disposed)
         {
             if (disposing)
             {
-                if (this.Texture != TextureStorage.Singleton.DefaultTexture)
+                if (this.MappedTexture.Texture != TextureStorage.Singleton.DefaultTexture)
                 {
-                    VulkanRenderer.Singleton.DeferredDispose(this.Texture);
+                    VulkanRenderer.Singleton.DeferredDispose(this.MappedTexture.Texture);
                 }
             }
 
@@ -231,7 +293,7 @@ internal partial class StencilLayer(Element owner) : IDisposable, IEnumerable<St
 
             using var bitmap = new SKBitmap((int)bounds.Width, (int)bounds.Height);
             using var canvas = new SKCanvas(bitmap);
-            using var paint  = new SKPaint
+            using var paint = new SKPaint
             {
                 Color = SKColors.White,
                 Style = SKPaintStyle.Fill,
@@ -252,32 +314,7 @@ internal partial class StencilLayer(Element owner) : IDisposable, IEnumerable<St
 
             canvas.DrawPath(this.path, paint);
 
-            var pixels = bitmap.Pixels.AsSpan();
-
-            var buffer = new byte[pixels.Length];
-
-            for (var i = 0; i < pixels.Length; i++)
-            {
-                buffer[i] = pixels[i].Alpha;
-            }
-
-            Common.SaveImage(bitmap, $"{this.Owner.Name}.png");
-
-            if (this.Texture == TextureStorage.Singleton.EmptyTexture || this.Texture.Image.Extent.Width != bounds.Width || this.Texture.Image.Extent.Height != bounds.Height)
-            {
-                var textureInfo = new TextureCreateInfo
-                {
-                    Width     = bounds.Width,
-                    Height    = bounds.Height,
-                    Depth     = 1,
-                    Format    = VkFormat.R8Unorm,
-                    ImageType = VkImageType.N2D,
-                };
-
-                this.Texture = new(textureInfo);
-            }
-
-            this.Texture.Update(buffer);
+            this.UpdateTexture(bounds, bitmap);
 
             this.Size = bounds;
 
