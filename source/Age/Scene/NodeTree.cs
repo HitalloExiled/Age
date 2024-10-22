@@ -1,3 +1,4 @@
+using Age.Core;
 using Age.Elements;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
@@ -9,7 +10,7 @@ using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Scene;
 
-public sealed partial class NodeTree : IDisposable
+public sealed partial class NodeTree : Disposable
 {
     public event Action? Updated;
 
@@ -31,9 +32,7 @@ public sealed partial class NodeTree : IDisposable
     public Window Window  { get; }
     #endregion
 
-    #region 2-bytes
-    private bool disposed;
-
+    #region 1-bytes
     public bool IsDirty { get; internal set; }
     #endregion
 
@@ -389,30 +388,19 @@ public sealed partial class NodeTree : IDisposable
         this.command3DEntriesCache.Clear();
     }
 
-    private void Dispose(bool disposing)
+    protected override void Disposed(bool disposing)
     {
-        if (!this.disposed)
+        if (disposing)
         {
-            if (disposing)
-            {
-                this.Window.Context     -= this.OnContext;
-                this.Window.DoubleClick -= this.OnDoubleClick;
-                this.Window.MouseDown   -= this.OnMouseDown;
-                this.Window.MouseMove   -= this.OnMouseMove;
-                this.Window.MouseUp     -= this.OnMouseUp;
+            this.Window.Context     -= this.OnContext;
+            this.Window.DoubleClick -= this.OnDoubleClick;
+            this.Window.MouseDown   -= this.OnMouseDown;
+            this.Window.MouseMove   -= this.OnMouseMove;
+            this.Window.MouseUp     -= this.OnMouseUp;
 
-                this.Root.Dispose();
-                this.buffer.Dispose();
-            }
-
-            this.disposed = true;
+            this.Root.Dispose();
+            this.buffer.Dispose();
         }
-    }
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     public void Initialize()

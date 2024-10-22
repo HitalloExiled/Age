@@ -1,5 +1,3 @@
-using Age.Scene;
-
-namespace Age.Rendering.Scene;
+namespace Age.Scene;
 
 public abstract class Entity : Node;
