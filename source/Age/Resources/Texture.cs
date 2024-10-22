@@ -1,6 +1,5 @@
 using Age.Core;
 using Age.Numerics;
-using Age.Rendering.Vulkan;
 using Age.Storage;
 
 using TextureResource = Age.Rendering.Resources.Texture;
@@ -63,9 +62,9 @@ public class Texture : Disposable
         return new(image, true);
     }
 
-    protected override void Disposed()
+    protected override void Disposed(bool disposing)
     {
-        if (this.imageOwner)
+        if (disposing && this.imageOwner)
         {
             this.Image.Dispose();
         }

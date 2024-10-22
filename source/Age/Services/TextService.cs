@@ -130,8 +130,7 @@ internal partial class TextService : IDisposable
             {
                 foreach (var atlas in this.atlases.Values)
                 {
-                    atlas.Texture.Dispose();
-                    this.renderer.DeferredDispose(atlas.Texture);
+                    this.renderer.DeferredDispose(atlas);
                 }
             }
 

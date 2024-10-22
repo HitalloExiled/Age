@@ -40,8 +40,13 @@ internal partial class RenderingService : Disposable
         }
     }
 
-    protected override void Disposed() =>
-        this.renderer.DeferredDispose(this.renderGraphs.Values);
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.renderer.DeferredDispose(this.renderGraphs.Values);
+        }
+    }
 
     public void RegisterRenderGraph(Window window, RenderGraph renderGraph) =>
         this.renderGraphs[window] = renderGraph;

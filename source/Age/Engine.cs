@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Age.Core;
 using Age.Internal;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
@@ -10,7 +11,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age;
 
-public class Engine : IDisposable
+public class Engine : Disposable
 {
     private const bool   FPS_LOCKED        = false;
     private const ushort TARGET_FPS        = 60;
@@ -18,8 +19,6 @@ public class Engine : IDisposable
 
     private readonly VulkanRenderer   renderer  = new();
     private readonly RenderingService renderingService;
-
-    private bool disposed;
 
     public Window Window { get; }
 
@@ -67,29 +66,18 @@ public class Engine : IDisposable
         Input.ListenInputEvents(this.Window);
     }
 
-    protected virtual void Dispose(bool disposing)
+    protected override void Disposed(bool disposing)
     {
-        if (!this.disposed)
+        if (disposing)
         {
-            if (disposing)
-            {
-                Platforms.Display.Window.CloseAll();
+            Platforms.Display.Window.CloseAll();
 
-                this.renderingService.Dispose();
-                this.textService.Dispose();
-                this.textureStorage.Dispose();
-                this.shaderStorage.Dispose();
-                this.renderer.Dispose();
-            }
-
-            this.disposed = true;
+            this.renderingService.Dispose();
+            this.textService.Dispose();
+            this.textureStorage.Dispose();
+            this.shaderStorage.Dispose();
+            this.renderer.Dispose();
         }
-    }
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     public void Run()

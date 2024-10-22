@@ -9,8 +9,13 @@ public class IndexBuffer : Disposable
     public required uint        Size   { get; init; }
     public required VkIndexType Type   { get; init; }
 
-    protected override void Disposed() =>
-        this.Buffer.Dispose();
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.Buffer.Dispose();
+        }
+    }
 
     public void Update<T>(T data) where T : unmanaged =>
         this.Buffer.Update(data);

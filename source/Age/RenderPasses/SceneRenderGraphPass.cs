@@ -150,18 +150,21 @@ public partial class SceneRenderGraphPass : RenderGraphPass
         return uniformSet;
     }
 
-    protected unsafe override void Disposed()
+    protected unsafe override void Disposed(bool disposing)
     {
-        this.renderPass.Dispose();
-
-        foreach (var resource in this.frameResources)
+        if (disposing)
         {
-            foreach (var ubo in resource.Ubo.Values)
-            {
-                this.Renderer.DeferredDispose(ubo.Buffer);
-            }
+            this.renderPass.Dispose();
 
-            this.Renderer.DeferredDispose(resource.UniformSets.Values);
+            foreach (var resource in this.frameResources)
+            {
+                foreach (var ubo in resource.Ubo.Values)
+                {
+                    this.Renderer.DeferredDispose(ubo.Buffer);
+                }
+
+                this.Renderer.DeferredDispose(resource.UniformSets.Values);
+            }
         }
     }
 

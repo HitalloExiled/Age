@@ -401,7 +401,7 @@ public sealed partial class NodeTree : IDisposable
                 this.Window.MouseMove   -= this.OnMouseMove;
                 this.Window.MouseUp     -= this.OnMouseUp;
 
-                this.Root.Destroy();
+                this.Root.Dispose();
                 this.buffer.Dispose();
             }
 

@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Age.Core;
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Resources;
@@ -7,7 +8,7 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age;
 
-public class TextureAtlas : IDisposable
+public class TextureAtlas : Disposable
 {
     #region 8-bytes
     public Bitmap  Bitmap  { get; }
@@ -20,7 +21,6 @@ public class TextureAtlas : IDisposable
     #endregion
 
     #region 2-bytes
-    private bool disposed;
     private bool isDirty;
     #endregion
 
@@ -109,21 +109,11 @@ public class TextureAtlas : IDisposable
         }
     }
 
-    protected virtual void Dispose(bool disposing)
+    protected override void Disposed(bool disposing)
     {
-        if (!this.disposed)
+        if (disposing)
         {
-            if (disposing)
-            { }
-
             this.Texture.Dispose();
-            this.disposed = true;
         }
-    }
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 }

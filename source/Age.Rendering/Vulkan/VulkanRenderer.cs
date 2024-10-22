@@ -98,20 +98,32 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     private void DisposePendingResources(bool immediate = false)
     {
-        var span = this.pendingDisposes.AsSpan();
-
-        for (var i = 0; i < this.pendingDisposes.Count; i++)
+        if (immediate)
         {
-            if (immediate || span[i].FramesRemaining == 0)
+            foreach (var item in this.pendingDisposes.AsSpan())
             {
-                span[i].Disposable.Dispose();
-                this.pendingDisposes.RemoveAt(i);
-
-                i--;
+                item.Disposable.Dispose();
             }
-            else
+
+            this.pendingDisposes.Clear();
+        }
+        else
+        {
+            var span = this.pendingDisposes.AsSpan();
+
+            for (var i = 0; i < this.pendingDisposes.Count; i++)
             {
-                span[i].FramesRemaining--;
+                if (span[i].FramesRemaining == 0)
+                {
+                    span[i].Disposable.Dispose();
+                    this.pendingDisposes.RemoveAt(i);
+
+                    i--;
+                }
+                else
+                {
+                    span[i].FramesRemaining--;
+                }
             }
         }
     }

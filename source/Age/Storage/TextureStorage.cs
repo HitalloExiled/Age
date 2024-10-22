@@ -49,10 +49,13 @@ public class TextureStorage : Disposable
     public void Add(string name, Texture texture) =>
         this.textures[name] = texture;
 
-    protected override void Disposed()
+    protected override void Disposed(bool disposing)
     {
-        this.renderer.DeferredDispose(this.DefaultTexture);
-        this.renderer.DeferredDispose(this.EmptyTexture);
-        this.renderer.DeferredDispose(this.textures.Values);
+        if (disposing)
+        {
+            this.renderer.DeferredDispose(this.DefaultTexture);
+            this.renderer.DeferredDispose(this.EmptyTexture);
+            this.renderer.DeferredDispose(this.textures.Values);
+        }
     }
 }

@@ -173,7 +173,7 @@ public class Editor : Node
 
     private void Reload()
     {
-        this.canvas.RemoveChildren();
+        this.canvas.DisposeChildren();
 
         this.setup.Invoke(this.canvas);
     }

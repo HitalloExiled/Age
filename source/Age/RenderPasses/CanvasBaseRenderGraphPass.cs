@@ -9,7 +9,6 @@ using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Flags;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 
 namespace Age.RenderPasses;
 
@@ -83,6 +82,14 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         this.CommandBuffer.BindUniformSet(uniformSet);
         this.CommandBuffer.PushConstant(this.CanvasStencilMaskShader, constant);
         this.CommandBuffer.DrawIndexed(indexBuffer);
+    }
+
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.Disposed();
+        }
     }
 
     protected virtual void AfterExecute() { }
@@ -161,5 +168,6 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         this.previousViewport = viewport;
     }
 
+    protected abstract void Disposed();
     protected abstract void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform);
 }

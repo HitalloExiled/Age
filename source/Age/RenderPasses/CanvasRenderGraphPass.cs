@@ -239,7 +239,6 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
     protected override void Disposed()
     {
         this.DisposeFrameBuffers();
-
         for (var i = 0; i < this.Pipelines.Length; i++)
         {
             this.Pipelines[i].Dispose();

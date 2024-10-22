@@ -222,7 +222,6 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
     protected override void Disposed()
     {
         this.DisposeFramebuffer();
-
         this.canvasStencilMaskShader.Dispose();
         this.renderPass.Dispose();
         this.commandBuffer.Dispose();

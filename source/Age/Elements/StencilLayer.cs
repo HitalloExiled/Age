@@ -1,18 +1,18 @@
-using System.Collections;
+using Age.Core;
 using Age.Core.Extensions;
 using Age.Extensions;
-using Age.Internal;
 using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.Storage;
 using Age.Styling;
 using SkiaSharp;
+using System.Collections;
 using ThirdParty.Vulkan.Enums;
 
 namespace Age.Elements;
 
-internal partial class StencilLayer(Element owner) : IDisposable, IEnumerable<StencilLayer>
+internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<StencilLayer>
 {
     #region 8-bytes
     private readonly SKPath path = new();
@@ -49,11 +49,8 @@ internal partial class StencilLayer(Element owner) : IDisposable, IEnumerable<St
     #endregion
 
     #region 1-byte
-    private bool disposed;
     private bool isDirty;
     #endregion
-
-    ~StencilLayer() => this.Dispose(false);
 
     IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
@@ -173,19 +170,11 @@ internal partial class StencilLayer(Element owner) : IDisposable, IEnumerable<St
         this.MappedTexture = new(texture, uv);
     }
 
-    protected virtual void Dispose(bool disposing)
+    protected override void Disposed(bool disposing)
     {
-        if (!this.disposed)
+        if (disposing && this.MappedTexture.Texture != TextureStorage.Singleton.DefaultTexture)
         {
-            if (disposing)
-            {
-                if (this.MappedTexture.Texture != TextureStorage.Singleton.DefaultTexture)
-                {
-                    VulkanRenderer.Singleton.DeferredDispose(this.MappedTexture.Texture);
-                }
-            }
-
-            this.disposed = true;
+            VulkanRenderer.Singleton.DeferredDispose(this.MappedTexture.Texture);
         }
     }
 
@@ -231,12 +220,6 @@ internal partial class StencilLayer(Element owner) : IDisposable, IEnumerable<St
 
             this.MakeDirty();
         }
-    }
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     public IEnumerator<StencilLayer> GetEnumerator() =>

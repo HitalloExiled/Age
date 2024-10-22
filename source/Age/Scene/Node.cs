@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Age.Core;
 
 namespace Age.Scene;
 
-public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
+public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<Node>
 {
     private NodeTree? tree;
 
@@ -80,6 +81,88 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
     IEnumerator IEnumerable.GetEnumerator() =>
         this.GetEnumerator();
 
+    private void RemoveChildren(bool dispose = false)
+    {
+        if (this.FirstChild != null)
+        {
+            var next = this.FirstChild;
+
+            do
+            {
+                var current = next;
+
+                if (dispose)
+                {
+                    current.Dispose();
+                }
+
+                next = current.NextSibling;
+
+                current.PreviousSibling = null;
+                current.NextSibling     = null;
+                current.Parent          = null;
+                current.Tree            = null;
+
+                this.ChildRemoved(current);
+            }
+            while (next != null);
+
+            this.FirstChild = null;
+            this.LastChild  = null;
+        }
+    }
+
+    private void RemoveChildren(Node start, Node end, bool dispose)
+    {
+        if (start.Parent != this || end.Parent != this)
+        {
+            return;
+        }
+
+        var next = start;
+
+        do
+        {
+            var current = next;
+
+            if (dispose)
+            {
+                current.Dispose();
+            }
+
+            next = current.NextSibling;
+
+            current.PreviousSibling = null;
+            current.NextSibling     = null;
+            current.Parent          = null;
+            current.Tree            = null;
+
+            this.ChildRemoved(current);
+
+            if (current == end)
+            {
+                break;
+            }
+        }
+        while (next != null);
+
+        this.FirstChild = null;
+        this.LastChild  = null;
+    }
+
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.Disposed();
+
+            foreach (var child in this.Traverse())
+            {
+                child.Disposed();
+            }
+        }
+    }
+
     protected virtual void Adopted()
     { }
 
@@ -92,9 +175,7 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
     protected virtual void Connected(NodeTree tree)
     { }
 
-    protected virtual void Destroyed()
-    { }
-
+    protected virtual void Disposed() { }
     protected virtual void Disconnected(NodeTree tree)
     { }
 
@@ -187,50 +268,20 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
         return 0;
     }
 
-    public void Destroy()
-    {
-        this.Destroyed();
-
-        foreach (var child in this.Traverse())
-        {
-            child.Destroyed();
-        }
-    }
-
     public void Detach() =>
         this.Parent?.RemoveChild(this);
+
+    public void DisposeChildren() =>
+        this.RemoveChildren(true);
+
+    public void DisposeChildren(Node start, Node end) =>
+        this.RemoveChildren(start, end, true);
 
     public IEnumerator<Node> GetEnumerator() =>
         new Enumerator(this);
 
     public TraverseEnumerator GetTraverseEnumerator() =>
         new(this);
-
-    public void RemoveChildren()
-    {
-        if (this.FirstChild != null)
-        {
-            var next = this.FirstChild;
-
-            do
-            {
-                var current = next;
-
-                next = current.NextSibling;
-
-                current.PreviousSibling = null;
-                current.NextSibling     = null;
-                current.Parent          = null;
-                current.Tree            = null;
-
-                this.ChildRemoved(current);
-            }
-            while (next != null);
-
-            this.FirstChild = null;
-            this.LastChild  = null;
-        }
-    }
 
     public void RemoveChild(Node child)
     {
@@ -269,38 +320,11 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
         }
     }
 
-    public void RemoveChildrenInRange(Node start, Node end)
-    {
-        if (start.Parent != this || end.Parent != this)
-        {
-            return;
-        }
+    public void RemoveChildren() =>
+        this.RemoveChildren(false);
 
-        var next = start;
-
-        do
-        {
-            var current = next;
-
-            next = current.NextSibling;
-
-            current.PreviousSibling = null;
-            current.NextSibling     = null;
-            current.Parent          = null;
-            current.Tree            = null;
-
-            this.ChildRemoved(current);
-
-            if (current == end)
-            {
-                break;
-            }
-        }
-        while (next != null);
-
-        this.FirstChild = null;
-        this.LastChild  = null;
-    }
+    public void RemoveChildrenInRange(Node start, Node end) =>
+        this.RemoveChildren(start, end, false);
 
     public IEnumerable<Node> Reverse() =>
         new ReverseEnumerator(this);
@@ -345,6 +369,4 @@ public abstract partial class Node : IEnumerable<Node>, IComparable<Node>
 
         return this.Parent == parent;
     }
-
-
 }

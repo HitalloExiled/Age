@@ -21,7 +21,7 @@ public class Mesh : Node3D
             Mesh         = this,
         };
 
-    protected override void Destroyed()
+    protected override void Disposed()
     {
         if (this.SingleCommand is MeshCommand command)
         {

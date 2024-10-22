@@ -118,8 +118,13 @@ public class DescriptorPool : Disposable
         typeEntries.Clear();
     }
 
-    protected override void Disposed() =>
-        this.Value.Dispose();
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.Value.Dispose();
+        }
+    }
 
     public void FreeDescriptorSets(VkDescriptorSet[] descriptorSets)
     {

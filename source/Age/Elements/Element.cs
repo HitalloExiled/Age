@@ -409,7 +409,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.MouseOver?.Invoke(mouseEvent);
     }
 
-    protected override void Destroyed() =>
+    protected override void Disposed() =>
         this.Layout.Dispose();
 
     public void Blur()

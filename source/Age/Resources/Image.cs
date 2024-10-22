@@ -1,7 +1,6 @@
 using Age.Core.Extensions;
 using Age.Core;
 using Age.Numerics;
-using Age.Rendering.Vulkan;
 using SkiaSharp;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -55,8 +54,13 @@ public class Image : Disposable
         return new(buffer.ToArray(), new((uint)bitmap.Width, (uint)bitmap.Height));
     }
 
-    protected override void Disposed() =>
-        this.resource.Dispose();
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.resource.Dispose();
+        }
+    }
 
     public static implicit operator ImageResource(Image value) => value.resource;
 
