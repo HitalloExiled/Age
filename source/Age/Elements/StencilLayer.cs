@@ -187,6 +187,8 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
 
         if (child.Parent != this)
         {
+            child.Parent?.RemoveChild(child);
+
             child.Parent = this;
 
             if (this.LastChild != null)

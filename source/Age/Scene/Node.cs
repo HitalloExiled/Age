@@ -190,6 +190,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         if (child.Parent != this)
         {
+            child.Detach();
+
             child.Parent = this;
 
             if (this.LastChild != null)
