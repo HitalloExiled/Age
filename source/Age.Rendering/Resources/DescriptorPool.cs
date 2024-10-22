@@ -126,9 +126,12 @@ public class DescriptorPool : Disposable
         }
     }
 
-    public void FreeDescriptorSets(VkDescriptorSet[] descriptorSets)
+    public void FreeDescriptorSets(Span<VkDescriptorSet> descriptorSets)
     {
-        this.Value.FreeDescriptorSets(descriptorSets);
+        foreach (var descriptorSet in descriptorSets)
+        {
+            descriptorSet.Dispose();
+        }
 
         RemoveFromDescriptorPool(this);
     }
