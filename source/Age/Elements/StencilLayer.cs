@@ -225,8 +225,18 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
     public IEnumerator<StencilLayer> GetEnumerator() =>
         new Enumerator(this);
 
-    public void MakeDirty() =>
+    public IEnumerable<StencilLayer> Traverse() =>
+        new TraverseEnumerator(this);
+
+    public void MakeDirty()
+    {
         this.isDirty = true;
+
+        foreach (var item in this.Traverse())
+        {
+            item.isDirty = true;
+        }
+    }
 
     public void RemoveChild(StencilLayer child)
     {

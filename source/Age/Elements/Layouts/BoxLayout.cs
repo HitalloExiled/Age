@@ -167,7 +167,7 @@ internal partial class BoxLayout : Layout, IDisposable
 
             while (enumerator.MoveNext())
             {
-                var current = enumerator.UnsafeCurrent!;
+                var current = enumerator.CurrentNode!;
 
                 if (current is ContainerNode containerNode)
                 {
@@ -1025,7 +1025,7 @@ internal partial class BoxLayout : Layout, IDisposable
             };
         }
 
-        if (this.Target.IsConnected && property is StyleProperty.Overflow or StyleProperty.All)
+        if (property is StyleProperty.Overflow or StyleProperty.All)
         {
             if (this.State.Style.Overflow == OverflowKind.Clipping)
             {
@@ -1215,21 +1215,10 @@ internal partial class BoxLayout : Layout, IDisposable
     {
         base.TargetConnected();
 
-        this.UpdateState(StyleProperty.All);
-    }
-
-    public override void TargetDisconnected()
-    {
-        base.TargetDisconnected();
-
-        // if (!this.Hidden && this.parentDependent != Dependency.None)
-        // {
-        //     this.Parent?.dependents.Remove(this.Target);
-        // }
-
-        this.ownStencilLayer?.Detach();
-        this.ownStencilLayer?.Dispose();
-        this.ownStencilLayer = null;
+        if (this.ownStencilLayer != null)
+        {
+            this.StencilLayer?.AppendChild(this.ownStencilLayer);
+        }
     }
 
     public override void Update()
