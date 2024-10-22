@@ -21,7 +21,7 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = BoxModelTest.Setup;
+        this.setup = ClippingTest.Setup;
 
         this.Reload();
         // this.CreateDemoScene();

@@ -4,4 +4,7 @@ public enum OverflowKind
 {
     None,
     Clipping,
+    Scroll,
+    ScrollX,
+    ScrollY,
 }

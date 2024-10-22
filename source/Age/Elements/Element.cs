@@ -5,7 +5,9 @@ using Age.Platforms.Display;
 using Age.Scene;
 using Age.Styling;
 
-using Key = Age.Platforms.Display.Key;
+using Key                  = Age.Platforms.Display.Key;
+using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
+using PlatformMouseEvent   = Age.Platforms.Display.MouseEvent;
 
 namespace Age.Elements;
 
@@ -24,6 +26,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 {
     private event KeyEventHandler? keyDown;
     private event KeyEventHandler? keyUp;
+    private event MouseEventHandler? scroll;
 
     public event MouseEventHandler?   Blured;
     public event MouseEventHandler?   Clicked;
@@ -86,6 +89,34 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 if (this.IsConnected && keyUp == null)
                 {
                     this.Tree.Window.KeyUp -= this.OnKeyUp;
+                }
+            }
+        }
+    }
+
+    public event MouseEventHandler? Scroll
+    {
+        add
+        {
+            lock(this.elementLock)
+            {
+                if (this.IsConnected && scroll == null)
+                {
+                    this.Tree.Window.MouseWhell += this.OnScroll;
+                }
+            }
+
+            scroll += value;
+        }
+        remove
+        {
+            scroll -= value;
+
+            lock(this.elementLock)
+            {
+                if (this.IsConnected && scroll == null)
+                {
+                    this.Tree.Window.MouseWhell -= this.OnScroll;
                 }
             }
         }
@@ -263,6 +294,27 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
+    private MouseEvent CreateEvent(in PlatformMouseEvent mouseEvent) =>
+        new()
+        {
+            Target    = this,
+            Button    = mouseEvent.Button,
+            Delta     = mouseEvent.Delta,
+            KeyStates = mouseEvent.KeyStates,
+            X         = mouseEvent.X,
+            Y         = mouseEvent.Y,
+        };
+
+    private ContextEvent CreateEvent(in PlatformContextEvent platformContextEvent) =>
+        new()
+        {
+            Target  = this,
+            X       = platformContextEvent.X,
+            Y       = platformContextEvent.Y,
+            ScreenX = platformContextEvent.ScreenX,
+            ScreenY = platformContextEvent.ScreenY,
+        };
+
     private void OnKeyDown(Key key)
     {
         if (this.IsFocused)
@@ -293,6 +345,16 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
+    private void OnScroll(in PlatformMouseEvent platformMouseEvent)
+    {
+        if (this.Layout.IsScrollable)
+        {
+            var mouseEvent = this.CreateEvent(platformMouseEvent);
+
+            this.scroll?.Invoke(mouseEvent);
+        }
+    }
+
     protected override void Connected(NodeTree tree)
     {
         if (this.keyDown != null)
@@ -303,6 +365,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         if (this.keyUp != null)
         {
             tree.Window.KeyUp += this.OnKeyUp;
+        }
+
+        if (this.scroll != null)
+        {
+            tree.Window.MouseWhell += this.OnScroll;
         }
 
         if (!tree.IsDirty && !this.Layout.Hidden)
@@ -362,51 +429,51 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     internal void InvokeActivate() =>
         this.Layout.State.AddState(StyledStateManager.State.Active);
 
-    internal void InvokeBlur(in MouseEvent mouseEvent)
+    internal void InvokeBlur(in PlatformMouseEvent platformMouseEvent)
     {
         if (this.IsFocusable)
         {
             this.Layout.State.RemoveState(StyledStateManager.State.Focus);
             this.IsFocused = false;
-            this.Blured?.Invoke(mouseEvent);
+            this.Blured?.Invoke(this.CreateEvent(platformMouseEvent));
         }
     }
 
-    internal void InvokeClick(in MouseEvent mouseEvent) =>
-        this.Clicked?.Invoke(mouseEvent);
+    internal void InvokeClick(in PlatformMouseEvent platformMouseEvent) =>
+        this.Clicked?.Invoke(this.CreateEvent(platformMouseEvent));
 
-    internal void InvokeContext(in ContextEvent contextEvent) =>
-        this.Context?.Invoke(contextEvent);
+    internal void InvokeContext(in PlatformContextEvent platformContextEvent) =>
+        this.Context?.Invoke(this.CreateEvent(platformContextEvent));
 
     internal void InvokeDeactivate() =>
         this.Layout.State.RemoveState(StyledStateManager.State.Active);
 
-    internal void InvokeDoubleClick(in MouseEvent mouseEvent) =>
-        this.DoubleClicked?.Invoke(mouseEvent);
+    internal void InvokeDoubleClick(in PlatformMouseEvent platformMouseEvent) =>
+        this.DoubleClicked?.Invoke(this.CreateEvent(platformMouseEvent));
 
-    internal void InvokeFocus(in MouseEvent mouseEvent)
+    internal void InvokeFocus(in PlatformMouseEvent platformMouseEvent)
     {
         if (this.IsFocusable)
         {
             this.Layout.State.AddState(StyledStateManager.State.Focus);
             this.IsFocused = true;
-            this.Focused?.Invoke(mouseEvent);
+            this.Focused?.Invoke(this.CreateEvent(platformMouseEvent));
         }
     }
 
-    internal void InvokeMouseMoved(in MouseEvent mouseEvent) =>
-        this.MouseMoved?.Invoke(mouseEvent);
+    internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent) =>
+        this.MouseMoved?.Invoke(this.CreateEvent(platformMouseEvent));
 
-    internal void InvokeMouseOut(in MouseEvent mouseEvent)
+    internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
     {
         this.Layout.State.RemoveState(StyledStateManager.State.Hovered);
-        this.MouseOut?.Invoke(mouseEvent);
+        this.MouseOut?.Invoke(this.CreateEvent(platformMouseEvent));
     }
 
-    internal void InvokeMouseOver(in MouseEvent mouseEvent)
+    internal void InvokeMouseOver(in PlatformMouseEvent platformMouseEvent)
     {
         this.Layout.State.AddState(StyledStateManager.State.Hovered);
-        this.MouseOver?.Invoke(mouseEvent);
+        this.MouseOver?.Invoke(this.CreateEvent(platformMouseEvent));
     }
 
     protected override void Disposed() =>

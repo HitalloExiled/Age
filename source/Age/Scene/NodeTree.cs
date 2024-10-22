@@ -104,17 +104,6 @@ public sealed partial class NodeTree : Disposable
         }
     }
 
-    private static MouseEvent CreateEventTarget(Element target, in Platforms.Display.MouseEvent mouseEvent) =>
-        new()
-        {
-            Target    = target,
-            Button    = mouseEvent.Button,
-            Delta     = mouseEvent.Delta,
-            KeyStates = mouseEvent.KeyStates,
-            X         = mouseEvent.X,
-            Y         = mouseEvent.Y,
-        };
-
     private IEnumerable<CommandEntry> EnumerateCommands()
     {
         this.stack.Push(this.Root);
@@ -236,19 +225,7 @@ public sealed partial class NodeTree : Disposable
     {
         var element = this.GetElement(contextEvent.X, contextEvent.Y);
 
-        if (element != null)
-        {
-            var eventTarget = new ContextEvent
-            {
-                X       = contextEvent.X,
-                Y       = contextEvent.Y,
-                ScreenX = contextEvent.ScreenX,
-                ScreenY = contextEvent.ScreenY,
-                Target  = element
-            };
-
-            element.InvokeContext(eventTarget);
-        }
+        element?.InvokeContext(contextEvent);
     }
 
     private void OnMouseDown(in Platforms.Display.MouseEvent mouseEvent)
@@ -257,8 +234,6 @@ public sealed partial class NodeTree : Disposable
 
         if (element != null)
         {
-            var eventTarget = CreateEventTarget(element, mouseEvent);
-
             if (mouseEvent.Button == mouseEvent.PrimaryButton)
             {
                 element.InvokeActivate();
@@ -266,16 +241,16 @@ public sealed partial class NodeTree : Disposable
 
             if (element != this.lastFocusedElement)
             {
-                element.InvokeFocus(eventTarget);
+                element.InvokeFocus(mouseEvent);
 
-                this.lastFocusedElement?.InvokeBlur(CreateEventTarget(this.lastFocusedElement, mouseEvent));
+                this.lastFocusedElement?.InvokeBlur(mouseEvent);
             }
 
             this.lastFocusedElement = element;
         }
         else
         {
-            this.lastFocusedElement?.InvokeBlur(CreateEventTarget(this.lastFocusedElement, mouseEvent));
+            this.lastFocusedElement?.InvokeBlur(mouseEvent);
             this.lastFocusedElement = null;
         }
     }
@@ -284,7 +259,7 @@ public sealed partial class NodeTree : Disposable
     {
         var element = this.GetElement(mouseEvent.X, mouseEvent.Y);
 
-        element?.InvokeDoubleClick(CreateEventTarget(element, mouseEvent));
+        element?.InvokeDoubleClick(mouseEvent);
     }
 
     private unsafe void OnMouseMove(in Platforms.Display.MouseEvent mouseEvent)
@@ -293,22 +268,20 @@ public sealed partial class NodeTree : Disposable
 
         if (element != null)
         {
-            var eventTarget = CreateEventTarget(element, mouseEvent);
-
-            element.InvokeMouseMoved(eventTarget);
+            element.InvokeMouseMoved(mouseEvent);
 
             if (element != this.lastSelectedElement)
             {
-                element.InvokeMouseOver(eventTarget);
+                element.InvokeMouseOver(mouseEvent);
 
-                this.lastSelectedElement?.InvokeMouseOut(CreateEventTarget(this.lastSelectedElement, mouseEvent));
+                this.lastSelectedElement?.InvokeMouseOut(mouseEvent);
             }
 
             this.lastSelectedElement = element;
         }
         else
         {
-            this.lastSelectedElement?.InvokeMouseOut(CreateEventTarget(this.lastSelectedElement, mouseEvent));
+            this.lastSelectedElement?.InvokeMouseOut(mouseEvent);
             this.lastSelectedElement = null;
         }
     }
@@ -319,8 +292,6 @@ public sealed partial class NodeTree : Disposable
 
         if (element != null)
         {
-            var eventTarget = CreateEventTarget(element, mouseEvent);
-
             if (mouseEvent.Button == mouseEvent.PrimaryButton)
             {
                 element.InvokeDeactivate();
@@ -328,7 +299,7 @@ public sealed partial class NodeTree : Disposable
 
             if (element == this.lastFocusedElement)
             {
-                element.InvokeClick(eventTarget);
+                element.InvokeClick(mouseEvent);
             }
 
             this.lastFocusedElement = element;

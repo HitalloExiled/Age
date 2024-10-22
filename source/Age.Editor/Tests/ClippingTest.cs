@@ -16,14 +16,14 @@ public class ClippingTest
             Style = new()
             {
                 Border    = new(borderSize, 60, Color.Red),
-                Overflow = OverflowKind.Clipping,
-                Size     = new((Percentage)10, (Percentage)10),
+                Overflow = OverflowKind.Scroll,
+                Size     = new((Percentage)50, (Percentage)50),
             }
         };
 
         n1_layer.Clicked += (in MouseEvent _) =>
         {
-            n1_layer.Style.Overflow = n1_layer.Style.Overflow == OverflowKind.Clipping ? OverflowKind.None : OverflowKind.Clipping;
+            n1_layer.Style.Overflow = n1_layer.Style.Overflow == OverflowKind.Scroll ? OverflowKind.None : OverflowKind.Scroll;
         };
 
         var n2_a_layer = new FlexBox()

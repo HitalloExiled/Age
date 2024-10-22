@@ -42,6 +42,9 @@ internal partial class BoxLayout : Layout, IDisposable
     private Dependency   parentDependent;
     private uint         renderableNodesCount;
     private Size<uint>   staticContent;
+    private Point<int>   scrollOffset;
+
+    public bool IsScrollable { get; internal set; }
     #endregion
 
     #region 1-byte
@@ -839,6 +842,22 @@ internal partial class BoxLayout : Layout, IDisposable
         }
     }
 
+    private void OnScroll(in MouseEvent mouseEvent)
+    {
+        if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlag(Platforms.Display.MouseKeyStates.Shift))
+        {
+            this.scrollOffset.X += (int)(5 * mouseEvent.Delta);
+            this.ownStencilLayer?.MakeDirty();
+            this.RequestUpdate();
+        }
+        else if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY)
+        {
+            this.scrollOffset.Y += (int)(5 * mouseEvent.Delta);
+            this.ownStencilLayer?.MakeDirty();
+            this.RequestUpdate();
+        }
+    }
+
     private void UpdateDisposition()
     {
         if (this.renderableNodesCount == 0)
@@ -980,7 +999,7 @@ internal partial class BoxLayout : Layout, IDisposable
                 }
             }
 
-            child.Layout.Offset = new(float.Round(cursor.X + position.X + margin.Left), -float.Round(-cursor.Y + position.Y + margin.Top));
+            child.Layout.Offset = new(float.Round(this.scrollOffset.X + cursor.X + position.X + margin.Left), -float.Round(this.scrollOffset.Y -cursor.Y + position.Y + margin.Top));
 
             if (stack == StackKind.Horizontal)
             {
@@ -1004,7 +1023,7 @@ internal partial class BoxLayout : Layout, IDisposable
         command.Color  = this.State.Style.BackgroundColor ?? default;
         command.StencilLayer  = this.StencilLayer;
 
-        if (this.State.Style.Overflow == OverflowKind.Clipping)
+        if (this.State.Style.Overflow != OverflowKind.None)
         {
             this.ownStencilLayer!.MakeDirty();
         }
@@ -1027,7 +1046,23 @@ internal partial class BoxLayout : Layout, IDisposable
 
         if (property is StyleProperty.Overflow or StyleProperty.All)
         {
-            if (this.State.Style.Overflow == OverflowKind.Clipping)
+            var previousIsScrollable = this.IsScrollable;
+
+            this.IsScrollable = this.State.Style.Overflow is not OverflowKind.None and not OverflowKind.Clipping;
+
+            if (this.IsScrollable != previousIsScrollable)
+            {
+                if (this.IsScrollable)
+                {
+                    this.target.Scroll += this.OnScroll;
+                }
+                else
+                {
+                    this.target.Scroll -= this.OnScroll;
+                    this.scrollOffset = default;
+                }
+            }
+            if (this.State.Style.Overflow != OverflowKind.None)
             {
                 if (this.ownStencilLayer == null)
                 {
