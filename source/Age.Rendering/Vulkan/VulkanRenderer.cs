@@ -13,7 +13,7 @@ using Buffer = Age.Rendering.Resources.Buffer;
 namespace Age.Rendering.Vulkan;
 
 
-public unsafe partial class VulkanRenderer : IDisposable
+public unsafe partial class VulkanRenderer : Disposable
 {
     public event Action? SwapchainRecreated;
     private const ushort MAX_DESCRIPTORS_PER_POOL        = 64;
@@ -26,7 +26,7 @@ public unsafe partial class VulkanRenderer : IDisposable
     private readonly Dictionary<VkCommandBuffer, CommandBuffer> commandBuffers = [];
     private readonly List<PendingDisposable>                    pendingDisposes = [];
 
-    private bool disposed;
+    private bool disposingPendingResources;
 
     internal VulkanContext Context { get; } = new();
 
@@ -98,9 +98,11 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     private void DisposePendingResources(bool immediate = false)
     {
+        this.disposingPendingResources = true;
+
         if (immediate)
         {
-            foreach (var item in this.pendingDisposes.AsSpan())
+            foreach (var item in this.pendingDisposes)
             {
                 item.Disposable.Dispose();
             }
@@ -126,6 +128,8 @@ public unsafe partial class VulkanRenderer : IDisposable
                 }
             }
         }
+
+        this.disposingPendingResources = false;
     }
 
     private void OnContextDeviceInitialized()
@@ -152,9 +156,9 @@ public unsafe partial class VulkanRenderer : IDisposable
                                 : VkSampleCountFlags.N1;
     }
 
-    protected virtual void Dispose(bool disposing)
+    protected override void Disposed(bool disposing)
     {
-        if (!this.disposed)
+        if (disposing)
         {
             this.Context.Device.WaitIdle();
 
@@ -163,8 +167,6 @@ public unsafe partial class VulkanRenderer : IDisposable
             DescriptorPool.Clear();
 
             this.Context.Dispose();
-
-            this.disposed = true;
         }
     }
 
@@ -344,8 +346,17 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public void DeferredDispose(IDisposable disposable) =>
-        this.pendingDisposes.Add(new(disposable, FRAMES_BETWEEN_PENDING_DISPOSES));
+    public void DeferredDispose(IDisposable disposable)
+    {
+        if (this.disposingPendingResources)
+        {
+            disposable.Dispose();
+        }
+        else
+        {
+            this.pendingDisposes.Add(new(disposable, FRAMES_BETWEEN_PENDING_DISPOSES));
+        }
+    }
 
     public void DeferredDispose(Span<IDisposable> disposables)
     {
@@ -361,12 +372,6 @@ public unsafe partial class VulkanRenderer : IDisposable
         {
             this.DeferredDispose(disposable);
         }
-    }
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     public void EndFrame()
