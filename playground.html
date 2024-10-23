@@ -15,7 +15,10 @@
             display: var(--display);
             border: var(--border) solid red;
             font-size: 16;
+            border-radius: 60px;
             height: 20px;
+            height: 100px;
+            width:  100px;
             /* font-family: 'Helvetica Neue'; */
             /* width:  100px;
             height: 100px; */
@@ -23,12 +26,12 @@
         }
 
         .green {
-            display: flex;
+            display: inline-flex;
             border: 10px solid green;
-            border-radius: 60px;
+            border-radius: 100px;
             /* font-size: 16; */
-            height: 100px;
-            width:  100px;
+            /* height: 100px;
+            width:  100px; */
             /* font-family: 'Lucida Console'; */
             /* width:  50%;
             height: 50%; */
@@ -64,15 +67,15 @@
     </style>
 </head>
 <body>
-    <button id="clicker">Click Me</button>
-    <span class="green" style="border-color: red;">
-        <!-- <span class="green"></span> -->
+    <!-- <button id="clicker">Click Me</button> -->
+    <span class="green">
+        <span class="red"></span>
     </span>
 
-    <span class="stack">
+    <!-- <span class="stack">
         <span class="red">01</span>
         <span class="blue">03</span>
-    </span>
+    </span> -->
     <!-- <span class="stack-v">
         Vertical
         <span class="red">X</span>

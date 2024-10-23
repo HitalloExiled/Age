@@ -15,9 +15,9 @@ public class ClippingTest
             Name  = "n1_layer",
             Style = new()
             {
-                Border    = new(borderSize, 60, Color.Red),
+                Border   = new(borderSize, 100, Color.Red),
                 Overflow = OverflowKind.Scroll,
-                Size     = new((Percentage)50, (Percentage)50),
+                Size     = new((Pixel)50, (Pixel)50),
             }
         };
 
@@ -29,15 +29,15 @@ public class ClippingTest
         var n2_a_layer = new FlexBox()
         {
             Name  = "n2_a_layer",
-            // Text  = "Clipped Content",
+            Text  = "Clipped\nContent",
             Style = new()
             {
                 Border    = new(borderSize, 60, Color.Green),
                 Color     = Color.White,
                 FontSize  = 24,
-                Transform = Transform2D.CreateTranslated(25, -40),
-                Overflow  = OverflowKind.Clipping,
-                Size      = new((Pixel)100, (Pixel)100),
+                // Transform = Transform2D.CreateTranslated(25, -40),
+                // Overflow  = OverflowKind.Clipping,
+                // Size      = new((Pixel)100, (Pixel)100),
             }
         };
 
@@ -100,7 +100,7 @@ public class ClippingTest
 
         canvas.AppendChild(n1_layer);
            n1_layer.AppendChild(n2_a_layer);
-               n2_a_layer.AppendChild(n3_no_layer);
+            //    n2_a_layer.AppendChild(n3_no_layer);
                 //    n3_no_layer.AppendChild(n4_layer);
                 //        n4_layer.AppendChild(n5_no_layer);
             //canvas.AppendChild(n2_b_non_layer);

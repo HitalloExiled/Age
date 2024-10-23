@@ -846,13 +846,13 @@ internal partial class BoxLayout : Layout, IDisposable
     {
         if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlag(Platforms.Display.MouseKeyStates.Shift))
         {
-            this.scrollOffset.X += (int)(5 * mouseEvent.Delta);
+            this.scrollOffset.X = MathX.MinMax(-(int)this.content.Width.ClampSubtract(this.Size.Width), 0, this.scrollOffset.X + (int)(5 * mouseEvent.Delta));
             this.ownStencilLayer?.MakeDirty();
             this.RequestUpdate();
         }
         else if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY)
         {
-            this.scrollOffset.Y += (int)(5 * mouseEvent.Delta);
+            this.scrollOffset.Y = MathX.MinMax(0, (int)this.content.Height.ClampSubtract(this.Size.Height), this.scrollOffset.Y - (int)(5 * mouseEvent.Delta));
             this.ownStencilLayer?.MakeDirty();
             this.RequestUpdate();
         }
@@ -999,7 +999,7 @@ internal partial class BoxLayout : Layout, IDisposable
                 }
             }
 
-            child.Layout.Offset = new(float.Round(this.scrollOffset.X + cursor.X + position.X + margin.Left), -float.Round(this.scrollOffset.Y -cursor.Y + position.Y + margin.Top));
+            child.Layout.Offset = new(float.Round(this.scrollOffset.X + cursor.X + position.X + margin.Left), -float.Round(-this.scrollOffset.Y + -cursor.Y + position.Y + margin.Top));
 
             if (stack == StackKind.Horizontal)
             {
@@ -1023,10 +1023,7 @@ internal partial class BoxLayout : Layout, IDisposable
         command.Color  = this.State.Style.BackgroundColor ?? default;
         command.StencilLayer  = this.StencilLayer;
 
-        if (this.State.Style.Overflow != OverflowKind.None)
-        {
-            this.ownStencilLayer!.MakeDirty();
-        }
+        this.ownStencilLayer?.MakeDirty();
     }
 
     private void UpdateState(StyleProperty property)
@@ -1042,44 +1039,6 @@ internal partial class BoxLayout : Layout, IDisposable
                 Bottom = this.State.Style.Border?.Bottom.Thickness ?? 0,
                 Left   = this.State.Style.Border?.Left.Thickness ?? 0,
             };
-        }
-
-        if (property is StyleProperty.Overflow or StyleProperty.All)
-        {
-            var previousIsScrollable = this.IsScrollable;
-
-            this.IsScrollable = this.State.Style.Overflow is not OverflowKind.None and not OverflowKind.Clipping;
-
-            if (this.IsScrollable != previousIsScrollable)
-            {
-                if (this.IsScrollable)
-                {
-                    this.target.Scroll += this.OnScroll;
-                }
-                else
-                {
-                    this.target.Scroll -= this.OnScroll;
-                    this.scrollOffset = default;
-                }
-            }
-            if (this.State.Style.Overflow != OverflowKind.None)
-            {
-                if (this.ownStencilLayer == null)
-                {
-                    this.ownStencilLayer = new StencilLayer(this.Target);
-
-                    this.StencilLayer?.AppendChild(this.ownStencilLayer);
-                }
-            }
-            else if (this.ownStencilLayer != null)
-            {
-                this.ownStencilLayer.Detach();
-                this.ownStencilLayer.Dispose();
-
-                this.ownStencilLayer = null;
-            }
-
-            SetStencilLayer(this, this.ContentStencilLayer);
         }
 
         var oldParentDependent = this.parentDependent;
@@ -1166,6 +1125,45 @@ internal partial class BoxLayout : Layout, IDisposable
 
                 this.Parent.dependents.Remove(this.Target);
             }
+        }
+
+        if (property is StyleProperty.Overflow or StyleProperty.All)
+        {
+            var currentIsScrollable = this.State.Style.Overflow is not OverflowKind.None and not OverflowKind.Clipping && this.contentDependent != (Dependency.Width | Dependency.Height);
+
+            if (currentIsScrollable != this.IsScrollable)
+            {
+                if (currentIsScrollable)
+                {
+                    this.target.Scroll += this.OnScroll;
+                }
+                else
+                {
+                    this.target.Scroll -= this.OnScroll;
+                    this.scrollOffset = default;
+                }
+
+                this.IsScrollable = currentIsScrollable;
+            }
+
+            if (this.State.Style.Overflow != OverflowKind.None && this.contentDependent != (Dependency.Width | Dependency.Height))
+            {
+                if (this.ownStencilLayer == null)
+                {
+                    this.ownStencilLayer = new StencilLayer(this.Target);
+
+                    this.StencilLayer?.AppendChild(this.ownStencilLayer);
+                }
+            }
+            else if (this.ownStencilLayer != null)
+            {
+                this.ownStencilLayer.Detach();
+                this.ownStencilLayer.Dispose();
+
+                this.ownStencilLayer = null;
+            }
+
+            SetStencilLayer(this, this.ContentStencilLayer);
         }
 
         if (hidden)
