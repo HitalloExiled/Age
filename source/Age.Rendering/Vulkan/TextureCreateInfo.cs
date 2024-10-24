@@ -2,11 +2,11 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Rendering.Vulkan;
 
-public readonly struct TextureCreateInfo
+public struct TextureCreateInfo
 {
-    public required VkFormat    Format    { get; init; }
-    public required uint        Depth     { get; init; }
-    public required uint        Height    { get; init; }
-    public required VkImageType ImageType { get; init; }
-    public required uint        Width     { get; init; }
+    public required VkFormat    Format    { get; set; }
+    public required uint        Depth     { get; set; }
+    public required uint        Height    { get; set; }
+    public required VkImageType ImageType { get; set; }
+    public required uint        Width     { get; set; }
 }

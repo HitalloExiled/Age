@@ -1,5 +1,6 @@
-using System.Runtime.InteropServices;
 using Age.Core;
+using Age.Core.Extensions;
+using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -10,12 +11,35 @@ public class DescriptorPool : Disposable
 {
     private const ushort MAX_DESCRIPTORS_PER_POOL = 64;
 
-    private static readonly Dictionary<VkDescriptorType, List<DescriptorPool>> typeEntries = [];
+    private static readonly Dictionary<DescriptorPoolKey, List<DescriptorPool>> typeEntries = [];
 
-    public required VkDescriptorType DescriptorType { get; init; }
-    public required VkDescriptorPool Value          { get; init; }
+    public required DescriptorPoolKey Key   { get; init; }
+    public required VkDescriptorPool  Value { get; init; }
 
     public uint Usage { get; private set; }
+
+    private static List<VkDescriptorPoolSize> GetPoolSize(in DescriptorPoolKey key)
+    {
+        Span<VkDescriptorType> types =
+        [
+            VkDescriptorType.UniformBuffer,
+            VkDescriptorType.CombinedImageSampler,
+        ];
+
+        var poolSizes = new List<VkDescriptorPoolSize>();
+
+        for (var i = 0; i < types.Length; i++)
+        {
+            var count = key[types[i]];
+
+            if (count > 0)
+            {
+                poolSizes.Add(new() { Type = types[i], DescriptorCount = count * MAX_DESCRIPTORS_PER_POOL });
+            }
+        }
+
+        return poolSizes;
+    }
 
     private static void RemoveFromDescriptorPool(DescriptorPool descriptorPool)
     {
@@ -25,20 +49,20 @@ public class DescriptorPool : Disposable
         {
             descriptorPool.Value.Dispose();
 
-            var entries = typeEntries[descriptorPool.DescriptorType];
+            var entries = typeEntries[descriptorPool.Key];
 
             entries.Remove(descriptorPool);
 
             if (entries.Count == 0)
             {
-                typeEntries.Remove(descriptorPool.DescriptorType);
+                typeEntries.Remove(descriptorPool.Key);
             }
         }
     }
 
-    public unsafe static DescriptorPool CreateDescriptorPool(VkDevice device, VkDescriptorType descriptorType)
+    public unsafe static DescriptorPool CreateDescriptorPool(DescriptorPoolKey key)
     {
-        if (typeEntries.TryGetValue(descriptorType, out var entries))
+        if (typeEntries.TryGetValue(key, out var entries))
         {
             if (entries.FirstOrDefault(x => x.Usage < MAX_DESCRIPTORS_PER_POOL) is DescriptorPool descriptorPool)
             {
@@ -49,38 +73,28 @@ public class DescriptorPool : Disposable
         }
         else
         {
-            typeEntries[descriptorType] = entries = [];
+            typeEntries[key] = entries = [];
         }
 
-        var sizes = new List<VkDescriptorPoolSize>();
+        var poolSizes = GetPoolSize(key);
 
-        if (descriptorType.HasFlag(VkDescriptorType.UniformBuffer))
-        {
-            sizes.Add(new() { Type = VkDescriptorType.UniformBuffer, DescriptorCount = MAX_DESCRIPTORS_PER_POOL });
-        }
-
-        if (descriptorType.HasFlag(VkDescriptorType.CombinedImageSampler))
-        {
-            sizes.Add(new() { Type = VkDescriptorType.CombinedImageSampler, DescriptorCount = MAX_DESCRIPTORS_PER_POOL });
-        }
-
-        fixed (VkDescriptorPoolSize* pPoolSizes = CollectionsMarshal.AsSpan(sizes))
+        fixed (VkDescriptorPoolSize* pPoolSizes = poolSizes.AsSpan())
         {
             var descriptorPoolCreateInfo = new VkDescriptorPoolCreateInfo
             {
                 Flags         = VkDescriptorPoolCreateFlags.FreeDescriptorSet,
                 MaxSets       = MAX_DESCRIPTORS_PER_POOL,
-                PoolSizeCount = (uint)sizes.Count,
+                PoolSizeCount = (uint)poolSizes.Count,
                 PPoolSizes    = pPoolSizes,
             };
 
-            var descriptorPool = device.CreateDescriptorPool(descriptorPoolCreateInfo);
+            var descriptorPool = VulkanRenderer.Singleton.Context.Device.CreateDescriptorPool(descriptorPoolCreateInfo);
 
             var descriptorPoolValue = new DescriptorPool
             {
-                DescriptorType = descriptorType,
-                Value          = descriptorPool,
-                Usage          = 1,
+                Key   = key,
+                Value = descriptorPool,
+                Usage = 1,
             };
 
             entries.Add(descriptorPoolValue);
@@ -104,12 +118,20 @@ public class DescriptorPool : Disposable
         typeEntries.Clear();
     }
 
-    protected override void Disposed() =>
-        this.Value.Dispose();
-
-    public void FreeDescriptorSets(VkDescriptorSet[] descriptorSets)
+    protected override void Disposed(bool disposing)
     {
-        this.Value.FreeDescriptorSets(descriptorSets);
+        if (disposing)
+        {
+            this.Value.Dispose();
+        }
+    }
+
+    public void FreeDescriptorSets(Span<VkDescriptorSet> descriptorSets)
+    {
+        foreach (var descriptorSet in descriptorSets)
+        {
+            descriptorSet.Dispose();
+        }
 
         RemoveFromDescriptorPool(this);
     }

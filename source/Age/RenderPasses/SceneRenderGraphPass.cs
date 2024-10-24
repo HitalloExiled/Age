@@ -89,10 +89,10 @@ public partial class SceneRenderGraphPass : RenderGraphPass
             ],
         };
 
-        return this.Renderer.CreateRenderPass(createInfo);
+        return new(createInfo);
     }
 
-    private unsafe UboHandle UpdateUbo(Camera3D camera, Mesh mesh, in Matrix4x4<float> transform, in VkExtent2D viewport)
+    private unsafe BufferHandlePair UpdateUbo(Camera3D camera, Mesh mesh, in Matrix4x4<float> transform, in VkExtent2D viewport)
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
 
@@ -123,7 +123,7 @@ public partial class SceneRenderGraphPass : RenderGraphPass
         return cameraBuffer;
     }
 
-    private unsafe UniformSet GetUniformSet(Camera3D camera, UboHandle cameraBuffer, Material material)
+    private unsafe UniformSet GetUniformSet(Camera3D camera, BufferHandlePair cameraBuffer, Material material)
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
 
@@ -134,7 +134,6 @@ public partial class SceneRenderGraphPass : RenderGraphPass
             var combinedImageSampler = new CombinedImageSamplerUniform
             {
                 Binding     = 1,
-                Sampler     = material.Diffuse.Sampler,
                 Texture     = material.Diffuse,
                 ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
             };
@@ -145,24 +144,27 @@ public partial class SceneRenderGraphPass : RenderGraphPass
                 Buffer  = cameraBuffer.Buffer,
             };
 
-            frameResource.UniformSets[hashcode] = uniformSet = new UniformSet(material.Pipeline, [uniformBuffer, combinedImageSampler]);
+            frameResource.UniformSets[hashcode] = uniformSet = new UniformSet(material.Shader, [uniformBuffer, combinedImageSampler]);
         }
 
         return uniformSet;
     }
 
-    protected unsafe override void Disposed()
+    protected unsafe override void Disposed(bool disposing)
     {
-        this.renderPass.Dispose();
-
-        foreach (var resource in this.frameResources)
+        if (disposing)
         {
-            foreach (var ubo in resource.Ubo.Values)
-            {
-                this.Renderer.DeferredDispose(ubo.Buffer);
-            }
+            this.renderPass.Dispose();
 
-            this.Renderer.DeferredDispose(resource.UniformSets.Values);
+            foreach (var resource in this.frameResources)
+            {
+                foreach (var ubo in resource.Ubo.Values)
+                {
+                    this.Renderer.DeferredDispose(ubo.Buffer);
+                }
+
+                this.Renderer.DeferredDispose(resource.UniformSets.Values);
+            }
         }
     }
 
@@ -200,7 +202,7 @@ public partial class SceneRenderGraphPass : RenderGraphPass
                                 case MeshCommand meshCommand:
                                     var ubo = this.UpdateUbo(camera, meshCommand.Mesh, entry.Transform, renderTarget.Size.ToExtent2D());
 
-                                    commandBuffer.BindPipeline(meshCommand.Mesh.Material.Pipeline);
+                                    commandBuffer.BindShader(meshCommand.Mesh.Material.Shader);
                                     commandBuffer.BindUniformSet(this.GetUniformSet(camera, ubo, meshCommand.Mesh.Material));
                                     commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
                                     commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);

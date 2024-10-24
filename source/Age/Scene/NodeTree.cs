@@ -1,3 +1,4 @@
+using Age.Core;
 using Age.Elements;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
@@ -9,16 +10,17 @@ using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Scene;
 
-public sealed partial class NodeTree
+public sealed partial class NodeTree : Disposable
 {
     public event Action? Updated;
 
+    #region 8-bytes
     private readonly List<Command2DEntry> command2DEntriesCache = [];
     private readonly List<Command3DEntry> command3DEntriesCache = [];
     private readonly Stack<Node>          stack                 = [];
 
-    private ulong                      bufferVersion;
     private Buffer                     buffer = null!;
+    private ulong                      bufferVersion;
     private CanvasIndexRenderGraphPass canvasIndexRenderGraphPass = null!;
     private Element?                   lastFocusedElement;
     private Element?                   lastSelectedElement;
@@ -26,16 +28,20 @@ public sealed partial class NodeTree
     internal List<Node>    Nodes    { get; } = new(256);
     internal List<Scene3D> Scenes3D { get; } = [];
 
-    public bool   IsDirty { get; internal set; }
     public Root   Root    { get; } = new();
     public Window Window  { get; }
+    #endregion
+
+    #region 1-bytes
+    public bool IsDirty { get; internal set; }
+    #endregion
 
     public NodeTree(Window window)
     {
         this.Window = window;
         this.Root   = new() { Tree = this };
 
-        this.Window.Closed += this.Destroy;
+        this.Window.Closed += this.Dispose;
     }
 
     private void CallInitialize()
@@ -98,17 +104,6 @@ public sealed partial class NodeTree
         }
     }
 
-    private static MouseEvent CreateEventTarget(Element target, in Platforms.Display.MouseEvent mouseEvent) =>
-        new()
-        {
-            Target    = target,
-            Button    = mouseEvent.Button,
-            Delta     = mouseEvent.Delta,
-            KeyStates = mouseEvent.KeyStates,
-            X         = mouseEvent.X,
-            Y         = mouseEvent.Y,
-        };
-
     private IEnumerable<CommandEntry> EnumerateCommands()
     {
         this.stack.Push(this.Root);
@@ -136,7 +131,7 @@ public sealed partial class NodeTree
 
                 if (current is Node2D node2D)
                 {
-                    var transform = (Matrix3x2<float>)node2D.TransformCache;
+                    var transform = node2D.TransformCache;
 
                     foreach (var command in node2D.Commands)
                     {
@@ -230,19 +225,7 @@ public sealed partial class NodeTree
     {
         var element = this.GetElement(contextEvent.X, contextEvent.Y);
 
-        if (element != null)
-        {
-            var eventTarget = new ContextEvent
-            {
-                X       = contextEvent.X,
-                Y       = contextEvent.Y,
-                ScreenX = contextEvent.ScreenX,
-                ScreenY = contextEvent.ScreenY,
-                Target  = element
-            };
-
-            element.InvokeContext(eventTarget);
-        }
+        element?.InvokeContext(contextEvent);
     }
 
     private void OnMouseDown(in Platforms.Display.MouseEvent mouseEvent)
@@ -251,8 +234,6 @@ public sealed partial class NodeTree
 
         if (element != null)
         {
-            var eventTarget = CreateEventTarget(element, mouseEvent);
-
             if (mouseEvent.Button == mouseEvent.PrimaryButton)
             {
                 element.InvokeActivate();
@@ -260,16 +241,16 @@ public sealed partial class NodeTree
 
             if (element != this.lastFocusedElement)
             {
-                element.InvokeFocus(eventTarget);
+                element.InvokeFocus(mouseEvent);
 
-                this.lastFocusedElement?.InvokeBlur(CreateEventTarget(this.lastFocusedElement, mouseEvent));
+                this.lastFocusedElement?.InvokeBlur(mouseEvent);
             }
 
             this.lastFocusedElement = element;
         }
         else
         {
-            this.lastFocusedElement?.InvokeBlur(CreateEventTarget(this.lastFocusedElement, mouseEvent));
+            this.lastFocusedElement?.InvokeBlur(mouseEvent);
             this.lastFocusedElement = null;
         }
     }
@@ -278,7 +259,7 @@ public sealed partial class NodeTree
     {
         var element = this.GetElement(mouseEvent.X, mouseEvent.Y);
 
-        element?.InvokeDoubleClick(CreateEventTarget(element, mouseEvent));
+        element?.InvokeDoubleClick(mouseEvent);
     }
 
     private unsafe void OnMouseMove(in Platforms.Display.MouseEvent mouseEvent)
@@ -287,22 +268,20 @@ public sealed partial class NodeTree
 
         if (element != null)
         {
-            var eventTarget = CreateEventTarget(element, mouseEvent);
-
-            element.InvokeMouseMoved(eventTarget);
+            element.InvokeMouseMoved(mouseEvent);
 
             if (element != this.lastSelectedElement)
             {
-                element.InvokeMouseOver(eventTarget);
+                element.InvokeMouseOver(mouseEvent);
 
-                this.lastSelectedElement?.InvokeMouseOut(CreateEventTarget(this.lastSelectedElement, mouseEvent));
+                this.lastSelectedElement?.InvokeMouseOut(mouseEvent);
             }
 
             this.lastSelectedElement = element;
         }
         else
         {
-            this.lastSelectedElement?.InvokeMouseOut(CreateEventTarget(this.lastSelectedElement, mouseEvent));
+            this.lastSelectedElement?.InvokeMouseOut(mouseEvent);
             this.lastSelectedElement = null;
         }
     }
@@ -313,8 +292,6 @@ public sealed partial class NodeTree
 
         if (element != null)
         {
-            var eventTarget = CreateEventTarget(element, mouseEvent);
-
             if (mouseEvent.Button == mouseEvent.PrimaryButton)
             {
                 element.InvokeDeactivate();
@@ -322,7 +299,7 @@ public sealed partial class NodeTree
 
             if (element == this.lastFocusedElement)
             {
-                element.InvokeClick(eventTarget);
+                element.InvokeClick(mouseEvent);
             }
 
             this.lastFocusedElement = element;
@@ -382,19 +359,22 @@ public sealed partial class NodeTree
         this.command3DEntriesCache.Clear();
     }
 
-    public void Destroy()
+    protected override void Disposed(bool disposing)
     {
-        this.Window.Context     -= this.OnContext;
-        this.Window.DoubleClick -= this.OnDoubleClick;
-        this.Window.MouseDown   -= this.OnMouseDown;
-        this.Window.MouseMove   -= this.OnMouseMove;
-        this.Window.MouseUp     -= this.OnMouseUp;
+        if (disposing)
+        {
+            this.Window.Context     -= this.OnContext;
+            this.Window.DoubleClick -= this.OnDoubleClick;
+            this.Window.MouseDown   -= this.OnMouseDown;
+            this.Window.MouseMove   -= this.OnMouseMove;
+            this.Window.MouseUp     -= this.OnMouseUp;
 
-        this.Root.Destroy();
-        this.buffer.Dispose();
+            this.Root.Dispose();
+            this.buffer.Dispose();
+        }
     }
 
-    internal void Initialize()
+    public void Initialize()
     {
         this.canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasIndexRenderGraphPass>();
         this.canvasIndexRenderGraphPass.Recreated += this.UpdateBuffer;

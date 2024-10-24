@@ -15,12 +15,13 @@ public class Mesh : Node3D
     public Mesh(Span<Vertex> vertices, Span<uint> indices) =>
         this.SingleCommand = new MeshCommand
         {
+            Id           = this.GetHashCode(),
             VertexBuffer = VulkanRenderer.Singleton.CreateVertexBuffer(vertices),
             IndexBuffer  = VulkanRenderer.Singleton.CreateIndexBuffer(indices),
             Mesh         = this,
         };
 
-    protected override void Destroyed()
+    protected override void Disposed()
     {
         if (this.SingleCommand is MeshCommand command)
         {

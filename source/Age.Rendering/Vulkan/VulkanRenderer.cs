@@ -2,13 +2,8 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using Age.Core;
 using Age.Core.Extensions;
-using Age.Core.Interop;
 using Age.Numerics;
-using Age.Rendering.Interfaces;
 using Age.Rendering.Resources;
-using Age.Rendering.Shaders;
-using ThirdParty.SpirvCross;
-using ThirdParty.SpirvCross.Enums;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -17,9 +12,8 @@ using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Rendering.Vulkan;
 
-#pragma warning disable CA1822 // TODO Remove;
 
-public unsafe partial class VulkanRenderer : IDisposable
+public unsafe partial class VulkanRenderer : Disposable
 {
     public event Action? SwapchainRecreated;
     private const ushort MAX_DESCRIPTORS_PER_POOL        = 64;
@@ -29,22 +23,20 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public static VulkanRenderer Singleton => singleton ?? throw new NullReferenceException();
 
-    private readonly object padlock = new();
-
     private readonly Dictionary<VkCommandBuffer, CommandBuffer> commandBuffers = [];
-    private readonly VulkanContext                              context = new();
-    private readonly Queue<IDisposable>                         pendingDisposes = new();
+    private readonly List<PendingDisposable>                    pendingDisposes = [];
 
-    private ushort framesUntilPendingDispose;
-    private bool   disposed;
+    private bool disposingPendingResources;
 
-    public uint CurrentFrame => this.context.Frame.Index;
+    internal VulkanContext Context { get; } = new();
+
+    public uint CurrentFrame => this.Context.Frame.Index;
 
     public CommandBuffer CurrentCommandBuffer
     {
         get
         {
-            var vkCommandBuffer = this.context.Frame.CommandBuffer;
+            var vkCommandBuffer = this.Context.Frame.CommandBuffer;
 
             if (!this.commandBuffers.TryGetValue(vkCommandBuffer, out var commandBuffer))
             {
@@ -55,17 +47,18 @@ public unsafe partial class VulkanRenderer : IDisposable
         }
     }
 
-    public VkQueue GraphicsQueue => this.context.GraphicsQueue;
+    public VkQueue GraphicsQueue => this.Context.GraphicsQueue;
 
-    public VkFormat           DepthBufferFormat   { get; private set; }
+    public VkFormat           DepthBufferFormat    { get; private set; }
+    public VkFormat           StencilBufferFormat  { get; private set; }
     public VkSampleCountFlags MaxUsableSampleCount { get; private set; }
 
     public VulkanRenderer()
     {
         singleton = this;
 
-        this.context.SwapchainRecreated += () => this.SwapchainRecreated?.Invoke();
-        this.context.DeviceInitialized  += this.OnContextDeviceInitialized;
+        this.Context.SwapchainRecreated += () => this.SwapchainRecreated?.Invoke();
+        this.Context.DeviceInitialized  += this.OnContextDeviceInitialized;
     }
 
     private unsafe static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
@@ -103,273 +96,48 @@ public unsafe partial class VulkanRenderer : IDisposable
         }
     }
 
-    private VkImageView CreateImageView(Image image, VkImageAspectFlags aspect)
-    {
-        var imageViewCreateInfo = new VkImageViewCreateInfo
-        {
-            Format           = image.Format,
-            Image            = image.Value.Handle,
-            SubresourceRange = new()
-            {
-                AspectMask = aspect,
-                LayerCount = 1,
-                LevelCount = 1,
-            },
-            ViewType = VkImageViewType.N2D,
-        };
-
-        var imageView = this.context.Device.CreateImageView(imageViewCreateInfo);
-
-        return imageView;
-    }
-
-    private VkShaderModule CreateShaderModule(byte[] buffer)
-    {
-        fixed (byte* pCode = buffer)
-        {
-            var createInfo = new VkShaderModuleCreateInfo
-            {
-                CodeSize = (uint)buffer.Length,
-                PCode    = (uint*)pCode,
-            };
-
-            return this.context.Device.CreateShaderModule(createInfo);
-        }
-    }
-
-    private void CreatePipeline<TShader, TVertexInput, TPushConstant>(
-        TShader                   shaderResources,
-        RenderPass                renderPass,
-        out VkPipeline            pipeline,
-        out VkPipelineLayout      pipelineLayout,
-        out VkDescriptorSetLayout descriptorSetLayout,
-        out VkDescriptorType[]    uniformBindings
-    )
-    where TShader : Shader<TVertexInput, TPushConstant>
-    where TVertexInput     : IVertexInput
-    where TPushConstant    : IPushConstant
-    {
-        fixed (byte* pName = "main"u8)
-        {
-            var bindings                       = new List<VkDescriptorSetLayoutBinding>();
-            var pipelineShaderStageCreateInfos = new List<VkPipelineShaderStageCreateInfo>();
-            var pushConstantRanges             = new List<VkPushConstantRange>();
-
-            if (TPushConstant.Size > 0)
-            {
-                var pushConstantRange = new VkPushConstantRange
-                {
-                    Size       = TPushConstant.Size,
-                    Offset     = TPushConstant.Offset,
-                    StageFlags = TPushConstant.Stages,
-                };
-
-                pushConstantRanges.Add(pushConstantRange);
-            }
-
-            using var disposables = new Disposables();
-            using var context     = new Context();
-
-            foreach (var stage in shaderResources.Stages)
-            {
-                var spirv     = context.ParseSpirv(stage.Value);
-                var compiler  = context.CreateCompiler(Backend.Glsl, spirv, CaptureMode.TakeOwnership);
-                var resources = compiler.CreateShaderResources();
-
-                foreach (var resource in resources.GetResourceListForType(ResorceType.SampledImage))
-                {
-                    var binding = compiler.GetDecoration(resource.Id, Decoration.Binding);
-
-                    var layout = new VkDescriptorSetLayoutBinding()
-                    {
-                        Binding         = binding,
-                        DescriptorCount = 1,
-                        DescriptorType  = VkDescriptorType.CombinedImageSampler,
-                        StageFlags      = stage.Key,
-                    };
-
-                    bindings.Add(layout);
-                }
-
-                foreach (var resource in resources.GetResourceListForType(ResorceType.UniformBuffer))
-                {
-                    var binding = compiler.GetDecoration(resource.Id, Decoration.Binding);
-
-                    var layout = new VkDescriptorSetLayoutBinding()
-                    {
-                        Binding         = binding,
-                        DescriptorCount = 1,
-                        DescriptorType  = VkDescriptorType.UniformBuffer,
-                        StageFlags      = stage.Key,
-                    };
-
-                    bindings.Add(layout);
-                }
-
-                var shaderModule = this.CreateShaderModule(stage.Value);
-
-                disposables.Add(shaderModule);
-
-                var createInfo = new VkPipelineShaderStageCreateInfo()
-                {
-                    Module = shaderModule.Handle,
-                    PName  = pName,
-                    Stage  = stage.Key,
-                };
-
-                pipelineShaderStageCreateInfos.Add(createInfo);
-            }
-
-            uniformBindings = bindings.OrderBy(x => x.Binding).Select(x => x.DescriptorType).ToArray();
-
-            var vertexInputAttributeDescription = TVertexInput.GetAttributes();
-            var vertexInputBindingDescription   = TVertexInput.GetBindings();
-
-            var dynamicStates = new VkDynamicState[]
-            {
-                VkDynamicState.Viewport,
-                VkDynamicState.Scissor,
-            };
-
-            fixed (VkDescriptorSetLayoutBinding*      pBindings                       = CollectionsMarshal.AsSpan(bindings))
-            fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription)
-            fixed (VkDynamicState*                    pDynamicStates                  = dynamicStates)
-            fixed (VkPipelineShaderStageCreateInfo*   pPipelineShaderStageCreateInfos = CollectionsMarshal.AsSpan(pipelineShaderStageCreateInfos))
-            fixed (VkPushConstantRange*               pPushConstantRanges             = CollectionsMarshal.AsSpan(pushConstantRanges))
-            {
-                var descriptorSetLayoutCreateInfo = new VkDescriptorSetLayoutCreateInfo
-                {
-                    PBindings    = pBindings,
-                    BindingCount = (uint)bindings.Count,
-                };
-
-                descriptorSetLayout = this.context.Device.CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
-
-                var descriptorSetLayoutHandle = descriptorSetLayout.Handle;
-
-                var pipelineLayoutCreateInfo = new VkPipelineLayoutCreateInfo
-                {
-                    PSetLayouts            = &descriptorSetLayoutHandle,
-                    SetLayoutCount         = 1,
-                    PPushConstantRanges    = pPushConstantRanges,
-                    PushConstantRangeCount = (uint)pushConstantRanges.Count,
-                };
-
-                pipelineLayout = this.context.Device.CreatePipelineLayout(pipelineLayoutCreateInfo);
-
-                var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
-                {
-                    Topology = shaderResources.PrimitiveTopology,
-                };
-
-                var pipelineVertexInputStateCreateInfo = new VkPipelineVertexInputStateCreateInfo
-                {
-                    PVertexAttributeDescriptions    = pVertexAttributeDescriptions,
-                    PVertexBindingDescriptions      = &vertexInputBindingDescription,
-                    VertexAttributeDescriptionCount = (uint)vertexInputAttributeDescription.Length,
-                    VertexBindingDescriptionCount   = 1,
-                };
-
-                var pipelineDynamicStateCreateInfo = new VkPipelineDynamicStateCreateInfo
-                {
-                    DynamicStateCount = (uint)dynamicStates.Length,
-                    PDynamicStates    = pDynamicStates,
-                };
-
-                var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
-                {
-                    AlphaBlendOp   = VkBlendOp.Add,
-                    BlendEnable    = true,
-                    ColorWriteMask = VkColorComponentFlags.R
-                        | VkColorComponentFlags.G
-                        | VkColorComponentFlags.B
-                        | VkColorComponentFlags.A,
-                    DstColorBlendFactor = VkBlendFactor.OneMinusSrcAlpha,
-                    SrcAlphaBlendFactor = VkBlendFactor.One,
-                    SrcColorBlendFactor = VkBlendFactor.SrcAlpha,
-                };
-
-                var pipelineColorBlendStateCreateInfo = new VkPipelineColorBlendStateCreateInfo
-                {
-                    AttachmentCount = 1,
-                    LogicOp         = VkLogicOp.Copy,
-                    PAttachments    = &pipelineColorBlendAttachmentState,
-                };
-
-                var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
-                {
-                    SampleShadingEnable  = true,
-                    RasterizationSamples = shaderResources.RasterizationSamples,
-                    MinSampleShading     = 1,
-                };
-
-                var pipelineRasterizationStateCreateInfo = new VkPipelineRasterizationStateCreateInfo
-                {
-                    CullMode    = VkCullModeFlags.Back,
-                    FrontFace   = shaderResources.FrontFace,
-                    LineWidth   = 1,
-                    PolygonMode = VkPolygonMode.Fill,
-                };
-
-                var pipelineViewportStateCreateInfo = new VkPipelineViewportStateCreateInfo
-                {
-                    ViewportCount = 1,
-                    ScissorCount  = 1,
-                };
-
-                var depthStencilState = new VkPipelineDepthStencilStateCreateInfo
-                {
-                    DepthTestEnable       = true,
-                    DepthWriteEnable      = true,
-                    DepthCompareOp        = VkCompareOp.Less,
-                    DepthBoundsTestEnable = false,
-                    StencilTestEnable     = false
-                };
-
-                var graphicsPipelineCreateInfo = new VkGraphicsPipelineCreateInfo
-                {
-                    Layout              = pipelineLayout.Handle,
-                    PColorBlendState    = &pipelineColorBlendStateCreateInfo,
-                    PDynamicState       = &pipelineDynamicStateCreateInfo,
-                    PInputAssemblyState = &inputAssembly,
-                    PMultisampleState   = &pipelineMultisampleStateCreateInfo,
-                    PRasterizationState = &pipelineRasterizationStateCreateInfo,
-                    PStages             = pPipelineShaderStageCreateInfos,
-                    PVertexInputState   = &pipelineVertexInputStateCreateInfo,
-                    PViewportState      = &pipelineViewportStateCreateInfo,
-                    StageCount          = (uint)pipelineShaderStageCreateInfos.Count,
-                    RenderPass          = renderPass.Value.Handle,
-                    PDepthStencilState  = &depthStencilState,
-                };
-
-                pipeline = this.context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);
-            }
-        }
-    }
-
     private void DisposePendingResources(bool immediate = false)
     {
-        if (this.pendingDisposes.Count > 0)
+        this.disposingPendingResources = true;
+
+        if (immediate)
         {
-            if (immediate || this.framesUntilPendingDispose == 0)
+            foreach (var item in this.pendingDisposes)
             {
-                while (this.pendingDisposes.Count > 0)
+                item.Disposable.Dispose();
+            }
+
+            this.pendingDisposes.Clear();
+        }
+        else
+        {
+            var span = this.pendingDisposes.AsSpan();
+
+            for (var i = 0; i < this.pendingDisposes.Count; i++)
+            {
+                if (span[i].FramesRemaining == 0)
                 {
-                    this.pendingDisposes.Dequeue().Dispose();
+                    span[i].Disposable.Dispose();
+                    this.pendingDisposes.RemoveAt(i);
+
+                    i--;
+                }
+                else
+                {
+                    span[i].FramesRemaining--;
                 }
             }
-            else
-            {
-                this.framesUntilPendingDispose--;
-            }
         }
+
+        this.disposingPendingResources = false;
     }
 
     private void OnContextDeviceInitialized()
     {
-        this.DepthBufferFormat = this.FindSupportedFormat([VkFormat.D32Sfloat, VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint], VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
+        this.DepthBufferFormat   = this.FindSupportedFormat([VkFormat.D32Sfloat, VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint],      VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
+        this.StencilBufferFormat = this.FindSupportedFormat([VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint, VkFormat.D16UnormS8Uint], VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
 
-        this.context.Device.PhysicalDevice.GetProperties(out var physicalDeviceProperties);
+        this.Context.Device.PhysicalDevice.GetProperties(out var physicalDeviceProperties);
 
         var counts = physicalDeviceProperties.Limits.FramebufferColorSampleCounts & physicalDeviceProperties.Limits.FramebufferDepthSampleCounts;
 
@@ -388,40 +156,38 @@ public unsafe partial class VulkanRenderer : IDisposable
                                 : VkSampleCountFlags.N1;
     }
 
-    protected virtual void Dispose(bool disposing)
+    protected override void Disposed(bool disposing)
     {
-        if (!this.disposed)
+        if (disposing)
         {
-            this.context.Device.WaitIdle();
+            this.Context.Device.WaitIdle();
 
             this.DisposePendingResources(true);
 
             DescriptorPool.Clear();
 
-            this.context.Dispose();
-
-            this.disposed = true;
+            this.Context.Dispose();
         }
     }
 
     public CommandBuffer AllocateCommand(VkCommandBufferLevel commandBufferLevel) =>
-        new(this.context.AllocateCommand(commandBufferLevel), true);
+        new(this.Context.AllocateCommand(commandBufferLevel), true);
 
     public void BeginFrame()
     {
         this.DisposePendingResources();
 
-        this.context.PrepareBuffers();
+        this.Context.PrepareBuffers();
 
-        if (this.context.Frame.BufferPrepared)
+        if (this.Context.Frame.BufferPrepared)
         {
-            this.context.Frame.CommandBuffer.Begin();
+            this.Context.Frame.CommandBuffer.Begin();
         }
     }
 
     public CommandBuffer BeginSingleTimeCommands()
     {
-        var commandBuffer = this.context.Frame.CommandPool.AllocateCommand(VkCommandBufferLevel.Primary);
+        var commandBuffer = this.Context.Frame.CommandPool.AllocateCommand(VkCommandBufferLevel.Primary);
 
         commandBuffer.Begin(VkCommandBufferUsageFlags.OneTimeSubmit);
 
@@ -436,13 +202,13 @@ public unsafe partial class VulkanRenderer : IDisposable
             Usage = usage,
         };
 
-        var device = this.context.Device;
+        var device = this.Context.Device;
 
         var buffer = device.CreateBuffer(bufferCreateInfo);
 
         buffer.GetMemoryRequirements(out var memRequirements);
 
-        var memoryType = this.context.FindMemoryType(memRequirements.MemoryTypeBits, properties);
+        var memoryType = this.Context.FindMemoryType(memRequirements.MemoryTypeBits, properties);
 
         var memoryAllocateInfo = new VkMemoryAllocateInfo
         {
@@ -466,62 +232,6 @@ public unsafe partial class VulkanRenderer : IDisposable
             },
             Usage = usage,
         };
-    }
-
-    public DescriptorPool CreateDescriptorPool(VkDescriptorType descriptorType) =>
-        DescriptorPool.CreateDescriptorPool(this.context.Device, descriptorType);
-
-    public Image CreateImage(in VkImageCreateInfo createInfo, VkImageLayout finalLayout) =>
-        this.CreateImage(createInfo, null, finalLayout);
-
-    public Image CreateImage(in VkImageCreateInfo createInfo, in Color? clearColor = null, VkImageLayout? finalLayout = null)
-    {
-        var image = this.context.Device.CreateImage(createInfo);
-
-        image.GetMemoryRequirements(out var memRequirements);
-
-        var memoryType = this.context.FindMemoryType(memRequirements.MemoryTypeBits, VkMemoryPropertyFlags.DeviceLocal);
-
-        var memoryAllocateInfo = new VkMemoryAllocateInfo
-        {
-            AllocationSize  = memRequirements.Size,
-            MemoryTypeIndex = memoryType,
-        };
-
-        var deviceMemory = this.context.Device.AllocateMemory(memoryAllocateInfo);
-
-        image.BindMemory(deviceMemory, 0);
-
-        return new(
-            image,
-            createInfo.Extent,
-            createInfo.Format,
-            createInfo.ImageType,
-            createInfo.Usage,
-            createInfo.InitialLayout,
-            finalLayout ?? createInfo.InitialLayout,
-            new()
-            {
-                Alignment  = memRequirements.Alignment,
-                Memory     = deviceMemory,
-                Memorytype = memoryType,
-                Offset     = 0,
-                Size       = memRequirements.Size,
-            },
-            clearColor
-        );
-    }
-
-    public Image[] CreateImage(in VkImageCreateInfo createInfo, int count)
-    {
-        var images = new Image[count];
-
-        for (var i = 0; i < count; i++)
-        {
-            images[i] = this.CreateImage(createInfo);
-        }
-
-        return images;
     }
 
     public IndexBuffer CreateIndexBuffer(Span<ushort> indices) =>
@@ -550,342 +260,74 @@ public unsafe partial class VulkanRenderer : IDisposable
         };
     }
 
-    public Framebuffer CreateFramebuffer(in FramebufferCreateInfo createInfo)
-    {
-        var imageViews = new VkImageView[createInfo.Attachments.Length];
+    // public RenderPipeline CreateRenderPipeline(in RenderPipelineCreateInfo createInfo)
+    // {
+    //     var subPasses   = new RenderPassCreateInfo.SubPass[createInfo.SubPasses.Length];
+    //     var attachments = new List<FramebufferCreateInfo.Attachment>();
 
-        for (var i = 0; i < createInfo.Attachments.Length; i++)
-        {
-            imageViews[i] = this.CreateImageView(createInfo.Attachments[i].Image, createInfo.Attachments[i].ImageAspect);
-        }
+    //     for (var subPassIndex = 0; subPassIndex < createInfo.SubPasses.Length; subPassIndex++)
+    //     {
+    //         ref var subPass      = ref createInfo.SubPasses[subPassIndex];
+    //         var colorAttachments = new RenderPassCreateInfo.ColorAttachment[subPass.ColorAttachments.Length];
 
-        var extent = new VkExtent2D
-        {
-            Width  = createInfo.Attachments[0].Image.Extent.Width,
-            Height = createInfo.Attachments[0].Image.Extent.Height,
-        };
+    //         ref var renderPassSubPass = ref subPasses[subPassIndex];
 
-        var framebuffer = this.context.CreateFrameBuffer(createInfo.RenderPass.Value, imageViews.AsSpan(), extent);
+    //         for (var i = 0; i < subPass.ColorAttachments.Length; i++)
+    //         {
+    //             ref var colorAttachment = ref subPass.ColorAttachments[i];
 
-        return new(framebuffer)
-        {
-            ImageViews = imageViews,
-            Extent     = extent,
-        };
-    }
+    //             attachments.Add(new(this.CreateImage(colorAttachment.Color.Image), VkImageAspectFlags.Color));
 
-    public RenderPass CreateRenderPass(in RenderPassCreateInfo createInfo)
-    {
-        using var disposables = new Disposables();
+    //             if (colorAttachment.Resolve.HasValue)
+    //             {
+    //                 attachments.Add(new(this.CreateImage(colorAttachment.Resolve.Value.Image), VkImageAspectFlags.Color));
+    //             }
 
-        using var subpassDescriptions     = new NativeList<VkSubpassDescription>();
-        using var attachmentDescriptions  = new NativeList<VkAttachmentDescription>();
-        using var depthStencilAttachments = new NativeList<VkAttachmentDescription>();
+    //             colorAttachments[i] = new()
+    //             {
+    //                 Color   = colorAttachment.Color.Description,
+    //                 Resolve = colorAttachment.Resolve?.Description,
+    //             };
+    //         }
 
-        var renderPassSubPasses = new List<RenderPass.SubPass>(createInfo.SubPasses.Length);
+    //         if (subPass.DepthStencilAttachment.HasValue)
+    //         {
+    //             attachments.Add(new(this.CreateImage(subPass.DepthStencilAttachment.Value.Image), VkImageAspectFlags.Depth));
+    //         }
 
-        foreach (var subpass in createInfo.SubPasses)
-        {
-            var colorAttachmentReferences        = new NativeList<VkAttachmentReference>(subpass.ColorAttachments.Length);
-            var resolveAttachmentReferences      = new NativeList<VkAttachmentReference>();
-            var depthStencilAttachmentReferences = new NativeList<VkAttachmentReference>();
+    //         subPasses[subPassIndex] = new()
+    //         {
+    //             PipelineBindPoint      = subPass.PipelineBindPoint,
+    //             ColorAttachments       = colorAttachments,
+    //             DepthStencilAttachment = subPass.DepthStencilAttachment?.Description,
+    //         };
+    //     }
 
-            var subPassColorAttachments = new NativeList<RenderPass.SubPass.ColorAttachment>(subpass.ColorAttachments.Length);
+    //     var renderPassCreateInfo = new RenderPassCreateInfo
+    //     {
+    //         SubpassDependencies = createInfo.SubpassDependencies,
+    //         SubPasses           = subPasses,
+    //     };
 
-            disposables.Add(colorAttachmentReferences);
-            disposables.Add(resolveAttachmentReferences);
-            disposables.Add(depthStencilAttachmentReferences);
+    //     var renderPass = this.CreateRenderPass(renderPassCreateInfo);
 
-            foreach (var attachment in subpass.ColorAttachments)
-            {
-                colorAttachmentReferences.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = VkImageLayout.ColorAttachmentOptimal });
-                attachmentDescriptions.Add(attachment.Color);
+    //     var framebufferCreateInfo = new FramebufferCreateInfo
+    //     {
+    //         RenderPass  = renderPass,
+    //         Attachments = [..attachments],
+    //     };
 
-                if (attachment.Resolve.HasValue)
-                {
-                    resolveAttachmentReferences.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = VkImageLayout.ColorAttachmentOptimal });
-                    attachmentDescriptions.Add(attachment.Resolve.Value);
-                }
+    //     var framebuffer = this.CreateFramebuffer(framebufferCreateInfo);
 
-                var subPassColorAttachment = new RenderPass.SubPass.ColorAttachment
-                {
-                    Color = new()
-                    {
-                        Format  = attachment.Color.Format,
-                        Samples = attachment.Color.Samples,
-                    },
-                    Resolve = attachment.Resolve.HasValue
-                        ? new()
-                        {
-                            Format  = attachment.Resolve.Value.Format,
-                            Samples = attachment.Resolve.Value.Samples,
-                        } : default,
-                };
-
-                subPassColorAttachments.Add(subPassColorAttachment);
-            }
-
-            if (subpass.DepthStencilAttachment.HasValue)
-            {
-                depthStencilAttachmentReferences.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = VkImageLayout.DepthStencilAttachmentOptimal });
-                attachmentDescriptions.Add(subpass.DepthStencilAttachment.Value);
-            }
-
-            var subpassDescription = new VkSubpassDescription
-            {
-                PipelineBindPoint       = subpass.PipelineBindPoint,
-                PColorAttachments       = colorAttachmentReferences.AsPointer(),
-                PResolveAttachments     = resolveAttachmentReferences.AsPointer(),
-                ColorAttachmentCount    = (uint)colorAttachmentReferences.Count,
-                PDepthStencilAttachment = depthStencilAttachmentReferences.AsPointer(),
-            };
-
-            subpassDescriptions.Add(subpassDescription);
-
-            var renderPassSubPass = new RenderPass.SubPass
-            {
-                PipelineBindPoint = subpass.PipelineBindPoint,
-                ColorAttachments  = [..subPassColorAttachments],
-                DepthStencilAttachment = subpass.DepthStencilAttachment.HasValue
-                    ? new()
-                    {
-                        Format  = subpass.DepthStencilAttachment.Value.Format,
-                        Samples = subpass.DepthStencilAttachment.Value.Samples,
-                    } : default,
-            };
-
-            renderPassSubPasses.Add(renderPassSubPass);
-        }
-
-        fixed (VkSubpassDependency* pDependencies = createInfo.SubpassDependencies)
-        {
-            var renderPassCreateInfo = new VkRenderPassCreateInfo
-            {
-                AttachmentCount = (uint)attachmentDescriptions.Count,
-                PAttachments    = attachmentDescriptions.AsPointer(),
-                DependencyCount = (uint)createInfo.SubpassDependencies.Length,
-                PDependencies   = pDependencies,
-                SubpassCount    = (uint)subpassDescriptions.Count,
-                PSubpasses      = subpassDescriptions.AsPointer(),
-            };
-
-            var renderPass = this.context.Device.CreateRenderPass(renderPassCreateInfo);
-
-            return new()
-            {
-                Value     = renderPass,
-                SubPasses = [..renderPassSubPasses],
-            };
-        }
-    }
-
-    public RenderPipeline CreateRenderPipeline(in RenderPipelineCreateInfo createInfo)
-    {
-        var subPasses   = new RenderPassCreateInfo.SubPass[createInfo.SubPasses.Length];
-        var attachments = new List<FramebufferCreateInfo.Attachment>();
-
-        for (var subPassIndex = 0; subPassIndex < createInfo.SubPasses.Length; subPassIndex++)
-        {
-            ref var subPass      = ref createInfo.SubPasses[subPassIndex];
-            var colorAttachments = new RenderPassCreateInfo.ColorAttachment[subPass.ColorAttachments.Length];
-
-            ref var renderPassSubPass = ref subPasses[subPassIndex];
-
-            for (var i = 0; i < subPass.ColorAttachments.Length; i++)
-            {
-                ref var colorAttachment = ref subPass.ColorAttachments[i];
-
-                attachments.Add(new(this.CreateImage(colorAttachment.Color.Image), VkImageAspectFlags.Color));
-
-                if (colorAttachment.Resolve.HasValue)
-                {
-                    attachments.Add(new(this.CreateImage(colorAttachment.Resolve.Value.Image), VkImageAspectFlags.Color));
-                }
-
-                colorAttachments[i] = new()
-                {
-                    Color   = colorAttachment.Color.Description,
-                    Resolve = colorAttachment.Resolve?.Description,
-                };
-            }
-
-            if (subPass.DepthStencilAttachment.HasValue)
-            {
-                attachments.Add(new(this.CreateImage(subPass.DepthStencilAttachment.Value.Image), VkImageAspectFlags.Depth));
-            }
-
-            subPasses[subPassIndex] = new()
-            {
-                PipelineBindPoint      = subPass.PipelineBindPoint,
-                ColorAttachments       = colorAttachments,
-                DepthStencilAttachment = subPass.DepthStencilAttachment?.Description,
-            };
-        }
-
-        var renderPassCreateInfo = new RenderPassCreateInfo
-        {
-            SubpassDependencies = createInfo.SubpassDependencies,
-            SubPasses           = subPasses,
-        };
-
-        var renderPass = this.CreateRenderPass(renderPassCreateInfo);
-
-        var framebufferCreateInfo = new FramebufferCreateInfo
-        {
-            RenderPass  = renderPass,
-            Attachments = [..attachments],
-        };
-
-        var framebuffer = this.CreateFramebuffer(framebufferCreateInfo);
-
-        return new()
-        {
-            RenderPass  = renderPass,
-            Framebuffer = framebuffer,
-        };
-    }
-
-    public Pipeline CreatePipeline<TShader, TVertexInput, TPushConstant>(TShader shader, RenderPass renderPass)
-    where TShader       : Shader<TVertexInput, TPushConstant>
-    where TVertexInput  : IVertexInput
-    where TPushConstant : IPushConstant
-    {
-        this.CreatePipeline<TShader, TVertexInput, TPushConstant>(
-            shader,
-            renderPass,
-            out var pipeline,
-            out var pipelineLayout,
-            out var descriptorSetLayout,
-            out var uniformBindings
-        );
-
-        return new(pipeline, VkPipelineBindPoint.Graphics, shader, renderPass)
-        {
-            DescriptorSetLayout = descriptorSetLayout,
-            Layout              = pipelineLayout,
-            UniformBindings     = uniformBindings,
-        };
-    }
-
-    public Pipeline CreatePipelineAndWatch<TShader, TVertexInput, TPushConstant>(TShader shader, RenderPass renderPass)
-    where TShader       : Shader<TVertexInput, TPushConstant>
-    where TVertexInput  : IVertexInput
-    where TPushConstant : IPushConstant
-    {
-        var pipeline = this.CreatePipeline<TShader, TVertexInput, TPushConstant>(shader, renderPass);
-
-        void action()
-        {
-            this.CreatePipeline<TShader, TVertexInput, TPushConstant>(
-                shader,
-                renderPass,
-                out var vkPipeline,
-                out var vkPipelineLayout,
-                out var vkDescriptorSetLayout,
-                out var uniformBindings
-            );
-
-            lock (this.padlock)
-            {
-                IDisposable disposables = new Disposables(pipeline.Value, pipeline.Layout, pipeline.DescriptorSetLayout);
-
-                pipeline.Value               = vkPipeline;
-                pipeline.Layout              = vkPipelineLayout;
-                pipeline.DescriptorSetLayout = vkDescriptorSetLayout;
-                pipeline.UniformBindings     = uniformBindings;
-
-                this.DeferredDispose(disposables);
-            }
-        }
-
-        pipeline.Changed += action;
-
-        return pipeline;
-    }
-
-    public Sampler CreateSampler()
-    {
-        this.context.Device.PhysicalDevice.GetProperties(out var properties);
-
-        var createInfo = new VkSamplerCreateInfo
-        {
-            AddressModeU  = VkSamplerAddressMode.Repeat,
-            AddressModeV  = VkSamplerAddressMode.Repeat,
-            AddressModeW  = VkSamplerAddressMode.Repeat,
-            BorderColor   = VkBorderColor.IntOpaqueBlack,
-            CompareOp     = VkCompareOp.Always,
-            MagFilter     = VkFilter.Linear,
-            MaxAnisotropy = properties.Limits.MaxSamplerAnisotropy,
-            MaxLod        = 1,
-            MinFilter     = VkFilter.Linear,
-            MipmapMode    = VkSamplerMipmapMode.Linear,
-        };
-
-        return new(this.context.Device.CreateSampler(createInfo));
-    }
+    //     return new()
+    //     {
+    //         RenderPass  = renderPass,
+    //         Framebuffer = framebuffer,
+    //     };
+    // }
 
     public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
-        this.context.CreateSurface(handle, clientSize);
-
-    public Texture CreateTexture(in TextureCreateInfo textureCreateInfo)
-    {
-        var samples = VkSampleCountFlags.N1;
-        var tiling  = VkImageTiling.Optimal;
-        var usage   = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
-
-        var imageCreateInfo = new VkImageCreateInfo
-        {
-            ArrayLayers   = 1,
-            Extent        = new()
-            {
-                Width  = textureCreateInfo.Width,
-                Height = textureCreateInfo.Height,
-                Depth  = textureCreateInfo.Depth
-            },
-            Format        = textureCreateInfo.Format,
-            ImageType     = textureCreateInfo.ImageType,
-            InitialLayout = VkImageLayout.Undefined,
-            MipLevels     = 1,
-            Samples       = samples,
-            Tiling        = tiling,
-            Usage         = usage,
-        };
-
-        var image = this.CreateImage(imageCreateInfo, VkImageLayout.TransferDstOptimal);
-
-        var imageView = this.CreateImageView(image, VkImageAspectFlags.Color);
-
-        var texture = new Texture(true)
-        {
-            Image     = image,
-            ImageView = imageView,
-        };
-
-        return texture;
-    }
-
-    public Texture CreateTexture(Image image, bool owner)
-    {
-        var imageView = this.CreateImageView(image, VkImageAspectFlags.Color);
-
-        var texture = new Texture(owner)
-        {
-            Image     = image,
-            ImageView = imageView,
-        };
-
-        return texture;
-    }
-
-    public Texture CreateTexture(in TextureCreateInfo textureCreate, Span<byte> data)
-    {
-        var texture = this.CreateTexture(textureCreate);
-
-        texture.Update(data);
-
-        return texture;
-    }
-
+        this.Context.CreateSurface(handle, clientSize);
     public VertexBuffer CreateVertexBuffer<T>(Span<T> data) where T : unmanaged
     {
         var size = (ulong)(data.Length * sizeof(T));
@@ -906,42 +348,47 @@ public unsafe partial class VulkanRenderer : IDisposable
 
     public void DeferredDispose(IDisposable disposable)
     {
-        this.framesUntilPendingDispose = FRAMES_BETWEEN_PENDING_DISPOSES;
+        if (this.disposingPendingResources)
+        {
+            disposable.Dispose();
+        }
+        else
+        {
+            this.pendingDisposes.Add(new(disposable, FRAMES_BETWEEN_PENDING_DISPOSES));
+        }
+    }
 
-        this.pendingDisposes.Enqueue(disposable);
+    public void DeferredDispose(Span<IDisposable> disposables)
+    {
+        foreach (var disposable in disposables)
+        {
+            this.DeferredDispose(disposable);
+        }
     }
 
     public void DeferredDispose(IEnumerable<IDisposable> disposables)
     {
-        this.framesUntilPendingDispose = FRAMES_BETWEEN_PENDING_DISPOSES;
-
         foreach (var disposable in disposables)
         {
-            this.pendingDisposes.Enqueue(disposable);
+            this.DeferredDispose(disposable);
         }
-    }
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     public void EndFrame()
     {
-        if (this.context.Frame.BufferPrepared)
+        if (this.Context.Frame.BufferPrepared)
         {
-            this.context.Frame.CommandBuffer.End();
+            this.Context.Frame.CommandBuffer.End();
         }
 
-        this.context.SwapBuffers();
+        this.Context.SwapBuffers();
     }
 
     public void EndSingleTimeCommands(CommandBuffer commandBuffer)
     {
         commandBuffer.End();
 
-        var commandBufferHandle = commandBuffer.Value.Handle;
+        var commandBufferHandle = commandBuffer.Instance.Handle;
 
         var submitInfo = new VkSubmitInfo
         {
@@ -949,18 +396,18 @@ public unsafe partial class VulkanRenderer : IDisposable
             PCommandBuffers    = &commandBufferHandle
         };
 
-        this.context.GraphicsQueue.Submit(submitInfo);
-        this.context.GraphicsQueue.WaitIdle();
+        this.Context.GraphicsQueue.Submit(submitInfo);
+        this.Context.GraphicsQueue.WaitIdle();
 
         commandBuffer.Dispose();
     }
 
     public VkFormat FindSupportedFormat(Span<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features) =>
-        this.context.FindSupportedFormat(candidates, tiling, features);
+        this.Context.FindSupportedFormat(candidates, tiling, features);
 
     public void UpdateDescriptorSets(Span<VkWriteDescriptorSet> descriptorWrites, Span<VkCopyDescriptorSet> descriptorCopies) =>
-        this.context.Device.UpdateDescriptorSets(descriptorWrites, descriptorCopies);
+        this.Context.Device.UpdateDescriptorSets(descriptorWrites, descriptorCopies);
 
     public void WaitIdle() =>
-        this.context.Device.WaitIdle();
+        this.Context.Device.WaitIdle();
 }

@@ -44,21 +44,23 @@ public class RenderTarget : Resource
             Usage         = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled,
         };
 
-        var colorImage = VulkanRenderer.Singleton.CreateImage(colorImageCreateInfo, Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
+        var colorImage = new ImageResource(colorImageCreateInfo);
+        colorImage.ClearColor(Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
 
         var resolveImageCreateInfo = colorImageCreateInfo;
 
         resolveImageCreateInfo.Usage   = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
         resolveImageCreateInfo.Samples = VkSampleCountFlags.N1;
 
-        var resolveImage = VulkanRenderer.Singleton.CreateImage(resolveImageCreateInfo, Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
+        var resolveImage = new ImageResource(resolveImageCreateInfo);
+        resolveImage.ClearColor(Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
 
         var depthImageCreateInfo = colorImageCreateInfo;
 
         depthImageCreateInfo.Usage  = VkImageUsageFlags.DepthStencilAttachment;
         depthImageCreateInfo.Format = VulkanRenderer.Singleton.DepthBufferFormat;
 
-        var depthImage = VulkanRenderer.Singleton.CreateImage(depthImageCreateInfo);
+        var depthImage = new ImageResource(depthImageCreateInfo);
 
         var framebufferCreateInfo = new FramebufferCreateInfo
         {
@@ -83,15 +85,15 @@ public class RenderTarget : Resource
             ]
         };
 
-        this.Texture     = VulkanRenderer.Singleton.CreateTexture(resolveImage, true);
-        this.Framebuffer = VulkanRenderer.Singleton.CreateFramebuffer(framebufferCreateInfo);
+        this.Texture     = new(resolveImage);
+        this.Framebuffer = new(framebufferCreateInfo);
 
         this.Attachments[0] = colorImage;
         this.Attachments[1] = resolveImage;
         this.Attachments[2] = depthImage;
     }
 
-    protected override void OnDispose()
+    protected override void Disposed()
     {
         this.Texture.Dispose();
         this.Framebuffer.Dispose();

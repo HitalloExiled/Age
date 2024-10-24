@@ -1,21 +1,45 @@
 using System.Runtime.CompilerServices;
+using Age.Core;
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Resources;
+using Age.Rendering.Vulkan;
+using ThirdParty.Vulkan.Enums;
 
 namespace Age;
 
-public class TextureAtlas(Size<uint> size, ColorMode colorMode, Texture texture)
+public class TextureAtlas : Disposable
 {
+    #region 8-bytes
+    public Bitmap  Bitmap  { get; }
+    public Texture Texture { get; }
+    #endregion
+
+    #region 4-bytes
     private Point<uint> cursor;
     private uint        maxHeight;
+    #endregion
+
+    #region 2-bytes
+    private bool isDirty;
+    #endregion
 
     public Size<uint> Size => this.Bitmap.Size;
 
-    public Bitmap  Bitmap  { get; } = new(size, colorMode);
-    public Texture Texture { get; } = texture;
+    public TextureAtlas(Size<uint> size, ColorMode colorMode)
+    {
+        var textureCreateInfo = new TextureCreateInfo
+        {
+            Format     = colorMode == ColorMode.Grayscale ? VkFormat.R8G8Unorm : VkFormat.B8G8R8A8Unorm,
+            ImageType  = VkImageType.N2D,
+            Width      = size.Width,
+            Height     = size.Height,
+            Depth      = 1,
+        };
 
-    public bool IsDirty { get; set; }
+        this.Bitmap  = new(size, colorMode);
+        this.Texture = new(textureCreateInfo);
+    }
 
     public Point<uint> Pack(Span<uint> pixels, Size<uint> size)
     {
@@ -56,7 +80,7 @@ public class TextureAtlas(Size<uint> size, ColorMode colorMode, Texture texture)
 
         this.cursor.X += size.Width;
 
-        this.IsDirty = true;
+        this.isDirty = true;
 
         return position;
     }
@@ -73,5 +97,23 @@ public class TextureAtlas(Size<uint> size, ColorMode colorMode, Texture texture)
         }
 
         return buffer;
+    }
+
+    public void Update()
+    {
+        if (this.isDirty)
+        {
+            this.Texture.Update(this.Bitmap.Buffer);
+
+            this.isDirty = false;
+        }
+    }
+
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.Texture.Dispose();
+        }
     }
 }

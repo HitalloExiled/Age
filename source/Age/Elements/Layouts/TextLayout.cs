@@ -10,6 +10,23 @@ internal class TextLayout(TextNode target): Layout
     public override TextNode   Target => target;
     public override BoxLayout? Parent => target.ParentElement?.Layout;
 
+    public override StencilLayer? StencilLayer
+    {
+        get => base.StencilLayer;
+        set
+        {
+            if (base.StencilLayer != value)
+            {
+                base.StencilLayer = value;
+
+                foreach (var command in target.Commands)
+                {
+                    command.StencilLayer = value;
+                }
+            }
+        }
+    }
+
     public string? Text
     {
         get => this.text;
@@ -24,7 +41,7 @@ internal class TextLayout(TextNode target): Layout
         }
     }
 
-    public void IndexChanged()
+    public void TargetIndexed()
     {
         for (var i = 0; i < this.Target.Commands.Count; i++)
         {

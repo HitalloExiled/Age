@@ -43,6 +43,12 @@ public record struct Point<T> where T : INumber<T>
     public static Point<T> operator /(Point<T> left, Point<T> right) =>
         new(left.X / right.X, left.Y / right.Y);
 
+    public static Point<T> operator *(Point<T> point, T value) =>
+        new(point.X * value, point.Y * value);
+
+    public static Point<T> operator *(Point<T> left, Point<T> right) =>
+        new(left.X * right.X, left.Y * right.Y);
+
     public static implicit operator Point<T>(Size<T> size) =>
         new(size.Height, size.Width);
 

@@ -1,30 +1,32 @@
+using Age.Core;
+
 namespace Age.Rendering.Resources;
 
-public abstract class Resource : IDisposable
+public abstract class Resource : Disposable
 {
-    private bool disposed;
+    internal List<ResourceCache.Entry> Dependencies { get; } = [];
 
-    protected abstract void OnDispose();
-
-    public void Dispose()
+    protected override void Disposed(bool disposing)
     {
-        if (!this.disposed)
+        if (disposing)
         {
-            this.disposed = true;
+            this.Disposed();
 
-            this.OnDispose();
+            foreach (var dependecy in this.Dependencies)
+            {
+                dependecy.Dispose();
+            }
+
+            this.Dependencies.Clear();
         }
-
-        GC.SuppressFinalize(this);
     }
+
+    protected abstract void Disposed();
 }
 
 public abstract class Resource<T> : Resource
 {
-    public T Value { get; }
+    public abstract T Instance { get; }
 
-    internal Resource(T value) =>
-        this.Value = value;
-
-    public static implicit operator T(Resource<T> value) => value.Value;
+    public static implicit operator T(Resource<T> value) => value.Instance;
 }

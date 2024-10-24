@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;
@@ -9,17 +8,20 @@ namespace Age.Rendering.Resources;
 
 public class Image : Resource<VkImage>
 {
+    #region 8-bytes
+    private readonly Allocation? allocation;
+    private readonly VkImage     instance;
+    #endregion
 
-    [MemberNotNullWhen(true, nameof(Allocation))]
-    private bool HandlerOwner { get; set; } = true;
+    #region 4-bytes
+    public VkImageLayout FinalLayout { get; private set; }
 
-    public Allocation?       Allocation    { get; }
     public VkExtent3D        Extent        { get; }
     public VkFormat          Format        { get; }
     public VkImageLayout     InitialLayout { get; }
-    public VkImageLayout     FinalLayout   { get; private set; }
     public VkImageType       Type          { get; }
     public VkImageUsageFlags Usage         { get; }
+    #endregion
 
     public VkImageAspectFlags Aspect
     {
@@ -27,7 +29,7 @@ public class Image : Resource<VkImage>
         {
             VkImageAspectFlags aspect = default;
 
-            if (this.Usage.HasFlag(VkImageUsageFlags.ColorAttachment))
+            if (this.Usage.HasFlag(VkImageUsageFlags.ColorAttachment) || this.Usage.HasFlag(VkImageUsageFlags.Sampled))
             {
                 aspect |= VkImageAspectFlags.Color;
             }
@@ -168,71 +170,79 @@ public class Image : Resource<VkImage>
             _ => 0,
         };
 
-    private Image(
-        VkImage           image,
-        bool              handlerOwner,
-        VkExtent3D        extent,
-        VkFormat          format,
-        VkImageType       type,
-        VkImageUsageFlags usage,
-        VkImageLayout     initialLayout,
-        VkImageLayout     finalLayout,
-        Allocation?       allocation,
-        in Color?         clearColor = null
-    ) : base(image)
+    public override VkImage Instance => this.instance;
+
+    internal Image(VkImage instance, in VkImageCreateInfo description)
     {
-        this.HandlerOwner  = handlerOwner;
-        this.Extent        = extent;
-        this.Format        = format;
-        this.Type          = type;
-        this.Usage         = usage;
-        this.InitialLayout = initialLayout;
+        this.instance      = instance;
+        this.Extent        = description.Extent;
+        this.Format        = description.Format;
+        this.Type          = description.ImageType;
+        this.Usage         = description.Usage;
+        this.InitialLayout = description.InitialLayout;
+    }
+
+    public Image(in VkImageCreateInfo createInfo, VkImageLayout finalLayout = default)
+    {
+        this.instance = VulkanRenderer.Singleton.Context.Device.CreateImage(createInfo);
+        this.instance.GetMemoryRequirements(out var memRequirements);
+
+        var memoryType = VulkanRenderer.Singleton.Context.FindMemoryType(memRequirements.MemoryTypeBits, VkMemoryPropertyFlags.DeviceLocal);
+
+        var memoryAllocateInfo = new VkMemoryAllocateInfo
+        {
+            AllocationSize  = memRequirements.Size,
+            MemoryTypeIndex = memoryType,
+        };
+
+        var deviceMemory = VulkanRenderer.Singleton.Context.Device.AllocateMemory(memoryAllocateInfo);
+
+        this.instance.BindMemory(deviceMemory, 0);
+
+        this.Extent        = createInfo.Extent;
+        this.Format        = createInfo.Format;
+        this.Type          = createInfo.ImageType;
+        this.Usage         = createInfo.Usage;
+        this.InitialLayout = createInfo.InitialLayout;
         this.FinalLayout   = finalLayout;
-        this.Allocation    = allocation;
 
-        if (clearColor.HasValue)
+        this.allocation = new()
         {
-            this.ClearColor(clearColor.Value, finalLayout == initialLayout ? VkImageLayout.General : finalLayout);
-        }
-        else if (finalLayout != initialLayout)
+            Alignment  = memRequirements.Alignment,
+            Memory     = deviceMemory,
+            Memorytype = memoryType,
+            Offset     = 0,
+            Size       = memRequirements.Size,
+        };
+
+        if (finalLayout != createInfo.InitialLayout)
         {
-            this.TransitionLayout(initialLayout, finalLayout);
+            this.TransitionLayout(createInfo.InitialLayout, finalLayout);
         }
     }
 
-    internal Image(
-        VkImage           image,
-        VkExtent3D        extent,
-        VkFormat          format,
-        VkImageType       type,
-        VkImageUsageFlags usage,
-        VkImageLayout     initialLayout,
-        VkImageLayout     finalLayout,
-        Allocation        allocation,
-        in Color?         clearColor = null
-    ) : this(image, true, extent, format, type, usage, initialLayout, finalLayout, allocation, clearColor)
-    { }
-
-    internal Image(
-        VkImage           image,
-        VkExtent3D        extent,
-        VkFormat          format,
-        VkImageType       type,
-        VkImageUsageFlags usage,
-        VkImageLayout     layout
-    ) : this(image, false, extent, format, type, usage, layout, layout, null, null)
-    { }
-
-    protected override void OnDispose()
+    public static Image[] Create(in VkImageCreateInfo createInfo, int count)
     {
-        if (this.HandlerOwner)
+        var images = new Image[count];
+
+        for (var i = 0; i < count; i++)
         {
-            this.Allocation.Dispose();
-            this.Value.Dispose();
+            images[i] = new(createInfo);
+        }
+
+        return images;
+    }
+
+    protected override void Disposed()
+    {
+        if (this.allocation != null)
+        {
+            this.allocation.Dispose();
+            this.instance.Dispose();
         }
     }
 
-    public unsafe void ClearColor(in Color color, VkImageLayout finalLayout)
+    public unsafe void ClearColor(in Color color, VkImageLayout layout)
     {
         var commandBuffer = VulkanRenderer.Singleton.BeginSingleTimeCommands();
 
@@ -254,7 +264,7 @@ public class Image : Resource<VkImage>
 
         commandBuffer.ClearImageColor(this, VkImageLayout.TransferDstOptimal, clearColor, [range]);
 
-        this.TransitionLayout(commandBuffer, VkImageLayout.TransferDstOptimal, finalLayout);
+        this.TransitionLayout(commandBuffer, VkImageLayout.TransferDstOptimal, layout);
 
         VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
     }
@@ -280,7 +290,7 @@ public class Image : Resource<VkImage>
             }
         };
 
-        commandBuffer.Value.CopyBufferToImage(buffer, this, VkImageLayout.TransferDstOptimal, [bufferImageCopy]);
+        commandBuffer.Instance.CopyBufferToImage(buffer, this.instance, VkImageLayout.TransferDstOptimal, [bufferImageCopy]);
     }
 
     public void CopyToBuffer(Buffer buffer, VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
@@ -308,7 +318,7 @@ public class Image : Resource<VkImage>
             }
         };
 
-        commandBuffer.Value.CopyImageToBuffer(this, VkImageLayout.TransferSrcOptimal, buffer.Value, [bufferImageCopy]);
+        commandBuffer.Instance.CopyImageToBuffer(this.instance, VkImageLayout.TransferSrcOptimal, buffer.Instance, [bufferImageCopy]);
     }
 
     public unsafe uint[] ReadBuffer(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
@@ -358,6 +368,14 @@ public class Image : Resource<VkImage>
                 destinationStage = VkPipelineStageFlags.Transfer;
 
                 break;
+            case (VkImageLayout.Undefined, VkImageLayout.ColorAttachmentOptimal):
+                srcAccessMask = default;
+                dstAccessMask = VkAccessFlags.ColorAttachmentWrite;
+
+                sourceStage      = VkPipelineStageFlags.TopOfPipe;
+                destinationStage = VkPipelineStageFlags.ColorAttachmentOutput;
+
+                break;
             case (VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal):
             case (VkImageLayout.Undefined,          VkImageLayout.ShaderReadOnlyOptimal):
                 srcAccessMask = VkAccessFlags.TransferWrite;
@@ -365,6 +383,14 @@ public class Image : Resource<VkImage>
 
                 sourceStage      = VkPipelineStageFlags.Transfer;
                 destinationStage = VkPipelineStageFlags.FragmentShader;
+
+                break;
+            case (VkImageLayout.ColorAttachmentOptimal, VkImageLayout.PresentSrcKHR):
+                srcAccessMask = VkAccessFlags.ColorAttachmentWrite;
+                dstAccessMask = VkAccessFlags.MemoryRead;
+
+                sourceStage      = VkPipelineStageFlags.ColorAttachmentOutput;
+                destinationStage = VkPipelineStageFlags.BottomOfPipe;
 
                 break;
             default:
@@ -375,7 +401,7 @@ public class Image : Resource<VkImage>
         {
             DstAccessMask       = dstAccessMask,
             DstQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
-            Image               = this.Value.Handle,
+            Image               = this.instance.Handle,
             NewLayout           = newLayout,
             OldLayout           = oldLayout,
             SrcAccessMask       = srcAccessMask,
@@ -388,7 +414,7 @@ public class Image : Resource<VkImage>
             }
         };
 
-        commandBuffer.Value.PipelineBarrier(sourceStage, destinationStage, default, [], [], [imageMemoryBarrier]);
+        commandBuffer.Instance.PipelineBarrier(sourceStage, destinationStage, default, [], [], [imageMemoryBarrier]);
 
         this.FinalLayout = newLayout;
     }

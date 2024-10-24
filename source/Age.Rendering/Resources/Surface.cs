@@ -21,16 +21,19 @@ public class Surface : Disposable
     public Surface() =>
         Entries.Add(this);
 
-    protected override void Disposed()
+    protected override void Disposed(bool disposing)
     {
         Entries.Remove(this);
 
-        foreach (var semaphore in this.Semaphores)
+        if (disposing)
         {
-            semaphore.Dispose();
-        }
+            foreach (var semaphore in this.Semaphores)
+            {
+                semaphore.Dispose();
+            }
 
-        this.Swapchain.Dispose();
-        this.Value.Dispose();
+            this.Swapchain.Dispose();
+            this.Value.Dispose();
+        }
     }
 }

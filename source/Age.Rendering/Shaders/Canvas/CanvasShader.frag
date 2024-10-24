@@ -5,10 +5,9 @@
 
 void main()
 {
-    vec4 texture_color = texture(texSampler, inFragTexCoord);
+    vec4 texture_color = texture(diffuse, inFragTexCoord);
 
-    vec4 color =
-        has_flag(data.flags, FLAGS_COLOR_AS_BACKGROUND)
+    vec4 color = has_flag(data.flags, FLAGS_COLOR_AS_BACKGROUND)
             ? data.color
             : has_flag(data.flags, FLAGS_GRAYSCALE_TEXTURE | FLAGS_MULTIPLY_COLOR)
                 ? vec4(1 - texture_color.rrr, texture_color.g) * data.color

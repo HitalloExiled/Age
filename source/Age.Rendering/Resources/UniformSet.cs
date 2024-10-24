@@ -10,20 +10,19 @@ namespace Age.Rendering.Resources;
 
 public class UniformSet : Resource
 {
-    public Pipeline Pipeline { get; }
+    public Shader shader { get; }
 
     public DescriptorPool    DescriptorPool { get; }
     public VkDescriptorSet[] DescriptorSets { get; }
 
-    public unsafe UniformSet(Pipeline pipeline, Span<Uniform> uniforms)
+    public unsafe UniformSet(Shader shader, Span<Uniform> uniforms)
     {
-        this.Pipeline = pipeline;
+        var key = CreatePoolKey(shader, uniforms);
 
-        var poolKey = CreatePoolKey(pipeline, uniforms);
+        this.shader         = shader;
+        this.DescriptorPool = DescriptorPool.CreateDescriptorPool(key);
 
-        this.DescriptorPool = VulkanRenderer.Singleton.CreateDescriptorPool(poolKey);
-
-        var descriptorSetLayoutHandle = pipeline.DescriptorSetLayout.Handle;
+        var descriptorSetLayoutHandle = shader.DescriptorSetLayout.Handle;
 
         var descriptorSetAllocateInfo = new VkDescriptorSetAllocateInfo
         {
@@ -36,24 +35,24 @@ public class UniformSet : Resource
         this.Update(uniforms);
     }
 
-    private static unsafe VkDescriptorType CreatePoolKey(Pipeline pipeline, Span<Uniform> uniforms)
+    private static unsafe DescriptorPoolKey CreatePoolKey(Shader shader, Span<Uniform> uniforms)
     {
-        VkDescriptorType poolKey = default;
+        DescriptorPoolKey poolKey = default;
 
         foreach (var uniform in uniforms)
         {
-            if (uniform.Binding > pipeline.UniformBindings.Length || pipeline.UniformBindings[uniform.Binding] != uniform.Type)
+            if (uniform.Binding > shader.UniformBindings.Length || shader.UniformBindings[uniform.Binding] != uniform.Type)
             {
-                throw new InvalidOperationException($"The provided shader expects that binding {uniform.Binding} to be of type {pipeline.UniformBindings[uniform.Binding]}");
+                throw new InvalidOperationException($"The provided shader expects that binding {uniform.Binding} to be of type {shader.UniformBindings[uniform.Binding]}");
             }
 
-            poolKey |= uniform.Type;
+            poolKey[uniform.Type]++;
         }
 
         return poolKey;
     }
 
-    protected override void OnDispose() =>
+    protected override void Disposed() =>
         this.DescriptorPool.FreeDescriptorSets(this.DescriptorSets);
 
     public unsafe void Update(Span<Uniform> uniforms)
@@ -70,7 +69,7 @@ public class UniformSet : Resource
                 {
                     var descriptorImageInfo = new VkDescriptorImageInfo
                     {
-                        Sampler     = combinedImageSampler.Sampler.Value.Handle,
+                        Sampler     = combinedImageSampler.Texture.Sampler.Value.Handle,
                         ImageView   = combinedImageSampler.Texture.ImageView.Handle,
                         ImageLayout = combinedImageSampler.ImageLayout,
                     };
@@ -96,7 +95,7 @@ public class UniformSet : Resource
                 {
                     var descriptorBufferInfo = new VkDescriptorBufferInfo
                     {
-                        Buffer = uniformBuffer.Buffer.Value.Handle,
+                        Buffer = uniformBuffer.Buffer.Instance.Handle,
                         Offset = uniformBuffer.Buffer.Allocation.Offset,
                         Range  = uniformBuffer.Buffer.Allocation.Size,
                     };

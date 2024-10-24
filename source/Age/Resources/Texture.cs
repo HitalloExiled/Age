@@ -1,6 +1,5 @@
 using Age.Core;
 using Age.Numerics;
-using Age.Rendering.Vulkan;
 using Age.Storage;
 
 using TextureResource = Age.Rendering.Resources.Texture;
@@ -19,7 +18,7 @@ public class Texture : Disposable
     public Texture(Image image, bool imageOwner)
     {
         this.imageOwner = imageOwner;
-        this.resource   = VulkanRenderer.Singleton.CreateTexture(image, imageOwner);
+        this.resource   = new(image);
         this.Image      = image;
 
         TextureStorage.Singleton.Add(Guid.NewGuid().ToString(), this.resource);
@@ -27,7 +26,7 @@ public class Texture : Disposable
 
     public Image Image { get; }
 
-    internal SamplerResource Sampler { get; set; } = TextureStorage.Singleton.DefaultSampler;
+    internal SamplerResource Sampler { get; set; } = new();
 
     private static Texture CreateDefaultTexture()
     {
@@ -63,9 +62,9 @@ public class Texture : Disposable
         return new(image, true);
     }
 
-    protected override void Disposed()
+    protected override void Disposed(bool disposing)
     {
-        if (this.imageOwner)
+        if (disposing && this.imageOwner)
         {
             this.Image.Dispose();
         }

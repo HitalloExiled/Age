@@ -3,7 +3,6 @@ using Age.Rendering.Resources;
 using Age.Rendering.Shaders;
 using Age.Rendering.Vulkan;
 using Age.RenderPasses;
-using ThirdParty.Vulkan.Enums;
 
 namespace Age.Storage;
 
@@ -14,7 +13,7 @@ public class ShaderStorage : Disposable
     public static ShaderStorage Singleton => singleton ?? throw new NullReferenceException();
 
 
-    private readonly Dictionary<string, Pipeline> pipelines = [];
+    private readonly Dictionary<string, Shader> shaders = [];
     private readonly VulkanRenderer renderer;
 
     public ShaderStorage(VulkanRenderer renderer)
@@ -24,9 +23,9 @@ public class ShaderStorage : Disposable
         this.renderer = renderer;
     }
 
-    public Pipeline GetShaderPipeline(string name)
+    public Shader GetShader(string name)
     {
-        if (!this.pipelines.TryGetValue(name, out var shader))
+        if (!this.shaders.TryGetValue(name, out var shader))
         {
             switch (name)
             {
@@ -34,7 +33,7 @@ public class ShaderStorage : Disposable
                     {
                         var pass = RenderGraph.Active.GetRenderGraphPass<SceneRenderGraphPass>();
 
-                        this.pipelines[name] = shader = this.renderer.CreatePipelineAndWatch<GeometryShader, GeometryShader.Vertex, GeometryShader.PushConstant>(new() { RasterizationSamples = this.renderer.MaxUsableSampleCount, FrontFace = VkFrontFace.CounterClockwise }, pass.RenderPass);
+                        this.shaders[name] = shader = new GeometryShader(pass.RenderPass, this.renderer.MaxUsableSampleCount, true);
 
                         break;
                     }
@@ -44,6 +43,11 @@ public class ShaderStorage : Disposable
         return shader ?? throw new InvalidOperationException($"Shader {name} not found");
     }
 
-    protected override void Disposed() =>
-        this.renderer.DeferredDispose(this.pipelines.Values);
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.renderer.DeferredDispose(this.shaders.Values);
+        }
+    }
 }

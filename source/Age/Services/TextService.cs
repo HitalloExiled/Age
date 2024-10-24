@@ -1,13 +1,10 @@
-// #define DUMP_IMAGES
 using Age.Commands;
 using Age.Core.Extensions;
 using Age.Core;
 using Age.Elements;
 using Age.Numerics;
-using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using SkiaSharp;
-using ThirdParty.Vulkan.Enums;
 
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
@@ -29,9 +26,8 @@ internal partial class TextService : IDisposable
 
     private readonly Dictionary<int, TextureAtlas> atlases = [];
     private readonly Dictionary<int, Glyph>        glyphs = [];
-    private readonly Sampler                       sampler;
     private readonly VulkanRenderer                renderer;
-    private readonly ObjectPool<RectCommand>       rectCommandPool = new(static () => new RectCommand());
+    private readonly ObjectPool<RectCommand>       rectCommandPool = new(static () => new() { Id = -1, MappedTexture = default! });
 
     private bool disposed;
 
@@ -45,7 +41,6 @@ internal partial class TextService : IDisposable
         singleton = this;
 
         this.renderer = renderer;
-        this.sampler  = renderer.CreateSampler();
     }
 
 #if DUMP_IMAGES
@@ -111,18 +106,7 @@ internal partial class TextService : IDisposable
             var axisSize = uint.Max(fontSize * 8, 256);
             var size     = new Size<uint>(axisSize, axisSize);
 
-            var textureCreateInfo = new TextureCreateInfo
-            {
-                Format     = VkFormat.R8G8Unorm,
-                ImageType  = VkImageType.N2D,
-                Width      = size.Width,
-                Height     = size.Height,
-                Depth      = 1,
-            };
-
-            var texture = this.renderer.CreateTexture(textureCreateInfo);
-
-            this.atlases[hashcode] = atlas = new(size, ColorMode.Grayscale, texture);
+            this.atlases[hashcode] = atlas = new(size, ColorMode.Grayscale);
         }
 
         return atlas;
@@ -146,11 +130,8 @@ internal partial class TextService : IDisposable
             {
                 foreach (var atlas in this.atlases.Values)
                 {
-                    atlas.Texture.Dispose();
-                    this.renderer.DeferredDispose(atlas.Texture);
+                    this.renderer.DeferredDispose(atlas);
                 }
-
-                this.renderer.DeferredDispose(this.sampler);
             }
 
             this.disposed = true;
@@ -164,7 +145,7 @@ internal partial class TextService : IDisposable
             return default;
         }
 
-        var style      = textNode.ParentElement.Style;
+        var style      = textNode.ParentElement.Layout.State.Style;
         var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
         var fontSize   = style.FontSize ?? 16;
         var commands   = textNode.Commands;
@@ -230,10 +211,11 @@ internal partial class TextService : IDisposable
 
                 var command = this.rectCommandPool.Get();
 
-                command.Rect           = new(size, position);
-                command.Color          = color;
-                command.Flags          = Flags.GrayscaleTexture | Flags.MultiplyColor;
-                command.SampledTexture = new(atlas.Texture, this.sampler, uv);
+                command.Rect          = new(size, position);
+                command.Color         = color;
+                command.Flags         = Flags.GrayscaleTexture | Flags.MultiplyColor;
+                command.MappedTexture = new(atlas.Texture, uv);
+                command.StencilLayer         = textNode.Layout.StencilLayer;
 
                 textNode.Commands.Add(command);
 
@@ -254,15 +236,7 @@ internal partial class TextService : IDisposable
             }
         }
 
-        if (atlas.IsDirty)
-        {
-            atlas.Texture.Update(atlas.Bitmap.Buffer);
-
-            atlas.IsDirty = false;
-#if DUMP_IMAGES
-            SaveToFile(fontFamily, atlas);
-#endif
-        }
+        atlas.Update();
 
         textDrawInfo.End       = cursor.Y;
         textDrawInfo.Boundings = boundings;

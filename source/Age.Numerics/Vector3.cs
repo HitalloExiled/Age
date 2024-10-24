@@ -75,7 +75,7 @@ public record struct Vector3<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
     public readonly Vector3<T> Cross(Vector3<T> other) =>
         new(this.Y * other.Z - this.Z * other.Y, this.Z * other.X - this.X * other.Z, this.X * other.Y - this.Y * other.X);
 
-    internal readonly bool IsAprox(Vector3<T> other) =>
+    public readonly bool IsAprox(Vector3<T> other) =>
         MathX.IsApprox(this.X, other.X) && MathX.IsApprox(this.Y, other.Y) && MathX.IsApprox(this.Z, other.Z);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

@@ -21,7 +21,7 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = AlignmentTest.Setup;
+        this.setup = ClippingTest.Setup;
 
         this.Reload();
         // this.CreateDemoScene();
@@ -146,19 +146,23 @@ public class Editor : Node
         }
         else if (Input.IsKeyJustPressed(Key.Num6))
         {
-            this.setup = MarginTest.Setup;
+            this.setup = ClippingTest.Setup;
         }
         else if (Input.IsKeyJustPressed(Key.Num7))
         {
-            this.setup = PaddingTest.Setup;
+            this.setup = MarginTest.Setup;
         }
         else if (Input.IsKeyJustPressed(Key.Num8))
+        {
+            this.setup = PaddingTest.Setup;
+        }
+        else if (Input.IsKeyJustPressed(Key.Num9))
         {
             this.setup = Playground.Setup;
         }
         else
         {
-            reload = Input.IsKeyJustPressed(Key.R) && Input.IsKeyPressed(Key.Control);
+            reload = Input.IsKeyJustPressed(Key.R);
         }
 
         if (reload)
@@ -169,7 +173,7 @@ public class Editor : Node
 
     private void Reload()
     {
-        this.canvas.RemoveChildren();
+        this.canvas.DisposeChildren();
 
         this.setup.Invoke(this.canvas);
     }

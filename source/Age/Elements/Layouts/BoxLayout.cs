@@ -3,78 +3,85 @@ using Age.Extensions;
 using Age.Numerics;
 using Age.Storage;
 using Age.Styling;
+
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Elements.Layouts;
 
-internal partial class BoxLayout : Layout
+internal partial class BoxLayout : Layout, IDisposable
 {
+    #region 8-bytes
+    private readonly List<Element> dependents = [];
+    private readonly Element       target;
 
-    // 24-bytes
-    private Transform2D styleTransform = new();
+    private StencilLayer? ownStencilLayer;
 
-    // 16-bytes
+    protected override StencilLayer? ContentStencilLayer => this.ownStencilLayer ?? this.StencilLayer;
+
+    public override StencilLayer? StencilLayer
+    {
+        get => base.StencilLayer;
+        set
+        {
+            if (base.StencilLayer != value)
+            {
+                var command = this.GetRectCommand();
+
+                base.StencilLayer = command.StencilLayer = value;
+            }
+        }
+    }
+    #endregion
+
+    #region 4-bytes
     private RawRectEdges border;
+    private Size<uint>   content;
+    private Dependency   contentDependent;
     private RawRectEdges margin;
     private RawRectEdges padding;
+    private Dependency   parentDependent;
+    private uint         renderableNodesCount;
+    private Size<uint>   staticContent;
+    private Point<int>   scrollOffset;
 
-    // 8-bytes
-    private Size<uint> content;
-    private Size<uint> staticContent;
+    public bool IsScrollable { get; internal set; }
+    #endregion
 
-    // 4-bytes
-    private readonly List<Element> dependents = [];
-    private readonly Element target;
-    private Dependency contentDependent;
-    private Dependency parentDependent;
-    private bool       dependenciesHasChanged;
-    private uint       renderableNodesCount;
+    #region 1-byte
+    private bool dependenciesHasChanged;
+    private bool disposed;
+    #endregion
+
+    public Size<uint> Boundings =>
+        new(
+            this.Size.Width  + this.padding.Horizontal + this.border.Horizontal,
+            this.Size.Height + this.padding.Vertical   + this.border.Vertical
+        );
+    public Size<uint> BoundingsWithMargin =>
+        new(
+            this.Size.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
+            this.Size.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
+        );
+
+    public RawRectEdges Border => this.border;
+
+    public Size<uint> InnerBoundings =>
+        new(
+            this.Size.Width  + this.padding.Horizontal,
+            this.Size.Height + this.padding.Vertical
+        );
+
+    public StyledStateManager State { get; } = new();
+
+    public override BoxLayout?  Parent    => this.target.ParentElement?.Layout;
+    public override Element     Target    => this.target;
+    public override Transform2D Transform => (this.State.Style.Transform ?? new Transform2D()) * base.Transform;
 
     public BoxLayout(Element target)
     {
         this.target = target;
 
         this.State.Changed += this.UpdateState;
-    }
-
-    public StyledStateManager State { get; } = new();
-
-    private Size<uint> Boundings =>
-        new(
-            this.Size.Width  + this.padding.Horizontal + this.border.Horizontal,
-            this.Size.Height + this.padding.Vertical   + this.border.Vertical
-        );
-
-    private Size<uint> BoundingsWithMargin =>
-        new(
-            this.Size.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
-            this.Size.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
-        );
-
-    public override BoxLayout? Parent => this.target.ParentElement?.Layout;
-    public override Element    Target => this.target;
-
-    public override Transform2D Transform
-    {
-        get
-        {
-            var pivot = new Vector2<float>();
-
-            if (this.Size != default)
-            {
-                var stylePivot = this.State.Style.Pivot ?? new();
-
-                stylePivot = (stylePivot + 1) / 2;
-                stylePivot.Y = 1 - stylePivot.Y;
-
-                pivot = stylePivot * this.Size.Cast<float>() * new Size<float>(1, -1);
-            }
-
-            return base.Transform
-                * Transform2D.Translated(pivot)
-                * this.styleTransform
-                * Transform2D.Translated(-pivot);
-        }
     }
 
     private static void CalculatePendingPaddingHorizontal(BoxLayout layout, in Size<uint> size, ref RawRectEdges padding)
@@ -157,6 +164,43 @@ internal partial class BoxLayout : Layout
         }
     }
 
+    private static void SetStencilLayer(BoxLayout layout, StencilLayer? stencilLayer)
+    {
+            var enumerator = layout.target.GetTraverseEnumerator();
+
+            while (enumerator.MoveNext())
+            {
+                var current = enumerator.CurrentNode!;
+
+                if (current is ContainerNode containerNode)
+                {
+                    if (containerNode.Layout.StencilLayer == stencilLayer)
+                    {
+                        enumerator.SkipToNextSibling();
+                    }
+                    else if (current is Element element && element.Layout.ownStencilLayer != null)
+                    {
+                        if (stencilLayer != null)
+                        {
+                            stencilLayer.AppendChild(element.Layout.ownStencilLayer);
+                        }
+                        else
+                        {
+                            element.Layout.ownStencilLayer.Detach();
+                        }
+
+                        element.Layout.StencilLayer = stencilLayer;
+
+                        enumerator.SkipToNextSibling();
+                    }
+                    else
+                    {
+                        containerNode.Layout.StencilLayer = stencilLayer;
+                    }
+                }
+            }
+    }
+
     private Point<float> GetAlignment(StackKind stack, AlignmentKind alignmentKind, out AlignmentAxis alignmentAxis)
     {
         var x = -1;
@@ -214,12 +258,9 @@ internal partial class BoxLayout : Layout
         {
             this.Target.SingleCommand = command = new()
             {
-                Flags = Flags.ColorAsBackground,
-                SampledTexture = new(
-                    TextureStorage.Singleton.DefaultTexture,
-                    TextureStorage.Singleton.DefaultSampler,
-                    UVRect.Normalized
-                ),
+                Id            = this.Target.GetHashCode(),
+                Flags         = Flags.ColorAsBackground,
+                MappedTexture = new(TextureStorage.Singleton.DefaultTexture, UVRect.Normalized),
             };
         }
 
@@ -801,6 +842,34 @@ internal partial class BoxLayout : Layout
         }
     }
 
+    private void OnScroll(in MouseEvent mouseEvent)
+    {
+        if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlag(Platforms.Display.MouseKeyStates.Shift))
+        {
+            var x = MathX.MinMax(-(int)this.content.Width.ClampSubtract(this.Size.Width), 0, this.scrollOffset.X + (int)(5 * mouseEvent.Delta));
+
+            if (this.scrollOffset.X != x)
+            {
+                this.scrollOffset.X = x;
+
+                this.ownStencilLayer?.MakeDirty();
+                this.RequestUpdate();
+            }
+        }
+        else if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY)
+        {
+            var y = MathX.MinMax(0, (int)this.content.Height.ClampSubtract(this.Size.Height), this.scrollOffset.Y - (int)(5 * mouseEvent.Delta));
+
+            if (this.scrollOffset.Y != y)
+            {
+                this.scrollOffset.Y = y;
+
+                this.ownStencilLayer?.MakeDirty();
+                this.RequestUpdate();
+            }
+        }
+    }
+
     private void UpdateDisposition()
     {
         if (this.renderableNodesCount == 0)
@@ -942,7 +1011,7 @@ internal partial class BoxLayout : Layout
                 }
             }
 
-            child.Layout.Offset = new(float.Round(cursor.X + position.X + margin.Left), -float.Round(-cursor.Y + position.Y + margin.Top));
+            child.Layout.Offset = new(float.Round(this.scrollOffset.X + cursor.X + position.X + margin.Left), -float.Round(-this.scrollOffset.Y + -cursor.Y + position.Y + margin.Top));
 
             if (stack == StackKind.Horizontal)
             {
@@ -964,6 +1033,9 @@ internal partial class BoxLayout : Layout
         command.Rect   = new(this.Boundings.Cast<float>(), default);
         command.Border = this.State.Style.Border ?? default;
         command.Color  = this.State.Style.BackgroundColor ?? default;
+        command.StencilLayer  = this.StencilLayer;
+
+        this.ownStencilLayer?.MakeDirty();
     }
 
     private void UpdateState(StyleProperty property)
@@ -978,15 +1050,6 @@ internal partial class BoxLayout : Layout
                 Right  = this.State.Style.Border?.Right.Thickness ?? 0,
                 Bottom = this.State.Style.Border?.Bottom.Thickness ?? 0,
                 Left   = this.State.Style.Border?.Left.Thickness ?? 0,
-            };
-        }
-
-        if (property is StyleProperty.Position or StyleProperty.Rotation or StyleProperty.All)
-        {
-            this.styleTransform = this.styleTransform with
-            {
-                Position = this.State.Style.Position ?? this.styleTransform.Position,
-                Rotation = this.State.Style.Rotation ?? this.styleTransform.Rotation,
             };
         }
 
@@ -1076,6 +1139,45 @@ internal partial class BoxLayout : Layout
             }
         }
 
+        if (property is StyleProperty.Overflow or StyleProperty.All)
+        {
+            var currentIsScrollable = this.State.Style.Overflow is not OverflowKind.None and not OverflowKind.Clipping && this.contentDependent != (Dependency.Width | Dependency.Height);
+
+            if (currentIsScrollable != this.IsScrollable)
+            {
+                if (currentIsScrollable)
+                {
+                    this.target.Scroll += this.OnScroll;
+                }
+                else
+                {
+                    this.target.Scroll -= this.OnScroll;
+                    this.scrollOffset = default;
+                }
+
+                this.IsScrollable = currentIsScrollable;
+            }
+
+            if (this.State.Style.Overflow != OverflowKind.None && this.contentDependent != (Dependency.Width | Dependency.Height))
+            {
+                if (this.ownStencilLayer == null)
+                {
+                    this.ownStencilLayer = new StencilLayer(this.Target);
+
+                    this.StencilLayer?.AppendChild(this.ownStencilLayer);
+                }
+            }
+            else if (this.ownStencilLayer != null)
+            {
+                this.ownStencilLayer.Detach();
+                this.ownStencilLayer.Dispose();
+
+                this.ownStencilLayer = null;
+            }
+
+            SetStencilLayer(this, this.ContentStencilLayer);
+        }
+
         if (hidden)
         {
             this.RequestUpdate();
@@ -1092,19 +1194,16 @@ internal partial class BoxLayout : Layout
         this.Target.Visible = !hidden;
     }
 
-    public void ElementAppended(Element element)
+    protected virtual void Dispose(bool disposing)
     {
-        if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
+        if (!this.disposed)
         {
-            this.dependents.Add(element);
-        }
-    }
+            if (disposing)
+            {
+                this.ownStencilLayer?.Dispose();
+            }
 
-    public void ElementRemoved(Element element)
-    {
-        if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
-        {
-            this.dependents.Remove(element);
+            this.disposed = true;
         }
     }
 
@@ -1126,13 +1225,45 @@ internal partial class BoxLayout : Layout
         }
     }
 
-    public void IndexChanged()
+    public void ElementAppended(Element element)
+    {
+        if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
+        {
+            this.dependents.Add(element);
+        }
+    }
+
+    public void ElementRemoved(Element element)
+    {
+        if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
+        {
+            this.dependents.Remove(element);
+        }
+    }
+
+    public void Dispose()
+    {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    public void TargetIndexed()
     {
         var command = this.GetRectCommand();
 
         command.ObjectId = this.Target.Index == -1
             ? default
             : this.State.Style.Border.HasValue || this.State.Style.BackgroundColor.HasValue ? (uint)(this.Target.Index + 1) : 0;
+    }
+
+    public override void TargetConnected()
+    {
+        base.TargetConnected();
+
+        if (this.ownStencilLayer != null)
+        {
+            this.StencilLayer?.AppendChild(this.ownStencilLayer);
+        }
     }
 
     public override void Update()

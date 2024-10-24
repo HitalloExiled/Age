@@ -8,12 +8,13 @@ layout(location = 0) out vec2 outFragTexCoord;
 
 void main()
 {
+    mat3 matrix = transform_to_mat3(data.transform);
+
     vec2 vertex = inPosition / 2 + 0.5;
     vertex.y *= -1;
     vertex *= data.rect.size;
     vertex += data.rect.position;
-    vertex =  data.transform.rotation * vertex;
-    vertex += data.transform.position;
+    vertex = (matrix * vec3(vertex, 1)).xy;
     vertex.y *= -1;
     vertex /= data.viewport;
     vertex = vertex * 2 - 1;

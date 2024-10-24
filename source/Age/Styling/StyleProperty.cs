@@ -3,8 +3,8 @@ namespace Age.Styling;
 public enum StyleProperty
 {
     None,
-    All,
     Alignment,
+    All,
     BackgroundColor,
     Baseline,
     Border,
@@ -18,12 +18,11 @@ public enum StyleProperty
     Margin,
     MaxSize,
     MinSize,
+    Overflow,
     Padding,
-    Pivot,
-    Position,
     Positioning,
-    Rotation,
     Size,
     Stack,
     TextAlignment,
+    Transform,
 }

@@ -13,6 +13,11 @@ public class Swapchain : Disposable
     public required VkSwapchainKHR    Value      { get; init; }
     public required VkImageUsageFlags ImageUsage { get; init; }
 
-    protected override void Disposed() =>
-        this.Value.Dispose();
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.Value.Dispose();
+        }
+    }
 }

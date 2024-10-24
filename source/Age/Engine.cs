@@ -1,17 +1,17 @@
 using System.Diagnostics;
+using Age.Core;
+using Age.Internal;
 using Age.Numerics;
-using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.RenderPasses;
 using Age.Scene;
 using Age.Services;
 using Age.Storage;
-using SkiaSharp;
 using ThirdParty.Vulkan.Flags;
 
 namespace Age;
 
-public class Engine : IDisposable
+public class Engine : Disposable
 {
     private const bool   FPS_LOCKED        = false;
     private const ushort TARGET_FPS        = 60;
@@ -19,8 +19,6 @@ public class Engine : IDisposable
 
     private readonly VulkanRenderer   renderer  = new();
     private readonly RenderingService renderingService;
-
-    private bool disposed;
 
     public Window Window { get; }
 
@@ -45,7 +43,7 @@ public class Engine : IDisposable
         this.Window.Resized += () =>
         {
             var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
-            SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "./.debug/CanvasIndex.png");
+            Common.SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "CanvasIndex.png");
         };
 
         var renderGraph = new RenderGraph
@@ -68,56 +66,18 @@ public class Engine : IDisposable
         Input.ListenInputEvents(this.Window);
     }
 
-    private static void SaveImage(Image image, VkImageAspectFlags aspectMask, string filename)
+    protected override void Disposed(bool disposing)
     {
-        var data = image.ReadBuffer(aspectMask);
-
-        static SKColor convert(uint value) => new(value);
-
-        var pixels = data.Select(convert).ToArray();
-
-        var bitmap = new SKBitmap((int)image.Extent.Width, (int)image.Extent.Height)
+        if (disposing)
         {
-            Pixels = pixels
-        };
+            Platforms.Display.Window.CloseAll();
 
-        var skimage = SKImage.FromBitmap(bitmap);
-
-        try
-        {
-            using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), filename));
-
-            skimage.Encode(SKEncodedImageFormat.Png, 100).SaveTo(stream);
+            this.renderingService.Dispose();
+            this.textService.Dispose();
+            this.textureStorage.Dispose();
+            this.shaderStorage.Dispose();
+            this.renderer.Dispose();
         }
-        catch
-        {
-
-        }
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!this.disposed)
-        {
-            if (disposing)
-            {
-                Platforms.Display.Window.CloseAll();
-
-                this.renderingService.Dispose();
-                this.textService.Dispose();
-                this.textureStorage.Dispose();
-                this.shaderStorage.Dispose();
-                this.renderer.Dispose();
-            }
-
-            this.disposed = true;
-        }
-    }
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     public void Run()

@@ -16,11 +16,11 @@
 
 #define CURVE_FACTOR 3
 
-#define FLAGS_GRAYSCALE_TEXTURE     1 << 0
-#define FLAGS_MULTIPLY_COLOR        1 << 1
-#define FLAGS_COLOR_AS_BACKGROUND   1 << 2
+#define FLAGS_GRAYSCALE_TEXTURE   1 << 0
+#define FLAGS_MULTIPLY_COLOR      1 << 1
+#define FLAGS_COLOR_AS_BACKGROUND 1 << 2
 
-layout(binding = 0) uniform sampler2D texSampler;
+layout(binding = 0) uniform sampler2D diffuse;
 
 layout(location = 0) in vec2 inFragTexCoord;
 
@@ -36,7 +36,7 @@ void get_corners(out Rect left_top, out Rect top_right, out Rect right_bottom, o
 
 uint get_min_radius(uint radius)
 {
-    return uint(min(radius, min(data.rect.size.x, data.rect.size.y)));
+    return uint(min(radius, min(data.rect.size.x * 0.5, data.rect.size.y * 0.5)));
 }
 
 vec2 get_max(vec2 vector)
@@ -154,117 +154,81 @@ bool is_inside_radius(vec2 position, uint corner, out vec4 color, out bool is_ou
 
     get_corners(left_top, top_right, right_bottom, bottom_left);
 
+    vec2  origin;
+    float radius;
+    float thickness_x;
+    float thickness_y;
+
     switch (corner)
     {
         case CORNER_LEFT_TOP:
-        {
-            uint radius    = get_min_radius(data.border.radius.left_top);
-            vec2 direction = position - vec2(radius);
-
-            float top_range = left_top.position.x + position.y / left_top.size.y * left_top.size.x;
-
-            color = position.x > top_range ? to_vec4(data.border.top.color) : to_vec4(data.border.left.color);
-
-            if (!(is_outside = length(direction) > radius))
             {
-                if (data.border.top.thickness + data.border.left.thickness == 0)
-                {
-                    return false;
-                }
+                radius    = get_min_radius(data.border.radius.left_top);
+                origin    = vec2(radius);
+                thickness_x = data.border.left.thickness;
+                thickness_y = data.border.top.thickness;
 
-                if (radius > data.border.top.thickness || radius > data.border.left.thickness)
-                {
-                    float influence = 1 - (position.y - data.border.top.thickness) / (radius - data.border.top.thickness);
-                    float curve = data.border.left.thickness + (radius - data.border.left.thickness) * pow(influence, CURVE_FACTOR);
+                float range = left_top.position.x + position.y / left_top.size.y * left_top.size.x;
 
-                    return position.x < curve;
-                }
-
-                return true;
+                color = position.x > range ? to_vec4(data.border.top.color) : to_vec4(data.border.left.color);
             }
-
-        }
+            break;
         case CORNER_TOP_RIGHT:
-        {
-            uint radius    = get_min_radius(data.border.radius.top_right);
-            vec2 direction = position - vec2(data.rect.size.x - radius, radius);
-
-            float top_range = top_right.position.x + position.y / -top_right.size.y * top_right.size.x + top_right.size.x;
-
-            color = position.x < top_range ? to_vec4(data.border.top.color) : to_vec4(data.border.right.color);
-
-            if (!(is_outside = length(direction) > radius))
             {
-                if (data.border.top.thickness + data.border.right.thickness == 0)
-                {
-                    return false;
-                }
+                radius    = get_min_radius(data.border.radius.top_right);
+                origin    = vec2(data.rect.size.x - radius, radius);
+                thickness_x = data.border.right.thickness;
+                thickness_y = data.border.top.thickness;
 
-                if (radius > data.border.top.thickness || radius > data.border.left.thickness)
-                {
-                    float influence = 1 - (position.y - data.border.top.thickness) / (radius - data.border.top.thickness);
-                    float curve = data.rect.size.x - data.border.right.thickness - (radius - data.border.right.thickness) * pow(influence, CURVE_FACTOR);
+                float range = top_right.position.x + position.y / -top_right.size.y * top_right.size.x + top_right.size.x;
 
-                    return position.x > curve;
-                }
-
-                return true;
+                color = position.x < range ? to_vec4(data.border.top.color) : to_vec4(data.border.right.color);
             }
-        }
+            break;
         case CORNER_RIGHT_BOTTOM:
-        {
-            uint radius    = get_min_radius(data.border.radius.right_bottom);
-            vec2 direction = position - vec2(data.rect.size.x - radius, data.rect.size.y - radius);
-
-            float bottom_range = right_bottom.position.x + (data.rect.size.y - position.y) / -right_bottom.size.y * right_bottom.size.x + right_bottom.size.x;
-
-            color = position.x < bottom_range ? to_vec4(data.border.bottom.color) : to_vec4(data.border.right.color);
-
-            if (!(is_outside = length(direction) > radius))
             {
-                if (data.border.bottom.thickness + data.border.right.thickness == 0)
-                {
-                    return false;
-                }
+                radius      = get_min_radius(data.border.radius.right_bottom);
+                origin      = vec2(data.rect.size.x - radius, data.rect.size.y - radius);
+                thickness_x = data.border.right.thickness;
+                thickness_y = data.border.bottom.thickness;
 
-                if (radius > data.border.bottom.thickness || radius > data.border.right.thickness)
-                {
-                    float influence = 1 - (data.rect.size.y - position.y - data.border.bottom.thickness) / (radius - data.border.bottom.thickness);
-                    float curve = data.rect.size.x - data.border.right.thickness - (radius - data.border.right.thickness) * pow(influence, CURVE_FACTOR);
+                float range = right_bottom.position.x + (data.rect.size.y - position.y) / -right_bottom.size.y * right_bottom.size.x + right_bottom.size.x;
 
-                    return position.x > curve;
-                }
-
-                return true;
+                color = position.x < range ? to_vec4(data.border.bottom.color) : to_vec4(data.border.right.color);
             }
-        }
+            break;
         case CORNER_BOTTOM_LEFT:
         {
-            uint radius    = get_min_radius(data.border.radius.bottom_left);
-            vec2 direction = position - vec2(radius, data.rect.size.y - radius);
+            radius    = get_min_radius(data.border.radius.bottom_left);
+            origin    = vec2(radius, data.rect.size.y - radius);
+            thickness_x = data.border.left.thickness;
+            thickness_y = data.border.bottom.thickness;
 
-            float bottom_range = bottom_left.position.x + (data.rect.size.y - position.y) / bottom_left.size.y * bottom_left.size.x;
+            float range = bottom_left.position.x + (data.rect.size.y - position.y) / bottom_left.size.y * bottom_left.size.x;
 
-            color = position.x > bottom_range ? to_vec4(data.border.bottom.color) : to_vec4(data.border.left.color);
-
-            if (!(is_outside = length(direction) > radius))
-            {
-                if (data.border.bottom.thickness + data.border.right.thickness == 0)
-                {
-                    return false;
-                }
-
-                if (radius > data.border.bottom.thickness || radius > data.border.left.thickness)
-                {
-                    float influence = 1 - (data.rect.size.y - position.y - data.border.bottom.thickness) / (radius - data.border.bottom.thickness);
-                    float curve     = data.border.left.thickness + (radius - data.border.left.thickness) * pow(influence, CURVE_FACTOR);
-
-                    return position.x < curve;
-                }
-
-                return true;
-            }
+            color = position.x > range ? to_vec4(data.border.bottom.color) : to_vec4(data.border.left.color);
         }
+        break;
+    }
+
+    float direction_length = length(position - origin);
+
+    if (!(is_outside = direction_length > radius))
+    {
+        if (thickness_x == thickness_y)
+        {
+            return direction_length > radius - thickness_x;
+        }
+
+        float radius_x = radius > thickness_x ? radius - thickness_x : 0;
+        float radius_y = radius > thickness_y ? radius - thickness_y : 0;
+
+        if (radius_x > 0 && radius_y > 0)
+        {
+            return !is_point_inside_ellipse(position, vec2(origin), radius_x, radius_y);
+        }
+
+        return true;
     }
 
     return false;

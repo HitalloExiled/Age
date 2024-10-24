@@ -7,6 +7,8 @@ public record struct Transform2D
 {
     private Matrix3x2<float> matrix;
 
+    public readonly Matrix3x2<float> Matrix => this.matrix;
+
     public Vector2<float> Position
     {
         readonly get => this.matrix.Translation;
@@ -37,14 +39,20 @@ public record struct Transform2D
     public Transform2D(float positionX, float positionY, float rotation, float scaleX, float scaleY) : this(new(positionX, positionY), rotation, new(scaleX, scaleY))
     { }
 
-    public static Transform2D Rotated(float rotation) =>
-        new(default, rotation, Vector2<float>.One);
+    public static Transform2D CreateRotated(float radians) =>
+        new(Matrix3x2<float>.CreateRotated(radians));
 
-    public static Transform2D Scaled(in Vector2<float> scale) =>
-        new(default, default, scale);
+    public static Transform2D CreateScaled(float scaleX, float scaleY) =>
+        new(Matrix3x2<float>.CreateScaled(new(scaleX, scaleY)));
 
-    public static Transform2D Translated(in Vector2<float> offset) =>
-        new(offset, default, Vector2<float>.One);
+    public static Transform2D CreateScaled(in Vector2<float> scale) =>
+        new(Matrix3x2<float>.CreateScaled(scale));
+
+    public static Transform2D CreateTranslated(float translationX, float translationY) =>
+        new(Matrix3x2<float>.CreateTranslated(new(translationX, translationY)));
+
+    public static Transform2D CreateTranslated(in Vector2<float> translation) =>
+        new(Matrix3x2<float>.CreateTranslated(translation));
 
     public readonly Transform2D Inverse() =>
         new(this.matrix.Inverse());

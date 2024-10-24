@@ -6,11 +6,15 @@ namespace Age.Commands;
 
 public partial record RectCommand : Command
 {
-    public CanvasShader.Border Border         { get; set; }
-    public Color               Color          { get; set; }
-    public CanvasShader.Flags  Flags          { get; set; }
-    public uint                ObjectId       { get; set; }
-    public Rect<float>         Rect           { get; set; }
-    public SampledTexture      SampledTexture { get; set; }
+    #region 8-bytes
+    public required MappedTexture MappedTexture { get; set; }
+    #endregion
 
+    #region 4-bytes
+    public CanvasShader.Border Border   { get; set; }
+    public Color               Color    { get; set; }
+    public CanvasShader.Flags  Flags    { get; set; }
+    public uint                ObjectId { get; set; }
+    public Rect<float>         Rect     { get; set; }
+    #endregion
 }

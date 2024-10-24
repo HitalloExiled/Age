@@ -67,7 +67,7 @@ public class AlignmentTest
             }
         };
 
-        // horizontal_a_container.Focus();
+        horizontal_a_container.Focus();
 
         var horizontal_a_left = new FlexBox()
         {
@@ -78,6 +78,7 @@ public class AlignmentTest
                 Alignment = AlignmentKind.Left,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
+                Size      = new(null, (Percentage)100),
             }
         };
 

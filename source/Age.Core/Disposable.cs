@@ -4,17 +4,23 @@ public abstract class Disposable : IDisposable
 {
     private bool disposed;
 
-    protected abstract void Disposed();
+    ~Disposable() =>
+        this.Dispose(false);
 
-    public void Dispose()
+    protected void Dispose(bool disposing)
     {
         if (!this.disposed)
         {
+            this.Disposed(disposing);
             this.disposed = true;
-
-            this.Disposed();
         }
+    }
 
+    protected abstract void Disposed(bool disposing);
+
+    public void Dispose()
+    {
+        this.Dispose(true);
         GC.SuppressFinalize(this);
     }
 }

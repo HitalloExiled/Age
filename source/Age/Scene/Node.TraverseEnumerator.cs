@@ -6,14 +6,18 @@ public abstract partial class Node
 {
 	public struct TraverseEnumerator(Node root) : IEnumerator<Node>, IEnumerable<Node>
     {
-        private readonly Node root  = root;
-
+        private readonly Node root = root;
         private bool  first = true;
-        private Node? current;
+        private bool  skipToNextSibling;
 
-        public readonly Node Current => this.current ?? throw new InvalidOperationException();
+        internal Node? CurrentNode { get; private set; }
+
+        public readonly Node Current => this.CurrentNode ?? throw new NullReferenceException();
 
         readonly object IEnumerator.Current => this.Current;
+
+        readonly IEnumerator IEnumerable.GetEnumerator() =>
+            this.GetEnumerator();
 
         public readonly void Dispose()
         { }
@@ -24,52 +28,41 @@ public abstract partial class Node
         {
             if (this.first)
             {
-                this.current = this.root.FirstChild;
                 this.first   = false;
+                this.CurrentNode = this.root.FirstChild;
+            }
+            else if (this.CurrentNode!.FirstChild != null && !this.skipToNextSibling)
+            {
+                this.CurrentNode = this.CurrentNode.FirstChild;
             }
             else
             {
-                if (this.current!.FirstChild != null)
-                {
-                    this.current = this.current.FirstChild;
-                }
-                else if (this.current.NextSibling != null)
-                {
-                    this.current = this.current.NextSibling;
-                }
-                else if (this.current.Parent != null)
-                {
-                    do
-                    {
-                        if (this.current.Parent?.NextSibling != null)
-                        {
-                            this.current = this.current.Parent.NextSibling;
+                this.skipToNextSibling = false;
 
-                            break;
-                        }
-                        else
-                        {
-                            this.current = this.current.Parent;
-                        }
-                    }
-                    while (this.current != null);
-                }
-                else
+                while (this.CurrentNode != null)
                 {
-                    this.current = null;
+                    if (this.CurrentNode.NextSibling != null)
+                    {
+                        this.CurrentNode = this.CurrentNode.NextSibling;
+
+                        break;
+                    }
+
+                    this.CurrentNode = this.CurrentNode == this.root ? null : this.CurrentNode.Parent;
                 }
             }
 
-            return this.current != null;
+            return this.CurrentNode != null;
         }
 
         public void Reset()
         {
-            this.first   = true;
-            this.current = null;
+            this.skipToNextSibling = false;
+            this.first             = true;
+            this.CurrentNode           = null;
         }
 
-        readonly IEnumerator IEnumerable.GetEnumerator() =>
-            this.GetEnumerator();
+        public void SkipToNextSibling() =>
+            this.skipToNextSibling = true;
     }
 }

@@ -6,10 +6,10 @@ namespace Age.Resources;
 
 public class Material
 {
-    internal Pipeline Pipeline { get; }
+    internal Shader Shader { get; }
 
     public Texture Diffuse { get; set; } = Texture.Default;
 
     public Material() =>
-        this.Pipeline = ShaderStorage.Singleton.GetShaderPipeline(nameof(GeometryShader));
+        this.Shader = ShaderStorage.Singleton.GetShader(nameof(GeometryShader));
 }

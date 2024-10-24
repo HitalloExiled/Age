@@ -1,8 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
+using Age.Core;
 
 namespace Age;
 
-public class RenderGraph : IDisposable
+public class RenderGraph : Disposable
 {
     private static RenderGraph? active;
 
@@ -12,8 +13,6 @@ public class RenderGraph : IDisposable
         set => active = value;
     }
 
-    private bool disposed;
-
     public required string Name { get; init; }
 
     public required RenderGraphPass[] Passes { get; init; }
@@ -21,6 +20,17 @@ public class RenderGraph : IDisposable
     public bool HasStarted { get; private set; }
 
     public bool Disabled { get; set; }
+
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            foreach (var pass in this.Passes)
+            {
+                pass.Dispose();
+            }
+        }
+    }
 
     public T GetRenderGraphPass<T>() where T : RenderGraphPass =>
         this.TryGetRenderGraphPass<T>(out var renderPass)
@@ -42,21 +52,6 @@ public class RenderGraph : IDisposable
         renderPass = null;
 
         return false;
-    }
-
-    public void Dispose()
-    {
-        if (!this.disposed)
-        {
-            this.disposed = true;
-
-            foreach (var pass in this.Passes)
-            {
-                pass.Dispose();
-            }
-        }
-
-        GC.SuppressFinalize(this);
     }
 
     public void Execute()
