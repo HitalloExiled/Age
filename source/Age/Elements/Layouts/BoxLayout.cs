@@ -846,15 +846,27 @@ internal partial class BoxLayout : Layout, IDisposable
     {
         if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlag(Platforms.Display.MouseKeyStates.Shift))
         {
-            this.scrollOffset.X = MathX.MinMax(-(int)this.content.Width.ClampSubtract(this.Size.Width), 0, this.scrollOffset.X + (int)(5 * mouseEvent.Delta));
-            this.ownStencilLayer?.MakeDirty();
-            this.RequestUpdate();
+            var x = MathX.MinMax(-(int)this.content.Width.ClampSubtract(this.Size.Width), 0, this.scrollOffset.X + (int)(5 * mouseEvent.Delta));
+
+            if (this.scrollOffset.X != x)
+            {
+                this.scrollOffset.X = x;
+
+                this.ownStencilLayer?.MakeDirty();
+                this.RequestUpdate();
+            }
         }
         else if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY)
         {
-            this.scrollOffset.Y = MathX.MinMax(0, (int)this.content.Height.ClampSubtract(this.Size.Height), this.scrollOffset.Y - (int)(5 * mouseEvent.Delta));
-            this.ownStencilLayer?.MakeDirty();
-            this.RequestUpdate();
+            var y = MathX.MinMax(0, (int)this.content.Height.ClampSubtract(this.Size.Height), this.scrollOffset.Y - (int)(5 * mouseEvent.Delta));
+
+            if (this.scrollOffset.Y != y)
+            {
+                this.scrollOffset.Y = y;
+
+                this.ownStencilLayer?.MakeDirty();
+                this.RequestUpdate();
+            }
         }
     }
 
