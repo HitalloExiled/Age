@@ -9,7 +9,7 @@ public abstract partial class Node
         private Node? current;
         private bool  last = true;
 
-        public readonly Node Current => this.current ?? throw new InvalidOperationException();
+        public readonly Node Current => this.current!;
         public readonly Node Node    => node;
 
         readonly object IEnumerator.Current => this.Current;

@@ -6,13 +6,18 @@ internal partial class StencilLayer
 {
     public struct TraverseEnumerator(StencilLayer root) : IEnumerator<StencilLayer>, IEnumerable<StencilLayer>
     {
+        #region 8-bytes
         private readonly StencilLayer root = root;
 
         private StencilLayer? current;
+        #endregion
+
+        #region 1-byte
         private bool first = true;
         private bool skipToNextSibling;
+        #endregion
 
-        public readonly StencilLayer Current => this.current ?? throw new NullReferenceException();
+        public readonly StencilLayer Current => this.current!;
 
         readonly object IEnumerator.Current => this.Current;
 

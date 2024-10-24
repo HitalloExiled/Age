@@ -170,7 +170,7 @@ internal partial class BoxLayout : Layout, IDisposable
 
             while (enumerator.MoveNext())
             {
-                var current = enumerator.CurrentNode!;
+                var current = enumerator.Current!;
 
                 if (current is ContainerNode containerNode)
                 {
