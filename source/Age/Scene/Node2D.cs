@@ -4,7 +4,7 @@ using Age.Numerics;
 
 namespace Age.Scene;
 
-public abstract class Node2D : Node
+public abstract class Node2D : RenderNode
 {
     internal static int CacheVersion { get; set; } = 1;
 
@@ -82,9 +82,9 @@ public abstract class Node2D : Node
 
             callback.Invoke();
 
-            if (this.IsConnected)
+            if (this.Tree is RenderTree renderTree)
             {
-                this.Tree.IsDirty = true;
+                renderTree.IsDirty = true;
             }
         }
     }

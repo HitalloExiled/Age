@@ -20,10 +20,10 @@ public class TextNode : ContainerNode
     public TextNode() =>
         this.Layout = new(this);
 
-    protected override void Connected(NodeTree tree) =>
+    protected override void Connected(RenderTree renderTree) =>
         this.Layout.TargetConnected();
 
-    protected override void Disconnected(NodeTree tree) =>
+    protected override void Disconnected(RenderTree renderTree) =>
         this.Layout.TargetDisconnected();
 
     protected override void Indexed() =>

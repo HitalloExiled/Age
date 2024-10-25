@@ -4,7 +4,6 @@ using Age.Elements;
 using Age.Styling;
 using Age.Numerics;
 using Age.Scene;
-using Age.Storage;
 namespace Age.Internal;
 
 public unsafe class BvhTree

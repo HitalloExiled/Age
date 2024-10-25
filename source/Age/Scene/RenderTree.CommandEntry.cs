@@ -4,7 +4,7 @@ using Age.Numerics;
 
 namespace Age.Scene;
 
-public sealed partial class NodeTree
+public sealed partial class RenderTree
 {
     private enum CommandEntryKind
     {

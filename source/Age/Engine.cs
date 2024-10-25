@@ -1,13 +1,11 @@
 using System.Diagnostics;
 using Age.Core;
-using Age.Internal;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
 using Age.RenderPasses;
 using Age.Scene;
 using Age.Services;
 using Age.Storage;
-using ThirdParty.Vulkan.Flags;
 
 namespace Age;
 

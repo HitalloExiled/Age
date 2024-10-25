@@ -1,6 +1,6 @@
 using Age.Elements;
 
-namespace Age.Tests.Age.Elements;
+namespace Age.Tests.Age.Drawing;
 
 public class ElementTest
 {
@@ -9,13 +9,13 @@ public class ElementTest
     {
         var parent = new FlexBox();
 
-        var text1  = new TextNode();
+        var text1 = new TextNode();
         var child1 = new FlexBox { Name = "child1" };
-        var text2  = new TextNode();
+        var text2 = new TextNode();
         var child2 = new FlexBox { Name = "child2" };
-        var text3  = new TextNode();
+        var text3 = new TextNode();
         var child3 = new FlexBox { Name = "child3" };
-        var text4  = new TextNode();
+        var text4 = new TextNode();
 
         parent.AppendChild(text1);
         parent.AppendChild(child1);

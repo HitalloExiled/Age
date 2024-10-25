@@ -10,7 +10,7 @@ namespace Age.Rendering.Resources;
 
 public class UniformSet : Resource
 {
-    public Shader shader { get; }
+    public Shader Shader { get; }
 
     public DescriptorPool    DescriptorPool { get; }
     public VkDescriptorSet[] DescriptorSets { get; }
@@ -19,7 +19,7 @@ public class UniformSet : Resource
     {
         var key = CreatePoolKey(shader, uniforms);
 
-        this.shader         = shader;
+        this.Shader         = shader;
         this.DescriptorPool = DescriptorPool.CreateDescriptorPool(key);
 
         var descriptorSetLayoutHandle = shader.DescriptorSetLayout.Handle;

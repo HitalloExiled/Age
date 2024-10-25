@@ -4,12 +4,10 @@ using Age.Core;
 using Age.Elements;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
+using Age.Resources;
 using SkiaSharp;
 
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
-using Age.Storage;
-using Age.Rendering.Resources;
-using Age.Resources;
 
 namespace Age.Services;
 
@@ -46,27 +44,6 @@ internal partial class TextService : IDisposable
         this.renderer = renderer;
     }
 
-#if DUMP_IMAGES
-    private static void SaveToFile(string fontFamily, TextureAtlas atlas)
-    {
-        var pixels = atlas.GetPixels().AsSpan().Cast<uint, SKColor>().ToArray();
-
-        var bitmap = new SKBitmap(
-            (int)atlas.Bitmap.Size.Width,
-            (int)atlas.Bitmap.Size.Height
-        )
-        {
-            Pixels = pixels
-        };
-
-        var skimage = SKImage.FromBitmap(bitmap);
-
-        using var stream = File.OpenWrite(Path.Join(Directory.GetCurrentDirectory(), $"Atlas-{fontFamily}-{atlas.Size.Width}x{atlas.Size.Height}.png"));
-
-        skimage.Encode(SKEncodedImageFormat.Png, 100).SaveTo(stream);
-    }
-#endif
-
     private Glyph DrawGlyph(TextureAtlas atlas, char character, string fontFamily, ushort fontSize, in SKRect bounds, SKPaint paint)
     {
         const ushort PADDING = 2;
@@ -83,19 +60,6 @@ internal partial class TextService : IDisposable
             );
 
             using var canvas = new SKCanvas(bitmap);
-
-            var boundsSpec =
-            $"""
-                ===========================
-                Char:   {character}
-                Width:  {bounds.Width}
-                Height: {bounds.Height}
-                X:      {bounds.Location.X}
-                Y:      {bounds.Location.Y}
-                ===========================
-            """;
-
-            Console.WriteLine(boundsSpec);
 
             canvas.DrawText(charString, PADDING + -bounds.Location.X, PADDING + -bounds.Location.Y, paint);
 

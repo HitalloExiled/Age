@@ -56,7 +56,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         this.Pipelines =
         [
             new(canvasShader,          this.vertexBuffer, this.indexBuffer, true, false),
-            new(canvasWireframeShader, this.vertexBuffer, this.wireframeIndexBuffer, true, true),
+            new(canvasWireframeShader, this.vertexBuffer, this.wireframeIndexBuffer, false, true),
         ];
 
         this.canvasStencilMaskShader.Changed += RenderingService.Singleton.RequestDraw;

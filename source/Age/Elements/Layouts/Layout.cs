@@ -37,9 +37,9 @@ internal abstract class Layout
             {
                 this.Parent.RequestUpdate();
             }
-            else if (this.Target.IsConnected)
+            else if (this.Target.Tree is RenderTree renderTree)
             {
-                this.Target.Tree.IsDirty = true;
+                renderTree.IsDirty = true;
             }
         }
     }
