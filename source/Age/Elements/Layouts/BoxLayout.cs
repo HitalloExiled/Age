@@ -1168,7 +1168,7 @@ internal partial class BoxLayout : Layout, IDisposable
                 this.IsScrollable = currentIsScrollable;
             }
 
-            if (this.State.Style.Overflow != OverflowKind.None && this.contentDependent != (Dependency.Width | Dependency.Height))
+            if ((this.State.Style.Overflow ?? OverflowKind.None) != OverflowKind.None && this.contentDependent != (Dependency.Width | Dependency.Height))
             {
                 if (this.ownStencilLayer == null)
                 {
