@@ -37,14 +37,10 @@ public class Viewport : Element
     {
         if (this.SingleCommand is not RectCommand command)
         {
-            this.SingleCommand = command = new()
-            {
-                Id       = this.GetHashCode(),
-                MappedTexture  = default!,
-            };
+            this.SingleCommand = command = new();
         }
 
-        command.Rect    = new Rect<float>(this.RenderTarget.Size.Cast<float>(), default);
+        command.Rect          = new Rect<float>(this.RenderTarget.Size.Cast<float>(), default);
         command.MappedTexture = new(this.RenderTarget.Texture, UVRect.Normalized);
     }
 

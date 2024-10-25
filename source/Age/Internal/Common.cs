@@ -1,11 +1,13 @@
 
+using Age.Core.Extensions;
+using Age.Numerics;
 using Age.Rendering.Resources;
 using SkiaSharp;
 using ThirdParty.Vulkan.Flags;
 
 namespace Age.Internal;
 
-internal static class Common
+public static class Common
 {
     private static readonly string debugDirectory = Path.Join(Directory.GetCurrentDirectory(), ".debug");
 
@@ -41,5 +43,30 @@ internal static class Common
         {
 
         }
+    }
+
+    public static void SaveImage(Bitmap bitmap, string filename)
+    {
+        using var skBitmap = new SKBitmap((int)bitmap.Size.Width, (int)bitmap.Size.Height);
+
+        if (bitmap.ColorMode == ColorMode.Grayscale)
+        {
+            var pixels = new SKColor[skBitmap.Pixels.Length];
+
+            var span = bitmap.Buffer.AsSpan().Cast<byte, short>();
+
+            for (var i = 0; i < pixels.Length; i++)
+            {
+                pixels[i] = (uint)(span[i] << 16);
+            }
+
+            skBitmap.Pixels = pixels;
+        }
+        else
+        {
+            skBitmap.Pixels = bitmap.Buffer.AsSpan().Cast<byte, SKColor>().ToArray();
+        }
+
+        SaveImage(skBitmap, filename);
     }
 }

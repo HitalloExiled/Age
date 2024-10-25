@@ -194,20 +194,19 @@ public unsafe class BvhTree
 
     internal static BvhDebugNode Draw(BvhNode<ContainerNode> bvhNode, Color color)
     {
-        var node = new BvhDebugNode();
-
-        node.SingleCommand = new RectCommand
+        var node = new BvhDebugNode
         {
-            Id             = node.GetHashCode(),
-            Border         = new Border(2, 0, color * new Color(1, 1, 1, 1)),
-            Flags          = Rendering.Shaders.Canvas.CanvasShader.Flags.ColorAsBackground,
-            Rect           = new(
-                bvhNode.AABB.Size.X,
-                bvhNode.AABB.Size.Y,
-                bvhNode.AABB.Position.X,
-                -bvhNode.AABB.Position.Y
-            ),
-            MappedTexture  = new(TextureStorage.Singleton.DefaultTexture, UVRect.Normalized),
+            SingleCommand = new RectCommand
+            {
+                Border = new Border(2, 0, color * new Color(1, 1, 1, 1)),
+                Flags  = Rendering.Shaders.Canvas.CanvasShader.Flags.ColorAsBackground,
+                Rect   = new(
+                    bvhNode.AABB.Size.X,
+                    bvhNode.AABB.Size.Y,
+                    bvhNode.AABB.Position.X,
+                    -bvhNode.AABB.Position.Y
+                ),
+            }
         };
 
         if (bvhNode.Left != null)

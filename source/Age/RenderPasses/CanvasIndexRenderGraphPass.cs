@@ -204,19 +204,22 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
     protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
     {
-        var constant = new CanvasShader.PushConstant
+        if (command.Variant.HasFlag(CanvasShader.Variant.Index))
         {
-            Border    = command.Border,
-            Color     = ColorFormatConverter.RGBAtoBGRA(command.ObjectId | 0xff000000),
-            Flags     = command.Flags,
-            Rect      = command.Rect,
-            Transform = transform,
-            UV        = command.MappedTexture.UV,
-            Viewport  = viewport,
-        };
+            var constant = new CanvasShader.PushConstant
+            {
+                Border    = command.Border,
+                Color     = ColorFormatConverter.RGBAtoBGRA(0xFF000000 | command.ObjectId),
+                Flags     = command.Flags,
+                Rect      = command.Rect,
+                Transform = transform,
+                UV        = command.MappedTexture.UV,
+                Viewport  = viewport,
+            };
 
-        this.CommandBuffer.PushConstant(resource.Shader, constant);
-        this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
+            this.CommandBuffer.PushConstant(resource.Shader, constant);
+            this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
+        }
     }
 
     protected override void Disposed()

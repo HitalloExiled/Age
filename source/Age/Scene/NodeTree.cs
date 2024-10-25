@@ -28,8 +28,8 @@ public sealed partial class NodeTree : Disposable
     internal List<Node>    Nodes    { get; } = new(256);
     internal List<Scene3D> Scenes3D { get; } = [];
 
-    public Root   Root    { get; } = new();
-    public Window Window  { get; }
+    public Root   Root   { get; } = new();
+    public Window Window { get; }
     #endregion
 
     #region 1-bytes
@@ -196,12 +196,14 @@ public sealed partial class NodeTree : Disposable
             var index = x + y * image.Extent.Width;
             var pixel = imageIndex[(int)index];
 
-            var id = (int)(pixel & 0x0000FFFF) - 1;
+            var id = (int)(pixel & 0x00000FFF) - 1;
 
             this.buffer.Allocation.Memory.Unmap();
 
             if (id > -1 && id < this.Nodes.Count)
             {
+                var character = ((pixel >> 12) & 0xFFF) - 1;
+
                 return this.Nodes[id];
             }
         }

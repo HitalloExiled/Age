@@ -40,12 +40,6 @@ public class Engine : Disposable
 
         var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
 
-        this.Window.Resized += () =>
-        {
-            var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
-            Common.SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "CanvasIndex.png");
-        };
-
         var renderGraph = new RenderGraph
         {
             Name   = "Default",

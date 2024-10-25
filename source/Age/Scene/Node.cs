@@ -59,8 +59,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
                     }
                     else if (oldTree != null)
                     {
-                        node.Index = -1;
-
                         node.Disconnected(oldTree);
                     }
                 }

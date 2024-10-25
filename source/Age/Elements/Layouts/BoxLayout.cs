@@ -258,9 +258,8 @@ internal partial class BoxLayout : Layout, IDisposable
         {
             this.Target.SingleCommand = command = new()
             {
-                Id            = this.Target.GetHashCode(),
-                Flags         = Flags.ColorAsBackground,
-                MappedTexture = new(TextureStorage.Singleton.DefaultTexture, UVRect.Normalized),
+                Flags   = Flags.ColorAsBackground,
+                Variant = Variant.Default | Variant.Index,
             };
         }
 
@@ -1030,10 +1029,21 @@ internal partial class BoxLayout : Layout, IDisposable
     {
         var command = this.GetRectCommand();
 
-        command.Rect   = new(this.Boundings.Cast<float>(), default);
-        command.Border = this.State.Style.Border ?? default;
-        command.Color  = this.State.Style.BackgroundColor ?? default;
-        command.StencilLayer  = this.StencilLayer;
+        var isDrawable = this.State.Style.Border.HasValue || this.State.Style.BackgroundColor.HasValue;
+
+        if (isDrawable)
+        {
+            command.Rect     = new(this.Boundings.Cast<float>(), default);
+            command.Border   = this.State.Style.Border ?? default;
+            command.Color    = this.State.Style.BackgroundColor ?? default;
+            command.Variant |= Variant.Default;
+        }
+        else
+        {
+            command.Variant &= ~Variant.Default;
+        }
+
+        command.StencilLayer = this.StencilLayer;
 
         this.ownStencilLayer?.MakeDirty();
     }

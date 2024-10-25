@@ -7,6 +7,9 @@ using Age.Rendering.Vulkan;
 using SkiaSharp;
 
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
+using Age.Storage;
+using Age.Rendering.Resources;
+using Age.Resources;
 
 namespace Age.Services;
 
@@ -27,7 +30,7 @@ internal partial class TextService : IDisposable
     private readonly Dictionary<int, TextureAtlas> atlases = [];
     private readonly Dictionary<int, Glyph>        glyphs = [];
     private readonly VulkanRenderer                renderer;
-    private readonly ObjectPool<RectCommand>       rectCommandPool = new(static () => new() { Id = -1, MappedTexture = default! });
+    private readonly ObjectPool<RectCommand>       rectCommandPool = new(static () => new());
 
     private bool disposed;
 
@@ -80,6 +83,19 @@ internal partial class TextService : IDisposable
             );
 
             using var canvas = new SKCanvas(bitmap);
+
+            var boundsSpec =
+            $"""
+                ===========================
+                Char:   {character}
+                Width:  {bounds.Width}
+                Height: {bounds.Height}
+                X:      {bounds.Location.X}
+                Y:      {bounds.Location.Y}
+                ===========================
+            """;
+
+            Console.WriteLine(boundsSpec);
 
             canvas.DrawText(charString, PADDING + -bounds.Location.X, PADDING + -bounds.Location.Y, paint);
 
@@ -186,9 +202,26 @@ internal partial class TextService : IDisposable
             LineHeight = lineHeight,
         };
 
+        var elementIndex = textNode.Index + 1;
+
         for (var i = 0; i < text.Length; i++)
         {
             var character = text[i];
+
+            if (character != '\n')
+            {
+                var selectionCommand = this.rectCommandPool.Get();
+
+                selectionCommand.Rect          = new(new(glyphsWidths[i], lineHeight), new(cursor.X, cursor.Y - baseLine));
+                selectionCommand.Color         = Color.Cyan;
+                selectionCommand.Flags         = Flags.ColorAsBackground;
+                selectionCommand.Variant       = Variant.Index;
+                selectionCommand.MappedTexture = MappedTexture.Default;
+                selectionCommand.StencilLayer  = textNode.Layout.StencilLayer;
+                selectionCommand.ObjectId      = (uint)(((i + 1) << 12) | elementIndex);
+
+                textNode.Commands.Add(selectionCommand);
+            }
 
             if (!char.IsWhiteSpace(character))
             {
@@ -209,17 +242,18 @@ internal partial class TextService : IDisposable
                     P4 = new Point<float>(glyph.Position.X, glyph.Position.Y + glyph.Size.Height) / atlasSize,
                 };
 
-                var command = this.rectCommandPool.Get();
+                var characterCommand = this.rectCommandPool.Get();
 
-                command.Rect          = new(size, position);
-                command.Color         = color;
-                command.Flags         = Flags.GrayscaleTexture | Flags.MultiplyColor;
-                command.MappedTexture = new(atlas.Texture, uv);
-                command.StencilLayer         = textNode.Layout.StencilLayer;
+                characterCommand.Rect          = new(size, position);
+                characterCommand.Color         = color;
+                characterCommand.Flags         = Flags.GrayscaleTexture | Flags.MultiplyColor;
+                characterCommand.Variant       = Variant.Default;
+                characterCommand.MappedTexture = new(atlas.Texture, uv);
+                characterCommand.StencilLayer  = textNode.Layout.StencilLayer;
 
-                textNode.Commands.Add(command);
+                textNode.Commands.Add(characterCommand);
 
-                boundings.Width = uint.Max(boundings.Width, (uint)float.Round(position.X + bounds.Right));
+                boundings.Width = uint.Max(boundings.Width, (uint)float.Round(cursor.X + glyphsWidths[i]));
                 cursor.X += (int)float.Round(glyphsWidths[i]);
 
             }

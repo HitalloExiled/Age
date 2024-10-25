@@ -1,4 +1,6 @@
 using Age.Commands;
+using Age.Core.Extensions;
+using Age.Rendering.Shaders.Canvas;
 using Age.Services;
 
 namespace Age.Elements.Layouts;
@@ -43,11 +45,16 @@ internal class TextLayout(TextNode target): Layout
 
     public void TargetIndexed()
     {
-        for (var i = 0; i < this.Target.Commands.Count; i++)
-        {
-            var command = (RectCommand)this.Target.Commands[i];
+        var parentIndex = this.Target.Index + 1;
+        var i           = 1;
 
-            command.ObjectId = (uint)((this.Target.Index + 1u) | (i + 1u) << 16);
+        foreach (var command in this.Target.Commands.AsSpan())
+        {
+            if (command.Variant.HasFlag(CanvasShader.Variant.Index))
+            {
+                command.ObjectId = (uint)((i << 12) | parentIndex);
+                i++;
+            }
         }
     }
 
