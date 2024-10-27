@@ -1,7 +1,7 @@
+using Age.Core;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using Age.Core;
 
 namespace Age.Scene;
 
@@ -75,6 +75,109 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     [MemberNotNullWhen(true, nameof(Tree))]
     public bool IsConnected => this.Tree != null;
+
+    internal static Node[] SelectBetween(Node start, Node end)
+    {
+        if (start == end)
+        {
+            return [];
+        }
+
+        var ancestor = GetLowestCommonAncestor(start, end);
+
+        var (left, right) = start < end
+            ? (start, end)
+            : (end, start);
+
+        var leftNodes  = new List<Node>();
+        var rightNodes = new List<Node>();
+
+        while (left!.Parent != ancestor)
+        {
+            for (var nextSibling = left.NextSibling; nextSibling != null; nextSibling = nextSibling.NextSibling)
+            {
+                leftNodes.Add(nextSibling);
+            }
+
+            left = left.Parent;
+        }
+
+        while (right!.Parent != ancestor)
+        {
+            for (var previousSibling = right.PreviousSibling; previousSibling != null; previousSibling = previousSibling.PreviousSibling)
+            {
+                rightNodes.Add(previousSibling);
+            }
+
+            right = right.Parent;
+        }
+
+        rightNodes.Reverse();
+
+        return [..leftNodes, ..rightNodes];
+    }
+
+    public static Node? GetLowestCommonAncestor(Node left, Node right)
+    {
+        if (left.Parent == right.Parent)
+        {
+            return left.Parent;
+        }
+        else if (left == right.Parent)
+        {
+            return left;
+        }
+        else if (left.Parent == right)
+        {
+            return right;
+        }
+        else
+        {
+            var leftDepth  = 0;
+            var rightDepth = 0;
+
+            var currentLeft  = left.Parent;
+            var currentRight = right.Parent;
+
+            while (currentLeft != null || currentRight != null)
+            {
+                if (currentLeft != null)
+                {
+                    leftDepth++;
+                    currentLeft  = currentLeft.Parent;
+                }
+
+                if (currentRight != null)
+                {
+                    rightDepth++;
+                    currentRight  = currentRight.Parent;
+                }
+            }
+
+            currentLeft  = left;
+            currentRight = right;
+
+            while (leftDepth > rightDepth)
+            {
+                currentLeft = currentLeft?.Parent;
+                leftDepth--;
+            }
+
+            while (leftDepth < rightDepth)
+            {
+                currentRight = currentRight?.Parent;
+                rightDepth--;
+            }
+
+            while (currentLeft != currentRight)
+            {
+                currentLeft  = currentLeft?.Parent;
+                currentRight = currentRight?.Parent;
+            }
+
+            return currentLeft;
+        }
+    }
 
     IEnumerator IEnumerable.GetEnumerator() =>
         this.GetEnumerator();
@@ -241,7 +344,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             }
             else
             {
-                for (var node = this.PreviousSibling; node != this.FirstChild; node = node?.PreviousSibling)
+                for (var node = this.PreviousSibling; node != null; node = node?.PreviousSibling)
                 {
                     if (node == other)
                     {
@@ -276,6 +379,21 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void DisposeChildren(Node start, Node end) =>
         this.RemoveChildren(start, end, true);
+
+    public int GetDepth()
+    {
+        var depth = 0;
+
+        var node = this.Parent;
+
+        while (node != null)
+        {
+            depth++;
+            node = node.Parent;
+        }
+
+        return depth;
+    }
 
     public IEnumerator<Node> GetEnumerator() =>
         new Enumerator(this);
@@ -369,4 +487,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         return this.Parent == parent;
     }
+
+    public static bool operator >(Node left, Node right) => left.CompareTo(right) == 1;
+    public static bool operator <(Node left, Node right) => left.CompareTo(right) == -1;
 }

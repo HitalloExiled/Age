@@ -1,6 +1,6 @@
 using Age.Elements;
 
-namespace Age.Tests.Age.Drawing;
+namespace Age.Tests.Age.Elements;
 
 public class ElementTest
 {
