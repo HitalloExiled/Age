@@ -248,7 +248,10 @@ internal partial class BoxLayout : Layout, IDisposable
             alignmentAxis &= ~AlignmentAxis.Vertical;
         }
 
-        return new(Normalize(x), Normalize(y));
+        static float normalize(float value) =>
+            (1 + value) / 2;
+
+        return new(normalize(x), normalize(y));
     }
 
     private RectCommand GetRectCommand()
@@ -258,15 +261,14 @@ internal partial class BoxLayout : Layout, IDisposable
             this.Target.SingleCommand = command = new()
             {
                 Flags   = Flags.ColorAsBackground,
-                Variant = Variant.Default | Variant.Index,
+                Variant = Variant.Color | Variant.Index,
             };
         }
 
         return command;
     }
 
-    private static float Normalize(float value) =>
-        (1 + value) / 2;
+
 
     private void CalculateLayout()
     {
@@ -1035,11 +1037,11 @@ internal partial class BoxLayout : Layout, IDisposable
             command.Rect     = new(this.Boundings.Cast<float>(), default);
             command.Border   = this.State.Style.Border ?? default;
             command.Color    = this.State.Style.BackgroundColor ?? default;
-            command.Variant |= Variant.Default;
+            command.Variant |= Variant.Color;
         }
         else
         {
-            command.Variant &= ~Variant.Default;
+            command.Variant &= ~Variant.Color;
         }
 
         command.StencilLayer = this.StencilLayer;

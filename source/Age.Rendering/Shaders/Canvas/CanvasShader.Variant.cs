@@ -4,7 +4,7 @@ public partial class CanvasShader
 {
     public enum Variant : uint
     {
-        Default   = 1 << 0,
+        Color     = 1 << 0,
         Index     = 1 << 1,
         Stencil   = 1 << 2,
         Wireframe = 1 << 3,

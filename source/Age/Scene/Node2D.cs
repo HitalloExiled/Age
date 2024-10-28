@@ -9,12 +9,10 @@ public abstract class Node2D : RenderNode
     internal static int CacheVersion { get; set; } = 1;
 
     private Transform2D             localTransform = new();
-    private Vector2<float>          pivot;
     private CacheValue<Transform2D> transformCache;
 
     private Transform2D ParentTransform      => (this.Parent as Node2D)?.Transform ?? new();
     private Transform2D ParentTransformCache => (this.Parent as Node2D)?.TransformCache ?? new();
-    private Transform2D PivotedTransform     => Transform2D.CreateTranslated(this.Pivot) * this.LocalTransform * Transform2D.CreateTranslated(-this.Pivot);
 
     internal List<Command> Commands { get; init; } = [];
 
@@ -47,7 +45,7 @@ public abstract class Node2D : RenderNode
             {
                 this.transformCache = new()
                 {
-                    Value   = this.ParentTransformCache * this.PivotedTransform,
+                    Value   = this.ParentTransformCache * this.LocalTransform,
                     Version = CacheVersion
                 };
             }
@@ -62,16 +60,10 @@ public abstract class Node2D : RenderNode
         set => this.Set(ref this.localTransform, value, this.TransformChanged);
     }
 
-    public virtual Vector2<float> Pivot
-    {
-        get => this.pivot;
-        set => this.Set(ref this.pivot, value, this.TransformChanged);
-    }
-
     public virtual Transform2D Transform
     {
-        get => this.ParentTransform * this.PivotedTransform;
-        set => this.LocalTransform = this.ParentTransform.Inverse() * value * this.PivotedTransform.Inverse();
+        get => this.ParentTransform * this.LocalTransform;
+        set => this.LocalTransform = this.ParentTransform.Inverse() * value * this.LocalTransform.Inverse();
     }
 
     protected void Set<T>(ref T field, in T value, Action callback)

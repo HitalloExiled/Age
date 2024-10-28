@@ -1,9 +1,8 @@
-using System.Text;
 using Age.Elements.Layouts;
-using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Scene;
 using Age.Styling;
+using System.Text;
 
 using Key                  = Age.Platforms.Display.Key;
 using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
@@ -138,8 +137,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     public bool IsFocused { get; internal set; }
     #endregion
 
-    public Element? ParentElement => this.Parent as Element;
-
     public Element? FirstElementChild
     {
         get
@@ -269,12 +266,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 this.Layout.RequestUpdate();
             }
         }
-    }
-
-    public override Transform2D Transform
-    {
-        get => this.Layout.Transform * base.Transform;
-        set => this.LocalTransform = value * this.Transform.Inverse();
     }
 
     public Element()

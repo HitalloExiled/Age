@@ -11,6 +11,7 @@ using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Services;
 
+
 internal partial class TextService : IDisposable
 {
     public struct TextDrawInfo
@@ -92,16 +93,6 @@ internal partial class TextService : IDisposable
         return atlas;
     }
 
-    private void ReleaseCommands(List<Command> commands)
-    {
-        foreach (var command in commands)
-        {
-            this.rectCommandPool.Return((RectCommand)command);
-        }
-
-        commands.Clear();
-    }
-
     protected virtual void Dispose(bool disposing)
     {
         if (!this.disposed)
@@ -158,34 +149,54 @@ internal partial class TextService : IDisposable
         var cursor     = new Point<int>(0, baseLine);
         var boundings  = new Size<uint>(0, lineHeight);
 
-        this.ReleaseCommands(commands);
+        this.ReleaseCommands(commands, text.Length);
 
         var textDrawInfo = new TextDrawInfo
         {
-            Start      = cursor.Y,
+            Start = cursor.Y,
             LineHeight = lineHeight,
         };
 
         var elementIndex = textNode.Index + 1;
 
+        var selectionStart = 0u;
+        var selectionEnd   = 0u;
+        var hasSelection   = false;
+
+        if (textNode.Layout.Selection.HasValue)
+        {
+            hasSelection = true;
+
+            (selectionStart, selectionEnd) = textNode.Layout.Selection.Value.Start < textNode.Layout.Selection.Value.End
+                ? (textNode.Layout.Selection.Value.Start, textNode.Layout.Selection.Value.End)
+                : (textNode.Layout.Selection.Value.End, textNode.Layout.Selection.Value.Start);
+        }
+
         for (var i = 0; i < text.Length; i++)
         {
             var character = text[i];
 
-            if (character != '\n')
+            var selectionCommand = this.rectCommandPool.Get();
+
+            selectionCommand.Rect          = new(new(glyphsWidths[i], lineHeight), new(cursor.X, cursor.Y - baseLine));
+            selectionCommand.MappedTexture = MappedTexture.Default;
+            selectionCommand.StencilLayer  = textNode.Layout.StencilLayer;
+            selectionCommand.ObjectId      = (uint)(((i + 1) << 12) | elementIndex);
+
+            if (hasSelection && i >= selectionStart && i < selectionEnd && (character != '\n' || i < selectionEnd - 1))
             {
-                var selectionCommand = this.rectCommandPool.Get();
-
-                selectionCommand.Rect          = new(new(glyphsWidths[i], lineHeight), new(cursor.X, cursor.Y - baseLine));
-                selectionCommand.Color         = Color.Cyan;
-                selectionCommand.Flags         = Flags.ColorAsBackground;
-                selectionCommand.Variant       = Variant.Index;
-                selectionCommand.MappedTexture = MappedTexture.Default;
-                selectionCommand.StencilLayer  = textNode.Layout.StencilLayer;
-                selectionCommand.ObjectId      = (uint)(((i + 1) << 12) | elementIndex);
-
-                textNode.Commands.Add(selectionCommand);
+                selectionCommand.Color   = Color.Blue;
+                selectionCommand.Flags   = Flags.ColorAsBackground;
+                selectionCommand.Variant = Variant.Index | Variant.Color;
             }
+            else
+            {
+                selectionCommand.Color   = default;
+                selectionCommand.Flags   = default;
+                selectionCommand.Variant = Variant.Index;
+            }
+
+            commands[i] = selectionCommand;
 
             if (!char.IsWhiteSpace(character))
             {
@@ -211,11 +222,11 @@ internal partial class TextService : IDisposable
                 characterCommand.Rect          = new(size, position);
                 characterCommand.Color         = color;
                 characterCommand.Flags         = Flags.GrayscaleTexture | Flags.MultiplyColor;
-                characterCommand.Variant       = Variant.Default;
+                characterCommand.Variant       = Variant.Color;
                 characterCommand.MappedTexture = new(atlas.Texture, uv);
                 characterCommand.StencilLayer  = textNode.Layout.StencilLayer;
 
-                textNode.Commands.Add(characterCommand);
+                commands.Add(characterCommand);
 
                 boundings.Width = uint.Max(boundings.Width, (uint)float.Round(cursor.X + glyphsWidths[i]));
                 cursor.X += (int)float.Round(glyphsWidths[i]);
@@ -236,10 +247,38 @@ internal partial class TextService : IDisposable
 
         atlas.Update();
 
-        textDrawInfo.End       = cursor.Y;
+        textDrawInfo.End = cursor.Y;
         textDrawInfo.Boundings = boundings;
 
         return textDrawInfo;
+    }
+
+    private void ReleaseCommands(List<Command> commands, int length)
+    {
+        if (length < commands.Count)
+        {
+            foreach (var command in commands)
+            {
+                this.rectCommandPool.Return((RectCommand)command);
+            }
+
+            commands.RemoveRange(length, commands.Count - length);
+        }
+        else
+        {
+            for (var i = 0; i < length; i++)
+            {
+                if (i < commands.Count)
+                {
+                    this.rectCommandPool.Return((RectCommand)commands[i]);
+                    commands[i] = default!;
+                }
+                else
+                {
+                    commands.Add(default!);
+                }
+            }
+        }
     }
 
     public void Dispose()

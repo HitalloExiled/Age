@@ -30,7 +30,9 @@ public abstract class ContainerNode : Node2D
 
     public override Transform2D Transform
     {
-        get => base.Transform * this.Layout.Transform;
-        set => this.LocalTransform = base.Transform.Inverse() * value * this.Layout.Transform.Inverse();
+        get => this.Layout.Transform * base.Transform;
+        set => this.LocalTransform = value * this.Transform.Inverse();
     }
+
+    public Element? ParentElement => this.Parent as Element;
 }

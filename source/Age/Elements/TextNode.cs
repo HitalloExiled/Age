@@ -9,8 +9,6 @@ public class TextNode : ContainerNode
 
     public override string NodeName { get; } = nameof(TextNode);
 
-    public Element? ParentElement => this.Parent as Element;
-
     public string? Value
     {
         get => this.Layout.Text;
@@ -29,6 +27,18 @@ public class TextNode : ContainerNode
     protected override void Indexed() =>
         this.Layout.TargetIndexed();
 
+    internal void ClearSelection() =>
+        this.Layout.ClearSelection();
+
+    internal void PropagateSelection(uint characterPosition) =>
+        this.Layout.PropagateSelection(characterPosition);
+
+    internal void SetCaret(uint position) =>
+        this.Layout.SetCaret(position);
+
     public override string ToString() =>
         this.Value ?? "";
+
+    internal void UpdateSelection(ushort x, ushort y, uint character) =>
+        this.Layout.UpdateSelection(x, y, character);
 }

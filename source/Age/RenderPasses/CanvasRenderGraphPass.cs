@@ -202,7 +202,7 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
     protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
     {
-        if (command.Variant.HasFlag(CanvasShader.Variant.Default) || command.Variant.HasFlag(CanvasShader.Variant.Wireframe))
+        if (command.Variant.HasFlag(CanvasShader.Variant.Color) || command.Variant.HasFlag(CanvasShader.Variant.Wireframe))
         {
             var constant = new CanvasShader.PushConstant
             {
