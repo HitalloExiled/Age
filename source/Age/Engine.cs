@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
@@ -6,6 +5,7 @@ using Age.RenderPasses;
 using Age.Scene;
 using Age.Services;
 using Age.Storage;
+using System.Diagnostics;
 
 namespace Age;
 
@@ -20,9 +20,9 @@ public class Engine : Disposable
 
     public Window Window { get; }
 
-    private readonly TextService    textService;
-    private readonly TextureStorage textureStorage;
     private readonly ShaderStorage  shaderStorage;
+    private readonly TextStorage    textStorage;
+    private readonly TextureStorage textureStorage;
 
     public bool Running { get; private set; }
 
@@ -33,17 +33,15 @@ public class Engine : Disposable
         this.Window           = new Window(name, windowSize, windowPosition);
         this.renderingService = new RenderingService(this.renderer);
         this.shaderStorage    = new ShaderStorage(this.renderer);
-        this.textService      = new TextService(this.renderer);
+        this.textStorage      = new TextStorage(this.renderer);
         this.textureStorage   = new TextureStorage(this.renderer);
-
-        var canvasIndexRenderGraphPass = new CanvasIndexRenderGraphPass(this.renderer, this.Window);
 
         var renderGraph = new RenderGraph
         {
             Name   = "Default",
             Passes =
             [
-                canvasIndexRenderGraphPass,
+                new CanvasIndexRenderGraphPass(this.renderer, this.Window),
                 new SceneRenderGraphPass(this.renderer, this.Window),
                 new CanvasRenderGraphPass(this.renderer, this.Window),
             ]
@@ -65,7 +63,7 @@ public class Engine : Disposable
             Platforms.Display.Window.CloseAll();
 
             this.renderingService.Dispose();
-            this.textService.Dispose();
+            this.textStorage.Dispose();
             this.textureStorage.Dispose();
             this.shaderStorage.Dispose();
             this.renderer.Dispose();

@@ -191,8 +191,6 @@ public sealed partial class RenderTree : NodeTree
     {
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var characterPosition);
 
-        this.lastFocusedElement?.InvokeBlur(mouseEvent);
-
         if (mouseEvent.Button == mouseEvent.PrimaryButton)
         {
             this.lastFocusedTextNode?.ClearSelection();
@@ -208,9 +206,13 @@ public sealed partial class RenderTree : NodeTree
 
                 if (mouseEvent.Button == mouseEvent.PrimaryButton)
                 {
-                    textNode.SetCaret(characterPosition);
+                    textNode.SetCaret(mouseEvent.X, mouseEvent.Y, characterPosition);
 
-                    this.lastFocusedTextNode = textNode;
+                    if (this.lastFocusedTextNode != textNode)
+                    {
+                        this.lastFocusedTextNode?.ClearCaret();
+                        this.lastFocusedTextNode = textNode;
+                    }
                 }
             }
             else
@@ -227,6 +229,7 @@ public sealed partial class RenderTree : NodeTree
 
                 if (this.lastFocusedElement != element)
                 {
+                    this.lastFocusedElement?.InvokeBlur(mouseEvent);
                     this.lastFocusedElement = element;
 
                     element.InvokeFocus(mouseEvent);
@@ -235,7 +238,10 @@ public sealed partial class RenderTree : NodeTree
         }
         else
         {
+            this.lastFocusedElement?.InvokeBlur(mouseEvent);
             this.lastFocusedElement  = null;
+
+            this.lastFocusedTextNode?.ClearCaret();
             this.lastFocusedTextNode = null;
         }
     }
@@ -308,7 +314,7 @@ public sealed partial class RenderTree : NodeTree
         {
             this.lastFocusedElement?.InvokeDeactivate();
             this.lastFocusedElement = null;
-            this.lastFocusedTextNode = null;
+            // this.lastFocusedTextNode = null;
         }
     }
 

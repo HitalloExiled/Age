@@ -1,5 +1,4 @@
 using Age.Elements;
-using Age.Rendering.Shaders.Canvas;
 
 namespace Age.Commands;
 
@@ -10,7 +9,8 @@ public abstract record Command
     #endregion
 
     #region 4-bytes
-    public uint                 ObjectId { get; set; }
-    public CanvasShader.Variant Variant  { get; set; }
+    public uint            ObjectId        { get; set; }
+    public PipelineVariant PipelineVariant { get; set; }
     #endregion
+
 }

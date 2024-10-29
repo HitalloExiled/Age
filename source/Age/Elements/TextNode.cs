@@ -27,14 +27,17 @@ public class TextNode : ContainerNode
     protected override void Indexed() =>
         this.Layout.TargetIndexed();
 
+    internal void ClearCaret() =>
+        this.Layout.ClearCaret();
+
     internal void ClearSelection() =>
         this.Layout.ClearSelection();
 
     internal void PropagateSelection(uint characterPosition) =>
         this.Layout.PropagateSelection(characterPosition);
 
-    internal void SetCaret(uint position) =>
-        this.Layout.SetCaret(position);
+    internal void SetCaret(ushort x, ushort y, uint position) =>
+        this.Layout.SetCaret(x, y, position);
 
     public override string ToString() =>
         this.Value ?? "";

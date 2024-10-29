@@ -7,7 +7,7 @@ using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Elements.Layouts;
 
-internal partial class BoxLayout : Layout, IDisposable
+internal partial class BoxLayout : Layout
 {
     #region 8-bytes
     private readonly List<Element> dependents = [];
@@ -48,7 +48,6 @@ internal partial class BoxLayout : Layout, IDisposable
 
     #region 1-byte
     private bool dependenciesHasChanged;
-    private bool disposed;
     #endregion
 
     public Size<uint> Boundings =>
@@ -260,8 +259,8 @@ internal partial class BoxLayout : Layout, IDisposable
         {
             this.Target.SingleCommand = command = new()
             {
-                Flags   = Flags.ColorAsBackground,
-                Variant = Variant.Color | Variant.Index,
+                Flags           = Flags.ColorAsBackground,
+                PipelineVariant = PipelineVariant.Color | PipelineVariant.Index,
             };
         }
 
@@ -1034,14 +1033,14 @@ internal partial class BoxLayout : Layout, IDisposable
 
         if (isDrawable)
         {
-            command.Rect     = new(this.Boundings.Cast<float>(), default);
-            command.Border   = this.State.Style.Border ?? default;
-            command.Color    = this.State.Style.BackgroundColor ?? default;
-            command.Variant |= Variant.Color;
+            command.Rect             = new(this.Boundings.Cast<float>(), default);
+            command.Border           = this.State.Style.Border ?? default;
+            command.Color            = this.State.Style.BackgroundColor ?? default;
+            command.PipelineVariant |= PipelineVariant.Color;
         }
         else
         {
-            command.Variant &= ~Variant.Color;
+            command.PipelineVariant &= ~PipelineVariant.Color;
         }
 
         command.StencilLayer = this.StencilLayer;
@@ -1205,18 +1204,8 @@ internal partial class BoxLayout : Layout, IDisposable
         this.Target.Visible = !hidden;
     }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!this.disposed)
-        {
-            if (disposing)
-            {
-                this.ownStencilLayer?.Dispose();
-            }
-
-            this.disposed = true;
-        }
-    }
+    protected override void Disposed() =>
+        this.ownStencilLayer?.Dispose();
 
     public void ContainerNodeRemoved(ContainerNode containerNode)
     {
@@ -1250,12 +1239,6 @@ internal partial class BoxLayout : Layout, IDisposable
         {
             this.dependents.Remove(element);
         }
-    }
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     public void TargetIndexed()

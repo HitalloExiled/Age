@@ -204,7 +204,7 @@ public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
     protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
     {
-        if (command.Variant.HasFlag(CanvasShader.Variant.Index))
+        if (command.PipelineVariant.HasFlag(PipelineVariant.Index))
         {
             var constant = new CanvasShader.PushConstant
             {

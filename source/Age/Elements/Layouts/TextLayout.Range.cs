@@ -7,6 +7,9 @@ internal partial class TextLayout
         public uint Start = Start;
         public uint End   = End;
 
+        public readonly Range Ordered() => this.Start < this.End
+            ? this
+            : new(this.End, this.Start);
         public readonly Range WithStart(uint start) => new(start, this.End);
         public readonly Range WithEnd(uint end) => new(this.Start, end);
     }

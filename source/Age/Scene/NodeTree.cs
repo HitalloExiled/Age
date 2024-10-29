@@ -8,12 +8,14 @@ public abstract class NodeTree : Disposable
 
     protected Stack<Node> Stack { get; } = [];
 
+    internal List<Timer> Timers { get; } = [];
+
     public Root Root { get; }
 
     protected NodeTree() =>
         this.Root = new() { Tree = this };
 
-    private void CallInitialize()
+    private void InitializeTree()
     {
         this.Stack.Push(this.Root);
 
@@ -33,7 +35,7 @@ public abstract class NodeTree : Disposable
         }
     }
 
-    private void CallLateUpdate()
+    private void LateUpdateTree()
     {
         this.Stack.Push(this.Root);
 
@@ -53,7 +55,15 @@ public abstract class NodeTree : Disposable
         }
     }
 
-    private void CallUpdate()
+    private void UpdateTimers()
+    {
+        foreach (var timer in this.Timers)
+        {
+            timer.Update();
+        }
+    }
+
+    private void UpdateTree()
     {
         this.Stack.Push(this.Root);
 
@@ -75,14 +85,15 @@ public abstract class NodeTree : Disposable
 
     public virtual void Initialize()
     {
-        this.CallInitialize();
-        this.CallLateUpdate();
+        this.InitializeTree();
+        this.LateUpdateTree();
     }
 
     public virtual void Update()
     {
-        this.CallUpdate();
-        this.CallLateUpdate();
+        this.UpdateTimers();
+        this.UpdateTree();
+        this.LateUpdateTree();
 
         this.Updated?.Invoke();
     }
