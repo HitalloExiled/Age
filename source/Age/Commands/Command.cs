@@ -10,6 +10,7 @@ public abstract record Command
 
     #region 4-bytes
     public uint            ObjectId        { get; set; }
+    public uint            Metadata        { get; set; }
     public PipelineVariant PipelineVariant { get; set; }
     #endregion
 

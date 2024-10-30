@@ -115,13 +115,6 @@ internal partial class TextLayout : Layout
         }
     }
 
-    private static void ClearSelection(RectCommand rectCommand)
-    {
-        rectCommand.Color           = default;
-        rectCommand.Flags           = default;
-        rectCommand.PipelineVariant = PipelineVariant.Index;
-    }
-
     private static void ReleaseCommands(List<Command> commands, int length)
     {
         if (length < commands.Count)
@@ -151,17 +144,22 @@ internal partial class TextLayout : Layout
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ApplySelection(int index, in Range range, RectCommand rectCommand)
+    private void ApplySelection(int index, in Range range, RectCommand selectionCommand)
     {
         if (index >= range.Start && index < range.End && (this.text![index] != '\n' || index < range.End - 1))
         {
-            rectCommand.Color           = Color.Blue;
-            rectCommand.Flags           = Flags.ColorAsBackground;
-            rectCommand.PipelineVariant = PipelineVariant.Index | PipelineVariant.Color;
+            selectionCommand.Color           = new(0, 0, 1, 0.5f);
+            selectionCommand.Flags           = Flags.ColorAsBackground;
+            selectionCommand.PipelineVariant = PipelineVariant.Index | PipelineVariant.Color;
+
+            if (selectionCommand.Metadata != default)
+            {
+                ((RectCommand)this.target.Commands[(int)selectionCommand.Metadata]).Color = Color.White;
+            }
         }
         else
         {
-            ClearSelection(rectCommand);
+            this.ClearSelection(selectionCommand);
         }
     }
 
@@ -176,6 +174,18 @@ internal partial class TextLayout : Layout
             caretCommand.PipelineVariant = this.caretIsVisible ? PipelineVariant.Color : default;
 
             this.RequestUpdate();
+        }
+    }
+
+    private void ClearSelection(RectCommand selectionCommand)
+    {
+        selectionCommand.Color           = default;
+        selectionCommand.Flags           = default;
+        selectionCommand.PipelineVariant = PipelineVariant.Index;
+
+        if (selectionCommand.Metadata != default)
+        {
+            ((RectCommand)this.target.Commands[(int)selectionCommand.Metadata]).Color = this.Parent?.State.Style.Color ?? default;
         }
     }
 
@@ -230,7 +240,7 @@ internal partial class TextLayout : Layout
         {
             for (var i = 0; i < textLength; i++)
             {
-                ClearSelection((RectCommand)this.target.Commands[i]);
+                this.ClearSelection((RectCommand)this.target.Commands[i]);
             }
         }
     }
@@ -284,10 +294,11 @@ internal partial class TextLayout : Layout
 
         caretCommand.MappedTexture   = MappedTexture.Default;
         caretCommand.StencilLayer    = this.StencilLayer;
-        caretCommand.Rect            = default;
         caretCommand.Color           = default;
         caretCommand.Flags           = default;
+        caretCommand.Metadata        = default;
         caretCommand.PipelineVariant = default;
+        caretCommand.Rect            = default;
 
         this.target.Commands[text.Length] = caretCommand;
 
@@ -297,19 +308,11 @@ internal partial class TextLayout : Layout
 
             var selectionCommand = rectCommandPool.Get();
 
-            selectionCommand.Rect          = new(new(glyphsWidths[i], lineHeight), new(cursor.X, cursor.Y - baseLine));
             selectionCommand.MappedTexture = MappedTexture.Default;
-            selectionCommand.StencilLayer  = this.StencilLayer;
             selectionCommand.ObjectId      = (uint)(((i + 1) << 12) | elementIndex);
-
-            if (range.HasValue)
-            {
-                this.ApplySelection(i, range.Value, selectionCommand);
-            }
-            else
-            {
-                ClearSelection(selectionCommand);
-            }
+            selectionCommand.Rect          = new(new(glyphsWidths[i], lineHeight), new(cursor.X, cursor.Y - baseLine));
+            selectionCommand.StencilLayer  = this.StencilLayer;
+            selectionCommand.Metadata      = default;
 
             this.target.Commands[i] = selectionCommand;
 
@@ -341,6 +344,8 @@ internal partial class TextLayout : Layout
                 characterCommand.MappedTexture   = new(atlas.Texture, uv);
                 characterCommand.StencilLayer    = this.StencilLayer;
 
+                selectionCommand.Metadata = (uint)this.target.Commands.Count;
+
                 this.target.Commands.Add(characterCommand);
 
                 boundings.Width = uint.Max(boundings.Width, (uint)float.Round(cursor.X + glyphsWidths[i]));
@@ -357,6 +362,15 @@ internal partial class TextLayout : Layout
             else
             {
                 cursor.X += (int)float.Round(glyphsWidths[i]);
+            }
+
+            if (range.HasValue)
+            {
+                this.ApplySelection(i, range.Value, selectionCommand);
+            }
+            else
+            {
+                this.ClearSelection(selectionCommand);
             }
         }
 
