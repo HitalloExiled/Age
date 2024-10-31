@@ -18,18 +18,11 @@ public record struct Line<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITr
     }
 
     public override readonly string ToString() =>
-        $"{{ Head: {this.A}, Tail: {this.B} }}";
+        $"{{ A: {this.A}, B: {this.B} }}";
 
     public readonly T CrossProduct(in Vector2<T> point) =>
-        (point.X - this.A.X) * (this.B.Y - this.A.Y) - (point.Y - this.A.Y) * (this.B.X - this.A.X);
+        Vector2.CrossProduct(point - this.A, this.B - this.A);
 
-    public readonly T DistanceTo(in Vector2<T> point)
-    {
-        var two = T.One + T.One;
-
-        var numerator   = T.Abs(this.CrossProduct(point));
-        var denominator = T.Sqrt(T.Pow(this.B.Y - this.A.Y, two) + T.Pow(this.B.X - this.A.X, two));
-
-        return numerator / denominator;
-    }
+    public readonly T DistanceTo(in Vector2<T> point) =>
+        T.Abs(this.CrossProduct(point)) / this.Lenght;
 }

@@ -24,27 +24,38 @@ public partial class Window : IDisposable
     private static string? className;
 
     protected static readonly Dictionary<nint, Window> WindowsMap = [];
-
-    protected readonly List<Window> Children = [];
+    protected static bool Registered { get; set; }
 
     public static IEnumerable<Window> Windows => WindowsMap.Values;
 
+
+    #region 8-bytes
+    private string title;
+
+    protected readonly List<Window> Children = [];
+
+    public nint    Handle { get; private set; }
+    public Window? Parent { get; }
+
+    #endregion
+
+    #region 4-bytes
     private Point<int> position;
     private Size<uint> size;
-    private string     title;
-    private bool       disposed;
 
-    protected static bool Registered { get; set; }
+    public CursorKind Cursor { get; set; } = CursorKind.Bean;
+    #endregion
 
-    public Size<uint> ClientSize => this.PlatformGetClientSize();
-    public Window?    Parent     { get; }
+    #region 1-byte
+    private bool disposed;
 
-    public nint Handle      { get; private set; }
     public bool IsClosed    { get; private set; }
     public bool IsMaximized { get; private set; }
     public bool IsMinimized { get; private set; }
     public bool IsVisible   { get; private set; } = true;
+    #endregion
 
+    public Size<uint> ClientSize => this.PlatformGetClientSize();
     public Point<int> Position { get => this.position; set => this.PlatformSetPosition(value); }
     public Size<uint> Size     { get => this.size;     set => this.PlatformSetSize(value); }
     public string     Title    { get => this.title;    set => this.PlatformSetTitle(value); }

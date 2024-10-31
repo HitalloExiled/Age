@@ -52,12 +52,26 @@ public partial class Window
     private static MouseButton GetPrimaryButton() =>
         User32.GetSystemMetrics(User32.SYSTEM_METRIC.SM_SWAPBUTTON) == 0 ? MouseButton.Left : MouseButton.Right;
 
+    private static User32.IDC_STANDARD_CURSORS GetPlatformCursor(CursorKind cursor) =>
+        cursor switch
+        {
+            CursorKind.Arrow => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
+            CursorKind.Bean  => User32.IDC_STANDARD_CURSORS.IDC_IBEAM,
+            CursorKind.Hand  => User32.IDC_STANDARD_CURSORS.IDC_HAND,
+            _ => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
+        };
+
     private static LRESULT WndProc(HWND hwnd, User32.WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam)
     {
         if (WindowsMap.TryGetValue(hwnd, out var window))
         {
             switch (msg)
             {
+                case User32.WINDOW_MESSAGE.WM_SETCURSOR:
+                    // User32.LoadCursorW();
+                    User32.SetCursor(User32.LoadCursorW(default, GetPlatformCursor(window.Cursor)));
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_KEYDOWN:
                     window.KeyDown?.Invoke((Key)wParam.Value);
                     window.KeyPress?.Invoke((Key)wParam.Value);
@@ -214,7 +228,8 @@ public partial class Window
             {
                 cbSize        = (uint)sizeof(User32.WNDCLASSEXW),
                 hbrBackground = default,
-                hCursor       = User32.LoadCursorW(default, User32.IDC_STANDARD_CURSORS.IDC_ARROW),
+                // hCursor       = User32.LoadCursorW(default, User32.IDC_STANDARD_CURSORS.IDC_ARROW),
+                // hCursor       = User32.LoadCursorW(default, User32.IDC_STANDARD_CURSORS.IDC_HAND),
                 hIcon         = default,
                 hIconSm       = default,
                 hInstance     = default,
