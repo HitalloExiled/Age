@@ -381,13 +381,18 @@ internal partial class TextLayout : Layout
         this.Size       = boundings;
     }
 
-    private void GetCharacterOffset(ushort x, ushort _, ref uint character)
+    private void GetCharacterOffset(ushort x, ushort y, ref uint character)
     {
         var command = (RectCommand)this.Target.Commands[(int)character];
 
-        var position = this.Target.Transform.Position + command.Rect.Position;
+        var matrix = this.Target.Transform.Matrix;
 
-        if (x > position.X + command.Rect.Size.Width / 2)
+        var position = matrix * ((Vector2<float>)command.Rect.Position + new Vector2<float>(command.Rect.Size.Width / 2, 0));
+
+        var line = new Line<float>(position, position + matrix.Y);
+        var side = line.CrossProduct(new(x, -y));
+
+        if (side > 0)
         {
             character++;
         }

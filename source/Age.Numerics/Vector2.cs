@@ -1,10 +1,8 @@
-using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("X: {X}, Y: {Y}")]
 public record struct Vector2<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public static Vector2<T> Down  => new(T.Zero, -T.One);
@@ -75,7 +73,7 @@ public record struct Vector2<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
         new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
 
     public override readonly string ToString() =>
-        $"{{ X = {this.X}, Y = {this.Y} }}";
+        $"{{ X: {this.X}, Y: {this.Y} }}";
 
     public static Vector2<T> operator +(in Vector2<T> vector, T value) =>
         new(vector.X + value, vector.Y + value);
