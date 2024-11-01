@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -73,7 +72,7 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
         left.X * right.X + left.Y * right.Y + left.Z * right.Z + left.W * right.W;
 
     public readonly T Dot(in Quaternion<T> other) =>
-        Quaternion<T>.Dot(this, other);
+        Dot(this, other);
 
     public override readonly int GetHashCode() =>
         this.X.GetHashCode() ^ (this.Y.GetHashCode() << 2) ^ (this.Z.GetHashCode() >> 2) ^ (this.W.GetHashCode() >> 1);

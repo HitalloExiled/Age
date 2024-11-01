@@ -222,7 +222,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     {
         var determinant = this.Determinant;
 
-        if (MathX.IsZeroApprox(determinant))
+        if (Math<T>.IsZeroApprox(determinant))
         {
             return default;
         }
@@ -242,12 +242,12 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     }
 
     public readonly bool IsAprox(Matrix3x2<T> other) =>
-        MathX.IsApprox(this.M11, other.M11)
-        && MathX.IsApprox(this.M12, other.M12)
-        && MathX.IsApprox(this.M21, other.M21)
-        && MathX.IsApprox(this.M22, other.M22)
-        && MathX.IsApprox(this.M31, other.M31)
-        && MathX.IsApprox(this.M32, other.M32);
+        Math<T>.IsApprox(this.M11, other.M11)
+        && Math<T>.IsApprox(this.M12, other.M12)
+        && Math<T>.IsApprox(this.M21, other.M21)
+        && Math<T>.IsApprox(this.M22, other.M22)
+        && Math<T>.IsApprox(this.M31, other.M31)
+        && Math<T>.IsApprox(this.M32, other.M32);
 
     public void Rotate(T radians) =>
         this.Rotate(radians, default);

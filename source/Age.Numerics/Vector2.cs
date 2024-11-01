@@ -55,7 +55,7 @@ public record struct Vector2<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
         var angle = T.Acos(Dot(v1, v2) / (v1.Length * v2.Length));
 
         return angle > T.Zero && v1.CrossProduct(v2) < T.Zero
-            ? T.CreateChecked(2 * Math.PI) - angle
+            ? Math<T>.Tau - angle
             : angle;
     }
 
@@ -66,7 +66,7 @@ public record struct Vector2<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
         v1.X * v2.X + v1.Y * v2.Y;
 
     public static bool IsApprox(in Vector2<T> left, in Vector2<T> right) =>
-        MathX.IsApprox(left.X, right.X) && MathX.IsApprox(left.Y, right.Y);
+        Math<T>.IsApprox(left.X, right.X) && Math<T>.IsApprox(left.Y, right.Y);
 
     public static Vector2<T> Normalized(in Vector2<T> vector) =>
         vector.Length is T length && length > T.Zero ? vector / length : default;

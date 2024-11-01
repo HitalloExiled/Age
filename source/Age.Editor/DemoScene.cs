@@ -139,7 +139,7 @@ public class DemoScene : Scene3D
 
         this.axis.Transform = this.axis.Transform with
         {
-            Rotation = new(Vector3<float>.Up, Angle.Radians(angle))
+            Rotation = new(Vector3<float>.Up, Angle.DegreesToRadians(angle))
         };
 
         var input = Vector3<float>.Zero;
@@ -194,7 +194,7 @@ public class DemoScene : Scene3D
         this.FreeCamera.Transform = this.FreeCamera.Transform with
         {
             Position = this.FreeCamera.Transform.Position + movement * (float)Time.DeltaTime,
-            Rotation = this.FreeCamera.Transform.Rotation * new Quaternion<float>(Vector3<float>.Up, Angle.Radians(rotation))
+            Rotation = this.FreeCamera.Transform.Rotation * new Quaternion<float>(Vector3<float>.Up, Angle.DegreesToRadians(rotation))
         };
     }
 }

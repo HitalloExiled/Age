@@ -1,7 +1,3 @@
-
-
-using System.Diagnostics;
-
 namespace Age.Numerics;
 
 public record struct Transform3D

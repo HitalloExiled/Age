@@ -3,4 +3,4 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 
 var config = DefaultConfig.Instance;
-var _ = BenchmarkRunner.Run<TypeCastBenchmarks>(config, args);
+var _ = BenchmarkRunner.Run<GenericMathBenchmarks>(config, args);

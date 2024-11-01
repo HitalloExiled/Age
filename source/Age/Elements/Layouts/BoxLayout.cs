@@ -845,7 +845,7 @@ internal partial class BoxLayout : Layout
     {
         if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlag(Platforms.Display.MouseKeyStates.Shift))
         {
-            var x = MathX.MinMax(-(int)this.content.Width.ClampSubtract(this.Size.Width), 0, this.scrollOffset.X + (int)(5 * mouseEvent.Delta));
+            var x = Math<int>.MinMax(-(int)this.content.Width.ClampSubtract(this.Size.Width), 0, this.scrollOffset.X + (int)(5 * mouseEvent.Delta));
 
             if (this.scrollOffset.X != x)
             {
@@ -857,7 +857,7 @@ internal partial class BoxLayout : Layout
         }
         else if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY)
         {
-            var y = MathX.MinMax(0, (int)this.content.Height.ClampSubtract(this.Size.Height), this.scrollOffset.Y - (int)(5 * mouseEvent.Delta));
+            var y = Math<int>.MinMax(0, (int)this.content.Height.ClampSubtract(this.Size.Height), this.scrollOffset.Y - (int)(5 * mouseEvent.Delta));
 
             if (this.scrollOffset.Y != y)
             {

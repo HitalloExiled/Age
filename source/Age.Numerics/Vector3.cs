@@ -66,7 +66,7 @@ public record struct Vector3<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
         v1.X * v2.X + v1.Y * v2.Y + v1.Z * v2.Z;
 
     public static bool IsAprox(in Vector3<T> left, in Vector3<T> right) =>
-        MathX.IsApprox(left.X, right.X) && MathX.IsApprox(left.Y, right.Y) && MathX.IsApprox(left.Z, right.Z);
+        Math<T>.IsApprox(left.X, right.X) && Math<T>.IsApprox(left.Y, right.Y) && Math<T>.IsApprox(left.Z, right.Z);
 
     public static Vector3<T> Normalized(in Vector3<T> vector) =>
         vector.Length is T length && length > T.Zero ? vector / length : default;

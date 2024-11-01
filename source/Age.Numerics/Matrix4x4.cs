@@ -74,24 +74,24 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
             Unsafe.SkipInit<Quaternion<T>>(out var result);
 
             var trace = this.M11 + this.M22 + this.M33;
-            var half  = T.CreateChecked(0.5);
+
 
             if (trace > T.Zero)
             {
                 var scalar        = T.Sqrt(trace + T.One);
-                var inverseScalar = half / scalar;
+                var inverseScalar = Math<T>.Half / scalar;
 
                 result.X = (this.M23 - this.M32) * inverseScalar;
                 result.Y = (this.M31 - this.M13) * inverseScalar;
                 result.Z = (this.M12 - this.M21) * inverseScalar;
-                result.W = scalar * half;
+                result.W = scalar * Math<T>.Half;
             }
             else if (this.M11 >= this.M22 && this.M11 >= this.M33)
             {
                 var scalar        = T.Sqrt(T.One + this.M11 - this.M22 - this.M33);
-                var inverseScalar = half / scalar;
+                var inverseScalar = Math<T>.Half / scalar;
 
-                result.X = half * scalar;
+                result.X = Math<T>.Half * scalar;
                 result.Y = (this.M12 + this.M21) * inverseScalar;
                 result.Z = (this.M13 + this.M31) * inverseScalar;
                 result.W = (this.M23 - this.M32) * inverseScalar;
@@ -99,21 +99,21 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
             else if (this.M22 > this.M33)
             {
                 var scalar        = T.Sqrt(T.One + this.M22 - this.M11 - this.M33);
-                var inverseScalar = half / scalar;
+                var inverseScalar = Math<T>.Half / scalar;
 
                 result.X = (this.M21 + this.M12) * inverseScalar;
-                result.Y = half * scalar;
+                result.Y = Math<T>.Half * scalar;
                 result.Z = (this.M32 + this.M23) * inverseScalar;
                 result.W = (this.M31 - this.M13) * inverseScalar;
             }
             else
             {
                 var scalar        = T.Sqrt(T.One + this.M33 - this.M11 - this.M22);
-                var inverseScalar = half / scalar;
+                var inverseScalar = Math<T>.Half / scalar;
 
                 result.X = (this.M31 + this.M13) * inverseScalar;
                 result.Y = (this.M32 + this.M23) * inverseScalar;
-                result.Z = half * scalar;
+                result.Z = Math<T>.Half * scalar;
                 result.W = (this.M12 - this.M21) * inverseScalar;
             }
 
@@ -252,7 +252,7 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
         var zw = rotation.Z * rotation.W;
 
         var one = T.One;
-        var two = T.CreateChecked(2);
+        var two = T.One + T.One;
 
         matrix.M11 = one - two * (yy + zz);
         matrix.M12 = two * (xy + zw);
@@ -309,7 +309,7 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
         Unsafe.SkipInit(out Matrix4x4<T> result);
 
-        var two = T.CreateChecked(2);
+        var two = T.One + T.One;
 
         result.M11 = two * nearPlaneDistance / width;
         result.M12 = result.M13 = result.M14 = T.Zero;
@@ -328,7 +328,7 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public static Matrix4x4<T> PerspectiveFov(T fieldOfView, T aspectRatio, T nearPlaneDistance, T farPlaneDistance)
     {
-        if (fieldOfView <= T.Zero || fieldOfView >= T.CreateSaturating(Math.PI))
+        if (fieldOfView <= T.Zero || fieldOfView >= Math<T>.PI)
         {
             throw new ArgumentOutOfRangeException(nameof(fieldOfView));
         }
@@ -337,7 +337,7 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(farPlaneDistance, T.Zero);
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(nearPlaneDistance, farPlaneDistance);
 
-        var num = T.One / T.Tan(fieldOfView * T.CreateSaturating(0.5));
+        var num = T.One / T.Tan(fieldOfView * Math<T>.Half);
 
         Unsafe.SkipInit(out Matrix4x4<T> result);
 
@@ -405,7 +405,7 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
     {
         var determinant = this.Determinant;
 
-        if (MathX.IsZeroApprox(determinant))
+        if (Math<T>.IsZeroApprox(determinant))
         {
             return default;
         }
