@@ -21,7 +21,7 @@ public record struct Line<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITr
         $"{{ A: {this.A}, B: {this.B} }}";
 
     public readonly T CrossProduct(in Vector2<T> point) =>
-        Vector2.CrossProduct(point - this.A, this.B - this.A);
+        Vector2<T>.CrossProduct(point - this.A, this.B - this.A);
 
     public readonly T DistanceTo(in Vector2<T> point) =>
         T.Abs(this.CrossProduct(point)) / this.Lenght;

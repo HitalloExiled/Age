@@ -1,10 +1,9 @@
-using System.Diagnostics;
+using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("[{M11}, {M12}, {M13}, {M14}], [{M21}, {M22}, {M23}, {M24}], [{M31}, {M32}, {M33}, {M34}], [{M41}, {M42}, {M43}, {M44}]")]
 public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIeee754<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public static Matrix4x4<T> Identity => new()
@@ -447,7 +446,7 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
         );
 
     public override readonly string ToString() =>
-        $"[{this.M11}, {this.M12}, {this.M13}, {this.M14}], [{this.M21}, {this.M22}, {this.M23}, {this.M24}], [{this.M31}, {this.M32}, {this.M33}, {this.M34}], [{this.M41}, {this.M42}, {this.M43}, {this.M44}]";
+        string.Create(CultureInfo.InvariantCulture, $"[{this.M11}, {this.M12}, {this.M13}, {this.M14}], [{this.M21}, {this.M22}, {this.M23}, {this.M24}], [{this.M31}, {this.M32}, {this.M33}, {this.M34}], [{this.M41}, {this.M42}, {this.M43}, {this.M44}]");
 
     public static Matrix4x4<T> operator *(in Matrix4x4<T> a, in Matrix4x4<T> b)
     {

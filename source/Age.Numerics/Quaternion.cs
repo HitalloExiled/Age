@@ -1,10 +1,10 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("X: {X}, Y: {Y}, Z: {Z}, W: {W}")]
 public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIeee754<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public static Quaternion<T> Identity => new(T.Zero, T.Zero, T.Zero, T.One);
@@ -82,7 +82,7 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
         Conjugate(this) / this.LengthSquared;
 
     public override readonly string ToString() =>
-        $"{{ X = {this.X}, Y = {this.Y}, Z = {this.Z}, W = {this.W} }}";
+        string.Create(CultureInfo.InvariantCulture, $"{{ X: {this.X}, Y: {this.Y}, Z: {this.Z}, W: {this.W} }}");
 
     public static Quaternion<T> operator +(in Quaternion<T> left, in Quaternion<T> right) =>
         new(left.X + right.X, left.Y + right.Y, left.Z + right.Z, left.W + right.W);

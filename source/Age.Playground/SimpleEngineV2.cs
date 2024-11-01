@@ -1603,7 +1603,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
                 texCoord.Y = 1 - texCoord.Y;
 
-                var vertex = new Vertex(pos, color, texCoord);
+                var vertex = new Vertex(pos.ToVector3(), color, texCoord);
 
                 if (!uniqueVertices.TryGetValue(vertex, out var index))
                 {

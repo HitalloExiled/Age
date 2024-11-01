@@ -1,10 +1,9 @@
-using System.Diagnostics;
+using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("X: {X}, Y: {Y}, Z: {Z}")]
 public record struct Vector3<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public static Vector3<T> Back  => new(T.Zero, T.Zero, -T.One);
@@ -57,68 +56,63 @@ public record struct Vector3<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
         }
     }
 
-    public readonly T Length
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        get => T.Sqrt(this.LengthSquared);
-    }
+    public readonly T Length        => T.Sqrt(this.LengthSquared);
+    public readonly T LengthSquared => this.Dot(this);
 
-    public readonly T LengthSquared
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        get => this.Dot(this);
-    }
+    public static Vector3<T> Cross(in Vector3<T> v1, in Vector3<T> v2) =>
+        new(v1.Y * v2.Z - v1.Z * v2.Y, v1.Z * v2.X - v1.X * v2.Z, v1.X * v2.Y - v1.Y * v2.X);
 
-    public Vector2<T> AsVector2() =>
-        Unsafe.As<Vector3<T>, Vector2<T>>(ref this);
+    public static T Dot(in Vector3<T> v1, in Vector3<T> v2) =>
+        v1.X * v2.X + v1.Y * v2.Y + v1.Z * v2.Z;
 
-    public readonly Vector3<T> Cross(Vector3<T> other) =>
-        new(this.Y * other.Z - this.Z * other.Y, this.Z * other.X - this.X * other.Z, this.X * other.Y - this.Y * other.X);
+    public static bool IsAprox(in Vector3<T> left, in Vector3<T> right) =>
+        MathX.IsApprox(left.X, right.X) && MathX.IsApprox(left.Y, right.Y) && MathX.IsApprox(left.Z, right.Z);
 
-    public readonly bool IsAprox(Vector3<T> other) =>
-        MathX.IsApprox(this.X, other.X) && MathX.IsApprox(this.Y, other.Y) && MathX.IsApprox(this.Z, other.Z);
+    public static Vector3<T> Normalized(in Vector3<T> vector) =>
+        vector.Length is T length && length > T.Zero ? vector / length : default;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly T Dot(Vector3<T> other) =>
-        this.X * other.X + this.Y * other.Y + this.Z * other.Z;
+    public readonly Vector3<T> Cross(in Vector3<T> other) =>
+        Cross(this, other);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public readonly T Dot(in Vector3<T> other) =>
+        Dot(this, other);
+
+    public readonly bool IsAprox(in Vector3<T> other) =>
+        IsAprox(this, other);
+
     public readonly Vector3<T> Normalized() =>
-        this.Length is T length && length > T.Zero ? this / length : default;
+        Normalized(this);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public override readonly string ToString() =>
+        string.Create(CultureInfo.InvariantCulture, $"{{ X: {this.X}, Y: {this.Y}, Z: {this.Z} }}");
+
+    public readonly Vector2<T> ToVector2() =>
+        new(this.X, this.Y);
+
     public static Vector3<T> operator +(Vector3<T> vector, T value) =>
         new(vector.X + value, vector.Y + value, vector.Z + value);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Vector3<T> operator +(Vector3<T> left, Vector3<T> right) =>
         new(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Vector3<T> operator -(Vector3<T> left, Vector3<T> right) =>
         new(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Vector3<T> operator -(Vector3<T> vector) =>
         new(-vector.X, -vector.Y, -vector.Z);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Vector3<T> operator *(Vector3<T> vector, T scalar) =>
         new(vector.X * scalar, vector.Y * scalar, vector.Z * scalar);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Vector3<T> operator *(T scalar, Vector3<T> vector) =>
         vector * scalar;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Vector3<T> operator *(Vector3<T> left, Vector3<T> right) =>
         new(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Vector3<T> operator /(Vector3<T> vector, T scalar) =>
         new(vector.X / scalar, vector.Y / scalar, vector.Z / scalar);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Vector3<T> operator /(Vector3<T> left, Vector3<T> right) =>
         new(left.X / right.X, left.Y / right.Y, left.Z / right.Z);
 
@@ -127,7 +121,4 @@ public record struct Vector3<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
 
     public static implicit operator Vector4<T>(Vector3<T> vector) =>
         new(vector.X, vector.Y, vector.Z, T.Zero);
-
-    public override readonly string ToString()
-        => $"{{ X = {this.X}, Y = {this.Y}, Z = {this.Z} }}";
 }

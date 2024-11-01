@@ -1,10 +1,9 @@
-using System.Diagnostics;
+using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("[{M11}, {M12}], [{M21}, {M22}], [{M31}, {M32}]")]
 public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIeee754<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public static Matrix3x2<T> Identity => new(Vector3<T>.Right, Vector3<T>.Up, Vector3<T>.Front);
@@ -272,7 +271,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     }
 
     public override readonly string ToString() =>
-        $"[{this.M11}, {this.M12}], [{this.M21}, {this.M22}], [{this.M31}, {this.M32}]";
+        string.Create(CultureInfo.InvariantCulture, $"[{this.M11}, {this.M12}], [{this.M21}, {this.M22}], [{this.M31}, {this.M32}]");
 
     public static Matrix3x2<T> operator *(in Matrix3x2<T> left, in Matrix3x2<T> right)
     {

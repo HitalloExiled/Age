@@ -17,7 +17,7 @@ public class Vecto2Tests
             v1.X = float.Cos(angle * RADIANS);
             v1.Y = float.Sin(angle * RADIANS);
 
-            Assert.True(Vector2.Angle(v1, v2) - angle * RADIANS < float.Epsilon);
+            Assert.True(Vector2<float>.Angle(v1, v2) - angle * RADIANS < float.Epsilon);
         }
 
         rotateAndAssert(0);
