@@ -1,4 +1,5 @@
 using Age.Numerics;
+using Age.Platforms.Display;
 
 namespace Age.Styling;
 
@@ -48,6 +49,12 @@ public record Style
     {
         get => this.data.ContentJustification;
         set => this.Set(ref this.data.ContentJustification, value, StyleProperty.ContentJustification);
+    }
+
+    public CursorKind? Cursor
+    {
+        get => this.data.Cursor;
+        set => this.Set(ref this.data.Cursor, value, StyleProperty.Cursor);
     }
 
     public string? FontFamily

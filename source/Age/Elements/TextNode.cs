@@ -33,15 +33,21 @@ public class TextNode : ContainerNode
     internal void ClearSelection() =>
         this.Layout.ClearSelection();
 
+    internal void MouseOver() =>
+        this.Layout.TargetMouseOver();
+
+    internal void MouseOut() =>
+        this.Layout.TargetMouseOut();
+
     internal void PropagateSelection(uint characterPosition) =>
         this.Layout.PropagateSelection(characterPosition);
 
     internal void SetCaret(ushort x, ushort y, uint position) =>
         this.Layout.SetCaret(x, y, position);
 
-    public override string ToString() =>
-        this.Value ?? "";
-
     internal void UpdateSelection(ushort x, ushort y, uint character) =>
         this.Layout.UpdateSelection(x, y, character);
+
+    public override string ToString() =>
+        this.Value ?? "";
 }

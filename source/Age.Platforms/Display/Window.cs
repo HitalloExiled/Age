@@ -43,7 +43,7 @@ public partial class Window : IDisposable
     private Point<int> position;
     private Size<uint> size;
 
-    public CursorKind Cursor { get; set; } = CursorKind.Bean;
+    public CursorKind Cursor { get; set; }
     #endregion
 
     #region 1-byte

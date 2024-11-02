@@ -458,12 +458,14 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
     {
         this.Layout.State.RemoveState(StyledStateManager.State.Hovered);
+        this.Layout.TargetMouseOut();
         this.MouseOut?.Invoke(this.CreateEvent(platformMouseEvent));
     }
 
     internal void InvokeMouseOver(in PlatformMouseEvent platformMouseEvent)
     {
         this.Layout.State.AddState(StyledStateManager.State.Hovered);
+        this.Layout.TargetMouseOver();
         this.MouseOver?.Invoke(this.CreateEvent(platformMouseEvent));
     }
 

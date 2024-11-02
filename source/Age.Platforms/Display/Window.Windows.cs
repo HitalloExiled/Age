@@ -55,9 +55,19 @@ public partial class Window
     private static User32.IDC_STANDARD_CURSORS GetPlatformCursor(CursorKind cursor) =>
         cursor switch
         {
-            CursorKind.Arrow => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
-            CursorKind.Bean  => User32.IDC_STANDARD_CURSORS.IDC_IBEAM,
-            CursorKind.Hand  => User32.IDC_STANDARD_CURSORS.IDC_HAND,
+            CursorKind.Arrow            => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
+            CursorKind.Busy             => User32.IDC_STANDARD_CURSORS.IDC_WAIT,
+            CursorKind.Cross            => User32.IDC_STANDARD_CURSORS.IDC_CROSS,
+            CursorKind.DiagonalResize1  => User32.IDC_STANDARD_CURSORS.IDC_SIZENWSE,
+            CursorKind.DiagonalResize2  => User32.IDC_STANDARD_CURSORS.IDC_SIZENESW,
+            CursorKind.Hand             => User32.IDC_STANDARD_CURSORS.IDC_HAND,
+            CursorKind.Help             => User32.IDC_STANDARD_CURSORS.IDC_HELP,
+            CursorKind.HorizontalResize => User32.IDC_STANDARD_CURSORS.IDC_SIZEWE,
+            CursorKind.Move             => User32.IDC_STANDARD_CURSORS.IDC_SIZEALL,
+            CursorKind.Progress         => User32.IDC_STANDARD_CURSORS.IDC_APPSTARTING,
+            CursorKind.Text             => User32.IDC_STANDARD_CURSORS.IDC_IBEAM,
+            CursorKind.Unavailable      => User32.IDC_STANDARD_CURSORS.IDC_NO,
+            CursorKind.VerticalResize   => User32.IDC_STANDARD_CURSORS.IDC_SIZENS,
             _ => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
         };
 

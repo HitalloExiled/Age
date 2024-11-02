@@ -10,6 +10,8 @@ using Timer = Age.Scene.Timer;
 
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
 using System.Runtime.CompilerServices;
+using Age.Scene;
+using Age.Platforms.Display;
 
 namespace Age.Elements.Layouts;
 
@@ -463,6 +465,22 @@ internal partial class TextLayout : Layout
                 command.ObjectId = (uint)((i << 12) | parentIndex);
                 i++;
             }
+        }
+    }
+
+    public void TargetMouseOver()
+    {
+        if (this.target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = CursorKind.Text;
+        }
+    }
+
+    public void TargetMouseOut()
+    {
+        if (this.target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = this.Parent?.State.Style.Cursor ?? default;
         }
     }
 

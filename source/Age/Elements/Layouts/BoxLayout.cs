@@ -1,6 +1,7 @@
 using Age.Commands;
 using Age.Extensions;
 using Age.Numerics;
+using Age.Scene;
 using Age.Styling;
 
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
@@ -1238,6 +1239,22 @@ internal partial class BoxLayout : Layout
         if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
         {
             this.dependents.Remove(element);
+        }
+    }
+
+    public void TargetMouseOver()
+    {
+        if (this.State.Style.Cursor.HasValue && this.target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = this.State.Style.Cursor.Value;
+        }
+    }
+
+    public void TargetMouseOut()
+    {
+        if (this.target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = default;
         }
     }
 
