@@ -48,9 +48,16 @@ public class TextSelectionTest
                 Hovered = new()
                 {
                     Cursor = CursorKind.Busy,
+                },
+                Active = new()
+                {
+                    Cursor = CursorKind.Move,
+                    Border = new(20, 0, Color.White),
                 }
             }
         };
+
+        world.Focus();
 
         canvas.AppendChild(hello);
         canvas.AppendChild(world);

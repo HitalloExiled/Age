@@ -150,18 +150,6 @@ public sealed partial class RenderTree : NodeTree
         return null;
     }
 
-    [MemberNotNull(nameof(buffer))]
-    private unsafe void UpdateBuffer()
-    {
-        this.buffer?.Dispose();
-
-        var image = this.canvasIndexRenderGraphPass.ColorImage;
-
-        var size = image.Extent.Width * image.Extent.Height * sizeof(uint);
-
-        this.buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
-    }
-
     private void OnContext(in Platforms.Display.ContextEvent contextEvent)
     {
         var element = this.GetElement(contextEvent.X, contextEvent.Y);
@@ -330,6 +318,18 @@ public sealed partial class RenderTree : NodeTree
             this.lastFocusedElement = null;
             // this.lastFocusedTextNode = null;
         }
+    }
+
+    [MemberNotNull(nameof(buffer))]
+    private unsafe void UpdateBuffer()
+    {
+        this.buffer?.Dispose();
+
+        var image = this.canvasIndexRenderGraphPass.ColorImage;
+
+        var size = image.Extent.Width * image.Extent.Height * sizeof(uint);
+
+        this.buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
     }
 
     internal IEnumerable<Command2DEntry> Enumerate2DCommands()

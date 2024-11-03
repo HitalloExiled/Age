@@ -43,8 +43,8 @@ public partial class Window : Disposable
     #region 4-bytes
     private Point<int> position;
     private Size<uint> size;
+    private CursorKind cursor;
 
-    public CursorKind Cursor { get; set; }
     #endregion
 
     #region 1-byte
@@ -55,9 +55,58 @@ public partial class Window : Disposable
     #endregion
 
     public Size<uint> ClientSize => this.PlatformGetClientSize();
-    public Point<int> Position { get => this.position; set => this.PlatformSetPosition(value); }
-    public Size<uint> Size     { get => this.size;     set => this.PlatformSetSize(value); }
-    public string     Title    { get => this.title;    set => this.PlatformSetTitle(value); }
+
+    public CursorKind Cursor
+    {
+        get => this.cursor;
+        set
+        {
+            if (this.cursor != value)
+            {
+                this.cursor = value;
+                PlatformSetCursor(value);
+            }
+        }
+    }
+
+    public Point<int> Position
+    {
+        get => this.position;
+        set
+        {
+            if (this.position != value)
+            {
+                this.position = value;
+                this.PlatformSetPosition(value);
+            }
+        }
+    }
+
+    public Size<uint> Size
+    {
+        get => this.size;
+        set
+        {
+            if (this.size != value)
+            {
+                this.size = value;
+                this.PlatformSetSize(value);
+            }
+        }
+    }
+
+    public string Title
+    {
+        get => this.title;
+        set
+        {
+            if (this.title != value)
+            {
+                this.title = value;
+                this.PlatformSetTitle(value);
+            }
+        }
+    }
 
     public Window(string title, Size<uint> size, Point<int> position, Window? parent = null)
     {

@@ -49,6 +49,8 @@ internal partial class BoxLayout : Layout
 
     #region 1-byte
     private bool dependenciesHasChanged;
+
+    public bool IsHoveringText { get; set; }
     #endregion
 
     public Size<uint> Boundings =>
@@ -267,10 +269,7 @@ internal partial class BoxLayout : Layout
 
         return command;
     }
-
-
-
-    private void CalculateLayout()
+     private void CalculateLayout()
     {
         var stack = this.State.Style.Stack ?? StackKind.Horizontal;
 
@@ -1064,6 +1063,11 @@ internal partial class BoxLayout : Layout
             };
         }
 
+        if (property is StyleProperty.Cursor or StyleProperty.All && this.target.IsHovered && !this.IsHoveringText && this.target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = this.State.Style.Cursor ?? default;
+        }
+
         var oldParentDependent = this.parentDependent;
         var relativePropertiesHasChanged = false;
 
@@ -1242,19 +1246,19 @@ internal partial class BoxLayout : Layout
         }
     }
 
-    public void TargetMouseOver()
-    {
-        if (this.State.Style.Cursor.HasValue && this.target.Tree is RenderTree renderTree)
-        {
-            renderTree.Window.Cursor = this.State.Style.Cursor.Value;
-        }
-    }
-
     public void TargetMouseOut()
     {
         if (this.target.Tree is RenderTree renderTree)
         {
             renderTree.Window.Cursor = default;
+        }
+    }
+
+    public void TargetMouseOver()
+    {
+        if (this.State.Style.Cursor.HasValue && this.target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = this.State.Style.Cursor.Value;
         }
     }
 

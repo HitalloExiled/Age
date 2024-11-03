@@ -1,17 +1,17 @@
 using Age.Commands;
-using Age.Core;
 using Age.Core.Extensions;
+using Age.Core;
 using Age.Numerics;
+using Age.Platforms.Display;
 using Age.Resources;
+using Age.Scene;
 using Age.Services;
 using SkiaSharp;
+using System.Runtime.CompilerServices;
 
 using Timer = Age.Scene.Timer;
 
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
-using System.Runtime.CompilerServices;
-using Age.Scene;
-using Age.Platforms.Display;
 
 namespace Age.Elements.Layouts;
 
@@ -39,19 +39,6 @@ internal partial class TextLayout : Layout
     private bool textIsDirty;
     #endregion
 
-    public TextLayout(TextNode target)
-    {
-        this.target = target;
-        this.timer  = new()
-        {
-            WaitTime = TimeSpan.FromMilliseconds(500),
-        };
-
-        this.timer.Timeout += this.BlinkCaret;
-
-        target.AppendChild(this.timer);
-    }
-
     public int CaretPosition
     {
         get => this.caretPosition;
@@ -66,6 +53,7 @@ internal partial class TextLayout : Layout
             }
         }
     }
+
     public Range? Selection
     {
         get => this.selection;
@@ -79,9 +67,6 @@ internal partial class TextLayout : Layout
             }
         }
     }
-
-    public override TextNode   Target => this.target;
-    public override BoxLayout? Parent => this.target.ParentElement?.Layout;
 
     public override StencilLayer? StencilLayer
     {
@@ -117,9 +102,26 @@ internal partial class TextLayout : Layout
         }
     }
 
+    public override BoxLayout? Parent => this.target.ParentElement?.Layout;
+
     public string? SelectedText => this.text != null && this.selection.HasValue
         ? this.text[(int)this.selection.Value.Start..(int)this.selection.Value.End]
         : null;
+
+    public override TextNode Target => this.target;
+
+    public TextLayout(TextNode target)
+    {
+        this.target = target;
+        this.timer  = new()
+        {
+            WaitTime = TimeSpan.FromMilliseconds(500),
+        };
+
+        this.timer.Timeout += this.BlinkCaret;
+
+        target.AppendChild(this.timer);
+    }
 
     private static void ReleaseCommands(List<Command> commands, int length)
     {
@@ -472,19 +474,21 @@ internal partial class TextLayout : Layout
         }
     }
 
-    public void TargetMouseOver()
-    {
-        if (this.target.Tree is RenderTree renderTree)
-        {
-            renderTree.Window.Cursor = CursorKind.Text;
-        }
-    }
-
     public void TargetMouseOut()
     {
         if (this.target.Tree is RenderTree renderTree)
         {
+            this.Parent!.IsHoveringText = false;
             renderTree.Window.Cursor = this.Parent?.State.Style.Cursor ?? default;
+        }
+    }
+
+    public void TargetMouseOver()
+    {
+        if (this.target.Tree is RenderTree renderTree)
+        {
+            this.Parent!.IsHoveringText = true;
+            renderTree.Window.Cursor = CursorKind.Text;
         }
     }
 

@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using Age.Platforms.Windows.Native.Types;
 
 [assembly: InternalsVisibleTo("Age.Rendering")]

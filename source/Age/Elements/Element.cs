@@ -135,6 +135,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     protected bool IsFocusable { get; set; }
 
     public bool IsFocused { get; internal set; }
+    public bool IsHovered { get; internal set; }
     #endregion
 
     public Element? FirstElementChild
@@ -446,8 +447,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         if (this.IsFocusable)
         {
-            this.Layout.State.AddState(StyledStateManager.State.Focus);
             this.IsFocused = true;
+            this.Layout.State.AddState(StyledStateManager.State.Focus);
             this.Focused?.Invoke(this.CreateEvent(platformMouseEvent));
         }
     }
@@ -457,6 +458,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
     {
+        this.IsHovered = false;
         this.Layout.State.RemoveState(StyledStateManager.State.Hovered);
         this.Layout.TargetMouseOut();
         this.MouseOut?.Invoke(this.CreateEvent(platformMouseEvent));
@@ -464,6 +466,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     internal void InvokeMouseOver(in PlatformMouseEvent platformMouseEvent)
     {
+        this.IsHovered = true;
         this.Layout.State.AddState(StyledStateManager.State.Hovered);
         this.Layout.TargetMouseOver();
         this.MouseOver?.Invoke(this.CreateEvent(platformMouseEvent));
@@ -474,8 +477,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     public void Blur()
     {
-        this.Layout.State.RemoveState(StyledStateManager.State.Focus);
         this.IsFocused = false;
+        this.Layout.State.RemoveState(StyledStateManager.State.Focus);
         this.Blured?.Invoke(new() { Target = this });
     }
 

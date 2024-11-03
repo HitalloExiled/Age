@@ -77,11 +77,6 @@ public partial class Window
         {
             switch (msg)
             {
-                case User32.WINDOW_MESSAGE.WM_SETCURSOR:
-                    // User32.LoadCursorW();
-                    User32.SetCursor(User32.LoadCursorW(default, GetPlatformCursor(window.Cursor)));
-
-                    break;
                 case User32.WINDOW_MESSAGE.WM_KEYDOWN:
                     window.KeyDown?.Invoke((Key)wParam.Value);
                     window.KeyPress?.Invoke((Key)wParam.Value);
@@ -270,6 +265,9 @@ public partial class Window
         return new((uint)(rect.right - rect.left), (uint)(rect.bottom - rect.top));
     }
 
+    protected static void PlatformSetCursor(CursorKind value) =>
+        User32.SetCursor(User32.LoadCursorW(default, GetPlatformCursor(value)));
+
     protected virtual void PlatformClose()
     {
         foreach (var child in this.Children)
@@ -350,9 +348,9 @@ public partial class Window
     protected void PlatformRestore() =>
         User32.ShowWindow(this.Handle, User32.SHOW_WINDOW_COMMANDS.SW_RESTORE);
 
-    protected void PlatformSetPosition(Point<int> value) => this.position = value;
-    protected void PlatformSetSize(Size<uint> value) => this.size = value;
-    protected void PlatformSetTitle(string value) => this.title = value;
+    protected void PlatformSetPosition(in Point<int> value) => throw new NotImplementedException();
+    protected void PlatformSetSize(in Size<uint> value) => throw new NotImplementedException();
+    protected void PlatformSetTitle(string value) => throw new NotImplementedException();
 
     protected void PlatformShow() =>
         User32.ShowWindow(this.Handle, User32.SHOW_WINDOW_COMMANDS.SW_SHOW);
