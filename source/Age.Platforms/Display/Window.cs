@@ -1,3 +1,4 @@
+using Age.Core;
 using Age.Numerics;
 
 namespace Age.Platforms.Display;
@@ -6,7 +7,7 @@ public delegate void MouseEventHandler(in MouseEvent mouseEvent);
 public delegate void ContextEventHandler(in ContextEvent mouseEvent);
 public delegate void KeyEventHandler(Key key);
 
-public partial class Window : IDisposable
+public partial class Window : Disposable
 {
     public event MouseEventHandler?   Click;
     public event Action?              Closed;
@@ -47,8 +48,6 @@ public partial class Window : IDisposable
     #endregion
 
     #region 1-byte
-    private bool disposed;
-
     public bool IsClosed    { get; private set; }
     public bool IsMaximized { get; private set; }
     public bool IsMinimized { get; private set; }
@@ -104,16 +103,11 @@ public partial class Window : IDisposable
         }
     }
 
-    protected virtual void Dispose(bool disposing)
+    protected override void Disposed(bool disposing)
     {
-        if (!this.disposed)
+        if (disposing)
         {
-            if (disposing)
-            {
-                this.Close();
-            }
-
-            this.disposed = true;
+            this.Close();
         }
     }
 
@@ -129,6 +123,9 @@ public partial class Window : IDisposable
             this.IsClosed = true;
         }
     }
+
+    public void SetClipboardData(string value) =>
+        this.PlatformSetClipboardData(value);
 
     public void DoEvents() =>
         this.PlatformDoEvents();
@@ -169,11 +166,5 @@ public partial class Window : IDisposable
         this.PlatformShow();
 
         this.IsVisible = true;
-    }
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 }

@@ -188,6 +188,14 @@ public sealed partial class RenderTree : NodeTree
         element?.InvokeDoubleClick(mouseEvent);
     }
 
+    private void OnKeyDown(Key key)
+    {
+        if (key == Key.C && Input.IsKeyPressed(Key.Control) && this.lastFocusedTextNode?.SelectedText is string selectedText)
+        {
+            this.Window.SetClipboardData(selectedText);
+        }
+    }
+
     private void OnMouseDown(in Platforms.Display.MouseEvent mouseEvent)
     {
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var characterPosition);
@@ -378,6 +386,7 @@ public sealed partial class RenderTree : NodeTree
         {
             this.Window.Context     -= this.OnContext;
             this.Window.DoubleClick -= this.OnDoubleClick;
+            this.Window.KeyDown     -= this.OnKeyDown;
             this.Window.MouseDown   -= this.OnMouseDown;
             this.Window.MouseMove   -= this.OnMouseMove;
             this.Window.MouseUp     -= this.OnMouseUp;
@@ -396,6 +405,7 @@ public sealed partial class RenderTree : NodeTree
 
         this.Window.Context     += this.OnContext;
         this.Window.DoubleClick += this.OnDoubleClick;
+        this.Window.KeyDown     += this.OnKeyDown;
         this.Window.MouseDown   += this.OnMouseDown;
         this.Window.MouseMove   += this.OnMouseMove;
         this.Window.MouseUp     += this.OnMouseUp;

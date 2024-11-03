@@ -117,6 +117,10 @@ internal partial class TextLayout : Layout
         }
     }
 
+    public string? SelectedText => this.text != null && this.selection.HasValue
+        ? this.text[(int)this.selection.Value.Start..(int)this.selection.Value.End]
+        : null;
+
     private static void ReleaseCommands(List<Command> commands, int length)
     {
         if (length < commands.Count)

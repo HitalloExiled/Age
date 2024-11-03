@@ -9,6 +9,8 @@ public class TextNode : ContainerNode
 
     public override string NodeName { get; } = nameof(TextNode);
 
+    public string? SelectedText => this.Layout.SelectedText;
+
     public string? Value
     {
         get => this.Layout.Text;

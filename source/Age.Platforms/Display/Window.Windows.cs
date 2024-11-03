@@ -316,6 +316,16 @@ public partial class Window
         WindowsMap[this.Handle] = this;
     }
 
+    protected void PlatformSetClipboardData(string value)
+    {
+        if (User32.OpenClipboard(this.Handle))
+        {
+            User32.EmptyClipboard();
+            User32.SetClipboardData(value);
+            User32.CloseClipboard();
+        }
+    }
+
     protected void PlatformDoEvents()
     {
         while (User32.PeekMessageW(out var msg, this.Handle, 0, 0, User32.PEEK_MESSAGE.PM_REMOVE) && !this.IsClosed)
