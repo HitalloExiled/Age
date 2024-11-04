@@ -4,7 +4,7 @@ using Age.Numerics;
 
 namespace Age.Scene;
 
-public abstract class Node3D : Node
+public abstract class Node3D : RenderNode
 {
     internal static int CacheVersion { get; set; } = 1;
 

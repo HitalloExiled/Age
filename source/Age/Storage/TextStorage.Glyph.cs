@@ -3,10 +3,10 @@ using Age.Numerics;
 
 namespace Age.Services;
 
-internal partial class TextService
+internal partial class TextStorage
 {
     [DebuggerDisplay("Character: {Character}, Size: {Size}, Position: {Position}")]
-    private record Glyph
+    public record Glyph
     {
         public required TextureAtlas Atlas     { get; init; }
         public required char         Character { get; init; }

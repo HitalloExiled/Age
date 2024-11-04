@@ -22,6 +22,17 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "benchmark",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "-c=Release",
+                "--project=./benchmarks/Age.Benchmarks/Age.Benchmarks.csproj",
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "build",
             "command": "dotnet",
             "type": "process",

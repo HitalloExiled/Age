@@ -69,8 +69,8 @@ public class Matrix4x4Tests
     [Fact]
     public void PerspectiveFov()
     {
-        var actual   = Matrix4x4<float>.PerspectiveFov(Angle.Radians(45), 800 / 400, 0.1f, 10);
-        var expected = Mat4x4.CreatePerspectiveFieldOfView(Angle.Radians(45), 800 / 400, 0.1f, 10);
+        var actual   = Matrix4x4<float>.PerspectiveFov(Angle.DegreesToRadians(45f), 800 / 400, 0.1f, 10);
+        var expected = Mat4x4.CreatePerspectiveFieldOfView(Angle.DegreesToRadians(45f), 800 / 400, 0.1f, 10);
 
         Assert.Equal(Unsafe.As<Mat4x4, Matrix4x4<float>>(ref expected), actual);
     }
@@ -78,8 +78,8 @@ public class Matrix4x4Tests
     [Fact]
     public void PerspectiveFovWithPositiveInfinityFarPlane()
     {
-        var actual   = Matrix4x4<float>.PerspectiveFov(Angle.Radians(45), 800 / 400, 0.1f, float.PositiveInfinity);
-        var expected = Mat4x4.CreatePerspectiveFieldOfView(Angle.Radians(45), 800 / 400, 0.1f, float.PositiveInfinity);
+        var actual   = Matrix4x4<float>.PerspectiveFov(Angle.DegreesToRadians(45f), 800 / 400, 0.1f, float.PositiveInfinity);
+        var expected = Mat4x4.CreatePerspectiveFieldOfView(Angle.DegreesToRadians(45f), 800 / 400, 0.1f, float.PositiveInfinity);
 
         Assert.Equal(Unsafe.As<Mat4x4, Matrix4x4<float>>(ref expected), actual);
     }
@@ -99,8 +99,8 @@ public class Matrix4x4Tests
         // TODO: Review after implements 3D transform on viewport
         static void rotateAndAssert(double angle)
         {
-            var rotated  = Matrix4x4<double>.Rotated(Vector3<double>.Up, Angle.Radians(angle));
-            var rotation = new Quaternion<double>(Vector3<double>.Up, Angle.Radians(angle));
+            var rotated  = Matrix4x4<double>.Rotated(Vector3<double>.Up, Angle.DegreesToRadians(angle));
+            var rotation = new Quaternion<double>(Vector3<double>.Up, Angle.DegreesToRadians(angle));
 
             Assert.True(Math.Abs(rotated.Rotation.Dot(rotation)) > 1 - 0.000001);
 
@@ -134,8 +134,8 @@ public class Matrix4x4Tests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => Matrix4x4<float>.PerspectiveFov(-1, 800 / 400, 0.1f, 10));
         Assert.Throws<ArgumentOutOfRangeException>(() => Matrix4x4<float>.PerspectiveFov((float)Math.PI, 800 / 400, 0.1f, 10));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Matrix4x4<float>.PerspectiveFov(Angle.Radians(45), 800 / 400, 0, 10));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Matrix4x4<float>.PerspectiveFov(Angle.Radians(45), 800 / 400, 0.1f, 0));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Matrix4x4<float>.PerspectiveFov(Angle.Radians(45), 800 / 400, 10, 0.1f));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Matrix4x4<float>.PerspectiveFov(Angle.DegreesToRadians(45f), 800 / 400, 0, 10));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Matrix4x4<float>.PerspectiveFov(Angle.DegreesToRadians(45f), 800 / 400, 0.1f, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Matrix4x4<float>.PerspectiveFov(Angle.DegreesToRadians(45f), 800 / 400, 10, 0.1f));
     }
 }

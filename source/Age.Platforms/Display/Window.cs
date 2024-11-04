@@ -1,3 +1,4 @@
+using Age.Core;
 using Age.Numerics;
 
 namespace Age.Platforms.Display;
@@ -6,7 +7,7 @@ public delegate void MouseEventHandler(in MouseEvent mouseEvent);
 public delegate void ContextEventHandler(in ContextEvent mouseEvent);
 public delegate void KeyEventHandler(Key key);
 
-public partial class Window : IDisposable
+public partial class Window : Disposable
 {
     public event MouseEventHandler?   Click;
     public event Action?              Closed;
@@ -24,30 +25,88 @@ public partial class Window : IDisposable
     private static string? className;
 
     protected static readonly Dictionary<nint, Window> WindowsMap = [];
-
-    protected readonly List<Window> Children = [];
+    protected static bool Registered { get; set; }
 
     public static IEnumerable<Window> Windows => WindowsMap.Values;
 
+
+    #region 8-bytes
+    private string title;
+
+    protected readonly List<Window> Children = [];
+
+    public nint    Handle { get; private set; }
+    public Window? Parent { get; }
+
+    #endregion
+
+    #region 4-bytes
+    private CursorKind cursor;
     private Point<int> position;
     private Size<uint> size;
-    private string     title;
-    private bool       disposed;
 
-    protected static bool Registered { get; set; }
+    #endregion
 
-    public Size<uint> ClientSize => this.PlatformGetClientSize();
-    public Window?    Parent     { get; }
-
-    public nint Handle      { get; private set; }
+    #region 1-byte
     public bool IsClosed    { get; private set; }
     public bool IsMaximized { get; private set; }
     public bool IsMinimized { get; private set; }
     public bool IsVisible   { get; private set; } = true;
+    #endregion
 
-    public Point<int> Position { get => this.position; set => this.PlatformSetPosition(value); }
-    public Size<uint> Size     { get => this.size;     set => this.PlatformSetSize(value); }
-    public string     Title    { get => this.title;    set => this.PlatformSetTitle(value); }
+    public Size<uint> ClientSize => this.PlatformGetClientSize();
+
+    public CursorKind Cursor
+    {
+        get => this.cursor;
+        set
+        {
+            if (this.cursor != value)
+            {
+                this.cursor = value;
+                PlatformSetCursor(value);
+            }
+        }
+    }
+
+    public Point<int> Position
+    {
+        get => this.position;
+        set
+        {
+            if (this.position != value)
+            {
+                this.position = value;
+                this.PlatformSetPosition(value);
+            }
+        }
+    }
+
+    public Size<uint> Size
+    {
+        get => this.size;
+        set
+        {
+            if (this.size != value)
+            {
+                this.size = value;
+                this.PlatformSetSize(value);
+            }
+        }
+    }
+
+    public string Title
+    {
+        get => this.title;
+        set
+        {
+            if (this.title != value)
+            {
+                this.title = value;
+                this.PlatformSetTitle(value);
+            }
+        }
+    }
 
     public Window(string title, Size<uint> size, Point<int> position, Window? parent = null)
     {
@@ -93,16 +152,11 @@ public partial class Window : IDisposable
         }
     }
 
-    protected virtual void Dispose(bool disposing)
+    protected override void Disposed(bool disposing)
     {
-        if (!this.disposed)
+        if (disposing)
         {
-            if (disposing)
-            {
-                this.Close();
-            }
-
-            this.disposed = true;
+            this.Close();
         }
     }
 
@@ -118,6 +172,9 @@ public partial class Window : IDisposable
             this.IsClosed = true;
         }
     }
+
+    public void SetClipboardData(string value) =>
+        this.PlatformSetClipboardData(value);
 
     public void DoEvents() =>
         this.PlatformDoEvents();
@@ -158,11 +215,5 @@ public partial class Window : IDisposable
         this.PlatformShow();
 
         this.IsVisible = true;
-    }
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 }

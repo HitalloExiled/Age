@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Age.Numerics;
+using Age.Platforms.Display;
 
 namespace Age.Styling;
 
@@ -13,6 +14,7 @@ internal struct StyleData
     public BoxSizing?                BoxSizing;
     public Color?                    Color;
     public ContentJustificationKind? ContentJustification;
+    public CursorKind?               Cursor;
     public string?                   FontFamily;
     public ItemsAlignmentKind?       ItemsAlignment;
     public RectEdges?                Margin;
@@ -41,6 +43,7 @@ internal struct StyleData
         target.BoxSizing            = source.BoxSizing            ?? fallback.BoxSizing;
         target.Color                = source.Color                ?? fallback.Color;
         target.ContentJustification = source.ContentJustification ?? fallback.ContentJustification;
+        target.Cursor               = source.Cursor               ?? fallback.Cursor;
         target.FontFamily           = source.FontFamily           ?? fallback.FontFamily;
         target.FontSize             = source.FontSize             ?? fallback.FontSize;
         target.Hidden               = source.Hidden               ?? fallback.Hidden;
@@ -49,11 +52,11 @@ internal struct StyleData
         target.MaxSize              = source.MaxSize              ?? fallback.MaxSize;
         target.MinSize              = source.MinSize              ?? fallback.MinSize;
         target.Padding              = source.Padding              ?? fallback.Padding;
-        target.Transform            = source.Transform            ?? fallback.Transform;
         target.Positioning          = source.Positioning          ?? fallback.Positioning;
         target.Size                 = source.Size                 ?? fallback.Size;
         target.Stack                = source.Stack                ?? fallback.Stack;
         target.TextAlignment        = source.TextAlignment        ?? fallback.TextAlignment;
+        target.Transform            = source.Transform            ?? fallback.Transform;
     }
 
     public static StyleData Merge(in StyleData left, in StyleData right)

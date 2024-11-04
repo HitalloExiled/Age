@@ -202,38 +202,41 @@ internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
     protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
     {
-        var constant = new CanvasShader.PushConstant
+        if (command.PipelineVariant.HasFlag(PipelineVariant.Color) || command.PipelineVariant.HasFlag(PipelineVariant.Wireframe))
         {
-            Border    = command.Border,
-            Color     = command.Color,
-            Flags     = command.Flags,
-            Rect      = command.Rect,
-            Transform = transform,
-            UV        = command.MappedTexture.UV,
-            Viewport  = viewport,
-        };
-
-        if (!this.UniformSets.TryGetValue(command.MappedTexture.Texture, out var uniformSet))
-        {
-            var diffuse = new CombinedImageSamplerUniform
+            var constant = new CanvasShader.PushConstant
             {
-                Binding     = 0,
-                Texture     = command.MappedTexture.Texture,
-                ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
+                Border    = command.Border,
+                Color     = command.Color,
+                Flags     = command.Flags,
+                Rect      = command.Rect,
+                Transform = transform,
+                UV        = command.MappedTexture.UV,
+                Viewport  = viewport,
             };
 
-            this.UniformSets.Set(command.MappedTexture.Texture, uniformSet = new UniformSet(resource.Shader, [diffuse]));
+            if (!this.UniformSets.TryGetValue(command.MappedTexture.Texture, out var uniformSet))
+            {
+                var diffuse = new CombinedImageSamplerUniform
+                {
+                    Binding     = 0,
+                    Texture     = command.MappedTexture.Texture,
+                    ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
+                };
+
+                this.UniformSets.Set(command.MappedTexture.Texture, uniformSet = new UniformSet(resource.Shader, [diffuse]));
+            }
+
+            if (uniformSet != null && uniformSet != this.lastUniformSet)
+            {
+                this.CommandBuffer.BindUniformSet(uniformSet);
+
+                this.lastUniformSet = uniformSet;
+            }
+
+            this.CommandBuffer.PushConstant(resource.Shader, constant);
+            this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
         }
-
-        if (uniformSet != null && uniformSet != this.lastUniformSet)
-        {
-            this.CommandBuffer.BindUniformSet(uniformSet);
-
-            this.lastUniformSet = uniformSet;
-        }
-
-        this.CommandBuffer.PushConstant(resource.Shader, constant);
-        this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
     }
 
     protected override void Disposed()

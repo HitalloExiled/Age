@@ -1,4 +1,4 @@
-namespace Age.Tests.Age.Rendering.Styling;
+namespace Age.Tests.Age.Styling;
 
 public class StyleTest
 {

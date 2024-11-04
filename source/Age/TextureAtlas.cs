@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Age.Core;
 using Age.Core.Extensions;
+using Age.Internal;
 using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
@@ -104,6 +105,10 @@ public class TextureAtlas : Disposable
         if (this.isDirty)
         {
             this.Texture.Update(this.Bitmap.Buffer);
+
+            #if DEBUG
+            Common.SaveImage(this.Bitmap, $"TextureAtlas_{this.Size.Width}x{this.Size.Height}.png");
+            #endif
 
             this.isDirty = false;
         }

@@ -1,10 +1,9 @@
-using System.Diagnostics;
+using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("[{M11}, {M12}], [{M21}, {M22}], [{M31}, {M32}]")]
 public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIeee754<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public static Matrix3x2<T> Identity => new(Vector3<T>.Right, Vector3<T>.Up, Vector3<T>.Front);
@@ -223,7 +222,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     {
         var determinant = this.Determinant;
 
-        if (MathX.IsZeroApprox(determinant))
+        if (Math<T>.IsZeroApprox(determinant))
         {
             return default;
         }
@@ -243,12 +242,12 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     }
 
     public readonly bool IsAprox(Matrix3x2<T> other) =>
-        MathX.IsApprox(this.M11, other.M11)
-        && MathX.IsApprox(this.M12, other.M12)
-        && MathX.IsApprox(this.M21, other.M21)
-        && MathX.IsApprox(this.M22, other.M22)
-        && MathX.IsApprox(this.M31, other.M31)
-        && MathX.IsApprox(this.M32, other.M32);
+        Math<T>.IsApprox(this.M11, other.M11)
+        && Math<T>.IsApprox(this.M12, other.M12)
+        && Math<T>.IsApprox(this.M21, other.M21)
+        && Math<T>.IsApprox(this.M22, other.M22)
+        && Math<T>.IsApprox(this.M31, other.M31)
+        && Math<T>.IsApprox(this.M32, other.M32);
 
     public void Rotate(T radians) =>
         this.Rotate(radians, default);
@@ -272,7 +271,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     }
 
     public override readonly string ToString() =>
-        $"[{this.M11}, {this.M12}], [{this.M21}, {this.M22}], [{this.M31}, {this.M32}]";
+        string.Create(CultureInfo.InvariantCulture, $"[{this.M11}, {this.M12}], [{this.M21}, {this.M22}], [{this.M31}, {this.M32}]");
 
     public static Matrix3x2<T> operator *(in Matrix3x2<T> left, in Matrix3x2<T> right)
     {
@@ -284,6 +283,16 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         result.M22 = left.M21 * right.M12 + left.M22 * right.M22;
         result.M31 = left.M31 * right.M11 + left.M32 * right.M21 + right.M31;
         result.M32 = left.M31 * right.M12 + left.M32 * right.M22 + right.M32;
+
+        return result;
+    }
+
+    public static Vector2<T> operator *(in Matrix3x2<T> matrix, in Vector2<T> vector)
+    {
+        Unsafe.SkipInit(out Vector2<T> result);
+
+        result.X = vector.X * matrix.M11 + vector.Y * matrix.M21 + matrix.M31;
+        result.Y = vector.X * matrix.M12 + vector.Y * matrix.M22 + matrix.M32;
 
         return result;
     }

@@ -1,10 +1,9 @@
-using System.Diagnostics;
+using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("X: {X}, Y: {Y}, Z: {Z}, W: {W}")]
 public record struct Vector4<T> where T :  IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public T X;
@@ -36,12 +35,12 @@ public record struct Vector4<T> where T :  IFloatingPoint<T>, IRootFunctions<T>,
         }
     }
 
-    public static implicit operator Vector2<T>(Vector4<T> vector) =>
-        new(vector.X, vector.Y);
+    public override readonly string ToString() =>
+        string.Create(CultureInfo.InvariantCulture, $"{{ X: {this.X}, Y: {this.Y}, Z: {this.Z}, W: {this.W} }}");
 
-    public static implicit operator Vector3<T>(Vector4<T> vector) =>
-        new(vector.X, vector.Y, vector.Z);
+    public readonly Vector2<T> ToVector2() =>
+        new(this.X, this.Y);
 
-    public override readonly string ToString()
-        => $"{{ X = {this.X}, Y = {this.Y}, Z = {this.Z}, W = {this.W} }}";
+    public readonly Vector3<T> ToVector3() =>
+        new(this.X, this.Y, this.Z);
 }

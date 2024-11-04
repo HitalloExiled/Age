@@ -6,13 +6,17 @@ public abstract partial class Node
 {
 	public struct TraverseEnumerator(Node root) : IEnumerator<Node>, IEnumerable<Node>
     {
+        #region 8-bytes
         private readonly Node root = root;
+        private Node? current;
+        #endregion
+
+        #region 1-byte
         private bool  first = true;
         private bool  skipToNextSibling;
+        #endregion
 
-        internal Node? CurrentNode { get; private set; }
-
-        public readonly Node Current => this.CurrentNode ?? throw new NullReferenceException();
+        public readonly Node Current => this.current!;
 
         readonly object IEnumerator.Current => this.Current;
 
@@ -29,37 +33,37 @@ public abstract partial class Node
             if (this.first)
             {
                 this.first   = false;
-                this.CurrentNode = this.root.FirstChild;
+                this.current = this.root.FirstChild;
             }
-            else if (this.CurrentNode!.FirstChild != null && !this.skipToNextSibling)
+            else if (this.current!.FirstChild != null && !this.skipToNextSibling)
             {
-                this.CurrentNode = this.CurrentNode.FirstChild;
+                this.current = this.current.FirstChild;
             }
             else
             {
                 this.skipToNextSibling = false;
 
-                while (this.CurrentNode != null)
+                while (this.current != null)
                 {
-                    if (this.CurrentNode.NextSibling != null)
+                    if (this.current.NextSibling != null)
                     {
-                        this.CurrentNode = this.CurrentNode.NextSibling;
+                        this.current = this.current.NextSibling;
 
                         break;
                     }
 
-                    this.CurrentNode = this.CurrentNode == this.root ? null : this.CurrentNode.Parent;
+                    this.current = this.current == this.root ? null : this.current.Parent;
                 }
             }
 
-            return this.CurrentNode != null;
+            return this.current != null;
         }
 
         public void Reset()
         {
             this.skipToNextSibling = false;
             this.first             = true;
-            this.CurrentNode           = null;
+            this.current           = null;
         }
 
         public void SkipToNextSibling() =>

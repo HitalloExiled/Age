@@ -1603,7 +1603,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
                 texCoord.Y = 1 - texCoord.Y;
 
-                var vertex = new Vertex(pos, color, texCoord);
+                var vertex = new Vertex(pos.ToVector3(), color, texCoord);
 
                 if (!uniqueVertices.TryGetValue(vertex, out var index))
                 {
@@ -1842,9 +1842,9 @@ public unsafe partial class SimpleEngineV2 : IDisposable
 
         var time = Math.Max(0, (float)(now - startTime).TotalMilliseconds / 1000);
 
-        var model = System.Numerics.Matrix4x4.CreateRotationZ(time * Angle.Radians(90));
+        var model = System.Numerics.Matrix4x4.CreateRotationZ(time * Angle.DegreesToRadians(90f));
         var view  = System.Numerics.Matrix4x4.CreateLookAt(new(2), new(0), new(0, 0, 1));
-        var proj  = System.Numerics.Matrix4x4.CreatePerspectiveFieldOfView(Angle.Radians(45), this.swapChainExtent.Width / (float)this.swapChainExtent.Height, 0.1f, 10);
+        var proj  = System.Numerics.Matrix4x4.CreatePerspectiveFieldOfView(Angle.DegreesToRadians(45f), this.swapChainExtent.Width / (float)this.swapChainExtent.Height, 0.1f, 10);
 
         var ubo = new UniformBufferObject
         {

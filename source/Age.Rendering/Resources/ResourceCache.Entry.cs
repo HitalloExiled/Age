@@ -1,3 +1,5 @@
+using Age.Rendering.Vulkan;
+
 namespace Age.Rendering.Resources;
 
 public partial class ResourceCache<TKey, TValue>
@@ -12,7 +14,7 @@ where TValue : notnull, Resource
 
         public readonly void Dispose()
         {
-            this.Cache.entries[this.Hash].Dispose();
+            VulkanRenderer.Singleton.DeferredDispose(this.Cache.entries[this.Hash]);
             this.Cache.entries.Remove(this.Hash);
         }
     }

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
@@ -55,7 +56,7 @@ public record struct Rect<T> where T : INumber<T>
         new(this.Size, new(this.Position.X, -this.Position.Y));
 
     public override readonly string ToString() =>
-        $"{{ Size: {this.Size}, Position: {this.Position} }}";
+        string.Create(CultureInfo.InvariantCulture, $"{{ Size: {this.Size}, Position: {this.Position} }}");
 }
 
 public static class Rect

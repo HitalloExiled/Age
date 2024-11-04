@@ -11,6 +11,7 @@ public enum StyleProperty
     BoxSizing,
     Color,
     ContentJustification,
+    Cursor,
     FontFamily,
     FontSize,
     Hidden,

@@ -52,6 +52,25 @@ public partial class Window
     private static MouseButton GetPrimaryButton() =>
         User32.GetSystemMetrics(User32.SYSTEM_METRIC.SM_SWAPBUTTON) == 0 ? MouseButton.Left : MouseButton.Right;
 
+    private static User32.IDC_STANDARD_CURSORS GetPlatformCursor(CursorKind cursor) =>
+        cursor switch
+        {
+            CursorKind.Arrow            => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
+            CursorKind.Busy             => User32.IDC_STANDARD_CURSORS.IDC_WAIT,
+            CursorKind.Cross            => User32.IDC_STANDARD_CURSORS.IDC_CROSS,
+            CursorKind.DiagonalResize1  => User32.IDC_STANDARD_CURSORS.IDC_SIZENWSE,
+            CursorKind.DiagonalResize2  => User32.IDC_STANDARD_CURSORS.IDC_SIZENESW,
+            CursorKind.Hand             => User32.IDC_STANDARD_CURSORS.IDC_HAND,
+            CursorKind.Help             => User32.IDC_STANDARD_CURSORS.IDC_HELP,
+            CursorKind.HorizontalResize => User32.IDC_STANDARD_CURSORS.IDC_SIZEWE,
+            CursorKind.Move             => User32.IDC_STANDARD_CURSORS.IDC_SIZEALL,
+            CursorKind.Progress         => User32.IDC_STANDARD_CURSORS.IDC_APPSTARTING,
+            CursorKind.Text             => User32.IDC_STANDARD_CURSORS.IDC_IBEAM,
+            CursorKind.Unavailable      => User32.IDC_STANDARD_CURSORS.IDC_NO,
+            CursorKind.VerticalResize   => User32.IDC_STANDARD_CURSORS.IDC_SIZENS,
+            _ => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
+        };
+
     private static LRESULT WndProc(HWND hwnd, User32.WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam)
     {
         if (WindowsMap.TryGetValue(hwnd, out var window))
@@ -198,6 +217,14 @@ public partial class Window
                     window.Close();
 
                     break;
+                case User32.WINDOW_MESSAGE.WM_SETCURSOR:
+                    if ((User32.HIT_TEST)LoWord(lParam) == User32.HIT_TEST.HTCLIENT)
+                    {
+                        PlatformSetCursor(window.Cursor);
+                        return 1;
+                    }
+
+                    break;
                 default:
                     break;
             }
@@ -245,6 +272,9 @@ public partial class Window
         return new((uint)(rect.right - rect.left), (uint)(rect.bottom - rect.top));
     }
 
+    protected static void PlatformSetCursor(CursorKind value) =>
+        User32.SetCursor(User32.LoadCursorW(default, GetPlatformCursor(value)));
+
     protected virtual void PlatformClose()
     {
         foreach (var child in this.Children)
@@ -291,6 +321,16 @@ public partial class Window
         WindowsMap[this.Handle] = this;
     }
 
+    protected void PlatformSetClipboardData(string value)
+    {
+        if (User32.OpenClipboard(this.Handle))
+        {
+            User32.EmptyClipboard();
+            User32.SetClipboardData(value);
+            User32.CloseClipboard();
+        }
+    }
+
     protected void PlatformDoEvents()
     {
         while (User32.PeekMessageW(out var msg, this.Handle, 0, 0, User32.PEEK_MESSAGE.PM_REMOVE) && !this.IsClosed)
@@ -315,9 +355,9 @@ public partial class Window
     protected void PlatformRestore() =>
         User32.ShowWindow(this.Handle, User32.SHOW_WINDOW_COMMANDS.SW_RESTORE);
 
-    protected void PlatformSetPosition(Point<int> value) => this.position = value;
-    protected void PlatformSetSize(Size<uint> value) => this.size = value;
-    protected void PlatformSetTitle(string value) => this.title = value;
+    protected void PlatformSetPosition(in Point<int> value) => throw new NotImplementedException();
+    protected void PlatformSetSize(in Size<uint> value) => throw new NotImplementedException();
+    protected void PlatformSetTitle(string value) => throw new NotImplementedException();
 
     protected void PlatformShow() =>
         User32.ShowWindow(this.Handle, User32.SHOW_WINDOW_COMMANDS.SW_SHOW);

@@ -1,9 +1,8 @@
-using System.Text;
 using Age.Elements.Layouts;
-using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Scene;
 using Age.Styling;
+using System.Text;
 
 using Key                  = Age.Platforms.Display.Key;
 using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
@@ -43,9 +42,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             lock(this.elementLock)
             {
-                if (this.IsConnected && keyDown == null)
+                if (this.Tree is RenderTree renderTree && keyDown == null)
                 {
-                    this.Tree.Window.KeyDown += this.OnKeyDown;
+                    renderTree.Window.KeyDown += this.OnKeyDown;
                 }
             }
 
@@ -58,9 +57,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
             lock(this.elementLock)
             {
-                if (this.IsConnected && keyDown == null)
+                if (this.Tree is RenderTree renderTree && keyDown == null)
                 {
-                    this.Tree.Window.KeyDown -= this.OnKeyDown;
+                    renderTree.Window.KeyDown -= this.OnKeyDown;
                 }
             }
         }
@@ -72,9 +71,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             lock(this.elementLock)
             {
-                if (this.IsConnected && keyUp == null)
+                if (this.Tree is RenderTree renderTree && keyUp == null)
                 {
-                    this.Tree.Window.KeyUp += this.OnKeyUp;
+                    renderTree.Window.KeyUp += this.OnKeyUp;
                 }
             }
 
@@ -86,9 +85,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
             lock(this.elementLock)
             {
-                if (this.IsConnected && keyUp == null)
+                if (this.Tree is RenderTree renderTree && keyUp == null)
                 {
-                    this.Tree.Window.KeyUp -= this.OnKeyUp;
+                    renderTree.Window.KeyUp -= this.OnKeyUp;
                 }
             }
         }
@@ -100,9 +99,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             lock(this.elementLock)
             {
-                if (this.IsConnected && scroll == null)
+                if (this.Tree is RenderTree renderTree && scroll == null)
                 {
-                    this.Tree.Window.MouseWhell += this.OnScroll;
+                    renderTree.Window.MouseWhell += this.OnScroll;
                 }
             }
 
@@ -114,9 +113,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
             lock(this.elementLock)
             {
-                if (this.IsConnected && scroll == null)
+                if (this.Tree is RenderTree renderTree && scroll == null)
                 {
-                    this.Tree.Window.MouseWhell -= this.OnScroll;
+                    renderTree.Window.MouseWhell -= this.OnScroll;
                 }
             }
         }
@@ -136,9 +135,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     protected bool IsFocusable { get; set; }
 
     public bool IsFocused { get; internal set; }
+    public bool IsHovered { get; internal set; }
     #endregion
-
-    public Element? ParentElement => this.Parent as Element;
 
     public Element? FirstElementChild
     {
@@ -271,12 +269,6 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    public override Transform2D Transform
-    {
-        get => this.Layout.Transform * base.Transform;
-        set => this.LocalTransform = value * this.Transform.Inverse();
-    }
-
     public Element()
     {
         this.Layout = new(this);
@@ -355,26 +347,26 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    protected override void Connected(NodeTree tree)
+    protected override void Connected(RenderTree renderTree)
     {
         if (this.keyDown != null)
         {
-            tree.Window.KeyDown += this.OnKeyDown;
+            renderTree.Window.KeyDown += this.OnKeyDown;
         }
 
         if (this.keyUp != null)
         {
-            tree.Window.KeyUp += this.OnKeyUp;
+            renderTree.Window.KeyUp += this.OnKeyUp;
         }
 
         if (this.scroll != null)
         {
-            tree.Window.MouseWhell += this.OnScroll;
+            renderTree.Window.MouseWhell += this.OnScroll;
         }
 
-        if (!tree.IsDirty && !this.Layout.Hidden)
+        if (!renderTree.IsDirty && !this.Layout.Hidden)
         {
-            tree.IsDirty = true;
+            renderTree.IsDirty = true;
         }
 
         this.Canvas = this.ParentElement?.Canvas ?? this.Parent as Canvas;
@@ -408,16 +400,16 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    protected override void Disconnected(NodeTree tree)
+    protected override void Disconnected(RenderTree renderTree)
     {
         this.Canvas = null;
 
-        tree.Window.KeyDown -= this.OnKeyDown;
-        tree.Window.KeyUp   -= this.OnKeyUp;
+        renderTree.Window.KeyDown -= this.OnKeyDown;
+        renderTree.Window.KeyUp   -= this.OnKeyUp;
 
-        if (!tree.IsDirty && !this.Layout.Hidden)
+        if (!renderTree.IsDirty && !this.Layout.Hidden)
         {
-            tree.IsDirty = true;
+            renderTree.IsDirty = true;
         }
 
         this.Layout.TargetDisconnected();
@@ -455,8 +447,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         if (this.IsFocusable)
         {
-            this.Layout.State.AddState(StyledStateManager.State.Focus);
             this.IsFocused = true;
+            this.Layout.State.AddState(StyledStateManager.State.Focus);
             this.Focused?.Invoke(this.CreateEvent(platformMouseEvent));
         }
     }
@@ -466,13 +458,17 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
     {
+        this.IsHovered = false;
         this.Layout.State.RemoveState(StyledStateManager.State.Hovered);
+        this.Layout.TargetMouseOut();
         this.MouseOut?.Invoke(this.CreateEvent(platformMouseEvent));
     }
 
     internal void InvokeMouseOver(in PlatformMouseEvent platformMouseEvent)
     {
+        this.IsHovered = true;
         this.Layout.State.AddState(StyledStateManager.State.Hovered);
+        this.Layout.TargetMouseOver();
         this.MouseOver?.Invoke(this.CreateEvent(platformMouseEvent));
     }
 
@@ -481,8 +477,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     public void Blur()
     {
-        this.Layout.State.RemoveState(StyledStateManager.State.Focus);
         this.IsFocused = false;
+        this.Layout.State.RemoveState(StyledStateManager.State.Focus);
         this.Blured?.Invoke(new() { Target = this });
     }
 

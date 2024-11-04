@@ -28,7 +28,7 @@ public partial class RenderPass : Resource<VkRenderPass>
             var resolveAttachmentReferences      = new NativeList<VkAttachmentReference>();
             var depthStencilAttachmentReferences = new NativeList<VkAttachmentReference>();
 
-            var subPassColorAttachments = new NativeList<RenderPass.SubPass.ColorAttachment>(subpass.ColorAttachments.Length);
+            var subPassColorAttachments = new NativeList<SubPass.ColorAttachment>(subpass.ColorAttachments.Length);
 
             disposables.Add(colorAttachmentReferences);
             disposables.Add(resolveAttachmentReferences);
@@ -45,7 +45,7 @@ public partial class RenderPass : Resource<VkRenderPass>
                     attachmentDescriptions.Add(attachment.Resolve.Value);
                 }
 
-                var subPassColorAttachment = new RenderPass.SubPass.ColorAttachment
+                var subPassColorAttachment = new SubPass.ColorAttachment
                 {
                     Color = new()
                     {
@@ -80,7 +80,7 @@ public partial class RenderPass : Resource<VkRenderPass>
 
             subpassDescriptions.Add(subpassDescription);
 
-            var renderPassSubPass = new RenderPass.SubPass
+            var renderPassSubPass = new SubPass
             {
                 PipelineBindPoint = subpass.PipelineBindPoint,
                 ColorAttachments  = [..subPassColorAttachments],

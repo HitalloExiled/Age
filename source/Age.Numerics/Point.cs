@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Numerics;
 
 namespace Age.Numerics;
@@ -20,7 +21,7 @@ public record struct Point<T> where T : INumber<T>
         new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
 
     public override readonly string ToString() =>
-        $"{{ X: {this.X}, Y: {this.Y} }}";
+        string.Create(CultureInfo.InvariantCulture, $"{{ X: {this.X}, Y: {this.Y} }}");
 
     public static Point<T> operator +(Point<T> point, T value) =>
         new(point.X + value, point.Y + value);

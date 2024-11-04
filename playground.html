@@ -19,6 +19,7 @@
             height: 20px;
             height: 100px;
             width:  100px;
+            cursor: hand;
             /* font-family: 'Helvetica Neue'; */
             /* width:  100px;
             height: 100px; */
@@ -29,6 +30,7 @@
             display: inline-flex;
             border: 10px solid green;
             border-radius: 100px;
+            cursor: text;
             /* font-size: 16; */
             /* height: 100px;
             width:  100px; */
@@ -55,6 +57,7 @@
             /* font-family: Impact; */
             width:   200px;
             height:  200px;
+            cursor: hand;
             /* box-sizing: border-box; */
         }
 
@@ -67,7 +70,7 @@
     </style>
 </head>
 <body>
-    <!-- <button id="clicker">Click Me</button> -->
+    <button id="clicker">Click Me</button>
     <span class="green">
         <span class="red"></span>
     </span>
@@ -92,6 +95,7 @@
 
     clicker.addEventListener('click', () => console.log(`Clickes: ${++clicks}`))
     clicker.addEventListener('blur', () => console.log(`Blured`))
+    clicker.addEventListener('focus', () => console.log(`Focused`))
     clicker.addEventListener('dblclick', () => console.log(`Double clickes: ${++doubleClicks}`))
 </script>
 </html>

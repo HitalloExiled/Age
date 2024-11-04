@@ -5,6 +5,11 @@ using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Editor.Tests;
 
+using Common = Age.Internal.Common;
+
+using ThirdParty.Vulkan.Flags;
+using Age.RenderPasses;
+
 namespace Age.Editor;
 
 internal delegate void Setup(Canvas canvas);
@@ -21,7 +26,7 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = ClippingTest.Setup;
+        this.setup = TextSelectionTest.Setup;
 
         this.Reload();
         // this.CreateDemoScene();
@@ -120,7 +125,7 @@ public class Editor : Node
                             sideViews.AppendChild(blueViewport);
     }
 
-    private void HandleBorders()
+    private void HandleInputs()
     {
         var reload = true;
 
@@ -160,6 +165,11 @@ public class Editor : Node
         {
             this.setup = Playground.Setup;
         }
+        else if (Input.IsKeyPressed(Key.Control) && Input.IsKeyJustPressed(Key.P))
+        {
+            PrintCanvasIndex();
+            reload = false;
+        }
         else
         {
             reload = Input.IsKeyJustPressed(Key.R);
@@ -169,6 +179,15 @@ public class Editor : Node
         {
             this.Reload();
         }
+    }
+
+    private static void PrintCanvasIndex()
+    {
+        var canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasIndexRenderGraphPass>();
+
+        var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
+
+        Common.SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "CanvasIndex.png");
     }
 
     private void Reload()
@@ -187,5 +206,5 @@ public class Editor : Node
 #endif
 
     public override void Update() =>
-        this.HandleBorders();
+        this.HandleInputs();
 }

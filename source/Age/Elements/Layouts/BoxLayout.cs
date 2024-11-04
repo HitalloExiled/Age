@@ -1,14 +1,14 @@
 using Age.Commands;
 using Age.Extensions;
 using Age.Numerics;
-using Age.Storage;
+using Age.Scene;
 using Age.Styling;
 
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Elements.Layouts;
 
-internal partial class BoxLayout : Layout, IDisposable
+internal partial class BoxLayout : Layout
 {
     #region 8-bytes
     private readonly List<Element> dependents = [];
@@ -49,7 +49,8 @@ internal partial class BoxLayout : Layout, IDisposable
 
     #region 1-byte
     private bool dependenciesHasChanged;
-    private bool disposed;
+
+    public bool IsHoveringText { get; set; }
     #endregion
 
     public Size<uint> Boundings =>
@@ -170,7 +171,7 @@ internal partial class BoxLayout : Layout, IDisposable
 
             while (enumerator.MoveNext())
             {
-                var current = enumerator.CurrentNode!;
+                var current = enumerator.Current!;
 
                 if (current is ContainerNode containerNode)
                 {
@@ -249,7 +250,10 @@ internal partial class BoxLayout : Layout, IDisposable
             alignmentAxis &= ~AlignmentAxis.Vertical;
         }
 
-        return new(Normalize(x), Normalize(y));
+        static float normalize(float value) =>
+            (1 + value) / 2;
+
+        return new(normalize(x), normalize(y));
     }
 
     private RectCommand GetRectCommand()
@@ -258,19 +262,14 @@ internal partial class BoxLayout : Layout, IDisposable
         {
             this.Target.SingleCommand = command = new()
             {
-                Id            = this.Target.GetHashCode(),
-                Flags         = Flags.ColorAsBackground,
-                MappedTexture = new(TextureStorage.Singleton.DefaultTexture, UVRect.Normalized),
+                Flags           = Flags.ColorAsBackground,
+                PipelineVariant = PipelineVariant.Color | PipelineVariant.Index,
             };
         }
 
         return command;
     }
-
-    private static float Normalize(float value) =>
-        (1 + value) / 2;
-
-    private void CalculateLayout()
+     private void CalculateLayout()
     {
         var stack = this.State.Style.Stack ?? StackKind.Horizontal;
 
@@ -846,7 +845,7 @@ internal partial class BoxLayout : Layout, IDisposable
     {
         if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlag(Platforms.Display.MouseKeyStates.Shift))
         {
-            var x = MathX.MinMax(-(int)this.content.Width.ClampSubtract(this.Size.Width), 0, this.scrollOffset.X + (int)(5 * mouseEvent.Delta));
+            var x = Math<int>.MinMax(-(int)this.content.Width.ClampSubtract(this.Size.Width), 0, this.scrollOffset.X + (int)(5 * mouseEvent.Delta));
 
             if (this.scrollOffset.X != x)
             {
@@ -858,7 +857,7 @@ internal partial class BoxLayout : Layout, IDisposable
         }
         else if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY)
         {
-            var y = MathX.MinMax(0, (int)this.content.Height.ClampSubtract(this.Size.Height), this.scrollOffset.Y - (int)(5 * mouseEvent.Delta));
+            var y = Math<int>.MinMax(0, (int)this.content.Height.ClampSubtract(this.Size.Height), this.scrollOffset.Y - (int)(5 * mouseEvent.Delta));
 
             if (this.scrollOffset.Y != y)
             {
@@ -1030,10 +1029,21 @@ internal partial class BoxLayout : Layout, IDisposable
     {
         var command = this.GetRectCommand();
 
-        command.Rect   = new(this.Boundings.Cast<float>(), default);
-        command.Border = this.State.Style.Border ?? default;
-        command.Color  = this.State.Style.BackgroundColor ?? default;
-        command.StencilLayer  = this.StencilLayer;
+        var isDrawable = this.State.Style.Border.HasValue || this.State.Style.BackgroundColor.HasValue;
+
+        if (isDrawable)
+        {
+            command.Rect             = new(this.Boundings.Cast<float>(), default);
+            command.Border           = this.State.Style.Border ?? default;
+            command.Color            = this.State.Style.BackgroundColor ?? default;
+            command.PipelineVariant |= PipelineVariant.Color;
+        }
+        else
+        {
+            command.PipelineVariant &= ~PipelineVariant.Color;
+        }
+
+        command.StencilLayer = this.StencilLayer;
 
         this.ownStencilLayer?.MakeDirty();
     }
@@ -1051,6 +1061,11 @@ internal partial class BoxLayout : Layout, IDisposable
                 Bottom = this.State.Style.Border?.Bottom.Thickness ?? 0,
                 Left   = this.State.Style.Border?.Left.Thickness ?? 0,
             };
+        }
+
+        if (property is StyleProperty.Cursor or StyleProperty.All && this.target.IsHovered && !this.IsHoveringText && this.target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = this.State.Style.Cursor ?? default;
         }
 
         var oldParentDependent = this.parentDependent;
@@ -1158,7 +1173,7 @@ internal partial class BoxLayout : Layout, IDisposable
                 this.IsScrollable = currentIsScrollable;
             }
 
-            if (this.State.Style.Overflow != OverflowKind.None && this.contentDependent != (Dependency.Width | Dependency.Height))
+            if ((this.State.Style.Overflow ?? OverflowKind.None) != OverflowKind.None && this.contentDependent != (Dependency.Width | Dependency.Height))
             {
                 if (this.ownStencilLayer == null)
                 {
@@ -1194,18 +1209,8 @@ internal partial class BoxLayout : Layout, IDisposable
         this.Target.Visible = !hidden;
     }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!this.disposed)
-        {
-            if (disposing)
-            {
-                this.ownStencilLayer?.Dispose();
-            }
-
-            this.disposed = true;
-        }
-    }
+    protected override void Disposed() =>
+        this.ownStencilLayer?.Dispose();
 
     public void ContainerNodeRemoved(ContainerNode containerNode)
     {
@@ -1241,10 +1246,20 @@ internal partial class BoxLayout : Layout, IDisposable
         }
     }
 
-    public void Dispose()
+    public void TargetMouseOut()
     {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
+        if (this.target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = default;
+        }
+    }
+
+    public void TargetMouseOver()
+    {
+        if (this.State.Style.Cursor.HasValue && this.target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = this.State.Style.Cursor.Value;
+        }
     }
 
     public void TargetIndexed()

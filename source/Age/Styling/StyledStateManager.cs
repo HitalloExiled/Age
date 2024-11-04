@@ -83,6 +83,8 @@ internal partial class StyledStateManager
                 {
                     this.style.Merge(this.Styles.Active);
                 }
+
+                this.isDirty = false;
             }
 
             return this.style;

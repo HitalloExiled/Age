@@ -1,9 +1,10 @@
+using Age.Core;
 using Age.Numerics;
 using Age.Scene;
 
 namespace Age.Elements.Layouts;
 
-internal abstract class Layout
+internal abstract class Layout : Disposable
 {
     #region 8-bytes
     protected virtual StencilLayer? ContentStencilLayer { get; }
@@ -27,6 +28,16 @@ internal abstract class Layout
     public abstract Layout? Parent { get; }
     public abstract Node    Target { get; }
 
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.Disposed();
+        }
+    }
+
+    protected abstract void Disposed();
+
     public void RequestUpdate()
     {
         if (!this.HasPendingUpdate && !this.Hidden)
@@ -37,9 +48,9 @@ internal abstract class Layout
             {
                 this.Parent.RequestUpdate();
             }
-            else if (this.Target.IsConnected)
+            else if (this.Target.Tree is RenderTree renderTree)
             {
-                this.Target.Tree.IsDirty = true;
+                renderTree.IsDirty = true;
             }
         }
     }

@@ -9,7 +9,7 @@ internal partial class StencilLayer
         private StencilLayer? current;
         private bool  first = true;
 
-        public readonly StencilLayer Current => this.current ?? throw new InvalidOperationException();
+        public readonly StencilLayer Current => this.current!;
         public readonly StencilLayer Node    => node;
 
         readonly object IEnumerator.Current => this.Current;

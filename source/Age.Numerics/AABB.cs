@@ -1,9 +1,7 @@
-using System.Diagnostics;
 using System.Numerics;
 
 namespace Age.Numerics;
 
-[DebuggerDisplay("\\{ Size: {Size}, Position: {Position} \\}")]
 public record struct AABB<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public Vector3<T> Size;
@@ -66,4 +64,7 @@ public record struct AABB<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITr
 
         return aabb;
     }
+
+    public override readonly string ToString() =>
+        $"{{ Size: {this.Size}, Position: {this.Position} }}";
 }

@@ -15,26 +15,31 @@ public sealed class Canvas : Element
             // Padding = new((Pixel)PADDING),
         };
 
-    private void OnWindowSizeChanged() =>
-        this.Style.Size = new((Pixel)this.Tree!.Window.ClientSize.Width, (Pixel)this.Tree!.Window.ClientSize.Height);
+    private void OnWindowSizeChanged()
+    {
+        if (this.Tree is RenderTree renderTree)
+        {
+            this.Style.Size = new((Pixel)renderTree.Window.ClientSize.Width, (Pixel)renderTree.Window.ClientSize.Height);
+        }
+    }
 
     private void OnUpdate() => this.Layout.Update();
 
-    protected override void Connected(NodeTree tree)
+    protected override void Connected(RenderTree renderTree)
     {
-        base.Connected(tree);
+        base.Connected(renderTree);
 
-        tree.Window.Resized += this.OnWindowSizeChanged;
-        tree.Updated        += this.OnUpdate;
+        renderTree.Window.Resized += this.OnWindowSizeChanged;
+        renderTree.Updated        += this.OnUpdate;
 
         this.OnWindowSizeChanged();
     }
 
-    protected override void Disconnected(NodeTree tree)
+    protected override void Disconnected(RenderTree renderTree)
     {
-        base.Disconnected(tree);
+        base.Disconnected(renderTree);
 
-        tree.Window.Resized -= this.OnWindowSizeChanged;
-        tree.Updated        -= this.OnUpdate;
+        renderTree.Window.Resized -= this.OnWindowSizeChanged;
+        renderTree.Updated        -= this.OnUpdate;
     }
 }

@@ -2,9 +2,8 @@ using Age.Core;
 using Age.Core.Extensions;
 using Age.Extensions;
 using Age.Numerics;
-using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
-using Age.Storage;
+using Age.Resources;
 using Age.Styling;
 using SkiaSharp;
 using System.Collections;
@@ -25,7 +24,7 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
     public StencilLayer? Parent          { get; private set; }
     public StencilLayer? PreviousSibling { get; private set; }
 
-    public MappedTexture MappedTexture { get; private set; } = new(TextureStorage.Singleton.EmptyTexture, UVRect.Normalized);
+    public MappedTexture MappedTexture { get; private set; } = MappedTexture.Default;
     #endregion
 
     #region 4-bytes
@@ -121,7 +120,7 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
             bounds.Width / (float)imageSize.Width is >= MIN_MARGIN_RATIO and <= MAX_MARGIN_RATIO
             && bounds.Height / (float)imageSize.Height is >= MIN_MARGIN_RATIO and <= MAX_MARGIN_RATIO;
 
-        if (texture == TextureStorage.Singleton.EmptyTexture || !isWithinMargin)
+        if (texture == MappedTexture.Default.Texture || !isWithinMargin)
         {
             imageSize = (bounds.Cast<float>() * 1.5f).Cast<uint>();
 
@@ -172,7 +171,7 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
 
     protected override void Disposed(bool disposing)
     {
-        if (disposing && this.MappedTexture.Texture != TextureStorage.Singleton.DefaultTexture)
+        if (disposing && this.MappedTexture != MappedTexture.Default)
         {
             VulkanRenderer.Singleton.DeferredDispose(this.MappedTexture.Texture);
         }
@@ -227,16 +226,24 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
     public IEnumerator<StencilLayer> GetEnumerator() =>
         new Enumerator(this);
 
-    public IEnumerable<StencilLayer> Traverse() =>
-        new TraverseEnumerator(this);
-
     public void MakeDirty()
     {
         this.isDirty = true;
 
-        foreach (var item in this.Traverse())
+        var enumerator = new TraverseEnumerator(this);
+
+        while (enumerator.MoveNext())
         {
-            item.isDirty = true;
+            var current = enumerator.Current;
+
+            if (current.isDirty)
+            {
+                enumerator.SkipToNextSibling();
+            }
+            else
+            {
+                current.isDirty = true;
+            }
         }
     }
 

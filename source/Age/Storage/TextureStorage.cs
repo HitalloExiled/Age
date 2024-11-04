@@ -24,7 +24,7 @@ public class TextureStorage : Disposable
 
         this.renderer = renderer;
 
-        const int DEFAULT_SIZE = 8;
+        const int DEFAULT_SIZE = 2;
 
         var textureCreateInfo = new TextureCreateInfo
         {
@@ -38,12 +38,8 @@ public class TextureStorage : Disposable
         this.DefaultTexture = new(textureCreateInfo);
         this.DefaultTexture.Image.ClearColor(Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
 
-        textureCreateInfo.Width  = 1;
-        textureCreateInfo.Height = 1;
-        textureCreateInfo.Format = VkFormat.R8Unorm;
-
         this.EmptyTexture = new(textureCreateInfo);
-        this.EmptyTexture.Image.ClearColor(Color.White, VkImageLayout.ShaderReadOnlyOptimal);
+        this.EmptyTexture.Image.ClearColor(default, VkImageLayout.ShaderReadOnlyOptimal);
     }
 
     public void Add(string name, Texture texture) =>

@@ -1,8 +1,5 @@
-using System.Diagnostics;
-
 namespace Age.Numerics;
 
-[DebuggerDisplay("\\{ Position: {Position}, Rotation: {Rotation}, Scale: {Scale} \\}")]
 public record struct Transform2D
 {
     private Matrix3x2<float> matrix;
@@ -56,6 +53,9 @@ public record struct Transform2D
 
     public readonly Transform2D Inverse() =>
         new(this.matrix.Inverse());
+
+    public override readonly string ToString() =>
+        this.matrix.ToString();
 
     public static Transform2D operator *(in Transform2D left, in Transform2D right) =>
         new(left.matrix * right.matrix);

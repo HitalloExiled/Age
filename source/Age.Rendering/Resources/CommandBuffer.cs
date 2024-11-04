@@ -101,7 +101,7 @@ public class CommandBuffer : Resource<VkCommandBuffer>
     }
 
     public void BindUniformSet(UniformSet uniformSet) =>
-        this.Instance.BindDescriptorSets(uniformSet.shader.BindPoint, uniformSet.shader.PipelineLayout, 0, uniformSet.DescriptorSets, []);
+        this.Instance.BindDescriptorSets(uniformSet.Shader.BindPoint, uniformSet.Shader.PipelineLayout, 0, uniformSet.DescriptorSets, []);
 
     public void ClearAttachments(Span<VkClearAttachment> attachments, Span<VkClearRect> rects) =>
         this.Instance.ClearAttachments(attachments, rects);
