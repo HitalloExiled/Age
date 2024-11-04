@@ -104,8 +104,8 @@ internal partial class TextLayout : Layout
 
     public override BoxLayout? Parent => this.target.ParentElement?.Layout;
 
-    public string? SelectedText => this.text != null && this.selection.HasValue
-        ? this.text[(int)this.selection.Value.Start..(int)this.selection.Value.End]
+    public string? SelectedText => this.text != null && this.selection?.Ordered() is Range range
+        ? this.text.Substring((int)range.Start, (int)(range.End - range.Start))
         : null;
 
     public override TextNode Target => this.target;
