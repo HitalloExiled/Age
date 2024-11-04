@@ -41,9 +41,9 @@ public partial class Window : Disposable
     #endregion
 
     #region 4-bytes
+    private CursorKind cursor;
     private Point<int> position;
     private Size<uint> size;
-    private CursorKind cursor;
 
     #endregion
 

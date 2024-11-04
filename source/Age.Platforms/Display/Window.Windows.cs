@@ -217,6 +217,14 @@ public partial class Window
                     window.Close();
 
                     break;
+                case User32.WINDOW_MESSAGE.WM_SETCURSOR:
+                    if ((User32.HIT_TEST)LoWord(lParam) == User32.HIT_TEST.HTCLIENT)
+                    {
+                        PlatformSetCursor(window.Cursor);
+                        return 1;
+                    }
+
+                    break;
                 default:
                     break;
             }
@@ -233,8 +241,7 @@ public partial class Window
             {
                 cbSize        = (uint)sizeof(User32.WNDCLASSEXW),
                 hbrBackground = default,
-                // hCursor       = User32.LoadCursorW(default, User32.IDC_STANDARD_CURSORS.IDC_ARROW),
-                // hCursor       = User32.LoadCursorW(default, User32.IDC_STANDARD_CURSORS.IDC_HAND),
+                hCursor       = User32.LoadCursorW(default, User32.IDC_STANDARD_CURSORS.IDC_ARROW),
                 hIcon         = default,
                 hIconSm       = default,
                 hInstance     = default,
