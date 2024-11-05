@@ -1,6 +1,6 @@
 using Age.Scene;
 
-namespace Age.Tests.Age.Drawing;
+namespace Age.Tests.Age.Scene;
 
 public class TestNode : Node
 {
@@ -96,6 +96,82 @@ public class NodeTest
         Assert.Equal(child1, parent.FirstChild);
         Assert.Equal(child3, parent.LastChild);
         Assert.Equal([child1, child3], parent.Children);
+    }
+
+    [Fact]
+    public void InsertBefore()
+    {
+        var parent = new TestNode { Name = "parent" };
+        var child0 = new TestNode { Name = "child0" };
+        var child1 = new TestNode { Name = "child1" };
+        var child2 = new TestNode { Name = "child2" };
+        var child3 = new TestNode { Name = "child3" };
+        var child4 = new TestNode { Name = "child4" };
+
+        parent.AppendChild(child1);
+        parent.AppendChild(child2);
+        parent.AppendChild(child4);
+
+        parent.InsertBefore(child3, child4);
+
+        Assert.Equal([child1, child2, child3, child4], parent.Children);
+
+        parent.InsertBefore(child0, child1);
+
+        Assert.Equal([child0, child1, child2, child3, child4], parent.Children);
+    }
+
+    [Fact]
+    public void InsertAfter()
+    {
+        var parent = new TestNode { Name = "parent" };
+        var child1 = new TestNode { Name = "child1" };
+        var child2 = new TestNode { Name = "child2" };
+        var child3 = new TestNode { Name = "child3" };
+        var child4 = new TestNode { Name = "child4" };
+        var child5 = new TestNode { Name = "child5" };
+
+        parent.AppendChild(child1);
+        parent.AppendChild(child3);
+        parent.AppendChild(child4);
+
+        parent.InsertAfter(child1, child2);
+
+        Assert.Equal([child1, child2, child3, child4], parent.Children);
+
+        parent.InsertAfter(child4, child5);
+
+        Assert.Equal([child1, child2, child3, child4, child5], parent.Children);
+    }
+
+    [Fact]
+    public void Replace()
+    {
+        var parent = new TestNode { Name = "parent" };
+        var child0 = new TestNode { Name = "child0" };
+        var child1 = new TestNode { Name = "child1" };
+        var child2 = new TestNode { Name = "child2" };
+        var child3 = new TestNode { Name = "child3" };
+
+        parent.AppendChild(child1);
+        parent.AppendChild(child0);
+        parent.AppendChild(child3);
+
+        parent.Replace(child0, child2);
+
+        Assert.Equal([child1, child2, child3], parent.Children);
+
+        parent.Replace(child3, child0);
+
+        Assert.Equal([child1, child2, child0], parent.Children);
+
+        parent.Replace(child1, child3);
+
+        Assert.Equal([child3, child2, child0], parent.Children);
+
+        parent.Replace(child0, child1);
+
+        Assert.Equal([child3, child2, child1], parent.Children);
     }
 
     [Fact]

@@ -182,35 +182,96 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     IEnumerator IEnumerable.GetEnumerator() =>
         this.GetEnumerator();
 
+    private void Insert(Node reference, Node child, bool before)
+    {
+        if (child == this)
+        {
+            throw new InvalidOperationException("Cant add node to itself");
+        }
+
+        if (reference.Parent != this)
+        {
+            throw new InvalidOperationException("Bla bla bla");
+        }
+
+        var hasSameParent = child.Parent == this;
+
+        if (!hasSameParent)
+        {
+            child.Detach();
+
+            child.Parent = this;
+        }
+
+        if (before)
+        {
+            if (reference.PreviousSibling == null)
+            {
+                this.FirstChild = child;
+            }
+            else
+            {
+                reference.PreviousSibling.NextSibling = child;
+            }
+
+            child.PreviousSibling = reference.PreviousSibling;
+            child.NextSibling     = reference;
+
+            reference.PreviousSibling = child;
+        }
+        else
+        {
+            if (reference.NextSibling == null)
+            {
+                this.LastChild = child;
+            }
+            else
+            {
+                reference.NextSibling.PreviousSibling = child;
+            }
+
+            child.PreviousSibling = reference;
+            child.NextSibling     = reference.NextSibling;
+
+            reference.NextSibling = child;
+
+        }
+
+        if (!hasSameParent)
+        {
+            child.Tree = this.Tree;
+
+            child.Adopted();
+            this.ChildAppended(child);
+        }
+    }
+
     private void RemoveChildren(bool dispose = false)
     {
-        if (this.FirstChild != null)
+        var next = this.FirstChild;
+
+        while (next != null)
         {
-            var next = this.FirstChild;
+            var current = next;
 
-            do
+            if (dispose)
             {
-                var current = next;
-
-                if (dispose)
-                {
-                    current.Dispose();
-                }
-
-                next = current.NextSibling;
-
-                current.PreviousSibling = null;
-                current.NextSibling     = null;
-                current.Parent          = null;
-                current.Tree            = null;
-
-                this.ChildRemoved(current);
+                current.Dispose();
             }
-            while (next != null);
 
-            this.FirstChild = null;
-            this.LastChild  = null;
+            next = current.NextSibling;
+
+            current.PreviousSibling = null;
+            current.NextSibling     = null;
+            current.Parent          = null;
+            current.Tree            = null;
+            current.Removed();
+
+            this.ChildRemoved(current);
         }
+
+        this.FirstChild = null;
+        this.LastChild  = null;
     }
 
     private void RemoveChildren(Node start, Node end, bool dispose)
@@ -222,7 +283,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         var next = start;
 
-        do
+        while (next != null)
         {
             var current = next;
 
@@ -245,10 +306,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
                 break;
             }
         }
-        while (next != null);
-
-        this.FirstChild = null;
-        this.LastChild  = null;
     }
 
     protected override void Disposed(bool disposing)
@@ -265,6 +322,9 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     }
 
     protected virtual void Adopted()
+    { }
+
+    protected virtual void Removed()
     { }
 
     protected virtual void ChildAppended(Node child)
@@ -401,6 +461,61 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public TraverseEnumerator GetTraverseEnumerator() =>
         new(this);
 
+    public void InsertAfter(Node reference, Node child) =>
+        this.Insert(reference, child, false);
+
+    public void InsertBefore(Node child, Node reference) =>
+        this.Insert(reference, child, true);
+
+    public void Replace(Node oldChild, Node newChild)
+    {
+        if (newChild == this)
+        {
+            throw new InvalidOperationException("Cant add node to itself");
+        }
+
+        if (oldChild.Parent != this)
+        {
+            throw new InvalidOperationException("Bla bla bla");
+        }
+
+        newChild.Detach();
+
+        if (oldChild.PreviousSibling == null)
+        {
+            this.FirstChild = newChild;
+        }
+        else
+        {
+            oldChild.PreviousSibling.NextSibling = newChild;
+        }
+
+        if (oldChild.NextSibling == null)
+        {
+            this.LastChild = newChild;
+        }
+        else
+        {
+            oldChild.NextSibling.PreviousSibling = newChild;
+        }
+
+        newChild.Parent          = this;
+        newChild.PreviousSibling = oldChild.PreviousSibling;
+        newChild.NextSibling     = oldChild.NextSibling;
+        newChild.Tree            = this.Tree;
+
+        oldChild.Parent          = null;
+        oldChild.PreviousSibling = null;
+        oldChild.NextSibling     = null;
+        oldChild.Tree            = null;
+
+        oldChild.Removed();
+        this.ChildRemoved(oldChild);
+
+        newChild.Adopted();
+        this.ChildAppended(newChild);
+    }
+
     public void RemoveChild(Node child)
     {
         if (child.Parent == this)
@@ -434,6 +549,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             child.Parent          = null;
             child.Tree            = null;
 
+            child.Removed();
             this.ChildRemoved(child);
         }
     }
