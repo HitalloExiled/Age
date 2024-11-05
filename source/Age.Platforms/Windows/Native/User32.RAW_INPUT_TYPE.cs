@@ -2,19 +2,13 @@ namespace Age.Platforms.Windows.Native;
 
 internal static partial class User32
 {
+    /// <summary>
+    /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-rawinputheader"></see>
+    /// </summary>
     public enum RAW_INPUT_TYPE
     {
-        /// <summary>
-        /// Raw input comes from the mouse.
-        /// </summary>
-        RIM_TYPEMOUSE = 0,
-        /// <summary>
-        /// Raw input comes from the keyboard.
-        /// </summary>
+        RIM_TYPEMOUSE    = 0,
         RIM_TYPEKEYBOARD = 1,
-        /// <summary>
-        /// Raw input comes from some device that is not a keyboard or a mouse.
-        /// </summary>
-        RIM_TYPEHID = 2
+        RIM_TYPEHID      = 2
     }
 }

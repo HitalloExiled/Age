@@ -1,16 +1,13 @@
 namespace Age.Platforms.Windows.Native;
+
 internal static partial class User32
 {
+    /// <summary>
+    /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-createpolygonrgn"></see>
+    /// </summary>
     public enum FILL_MODE
     {
-        /// <summary>
-        /// Selects alternate mode (fills area between odd-numbered and even-numbered polygon sides on each scan line).
-        /// </summary>
         ALTERNATE,
-
-        /// <summary>
-        /// Selects winding mode (fills any region with a nonzero winding value).
-        /// </summary>
         WINDING,
     }
 }

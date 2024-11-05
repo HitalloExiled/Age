@@ -1,6 +1,10 @@
 namespace Age.Platforms.Windows.Native;
+
 internal static partial class User32
 {
+    /// <summary>
+    /// See <see href="https://learn.microsoft.com/en-us/windows/win32/menurc/about-cursors"></see>
+    /// </summary>
     public enum IDC_STANDARD_CURSORS
     {
         IDC_ARROW       = 32512,
