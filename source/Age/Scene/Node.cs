@@ -1,7 +1,7 @@
-using Age.Core;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Age.Core;
 
 namespace Age.Scene;
 
@@ -182,9 +182,9 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     IEnumerator IEnumerable.GetEnumerator() =>
         this.GetEnumerator();
 
-    private void Insert(Node reference, Node child, bool before)
+    private void Insert(Node reference, Node node, bool before)
     {
-        if (child == this)
+        if (node == this)
         {
             throw new InvalidOperationException("Cant add node to itself");
         }
@@ -194,55 +194,151 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             throw new InvalidOperationException("Bla bla bla");
         }
 
-        var hasSameParent = child.Parent == this;
+        var hasSameParent = node.Parent == this;
 
         if (!hasSameParent)
         {
-            child.Detach();
+            node.Detach();
 
-            child.Parent = this;
+            node.Parent = this;
         }
 
         if (before)
         {
             if (reference.PreviousSibling == null)
             {
-                this.FirstChild = child;
+                this.FirstChild = node;
             }
             else
             {
-                reference.PreviousSibling.NextSibling = child;
+                reference.PreviousSibling.NextSibling = node;
             }
 
-            child.PreviousSibling = reference.PreviousSibling;
-            child.NextSibling     = reference;
+            node.PreviousSibling = reference.PreviousSibling;
+            node.NextSibling     = reference;
 
-            reference.PreviousSibling = child;
+            reference.PreviousSibling = node;
         }
         else
         {
             if (reference.NextSibling == null)
             {
-                this.LastChild = child;
+                this.LastChild = node;
             }
             else
             {
-                reference.NextSibling.PreviousSibling = child;
+                reference.NextSibling.PreviousSibling = node;
             }
 
-            child.PreviousSibling = reference;
-            child.NextSibling     = reference.NextSibling;
+            node.PreviousSibling = reference;
+            node.NextSibling     = reference.NextSibling;
 
-            reference.NextSibling = child;
+            reference.NextSibling = node;
 
         }
 
         if (!hasSameParent)
         {
-            child.Tree = this.Tree;
+            node.Tree = this.Tree;
 
-            child.Adopted();
-            this.ChildAppended(child);
+            node.Adopted();
+            this.ChildAppended(node);
+        }
+    }
+
+    private void Insert(Node reference, Span<Node> nodes, bool before)
+    {
+        if (reference.Parent != this)
+        {
+            throw new InvalidOperationException("Bla bla bla");
+        }
+
+        for (var i = 0; i < nodes.Length ; i++)
+        {
+            var node = nodes[i];
+
+            if (node == this)
+            {
+                throw new InvalidOperationException("Cant add node to itself");
+            }
+
+            var hasSameParent = node.Parent == this;
+
+            if (!hasSameParent)
+            {
+                node.Detach();
+
+                node.Parent = this;
+            }
+
+            if (i == 0)
+            {
+                if (before)
+                {
+                    if (reference.PreviousSibling == null)
+                    {
+                        this.FirstChild = node;
+                    }
+                    else
+                    {
+                        reference.PreviousSibling.NextSibling = node;
+                    }
+
+                    node.PreviousSibling = reference.PreviousSibling;
+                }
+                else
+                {
+                    node.PreviousSibling = reference;
+                }
+
+                if (nodes.Length > 1)
+                {
+                    node.NextSibling = nodes[i + 1];
+                }
+            }
+            else if (i < nodes.Length - 1)
+            {
+                node.PreviousSibling = nodes[i - 1];
+                node.NextSibling     = nodes[i + 1];
+            }
+
+            if (i == nodes.Length - 1)
+            {
+                if (i > 0)
+                {
+                    node.PreviousSibling = nodes[i - 1];
+                }
+
+                if (before)
+                {
+                    node.NextSibling = reference;
+
+                    reference.PreviousSibling = node;
+                }
+                else
+                {
+                    if (reference.NextSibling == null)
+                    {
+                        this.LastChild = node;
+                    }
+                    else
+                    {
+                        reference.NextSibling.PreviousSibling = node;
+                    }
+
+                    node.NextSibling = reference.NextSibling;
+
+                    reference.NextSibling = nodes[0];
+                }
+            }
+
+            if (!hasSameParent)
+            {
+                node.Tree = this.Tree;
+
+                node.Adopted();
+                this.ChildAppended(node);
+            }
         }
     }
 
@@ -265,8 +361,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             current.NextSibling     = null;
             current.Parent          = null;
             current.Tree            = null;
-            current.Removed();
 
+            current.Removed();
             this.ChildRemoved(current);
         }
 
@@ -299,6 +395,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             current.Parent          = null;
             current.Tree            = null;
 
+            current.Removed();
             this.ChildRemoved(current);
 
             if (current == end)
@@ -342,43 +439,82 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     protected virtual void Indexed() { }
 
-    public void AppendChild(Node child)
+    public void AppendChild(Node node)
     {
-        if (child == this)
+        if (node == this)
         {
             throw new InvalidOperationException("Cant add node to itself");
         }
 
-        if (child.Parent != this)
+        if (node.Parent != this)
         {
-            child.Detach();
+            node.Detach();
 
-            child.Parent = this;
+            node.Parent = this;
 
             if (this.LastChild != null)
             {
-                this.LastChild.NextSibling = child;
-                child.PreviousSibling = this.LastChild;
+                this.LastChild.NextSibling = node;
+                node.PreviousSibling = this.LastChild;
 
-                this.LastChild = child;
+                this.LastChild = node;
             }
             else
             {
-                this.FirstChild = this.LastChild = child;
+                this.FirstChild = this.LastChild = node;
             }
 
-            child.Tree = this.Tree;
+            node.Tree = this.Tree;
 
-            child.Adopted();
-            this.ChildAppended(child);
+            node.Adopted();
+            this.ChildAppended(node);
         }
     }
 
-    public void AppendChildren(IEnumerable<Node> children)
+    public void AppendChildren(Span<Node> nodes)
     {
-        foreach (var child in children)
+        for (var i = 0; i < nodes.Length; i++)
         {
-            this.AppendChild(child);
+            var node = nodes[i];
+
+            if (node == this)
+            {
+                throw new InvalidOperationException("Cant add node to itself");
+            }
+
+            if (node.Parent != this)
+            {
+                node.Detach();
+
+                node.Parent = this;
+
+                if (i == 0)
+                {
+                    if (this.LastChild == null)
+                    {
+                        this.FirstChild = node;
+                    }
+                    else
+                    {
+                        this.LastChild.NextSibling = node;
+                    }
+                }
+                else
+                {
+                    nodes[i - 1].NextSibling = node;
+                    node.PreviousSibling = nodes[i - 1];
+                }
+
+                if (i == nodes.Length - 1)
+                {
+                    this.LastChild = node;
+                }
+
+                node.Tree = this.Tree;
+
+                node.Adopted();
+                this.ChildAppended(node);
+            }
         }
     }
 
@@ -461,96 +597,102 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public TraverseEnumerator GetTraverseEnumerator() =>
         new(this);
 
-    public void InsertAfter(Node reference, Node child) =>
-        this.Insert(reference, child, false);
+    public void InsertAfter(Node reference, Node node) =>
+        this.Insert(reference, node, false);
 
-    public void InsertBefore(Node child, Node reference) =>
-        this.Insert(reference, child, true);
+    public void InsertAfter(Node reference, Span<Node> nodes) =>
+        this.Insert(reference, nodes, false);
 
-    public void Replace(Node oldChild, Node newChild)
+    public void InsertBefore(Node node, Node reference) =>
+        this.Insert(reference, node, true);
+
+    public void InsertBefore(Span<Node> nodes, Node reference) =>
+        this.Insert(reference, nodes, true);
+
+    public void Replace(Node oldNode, Node newNode)
     {
-        if (newChild == this)
+        if (newNode == this)
         {
             throw new InvalidOperationException("Cant add node to itself");
         }
 
-        if (oldChild.Parent != this)
+        if (oldNode.Parent != this)
         {
             throw new InvalidOperationException("Bla bla bla");
         }
 
-        newChild.Detach();
+        newNode.Detach();
 
-        if (oldChild.PreviousSibling == null)
+        if (oldNode.PreviousSibling == null)
         {
-            this.FirstChild = newChild;
+            this.FirstChild = newNode;
         }
         else
         {
-            oldChild.PreviousSibling.NextSibling = newChild;
+            oldNode.PreviousSibling.NextSibling = newNode;
         }
 
-        if (oldChild.NextSibling == null)
+        if (oldNode.NextSibling == null)
         {
-            this.LastChild = newChild;
+            this.LastChild = newNode;
         }
         else
         {
-            oldChild.NextSibling.PreviousSibling = newChild;
+            oldNode.NextSibling.PreviousSibling = newNode;
         }
 
-        newChild.Parent          = this;
-        newChild.PreviousSibling = oldChild.PreviousSibling;
-        newChild.NextSibling     = oldChild.NextSibling;
-        newChild.Tree            = this.Tree;
+        newNode.Parent          = this;
+        newNode.PreviousSibling = oldNode.PreviousSibling;
+        newNode.NextSibling     = oldNode.NextSibling;
+        newNode.Tree            = this.Tree;
 
-        oldChild.Parent          = null;
-        oldChild.PreviousSibling = null;
-        oldChild.NextSibling     = null;
-        oldChild.Tree            = null;
+        oldNode.Parent          = null;
+        oldNode.PreviousSibling = null;
+        oldNode.NextSibling     = null;
+        oldNode.Tree            = null;
 
-        oldChild.Removed();
-        this.ChildRemoved(oldChild);
+        oldNode.Removed();
+        this.ChildRemoved(oldNode);
 
-        newChild.Adopted();
-        this.ChildAppended(newChild);
+        newNode.Adopted();
+        this.ChildAppended(newNode);
     }
 
-    public void RemoveChild(Node child)
+    public void RemoveChild(Node node)
     {
-        if (child.Parent == this)
+        if (node.Parent == this)
         {
-            if (child == this.FirstChild)
+            if (node == this.FirstChild)
             {
-                this.FirstChild = child.NextSibling;
+                this.FirstChild = node.NextSibling;
             }
 
-            if (child == this.LastChild)
+            if (node == this.LastChild)
             {
-                this.LastChild = child.PreviousSibling;
+                this.LastChild = node.PreviousSibling;
             }
 
-            if (child.PreviousSibling != null)
+            if (node.PreviousSibling != null)
             {
-                child.PreviousSibling.NextSibling = child.NextSibling;
+                node.PreviousSibling.NextSibling = node.NextSibling;
 
-                if (child.NextSibling != null)
+                if (node.NextSibling != null)
                 {
-                    child.NextSibling.PreviousSibling = child.PreviousSibling.NextSibling;
+                    node.NextSibling.PreviousSibling = node.PreviousSibling.NextSibling;
                 }
             }
-            else if (child.NextSibling != null)
+            else if (node.NextSibling != null)
             {
-                child.NextSibling.PreviousSibling = null;
+                node.NextSibling.PreviousSibling = null;
             }
 
-            child.PreviousSibling = null;
-            child.NextSibling     = null;
-            child.Parent          = null;
-            child.Tree            = null;
+            node.PreviousSibling = null;
+            node.NextSibling     = null;
+            node.Parent          = null;
+            node.Tree            = null;
 
-            child.Removed();
-            this.ChildRemoved(child);
+            node.Removed();
+            this.ChildRemoved(node);
         }
     }
 

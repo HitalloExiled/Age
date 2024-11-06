@@ -131,9 +131,7 @@ public class NodeTest
         var child4 = new TestNode { Name = "child4" };
         var child5 = new TestNode { Name = "child5" };
 
-        parent.AppendChild(child1);
-        parent.AppendChild(child3);
-        parent.AppendChild(child4);
+        parent.AppendChildren([child1, child3, child4]);
 
         parent.InsertAfter(child1, child2);
 
@@ -145,6 +143,68 @@ public class NodeTest
     }
 
     [Fact]
+    public void InsertNodesBefore()
+    {
+        var parent = new TestNode { Name = "parent" };
+        var child1 = new TestNode { Name = "child1" };
+        var child2 = new TestNode { Name = "child2" };
+        var child3 = new TestNode { Name = "child3" };
+        var child4 = new TestNode { Name = "child4" };
+        var child5 = new TestNode { Name = "child5" };
+        var child6 = new TestNode { Name = "child6" };
+        var child7 = new TestNode { Name = "child7" };
+        var child8 = new TestNode { Name = "child8" };
+        var child9 = new TestNode { Name = "child9" };
+
+        parent.AppendChild(child1);
+        parent.AppendChild(child2);
+        parent.AppendChild(child9);
+
+        parent.InsertBefore(new Node[] { child3 }, child9);
+
+        Assert.Equal([child1, child2, child3, child9], parent.Children);
+
+        parent.InsertBefore(new Node[] { child4, child5 }, child9);
+
+        Assert.Equal([child1, child2, child3, child4, child5, child9], parent.Children);
+
+        parent.InsertBefore(new Node[] { child6, child7, child8 }, child9);
+
+        Assert.Equal([child1, child2, child3, child4, child5, child6, child7, child8, child9], parent.Children);
+    }
+
+    [Fact]
+    public void InsertNodesAfter()
+    {
+        var parent = new TestNode { Name = "parent" };
+        var child1 = new TestNode { Name = "child1" };
+        var child2 = new TestNode { Name = "child2" };
+        var child3 = new TestNode { Name = "child3" };
+        var child4 = new TestNode { Name = "child4" };
+        var child5 = new TestNode { Name = "child5" };
+        var child6 = new TestNode { Name = "child6" };
+        var child7 = new TestNode { Name = "child7" };
+        var child8 = new TestNode { Name = "child8" };
+        var child9 = new TestNode { Name = "child9" };
+
+        parent.AppendChild(child1);
+        parent.AppendChild(child2);
+        parent.AppendChild(child9);
+
+        parent.InsertAfter(child2, new Node[] { child3 });
+
+        Assert.Equal([child1, child2, child3, child9], parent.Children);
+
+        parent.InsertAfter(child3, new Node[] { child4, child5 });
+
+        Assert.Equal([child1, child2, child3, child4, child5, child9], parent.Children);
+
+        parent.InsertAfter(child5, new Node[] { child6, child7, child8 });
+
+        Assert.Equal([child1, child2, child3, child4, child5, child6, child7, child8, child9], parent.Children);
+    }
+
+    [Fact]
     public void Replace()
     {
         var parent = new TestNode { Name = "parent" };
@@ -153,9 +213,7 @@ public class NodeTest
         var child2 = new TestNode { Name = "child2" };
         var child3 = new TestNode { Name = "child3" };
 
-        parent.AppendChild(child1);
-        parent.AppendChild(child0);
-        parent.AppendChild(child3);
+        parent.AppendChildren([child1, child0, child3]);
 
         parent.Replace(child0, child2);
 
