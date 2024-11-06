@@ -20,6 +20,9 @@ public class TextNode : ContainerNode
     public TextNode() =>
         this.Layout = new(this);
 
+    public TextNode(string value) : this() =>
+        this.Value = value;
+
     protected override void Connected(RenderTree renderTree) =>
         this.Layout.TargetConnected();
 

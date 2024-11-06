@@ -102,11 +102,11 @@ public class NodeTest
     public void InsertBefore()
     {
         var parent = new TestNode { Name = "parent" };
-        var child0 = new TestNode { Name = "child0" };
-        var child1 = new TestNode { Name = "child1" };
-        var child2 = new TestNode { Name = "child2" };
-        var child3 = new TestNode { Name = "child3" };
-        var child4 = new TestNode { Name = "child4" };
+        var child0 = new TestNode { Name = "child.0" };
+        var child1 = new TestNode { Name = "child.1" };
+        var child2 = new TestNode { Name = "child.2" };
+        var child3 = new TestNode { Name = "child.3" };
+        var child4 = new TestNode { Name = "child.4" };
 
         parent.AppendChild(child1);
         parent.AppendChild(child2);
@@ -125,11 +125,11 @@ public class NodeTest
     public void InsertAfter()
     {
         var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child1" };
-        var child2 = new TestNode { Name = "child2" };
-        var child3 = new TestNode { Name = "child3" };
-        var child4 = new TestNode { Name = "child4" };
-        var child5 = new TestNode { Name = "child5" };
+        var child1 = new TestNode { Name = "child.1" };
+        var child2 = new TestNode { Name = "child.2" };
+        var child3 = new TestNode { Name = "child.3" };
+        var child4 = new TestNode { Name = "child.4" };
+        var child5 = new TestNode { Name = "child.5" };
 
         parent.AppendChildren([child1, child3, child4]);
 
@@ -146,15 +146,15 @@ public class NodeTest
     public void InsertNodesBefore()
     {
         var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child1" };
-        var child2 = new TestNode { Name = "child2" };
-        var child3 = new TestNode { Name = "child3" };
-        var child4 = new TestNode { Name = "child4" };
-        var child5 = new TestNode { Name = "child5" };
-        var child6 = new TestNode { Name = "child6" };
-        var child7 = new TestNode { Name = "child7" };
-        var child8 = new TestNode { Name = "child8" };
-        var child9 = new TestNode { Name = "child9" };
+        var child1 = new TestNode { Name = "child.1" };
+        var child2 = new TestNode { Name = "child.2" };
+        var child3 = new TestNode { Name = "child.3" };
+        var child4 = new TestNode { Name = "child.4" };
+        var child5 = new TestNode { Name = "child.5" };
+        var child6 = new TestNode { Name = "child.6" };
+        var child7 = new TestNode { Name = "child.7" };
+        var child8 = new TestNode { Name = "child.8" };
+        var child9 = new TestNode { Name = "child.9" };
 
         parent.AppendChild(child1);
         parent.AppendChild(child2);
@@ -177,15 +177,15 @@ public class NodeTest
     public void InsertNodesAfter()
     {
         var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child1" };
-        var child2 = new TestNode { Name = "child2" };
-        var child3 = new TestNode { Name = "child3" };
-        var child4 = new TestNode { Name = "child4" };
-        var child5 = new TestNode { Name = "child5" };
-        var child6 = new TestNode { Name = "child6" };
-        var child7 = new TestNode { Name = "child7" };
-        var child8 = new TestNode { Name = "child8" };
-        var child9 = new TestNode { Name = "child9" };
+        var child1 = new TestNode { Name = "child.1" };
+        var child2 = new TestNode { Name = "child.2" };
+        var child3 = new TestNode { Name = "child.3" };
+        var child4 = new TestNode { Name = "child.4" };
+        var child5 = new TestNode { Name = "child.5" };
+        var child6 = new TestNode { Name = "child.6" };
+        var child7 = new TestNode { Name = "child.7" };
+        var child8 = new TestNode { Name = "child.8" };
+        var child9 = new TestNode { Name = "child.9" };
 
         parent.AppendChild(child1);
         parent.AppendChild(child2);
@@ -208,10 +208,10 @@ public class NodeTest
     public void Replace()
     {
         var parent = new TestNode { Name = "parent" };
-        var child0 = new TestNode { Name = "child0" };
-        var child1 = new TestNode { Name = "child1" };
-        var child2 = new TestNode { Name = "child2" };
-        var child3 = new TestNode { Name = "child3" };
+        var child0 = new TestNode { Name = "child.0" };
+        var child1 = new TestNode { Name = "child.1" };
+        var child2 = new TestNode { Name = "child.2" };
+        var child3 = new TestNode { Name = "child.3" };
 
         parent.AppendChildren([child1, child0, child3]);
 

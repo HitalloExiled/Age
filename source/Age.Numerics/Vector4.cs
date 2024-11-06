@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-public record struct Vector4<T> where T :  IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
+public record struct Vector4<T> where T : IFloatingPoint<T>, IFloatingPointIeee754<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public T X;
     public T Y;
