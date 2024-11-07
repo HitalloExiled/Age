@@ -21,46 +21,48 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public T this[int row, int column]
     {
-        readonly get => (row, column) switch
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        readonly get => (row * 4 + column) switch
         {
-            (0, 0) => this.M11,
-            (0, 1) => this.M12,
-            (0, 2) => this.M13,
-            (0, 3) => this.M14,
-            (1, 0) => this.M21,
-            (1, 1) => this.M22,
-            (1, 2) => this.M23,
-            (1, 3) => this.M24,
-            (2, 0) => this.M31,
-            (2, 1) => this.M32,
-            (2, 2) => this.M33,
-            (2, 3) => this.M34,
-            (3, 0) => this.M41,
-            (3, 1) => this.M42,
-            (3, 2) => this.M43,
-            (3, 3) => this.M44,
+             0 => this.M11,
+             1 => this.M12,
+             2 => this.M13,
+             3 => this.M14,
+             4 => this.M21,
+             5 => this.M22,
+             6 => this.M23,
+             7 => this.M24,
+             8 => this.M31,
+             9 => this.M32,
+            10 => this.M33,
+            11 => this.M34,
+            12 => this.M41,
+            13 => this.M42,
+            14 => this.M43,
+            15 => this.M44,
             _ => throw new IndexOutOfRangeException(),
         };
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set
         {
-            switch ((row, column))
+            switch (row * 4 + column)
             {
-                case (0, 0): this.M11 = value; break;
-                case (0, 1): this.M12 = value; break;
-                case (0, 2): this.M13 = value; break;
-                case (0, 3): this.M14 = value; break;
-                case (1, 0): this.M21 = value; break;
-                case (1, 1): this.M22 = value; break;
-                case (1, 2): this.M23 = value; break;
-                case (1, 3): this.M24 = value; break;
-                case (2, 0): this.M31 = value; break;
-                case (2, 1): this.M32 = value; break;
-                case (2, 2): this.M33 = value; break;
-                case (2, 3): this.M34 = value; break;
-                case (3, 0): this.M41 = value; break;
-                case (3, 1): this.M42 = value; break;
-                case (3, 2): this.M43 = value; break;
-                case (3, 3): this.M44 = value; break;
+                case  0: this.M11 = value; break;
+                case  1: this.M12 = value; break;
+                case  2: this.M13 = value; break;
+                case  3: this.M14 = value; break;
+                case  4: this.M21 = value; break;
+                case  5: this.M22 = value; break;
+                case  6: this.M23 = value; break;
+                case  7: this.M24 = value; break;
+                case  8: this.M31 = value; break;
+                case  9: this.M32 = value; break;
+                case 10: this.M33 = value; break;
+                case 11: this.M34 = value; break;
+                case 12: this.M41 = value; break;
+                case 13: this.M42 = value; break;
+                case 14: this.M43 = value; break;
+                case 15: this.M44 = value; break;
                 default: throw new IndexOutOfRangeException();
             }
         }

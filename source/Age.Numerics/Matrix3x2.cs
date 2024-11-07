@@ -14,26 +14,26 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public T this[int column, int row]
     {
-        readonly get => (row, column) switch
+        readonly get => (row * 2 + column) switch
         {
-            (0, 0) => this.M11,
-            (0, 1) => this.M12,
-            (1, 0) => this.M21,
-            (1, 1) => this.M22,
-            (2, 0) => this.M31,
-            (2, 1) => this.M32,
+            0 => this.M11,
+            1 => this.M12,
+            2 => this.M21,
+            3 => this.M22,
+            4 => this.M31,
+            5 => this.M32,
             _ => throw new IndexOutOfRangeException(),
         };
         set
         {
-            switch ((row, column))
+            switch (row * 2 + column)
             {
-                case (0, 0): this.M11 = value; break;
-                case (0, 1): this.M12 = value; break;
-                case (1, 0): this.M21 = value; break;
-                case (1, 1): this.M22 = value; break;
-                case (2, 0): this.M31 = value; break;
-                case (2, 1): this.M32 = value; break;
+                case 0: this.M11 = value; break;
+                case 1: this.M12 = value; break;
+                case 2: this.M21 = value; break;
+                case 3: this.M22 = value; break;
+                case 4: this.M31 = value; break;
+                case 5: this.M32 = value; break;
                 default: throw new IndexOutOfRangeException();
             }
         }
