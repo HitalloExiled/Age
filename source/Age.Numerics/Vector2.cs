@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
@@ -33,17 +32,20 @@ public record struct Vector2<T> where T : IFloatingPoint<T>, IFloatingPointIeee7
 
     public T this[int index]
     {
-        get
+        readonly get => index switch
         {
-            Common.ThrowIfOutOfRange(0, 2, index);
-
-            return Unsafe.Add(ref this.X, index);
-        }
+            0 => this.X,
+            1 => this.Y,
+            _ => throw new IndexOutOfRangeException(),
+        };
         set
         {
-            Common.ThrowIfOutOfRange(0, 2, index);
-
-            Unsafe.Add(ref this.X, index) = value;
+            switch (index)
+            {
+                case 0: this.X = value; break;
+                case 1: this.Y = value; break;
+                default: throw new IndexOutOfRangeException();
+            }
         }
     }
 

@@ -21,49 +21,78 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public T this[int row, int column]
     {
-        get
+        readonly get => (row, column) switch
         {
-            Common.ThrowIfOutOfRange(0, 3, row);
-            Common.ThrowIfOutOfRange(0, 3, column);
-
-		    return Unsafe.Add(ref Unsafe.As<T, Vector4<T>>(ref this.M11), row)[column];
-        }
+            (0, 0) => this.M11,
+            (0, 1) => this.M12,
+            (0, 2) => this.M13,
+            (0, 3) => this.M14,
+            (1, 0) => this.M21,
+            (1, 1) => this.M22,
+            (1, 2) => this.M23,
+            (1, 3) => this.M24,
+            (2, 0) => this.M31,
+            (2, 1) => this.M32,
+            (2, 2) => this.M33,
+            (2, 3) => this.M34,
+            (3, 0) => this.M41,
+            (3, 1) => this.M42,
+            (3, 2) => this.M43,
+            (3, 3) => this.M44,
+            _ => throw new IndexOutOfRangeException(),
+        };
         set
         {
-            Common.ThrowIfOutOfRange(0, 3, row);
-            Common.ThrowIfOutOfRange(0, 3, column);
-
-            Unsafe.Add(ref Unsafe.As<T, Vector4<T>>(ref this.M11), row)[column] = value;
+            switch ((row, column))
+            {
+                case (0, 0): this.M11 = value; break;
+                case (0, 1): this.M12 = value; break;
+                case (0, 2): this.M13 = value; break;
+                case (0, 3): this.M14 = value; break;
+                case (1, 0): this.M21 = value; break;
+                case (1, 1): this.M22 = value; break;
+                case (1, 2): this.M23 = value; break;
+                case (1, 3): this.M24 = value; break;
+                case (2, 0): this.M31 = value; break;
+                case (2, 1): this.M32 = value; break;
+                case (2, 2): this.M33 = value; break;
+                case (2, 3): this.M34 = value; break;
+                case (3, 0): this.M41 = value; break;
+                case (3, 1): this.M42 = value; break;
+                case (3, 2): this.M43 = value; break;
+                case (3, 3): this.M44 = value; break;
+                default: throw new IndexOutOfRangeException();
+            }
         }
     }
 
-    public Vector4<T> X
+    public Vector3<T> X
     {
-        get => Unsafe.As<T, Vector4<T>>(ref this.M11);
+        readonly get => new(this.M11, this.M12, this.M13);
         set => Unsafe.As<T, Vector4<T>>(ref this.M11) = value;
     }
 
-    public Vector4<T> Y
+    public Vector3<T> Y
     {
-        get => Unsafe.As<T, Vector4<T>>(ref this.M21);
+        readonly get => new(this.M21, this.M22, this.M23);
         set => Unsafe.As<T, Vector4<T>>(ref this.M21) = value;
     }
 
-    public Vector4<T> Z
+    public Vector3<T> Z
     {
-        get => Unsafe.As<T, Vector4<T>>(ref this.M31);
+        readonly get => new(this.M31, this.M32, this.M33);
         set => Unsafe.As<T, Vector4<T>>(ref this.M31) = value;
     }
 
-    public Vector4<T> W
+    public Vector3<T> W
     {
-        get => Unsafe.As<T, Vector4<T>>(ref this.M41);
+        readonly get => new(this.M41, this.M42, this.M43);
         set => Unsafe.As<T, Vector4<T>>(ref this.M41) = value;
     }
 
     public Vector3<T> Translation
     {
-        get => Unsafe.As<T, Vector3<T>>(ref this.M41);
+        readonly get => this.W;
         set => Unsafe.As<T, Vector3<T>>(ref this.M41) = value;
     }
 
@@ -124,14 +153,7 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public Vector3<T> Scale
     {
-        get
-        {
-            ref var x = ref Unsafe.As<T, Vector3<T>>(ref this.M11);
-            ref var y = ref Unsafe.As<T, Vector3<T>>(ref this.M21);
-            ref var z = ref Unsafe.As<T, Vector3<T>>(ref this.M31);
-
-            return new(x.Length, y.Length, z.Length);
-        }
+        readonly get => new(this.X.Length, this.Y.Length, this.Z.Length);
         set
         {
             ref var x = ref Unsafe.As<T, Vector3<T>>(ref this.M11);

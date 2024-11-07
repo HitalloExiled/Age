@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
@@ -18,6 +17,30 @@ public record struct Vector3<T> where T : IFloatingPoint<T>, IFloatingPointIeee7
     public T X;
     public T Y;
     public T Z;
+
+    public T this[int index]
+    {
+        readonly get => index switch
+        {
+            0 => this.X,
+            1 => this.Y,
+            2 => this.Z,
+            _ => throw new IndexOutOfRangeException(),
+        };
+        set
+        {
+            switch (index)
+            {
+                case 0: this.X = value; break;
+                case 1: this.Y = value; break;
+                case 2: this.Z = value; break;
+                default: throw new IndexOutOfRangeException();
+            }
+        }
+    }
+
+    public readonly T Length        => T.Sqrt(this.LengthSquared);
+    public readonly T LengthSquared => this.Dot(this);
 
     public Vector3(T value)
     {
@@ -39,25 +62,6 @@ public record struct Vector3<T> where T : IFloatingPoint<T>, IFloatingPointIeee7
         this.Y = vector2.Y;
         this.Z = z;
     }
-
-    public T this[int index]
-    {
-        get
-        {
-            Common.ThrowIfOutOfRange(0, 3, index);
-
-            return Unsafe.Add(ref this.X, index);
-        }
-        set
-        {
-            Common.ThrowIfOutOfRange(0, 3, index);
-
-            Unsafe.Add(ref this.X, index) = value;
-        }
-    }
-
-    public readonly T Length        => T.Sqrt(this.LengthSquared);
-    public readonly T LengthSquared => this.Dot(this);
 
     public static Vector3<T> Cross(in Vector3<T> v1, in Vector3<T> v2) =>
         new(v1.Y * v2.Z - v1.Z * v2.Y, v1.Z * v2.X - v1.X * v2.Z, v1.X * v2.Y - v1.Y * v2.X);
