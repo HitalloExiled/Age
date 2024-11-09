@@ -233,6 +233,65 @@ public class NodeTest
     }
 
     [Fact]
+    public void ReplaceByNodes()
+    {
+        var parent  = new TestNode { Name = "parent" };
+        var child0  = new TestNode { Name = "child.0" };
+        var child1  = new TestNode { Name = "child.1" };
+        var child2  = new TestNode { Name = "child.2" };
+        var child3  = new TestNode { Name = "child.3" };
+        var child4  = new TestNode { Name = "child.4" };
+        var child5  = new TestNode { Name = "child.5" };
+        var child6  = new TestNode { Name = "child.6" };
+        var child7  = new TestNode { Name = "child.7" };
+        var child8  = new TestNode { Name = "child.8" };
+        var child9  = new TestNode { Name = "child.9" };
+        var child10 = new TestNode { Name = "child.10" };
+        var child11 = new TestNode { Name = "child.11" };
+        var child12 = new TestNode { Name = "child.12" };
+
+        parent.AppendChild(child5);
+        parent.AppendChild(child0);
+        parent.AppendChild(child9);
+
+        parent.Replace(child0, new Node[] { child6, child7, child8 });
+
+        Assert.True(parent.Children.SequenceEqual([child5, child6, child7, child8, child9]));
+
+        parent.InsertBefore(child0, child5);
+
+        parent.Replace(child0, new Node[] { child1, child2, child3, child4 });
+
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child6, child7, child8, child9]));
+
+        parent.AppendChild(child0);
+
+        parent.Replace(child0, new Node[] { child10, child11, child12 });
+
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child6, child7, child8, child9, child10, child11, child12]));
+    }
+
+    [Fact]
+    public void ReplaceByNodesEdgeCase()
+    {
+        var parent  = new TestNode { Name = "parent" };
+        var child0  = new TestNode { Name = "child.0" };
+        var child1  = new TestNode { Name = "child.1" };
+        var child2  = new TestNode { Name = "child.2" };
+        var child3  = new TestNode { Name = "child.3" };
+        var child4  = new TestNode { Name = "child.4" };
+        var child5  = new TestNode { Name = "child.5" };
+        var child6  = new TestNode { Name = "child.6" };
+        var child7  = new TestNode { Name = "child.7" };
+
+        parent.AppendChildren([child1, child0, child7, child2, child3, child4, child5, child6]);
+
+        parent.Replace(child0, new Node[] { child2, child3, child4, child5, child6, child7 });
+
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child6, child7]));
+    }
+
+    [Fact]
     public void Clear()
     {
         var parent = new TestNode();

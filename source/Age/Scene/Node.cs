@@ -348,18 +348,16 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void RemoveChildren(bool dispose = false)
     {
-        var next = this.FirstChild;
-
-        while (next != null)
+        while (this.FirstChild != null)
         {
-            var current = next;
+            var current = this.FirstChild;
 
             if (dispose)
             {
                 current.Dispose();
             }
 
-            next = current.NextSibling;
+            this.FirstChild = current.NextSibling;
 
             current.PreviousSibling = null;
             current.NextSibling     = null;
@@ -370,8 +368,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             this.ChildRemoved(current);
         }
 
-        this.FirstChild = null;
-        this.LastChild  = null;
+        this.LastChild = null;
     }
 
     private void RemoveChildren(Node start, Node end, bool dispose)
@@ -712,6 +709,92 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         node.Adopted();
         this.ChildAppended(node);
+    }
+
+    public void Replace(Node target, Span<Node> nodes)
+    {
+        if (target.Parent != this)
+        {
+            throw new InvalidOperationException("Target is not child of this node");
+        }
+
+        if (nodes.Length == 0)
+        {
+            return;
+        }
+
+        foreach (var node in nodes)
+        {
+            if (node == this)
+            {
+                throw new InvalidOperationException("Cant add node to itself");
+            }
+
+            if (node == target)
+            {
+                throw new InvalidOperationException("Cant replace node by itself");
+            }
+
+            node.Detach();
+        }
+
+        var first = nodes[0];
+        var last  = nodes[^1];
+
+        if (target.PreviousSibling == null)
+        {
+            this.FirstChild = first;
+        }
+        else
+        {
+            target.PreviousSibling.NextSibling = first;
+        }
+
+        first.PreviousSibling = target.PreviousSibling;
+
+        if (nodes.Length > 1)
+        {
+            first.NextSibling = nodes[1];
+        }
+
+        for (var i = 1; i < nodes.Length - 1; i++)
+        {
+            nodes[i].PreviousSibling = nodes[i - 1];
+            nodes[i].NextSibling     = nodes[i + 1];
+        }
+
+        if (nodes.Length > 1)
+        {
+            last.PreviousSibling = nodes[^2];
+        }
+
+        last.NextSibling = target.NextSibling;
+
+        if (target.NextSibling == null)
+        {
+            this.LastChild = last;
+        }
+        else
+        {
+            target.NextSibling.PreviousSibling = last;
+        }
+
+        target.Parent          = null;
+        target.PreviousSibling = null;
+        target.NextSibling     = null;
+        target.Tree            = null;
+
+        target.Removed();
+        this.ChildRemoved(target);
+
+        foreach (var node in nodes)
+        {
+            node.Parent = this;
+            node.Tree   = this.Tree;
+            node.Adopted();
+
+            this.ChildAppended(node);
+        }
     }
 
     public void RemoveChild(Node node)
