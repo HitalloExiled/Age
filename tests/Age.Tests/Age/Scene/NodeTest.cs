@@ -19,13 +19,13 @@ public class NodeTest
 
         void appendAll()
         {
-            parent!.AppendChild(child1!);
-            parent.AppendChild(child2!);
-            parent.AppendChild(child3!);
+            parent.AppendChild(child1);
+            parent.AppendChild(child2);
+            parent.AppendChild(child3);
 
             Assert.Equal(child1, parent.FirstChild);
             Assert.Equal(child3, parent.LastChild);
-            Assert.Equal([child1, child2, child3], parent.Children);
+            Assert.True(parent.Children.SequenceEqual([child1, child2, child3]));
         }
 
         appendAll();
@@ -37,7 +37,7 @@ public class NodeTest
 
         Assert.Equal(child1, parent.FirstChild);
         Assert.Equal(child2, parent.LastChild);
-        Assert.Equal([child1, child2], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2]));
 
         parent.RemoveChild(child2);
 
@@ -46,7 +46,7 @@ public class NodeTest
 
         Assert.Equal(child1, parent.FirstChild);
         Assert.Equal(child1, parent.LastChild);
-        Assert.Equal([child1], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1]));
 
         parent.RemoveChild(child1);
 
@@ -55,7 +55,7 @@ public class NodeTest
 
         Assert.Null(parent.FirstChild);
         Assert.Null(parent.LastChild);
-        Assert.Equal([], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([]));
 
         appendAll();
 
@@ -66,7 +66,7 @@ public class NodeTest
 
         Assert.Equal(child2, parent.FirstChild);
         Assert.Equal(child3, parent.LastChild);
-        Assert.Equal([child2, child3], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child2, child3]));
 
         parent.RemoveChild(child2);
 
@@ -75,7 +75,7 @@ public class NodeTest
 
         Assert.Equal(child3, parent.FirstChild);
         Assert.Equal(child3, parent.LastChild);
-        Assert.Equal([child3], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child3]));
 
         parent.RemoveChild(child3);
 
@@ -84,7 +84,7 @@ public class NodeTest
 
         Assert.Null(parent.FirstChild);
         Assert.Null(parent.LastChild);
-        Assert.Equal([], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([]));
 
         appendAll();
 
@@ -95,7 +95,7 @@ public class NodeTest
 
         Assert.Equal(child1, parent.FirstChild);
         Assert.Equal(child3, parent.LastChild);
-        Assert.Equal([child1, child3], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child3]));
     }
 
     [Fact]
@@ -114,11 +114,11 @@ public class NodeTest
 
         parent.InsertBefore(child3, child4);
 
-        Assert.Equal([child1, child2, child3, child4], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4]));
 
         parent.InsertBefore(child0, child1);
 
-        Assert.Equal([child0, child1, child2, child3, child4], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child0, child1, child2, child3, child4]));
     }
 
     [Fact]
@@ -135,11 +135,11 @@ public class NodeTest
 
         parent.InsertAfter(child1, child2);
 
-        Assert.Equal([child1, child2, child3, child4], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4]));
 
         parent.InsertAfter(child4, child5);
 
-        Assert.Equal([child1, child2, child3, child4, child5], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5]));
     }
 
     [Fact]
@@ -162,15 +162,15 @@ public class NodeTest
 
         parent.InsertBefore(new Node[] { child3 }, child9);
 
-        Assert.Equal([child1, child2, child3, child9], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child9]));
 
         parent.InsertBefore(new Node[] { child4, child5 }, child9);
 
-        Assert.Equal([child1, child2, child3, child4, child5, child9], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child9]));
 
         parent.InsertBefore(new Node[] { child6, child7, child8 }, child9);
 
-        Assert.Equal([child1, child2, child3, child4, child5, child6, child7, child8, child9], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child6, child7, child8, child9]));
     }
 
     [Fact]
@@ -193,15 +193,15 @@ public class NodeTest
 
         parent.InsertAfter(child2, new Node[] { child3 });
 
-        Assert.Equal([child1, child2, child3, child9], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child9]));
 
         parent.InsertAfter(child3, new Node[] { child4, child5 });
 
-        Assert.Equal([child1, child2, child3, child4, child5, child9], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child9]));
 
         parent.InsertAfter(child5, new Node[] { child6, child7, child8 });
 
-        Assert.Equal([child1, child2, child3, child4, child5, child6, child7, child8, child9], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child6, child7, child8, child9]));
     }
 
     [Fact]
@@ -217,19 +217,19 @@ public class NodeTest
 
         parent.Replace(child0, child2);
 
-        Assert.Equal([child1, child2, child3], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3]));
 
         parent.Replace(child3, child0);
 
-        Assert.Equal([child1, child2, child0], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child0]));
 
         parent.Replace(child1, child3);
 
-        Assert.Equal([child3, child2, child0], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child3, child2, child0]));
 
         parent.Replace(child0, child1);
 
-        Assert.Equal([child3, child2, child1], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child3, child2, child1]));
     }
 
     [Fact]
@@ -244,7 +244,7 @@ public class NodeTest
         parent.AppendChild(child2);
         parent.AppendChild(child3);
 
-        Assert.Equal([child1, child2, child3], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([child1, child2, child3]));
 
         parent.RemoveChildren();
 
@@ -257,7 +257,7 @@ public class NodeTest
         Assert.Null(child3.PreviousSibling);
         Assert.Null(child3.NextSibling);
 
-        Assert.Equal([], parent.Children);
+        Assert.True(parent.Children.SequenceEqual([]));
     }
 
     [Fact]
@@ -268,6 +268,7 @@ public class NodeTest
         var child3 = new TestNode();
 
         var parent = new TestNode();
+
         parent.AppendChildren([child1, child2, child3]);
 
         var nodes = new List<Node>();
@@ -279,7 +280,7 @@ public class NodeTest
             nodes.Add(enumerator.Current);
         }
 
-        Assert.Equal([child1, child2, child3], nodes);
+        Assert.True(nodes.SequenceEqual([child1, child2, child3]));
     }
 
     [Fact]
@@ -487,34 +488,5 @@ public class NodeTest
         }
 
         Assert.Equal(expected, nodes);
-    }
-
-    private static void AddChilds(Node parent, ref int parentDepth)
-    {
-        if (parentDepth > 0)
-        {
-            parentDepth--;
-
-            for (var i = 0; i < 5; i++)
-            {
-                var child = new TestNode();
-
-                parent.AppendChild(child);
-
-                var depth = parentDepth;
-
-                AddChilds(child, ref depth);
-            }
-        }
-    }
-
-    [Fact]
-    public void TestName()
-    {
-        var root = new TestNode();
-
-        var depth = 100;
-
-        AddChilds(root, ref depth);
     }
 }
