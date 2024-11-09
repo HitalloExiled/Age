@@ -43,13 +43,13 @@ public sealed partial class RenderTree : NodeTree
 
     private IEnumerable<CommandEntry> EnumerateCommands()
     {
-        this.Stack.Push(this.Root);
+        var enumerator = this.Root.GetTraverseEnumerator();
 
         var index = 0;
 
-        while (this.Stack.Count > 0)
+        while (enumerator.MoveNext())
         {
-            var current = this.Stack.Pop();
+            var current = enumerator.Current;
 
             if (current.Visible)
             {
@@ -91,11 +91,6 @@ public sealed partial class RenderTree : NodeTree
 
                         yield return entry;
                     }
-                }
-
-                foreach (var node in current.Reverse())
-                {
-                    this.Stack.Push(node);
                 }
             }
         }

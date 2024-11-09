@@ -6,8 +6,6 @@ public abstract class NodeTree : Disposable
 {
     public event Action? Updated;
 
-    protected Stack<Node> Stack { get; } = [];
-
     internal List<Timer> Timers { get; } = [];
 
     public Root Root { get; }
@@ -17,40 +15,38 @@ public abstract class NodeTree : Disposable
 
     private void InitializeTree()
     {
-        this.Stack.Push(this.Root);
+        var enumerator = this.Root.GetTraverseEnumerator();
 
-        while (this.Stack.Count > 0)
+        while (enumerator.MoveNext())
         {
-            var current = this.Stack.Pop();
+            var current = enumerator.Current;
 
-            if (!current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+            if (current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+            {
+                enumerator.SkipToNextSibling();
+            }
+            else
             {
                 current.Initialize();
-
-                foreach (var node in current.Reverse())
-                {
-                    this.Stack.Push(node);
-                }
             }
         }
     }
 
     private void LateUpdateTree()
     {
-        this.Stack.Push(this.Root);
+        var enumerator = this.Root.GetTraverseEnumerator();
 
-        while (this.Stack.Count > 0)
+        while (enumerator.MoveNext())
         {
-            var current = this.Stack.Pop();
+            var current = enumerator.Current;
 
-            if (!current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+            if (current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+            {
+                enumerator.SkipToNextSibling();
+            }
+            else
             {
                 current.LateUpdate();
-
-                foreach (var node in current.Reverse())
-                {
-                    this.Stack.Push(node);
-                }
             }
         }
     }
@@ -65,20 +61,19 @@ public abstract class NodeTree : Disposable
 
     private void UpdateTree()
     {
-        this.Stack.Push(this.Root);
+        var enumerator = this.Root.GetTraverseEnumerator();
 
-        while (this.Stack.Count > 0)
+        while (enumerator.MoveNext())
         {
-            var current = this.Stack.Pop();
+            var current = enumerator.Current;
 
-            if (!current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+            if (current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+            {
+                enumerator.SkipToNextSibling();
+            }
+            else
             {
                 current.Update();
-
-                foreach (var node in current.Reverse())
-                {
-                    this.Stack.Push(node);
-                }
             }
         }
     }

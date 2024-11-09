@@ -488,4 +488,33 @@ public class NodeTest
 
         Assert.Equal(expected, nodes);
     }
+
+    private static void AddChilds(Node parent, ref int parentDepth)
+    {
+        if (parentDepth > 0)
+        {
+            parentDepth--;
+
+            for (var i = 0; i < 5; i++)
+            {
+                var child = new TestNode();
+
+                parent.AppendChild(child);
+
+                var depth = parentDepth;
+
+                AddChilds(child, ref depth);
+            }
+        }
+    }
+
+    [Fact]
+    public void TestName()
+    {
+        var root = new TestNode();
+
+        var depth = 100;
+
+        AddChilds(root, ref depth);
+    }
 }
