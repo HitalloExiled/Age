@@ -9,93 +9,279 @@ public class TestNode : Node
 
 public class NodeTest
 {
-    [Fact]
-    public void AppendAndRemove()
+    private static void AssertParentHasNodes(Node parent, Node[] nodes)
     {
-        var parent = new TestNode();
-        var child1 = new TestNode();
-        var child2 = new TestNode();
-        var child3 = new TestNode();
-
-        void appendAll()
+        if (nodes.Length == 0)
         {
-            parent.AppendChild(child1);
-            parent.AppendChild(child2);
-            parent.AppendChild(child3);
-
-            Assert.Equal(child1, parent.FirstChild);
-            Assert.Equal(child3, parent.LastChild);
-            Assert.True(parent.Children.SequenceEqual([child1, child2, child3]));
+            Assert.Null(parent.FirstChild);
+            Assert.Null(parent.LastChild);
         }
+        else
+        {
+            if (nodes.Length == 1)
+            {
+                Assert.Equal(parent, nodes[0].Parent);
 
-        appendAll();
+                Assert.Equal(nodes[0], parent.FirstChild);
+                Assert.Equal(nodes[0], parent.LastChild);
 
-        parent.RemoveChild(child3);
+                Assert.Null(nodes[0].PreviousSibling);
+                Assert.Null(nodes[0].NextSibling);
+            }
+            else
+            {
+                var first = nodes[0];
+                var last  = nodes[^1];
 
-        Assert.Null(child3.PreviousSibling);
-        Assert.Null(child3.NextSibling);
+                Assert.Equal(parent, first.Parent);
+                Assert.Equal(parent, last.Parent);
 
-        Assert.Equal(child1, parent.FirstChild);
-        Assert.Equal(child2, parent.LastChild);
-        Assert.True(parent.Children.SequenceEqual([child1, child2]));
+                Assert.Equal(first, parent.FirstChild);
+                Assert.Equal(last, parent.LastChild);
 
-        parent.RemoveChild(child2);
+                Assert.Null(first.PreviousSibling);
+                Assert.Equal(first.NextSibling, nodes[1]);
 
-        Assert.Null(child2.PreviousSibling);
-        Assert.Null(child2.NextSibling);
+                for (var i = 1; i < nodes.Length - 1; i++)
+                {
+                    Assert.Equal(nodes[i].PreviousSibling, nodes[i - 1]);
+                    Assert.Equal(nodes[i].NextSibling, nodes[i + 1]);
+                }
 
-        Assert.Equal(child1, parent.FirstChild);
-        Assert.Equal(child1, parent.LastChild);
-        Assert.True(parent.Children.SequenceEqual([child1]));
+                Assert.Equal(last.PreviousSibling, nodes[^2]);
+                Assert.Null(last.NextSibling);
 
-        parent.RemoveChild(child1);
+                Assert.True(parent.Children.SequenceEqual(nodes));
+            }
+        }
+    }
 
-        Assert.Null(child1.PreviousSibling);
-        Assert.Null(child1.NextSibling);
-
-        Assert.Null(parent.FirstChild);
-        Assert.Null(parent.LastChild);
-        Assert.True(parent.Children.SequenceEqual([]));
-
-        appendAll();
-
-        parent.RemoveChild(child1);
-
-        Assert.Null(child1.PreviousSibling);
-        Assert.Null(child1.NextSibling);
-
-        Assert.Equal(child2, parent.FirstChild);
-        Assert.Equal(child3, parent.LastChild);
-        Assert.True(parent.Children.SequenceEqual([child2, child3]));
-
-        parent.RemoveChild(child2);
-
-        Assert.Null(child2.PreviousSibling);
-        Assert.Null(child2.NextSibling);
-
-        Assert.Equal(child3, parent.FirstChild);
-        Assert.Equal(child3, parent.LastChild);
-        Assert.True(parent.Children.SequenceEqual([child3]));
-
-        parent.RemoveChild(child3);
-
-        Assert.Null(child3.PreviousSibling);
-        Assert.Null(child3.NextSibling);
+    [Fact]
+    public void AppendChild()
+    {
+        var parent = new TestNode { Name = "parent" };
+        var child1 = new TestNode { Name = "child1" };
+        var child2 = new TestNode { Name = "child2" };
+        var child3 = new TestNode { Name = "child3" };
 
         Assert.Null(parent.FirstChild);
         Assert.Null(parent.LastChild);
-        Assert.True(parent.Children.SequenceEqual([]));
 
-        appendAll();
+        parent.AppendChild(child1);
+
+        AssertParentHasNodes(parent, [child1]);
+
+        parent.AppendChild(child2);
+
+        AssertParentHasNodes(parent, [child1, child2]);
+
+        parent.AppendChild(child3);
+
+        AssertParentHasNodes(parent, [child1, child2, child3]);
+    }
+
+    [Fact]
+    public void AppendChildren()
+    {
+        var parent = new TestNode { Name = "parent" };
+        var child1 = new TestNode { Name = "child1" };
+        var child2 = new TestNode { Name = "child2" };
+        var child3 = new TestNode { Name = "child3" };
+        var child4 = new TestNode { Name = "child4" };
+        var child5 = new TestNode { Name = "child5" };
+
+        parent.AppendChildren([child1, child2]);
+
+        AssertParentHasNodes(parent, [child1, child2]);
+
+        parent.AppendChildren([child3, child4, child5]);
+
+        AssertParentHasNodes(parent, [child1, child2, child3, child4, child5]);
+
+        parent.AppendChildren([child3, child2, child1]);
+
+        AssertParentHasNodes(parent, [child4, child5, child3, child2, child1]);
+    }
+
+    [Fact]
+    public void PrependChild()
+    {
+        var parent = new TestNode { Name = "parent" };
+        var child1 = new TestNode { Name = "child1" };
+        var child2 = new TestNode { Name = "child2" };
+        var child3 = new TestNode { Name = "child3" };
+
+        parent.PrependChild(child3);
+
+        AssertParentHasNodes(parent, [child3]);
+
+        parent.PrependChild(child2);
+
+        AssertParentHasNodes(parent, [child2, child3]);
+
+        parent.PrependChild(child1);
+
+        AssertParentHasNodes(parent, [child1, child2, child3]);
+    }
+
+    [Fact]
+    public void PrependChildren()
+    {
+        var parent = new TestNode { Name = "parent" };
+        var child1 = new TestNode { Name = "child1" };
+        var child2 = new TestNode { Name = "child2" };
+        var child3 = new TestNode { Name = "child3" };
+        var child4 = new TestNode { Name = "child4" };
+        var child5 = new TestNode { Name = "child5" };
+
+        parent.PrependChildren([child4, child5]);
+
+        AssertParentHasNodes(parent, [child4, child5]);
+
+        parent.PrependChildren([child1, child2, child3]);
+
+        AssertParentHasNodes(parent, [child1, child2, child3, child4, child5]);
+
+        parent.PrependChildren([child5, child4, child3]);
+
+        AssertParentHasNodes(parent, [child5, child4, child3, child1, child2]);
+    }
+
+    [Fact]
+    public void RemoveChild()
+    {
+        var parent = new TestNode { Name = "parent" };
+        var child1 = new TestNode { Name = "child1" };
+        var child2 = new TestNode { Name = "child2" };
+        var child3 = new TestNode { Name = "child3" };
+
+        AssertParentHasNodes(parent, []);
+
+        parent.AppendChild(child1);
+
+        AssertParentHasNodes(parent, [child1]);
+
+        parent.RemoveChild(child1);
+
+        AssertParentHasNodes(parent, []);
+
+        parent.AppendChild(child1);
+        parent.AppendChild(child2);
+        parent.AppendChild(child3);
+
+        AssertParentHasNodes(parent, [child1, child2, child3]);
+
+        parent.RemoveChild(child1);
+
+        AssertParentHasNodes(parent, [child2, child3]);
+
+        parent.PrependChild(child1);
+
+        AssertParentHasNodes(parent, [child1, child2, child3]);
 
         parent.RemoveChild(child2);
 
-        Assert.Null(child2.PreviousSibling);
-        Assert.Null(child2.NextSibling);
+        AssertParentHasNodes(parent, [child1, child3]);
 
-        Assert.Equal(child1, parent.FirstChild);
-        Assert.Equal(child3, parent.LastChild);
-        Assert.True(parent.Children.SequenceEqual([child1, child3]));
+        parent.InsertAfter(child1, child2);
+
+        AssertParentHasNodes(parent, [child1, child2, child3]);
+
+        parent.RemoveChild(child3);
+
+        AssertParentHasNodes(parent, [child1, child2]);
+
+        parent.RemoveChild(child1);
+
+        AssertParentHasNodes(parent, [child2]);
+
+        parent.RemoveChild(child2);
+
+        AssertParentHasNodes(parent, []);
+    }
+
+    [Fact]
+    public void RemoveChildren()
+    {
+        var parent = new TestNode { Name = "parent" };
+        var child1 = new TestNode { Name = "child1" };
+        var child2 = new TestNode { Name = "child2" };
+        var child3 = new TestNode { Name = "child3" };
+
+        parent.AppendChild(child1);
+        parent.AppendChild(child2);
+        parent.AppendChild(child3);
+
+        AssertParentHasNodes(parent, [child1, child2, child3]);
+
+        parent.RemoveChildren();
+
+        AssertParentHasNodes(parent, []);
+    }
+
+    [Fact]
+    public void RemoveChildrenInRange()
+    {
+        var parent = new TestNode { Name = "parent" };
+        var child1 = new TestNode { Name = "child1" };
+        var child2 = new TestNode { Name = "child2" };
+        var child3 = new TestNode { Name = "child3" };
+        var child4 = new TestNode { Name = "child4" };
+        var child5 = new TestNode { Name = "child5" };
+        var child6 = new TestNode { Name = "child6" };
+        var child7 = new TestNode { Name = "child7" };
+        var child8 = new TestNode { Name = "child8" };
+        var child9 = new TestNode { Name = "child9" };
+
+        void appendAll() => parent.AppendChildren([child1, child2, child3, child4, child5, child6, child7, child8, child9]);
+
+        appendAll();
+
+        parent.RemoveChildrenInRange(child1, child1);
+
+        AssertParentHasNodes(parent, [child2, child3, child4, child5, child6, child7, child8, child9]);
+
+        parent.RemoveChildrenInRange(child2, child3);
+
+        AssertParentHasNodes(parent, [child4, child5, child6, child7, child8, child9]);
+
+        parent.RemoveChildrenInRange(child4, child6);
+
+        AssertParentHasNodes(parent, [child7, child8, child9]);
+
+        parent.RemoveChildrenInRange(child7, child9);
+
+        AssertParentHasNodes(parent, []);
+
+        appendAll();
+
+        parent.RemoveChildrenInRange(child9, child9);
+
+        AssertParentHasNodes(parent, [child1, child2, child3, child4, child5, child6, child7, child8]);
+
+        parent.RemoveChildrenInRange(child8, child7);
+
+        AssertParentHasNodes(parent, [child1, child2, child3, child4, child5, child6]);
+
+        parent.RemoveChildrenInRange(child6, child4);
+
+        AssertParentHasNodes(parent, [child1, child2, child3]);
+
+        parent.RemoveChildrenInRange(child3, child1);
+
+        AssertParentHasNodes(parent, []);
+
+        appendAll();
+
+        parent.RemoveChildrenInRange(child3, child7);
+
+        AssertParentHasNodes(parent, [child1, child2, child8, child9]);
+
+        appendAll();
+
+        parent.RemoveChildrenInRange(child1, child9);
+
+        AssertParentHasNodes(parent, []);
     }
 
     [Fact]
@@ -114,11 +300,11 @@ public class NodeTest
 
         parent.InsertBefore(child3, child4);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4]));
+        AssertParentHasNodes(parent, [child1, child2, child3, child4]);
 
         parent.InsertBefore(child0, child1);
 
-        Assert.True(parent.Children.SequenceEqual([child0, child1, child2, child3, child4]));
+        AssertParentHasNodes(parent, [child0, child1, child2, child3, child4]);
     }
 
     [Fact]
@@ -135,11 +321,11 @@ public class NodeTest
 
         parent.InsertAfter(child1, child2);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4]));
+        AssertParentHasNodes(parent, [child1, child2, child3, child4]);
 
         parent.InsertAfter(child4, child5);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5]));
+        AssertParentHasNodes(parent, [child1, child2, child3, child4, child5]);
     }
 
     [Fact]
@@ -160,17 +346,21 @@ public class NodeTest
         parent.AppendChild(child2);
         parent.AppendChild(child9);
 
-        parent.InsertBefore(new Node[] { child3 }, child9);
+        parent.InsertNodesBefore([child3], child9);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child9]));
+        AssertParentHasNodes(parent, [child1, child2, child3, child9]);
 
-        parent.InsertBefore(new Node[] { child4, child5 }, child9);
+        parent.InsertNodesBefore([child4, child5], child9);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child9]));
+        AssertParentHasNodes(parent, [child1, child2, child3, child4, child5, child9]);
 
-        parent.InsertBefore(new Node[] { child6, child7, child8 }, child9);
+        parent.InsertNodesBefore([child6, child7, child8], child9);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child6, child7, child8, child9]));
+        AssertParentHasNodes(parent, [child1, child2, child3, child4, child5, child6, child7, child8, child9]);
+
+        parent.InsertNodesBefore([child1, child3, child5], child6);
+
+        AssertParentHasNodes(parent, [child2, child4, child1, child3, child5, child6, child7, child8, child9]);
     }
 
     [Fact]
@@ -191,21 +381,25 @@ public class NodeTest
         parent.AppendChild(child2);
         parent.AppendChild(child9);
 
-        parent.InsertAfter(child2, new Node[] { child3 });
+        parent.InsertNodesAfter(child2, [child3]);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child9]));
+        AssertParentHasNodes(parent, [child1, child2, child3, child9]);
 
-        parent.InsertAfter(child3, new Node[] { child4, child5 });
+        parent.InsertNodesAfter(child3, [child4, child5]);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child9]));
+        AssertParentHasNodes(parent, [child1, child2, child3, child4, child5, child9]);
 
-        parent.InsertAfter(child5, new Node[] { child6, child7, child8 });
+        parent.InsertNodesAfter(child5, [child6, child7, child8]);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child6, child7, child8, child9]));
+        AssertParentHasNodes(parent, [child1, child2, child3, child4, child5, child6, child7, child8, child9]);
+
+        parent.InsertNodesAfter(child5, [child4, child3, child2]);
+
+        AssertParentHasNodes(parent, [child1, child5, child4, child3, child2, child6, child7, child8, child9]);
     }
 
     [Fact]
-    public void Replace()
+    public void ReplaceNode()
     {
         var parent = new TestNode { Name = "parent" };
         var child0 = new TestNode { Name = "child.0" };
@@ -217,23 +411,23 @@ public class NodeTest
 
         parent.Replace(child0, child2);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3]));
+        AssertParentHasNodes(parent, [child1, child2, child3]);
 
         parent.Replace(child3, child0);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child0]));
+        AssertParentHasNodes(parent, [child1, child2, child0]);
 
         parent.Replace(child1, child3);
 
-        Assert.True(parent.Children.SequenceEqual([child3, child2, child0]));
+        AssertParentHasNodes(parent, [child3, child2, child0]);
 
         parent.Replace(child0, child1);
 
-        Assert.True(parent.Children.SequenceEqual([child3, child2, child1]));
+        AssertParentHasNodes(parent, [child3, child2, child1]);
     }
 
     [Fact]
-    public void ReplaceByNodes()
+    public void ReplaceNodeWith()
     {
         var parent  = new TestNode { Name = "parent" };
         var child0  = new TestNode { Name = "child.0" };
@@ -254,69 +448,31 @@ public class NodeTest
         parent.AppendChild(child0);
         parent.AppendChild(child9);
 
-        parent.Replace(child0, new Node[] { child6, child7, child8 });
+        parent.ReplaceWith(child0, [child6, child7, child8]);
 
-        Assert.True(parent.Children.SequenceEqual([child5, child6, child7, child8, child9]));
+        AssertParentHasNodes(parent, [child5, child6, child7, child8, child9]);
 
         parent.InsertBefore(child0, child5);
 
-        parent.Replace(child0, new Node[] { child1, child2, child3, child4 });
+        parent.ReplaceWith(child0, [child1, child2, child3, child4]);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child6, child7, child8, child9]));
+        AssertParentHasNodes(parent, [child1, child2, child3, child4, child5, child6, child7, child8, child9]);
 
         parent.AppendChild(child0);
 
-        parent.Replace(child0, new Node[] { child10, child11, child12 });
+        parent.ReplaceWith(child0, [child10, child11, child12]);
 
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child6, child7, child8, child9, child10, child11, child12]));
-    }
-
-    [Fact]
-    public void ReplaceByNodesEdgeCase()
-    {
-        var parent  = new TestNode { Name = "parent" };
-        var child0  = new TestNode { Name = "child.0" };
-        var child1  = new TestNode { Name = "child.1" };
-        var child2  = new TestNode { Name = "child.2" };
-        var child3  = new TestNode { Name = "child.3" };
-        var child4  = new TestNode { Name = "child.4" };
-        var child5  = new TestNode { Name = "child.5" };
-        var child6  = new TestNode { Name = "child.6" };
-        var child7  = new TestNode { Name = "child.7" };
-
-        parent.AppendChildren([child1, child0, child7, child2, child3, child4, child5, child6]);
-
-        parent.Replace(child0, new Node[] { child2, child3, child4, child5, child6, child7 });
-
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3, child4, child5, child6, child7]));
-    }
-
-    [Fact]
-    public void Clear()
-    {
-        var parent = new TestNode();
-        var child1 = new TestNode();
-        var child2 = new TestNode();
-        var child3 = new TestNode();
-
-        parent.AppendChild(child1);
-        parent.AppendChild(child2);
-        parent.AppendChild(child3);
-
-        Assert.True(parent.Children.SequenceEqual([child1, child2, child3]));
+        AssertParentHasNodes(parent, [child1, child2, child3, child4, child5, child6, child7, child8, child9, child10, child11, child12]);
 
         parent.RemoveChildren();
 
-        Assert.Null(child1.PreviousSibling);
-        Assert.Null(child1.NextSibling);
+        AssertParentHasNodes(parent, []);
 
-        Assert.Null(child2.PreviousSibling);
-        Assert.Null(child2.NextSibling);
+        parent.AppendChildren([child1, child0, child7, child2, child3, child4, child5, child6]);
 
-        Assert.Null(child3.PreviousSibling);
-        Assert.Null(child3.NextSibling);
+        parent.ReplaceWith(child0, [child2, child3, child4, child5, child6, child7]);
 
-        Assert.True(parent.Children.SequenceEqual([]));
+        AssertParentHasNodes(parent, [child1, child2, child3, child4, child5, child6, child7]);
     }
 
     [Fact]
