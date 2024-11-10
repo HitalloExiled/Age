@@ -158,17 +158,20 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         return matrix;
     }
 
-    public static Matrix3x2<T> CreateScaled(in Vector2<T> scale) =>
-        CreateScaled(scale.X, scale.Y);
+    public static Matrix3x2<T> CreateScaled(T scale) =>
+        CreateScaled(new Vector2<T>(scale));
 
-    public static Matrix3x2<T> CreateScaled(T x, T y)
+    public static Matrix3x2<T> CreateScaled(T scaleX, T scaleY) =>
+        CreateScaled(new Vector2<T>(scaleX, scaleY));
+
+    public static Matrix3x2<T> CreateScaled(in Vector2<T> scale)
     {
         Unsafe.SkipInit(out Matrix3x2<T> matrix);
 
-        matrix.M11 = x;
+        matrix.M11 = scale.X;
         matrix.M12 = T.Zero;
         matrix.M21 = T.Zero;
-        matrix.M22 = y;
+        matrix.M22 = scale.Y;
         matrix.M31 = T.Zero;
         matrix.M32 = T.Zero;
 
