@@ -2,7 +2,7 @@ using ThirdParty.Vulkan.Extensions;
 
 namespace ThirdParty.Vulkan;
 
-public partial class VkSwapchainKHR : DisposableManagedHandle<VkSwapchainKHR>
+public sealed partial class VkSwapchainKHR : DisposableManagedHandle<VkSwapchainKHR>
 {
     private readonly VkSwapchainExtensionKHR extension;
 

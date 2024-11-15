@@ -4,7 +4,7 @@ using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkDeviceMemory : VkDeviceResource<VkDeviceMemory>
+public sealed unsafe partial class VkDeviceMemory : VkDeviceResource<VkDeviceMemory>
 {
     internal VkDeviceMemory(VkDevice device, in VkMemoryAllocateInfo allocateInfo) : base(device)
     {

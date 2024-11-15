@@ -2,7 +2,7 @@ using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkFence : VkDeviceResource<VkFence>
+public sealed unsafe partial class VkFence : VkDeviceResource<VkFence>
 {
     public bool IsSignaled => PInvoke.vkGetFenceStatus(this.Device.Handle, this.handle) == Enums.VkResult.Success;
 

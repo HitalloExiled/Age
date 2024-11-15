@@ -6,7 +6,7 @@ using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan.Extensions;
 
-public unsafe class VkSwapchainExtensionKHR : IDeviceExtension<VkSwapchainExtensionKHR>
+public sealed unsafe class VkSwapchainExtensionKHR : IDeviceExtension<VkSwapchainExtensionKHR>
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkAcquireNextImageKHR(VkHandle<VkDevice> device, VkHandle<VkSwapchainKHR> swapchain, ulong timeout, VkHandle<VkSemaphore> semaphore, VkHandle<VkFence> fence, uint* pImageIndex);

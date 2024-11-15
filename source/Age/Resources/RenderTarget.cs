@@ -13,7 +13,7 @@ using TextureResource = Age.Rendering.Resources.Texture;
 
 namespace Age.Resources;
 
-public class RenderTarget : Resource
+public sealed class RenderTarget : Resource
 {
     internal Framebuffer     Framebuffer { get; private set; }
     internal ImageResource[] Attachments { get; private set; } = new ImageResource[3];

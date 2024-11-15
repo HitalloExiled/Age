@@ -4,7 +4,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Shaders;
 
-public partial class GeometryShader(RenderPass renderPass, VkSampleCountFlags rasterizationSamples, bool watch)
+public sealed partial class GeometryShader(RenderPass renderPass, VkSampleCountFlags rasterizationSamples, bool watch)
 : Shader<GeometryShader.Vertex, GeometryShader.PushConstant>(
     renderPass,
     [$"{nameof(GeometryShader)}.vert", $"{nameof(GeometryShader)}.frag"],

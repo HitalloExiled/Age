@@ -7,7 +7,7 @@ namespace Age.Resources.Loaders.Wavefront.Parsers;
 
 public partial class ObjParser
 {
-    private record Context
+    private sealed record Context
     {
         private readonly Dictionary<Color, int>  colorIndices          = [];
         private readonly List<Color>             colors                = [];

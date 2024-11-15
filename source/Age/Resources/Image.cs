@@ -10,7 +10,7 @@ using ImageResource = Age.Rendering.Resources.Image;
 
 namespace Age.Resources;
 
-public class Image : Disposable
+public sealed class Image : Disposable
 {
     private readonly ImageResource resource;
 

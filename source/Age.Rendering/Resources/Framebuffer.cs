@@ -5,7 +5,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public class Framebuffer : Resource<VkFramebuffer>
+public sealed class Framebuffer : Resource<VkFramebuffer>
 {
     public VkExtent2D    Extent     { get; }
     public VkImageView[] ImageViews { get; }

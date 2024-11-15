@@ -5,7 +5,7 @@ namespace ThirdParty.Shaderc;
 
 public delegate IncludeResult IncludeResolve(string requestedSource, IncludeType type, string requestingSource, ulong includeDepth);
 
-public unsafe class CompilerOptions : IDisposable
+public sealed unsafe class CompilerOptions : IDisposable
 {
     private static unsafe void IncludeResultReleaseFn(void* userData, shaderc_include_result* includeResult)
     {
@@ -76,7 +76,7 @@ public unsafe class CompilerOptions : IDisposable
 
     ~CompilerOptions() => this.Dispose(false);
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (!this.disposed)
         {

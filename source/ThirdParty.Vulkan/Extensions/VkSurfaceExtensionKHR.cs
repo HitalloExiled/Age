@@ -5,7 +5,7 @@ using ThirdParty.Vulkan.Interfaces;
 
 namespace ThirdParty.Vulkan.Extensions;
 
-public unsafe class VkSurfaceExtensionKHR : IInstanceExtension<VkSurfaceExtensionKHR>
+public sealed unsafe class VkSurfaceExtensionKHR : IInstanceExtension<VkSurfaceExtensionKHR>
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate void VkDestroySurfaceKHR(VkHandle<VkInstance> instance, VkHandle<VkSurfaceKHR> surface, VkAllocationCallbacks* pAllocator);

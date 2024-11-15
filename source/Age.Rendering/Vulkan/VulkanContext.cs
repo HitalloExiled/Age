@@ -12,7 +12,7 @@ using static Age.Core.Interop.PointerHelper;
 
 namespace Age.Rendering.Vulkan;
 
-internal unsafe partial class VulkanContext : IDisposable
+internal sealed unsafe partial class VulkanContext : Disposable
 {
     public event Action? DeviceInitialized;
     public event Action? SwapchainRecreated;
@@ -34,7 +34,6 @@ internal unsafe partial class VulkanContext : IDisposable
     private ushort                  currentFrame;
     private VkDevice                device = null!;
     private bool                    deviceInitialized;
-    private bool                    disposed;
     private VkQueue                 graphicsQueue = null!;
     private uint                    graphicsQueueIndex;
     private VkPhysicalDevice        physicalDevice = null!;
@@ -417,35 +416,30 @@ internal unsafe partial class VulkanContext : IDisposable
         }
     }
 
-    protected virtual void Dispose(bool disposing)
+    protected override void Disposed(bool disposing)
     {
-        if (!this.disposed)
+        this.device.WaitIdle();
+
+        for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            this.device.WaitIdle();
-
-            for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-            {
-                this.renderingFinishedSemaphores[i].Dispose();
-                this.fences[i].Dispose();
-            }
-
-            this.commandPool.Dispose();
-
-            foreach (var frame in this.frames)
-            {
-                frame.CommandBuffer.Dispose();
-                frame.CommandPool.Dispose();
-            }
-
-            this.device.Dispose();
-            this.debugUtilsMessenger?.Dispose();
-            this.instance.Dispose();
-
-            this.disposed = true;
+            this.renderingFinishedSemaphores[i].Dispose();
+            this.fences[i].Dispose();
         }
+
+        this.commandPool.Dispose();
+
+        foreach (var frame in this.frames)
+        {
+            frame.CommandBuffer.Dispose();
+            frame.CommandPool.Dispose();
+        }
+
+        this.device.Dispose();
+        this.debugUtilsMessenger?.Dispose();
+        this.instance.Dispose();
     }
 
-    public virtual Surface CreateSurface(VkSurfaceKHR surface, Size<uint> size)
+    public Surface CreateSurface(VkSurfaceKHR surface, Size<uint> size)
     {
         if (!this.deviceInitialized)
         {
@@ -472,12 +466,6 @@ internal unsafe partial class VulkanContext : IDisposable
         };
 
         return surfaceContext;
-    }
-
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     public VkCommandBuffer AllocateCommand(VkCommandBufferLevel commandBufferLevel) =>

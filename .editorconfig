@@ -323,6 +323,7 @@ dotnet_diagnostic.CA1805.severity  = suggestion # Do not initialize unnecessaril
 dotnet_diagnostic.CA1810.severity  = suggestion # Initialize reference type static fields
 dotnet_diagnostic.CA1836.severity  = suggestion # Prefer IsEmpty over Count when available
 dotnet_diagnostic.CA1836.severity  = suggestion # Property names should not match get methods
+dotnet_diagnostic.CA1852.severity  = suggestion # Seal internal types
 dotnet_diagnostic.CA1861.severity  = suggestion # Avoid constant arrays as arguments
 # dotnet_diagnostic.CA2000.severity  = error      # Dispose objects before losing scope
 dotnet_diagnostic.CA2011.severity  = error      # Do not assign property within its setter

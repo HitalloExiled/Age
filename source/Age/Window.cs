@@ -5,7 +5,7 @@ using Age.Scene;
 
 namespace Age;
 
-public class Window : Platforms.Display.Window
+public sealed class Window : Platforms.Display.Window
 {
     public new static IEnumerable<Window> Windows => Platforms.Display.Window.Windows.Cast<Window>();
 

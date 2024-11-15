@@ -3,7 +3,7 @@ using ThirdParty.SpirvCross.Enums;
 
 namespace ThirdParty.SpirvCross;
 
-public unsafe class Context : IDisposable
+public sealed unsafe class Context : IDisposable
 {
     private readonly spvc_context handle;
 
@@ -22,29 +22,24 @@ public unsafe class Context : IDisposable
 
     ~Context() => this.Dispose(false);
 
-    internal void CheckResult(spvc_result result)
+    private void Dispose(bool _)
     {
-        if (result != Result.Success)
+        if (!this.disposed)
         {
-            throw new Exception($"Error: {this.lastError}");
+            PInvoke.spvc_context_destroy(this.handle);
+
+            this.disposed = true;
         }
     }
 
     private unsafe void ErrorCallback(void* userdata, byte* error) =>
         this.lastError = Marshal.PtrToStringAnsi((nint)error);
 
-    protected virtual void Dispose(bool disposing)
+    internal void CheckResult(spvc_result result)
     {
-        if (!this.disposed)
+        if (result != Result.Success)
         {
-            if (disposing)
-            {
-                // TODO: dispose managed state (managed objects)
-            }
-
-            PInvoke.spvc_context_destroy(this.handle);
-
-            this.disposed = true;
+            throw new Exception($"Error: {this.lastError}");
         }
     }
 

@@ -7,7 +7,7 @@ using SamplerResource = Age.Rendering.Resources.Sampler;
 
 namespace Age.Resources;
 
-public class Texture : Disposable
+public sealed class Texture : Disposable
 {
     public static Texture Default { get; } = CreateDefaultTexture();
 

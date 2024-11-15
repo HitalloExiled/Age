@@ -3,7 +3,7 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Rendering.Resources;
 
-public class IndexBuffer : Disposable
+public sealed class IndexBuffer : Disposable
 {
     public required Buffer      Buffer { get; init; }
     public required uint        Size   { get; init; }

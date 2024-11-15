@@ -15,7 +15,7 @@ using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Elements.Layouts;
 
-internal partial class TextLayout : Layout
+internal sealed partial class TextLayout : Layout
 {
     private static readonly ObjectPool<RectCommand> rectCommandPool = new(static () => new());
 

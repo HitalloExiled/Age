@@ -2,7 +2,7 @@ using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkFramebuffer : VkDeviceResource<VkFramebuffer>
+public sealed unsafe partial class VkFramebuffer : VkDeviceResource<VkFramebuffer>
 {
     internal VkFramebuffer(VkDevice device, in VkFramebufferCreateInfo createInfo) : base(device)
     {

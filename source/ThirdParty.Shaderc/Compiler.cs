@@ -4,14 +4,14 @@ using ThirdParty.Shaderc.Enums;
 
 namespace ThirdParty.Shaderc;
 
-public unsafe class Compiler : IDisposable
+public sealed unsafe class Compiler : IDisposable
 {
     private readonly shaderc_compiler_t handle = PInvoke.shaderc_compiler_initialize();
     private bool disposed;
 
     ~Compiler() => this.Dispose(false);
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (!this.disposed)
         {

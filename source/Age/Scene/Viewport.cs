@@ -6,7 +6,7 @@ using Age.Styling;
 
 namespace Age.Scene;
 
-public class Viewport : Element
+public sealed class Viewport : Element
 {
     public override string NodeName => nameof(Viewport);
 

@@ -5,7 +5,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public class Texture : Resource
+public sealed class Texture : Resource
 {
     private readonly bool imageOwner;
 

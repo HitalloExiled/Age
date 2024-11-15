@@ -6,7 +6,7 @@ using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan.Extensions;
 
-public unsafe class VkWin32SurfaceExtensionKHR : IInstanceExtension<VkWin32SurfaceExtensionKHR>
+public sealed unsafe class VkWin32SurfaceExtensionKHR : IInstanceExtension<VkWin32SurfaceExtensionKHR>
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateWin32SurfaceKHR(VkHandle<VkInstance> instance, VkWin32SurfaceCreateInfoKHR* pCreateInfo, VkAllocationCallbacks* pAllocator, VkHandle<VkSurfaceKHR>* pSurface);

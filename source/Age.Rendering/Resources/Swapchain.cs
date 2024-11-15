@@ -5,7 +5,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public class Swapchain : Disposable
+public sealed class Swapchain : Disposable
 {
     public required VkExtent2D        Extent     { get; init; }
     public required VkFormat          Format     { get; init; }

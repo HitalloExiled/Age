@@ -4,7 +4,7 @@ using ThirdParty.SpirvCross.Native;
 
 namespace ThirdParty.SpirvCross;
 
-public unsafe class Resources
+public sealed unsafe class Resources
 {
     private readonly Context        context;
     private readonly spvc_resources handle;

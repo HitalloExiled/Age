@@ -2,7 +2,7 @@ using ThirdParty.Vulkan.Extensions;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkDebugUtilsMessengerEXT : DisposableManagedHandle<VkDebugUtilsMessengerEXT>
+public sealed unsafe partial class VkDebugUtilsMessengerEXT : DisposableManagedHandle<VkDebugUtilsMessengerEXT>
 {
     private readonly VkDebugUtilsExtensionEXT extension;
 

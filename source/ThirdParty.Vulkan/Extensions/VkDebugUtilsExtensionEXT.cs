@@ -5,7 +5,7 @@ using ThirdParty.Vulkan.Interfaces;
 
 namespace ThirdParty.Vulkan.Extensions;
 
-public unsafe class VkDebugUtilsExtensionEXT : IInstanceExtension<VkDebugUtilsExtensionEXT>
+public sealed unsafe class VkDebugUtilsExtensionEXT : IInstanceExtension<VkDebugUtilsExtensionEXT>
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate VkResult VkCreateDebugUtilsMessengerEXT(VkHandle<VkInstance> instance, VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, VkAllocationCallbacks* pAllocator, VkHandle<VkDebugUtilsMessengerEXT>* pMessenger);

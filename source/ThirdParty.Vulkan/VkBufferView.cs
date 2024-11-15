@@ -1,3 +1,3 @@
 namespace ThirdParty.Vulkan;
 
-public class VkBufferView : ManagedHandle<VkBufferView>;
+public sealed class VkBufferView : ManagedHandle<VkBufferView>;

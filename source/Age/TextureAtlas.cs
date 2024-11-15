@@ -9,7 +9,7 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age;
 
-public class TextureAtlas : Disposable
+public sealed class TextureAtlas : Disposable
 {
     #region 8-bytes
     public Bitmap  Bitmap  { get; }

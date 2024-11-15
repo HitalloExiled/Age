@@ -2,7 +2,7 @@ using Age.Numerics;
 
 namespace Age;
 
-public class Bitmap
+public sealed class Bitmap
 {
     public byte[]     Buffer    { get; }
     public ColorMode  ColorMode { get; }

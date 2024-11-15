@@ -6,7 +6,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public class Image : Resource<VkImage>
+public sealed class Image : Resource<VkImage>
 {
     #region 8-bytes
     private readonly Allocation? allocation;

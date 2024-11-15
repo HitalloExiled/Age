@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace Age.Elements;
 
-internal partial class StencilLayer
+internal sealed partial class StencilLayer
 {
     public struct Enumerator(StencilLayer node) : IEnumerator<StencilLayer>
     {

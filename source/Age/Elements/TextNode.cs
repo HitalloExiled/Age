@@ -3,7 +3,7 @@ using Age.Scene;
 
 namespace Age.Elements;
 
-public class TextNode : ContainerNode
+public sealed class TextNode : ContainerNode
 {
     internal override TextLayout Layout { get; }
 

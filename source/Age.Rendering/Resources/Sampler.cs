@@ -4,7 +4,7 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Rendering.Resources;
 
-public class Sampler : Resource
+public sealed class Sampler : Resource
 {
     public VkSampler Value { get; }
 
