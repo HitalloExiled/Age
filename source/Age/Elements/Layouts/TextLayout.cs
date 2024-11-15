@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 using Timer = Age.Scene.Timer;
 
 using static Age.Rendering.Shaders.Canvas.CanvasShader;
+using Age.Styling;
 
 namespace Age.Elements.Layouts;
 
@@ -263,8 +264,9 @@ internal sealed partial class TextLayout : Layout
         var style      = this.target.ParentElement.Layout.State.Style;
         var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
         var fontSize   = style.FontSize ?? 16;
+        var fontWeight = style.FontWeight ?? FontWeight.Normal;
 
-        var typeface = SKTypeface.FromFamilyName(fontFamily);
+        var typeface = SKTypeface.FromFamilyName(fontFamily, (SKFontStyleWeight)(int)fontWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
 
         var paint = new SKPaint
         {
@@ -273,7 +275,7 @@ internal sealed partial class TextLayout : Layout
             TextAlign    = SKTextAlign.Left,
             TextSize     = fontSize,
             Typeface     = typeface,
-            SubpixelText = true,
+            SubpixelText = false,
         };
 
         var atlas  = TextStorage.Singleton.GetAtlas(typeface.FamilyName, fontSize);
@@ -406,6 +408,11 @@ internal sealed partial class TextLayout : Layout
 
     public void ClearSelection()
     {
+        if (this.Parent?.State.Style.TextSelection == false)
+        {
+            return;
+        }
+
         this.ClearCaret();
 
         this.Selection = default;
@@ -413,7 +420,7 @@ internal sealed partial class TextLayout : Layout
 
     public void PropagateSelection(uint characterPosition)
     {
-        if (this.text == null || char.IsWhiteSpace(this.text[(int)characterPosition]))
+        if (this.Parent?.State.Style.TextSelection == false || this.text == null || char.IsWhiteSpace(this.text[(int)characterPosition]))
         {
             return;
         }
@@ -440,6 +447,11 @@ internal sealed partial class TextLayout : Layout
 
     public void SetCaret(ushort x, ushort y, uint position)
     {
+        if (this.Parent?.State.Style.TextSelection == false)
+        {
+            return;
+        }
+
         this.GetCharacterOffset(x, y, ref position);
 
         this.CaretPosition = (int)position;
@@ -449,6 +461,11 @@ internal sealed partial class TextLayout : Layout
 
     public void ClearCaret()
     {
+        if (this.Parent?.State.Style.TextSelection == false)
+        {
+            return;
+        }
+
         this.timer.Stop();
         this.CaretPosition  = -1;
         this.caretIsVisible = false;
@@ -471,6 +488,11 @@ internal sealed partial class TextLayout : Layout
 
     public void TargetMouseOut()
     {
+        if (this.Parent?.State.Style.TextSelection == false)
+        {
+            return;
+        }
+
         if (this.target.Tree is RenderTree renderTree)
         {
             this.Parent!.IsHoveringText = false;
@@ -480,6 +502,11 @@ internal sealed partial class TextLayout : Layout
 
     public void TargetMouseOver()
     {
+        if (this.Parent?.State.Style.TextSelection == false)
+        {
+            return;
+        }
+
         if (this.target.Tree is RenderTree renderTree)
         {
             this.Parent!.IsHoveringText = true;
@@ -489,6 +516,11 @@ internal sealed partial class TextLayout : Layout
 
     public void UpdateSelection(ushort x, ushort y, uint character)
     {
+        if (this.Parent?.State.Style.TextSelection == false)
+        {
+            return;
+        }
+
         this.GetCharacterOffset(x, y, ref character);
 
         this.Selection     = this.Selection?.WithEnd(character) ?? new((uint)this.caretPosition, character);

@@ -208,7 +208,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         set
         {
             this.Layout.State.Styles ??= new();
-            this.Layout.State.Styles.Base = value;
+            (this.Layout.State.Styles.Base ??= new()).Merge(value);
         }
     }
 

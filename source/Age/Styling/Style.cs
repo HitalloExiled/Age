@@ -69,6 +69,12 @@ public record Style
         set => this.Set(ref this.data.FontSize, value, StyleProperty.FontSize);
     }
 
+    public FontWeight? FontWeight
+    {
+        get => this.data.FontWeight;
+        set => this.Set(ref this.data.FontWeight, value, StyleProperty.FontWeight);
+    }
+
     public bool? Hidden
     {
         get => this.data.Hidden;
@@ -135,6 +141,12 @@ public record Style
         set => this.Set(ref this.data.TextAlignment, value, StyleProperty.TextAlignment);
     }
 
+    public bool? TextSelection
+    {
+        get => this.data.TextSelection;
+        set => this.Set(ref this.data.TextSelection, value, StyleProperty.TextSelection);
+    }
+
     public Transform2D? Transform
     {
         get => this.data.Transform;
@@ -165,6 +177,10 @@ public record Style
     public void Copy(Style source) =>
         this.data = source.data;
 
-    public void Merge(Style source) =>
+    public void Merge(Style source)
+    {
         this.data.Merge(source.data);
+
+        Changed?.Invoke(StyleProperty.All);
+    }
 }

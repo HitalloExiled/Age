@@ -16,6 +16,7 @@ internal struct StyleData
     public ContentJustificationKind? ContentJustification;
     public CursorKind?               Cursor;
     public string?                   FontFamily;
+    public FontWeight?               FontWeight;
     public ItemsAlignmentKind?       ItemsAlignment;
     public RectEdges?                Margin;
     public SizeUnit?                 MaxSize;
@@ -33,6 +34,7 @@ internal struct StyleData
 
     // 1-byte aligment
     public bool? Hidden;
+    public bool? TextSelection;
 
     private static void Merge(ref StyleData target, in StyleData source, in StyleData fallback)
     {
@@ -46,6 +48,7 @@ internal struct StyleData
         target.Cursor               = source.Cursor               ?? fallback.Cursor;
         target.FontFamily           = source.FontFamily           ?? fallback.FontFamily;
         target.FontSize             = source.FontSize             ?? fallback.FontSize;
+        target.FontWeight           = source.FontWeight           ?? fallback.FontWeight;
         target.Hidden               = source.Hidden               ?? fallback.Hidden;
         target.ItemsAlignment       = source.ItemsAlignment       ?? fallback.ItemsAlignment;
         target.Margin               = source.Margin               ?? fallback.Margin;
@@ -56,6 +59,7 @@ internal struct StyleData
         target.Size                 = source.Size                 ?? fallback.Size;
         target.Stack                = source.Stack                ?? fallback.Stack;
         target.TextAlignment        = source.TextAlignment        ?? fallback.TextAlignment;
+        target.TextSelection        = source.TextSelection        ?? fallback.TextSelection;
         target.Transform            = source.Transform            ?? fallback.Transform;
     }
 
