@@ -2,7 +2,7 @@ using static Age.Core.Interop.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkDescriptorPool : VkDeviceResource<VkDescriptorPool>
+public sealed unsafe partial class VkDescriptorPool : VkDeviceResource<VkDescriptorPool>
 {
     internal VkDescriptorPool(VkDevice device, in VkDescriptorPoolCreateInfo createInfo) : base(device)
     {

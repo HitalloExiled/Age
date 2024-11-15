@@ -8,7 +8,7 @@ using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Elements.Layouts;
 
-internal partial class BoxLayout : Layout
+internal sealed partial class BoxLayout : Layout
 {
     #region 8-bytes
     private readonly List<Element> dependents = [];

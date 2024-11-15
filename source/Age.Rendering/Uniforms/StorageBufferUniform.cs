@@ -3,7 +3,7 @@ using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Rendering.Uniforms;
 
-public record StorageBufferUniform : Uniform
+public sealed record StorageBufferUniform : Uniform
 {
     public override VkDescriptorType Type => VkDescriptorType.StorageBuffer;
 

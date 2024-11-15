@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace Age.Core;
 
-public class Disposables : IDisposable, IEnumerable<IDisposable>
+public sealed class Disposables : IDisposable, IEnumerable<IDisposable>
 {
     private readonly List<IDisposable> disposables = [];
     private bool disposed;

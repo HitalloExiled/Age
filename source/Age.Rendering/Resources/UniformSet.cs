@@ -8,7 +8,7 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Rendering.Resources;
 
-public class UniformSet : Resource
+public sealed class UniformSet : Resource
 {
     public Shader Shader { get; }
 

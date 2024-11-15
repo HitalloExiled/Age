@@ -3,7 +3,7 @@ using Age.Core;
 
 namespace Age;
 
-public class RenderGraph : Disposable
+public sealed class RenderGraph : Disposable
 {
     private static RenderGraph? active;
 

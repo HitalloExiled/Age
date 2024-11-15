@@ -14,43 +14,52 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public T this[int column, int row]
     {
-        get
+        readonly get => (row * 2 + column) switch
         {
-            Common.ThrowIfOutOfRange(0, 2, column);
-            Common.ThrowIfOutOfRange(0, 2, row);
-
-            return Unsafe.Add(ref this.M11, column * 3 + row);
-        }
+            0 => this.M11,
+            1 => this.M12,
+            2 => this.M21,
+            3 => this.M22,
+            4 => this.M31,
+            5 => this.M32,
+            _ => throw new IndexOutOfRangeException(),
+        };
         set
         {
-            Common.ThrowIfOutOfRange(0, 2, row);
-            Common.ThrowIfOutOfRange(0, 2, column);
-
-            Unsafe.Add(ref this.M11, column * 3 + row) = value;
+            switch (row * 2 + column)
+            {
+                case 0: this.M11 = value; break;
+                case 1: this.M12 = value; break;
+                case 2: this.M21 = value; break;
+                case 3: this.M22 = value; break;
+                case 4: this.M31 = value; break;
+                case 5: this.M32 = value; break;
+                default: throw new IndexOutOfRangeException();
+            }
         }
     }
 
     public Vector2<T> X
     {
-        get => Unsafe.As<T, Vector2<T>>(ref this.M11);
+        readonly get => new(this.M11, this.M12);
         set => Unsafe.As<T, Vector2<T>>(ref this.M11) = value;
     }
 
     public Vector2<T> Y
     {
-        get => Unsafe.As<T, Vector2<T>>(ref this.M21);
+        readonly get => new(this.M21, this.M22);
         set => Unsafe.As<T, Vector2<T>>(ref this.M21) = value;
     }
 
     public Vector2<T> Z
     {
-        get => Unsafe.As<T, Vector2<T>>(ref this.M31);
+        readonly get => new(this.M31, this.M32);
         set => Unsafe.As<T, Vector2<T>>(ref this.M31) = value;
     }
 
     public T Rotation
     {
-        get
+        readonly get
         {
             var scale = this.Scale;
 
@@ -72,13 +81,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public Vector2<T> Scale
     {
-        get
-        {
-            ref var x = ref Unsafe.As<T, Vector2<T>>(ref this.M11);
-            ref var y = ref Unsafe.As<T, Vector2<T>>(ref this.M21);
-
-            return new(x.Length, y.Length);
-        }
+        readonly get => new(this.X.Length, this.Y.Length);
         set
         {
             ref var x = ref Unsafe.As<T, Vector2<T>>(ref this.M11);
@@ -91,7 +94,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public Vector2<T> Translation
     {
-        get => Unsafe.As<T, Vector2<T>>(ref this.M31);
+        readonly get => this.Z;
         set => Unsafe.As<T, Vector2<T>>(ref this.M31) = value;
     }
 
@@ -155,17 +158,20 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         return matrix;
     }
 
-    public static Matrix3x2<T> CreateScaled(in Vector2<T> scale) =>
-        CreateScaled(scale.X, scale.Y);
+    public static Matrix3x2<T> CreateScaled(T scale) =>
+        CreateScaled(new Vector2<T>(scale));
 
-    public static Matrix3x2<T> CreateScaled(T x, T y)
+    public static Matrix3x2<T> CreateScaled(T scaleX, T scaleY) =>
+        CreateScaled(new Vector2<T>(scaleX, scaleY));
+
+    public static Matrix3x2<T> CreateScaled(in Vector2<T> scale)
     {
         Unsafe.SkipInit(out Matrix3x2<T> matrix);
 
-        matrix.M11 = x;
+        matrix.M11 = scale.X;
         matrix.M12 = T.Zero;
         matrix.M21 = T.Zero;
-        matrix.M22 = y;
+        matrix.M22 = scale.Y;
         matrix.M31 = T.Zero;
         matrix.M32 = T.Zero;
 

@@ -12,8 +12,7 @@ using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Rendering.Vulkan;
 
-
-public unsafe partial class VulkanRenderer : Disposable
+public sealed unsafe partial class VulkanRenderer : Disposable
 {
     public event Action? SwapchainRecreated;
     private const ushort MAX_DESCRIPTORS_PER_POOL        = 64;

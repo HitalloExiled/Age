@@ -3,7 +3,7 @@ using Age.Resources;
 
 namespace Age.Scene;
 
-public class Camera3D : Node3D
+public sealed class Camera3D : Node3D
 {
     public override string NodeName { get; } = nameof(Camera3D);
 

@@ -1,17 +1,17 @@
-using Age.Numerics;
 using Age.Commands;
+using Age.Converters;
+using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Rendering.Shaders.Canvas;
 using Age.Rendering.Vulkan;
-using ThirdParty.Vulkan;
+using Age.Services;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
-using Age.Converters;
-using Age.Services;
+using ThirdParty.Vulkan;
 
 namespace Age.RenderPasses;
 
-public class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
+public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 {
     private readonly CanvasStencilMaskShader canvasStencilMaskShader;
     private readonly CommandBuffer           commandBuffer;

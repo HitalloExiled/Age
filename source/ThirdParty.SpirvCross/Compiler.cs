@@ -3,7 +3,7 @@ using ThirdParty.SpirvCross.Enums;
 
 namespace ThirdParty.SpirvCross;
 
-public unsafe class Compiler
+public sealed unsafe class Compiler
 {
     private readonly Context       context;
     private readonly spvc_compiler handle;

@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace Age.Numerics;
 
-public record struct Line<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>, IPowerFunctions<T>
+public record struct Line<T> where T : IFloatingPoint<T>, IFloatingPointIeee754<T>, IRootFunctions<T>, ITrigonometricFunctions<T>, IPowerFunctions<T>
 {
     public Vector2<T> A;
     public Vector2<T> B;

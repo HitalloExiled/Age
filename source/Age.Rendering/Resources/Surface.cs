@@ -4,7 +4,7 @@ using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public class Surface : Disposable
+public sealed class Surface : Disposable
 {
     public static List<Surface> Entries { get; } = [];
 

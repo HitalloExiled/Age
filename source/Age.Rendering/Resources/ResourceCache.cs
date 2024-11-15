@@ -38,4 +38,4 @@ where TValue : notnull, Resource
     }
 }
 
-public class ResourceCache : ResourceCache<Resource, Resource>;
+public sealed class ResourceCache : ResourceCache<Resource, Resource>;

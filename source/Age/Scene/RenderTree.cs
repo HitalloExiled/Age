@@ -43,13 +43,13 @@ public sealed partial class RenderTree : NodeTree
 
     private IEnumerable<CommandEntry> EnumerateCommands()
     {
-        this.Stack.Push(this.Root);
+        var enumerator = this.Root.GetTraverseEnumerator();
 
         var index = 0;
 
-        while (this.Stack.Count > 0)
+        while (enumerator.MoveNext())
         {
-            var current = this.Stack.Pop();
+            var current = enumerator.Current;
 
             if (current.Visible)
             {
@@ -91,11 +91,6 @@ public sealed partial class RenderTree : NodeTree
 
                         yield return entry;
                     }
-                }
-
-                foreach (var node in current.Reverse())
-                {
-                    this.Stack.Push(node);
                 }
             }
         }
@@ -244,12 +239,29 @@ public sealed partial class RenderTree : NodeTree
     {
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var character);
 
-        Element? element;
+        var textNode = node as TextNode;
+        var element  = textNode?.ParentElement ?? node as Element;
 
-        if (node is TextNode textNode)
+        if (element != null)
         {
-            element = textNode.ParentElement;
+            element.InvokeMouseMoved(mouseEvent);
 
+            if (this.lastHoveredElement != element)
+            {
+                this.lastHoveredElement?.InvokeMouseOut(mouseEvent);
+                this.lastHoveredElement = element;
+
+                element.InvokeMouseOver(mouseEvent);
+            }
+        }
+        else
+        {
+            this.lastHoveredElement?.InvokeMouseOut(mouseEvent);
+            this.lastHoveredElement  = null;
+        }
+
+        if (textNode != null)
+        {
             var primaryButtonIsPressed =
                 mouseEvent.PrimaryButton == MouseButton.Left && mouseEvent.KeyStates.HasFlag(MouseKeyStates.LeftButton)
                 || mouseEvent.PrimaryButton == MouseButton.Right && mouseEvent.KeyStates.HasFlag(MouseKeyStates.RightButton);
@@ -271,26 +283,6 @@ public sealed partial class RenderTree : NodeTree
         {
             this.lastHoveredTextNode?.MouseOut();
             this.lastHoveredTextNode = null;
-
-            element = node as Element;
-        }
-
-        if (element != null)
-        {
-            element.InvokeMouseMoved(mouseEvent);
-
-            if (this.lastHoveredElement != element)
-            {
-                this.lastHoveredElement?.InvokeMouseOut(mouseEvent);
-                this.lastHoveredElement = element;
-
-                element.InvokeMouseOver(mouseEvent);
-            }
-        }
-        else
-        {
-            this.lastHoveredElement?.InvokeMouseOut(mouseEvent);
-            this.lastHoveredElement  = null;
         }
     }
 

@@ -4,9 +4,8 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public class Buffer(VkBuffer instance) : Resource<VkBuffer>
+public sealed class Buffer(VkBuffer instance) : Resource<VkBuffer>
 {
-
     public required Allocation         Allocation { get; init; }
     public required VkBufferUsageFlags Usage      { get; init; }
 

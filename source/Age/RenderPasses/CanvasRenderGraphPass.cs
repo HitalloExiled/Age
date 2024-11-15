@@ -5,13 +5,13 @@ using Age.Rendering.Shaders.Canvas;
 using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
 using Age.Services;
-using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
+using ThirdParty.Vulkan;
 
 namespace Age.RenderPasses;
 
-internal class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
+public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 {
     private readonly CanvasStencilMaskShader canvasStencilMaskShader;
     private readonly Image[]                 colorImages = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];

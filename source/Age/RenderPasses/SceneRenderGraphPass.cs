@@ -15,7 +15,7 @@ using ThirdParty.Vulkan;
 
 namespace Age.RenderPasses;
 
-public partial class SceneRenderGraphPass : RenderGraphPass
+public sealed partial class SceneRenderGraphPass : RenderGraphPass
 {
     private readonly VkFormat           depthFormat;
     private readonly FrameResource[]    frameResources = new FrameResource[VulkanContext.MAX_FRAMES_IN_FLIGHT];

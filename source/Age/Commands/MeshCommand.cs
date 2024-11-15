@@ -3,7 +3,7 @@ using Age.Resources;
 
 namespace Age.Commands;
 
-public record MeshCommand : Command
+public sealed record MeshCommand : Command
 {
     public required IndexBuffer  IndexBuffer  { get; set; }
     public required VertexBuffer VertexBuffer { get; set; }

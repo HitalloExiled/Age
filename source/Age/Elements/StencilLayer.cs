@@ -247,38 +247,34 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         }
     }
 
-    public void RemoveChild(StencilLayer child)
+    public void RemoveChild(StencilLayer layer)
     {
-        if (child.Parent == this)
+        if (layer.Parent != this)
         {
-            if (child == this.FirstChild)
-            {
-                this.FirstChild = child.NextSibling;
-            }
-
-            if (child == this.LastChild)
-            {
-                this.LastChild = child.PreviousSibling;
-            }
-
-            if (child.PreviousSibling != null)
-            {
-                child.PreviousSibling.NextSibling = child.NextSibling;
-
-                if (child.NextSibling != null)
-                {
-                    child.NextSibling.PreviousSibling = child.PreviousSibling.NextSibling;
-                }
-            }
-            else if (child.NextSibling != null)
-            {
-                child.NextSibling.PreviousSibling = null;
-            }
-
-            child.PreviousSibling = null;
-            child.NextSibling     = null;
-            child.Parent          = null;
+            throw new InvalidOperationException("Layer is not child of this layer");
         }
+
+        if (layer.PreviousSibling == null)
+        {
+            this.FirstChild = layer.NextSibling;
+        }
+        else
+        {
+            layer.PreviousSibling.NextSibling = layer.NextSibling;
+        }
+
+        if (layer.NextSibling == null)
+        {
+            this.LastChild = layer.PreviousSibling;
+        }
+        else
+        {
+            layer.NextSibling.PreviousSibling = layer.PreviousSibling;
+        }
+
+        layer.PreviousSibling = null;
+        layer.NextSibling     = null;
+        layer.Parent          = null;
     }
 
     public override string ToString() =>

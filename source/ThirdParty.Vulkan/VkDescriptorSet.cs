@@ -1,7 +1,7 @@
 
 namespace ThirdParty.Vulkan;
 
-public unsafe partial class VkDescriptorSet : DisposableManagedHandle<VkDescriptorSet>
+public sealed unsafe partial class VkDescriptorSet : DisposableManagedHandle<VkDescriptorSet>
 {
     private readonly VkDescriptorPool descriptorPool;
 

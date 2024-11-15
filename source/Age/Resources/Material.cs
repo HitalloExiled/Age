@@ -4,7 +4,7 @@ using Age.Storage;
 
 namespace Age.Resources;
 
-public class Material
+public sealed class Material
 {
     internal Shader Shader { get; }
 

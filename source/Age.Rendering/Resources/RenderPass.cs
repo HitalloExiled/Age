@@ -6,7 +6,7 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Rendering.Resources;
 
-public partial class RenderPass : Resource<VkRenderPass>
+public sealed partial class RenderPass : Resource<VkRenderPass>
 {
     public override VkRenderPass Instance { get; }
 

@@ -99,7 +99,7 @@
         },
         {
             "label": "generate-report",
-            "command": "reportgenerator",
+            "command": "dotnet",
             "type": "process",
             "options": {
                 "cwd": "${workspaceFolder}"

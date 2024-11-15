@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace Age.Numerics;
 
-public record struct AABB<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
+public record struct AABB<T> where T : IFloatingPoint<T>, IFloatingPointIeee754<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public Vector3<T> Size;
     public Vector3<T> Position;

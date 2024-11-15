@@ -1,15 +1,38 @@
 using System.Globalization;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-public record struct Vector4<T> where T :  IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
+public record struct Vector4<T> where T : IFloatingPoint<T>, IFloatingPointIeee754<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public T X;
     public T Y;
     public T Z;
     public T W;
+
+
+    public T this[int index]
+    {
+        readonly get => index switch
+        {
+            0 => this.X,
+            1 => this.Y,
+            2 => this.Z,
+            3 => this.W,
+            _ => throw new IndexOutOfRangeException(),
+        };
+        set
+        {
+            switch (index)
+            {
+                case 0: this.X = value; break;
+                case 1: this.Y = value; break;
+                case 2: this.Z = value; break;
+                case 3: this.W = value; break;
+                default: throw new IndexOutOfRangeException();
+            }
+        }
+    }
 
     public Vector4(T x, T y, T z, T w)
     {
@@ -17,22 +40,6 @@ public record struct Vector4<T> where T :  IFloatingPoint<T>, IRootFunctions<T>,
         this.Y = y;
         this.Z = z;
         this.W = w;
-    }
-
-    public T this[int index]
-    {
-        get
-        {
-            Common.ThrowIfOutOfRange(0, 3, index);
-
-            return Unsafe.Add(ref this.X, index);
-        }
-        set
-        {
-            Common.ThrowIfOutOfRange(0, 3, index);
-
-            Unsafe.Add(ref this.X, index) = value;
-        }
     }
 
     public override readonly string ToString() =>

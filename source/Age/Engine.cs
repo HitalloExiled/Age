@@ -9,7 +9,7 @@ using System.Diagnostics;
 
 namespace Age;
 
-public class Engine : Disposable
+public sealed class Engine : Disposable
 {
     private const bool   FPS_LOCKED        = false;
     private const ushort TARGET_FPS        = 60;

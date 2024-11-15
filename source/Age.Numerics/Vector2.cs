@@ -1,10 +1,9 @@
 using System.Globalization;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace Age.Numerics;
 
-public record struct Vector2<T> where T : IFloatingPoint<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
+public record struct Vector2<T> where T : IFloatingPoint<T>, IFloatingPointIeee754<T>, IRootFunctions<T>, ITrigonometricFunctions<T>
 {
     public static Vector2<T> Down  => new(T.Zero, -T.One);
     public static Vector2<T> Left  => new(-T.One, T.Zero);
@@ -33,31 +32,28 @@ public record struct Vector2<T> where T : IFloatingPoint<T>, IRootFunctions<T>, 
 
     public T this[int index]
     {
-        get
+        readonly get => index switch
         {
-            Common.ThrowIfOutOfRange(0, 2, index);
-
-            return Unsafe.Add(ref this.X, index);
-        }
+            0 => this.X,
+            1 => this.Y,
+            _ => throw new IndexOutOfRangeException(),
+        };
         set
         {
-            Common.ThrowIfOutOfRange(0, 2, index);
-
-            Unsafe.Add(ref this.X, index) = value;
+            switch (index)
+            {
+                case 0: this.X = value; break;
+                case 1: this.Y = value; break;
+                default: throw new IndexOutOfRangeException();
+            }
         }
     }
 
     public readonly T Length        => T.Sqrt(this.LengthSquared);
     public readonly T LengthSquared => Dot(this, this);
 
-    public static T Angle(in Vector2<T> v1, in Vector2<T> v2)
-    {
-        var angle = T.Acos(Dot(v1, v2) / (v1.Length * v2.Length));
-
-        return angle > T.Zero && v1.CrossProduct(v2) < T.Zero
-            ? Math<T>.Tau - angle
-            : angle;
-    }
+    public static T Angle(in Vector2<T> v1, in Vector2<T> v2) =>
+        T.Atan2(CrossProduct(v1, v2), Dot(v1, v2));
 
     public static T CrossProduct(in Vector2<T> v1, in Vector2<T> v2) =>
         v1.X * v2.Y - v1.Y * v2.X;

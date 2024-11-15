@@ -15,7 +15,7 @@ using static Age.Rendering.Shaders.Canvas.CanvasShader;
 
 namespace Age.Elements.Layouts;
 
-internal partial class TextLayout : Layout
+internal sealed partial class TextLayout : Layout
 {
     private static readonly ObjectPool<RectCommand> rectCommandPool = new(static () => new());
 
@@ -393,14 +393,9 @@ internal partial class TextLayout : Layout
     {
         var command = (RectCommand)this.Target.Commands[(int)character];
 
-        var matrix = this.Target.Transform.Matrix;
+        var localPosition = this.Target.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
-        var position = matrix * ((Vector2<float>)command.Rect.Position + new Vector2<float>(command.Rect.Size.Width / 2, 0));
-
-        var line = new Line<float>(position, position + matrix.Y);
-        var side = line.CrossProduct(new(x, -y));
-
-        if (side > 0)
+        if (localPosition.X > command.Rect.Position.X + command.Rect.Size.Width / 2)
         {
             character++;
         }

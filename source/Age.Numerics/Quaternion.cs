@@ -16,18 +16,25 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
 
     public T this[int index]
 	{
-		get
-		{
-            Common.ThrowIfOutOfRange(0, 3, index);
-
-			return Unsafe.Add(ref this.X, index);
-		}
-		set
-		{
-            Common.ThrowIfOutOfRange(0, 3, index);
-
-			Unsafe.Add(ref this.X, index) = value;
-		}
+		readonly get => index switch
+        {
+            0 => this.X,
+            1 => this.Y,
+            2 => this.Z,
+            3 => this.W,
+            _ => throw new IndexOutOfRangeException(),
+        };
+        set
+        {
+            switch (index)
+            {
+                case 0: this.X = value; break;
+                case 1: this.Y = value; break;
+                case 2: this.Z = value; break;
+                case 3: this.W = value; break;
+                default: throw new IndexOutOfRangeException();
+            }
+        }
 	}
 
     public readonly Vector3<T> Axis

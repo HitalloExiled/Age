@@ -39,8 +39,11 @@ public record struct Transform2D
     public static Transform2D CreateRotated(float radians) =>
         new(Matrix3x2<float>.CreateRotated(radians));
 
+    public static Transform2D CreateScaled(float scale) =>
+        new(Matrix3x2<float>.CreateScaled(scale));
+
     public static Transform2D CreateScaled(float scaleX, float scaleY) =>
-        new(Matrix3x2<float>.CreateScaled(new(scaleX, scaleY)));
+        new(Matrix3x2<float>.CreateScaled(scaleX, scaleY));
 
     public static Transform2D CreateScaled(in Vector2<float> scale) =>
         new(Matrix3x2<float>.CreateScaled(scale));

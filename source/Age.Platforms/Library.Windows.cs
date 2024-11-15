@@ -25,17 +25,12 @@ public partial class Library(string lib)
 
     private void PlatformDispose(bool disposing)
     {
-        if (!this.disposed)
+        if (disposing)
         {
-            if (disposing)
-            {
-                // TODO: dispose managed state (managed objects)
-            }
-
-            Kernel32.FreeLibrary(this.handler);
-
-            this.disposed = true;
+            // TODO: dispose managed state (managed objects)
         }
+
+        Kernel32.FreeLibrary(this.handler);
     }
 
     private bool PlatformIsLoaded() =>

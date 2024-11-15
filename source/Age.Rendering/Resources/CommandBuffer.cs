@@ -6,7 +6,7 @@ using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public class CommandBuffer : Resource<VkCommandBuffer>
+public sealed class CommandBuffer : Resource<VkCommandBuffer>
 {
     private readonly bool disposable;
     private readonly VkCommandBuffer instance;
