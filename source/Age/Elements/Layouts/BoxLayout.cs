@@ -48,6 +48,7 @@ internal sealed partial class BoxLayout : Layout
     #endregion
 
     #region 1-byte
+    private bool childsChanged;
     private bool dependenciesHasChanged;
 
     public bool IsHoveringText { get; set; }
@@ -491,18 +492,14 @@ internal sealed partial class BoxLayout : Layout
             }
         }
 
-        if (this.dependenciesHasChanged || this.Size != size || this.Target is Canvas)
+        if (this.childsChanged || this.dependenciesHasChanged || this.Size != size || this.Target is Canvas)
         {
             this.Size = size;
-
-            this.Parent?.RequestUpdate();
 
             if (resolvedWidth && resolvedHeight && resolvedMargin && resolvedPadding)
             {
                 this.CalculatePendingLayouts();
             }
-
-            this.dependenciesHasChanged = false;
         }
 
         this.UpdateRect();
@@ -791,8 +788,10 @@ internal sealed partial class BoxLayout : Layout
                 }
             }
 
-            if (size != dependent.Layout.Size || padding != dependent.Layout.padding || margin != dependent.Layout.margin)
+            if (dependent.Layout.dependenciesHasChanged || dependent.Layout.childsChanged || size != dependent.Layout.Size || padding != dependent.Layout.padding || margin != dependent.Layout.margin)
             {
+                dependent.Layout.childsChanged          = false;
+                dependent.Layout.dependenciesHasChanged = false;
                 dependent.Layout.Size    = size;
                 dependent.Layout.padding = padding;
                 dependent.Layout.margin  = margin;
@@ -802,6 +801,7 @@ internal sealed partial class BoxLayout : Layout
             }
 
             dependent.Layout.UpdateRect();
+
             dependent.Layout.HasPendingUpdate = false;
 
             this.CheckHightestInlineChild(stack, dependent);
@@ -1216,6 +1216,7 @@ internal sealed partial class BoxLayout : Layout
     {
         if (!containerNode.Layout.Hidden)
         {
+            this.childsChanged = true;
             this.renderableNodesCount--;
             this.RequestUpdate();
         }
@@ -1225,6 +1226,7 @@ internal sealed partial class BoxLayout : Layout
     {
         if (!containerNode.Layout.Hidden)
         {
+            this.childsChanged = true;
             this.renderableNodesCount++;
             this.RequestUpdate();
         }
@@ -1292,6 +1294,8 @@ internal sealed partial class BoxLayout : Layout
                 if (this.parentDependent == Dependency.None)
                 {
                     this.UpdateDisposition();
+                    this.childsChanged          = false;
+                    this.dependenciesHasChanged = false;
                 }
 
             }
