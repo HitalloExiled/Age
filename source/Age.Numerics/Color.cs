@@ -37,6 +37,9 @@ public record struct Color
     public override readonly string ToString() =>
         $"#{Convert.ToString((uint)this, 16)}";
 
+    public readonly Color WithAlpha(float value) =>
+        new(this.R, this.G, this.B, value);
+
     public static Color operator +(Color color, float value) =>
         new(color.R + value, color.G + value, color.B + value, color.A + value);
 

@@ -799,6 +799,12 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public void ReplaceSelf(Node node) =>
         this.Parent?.Replace(this, node);
 
+    public void ReplaceChildren(Node node)
+    {
+        this.RemoveChildren();
+        this.AppendChild(node);
+    }
+
     public void ReplaceChildren(Span<Node> nodes)
     {
         this.RemoveChildren();
