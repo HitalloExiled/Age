@@ -313,7 +313,6 @@ public sealed partial class RenderTree : NodeTree
         {
             this.lastFocusedElement?.InvokeDeactivate();
             this.lastFocusedElement = null;
-            // this.lastFocusedTextNode = null;
         }
     }
 

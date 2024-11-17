@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Text;
 using Age.Numerics;
 using Age.Platforms.Display;
 
@@ -54,6 +55,7 @@ internal struct StyleData
         target.Margin               = source.Margin               ?? fallback.Margin;
         target.MaxSize              = source.MaxSize              ?? fallback.MaxSize;
         target.MinSize              = source.MinSize              ?? fallback.MinSize;
+        target.Overflow             = source.Overflow             ?? fallback.Overflow;
         target.Padding              = source.Padding              ?? fallback.Padding;
         target.Positioning          = source.Positioning          ?? fallback.Positioning;
         target.Size                 = source.Size                 ?? fallback.Size;
@@ -74,4 +76,48 @@ internal struct StyleData
 
     public void Merge(in StyleData source) =>
         Merge(ref this, source, this);
+
+    public override readonly string ToString()
+    {
+        var builder = new StringBuilder();
+
+        void appendProperty<T>(string name, in T? value)
+        {
+            if (value != null)
+            {
+                if (builder.Length > 0)
+                {
+                    builder.Append("; ");
+                }
+
+                builder.Append($"{name}: {value}");
+            }
+        }
+
+        appendProperty("Alignment",            in this.Alignment);
+        appendProperty("BackgroundColor",      in this.BackgroundColor);
+        appendProperty("Baseline",             in this.Baseline);
+        appendProperty("Border",               in this.Border);
+        appendProperty("BoxSizing",            in this.BoxSizing);
+        appendProperty("Color",                in this.Color);
+        appendProperty("ContentJustification", in this.ContentJustification);
+        appendProperty("Cursor",               in this.Cursor);
+        appendProperty("FontFamily",           in this.FontFamily);
+        appendProperty("FontSize",             in this.FontSize);
+        appendProperty("FontWeight",           in this.FontWeight);
+        appendProperty("Hidden",               in this.Hidden);
+        appendProperty("ItemsAlignment",       in this.ItemsAlignment);
+        appendProperty("Margin",               in this.Margin);
+        appendProperty("MaxSize",              in this.MaxSize);
+        appendProperty("MinSize",              in this.MinSize);
+        appendProperty("Padding",              in this.Padding);
+        appendProperty("Positioning",          in this.Positioning);
+        appendProperty("Size",                 in this.Size);
+        appendProperty("Stack",                in this.Stack);
+        appendProperty("TextAlignment",        in this.TextAlignment);
+        appendProperty("TextSelection",        in this.TextSelection);
+        appendProperty("Transform",            in this.Transform);
+
+        return builder.ToString();
+    }
 }

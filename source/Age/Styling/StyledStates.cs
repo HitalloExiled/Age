@@ -2,9 +2,9 @@ namespace Age.Styling;
 
 public class StyledStates
 {
-    private Style? active;
     private Style? @base;
     private Style? @checked;
+    private Style? active;
     private Style? disabled;
     private Style? enabled;
     private Style? focus;
@@ -12,16 +12,16 @@ public class StyledStates
 
     public event Action<StyleProperty>? Changed;
 
-    public Style? Base
-    {
-        get => this.@base;
-        set => this.Set(ref this.@base, value);
-    }
-
     public Style? Active
     {
         get => this.active;
         set => this.Set(ref this.active, value);
+    }
+
+    public Style? Base
+    {
+        get => this.@base;
+        set => this.Set(ref this.@base, value);
     }
 
     public Style? Checked

@@ -12,4 +12,7 @@ public record struct BorderSide
         this.Thickness = thickness;
         this.Color     = color;
     }
+
+    public override readonly string ToString() =>
+        $"[{this.Thickness}, ${this.Color}]";
 }

@@ -65,4 +65,7 @@ public record struct Border
                 BottomLeft  = value.Radius.BottomLeft,
             }
         };
+
+    public override readonly string ToString() =>
+        $"{{ Top: {this.Top}, Right: {this.Right}, Bottom: {this.Bottom}, Left: {this.Left}, Radius: {this.Radius} }}";
 }

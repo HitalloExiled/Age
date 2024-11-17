@@ -171,16 +171,45 @@ public record Style
         }
     }
 
-    public void Clear() =>
+    internal void Clear(bool notify)
+    {
         this.data = default;
 
-    public void Copy(Style source) =>
+        if (notify)
+        {
+            Changed?.Invoke(StyleProperty.All);
+        }
+    }
+
+    internal void Copy(Style source, bool notify)
+    {
         this.data = source.data;
 
-    public void Merge(Style source)
+        if (notify)
+        {
+            Changed?.Invoke(StyleProperty.All);
+        }
+    }
+
+    internal void Merge(Style source, bool notify)
     {
         this.data.Merge(source.data);
 
-        Changed?.Invoke(StyleProperty.All);
+        if (notify)
+        {
+            Changed?.Invoke(StyleProperty.All);
+        }
     }
+
+    public void Clear() =>
+        this.Clear(true);
+
+    public void Copy(Style source) =>
+        this.Copy(source, true);
+
+    public void Merge(Style source) =>
+        this.Merge(source, true);
+
+    public override string ToString() =>
+        this.data.ToString();
 }
