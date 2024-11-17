@@ -49,48 +49,53 @@ public sealed partial class RenderTree : NodeTree
 
         while (enumerator.MoveNext())
         {
-            var current = enumerator.Current;
-
-            if (current.Visible)
+            if (enumerator.Current is RenderNode current)
             {
-                current.Index = index;
-
-                if (index == this.Nodes.Count)
+                if (current.Visible == true)
                 {
-                    this.Nodes.Add(current);
+                    current.Index = index;
+
+                    if (index == this.Nodes.Count)
+                    {
+                        this.Nodes.Add(current);
+                    }
+                    else
+                    {
+                        this.Nodes[index] = current;
+                    }
+
+                    index++;
+
+                    if (current is Node2D node2D)
+                    {
+                        var transform = node2D.TransformCache;
+
+                        foreach (var command in node2D.Commands)
+                        {
+                            var entry = new Command2DEntry(command, transform);
+
+                            this.command2DEntriesCache.Add(entry);
+
+                            yield return entry;
+                        }
+                    }
+                    else if (current is Node3D node3D)
+                    {
+                        var transform = (Matrix4x4<float>)node3D.TransformCache;
+
+                        foreach (var command in node3D.Commands)
+                        {
+                            var entry = new Command3DEntry(command, transform);
+
+                            this.command3DEntriesCache.Add(entry);
+
+                            yield return entry;
+                        }
+                    }
                 }
                 else
                 {
-                    this.Nodes[index] = current;
-                }
-
-                index++;
-
-                if (current is Node2D node2D)
-                {
-                    var transform = node2D.TransformCache;
-
-                    foreach (var command in node2D.Commands)
-                    {
-                        var entry = new Command2DEntry(command, transform);
-
-                        this.command2DEntriesCache.Add(entry);
-
-                        yield return entry;
-                    }
-                }
-                else if (current is Node3D node3D)
-                {
-                    var transform = (Matrix4x4<float>)node3D.TransformCache;
-
-                    foreach (var command in node3D.Commands)
-                    {
-                        var entry = new Command3DEntry(command, transform);
-
-                        this.command3DEntriesCache.Add(entry);
-
-                        yield return entry;
-                    }
+                    enumerator.SkipToNextSibling();
                 }
             }
         }

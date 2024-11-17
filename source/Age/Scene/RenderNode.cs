@@ -2,6 +2,10 @@ namespace Age.Scene;
 
 public abstract class RenderNode : Node
 {
+    #region 1-byte
+    public bool Visible { get; set; } = true;
+    #endregion
+
     public RenderTree? RenderTree => this.Tree as RenderTree;
 
     protected override void Connected(NodeTree tree)

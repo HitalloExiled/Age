@@ -25,9 +25,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public NodeFlags Flags { get; protected set; }
     #endregion
 
-    #region 1-byte
-    public bool Visible { get; set; } = true;
-    #endregion
 
     internal int Index
     {
