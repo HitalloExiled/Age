@@ -471,6 +471,12 @@ internal sealed partial class TextLayout : Layout
         this.caretIsVisible = false;
     }
 
+    public void MarkStyleAsDirty()
+    {
+        this.textIsDirty = true;
+        this.RequestUpdate();
+    }
+
     public void TargetIndexed()
     {
         var parentIndex = this.Target.Index + 1;

@@ -1052,7 +1052,7 @@ internal sealed partial class BoxLayout : Layout
     {
         var hidden = this.State.Style.Hidden ?? false;
 
-        if (property is StyleProperty.Border or StyleProperty.All)
+        if (property is StyleProperty.All or StyleProperty.Border)
         {
             this.border = new()
             {
@@ -1063,7 +1063,18 @@ internal sealed partial class BoxLayout : Layout
             };
         }
 
-        if (property is StyleProperty.Cursor or StyleProperty.All && this.target.IsHovered && !this.IsHoveringText && this.target.Tree is RenderTree renderTree)
+        if (property is StyleProperty.All or StyleProperty.Color or StyleProperty.FontFamily or StyleProperty.FontSize or StyleProperty.FontWeight)
+        {
+            foreach (var node in this.target)
+            {
+                if (node is TextNode textNode)
+                {
+                    textNode.Layout.MarkStyleAsDirty();
+                }
+            }
+        }
+
+        if (property is StyleProperty.All or StyleProperty.Cursor && this.target.IsHovered && !this.IsHoveringText && this.target.Tree is RenderTree renderTree)
         {
             renderTree.Window.Cursor = this.State.Style.Cursor ?? default;
         }
@@ -1071,7 +1082,7 @@ internal sealed partial class BoxLayout : Layout
         var oldParentDependent = this.parentDependent;
         var relativePropertiesHasChanged = false;
 
-        if (property is StyleProperty.Size or StyleProperty.MinSize or StyleProperty.MaxSize or StyleProperty.All)
+        if (property is StyleProperty.All or StyleProperty.Size or StyleProperty.MinSize or StyleProperty.MaxSize)
         {
             this.contentDependent = Dependency.None;
             this.parentDependent  = Dependency.None;
@@ -1101,7 +1112,7 @@ internal sealed partial class BoxLayout : Layout
             }
         }
 
-        if (property is StyleProperty.Margin or StyleProperty.All)
+        if (property is StyleProperty.All or StyleProperty.Margin)
         {
             if (this.State.Style.Margin?.Top?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Right?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Bottom?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Left?.Kind == UnitKind.Percentage)
             {
@@ -1111,7 +1122,7 @@ internal sealed partial class BoxLayout : Layout
             }
         }
 
-        if (property is StyleProperty.Padding or StyleProperty.All)
+        if (property is StyleProperty.All or StyleProperty.Padding)
         {
             if (this.State.Style.Padding?.Top?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Right?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Bottom?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Left?.Kind == UnitKind.Percentage)
             {
@@ -1154,7 +1165,7 @@ internal sealed partial class BoxLayout : Layout
             }
         }
 
-        if (property is StyleProperty.Overflow or StyleProperty.All)
+        if (property is StyleProperty.All or StyleProperty.Overflow)
         {
             var currentIsScrollable = this.State.Style.Overflow is not OverflowKind.None and not OverflowKind.Clipping && this.contentDependent != (Dependency.Width | Dependency.Height);
 
