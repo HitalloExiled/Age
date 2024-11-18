@@ -104,16 +104,6 @@ internal partial class StyledStateManager
         {
             if (this.styles != value)
             {
-                if (this.styles != null)
-                {
-                    this.styles.Changed -= this.InvokeChanged;
-                }
-
-                if (value != null)
-                {
-                    value.Changed += this.InvokeChanged;
-                }
-
                 this.styles = value;
 
                 this.InvokeChanged();

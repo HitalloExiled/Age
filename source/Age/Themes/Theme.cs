@@ -25,7 +25,7 @@ public class Theme
                 },
                 Active = new()
                 {
-                    BackgroundColor = Color.Green + Color.White * 0.7f,
+                    BackgroundColor = Color.Green + Color.White * 0.9f,
                 },
             },
             Outlined = new()
@@ -41,11 +41,13 @@ public class Theme
                 },
                 Hovered = new()
                 {
+                    Color           = Color.Green + Color.White * 0.6f,
                     BackgroundColor = Color.Green.WithAlpha(0.2f),
                 },
                 Active = new()
                 {
-                    BackgroundColor = Color.Green.WithAlpha(0.25f),
+                    Color           = Color.Green + Color.White * 0.9f,
+                    BackgroundColor = Color.Green.WithAlpha(0.5f),
                 },
             },
             Text = new()
@@ -60,11 +62,13 @@ public class Theme
                 },
                 Hovered = new()
                 {
+                    Color           = Color.Green + Color.White * 0.6f,
                     BackgroundColor = Color.Green.WithAlpha(0.2f),
                 },
                 Active = new()
                 {
-                    BackgroundColor = Color.Green.WithAlpha(0.25f),
+                    Color           = Color.Green + Color.White * 0.9f,
+                    BackgroundColor = Color.Green.WithAlpha(0.5f),
                 },
             }
         },
