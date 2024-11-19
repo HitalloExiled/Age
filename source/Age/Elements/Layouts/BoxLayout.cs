@@ -397,7 +397,7 @@ internal sealed partial class BoxLayout : Layout
 
                 resolvedWidth = true;
             }
-            else if ((this.State.Style.MinSize?.Width?.TryGetPixel(out var min) == true) && (this.State.Style.MaxSize?.Width?.TryGetPixel(out var max) == true))
+            else if (this.State.Style.MinSize?.Width?.TryGetPixel(out var min) == true && this.State.Style.MaxSize?.Width?.TryGetPixel(out var max) == true)
             {
                 resolvedWidth = true;
 
@@ -442,7 +442,7 @@ internal sealed partial class BoxLayout : Layout
 
                 resolvedHeight = true;
             }
-            else if ((this.State.Style.MinSize?.Height?.TryGetPixel(out var min) == true) && (this.State.Style.MaxSize?.Height?.TryGetPixel(out var max) == true))
+            else if (this.State.Style.MinSize?.Height?.TryGetPixel(out var min) == true && this.State.Style.MaxSize?.Height?.TryGetPixel(out var max) == true)
             {
                 resolvedHeight = true;
 
@@ -492,17 +492,19 @@ internal sealed partial class BoxLayout : Layout
             }
         }
 
-        if (this.childsChanged || this.dependenciesHasChanged || this.Size != size || this.Target is Canvas)
-        {
-            this.Size = size;
+        var sizeHasChanged = this.Size != size;
 
-            if (resolvedWidth && resolvedHeight && resolvedMargin && resolvedPadding)
+        this.Size = size;
+
+        if (resolvedWidth && resolvedHeight && resolvedMargin && resolvedPadding)
+        {
+            if (sizeHasChanged || this.childsChanged || this.dependenciesHasChanged || this.Target is Canvas)
             {
                 this.CalculatePendingLayouts();
             }
-        }
 
-        this.UpdateRect();
+            this.UpdateRect();
+        }
     }
 
     private void CalculatePendingMargin(ref Size<uint> size)
@@ -562,7 +564,7 @@ internal sealed partial class BoxLayout : Layout
                     {
                         size.Width = (uint)(this.Size.Width * percentage);
 
-                        if ((dependent.Layout.State.Style.MinSize?.Width?.TryGetPixel(out var min) == true) && (this.State.Style.MaxSize?.Width?.TryGetPixel(out var max) == true))
+                        if (dependent.Layout.State.Style.MinSize?.Width?.TryGetPixel(out var min) == true && this.State.Style.MaxSize?.Width?.TryGetPixel(out var max) == true)
                         {
                             if (size.Width < min)
                             {
@@ -590,7 +592,7 @@ internal sealed partial class BoxLayout : Layout
 
                         modified = true;
                     }
-                    else if ((dependent.Layout.State.Style.MinSize?.Width?.TryGetPercentage(out var min) == true) && (dependent.Layout.State.Style.MaxSize?.Width?.TryGetPercentage(out var max) == true))
+                    else if (dependent.Layout.State.Style.MinSize?.Width?.TryGetPercentage(out var min) == true && dependent.Layout.State.Style.MaxSize?.Width?.TryGetPercentage(out var max) == true)
                     {
                         var minValue = (uint)(this.Size.Width * min);
                         var maxValue = (uint)(this.Size.Width * max);
@@ -681,7 +683,7 @@ internal sealed partial class BoxLayout : Layout
                     {
                         size.Height = (uint)(this.Size.Height * percentage);
 
-                        if ((dependent.Layout.State.Style.MinSize?.Height?.TryGetPixel(out var min) == true) && (this.State.Style.MaxSize?.Height?.TryGetPixel(out var max) == true))
+                        if (dependent.Layout.State.Style.MinSize?.Height?.TryGetPixel(out var min) == true && this.State.Style.MaxSize?.Height?.TryGetPixel(out var max) == true)
                         {
                             if (size.Height < min)
                             {
@@ -709,7 +711,7 @@ internal sealed partial class BoxLayout : Layout
 
                         modified = true;
                     }
-                    else if ((dependent.Layout.State.Style.MinSize?.Height?.TryGetPercentage(out var min) == true) && (dependent.Layout.State.Style.MaxSize?.Height?.TryGetPercentage(out var max) == true))
+                    else if (dependent.Layout.State.Style.MinSize?.Height?.TryGetPercentage(out var min) == true && dependent.Layout.State.Style.MaxSize?.Height?.TryGetPercentage(out var max) == true)
                     {
                         var minValue = (uint)(this.Size.Height * min);
                         var maxValue = (uint)(this.Size.Height * max);
@@ -1184,7 +1186,7 @@ internal sealed partial class BoxLayout : Layout
                 this.IsScrollable = currentIsScrollable;
             }
 
-            if (this.State.Style.Overflow is not null or OverflowKind.None && this.contentDependent != (Dependency.Width | Dependency.Height))
+            if (this.State.Style.Overflow is not (null or OverflowKind.None) && this.contentDependent != (Dependency.Width | Dependency.Height))
             {
                 if (this.ownStencilLayer == null)
                 {

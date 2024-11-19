@@ -93,18 +93,6 @@ public sealed class StoryBook : Node
                 FontWeight = FontWeight.Bold,
             },
         };
-        var title2 = new FlexBox
-        {
-            Name = "Title",
-            Text = "Title",
-            Style = new()
-            {
-                Alignment  = AlignmentKind.Center,
-                Color      = Color.White,
-                FontSize   = 24,
-                FontWeight = FontWeight.Bold,
-            },
-        };
 
         var outlet = new FlexBox
         {
@@ -124,7 +112,6 @@ public sealed class StoryBook : Node
             canvas.AppendChild(content);
                 content.AppendChild(header);
                     header.AppendChild(title);
-                    header.AppendChild(title2);
                 content.AppendChild(outlet);
 
         this.canvas = canvas;
