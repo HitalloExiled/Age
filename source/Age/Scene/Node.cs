@@ -72,7 +72,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
-    public Node[] Children => [..this];
+    public Node[] Children
+    {
+        get => [.. this];
+        set => this.ReplaceChildren(value);
+    }
 
     [MemberNotNullWhen(true, nameof(Tree))]
     public bool IsConnected => this.Tree != null;
@@ -807,7 +811,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void ReplaceChildren(Span<Node> nodes)
     {
-        this.RemoveChildren();
+        if (this.FirstChild != null)
+        {
+            this.RemoveChildren();
+        }
+
         this.AppendChildren(nodes);
     }
 

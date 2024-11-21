@@ -11,6 +11,11 @@ public class ButtonPage : Page
 
     public ButtonPage()
     {
+        var buttonStyle = new Style
+        {
+            Margin = new((Pixel)2, null),
+        };
+
         var container = new FlexBox
         {
             Style = new()
@@ -18,15 +23,30 @@ public class ButtonPage : Page
                 ContentJustification = ContentJustificationKind.SpaceAround,
                 Size                 = new((Percentage)100, null),
                 Margin               = new((Pixel)10),
-            }
+            },
+            Children =
+            [
+                new Button
+                {
+                    Text    = "Flat",
+                    Variant = ButtonVariant.Flat,
+                    Style   = buttonStyle,
+                },
+                new Button
+                {
+                    Text    = "Outlined",
+                    Variant = ButtonVariant.Outlined,
+                    Style   = buttonStyle,
+                },
+                new Button
+                {
+                    Text    = "Text",
+                    Variant = ButtonVariant.Text,
+                    Style   = buttonStyle,
+                }
+            ]
         };
-        var button1 = new Button() { Text = "Flat",     Variant = ButtonVariant.Flat };
-        var button2 = new Button() { Text = "Outlined", Variant = ButtonVariant.Outlined, Style = new() { Margin = new((Pixel)4, null) } };
-        var button3 = new Button() { Text = "Text",     Variant = ButtonVariant.Text,     Style = new() { Margin = new((Pixel)4, null) } };
 
         this.AppendChild(container);
-            container.AppendChild(button1);
-            container.AppendChild(button2);
-            container.AppendChild(button3);
     }
 }
