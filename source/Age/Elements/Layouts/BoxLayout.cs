@@ -83,7 +83,7 @@ internal sealed partial class BoxLayout : Layout
     {
         this.target = target;
 
-        this.State.Changed += this.UpdateState;
+        this.State.Changed += this.StyleChanged;
     }
 
     private static void CalculatePendingPaddingHorizontal(BoxLayout layout, in Size<uint> size, ref RawRectEdges padding)
@@ -871,6 +871,178 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
+    private void StyleChanged(StyleProperty property)
+    {
+        var hidden = this.State.Style.Hidden == true;
+
+        if (property is StyleProperty.All or StyleProperty.Border)
+        {
+            this.border = new()
+            {
+                Top    = this.State.Style.Border?.Top.Thickness ?? 0,
+                Right  = this.State.Style.Border?.Right.Thickness ?? 0,
+                Bottom = this.State.Style.Border?.Bottom.Thickness ?? 0,
+                Left   = this.State.Style.Border?.Left.Thickness ?? 0,
+            };
+        }
+
+        // if (property is StyleProperty.All or StyleProperty.Color or StyleProperty.FontFamily or StyleProperty.FontSize or StyleProperty.FontWeight)
+        // {
+        //     foreach (var node in this.target)
+        //     {
+        //         if (node is TextNode textNode)
+        //         {
+        //             textNode.Layout.ParentStyleChanged(property);
+        //         }
+        //     }
+        // }
+
+        if (property is StyleProperty.All or StyleProperty.Cursor && this.target.IsHovered && !this.IsHoveringText && this.target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = this.State.Style.Cursor ?? default;
+        }
+
+        var oldParentDependent = this.parentDependent;
+        var relativePropertiesHasChanged = false;
+
+        if (property is StyleProperty.All or StyleProperty.Size or StyleProperty.MinSize or StyleProperty.MaxSize)
+        {
+            this.contentDependent = Dependency.None;
+            this.parentDependent  = Dependency.None;
+
+            if (this.State.Style.Size?.Width == null && this.State.Style.MinSize?.Width == null && this.State.Style.MaxSize?.Width == null)
+            {
+                this.contentDependent |= Dependency.Width;
+
+                relativePropertiesHasChanged = true;
+            }
+            else if (this.State.Style.Size?.Width?.Kind == UnitKind.Percentage || this.State.Style.MinSize?.Width?.Kind == UnitKind.Percentage || this.State.Style.MaxSize?.Width?.Kind == UnitKind.Percentage)
+            {
+                this.parentDependent |= Dependency.Width;
+
+                relativePropertiesHasChanged = true;
+            }
+
+            if (this.State.Style.Size?.Height == null && this.State.Style.MinSize?.Height == null && this.State.Style.MaxSize?.Height == null)
+            {
+                this.contentDependent |= Dependency.Height;
+            }
+            else if (this.State.Style.Size?.Height?.Kind == UnitKind.Percentage || this.State.Style.MinSize?.Height?.Kind == UnitKind.Percentage || this.State.Style.MaxSize?.Height?.Kind == UnitKind.Percentage)
+            {
+                this.parentDependent |= Dependency.Height;
+
+                relativePropertiesHasChanged = true;
+            }
+        }
+
+        if (property is StyleProperty.All or StyleProperty.Margin)
+        {
+            if (this.State.Style.Margin?.Top?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Right?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Bottom?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Left?.Kind == UnitKind.Percentage)
+            {
+                this.parentDependent |= Dependency.Margin;
+
+                relativePropertiesHasChanged = true;
+            }
+        }
+
+        if (property is StyleProperty.All or StyleProperty.Padding)
+        {
+            if (this.State.Style.Padding?.Top?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Right?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Bottom?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Left?.Kind == UnitKind.Percentage)
+            {
+                this.parentDependent |= Dependency.Padding;
+
+                relativePropertiesHasChanged = true;
+            }
+        }
+
+        var justHidden      = hidden && !this.Hidden;
+        var justUnhidden    = !hidden && this.Hidden;
+        var justUndependent = oldParentDependent != Dependency.None && this.parentDependent == Dependency.None;
+        var justDependent   = oldParentDependent == Dependency.None && this.parentDependent != Dependency.None;
+
+        if (this.Parent != null)
+        {
+            this.Parent.dependenciesHasChanged = relativePropertiesHasChanged;
+
+            if (justUnhidden || justDependent)
+            {
+                if (justUnhidden)
+                {
+                    this.Parent.renderableNodesCount++;
+                }
+
+                if (this.parentDependent != Dependency.None)
+                {
+                    this.Parent.dependents.Add(this.Target);
+                    this.Parent.dependents.Sort();
+                }
+            }
+            else if (justHidden || justUndependent)
+            {
+                if (justHidden)
+                {
+                    this.Parent.renderableNodesCount--;
+                }
+
+                this.Parent.dependents.Remove(this.Target);
+            }
+        }
+
+        if (property is StyleProperty.All or StyleProperty.Overflow)
+        {
+            var currentIsScrollable = this.State.Style.Overflow is not OverflowKind.None and not OverflowKind.Clipping && this.contentDependent != (Dependency.Width | Dependency.Height);
+
+            if (currentIsScrollable != this.IsScrollable)
+            {
+                if (currentIsScrollable)
+                {
+                    this.target.Scroll += this.OnScroll;
+                }
+                else
+                {
+                    this.target.Scroll -= this.OnScroll;
+                    this.scrollOffset = default;
+                }
+
+                this.IsScrollable = currentIsScrollable;
+            }
+
+            if (this.State.Style.Overflow is not (null or OverflowKind.None) && this.contentDependent != (Dependency.Width | Dependency.Height))
+            {
+                if (this.ownStencilLayer == null)
+                {
+                    this.ownStencilLayer = new StencilLayer(this.Target);
+
+                    this.StencilLayer?.AppendChild(this.ownStencilLayer);
+                }
+            }
+            else if (this.ownStencilLayer != null)
+            {
+                this.ownStencilLayer.Detach();
+                this.ownStencilLayer.Dispose();
+
+                this.ownStencilLayer = null;
+            }
+
+            SetStencilLayer(this, this.ContentStencilLayer);
+        }
+
+        if (hidden)
+        {
+            this.RequestUpdate();
+
+            this.Hidden = hidden;
+        }
+        else
+        {
+            this.Hidden = hidden;
+
+            this.RequestUpdate();
+        }
+
+        this.Target.Visible = !hidden;
+    }
+
     private void UpdateDisposition()
     {
         if (this.renderableNodesCount == 0)
@@ -1048,178 +1220,6 @@ internal sealed partial class BoxLayout : Layout
         command.StencilLayer = this.StencilLayer;
 
         this.ownStencilLayer?.MakeDirty();
-    }
-
-    private void UpdateState(StyleProperty property)
-    {
-        var hidden = this.State.Style.Hidden == true;
-
-        if (property is StyleProperty.All or StyleProperty.Border)
-        {
-            this.border = new()
-            {
-                Top    = this.State.Style.Border?.Top.Thickness ?? 0,
-                Right  = this.State.Style.Border?.Right.Thickness ?? 0,
-                Bottom = this.State.Style.Border?.Bottom.Thickness ?? 0,
-                Left   = this.State.Style.Border?.Left.Thickness ?? 0,
-            };
-        }
-
-        if (property is StyleProperty.All or StyleProperty.Color or StyleProperty.FontFamily or StyleProperty.FontSize or StyleProperty.FontWeight)
-        {
-            foreach (var node in this.target)
-            {
-                if (node is TextNode textNode)
-                {
-                    textNode.Layout.MarkStyleAsDirty();
-                }
-            }
-        }
-
-        if (property is StyleProperty.All or StyleProperty.Cursor && this.target.IsHovered && !this.IsHoveringText && this.target.Tree is RenderTree renderTree)
-        {
-            renderTree.Window.Cursor = this.State.Style.Cursor ?? default;
-        }
-
-        var oldParentDependent = this.parentDependent;
-        var relativePropertiesHasChanged = false;
-
-        if (property is StyleProperty.All or StyleProperty.Size or StyleProperty.MinSize or StyleProperty.MaxSize)
-        {
-            this.contentDependent = Dependency.None;
-            this.parentDependent  = Dependency.None;
-
-            if (this.State.Style.Size?.Width == null && this.State.Style.MinSize?.Width == null && this.State.Style.MaxSize?.Width == null)
-            {
-                this.contentDependent |= Dependency.Width;
-
-                relativePropertiesHasChanged = true;
-            }
-            else if (this.State.Style.Size?.Width?.Kind == UnitKind.Percentage || this.State.Style.MinSize?.Width?.Kind == UnitKind.Percentage || this.State.Style.MaxSize?.Width?.Kind == UnitKind.Percentage)
-            {
-                this.parentDependent |= Dependency.Width;
-
-                relativePropertiesHasChanged = true;
-            }
-
-            if (this.State.Style.Size?.Height == null && this.State.Style.MinSize?.Height == null && this.State.Style.MaxSize?.Height == null)
-            {
-                this.contentDependent |= Dependency.Height;
-            }
-            else if (this.State.Style.Size?.Height?.Kind == UnitKind.Percentage || this.State.Style.MinSize?.Height?.Kind == UnitKind.Percentage || this.State.Style.MaxSize?.Height?.Kind == UnitKind.Percentage)
-            {
-                this.parentDependent |= Dependency.Height;
-
-                relativePropertiesHasChanged = true;
-            }
-        }
-
-        if (property is StyleProperty.All or StyleProperty.Margin)
-        {
-            if (this.State.Style.Margin?.Top?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Right?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Bottom?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Left?.Kind == UnitKind.Percentage)
-            {
-                this.parentDependent |= Dependency.Margin;
-
-                relativePropertiesHasChanged = true;
-            }
-        }
-
-        if (property is StyleProperty.All or StyleProperty.Padding)
-        {
-            if (this.State.Style.Padding?.Top?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Right?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Bottom?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Left?.Kind == UnitKind.Percentage)
-            {
-                this.parentDependent |= Dependency.Padding;
-
-                relativePropertiesHasChanged = true;
-            }
-        }
-
-        var justHidden      = hidden && !this.Hidden;
-        var justUnhidden    = !hidden && this.Hidden;
-        var justUndependent = oldParentDependent != Dependency.None && this.parentDependent == Dependency.None;
-        var justDependent   = oldParentDependent == Dependency.None && this.parentDependent != Dependency.None;
-
-        if (this.Parent != null)
-        {
-            this.Parent.dependenciesHasChanged = relativePropertiesHasChanged;
-
-            if (justUnhidden || justDependent)
-            {
-                if (justUnhidden)
-                {
-                    this.Parent.renderableNodesCount++;
-                }
-
-                if (this.parentDependent != Dependency.None)
-                {
-                    this.Parent.dependents.Add(this.Target);
-                    this.Parent.dependents.Sort();
-                }
-            }
-            else if (justHidden || justUndependent)
-            {
-                if (justHidden)
-                {
-                    this.Parent.renderableNodesCount--;
-                }
-
-                this.Parent.dependents.Remove(this.Target);
-            }
-        }
-
-        if (property is StyleProperty.All or StyleProperty.Overflow)
-        {
-            var currentIsScrollable = this.State.Style.Overflow is not OverflowKind.None and not OverflowKind.Clipping && this.contentDependent != (Dependency.Width | Dependency.Height);
-
-            if (currentIsScrollable != this.IsScrollable)
-            {
-                if (currentIsScrollable)
-                {
-                    this.target.Scroll += this.OnScroll;
-                }
-                else
-                {
-                    this.target.Scroll -= this.OnScroll;
-                    this.scrollOffset = default;
-                }
-
-                this.IsScrollable = currentIsScrollable;
-            }
-
-            if (this.State.Style.Overflow is not (null or OverflowKind.None) && this.contentDependent != (Dependency.Width | Dependency.Height))
-            {
-                if (this.ownStencilLayer == null)
-                {
-                    this.ownStencilLayer = new StencilLayer(this.Target);
-
-                    this.StencilLayer?.AppendChild(this.ownStencilLayer);
-                }
-            }
-            else if (this.ownStencilLayer != null)
-            {
-                this.ownStencilLayer.Detach();
-                this.ownStencilLayer.Dispose();
-
-                this.ownStencilLayer = null;
-            }
-
-            SetStencilLayer(this, this.ContentStencilLayer);
-        }
-
-        if (hidden)
-        {
-            this.RequestUpdate();
-
-            this.Hidden = hidden;
-        }
-        else
-        {
-            this.Hidden = hidden;
-
-            this.RequestUpdate();
-        }
-
-        this.Target.Visible = !hidden;
     }
 
     protected override void Disposed() =>
