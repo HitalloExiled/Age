@@ -2,12 +2,12 @@ using Age.Components;
 using Age.Elements;
 using Age.Styling;
 
-namespace Age.StoryBook;
+namespace Age.StoryBook.Pages;
 
 public class ButtonPage : Page
 {
     public override string NodeName { get; } = nameof(ButtonPage);
-    public override string Title    { get; } = "Button";
+    public override string Title    { get; } = nameof(Button);
 
     public ButtonPage()
     {

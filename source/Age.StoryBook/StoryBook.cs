@@ -2,6 +2,7 @@ using Age.Components;
 using Age.Elements;
 using Age.Numerics;
 using Age.Scene;
+using Age.StoryBook.Pages;
 using Age.Styling;
 
 namespace Age.StoryBook;
@@ -24,6 +25,7 @@ public sealed class StoryBook : Node
         };
 
         Button buttonLink;
+        Button textBoxLink;
         Button emptyLink;
 
         this.canvas = new Canvas
@@ -48,6 +50,12 @@ public sealed class StoryBook : Node
                         {
                             Name  = "ButtonLink",
                             Text  = "Button",
+                            Style = buttonLinkStyle,
+                        },
+                        textBoxLink = new Button
+                        {
+                            Name  = "TextBoxLink",
+                            Text  = "TextBox",
                             Style = buttonLinkStyle,
                         },
                         emptyLink = new Button
@@ -102,9 +110,8 @@ public sealed class StoryBook : Node
                             Name  = "Outlet",
                             Style = new()
                             {
-                                Size                 = new((Percentage)100),
-                                Border               = new(1, 0, Color.Green),
-                                // ContentJustification = ContentJustificationKind.Center,
+                                Size   = new((Percentage)100),
+                                Border = new(1, 0, Color.Green),
                             },
                         }
                     ]
@@ -113,20 +120,10 @@ public sealed class StoryBook : Node
         };
 
         buttonLink.Clicked += (in MouseEvent _) => this.SetPage(new ButtonPage());
+        textBoxLink.Clicked += (in MouseEvent _) => this.SetPage(new TextBoxPage());
         emptyLink.Clicked += (in MouseEvent _) => this.outlet.RemoveChildren();
 
         this.AppendChild(this.canvas);
-        //     canvas.AppendChild(navbar);
-        //         navbar.AppendChild(buttonLink);
-        //         navbar.AppendChild(emptyLink);
-        //     canvas.AppendChild(content);
-        //         content.AppendChild(header);
-        //             header.AppendChild(title);
-        //         content.AppendChild(outlet);
-
-        // this.canvas = canvas;
-        // this.header = header;
-        // this.outlet = outlet;
     }
 
     public void SetPage<T>(T page) where T : Page
