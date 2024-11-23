@@ -124,30 +124,22 @@ internal sealed partial class TextLayout : Layout
         target.AppendChild(this.timer);
     }
 
-    private static void ReleaseCommands(List<Command> commands, int length)
+    private static void AllocateCommands(List<Command> commands, int length)
     {
         if (length < commands.Count)
         {
-            foreach (var command in commands.AsSpan())
+            for (var i = length; i < commands.Count; i++)
             {
-                rectCommandPool.Return((RectCommand)command);
+                rectCommandPool.Return((RectCommand)commands[i]);
             }
 
             commands.RemoveRange(length, commands.Count - length);
         }
         else
         {
-            for (var i = 0; i < length; i++)
+            for (var i = commands.Count; i < length; i++)
             {
-                if (i < commands.Count)
-                {
-                    rectCommandPool.Return((RectCommand)commands[i]);
-                    commands[i] = default!;
-                }
-                else
-                {
-                    commands.Add(default!);
-                }
+                commands.Add(rectCommandPool.Get());
             }
         }
     }
@@ -178,7 +170,7 @@ internal sealed partial class TextLayout : Layout
 
         if (this.text != null && this.caretPosition > -1)
         {
-            var caretCommand = (RectCommand)this.target.Commands[this.text.Length];
+            var caretCommand = (RectCommand)this.target.Commands[0];
 
             caretCommand.PipelineVariant = this.caretIsVisible ? PipelineVariant.Color : default;
 
@@ -200,7 +192,7 @@ internal sealed partial class TextLayout : Layout
 
     private void DrawCaret(int textLength)
     {
-        var caretCommand = (RectCommand)this.target.Commands[textLength];
+        var caretCommand = (RectCommand)this.target.Commands[0];
 
         if (this.caretPosition > -1)
         {
@@ -208,14 +200,14 @@ internal sealed partial class TextLayout : Layout
 
             if (this.CaretPosition == textLength)
             {
-                var rect = ((RectCommand)this.target.Commands[textLength - 1]).Rect;
+                var rect = ((RectCommand)this.target.Commands[textLength]).Rect;
 
                 position = rect.Position;
                 position.X += rect.Size.Width;
             }
             else
             {
-                position = ((RectCommand)this.target.Commands[this.caretPosition]).Rect.Position;
+                position = ((RectCommand)this.target.Commands[this.caretPosition + 1]).Rect.Position;
             }
 
             caretCommand.Rect            = new(new(this.caretWidth, this.LineHeight), position);
@@ -242,12 +234,12 @@ internal sealed partial class TextLayout : Layout
 
             for (var i = 0; i < textLength; i++)
             {
-                this.ApplySelection(i, range, (RectCommand)this.target.Commands[i]);
+                this.ApplySelection(i, range, (RectCommand)this.target.Commands[i + 1]);
             }
         }
         else
         {
-            for (var i = 0; i < textLength; i++)
+            for (var i = 1; i <= textLength; i++)
             {
                 this.ClearSelection((RectCommand)this.target.Commands[i]);
             }
@@ -294,13 +286,13 @@ internal sealed partial class TextLayout : Layout
         var cursor     = new Point<int>(0, baseLine);
         var boundings  = new Size<uint>(0, lineHeight);
 
-        ReleaseCommands(this.target.Commands, text.Length + 1);
+        AllocateCommands(this.target.Commands, text.Length + text.AsSpan().CountNonWhitespaceCharacters() + 1);
 
         var elementIndex = this.target.Index + 1;
 
         var range = this.selection?.Ordered();
 
-        var caretCommand = rectCommandPool.Get();
+        var caretCommand = (RectCommand)this.target.Commands[0];
 
         caretCommand.MappedTexture   = MappedTexture.Default;
         caretCommand.StencilLayer    = this.StencilLayer;
@@ -310,21 +302,19 @@ internal sealed partial class TextLayout : Layout
         caretCommand.PipelineVariant = default;
         caretCommand.Rect            = default;
 
-        this.target.Commands[text.Length] = caretCommand;
+        var textOffset = 0;
 
         for (var i = 0; i < text.Length; i++)
         {
             var character = text[i];
 
-            var selectionCommand = rectCommandPool.Get();
+            var selectionCommand = (RectCommand)this.target.Commands[i + 1];
 
             selectionCommand.MappedTexture = MappedTexture.Default;
             selectionCommand.ObjectId      = (uint)(((i + 1) << 12) | elementIndex);
             selectionCommand.Rect          = new(new(glyphsWidths[i], lineHeight), new(cursor.X, cursor.Y - baseLine));
             selectionCommand.StencilLayer  = this.StencilLayer;
             selectionCommand.Metadata      = default;
-
-            this.target.Commands[i] = selectionCommand;
 
             if (!char.IsWhiteSpace(character))
             {
@@ -345,7 +335,11 @@ internal sealed partial class TextLayout : Layout
                     P4 = new Point<float>(glyph.Position.X, glyph.Position.Y + glyph.Size.Height) / atlasSize,
                 };
 
-                var characterCommand = rectCommandPool.Get();
+                var characterIndex = text.Length + textOffset + 1;
+
+                selectionCommand.Metadata = (uint)characterIndex;
+
+                var characterCommand = (RectCommand)this.target.Commands[characterIndex];
 
                 characterCommand.Rect            = new(size, position);
                 characterCommand.Color           = color;
@@ -354,12 +348,10 @@ internal sealed partial class TextLayout : Layout
                 characterCommand.MappedTexture   = new(atlas.Texture, uv);
                 characterCommand.StencilLayer    = this.StencilLayer;
 
-                selectionCommand.Metadata = (uint)this.target.Commands.Count;
-
-                this.target.Commands.Add(characterCommand);
-
                 boundings.Width = uint.Max(boundings.Width, (uint)float.Round(cursor.X + glyphsWidths[i]));
                 cursor.X += (int)float.Round(glyphsWidths[i]);
+
+                textOffset++;
 
             }
             else if (character == '\n')
@@ -393,7 +385,7 @@ internal sealed partial class TextLayout : Layout
 
     private void GetCharacterOffset(ushort x, ushort y, ref uint character)
     {
-        var command = (RectCommand)this.Target.Commands[(int)character];
+        var command = (RectCommand)this.target.Commands[(int)character + 1];
 
         var localPosition = this.Target.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
