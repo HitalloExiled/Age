@@ -25,9 +25,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public NodeFlags Flags { get; protected set; }
     #endregion
 
-    #region 1-byte
-    public bool Visible { get; set; } = true;
-    #endregion
 
     internal int Index
     {
@@ -75,7 +72,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
-    public Node[] Children => [..this];
+    public Node[] Children
+    {
+        get => [.. this];
+        set => this.ReplaceChildren(value);
+    }
 
     [MemberNotNullWhen(true, nameof(Tree))]
     public bool IsConnected => this.Tree != null;
@@ -802,9 +803,19 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public void ReplaceSelf(Node node) =>
         this.Parent?.Replace(this, node);
 
-    public void ReplaceChildren(Span<Node> nodes)
+    public void ReplaceChildren(Node node)
     {
         this.RemoveChildren();
+        this.AppendChild(node);
+    }
+
+    public void ReplaceChildren(Span<Node> nodes)
+    {
+        if (this.FirstChild != null)
+        {
+            this.RemoveChildren();
+        }
+
         this.AppendChildren(nodes);
     }
 

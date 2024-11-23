@@ -69,6 +69,12 @@ public record Style
         set => this.Set(ref this.data.FontSize, value, StyleProperty.FontSize);
     }
 
+    public FontWeight? FontWeight
+    {
+        get => this.data.FontWeight;
+        set => this.Set(ref this.data.FontWeight, value, StyleProperty.FontWeight);
+    }
+
     public bool? Hidden
     {
         get => this.data.Hidden;
@@ -135,6 +141,12 @@ public record Style
         set => this.Set(ref this.data.TextAlignment, value, StyleProperty.TextAlignment);
     }
 
+    public bool? TextSelection
+    {
+        get => this.data.TextSelection;
+        set => this.Set(ref this.data.TextSelection, value, StyleProperty.TextSelection);
+    }
+
     public Transform2D? Transform
     {
         get => this.data.Transform;
@@ -159,12 +171,45 @@ public record Style
         }
     }
 
-    public void Clear() =>
+    internal void Clear(bool notify)
+    {
         this.data = default;
 
-    public void Copy(Style source) =>
+        if (notify)
+        {
+            Changed?.Invoke(StyleProperty.All);
+        }
+    }
+
+    internal void Copy(Style source, bool notify)
+    {
         this.data = source.data;
 
-    public void Merge(Style source) =>
+        if (notify)
+        {
+            Changed?.Invoke(StyleProperty.All);
+        }
+    }
+
+    internal void Merge(Style source, bool notify)
+    {
         this.data.Merge(source.data);
+
+        if (notify)
+        {
+            Changed?.Invoke(StyleProperty.All);
+        }
+    }
+
+    public void Clear() =>
+        this.Clear(true);
+
+    public void Copy(Style source) =>
+        this.Copy(source, true);
+
+    public void Merge(Style source) =>
+        this.Merge(source, true);
+
+    public override string ToString() =>
+        this.data.ToString();
 }

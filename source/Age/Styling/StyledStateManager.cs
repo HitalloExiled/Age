@@ -8,6 +8,7 @@ internal partial class StyledStateManager
     private bool          isDirty;
     private State         states;
     private StyledStates? styles;
+    private Style?        userStyle;
 
     private State States
     {
@@ -47,41 +48,46 @@ internal partial class StyledStateManager
             {
                 if (this.Styles?.Base == null)
                 {
-                    this.style.Clear();
+                    this.style.Clear(false);
                 }
                 else
                 {
-                    this.style.Copy(this.Styles.Base);
+                    this.style.Copy(this.Styles.Base, false);
+                }
+
+                if (this.UserStyle != null)
+                {
+                    this.style.Merge(this.UserStyle, false);
                 }
 
                 if (this.States.HasFlag(State.Focus) && this.Styles?.Focus != null)
                 {
-                    this.style.Merge(this.Styles.Focus);
+                    this.style.Merge(this.Styles.Focus, false);
                 }
 
                 if (this.States.HasFlag(State.Hovered) && this.Styles?.Hovered != null)
                 {
-                    this.style.Merge(this.Styles.Hovered);
+                    this.style.Merge(this.Styles.Hovered, false);
                 }
 
                 if (this.States.HasFlag(State.Disabled) && this.Styles?.Disabled != null)
                 {
-                    this.style.Merge(this.Styles.Disabled);
+                    this.style.Merge(this.Styles.Disabled, false);
                 }
 
                 if (this.States.HasFlag(State.Enabled) && this.Styles?.Enabled != null)
                 {
-                    this.style.Merge(this.Styles.Enabled);
+                    this.style.Merge(this.Styles.Enabled, false);
                 }
 
                 if (this.States.HasFlag(State.Checked) && this.Styles?.Checked != null)
                 {
-                    this.style.Merge(this.Styles.Checked);
+                    this.style.Merge(this.Styles.Checked, false);
                 }
 
                 if (this.States.HasFlag(State.Active) && this.Styles?.Active != null)
                 {
-                    this.style.Merge(this.Styles.Active);
+                    this.style.Merge(this.Styles.Active, false);
                 }
 
                 this.isDirty = false;
@@ -98,18 +104,31 @@ internal partial class StyledStateManager
         {
             if (this.styles != value)
             {
-                if (this.styles != null)
+                this.styles = value;
+
+                this.InvokeChanged();
+            }
+        }
+    }
+
+    public Style? UserStyle
+    {
+        get => this.userStyle;
+        set
+        {
+            if (this.userStyle != value)
+            {
+                if (this.userStyle != null)
                 {
-                    this.styles.Changed -= this.InvokeChanged;
+                    this.userStyle.Changed -= this.InvokeChanged;
                 }
 
                 if (value != null)
                 {
-                    value.Base ??= this.styles?.Base;
                     value.Changed += this.InvokeChanged;
                 }
 
-                this.styles = value;
+                this.userStyle = value;
 
                 this.InvokeChanged();
             }
@@ -123,7 +142,6 @@ internal partial class StyledStateManager
     }
     public void AddState(State state) =>
         this.States |= state;
-
     public void RemoveState(State state) =>
         this.States &= ~state;
 }

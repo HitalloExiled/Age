@@ -30,4 +30,7 @@ public record struct BorderRadius
         this.RightBottom = rightBottom;
         this.BottomLeft  = bottomLeft;
     }
+
+    public override readonly string ToString() =>
+        $"[{this.LeftTop}, {this.TopRight}, {this.RightBottom}, ${this.BottomLeft}]";
 }

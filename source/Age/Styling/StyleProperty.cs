@@ -14,6 +14,7 @@ public enum StyleProperty
     Cursor,
     FontFamily,
     FontSize,
+    FontWeight,
     Hidden,
     ItemsAlignment,
     Margin,
@@ -25,5 +26,6 @@ public enum StyleProperty
     Size,
     Stack,
     TextAlignment,
+    TextSelection,
     Transform,
 }

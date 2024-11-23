@@ -26,7 +26,7 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = TextSelectionTest.Setup;
+        this.setup = ButtonTest.Setup;
 
         this.Reload();
         // this.CreateDemoScene();

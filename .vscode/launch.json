@@ -36,5 +36,22 @@
             },
             "enableStepFiltering": true,
         },
+        {
+            "name": "Launch StoryBook",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/source/Age.StoryBook/bin/Debug/net9.0/Age.StoryBook.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "justMyCode": true,
+            "symbolOptions": {
+                "searchMicrosoftSymbolServer": false,
+                "searchNuGetOrgSymbolServer": false,
+            },
+            "enableStepFiltering": true,
+        },
     ]
 }

@@ -204,12 +204,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     public Style Style
     {
-        get => (this.Layout.State.Styles ??= new()).Base ??= new();
-        set
-        {
-            this.Layout.State.Styles ??= new();
-            this.Layout.State.Styles.Base = value;
-        }
+        get => this.Layout.State.UserStyle ??= new();
+        set => this.Layout.State.UserStyle = value;
     }
 
     public StyledStates? States

@@ -48,6 +48,7 @@ internal sealed partial class BoxLayout : Layout
     #endregion
 
     #region 1-byte
+    private bool childsChanged;
     private bool dependenciesHasChanged;
 
     public bool IsHoveringText { get; set; }
@@ -87,12 +88,12 @@ internal sealed partial class BoxLayout : Layout
 
     private static void CalculatePendingPaddingHorizontal(BoxLayout layout, in Size<uint> size, ref RawRectEdges padding)
     {
-        if (layout.State.Style.Padding?.Left?.TryGetPercentage(out var left) ?? false)
+        if (layout.State.Style.Padding?.Left?.TryGetPercentage(out var left) == true)
         {
             padding.Left = (uint)(size.Width * left);
         }
 
-        if (layout.State.Style.Padding?.Right?.TryGetPercentage(out var right) ?? false)
+        if (layout.State.Style.Padding?.Right?.TryGetPercentage(out var right) == true)
         {
             padding.Right = (uint)(size.Width * right);
         }
@@ -100,12 +101,12 @@ internal sealed partial class BoxLayout : Layout
 
     private static void CalculatePendingPaddingVertical(BoxLayout layout, in Size<uint> size, ref RawRectEdges padding)
     {
-        if (layout.State.Style.Padding?.Top?.TryGetPercentage(out var top) ?? false)
+        if (layout.State.Style.Padding?.Top?.TryGetPercentage(out var top) == true)
         {
             padding.Top = (uint)(size.Width * top);
         }
 
-        if (layout.State.Style.Padding?.Bottom?.TryGetPercentage(out var bottom) ?? false)
+        if (layout.State.Style.Padding?.Bottom?.TryGetPercentage(out var bottom) == true)
         {
             padding.Bottom = (uint)(size.Width * bottom);
         }
@@ -115,12 +116,12 @@ internal sealed partial class BoxLayout : Layout
     {
         var horizontal = 0u;
 
-        if (layout.State.Style.Margin?.Left?.TryGetPercentage(out var left) ?? false)
+        if (layout.State.Style.Margin?.Left?.TryGetPercentage(out var left) == true)
         {
             horizontal += margin.Left = (uint)(size.Width * left);
         }
 
-        if (layout.State.Style.Margin?.Right?.TryGetPercentage(out var right) ?? false)
+        if (layout.State.Style.Margin?.Right?.TryGetPercentage(out var right) == true)
         {
             horizontal += margin.Right = (uint)(size.Width * right);
         }
@@ -142,12 +143,12 @@ internal sealed partial class BoxLayout : Layout
     {
         var vertical = 0u;
 
-        if (layout.State.Style.Margin?.Top?.TryGetPercentage(out var top) ?? false)
+        if (layout.State.Style.Margin?.Top?.TryGetPercentage(out var top) == true)
         {
             vertical += margin.Top = (uint)(size.Height * top);
         }
 
-        if (layout.State.Style.Margin?.Bottom?.TryGetPercentage(out var bottom) ?? false)
+        if (layout.State.Style.Margin?.Bottom?.TryGetPercentage(out var bottom) == true)
         {
             vertical += margin.Bottom = (uint)(size.Height * bottom);
         }
@@ -346,42 +347,42 @@ internal sealed partial class BoxLayout : Layout
         var resolvedWidth   = !this.parentDependent.HasFlag(Dependency.Width);
         var resolvedHeight  = !this.parentDependent.HasFlag(Dependency.Height);
 
-        if (this.State.Style.Padding?.Top?.TryGetPixel(out var top) ?? false)
+        if (this.State.Style.Padding?.Top?.TryGetPixel(out var top) == true)
         {
             this.padding.Top = top;
         }
 
-        if (this.State.Style.Padding?.Right?.TryGetPixel(out var right) ?? false)
+        if (this.State.Style.Padding?.Right?.TryGetPixel(out var right) == true)
         {
             this.padding.Right = right;
         }
 
-        if (this.State.Style.Padding?.Bottom?.TryGetPixel(out var bottom) ?? false)
+        if (this.State.Style.Padding?.Bottom?.TryGetPixel(out var bottom) == true)
         {
             this.padding.Bottom = bottom;
         }
 
-        if (this.State.Style.Padding?.Left?.TryGetPixel(out var left) ?? false)
+        if (this.State.Style.Padding?.Left?.TryGetPixel(out var left) == true)
         {
             this.padding.Left = left;
         }
 
-        if (this.State.Style.Margin?.Top?.TryGetPixel(out top) ?? false)
+        if (this.State.Style.Margin?.Top?.TryGetPixel(out top) == true)
         {
             this.margin.Top = top;
         }
 
-        if (this.State.Style.Margin?.Right?.TryGetPixel(out right) ?? false)
+        if (this.State.Style.Margin?.Right?.TryGetPixel(out right) == true)
         {
             this.margin.Right = right;
         }
 
-        if (this.State.Style.Margin?.Bottom?.TryGetPixel(out bottom) ?? false)
+        if (this.State.Style.Margin?.Bottom?.TryGetPixel(out bottom) == true)
         {
             this.margin.Bottom = bottom;
         }
 
-        if (this.State.Style.Margin?.Left?.TryGetPixel(out left) ?? false)
+        if (this.State.Style.Margin?.Left?.TryGetPixel(out left) == true)
         {
             this.margin.Left = left;
         }
@@ -390,13 +391,13 @@ internal sealed partial class BoxLayout : Layout
 
         if (!this.contentDependent.HasFlag(Dependency.Width))
         {
-            if (this.State.Style.Size?.Width?.TryGetPixel(out var pixel) ?? false)
+            if (this.State.Style.Size?.Width?.TryGetPixel(out var pixel) == true)
             {
                 size.Width = pixel;
 
                 resolvedWidth = true;
             }
-            else if ((this.State.Style.MinSize?.Width?.TryGetPixel(out var min) ?? false) && (this.State.Style.MaxSize?.Width?.TryGetPixel(out var max) ?? false))
+            else if (this.State.Style.MinSize?.Width?.TryGetPixel(out var min) == true && this.State.Style.MaxSize?.Width?.TryGetPixel(out var max) == true)
             {
                 resolvedWidth = true;
 
@@ -413,7 +414,7 @@ internal sealed partial class BoxLayout : Layout
                     resolvedWidth = false;
                 }
             }
-            else if (this.State.Style.MinSize?.Width?.TryGetPixel(out min) ?? false)
+            else if (this.State.Style.MinSize?.Width?.TryGetPixel(out min) == true)
             {
                 if (size.Width < min)
                 {
@@ -422,7 +423,7 @@ internal sealed partial class BoxLayout : Layout
                     resolvedWidth = true;
                 }
             }
-            else if (this.State.Style.MaxSize?.Width?.TryGetPixel(out max) ?? false)
+            else if (this.State.Style.MaxSize?.Width?.TryGetPixel(out max) == true)
             {
                 if (size.Width > max)
                 {
@@ -435,13 +436,13 @@ internal sealed partial class BoxLayout : Layout
 
         if (!this.contentDependent.HasFlag(Dependency.Height))
         {
-            if (this.State.Style.Size?.Height?.TryGetPixel(out var pixel) ?? false)
+            if (this.State.Style.Size?.Height?.TryGetPixel(out var pixel) == true)
             {
                 size.Height = pixel;
 
                 resolvedHeight = true;
             }
-            else if ((this.State.Style.MinSize?.Height?.TryGetPixel(out var min) ?? false) && (this.State.Style.MaxSize?.Height?.TryGetPixel(out var max) ?? false))
+            else if (this.State.Style.MinSize?.Height?.TryGetPixel(out var min) == true && this.State.Style.MaxSize?.Height?.TryGetPixel(out var max) == true)
             {
                 resolvedHeight = true;
 
@@ -458,7 +459,7 @@ internal sealed partial class BoxLayout : Layout
                     resolvedHeight = false;
                 }
             }
-            else if (this.State.Style.MinSize?.Height?.TryGetPixel(out min) ?? false)
+            else if (this.State.Style.MinSize?.Height?.TryGetPixel(out min) == true)
             {
                 if (size.Height < min)
                 {
@@ -467,7 +468,7 @@ internal sealed partial class BoxLayout : Layout
                     resolvedHeight = true;
                 }
             }
-            else if (this.State.Style.MaxSize?.Height?.TryGetPixel(out max) ?? false)
+            else if (this.State.Style.MaxSize?.Height?.TryGetPixel(out max) == true)
             {
                 if (size.Height > max)
                 {
@@ -491,21 +492,19 @@ internal sealed partial class BoxLayout : Layout
             }
         }
 
-        if (this.dependenciesHasChanged || this.Size != size || this.Target is Canvas)
+        var sizeHasChanged = this.Size != size;
+
+        this.Size = size;
+
+        if (resolvedWidth && resolvedHeight && resolvedMargin && resolvedPadding)
         {
-            this.Size = size;
-
-            this.Parent?.RequestUpdate();
-
-            if (resolvedWidth && resolvedHeight && resolvedMargin && resolvedPadding)
+            if (sizeHasChanged || this.childsChanged || this.dependenciesHasChanged || this.Target is Canvas)
             {
                 this.CalculatePendingLayouts();
             }
 
-            this.dependenciesHasChanged = false;
+            this.UpdateRect();
         }
-
-        this.UpdateRect();
     }
 
     private void CalculatePendingMargin(ref Size<uint> size)
@@ -561,11 +560,11 @@ internal sealed partial class BoxLayout : Layout
                 {
                     var modified = false;
 
-                    if (dependent.Layout.State.Style.Size?.Width?.TryGetPercentage(out var percentage) ?? false)
+                    if (dependent.Layout.State.Style.Size?.Width?.TryGetPercentage(out var percentage) == true)
                     {
                         size.Width = (uint)(this.Size.Width * percentage);
 
-                        if ((dependent.Layout.State.Style.MinSize?.Width?.TryGetPixel(out var min) ?? false) && (this.State.Style.MaxSize?.Width?.TryGetPixel(out var max) ?? false))
+                        if (dependent.Layout.State.Style.MinSize?.Width?.TryGetPixel(out var min) == true && this.State.Style.MaxSize?.Width?.TryGetPixel(out var max) == true)
                         {
                             if (size.Width < min)
                             {
@@ -576,14 +575,14 @@ internal sealed partial class BoxLayout : Layout
                                 size.Width = max;
                             }
                         }
-                        else if (dependent.Layout.State.Style.MinSize?.Width?.TryGetPixel(out min) ?? false)
+                        else if (dependent.Layout.State.Style.MinSize?.Width?.TryGetPixel(out min) == true)
                         {
                             if (size.Width < min)
                             {
                                 size.Width = min;
                             }
                         }
-                        else if (dependent.Layout.State.Style.MaxSize?.Width?.TryGetPixel(out max) ?? false)
+                        else if (dependent.Layout.State.Style.MaxSize?.Width?.TryGetPixel(out max) == true)
                         {
                             if (size.Width > max)
                             {
@@ -593,7 +592,7 @@ internal sealed partial class BoxLayout : Layout
 
                         modified = true;
                     }
-                    else if ((dependent.Layout.State.Style.MinSize?.Width?.TryGetPercentage(out var min) ?? false) && (dependent.Layout.State.Style.MaxSize?.Width?.TryGetPercentage(out var max) ?? false))
+                    else if (dependent.Layout.State.Style.MinSize?.Width?.TryGetPercentage(out var min) == true && dependent.Layout.State.Style.MaxSize?.Width?.TryGetPercentage(out var max) == true)
                     {
                         var minValue = (uint)(this.Size.Width * min);
                         var maxValue = (uint)(this.Size.Width * max);
@@ -613,7 +612,7 @@ internal sealed partial class BoxLayout : Layout
                             modified = false;
                         }
                     }
-                    else if (dependent.Layout.State.Style.MinSize?.Width?.TryGetPercentage(out min) ?? false)
+                    else if (dependent.Layout.State.Style.MinSize?.Width?.TryGetPercentage(out min) == true)
                     {
                         var minValue = (uint)(this.Size.Width * min);
 
@@ -624,7 +623,7 @@ internal sealed partial class BoxLayout : Layout
                             modified = true;
                         }
                     }
-                    else if (dependent.Layout.State.Style.MaxSize?.Width?.TryGetPercentage(out max) ?? false)
+                    else if (dependent.Layout.State.Style.MaxSize?.Width?.TryGetPercentage(out max) == true)
                     {
                         var maxValue = (uint)(this.Size.Width * max);
 
@@ -680,11 +679,11 @@ internal sealed partial class BoxLayout : Layout
                 {
                     var modified = false;
 
-                    if (dependent.Layout.State.Style.Size?.Height?.TryGetPercentage(out var percentage) ?? false)
+                    if (dependent.Layout.State.Style.Size?.Height?.TryGetPercentage(out var percentage) == true)
                     {
                         size.Height = (uint)(this.Size.Height * percentage);
 
-                        if ((dependent.Layout.State.Style.MinSize?.Height?.TryGetPixel(out var min) ?? false) && (this.State.Style.MaxSize?.Height?.TryGetPixel(out var max) ?? false))
+                        if (dependent.Layout.State.Style.MinSize?.Height?.TryGetPixel(out var min) == true && this.State.Style.MaxSize?.Height?.TryGetPixel(out var max) == true)
                         {
                             if (size.Height < min)
                             {
@@ -695,14 +694,14 @@ internal sealed partial class BoxLayout : Layout
                                 size.Height = max;
                             }
                         }
-                        else if (dependent.Layout.State.Style.MinSize?.Height?.TryGetPixel(out min) ?? false)
+                        else if (dependent.Layout.State.Style.MinSize?.Height?.TryGetPixel(out min) == true)
                         {
                             if (size.Height < min)
                             {
                                 size.Height = min;
                             }
                         }
-                        else if (dependent.Layout.State.Style.MaxSize?.Height?.TryGetPixel(out max) ?? false)
+                        else if (dependent.Layout.State.Style.MaxSize?.Height?.TryGetPixel(out max) == true)
                         {
                             if (size.Height > max)
                             {
@@ -712,7 +711,7 @@ internal sealed partial class BoxLayout : Layout
 
                         modified = true;
                     }
-                    else if ((dependent.Layout.State.Style.MinSize?.Height?.TryGetPercentage(out var min) ?? false) && (dependent.Layout.State.Style.MaxSize?.Height?.TryGetPercentage(out var max) ?? false))
+                    else if (dependent.Layout.State.Style.MinSize?.Height?.TryGetPercentage(out var min) == true && dependent.Layout.State.Style.MaxSize?.Height?.TryGetPercentage(out var max) == true)
                     {
                         var minValue = (uint)(this.Size.Height * min);
                         var maxValue = (uint)(this.Size.Height * max);
@@ -732,7 +731,7 @@ internal sealed partial class BoxLayout : Layout
                             modified = false;
                         }
                     }
-                    else if (dependent.Layout.State.Style.MinSize?.Height?.TryGetPercentage(out min) ?? false)
+                    else if (dependent.Layout.State.Style.MinSize?.Height?.TryGetPercentage(out min) == true)
                     {
                         var minValue = (uint)(this.Size.Height * min);
 
@@ -743,7 +742,7 @@ internal sealed partial class BoxLayout : Layout
                             modified = true;
                         }
                     }
-                    else if (dependent.Layout.State.Style.MaxSize?.Height?.TryGetPercentage(out max) ?? false)
+                    else if (dependent.Layout.State.Style.MaxSize?.Height?.TryGetPercentage(out max) == true)
                     {
                         var maxValue = (uint)(this.Size.Height * max);
 
@@ -791,8 +790,10 @@ internal sealed partial class BoxLayout : Layout
                 }
             }
 
-            if (size != dependent.Layout.Size || padding != dependent.Layout.padding || margin != dependent.Layout.margin)
+            if (dependent.Layout.dependenciesHasChanged || dependent.Layout.childsChanged || size != dependent.Layout.Size || padding != dependent.Layout.padding || margin != dependent.Layout.margin)
             {
+                dependent.Layout.childsChanged          = false;
+                dependent.Layout.dependenciesHasChanged = false;
                 dependent.Layout.Size    = size;
                 dependent.Layout.padding = padding;
                 dependent.Layout.margin  = margin;
@@ -802,6 +803,7 @@ internal sealed partial class BoxLayout : Layout
             }
 
             dependent.Layout.UpdateRect();
+
             dependent.Layout.HasPendingUpdate = false;
 
             this.CheckHightestInlineChild(stack, dependent);
@@ -1050,9 +1052,9 @@ internal sealed partial class BoxLayout : Layout
 
     private void UpdateState(StyleProperty property)
     {
-        var hidden = this.State.Style.Hidden ?? false;
+        var hidden = this.State.Style.Hidden == true;
 
-        if (property is StyleProperty.Border or StyleProperty.All)
+        if (property is StyleProperty.All or StyleProperty.Border)
         {
             this.border = new()
             {
@@ -1063,7 +1065,18 @@ internal sealed partial class BoxLayout : Layout
             };
         }
 
-        if (property is StyleProperty.Cursor or StyleProperty.All && this.target.IsHovered && !this.IsHoveringText && this.target.Tree is RenderTree renderTree)
+        if (property is StyleProperty.All or StyleProperty.Color or StyleProperty.FontFamily or StyleProperty.FontSize or StyleProperty.FontWeight)
+        {
+            foreach (var node in this.target)
+            {
+                if (node is TextNode textNode)
+                {
+                    textNode.Layout.MarkStyleAsDirty();
+                }
+            }
+        }
+
+        if (property is StyleProperty.All or StyleProperty.Cursor && this.target.IsHovered && !this.IsHoveringText && this.target.Tree is RenderTree renderTree)
         {
             renderTree.Window.Cursor = this.State.Style.Cursor ?? default;
         }
@@ -1071,7 +1084,7 @@ internal sealed partial class BoxLayout : Layout
         var oldParentDependent = this.parentDependent;
         var relativePropertiesHasChanged = false;
 
-        if (property is StyleProperty.Size or StyleProperty.MinSize or StyleProperty.MaxSize or StyleProperty.All)
+        if (property is StyleProperty.All or StyleProperty.Size or StyleProperty.MinSize or StyleProperty.MaxSize)
         {
             this.contentDependent = Dependency.None;
             this.parentDependent  = Dependency.None;
@@ -1101,7 +1114,7 @@ internal sealed partial class BoxLayout : Layout
             }
         }
 
-        if (property is StyleProperty.Margin or StyleProperty.All)
+        if (property is StyleProperty.All or StyleProperty.Margin)
         {
             if (this.State.Style.Margin?.Top?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Right?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Bottom?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Left?.Kind == UnitKind.Percentage)
             {
@@ -1111,7 +1124,7 @@ internal sealed partial class BoxLayout : Layout
             }
         }
 
-        if (property is StyleProperty.Padding or StyleProperty.All)
+        if (property is StyleProperty.All or StyleProperty.Padding)
         {
             if (this.State.Style.Padding?.Top?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Right?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Bottom?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Left?.Kind == UnitKind.Percentage)
             {
@@ -1154,7 +1167,7 @@ internal sealed partial class BoxLayout : Layout
             }
         }
 
-        if (property is StyleProperty.Overflow or StyleProperty.All)
+        if (property is StyleProperty.All or StyleProperty.Overflow)
         {
             var currentIsScrollable = this.State.Style.Overflow is not OverflowKind.None and not OverflowKind.Clipping && this.contentDependent != (Dependency.Width | Dependency.Height);
 
@@ -1173,7 +1186,7 @@ internal sealed partial class BoxLayout : Layout
                 this.IsScrollable = currentIsScrollable;
             }
 
-            if ((this.State.Style.Overflow ?? OverflowKind.None) != OverflowKind.None && this.contentDependent != (Dependency.Width | Dependency.Height))
+            if (this.State.Style.Overflow is not (null or OverflowKind.None) && this.contentDependent != (Dependency.Width | Dependency.Height))
             {
                 if (this.ownStencilLayer == null)
                 {
@@ -1216,6 +1229,7 @@ internal sealed partial class BoxLayout : Layout
     {
         if (!containerNode.Layout.Hidden)
         {
+            this.childsChanged = true;
             this.renderableNodesCount--;
             this.RequestUpdate();
         }
@@ -1225,6 +1239,7 @@ internal sealed partial class BoxLayout : Layout
     {
         if (!containerNode.Layout.Hidden)
         {
+            this.childsChanged = true;
             this.renderableNodesCount++;
             this.RequestUpdate();
         }
@@ -1292,6 +1307,8 @@ internal sealed partial class BoxLayout : Layout
                 if (this.parentDependent == Dependency.None)
                 {
                     this.UpdateDisposition();
+                    this.childsChanged          = false;
+                    this.dependenciesHasChanged = false;
                 }
 
             }

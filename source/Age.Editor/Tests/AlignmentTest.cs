@@ -47,7 +47,7 @@ public class AlignmentTest
                 Hovered = new()
                 {
                     Border = new(borderSize, 0, Color.Red),
-                    Stack  = StackKind.Vertical,
+                    // Stack  = StackKind.Vertical,
                 }
             }
         };
