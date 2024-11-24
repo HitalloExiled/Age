@@ -1,4 +1,3 @@
-using System.Text;
 using Age.Elements;
 using Age.Themes;
 
@@ -12,6 +11,8 @@ public class TextBox : Element
     private readonly TextNode text = new();
 
     public override string NodeName { get; } = nameof(TextBox);
+
+    public bool Multiline { get; set; }
 
     public TextBox()
     {
@@ -31,25 +32,78 @@ public class TextBox : Element
         switch (keyEvent.Key)
         {
             case Key.Delete:
-                this.text.DeleteSelected();
+                if (this.text.Value?.Length > 0)
+                {
+                    if (this.text.Selection != null)
+                    {
+                        this.text.DeleteSelected();
+                    }
+                    else
+                    {
+                        if (this.text.CursorPosition < this.text.Value.Length)
+                        {
+                            var start = this.text.Value.AsSpan(..(int)this.text.CursorPosition);
+
+                            var end = this.text.Value.AsSpan(((int)this.text.CursorPosition + 1)..);
+
+                            this.text.Value = string.Concat(start, end);
+                        }
+                    }
+                }
                 break;
 
             case Key.Enter:
-                this.text.Value += "\n ";
-                this.text.CursorPosition = this.text.Value.Length;
+                if (this.Multiline)
+                {
+                    this.text.Value += "\n\r";
+                    this.text.CursorPosition += 2;
+                }
+                else
+                {
+                    this.Blur();
+                }
+
                 break;
 
             case Key.Backspace:
-                if (this.text.Value != null)
+                if (this.text.Value?.Length > 0)
                 {
-                    this.text.Value = this.text.Value[..^1];
-                    this.text.CursorPosition--;
+                    if (this.text.Selection != null)
+                    {
+                        this.text.DeleteSelected();
+                    }
+                    else
+                    {
+                        if (this.text.CursorPosition == this.text.Value.Length)
+                        {
+                            this.text.Value = this.text.Value[..^1];
+                        }
+                        else if (this.text.CursorPosition > 0)
+                        {
+                            var start = this.text.Value.AsSpan(..((int)this.text.CursorPosition - 1));
+
+                            var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
+
+                            this.text.Value = string.Concat(start, end);
+                        }
+
+                        this.text.CursorPosition--;
+                    }
                 }
                 break;
 
             case Key.Left:
-                if (this.text.CursorPosition > 1)
+                if (this.text.CursorPosition > 0)
                 {
+                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    {
+                        this.text.Selection = this.text.Selection?.WithEnd(this.text.CursorPosition - 1) ?? new(this.text.CursorPosition, this.text.CursorPosition - 1);
+                    }
+                    else if (this.text.Selection != null)
+                    {
+                        this.text.ClearSelection();
+                    }
+
                     this.text.CursorPosition--;
                 }
 
@@ -60,10 +114,40 @@ public class TextBox : Element
                 {
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
-
+                        this.text.Selection = this.text.Selection?.WithEnd(this.text.CursorPosition + 1) ?? new(this.text.CursorPosition, this.text.CursorPosition + 1);
+                    }
+                    else if (this.text.Selection != null)
+                    {
+                        this.text.ClearSelection();
                     }
 
                     this.text.CursorPosition++;
+                }
+
+                break;
+
+            case Key.Home:
+                if (this.text.Value?.Length > 0)
+                {
+                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    {
+                        this.text.Selection = this.text.Selection?.WithEnd(0) ?? new(this.text.CursorPosition, 0);
+                    }
+
+                    this.text.CursorPosition = 0;
+                }
+
+                break;
+
+            case Key.End:
+                if (this.text.Value?.Length > 0)
+                {
+                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    {
+                        this.text.Selection = this.text.Selection?.WithEnd((uint)this.text.Value.Length) ?? new(this.text.CursorPosition, (uint)this.text.Value.Length);
+                    }
+
+                    this.text.CursorPosition = (uint)this.text.Value.Length;
                 }
 
                 break;
@@ -79,21 +163,24 @@ public class TextBox : Element
                             character = char.ToLower(character);
                         }
 
-                        if (this.text.Value == null || this.text.CursorPosition == this.text.Value.Length)
+                        if (this.text.Selection != null)
+                        {
+                            this.text.DeleteSelected();
+                        }
+
+                        if (this.text.Value?.Length is 0 or null || this.text.CursorPosition == this.text.Value.Length)
                         {
                             this.text.Value += character;
                         }
                         else
                         {
-                            Span<char> buffer = stackalloc char[this.text.Value.Length + 1];
+                            var start = this.text.Value.AsSpan(..(int)this.text.CursorPosition);
 
-                            this.text.Value.AsSpan()[..this.text.CursorPosition].CopyTo(buffer);
+                            Span<char> middle = [character];
 
-                            buffer[this.text.CursorPosition] = character;
+                            var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
 
-                            this.text.Value.AsSpan()[this.text.CursorPosition..].CopyTo(buffer[(this.text.CursorPosition + 1)..]);
-
-                            this.text.Value = new(buffer);
+                            this.text.Value = string.Concat(start, middle, end);
                         }
 
                         this.text.CursorPosition++;
@@ -108,7 +195,7 @@ public class TextBox : Element
     {
         if (this.text.Value == null)
         {
-            this.text.ClearSelection();
+            this.text.HideCaret();
         }
     }
 
@@ -116,7 +203,7 @@ public class TextBox : Element
     {
         if (this.text.Value == null)
         {
-            this.text.CursorPosition = 0;
+            this.text.ShowCaret();
         }
     }
 }

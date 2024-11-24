@@ -1,4 +1,6 @@
 using Age.Components;
+using Age.Elements;
+using Age.Styling;
 
 namespace Age.StoryBook.Pages;
 
@@ -9,8 +11,28 @@ public class TextBoxPage : Page
 
     public TextBoxPage()
     {
-        var textBox = new TextBox();
+        var textBoxStyle = new Style
+        {
+            Margin = new((Pixel)2, null),
+        };
 
-        this.AppendChild(textBox);
+        var container = new FlexBox
+        {
+            Style = new()
+            {
+                ContentJustification = ContentJustificationKind.SpaceAround,
+                Size                 = new((Percentage)100, null),
+                Margin               = new((Pixel)10),
+            },
+            Children =
+            [
+                new TextBox
+                {
+                    Style = textBoxStyle,
+                },
+            ]
+        };
+
+        this.AppendChild(container);
     }
 }

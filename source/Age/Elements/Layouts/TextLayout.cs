@@ -29,21 +29,24 @@ internal sealed partial class TextLayout : Layout
 
     #region 4-bytes
     private readonly int caretWidth = 2;
-    private int    caretPosition = -1;
-    private float  fontLeading;
-    private Range? selection;
+    private uint           caretPosition;
+    private float          fontLeading;
+    private TextSelection? selection;
     #endregion
 
     #region 1-byte
-    private bool       caretIsDirty;
-    private bool       caretIsVisible;
-    private bool       selectionIsDirty;
-    private bool       textIsDirty;
+    private bool        caretIsDirty;
+    private bool        caretIsVisible;
+    private bool        caretBlinked;
+    private bool        selectionIsDirty;
+    private bool        textIsDirty;
     private SKTypeface? typeface;
     private SKPaint?    paint;
     #endregion
 
-    public int CaretPosition
+    private RectCommand CaretCommand => (RectCommand)this.target.Commands[0];
+
+    public uint CaretPosition
     {
         get => this.caretPosition;
         set
@@ -51,17 +54,15 @@ internal sealed partial class TextLayout : Layout
             if (this.caretPosition != value)
             {
                 this.caretPosition = value;
-                this.caretIsDirty = true;
-
-                this.RequestUpdate();
+                this.ShowCaret();
             }
         }
     }
 
-    public Range? Selection
+    public TextSelection? Selection
     {
         get => this.selection;
-        private set
+        set
         {
             if (this.selection != value)
             {
@@ -108,10 +109,6 @@ internal sealed partial class TextLayout : Layout
 
     public override BoxLayout? Parent => this.target.ParentElement?.Layout;
 
-    public string? SelectedText => this.text != null && this.selection?.Ordered() is Range range
-        ? this.text.Substring((int)range.Start, (int)(range.End - range.Start))
-        : null;
-
     public override TextNode Target => this.target;
 
     public TextLayout(TextNode target)
@@ -143,12 +140,7 @@ internal sealed partial class TextLayout : Layout
     {
         if (length < commands.Count)
         {
-            for (var i = length; i < commands.Count; i++)
-            {
-                rectCommandPool.Return((RectCommand)commands[i]);
-            }
-
-            commands.RemoveRange(length, commands.Count - length);
+            ReleaseCommands(commands, commands.Count - length);
         }
         else
         {
@@ -159,10 +151,25 @@ internal sealed partial class TextLayout : Layout
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ApplySelection(int index, in Range range, RectCommand selectionCommand)
+    private static void ReleaseCommands(List<Command> commands, int count)
     {
-        if (index >= range.Start && index < range.End && (this.text![index] != '\n' || index < range.End - 1))
+        if (count > 0)
+        {
+            var index = commands.Count - count;
+
+            for (var i = index; i < commands.Count; i++)
+            {
+                rectCommandPool.Return((RectCommand)commands[i]);
+            }
+
+            commands.RemoveRange(index, count);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ApplySelection(int index, in TextSelection selection, RectCommand selectionCommand)
+    {
+        if (index >= selection.Start && index < selection.End && (this.text![index] != '\n' || index < selection.End - 1))
         {
             selectionCommand.Color           = new(0, 0, 1, 0.5f);
             selectionCommand.Flags           = Flags.ColorAsBackground;
@@ -181,11 +188,9 @@ internal sealed partial class TextLayout : Layout
 
     private void BlinkCaret()
     {
-        this.caretIsVisible = !this.caretIsVisible;
+        this.caretBlinked = !this.caretBlinked;
 
-        var caretCommand = (RectCommand)this.target.Commands[0];
-
-        caretCommand.PipelineVariant = this.caretIsVisible ? PipelineVariant.Color : default;
+        this.CaretCommand.PipelineVariant = this.caretBlinked ? default : PipelineVariant.Color;
 
         this.RequestUpdate();
     }
@@ -206,44 +211,31 @@ internal sealed partial class TextLayout : Layout
     {
         var caretCommand = (RectCommand)this.target.Commands[0];
 
-        if (this.caretPosition > -1)
+        if (this.text?.Length > 0)
         {
-            caretCommand.PipelineVariant = PipelineVariant.Color;
+            Point<float> position;
 
-            if (this.text != null)
+            if (this.CaretPosition == this.text.Length)
             {
-                Point<float> position;
+                var rect = ((RectCommand)this.target.Commands[this.text.Length]).Rect;
 
-                if (this.CaretPosition == this.text.Length)
-                {
-                    var rect = ((RectCommand)this.target.Commands[this.text.Length]).Rect;
-
-                    position = rect.Position;
-                    position.X += rect.Size.Width;
-                }
-                else
-                {
-                    position = ((RectCommand)this.target.Commands[this.caretPosition + 1]).Rect.Position;
-                }
-
-                caretCommand.Rect = new(new(this.caretWidth, this.LineHeight), position);
+                position = rect.Position;
+                position.X += rect.Size.Width;
             }
             else
             {
-                caretCommand.Rect = new()
-                {
-                    Position = default,
-                    Size     = new(this.caretWidth, this.LineHeight),
-                };
+                position = ((RectCommand)this.target.Commands[(int)this.caretPosition + 1]).Rect.Position;
             }
 
-            this.caretIsVisible = true;
-            this.caretTimer.Start();
+            caretCommand.Rect = new(new(this.caretWidth, this.LineHeight), position);
         }
         else
         {
-            caretCommand.PipelineVariant = default;
-            this.caretTimer.Stop();
+            caretCommand.Rect = new()
+            {
+                Position = default,
+                Size     = new(this.caretWidth, this.LineHeight),
+            };
         }
     }
 
@@ -431,15 +423,19 @@ internal sealed partial class TextLayout : Layout
         this.typeface?.Dispose();
     }
 
-    public void ClearSelection()
-    {
-        if (this.Parent?.State.Style.TextSelection == false)
-        {
-            return;
-        }
-
-        this.ClearCaret();
+    public void ClearSelection() =>
         this.Selection = default;
+
+    public void HideCaret()
+    {
+        this.caretIsDirty   = true;
+        this.caretIsVisible = false;
+
+        this.CaretCommand.PipelineVariant = default;
+
+        this.caretTimer.Stop();
+
+        this.RequestUpdate();
     }
 
     public void PropagateSelection(uint characterPosition)
@@ -464,7 +460,7 @@ internal sealed partial class TextLayout : Layout
             end++;
         }
 
-        this.CaretPosition = end;
+        this.CaretPosition = (uint)end;
 
         this.Selection = new((uint)start, (uint)end);
     }
@@ -478,11 +474,21 @@ internal sealed partial class TextLayout : Layout
 
         this.GetCharacterOffset(x, y, ref position);
 
-        this.CaretPosition = (int)position;
+        this.CaretPosition = position;
     }
 
-    public void SetCursor(uint position) =>
-        this.CaretPosition = (int)position;
+    public void ShowCaret()
+    {
+        this.caretIsDirty   = true;
+        this.caretIsVisible = true;
+        this.caretBlinked   = false;
+
+        this.CaretCommand.PipelineVariant = PipelineVariant.Color;
+
+        this.caretTimer.Start();
+
+        this.RequestUpdate();
+    }
 
     public void ClearCaret()
     {
@@ -491,9 +497,7 @@ internal sealed partial class TextLayout : Layout
             return;
         }
 
-        this.caretTimer.Stop();
-        this.CaretPosition  = -1;
-        this.caretIsVisible = false;
+        this.HideCaret();
     }
 
     public void TargetAdopted(Element parentElement)
@@ -558,8 +562,8 @@ internal sealed partial class TextLayout : Layout
 
         this.GetCharacterOffset(x, y, ref character);
 
-        this.Selection     = this.Selection?.WithEnd(character) ?? new((uint)this.caretPosition, character);
-        this.CaretPosition = (int)character;
+        this.Selection     = this.Selection?.WithEnd(character) ?? new(this.caretPosition, character);
+        this.CaretPosition = character;
     }
 
     public override void Update()
@@ -568,7 +572,7 @@ internal sealed partial class TextLayout : Layout
         {
             if (string.IsNullOrEmpty(this.text))
             {
-                this.target.Commands.RemoveRange(1, this.target.Commands.Count - 1);
+                ReleaseCommands(this.target.Commands, this.target.Commands.Count - 1);
 
                 this.selection = default;
                 this.Size      = default;
@@ -596,6 +600,4 @@ internal sealed partial class TextLayout : Layout
             this.HasPendingUpdate = false;
         }
     }
-
-
 }

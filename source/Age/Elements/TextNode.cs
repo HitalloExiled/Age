@@ -9,12 +9,20 @@ public sealed class TextNode : ContainerNode
 
     public override string NodeName { get; } = nameof(TextNode);
 
-    public string? SelectedText => this.Layout.SelectedText;
+    public string? SelectedText => this.Layout.Text != null && this.Selection?.Ordered() is TextSelection selection
+        ? this.Layout.Text.Substring((int)selection.Start, (int)(selection.End - selection.Start))
+        : null;
 
-    public int CursorPosition
+    public uint CursorPosition
     {
         get => this.Layout.CaretPosition;
         set => this.Layout.CaretPosition = value;
+    }
+
+    public TextSelection? Selection
+    {
+        get => this.Layout.Selection;
+        set => this.Layout.Selection = value;
     }
 
     public string? Value
@@ -54,26 +62,8 @@ public sealed class TextNode : ContainerNode
     protected override void Indexed() =>
         this.Layout.TargetIndexed();
 
-    internal void ClearCaret() =>
-        this.Layout.ClearCaret();
-
-    internal void ClearSelection() =>
+    public void ClearSelection() =>
         this.Layout.ClearSelection();
-
-    internal void MouseOver() =>
-        this.Layout.TargetMouseOver();
-
-    internal void MouseOut() =>
-        this.Layout.TargetMouseOut();
-
-    internal void PropagateSelection(uint characterPosition) =>
-        this.Layout.PropagateSelection(characterPosition);
-
-    internal void SetCaret(ushort x, ushort y, uint position) =>
-        this.Layout.SetCaret(x, y, position);
-
-    internal void UpdateSelection(ushort x, ushort y, uint character) =>
-        this.Layout.UpdateSelection(x, y, character);
 
     public void DeleteSelected()
     {
@@ -81,19 +71,22 @@ public sealed class TextNode : ContainerNode
 
         if (range.HasValue && this.Layout.Text != null)
         {
-            Span<char> buffer = stackalloc char[this.Layout.Text.Length - range.Value.Offset];
+            var start = this.Layout.Text.AsSpan(..(int)range.Value.Start);
+            var end   = this.Layout.Text.AsSpan((int)range.Value.End..);
 
-            this.Layout.Text.AsSpan()[..(int)range.Value.Start].CopyTo(buffer);
-            this.Layout.Text.AsSpan()[(int)range.Value.End..].CopyTo(buffer[(int)range.Value.Start..]);
+            this.Layout.Text = string.Concat(start, end);
 
-            this.Layout.Text = new(buffer);
-
-            this.ClearSelection();
-            this.CursorPosition = (int)range.Value.Start;
+            this.Layout.ClearSelection();
+            this.CursorPosition = range.Value.Start;
         }
     }
 
+    public void HideCaret() =>
+        this.Layout.HideCaret();
+
+    public void ShowCaret() =>
+        this.Layout.ShowCaret();
+
     public override string ToString() =>
         this.Value ?? "";
-
 }
