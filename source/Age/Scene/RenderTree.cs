@@ -165,7 +165,7 @@ public sealed partial class RenderTree : NodeTree
 
         if (node is TextNode textNode)
         {
-            textNode.PropagateSelection(characterPosition);
+            textNode.Layout.PropagateSelection(characterPosition);
             element = textNode.ParentElement;
         }
         else
@@ -190,7 +190,7 @@ public sealed partial class RenderTree : NodeTree
 
         if (mouseEvent.Button == mouseEvent.PrimaryButton)
         {
-            this.lastFocusedTextNode?.ClearSelection();
+            this.lastFocusedTextNode?.Layout.ClearSelection();
         }
 
         Element? element;
@@ -201,18 +201,18 @@ public sealed partial class RenderTree : NodeTree
 
             if (mouseEvent.Button == mouseEvent.PrimaryButton)
             {
-                textNode.SetCaret(mouseEvent.X, mouseEvent.Y, characterPosition);
+                textNode.Layout.SetCaret(mouseEvent.X, mouseEvent.Y, characterPosition);
 
                 if (this.lastFocusedTextNode != textNode)
                 {
-                    this.lastFocusedTextNode?.ClearCaret();
+                    this.lastFocusedTextNode?.Layout.ClearCaret();
                     this.lastFocusedTextNode = textNode;
                 }
             }
         }
         else
         {
-            this.lastFocusedTextNode?.ClearCaret();
+            this.lastFocusedTextNode?.Layout.ClearCaret();
             this.lastFocusedTextNode = null;
 
             element = node as Element;
@@ -273,20 +273,20 @@ public sealed partial class RenderTree : NodeTree
 
             if (primaryButtonIsPressed && textNode == this.lastFocusedTextNode)
             {
-                textNode.UpdateSelection(mouseEvent.X, mouseEvent.Y, character);
+                textNode.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y, character);
             }
 
             if (this.lastHoveredTextNode != textNode)
             {
-                this.lastHoveredTextNode?.MouseOut();
+                this.lastHoveredTextNode?.Layout.TargetMouseOut();
                 this.lastHoveredTextNode = textNode;
 
-                textNode.MouseOver();
+                textNode.Layout.TargetMouseOver();
             }
         }
         else
         {
-            this.lastHoveredTextNode?.MouseOut();
+            this.lastHoveredTextNode?.Layout.TargetMouseOut();
             this.lastHoveredTextNode = null;
         }
     }
