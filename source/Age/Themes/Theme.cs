@@ -82,7 +82,7 @@ public class Theme
                     Border  = new(1, 4, Color.Green),
                     Color   = Color.Green,
                     Padding = new((Pixel)4),
-                    MinSize = new((Pixel)100, (Pixel)36)
+                    MinSize = new((Pixel)100, (Em)1.5)
                 }
             }
         }

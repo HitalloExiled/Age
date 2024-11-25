@@ -37,7 +37,6 @@ internal sealed partial class TextLayout : Layout
     #region 1-byte
     private bool        caretIsDirty;
     private bool        caretIsVisible;
-    private bool        caretBlinked;
     private bool        selectionIsDirty;
     private bool        textIsDirty;
     private SKTypeface? typeface;
@@ -188,9 +187,9 @@ internal sealed partial class TextLayout : Layout
 
     private void BlinkCaret()
     {
-        this.caretBlinked = !this.caretBlinked;
+        this.caretIsVisible = !this.caretIsVisible;
 
-        this.CaretCommand.PipelineVariant = this.caretBlinked ? default : PipelineVariant.Color;
+        this.CaretCommand.PipelineVariant = this.caretIsVisible ? PipelineVariant.Color : default;
 
         this.RequestUpdate();
     }
@@ -386,10 +385,9 @@ internal sealed partial class TextLayout : Layout
             var style = this.target.ParentElement!.Layout.State.Style;
 
             var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
-            var fontSize   = style.FontSize ?? 16;
             var fontWeight = (int)(style.FontWeight ?? FontWeight.Normal);
 
-            if (this.paint?.TextSize != fontSize || this.typeface?.FamilyName != fontFamily || this.typeface?.FontWeight != fontWeight)
+            if (this.paint?.TextSize != this.Parent!.FontSize || this.typeface?.FamilyName != fontFamily || this.typeface?.FontWeight != fontWeight)
             {
                 this.typeface?.Dispose();
                 this.paint?.Dispose();
@@ -400,7 +398,7 @@ internal sealed partial class TextLayout : Layout
                     Color        = SKColors.Black,
                     IsAntialias  = true,
                     TextAlign    = SKTextAlign.Left,
-                    TextSize     = fontSize,
+                    TextSize     = this.Parent!.FontSize,
                     Typeface     = this.typeface,
                     SubpixelText = false,
                 };
@@ -481,7 +479,6 @@ internal sealed partial class TextLayout : Layout
     {
         this.caretIsDirty   = true;
         this.caretIsVisible = true;
-        this.caretBlinked   = false;
 
         this.CaretCommand.PipelineVariant = PipelineVariant.Color;
 

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Age.Commands;
 using Age.Extensions;
 using Age.Numerics;
@@ -44,13 +45,14 @@ internal sealed partial class BoxLayout : Layout
     private Size<uint>   staticContent;
     private Point<int>   scrollOffset;
 
-    public bool IsScrollable { get; internal set; }
+    public uint FontSize { get; private set; }
     #endregion
 
     #region 1-byte
     private bool childsChanged;
     private bool dependenciesHasChanged;
 
+    public bool IsScrollable { get; internal set; }
     public bool IsHoveringText { get; set; }
     #endregion
 
@@ -168,39 +170,39 @@ internal sealed partial class BoxLayout : Layout
 
     private static void SetStencilLayer(BoxLayout layout, StencilLayer? stencilLayer)
     {
-            var enumerator = layout.target.GetTraverseEnumerator();
+        var enumerator = layout.target.GetTraverseEnumerator();
 
-            while (enumerator.MoveNext())
+        while (enumerator.MoveNext())
+        {
+            var current = enumerator.Current!;
+
+            if (current is ContainerNode containerNode)
             {
-                var current = enumerator.Current!;
-
-                if (current is ContainerNode containerNode)
+                if (containerNode.Layout.StencilLayer == stencilLayer)
                 {
-                    if (containerNode.Layout.StencilLayer == stencilLayer)
+                    enumerator.SkipToNextSibling();
+                }
+                else if (current is Element element && element.Layout.ownStencilLayer != null)
+                {
+                    if (stencilLayer != null)
                     {
-                        enumerator.SkipToNextSibling();
-                    }
-                    else if (current is Element element && element.Layout.ownStencilLayer != null)
-                    {
-                        if (stencilLayer != null)
-                        {
-                            stencilLayer.AppendChild(element.Layout.ownStencilLayer);
-                        }
-                        else
-                        {
-                            element.Layout.ownStencilLayer.Detach();
-                        }
-
-                        element.Layout.StencilLayer = stencilLayer;
-
-                        enumerator.SkipToNextSibling();
+                        stencilLayer.AppendChild(element.Layout.ownStencilLayer);
                     }
                     else
                     {
-                        containerNode.Layout.StencilLayer = stencilLayer;
+                        element.Layout.ownStencilLayer.Detach();
                     }
+
+                    element.Layout.StencilLayer = stencilLayer;
+
+                    enumerator.SkipToNextSibling();
+                }
+                else
+                {
+                    containerNode.Layout.StencilLayer = stencilLayer;
                 }
             }
+        }
     }
 
     private Point<float> GetAlignment(StackKind stack, AlignmentKind alignmentKind, out AlignmentAxis alignmentAxis)
@@ -298,7 +300,7 @@ internal sealed partial class BoxLayout : Layout
 
             if (child is Element element)
             {
-                childSize    = element.Layout.BoundingsWithMargin;
+                childSize = element.Layout.BoundingsWithMargin;
                 dependencies = element.Layout.parentDependent;
             }
             else
@@ -323,11 +325,11 @@ internal sealed partial class BoxLayout : Layout
             {
                 if (!dependencies.HasFlag(Dependency.Height))
                 {
-                    this.staticContent.Width   = uint.Max(this.staticContent.Width, childSize.Width);
+                    this.staticContent.Width = uint.Max(this.staticContent.Width, childSize.Width);
                     this.staticContent.Height += childSize.Height;
                 }
 
-                this.content.Width   = uint.Max(this.content.Width, childSize.Width);
+                this.content.Width = uint.Max(this.content.Width, childSize.Width);
                 this.content.Height += childSize.Height;
 
                 if (child == this.Target.FirstChild)
@@ -342,161 +344,17 @@ internal sealed partial class BoxLayout : Layout
             this.CalculatePendingMargin(ref this.content);
         }
 
-        var resolvedMargin  = !this.parentDependent.HasFlag(Dependency.Margin);
-        var resolvedPadding = !this.parentDependent.HasFlag(Dependency.Padding);
-        var resolvedWidth   = !this.parentDependent.HasFlag(Dependency.Width);
-        var resolvedHeight  = !this.parentDependent.HasFlag(Dependency.Height);
-
-        if (this.State.Style.Padding?.Top?.TryGetPixel(out var top) == true)
-        {
-            this.padding.Top = top;
-        }
-
-        if (this.State.Style.Padding?.Right?.TryGetPixel(out var right) == true)
-        {
-            this.padding.Right = right;
-        }
-
-        if (this.State.Style.Padding?.Bottom?.TryGetPixel(out var bottom) == true)
-        {
-            this.padding.Bottom = bottom;
-        }
-
-        if (this.State.Style.Padding?.Left?.TryGetPixel(out var left) == true)
-        {
-            this.padding.Left = left;
-        }
-
-        if (this.State.Style.Margin?.Top?.TryGetPixel(out top) == true)
-        {
-            this.margin.Top = top;
-        }
-
-        if (this.State.Style.Margin?.Right?.TryGetPixel(out right) == true)
-        {
-            this.margin.Right = right;
-        }
-
-        if (this.State.Style.Margin?.Bottom?.TryGetPixel(out bottom) == true)
-        {
-            this.margin.Bottom = bottom;
-        }
-
-        if (this.State.Style.Margin?.Left?.TryGetPixel(out left) == true)
-        {
-            this.margin.Left = left;
-        }
-
         var size = this.content;
 
-        if (!this.contentDependent.HasFlag(Dependency.Width))
-        {
-            if (this.State.Style.Size?.Width?.TryGetPixel(out var pixel) == true)
-            {
-                size.Width = pixel;
-
-                resolvedWidth = true;
-            }
-            else if (this.State.Style.MinSize?.Width?.TryGetPixel(out var min) == true && this.State.Style.MaxSize?.Width?.TryGetPixel(out var max) == true)
-            {
-                resolvedWidth = true;
-
-                if (size.Width < min)
-                {
-                    size.Width = min;
-                }
-                else if (size.Width > max)
-                {
-                    size.Width = max;
-                }
-                else
-                {
-                    resolvedWidth = false;
-                }
-            }
-            else if (this.State.Style.MinSize?.Width?.TryGetPixel(out min) == true)
-            {
-                if (size.Width < min)
-                {
-                    size.Width = min;
-
-                    resolvedWidth = true;
-                }
-            }
-            else if (this.State.Style.MaxSize?.Width?.TryGetPixel(out max) == true)
-            {
-                if (size.Width > max)
-                {
-                    size.Width = max;
-
-                    resolvedWidth = true;
-                }
-            }
-        }
-
-        if (!this.contentDependent.HasFlag(Dependency.Height))
-        {
-            if (this.State.Style.Size?.Height?.TryGetPixel(out var pixel) == true)
-            {
-                size.Height = pixel;
-
-                resolvedHeight = true;
-            }
-            else if (this.State.Style.MinSize?.Height?.TryGetPixel(out var min) == true && this.State.Style.MaxSize?.Height?.TryGetPixel(out var max) == true)
-            {
-                resolvedHeight = true;
-
-                if (size.Height < min)
-                {
-                    size.Height = min;
-                }
-                else if (size.Height > max)
-                {
-                    size.Height = max;
-                }
-                else
-                {
-                    resolvedHeight = false;
-                }
-            }
-            else if (this.State.Style.MinSize?.Height?.TryGetPixel(out min) == true)
-            {
-                if (size.Height < min)
-                {
-                    size.Height = min;
-
-                    resolvedHeight = true;
-                }
-            }
-            else if (this.State.Style.MaxSize?.Height?.TryGetPixel(out max) == true)
-            {
-                if (size.Height > max)
-                {
-                    size.Height = max;
-
-                    resolvedHeight = true;
-                }
-            }
-        }
-
-        if (this.State.Style.BoxSizing == BoxSizing.Border)
-        {
-            if (!this.contentDependent.HasFlag(Dependency.Width))
-            {
-                size.Width = size.Width.ClampSubtract(this.border.Horizontal);
-            }
-
-            if (!this.contentDependent.HasFlag(Dependency.Height))
-            {
-                size.Height = size.Height.ClampSubtract(this.border.Horizontal);
-            }
-        }
+        var resolvedMargin  = this.ResolveMargin();
+        var resolvedPadding = this.ResolvePadding();
+        var resolvedSize    = this.ResolveSize(ref size);
 
         var sizeHasChanged = this.Size != size;
 
         this.Size = size;
 
-        if (resolvedWidth && resolvedHeight && resolvedMargin && resolvedPadding)
+        if (resolvedSize && resolvedMargin && resolvedPadding)
         {
             if (sizeHasChanged || this.childsChanged || this.dependenciesHasChanged || this.Target is Canvas)
             {
@@ -875,6 +733,8 @@ internal sealed partial class BoxLayout : Layout
     {
         var hidden = this.State.Style.Hidden == true;
 
+        this.FontSize = this.State.Style.FontSize ?? 16;
+
         if (property is StyleProperty.All or StyleProperty.Border)
         {
             this.border = new()
@@ -885,17 +745,6 @@ internal sealed partial class BoxLayout : Layout
                 Left   = this.State.Style.Border?.Left.Thickness ?? 0,
             };
         }
-
-        // if (property is StyleProperty.All or StyleProperty.Color or StyleProperty.FontFamily or StyleProperty.FontSize or StyleProperty.FontWeight)
-        // {
-        //     foreach (var node in this.target)
-        //     {
-        //         if (node is TextNode textNode)
-        //         {
-        //             textNode.Layout.ParentStyleChanged(property);
-        //         }
-        //     }
-        // }
 
         if (property is StyleProperty.All or StyleProperty.Cursor && this.target.IsHovered && !this.IsHoveringText && this.target.Tree is RenderTree renderTree)
         {
@@ -1041,6 +890,229 @@ internal sealed partial class BoxLayout : Layout
         }
 
         this.Target.Visible = !hidden;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool ResolveHeight(ref uint height)
+    {
+        var resolved = !this.parentDependent.HasFlag(Dependency.Height);
+
+        if (!this.contentDependent.HasFlag(Dependency.Height))
+        {
+            if (this.State.Style.Size?.Height?.TryGetPixel(out var pixel) == true)
+            {
+                height = pixel;
+
+                resolved = true;
+            }
+            else if (this.State.Style.Size?.Height?.TryGetEm(out var em) == true)
+            {
+                height = (uint)(em.Value * this.FontSize);
+
+                resolved = true;
+            }
+            else
+            {
+                var min = height;
+                var max = height;
+
+                if (this.State.Style.MinSize?.Height?.TryGetPixel(out var minPixel) == true)
+                {
+                    min = minPixel;
+                }
+                else if (this.State.Style.MinSize?.Height?.TryGetEm(out var minEm) == true)
+                {
+                    min = (uint)(minEm.Value * this.FontSize);
+                }
+
+                if (this.State.Style.MaxSize?.Height?.TryGetPixel(out var maxPixel) == true)
+                {
+                    max = maxPixel;
+                }
+                else if (this.State.Style.MaxSize?.Height?.TryGetEm(out var maxEm) == true)
+                {
+                    max = (uint)(maxEm.Value * this.FontSize);
+                }
+
+                if (height < min)
+                {
+                    height = min;
+
+                    resolved = true;
+                }
+                else if (height > max)
+                {
+                    height = max;
+
+                    resolved = true;
+                }
+            }
+
+            if (this.State.Style.BoxSizing == BoxSizing.Border)
+            {
+                height = height.ClampSubtract(this.border.Vertical);
+            }
+        }
+
+        return resolved;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool ResolveSize(ref Size<uint> size)
+    {
+        var resolvedWidth  = this.ResolveWidth(ref size.Width);
+        var resolvedHeight = this.ResolveHeight(ref size.Height);
+
+        return resolvedWidth && resolvedHeight;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool ResolveMargin()
+    {
+        if (this.State.Style.Margin?.Top?.TryGetPixel(out var topPixel) == true)
+        {
+            this.margin.Top = topPixel;
+        }
+        else if (this.State.Style.Margin?.Top?.TryGetEm(out var topEm) == true)
+        {
+            this.margin.Top = (uint)(topEm * this.FontSize);
+        }
+
+        if (this.State.Style.Margin?.Right?.TryGetPixel(out var rightPixel) == true)
+        {
+            this.margin.Right = rightPixel;
+        }
+        else if (this.State.Style.Margin?.Right?.TryGetEm(out var rightEm) == true)
+        {
+            this.margin.Top = (uint)(rightEm * this.FontSize);
+        }
+
+        if (this.State.Style.Margin?.Bottom?.TryGetPixel(out var bottomPixel) == true)
+        {
+            this.margin.Bottom = bottomPixel;
+        }
+        else if (this.State.Style.Margin?.Bottom?.TryGetEm(out var bottomEm) == true)
+        {
+            this.margin.Top = (uint)(bottomEm * this.FontSize);
+        }
+
+        if (this.State.Style.Margin?.Left?.TryGetPixel(out var leftPixel) == true)
+        {
+            this.margin.Left = leftPixel;
+        }
+        else if (this.State.Style.Margin?.Left?.TryGetEm(out var leftEm) == true)
+        {
+            this.margin.Top = (uint)(leftEm * this.FontSize);
+        }
+
+        return !this.parentDependent.HasFlag(Dependency.Margin);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool ResolvePadding()
+    {
+        if (this.State.Style.Padding?.Top?.TryGetPixel(out var topPixel) == true)
+        {
+            this.padding.Top = topPixel;
+        }
+        else if (this.State.Style.Padding?.Top?.TryGetEm(out var topEm) == true)
+        {
+            this.padding.Top = (uint)(topEm * this.FontSize);
+        }
+
+        if (this.State.Style.Padding?.Right?.TryGetPixel(out var rightPixel) == true)
+        {
+            this.padding.Right = rightPixel;
+        }
+        else if (this.State.Style.Padding?.Right?.TryGetEm(out var rightEm) == true)
+        {
+            this.padding.Top = (uint)(rightEm * this.FontSize);
+        }
+
+        if (this.State.Style.Padding?.Bottom?.TryGetPixel(out var bottomPixel) == true)
+        {
+            this.padding.Bottom = bottomPixel;
+        }
+        else if (this.State.Style.Padding?.Bottom?.TryGetEm(out var bottomEm) == true)
+        {
+            this.padding.Top = (uint)(bottomEm * this.FontSize);
+        }
+
+        if (this.State.Style.Padding?.Left?.TryGetPixel(out var leftPixel) == true)
+        {
+            this.padding.Left = leftPixel;
+        }
+        else if (this.State.Style.Padding?.Left?.TryGetEm(out var leftEm) == true)
+        {
+            this.padding.Top = (uint)(leftEm * this.FontSize);
+        }
+
+        return !this.parentDependent.HasFlag(Dependency.Padding);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool ResolveWidth(ref uint width)
+    {
+        var resolved = !this.parentDependent.HasFlag(Dependency.Width);
+
+        if (!this.contentDependent.HasFlag(Dependency.Width))
+        {
+            if (this.State.Style.Size?.Width?.TryGetPixel(out var pixel) == true)
+            {
+                width = pixel;
+
+                resolved = true;
+            }
+            else if (this.State.Style.Size?.Width?.TryGetEm(out var em) == true)
+            {
+                width = (uint)(em.Value * this.FontSize);
+
+                resolved = true;
+            }
+            else
+            {
+                var min = width;
+                var max = width;
+
+                if (this.State.Style.MinSize?.Width?.TryGetPixel(out var minPixel) == true)
+                {
+                    min = minPixel;
+                }
+                else if (this.State.Style.MinSize?.Width?.TryGetEm(out var minEm) == true)
+                {
+                    min = (uint)(minEm.Value * this.FontSize);
+                }
+
+                if (this.State.Style.MaxSize?.Width?.TryGetPixel(out var maxPixel) == true)
+                {
+                    max = maxPixel;
+                }
+                else if (this.State.Style.MaxSize?.Width?.TryGetEm(out var maxEm) == true)
+                {
+                    max = (uint)(maxEm.Value * this.FontSize);
+                }
+
+                if (width < min)
+                {
+                    width = min;
+
+                    resolved = true;
+                }
+                else if (width > max)
+                {
+                    width = max;
+
+                    resolved = true;
+                }
+            }
+
+            if (this.State.Style.BoxSizing == BoxSizing.Border)
+            {
+                width = width.ClampSubtract(this.border.Horizontal);
+            }
+        }
+
+        return resolved;
     }
 
     private void UpdateDisposition()
