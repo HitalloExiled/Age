@@ -6,6 +6,15 @@ public enum UnitKind
 {
     Pixel      = 1,
     Percentage = 2,
+    Em         = 3,
+}
+
+public readonly record struct Em(float Value)
+{
+    public override readonly string ToString() => $"{this.Value}em";
+
+    public static explicit operator Em(float value) => new(value);
+    public static implicit operator float(Em em) => em.Value;
 }
 
 public readonly record struct Pixel(uint Value)
@@ -22,7 +31,7 @@ public readonly record struct Percentage(float Value)
 
     public override readonly string ToString() => $"{this.Value * 100}%";
 
-    public static explicit operator Percentage(uint value) => new(value);
+    public static explicit operator Percentage(float value) => new(value);
     public static implicit operator float(Percentage pixel) => pixel.Value;
 }
 
@@ -38,6 +47,9 @@ public readonly record struct Unit
     [FieldOffset(4)]
     private readonly Pixel pixel;
 
+    [FieldOffset(4)]
+    private readonly Em em;
+
     public Unit(Pixel pixel)
     {
         this.Kind  = UnitKind.Pixel;
@@ -48,6 +60,30 @@ public readonly record struct Unit
     {
         this.Kind       = UnitKind.Percentage;
         this.percentage = percentage;
+    }
+
+    public Unit(Em em)
+    {
+        this.Kind = UnitKind.Em;
+        this.em   = em;
+    }
+
+    public static Em         Em(float value) => new(value);
+    public static Percentage Pc(float value) => new(value);
+    public static Pixel      Px(uint value) => new(value);
+
+    public readonly bool TryGetEm(out Em em)
+    {
+        if (this.Kind == UnitKind.Em)
+        {
+            em = this.em;
+
+            return true;
+        }
+
+        em = default;
+
+        return false;
     }
 
     public readonly bool TryGetPercentage(out Percentage percentage)
@@ -78,20 +114,16 @@ public readonly record struct Unit
         return false;
     }
 
-    public override readonly string ToString()
-    {
-        if (this.TryGetPercentage(out var percentage))
+    public override readonly string ToString() =>
+        this.Kind switch
         {
-            return percentage.ToString();
-        }
-        else if (this.TryGetPixel(out var pixel))
-        {
-            return pixel.ToString();
-        }
+            UnitKind.Em         => this.em.ToString(),
+            UnitKind.Pixel      => this.pixel.ToString(),
+            UnitKind.Percentage => this.percentage.ToString(),
+            _ => "",
+        };
 
-        return "";
-    }
-
+    public static implicit operator Unit(Em em) => new(em);
     public static implicit operator Unit(Pixel pixel) => new(pixel);
     public static implicit operator Unit(Percentage percentage) => new(percentage);
 }
