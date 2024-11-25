@@ -7,6 +7,7 @@ using System.Text;
 using Key                  = Age.Platforms.Display.Key;
 using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
 using PlatformMouseEvent   = Age.Platforms.Display.MouseEvent;
+using AgeInput             = Age.Input;
 
 namespace Age.Elements;
 
@@ -20,11 +21,13 @@ public struct KeyEvent
 public delegate void ContextEventHandler(in ContextEvent mouseEvent);
 public delegate void MouseEventHandler(in MouseEvent mouseEvent);
 public delegate void KeyEventHandler(in KeyEvent keyEvent);
+public delegate void InputEventHandler(char keyEvent);
 
 public abstract partial class Element : ContainerNode, IEnumerable<Element>
 {
-    private event KeyEventHandler? keyDown;
-    private event KeyEventHandler? keyUp;
+    private event InputEventHandler? input;
+    private event KeyEventHandler?   keyDown;
+    private event KeyEventHandler?   keyUp;
     private event MouseEventHandler? scroll;
 
     public event MouseEventHandler?   Blured;
@@ -35,6 +38,35 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     public event MouseEventHandler?   MouseMoved;
     public event MouseEventHandler?   MouseOut;
     public event MouseEventHandler?   MouseOver;
+
+    public event InputEventHandler? Input
+    {
+        add
+        {
+            lock(this.elementLock)
+            {
+                if (this.Tree is RenderTree renderTree && keyDown == null)
+                {
+                    renderTree.Window.Input += this.OnInput;
+                }
+            }
+
+            input += value;
+
+        }
+        remove
+        {
+            input -= value;
+
+            lock(this.elementLock)
+            {
+                if (this.Tree is RenderTree renderTree && keyDown == null)
+                {
+                    renderTree.Window.Input -= this.OnInput;
+                }
+            }
+        }
+    }
 
     public event KeyEventHandler? KeyDown
     {
@@ -303,6 +335,14 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             ScreenY = platformContextEvent.ScreenY,
         };
 
+    private void OnInput(char character)
+    {
+        if (this.IsFocused)
+        {
+            this.input?.Invoke(character);
+        }
+    }
+
     private void OnKeyDown(Key key)
     {
         if (this.IsFocused)
@@ -310,8 +350,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             var keyEvent = new KeyEvent
             {
                 Key       = key,
-                Holding   = !Input.IsKeyJustPressed(key),
-                Modifiers = Input.GetModifiers(),
+                Holding   = !AgeInput.IsKeyJustPressed(key),
+                Modifiers = AgeInput.GetModifiers(),
             };
 
             this.keyDown?.Invoke(keyEvent);
@@ -325,8 +365,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             var keyEvent = new KeyEvent
             {
                 Key       = key,
-                Holding   = !Input.IsKeyJustPressed(key),
-                Modifiers = Input.GetModifiers(),
+                Holding   = !AgeInput.IsKeyJustPressed(key),
+                Modifiers = AgeInput.GetModifiers(),
             };
 
             this.keyUp?.Invoke(keyEvent);
@@ -345,6 +385,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     protected override void Connected(RenderTree renderTree)
     {
+        if (this.input != null)
+        {
+            renderTree.Window.Input += this.OnInput;
+        }
+
         if (this.keyDown != null)
         {
             renderTree.Window.KeyDown += this.OnKeyDown;
@@ -400,6 +445,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         this.Canvas = null;
 
+        renderTree.Window.Input   -= this.OnInput;
         renderTree.Window.KeyDown -= this.OnKeyDown;
         renderTree.Window.KeyUp   -= this.OnKeyUp;
 

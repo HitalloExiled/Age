@@ -77,6 +77,10 @@ public partial class Window
         {
             switch (msg)
             {
+                case User32.WINDOW_MESSAGE.WM_CHAR:
+                    window.Input?.Invoke((char)wParam.Value);
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_KEYDOWN:
                     window.KeyDown?.Invoke((Key)wParam.Value);
                     window.KeyPress?.Invoke((Key)wParam.Value);
@@ -95,7 +99,6 @@ public partial class Window
                     window.MouseWhell?.Invoke(GetMouseEventArgs(MouseButton.None, msg, wParam, lParam));
 
                     break;
-
                 case User32.WINDOW_MESSAGE.WM_LBUTTONDOWN:
                 case User32.WINDOW_MESSAGE.WM_MBUTTONDOWN:
                 case User32.WINDOW_MESSAGE.WM_RBUTTONDOWN:
@@ -137,7 +140,6 @@ public partial class Window
                     }
 
                     break;
-
                 case User32.WINDOW_MESSAGE.WM_LBUTTONUP:
                 case User32.WINDOW_MESSAGE.WM_MBUTTONUP:
                 case User32.WINDOW_MESSAGE.WM_RBUTTONUP:
