@@ -22,9 +22,71 @@ public class TextBox : Element
 
         this.AppendChild(this.text);
 
-        this.Clicked += this.OnClicked;
         this.Blured  += this.OnBlurer;
+        this.Focused += this.OnFocused;
+        this.Input   += this.OnInput;
         this.KeyDown += this.OnKeyDown;
+    }
+
+    private void OnBlurer(in MouseEvent mouseEvent) =>
+        this.text.HideCaret();
+
+    private void OnFocused(in MouseEvent mouseEvent) =>
+        this.text.ShowCaret();
+
+    private void OnInput(char character)
+    {
+        if (character == '\b')
+        {
+            if (this.text.Value?.Length > 0)
+            {
+                if (this.text.Selection != null)
+                {
+                    this.text.DeleteSelected();
+                }
+                else
+                {
+                    if (this.text.CursorPosition == this.text.Value.Length)
+                    {
+                        this.text.Value = this.text.Value[..^1];
+                    }
+                    else if (this.text.CursorPosition > 0)
+                    {
+                        var start = this.text.Value.AsSpan(..((int)this.text.CursorPosition - 1));
+
+                        var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
+
+                        this.text.Value = string.Concat(start, end);
+                    }
+
+                    this.text.CursorPosition--;
+                }
+            }
+        }
+        else
+        {
+            if (this.text.Selection != null)
+            {
+                this.text.DeleteSelected();
+            }
+
+            if (this.text.Value?.Length is 0 or null || this.text.CursorPosition == this.text.Value.Length)
+            {
+                this.text.Value += character;
+            }
+            else
+            {
+                var start = this.text.Value.AsSpan(..(int)this.text.CursorPosition);
+
+                Span<char> middle = [character];
+
+                var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
+
+                this.text.Value = string.Concat(start, middle, end);
+            }
+
+            this.text.CursorPosition++;
+        }
     }
 
     private void OnKeyDown(in KeyEvent keyEvent)
@@ -63,33 +125,6 @@ public class TextBox : Element
                     this.Blur();
                 }
 
-                break;
-
-            case Key.Backspace:
-                if (this.text.Value?.Length > 0)
-                {
-                    if (this.text.Selection != null)
-                    {
-                        this.text.DeleteSelected();
-                    }
-                    else
-                    {
-                        if (this.text.CursorPosition == this.text.Value.Length)
-                        {
-                            this.text.Value = this.text.Value[..^1];
-                        }
-                        else if (this.text.CursorPosition > 0)
-                        {
-                            var start = this.text.Value.AsSpan(..((int)this.text.CursorPosition - 1));
-
-                            var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
-
-                            this.text.Value = string.Concat(start, end);
-                        }
-
-                        this.text.CursorPosition--;
-                    }
-                }
                 break;
 
             case Key.Left:
@@ -133,6 +168,10 @@ public class TextBox : Element
                     {
                         this.text.Selection = this.text.Selection?.WithEnd(0) ?? new(this.text.CursorPosition, 0);
                     }
+                    else if (this.text.Selection != null)
+                    {
+                        this.text.ClearSelection();
+                    }
 
                     this.text.CursorPosition = 0;
                 }
@@ -146,6 +185,10 @@ public class TextBox : Element
                     {
                         this.text.Selection = this.text.Selection?.WithEnd((uint)this.text.Value.Length) ?? new(this.text.CursorPosition, (uint)this.text.Value.Length);
                     }
+                    else if (this.text.Selection != null)
+                    {
+                        this.text.ClearSelection();
+                    }
 
                     this.text.CursorPosition = (uint)this.text.Value.Length;
                 }
@@ -153,57 +196,7 @@ public class TextBox : Element
                 break;
 
             default:
-                {
-                    var character = (char)keyEvent.Key;
-
-                    if (!char.IsControl(character) && char.IsAscii(character))
-                    {
-                        if (!keyEvent.Modifiers.HasFlag(KeyStates.Shift))
-                        {
-                            character = char.ToLower(character);
-                        }
-
-                        if (this.text.Selection != null)
-                        {
-                            this.text.DeleteSelected();
-                        }
-
-                        if (this.text.Value?.Length is 0 or null || this.text.CursorPosition == this.text.Value.Length)
-                        {
-                            this.text.Value += character;
-                        }
-                        else
-                        {
-                            var start = this.text.Value.AsSpan(..(int)this.text.CursorPosition);
-
-                            Span<char> middle = [character];
-
-                            var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
-
-                            this.text.Value = string.Concat(start, middle, end);
-                        }
-
-                        this.text.CursorPosition++;
-                    }
-                }
-
                 break;
-        }
-    }
-
-    private void OnBlurer(in MouseEvent mouseEvent)
-    {
-        if (this.text.Value == null)
-        {
-            this.text.HideCaret();
-        }
-    }
-
-    private void OnClicked(in MouseEvent mouseEvent)
-    {
-        if (this.text.Value == null)
-        {
-            this.text.ShowCaret();
         }
     }
 }
