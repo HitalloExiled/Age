@@ -8,6 +8,8 @@ using Key                  = Age.Platforms.Display.Key;
 using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
 using PlatformMouseEvent   = Age.Platforms.Display.MouseEvent;
 using AgeInput             = Age.Input;
+using System.Drawing;
+using Age.Numerics;
 
 namespace Age.Elements;
 
@@ -28,7 +30,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     private event InputEventHandler? input;
     private event KeyEventHandler?   keyDown;
     private event KeyEventHandler?   keyUp;
-    private event MouseEventHandler? scroll;
+    private event MouseEventHandler? scrolled;
 
     public event MouseEventHandler?   Blured;
     public event MouseEventHandler?   Clicked;
@@ -125,27 +127,27 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    public event MouseEventHandler? Scroll
+    public event MouseEventHandler? Scrolled
     {
         add
         {
             lock(this.elementLock)
             {
-                if (this.Tree is RenderTree renderTree && scroll == null)
+                if (this.Tree is RenderTree renderTree && scrolled == null)
                 {
                     renderTree.Window.MouseWhell += this.OnScroll;
                 }
             }
 
-            scroll += value;
+            scrolled += value;
         }
         remove
         {
-            scroll -= value;
+            scrolled -= value;
 
             lock(this.elementLock)
             {
-                if (this.Tree is RenderTree renderTree && scroll == null)
+                if (this.Tree is RenderTree renderTree && scrolled == null)
                 {
                     renderTree.Window.MouseWhell -= this.OnScroll;
                 }
@@ -379,7 +381,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             var mouseEvent = this.CreateEvent(platformMouseEvent);
 
-            this.scroll?.Invoke(mouseEvent);
+            this.scrolled?.Invoke(mouseEvent);
         }
     }
 
@@ -400,7 +402,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             renderTree.Window.KeyUp += this.OnKeyUp;
         }
 
-        if (this.scroll != null)
+        if (this.scrolled != null)
         {
             renderTree.Window.MouseWhell += this.OnScroll;
         }
@@ -536,4 +538,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.IsFocused = true;
         this.Focused?.Invoke(new() { Target = this });
     }
+
+    public void Scroll(in Vector2<float> offset) =>
+        this.Layout.ScrollOffset = offset;
 }

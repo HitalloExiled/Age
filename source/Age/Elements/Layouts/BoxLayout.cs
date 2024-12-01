@@ -43,7 +43,24 @@ internal sealed partial class BoxLayout : Layout
     private Dependency   parentDependent;
     private uint         renderableNodesCount;
     private Size<uint>   staticContent;
-    private Point<int>   scrollOffset;
+
+    public Point<int> ScrollOffset
+    {
+        get;
+        set
+        {
+            value.X = Math<int>.MinMax(-(int)this.content.Width.ClampSubtract(this.Size.Width), 0, value.X);
+            value.Y = Math<int>.MinMax(0, (int)this.content.Height.ClampSubtract(this.Size.Height), value.Y);
+
+            if (field != value)
+            {
+                field = value;
+
+                this.ownStencilLayer?.MakeDirty();
+                this.RequestUpdate();
+            }
+        }
+    }
 
     public uint FontSize { get; private set; }
     #endregion
@@ -705,27 +722,17 @@ internal sealed partial class BoxLayout : Layout
     {
         if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlag(Platforms.Display.MouseKeyStates.Shift))
         {
-            var x = Math<int>.MinMax(-(int)this.content.Width.ClampSubtract(this.Size.Width), 0, this.scrollOffset.X + (int)(5 * mouseEvent.Delta));
-
-            if (this.scrollOffset.X != x)
+            this.ScrollOffset = this.ScrollOffset with
             {
-                this.scrollOffset.X = x;
-
-                this.ownStencilLayer?.MakeDirty();
-                this.RequestUpdate();
-            }
+                X = this.ScrollOffset.X + (int)(5 * mouseEvent.Delta)
+            };
         }
         else if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY)
         {
-            var y = Math<int>.MinMax(0, (int)this.content.Height.ClampSubtract(this.Size.Height), this.scrollOffset.Y - (int)(5 * mouseEvent.Delta));
-
-            if (this.scrollOffset.Y != y)
+            this.ScrollOffset = this.ScrollOffset with
             {
-                this.scrollOffset.Y = y;
-
-                this.ownStencilLayer?.MakeDirty();
-                this.RequestUpdate();
-            }
+                Y = this.ScrollOffset.Y + (int)(5 * mouseEvent.Delta)
+            };
         }
     }
 
@@ -845,12 +852,12 @@ internal sealed partial class BoxLayout : Layout
             {
                 if (currentIsScrollable)
                 {
-                    this.target.Scroll += this.OnScroll;
+                    this.target.Scrolled += this.OnScroll;
                 }
                 else
                 {
-                    this.target.Scroll -= this.OnScroll;
-                    this.scrollOffset = default;
+                    this.target.Scrolled -= this.OnScroll;
+                    this.ScrollOffset = default;
                 }
 
                 this.IsScrollable = currentIsScrollable;
@@ -1256,7 +1263,7 @@ internal sealed partial class BoxLayout : Layout
                 }
             }
 
-            child.Layout.Offset = new(float.Round(this.scrollOffset.X + cursor.X + position.X + margin.Left), -float.Round(-this.scrollOffset.Y + -cursor.Y + position.Y + margin.Top));
+            child.Layout.Offset = new(float.Round(this.ScrollOffset.X + cursor.X + position.X + margin.Left), -float.Round(-this.ScrollOffset.Y + -cursor.Y + position.Y + margin.Top));
 
             if (stack == StackKind.Horizontal)
             {
