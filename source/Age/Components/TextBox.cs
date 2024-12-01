@@ -10,11 +10,34 @@ namespace Age.Components;
 
 public partial class TextBox : Element
 {
+    public event Action? Changed;
+
     private readonly TextNode            text = new();
     private readonly Stack<HistoryEntry> undo = [];
     private readonly Stack<HistoryEntry> redo = [];
 
+    private string? previousText;
+
     public override string NodeName { get; } = nameof(TextBox);
+
+    public string? Value
+    {
+        get => this.text.Value;
+        set
+        {
+            if (value != this.text.Value)
+            {
+                this.text.Value = value;
+
+                if (value != null)
+                {
+                    this.text.CursorPosition = (uint)value.Length;
+                }
+
+                this.Changed?.Invoke();
+            }
+        }
+    }
 
     public bool Multiline { get; set; }
 
@@ -47,11 +70,22 @@ public partial class TextBox : Element
             Selection      = this.text.Selection
         };
 
-    private void OnBlurer(in MouseEvent mouseEvent) =>
+    private void OnBlurer(in MouseEvent mouseEvent)
+    {
         this.text.HideCaret();
 
-    private void OnFocused(in MouseEvent mouseEvent) =>
+        if (this.previousText != this.text.Value)
+        {
+            this.Changed?.Invoke();
+        }
+    }
+
+    private void OnFocused(in MouseEvent mouseEvent)
+    {
         this.text.ShowCaret();
+
+        this.previousText = this.text.Value;
+    }
 
     private void OnInput(char character)
     {
