@@ -1,4 +1,3 @@
-using Age.Commands;
 using Age.Core;
 using Age.Numerics;
 
@@ -8,34 +7,11 @@ public abstract class Node3D : RenderNode
 {
     internal static int CacheVersion { get; set; } = 1;
 
-    private Transform3D             localTransform = new();
-    private Vector3<float>          pivot;
     private CacheValue<Transform3D> transformCache;
 
     private Transform3D ParentTransform      => (this.Parent as Node3D)?.Transform ?? new();
     private Transform3D ParentTransformCache => (this.Parent as Node3D)?.TransformCache ?? new();
     private Transform3D PivotedTransform     => Transform3D.Translated(this.Pivot) * this.LocalTransform * Transform3D.Translated(-this.Pivot);
-
-    protected Command? SingleCommand
-    {
-        get => this.Commands.Count == 1 ? this.Commands[0] : null;
-        set
-        {
-            if (value == null)
-            {
-                this.Commands.Clear();
-            }
-            else if (this.Commands.Count == 1)
-            {
-                this.Commands[0] = value;
-            }
-            else
-            {
-                this.Commands.Clear();
-                this.Commands.Add(value);
-            }
-        }
-    }
 
     internal protected virtual Transform3D TransformCache
     {
@@ -54,18 +30,16 @@ public abstract class Node3D : RenderNode
         }
     }
 
-    internal List<Command> Commands { get; init; } = [];
-
     public virtual Transform3D LocalTransform
     {
-        get => this.localTransform;
-        set => this.Set(ref this.localTransform, value);
-    }
+        get;
+        set => this.Set(ref field, value);
+    } = new();
 
     public virtual Vector3<float> Pivot
     {
-        get => this.pivot;
-        set => this.Set(ref this.pivot, value);
+        get;
+        set => this.Set(ref field, value);
     }
 
     public virtual Transform3D Transform

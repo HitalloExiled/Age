@@ -20,24 +20,21 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     #endregion
 
     #region 4-bytes
-    private int index;
-
-    public NodeFlags Flags { get; protected set; }
-    #endregion
-
-
     internal int Index
     {
-        get => this.index;
+        get;
         set
         {
-            if (this.index != value)
+            if (field != value)
             {
-                this.index = value;
+                field = value;
                 this.Indexed();
             }
         }
     }
+
+    public NodeFlags Flags { get; protected set; }
+    #endregion
 
     public NodeTree? Tree
     {
