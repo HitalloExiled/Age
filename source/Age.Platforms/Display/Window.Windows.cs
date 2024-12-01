@@ -323,6 +323,20 @@ public partial class Window
         WindowsMap[this.Handle] = this;
     }
 
+    protected string? PlatformGetClipboardData()
+    {
+        if (User32.OpenClipboard(this.Handle))
+        {
+            var text = User32.GetClipboardTextData();
+
+            User32.CloseClipboard();
+
+            return text;
+        }
+
+        return null;
+    }
+
     protected void PlatformSetClipboardData(string value)
     {
         if (User32.OpenClipboard(this.Handle))

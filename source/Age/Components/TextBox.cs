@@ -234,6 +234,69 @@ public partial class TextBox : Element
 
                 break;
 
+            case Key.V:
+                {
+                    if (keyEvent.Modifiers.HasFlag(KeyStates.Control) && this.Tree is RenderTree renderTree)
+                    {
+                        this.SaveHistory();
+
+                        this.text.DeleteSelected();
+
+                        if (renderTree.Window.GetClipboardData() is string text)
+                        {
+                            if (this.text.Value == null || this.text.CursorPosition == this.text.Value.Length)
+                            {
+                                this.text.Value = text;
+                            }
+                            else
+                            {
+                                var start = this.text.Value.AsSpan(..(int)this.text.CursorPosition);
+
+                                var middle = text.AsSpan();
+
+                                var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
+
+                                this.text.Value = string.Concat(start, middle, end);
+                            }
+
+                            this.text.CursorPosition += (uint)text.Length;
+                        }
+                    }
+                }
+
+                break;
+
+            case Key.X:
+                {
+                    if (keyEvent.Modifiers.HasFlag(KeyStates.Control) && this.text.Selection != null && this.Tree is RenderTree renderTree)
+                    {
+                        if (this.text.SelectedText is string text)
+                        {
+                            this.SaveHistory();
+
+                            this.text.DeleteSelected();
+
+                            renderTree.Window.SetClipboardData(text);
+                        }
+                    }
+                }
+
+                break;
+
+            case Key.Z:
+                if (keyEvent.Modifiers.HasFlag(KeyStates.Control))
+                {
+                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    {
+                        this.Redo();
+                    }
+                    else
+                    {
+                        this.Undo();
+                    }
+                }
+
+                break;
 
             default:
                 break;

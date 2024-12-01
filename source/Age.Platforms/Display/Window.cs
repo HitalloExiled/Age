@@ -175,6 +175,9 @@ public partial class Window : Disposable
         }
     }
 
+    public string? GetClipboardData() =>
+        this.PlatformGetClipboardData();
+
     public void SetClipboardData(string value) =>
         this.PlatformSetClipboardData(value);
 
