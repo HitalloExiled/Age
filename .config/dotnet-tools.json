@@ -3,14 +3,14 @@
   "isRoot": true,
   "tools": {
     "dotnet-reportgenerator-globaltool": {
-      "version": "5.2.0",
+      "version": "5.4.1",
       "commands": [
         "reportgenerator"
       ],
       "rollForward": false
     },
     "roslynator.dotnet.cli": {
-      "version": "0.9.0",
+      "version": "0.9.3",
       "commands": [
         "roslynator"
       ],

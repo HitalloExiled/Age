@@ -1,4 +1,6 @@
+using Age.Core.Extensions;
 using Age.Elements;
+using Age.Scene;
 using Age.Themes;
 
 using Key       = Age.Platforms.Display.Key;
@@ -6,9 +8,11 @@ using KeyStates = Age.Platforms.Display.KeyStates;
 
 namespace Age.Components;
 
-public class TextBox : Element
+public partial class TextBox : Element
 {
-    private readonly TextNode text = new();
+    private readonly TextNode            text = new();
+    private readonly Stack<HistoryEntry> undo = [];
+    private readonly Stack<HistoryEntry> redo = [];
 
     public override string NodeName { get; } = nameof(TextBox);
 
@@ -28,6 +32,21 @@ public class TextBox : Element
         this.KeyDown += this.OnKeyDown;
     }
 
+    private void ApplyHistory(in HistoryEntry entry)
+    {
+        this.text.Value          = entry.Text;
+        this.text.CursorPosition = entry.CursorPosition;
+        this.text.Selection      = entry.Selection;
+    }
+
+    private HistoryEntry GetHistory() =>
+        new()
+        {
+            Text           = this.text.Value,
+            CursorPosition = this.text.CursorPosition,
+            Selection      = this.text.Selection
+        };
+
     private void OnBlurer(in MouseEvent mouseEvent) =>
         this.text.HideCaret();
 
@@ -36,57 +55,34 @@ public class TextBox : Element
 
     private void OnInput(char character)
     {
-        if (character == '\b')
+        if (char.IsControl(character))
         {
-            if (this.text.Value?.Length > 0)
-            {
-                if (this.text.Selection != null)
-                {
-                    this.text.DeleteSelected();
-                }
-                else
-                {
-                    if (this.text.CursorPosition == this.text.Value.Length)
-                    {
-                        this.text.Value = this.text.Value[..^1];
-                    }
-                    else if (this.text.CursorPosition > 0)
-                    {
-                        var start = this.text.Value.AsSpan(..((int)this.text.CursorPosition - 1));
+            return;
+        }
 
-                        var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
+        this.SaveHistory();
 
-                        this.text.Value = string.Concat(start, end);
-                    }
+        if (this.text.Selection != null)
+        {
+            this.text.DeleteSelected();
+        }
 
-                    this.text.CursorPosition--;
-                }
-            }
+        if (this.text.Value?.Length is 0 or null || this.text.CursorPosition == this.text.Value.Length)
+        {
+            this.text.Value += character;
         }
         else
         {
-            if (this.text.Selection != null)
-            {
-                this.text.DeleteSelected();
-            }
+            var start = this.text.Value.AsSpan(..(int)this.text.CursorPosition);
 
-            if (this.text.Value?.Length is 0 or null || this.text.CursorPosition == this.text.Value.Length)
-            {
-                this.text.Value += character;
-            }
-            else
-            {
-                var start = this.text.Value.AsSpan(..(int)this.text.CursorPosition);
+            Span<char> middle = [character];
 
-                Span<char> middle = [character];
+            var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
 
-                var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
-
-                this.text.Value = string.Concat(start, middle, end);
-            }
-
-            this.text.CursorPosition++;
+            this.text.Value = string.Concat(start, middle, end);
         }
+
+        this.text.CursorPosition++;
     }
 
     private void OnKeyDown(in KeyEvent keyEvent)
@@ -96,6 +92,8 @@ public class TextBox : Element
             case Key.Delete:
                 if (this.text.Value?.Length > 0)
                 {
+                    this.SaveHistory();
+
                     if (this.text.Selection != null)
                     {
                         this.text.DeleteSelected();
@@ -112,11 +110,44 @@ public class TextBox : Element
                         }
                     }
                 }
+
+                break;
+
+            case Key.Backspace:
+                if (this.text.Value?.Length > 0)
+                {
+                    this.SaveHistory();
+
+                    if (this.text.Selection != null)
+                    {
+                        this.text.DeleteSelected();
+                    }
+                    else
+                    {
+                        if (this.text.CursorPosition == this.text.Value.Length)
+                        {
+                            this.text.Value = this.text.Value[..^1];
+                        }
+                        else if (this.text.CursorPosition > 0)
+                        {
+                            var start = this.text.Value.AsSpan(..((int)this.text.CursorPosition - 1));
+
+                            var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
+
+                            this.text.Value = string.Concat(start, end);
+                        }
+
+                        this.text.CursorPosition--;
+                    }
+                }
+
                 break;
 
             case Key.Enter:
                 if (this.Multiline)
                 {
+                    this.SaveHistory();
+
                     this.text.Value += "\n\r";
                     this.text.CursorPosition += 2;
                 }
@@ -130,6 +161,8 @@ public class TextBox : Element
             case Key.Left:
                 if (this.text.CursorPosition > 0)
                 {
+                    this.SaveHistory();
+
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
                         this.text.Selection = this.text.Selection?.WithEnd(this.text.CursorPosition - 1) ?? new(this.text.CursorPosition, this.text.CursorPosition - 1);
@@ -147,6 +180,8 @@ public class TextBox : Element
             case Key.Right:
                 if (this.text.CursorPosition < this.text.Value?.Length)
                 {
+                    this.SaveHistory();
+
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
                         this.text.Selection = this.text.Selection?.WithEnd(this.text.CursorPosition + 1) ?? new(this.text.CursorPosition, this.text.CursorPosition + 1);
@@ -164,6 +199,8 @@ public class TextBox : Element
             case Key.Home:
                 if (this.text.Value?.Length > 0)
                 {
+                    this.SaveHistory();
+
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
                         this.text.Selection = this.text.Selection?.WithEnd(0) ?? new(this.text.CursorPosition, 0);
@@ -181,6 +218,8 @@ public class TextBox : Element
             case Key.End:
                 if (this.text.Value?.Length > 0)
                 {
+                    this.SaveHistory();
+
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
                         this.text.Selection = this.text.Selection?.WithEnd((uint)this.text.Value.Length) ?? new(this.text.CursorPosition, (uint)this.text.Value.Length);
@@ -195,8 +234,32 @@ public class TextBox : Element
 
                 break;
 
+
             default:
                 break;
+        }
+    }
+
+    private void SaveHistory() =>
+        this.undo.Push(this.GetHistory());
+
+    public void Redo()
+    {
+        if (this.redo.Count > 0)
+        {
+            this.undo.Push(this.GetHistory());
+
+            this.ApplyHistory(this.redo.Pop());
+        }
+    }
+
+    public void Undo()
+    {
+        if (this.undo.Count > 0)
+        {
+            this.redo.Push(this.GetHistory());
+
+            this.ApplyHistory(this.undo.Pop());
         }
     }
 }
