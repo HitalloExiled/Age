@@ -1,3 +1,4 @@
+using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Elements;
 using Age.Scene;
@@ -12,9 +13,9 @@ public partial class TextBox : Element
 {
     public event Action? Changed;
 
-    private readonly TextNode            text = new();
-    private readonly Stack<HistoryEntry> undo = [];
-    private readonly Stack<HistoryEntry> redo = [];
+    private readonly DropoutStack<HistoryEntry> redo = new(50);
+    private readonly TextNode                   text = new();
+    private readonly DropoutStack<HistoryEntry> undo = new(50);
 
     private string? previousText;
 
@@ -280,7 +281,7 @@ public partial class TextBox : Element
                         {
                             if (this.text.Value == null || this.text.CursorPosition == this.text.Value.Length)
                             {
-                                this.text.Value = text;
+                                this.text.Value += text;
                             }
                             else
                             {
