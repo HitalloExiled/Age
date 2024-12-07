@@ -1,0 +1,11 @@
+global using size_t                              = ulong;
+global using SlangCompileRequestHandle           = nint;
+global using SlangReflectionEntryPointHandle     = nint;
+global using SlangReflectionFunctionHandle       = nint;
+global using SlangReflectionHandle               = nint;
+global using SlangReflectionParameterHandle      = nint;
+global using SlangReflectionTypeParameterHandle  = nint;
+global using SlangReflectionVariableLayoutHandle = nint;
+global using SlangResult                         = int;
+global using SlangSessionHandle                  = nint;
+global using SlangUInt                           = ulong;

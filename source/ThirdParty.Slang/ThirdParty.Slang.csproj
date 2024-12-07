@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="./Native/Lib/*.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes/win-x64/native/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

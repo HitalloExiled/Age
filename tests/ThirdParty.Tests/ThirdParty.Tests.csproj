@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\source\ThirdParty.Slang\ThirdParty.Slang.csproj" />
     <ProjectReference Include="..\..\source\ThirdParty.Shaderc\ThirdParty.Shaderc.csproj" />
     <ProjectReference Include="..\..\source\ThirdParty.SpirvCross\ThirdParty.SpirvCross.csproj" />
     <ProjectReference Include="..\..\source\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj" />
