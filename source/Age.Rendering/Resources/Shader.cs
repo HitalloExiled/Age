@@ -7,6 +7,7 @@ using Age.Rendering.Interfaces;
 using Age.Rendering.Vulkan;
 using ThirdParty.Shaderc;
 using ThirdParty.Shaderc.Enums;
+using ThirdParty.Slang;
 using ThirdParty.SpirvCross;
 using ThirdParty.SpirvCross.Enums;
 using ThirdParty.Vulkan;
@@ -62,8 +63,9 @@ where TPushConstant : IPushConstant
 {
     private const int DEBOUNCE_DELAY = 50;
 
-    private static readonly string            shadersPath = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age.Rendering/Shaders") : Path.Join(AppContext.BaseDirectory, $"Shaders"));
-    private static readonly FileSystemWatcher watcher     = new(shadersPath) { EnableRaisingEvents = true, IncludeSubdirectories = true };
+    private static readonly string            shadersPath        = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age.Rendering/Shaders") : Path.Join(AppContext.BaseDirectory, $"Shaders"));
+    private static readonly SlangSession      globalSlangSession = new();
+    private static readonly FileSystemWatcher watcher            = new(shadersPath) { EnableRaisingEvents = true, IncludeSubdirectories = true };
 
     private readonly Dictionary<string, CancellationTokenSource>    cancellationTokenSources = [];
     private readonly HashSet<string>                                files                    = [];
@@ -156,12 +158,17 @@ where TPushConstant : IPushConstant
             .ContinueWith(action, TaskScheduler.Default);
     }
 
-    private bool CompileShader(string filepath, bool allowFailure = false, string? trigger = null)
+    private bool CompileShader(string filepath, bool allowFailure = false, string? trigger = null) =>
+        filepath.EndsWith(".slang")
+            ? this.CompileSlangShader(filepath, allowFailure)
+            : this.CompileGLSLShader(filepath, allowFailure, trigger);
+
+    private bool CompileGLSLShader(string filepath, bool allowFailure = false, string? trigger = null)
     {
         var (shaderStage, shaderKind) = Path.GetExtension(filepath) switch
         {
-            ".frag" => (VkShaderStageFlags.Fragment, ShaderKind.FragmentShader),
-            ".vert" => (VkShaderStageFlags.Vertex,   ShaderKind.VertexShader),
+            ".frag"  => (VkShaderStageFlags.Fragment, ShaderKind.FragmentShader),
+            ".vert"  => (VkShaderStageFlags.Vertex,   ShaderKind.VertexShader),
             _ => throw new InvalidOperationException()
         };
 
@@ -234,6 +241,113 @@ where TPushConstant : IPushConstant
             }
 
             Logger.Error(exception.Message);
+        }
+
+        return false;
+    }
+
+    private bool CompileSlangShader(string filepath, bool allowFailure = false, string? trigger = null)
+    {
+        try
+        {
+            var source   = File.ReadAllBytes(filepath);
+            var checksum = MD5.HashData(source);
+
+            var canCompile = trigger != null
+                ? !this.shaderIncludes[filepath].TryGetValue(trigger, out var includeHash) || !includeHash.AsSpan().SequenceEqual(MD5.HashData(File.ReadAllBytes(trigger)))
+                : !this.hashes.TryGetValue(filepath, out var shaderHash) || !shaderHash.AsSpan().SequenceEqual(checksum);
+
+            if (canCompile)
+            {
+                this.hashes[filepath] = checksum;
+
+                Logger.Trace($"Compiling Shader [{filepath}]");
+
+                foreach (var include in this.shaderIncludes[filepath])
+                {
+                    watcher.Filters.Remove(Path.GetRelativePath(shadersPath, include.Key));
+                }
+
+                foreach (var includeShader in this.includeShaders.Values)
+                {
+                    includeShader.Remove(filepath);
+                }
+
+                this.shaderIncludes[filepath].Clear();
+
+                using var request = new SlangCompileRequest(globalSlangSession);
+
+                var translationUnitIndex = request.AddTranslationUnit(SlangSourceLanguage.Slang, Path.GetFileName(filepath.AsSpan()));
+
+                request.AddTranslationUnitSourceString(translationUnitIndex, filepath, source);
+                request.SetCodeGenTarget(SlangCompileTarget.Spirv);
+                request.SetTargetProfile(0, globalSlangSession.FindProfile("spirv_1_0"));
+
+                if (request.Compile())
+                {
+                    var dependencies = request.GetDependencyFiles();
+
+                    foreach (var dependecy in dependencies)
+                    {
+                        if (dependecy != filepath)
+                        {
+                            if (!this.includeShaders.TryGetValue(dependecy, out var shaders))
+                            {
+                                this.includeShaders[filepath] = shaders = [];
+                            }
+
+                            shaders.Add(filepath);
+
+                            var content = File.ReadAllBytes(dependecy);
+
+                            this.shaderIncludes[filepath][dependecy] = MD5.HashData(content);
+
+                            var filename = string.Intern(Path.GetFileName(dependecy));
+
+                            if (!watcher.Filters.Contains(filename))
+                            {
+                                watcher.Filters.Add(filename);
+                            }
+                        }
+                    }
+
+                    var reflection  = request.GetReflection();
+                    var entryPoints = reflection.GetEntryPoints();
+
+                    for (var i = 0; i < entryPoints.Length; i++)
+                    {
+                        var entryPoint = entryPoints[i];
+                        var shaderStage = entryPoint.GetStage() switch
+                        {
+                            SlangStage.Vertex   => VkShaderStageFlags.Vertex,
+                            SlangStage.Fragment => VkShaderStageFlags.Fragment,
+                            _ => throw new InvalidOperationException(),
+                        };
+
+                        this.Stages[shaderStage] = request.GetEntryPointCode(i);
+
+                        Logger.Info($"Shader {this.Name}.{shaderStage} [{filepath}] compiled with success.");
+                    }
+
+                    return true;
+                }
+                else
+                {
+                    var diagnostic = request.GetDiagnosticOutput()!;
+
+                    if (!allowFailure)
+                    {
+                        throw new ShaderCompilationException(diagnostic);
+                    }
+
+                    Logger.Error(diagnostic);
+                }
+            }
+        }
+        catch (Exception)
+        {
+
+            throw;
         }
 
         return false;

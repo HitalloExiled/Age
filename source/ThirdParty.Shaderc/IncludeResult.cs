@@ -2,7 +2,7 @@ namespace ThirdParty.Shaderc;
 
 public struct IncludeResult
 {
-    public unsafe struct Native
+    internal unsafe struct Native
     {
         public byte*  SourceName;
         public size_t SourceNameLength;
