@@ -10,6 +10,7 @@
     <ProjectReference Include="..\Age.Platforms\Age.Platforms.csproj" />
     <ProjectReference Include="..\Age.Resources\Age.Resources.csproj" />
     <ProjectReference Include="..\ThirdParty.Shaderc\ThirdParty.Shaderc.csproj" />
+    <ProjectReference Include="..\ThirdParty.Slang\ThirdParty.Slang.csproj" />
     <ProjectReference Include="..\ThirdParty.SpirvCross\ThirdParty.SpirvCross.csproj" />
     <ProjectReference Include="..\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj" />
   </ItemGroup>

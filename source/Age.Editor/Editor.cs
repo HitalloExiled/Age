@@ -28,8 +28,8 @@ public class Editor : Node
         this.AppendChild(this.canvas);
         this.setup = ButtonTest.Setup;
 
-        this.Reload();
-        // this.CreateDemoScene();
+        // this.Reload();
+        this.CreateDemoScene();
     }
 
     private void CreateDemoScene()
