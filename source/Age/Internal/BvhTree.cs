@@ -198,7 +198,7 @@ public unsafe class BvhTree
             SingleCommand = new RectCommand
             {
                 Border = new Border(2, 0, color * new Color(1, 1, 1, 1)),
-                Flags  = Rendering.Shaders.Canvas.CanvasShader.Flags.ColorAsBackground,
+                Flags  = Shaders.CanvasShader.Flags.ColorAsBackground,
                 Rect   = new(
                     bvhNode.AABB.Size.X,
                     bvhNode.AABB.Size.Y,

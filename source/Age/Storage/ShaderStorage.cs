@@ -1,6 +1,6 @@
 using Age.Core;
 using Age.Rendering.Resources;
-using Age.Rendering.Shaders;
+using Age.Shaders;
 using Age.Rendering.Vulkan;
 using Age.RenderPasses;
 

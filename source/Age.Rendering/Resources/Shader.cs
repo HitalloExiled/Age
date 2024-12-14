@@ -18,29 +18,6 @@ namespace Age.Rendering.Resources;
 
 public class ShaderCompilationException(string message) : Exception(message);
 
-public enum StencilKind
-{
-    None,
-    Mask,
-    Content,
-}
-
-public struct ShaderOptions
-{
-    #region 4-bytes
-    public required VkSampleCountFlags RasterizationSamples;
-
-    public VkFrontFace FrontFace;
-    public StencilKind Stencil;
-    public uint        Subpass;
-    #endregion
-
-    #region 2-bytes
-    public bool Watch;
-
-    #endregion
-}
-
 public abstract class Shader(RenderPass renderPass) : Resource
 {
     public event Action? Changed;
@@ -63,9 +40,8 @@ where TPushConstant : IPushConstant
 {
     private const int DEBOUNCE_DELAY = 50;
 
-    private static readonly string            shadersPath        = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age.Rendering/Shaders") : Path.Join(AppContext.BaseDirectory, $"Shaders"));
-    private static readonly SlangSession      globalSlangSession = new();
-    private static readonly FileSystemWatcher watcher            = new(shadersPath) { EnableRaisingEvents = true, IncludeSubdirectories = true };
+    private static readonly string            shadersPath = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age/Shaders") : Path.Join(AppContext.BaseDirectory, $"Shaders"));
+    private static readonly FileSystemWatcher watcher     = new(shadersPath) { EnableRaisingEvents = true, IncludeSubdirectories = true };
 
     private readonly Dictionary<string, CancellationTokenSource>    cancellationTokenSources = [];
     private readonly HashSet<string>                                files                    = [];
@@ -74,6 +50,7 @@ where TPushConstant : IPushConstant
     private readonly Dictionary<string, Lock>                       locks                    = [];
     private readonly Dictionary<string, Dictionary<string, byte[]>> shaderIncludes           = [];
     private readonly Lock                                           shaderLock               = new();
+    private readonly SlangSession                                   slangSession             = new();
 
     private VkDescriptorSetLayout descriptorSetLayout;
     private VkPipeline            pipeline;
@@ -160,7 +137,7 @@ where TPushConstant : IPushConstant
 
     private bool CompileShader(string filepath, bool allowFailure = false, string? trigger = null) =>
         filepath.EndsWith(".slang")
-            ? this.CompileSlangShader(filepath, allowFailure)
+            ? this.CompileSlangShader(filepath, allowFailure, trigger)
             : this.CompileGLSLShader(filepath, allowFailure, trigger);
 
     private bool CompileGLSLShader(string filepath, bool allowFailure = false, string? trigger = null)
@@ -275,13 +252,14 @@ where TPushConstant : IPushConstant
 
                 this.shaderIncludes[filepath].Clear();
 
-                using var request = new SlangCompileRequest(globalSlangSession);
+                using var request = new SlangCompileRequest(slangSession);
 
                 var translationUnitIndex = request.AddTranslationUnit(SlangSourceLanguage.Slang, Path.GetFileName(filepath.AsSpan()));
 
+                request.AddSearchPath(Path.Join(shadersPath.AsSpan(), "Modules"));
                 request.AddTranslationUnitSourceString(translationUnitIndex, filepath, source);
                 request.SetCodeGenTarget(SlangCompileTarget.Spirv);
-                request.SetTargetProfile(0, globalSlangSession.FindProfile("spirv_1_0"));
+                request.SetTargetProfile(0, slangSession.FindProfile("spirv_1_0"));
 
                 if (request.Compile())
                 {
@@ -289,11 +267,16 @@ where TPushConstant : IPushConstant
 
                     foreach (var dependecy in dependencies)
                     {
+                        if (dependecy == "glsl")
+                        {
+                            continue;
+                        }
+
                         if (dependecy != filepath)
                         {
                             if (!this.includeShaders.TryGetValue(dependecy, out var shaders))
                             {
-                                this.includeShaders[filepath] = shaders = [];
+                                this.includeShaders[dependecy] = shaders = [];
                             }
 
                             shaders.Add(filepath);

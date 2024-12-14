@@ -1,4 +1,4 @@
-using static Age.Rendering.Shaders.Canvas.CanvasShader;
+using static Age.Shaders.CanvasShader;
 
 namespace Age.Elements.Layouts;
 

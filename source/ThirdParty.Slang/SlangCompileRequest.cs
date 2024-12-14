@@ -45,6 +45,21 @@ public unsafe class SlangCompileRequest : Disposable
         }
     }
 
+    public void AddSearchPath(string path) =>
+        this.AddSearchPath(path.AsSpan());
+
+    public void AddSearchPath(ReadOnlySpan<char> path)
+    {
+        Span<byte> buffer = stackalloc byte[Encoding.UTF8.GetByteCount(path)];
+
+        Encoding.UTF8.GetBytes(path, buffer);
+
+        fixed (byte* pPath = buffer)
+        {
+            PInvoke.spAddSearchPath(this.Handle, pPath);
+        }
+    }
+
     public int AddTranslationUnit(SlangSourceLanguage language, string? name) =>
         this.AddTranslationUnit(language, name.AsSpan());
 

@@ -15,10 +15,4 @@
     <ProjectReference Include="..\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="./Shaders/**/*.glsl" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="./Shaders/**/*.frag" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="./Shaders/**/*.vert" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
 </Project>
