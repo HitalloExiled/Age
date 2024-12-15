@@ -8,12 +8,16 @@ public unsafe class SlangCompileRequest : Disposable
 {
     internal SlangCompileRequestHandle Handle { get; }
 
+    public SlangSession Session { get; }
+
     public SlangCompileRequest(SlangSession session)
     {
         if ((this.Handle = PInvoke.spCreateCompileRequest(session.Handle)) == default)
         {
             throw new InvalidOperationException();
         }
+
+        this.Session = session;
     }
 
     protected override void Disposed(bool disposing) =>

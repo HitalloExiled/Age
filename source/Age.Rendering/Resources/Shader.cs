@@ -16,8 +16,6 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public class ShaderCompilationException(string message) : Exception(message);
-
 public abstract class Shader(RenderPass renderPass) : Resource
 {
     public event Action? Changed;
@@ -144,8 +142,8 @@ where TPushConstant : IPushConstant
     {
         var (shaderStage, shaderKind) = Path.GetExtension(filepath) switch
         {
-            ".frag"  => (VkShaderStageFlags.Fragment, ShaderKind.FragmentShader),
-            ".vert"  => (VkShaderStageFlags.Vertex,   ShaderKind.VertexShader),
+            ".frag" => (VkShaderStageFlags.Fragment, ShaderKind.FragmentShader),
+            ".vert" => (VkShaderStageFlags.Vertex,   ShaderKind.VertexShader),
             _ => throw new InvalidOperationException()
         };
 

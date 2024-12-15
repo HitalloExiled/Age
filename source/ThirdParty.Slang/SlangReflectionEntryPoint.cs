@@ -2,12 +2,10 @@ using System.Runtime.InteropServices;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflectionEntryPoint
+public unsafe class SlangReflectionEntryPoint : ManagedSlang
 {
-    internal SlangReflectionEntryPointHandle Handle { get; }
-
-    internal SlangReflectionEntryPoint(SlangReflectionEntryPointHandle handle) =>
-        this.Handle = handle;
+    internal SlangReflectionEntryPoint(nint handle) : base(handle)
+    { }
 
     public nint GetFunction() =>
         PInvoke.spReflectionEntryPoint_getFunction(this.Handle);

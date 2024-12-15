@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Age.Core;
+using Age.Core.Extensions;
 using Age.Core.Interop;
 using Age.Numerics;
 using Age.Rendering.Resources;
@@ -42,7 +43,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
     private VkSurfaceFormatKHR      surfaceFormat;
     private VkSwapchainExtensionKHR swapchainExtension = null!;
 
-    private IList<string> RequiredExtensions
+    private Span<string> RequiredExtensions
     {
         get
         {
@@ -58,7 +59,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
                 extensions.Add(VkDebugUtilsExtensionEXT.Name);
             }
 
-            return extensions;
+            return extensions.AsSpan();
         }
     }
 

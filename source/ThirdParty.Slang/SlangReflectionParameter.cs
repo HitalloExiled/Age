@@ -1,15 +1,9 @@
-using Age.Core;
-
 namespace ThirdParty.Slang;
 
-public class SlangReflectionParameter : Disposable
+public class SlangReflectionParameter : ManagedSlang
 {
-    public SlangReflectionParameterHandle Handle { get; }
-
-    internal SlangReflectionParameter(SlangReflectionParameterHandle handle) =>
-        this.Handle = handle;
-
-    protected override void Disposed(bool disposing) => throw new NotImplementedException();
+    internal SlangReflectionParameter(nint handle) : base(handle)
+    { }
 
     public uint GetBindingIndex() =>
         PInvoke.spReflectionParameter_GetBindingIndex(this.Handle);
