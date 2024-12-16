@@ -265,21 +265,21 @@ where TPushConstant : IPushConstant
         using var disposables = new Disposables();
         using var context     = new Context();
 
-        var entryPoints = reflection.GetEntryPoints();
+        var entryPoints = reflection.EntryPoints;
 
         Span<nint> entryPointNames = stackalloc nint[entryPoints.Length];
 
         for (var i = 0; i < entryPoints.Length; i++)
         {
             var entryPoint = entryPoints[i];
-            var stage      = entryPoint.GetStage() switch
+            var stage      = entryPoint.Stage switch
             {
                 SlangStage.Vertex => VkShaderStageFlags.Vertex,
                 SlangStage.Fragment => VkShaderStageFlags.Fragment,
                 _ => throw new InvalidOperationException("Unsuported shader stage"),
             };
 
-            var parameters = reflection.GetParameters();
+            var parameters = reflection.Parameters;
 
             foreach (var parameter in parameters)
             {

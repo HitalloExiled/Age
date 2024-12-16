@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -5,65 +6,46 @@ namespace ThirdParty.Slang;
 
 public unsafe class SlangReflectionType : ManagedSlang
 {
+    [field: AllowNull]
+    public SlangReflectionType? ElementType => field ??= PInvoke.spReflectionType_GetElementType(this.Handle) is var x && x != default ? new(x) : null;
+
+    [field: AllowNull]
+    public SlangReflectionGeneric? GenericContainer => field ??= PInvoke.spReflectionType_GetGenericContainer(this.Handle) is var x && x != default ? new(x) : null;
+
+    [field: AllowNull]
+    public string Name => field ??= Marshal.PtrToStringAnsi((nint)PInvoke.spReflectionType_GetName(this.Handle))!;
+
+    [field: AllowNull]
+    public SlangReflectionType? ResourceResultType => field ??= PInvoke.spReflectionType_GetResourceResultType(this.Handle) is var x && x != default ? new(x) : null;
+
+    public uint                ColumnCount             => PInvoke.spReflectionType_GetColumnCount(this.Handle);
+    public ulong               ElementCount            => PInvoke.spReflectionType_GetElementCount(this.Handle);
+    public uint                FieldCount              => PInvoke.spReflectionType_GetFieldCount(this.Handle);
+    public SlangTypeKind       Kind                    => PInvoke.spReflectionType_GetKind(this.Handle);
+    public SlangResourceAccess ResourceAccess          => PInvoke.spReflectionType_GetResourceAccess(this.Handle);
+    public SlangResourceShape  ResourceShape           => PInvoke.spReflectionType_GetResourceShape(this.Handle);
+    public uint                RowCount                => PInvoke.spReflectionType_GetRowCount(this.Handle);
+    public SlangScalarType     ScalarType              => PInvoke.spReflectionType_GetScalarType(this.Handle);
+    public long                SpecializedTypeArgCount => PInvoke.spReflectionType_getSpecializedTypeArgCount(this.Handle);
+    public uint                UserAttributeCount      => PInvoke.spReflectionType_GetUserAttributeCount(this.Handle);
+
     internal SlangReflectionType(nint handle) : base(handle)
     { }
 
-    public SlangReflectionUserAttributeHandle FindUserAttributeByName(string name)
+    public SlangReflectionUserAttribute FindUserAttributeByName(string name)
     {
         fixed (byte* pName = Encoding.UTF8.GetBytes(name))
         {
-            return PInvoke.spReflectionType_FindUserAttributeByName(this.Handle, pName);
+            return new(PInvoke.spReflectionType_FindUserAttributeByName(this.Handle, pName));
         }
     }
 
-    public uint GetColumnCount() =>
-        PInvoke.spReflectionType_GetColumnCount(this.Handle);
+    public SlangReflectionVariableLayout GetFieldByIndex(uint index) =>
+        new(PInvoke.spReflectionType_GetFieldByIndex(this.Handle, index));
 
-    public ulong GetElementCount() =>
-        PInvoke.spReflectionType_GetElementCount(this.Handle);
-
-    public SlangReflectionTypeHandle GetElementType() =>
-        PInvoke.spReflectionType_GetElementType(this.Handle);
-
-    public SlangReflectionVariableLayoutHandle GetFieldByIndex(uint index) =>
-        PInvoke.spReflectionType_GetFieldByIndex(this.Handle, index);
-
-    public uint GetFieldCount() =>
-        PInvoke.spReflectionType_GetFieldCount(this.Handle);
-
-    public SlangReflectionGenericHandle GetGenericContainer() =>
-        PInvoke.spReflectionType_GetGenericContainer(this.Handle);
-
-    public SlangTypeKind GetKind() =>
-        PInvoke.spReflectionType_GetKind(this.Handle);
-
-    public string GetName() =>
-        Marshal.PtrToStringAnsi((nint)PInvoke.spReflectionType_GetName(this.Handle))!;
-
-    public SlangResourceAccess GetResourceAccess() =>
-        PInvoke.spReflectionType_GetResourceAccess(this.Handle);
-
-    public SlangReflectionTypeHandle GetResourceResultType() =>
-        PInvoke.spReflectionType_GetResourceResultType(this.Handle);
-
-    public SlangResourceShape GetResourceShape() =>
-        PInvoke.spReflectionType_GetResourceShape(this.Handle);
-
-    public uint GetRowCount() =>
-        PInvoke.spReflectionType_GetRowCount(this.Handle);
-
-    public SlangScalarType GetScalarType() =>
-        PInvoke.spReflectionType_GetScalarType(this.Handle);
-
-    public SlangInt getSpecializedTypeArgCount() =>
-        PInvoke.spReflectionType_getSpecializedTypeArgCount(this.Handle);
-
-    public SlangReflectionType getSpecializedTypeArgType(long index) =>
+    public SlangReflectionType GetSpecializedTypeArgType(long index) =>
         new(PInvoke.spReflectionType_getSpecializedTypeArgType(this.Handle, index));
 
     public SlangReflectionUserAttribute GetUserAttribute(uint index) =>
         new(PInvoke.spReflectionType_GetUserAttribute(this.Handle, index));
-
-    public uint GetUserAttributeCount() =>
-        PInvoke.spReflectionType_GetUserAttributeCount(this.Handle);
 }

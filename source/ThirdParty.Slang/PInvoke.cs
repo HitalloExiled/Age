@@ -424,4 +424,27 @@ internal static unsafe partial class PInvoke
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool spReflectionVariable_HasDefaultValue(SlangReflectionVariableHandle inVar);
     #endregion
+
+    #region SlangReflectionVariableLayout
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial size_t spReflectionVariableLayout_GetOffset(SlangReflectionVariableLayoutHandle inVarLayout, SlangParameterCategory category);
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangReflectionVariableLayoutHandle spReflectionVariableLayout_getPendingDataLayout(SlangReflectionVariableLayoutHandle inVarLayout);
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial byte* spReflectionVariableLayout_GetSemanticName(SlangReflectionVariableLayoutHandle inVarLayout);
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial size_t spReflectionVariableLayout_GetSpace(SlangReflectionVariableLayoutHandle inVarLayout, SlangParameterCategory category);
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangStage spReflectionVariableLayout_getStage(SlangReflectionVariableLayoutHandle inVarLayout);
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangReflectionTypeLayoutHandle spReflectionVariableLayout_GetTypeLayout(SlangReflectionVariableLayoutHandle inVarLayout);
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangReflectionVariableHandle spReflectionVariableLayout_GetVariable(SlangReflectionVariableLayoutHandle inVarLayout);
+    #endregion
 }

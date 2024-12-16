@@ -293,12 +293,12 @@ where TPushConstant : IPushConstant
                     }
 
                     var reflection  = request.GetReflection();
-                    var entryPoints = reflection.GetEntryPoints();
+                    var entryPoints = reflection.EntryPoints;
 
                     for (var i = 0; i < entryPoints.Length; i++)
                     {
-                        var entryPoint = entryPoints[i];
-                        var shaderStage = entryPoint.GetStage() switch
+                        var entryPoint  = entryPoints[i];
+                        var shaderStage = entryPoint.Stage switch
                         {
                             SlangStage.Vertex   => VkShaderStageFlags.Vertex,
                             SlangStage.Fragment => VkShaderStageFlags.Fragment,
