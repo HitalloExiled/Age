@@ -146,8 +146,9 @@ public class SlangCompileRequestTest
 
         var reflection = request.GetReflection();
 
-        var ubo            = reflection.GlobalParamsVarLayout.TypeLayout?.Fields[0].Variable?.Name;
-        var sampledTexture = reflection.GlobalParamsVarLayout.TypeLayout?.Fields[1].Variable?.Name;
+        var x = reflection.GlobalParamsVarLayout.TypeLayout.CategoryCount;
+        var y = reflection.GlobalParamsVarLayout.TypeLayout?.Fields[0].TypeLayout.Type?.ElementType?.Fields[0].TypeLayout.Type;
+        var z = reflection.GlobalParamsVarLayout.TypeLayout?.Fields[1].Variable?.Name;
 
         // Assert.Equal(2u, reflection.EntryPointCount);
         // Assert.Equal(0u, reflection.GlobalConstantBufferBinding);

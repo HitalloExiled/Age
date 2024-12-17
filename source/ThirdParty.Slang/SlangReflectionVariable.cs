@@ -14,7 +14,7 @@ public unsafe class SlangReflectionVariable : ManagedSlang
     // public SlangReflectionGeneric? GenericContainer => field ??= PInvoke.spReflectionVariable_GetGenericContainer(this.Handle) is var x && x != default ? new(x) : null;
 
     [field: AllowNull]
-    public SlangReflectionType ReflectionType => field ??= new(PInvoke.spReflectionVariable_GetType(this.Handle));
+    public SlangReflectionType Type => field ??= new(PInvoke.spReflectionVariable_GetType(this.Handle));
 
     [field: AllowNull]
     public SlangReflectionUserAttribute[] UserAttributes

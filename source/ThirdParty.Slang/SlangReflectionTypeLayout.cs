@@ -40,10 +40,10 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang
     public SlangReflectionTypeLayout? PendingDataTypeLayout => field ??= PInvoke.spReflectionTypeLayout_getPendingDataTypeLayout(this.Handle) is var x && x != default ? new(x) : null;
 
     [field: AllowNull]
-    public SlangReflectionType? ReflectionType => field ??= PInvoke.spReflectionTypeLayout_GetType(this.Handle) is var x && x != default ? new(x) : null;
+    public SlangReflectionVariableLayout? SpecializedTypePendingDataVarLayout => field ??= PInvoke.spReflectionTypeLayout_getSpecializedTypePendingDataVarLayout(this.Handle) is var x && x != default ? new(x) : null;
 
     [field: AllowNull]
-    public SlangReflectionVariableLayout? SpecializedTypePendingDataVarLayout => field ??= PInvoke.spReflectionTypeLayout_getSpecializedTypePendingDataVarLayout(this.Handle) is var x && x != default ? new(x) : null;
+    public SlangReflectionType? Type => field ??= PInvoke.spReflectionTypeLayout_GetType(this.Handle) is var x && x != default ? new(x) : null;
 
     public uint          CategoryCount       => PInvoke.spReflectionTypeLayout_GetCategoryCount(this.Handle);
     public uint          FieldCount          => PInvoke.spReflectionTypeLayout_GetFieldCount(this.Handle);
