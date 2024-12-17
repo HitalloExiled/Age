@@ -9,14 +9,53 @@ public unsafe class SlangReflectionType : ManagedSlang
     [field: AllowNull]
     public SlangReflectionType? ElementType => field ??= PInvoke.spReflectionType_GetElementType(this.Handle) is var x && x != default ? new(x) : null;
 
-    [field: AllowNull]
-    public SlangReflectionGeneric? GenericContainer => field ??= PInvoke.spReflectionType_GetGenericContainer(this.Handle) is var x && x != default ? new(x) : null;
+    // TODO: Investigate crash
+    // [field: AllowNull]
+    // public SlangReflectionGeneric? GenericContainer => field ??= PInvoke.spReflectionType_GetGenericContainer(this.Handle) is var x && x != default ? new(x) : null;
 
     [field: AllowNull]
     public string Name => field ??= Marshal.PtrToStringAnsi((nint)PInvoke.spReflectionType_GetName(this.Handle))!;
 
     [field: AllowNull]
     public SlangReflectionType? ResourceResultType => field ??= PInvoke.spReflectionType_GetResourceResultType(this.Handle) is var x && x != default ? new(x) : null;
+
+    [field: AllowNull]
+    public SlangReflectionVariableLayout[] Fields
+    {
+        get
+        {
+            if (field == null)
+            {
+                field = new SlangReflectionVariableLayout[this.FieldCount];
+
+                for (var i = 0; i < field.Length; i++)
+                {
+                    field[i] = this.GetFieldByIndex((uint)i);
+                }
+            }
+
+            return field;
+        }
+    }
+
+    [field: AllowNull]
+    public SlangReflectionUserAttribute[] UserAttributes
+    {
+        get
+        {
+            if (field == null)
+            {
+                field = new SlangReflectionUserAttribute[this.UserAttributeCount];
+
+                for (var i = 0; i < field.Length; i++)
+                {
+                    field[i] = this.GetUserAttribute((uint)i);
+                }
+            }
+
+            return field;
+        }
+    }
 
     public uint                ColumnCount             => PInvoke.spReflectionType_GetColumnCount(this.Handle);
     public ulong               ElementCount            => PInvoke.spReflectionType_GetElementCount(this.Handle);

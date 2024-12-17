@@ -18,6 +18,25 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang
     public SlangReflectionVariableLayout? ExplicitCounter => field ??= PInvoke.spReflectionTypeLayout_GetExplicitCounter(this.Handle) is var x && x != default ? new(x) : null;
 
     [field: AllowNull]
+    public SlangReflectionVariableLayout[] Fields
+    {
+        get
+        {
+            if (field == null)
+            {
+                field = new SlangReflectionVariableLayout[this.FieldCount];
+
+                for (var i = 0; i < field.Length; i++)
+                {
+                    field[i] = this.GetFieldByIndex((uint)i);
+                }
+            }
+
+            return field;
+        }
+    }
+
+    [field: AllowNull]
     public SlangReflectionTypeLayout? PendingDataTypeLayout => field ??= PInvoke.spReflectionTypeLayout_getPendingDataTypeLayout(this.Handle) is var x && x != default ? new(x) : null;
 
     [field: AllowNull]
@@ -26,10 +45,11 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang
     [field: AllowNull]
     public SlangReflectionVariableLayout? SpecializedTypePendingDataVarLayout => field ??= PInvoke.spReflectionTypeLayout_getSpecializedTypePendingDataVarLayout(this.Handle) is var x && x != default ? new(x) : null;
 
-    public uint          CategoryCount     => PInvoke.spReflectionTypeLayout_GetCategoryCount(this.Handle);
-    public uint          FieldCount        => PInvoke.spReflectionTypeLayout_GetFieldCount(this.Handle);
-    public int           GenericParamIndex => PInvoke.spReflectionTypeLayout_getGenericParamIndex(this.Handle);
-    public SlangTypeKind Kind              => PInvoke.spReflectionTypeLayout_getKind(this.Handle);
+    public uint          CategoryCount       => PInvoke.spReflectionTypeLayout_GetCategoryCount(this.Handle);
+    public uint          FieldCount          => PInvoke.spReflectionTypeLayout_GetFieldCount(this.Handle);
+    public int           GenericParamIndex   => PInvoke.spReflectionTypeLayout_getGenericParamIndex(this.Handle);
+    public SlangTypeKind Kind                => PInvoke.spReflectionTypeLayout_getKind(this.Handle);
+    public long          SubObjectRangeCount => PInvoke.spReflectionTypeLayout_getSubObjectRangeCount(this.Handle);
 
     internal SlangReflectionTypeLayout(SlangReflectionTypeLayoutHandle handle) : base(handle)
     { }
@@ -102,9 +122,6 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang
 
     public long GetSubObjectRangeBindingRangeIndex(long subObjectRangeIndex) =>
         PInvoke.spReflectionTypeLayout_getSubObjectRangeBindingRangeIndex(this.Handle, subObjectRangeIndex);
-
-    public long GetSubObjectRangeCount() =>
-        PInvoke.spReflectionTypeLayout_getSubObjectRangeCount(this.Handle);
 
     public long GetSubObjectRangeDescriptorRangeBindingCount(long subObjectRangeIndex, long bindingRangeIndexInSubObject) =>
         PInvoke.spReflectionTypeLayout_getSubObjectRangeDescriptorRangeBindingCount(this.Handle, subObjectRangeIndex, bindingRangeIndexInSubObject);

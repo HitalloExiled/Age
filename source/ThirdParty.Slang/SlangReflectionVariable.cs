@@ -9,13 +9,34 @@ public unsafe class SlangReflectionVariable : ManagedSlang
     [field: AllowNull]
     public string Name => field ??= Marshal.PtrToStringAnsi((nint)PInvoke.spReflectionVariable_GetName(this.Handle))!;
 
-    [field: AllowNull]
-    public SlangReflectionGeneric? GenericContainer => field ??= PInvoke.spReflectionVariable_GetGenericContainer(this.Handle) is var x && x != default ? new(x) : null;
+    // TODO: Investigate crash
+    // [field: AllowNull]
+    // public SlangReflectionGeneric? GenericContainer => field ??= PInvoke.spReflectionVariable_GetGenericContainer(this.Handle) is var x && x != default ? new(x) : null;
 
     [field: AllowNull]
     public SlangReflectionType ReflectionType => field ??= new(PInvoke.spReflectionVariable_GetType(this.Handle));
 
-    public bool HasDefaultValue => PInvoke.spReflectionVariable_HasDefaultValue(this.Handle);
+    [field: AllowNull]
+    public SlangReflectionUserAttribute[] UserAttributes
+    {
+        get
+        {
+            if (field == null)
+            {
+                field = new SlangReflectionUserAttribute[this.UserAttributeCount];
+
+                for (var i = 0; i < field.Length; i++)
+                {
+                    field[i] = this.GetUserAttribute((uint)i);
+                }
+            }
+
+            return field;
+        }
+    }
+
+    public bool HasDefaultValue    => PInvoke.spReflectionVariable_HasDefaultValue(this.Handle);
+    public uint UserAttributeCount => PInvoke.spReflectionVariable_GetUserAttributeCount(this.Handle);
 
     internal SlangReflectionVariable(nint handle) : base(handle)
     { }
@@ -42,7 +63,4 @@ public unsafe class SlangReflectionVariable : ManagedSlang
 
     public SlangReflectionUserAttribute GetUserAttribute(uint index) =>
         new(PInvoke.spReflectionVariable_GetUserAttribute(this.Handle, index));
-
-    public uint GetUserAttributeCount() =>
-        PInvoke.spReflectionVariable_GetUserAttributeCount(this.Handle);
 }

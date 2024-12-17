@@ -19,7 +19,7 @@ public unsafe class SlangReflection(SlangCompileRequest request) : ManagedSlang(
 
                 for (var i = 0; i < field.Length; i++)
                 {
-                    field[i] = new(PInvoke.spReflection_getEntryPointByIndex(this.Handle, (uint)i));
+                    field[i] = this.GetEntryPointByIndex((uint)i);
                 }
             }
 
@@ -33,7 +33,6 @@ public unsafe class SlangReflection(SlangCompileRequest request) : ManagedSlang(
     [field: AllowNull]
     public SlangReflectionVariableLayout GlobalParamsVarLayout => field ??= new(PInvoke.spReflection_getGlobalParamsVarLayout(this.Handle));
 
-
     [field: AllowNull]
     public SlangReflectionParameter[] Parameters
     {
@@ -45,7 +44,7 @@ public unsafe class SlangReflection(SlangCompileRequest request) : ManagedSlang(
 
                 for (var i = 0; i < field.Length; i++)
                 {
-                    field[i] = new(PInvoke.spReflection_GetParameterByIndex(this.Handle, (uint)i));
+                    field[i] = this.GetParameterByIndex((uint)i);
                 }
             }
 
@@ -64,7 +63,7 @@ public unsafe class SlangReflection(SlangCompileRequest request) : ManagedSlang(
 
                 for (var i = 0; i < field.Length; i++)
                 {
-                    field[i] = new(PInvoke.spReflection_GetTypeParameterByIndex(this.Handle, (uint)i));
+                    field[i] = this.GetTypeParameterByIndex((uint)i);
                 }
             }
 

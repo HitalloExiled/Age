@@ -13,4 +13,13 @@ public abstract class ManagedSlang
 
         this.Handle = handle;
     }
+
+    public static bool operator == (ManagedSlang left, ManagedSlang right) => left.Handle == right.Handle;
+    public static bool operator != (ManagedSlang left, ManagedSlang right) => left.Handle != right.Handle;
+
+    public override bool Equals(object? obj) =>
+        obj is ManagedSlang managed && managed.Handle == this.Handle;
+
+    public override int GetHashCode() =>
+        this.Handle.GetHashCode();
 }

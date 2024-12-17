@@ -70,92 +70,62 @@ public class SlangCompileRequestTest
 
         var source =
         """
-        struct AssembledVertex
+        struct UniformBufferObject
         {
-            float3 position : POSITION;
-            float3 normal   : NORMAL;
-            float2 uv       : TEXCOORD;
+            float4x4 model;
+            float4x4 view;
+            float4x4 proj;
         };
 
-        struct RasterVertex
+        [vk::binding(0)]
+        cbuffer ubo
         {
-            float3 worldPosition;
-            float3 worldNormal;
-            float2 uv;
+            UniformBufferObject ubo;
+        }
+
+        [vk::binding(1)]
+        Sampler2D sampledTexture;
+
+        struct VertexInput
+        {
+            float3 position : LOCATION0;
+            float3 color    : LOCATION1;
+            float2 uv       : LOCATION2;
         };
 
-        struct Model
+        struct VertexOutput
         {
-            float3x4 modelToWorld;
-            float3x4 modelToWorld_inverseTranspose;
-        }
+            float4 position : SV_Position;
+            float3 color    : LOCATION0;
+            float2 uv       : LOCATION1;
+        };
 
-        struct Material
+        struct FragmentInput
         {
-            Texture2D<float3> albedoMap;
-            Texture2D<float3> normalMap;
-            Texture2D<float> glossMap;
-            SamplerState sampler;
-            float2 uvScale;
-            float2 uvBias;
-        }
-
-        struct Camera
-        {
-            float3x4 worldToView;
-            float3x4 worldToView_inverseTranspose;
-
-            float4x4 viewToProj;
-        }
-
-        struct DirectionalLight
-        {
-            float3 intensity;
-            float3 direction;
-        }
-
-        struct Environment
-        {
-            TextureCube environmentMap;
-            DirectionalLight light;
-        }
-
-        uniform Model                       model;
-        uniform ParameterBlock<Material>    material;
-        uniform ConstantBuffer<Camera>      camera;
-        uniform ParameterBlock<Environment> environment;
+            float3 color : LOCATION0;
+            float2 uv    : LOCATION1;
+        };
 
         [shader("vertex")]
-        [require(sm_6_0)]
-        void vertexMain(
-            in  AssembledVertex assembledVertex : A,
-            out RasterVertex    rasterVertex    : R,
-            in  uint            vertexID        : SV_VertexID,
-            out float4          projPosition    :  SV_Position
-        )
+        VertexOutput main(VertexInput input)
         {
-            float3 worldPosition = mul(model.modelToWorld, float4(assembledVertex.position,1));
+            var worldPosition = mul(float4(input.position, 1.0), ubo.model);
+            var viewPosition  = mul(worldPosition, ubo.view);
+            var clipPosition  = mul(viewPosition, ubo.proj);
 
-            rasterVertex.worldPosition = worldPosition;
-            rasterVertex.worldNormal = mul(model.modelToWorld_inverseTranspose, float4(assembledVertex.normal,0));
-            rasterVertex.uv = assembledVertex.uv;
-
-            float3 viewPosition = mul(camera.worldToView, float4(worldPosition,1));
-            projPosition = mul(camera.viewToProj, float4(viewPosition,1));
+            return
+            {
+                clipPosition,
+                input.color,
+                input.uv
+            };
         }
 
         [shader("fragment")]
-        [require(sm_6_0)]
-        float4 fragmentMain(in RasterVertex vertex : R) : SV_Target0
+        float4 main(FragmentInput input) : SV_Target
         {
-            float3 normal = vertex.worldNormal;
-
-            float3 albedo = material.albedoMap.Sample(material.sampler, vertex.uv);
-
-            float3 color = albedo * max(0, dot(normal, environment.light.direction));
-            return float4(color, 1);
+            return sampledTexture.Sample(input.uv);
         }
-
         """;
 
         var translationUnitIndex = request.AddTranslationUnit(SlangSourceLanguage.Slang, null);
@@ -175,6 +145,9 @@ public class SlangCompileRequestTest
         var dependencies = request.GetDependencyFiles();
 
         var reflection = request.GetReflection();
+
+        var ubo            = reflection.GlobalParamsVarLayout.TypeLayout?.Fields[0].Variable?.Name;
+        var sampledTexture = reflection.GlobalParamsVarLayout.TypeLayout?.Fields[1].Variable?.Name;
 
         // Assert.Equal(2u, reflection.EntryPointCount);
         // Assert.Equal(0u, reflection.GlobalConstantBufferBinding);

@@ -24,7 +24,7 @@ public unsafe class SlangReflectionEntryPoint : ManagedSlang
 
                 for (var i = 0; i < field.Length; i++)
                 {
-                    field[i] = new(PInvoke.spReflectionEntryPoint_getParameterByIndex(this.Handle, (uint)i));
+                    field[i] = this.GetParameterByIndex((uint)i);
                 }
             }
 
