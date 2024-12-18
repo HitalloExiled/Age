@@ -4,12 +4,12 @@ using System.Text;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflectionType : ManagedSlang
+public unsafe class SlangReflectionType : ManagedSlang<SlangReflectionType>
 {
     [field: AllowNull]
     public SlangReflectionType? ElementType => field ??= PInvoke.spReflectionType_GetElementType(this.Handle) is var x && x != default ? new(x) : null;
 
-    // TODO: Investigate crash
+    // TODO: Report crash
     // [field: AllowNull]
     // public SlangReflectionGeneric? GenericContainer => field ??= PInvoke.spReflectionType_GetGenericContainer(this.Handle) is var x && x != default ? new(x) : null;
 
@@ -20,13 +20,13 @@ public unsafe class SlangReflectionType : ManagedSlang
     public SlangReflectionType? ResourceResultType => field ??= PInvoke.spReflectionType_GetResourceResultType(this.Handle) is var x && x != default ? new(x) : null;
 
     [field: AllowNull]
-    public SlangReflectionVariableLayout[] Fields
+    public SlangReflectionVariable[] Fields
     {
         get
         {
             if (field == null)
             {
-                field = new SlangReflectionVariableLayout[this.FieldCount];
+                field = new SlangReflectionVariable[this.FieldCount];
 
                 for (var i = 0; i < field.Length; i++)
                 {
@@ -68,8 +68,11 @@ public unsafe class SlangReflectionType : ManagedSlang
     public long                SpecializedTypeArgCount => PInvoke.spReflectionType_getSpecializedTypeArgCount(this.Handle);
     public uint                UserAttributeCount      => PInvoke.spReflectionType_GetUserAttributeCount(this.Handle);
 
-    internal SlangReflectionType(nint handle) : base(handle)
+    internal SlangReflectionType(Handle<SlangReflectionType> handle) : base(handle)
     { }
+
+    public SlangReflectionType ApplySpecializations(SlangReflectionGeneric generic) =>
+        new(PInvoke.spReflectionType_applySpecializations(this.Handle, generic.Handle));
 
     public SlangReflectionUserAttribute FindUserAttributeByName(string name)
     {
@@ -79,7 +82,7 @@ public unsafe class SlangReflectionType : ManagedSlang
         }
     }
 
-    public SlangReflectionVariableLayout GetFieldByIndex(uint index) =>
+    public SlangReflectionVariable GetFieldByIndex(uint index) =>
         new(PInvoke.spReflectionType_GetFieldByIndex(this.Handle, index));
 
     public SlangReflectionType GetSpecializedTypeArgType(long index) =>

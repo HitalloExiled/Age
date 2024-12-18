@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflection(SlangCompileRequest request) : ManagedSlang(PInvoke.spGetReflection(request.Handle))
+public unsafe class SlangReflection(SlangCompileRequest request) : ManagedSlang<SlangReflection>(PInvoke.spGetReflection(request.Handle))
 {
     public SlangCompileRequest Request { get; } = request;
 

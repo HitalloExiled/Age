@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflectionTypeParameter : ManagedSlang
+public unsafe class SlangReflectionTypeParameter : ManagedSlang<SlangReflectionTypeParameter>
 {
     [field: AllowNull]
     public string Name => field ??= Marshal.PtrToStringAnsi((nint)PInvoke.spReflectionTypeParameter_GetName(this.Handle))!;
@@ -11,9 +11,9 @@ public unsafe class SlangReflectionTypeParameter : ManagedSlang
     public uint ConstraintCount => PInvoke.spReflectionTypeParameter_GetConstraintCount(this.Handle);
     public uint Index           => PInvoke.spReflectionTypeParameter_GetIndex(this.Handle);
 
-    internal SlangReflectionTypeParameter(nint handle) : base(handle)
+    internal SlangReflectionTypeParameter(Handle<SlangReflectionTypeParameter> handle) : base(handle)
     { }
 
-    public nint GetConstraintByIndex(uint index) =>
-        PInvoke.spReflectionTypeParameter_GetConstraintByIndex(this.Handle, index);
+    public SlangReflectionType GetConstraintByIndex(uint index) =>
+        new(PInvoke.spReflectionTypeParameter_GetConstraintByIndex(this.Handle, index));
 }

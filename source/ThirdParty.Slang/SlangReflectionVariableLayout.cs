@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflectionVariableLayout : ManagedSlang
+public unsafe class SlangReflectionVariableLayout : ManagedSlang<SlangReflectionVariableLayout>
 {
     [field: AllowNull]
     public string SemanticName => field ??= Marshal.PtrToStringAnsi((nint)PInvoke.spReflectionVariableLayout_GetSemanticName(this.Handle))!;
@@ -19,7 +19,7 @@ public unsafe class SlangReflectionVariableLayout : ManagedSlang
 
     public SlangStage Stage => PInvoke.spReflectionVariableLayout_getStage(this.Handle);
 
-    internal SlangReflectionVariableLayout(nint handle) : base(handle)
+    internal SlangReflectionVariableLayout(Handle<SlangReflectionVariableLayout> handle) : base(handle)
     { }
 
     public ulong GetOffset(SlangParameterCategory category) =>

@@ -1,7 +1,7 @@
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflectionModifier : ManagedSlang
+public unsafe class SlangReflectionModifier : ManagedSlang<SlangReflectionModifier>
 {
-    internal SlangReflectionModifier(nint handle) : base(handle)
+    internal SlangReflectionModifier(Handle<SlangReflectionModifier> handle) : base(handle)
     { }
 }

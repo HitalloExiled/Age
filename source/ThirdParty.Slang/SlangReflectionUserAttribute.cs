@@ -3,14 +3,14 @@ using System.Runtime.InteropServices;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflectionUserAttribute : ManagedSlang
+public unsafe class SlangReflectionUserAttribute : ManagedSlang<SlangReflectionUserAttribute>
 {
     [field: AllowNull]
     public string Name => field ??= Marshal.PtrToStringAnsi((nint)PInvoke.spReflectionUserAttribute_GetName(this.Handle))!;
 
     public uint ArgumentCount => PInvoke.spReflectionUserAttribute_GetArgumentCount(this.Handle);
 
-    internal SlangReflectionUserAttribute(nint handle) : base(handle)
+    internal SlangReflectionUserAttribute(Handle<SlangReflectionUserAttribute> handle) : base(handle)
     { }
 
     public SlangResult GetArgumentValueFloat(uint index, Span<float> rs)

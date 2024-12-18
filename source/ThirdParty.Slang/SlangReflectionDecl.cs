@@ -1,7 +1,7 @@
 namespace ThirdParty.Slang;
 
-public class SlangReflectionDecl : ManagedSlang
+public class SlangReflectionDecl : ManagedSlang<SlangReflectionDecl>
 {
-    internal SlangReflectionDecl(nint handle) : base(handle)
+    internal SlangReflectionDecl(Handle<SlangReflectionDecl> handle) : base(handle)
     { }
 }

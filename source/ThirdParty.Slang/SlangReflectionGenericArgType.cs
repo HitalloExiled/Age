@@ -1,7 +1,7 @@
 namespace ThirdParty.Slang;
 
-public class SlangReflectionGenericArgType : ManagedSlang
+public class SlangReflectionGenericArgType : ManagedSlang<SlangReflectionGenericArgType>
 {
-    internal SlangReflectionGenericArgType(nint handle) : base(handle)
+    internal SlangReflectionGenericArgType(Handle<SlangReflectionGenericArgType> handle) : base(handle)
     { }
 }

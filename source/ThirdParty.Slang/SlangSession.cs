@@ -1,22 +1,14 @@
 using System.Text;
-using Age.Core;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangSession : Disposable
+public unsafe class SlangSession : DisposableManagedSlang<SlangSession>
 {
-    internal SlangSessionHandle Handle { get; }
-
-    public SlangSession()
-    {
-        if ((this.Handle = PInvoke.spCreateSession(null)) == default)
-        {
-            throw new InvalidOperationException();
-        }
-    }
+    public SlangSession() : base(PInvoke.spCreateSession(null))
+    { }
 
     protected override void Disposed(bool disposing) =>
-        PInvoke.spDestroyCompileRequest(this.Handle);
+        PInvoke.spDestroySession(this.Handle);
 
     public SlangProfileID FindProfile(string name)
     {
@@ -25,6 +17,4 @@ public unsafe class SlangSession : Disposable
             return PInvoke.spFindProfile(this.Handle, pName);
         }
     }
-
-    public object LoadModule(string filepath) => throw new NotImplementedException();
 }

@@ -1,24 +1,11 @@
 using System.Runtime.InteropServices;
 using System.Text;
-using Age.Core;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangCompileRequest : Disposable
+public unsafe class SlangCompileRequest(SlangSession session) : DisposableManagedSlang<SlangCompileRequest>(PInvoke.spCreateCompileRequest(session.Handle))
 {
-    internal SlangCompileRequestHandle Handle { get; }
-
-    public SlangSession Session { get; }
-
-    public SlangCompileRequest(SlangSession session)
-    {
-        if ((this.Handle = PInvoke.spCreateCompileRequest(session.Handle)) == default)
-        {
-            throw new InvalidOperationException();
-        }
-
-        this.Session = session;
-    }
+    public SlangSession Session { get; } = session;
 
     protected override void Disposed(bool disposing) =>
         PInvoke.spDestroyCompileRequest(this.Handle);

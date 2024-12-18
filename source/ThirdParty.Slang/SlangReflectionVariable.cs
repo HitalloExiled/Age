@@ -4,12 +4,12 @@ using System.Text;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflectionVariable : ManagedSlang
+public unsafe class SlangReflectionVariable : ManagedSlang<SlangReflectionVariable>
 {
     [field: AllowNull]
     public string Name => field ??= Marshal.PtrToStringAnsi((nint)PInvoke.spReflectionVariable_GetName(this.Handle))!;
 
-    // TODO: Investigate crash
+    // TODO: Report crash
     // [field: AllowNull]
     // public SlangReflectionGeneric? GenericContainer => field ??= PInvoke.spReflectionVariable_GetGenericContainer(this.Handle) is var x && x != default ? new(x) : null;
 
@@ -38,11 +38,11 @@ public unsafe class SlangReflectionVariable : ManagedSlang
     public bool HasDefaultValue    => PInvoke.spReflectionVariable_HasDefaultValue(this.Handle);
     public uint UserAttributeCount => PInvoke.spReflectionVariable_GetUserAttributeCount(this.Handle);
 
-    internal SlangReflectionVariable(nint handle) : base(handle)
+    internal SlangReflectionVariable(Handle<SlangReflectionVariable> handle) : base(handle)
     { }
 
-    public SlangReflectionVariable ApplySpecializations(SlangReflectionGenericHandle generic) =>
-        new(PInvoke.spReflectionVariable_applySpecializations(this.Handle, generic));
+    public SlangReflectionVariable ApplySpecializations(SlangReflectionGeneric generic) =>
+        new(PInvoke.spReflectionVariable_applySpecializations(this.Handle, generic.Handle));
 
     public SlangReflectionModifier? FindModifier(SlangModifierID modifierID)
     {

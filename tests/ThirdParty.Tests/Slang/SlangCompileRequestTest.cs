@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+using System.Text;
 using ThirdParty.Slang;
 
 namespace ThirdParty.Tests.Slang;
@@ -146,65 +148,116 @@ public class SlangCompileRequestTest
 
         var reflection = request.GetReflection();
 
-        var x = reflection.GlobalParamsVarLayout.TypeLayout.CategoryCount;
-        var y = reflection.GlobalParamsVarLayout.TypeLayout?.Fields[0].TypeLayout.Type?.ElementType?.Fields[0].TypeLayout.Type;
+        // var x = reflection.GlobalParamsVarLayout.TypeLayout.Type?.GenericContainer; // Crashes
+        var y = reflection.GlobalParamsVarLayout.TypeLayout?.Fields[0].TypeLayout.Type?.ElementType?.Fields[0].Type;
         var z = reflection.GlobalParamsVarLayout.TypeLayout?.Fields[1].Variable?.Name;
 
-        // Assert.Equal(2u, reflection.EntryPointCount);
-        // Assert.Equal(0u, reflection.GlobalConstantBufferBinding);
-        // Assert.Equal(96u, reflection.GlobalConstantBufferSize);
-        // Assert.NotNull(reflection.GlobalParamsTypeLayout);
-        //     Assert.Equal(1u, reflection.GlobalParamsTypeLayout.CategoryCount);
-        //     Assert.NotNull(reflection.GlobalParamsTypeLayout.ContainerVarLayout);
-        //         Assert.Null(reflection.GlobalParamsTypeLayout.ContainerVarLayout.PendingDataLayout);
-        //         Assert.Null(reflection.GlobalParamsTypeLayout.ContainerVarLayout.SemanticName);
-        //         Assert.Equal(default, reflection.GlobalParamsTypeLayout.ContainerVarLayout.Stage);
-        //         Assert.NotNull(reflection.GlobalParamsTypeLayout.ContainerVarLayout.TypeLayout);
-        //             Assert.Equal(1u, reflection.GlobalParamsTypeLayout.ContainerVarLayout.TypeLayout!.CategoryCount);
-        //             Assert.Null(reflection.GlobalParamsTypeLayout.ContainerVarLayout.TypeLayout!.ContainerVarLayout);
-        //             Assert.Null(reflection.GlobalParamsTypeLayout.ContainerVarLayout.TypeLayout!.ElementTypeLayout);
-        //             Assert.Null(reflection.GlobalParamsTypeLayout.ContainerVarLayout.TypeLayout!.ElementVarLayout);
-        //             Assert.Null(reflection.GlobalParamsTypeLayout.ContainerVarLayout.TypeLayout!.ExplicitCounter);
-        //             Assert.Equal(default, reflection.GlobalParamsTypeLayout.ContainerVarLayout.TypeLayout!.FieldCount);
-        //             Assert.Equal(-1, reflection.GlobalParamsTypeLayout.ContainerVarLayout.TypeLayout!.GenericParamIndex);
-        //             Assert.Equal(default, reflection.GlobalParamsTypeLayout.ContainerVarLayout.TypeLayout!.Kind);
-        //             Assert.Null(reflection.GlobalParamsTypeLayout.ContainerVarLayout.TypeLayout!.PendingDataTypeLayout);
-        //             Assert.Null(reflection.GlobalParamsTypeLayout.ContainerVarLayout.TypeLayout!.ReflectionType);
-        //             Assert.Null(reflection.GlobalParamsTypeLayout.ContainerVarLayout.TypeLayout!.SpecializedTypePendingDataVarLayout);
-        //         Assert.Null(reflection.GlobalParamsTypeLayout.ContainerVarLayout.Variable);
-        //     Assert.NotNull(reflection.GlobalParamsTypeLayout.ElementTypeLayout);
-        //     Assert.NotNull(reflection.GlobalParamsTypeLayout.ElementVarLayout);
-        //         Assert.Null(reflection.GlobalParamsTypeLayout.ElementVarLayout.PendingDataLayout);
-        //         Assert.Null(reflection.GlobalParamsTypeLayout.ElementVarLayout.SemanticName);
-        //         Assert.Equal(default, reflection.GlobalParamsTypeLayout.ElementVarLayout.Stage);
-        //         Assert.NotNull(reflection.GlobalParamsTypeLayout.ElementVarLayout.TypeLayout);
-        //         Assert.Null(reflection.GlobalParamsTypeLayout.ElementVarLayout.Variable);
-        //     Assert.Null(reflection.GlobalParamsTypeLayout.ExplicitCounter);
-        //     Assert.Equal(0u, reflection.GlobalParamsTypeLayout.FieldCount);
-        //     Assert.Equal(-1, reflection.GlobalParamsTypeLayout.GenericParamIndex);
-        //     Assert.Equal(SlangTypeKind.ConstantBuffer, reflection.GlobalParamsTypeLayout.Kind);
-        //     Assert.Null(reflection.GlobalParamsTypeLayout.PendingDataTypeLayout);
-        //     Assert.Null(reflection.GlobalParamsTypeLayout.ReflectionType);
-        //     Assert.Null(reflection.GlobalParamsTypeLayout.SpecializedTypePendingDataVarLayout);
+        // TODO: Implements asserts
+    }
 
-        // Assert.NotNull(reflection.GlobalParamsVarLayout);
-        // Assert.NotNull(reflection.Request);
-        // Assert.NotNull(reflection.Session);
-
-        foreach (var entryPoint in reflection.EntryPoints)
+    [Fact]
+    public unsafe void ReflectionUsingPInvoke()
+    {
+        var source =
+        """
+        struct UniformBufferObject
         {
-            foreach (var entryPointParameter in entryPoint.Parameters)
-            {
-                // Assert.NotNull(entryPointParameter.TypeLayout);
-                // Assert.NotNull(entryPointParameter.Variable);
-                // Assert.NotNull(entryPointParameter.Variable.Name);
-                // Assert.False(entryPointParameter.Variable.HasDefaultValue);
-                // Assert.NotNull(entryPointParameter.Variable.ReflectionType);
-                // Assert.NotNull(entryPointParameter.Variable.ReflectionType.ResourceResultType);
-                // Assert.NotNull(entryPointParameter.Variable.ReflectionType.ElementType);
-                // Assert.NotNull(entryPointParameter.Variable.GenericContainer);
-                // Assert.Null(entryPointParameter.PendingDataLayout);
-            }
+            float4x4 model;
+            float4x4 view;
+            float4x4 proj;
+        };
+
+        [vk::binding(0)]
+        cbuffer ubo
+        {
+            UniformBufferObject ubo;
         }
+
+        [vk::binding(1)]
+        Sampler2D sampledTexture;
+
+        struct VertexInput
+        {
+            float3 position : LOCATION0;
+            float3 color    : LOCATION1;
+            float2 uv       : LOCATION2;
+        };
+
+        struct VertexOutput
+        {
+            float4 position : SV_Position;
+            float3 color    : LOCATION0;
+            float2 uv       : LOCATION1;
+        };
+
+        struct FragmentInput
+        {
+            float3 color : LOCATION0;
+            float2 uv    : LOCATION1;
+        };
+
+        [shader("vertex")]
+        VertexOutput main(VertexInput input)
+        {
+            var worldPosition = mul(float4(input.position, 1.0), ubo.model);
+            var viewPosition  = mul(worldPosition, ubo.view);
+            var clipPosition  = mul(viewPosition, ubo.proj);
+
+            return
+            {
+                clipPosition,
+                input.color,
+                input.uv
+            };
+        }
+
+        [shader("fragment")]
+        float4 main(FragmentInput input) : SV_Target
+        {
+            return sampledTexture.Sample(input.uv);
+        }
+        """;
+
+        var session = PInvoke.spCreateSession(null);
+        var request = PInvoke.spCreateCompileRequest(session);
+
+        var translationUnitIndex = PInvoke.spAddTranslationUnit(request, SlangSourceLanguage.Slang, null);
+
+        fixed (byte* pName   = "shader.slang"u8)
+        fixed (byte* pSource = Encoding.UTF8.GetBytes(source))
+        {
+            PInvoke.spAddTranslationUnitSourceString(request, translationUnitIndex, pName, pSource);
+        }
+
+        PInvoke.spSetCodeGenTarget(request, SlangCompileTarget.Spirv);
+
+        fixed (byte* pProfile = "spirv_1_0"u8)
+        {
+            PInvoke.spSetTargetProfile(request, 0, PInvoke.spFindProfile(session, pProfile));
+        }
+
+        if (PInvoke.spCompile(request) < 0)
+        {
+            var diagnostic = Marshal.PtrToStringAnsi((nint)PInvoke.spGetDiagnosticOutput(request));
+            Console.WriteLine(diagnostic);
+        }
+
+        var reflection = PInvoke.spGetReflection(request);
+
+        //reflection.GlobalParamsVarLayout.TypeLayout.CategoryCount;
+        var reflection_GlobalParamsVarLayout                          = PInvoke.spReflection_getGlobalParamsVarLayout(reflection);
+        var reflection_GlobalParamsVarLayout_TypeLayout               = PInvoke.spReflectionVariableLayout_GetTypeLayout(reflection_GlobalParamsVarLayout);
+        var reflection_GlobalParamsVarLayout_TypeLayout_CategoryCount = PInvoke.spReflectionTypeLayout_GetCategoryCount(reflection_GlobalParamsVarLayout_TypeLayout);
+
+        // reflection.GlobalParamsVarLayout.TypeLayout?.Fields[0].TypeLayout.Type?.ElementType?.Fields[0].TypeLayout.Type;
+        var reflection_GlobalParamsVarLayout_TypeLayout_Fields0                                          = PInvoke.spReflectionTypeLayout_GetFieldByIndex(reflection_GlobalParamsVarLayout_TypeLayout, 0);
+        var reflection_GlobalParamsVarLayout_TypeLayout_Fields0_TypeLayout                               = PInvoke.spReflectionVariableLayout_GetTypeLayout(reflection_GlobalParamsVarLayout_TypeLayout_Fields0);
+        var reflection_GlobalParamsVarLayout_TypeLayout_Fields0_TypeLayout_Type                          = PInvoke.spReflectionTypeLayout_GetType(reflection_GlobalParamsVarLayout_TypeLayout_Fields0_TypeLayout);
+        var reflection_GlobalParamsVarLayout_TypeLayout_Fields0_TypeLayout_Type_ElementType              = PInvoke.spReflectionType_GetElementType(reflection_GlobalParamsVarLayout_TypeLayout_Fields0_TypeLayout_Type);
+        var reflection_GlobalParamsVarLayout_TypeLayout_Fields0_TypeLayout_Type_ElementType_Fields0      = PInvoke.spReflectionType_GetFieldByIndex(reflection_GlobalParamsVarLayout_TypeLayout_Fields0_TypeLayout_Type_ElementType, 0);
+        var reflection_GlobalParamsVarLayout_TypeLayout_Fields0_TypeLayout_Type_ElementType_Fields0_Type = PInvoke.spReflectionVariable_GetType(reflection_GlobalParamsVarLayout_TypeLayout_Fields0_TypeLayout_Type_ElementType_Fields0);
+
+        PInvoke.spDestroyCompileRequest(request);
+        PInvoke.spDestroySession(session);
     }
 }

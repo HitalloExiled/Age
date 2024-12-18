@@ -3,7 +3,7 @@ using System.Text;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflectionTypeLayout : ManagedSlang
+public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionTypeLayout>
 {
     [field: AllowNull]
     public SlangReflectionVariableLayout? ContainerVarLayout => field ??= PInvoke.spReflectionTypeLayout_getContainerVarLayout(this.Handle) is var x && x != default ? new(x) : null;
@@ -51,7 +51,7 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang
     public SlangTypeKind Kind                => PInvoke.spReflectionTypeLayout_getKind(this.Handle);
     public long          SubObjectRangeCount => PInvoke.spReflectionTypeLayout_getSubObjectRangeCount(this.Handle);
 
-    internal SlangReflectionTypeLayout(SlangReflectionTypeLayoutHandle handle) : base(handle)
+    internal SlangReflectionTypeLayout(Handle<SlangReflectionTypeLayout> handle) : base(handle)
     { }
 
     public long FindFieldIndexByName(string nameBegin, string nameEnd)
