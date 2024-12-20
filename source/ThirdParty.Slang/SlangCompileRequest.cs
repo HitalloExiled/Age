@@ -7,14 +7,41 @@ public unsafe class SlangCompileRequest(SlangSession session) : DisposableManage
 {
     public SlangSession Session { get; } = session;
 
+    public bool Compiled { get; private set; }
+
+    public int DependencyFileCount
+    {
+        get
+        {
+            this.AssertCompiled();
+            this.AssertNotDisposed();
+
+            return PInvoke.spGetDependencyFileCount(this.Handle);
+        }
+    }
+
+    private void AssertCompiled()
+    {
+        if (!this.Compiled)
+        {
+            throw new InvalidOperationException("Request not compiled");
+        }
+    }
+
     protected override void Disposed(bool disposing) =>
         PInvoke.spDestroyCompileRequest(this.Handle);
 
-    public int AddCodeGenTarget(SlangCompileTarget target) =>
-        PInvoke.spAddCodeGenTarget(this.Handle, target);
+    public int AddCodeGenTarget(SlangCompileTarget target)
+    {
+        this.AssertNotDisposed();
+
+        return PInvoke.spAddCodeGenTarget(this.Handle, target);
+    }
 
     public void AddCodeGenTarget(string path)
     {
+        this.AssertNotDisposed();
+
         fixed (byte* pPath = Encoding.UTF8.GetBytes(path))
         {
             PInvoke.spAddSearchPath(this.Handle, pPath);
@@ -26,6 +53,8 @@ public unsafe class SlangCompileRequest(SlangSession session) : DisposableManage
 
     public int AddEntryPoint(int translationUnitIndex, ReadOnlySpan<char> name, SlangStage stage)
     {
+        this.AssertNotDisposed();
+
         Span<byte> buffer = stackalloc byte[Encoding.UTF8.GetByteCount(name)];
 
         Encoding.UTF8.GetBytes(name, buffer);
@@ -41,6 +70,8 @@ public unsafe class SlangCompileRequest(SlangSession session) : DisposableManage
 
     public void AddSearchPath(ReadOnlySpan<char> path)
     {
+        this.AssertNotDisposed();
+
         Span<byte> buffer = stackalloc byte[Encoding.UTF8.GetByteCount(path)];
 
         Encoding.UTF8.GetBytes(path, buffer);
@@ -56,6 +87,8 @@ public unsafe class SlangCompileRequest(SlangSession session) : DisposableManage
 
     public int AddTranslationUnit(SlangSourceLanguage language, ReadOnlySpan<char> name)
     {
+        this.AssertNotDisposed();
+
         Span<byte> buffer = stackalloc byte[Encoding.UTF8.GetByteCount(name)];
 
         Encoding.UTF8.GetBytes(name, buffer);
@@ -71,6 +104,8 @@ public unsafe class SlangCompileRequest(SlangSession session) : DisposableManage
 
     public void AddTranslationUnitSourceFile(int translationUnitIndex, ReadOnlySpan<char> path)
     {
+        this.AssertNotDisposed();
+
         Span<byte> pathBuffer = stackalloc byte[Encoding.UTF8.GetByteCount(path)];
 
         Encoding.UTF8.GetBytes(path, pathBuffer);
@@ -86,6 +121,8 @@ public unsafe class SlangCompileRequest(SlangSession session) : DisposableManage
 
     public void AddTranslationUnitSourceString(int translationUnitIndex, ReadOnlySpan<char> path, ReadOnlySpan<byte> source)
     {
+        this.AssertNotDisposed();
+
         Span<byte> pathBuffer = stackalloc byte[Encoding.UTF8.GetByteCount(path)];
 
         Encoding.UTF8.GetBytes(path, pathBuffer);
@@ -97,15 +134,17 @@ public unsafe class SlangCompileRequest(SlangSession session) : DisposableManage
         }
     }
 
-    public int GetDependencyFileCount() =>
-        PInvoke.spGetDependencyFileCount(this.Handle);
+    public string GetDependencyFilePath(int index)
+    {
+        this.AssertCompiled();
+        this.AssertNotDisposed();
 
-    public string GetDependencyFilePath(int index) =>
-        Marshal.PtrToStringAnsi((nint)PInvoke.spGetDependencyFilePath(this.Handle, index))!;
+        return Marshal.PtrToStringAnsi((nint)PInvoke.spGetDependencyFilePath(this.Handle, index))!;
+    }
 
     public string[] GetDependencyFiles()
     {
-        var dependencies = new string[this.GetDependencyFileCount()];
+        var dependencies = new string[this.DependencyFileCount];
 
         for (var i = 0; i < dependencies.Length; i++)
         {
@@ -115,29 +154,61 @@ public unsafe class SlangCompileRequest(SlangSession session) : DisposableManage
         return dependencies;
     }
 
-    public SlangReflection GetReflection() =>
-        new(this);
+    public SlangReflection GetReflection()
+    {
+        this.AssertCompiled();
+        this.AssertNotDisposed();
 
-    public void SetCodeGenTarget(SlangCompileTarget target) =>
+        return new(this);
+    }
+
+    public void SetCodeGenTarget(SlangCompileTarget target)
+    {
+        this.AssertNotDisposed();
+
         PInvoke.spSetCodeGenTarget(this.Handle, target);
+    }
 
-    public void SetTargetProfile(int targetIndex, SlangProfileID profile) =>
+    public void SetTargetProfile(int targetIndex, SlangProfileID profile)
+    {
+        this.AssertNotDisposed();
+
         PInvoke.spSetTargetProfile(this.Handle, targetIndex, profile);
+    }
 
-    public void SetOptimizationLevel(SlangOptimizationLevel level) =>
+    public void SetOptimizationLevel(SlangOptimizationLevel level)
+    {
+        this.AssertNotDisposed();
+
         PInvoke.spSetOptimizationLevel(this.Handle, level);
+    }
 
-    public void SetDebugInfoLevel(SlangDebugInfoLevel level) =>
+    public void SetDebugInfoLevel(SlangDebugInfoLevel level)
+    {
+        this.AssertNotDisposed();
+
         PInvoke.spSetDebugInfoLevel(this.Handle, level);
+    }
 
-    public bool Compile() =>
-        PInvoke.spCompile(this.Handle) >= 0;
+    public bool Compile()
+    {
+        this.AssertNotDisposed();
 
-    public string? GetDiagnosticOutput() =>
-        Marshal.PtrToStringAnsi((nint)PInvoke.spGetDiagnosticOutput(this.Handle));
+        return this.Compiled = PInvoke.spCompile(this.Handle) >= 0;
+    }
+
+    public string? GetDiagnosticOutput()
+    {
+        this.AssertNotDisposed();
+
+        return Marshal.PtrToStringAnsi((nint)PInvoke.spGetDiagnosticOutput(this.Handle));
+    }
 
     public byte[] GetEntryPointCode(int entryPointIndex)
     {
+        this.AssertCompiled();
+        this.AssertNotDisposed();
+
         var size = 0UL;
 
         var result = PInvoke.spGetEntryPointCode(this.Handle, entryPointIndex, &size);

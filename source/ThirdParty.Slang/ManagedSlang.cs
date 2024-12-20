@@ -36,6 +36,9 @@ where T : DisposableManagedSlang<T>
     ~DisposableManagedSlang() =>
         this.Dispose(false);
 
+    protected void AssertNotDisposed() =>
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
     protected void Dispose(bool disposing)
     {
         if (!this.disposed)

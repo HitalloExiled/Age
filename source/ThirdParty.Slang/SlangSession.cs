@@ -12,6 +12,8 @@ public unsafe class SlangSession : DisposableManagedSlang<SlangSession>
 
     public SlangProfileID FindProfile(string name)
     {
+        this.AssertNotDisposed();
+
         fixed (byte* pName = Encoding.UTF8.GetBytes(name))
         {
             return PInvoke.spFindProfile(this.Handle, pName);
