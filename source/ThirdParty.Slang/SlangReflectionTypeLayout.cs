@@ -6,6 +6,44 @@ namespace ThirdParty.Slang;
 public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionTypeLayout>
 {
     [field: AllowNull]
+    public SlangBindingType[] BindingRangeTypes
+    {
+        get
+        {
+            if (field == null)
+            {
+                field = new SlangBindingType[this.CategoryCount];
+
+                for (var i = 0; i < field.Length; i++)
+                {
+                    field[i] = this.GetBindingRangeType((uint)i);
+                }
+            }
+
+            return field;
+        }
+    }
+
+    [field: AllowNull]
+    public SlangParameterCategory[] Categories
+    {
+        get
+        {
+            if (field == null)
+            {
+                field = new SlangParameterCategory[this.CategoryCount];
+
+                for (var i = 0; i < field.Length; i++)
+                {
+                    field[i] = this.GetCategoryByIndex((uint)i);
+                }
+            }
+
+            return field;
+        }
+    }
+
+    [field: AllowNull]
     public SlangReflectionVariableLayout? ContainerVarLayout => field ??= PInvoke.spReflectionTypeLayout_getContainerVarLayout(this.Handle) is var x && x != default ? new(x) : null;
 
     [field: AllowNull]
@@ -45,11 +83,16 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionType
     [field: AllowNull]
     public SlangReflectionType? Type => field ??= PInvoke.spReflectionTypeLayout_GetType(this.Handle) is var x && x != default ? new(x) : null;
 
-    public uint          CategoryCount       => PInvoke.spReflectionTypeLayout_GetCategoryCount(this.Handle);
-    public uint          FieldCount          => PInvoke.spReflectionTypeLayout_GetFieldCount(this.Handle);
-    public int           GenericParamIndex   => PInvoke.spReflectionTypeLayout_getGenericParamIndex(this.Handle);
-    public SlangTypeKind Kind                => PInvoke.spReflectionTypeLayout_getKind(this.Handle);
-    public long          SubObjectRangeCount => PInvoke.spReflectionTypeLayout_getSubObjectRangeCount(this.Handle);
+    public SlangInt               BindingRangeCount                 => PInvoke.spReflectionTypeLayout_getBindingRangeCount(this.Handle);
+    public uint                   CategoryCount                     => PInvoke.spReflectionTypeLayout_GetCategoryCount(this.Handle);
+    public long                   DescriptorSetCount                => PInvoke.spReflectionTypeLayout_getDescriptorSetCount(this.Handle);
+    public long                   ExplicitCounterBindingRangeOffset => PInvoke.spReflectionTypeLayout_getExplicitCounterBindingRangeOffset(this.Handle);
+    public uint                   FieldCount                        => PInvoke.spReflectionTypeLayout_GetFieldCount(this.Handle);
+    public int                    GenericParamIndex                 => PInvoke.spReflectionTypeLayout_getGenericParamIndex(this.Handle);
+    public SlangTypeKind          Kind                              => PInvoke.spReflectionTypeLayout_getKind(this.Handle);
+    public SlangMatrixLayoutMode  MatrixLayoutMode                  => PInvoke.spReflectionTypeLayout_GetMatrixLayoutMode(this.Handle);
+    public SlangParameterCategory ParameterCategory                 => PInvoke.spReflectionTypeLayout_GetParameterCategory(this.Handle);
+    public long                   SubObjectRangeCount               => PInvoke.spReflectionTypeLayout_getSubObjectRangeCount(this.Handle);
 
     internal SlangReflectionTypeLayout(Handle<SlangReflectionTypeLayout> handle) : base(handle)
     { }
@@ -65,6 +108,9 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionType
 
     public int GetAlignment(SlangParameterCategory category) =>
         PInvoke.spReflectionTypeLayout_getAlignment(this.Handle, category);
+
+    public SlangBindingType GetBindingRangeType(long index) =>
+        PInvoke.spReflectionTypeLayout_getBindingRangeType(this.Handle, index);
 
     public long GetBindingRangeBindingCount(long index) =>
         PInvoke.spReflectionTypeLayout_getBindingRangeBindingCount(this.Handle, index);
@@ -86,6 +132,9 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionType
 
     public SlangReflectionVariable GetBindingRangeLeafVariable(long index) =>
         new(PInvoke.spReflectionTypeLayout_getBindingRangeLeafVariable(this.Handle, index));
+
+    public SlangParameterCategory GetCategoryByIndex(uint index) =>
+        PInvoke.spReflectionTypeLayout_GetCategoryByIndex(this.Handle, index);
 
     public SlangParameterCategory GetDescriptorSetDescriptorRangeCategory(long setIndex, long rangeIndex) =>
         PInvoke.spReflectionTypeLayout_getDescriptorSetDescriptorRangeCategory(this.Handle, setIndex, rangeIndex);

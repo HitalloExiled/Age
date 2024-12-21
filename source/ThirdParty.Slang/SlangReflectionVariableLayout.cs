@@ -17,7 +17,8 @@ public unsafe class SlangReflectionVariableLayout : ManagedSlang<SlangReflection
     [field: AllowNull]
     public SlangReflectionVariable? Variable => field ??= PInvoke.spReflectionVariableLayout_GetVariable(this.Handle) is var x && x != default ? new(x) : null;
 
-    public SlangStage Stage => PInvoke.spReflectionVariableLayout_getStage(this.Handle);
+    public ulong      SemanticIndex => PInvoke.spReflectionVariableLayout_GetSemanticIndex(this.Handle);
+    public SlangStage Stage         => PInvoke.spReflectionVariableLayout_getStage(this.Handle);
 
     internal SlangReflectionVariableLayout(Handle<SlangReflectionVariableLayout> handle) : base(handle)
     { }

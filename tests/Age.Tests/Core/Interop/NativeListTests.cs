@@ -82,7 +82,7 @@ public unsafe class NativeListTests
     }
 
     [Fact]
-    public void DeccreaseCapacity()
+    public void DecreaseCapacity()
     {
         using var list = new NativeList<int>([1, 2, 3, 4, 5, 6]);
 

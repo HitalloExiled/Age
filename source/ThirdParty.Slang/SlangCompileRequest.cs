@@ -13,10 +13,9 @@ public unsafe class SlangCompileRequest(SlangSession session) : DisposableManage
     {
         get
         {
-            this.AssertCompiled();
             this.AssertNotDisposed();
 
-            return PInvoke.spGetDependencyFileCount(this.Handle);
+            return !this.Compiled ? 0 : PInvoke.spGetDependencyFileCount(this.Handle);
         }
     }
 

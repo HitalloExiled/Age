@@ -214,6 +214,9 @@ internal static unsafe partial class PInvoke
     internal static partial uint spReflectionTypeParameter_GetConstraintCount(Handle<SlangReflectionTypeParameter> inTypeParam);
 
     [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangResult spReflectionType_GetFullName(Handle<SlangReflectionType> inType, ISlangBlob* outNameBlob);
+
+    [LibraryImport(PLATFORM_PATH)]
     internal static partial uint spReflectionTypeParameter_GetIndex(Handle<SlangReflectionTypeParameter> inTypeParam);
 
     [LibraryImport(PLATFORM_PATH)]
@@ -280,6 +283,16 @@ internal static unsafe partial class PInvoke
     #endregion
 
     #region ReflectionTypeLayout
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangInt spReflectionTypeLayout_getBindingRangeCount(Handle<SlangReflectionTypeLayout> inTypeLayout);
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangBindingType spReflectionTypeLayout_getBindingRangeType(Handle<SlangReflectionTypeLayout> inTypeLayout, SlangInt index);
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangInt spReflectionTypeLayout_getFieldBindingRangeOffset(Handle<SlangReflectionTypeLayout> inTypeLayout, SlangInt fieldIndex);
+
     [LibraryImport(PLATFORM_PATH)]
     internal static partial SlangInt spReflectionTypeLayout_findFieldIndexByName(Handle<SlangReflectionTypeLayout> inTypeLayout, byte* nameBegin, byte* nameEnd);
 
@@ -308,10 +321,16 @@ internal static unsafe partial class PInvoke
     internal static partial Handle<SlangReflectionVariable> spReflectionTypeLayout_getBindingRangeLeafVariable(Handle<SlangReflectionTypeLayout> inTypeLayout, SlangInt index);
 
     [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangParameterCategory spReflectionTypeLayout_GetCategoryByIndex(Handle<SlangReflectionTypeLayout> inTypeLayout, uint index);
+
+    [LibraryImport(PLATFORM_PATH)]
     internal static partial uint spReflectionTypeLayout_GetCategoryCount(Handle<SlangReflectionTypeLayout> inTypeLayout);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial Handle<SlangReflectionVariableLayout> spReflectionTypeLayout_getContainerVarLayout(Handle<SlangReflectionTypeLayout> inTypeLayout);
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangInt spReflectionTypeLayout_getDescriptorSetCount(Handle<SlangReflectionTypeLayout> inTypeLayout);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial SlangParameterCategory spReflectionTypeLayout_getDescriptorSetDescriptorRangeCategory(Handle<SlangReflectionTypeLayout> inTypeLayout, SlangInt setIndex, SlangInt rangeIndex);
@@ -344,7 +363,7 @@ internal static unsafe partial class PInvoke
     internal static partial Handle<SlangReflectionVariableLayout> spReflectionTypeLayout_GetExplicitCounter(Handle<SlangReflectionTypeLayout> inTypeLayout);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial SlangInt spReflectionTypeLayout_getFieldBindingRangeOffset(Handle<SlangReflectionTypeLayout> inTypeLayout, SlangInt fieldIndex);
+    internal static partial SlangInt spReflectionTypeLayout_getExplicitCounterBindingRangeOffset(Handle<SlangReflectionTypeLayout> inTypeLayout);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial Handle<SlangReflectionVariableLayout> spReflectionTypeLayout_GetFieldByIndex(Handle<SlangReflectionTypeLayout> inTypeLayout, uint index);
@@ -357,6 +376,12 @@ internal static unsafe partial class PInvoke
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial SlangTypeKind spReflectionTypeLayout_getKind(Handle<SlangReflectionTypeLayout> inTypeLayout);
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangMatrixLayoutMode spReflectionTypeLayout_GetMatrixLayoutMode(Handle<SlangReflectionTypeLayout> inTypeLayout);
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangParameterCategory spReflectionTypeLayout_GetParameterCategory(Handle<SlangReflectionTypeLayout> inTypeLayout);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial Handle<SlangReflectionTypeLayout> spReflectionTypeLayout_getPendingDataTypeLayout(Handle<SlangReflectionTypeLayout> inTypeLayout);
@@ -466,6 +491,9 @@ internal static unsafe partial class PInvoke
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial byte* spReflectionVariableLayout_GetSemanticName(Handle<SlangReflectionVariableLayout> inVarLayout);
+
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial size_t spReflectionVariableLayout_GetSemanticIndex(Handle<SlangReflectionVariableLayout> inVarLayout);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial size_t spReflectionVariableLayout_GetSpace(Handle<SlangReflectionVariableLayout> inVarLayout, SlangParameterCategory category);

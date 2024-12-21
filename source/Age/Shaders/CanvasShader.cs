@@ -9,10 +9,10 @@ public partial class CanvasShader : Shader<CanvasShader.Vertex, CanvasShader.Pus
     public override VkPipelineBindPoint BindPoint         { get; } = VkPipelineBindPoint.Graphics;
     public override VkPrimitiveTopology PrimitiveTopology { get; } = VkPrimitiveTopology.TriangleList;
 
-    protected CanvasShader(RenderPass renderPass, uint subpass, Span<string> files, StencilKind stencil, bool watch)
+    protected CanvasShader(RenderPass renderPass, uint subpass, string file, StencilKind stencil, bool watch)
     : base(
         renderPass,
-        files,
+        file,
         new()
         {
             FrontFace            = VkFrontFace.Clockwise,
@@ -29,6 +29,6 @@ public partial class CanvasShader : Shader<CanvasShader.Vertex, CanvasShader.Pus
     { }
 
     public CanvasShader(RenderPass renderPass, uint subpass, bool watch)
-    : this(renderPass, subpass, [$"{nameof(CanvasShader)}.slang"], StencilKind.Content, watch)
+    : this(renderPass, subpass, $"{nameof(CanvasShader)}.slang", StencilKind.Content, watch)
     { }
 }
