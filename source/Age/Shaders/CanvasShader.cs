@@ -3,11 +3,11 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Shaders;
 
-public partial class CanvasShader : Shader<CanvasShader.Vertex, CanvasShader.PushConstant>
+public partial class CanvasShader : Shader<CanvasShader.Vertex>
 {
-    public override string              Name              { get; } = nameof(CanvasShader);
-    public override VkPipelineBindPoint BindPoint         { get; } = VkPipelineBindPoint.Graphics;
-    public override VkPrimitiveTopology PrimitiveTopology { get; } = VkPrimitiveTopology.TriangleList;
+    public override string              Name               { get; } = nameof(CanvasShader);
+    public override VkPipelineBindPoint BindPoint          { get; } = VkPipelineBindPoint.Graphics;
+    public override VkPrimitiveTopology PrimitiveTopology  { get; } = VkPrimitiveTopology.TriangleList;
 
     protected CanvasShader(RenderPass renderPass, uint subpass, string file, StencilKind stencil, bool watch)
     : base(

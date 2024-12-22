@@ -5,7 +5,7 @@ using ThirdParty.Vulkan.Flags;
 namespace Age.Shaders;
 
 public sealed partial class GeometryShader(RenderPass renderPass, VkSampleCountFlags rasterizationSamples, bool watch)
-: Shader<GeometryShader.Vertex, GeometryShader.PushConstant>(
+: Shader<GeometryShader.Vertex>(
     renderPass,
     $"{nameof(GeometryShader)}.slang",
     new ShaderOptions
@@ -16,7 +16,7 @@ public sealed partial class GeometryShader(RenderPass renderPass, VkSampleCountF
     }
 )
 {
-    public override string              Name              { get; } = nameof(GeometryShader);
-    public override VkPipelineBindPoint BindPoint         { get; } = VkPipelineBindPoint.Graphics;
-    public override VkPrimitiveTopology PrimitiveTopology { get; } = VkPrimitiveTopology.TriangleList;
+    public override string              Name               { get; } = nameof(GeometryShader);
+    public override VkPipelineBindPoint BindPoint          { get; } = VkPipelineBindPoint.Graphics;
+    public override VkPrimitiveTopology PrimitiveTopology  { get; } = VkPrimitiveTopology.TriangleList;
 }

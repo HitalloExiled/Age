@@ -86,7 +86,7 @@ public class Editor : Node
 
         var scene = new DemoScene();
 
-        var freeViewport  = new Viewport(new(300)) { Name = "Red" };
+        var freeViewport  = new Viewport(new(800)) { Name = "Red" };
         var redViewport   = new Viewport(new(100)) { Name = "Red" };
         var greenViewport = new Viewport(new(100)) { Name = "Green" };
         var blueViewport  = new Viewport(new(100)) { Name = "Blue" };

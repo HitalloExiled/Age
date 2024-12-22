@@ -83,15 +83,19 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionType
     [field: AllowNull]
     public SlangReflectionType? Type => field ??= PInvoke.spReflectionTypeLayout_GetType(this.Handle) is var x && x != default ? new(x) : null;
 
+    public int                    ParameterAlignment                => PInvoke.spReflectionTypeLayout_getAlignment(this.Handle, this.ParameterCategory);
     public SlangInt               BindingRangeCount                 => PInvoke.spReflectionTypeLayout_getBindingRangeCount(this.Handle);
     public uint                   CategoryCount                     => PInvoke.spReflectionTypeLayout_GetCategoryCount(this.Handle);
     public long                   DescriptorSetCount                => PInvoke.spReflectionTypeLayout_getDescriptorSetCount(this.Handle);
+    public ulong                  ParameterElementStride            => PInvoke.spReflectionTypeLayout_GetElementStride(this.Handle, this.ParameterCategory);
     public long                   ExplicitCounterBindingRangeOffset => PInvoke.spReflectionTypeLayout_getExplicitCounterBindingRangeOffset(this.Handle);
     public uint                   FieldCount                        => PInvoke.spReflectionTypeLayout_GetFieldCount(this.Handle);
     public int                    GenericParamIndex                 => PInvoke.spReflectionTypeLayout_getGenericParamIndex(this.Handle);
     public SlangTypeKind          Kind                              => PInvoke.spReflectionTypeLayout_getKind(this.Handle);
     public SlangMatrixLayoutMode  MatrixLayoutMode                  => PInvoke.spReflectionTypeLayout_GetMatrixLayoutMode(this.Handle);
     public SlangParameterCategory ParameterCategory                 => PInvoke.spReflectionTypeLayout_GetParameterCategory(this.Handle);
+    public ulong                  ParameterSize                     => PInvoke.spReflectionTypeLayout_GetSize(this.Handle, this.ParameterCategory);
+    public ulong                  ParameterStride                   => PInvoke.spReflectionTypeLayout_GetStride(this.Handle, this.ParameterCategory);
     public long                   SubObjectRangeCount               => PInvoke.spReflectionTypeLayout_getSubObjectRangeCount(this.Handle);
 
     internal SlangReflectionTypeLayout(Handle<SlangReflectionTypeLayout> handle) : base(handle)

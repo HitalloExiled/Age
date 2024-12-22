@@ -127,8 +127,8 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
     public void Reset() =>
         this.Instance.Reset();
 
-    public void PushConstant<T>(Shader shader, in T constant) where T : unmanaged, IPushConstant =>
-        this.Instance.PushConstants(shader.PipelineLayout, T.Stages, constant);
+    public void PushConstant<T>(Shader shader, in T constant) where T : unmanaged =>
+        this.Instance.PushConstants(shader.PipelineLayout, shader.PushConstantStages, constant);
 
     public void SetViewport(in VkExtent2D extent)
     {

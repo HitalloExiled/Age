@@ -1,17 +1,11 @@
 using Age.Numerics;
-using Age.Rendering.Interfaces;
-using ThirdParty.Vulkan.Flags;
 
 namespace Age.Shaders;
 
 public partial class CanvasShader
 {
-    public struct PushConstant : IPushConstant
+    public struct PushConstant
     {
-        static uint               IPushConstant.Offset { get; }
-        static unsafe uint        IPushConstant.Size   { get; } = (uint)sizeof(PushConstant);
-        static VkShaderStageFlags IPushConstant.Stages { get; } = VkShaderStageFlags.Vertex | VkShaderStageFlags.Fragment;
-
         // [16-bytes boundary]
         public Color Color;
 

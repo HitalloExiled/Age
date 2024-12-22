@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-using System.Text;
 using ThirdParty.Slang;
 
 namespace ThirdParty.Tests.Slang;
@@ -41,15 +39,13 @@ public class SlangCompileRequestTest
         }
         """;
 
-        var translationUnitIndex = request.AddTranslationUnit(SlangSourceLanguage.Hlsl, null);
+        var translationUnitIndex = request.AddTranslationUnit(SlangSourceLanguage.Slang, null);
         var entryPointIndex      = request.AddEntryPoint(translationUnitIndex, "main", SlangStage.Vertex);
 
         request.AddTranslationUnitSourceString(translationUnitIndex, "shader.slang", source);
 
         request.SetCodeGenTarget(SlangCompileTarget.Spirv);
         request.SetTargetProfile(0, session.FindProfile("spirv_1_0"));
-        // request.SetOptimizationLevel(SlangOptimizationLevel.High);
-        // request.SetDebugInfoLevel(SlangDebugInfoLevel.Standard);
 
         if (!request.Compile())
         {
@@ -159,11 +155,14 @@ public class SlangCompileRequestTest
 
         Assert.Equal(3, reflection.GlobalParamsTypeLayout.Fields.Length);
 
-        var fields = reflection.GlobalParamsTypeLayout.Fields;
+        var fields      = reflection.GlobalParamsTypeLayout.Fields;
+        var entryPoints = reflection.EntryPoints;
 
         Assert.True(
             fields[0] is
             {
+                TypeLayout.ElementTypeLayout.ParameterSize:  192,
+                TypeLayout.ElementVarLayout.ParameterOffset: 0,
                 TypeLayout.ParameterCategory: SlangParameterCategory.DescriptorTableSlot,
                 TypeLayout.Type.Kind:         SlangTypeKind.ConstantBuffer,
                 Variable.Name:                "ubo",
@@ -183,9 +182,69 @@ public class SlangCompileRequestTest
         Assert.True(
             fields[2] is
             {
-                TypeLayout.ParameterCategory: SlangParameterCategory.PushConstantBuffer,
-                TypeLayout.Type.Kind:         SlangTypeKind.ConstantBuffer,
-                Variable.Name:                "pushConstant",
+                TypeLayout.ElementTypeLayout.ParameterSize:  12,
+                TypeLayout.ElementVarLayout.ParameterOffset: 0,
+                TypeLayout.ParameterCategory:                SlangParameterCategory.PushConstantBuffer,
+                TypeLayout.Type.Kind:                        SlangTypeKind.ConstantBuffer,
+                Variable.Name:                               "pushConstant",
+            }
+        );
+
+        Assert.True(
+            entryPoints[0] is
+            {
+                Parameters:
+                [
+                    {
+                        TypeLayout.Fields:
+                        [
+                            {
+                                ParameterOffset:          0,
+                                SemanticIndex:            0,
+                                SemanticName:             "LOCATION",
+                                TypeLayout.ParameterSize: 1,
+                            },
+                            {
+                                ParameterOffset:          1,
+                                SemanticIndex:            1,
+                                SemanticName:             "LOCATION",
+                                TypeLayout.ParameterSize: 1,
+                            },
+                            {
+                                ParameterOffset:          2,
+                                SemanticIndex:            2,
+                                SemanticName:             "LOCATION",
+                                TypeLayout.ParameterSize: 1,
+                            }
+                        ]
+                    }
+                ],
+                Stage: SlangStage.Vertex,
+            }
+        );
+
+        Assert.True(
+            entryPoints[1] is
+            {
+                Parameters:
+                [
+                    {
+                        TypeLayout.Fields:
+                        [
+                            {
+                                SemanticIndex:            0,
+                                SemanticName:             "LOCATION",
+                                TypeLayout.ParameterSize: 1,
+                            },
+                            {
+                                SemanticIndex:            1,
+                                SemanticName:             "LOCATION",
+                                TypeLayout.ParameterSize: 1,
+                            },
+                        ]
+                    }
+                ],
+                Stage: SlangStage.Fragment,
             }
         );
     }

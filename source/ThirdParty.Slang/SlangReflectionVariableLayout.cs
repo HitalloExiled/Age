@@ -17,8 +17,10 @@ public unsafe class SlangReflectionVariableLayout : ManagedSlang<SlangReflection
     [field: AllowNull]
     public SlangReflectionVariable? Variable => field ??= PInvoke.spReflectionVariableLayout_GetVariable(this.Handle) is var x && x != default ? new(x) : null;
 
-    public ulong      SemanticIndex => PInvoke.spReflectionVariableLayout_GetSemanticIndex(this.Handle);
-    public SlangStage Stage         => PInvoke.spReflectionVariableLayout_getStage(this.Handle);
+    public ulong      ParameterOffset => PInvoke.spReflectionVariableLayout_GetOffset(this.Handle, this.TypeLayout.ParameterCategory);
+    public ulong      ParameterSpace  =>  PInvoke.spReflectionVariableLayout_GetSpace(this.Handle, this.TypeLayout.ParameterCategory);
+    public ulong      SemanticIndex   => PInvoke.spReflectionVariableLayout_GetSemanticIndex(this.Handle);
+    public SlangStage Stage           => PInvoke.spReflectionVariableLayout_getStage(this.Handle);
 
     internal SlangReflectionVariableLayout(Handle<SlangReflectionVariableLayout> handle) : base(handle)
     { }

@@ -8,11 +8,11 @@ namespace Age.Shaders;
 
 public partial class GeometryShader
 {
-    public struct Vertex(Vector3<float> position, Color color, in Vector2<float> texCoord) : IVertexInput
+    public struct Vertex(Vector3<float> position, Color color, in Vector2<float> uv) : IVertexInput
     {
         public Vector3<float> Position = position;
         public Color          Color    = color;
-        public Vector2<float> TexCoord = texCoord;
+        public Vector2<float> UV       = uv;
 
         public static VkVertexInputAttributeDescription[] GetAttributes()
         {
@@ -37,7 +37,7 @@ public partial class GeometryShader
                     Binding  = 0,
                     Location = 2,
                     Format   = VkFormat.R32G32Sfloat,
-                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(TexCoord))!,
+                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(UV))!,
                 }
             };
 

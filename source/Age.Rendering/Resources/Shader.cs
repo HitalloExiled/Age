@@ -21,6 +21,8 @@ public abstract class Shader(RenderPass renderPass) : Resource
 
     public RenderPass RenderPass { get; } = renderPass;
 
+    public abstract VkShaderStageFlags PushConstantStages { get; }
+
     public abstract VkPipelineBindPoint   BindPoint           { get; }
     public abstract VkDescriptorSetLayout DescriptorSetLayout { get; }
     public abstract VkPipeline            Pipeline            { get; }
@@ -31,9 +33,8 @@ public abstract class Shader(RenderPass renderPass) : Resource
         this.Changed?.Invoke();
 }
 
-public abstract unsafe class Shader<TVertexInput, TPushConstant> : Shader
+public abstract unsafe class Shader<TVertexInput> : Shader
 where TVertexInput  : IVertexInput
-where TPushConstant : IPushConstant
 {
     private const int DEBOUNCE_DELAY = 50;
 
@@ -54,15 +55,17 @@ where TPushConstant : IPushConstant
     private byte[]                  source;
     private VkDescriptorType[]      uniformBindings;
 
-    private ShaderOptions options;
+    private ShaderOptions      options;
+    private VkShaderStageFlags pushConstantStages;
 
     public abstract string              Name              { get; }
     public abstract VkPrimitiveTopology PrimitiveTopology { get; }
 
-    public override VkPipeline            Pipeline            => this.pipeline;
-    public override VkDescriptorSetLayout DescriptorSetLayout => this.descriptorSetLayout;
-    public override VkPipelineLayout      PipelineLayout      => this.pipelineLayout;
-    public override VkDescriptorType[]    UniformBindings     => this.uniformBindings;
+    public sealed override VkDescriptorSetLayout DescriptorSetLayout => this.descriptorSetLayout;
+    public sealed override VkPipeline            Pipeline            => this.pipeline;
+    public sealed override VkPipelineLayout      PipelineLayout      => this.pipelineLayout;
+    public sealed override VkShaderStageFlags    PushConstantStages  => this.pushConstantStages;
+    public sealed override VkDescriptorType[]    UniformBindings     => this.uniformBindings;
 
     public Shader(RenderPass renderPass, string file, in ShaderOptions options) : base(renderPass)
     {
@@ -260,18 +263,6 @@ where TPushConstant : IPushConstant
         var pipelineShaderStageCreateInfos = new List<VkPipelineShaderStageCreateInfo>((int)reflection.EntryPointCount);
         var pushConstantRanges             = new List<VkPushConstantRange>();
 
-        if (TPushConstant.Size > 0)
-        {
-            var pushConstantRange = new VkPushConstantRange
-            {
-                Size       = TPushConstant.Size,
-                Offset     = TPushConstant.Offset,
-                StageFlags = TPushConstant.Stages,
-            };
-
-            pushConstantRanges.Add(pushConstantRange);
-        }
-
         var entryPoints = reflection.EntryPoints;
         var parameters  = reflection.Parameters;
         var fields      = reflection.GlobalParamsTypeLayout.Fields;
@@ -314,27 +305,77 @@ where TPushConstant : IPushConstant
             var typeLayout = field.TypeLayout;
             var binding    = parameters[i].BindingIndex;
 
-            VkDescriptorType? descriptorType = typeLayout switch
+            switch (typeLayout)
             {
-                { Kind: SlangTypeKind.ConstantBuffer, ParameterCategory: SlangParameterCategory.DescriptorTableSlot } => VkDescriptorType.UniformBuffer,
-                { Kind: SlangTypeKind.Resource, Type.ResourceShape: SlangResourceShape.Texture2D }                    => VkDescriptorType.CombinedImageSampler,
-                _ => null,
-            };
+                case { Kind: SlangTypeKind.ConstantBuffer, ParameterCategory: SlangParameterCategory.PushConstantBuffer }:
+                    {
+                        var pushConstantRange = new VkPushConstantRange
+                        {
+                            Size       = (uint)typeLayout.ElementTypeLayout!.ParameterSize,
+                            Offset     = (uint)typeLayout.ElementVarLayout!.ParameterOffset,
+                            StageFlags = this.pushConstantStages = stages,
+                        };
 
-            if (descriptorType.HasValue)
-            {
-                uniformBindings.Add(descriptorType.Value);
+                        pushConstantRanges.Add(pushConstantRange);
+                    }
 
-                var layout = new VkDescriptorSetLayoutBinding()
-                {
-                    Binding         = binding,
-                    DescriptorCount = 1,
-                    DescriptorType  = descriptorType.Value,
-                    StageFlags      = stages,
-                };
+                    break;
+                case { Kind: SlangTypeKind.ConstantBuffer, ParameterCategory: SlangParameterCategory.DescriptorTableSlot }:
+                    {
+                        uniformBindings.Add(VkDescriptorType.UniformBuffer);
 
-                bindings.Add(layout);
+                        var layout = new VkDescriptorSetLayoutBinding()
+                        {
+                            Binding         = binding,
+                            DescriptorCount = 1,
+                            DescriptorType  = VkDescriptorType.UniformBuffer,
+                            StageFlags      = stages,
+                        };
+
+                        bindings.Add(layout);
+                    }
+
+                    break;
+                case { Kind: SlangTypeKind.Resource, Type.ResourceShape: SlangResourceShape.Texture2D }:
+                    {
+                        uniformBindings.Add(VkDescriptorType.CombinedImageSampler);
+
+                        var layout = new VkDescriptorSetLayoutBinding()
+                        {
+                            Binding         = binding,
+                            DescriptorCount = 1,
+                            DescriptorType  = VkDescriptorType.CombinedImageSampler,
+                            StageFlags      = stages,
+                        };
+
+                        bindings.Add(layout);
+                    }
+                    break;
+                default:
+                    break;
             }
+
+            // VkDescriptorType? descriptorType = typeLayout switch
+            // {
+            //     { Kind: SlangTypeKind.ConstantBuffer, ParameterCategory: SlangParameterCategory.DescriptorTableSlot } => VkDescriptorType.UniformBuffer,
+            //     { Kind: SlangTypeKind.Resource, Type.ResourceShape: SlangResourceShape.Texture2D }                    => VkDescriptorType.CombinedImageSampler,
+            //     _ => null,
+            // };
+
+            // if (descriptorType.HasValue)
+            // {
+            //     uniformBindings.Add(descriptorType.Value);
+
+            //     var layout = new VkDescriptorSetLayoutBinding()
+            //     {
+            //         Binding         = binding,
+            //         DescriptorCount = 1,
+            //         DescriptorType  = descriptorType.Value,
+            //         StageFlags      = stages,
+            //     };
+
+            //     bindings.Add(layout);
+            // }
         }
 
         this.uniformBindings = [..uniformBindings];
