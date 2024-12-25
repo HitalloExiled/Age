@@ -36,16 +36,19 @@ public abstract class Shader(RenderPass renderPass) : Resource
 public abstract unsafe class Shader<TVertexInput> : Shader
 where TVertexInput  : IVertexInput
 {
-    private const int DEBOUNCE_DELAY = 50;
+    private const string GLSL           = "glsl";
+    private const int    DEBOUNCE_DELAY = 50;
 
-    private static readonly string                  shadersPath       = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age/Shaders") : Path.Join(AppContext.BaseDirectory, $"Shaders"));
     private static readonly Dictionary<string, int> dependenciesUsers = [];
+    private static readonly string                  shadersPath       = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age/Shaders") : Path.Join(AppContext.BaseDirectory, $"Shaders"));
     private static readonly FileSystemWatcher       watcher           = new(shadersPath) { EnableRaisingEvents = true, IncludeSubdirectories = true };
 
-    private readonly Lock                             @lock            = new();
-    private readonly Dictionary<string, byte[]>       dependenciesHash = [];
-    private readonly string                           filepath;
-    private readonly SlangSession                     slangSession     = new();
+    private static SpinLock spinLock;
+
+    private readonly Lock                       @lock            = new();
+    private readonly Dictionary<string, byte[]> dependenciesHash = [];
+    private readonly string                     filepath;
+    private readonly SlangSession               slangSession     = new();
 
     private CancellationTokenSource cancellationTokenSource = new();
     private VkDescriptorSetLayout   descriptorSetLayout;
@@ -116,20 +119,32 @@ where TVertexInput  : IVertexInput
     private void CompileShader()
     {
         Logger.Trace($"Compiling Shader [{this.filepath}]");
+        var start = Stopwatch.GetTimestamp();
 
-        foreach (var entry in this.dependenciesHash)
+        if (this.dependenciesHash.Count > 0)
         {
-            ref var users = ref dependenciesUsers.GetValueRefOrNullRef(entry.Key);
+            var lockTaken = false;
+            spinLock.Enter(ref lockTaken);
 
-            if (!Unsafe.IsNullRef(ref users))
+            foreach (var entry in this.dependenciesHash)
             {
-                users--;
+                ref var users = ref dependenciesUsers.GetValueRefOrNullRef(entry.Key);
 
-                if (users == 0)
+                if (!Unsafe.IsNullRef(ref users))
                 {
-                    watcher.Filters.Remove(Path.GetRelativePath(shadersPath, entry.Key));
-                    dependenciesUsers.Remove(entry.Key);
+                    users--;
+
+                    if (users == 0)
+                    {
+                        watcher.Filters.Remove(Path.GetRelativePath(shadersPath, entry.Key));
+                        dependenciesUsers.Remove(entry.Key);
+                    }
                 }
+            }
+
+            if (lockTaken)
+            {
+                spinLock.Exit(false);
             }
         }
 
@@ -146,21 +161,25 @@ where TVertexInput  : IVertexInput
 
         if (request.Compile())
         {
-            var dependencies = request.GetDependencyFiles();
+            var dependencies = request.GetDependencyFiles().AsSpan(1);
 
-            foreach (var dependecy in dependencies)
+            if (dependencies.Length > 0)
             {
-                if (dependecy == "glsl")
+                if (dependencies[^1] == GLSL)
                 {
-                    continue;
+                    dependencies = dependencies[..^1];
                 }
 
-                if (dependecy != this.filepath)
+                foreach (var dependecy in dependencies)
                 {
-                    var content = File.ReadAllBytes(dependecy);
+                    this.dependenciesHash[dependecy] = MD5.HashData(File.ReadAllBytes(dependecy));
+                }
 
-                    this.dependenciesHash[dependecy] = MD5.HashData(content);
+                var lockTaken = false;
+                spinLock.Enter(ref lockTaken);
 
+                foreach (var dependecy in dependencies)
+                {
                     ref var users = ref dependenciesUsers.GetValueRefOrAddDefault(dependecy, out var hasUsers);
 
                     if (!hasUsers)
@@ -172,11 +191,16 @@ where TVertexInput  : IVertexInput
 
                     users++;
                 }
+
+                if (lockTaken)
+                {
+                    spinLock.Exit(false);
+                }
             }
 
             this.UpdatePipeline(request);
 
-            Logger.Info($"Shader {this.filepath} compiled with success.");
+            Logger.Info($"Shader {this.filepath} compiled in {Stopwatch.GetElapsedTime(start).Milliseconds}ms.");
         }
         else
         {
@@ -201,7 +225,7 @@ where TVertexInput  : IVertexInput
             var source = File.ReadAllBytes(this.filepath);
             var hash   = MD5.HashData(source);
 
-            if (hasChanged = this.hash.AsSpan().SequenceEqual(hash))
+            if (hasChanged = !this.hash.AsSpan().SequenceEqual(hash))
             {
                 this.source = source;
                 this.hash   = hash;
@@ -230,13 +254,14 @@ where TVertexInput  : IVertexInput
     private void RecompileShaderWithDebounce(string? trigger)
     {
         this.cancellationTokenSource.Cancel();
+        this.cancellationTokenSource.Dispose();
         this.cancellationTokenSource = new();
 
         void action(Task task)
         {
-            lock (this.@lock)
+            if (task.IsCompletedSuccessfully)
             {
-                if (task.IsCompletedSuccessfully)
+                lock (this.@lock)
                 {
                     this.RecompileShader(trigger);
                 }
@@ -251,7 +276,7 @@ where TVertexInput  : IVertexInput
     {
         var filepath = Path.GetFullPath(e.FullPath);
 
-        this.RecompileShaderWithDebounce(filepath != this.filepath ? filepath : null);
+        this.RecompileShaderWithDebounce(this.dependenciesHash.ContainsKey(filepath) ? filepath : null);
     }
 
     [MemberNotNull(nameof(pipeline), nameof(pipelineLayout), nameof(descriptorSetLayout), nameof(uniformBindings))]
@@ -354,28 +379,6 @@ where TVertexInput  : IVertexInput
                 default:
                     break;
             }
-
-            // VkDescriptorType? descriptorType = typeLayout switch
-            // {
-            //     { Kind: SlangTypeKind.ConstantBuffer, ParameterCategory: SlangParameterCategory.DescriptorTableSlot } => VkDescriptorType.UniformBuffer,
-            //     { Kind: SlangTypeKind.Resource, Type.ResourceShape: SlangResourceShape.Texture2D }                    => VkDescriptorType.CombinedImageSampler,
-            //     _ => null,
-            // };
-
-            // if (descriptorType.HasValue)
-            // {
-            //     uniformBindings.Add(descriptorType.Value);
-
-            //     var layout = new VkDescriptorSetLayoutBinding()
-            //     {
-            //         Binding         = binding,
-            //         DescriptorCount = 1,
-            //         DescriptorType  = descriptorType.Value,
-            //         StageFlags      = stages,
-            //     };
-
-            //     bindings.Add(layout);
-            // }
         }
 
         this.uniformBindings = [..uniformBindings];
