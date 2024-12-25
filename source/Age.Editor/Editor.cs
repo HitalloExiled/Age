@@ -86,10 +86,10 @@ public class Editor : Node
 
         var scene = new DemoScene();
 
-        var freeViewport  = new Viewport(new(800)) { Name = "Red" };
-        var redViewport   = new Viewport(new(100)) { Name = "Red" };
-        var greenViewport = new Viewport(new(100)) { Name = "Green" };
-        var blueViewport  = new Viewport(new(100)) { Name = "Blue" };
+        var freeViewport  = new Viewport(new(600)) { Name = "Red" };
+        var redViewport   = new Viewport(new(200)) { Name = "Red" };
+        var greenViewport = new Viewport(new(200)) { Name = "Green" };
+        var blueViewport  = new Viewport(new(200)) { Name = "Blue" };
 
         freeViewport.Style.Border  = new(1, 0, Color.White);
         redViewport.Style.Border   = new(1, 0, Color.Red);

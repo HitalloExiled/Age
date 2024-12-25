@@ -13,16 +13,7 @@ public FragmentOutput main(in FragmentInput input)
                 ? float4(1 - texel.rrr, texel.g) * data.color
                 : texel;
 
-    var hasBorder = data.border.top.thickness
-        + data.border.right.thickness
-        + data.border.bottom.thickness
-        + data.border.left.thickness
-        + data.border.radius.leftTop
-        + data.border.radius.topRight
-        + data.border.radius.rightBottom
-        + data.border.radius.bottomLeft > 0;
-
-    if (hasBorder)
+    if (hasBorder(data))
     {
         var position = data.rect.size * input.uv;
 

@@ -42,6 +42,7 @@ float2 getMax(float2 vector)
     return float2(value, value);
 }
 
+
 bool intersectsBorders(in PushConstant data, in float2 position, BorderKind border)
 {
     Rect leftTop;
@@ -84,6 +85,18 @@ bool intersectsBorders(in PushConstant data, in float2 position, BorderKind bord
     }
 
     return false;
+}
+
+public bool hasBorder(in PushConstant data)
+{
+    return data.border.top.thickness
+        + data.border.right.thickness
+        + data.border.bottom.thickness
+        + data.border.left.thickness
+        + data.border.radius.leftTop
+        + data.border.radius.topRight
+        + data.border.radius.rightBottom
+        + data.border.radius.bottomLeft > 0;
 }
 
 public bool isBorder(in PushConstant data, in float2 position, out BorderSide side)

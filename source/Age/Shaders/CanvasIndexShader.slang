@@ -7,20 +7,10 @@ FragmentOutput main(in FragmentInput input)
 {
     var color = data.color;
 
-    var hasBorder = data.border.top.thickness
-        + data.border.right.thickness
-        + data.border.bottom.thickness
-        + data.border.left.thickness
-        + data.border.radius.leftTop
-        + data.border.radius.topRight
-        + data.border.radius.rightBottom
-        + data.border.radius.bottomLeft > 0;
-
-    if (hasBorder)
+    if (hasBorder(data))
     {
         var position = data.rect.size * input.uv;
 
-        BorderSide side;
         CornerKind corner;
 
         if (isCorner(data, position, corner))
