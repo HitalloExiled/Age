@@ -18,6 +18,9 @@ public abstract class Disposable : IDisposable
 
     protected abstract void Disposed(bool disposing);
 
+    protected void ThrowIfDisposed() =>
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
     public void Dispose()
     {
         this.Dispose(true);

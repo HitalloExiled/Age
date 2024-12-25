@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 
 using Timer = Age.Scene.Timer;
 
-using static Age.Rendering.Shaders.Canvas.CanvasShader;
+using static Age.Shaders.CanvasShader;
 using Age.Styling;
 
 namespace Age.Elements.Layouts;

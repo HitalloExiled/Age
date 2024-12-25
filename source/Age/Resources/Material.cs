@@ -1,5 +1,5 @@
 using Age.Rendering.Resources;
-using Age.Rendering.Shaders;
+using Age.Shaders;
 using Age.Storage;
 
 namespace Age.Resources;

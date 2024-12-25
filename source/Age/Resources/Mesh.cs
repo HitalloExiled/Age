@@ -2,7 +2,7 @@ using Age.Commands;
 using Age.Rendering.Vulkan;
 using Age.Scene;
 
-using static Age.Rendering.Shaders.GeometryShader;
+using static Age.Shaders.GeometryShader;
 
 namespace Age.Resources;
 

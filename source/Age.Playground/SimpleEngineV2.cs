@@ -13,6 +13,7 @@ using PlatformWindow = Age.Platforms.Display.Window;
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
 using Age.Core.Interop;
 using System.Runtime.CompilerServices;
+using Age.Core.Extensions;
 
 namespace Age.Playground;
 
@@ -772,7 +773,7 @@ public unsafe partial class SimpleEngineV2 : IDisposable
             PopulateDebugMessengerCreateInfo(out debugCreateInfo);
         }
 
-        using var ppEnabledExtensionNames = new NativeStringArray(this.GetRequiredExtensions());
+        using var ppEnabledExtensionNames = new NativeStringArray(this.GetRequiredExtensions().AsSpan());
         using var ppEnabledLayerNames     = new NativeStringArray(enabledLayerNames);
 
         var createInfo = new VkInstanceCreateInfo

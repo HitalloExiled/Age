@@ -233,4 +233,5 @@ public sealed unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkC
     /// <inheritdoc cref="PInvoke.vkResetCommandBuffer" />
     public void Reset(VkCommandBufferResetFlags flags = default) =>
         PInvoke.vkResetCommandBuffer(this.handle, flags);
+    public void PushConstants<T>(VkPipelineLayout pipelineLayout, object pushConstantStages, T constant) where T : unmanaged => throw new NotImplementedException();
 }

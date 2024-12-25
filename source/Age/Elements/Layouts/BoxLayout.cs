@@ -4,7 +4,7 @@ using Age.Numerics;
 using Age.Scene;
 using Age.Styling;
 
-using static Age.Rendering.Shaders.Canvas.CanvasShader;
+using static Age.Shaders.CanvasShader;
 
 namespace Age.Elements.Layouts;
 

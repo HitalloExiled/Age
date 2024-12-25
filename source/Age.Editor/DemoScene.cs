@@ -6,7 +6,7 @@ using Age.Platforms.Display;
 
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
 
-using static Age.Rendering.Shaders.GeometryShader;
+using static Age.Shaders.GeometryShader;
 
 namespace Age.Editor;
 

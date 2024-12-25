@@ -35,6 +35,7 @@ public sealed unsafe class CompilerOptions : IDisposable
         nativeResult->SourceNameLength = (ulong)result.SourceName.Length;
         nativeResult->Content          = content;
         nativeResult->ContentLength    = (ulong)result.Content.Length;
+        nativeResult->UserData         = userData;
 
         return nativeResult;
     }

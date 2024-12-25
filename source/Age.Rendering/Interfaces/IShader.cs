@@ -40,5 +40,4 @@ public interface IShader
 }
 
 public interface IShader<TVertexInput, TPushConstant> : IShader
-where TVertexInput  : IVertexInput
-where TPushConstant : IPushConstant;
+where TVertexInput  : IVertexInput;

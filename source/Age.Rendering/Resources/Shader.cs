@@ -1,50 +1,27 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Age.Core;
 using Age.Core.Extensions;
+using Age.Core.Interop;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Vulkan;
-using ThirdParty.Shaderc;
-using ThirdParty.Shaderc.Enums;
+using ThirdParty.Slang;
 using ThirdParty.SpirvCross;
-using ThirdParty.SpirvCross.Enums;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public class ShaderCompilationException(string message) : Exception(message);
-
-public enum StencilKind
-{
-    None,
-    Mask,
-    Content,
-}
-
-public struct ShaderOptions
-{
-    #region 4-bytes
-    public required VkSampleCountFlags RasterizationSamples;
-
-    public VkFrontFace FrontFace;
-    public StencilKind Stencil;
-    public uint        Subpass;
-    #endregion
-
-    #region 2-bytes
-    public bool Watch;
-
-    #endregion
-}
-
 public abstract class Shader(RenderPass renderPass) : Resource
 {
     public event Action? Changed;
 
     public RenderPass RenderPass { get; } = renderPass;
+
+    public abstract VkShaderStageFlags PushConstantStages { get; }
 
     public abstract VkPipelineBindPoint   BindPoint           { get; }
     public abstract VkDescriptorSetLayout DescriptorSetLayout { get; }
@@ -56,60 +33,55 @@ public abstract class Shader(RenderPass renderPass) : Resource
         this.Changed?.Invoke();
 }
 
-public abstract unsafe class Shader<TVertexInput, TPushConstant> : Shader
+public abstract unsafe class Shader<TVertexInput> : Shader
 where TVertexInput  : IVertexInput
-where TPushConstant : IPushConstant
 {
-    private const int DEBOUNCE_DELAY = 50;
+    private const string GLSL           = "glsl";
+    private const int    DEBOUNCE_DELAY = 50;
 
-    private static readonly string            shadersPath = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age.Rendering/Shaders") : Path.Join(AppContext.BaseDirectory, $"Shaders"));
-    private static readonly FileSystemWatcher watcher     = new(shadersPath) { EnableRaisingEvents = true, IncludeSubdirectories = true };
+    private static readonly Dictionary<string, int> dependenciesUsers = [];
+    private static readonly string                  shadersPath       = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age/Shaders") : Path.Join(AppContext.BaseDirectory, $"Shaders"));
+    private static readonly FileSystemWatcher       watcher           = new(shadersPath) { EnableRaisingEvents = true, IncludeSubdirectories = true };
 
-    private readonly Dictionary<string, CancellationTokenSource>    cancellationTokenSources = [];
-    private readonly HashSet<string>                                files                    = [];
-    private readonly Dictionary<string, byte[]>                     hashes                   = [];
-    private readonly Dictionary<string, List<string>>               includeShaders           = [];
-    private readonly Dictionary<string, Lock>                       locks                    = [];
-    private readonly Dictionary<string, Dictionary<string, byte[]>> shaderIncludes           = [];
-    private readonly Lock                                           shaderLock               = new();
+    private static SpinLock spinLock;
 
-    private VkDescriptorSetLayout descriptorSetLayout;
-    private VkPipeline            pipeline;
-    private VkPipelineLayout      pipelineLayout;
-    private VkDescriptorType[]    uniformBindings;
+    private readonly Lock                       @lock            = new();
+    private readonly Dictionary<string, byte[]> dependenciesHash = [];
+    private readonly string                     filepath;
+    private readonly SlangSession               slangSession     = new();
 
-    private ShaderOptions options;
+    private CancellationTokenSource cancellationTokenSource = new();
+    private VkDescriptorSetLayout   descriptorSetLayout;
+    private byte[]                  hash                    = [];
+    private VkPipeline              pipeline;
+    private VkPipelineLayout        pipelineLayout;
+    private byte[]                  source;
+    private VkDescriptorType[]      uniformBindings;
+
+    private ShaderOptions      options;
+    private VkShaderStageFlags pushConstantStages;
 
     public abstract string              Name              { get; }
     public abstract VkPrimitiveTopology PrimitiveTopology { get; }
 
-    public override VkPipeline            Pipeline            => this.pipeline;
-    public override VkDescriptorSetLayout DescriptorSetLayout => this.descriptorSetLayout;
-    public override VkPipelineLayout      PipelineLayout      => this.pipelineLayout;
-    public override VkDescriptorType[]    UniformBindings     => this.uniformBindings;
+    public sealed override VkDescriptorSetLayout DescriptorSetLayout => this.descriptorSetLayout;
+    public sealed override VkPipeline            Pipeline            => this.pipeline;
+    public sealed override VkPipelineLayout      PipelineLayout      => this.pipelineLayout;
+    public sealed override VkShaderStageFlags    PushConstantStages  => this.pushConstantStages;
+    public sealed override VkDescriptorType[]    UniformBindings     => this.uniformBindings;
 
-    public Dictionary<VkShaderStageFlags, byte[]> Stages { get; } = [];
-
-    public Shader(RenderPass renderPass, Span<string> files, in ShaderOptions options) : base(renderPass)
+    public Shader(RenderPass renderPass, string file, in ShaderOptions options) : base(renderPass)
     {
-        this.options = options;
+        this.filepath = string.Intern(Path.IsPathRooted(file) ? file : Path.GetFullPath(Path.Join(shadersPath, file)));
+        this.options  = options;
+        this.source   = File.ReadAllBytes(this.filepath);
+        this.hash     = MD5.HashData(this.source);
 
-        foreach (var file in files)
+        var filename = string.Intern(Path.GetFileName(this.filepath));
+
+        if (!watcher.Filters.Contains(filename))
         {
-            var filepath = string.Intern(Path.IsPathRooted(file) ? file : Path.GetFullPath(Path.Join(shadersPath, file)));
-            var filename = string.Intern(Path.GetFileName(filepath));
-
-            if (!watcher.Filters.Contains(filename))
-            {
-                watcher.Filters.Add(filename);
-            }
-
-            this.cancellationTokenSources[filepath] = new();
-            this.shaderIncludes[filepath] = [];
-            this.locks[filepath] = new();
-
-            this.CompileShader(filepath);
-            this.files.Add(filepath);
+            watcher.Filters.Add(filename);
         }
 
         if (options.Watch)
@@ -117,8 +89,17 @@ where TPushConstant : IPushConstant
             watcher.Changed += this.OnFileChanged;
         }
 
-        this.UpdatePipeline();
+        this.CompileShader();
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static VkShaderStageFlags SlangStageToVkShaderStageFlags(SlangStage stage) =>
+        stage switch
+        {
+            SlangStage.Vertex   => VkShaderStageFlags.Vertex,
+            SlangStage.Fragment => VkShaderStageFlags.Fragment,
+            _ => throw new InvalidOperationException("Unsuported shader stage"),
+        };
 
     private VkShaderModule CreateShaderModule(byte[] buffer)
     {
@@ -134,406 +115,429 @@ where TPushConstant : IPushConstant
         }
     }
 
-    private void CompileShaderWithDebounce(string filepath, string? trigger)
+    [MemberNotNull(nameof(pipeline), nameof(pipelineLayout), nameof(descriptorSetLayout), nameof(uniformBindings))]
+    private void CompileShader()
     {
-        var cancellationTokenSource = this.cancellationTokenSources[filepath];
+        Logger.Trace($"Compiling Shader [{this.filepath}]");
+        var start = Stopwatch.GetTimestamp();
 
-        cancellationTokenSource.Cancel();
-        cancellationTokenSource = new();
+        if (this.dependenciesHash.Count > 0)
+        {
+            var lockTaken = false;
+            spinLock.Enter(ref lockTaken);
+
+            foreach (var entry in this.dependenciesHash)
+            {
+                ref var users = ref dependenciesUsers.GetValueRefOrNullRef(entry.Key);
+
+                if (!Unsafe.IsNullRef(ref users))
+                {
+                    users--;
+
+                    if (users == 0)
+                    {
+                        watcher.Filters.Remove(Path.GetRelativePath(shadersPath, entry.Key));
+                        dependenciesUsers.Remove(entry.Key);
+                    }
+                }
+            }
+
+            if (lockTaken)
+            {
+                spinLock.Exit(false);
+            }
+        }
+
+        this.dependenciesHash.Clear();
+
+        using var request = new SlangCompileRequest(this.slangSession);
+
+        var translationUnitIndex = request.AddTranslationUnit(SlangSourceLanguage.Slang, Path.GetFileName(this.filepath.AsSpan()));
+
+        request.AddSearchPath(Path.Join(shadersPath.AsSpan(), "Modules"));
+        request.AddTranslationUnitSourceString(translationUnitIndex, this.filepath, this.source);
+        request.SetCodeGenTarget(SlangCompileTarget.Spirv);
+        request.SetTargetProfile(0, this.slangSession.FindProfile("spirv_1_0"));
+
+        if (request.Compile())
+        {
+            var dependencies = request.GetDependencyFiles().AsSpan(1);
+
+            if (dependencies.Length > 0)
+            {
+                if (dependencies[^1] == GLSL)
+                {
+                    dependencies = dependencies[..^1];
+                }
+
+                foreach (var dependecy in dependencies)
+                {
+                    this.dependenciesHash[dependecy] = MD5.HashData(File.ReadAllBytes(dependecy));
+                }
+
+                var lockTaken = false;
+                spinLock.Enter(ref lockTaken);
+
+                foreach (var dependecy in dependencies)
+                {
+                    ref var users = ref dependenciesUsers.GetValueRefOrAddDefault(dependecy, out var hasUsers);
+
+                    if (!hasUsers)
+                    {
+                        var filename = string.Intern(Path.GetFileName(dependecy));
+
+                        watcher.Filters.Add(filename);
+                    }
+
+                    users++;
+                }
+
+                if (lockTaken)
+                {
+                    spinLock.Exit(false);
+                }
+            }
+
+            this.UpdatePipeline(request);
+
+            Logger.Info($"Shader {this.filepath} compiled in {Stopwatch.GetElapsedTime(start).Milliseconds}ms.");
+        }
+        else
+        {
+            var diagnostic = request.GetDiagnosticOutput()!;
+
+            Logger.Error(diagnostic);
+
+            throw new ShaderCompilationException(diagnostic);
+        }
+    }
+
+    private void RecompileShader(string? dependency)
+    {
+        bool hasChanged;
+
+        if (dependency != null)
+        {
+            hasChanged = !this.dependenciesHash.TryGetValue(dependency, out var dependencyHash) || !dependencyHash.AsSpan().SequenceEqual(MD5.HashData(File.ReadAllBytes(dependency)));
+        }
+        else
+        {
+            var source = File.ReadAllBytes(this.filepath);
+            var hash   = MD5.HashData(source);
+
+            if (hasChanged = !this.hash.AsSpan().SequenceEqual(hash))
+            {
+                this.source = source;
+                this.hash   = hash;
+            }
+        }
+
+        if (hasChanged)
+        {
+            try
+            {
+                Span<IDisposable> disposables = [this.pipeline, this.pipelineLayout, this.descriptorSetLayout];
+
+                this.CompileShader();
+
+                VulkanRenderer.Singleton.DeferredDispose(disposables);
+
+                this.InvokeChanged();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e.Message);
+            }
+        }
+    }
+
+    private void RecompileShaderWithDebounce(string? trigger)
+    {
+        this.cancellationTokenSource.Cancel();
+        this.cancellationTokenSource.Dispose();
+        this.cancellationTokenSource = new();
 
         void action(Task task)
         {
-            lock (this.locks[filepath])
+            if (task.IsCompletedSuccessfully)
             {
-                if (task.IsCompletedSuccessfully && this.CompileShader(filepath, true, trigger))
+                lock (this.@lock)
                 {
-                    this.ShaderChanged();
+                    this.RecompileShader(trigger);
                 }
             }
         }
 
-        Task.Delay(DEBOUNCE_DELAY, cancellationTokenSource.Token)
+        Task.Delay(DEBOUNCE_DELAY, this.cancellationTokenSource.Token)
             .ContinueWith(action, TaskScheduler.Default);
     }
-
-    private bool CompileShader(string filepath, bool allowFailure = false, string? trigger = null)
-    {
-        var (shaderStage, shaderKind) = Path.GetExtension(filepath) switch
-        {
-            ".frag" => (VkShaderStageFlags.Fragment, ShaderKind.FragmentShader),
-            ".vert" => (VkShaderStageFlags.Vertex,   ShaderKind.VertexShader),
-            _ => throw new InvalidOperationException()
-        };
-
-        try
-        {
-            var source   = File.ReadAllBytes(filepath);
-            var checksum = MD5.HashData(source);
-
-            var canCompile = trigger != null
-                ? !this.shaderIncludes[filepath].TryGetValue(trigger, out var includeHash) || !includeHash.AsSpan().SequenceEqual(MD5.HashData(File.ReadAllBytes(trigger)))
-                : !this.hashes.TryGetValue(filepath, out var shaderHash) || !shaderHash.AsSpan().SequenceEqual(checksum);
-
-            if (canCompile)
-            {
-                this.hashes[filepath] = checksum;
-
-                Logger.Trace($"Compiling Shader {this.Name}.{shaderStage} [{filepath}]");
-
-                foreach (var include in this.shaderIncludes[filepath])
-                {
-                    watcher.Filters.Remove(Path.GetRelativePath(shadersPath, include.Key));
-                }
-
-                foreach (var includeShader in this.includeShaders.Values)
-                {
-                    includeShader.Remove(filepath);
-                }
-
-                this.shaderIncludes[filepath].Clear();
-
-                using var compiler = new ThirdParty.Shaderc.Compiler();
-                using var options  = new CompilerOptions { IncludeResolver = this.GetIncludeResolver(filepath) };
-
-                var result = compiler.CompileIntoSpv(source, shaderKind, filepath, "main", options);
-
-                foreach (var include in this.shaderIncludes[filepath])
-                {
-                    var filename = string.Intern(Path.GetFileName(include.Key));
-
-                    if (!watcher.Filters.Contains(filename))
-                    {
-                        watcher.Filters.Add(filename);
-                    }
-                }
-
-                if (result.CompilationStatus == CompilationStatus.Success)
-                {
-                    this.Stages[shaderStage] = result.Bytes;
-
-                    Logger.Info($"Shader {this.Name}.{shaderStage} [{filepath}] compiled with {(result.Warnings > 0 ? $"{result.Warnings} warnings" : "success")}.");
-
-                    return true;
-                }
-                else
-                {
-                    if (!allowFailure)
-                    {
-                        throw new ShaderCompilationException(result.ErrorMessage);
-                    }
-
-                    Logger.Error(result.ErrorMessage);
-                }
-            }
-        }
-        catch (Exception exception)
-        {
-            if (!allowFailure)
-            {
-                throw;
-            }
-
-            Logger.Error(exception.Message);
-        }
-
-        return false;
-    }
-
-    private IncludeResolve GetIncludeResolver(string shaderfile) =>
-        (requestedSource, type, requestingSource, includeDepth) =>
-        {
-            Logger.Trace($"Resolving include \"{requestedSource}\" requested by \"{requestingSource}\"");
-
-            var filepath = type == IncludeType.Relative
-                ? Path.GetFullPath(Path.Join(Path.GetDirectoryName(requestingSource), requestedSource))
-                : requestedSource;
-
-            Logger.Trace($"Include resolved to \"{filepath}\"");
-
-            if (!this.includeShaders.TryGetValue(filepath, out var shaders))
-            {
-                this.includeShaders[filepath] = shaders = [];
-            }
-
-            shaders.Add(shaderfile);
-
-            var content = File.ReadAllBytes(filepath);
-
-            this.shaderIncludes[shaderfile][filepath] = MD5.HashData(content);
-
-            return new()
-            {
-                SourceName = filepath,
-                Content    = content,
-            };
-        };
 
     private void OnFileChanged(object sender, FileSystemEventArgs e)
     {
         var filepath = Path.GetFullPath(e.FullPath);
 
-        if (this.files.Contains(filepath))
-        {
-            this.CompileShaderWithDebounce(filepath, null);
-        }
-        else if (this.includeShaders.TryGetValue(filepath, out var files))
-        {
-            foreach (var file in files)
-            {
-                this.CompileShaderWithDebounce(file, filepath);
-            }
-        }
-    }
-
-    private void ShaderChanged()
-    {
-        lock (this.shaderLock)
-        {
-            Span<IDisposable> disposables = [this.pipeline, this.pipelineLayout, this.descriptorSetLayout];
-
-            this.UpdatePipeline();
-
-            VulkanRenderer.Singleton.DeferredDispose(disposables);
-
-            this.InvokeChanged();
-        }
+        this.RecompileShaderWithDebounce(this.dependenciesHash.ContainsKey(filepath) ? filepath : null);
     }
 
     [MemberNotNull(nameof(pipeline), nameof(pipelineLayout), nameof(descriptorSetLayout), nameof(uniformBindings))]
-    private void UpdatePipeline()
+    private void UpdatePipeline(SlangCompileRequest compileRequest)
     {
-        fixed (byte* pName = "main"u8)
+        var reflection = compileRequest.GetReflection();
+
+        var bindings                       = new List<VkDescriptorSetLayoutBinding>((int)reflection.ParameterCount);
+        var pipelineShaderStageCreateInfos = new List<VkPipelineShaderStageCreateInfo>((int)reflection.EntryPointCount);
+        var pushConstantRanges             = new List<VkPushConstantRange>();
+
+        var entryPoints = reflection.EntryPoints;
+        var parameters  = reflection.Parameters;
+        var fields      = reflection.GlobalParamsTypeLayout.Fields;
+
+        using var disposables     = new Disposables();
+        using var context         = new Context();
+        using var entryPointNames = new NativeStringList(entryPoints.Length);
+
+        VkShaderStageFlags stages = default;
+
+        for (var i = 0; i < entryPoints.Length; i++)
         {
-            var bindings                       = new List<VkDescriptorSetLayoutBinding>();
-            var pipelineShaderStageCreateInfos = new List<VkPipelineShaderStageCreateInfo>();
-            var pushConstantRanges             = new List<VkPushConstantRange>();
+            var entryPoint = entryPoints[i];
 
-            if (TPushConstant.Size > 0)
+            entryPointNames.Add(entryPoint.Name);
+
+            var shaderModule = this.CreateShaderModule(compileRequest.GetEntryPointCode(i));
+
+            disposables.Add(shaderModule);
+
+            var stage = SlangStageToVkShaderStageFlags(entryPoint.Stage);
+
+            stages |= stage;
+
+            var createInfo = new VkPipelineShaderStageCreateInfo()
             {
-                var pushConstantRange = new VkPushConstantRange
-                {
-                    Size       = TPushConstant.Size,
-                    Offset     = TPushConstant.Offset,
-                    StageFlags = TPushConstant.Stages,
-                };
-
-                pushConstantRanges.Add(pushConstantRange);
-            }
-
-            using var disposables = new Disposables();
-            using var context     = new Context();
-
-            foreach (var stage in this.Stages)
-            {
-                var spirv     = context.ParseSpirv(stage.Value);
-                var compiler  = context.CreateCompiler(Backend.Glsl, spirv, CaptureMode.TakeOwnership);
-                var resources = compiler.CreateShaderResources();
-
-                foreach (var resource in resources.GetResourceListForType(ResorceType.SampledImage))
-                {
-                    var binding = compiler.GetDecoration(resource.Id, Decoration.Binding);
-
-                    var layout = new VkDescriptorSetLayoutBinding()
-                    {
-                        Binding         = binding,
-                        DescriptorCount = 1,
-                        DescriptorType  = VkDescriptorType.CombinedImageSampler,
-                        StageFlags      = stage.Key,
-                    };
-
-                    bindings.Add(layout);
-                }
-
-                foreach (var resource in resources.GetResourceListForType(ResorceType.UniformBuffer))
-                {
-                    var binding = compiler.GetDecoration(resource.Id, Decoration.Binding);
-
-                    var layout = new VkDescriptorSetLayoutBinding()
-                    {
-                        Binding         = binding,
-                        DescriptorCount = 1,
-                        DescriptorType  = VkDescriptorType.UniformBuffer,
-                        StageFlags      = stage.Key,
-                    };
-
-                    bindings.Add(layout);
-                }
-
-                var shaderModule = this.CreateShaderModule(stage.Value);
-
-                disposables.Add(shaderModule);
-
-                var createInfo = new VkPipelineShaderStageCreateInfo()
-                {
-                    Module = shaderModule.Handle,
-                    PName  = pName,
-                    Stage  = stage.Key,
-                };
-
-                pipelineShaderStageCreateInfos.Add(createInfo);
-            }
-
-            this.uniformBindings = bindings.OrderBy(x => x.Binding).Select(x => x.DescriptorType).ToArray();
-
-            var vertexInputAttributeDescription = TVertexInput.GetAttributes();
-            var vertexInputBindingDescription   = TVertexInput.GetBindings();
-
-            var dynamicStates = new VkDynamicState[]
-            {
-                VkDynamicState.Viewport,
-                VkDynamicState.Scissor,
+                Module = shaderModule.Handle,
+                PName  = (byte*)entryPointNames.GetHandle(i),
+                Stage  = stage,
             };
 
-            fixed (VkDescriptorSetLayoutBinding*      pBindings                       = bindings.AsSpan())
-            fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription)
-            fixed (VkDynamicState*                    pDynamicStates                  = dynamicStates)
-            fixed (VkPipelineShaderStageCreateInfo*   pPipelineShaderStageCreateInfos = pipelineShaderStageCreateInfos.AsSpan())
-            fixed (VkPushConstantRange*               pPushConstantRanges             = pushConstantRanges.AsSpan())
+            pipelineShaderStageCreateInfos.Add(createInfo);
+        }
+
+        var uniformBindings = new List<VkDescriptorType>(parameters.Length);
+
+        for (var i = 0; i < parameters.Length; i++)
+        {
+            var field      = fields[i];
+            var typeLayout = field.TypeLayout;
+            var binding    = parameters[i].BindingIndex;
+
+            switch (typeLayout)
             {
-                var descriptorSetLayoutCreateInfo = new VkDescriptorSetLayoutCreateInfo
-                {
-                    PBindings    = pBindings,
-                    BindingCount = (uint)bindings.Count,
-                };
-
-                this.descriptorSetLayout = VulkanRenderer.Singleton.Context.Device.CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
-
-                var descriptorSetLayoutHandle = this.descriptorSetLayout.Handle;
-
-                var pipelineLayoutCreateInfo = new VkPipelineLayoutCreateInfo
-                {
-                    PSetLayouts            = &descriptorSetLayoutHandle,
-                    SetLayoutCount         = 1,
-                    PPushConstantRanges    = pPushConstantRanges,
-                    PushConstantRangeCount = (uint)pushConstantRanges.Count,
-                };
-
-                this.pipelineLayout = VulkanRenderer.Singleton.Context.Device.CreatePipelineLayout(pipelineLayoutCreateInfo);
-
-                var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
-                {
-                    Topology = this.PrimitiveTopology,
-                };
-
-                var pipelineVertexInputStateCreateInfo = new VkPipelineVertexInputStateCreateInfo
-                {
-                    PVertexAttributeDescriptions    = pVertexAttributeDescriptions,
-                    PVertexBindingDescriptions      = &vertexInputBindingDescription,
-                    VertexAttributeDescriptionCount = (uint)vertexInputAttributeDescription.Length,
-                    VertexBindingDescriptionCount   = 1,
-                };
-
-                var pipelineDynamicStateCreateInfo = new VkPipelineDynamicStateCreateInfo
-                {
-                    DynamicStateCount = (uint)dynamicStates.Length,
-                    PDynamicStates    = pDynamicStates,
-                };
-
-                var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
-                {
-                    AlphaBlendOp   = VkBlendOp.Add,
-                    BlendEnable    = true,
-                    ColorWriteMask = VkColorComponentFlags.R
-                        | VkColorComponentFlags.G
-                        | VkColorComponentFlags.B
-                        | VkColorComponentFlags.A,
-                    DstColorBlendFactor = VkBlendFactor.OneMinusSrcAlpha,
-                    SrcAlphaBlendFactor = VkBlendFactor.One,
-                    SrcColorBlendFactor = VkBlendFactor.SrcAlpha,
-                };
-
-                var pipelineColorBlendStateCreateInfo = new VkPipelineColorBlendStateCreateInfo
-                {
-                    AttachmentCount = 1,
-                    LogicOp         = VkLogicOp.Copy,
-                    PAttachments    = &pipelineColorBlendAttachmentState,
-                };
-
-                var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
-                {
-                    SampleShadingEnable  = true,
-                    RasterizationSamples = this.options.RasterizationSamples,
-                    MinSampleShading     = 1,
-                };
-
-                var pipelineRasterizationStateCreateInfo = new VkPipelineRasterizationStateCreateInfo
-                {
-                    CullMode    = VkCullModeFlags.Back,
-                    FrontFace   = this.options.FrontFace,
-                    LineWidth   = 1,
-                    PolygonMode = VkPolygonMode.Fill,
-                };
-
-                var pipelineViewportStateCreateInfo = new VkPipelineViewportStateCreateInfo
-                {
-                    ViewportCount = 1,
-                    ScissorCount  = 1,
-                };
-
-                var stencilOp = this.options.Stencil switch
-                {
-                    StencilKind.Mask => new VkStencilOpState
+                case { Kind: SlangTypeKind.ConstantBuffer, ParameterCategory: SlangParameterCategory.PushConstantBuffer }:
                     {
-                        CompareMask = 0xFF,
-                        CompareOp   = VkCompareOp.Always,
-                        DepthFailOp = VkStencilOp.Replace,
-                        FailOp      = VkStencilOp.Replace,
-                        PassOp      = VkStencilOp.Replace,
-                        Reference   = 1,
-                        WriteMask   = 0xFF,
-                    },
-                    StencilKind.Content => new VkStencilOpState
+                        var pushConstantRange = new VkPushConstantRange
+                        {
+                            Size       = (uint)typeLayout.ElementTypeLayout!.ParameterSize,
+                            Offset     = (uint)typeLayout.ElementVarLayout!.ParameterOffset,
+                            StageFlags = this.pushConstantStages = stages,
+                        };
+
+                        pushConstantRanges.Add(pushConstantRange);
+                    }
+
+                    break;
+                case { Kind: SlangTypeKind.ConstantBuffer, ParameterCategory: SlangParameterCategory.DescriptorTableSlot }:
                     {
-                        CompareMask = 0xFF,
-                        CompareOp   = VkCompareOp.Equal,
-                        DepthFailOp = VkStencilOp.Keep,
-                        FailOp      = VkStencilOp.Keep,
-                        PassOp      = VkStencilOp.Replace,
-                        Reference   = 1,
-                        WriteMask   = 0xFF,
-                    },
-                    _ => default
-                };
+                        uniformBindings.Add(VkDescriptorType.UniformBuffer);
 
-                var depthStencilState = new VkPipelineDepthStencilStateCreateInfo
-                {
-                    DepthTestEnable       = this.options.Stencil == StencilKind.None,
-                    DepthWriteEnable      = true,
-                    DepthCompareOp        = VkCompareOp.Less,
-                    DepthBoundsTestEnable = false,
-                    StencilTestEnable     = this.options.Stencil != StencilKind.None,
-                    Front                 = stencilOp,
-                    Back                  = stencilOp,
-                };
+                        var layout = new VkDescriptorSetLayoutBinding()
+                        {
+                            Binding         = binding,
+                            DescriptorCount = 1,
+                            DescriptorType  = VkDescriptorType.UniformBuffer,
+                            StageFlags      = stages,
+                        };
 
-                var graphicsPipelineCreateInfo = new VkGraphicsPipelineCreateInfo
-                {
-                    Layout              = this.PipelineLayout.Handle,
-                    PColorBlendState    = &pipelineColorBlendStateCreateInfo,
-                    PDynamicState       = &pipelineDynamicStateCreateInfo,
-                    PInputAssemblyState = &inputAssembly,
-                    PMultisampleState   = &pipelineMultisampleStateCreateInfo,
-                    PRasterizationState = &pipelineRasterizationStateCreateInfo,
-                    PStages             = pPipelineShaderStageCreateInfos,
-                    PVertexInputState   = &pipelineVertexInputStateCreateInfo,
-                    PViewportState      = &pipelineViewportStateCreateInfo,
-                    StageCount          = (uint)pipelineShaderStageCreateInfos.Count,
-                    RenderPass          = this.RenderPass.Instance.Handle,
-                    PDepthStencilState  = &depthStencilState,
-                    Subpass             = this.options.Subpass,
-                };
+                        bindings.Add(layout);
+                    }
 
-                this.pipeline = VulkanRenderer.Singleton.Context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);
+                    break;
+                case { Kind: SlangTypeKind.Resource, Type.ResourceShape: SlangResourceShape.Texture2D }:
+                    {
+                        uniformBindings.Add(VkDescriptorType.CombinedImageSampler);
+
+                        var layout = new VkDescriptorSetLayoutBinding()
+                        {
+                            Binding         = binding,
+                            DescriptorCount = 1,
+                            DescriptorType  = VkDescriptorType.CombinedImageSampler,
+                            StageFlags      = stages,
+                        };
+
+                        bindings.Add(layout);
+                    }
+                    break;
+                default:
+                    break;
             }
+        }
+
+        this.uniformBindings = [..uniformBindings];
+
+        var vertexInputAttributeDescription = TVertexInput.GetAttributes();
+        var vertexInputBindingDescription   = TVertexInput.GetBindings();
+
+        Span<VkDynamicState> dynamicStates =
+        [
+            VkDynamicState.Viewport,
+            VkDynamicState.Scissor,
+        ];
+
+        fixed (VkDescriptorSetLayoutBinding*      pBindings                       = bindings.AsSpan())
+        fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription)
+        fixed (VkDynamicState*                    pDynamicStates                  = dynamicStates)
+        fixed (VkPipelineShaderStageCreateInfo*   pPipelineShaderStageCreateInfos = pipelineShaderStageCreateInfos.AsSpan())
+        fixed (VkPushConstantRange*               pPushConstantRanges             = pushConstantRanges.AsSpan())
+        {
+            var descriptorSetLayoutCreateInfo = new VkDescriptorSetLayoutCreateInfo
+            {
+                PBindings    = pBindings,
+                BindingCount = (uint)bindings.Count,
+            };
+
+            this.descriptorSetLayout = VulkanRenderer.Singleton.Context.Device.CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+
+            var descriptorSetLayoutHandle = this.descriptorSetLayout.Handle;
+
+            var pipelineLayoutCreateInfo = new VkPipelineLayoutCreateInfo
+            {
+                PSetLayouts            = &descriptorSetLayoutHandle,
+                SetLayoutCount         = 1,
+                PPushConstantRanges    = pPushConstantRanges,
+                PushConstantRangeCount = (uint)pushConstantRanges.Count,
+            };
+
+            this.pipelineLayout = VulkanRenderer.Singleton.Context.Device.CreatePipelineLayout(pipelineLayoutCreateInfo);
+
+            var inputAssembly = new VkPipelineInputAssemblyStateCreateInfo
+            {
+                Topology = this.PrimitiveTopology,
+            };
+
+            var pipelineVertexInputStateCreateInfo = new VkPipelineVertexInputStateCreateInfo
+            {
+                PVertexAttributeDescriptions    = pVertexAttributeDescriptions,
+                PVertexBindingDescriptions      = &vertexInputBindingDescription,
+                VertexAttributeDescriptionCount = (uint)vertexInputAttributeDescription.Length,
+                VertexBindingDescriptionCount   = 1,
+            };
+
+            var pipelineDynamicStateCreateInfo = new VkPipelineDynamicStateCreateInfo
+            {
+                DynamicStateCount = (uint)dynamicStates.Length,
+                PDynamicStates    = pDynamicStates,
+            };
+
+            var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
+            {
+                AlphaBlendOp   = VkBlendOp.Add,
+                BlendEnable    = true,
+                ColorWriteMask = VkColorComponentFlags.R
+                    | VkColorComponentFlags.G
+                    | VkColorComponentFlags.B
+                    | VkColorComponentFlags.A,
+                DstColorBlendFactor = VkBlendFactor.OneMinusSrcAlpha,
+                SrcAlphaBlendFactor = VkBlendFactor.One,
+                SrcColorBlendFactor = VkBlendFactor.SrcAlpha,
+            };
+
+            var pipelineColorBlendStateCreateInfo = new VkPipelineColorBlendStateCreateInfo
+            {
+                AttachmentCount = 1,
+                LogicOp         = VkLogicOp.Copy,
+                PAttachments    = &pipelineColorBlendAttachmentState,
+            };
+
+            var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
+            {
+                SampleShadingEnable  = true,
+                RasterizationSamples = this.options.RasterizationSamples,
+                MinSampleShading     = 1,
+            };
+
+            var pipelineRasterizationStateCreateInfo = new VkPipelineRasterizationStateCreateInfo
+            {
+                CullMode    = VkCullModeFlags.Back,
+                FrontFace   = this.options.FrontFace,
+                LineWidth   = 1,
+                PolygonMode = VkPolygonMode.Fill,
+            };
+
+            var pipelineViewportStateCreateInfo = new VkPipelineViewportStateCreateInfo
+            {
+                ViewportCount = 1,
+                ScissorCount  = 1,
+            };
+
+            var stencilOp = this.options.Stencil switch
+            {
+                StencilKind.Mask => new VkStencilOpState
+                {
+                    CompareMask = 0xFF,
+                    CompareOp   = VkCompareOp.Always,
+                    DepthFailOp = VkStencilOp.Replace,
+                    FailOp      = VkStencilOp.Replace,
+                    PassOp      = VkStencilOp.Replace,
+                    Reference   = 1,
+                    WriteMask   = 0xFF,
+                },
+                StencilKind.Content => new VkStencilOpState
+                {
+                    CompareMask = 0xFF,
+                    CompareOp   = VkCompareOp.Equal,
+                    DepthFailOp = VkStencilOp.Keep,
+                    FailOp      = VkStencilOp.Keep,
+                    PassOp      = VkStencilOp.Replace,
+                    Reference   = 1,
+                    WriteMask   = 0xFF,
+                },
+                _ => default
+            };
+
+            var depthStencilState = new VkPipelineDepthStencilStateCreateInfo
+            {
+                DepthTestEnable       = this.options.Stencil == StencilKind.None,
+                DepthWriteEnable      = true,
+                DepthCompareOp        = VkCompareOp.Less,
+                DepthBoundsTestEnable = false,
+                StencilTestEnable     = this.options.Stencil != StencilKind.None,
+                Front                 = stencilOp,
+                Back                  = stencilOp,
+            };
+
+            var graphicsPipelineCreateInfo = new VkGraphicsPipelineCreateInfo
+            {
+                Layout              = this.PipelineLayout.Handle,
+                PColorBlendState    = &pipelineColorBlendStateCreateInfo,
+                PDynamicState       = &pipelineDynamicStateCreateInfo,
+                PInputAssemblyState = &inputAssembly,
+                PMultisampleState   = &pipelineMultisampleStateCreateInfo,
+                PRasterizationState = &pipelineRasterizationStateCreateInfo,
+                PStages             = pPipelineShaderStageCreateInfos,
+                PVertexInputState   = &pipelineVertexInputStateCreateInfo,
+                PViewportState      = &pipelineViewportStateCreateInfo,
+                StageCount          = (uint)pipelineShaderStageCreateInfos.Count,
+                RenderPass          = this.RenderPass.Instance.Handle,
+                PDepthStencilState  = &depthStencilState,
+                Subpass             = this.options.Subpass,
+            };
+
+            this.pipeline = VulkanRenderer.Singleton.Context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);
         }
     }
 
     protected override void Disposed()
     {
-        foreach (var file in this.files)
-        {
-            watcher.Filters.Remove(file);
-        }
+        watcher.Filters.Remove(this.filepath);
 
         watcher.Changed -= this.OnFileChanged;
 
@@ -542,4 +546,3 @@ where TPushConstant : IPushConstant
         VulkanRenderer.Singleton.DeferredDispose(this.DescriptorSetLayout);
     }
 }
-

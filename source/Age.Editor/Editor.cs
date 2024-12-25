@@ -1,14 +1,13 @@
+using Age.Editor.Tests;
 using Age.Elements;
-using Age.Styling;
-using Age.Scene;
 using Age.Numerics;
 using Age.Platforms.Display;
-using Age.Editor.Tests;
+using Age.RenderPasses;
+using Age.Scene;
+using Age.Styling;
+using ThirdParty.Vulkan.Flags;
 
 using Common = Age.Internal.Common;
-
-using ThirdParty.Vulkan.Flags;
-using Age.RenderPasses;
 
 namespace Age.Editor;
 
@@ -28,8 +27,8 @@ public class Editor : Node
         this.AppendChild(this.canvas);
         this.setup = ButtonTest.Setup;
 
-        this.Reload();
-        // this.CreateDemoScene();
+        // this.Reload();
+        this.CreateDemoScene();
     }
 
     private void CreateDemoScene()
@@ -87,10 +86,10 @@ public class Editor : Node
 
         var scene = new DemoScene();
 
-        var freeViewport  = new Viewport(new(300)) { Name = "Red" };
-        var redViewport   = new Viewport(new(100)) { Name = "Red" };
-        var greenViewport = new Viewport(new(100)) { Name = "Green" };
-        var blueViewport  = new Viewport(new(100)) { Name = "Blue" };
+        var freeViewport  = new Viewport(new(600)) { Name = "Red" };
+        var redViewport   = new Viewport(new(200)) { Name = "Red" };
+        var greenViewport = new Viewport(new(200)) { Name = "Green" };
+        var blueViewport  = new Viewport(new(200)) { Name = "Blue" };
 
         freeViewport.Style.Border  = new(1, 0, Color.White);
         redViewport.Style.Border   = new(1, 0, Color.Red);

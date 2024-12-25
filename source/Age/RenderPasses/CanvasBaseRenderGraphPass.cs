@@ -2,7 +2,7 @@ using Age.Commands;
 using Age.Elements;
 using Age.Numerics;
 using Age.Rendering.Resources;
-using Age.Rendering.Shaders.Canvas;
+using Age.Shaders;
 using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan.Enums;

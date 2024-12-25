@@ -1,7 +1,4 @@
 {
-    "dotnetCoreExplorer.logpanel": true,
-    "dotnetCoreExplorer.searchpatterns": "**/tests/**/*.Tests.{dll,exe}",
-    "dotnetCoreExplorer.codeLens": false,
     // "csharp.semanticHighlighting.enabled": false
     "files.exclude": {
         "**/.git": true,
@@ -19,5 +16,9 @@
         "BenchmarkDotNet.Artifacts": true
     },
     "explorerExclude.backup": {},
-    "glsllint.glslangValidatorArgs": "-V"
+    "[slang]": {
+        "editor.formatOnSave": false,
+        "editor.formatOnPaste": false,
+        "editor.formatOnType": false
+    }
 }

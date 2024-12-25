@@ -10,11 +10,11 @@ public unsafe class NativeStringArray : IDisposable
 
     private bool disposed;
 
-    public NativeStringArray(IList<string> source)
+    public NativeStringArray(Span<string> source)
     {
-        var ppData = (byte**)NativeMemory.Alloc((uint)(sizeof(byte*) * source.Count));
+        var ppData = (byte**)NativeMemory.Alloc((uint)(sizeof(byte*) * source.Length));
 
-        for (var i = 0; i < source.Count; i++)
+        for (var i = 0; i < source.Length; i++)
         {
             var bytes = Encoding.UTF8.GetBytes(source[i]);
 
@@ -28,7 +28,7 @@ public unsafe class NativeStringArray : IDisposable
         }
 
         this.PpData = ppData;
-        this.Length = source.Count;
+        this.Length = source.Length;
     }
 
     ~NativeStringArray() =>

@@ -1,5 +1,5 @@
 using Age.Numerics;
-using Age.Rendering.Shaders.Canvas;
+using Age.Shaders;
 using Age.Resources;
 
 namespace Age.Commands;

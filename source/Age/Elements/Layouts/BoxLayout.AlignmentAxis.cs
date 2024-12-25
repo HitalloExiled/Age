@@ -1,8 +1,6 @@
-using static Age.Rendering.Shaders.Canvas.CanvasShader;
+using static Age.Shaders.CanvasShader;
 
 namespace Age.Elements.Layouts;
-
-#pragma warning disable CA1001 // TODO Remove;
 
 internal partial class BoxLayout
 {
