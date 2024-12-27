@@ -45,14 +45,14 @@ where TVertexInput  : IVertexInput
 
     private static SpinLock spinLock;
 
-    private readonly Lock                       @lock            = new();
-    private readonly Dictionary<string, byte[]> dependenciesHash = [];
-    private readonly string                     filepath;
-    private readonly SlangSession               slangSession     = new();
+    private readonly Lock                        @lock            = new();
+    private readonly Dictionary<string, MD5Hash> dependenciesHash = [];
+    private readonly string                      filepath;
+    private readonly SlangSession                slangSession     = new();
 
     private CancellationTokenSource cancellationTokenSource = new();
     private VkDescriptorSetLayout   descriptorSetLayout;
-    private byte[]                  hash                    = [];
+    private MD5Hash                 hash;
     private VkPipeline              pipeline;
     private VkPipelineLayout        pipelineLayout;
     private byte[]                  source;
@@ -75,7 +75,7 @@ where TVertexInput  : IVertexInput
         this.filepath = string.Intern(Path.IsPathRooted(file) ? file : Path.GetFullPath(Path.Join(shadersPath, file)));
         this.options  = options;
         this.source   = File.ReadAllBytes(this.filepath);
-        this.hash     = MD5.HashData(this.source);
+        this.hash     = MD5Hash.Create(this.source);
 
         var filename = string.Intern(Path.GetFileName(this.filepath));
 
@@ -172,7 +172,9 @@ where TVertexInput  : IVertexInput
 
                 foreach (var dependecy in dependencies)
                 {
-                    this.dependenciesHash[dependecy] = MD5.HashData(File.ReadAllBytes(dependecy));
+                    ref var dependencieHash = ref this.dependenciesHash.GetValueRefOrAddDefault(dependecy, out var exists);
+
+                    MD5Hash.Update(File.ReadAllBytes(dependecy), ref dependencieHash);
                 }
 
                 var lockTaken = false;
@@ -218,14 +220,14 @@ where TVertexInput  : IVertexInput
 
         if (dependency != null)
         {
-            hasChanged = !this.dependenciesHash.TryGetValue(dependency, out var dependencyHash) || !dependencyHash.AsSpan().SequenceEqual(MD5.HashData(File.ReadAllBytes(dependency)));
+            hasChanged = !this.dependenciesHash.TryGetValue(dependency, out var dependencyHash) || dependencyHash != MD5Hash.Create(File.ReadAllBytes(dependency));
         }
         else
         {
             var source = File.ReadAllBytes(this.filepath);
-            var hash   = MD5.HashData(source);
+            var hash   = MD5Hash.Create(source);
 
-            if (hasChanged = !this.hash.AsSpan().SequenceEqual(hash))
+            if (hasChanged = this.hash != hash)
             {
                 this.source = source;
                 this.hash   = hash;
@@ -251,7 +253,7 @@ where TVertexInput  : IVertexInput
         }
     }
 
-    private void RecompileShaderWithDebounce(string? trigger)
+    private void RecompileShaderWithDebounce(string? trigger = null)
     {
         this.cancellationTokenSource.Cancel();
         this.cancellationTokenSource.Dispose();
@@ -276,7 +278,14 @@ where TVertexInput  : IVertexInput
     {
         var filepath = Path.GetFullPath(e.FullPath);
 
-        this.RecompileShaderWithDebounce(this.dependenciesHash.ContainsKey(filepath) ? filepath : null);
+        if (filepath == this.filepath)
+        {
+            this.RecompileShaderWithDebounce();
+        }
+        else if (this.dependenciesHash.ContainsKey(filepath))
+        {
+            this.RecompileShaderWithDebounce(filepath);
+        }
     }
 
     [MemberNotNull(nameof(pipeline), nameof(pipelineLayout), nameof(descriptorSetLayout), nameof(uniformBindings))]

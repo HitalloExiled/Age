@@ -42,7 +42,6 @@ float2 getMax(float2 vector)
     return float2(value, value);
 }
 
-
 bool intersectsBorders(in PushConstant data, in float2 position, BorderKind border)
 {
     Rect leftTop;
