@@ -48,9 +48,11 @@ public VertexOutput main(in VertexInput input)
     vertex /= data.viewport;
     vertex = vertex * 2 - 1;
 
+    var uv = data.uv; // For some reason the Intel GPU doesn't seem to support directly assigning push constant values ​​to the output of the shader stage
+
     return
     {
         float4(vertex, 1, 1),
-        data.uv[input.index]
+        uv[input.index]
     };
 }
