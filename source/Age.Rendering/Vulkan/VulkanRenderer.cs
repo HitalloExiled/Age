@@ -22,7 +22,8 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
     public static VulkanRenderer Singleton => singleton ?? throw new NullReferenceException();
 
-    private readonly Dictionary<VkCommandBuffer, CommandBuffer> commandBuffers = [];
+    private readonly Lock                                       @lock           = new();
+    private readonly Dictionary<VkCommandBuffer, CommandBuffer> commandBuffers  = [];
     private readonly List<PendingDisposable>                    pendingDisposes = [];
 
     private bool disposingPendingResources;
@@ -75,6 +76,9 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         return true;
     }
 
+    private void AddPendingDisposes(IDisposable disposable) =>
+        this.pendingDisposes.Add(new(disposable, FRAMES_BETWEEN_PENDING_DISPOSES));
+
     private VkDescriptorSet[] CreateDescriptorSets(VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout)
     {
         var descriptorSetLayouts = new VkHandle<VkDescriptorSetLayout>[VulkanContext.MAX_FRAMES_IN_FLIGHT]
@@ -97,38 +101,41 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
     private void DisposePendingResources(bool immediate = false)
     {
-        this.disposingPendingResources = true;
-
-        if (immediate)
+        lock (this.@lock)
         {
-            foreach (var item in this.pendingDisposes)
+            this.disposingPendingResources = true;
+
+            if (immediate)
             {
-                item.Disposable.Dispose();
+                foreach (var item in this.pendingDisposes)
+                {
+                    item.Disposable.Dispose();
+                }
+
+                this.pendingDisposes.Clear();
+            }
+            else
+            {
+                var span = this.pendingDisposes.AsSpan();
+
+                for (var i = 0; i < this.pendingDisposes.Count; i++)
+                {
+                    if (span[i].FramesRemaining == 0)
+                    {
+                        span[i].Disposable.Dispose();
+                        this.pendingDisposes.RemoveAt(i);
+
+                        i--;
+                    }
+                    else
+                    {
+                        span[i].FramesRemaining--;
+                    }
+                }
             }
 
-            this.pendingDisposes.Clear();
+            this.disposingPendingResources = false;
         }
-        else
-        {
-            var span = this.pendingDisposes.AsSpan();
-
-            for (var i = 0; i < this.pendingDisposes.Count; i++)
-            {
-                if (span[i].FramesRemaining == 0)
-                {
-                    span[i].Disposable.Dispose();
-                    this.pendingDisposes.RemoveAt(i);
-
-                    i--;
-                }
-                else
-                {
-                    span[i].FramesRemaining--;
-                }
-            }
-        }
-
-        this.disposingPendingResources = false;
     }
 
     private void OnContextDeviceInitialized()
@@ -259,72 +266,6 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         };
     }
 
-    // public RenderPipeline CreateRenderPipeline(in RenderPipelineCreateInfo createInfo)
-    // {
-    //     var subPasses   = new RenderPassCreateInfo.SubPass[createInfo.SubPasses.Length];
-    //     var attachments = new List<FramebufferCreateInfo.Attachment>();
-
-    //     for (var subPassIndex = 0; subPassIndex < createInfo.SubPasses.Length; subPassIndex++)
-    //     {
-    //         ref var subPass      = ref createInfo.SubPasses[subPassIndex];
-    //         var colorAttachments = new RenderPassCreateInfo.ColorAttachment[subPass.ColorAttachments.Length];
-
-    //         ref var renderPassSubPass = ref subPasses[subPassIndex];
-
-    //         for (var i = 0; i < subPass.ColorAttachments.Length; i++)
-    //         {
-    //             ref var colorAttachment = ref subPass.ColorAttachments[i];
-
-    //             attachments.Add(new(this.CreateImage(colorAttachment.Color.Image), VkImageAspectFlags.Color));
-
-    //             if (colorAttachment.Resolve.HasValue)
-    //             {
-    //                 attachments.Add(new(this.CreateImage(colorAttachment.Resolve.Value.Image), VkImageAspectFlags.Color));
-    //             }
-
-    //             colorAttachments[i] = new()
-    //             {
-    //                 Color   = colorAttachment.Color.Description,
-    //                 Resolve = colorAttachment.Resolve?.Description,
-    //             };
-    //         }
-
-    //         if (subPass.DepthStencilAttachment.HasValue)
-    //         {
-    //             attachments.Add(new(this.CreateImage(subPass.DepthStencilAttachment.Value.Image), VkImageAspectFlags.Depth));
-    //         }
-
-    //         subPasses[subPassIndex] = new()
-    //         {
-    //             PipelineBindPoint      = subPass.PipelineBindPoint,
-    //             ColorAttachments       = colorAttachments,
-    //             DepthStencilAttachment = subPass.DepthStencilAttachment?.Description,
-    //         };
-    //     }
-
-    //     var renderPassCreateInfo = new RenderPassCreateInfo
-    //     {
-    //         SubpassDependencies = createInfo.SubpassDependencies,
-    //         SubPasses           = subPasses,
-    //     };
-
-    //     var renderPass = this.CreateRenderPass(renderPassCreateInfo);
-
-    //     var framebufferCreateInfo = new FramebufferCreateInfo
-    //     {
-    //         RenderPass  = renderPass,
-    //         Attachments = [..attachments],
-    //     };
-
-    //     var framebuffer = this.CreateFramebuffer(framebufferCreateInfo);
-
-    //     return new()
-    //     {
-    //         RenderPass  = renderPass,
-    //         Framebuffer = framebuffer,
-    //     };
-    // }
-
     public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
         this.Context.CreateSurface(handle, clientSize);
     public VertexBuffer CreateVertexBuffer<T>(Span<T> data) where T : unmanaged
@@ -345,31 +286,62 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         };
     }
 
+
+
     public void DeferredDispose(IDisposable disposable)
     {
-        if (this.disposingPendingResources)
+        lock (this.@lock)
         {
-            disposable.Dispose();
-        }
-        else
-        {
-            this.pendingDisposes.Add(new(disposable, FRAMES_BETWEEN_PENDING_DISPOSES));
+            if (this.disposingPendingResources)
+            {
+                disposable.Dispose();
+            }
+            else
+            {
+                this.AddPendingDisposes(disposable);
+            }
         }
     }
 
     public void DeferredDispose(Span<IDisposable> disposables)
     {
-        foreach (var disposable in disposables)
+        lock (this.@lock)
         {
-            this.DeferredDispose(disposable);
+            if (this.disposingPendingResources)
+            {
+                foreach (var disposable in disposables)
+                {
+                    disposable.Dispose();
+                }
+            }
+            else
+            {
+                foreach (var disposable in disposables)
+                {
+                    this.AddPendingDisposes(disposable);
+                }
+            }
         }
     }
 
     public void DeferredDispose(IEnumerable<IDisposable> disposables)
     {
-        foreach (var disposable in disposables)
+        lock (this.@lock)
         {
-            this.DeferredDispose(disposable);
+            if (this.disposingPendingResources)
+            {
+                foreach (var disposable in disposables)
+                {
+                    disposable.Dispose();
+                }
+            }
+            else
+            {
+                foreach (var disposable in disposables)
+                {
+                    this.AddPendingDisposes(disposable);
+                }
+            }
         }
     }
 
