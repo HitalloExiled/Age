@@ -1,8 +1,8 @@
-import Common;
-import Numerics;
+import Modules.Common;
+import Modules.Numerics;
 
-import "./CanvasShader.BorderSide";
-import "./CanvasShader.PushConstant";
+import "CanvasShader.BorderSide";
+import "CanvasShader.PushConstant";
 
 public enum CornerKind
 {

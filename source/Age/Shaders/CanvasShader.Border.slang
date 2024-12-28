@@ -1,5 +1,5 @@
-import "./CanvasShader.BorderRadius";
-import "./CanvasShader.BorderSide";
+import "CanvasShader.BorderRadius";
+import "CanvasShader.BorderSide";
 
 public struct Border
 {

@@ -154,7 +154,6 @@ where TVertexInput  : IVertexInput
 
         var translationUnitIndex = request.AddTranslationUnit(SlangSourceLanguage.Slang, Path.GetFileName(this.filepath.AsSpan()));
 
-        request.AddSearchPath(Path.Join(shadersPath.AsSpan(), "Modules"));
         request.AddTranslationUnitSourceString(translationUnitIndex, this.filepath, this.source);
         request.SetCodeGenTarget(SlangCompileTarget.Spirv);
         request.SetTargetProfile(0, this.slangSession.FindProfile("spirv_1_0"));

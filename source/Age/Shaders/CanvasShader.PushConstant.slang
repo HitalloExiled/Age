@@ -1,7 +1,7 @@
-import Numerics;
+import "Modules/Numerics";
 
-import "./CanvasShader.Border";
-import "./CanvasShader.Flags";
+import "CanvasShader.Border";
+import "CanvasShader.Flags";
 
 public struct PushConstant
 {

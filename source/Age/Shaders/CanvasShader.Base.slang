@@ -1,6 +1,6 @@
 #pragma once
 
-import Common;
+import Modules.Common;
 
 import "CanvasShader.Flags";
 import "CanvasShader.BorderSide";
