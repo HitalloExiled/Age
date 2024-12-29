@@ -6,8 +6,8 @@ namespace Age.Shaders;
 
 public sealed partial class GeometryShader(RenderPass renderPass, VkSampleCountFlags rasterizationSamples, bool watch)
 : Shader<GeometryShader.Vertex>(
-    renderPass,
     $"{nameof(GeometryShader)}.slang",
+    renderPass,
     new ShaderOptions
     {
         Watch                = watch,

@@ -4,7 +4,7 @@ using ThirdParty.Vulkan.Enums;
 namespace Age.Shaders;
 
 public sealed class CanvasWireframeShader(RenderPass renderPass, uint subpass, bool watch)
-: CanvasShader(renderPass, subpass, $"{nameof(CanvasWireframeShader)}.slang", StencilKind.Content, watch)
+: CanvasShader($"{nameof(CanvasWireframeShader)}.slang", renderPass, subpass, StencilKind.Content, watch)
 {
     public override string              Name              { get; } = nameof(CanvasWireframeShader);
     public override VkPipelineBindPoint BindPoint         { get; } = VkPipelineBindPoint.Graphics;

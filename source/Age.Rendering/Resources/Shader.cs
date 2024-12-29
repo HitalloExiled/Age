@@ -70,7 +70,7 @@ where TVertexInput  : IVertexInput
     public sealed override VkShaderStageFlags    PushConstantStages  => this.pushConstantStages;
     public sealed override VkDescriptorType[]    UniformBindings     => this.uniformBindings;
 
-    public Shader(RenderPass renderPass, string file, in ShaderOptions options) : base(renderPass)
+    public Shader(string file, RenderPass renderPass, in ShaderOptions options) : base(renderPass)
     {
         this.filepath = string.Intern(Path.IsPathRooted(file) ? file : Path.GetFullPath(Path.Join(shadersPath, file)));
         this.options  = options;
