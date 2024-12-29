@@ -35,4 +35,14 @@ public abstract class ContainerNode : Node2D
     }
 
     public Element? ParentElement => this.Parent as Element;
+
+    public Rect<int> GetBoundings()
+    {
+        this.Layout.Update();
+
+        var size     = this.Layout.Boundings.Cast<int>();
+        var position = new Point<int>((int)this.Transform.Position.X, (int)this.Transform.Position.Y);
+
+        return new(size, position);
+    }
 }

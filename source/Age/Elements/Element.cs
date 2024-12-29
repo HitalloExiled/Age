@@ -294,7 +294,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
                 this.text = value;
 
-                this.Layout.RequestUpdate();
+                this.Layout.RequestUpdate(true);
             }
         }
     }
@@ -409,7 +409,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         if (!renderTree.IsDirty && !this.Layout.Hidden)
         {
-            renderTree.IsDirty = true;
+            renderTree.MakeDirty();
         }
 
         this.Canvas = this.ParentElement?.Canvas ?? this.Parent as Canvas;
@@ -453,7 +453,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
         if (!renderTree.IsDirty && !this.Layout.Hidden)
         {
-            renderTree.IsDirty = true;
+            renderTree.MakeDirty();
         }
 
         this.Layout.TargetDisconnected();

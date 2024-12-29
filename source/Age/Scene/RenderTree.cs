@@ -30,10 +30,6 @@ public sealed partial class RenderTree : NodeTree
     public Window Window { get; }
     #endregion
 
-    #region 1-bytes
-    public bool IsDirty { get; internal set; }
-    #endregion
-
     public RenderTree(Window window)
     {
         this.Window = window;

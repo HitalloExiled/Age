@@ -140,8 +140,10 @@ internal partial class StyledStateManager
         this.isDirty = true;
         this.Changed?.Invoke(property);
     }
+
     public void AddState(State state) =>
         this.States |= state;
+
     public void RemoveState(State state) =>
         this.States &= ~state;
 }

@@ -6,6 +6,7 @@ using Age.Scene;
 using Age.Services;
 using Age.Storage;
 using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Age;
 
@@ -109,7 +110,8 @@ public sealed class Engine : Disposable
                         if (window.Tree.IsDirty)
                         {
                             this.renderingService.RequestDraw();
-                            window.Tree.IsDirty = false;
+
+                            window.Tree.MakePristine();
                         }
                     }
                 }
@@ -121,7 +123,17 @@ public sealed class Engine : Disposable
                 Node2D.CacheVersion++;
                 Node3D.CacheVersion++;
 
-                this.Running = Window.Windows.Any(x => !x.IsClosed);
+                this.Running = false;
+
+                foreach (var window in Window.Windows)
+                {
+                    if (!window.IsClosed)
+                    {
+                        this.Running = true;
+
+                        break;
+                    }
+                }
 
                 frameTime = 0;
             }

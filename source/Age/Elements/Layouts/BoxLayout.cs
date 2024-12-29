@@ -11,6 +11,19 @@ namespace Age.Elements.Layouts;
 
 internal sealed partial class BoxLayout : Layout
 {
+    private static readonly HashSet<StyleProperty> nonBoundingAffectingProperties =
+    [
+        StyleProperty.BackgroundColor,
+        StyleProperty.Color,
+        StyleProperty.ContentJustification,
+        StyleProperty.Overflow,
+        StyleProperty.Padding,
+        StyleProperty.Positioning,
+        StyleProperty.TextAlignment,
+        StyleProperty.TextSelection,
+        StyleProperty.Transform
+    ];
+
     #region 8-bytes
     private readonly List<Element> dependents = [];
     private readonly Element       target;
@@ -42,6 +55,7 @@ internal sealed partial class BoxLayout : Layout
     private RawRectEdges padding;
     private Dependency   parentDependent;
     private uint         renderableNodesCount;
+    private Size<uint>   size;
     private Size<uint>   staticContent;
 
     public Point<int> ScrollOffset
@@ -49,15 +63,15 @@ internal sealed partial class BoxLayout : Layout
         get;
         set
         {
-            value.X = Math<int>.MinMax(-(int)this.content.Width.ClampSubtract(this.Size.Width), 0, value.X);
-            value.Y = Math<int>.MinMax(0, (int)this.content.Height.ClampSubtract(this.Size.Height), value.Y);
+            value.X = Math<int>.MinMax(-(int)this.content.Width.ClampSubtract(this.size.Width), 0, value.X);
+            value.Y = Math<int>.MinMax(0, (int)this.content.Height.ClampSubtract(this.size.Height), value.Y);
 
             if (field != value)
             {
                 field = value;
 
                 this.ownStencilLayer?.MakeDirty();
-                this.RequestUpdate();
+                this.RequestUpdate(false);
             }
         }
     }
@@ -73,23 +87,10 @@ internal sealed partial class BoxLayout : Layout
     public bool IsHoveringText { get; set; }
     #endregion
 
-    public Size<uint> Boundings =>
+    private Size<uint> BoundingsWithMargin =>
         new(
-            this.Size.Width  + this.padding.Horizontal + this.border.Horizontal,
-            this.Size.Height + this.padding.Vertical   + this.border.Vertical
-        );
-    public Size<uint> BoundingsWithMargin =>
-        new(
-            this.Size.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
-            this.Size.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
-        );
-
-    public RawRectEdges Border => this.border;
-
-    public Size<uint> InnerBoundings =>
-        new(
-            this.Size.Width  + this.padding.Horizontal,
-            this.Size.Height + this.padding.Vertical
+            this.size.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
+            this.size.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
         );
 
     public StyledStateManager State { get; } = new();
@@ -153,7 +154,7 @@ internal sealed partial class BoxLayout : Layout
             }
             else
             {
-                contentSize.Width = uint.Max(layout.Size.Width + layout.padding.Horizontal + layout.border.Horizontal + horizontal, contentSize.Width);
+                contentSize.Width = uint.Max(layout.size.Width + layout.padding.Horizontal + layout.border.Horizontal + horizontal, contentSize.Width);
             }
         }
     }
@@ -180,7 +181,7 @@ internal sealed partial class BoxLayout : Layout
             }
             else
             {
-                contentSize.Height = uint.Max(layout.Size.Height + layout.padding.Vertical + layout.border.Vertical + vertical, contentSize.Height);
+                contentSize.Height = uint.Max(layout.size.Height + layout.padding.Vertical + layout.border.Vertical + vertical, contentSize.Height);
             }
         }
     }
@@ -317,12 +318,12 @@ internal sealed partial class BoxLayout : Layout
 
             if (child is Element element)
             {
-                childSize = element.Layout.BoundingsWithMargin;
+                childSize    = element.Layout.BoundingsWithMargin;
                 dependencies = element.Layout.parentDependent;
             }
             else
             {
-                childSize = child.Layout.Size;
+                childSize = child.Layout.Boundings;
             }
 
             if (stack == StackKind.Horizontal)
@@ -367,9 +368,9 @@ internal sealed partial class BoxLayout : Layout
         var resolvedPadding = this.ResolvePadding();
         var resolvedSize    = this.ResolveSize(ref size);
 
-        var sizeHasChanged = this.Size != size;
+        var sizeHasChanged = this.size != size;
 
-        this.Size = size;
+        this.size = size;
 
         if (resolvedSize && resolvedMargin && resolvedPadding)
         {
@@ -378,7 +379,7 @@ internal sealed partial class BoxLayout : Layout
                 this.CalculatePendingLayouts();
             }
 
-            this.UpdateRect();
+            this.UpdateBoundings();
         }
     }
 
@@ -414,21 +415,21 @@ internal sealed partial class BoxLayout : Layout
     private void CalculatePendingLayouts()
     {
         var content        = this.content;
-        var avaliableSpace = this.Size.ClampSubtract(this.staticContent);
+        var avaliableSpace = this.size.ClampSubtract(this.staticContent);
         var stack          = this.State.Style.Stack ?? StackKind.Horizontal;
 
         foreach (var dependent in this.dependents)
         {
             var margin  = dependent.Layout.margin;
             var padding = dependent.Layout.padding;
-            var size    = dependent.Layout.Size;
+            var size    = dependent.Layout.size;
 
             if (!this.contentDependent.HasFlag(Dependency.Width) || stack == StackKind.Vertical)
             {
                 if (!this.contentDependent.HasFlag(Dependency.Width))
                 {
-                    CalculatePendingPaddingHorizontal(dependent.Layout, this.Size, ref padding);
-                    CalculatePendingMarginHorizontal(dependent.Layout, stack, this.Size, ref margin, ref content);
+                    CalculatePendingPaddingHorizontal(dependent.Layout, this.size, ref padding);
+                    CalculatePendingMarginHorizontal(dependent.Layout, stack, this.size, ref margin, ref content);
                 }
 
                 if (dependent.Layout.parentDependent.HasFlag(Dependency.Width))
@@ -437,7 +438,7 @@ internal sealed partial class BoxLayout : Layout
 
                     if (dependent.Layout.State.Style.Size?.Width?.TryGetPercentage(out var percentage) == true)
                     {
-                        size.Width = (uint)(this.Size.Width * percentage);
+                        size.Width = (uint)(this.size.Width * percentage);
 
                         if (dependent.Layout.State.Style.MinSize?.Width?.TryGetPixel(out var min) == true && this.State.Style.MaxSize?.Width?.TryGetPixel(out var max) == true)
                         {
@@ -469,8 +470,8 @@ internal sealed partial class BoxLayout : Layout
                     }
                     else if (dependent.Layout.State.Style.MinSize?.Width?.TryGetPercentage(out var min) == true && dependent.Layout.State.Style.MaxSize?.Width?.TryGetPercentage(out var max) == true)
                     {
-                        var minValue = (uint)(this.Size.Width * min);
-                        var maxValue = (uint)(this.Size.Width * max);
+                        var minValue = (uint)(this.size.Width * min);
+                        var maxValue = (uint)(this.size.Width * max);
 
                         modified = true;
 
@@ -489,7 +490,7 @@ internal sealed partial class BoxLayout : Layout
                     }
                     else if (dependent.Layout.State.Style.MinSize?.Width?.TryGetPercentage(out min) == true)
                     {
-                        var minValue = (uint)(this.Size.Width * min);
+                        var minValue = (uint)(this.size.Width * min);
 
                         if (size.Width < minValue)
                         {
@@ -500,7 +501,7 @@ internal sealed partial class BoxLayout : Layout
                     }
                     else if (dependent.Layout.State.Style.MaxSize?.Width?.TryGetPercentage(out max) == true)
                     {
-                        var maxValue = (uint)(this.Size.Width * max);
+                        var maxValue = (uint)(this.size.Width * max);
 
                         if (size.Width > maxValue)
                         {
@@ -546,8 +547,8 @@ internal sealed partial class BoxLayout : Layout
             {
                 if (!this.contentDependent.HasFlag(Dependency.Height))
                 {
-                    CalculatePendingPaddingVertical(dependent.Layout, this.Size, ref padding);
-                    CalculatePendingMarginVertical(dependent.Layout, stack, this.Size, ref margin, ref content);
+                    CalculatePendingPaddingVertical(dependent.Layout, this.size, ref padding);
+                    CalculatePendingMarginVertical(dependent.Layout, stack, this.size, ref margin, ref content);
                 }
 
                 if (dependent.Layout.parentDependent.HasFlag(Dependency.Height))
@@ -556,7 +557,7 @@ internal sealed partial class BoxLayout : Layout
 
                     if (dependent.Layout.State.Style.Size?.Height?.TryGetPercentage(out var percentage) == true)
                     {
-                        size.Height = (uint)(this.Size.Height * percentage);
+                        size.Height = (uint)(this.size.Height * percentage);
 
                         if (dependent.Layout.State.Style.MinSize?.Height?.TryGetPixel(out var min) == true && this.State.Style.MaxSize?.Height?.TryGetPixel(out var max) == true)
                         {
@@ -588,8 +589,8 @@ internal sealed partial class BoxLayout : Layout
                     }
                     else if (dependent.Layout.State.Style.MinSize?.Height?.TryGetPercentage(out var min) == true && dependent.Layout.State.Style.MaxSize?.Height?.TryGetPercentage(out var max) == true)
                     {
-                        var minValue = (uint)(this.Size.Height * min);
-                        var maxValue = (uint)(this.Size.Height * max);
+                        var minValue = (uint)(this.size.Height * min);
+                        var maxValue = (uint)(this.size.Height * max);
 
                         modified = true;
 
@@ -608,7 +609,7 @@ internal sealed partial class BoxLayout : Layout
                     }
                     else if (dependent.Layout.State.Style.MinSize?.Height?.TryGetPercentage(out min) == true)
                     {
-                        var minValue = (uint)(this.Size.Height * min);
+                        var minValue = (uint)(this.size.Height * min);
 
                         if (size.Height < minValue)
                         {
@@ -619,7 +620,7 @@ internal sealed partial class BoxLayout : Layout
                     }
                     else if (dependent.Layout.State.Style.MaxSize?.Height?.TryGetPercentage(out max) == true)
                     {
-                        var maxValue = (uint)(this.Size.Height * max);
+                        var maxValue = (uint)(this.size.Height * max);
 
                         if (size.Height > maxValue)
                         {
@@ -665,11 +666,11 @@ internal sealed partial class BoxLayout : Layout
                 }
             }
 
-            if (dependent.Layout.dependenciesHasChanged || dependent.Layout.childsChanged || size != dependent.Layout.Size || padding != dependent.Layout.padding || margin != dependent.Layout.margin)
+            if (dependent.Layout.dependenciesHasChanged || dependent.Layout.childsChanged || size != dependent.Layout.size || padding != dependent.Layout.padding || margin != dependent.Layout.margin)
             {
                 dependent.Layout.childsChanged          = false;
                 dependent.Layout.dependenciesHasChanged = false;
-                dependent.Layout.Size    = size;
+                dependent.Layout.size    = size;
                 dependent.Layout.padding = padding;
                 dependent.Layout.margin  = margin;
 
@@ -677,7 +678,7 @@ internal sealed partial class BoxLayout : Layout
                 dependent.Layout.UpdateDisposition();
             }
 
-            dependent.Layout.UpdateRect();
+            dependent.Layout.UpdateBoundings();
 
             dependent.Layout.HasPendingUpdate = false;
 
@@ -883,9 +884,11 @@ internal sealed partial class BoxLayout : Layout
             SetStencilLayer(this, this.ContentStencilLayer);
         }
 
+        var affectsBoundings = !nonBoundingAffectingProperties.Contains(property);
+
         if (hidden)
         {
-            this.RequestUpdate();
+            this.RequestUpdate(affectsBoundings);
 
             this.Hidden = hidden;
         }
@@ -893,7 +896,7 @@ internal sealed partial class BoxLayout : Layout
         {
             this.Hidden = hidden;
 
-            this.RequestUpdate();
+            this.RequestUpdate(affectsBoundings);
         }
 
         this.Target.Visible = !hidden;
@@ -1130,7 +1133,7 @@ internal sealed partial class BoxLayout : Layout
         }
 
         var cursor               = new Point<float>();
-        var size                 = this.Size;
+        var size                 = this.size;
         var stack                = this.State.Style.Stack ?? StackKind.Horizontal;
         var contentJustification = this.State.Style.ContentJustification ?? ContentJustificationKind.None;
 
@@ -1151,7 +1154,7 @@ internal sealed partial class BoxLayout : Layout
             }
 
             var alignmentType  = AlignmentKind.None;
-            var childBoundings = child.Layout.Size;
+            var childBoundings = child.Layout.Boundings;
             var contentOffsetY = 0u;
 
             RawRectEdges margin  = default;
@@ -1278,6 +1281,16 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
+    private void UpdateBoundings()
+    {
+        this.Boundings = new(
+            this.size.Width + this.padding.Horizontal + this.border.Horizontal,
+            this.size.Height + this.padding.Vertical + this.border.Vertical
+        );
+
+        this.UpdateRect();
+    }
+
     private void UpdateRect()
     {
         var command = this.GetRectCommand();
@@ -1286,9 +1299,9 @@ internal sealed partial class BoxLayout : Layout
 
         if (isDrawable)
         {
-            command.Rect             = new(this.Boundings.Cast<float>(), default);
-            command.Border           = this.State.Style.Border ?? default;
-            command.Color            = this.State.Style.BackgroundColor ?? default;
+            command.Rect = new(this.Boundings.Cast<float>(), default);
+            command.Border = this.State.Style.Border ?? default;
+            command.Color = this.State.Style.BackgroundColor ?? default;
             command.PipelineVariant |= PipelineVariant.Color;
         }
         else
@@ -1310,7 +1323,7 @@ internal sealed partial class BoxLayout : Layout
         {
             this.childsChanged = true;
             this.renderableNodesCount--;
-            this.RequestUpdate();
+            this.RequestUpdate(true);
         }
     }
 
@@ -1320,7 +1333,7 @@ internal sealed partial class BoxLayout : Layout
         {
             this.childsChanged = true;
             this.renderableNodesCount++;
-            this.RequestUpdate();
+            this.RequestUpdate(true);
         }
     }
 

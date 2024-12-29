@@ -9,11 +9,14 @@ public sealed class Canvas : Element
 
     public override string NodeName { get; } = nameof(Canvas);
 
-    public Canvas() =>
+    public Canvas()
+    {
+        this.Flags = NodeFlags.IgnoreChildrenUpdates;
         this.Style = new()
         {
             // Padding = new((Pixel)PADDING),
         };
+    }
 
     private void OnWindowSizeChanged()
     {
@@ -23,14 +26,11 @@ public sealed class Canvas : Element
         }
     }
 
-    private void OnUpdate() => this.Layout.Update();
-
     protected override void Connected(RenderTree renderTree)
     {
         base.Connected(renderTree);
 
         renderTree.Window.Resized += this.OnWindowSizeChanged;
-        renderTree.Updated        += this.OnUpdate;
 
         this.OnWindowSizeChanged();
     }
@@ -40,6 +40,8 @@ public sealed class Canvas : Element
         base.Disconnected(renderTree);
 
         renderTree.Window.Resized -= this.OnWindowSizeChanged;
-        renderTree.Updated        -= this.OnUpdate;
     }
+
+    public override void Update() =>
+        this.Layout.Update();
 }

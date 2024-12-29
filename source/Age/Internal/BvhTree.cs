@@ -17,7 +17,7 @@ public unsafe class BvhTree
 
         foreach (var node in nodes)
         {
-            aabb.Extends(new(node.Layout.Size, 1), new(node.Transform.Position.InvertedY, depths[node]));
+            aabb.Extends(new(node.Layout.Boundings, 1), new(node.Transform.Position.InvertedY, depths[node]));
         }
 
         return aabb;
@@ -50,7 +50,7 @@ public unsafe class BvhTree
 
         foreach (var node in nodes)
         {
-            var aabb = new AABB<float>(new(node.Layout.Size, 1), new(node.Transform.Position.InvertedY, depths[node]));
+            var aabb = new AABB<float>(new(node.Layout.Boundings, 1), new(node.Transform.Position.InvertedY, depths[node]));
 
             var intersection = particion.Intersection(aabb);
 
@@ -80,7 +80,7 @@ public unsafe class BvhTree
         else if (leftAABB == bvhNode.AABB)
         {
             var sortedElements = leftNodes
-                .OrderByDescending(static x => x.Layout.Size.Area)
+                .OrderByDescending(static x => x.Layout.Boundings.Area)
                 .ThenBy(static x => x.Transform.Position.X)
                 .ToArray()
                 .AsSpan();
@@ -129,7 +129,7 @@ public unsafe class BvhTree
         else if (rightAABB == bvhNode.AABB)
         {
             var sortedElements = rightNodes
-                .OrderByDescending(static x => x.Layout.Size.Area)
+                .OrderByDescending(static x => x.Layout.Boundings.Area)
                 .ThenByDescending(static x => x.Transform.Position.X)
                 .ToArray()
                 .AsSpan();
@@ -238,7 +238,7 @@ public unsafe class BvhTree
                 depths[node] = depth;
                 nodes.Add(node);
 
-                aabb.Extends(new(node.Layout.Size, 1), new(node.Transform.Position.InvertedY, depth));
+                aabb.Extends(new(node.Layout.Boundings, 1), new(node.Transform.Position.InvertedY, depth));
             }
         }
 

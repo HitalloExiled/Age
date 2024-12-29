@@ -24,14 +24,56 @@ internal sealed partial class TextLayout : Layout
     private readonly Timer    caretTimer;
     private readonly TextNode target;
 
-    private string? text;
+    public string? Text
+    {
+        get;
+        internal set
+        {
+            if (value != field)
+            {
+                field = value;
+
+                this.Selection   = this.Selection?.WithEnd(uint.Min(this.Selection.Value.End, (uint)(field?.Length ?? 0)));
+                this.textIsDirty = true;
+
+                this.RequestUpdate(true);
+            }
+        }
+    }
     #endregion
 
     #region 4-bytes
     private readonly int caretWidth = 2;
-    private uint           caretPosition;
-    private float          fontLeading;
-    private TextSelection? selection;
+
+    private float fontLeading;
+
+    public uint CaretPosition
+    {
+        get;
+        set
+        {
+            if (field != value)
+            {
+                field = value;
+                this.ShowCaret();
+            }
+        }
+    }
+
+    public TextSelection? Selection
+    {
+        get;
+        set
+        {
+            if (field != value)
+            {
+                field = value;
+
+                this.selectionIsDirty = true;
+                this.RequestUpdate(false);
+            }
+        }
+    }
     #endregion
 
     #region 1-byte
@@ -45,32 +87,7 @@ internal sealed partial class TextLayout : Layout
 
     private RectCommand CaretCommand => (RectCommand)this.target.Commands[0];
 
-    public uint CaretPosition
-    {
-        get => this.caretPosition;
-        set
-        {
-            if (this.caretPosition != value)
-            {
-                this.caretPosition = value;
-                this.ShowCaret();
-            }
-        }
-    }
-
-    public TextSelection? Selection
-    {
-        get => this.selection;
-        set
-        {
-            if (this.selection != value)
-            {
-                this.selection        = value;
-                this.selectionIsDirty = true;
-                this.RequestUpdate();
-            }
-        }
-    }
+    public Rect<float> CursorRect => this.CaretCommand.Rect;
 
     public override StencilLayer? StencilLayer
     {
@@ -85,23 +102,6 @@ internal sealed partial class TextLayout : Layout
                 {
                     command.StencilLayer = value;
                 }
-            }
-        }
-    }
-
-    public string? Text
-    {
-        get => this.text;
-        internal set
-        {
-            if (value != this.text)
-            {
-                this.text = value;
-
-                this.Selection   = this.Selection?.WithEnd(uint.Min(this.Selection.Value.End, (uint)(this.text?.Length ?? 0)));
-                this.textIsDirty = true;
-
-                this.RequestUpdate();
             }
         }
     }
@@ -168,7 +168,7 @@ internal sealed partial class TextLayout : Layout
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ApplySelection(int index, in TextSelection selection, RectCommand selectionCommand)
     {
-        if (index >= selection.Start && index < selection.End && (this.text![index] != '\n' || index < selection.End - 1))
+        if (index >= selection.Start && index < selection.End && (this.Text![index] != '\n' || index < selection.End - 1))
         {
             selectionCommand.Color           = new(0, 0, 1, 0.5f);
             selectionCommand.Flags           = Flags.ColorAsBackground;
@@ -191,7 +191,7 @@ internal sealed partial class TextLayout : Layout
 
         this.CaretCommand.PipelineVariant = this.caretIsVisible ? PipelineVariant.Color : default;
 
-        this.RequestUpdate();
+        this.RequestUpdate(false);
     }
 
     private void ClearSelection(RectCommand selectionCommand)
@@ -210,20 +210,20 @@ internal sealed partial class TextLayout : Layout
     {
         var caretCommand = (RectCommand)this.target.Commands[0];
 
-        if (this.text?.Length > 0)
+        if (this.Text?.Length > 0)
         {
             Point<float> position;
 
-            if (this.CaretPosition == this.text.Length)
+            if (this.CaretPosition == this.Text.Length)
             {
-                var rect = ((RectCommand)this.target.Commands[this.text.Length]).Rect;
+                var rect = ((RectCommand)this.target.Commands[this.Text.Length]).Rect;
 
                 position = rect.Position;
                 position.X += rect.Size.Width;
             }
             else
             {
-                position = ((RectCommand)this.target.Commands[(int)this.caretPosition + 1]).Rect.Position;
+                position = ((RectCommand)this.target.Commands[(int)this.CaretPosition + 1]).Rect.Position;
             }
 
             caretCommand.Rect = new(new(this.caretWidth, this.LineHeight), position);
@@ -240,9 +240,9 @@ internal sealed partial class TextLayout : Layout
 
     private void DrawSelection(int textLength)
     {
-        if (this.selection.HasValue)
+        if (this.Selection.HasValue)
         {
-            var range = this.selection.Value.Ordered();
+            var range = this.Selection.Value.Ordered();
 
             for (var i = 0; i < textLength; i++)
             {
@@ -267,7 +267,7 @@ internal sealed partial class TextLayout : Layout
 
         var style = this.target.ParentElement!.Layout.State.Style;
 
-        var glyphs = this.typeface.GetGlyphs(this.text);
+        var glyphs = this.typeface.GetGlyphs(this.Text);
         var font   = this.paint.ToFont();
         var atlas  = TextStorage.Singleton.GetAtlas(this.typeface!.FamilyName, (uint)this.paint.TextSize);
 
@@ -285,7 +285,7 @@ internal sealed partial class TextLayout : Layout
 
         var elementIndex = this.target.Index + 1;
 
-        var range = this.selection?.Ordered();
+        var range = this.Selection?.Ordered();
 
         var textOffset = 0;
 
@@ -363,7 +363,7 @@ internal sealed partial class TextLayout : Layout
 
         atlas.Update();
 
-        this.Size = boundings;
+        this.Boundings = boundings;
     }
 
     private void GetCharacterOffset(ushort x, ushort y, ref uint character)
@@ -412,7 +412,7 @@ internal sealed partial class TextLayout : Layout
         }
 
         this.textIsDirty = true;
-        this.RequestUpdate();
+        this.RequestUpdate(true);
     }
 
     protected override void Disposed()
@@ -433,12 +433,12 @@ internal sealed partial class TextLayout : Layout
 
         this.caretTimer.Stop();
 
-        this.RequestUpdate();
+        this.RequestUpdate(false);
     }
 
     public void PropagateSelection(uint characterPosition)
     {
-        if (this.Parent?.State.Style.TextSelection == false || this.text == null || char.IsWhiteSpace(this.text[(int)characterPosition]))
+        if (this.Parent?.State.Style.TextSelection == false || this.Text == null || char.IsWhiteSpace(this.Text[(int)characterPosition]))
         {
             return;
         }
@@ -446,14 +446,14 @@ internal sealed partial class TextLayout : Layout
         var start = (int)characterPosition - 1;
         var end   = (int)characterPosition;
 
-        while (start > -1 && !char.IsWhiteSpace(this.text[start]))
+        while (start > -1 && !char.IsWhiteSpace(this.Text[start]))
         {
             start--;
         }
 
         start++;
 
-        while (end < this.text.Length && !char.IsWhiteSpace(this.text[end]))
+        while (end < this.Text.Length && !char.IsWhiteSpace(this.Text[end]))
         {
             end++;
         }
@@ -484,7 +484,7 @@ internal sealed partial class TextLayout : Layout
 
         this.caretTimer.Start();
 
-        this.RequestUpdate();
+        this.RequestUpdate(false);
     }
 
     public void ClearCaret()
@@ -559,7 +559,7 @@ internal sealed partial class TextLayout : Layout
 
         this.GetCharacterOffset(x, y, ref character);
 
-        this.Selection     = this.Selection?.WithEnd(character) ?? new(this.caretPosition, character);
+        this.Selection     = this.Selection?.WithEnd(character) ?? new(this.CaretPosition, character);
         this.CaretPosition = character;
     }
 
@@ -567,22 +567,22 @@ internal sealed partial class TextLayout : Layout
     {
         if (this.HasPendingUpdate)
         {
-            if (string.IsNullOrEmpty(this.text))
+            if (string.IsNullOrEmpty(this.Text))
             {
                 ReleaseCommands(this.target.Commands, this.target.Commands.Count - 1);
 
-                this.selection = default;
-                this.Size      = default;
+                this.Selection = default;
+                this.Boundings = default;
             }
             else
             {
                 if (this.textIsDirty)
                 {
-                    this.DrawText(this.text);
+                    this.DrawText(this.Text);
                 }
                 else if (this.selectionIsDirty)
                 {
-                    this.DrawSelection(this.text.Length);
+                    this.DrawSelection(this.Text.Length);
                 }
             }
 

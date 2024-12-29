@@ -41,9 +41,9 @@ public abstract class Node2D : RenderNode
         set => this.LocalTransform = this.ParentTransform.Inverse() * value * this.LocalTransform.Inverse();
     }
 
-    protected void Set<T>(ref T field, in T value, Action callback)
+    protected void Set<T>(ref T field, in T value, Action callback) where T : IEquatable<T>
     {
-        if (!Equals(field, value))
+        if (!field.Equals(value))
         {
             field = value;
 
@@ -51,7 +51,7 @@ public abstract class Node2D : RenderNode
 
             if (this.Tree is RenderTree renderTree)
             {
-                renderTree.IsDirty = true;
+                renderTree.MakeDirty();
             }
         }
     }
