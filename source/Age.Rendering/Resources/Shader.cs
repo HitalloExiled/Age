@@ -1,14 +1,12 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using Age.Core;
 using Age.Core.Extensions;
 using Age.Core.Interop;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Vulkan;
 using ThirdParty.Slang;
-using ThirdParty.SpirvCross;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -301,7 +299,6 @@ where TVertexInput  : IVertexInput
         var fields      = reflection.GlobalParamsTypeLayout.Fields;
 
         using var disposables     = new Disposables();
-        using var context         = new Context();
         using var entryPointNames = new NativeStringList(entryPoints.Length);
 
         VkShaderStageFlags stages = default;
