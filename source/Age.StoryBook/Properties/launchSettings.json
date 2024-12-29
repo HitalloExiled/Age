@@ -1,7 +1,7 @@
 {
     "profiles":
     {
-        "Age.Editor":
+        "Age.StoryBook":
         {
             "commandName": "Project",
             "workingDirectory": "../.."

@@ -27,9 +27,11 @@ internal abstract class Layout : Disposable
     #endregion
 
     #region 1-byte
-    public bool HasPendingUpdate { get; set; }
+    public bool IsDirty { get; private set; }
 
     public virtual bool Hidden { get; set; }
+
+    public abstract bool IsParentDependent { get; }
     #endregion
 
     public abstract Layout? Parent { get; }
@@ -47,9 +49,9 @@ internal abstract class Layout : Disposable
 
     public void RequestUpdate(bool affectsBoundings)
     {
-        if (!this.HasPendingUpdate && !this.Hidden)
+        if (!this.IsDirty && !this.Hidden)
         {
-            this.HasPendingUpdate = true;
+            this.MakeDirty();
 
             if (affectsBoundings && this.Parent != null)
             {
@@ -68,6 +70,12 @@ internal abstract class Layout : Disposable
             }
         }
     }
+
+    public void MakeDirty() =>
+        this.IsDirty = true;
+
+    public void MakePristine() =>
+        this.IsDirty = false;
 
     public virtual void TargetConnected() =>
         this.StencilLayer = this.Parent?.ContentStencilLayer;

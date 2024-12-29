@@ -11,6 +11,11 @@ public record struct Rect<T> where T : INumber<T>
 
     public readonly T Area => this.Size.Area;
 
+    public readonly T Bottom => this.Top + this.Size.Height;
+    public readonly T Left   => this.Position.X;
+    public readonly T Right  => this.Left + this.Size.Width;
+    public readonly T Top    => this.Position.Y;
+
     public Rect(in Size<T> size, in Point<T> position)
     {
         this.Size     = size;

@@ -1,6 +1,8 @@
+using System.ComponentModel.DataAnnotations;
 using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Elements;
+using Age.Extensions;
 using Age.Scene;
 using Age.Themes;
 
@@ -21,6 +23,20 @@ public partial class TextBox : Element
 
     public override string NodeName { get; } = nameof(TextBox);
 
+    public uint CursorPosition
+    {
+        get => this.text.CursorPosition;
+        set
+        {
+            if (this.text.CursorPosition != value)
+            {
+                this.text.CursorPosition = value;
+
+                this.AdjustScroll();
+            }
+        }
+    }
+
     public string? Value
     {
         get => this.text.Value;
@@ -32,7 +48,7 @@ public partial class TextBox : Element
 
                 if (value != null)
                 {
-                    this.text.CursorPosition = (uint)value.Length;
+                    this.CursorPosition = (uint)value.Length;
                 }
 
                 this.Changed?.Invoke();
@@ -59,7 +75,7 @@ public partial class TextBox : Element
     private void ApplyHistory(in HistoryEntry entry)
     {
         this.text.Value          = entry.Text;
-        this.text.CursorPosition = entry.CursorPosition;
+        this.CursorPosition = entry.CursorPosition;
         this.text.Selection      = entry.Selection;
     }
 
@@ -67,9 +83,45 @@ public partial class TextBox : Element
         new()
         {
             Text           = this.text.Value,
-            CursorPosition = this.text.CursorPosition,
+            CursorPosition = this.CursorPosition,
             Selection      = this.text.Selection
         };
+
+    private void AdjustScroll()
+    {
+        if (this.text.Value?.Length > 0)
+        {
+            var boundings       = this.GetBoundings();
+            var cursorBoundings = this.text.GetCursorBounds();
+            var paddingLeft     = 4;
+            var paddingRight    = 4;
+
+            var leftBounds  = boundings.Left + paddingLeft;
+            var rightBounds = boundings.Right - paddingRight;
+
+            if (cursorBoundings.Left < leftBounds)
+            {
+                var characterBounds = this.text.GetCharacterBounds(this.CursorPosition);
+
+                var offsetX = this.Scroll.X - (leftBounds - characterBounds.Left);
+
+                this.Scroll = this.Scroll with { X = offsetX };
+            }
+            else if (cursorBoundings.Right > rightBounds)
+            {
+                var position        = this.CursorPosition.ClampSubtract(1);
+                var characterBounds = this.text.GetCharacterBounds(position);
+
+                var offsetX = this.Scroll.X + (characterBounds.Right + cursorBoundings.Size.Width - rightBounds);
+
+                this.Scroll = this.Scroll with { X = offsetX };
+            }
+        }
+        else
+        {
+            this.Scroll = this.Scroll with { X = 0 };
+        }
+    }
 
     private void OnBlurer(in MouseEvent mouseEvent)
     {
@@ -102,22 +154,22 @@ public partial class TextBox : Element
             this.text.DeleteSelected();
         }
 
-        if (this.text.Value?.Length is 0 or null || this.text.CursorPosition == this.text.Value.Length)
+        if (this.text.Value?.Length is 0 or null || this.CursorPosition == this.text.Value.Length)
         {
             this.text.Value += character;
         }
         else
         {
-            var start = this.text.Value.AsSpan(..(int)this.text.CursorPosition);
+            var start = this.text.Value.AsSpan(..(int)this.CursorPosition);
 
             Span<char> middle = [character];
 
-            var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
+            var end = this.text.Value.AsSpan((int)this.CursorPosition..);
 
             this.text.Value = string.Concat(start, middle, end);
         }
 
-        this.text.CursorPosition++;
+        this.CursorPosition++;
     }
 
     private void OnKeyDown(in KeyEvent keyEvent)
@@ -131,15 +183,15 @@ public partial class TextBox : Element
 
                     if (this.text.Selection != null)
                     {
-                        this.text.DeleteSelected();
+                        this.DeleteSelected();
                     }
                     else
                     {
-                        if (this.text.CursorPosition < this.text.Value.Length)
+                        if (this.CursorPosition < this.text.Value.Length)
                         {
-                            var start = this.text.Value.AsSpan(..(int)this.text.CursorPosition);
+                            var start = this.text.Value.AsSpan(..(int)this.CursorPosition);
 
-                            var end = this.text.Value.AsSpan(((int)this.text.CursorPosition + 1)..);
+                            var end = this.text.Value.AsSpan(((int)this.CursorPosition + 1)..);
 
                             this.text.Value = string.Concat(start, end);
                         }
@@ -155,24 +207,24 @@ public partial class TextBox : Element
 
                     if (this.text.Selection != null)
                     {
-                        this.text.DeleteSelected();
+                        this.DeleteSelected();
                     }
                     else
                     {
-                        if (this.text.CursorPosition == this.text.Value.Length)
+                        if (this.CursorPosition == this.text.Value.Length)
                         {
                             this.text.Value = this.text.Value[..^1];
                         }
-                        else if (this.text.CursorPosition > 0)
+                        else if (this.CursorPosition > 0)
                         {
-                            var start = this.text.Value.AsSpan(..((int)this.text.CursorPosition - 1));
+                            var start = this.text.Value.AsSpan(..((int)this.CursorPosition - 1));
 
-                            var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
+                            var end = this.text.Value.AsSpan((int)this.CursorPosition..);
 
                             this.text.Value = string.Concat(start, end);
                         }
 
-                        this.text.CursorPosition--;
+                        this.CursorPosition--;
                     }
                 }
 
@@ -184,7 +236,7 @@ public partial class TextBox : Element
                     this.SaveHistory();
 
                     this.text.Value += "\n\r";
-                    this.text.CursorPosition += 2;
+                    this.CursorPosition += 2;
                 }
                 else
                 {
@@ -194,39 +246,39 @@ public partial class TextBox : Element
                 break;
 
             case Key.Left:
-                if (this.text.CursorPosition > 0)
+                if (this.CursorPosition > 0)
                 {
                     this.SaveHistory();
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
-                        this.text.Selection = this.text.Selection?.WithEnd(this.text.CursorPosition - 1) ?? new(this.text.CursorPosition, this.text.CursorPosition - 1);
+                        this.text.Selection = this.text.Selection?.WithEnd(this.CursorPosition - 1) ?? new(this.CursorPosition, this.CursorPosition - 1);
                     }
                     else if (this.text.Selection != null)
                     {
                         this.text.ClearSelection();
                     }
 
-                    this.text.CursorPosition--;
+                    this.CursorPosition--;
                 }
 
                 break;
 
             case Key.Right:
-                if (this.text.CursorPosition < this.text.Value?.Length)
+                if (this.CursorPosition < this.text.Value?.Length)
                 {
                     this.SaveHistory();
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
-                        this.text.Selection = this.text.Selection?.WithEnd(this.text.CursorPosition + 1) ?? new(this.text.CursorPosition, this.text.CursorPosition + 1);
+                        this.text.Selection = this.text.Selection?.WithEnd(this.CursorPosition + 1) ?? new(this.CursorPosition, this.CursorPosition + 1);
                     }
                     else if (this.text.Selection != null)
                     {
                         this.text.ClearSelection();
                     }
 
-                    this.text.CursorPosition++;
+                    this.CursorPosition++;
                 }
 
                 break;
@@ -238,14 +290,14 @@ public partial class TextBox : Element
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
-                        this.text.Selection = this.text.Selection?.WithEnd(0) ?? new(this.text.CursorPosition, 0);
+                        this.text.Selection = this.text.Selection?.WithEnd(0) ?? new(this.CursorPosition, 0);
                     }
                     else if (this.text.Selection != null)
                     {
                         this.text.ClearSelection();
                     }
 
-                    this.text.CursorPosition = 0;
+                    this.CursorPosition = 0;
                 }
 
                 break;
@@ -257,14 +309,14 @@ public partial class TextBox : Element
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
-                        this.text.Selection = this.text.Selection?.WithEnd((uint)this.text.Value.Length) ?? new(this.text.CursorPosition, (uint)this.text.Value.Length);
+                        this.text.Selection = this.text.Selection?.WithEnd((uint)this.text.Value.Length) ?? new(this.CursorPosition, (uint)this.text.Value.Length);
                     }
                     else if (this.text.Selection != null)
                     {
                         this.text.ClearSelection();
                     }
 
-                    this.text.CursorPosition = (uint)this.text.Value.Length;
+                    this.CursorPosition = (uint)this.text.Value.Length;
                 }
 
                 break;
@@ -279,22 +331,22 @@ public partial class TextBox : Element
 
                         if (renderTree.Window.GetClipboardData() is string text)
                         {
-                            if (this.text.Value == null || this.text.CursorPosition == this.text.Value.Length)
+                            if (this.text.Value == null || this.CursorPosition == this.text.Value.Length)
                             {
                                 this.text.Value += text;
                             }
                             else
                             {
-                                var start = this.text.Value.AsSpan(..(int)this.text.CursorPosition);
+                                var start = this.text.Value.AsSpan(..(int)this.CursorPosition);
 
                                 var middle = text.AsSpan();
 
-                                var end = this.text.Value.AsSpan((int)this.text.CursorPosition..);
+                                var end = this.text.Value.AsSpan((int)this.CursorPosition..);
 
                                 this.text.Value = string.Concat(start, middle, end);
                             }
 
-                            this.text.CursorPosition += (uint)text.Length;
+                            this.CursorPosition += (uint)text.Length;
                         }
                     }
                 }
@@ -309,7 +361,7 @@ public partial class TextBox : Element
                         {
                             this.SaveHistory();
 
-                            this.text.DeleteSelected();
+                            this.DeleteSelected();
 
                             renderTree.Window.SetClipboardData(text);
                         }
@@ -340,6 +392,12 @@ public partial class TextBox : Element
 
     private void SaveHistory() =>
         this.undo.Push(this.GetHistory());
+
+    public void DeleteSelected()
+    {
+        this.text.DeleteSelected();
+        this.AdjustScroll();
+    }
 
     public void Redo()
     {

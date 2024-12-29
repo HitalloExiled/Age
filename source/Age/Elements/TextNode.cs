@@ -1,4 +1,8 @@
+using System.ComponentModel.Design;
+using Age.Commands;
+using Age.Core.Extensions;
 using Age.Elements.Layouts;
+using Age.Numerics;
 using Age.Scene;
 
 namespace Age.Elements;
@@ -79,6 +83,58 @@ public sealed class TextNode : ContainerNode
             this.Layout.ClearSelection();
             this.CursorPosition = range.Value.Start;
         }
+    }
+
+    public Rect<int> GetCursorBounds()
+    {
+        this.Layout.Update();
+
+        var cursorRect = this.Layout.CursorRect.Cast<int>();
+
+        return new(cursorRect.Size, this.Transform.Position + cursorRect.Position);
+    }
+
+    public Rect<int> GetCharacterBounds(uint index)
+    {
+        if (index > this.Value?.Length)
+        {
+            throw new IndexOutOfRangeException();
+        }
+
+        this.GetIndependentLayoutAncestor().Update();
+
+        var rect = ((RectCommand)this.Commands[(int)index + 1]).Rect;
+
+        rect.Position += this.Transform.Position;
+
+        return rect.Cast<int>();
+    }
+
+    public Rect<int> GetTextSelectionBounds(TextSelection textSelection)
+    {
+        textSelection = textSelection.Ordered();
+
+        if (this.Value == null || textSelection.Start > this.Value.Length || textSelection.End > this.Value.Length)
+        {
+            throw new IndexOutOfRangeException();
+        }
+
+        this.GetIndependentLayoutAncestor().Update();
+
+        var slice = this.Commands.AsSpan((int)textSelection.Start + 1, (int)textSelection.End + 1);
+
+        var rect = new Rect<float>();
+
+        for (var i = 0; i < slice.Length; i++)
+        {
+            var command = (RectCommand)slice[i];
+
+            rect.Grow(command.Rect);
+        }
+
+        rect.Position += this.Transform.Position;
+
+        return rect.Cast<int>();
     }
 
     public void HideCaret() =>

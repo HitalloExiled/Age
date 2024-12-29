@@ -83,6 +83,8 @@ internal sealed partial class TextLayout : Layout
     private bool        textIsDirty;
     private SKTypeface? typeface;
     private SKPaint?    paint;
+
+    public override bool IsParentDependent { get; }
     #endregion
 
     private RectCommand CaretCommand => (RectCommand)this.target.Commands[0];
@@ -565,7 +567,7 @@ internal sealed partial class TextLayout : Layout
 
     public override void Update()
     {
-        if (this.HasPendingUpdate)
+        if (this.IsDirty)
         {
             if (string.IsNullOrEmpty(this.Text))
             {
@@ -594,7 +596,8 @@ internal sealed partial class TextLayout : Layout
             this.caretIsDirty     = false;
             this.selectionIsDirty = false;
             this.textIsDirty      = false;
-            this.HasPendingUpdate = false;
+
+            this.MakePristine();
         }
     }
 }

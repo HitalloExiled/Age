@@ -63,7 +63,7 @@ internal sealed partial class BoxLayout : Layout
         get;
         set
         {
-            value.X = Math<int>.MinMax(-(int)this.content.Width.ClampSubtract(this.size.Width), 0, value.X);
+            value.X = Math<int>.MinMax(0, (int)this.content.Width.ClampSubtract(this.size.Width),   value.X);
             value.Y = Math<int>.MinMax(0, (int)this.content.Height.ClampSubtract(this.size.Height), value.Y);
 
             if (field != value)
@@ -85,6 +85,8 @@ internal sealed partial class BoxLayout : Layout
 
     public bool IsScrollable { get; internal set; }
     public bool IsHoveringText { get; set; }
+
+    public override bool IsParentDependent => this.parentDependent != Dependency.None;
     #endregion
 
     private Size<uint> BoundingsWithMargin =>
@@ -679,8 +681,7 @@ internal sealed partial class BoxLayout : Layout
             }
 
             dependent.Layout.UpdateBoundings();
-
-            dependent.Layout.HasPendingUpdate = false;
+            dependent.Layout.MakePristine();
 
             this.CheckHightestInlineChild(stack, dependent);
         }
@@ -1266,7 +1267,7 @@ internal sealed partial class BoxLayout : Layout
                 }
             }
 
-            child.Layout.Offset = new(float.Round(this.ScrollOffset.X + cursor.X + position.X + margin.Left), -float.Round(-this.ScrollOffset.Y + -cursor.Y + position.Y + margin.Top));
+            child.Layout.Offset = new(float.Round(-this.ScrollOffset.X + cursor.X + position.X + margin.Left), -float.Round(-this.ScrollOffset.Y + -cursor.Y + position.Y + margin.Top));
 
             if (stack == StackKind.Horizontal)
             {
@@ -1390,7 +1391,7 @@ internal sealed partial class BoxLayout : Layout
 
     public override void Update()
     {
-        if (this.HasPendingUpdate)
+        if (this.IsDirty)
         {
             if (!this.Hidden)
             {
@@ -1405,7 +1406,7 @@ internal sealed partial class BoxLayout : Layout
 
             }
 
-            this.HasPendingUpdate = false;
+            this.MakePristine();
         }
     }
 }

@@ -36,9 +36,31 @@ public abstract class ContainerNode : Node2D
 
     public Element? ParentElement => this.Parent as Element;
 
+    internal Layout GetIndependentLayoutAncestor()
+    {
+        if (!this.Layout.IsDirty)
+        {
+            return this.Layout;
+        }
+
+        var current = this;
+
+        while (current.Layout.IsParentDependent)
+        {
+            if (current.Parent is not ContainerNode parent)
+            {
+                break;
+            }
+
+            current = parent;
+        }
+
+        return current.Layout;
+    }
+
     public Rect<int> GetBoundings()
     {
-        this.Layout.Update();
+        this.GetIndependentLayoutAncestor().Update();
 
         var size     = this.Layout.Boundings.Cast<int>();
         var position = new Point<int>((int)this.Transform.Position.X, (int)this.Transform.Position.Y);

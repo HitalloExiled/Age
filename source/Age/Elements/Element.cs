@@ -539,6 +539,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.Focused?.Invoke(new() { Target = this });
     }
 
-    public void Scroll(in Vector2<float> offset) =>
-        this.Layout.ScrollOffset = offset;
+    public Vector2<float> Scroll
+    {
+        get => this.Layout.ScrollOffset;
+        set => this.Layout.ScrollOffset = value;
+    }
 }
