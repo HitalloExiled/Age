@@ -11,6 +11,8 @@ public abstract class ContainerNode : Node2D
 
     private CacheValue<Transform2D> transformCache;
 
+    private Transform2D Offset => Transform2D.CreateTranslated((this.ParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
+
     internal protected override Transform2D TransformCache
     {
         get
@@ -19,7 +21,7 @@ public abstract class ContainerNode : Node2D
             {
                 this.transformCache = new()
                 {
-                    Value   = this.Layout.Transform * base.TransformCache,
+                    Value   = this.Offset * this.Layout.Transform * base.TransformCache,
                     Version = CacheVersion
                 };
             }

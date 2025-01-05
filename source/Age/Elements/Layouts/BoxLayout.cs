@@ -21,7 +21,7 @@ internal sealed partial class BoxLayout : Layout
         StyleProperty.Positioning,
         StyleProperty.TextAlignment,
         StyleProperty.TextSelection,
-        StyleProperty.Transform
+        StyleProperty.Transform,
     ];
 
     #region 8-bytes
@@ -58,13 +58,13 @@ internal sealed partial class BoxLayout : Layout
     private Size<uint>   size;
     private Size<uint>   staticContent;
 
-    public Point<int> ScrollOffset
+    public Point<uint> ContentOffset
     {
         get;
         set
         {
-            value.X = Math<int>.MinMax(0, (int)this.content.Width.ClampSubtract(this.size.Width),   value.X);
-            value.Y = Math<int>.MinMax(0, (int)this.content.Height.ClampSubtract(this.size.Height), value.Y);
+            value.X = Math<uint>.MinMax(0, this.content.Width.ClampSubtract(this.size.Width),   value.X);
+            value.Y = Math<uint>.MinMax(0, this.content.Height.ClampSubtract(this.size.Height), value.Y);
 
             if (field != value)
             {
@@ -292,7 +292,8 @@ internal sealed partial class BoxLayout : Layout
 
         return command;
     }
-     private void CalculateLayout()
+
+    private void CalculateLayout()
     {
         var stack = this.State.Style.Stack ?? StackKind.Horizontal;
 
@@ -724,16 +725,16 @@ internal sealed partial class BoxLayout : Layout
     {
         if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlag(Platforms.Display.MouseKeyStates.Shift))
         {
-            this.ScrollOffset = this.ScrollOffset with
+            this.ContentOffset = this.ContentOffset with
             {
-                X = this.ScrollOffset.X + (int)(5 * mouseEvent.Delta)
+                X = this.ContentOffset.X + (uint)(5 * -mouseEvent.Delta)
             };
         }
         else if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY)
         {
-            this.ScrollOffset = this.ScrollOffset with
+            this.ContentOffset = this.ContentOffset with
             {
-                Y = this.ScrollOffset.Y + (int)(5 * mouseEvent.Delta)
+                Y = this.ContentOffset.Y + (uint)(5 * -mouseEvent.Delta)
             };
         }
     }
@@ -859,7 +860,7 @@ internal sealed partial class BoxLayout : Layout
                 else
                 {
                     this.target.Scrolled -= this.OnScroll;
-                    this.ScrollOffset = default;
+                    this.ContentOffset = default;
                 }
 
                 this.IsScrollable = currentIsScrollable;
@@ -1267,7 +1268,7 @@ internal sealed partial class BoxLayout : Layout
                 }
             }
 
-            child.Layout.Offset = new(float.Round(-this.ScrollOffset.X + cursor.X + position.X + margin.Left), -float.Round(-this.ScrollOffset.Y + -cursor.Y + position.Y + margin.Top));
+            child.Layout.Offset = new(float.Round(cursor.X + position.X + margin.Left), -float.Round(-cursor.Y + position.Y + margin.Top));
 
             if (stack == StackKind.Horizontal)
             {
@@ -1318,22 +1319,22 @@ internal sealed partial class BoxLayout : Layout
     protected override void Disposed() =>
         this.ownStencilLayer?.Dispose();
 
-    public void ContainerNodeRemoved(ContainerNode containerNode)
-    {
-        if (!containerNode.Layout.Hidden)
-        {
-            this.childsChanged = true;
-            this.renderableNodesCount--;
-            this.RequestUpdate(true);
-        }
-    }
-
     public void ContainerNodeAppended(ContainerNode containerNode)
     {
         if (!containerNode.Layout.Hidden)
         {
             this.childsChanged = true;
             this.renderableNodesCount++;
+            this.RequestUpdate(true);
+        }
+    }
+
+    public void ContainerNodeRemoved(ContainerNode containerNode)
+    {
+        if (!containerNode.Layout.Hidden)
+        {
+            this.childsChanged = true;
+            this.renderableNodesCount--;
             this.RequestUpdate(true);
         }
     }
@@ -1354,6 +1355,25 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
+    public override void TargetConnected()
+    {
+        base.TargetConnected();
+
+        if (this.ownStencilLayer != null)
+        {
+            this.StencilLayer?.AppendChild(this.ownStencilLayer);
+        }
+    }
+
+    public void TargetIndexed()
+    {
+        var command = this.GetRectCommand();
+
+        command.ObjectId = this.Target.Index == -1
+            ? default
+            : this.State.Style.Border.HasValue || this.State.Style.BackgroundColor.HasValue ? (uint)(this.Target.Index + 1) : 0;
+    }
+
     public void TargetMouseOut()
     {
         if (this.target.Tree is RenderTree renderTree)
@@ -1367,25 +1387,6 @@ internal sealed partial class BoxLayout : Layout
         if (this.State.Style.Cursor.HasValue && this.target.Tree is RenderTree renderTree)
         {
             renderTree.Window.Cursor = this.State.Style.Cursor.Value;
-        }
-    }
-
-    public void TargetIndexed()
-    {
-        var command = this.GetRectCommand();
-
-        command.ObjectId = this.Target.Index == -1
-            ? default
-            : this.State.Style.Border.HasValue || this.State.Style.BackgroundColor.HasValue ? (uint)(this.Target.Index + 1) : 0;
-    }
-
-    public override void TargetConnected()
-    {
-        base.TargetConnected();
-
-        if (this.ownStencilLayer != null)
-        {
-            this.StencilLayer?.AppendChild(this.ownStencilLayer);
         }
     }
 

@@ -20,6 +20,9 @@ public record struct Point<T> where T : INumber<T>
     public readonly Point<U> Cast<U>() where U : INumber<U> =>
         new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
 
+    public readonly Vector2<U> ToVector2<U>() where U : IFloatingPoint<U>, IFloatingPointIeee754<U>, IRootFunctions<U>, ITrigonometricFunctions<U> =>
+        new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
+
     public override readonly string ToString() =>
         string.Create(CultureInfo.InvariantCulture, $"{{ X: {this.X}, Y: {this.Y} }}");
 

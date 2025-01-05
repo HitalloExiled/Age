@@ -291,7 +291,7 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
 
             using var bitmap = new SKBitmap((int)bounds.Width, (int)bounds.Height);
             using var canvas = new SKCanvas(bitmap);
-            using var paint = new SKPaint
+            using var paint  = new SKPaint
             {
                 Color = SKColors.White,
                 Style = SKPaintStyle.Fill,

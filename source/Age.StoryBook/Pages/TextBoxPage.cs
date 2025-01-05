@@ -35,7 +35,7 @@ public class TextBoxPage : Page
                     Style = textBoxStyle with
                     {
                         Overflow = OverflowKind.ScrollX,
-                        Size     = new((Pixel)100, null),
+                        Size     = new((Pixel)50, null),
                     },
                 },
             ]

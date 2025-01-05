@@ -25,10 +25,10 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = ButtonTest.Setup;
+        this.setup = ScrollTest.Setup;
 
-        // this.Reload();
-        this.CreateDemoScene();
+        this.Reload();
+        // this.CreateDemoScene();
     }
 
     private void CreateDemoScene()

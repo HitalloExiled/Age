@@ -236,6 +236,12 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
+    public Point<uint> Scroll
+    {
+        get => this.Layout.ContentOffset;
+        set => this.Layout.ContentOffset = value;
+    }
+
     public Style Style
     {
         get => this.Layout.State.UserStyle ??= new();
@@ -537,11 +543,5 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.Layout.State.AddState(StyledStateManager.State.Focus);
         this.IsFocused = true;
         this.Focused?.Invoke(new() { Target = this });
-    }
-
-    public Vector2<float> Scroll
-    {
-        get => this.Layout.ScrollOffset;
-        set => this.Layout.ScrollOffset = value;
     }
 }

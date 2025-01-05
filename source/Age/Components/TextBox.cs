@@ -93,28 +93,29 @@ public partial class TextBox : Element
         {
             var boundings       = this.GetBoundings();
             var cursorBoundings = this.text.GetCursorBounds();
-            var paddingLeft     = 4;
-            var paddingRight    = 4;
+
+            var paddingLeft  = 4;
+            var paddingRight = 4;
 
             var leftBounds  = boundings.Left + paddingLeft;
             var rightBounds = boundings.Right - paddingRight;
 
-            if (cursorBoundings.Left < leftBounds)
+            if (cursorBoundings.Left - this.Scroll.X < leftBounds)
             {
                 var characterBounds = this.text.GetCharacterBounds(this.CursorPosition);
 
-                var offsetX = this.Scroll.X - (leftBounds - characterBounds.Left);
+                var offsetX = characterBounds.Left - leftBounds;
 
-                this.Scroll = this.Scroll with { X = offsetX };
+                this.Scroll = this.Scroll with { X = (uint)offsetX };
             }
-            else if (cursorBoundings.Right > rightBounds)
+            else if (cursorBoundings.Right - this.Scroll.X > rightBounds)
             {
                 var position        = this.CursorPosition.ClampSubtract(1);
                 var characterBounds = this.text.GetCharacterBounds(position);
 
-                var offsetX = this.Scroll.X + (characterBounds.Right + cursorBoundings.Size.Width - rightBounds);
+                var offsetX = characterBounds.Right + cursorBoundings.Size.Width - rightBounds;
 
-                this.Scroll = this.Scroll with { X = offsetX };
+                this.Scroll = this.Scroll with { X = (uint)offsetX };
             }
         }
         else
@@ -201,7 +202,7 @@ public partial class TextBox : Element
                 break;
 
             case Key.Backspace:
-                if (this.text.Value?.Length > 0)
+                if (this.CursorPosition > 0 && this.text.Value?.Length > 0)
                 {
                     this.SaveHistory();
 
@@ -215,7 +216,7 @@ public partial class TextBox : Element
                         {
                             this.text.Value = this.text.Value[..^1];
                         }
-                        else if (this.CursorPosition > 0)
+                        else
                         {
                             var start = this.text.Value.AsSpan(..((int)this.CursorPosition - 1));
 
