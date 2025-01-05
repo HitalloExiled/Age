@@ -91,7 +91,7 @@ public sealed class TextNode : ContainerNode
 
         var cursorRect = this.Layout.CursorRect.Cast<int>();
 
-        return new(cursorRect.Size, this.Transform.Position + cursorRect.Position);
+        return new(cursorRect.Size, this.Transform.Position.ToPoint<int>() + cursorRect.Position);
     }
 
     public Rect<int> GetCharacterBounds(uint index)
@@ -105,7 +105,7 @@ public sealed class TextNode : ContainerNode
 
         var rect = ((RectCommand)this.Commands[(int)index + 1]).Rect;
 
-        rect.Position += this.Transform.Position;
+        rect.Position += this.Transform.Position.ToPoint<float>();
 
         return rect.Cast<int>();
     }
@@ -132,7 +132,7 @@ public sealed class TextNode : ContainerNode
             rect.Grow(command.Rect);
         }
 
-        rect.Position += this.Transform.Position;
+        rect.Position += this.Transform.Position.ToPoint<float>();
 
         return rect.Cast<int>();
     }
