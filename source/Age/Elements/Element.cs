@@ -4,10 +4,10 @@ using Age.Scene;
 using Age.Styling;
 using System.Text;
 
-using Key                  = Age.Platforms.Display.Key;
+using Key = Age.Platforms.Display.Key;
 using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
-using PlatformMouseEvent   = Age.Platforms.Display.MouseEvent;
-using AgeInput             = Age.Input;
+using PlatformMouseEvent = Age.Platforms.Display.MouseEvent;
+using AgeInput = Age.Input;
 using System.Drawing;
 using Age.Numerics;
 
@@ -543,5 +543,24 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.Layout.State.AddState(StyledStateManager.State.Focus);
         this.IsFocused = true;
         this.Focused?.Invoke(new() { Target = this });
+    }
+
+    public BoxModel GetBoxModel()
+    {
+        var boundings = this.GetBoundings();
+
+        var padding = this.Layout.Padding;
+        var border  = this.Layout.Border;
+        var content = this.Layout.Content;
+        var margin  = this.Layout.Margin;
+
+        return new()
+        {
+            Margin    = margin,
+            Boundings = boundings,
+            Border    = border,
+            Padding   = padding,
+            Content   = content,
+        };
     }
 }

@@ -6,10 +6,11 @@ public class TextBoxStyles
 {
     public static Style Base { get; } = new()
     {
-        TextSelection        = false,
-        Padding              = new((Pixel)4),
-        FontWeight           = FontWeight.Medium,
         ContentJustification = ContentJustificationKind.Center,
+        FontWeight           = FontWeight.Medium,
+        Overflow             = OverflowKind.Scroll,
+        Padding              = new((Pixel)4),
+        TextSelection        = false,
     };
 
     public required StyledStates Outlined { get; init; }

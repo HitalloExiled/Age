@@ -48,11 +48,11 @@ internal sealed partial class BoxLayout : Layout
     #endregion
 
     #region 4-bytes
-    private RawRectEdges border;
+    private RectEdges    border;
     private Size<uint>   content;
     private Dependency   contentDependent;
-    private RawRectEdges margin;
-    private RawRectEdges padding;
+    private RectEdges    margin;
+    private RectEdges    padding;
     private Dependency   parentDependent;
     private uint         renderableNodesCount;
     private Size<uint>   size;
@@ -70,13 +70,18 @@ internal sealed partial class BoxLayout : Layout
             {
                 field = value;
 
-                this.ownStencilLayer?.MakeDirty();
+                this.ownStencilLayer?.MakeChildrenDirty();
                 this.RequestUpdate(false);
             }
         }
     }
 
     public uint FontSize { get; private set; }
+
+    public RectEdges  Border  => this.border;
+    public Size<uint> Content => this.content;
+    public RectEdges  Margin  => this.margin;
+    public RectEdges  Padding => this.padding;
     #endregion
 
     #region 1-byte
@@ -108,7 +113,7 @@ internal sealed partial class BoxLayout : Layout
         this.State.Changed += this.StyleChanged;
     }
 
-    private static void CalculatePendingPaddingHorizontal(BoxLayout layout, in Size<uint> size, ref RawRectEdges padding)
+    private static void CalculatePendingPaddingHorizontal(BoxLayout layout, in Size<uint> size, ref RectEdges padding)
     {
         if (layout.State.Style.Padding?.Left?.TryGetPercentage(out var left) == true)
         {
@@ -121,7 +126,7 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    private static void CalculatePendingPaddingVertical(BoxLayout layout, in Size<uint> size, ref RawRectEdges padding)
+    private static void CalculatePendingPaddingVertical(BoxLayout layout, in Size<uint> size, ref RectEdges padding)
     {
         if (layout.State.Style.Padding?.Top?.TryGetPercentage(out var top) == true)
         {
@@ -134,7 +139,7 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    private static void CalculatePendingMarginHorizontal(BoxLayout layout, StackKind stack, in Size<uint> size, ref RawRectEdges margin, ref Size<uint> contentSize)
+    private static void CalculatePendingMarginHorizontal(BoxLayout layout, StackKind stack, in Size<uint> size, ref RectEdges margin, ref Size<uint> contentSize)
     {
         var horizontal = 0u;
 
@@ -161,7 +166,7 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    private static void CalculatePendingMarginVertical(BoxLayout layout, StackKind stack, in Size<uint> size, ref RawRectEdges margin, ref Size<uint> contentSize)
+    private static void CalculatePendingMarginVertical(BoxLayout layout, StackKind stack, in Size<uint> size, ref RectEdges margin, ref Size<uint> contentSize)
     {
         var vertical = 0u;
 
@@ -535,7 +540,7 @@ internal sealed partial class BoxLayout : Layout
                         }
                         else
                         {
-                            content.Width = uint.Max(size.Width, content.Width);
+                            content.Width = uint.Max(size.Width, (uint)content.Width);
                         }
 
                         size.Width = size.Width
@@ -658,7 +663,7 @@ internal sealed partial class BoxLayout : Layout
                         }
                         else
                         {
-                            content.Height = uint.Max(size.Height, content.Height);
+                            content.Height = uint.Max(size.Height, (uint)content.Height);
                         }
 
                         size.Height = size.Height
@@ -1159,7 +1164,7 @@ internal sealed partial class BoxLayout : Layout
             var childBoundings = child.Layout.Boundings;
             var contentOffsetY = 0u;
 
-            RawRectEdges margin  = default;
+            RectEdges margin  = default;
 
             if (child is Element element)
             {
@@ -1301,9 +1306,9 @@ internal sealed partial class BoxLayout : Layout
 
         if (isDrawable)
         {
-            command.Rect = new(this.Boundings.Cast<float>(), default);
-            command.Border = this.State.Style.Border ?? default;
-            command.Color = this.State.Style.BackgroundColor ?? default;
+            command.Rect            = new(this.Boundings.Cast<float>(), default);
+            command.Border          = this.State.Style.Border ?? default;
+            command.Color           = this.State.Style.BackgroundColor ?? default;
             command.PipelineVariant |= PipelineVariant.Color;
         }
         else

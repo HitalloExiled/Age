@@ -74,35 +74,24 @@ public partial class TextBox : Element
 
     private void ApplyHistory(in HistoryEntry entry)
     {
-        this.text.Value          = entry.Text;
+        this.text.Value     = entry.Text;
         this.CursorPosition = entry.CursorPosition;
-        this.text.Selection      = entry.Selection;
+        this.text.Selection = entry.Selection;
     }
-
-    private HistoryEntry GetHistory() =>
-        new()
-        {
-            Text           = this.text.Value,
-            CursorPosition = this.CursorPosition,
-            Selection      = this.text.Selection
-        };
 
     private void AdjustScroll()
     {
         if (this.text.Value?.Length > 0)
         {
-            var boundings       = this.GetBoundings();
-            var cursorBoundings = this.text.GetCursorBounds();
+            var boxModel        = this.GetBoxModel();
+            var cursorBoundings = this.text.GetCursorBoundings();
 
-            var paddingLeft  = 4;
-            var paddingRight = 4;
-
-            var leftBounds  = boundings.Left + paddingLeft;
-            var rightBounds = boundings.Right - paddingRight;
+            var leftBounds  = boxModel.Boundings.Left  + boxModel.Border.Left  + boxModel.Padding.Left;
+            var rightBounds = boxModel.Boundings.Right - boxModel.Border.Right - boxModel.Padding.Right;
 
             if (cursorBoundings.Left - this.Scroll.X < leftBounds)
             {
-                var characterBounds = this.text.GetCharacterBounds(this.CursorPosition);
+                var characterBounds = this.text.GetCharacterBoundings(this.CursorPosition);
 
                 var offsetX = characterBounds.Left - leftBounds;
 
@@ -111,7 +100,7 @@ public partial class TextBox : Element
             else if (cursorBoundings.Right - this.Scroll.X > rightBounds)
             {
                 var position        = this.CursorPosition.ClampSubtract(1);
-                var characterBounds = this.text.GetCharacterBounds(position);
+                var characterBounds = this.text.GetCharacterBoundings(position);
 
                 var offsetX = characterBounds.Right + cursorBoundings.Size.Width - rightBounds;
 
@@ -123,6 +112,14 @@ public partial class TextBox : Element
             this.Scroll = this.Scroll with { X = 0 };
         }
     }
+
+    private HistoryEntry CreateHistory() =>
+        new()
+        {
+            Text           = this.text.Value,
+            CursorPosition = this.CursorPosition,
+            Selection      = this.text.Selection
+        };
 
     private void OnBlurer(in MouseEvent mouseEvent)
     {
@@ -392,7 +389,7 @@ public partial class TextBox : Element
     }
 
     private void SaveHistory() =>
-        this.undo.Push(this.GetHistory());
+        this.undo.Push(this.CreateHistory());
 
     public void DeleteSelected()
     {
@@ -404,7 +401,7 @@ public partial class TextBox : Element
     {
         if (this.redo.Count > 0)
         {
-            this.undo.Push(this.GetHistory());
+            this.undo.Push(this.CreateHistory());
 
             this.ApplyHistory(this.redo.Pop());
         }
@@ -414,7 +411,7 @@ public partial class TextBox : Element
     {
         if (this.undo.Count > 0)
         {
-            this.redo.Push(this.GetHistory());
+            this.redo.Push(this.CreateHistory());
 
             this.ApplyHistory(this.undo.Pop());
         }

@@ -247,6 +247,14 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         }
     }
 
+    public void MakeChildrenDirty()
+    {
+        foreach (var child in this)
+        {
+            child.MakeDirty();
+        }
+    }
+
     public void RemoveChild(StencilLayer layer)
     {
         if (layer.Parent != this)

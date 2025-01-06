@@ -85,7 +85,7 @@ public sealed class TextNode : ContainerNode
         }
     }
 
-    public Rect<int> GetCursorBounds()
+    public Rect<int> GetCursorBoundings()
     {
         this.Layout.Update();
 
@@ -94,14 +94,14 @@ public sealed class TextNode : ContainerNode
         return new(cursorRect.Size, this.Transform.Position.ToPoint<int>() + cursorRect.Position);
     }
 
-    public Rect<int> GetCharacterBounds(uint index)
+    public Rect<int> GetCharacterBoundings(uint index)
     {
         if (index > this.Value?.Length)
         {
             throw new IndexOutOfRangeException();
         }
 
-        this.GetIndependentLayoutAncestor().Update();
+        this.UpdateIndependentAncestorLayout();
 
         var rect = ((RectCommand)this.Commands[(int)index + 1]).Rect;
 
@@ -119,7 +119,7 @@ public sealed class TextNode : ContainerNode
             throw new IndexOutOfRangeException();
         }
 
-        this.GetIndependentLayoutAncestor().Update();
+        this.UpdateIndependentAncestorLayout();
 
         var slice = this.Commands.AsSpan((int)textSelection.Start + 1, (int)textSelection.End + 1);
 
