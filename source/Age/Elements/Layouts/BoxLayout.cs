@@ -732,14 +732,14 @@ internal sealed partial class BoxLayout : Layout
         {
             this.ContentOffset = this.ContentOffset with
             {
-                X = this.ContentOffset.X + (uint)(5 * -mouseEvent.Delta)
+                X = (uint)(this.ContentOffset.X + 5 * -mouseEvent.Delta)
             };
         }
         else if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY)
         {
             this.ContentOffset = this.ContentOffset with
             {
-                Y = this.ContentOffset.Y + (uint)(5 * -mouseEvent.Delta)
+                Y = (uint)(this.ContentOffset.Y + 5 * -mouseEvent.Delta)
             };
         }
     }
