@@ -335,7 +335,6 @@ internal sealed partial class TextLayout : Layout
                 characterCommand.MappedTexture   = new(atlas.Texture, uv);
                 characterCommand.StencilLayer    = this.StencilLayer;
 
-                boundings.Width = uint.Max(boundings.Width, (uint)float.Round(cursor.X + glyphsWidths[i]));
                 cursor.X += (int)float.Round(glyphsWidths[i]);
 
                 textOffset++;
@@ -352,6 +351,8 @@ internal sealed partial class TextLayout : Layout
             {
                 cursor.X += (int)float.Round(glyphsWidths[i]);
             }
+
+            boundings.Width = uint.Max(boundings.Width, (uint)cursor.X);
 
             if (range.HasValue)
             {
