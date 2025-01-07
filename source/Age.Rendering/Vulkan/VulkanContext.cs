@@ -185,7 +185,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
             .Select(
                 x => new VkDeviceQueueCreateInfo
                 {
-                    QueueFamilyIndex = this.graphicsQueueIndex,
+                    QueueFamilyIndex = x,
                     QueueCount       = 1,
                     PQueuePriorities = pQueuePriorities,
                 }
