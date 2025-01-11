@@ -104,7 +104,6 @@ public sealed class Engine : Disposable
 
                     if (!window.IsClosed)
                     {
-                        window.Tree.ResetCache();
                         window.Tree.Update();
 
                         if (window.Tree.IsDirty)

@@ -146,6 +146,12 @@ public sealed partial class RenderTree : NodeTree
         return null;
     }
 
+    private void ResetCache()
+    {
+        this.command2DEntriesCache.Clear();
+        this.command3DEntriesCache.Clear();
+    }
+
     private void OnContext(in Platforms.Display.ContextEvent contextEvent)
     {
         var element = this.GetElement(contextEvent.X, contextEvent.Y);
@@ -192,9 +198,16 @@ public sealed partial class RenderTree : NodeTree
 
             if (mouseEvent.Button == mouseEvent.PrimaryButton)
             {
-                this.lastFocusedTextNode?.Layout.ClearSelection();
+                if (mouseEvent.KeyStates.HasFlag(MouseKeyStates.Shift) && this.lastFocusedTextNode == textNode)
+                {
+                    textNode.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y, characterPosition);
+                }
+                else
+                {
+                    this.lastFocusedTextNode?.Layout.ClearSelection();
 
-                textNode.Layout.SetCaret(mouseEvent.X, mouseEvent.Y, characterPosition);
+                    textNode.Layout.SetCaret(mouseEvent.X, mouseEvent.Y, characterPosition);
+                }
 
                 if (this.lastFocusedTextNode != textNode)
                 {
@@ -375,12 +388,6 @@ public sealed partial class RenderTree : NodeTree
         }
     }
 
-    internal void ResetCache()
-    {
-        this.command2DEntriesCache.Clear();
-        this.command3DEntriesCache.Clear();
-    }
-
     protected override void Disposed(bool disposing)
     {
         if (disposing)
@@ -397,7 +404,7 @@ public sealed partial class RenderTree : NodeTree
         }
     }
 
-    public override void Initialize()
+    public sealed override void Initialize()
     {
         this.canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasIndexRenderGraphPass>();
         this.canvasIndexRenderGraphPass.Recreated += this.UpdateBuffer;
@@ -412,5 +419,11 @@ public sealed partial class RenderTree : NodeTree
         this.Window.MouseUp     += this.OnMouseUp;
 
         base.Initialize();
+    }
+
+    public sealed override void Update()
+    {
+        this.ResetCache();
+        base.Update();
     }
 }

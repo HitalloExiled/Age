@@ -10,7 +10,8 @@ public class ScrollTest
     {
         var borderSize = 2u;
 
-        var text = """
+        var text =
+        """
         Lorem ipsum dolor sit amet, consectetur adipiscing elit.
         Sed et malesuada urna.
         Duis quam nisi, ultricies ut elit ac, feugiat tincidunt dolor.
