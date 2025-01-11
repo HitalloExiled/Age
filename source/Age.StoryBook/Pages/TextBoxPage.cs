@@ -1,5 +1,6 @@
 using Age.Components;
 using Age.Elements;
+using Age.Numerics;
 using Age.Styling;
 
 namespace Age.StoryBook.Pages;
@@ -11,6 +12,13 @@ public class TextBoxPage : Page
 
     public TextBoxPage()
     {
+        var containerStyle = new Style
+        {
+            Color                = Color.White,
+            Stack                = StackKind.Vertical,
+            ContentJustification = ContentJustificationKind.Start,
+        };
+
         var textBoxStyle = new Style
         {
             Margin = new((Pixel)2, null),
@@ -26,18 +34,65 @@ public class TextBoxPage : Page
             },
             Children =
             [
-                new TextBox
+                new FlexBox
                 {
-                    Style = textBoxStyle,
+                    Style    = containerStyle,
+                    Children =
+                    [
+                        new TextNode("Default"),
+                        new TextBox
+                        {
+                            Style = textBoxStyle,
+                        },
+                    ]
                 },
-                new TextBox
+                new FlexBox
                 {
-                    Style = textBoxStyle with
-                    {
-                        Overflow = OverflowKind.ScrollX,
-                        Size     = new((Pixel)50, null),
-                    },
+                    Style    = containerStyle,
+                    Children =
+                    [
+                        new TextNode("Multiline"),
+                        new TextBox
+                        {
+                            Style     = textBoxStyle,
+                            Multiline = true,
+                        },
+                    ]
                 },
+                new FlexBox
+                {
+                    Style    = containerStyle,
+                    Children =
+                    [
+                        new TextNode("Fixed Size"),
+                        new TextBox
+                        {
+                            Style = textBoxStyle with
+                            {
+                                Overflow = OverflowKind.ScrollX,
+                                Size     = new((Pixel)100, null),
+                            },
+                        },
+                    ]
+                },
+                new FlexBox
+                {
+                    Style    = containerStyle,
+                    Children =
+                    [
+                        new TextNode("Fixed Size Multiline"),
+                        new TextBox
+                        {
+                            Multiline = true,
+                            Style     = textBoxStyle with
+                            {
+                                Overflow = OverflowKind.Scroll,
+                                Size     = new((Pixel)200),
+                            },
+                        },
+                    ]
+                },
+
             ]
         };
 

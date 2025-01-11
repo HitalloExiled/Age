@@ -6,7 +6,7 @@ using Age.Extensions;
 using Age.Scene;
 using Age.Themes;
 
-using Key       = Age.Platforms.Display.Key;
+using Key = Age.Platforms.Display.Key;
 using KeyStates = Age.Platforms.Display.KeyStates;
 
 namespace Age.Components;
@@ -86,26 +86,42 @@ public partial class TextBox : Element
             var boxModel        = this.GetBoxModel();
             var cursorBoundings = this.text.GetCursorBoundings();
 
-            var leftBounds  = boxModel.Boundings.Left  + boxModel.Border.Left  + boxModel.Padding.Left;
-            var rightBounds = boxModel.Boundings.Right - boxModel.Border.Right - boxModel.Padding.Right;
+            var leftBounds   = boxModel.Boundings.Left   + boxModel.Border.Left   + boxModel.Padding.Left;
+            var rightBounds  = boxModel.Boundings.Right  - boxModel.Border.Right  - boxModel.Padding.Right;
+            var topBounds    = boxModel.Boundings.Top    + boxModel.Border.Top    + boxModel.Padding.Top;
+            var bottomBounds = boxModel.Boundings.Bottom - boxModel.Border.Bottom - boxModel.Padding.Bottom;
+
+            var scroll = this.Scroll;
 
             if (cursorBoundings.Left - this.Scroll.X < leftBounds)
             {
                 var characterBounds = this.text.GetCharacterBoundings(this.CursorPosition);
 
-                var offsetX = characterBounds.Left - leftBounds;
-
-                this.Scroll = this.Scroll with { X = (uint)offsetX };
+                scroll.X = (uint)(characterBounds.Left - leftBounds);
             }
             else if (cursorBoundings.Right - this.Scroll.X > rightBounds)
             {
                 var position        = this.CursorPosition.ClampSubtract(1);
                 var characterBounds = this.text.GetCharacterBoundings(position);
 
-                var offsetX = characterBounds.Right + cursorBoundings.Size.Width - rightBounds;
-
-                this.Scroll = this.Scroll with { X = (uint)offsetX };
+                scroll.X = (uint)(characterBounds.Right + cursorBoundings.Size.Height - rightBounds);
             }
+
+            if (cursorBoundings.Top - this.Scroll.Y < topBounds)
+            {
+                var characterBounds = this.text.GetCharacterBoundings(this.CursorPosition);
+
+                scroll.Y = (uint)(characterBounds.Top - topBounds);
+            }
+            else if (cursorBoundings.Bottom - this.Scroll.Y > bottomBounds)
+            {
+                var position        = this.CursorPosition.ClampSubtract(1);
+                var characterBounds = this.text.GetCharacterBoundings(position);
+
+                scroll.Y = (uint)(characterBounds.Bottom + cursorBoundings.Size.Height - bottomBounds);
+            }
+
+            this.Scroll = scroll;
         }
         else
         {
@@ -233,8 +249,22 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
-                    this.text.Value += "\n\r";
-                    this.CursorPosition += 2;
+                    this.DeleteSelected();
+
+                    if (this.CursorPosition == this.text.Value?.Length)
+                    {
+                        this.text.Value += '\n';
+                    }
+                    else
+                    {
+                        var start = this.text.Value.AsSpan(..(int)this.CursorPosition);
+
+                        var end = this.text.Value.AsSpan((int)this.CursorPosition..);
+
+                        this.text.Value = string.Concat(start, ['\n'], end);
+                    }
+
+                    this.CursorPosition++;
                 }
                 else
                 {
@@ -281,21 +311,89 @@ public partial class TextBox : Element
 
                 break;
 
-            case Key.Home:
-                if (this.text.Value?.Length > 0)
+            case Key.Up:
+                if (this.Multiline && this.text.Value != null && this.CursorPosition > 0)
                 {
                     this.SaveHistory();
 
+                    var lineInfo     = new LineInfo(this.text.Value, this.CursorPosition);
+                    var position     = lineInfo.Start;
+                    var previousLine = lineInfo.PreviousLine();
+
+                    if (!previousLine.IsEmpty && !(this.CursorPosition == this.text.Value.Length && this.text.Value[^1] == '\n'))
+                    {
+                        var column = this.CursorPosition - lineInfo.Start;
+
+                        position = column < previousLine.Length ? previousLine.Start + column : previousLine.End;
+                    }
+
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
-                        this.text.Selection = this.text.Selection?.WithEnd(0) ?? new(this.CursorPosition, 0);
+                        this.text.Selection = this.text.Selection?.WithEnd(position) ?? new(this.CursorPosition, position);
                     }
                     else if (this.text.Selection != null)
                     {
                         this.text.ClearSelection();
                     }
 
-                    this.CursorPosition = 0;
+                    this.CursorPosition = position;
+                }
+
+                break;
+
+            case Key.Down:
+                if (this.Multiline && this.CursorPosition < this.text.Value?.Length)
+                {
+                    this.SaveHistory();
+
+                    var lineInfo = new LineInfo(this.text.Value, this.CursorPosition);
+                    var position = lineInfo.End + 1;
+                    var nextLine = lineInfo.NextLine();
+
+                    if (!nextLine.IsEmpty)
+                    {
+                        var column  = this.CursorPosition - lineInfo.Start;
+
+                        position = column < nextLine.Length
+                            ? nextLine.Start + column
+                            : nextLine.End == this.text.Value.Length - 1
+                                ? (uint)this.text.Value.Length
+                                : nextLine.End;
+                    }
+
+                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    {
+                        this.text.Selection = this.text.Selection?.WithEnd(position) ?? new(this.CursorPosition, position);
+                    }
+                    else if (this.text.Selection != null)
+                    {
+                        this.text.ClearSelection();
+                    }
+
+                    this.CursorPosition = position;
+                }
+
+                break;
+
+            case Key.Home:
+                if (this.text.Value?.Length > 0)
+                {
+                    this.SaveHistory();
+
+                    var position = (!this.Multiline || keyEvent.Modifiers.HasFlag(KeyStates.Control))
+                        ? 0u
+                        : new LineInfo(this.text.Value, this.CursorPosition).Start;
+
+                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    {
+                        this.text.Selection = this.text.Selection?.WithEnd(position) ?? new(this.CursorPosition, position);
+                    }
+                    else if (this.text.Selection != null)
+                    {
+                        this.text.ClearSelection();
+                    }
+
+                    this.CursorPosition = position;
                 }
 
                 break;
@@ -305,16 +403,29 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
+                    uint position;
+
+                    if (!this.Multiline || keyEvent.Modifiers.HasFlag(KeyStates.Control))
+                    {
+                        position = (uint)this.text.Value.Length;
+                    }
+                    else
+                    {
+                        var lineInfo = new LineInfo(this.text.Value, this.CursorPosition);
+
+                        position = lineInfo.End == this.text.Value.Length - 1 && this.text.Value[^1] != '\n' ? lineInfo.End + 1 : lineInfo.End;
+                    }
+
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
-                        this.text.Selection = this.text.Selection?.WithEnd((uint)this.text.Value.Length) ?? new(this.CursorPosition, (uint)this.text.Value.Length);
+                        this.text.Selection = this.text.Selection?.WithEnd(position) ?? new(this.CursorPosition, position);
                     }
                     else if (this.text.Selection != null)
                     {
                         this.text.ClearSelection();
                     }
 
-                    this.CursorPosition = (uint)this.text.Value.Length;
+                    this.CursorPosition = position;
                 }
 
                 break;

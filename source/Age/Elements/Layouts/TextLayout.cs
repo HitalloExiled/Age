@@ -170,7 +170,7 @@ internal sealed partial class TextLayout : Layout
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ApplySelection(int index, in TextSelection selection, RectCommand selectionCommand)
     {
-        if (index >= selection.Start && index < selection.End && (this.Text![index] != '\n' || index < selection.End - 1))
+        if (index >= selection.Start && index < selection.End)
         {
             selectionCommand.Color           = new(0, 0, 1, 0.5f);
             selectionCommand.Flags           = Flags.ColorAsBackground;
@@ -220,8 +220,16 @@ internal sealed partial class TextLayout : Layout
             {
                 var rect = ((RectCommand)this.target.Commands[this.Text.Length]).Rect;
 
-                position = rect.Position;
-                position.X += rect.Size.Width;
+                if (this.Text[^1] == '\n')
+                {
+                    position.X = 0;
+                    position.Y = rect.Position.Y - this.LineHeight;
+                }
+                else
+                {
+                    position = rect.Position;
+                    position.X += rect.Size.Width;
+                }
             }
             else
             {

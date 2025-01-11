@@ -89,9 +89,14 @@ public sealed class TextNode : ContainerNode
     {
         this.Layout.Update();
 
-        var cursorRect = this.Layout.CursorRect.Cast<int>();
+        var rect = this.Layout.CursorRect;
 
-        return new(cursorRect.Size, this.Transform.Position.ToPoint<int>() + cursorRect.Position);
+        var position = new Point<int>(
+            (int)(this.Transform.Position.X + rect.Position.X),
+            -(int)(this.Transform.Position.Y + rect.Position.Y)
+        );
+
+        return new(rect.Size.Cast<int>(), position);
     }
 
     public Rect<int> GetCharacterBoundings(uint index)
@@ -105,9 +110,12 @@ public sealed class TextNode : ContainerNode
 
         var rect = ((RectCommand)this.Commands[(int)index + 1]).Rect;
 
-        rect.Position += this.Transform.Position.ToPoint<float>();
+        var position = new Point<int>(
+            (int)(this.Transform.Position.X + rect.Position.X),
+            -(int)(this.Transform.Position.Y + rect.Position.Y)
+        );
 
-        return rect.Cast<int>();
+        return new(rect.Size.Cast<int>(), position);
     }
 
     public Rect<int> GetTextSelectionBounds(TextSelection textSelection)
@@ -132,7 +140,12 @@ public sealed class TextNode : ContainerNode
             rect.Grow(command.Rect);
         }
 
-        rect.Position += this.Transform.Position.ToPoint<float>();
+        var position = new Point<float>(
+            (float)(this.Transform.Position.X + rect.Position.X),
+            -(float)(this.Transform.Position.Y + rect.Position.Y)
+        );
+
+        rect.Position = position;
 
         return rect.Cast<int>();
     }
