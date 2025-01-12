@@ -83,6 +83,13 @@ public class TextBoxPage : Page
                         new TextNode("Fixed Size Multiline"),
                         new TextBox
                         {
+                            Text      =
+                            """
+                            1111
+                            2222
+                            3333
+                            4444
+                            """,
                             Multiline = true,
                             Style     = textBoxStyle with
                             {

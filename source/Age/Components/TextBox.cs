@@ -125,7 +125,7 @@ public partial class TextBox : Element
         }
         else
         {
-            this.Scroll = this.Scroll with { X = 0 };
+            this.Scroll = default;
         }
     }
 
@@ -426,6 +426,16 @@ public partial class TextBox : Element
                     }
 
                     this.CursorPosition = position;
+                }
+
+                break;
+
+            case Key.A:
+                if (keyEvent.Modifiers.HasFlag(KeyStates.Control) && this.text.Value != null)
+                {
+                    this.text.Selection = new(0, (uint)this.text.Value.Length);
+
+                    this.CursorPosition = (uint)this.text.Value.Length;
                 }
 
                 break;
