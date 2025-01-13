@@ -67,6 +67,9 @@ public sealed class Engine : Disposable
             this.textStorage.Dispose();
             this.textureStorage.Dispose();
             this.shaderStorage.Dispose();
+
+            GC.Collect();
+
             this.renderer.Dispose();
         }
     }
