@@ -283,12 +283,12 @@ public sealed partial class RenderTree : NodeTree
             this.lastHoveredElement  = null;
         }
 
+        var primaryButtonIsPressed =
+            mouseEvent.PrimaryButton == MouseButton.Left && mouseEvent.KeyStates.HasFlag(MouseKeyStates.LeftButton)
+            || mouseEvent.PrimaryButton == MouseButton.Right && mouseEvent.KeyStates.HasFlag(MouseKeyStates.RightButton);
+
         if (textNode != null)
         {
-            var primaryButtonIsPressed =
-                mouseEvent.PrimaryButton == MouseButton.Left && mouseEvent.KeyStates.HasFlag(MouseKeyStates.LeftButton)
-                || mouseEvent.PrimaryButton == MouseButton.Right && mouseEvent.KeyStates.HasFlag(MouseKeyStates.RightButton);
-
             if (primaryButtonIsPressed && textNode == this.lastFocusedTextNode)
             {
                 textNode.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y, character);
@@ -302,10 +302,17 @@ public sealed partial class RenderTree : NodeTree
                 textNode.Layout.TargetMouseOver();
             }
         }
-        else
+        else if (this.lastHoveredTextNode != null)
         {
-            this.lastHoveredTextNode?.Layout.TargetMouseOut();
-            this.lastHoveredTextNode = null;
+            if (primaryButtonIsPressed)
+            {
+                this.lastHoveredTextNode.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y);
+            }
+            else
+            {
+                this.lastHoveredTextNode?.Layout.TargetMouseOut();
+                this.lastHoveredTextNode = null;
+            }
         }
     }
 

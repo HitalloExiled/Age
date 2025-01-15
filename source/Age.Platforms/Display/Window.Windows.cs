@@ -25,10 +25,10 @@ public partial class Window
     public static short HiWord(nint value) => HiWord((uint)value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static ushort GetXLParam(LPARAM lParam) => (ushort)LoWord(lParam);
+    private static ushort GetXLParam(LPARAM lParam) => (ushort)short.Max(0, LoWord(lParam));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static ushort GetYLParam(LPARAM lParam) => (ushort)HiWord(lParam);
+    private static ushort GetYLParam(LPARAM lParam) => (ushort)short.Max(0, HiWord(lParam));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static int GetKeyStateWParam(WPARAM wParam) => LoWord(wParam);

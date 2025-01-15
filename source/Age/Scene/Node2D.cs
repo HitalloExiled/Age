@@ -12,7 +12,7 @@ public abstract class Node2D : RenderNode
     private Transform2D ParentTransform      => (this.Parent as Node2D)?.Transform ?? new();
     private Transform2D ParentTransformCache => (this.Parent as Node2D)?.TransformCache ?? new();
 
-    internal protected virtual Transform2D TransformCache
+    internal virtual Transform2D TransformCache
     {
         get
         {

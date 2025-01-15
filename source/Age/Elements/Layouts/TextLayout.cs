@@ -381,9 +381,9 @@ internal sealed partial class TextLayout : Layout
     {
         var command = (RectCommand)this.target.Commands[(int)character + 1];
 
-        var localPosition = this.Target.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
+        var cursor = this.Target.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
-        if (localPosition.X > command.Rect.Position.X + command.Rect.Size.Width / 2)
+        if (cursor.X > command.Rect.Position.X + command.Rect.Size.Width / 2)
         {
             character++;
         }
@@ -560,6 +560,68 @@ internal sealed partial class TextLayout : Layout
 
     public void TargetRemoved(Element parentElement) =>
         parentElement.Layout.State.Changed -= this.TargetParentStyleChanged;
+
+    public void UpdateSelection(ushort x, ushort y)
+    {
+        if (this.Parent!.State.Style.TextSelection == false)
+        {
+            return;
+        }
+
+        var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition + 1);
+        var cursor    = this.Target.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
+
+        var (startIndex, endIndex) = selection.Inverted
+            ? (selection.Start, selection.End + 1)
+            : (selection.Start + 1, selection.End);
+
+        var startRect = ((RectCommand)this.target.Commands[(int)startIndex]).Rect;
+        var endRect   = ((RectCommand)this.target.Commands[(int)endIndex]).Rect;
+
+        var start = selection.Start + 1;
+        var end   = selection.End   + 1;
+
+        if (!selection.Inverted && cursor.Y < endRect.Position.Y - endRect.Size.Height || selection.Inverted && cursor.Y > endRect.Position.Y)
+        {
+            start = end;
+        }
+
+        if (cursor.Y < startRect.Position.Y + startRect.Size.Height / 2)
+        {
+            var length = this.Text!.Length + 1;
+
+            for (var i = (int)start; i < length; i++)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (cursor.Y > command.Rect.Position.Y - command.Rect.Size.Height)
+                {
+                    break;
+                }
+
+                end = (uint)i + 1;
+            }
+        }
+        else
+        {
+            for (var i = (int)start; i > 0; i--)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (cursor.Y < command.Rect.Position.Y)
+                {
+                    break;
+                }
+
+                end = (uint)i;
+            }
+        }
+
+        end--;
+
+        this.Selection     = selection.WithEnd(end);
+        this.CaretPosition = end;
+    }
 
     public void UpdateSelection(ushort x, ushort y, uint character)
     {
