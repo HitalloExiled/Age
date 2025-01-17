@@ -4,13 +4,15 @@ namespace Age.Elements;
 
 public struct MouseEvent
 {
-    public Element        Target;
+    public required Element Target;
     public MouseButton    Button;
     public float          Delta;
     public MouseKeyStates KeyStates;
     public MouseButton    PrimaryButton;
     public ushort         X;
     public ushort         Y;
+
+    public bool Indirect;
 
     public readonly bool IsPrimaryButtonPressed => this.Button == this.PrimaryButton;
 

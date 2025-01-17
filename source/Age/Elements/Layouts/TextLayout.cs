@@ -379,6 +379,11 @@ internal sealed partial class TextLayout : Layout
 
     private void GetCharacterOffset(ushort x, ushort y, ref uint character)
     {
+        if (char.IsControl(this.Text![(int)character]))
+        {
+            return;
+        }
+
         var command = (RectCommand)this.target.Commands[(int)character + 1];
 
         var cursor = this.Target.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
@@ -507,12 +512,12 @@ internal sealed partial class TextLayout : Layout
                         break;
                     }
 
-                    position = (uint)j - 1;
+                    position = (uint)j;
                 }
 
-                if (position == this.Text.Length - 1)
+                if (position == this.Text.Length)
                 {
-                    position += 2;
+                    position += 1;
                 }
 
                 break;

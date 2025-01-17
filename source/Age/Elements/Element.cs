@@ -323,7 +323,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    private MouseEvent CreateEvent(in PlatformMouseEvent mouseEvent) =>
+    private MouseEvent CreateEvent(in PlatformMouseEvent mouseEvent, bool indirect) =>
         new()
         {
             Target        = this,
@@ -333,6 +333,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             PrimaryButton = mouseEvent.PrimaryButton,
             X             = mouseEvent.X,
             Y             = mouseEvent.Y,
+            Indirect      = indirect,
         };
 
     private ContextEvent CreateEvent(in PlatformContextEvent platformContextEvent) =>
@@ -387,7 +388,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         if (this.Layout.IsScrollable)
         {
-            var mouseEvent = this.CreateEvent(platformMouseEvent);
+            var mouseEvent = this.CreateEvent(platformMouseEvent, false);
 
             this.scrolled?.Invoke(mouseEvent);
         }
@@ -479,12 +480,12 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             this.Layout.State.RemoveState(StyledStateManager.State.Focus);
             this.IsFocused = false;
-            this.Blured?.Invoke(this.CreateEvent(platformMouseEvent));
+            this.Blured?.Invoke(this.CreateEvent(platformMouseEvent, false));
         }
     }
 
-    internal void InvokeClick(in PlatformMouseEvent platformMouseEvent) =>
-        this.Clicked?.Invoke(this.CreateEvent(platformMouseEvent));
+    internal void InvokeClick(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
+        this.Clicked?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
     internal void InvokeContext(in PlatformContextEvent platformContextEvent) =>
         this.Context?.Invoke(this.CreateEvent(platformContextEvent));
@@ -492,8 +493,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     internal void InvokeDeactivate() =>
         this.Layout.State.RemoveState(StyledStateManager.State.Active);
 
-    internal void InvokeDoubleClick(in PlatformMouseEvent platformMouseEvent) =>
-        this.DoubleClicked?.Invoke(this.CreateEvent(platformMouseEvent));
+    internal void InvokeDoubleClick(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
+        this.DoubleClicked?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
     internal void InvokeFocus(in PlatformMouseEvent platformMouseEvent)
     {
@@ -501,25 +502,25 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             this.IsFocused = true;
             this.Layout.State.AddState(StyledStateManager.State.Focus);
-            this.Focused?.Invoke(this.CreateEvent(platformMouseEvent));
+            this.Focused?.Invoke(this.CreateEvent(platformMouseEvent, false));
         }
     }
 
-    internal void InvokeMouseDown(in PlatformMouseEvent platformMouseEvent) =>
-        this.MouseDown?.Invoke(this.CreateEvent(platformMouseEvent));
+    internal void InvokeMouseDown(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
+        this.MouseDown?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
-    internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent) =>
-        this.MouseMoved?.Invoke(this.CreateEvent(platformMouseEvent));
+    internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
+        this.MouseMoved?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
-    internal void InvokeMouseUp(in PlatformMouseEvent platformMouseEvent) =>
-        this.MouseUp?.Invoke(this.CreateEvent(platformMouseEvent));
+    internal void InvokeMouseUp(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
+        this.MouseUp?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
     {
         this.IsHovered = false;
         this.Layout.State.RemoveState(StyledStateManager.State.Hovered);
         this.Layout.TargetMouseOut();
-        this.MouseOut?.Invoke(this.CreateEvent(platformMouseEvent));
+        this.MouseOut?.Invoke(this.CreateEvent(platformMouseEvent, false));
     }
 
     internal void InvokeMouseOver(in PlatformMouseEvent platformMouseEvent)
@@ -527,7 +528,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.IsHovered = true;
         this.Layout.State.AddState(StyledStateManager.State.Hovered);
         this.Layout.TargetMouseOver();
-        this.MouseOver?.Invoke(this.CreateEvent(platformMouseEvent));
+        this.MouseOver?.Invoke(this.CreateEvent(platformMouseEvent, false));
     }
 
     protected override void Disposed() =>

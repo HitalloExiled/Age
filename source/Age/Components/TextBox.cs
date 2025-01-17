@@ -1,9 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Elements;
 using Age.Extensions;
-using Age.Numerics;
 using Age.Scene;
 using Age.Themes;
 
@@ -514,27 +512,17 @@ public partial class TextBox : Element
 
     private void OnMouseDown(in MouseEvent mouseEvent)
     {
-        if (this.text.Value != null)
+        if (this.text.Value != null && !mouseEvent.Indirect)
         {
-            var boundings = this.text.GetBoundings();
-
-            if (!boundings.Intersects(new Point<int>(mouseEvent.X, mouseEvent.Y)))
-            {
-                this.text.Layout.SetCaret(mouseEvent.X, mouseEvent.Y);
-            }
+            this.text.Layout.SetCaret(mouseEvent.X, mouseEvent.Y);
         }
     }
 
     private void OnMouseMove(in MouseEvent mouseEvent)
     {
-        if (this.text.Value != null && mouseEvent.IsHoldingPrimaryButton)
+        if (this.text.Value != null && !mouseEvent.Indirect && mouseEvent.IsHoldingPrimaryButton)
         {
-            var boundings = this.text.GetBoundings();
-
-            if (!boundings.Intersects(new Point<int>(mouseEvent.X, mouseEvent.Y)))
-            {
-                this.text.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y);
-            }
+            this.text.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y);
         }
      }
 
