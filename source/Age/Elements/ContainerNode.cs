@@ -13,7 +13,7 @@ public abstract class ContainerNode : Node2D
 
     private Transform2D Offset => Transform2D.CreateTranslated((this.ParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
 
-    internal Transform2D TransformWithOffset => this.Offset * this.Layout.Transform;
+    internal Transform2D TransformWithOffset => this.Offset * this.Transform;
 
     internal override Transform2D TransformCache
     {

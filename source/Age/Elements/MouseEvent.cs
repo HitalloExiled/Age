@@ -4,10 +4,17 @@ namespace Age.Elements;
 
 public struct MouseEvent
 {
+    public Element        Target;
+    public MouseButton    Button;
+    public float          Delta;
+    public MouseKeyStates KeyStates;
+    public MouseButton    PrimaryButton;
     public ushort         X;
     public ushort         Y;
-    public MouseButton    Button;
-    public MouseKeyStates KeyStates;
-    public float          Delta;
-    public Element        Target;
+
+    public readonly bool IsPrimaryButtonPressed => this.Button == this.PrimaryButton;
+
+    public readonly bool IsHoldingPrimaryButton =>
+        this.PrimaryButton == MouseButton.Left && this.KeyStates.HasFlag(MouseKeyStates.LeftButton)
+        || this.PrimaryButton == MouseButton.Right && this.KeyStates.HasFlag(MouseKeyStates.RightButton);
 }

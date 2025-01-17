@@ -1,15 +1,14 @@
 using Age.Elements.Layouts;
+using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Scene;
 using Age.Styling;
 using System.Text;
 
-using Key = Age.Platforms.Display.Key;
+using Key                  = Age.Platforms.Display.Key;
 using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
-using PlatformMouseEvent = Age.Platforms.Display.MouseEvent;
-using AgeInput = Age.Input;
-using System.Drawing;
-using Age.Numerics;
+using PlatformMouseEvent   = Age.Platforms.Display.MouseEvent;
+using AgeInput             = Age.Input;
 
 namespace Age.Elements;
 
@@ -37,9 +36,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     public event ContextEventHandler? Context;
     public event MouseEventHandler?   DoubleClicked;
     public event MouseEventHandler?   Focused;
+    public event MouseEventHandler?   MouseDown;
     public event MouseEventHandler?   MouseMoved;
     public event MouseEventHandler?   MouseOut;
     public event MouseEventHandler?   MouseOver;
+    public event MouseEventHandler?   MouseUp;
 
     public event InputEventHandler? Input
     {
@@ -325,12 +326,13 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     private MouseEvent CreateEvent(in PlatformMouseEvent mouseEvent) =>
         new()
         {
-            Target    = this,
-            Button    = mouseEvent.Button,
-            Delta     = mouseEvent.Delta,
-            KeyStates = mouseEvent.KeyStates,
-            X         = mouseEvent.X,
-            Y         = mouseEvent.Y,
+            Target        = this,
+            Button        = mouseEvent.Button,
+            Delta         = mouseEvent.Delta,
+            KeyStates     = mouseEvent.KeyStates,
+            PrimaryButton = mouseEvent.PrimaryButton,
+            X             = mouseEvent.X,
+            Y             = mouseEvent.Y,
         };
 
     private ContextEvent CreateEvent(in PlatformContextEvent platformContextEvent) =>
@@ -503,8 +505,14 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
+    internal void InvokeMouseDown(in PlatformMouseEvent platformMouseEvent) =>
+        this.MouseDown?.Invoke(this.CreateEvent(platformMouseEvent));
+
     internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent) =>
         this.MouseMoved?.Invoke(this.CreateEvent(platformMouseEvent));
+
+    internal void InvokeMouseUp(in PlatformMouseEvent platformMouseEvent) =>
+        this.MouseUp?.Invoke(this.CreateEvent(platformMouseEvent));
 
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
     {

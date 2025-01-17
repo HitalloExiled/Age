@@ -18,6 +18,9 @@ public static class Math<T> where T : INumber<T>
     public static bool IsApprox(T left, T right) =>
         T.Abs(left - right) < Epsilon;
 
+    public static bool IsInRange(T value, T min, T max) =>
+        value >= min && value <= max;
+
     public static T MinMax(T min, T max, T value) =>
         T.Min(max, T.Max(value, min));
 }

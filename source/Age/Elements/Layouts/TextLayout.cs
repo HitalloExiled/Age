@@ -474,6 +474,56 @@ internal sealed partial class TextLayout : Layout
         this.Selection = new((uint)start, (uint)end);
     }
 
+    public void SetCaret(ushort x, ushort y)
+    {
+        if (this.Text == null || this.Parent?.State.Style.TextSelection == false)
+        {
+            return;
+        }
+
+        this.ClearSelection();
+
+        var length   = this.Text.Length + 1;
+        var position = (uint)length;
+
+        var cursor = this.Target.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
+
+        bool isCursorWithinRect(in Rect<float> rect) => cursor.Y >= rect.Position.Y - rect.Size.Height && cursor.Y <= rect.Position.Y;
+
+        for (var i = 1; i < length; i++)
+        {
+            var rect = ((RectCommand)this.target.Commands[i]).Rect;
+
+            if (isCursorWithinRect(rect))
+            {
+                position = (uint)i;
+
+                for (var j = i + 1; j < length; j++)
+                {
+                    rect = ((RectCommand)this.target.Commands[j]).Rect;
+
+                    if (!isCursorWithinRect(rect))
+                    {
+                        break;
+                    }
+
+                    position = (uint)j - 1;
+                }
+
+                if (position == this.Text.Length - 1)
+                {
+                    position += 2;
+                }
+
+                break;
+            }
+        }
+
+        position--;
+
+        this.CaretPosition = position;
+    }
+
     public void SetCaret(ushort x, ushort y, uint position)
     {
         if (this.Parent?.State.Style.TextSelection == false)
@@ -568,7 +618,7 @@ internal sealed partial class TextLayout : Layout
             return;
         }
 
-        var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition + 1);
+        var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition);
         var cursor    = this.Target.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -577,9 +627,11 @@ internal sealed partial class TextLayout : Layout
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorBelow(float y) => cursor.Y < y;
 
-        var (startIndex, endIndex) = selection.Inverted
-            ? (selection.Start, selection.End + 1)
-            : (selection.Start + 1, selection.End);
+        var (startIndex, endIndex) = selection.Start == selection.End
+            ? (selection.Start, selection.End)
+            : selection.Inverted
+                ? (selection.Start, selection.End + 1)
+                : (selection.Start + 1, selection.End);
 
         var startRect = ((RectCommand)this.target.Commands[(int)startIndex]).Rect;
         var endRect   = ((RectCommand)this.target.Commands[(int)endIndex]).Rect;

@@ -3,6 +3,7 @@ using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Elements;
 using Age.Extensions;
+using Age.Numerics;
 using Age.Scene;
 using Age.Themes;
 
@@ -66,10 +67,12 @@ public partial class TextBox : Element
 
         this.AppendChild(this.text);
 
-        this.Blured  += this.OnBlurer;
-        this.Focused += this.OnFocused;
-        this.Input   += this.OnInput;
-        this.KeyDown += this.OnKeyDown;
+        this.Blured     += this.OnBlurer;
+        this.MouseDown  += this.OnMouseDown;
+        this.Focused    += this.OnFocused;
+        this.Input      += this.OnInput;
+        this.KeyDown    += this.OnKeyDown;
+        this.MouseMoved += this.OnMouseMove;
     }
 
     private void ApplyHistory(in HistoryEntry entry)
@@ -508,6 +511,32 @@ public partial class TextBox : Element
                 break;
         }
     }
+
+    private void OnMouseDown(in MouseEvent mouseEvent)
+    {
+        if (this.text.Value != null)
+        {
+            var boundings = this.text.GetBoundings();
+
+            if (!boundings.Intersects(new Point<int>(mouseEvent.X, mouseEvent.Y)))
+            {
+                this.text.Layout.SetCaret(mouseEvent.X, mouseEvent.Y);
+            }
+        }
+    }
+
+    private void OnMouseMove(in MouseEvent mouseEvent)
+    {
+        if (this.text.Value != null && mouseEvent.IsHoldingPrimaryButton)
+        {
+            var boundings = this.text.GetBoundings();
+
+            if (!boundings.Intersects(new Point<int>(mouseEvent.X, mouseEvent.Y)))
+            {
+                this.text.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y);
+            }
+        }
+     }
 
     private void SaveHistory() =>
         this.undo.Push(this.CreateHistory());

@@ -234,6 +234,8 @@ public sealed partial class RenderTree : NodeTree
 
         if (element != null)
         {
+            element.InvokeMouseDown(mouseEvent);
+
             if (mouseEvent.Button == mouseEvent.PrimaryButton)
             {
                 element.InvokeActivate();
@@ -283,6 +285,7 @@ public sealed partial class RenderTree : NodeTree
             this.lastHoveredElement  = null;
         }
 
+        // TODO analyze better approach
         var primaryButtonIsPressed =
             mouseEvent.PrimaryButton == MouseButton.Left && mouseEvent.KeyStates.HasFlag(MouseKeyStates.LeftButton)
             || mouseEvent.PrimaryButton == MouseButton.Right && mouseEvent.KeyStates.HasFlag(MouseKeyStates.RightButton);
@@ -322,6 +325,8 @@ public sealed partial class RenderTree : NodeTree
 
         if (element != null)
         {
+            element.InvokeMouseUp(mouseEvent);
+
             if (mouseEvent.Button == mouseEvent.PrimaryButton)
             {
                 element.InvokeDeactivate();

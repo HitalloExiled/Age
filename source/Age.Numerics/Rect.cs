@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Age.Numerics;
 
@@ -51,6 +52,9 @@ public record struct Rect<T> where T : INumber<T>
         }
     }
 
+    public readonly bool Intersects(in Point<T> point) =>
+        Rect.Intersects(this, point);
+
     public readonly bool Intersects(in Rect<T> other) =>
         Rect.Intersects(this, other);
 
@@ -66,6 +70,9 @@ public record struct Rect<T> where T : INumber<T>
 
 public static class Rect
 {
+    public static bool Intersects<T>(in Rect<T> rect, in Point<T> point) where T : INumber<T> =>
+        Math<T>.IsInRange(point.X, rect.Left, rect.Right) && Math<T>.IsInRange(point.Y, rect.Top, rect.Bottom);
+
     public static bool Intersects<T>(in Rect<T> left, in Rect<T> right) where T : INumber<T> =>
         Intersection(left, right) != default;
 
