@@ -571,6 +571,12 @@ internal sealed partial class TextLayout : Layout
         var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition + 1);
         var cursor    = this.Target.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorAbove(float y) => cursor.Y > y;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorBelow(float y) => cursor.Y < y;
+
         var (startIndex, endIndex) = selection.Inverted
             ? (selection.Start, selection.End + 1)
             : (selection.Start + 1, selection.End);
@@ -581,39 +587,65 @@ internal sealed partial class TextLayout : Layout
         var start = selection.Start + 1;
         var end   = selection.End   + 1;
 
-        if (!selection.Inverted && cursor.Y < endRect.Position.Y - endRect.Size.Height || selection.Inverted && cursor.Y > endRect.Position.Y)
+        if (isCursorBelow(startRect.Position.Y + startRect.Size.Height / 2))
         {
-            start = end;
-        }
-
-        if (cursor.Y < startRect.Position.Y + startRect.Size.Height / 2)
-        {
-            var length = this.Text!.Length + 1;
-
-            for (var i = (int)start; i < length; i++)
+            if (isCursorBelow(endRect.Position.Y - endRect.Size.Height))
             {
-                var command = (RectCommand)this.target.Commands[i];
+                var length = this.Text!.Length + 1;
 
-                if (cursor.Y > command.Rect.Position.Y - command.Rect.Size.Height)
+                for (var i = (int)end; i < length; i++)
                 {
-                    break;
-                }
+                    var command = (RectCommand)this.target.Commands[i];
 
-                end = (uint)i + 1;
+                    if (isCursorAbove(command.Rect.Position.Y - command.Rect.Size.Height))
+                    {
+                        break;
+                    }
+
+                    end = (uint)i + 1;
+                }
+            }
+            else
+            {
+                for (var i = (int)end - 1; i > start - 1; i--)
+                {
+                    var command = (RectCommand)this.target.Commands[i];
+
+                    if (isCursorBelow(command.Rect.Position.Y - command.Rect.Size.Height))
+                    {
+                        end = (uint)i + 1;
+
+                        break;
+                    }
+                }
             }
         }
-        else
+        else if (isCursorAbove(endRect.Position.Y))
         {
-            for (var i = (int)start; i > 0; i--)
+            for (var i = (int)end - 1; i > 0; i--)
             {
                 var command = (RectCommand)this.target.Commands[i];
 
-                if (cursor.Y < command.Rect.Position.Y)
+                if (isCursorBelow(command.Rect.Position.Y))
                 {
                     break;
                 }
 
                 end = (uint)i;
+            }
+        }
+        else
+        {
+            for (var i = (int)end; i < start - 1; i++)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (isCursorAbove(command.Rect.Position.Y))
+                {
+                    end = (uint)i;
+
+                    break;
+                }
             }
         }
 
