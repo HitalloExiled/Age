@@ -5,7 +5,7 @@ using Age.Extensions;
 using Age.Scene;
 using Age.Themes;
 
-using Key = Age.Platforms.Display.Key;
+using Key       = Age.Platforms.Display.Key;
 using KeyStates = Age.Platforms.Display.KeyStates;
 
 namespace Age.Components;
@@ -65,7 +65,7 @@ public partial class TextBox : Element
 
         this.AppendChild(this.text);
 
-        this.Blured     += this.OnBlurer;
+        this.Blured     += this.OnBlur;
         this.MouseDown  += this.OnMouseDown;
         this.Focused    += this.OnFocused;
         this.Input      += this.OnInput;
@@ -138,8 +138,9 @@ public partial class TextBox : Element
             Selection      = this.text.Selection
         };
 
-    private void OnBlurer(in MouseEvent mouseEvent)
+    private void OnBlur(in MouseEvent mouseEvent)
     {
+        this.text.ClearSelection();
         this.text.HideCaret();
 
         if (this.previousText != this.text.Value)
@@ -520,7 +521,7 @@ public partial class TextBox : Element
 
     private void OnMouseMove(in MouseEvent mouseEvent)
     {
-        if (this.text.Value != null && !mouseEvent.Indirect && mouseEvent.IsHoldingPrimaryButton)
+        if (this.IsFocused && this.text.Value != null && !mouseEvent.Indirect && mouseEvent.IsHoldingPrimaryButton)
         {
             this.text.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y);
         }

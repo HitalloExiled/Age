@@ -8,6 +8,12 @@ public struct MouseEvent
     public MouseButton    PrimaryButton;
     public MouseKeyStates KeyStates;
     public float          Delta;
+
+    public readonly bool IsPrimaryButtonPressed => this.Button == this.PrimaryButton;
+
+    public readonly bool IsHoldingPrimaryButton =>
+        this.PrimaryButton == MouseButton.Left && this.KeyStates.HasFlag(MouseKeyStates.LeftButton)
+        || this.PrimaryButton == MouseButton.Right && this.KeyStates.HasFlag(MouseKeyStates.RightButton);
 };
 
 public struct ContextEvent

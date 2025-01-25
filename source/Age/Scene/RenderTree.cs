@@ -196,7 +196,7 @@ public sealed partial class RenderTree : NodeTree
         {
             element = textNode.ParentElement;
 
-            if (mouseEvent.Button == mouseEvent.PrimaryButton)
+            if (mouseEvent.IsPrimaryButtonPressed)
             {
                 if (mouseEvent.KeyStates.HasFlag(MouseKeyStates.Shift) && this.lastFocusedTextNode == textNode)
                 {
@@ -234,8 +234,6 @@ public sealed partial class RenderTree : NodeTree
 
         if (element != null)
         {
-            element.InvokeMouseDown(mouseEvent, element != node);
-
             if (mouseEvent.Button == mouseEvent.PrimaryButton)
             {
                 element.InvokeActivate();
@@ -252,6 +250,8 @@ public sealed partial class RenderTree : NodeTree
             {
                 element.InvokeFocus(mouseEvent);
             }
+
+            element.InvokeMouseDown(mouseEvent, element != node);
         }
         else
         {
@@ -269,8 +269,6 @@ public sealed partial class RenderTree : NodeTree
 
         if (element != null)
         {
-            element.InvokeMouseMoved(mouseEvent, element != node);
-
             if (this.lastHoveredElement != element)
             {
                 this.lastHoveredElement?.InvokeMouseOut(mouseEvent);
@@ -278,6 +276,8 @@ public sealed partial class RenderTree : NodeTree
 
                 element.InvokeMouseOver(mouseEvent);
             }
+
+            element.InvokeMouseMoved(mouseEvent, element != node);
         }
         else
         {
@@ -285,14 +285,11 @@ public sealed partial class RenderTree : NodeTree
             this.lastHoveredElement  = null;
         }
 
-        // TODO analyze better approach
-        var primaryButtonIsPressed =
-            mouseEvent.PrimaryButton == MouseButton.Left && mouseEvent.KeyStates.HasFlag(MouseKeyStates.LeftButton)
-            || mouseEvent.PrimaryButton == MouseButton.Right && mouseEvent.KeyStates.HasFlag(MouseKeyStates.RightButton);
+        var isHoldingPrimaryButton = mouseEvent.IsHoldingPrimaryButton;
 
         if (textNode != null)
         {
-            if (primaryButtonIsPressed && textNode == this.lastFocusedTextNode)
+            if (mouseEvent.IsHoldingPrimaryButton && textNode == this.lastFocusedTextNode)
             {
                 textNode.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y, character);
             }
@@ -305,11 +302,11 @@ public sealed partial class RenderTree : NodeTree
                 textNode.Layout.TargetMouseOver();
             }
         }
-        else if (this.lastHoveredTextNode != null)
+        else if (this.lastFocusedTextNode != null)
         {
-            if (primaryButtonIsPressed)
+            if (isHoldingPrimaryButton)
             {
-                this.lastHoveredTextNode.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y);
+                this.lastFocusedTextNode.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y);
             }
             else
             {
@@ -328,8 +325,6 @@ public sealed partial class RenderTree : NodeTree
 
         if (element != null)
         {
-            element.InvokeMouseUp(mouseEvent, element != node);
-
             if (mouseEvent.Button == mouseEvent.PrimaryButton)
             {
                 element.InvokeDeactivate();
@@ -340,7 +335,7 @@ public sealed partial class RenderTree : NodeTree
                 element.InvokeClick(mouseEvent, element != node);
             }
 
-            this.lastFocusedElement = element;
+            element.InvokeMouseUp(mouseEvent, element != node);
         }
         else
         {
