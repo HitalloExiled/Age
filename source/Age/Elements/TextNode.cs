@@ -1,7 +1,7 @@
-using System.ComponentModel.Design;
 using Age.Commands;
 using Age.Core.Extensions;
 using Age.Elements.Layouts;
+using Age.Extensions;
 using Age.Numerics;
 using Age.Scene;
 
@@ -40,6 +40,63 @@ public sealed class TextNode : ContainerNode
 
     public TextNode(string value) : this() =>
         this.Value = value;
+
+    internal void AdjustScroll()
+    {
+        var parent = this.ParentElement;
+
+        if (parent == null)
+        {
+            return;
+        }
+
+        if (this.Value?.Length > 0)
+        {
+            var boxModel        = parent.GetBoxModel();
+            var cursorBoundings = this.GetCursorBoundings();
+
+            var leftBounds   = boxModel.Boundings.Left   + boxModel.Border.Left   + boxModel.Padding.Left;
+            var rightBounds  = boxModel.Boundings.Right  - boxModel.Border.Right  - boxModel.Padding.Right;
+            var topBounds    = boxModel.Boundings.Top    + boxModel.Border.Top    + boxModel.Padding.Top;
+            var bottomBounds = boxModel.Boundings.Bottom - boxModel.Border.Bottom - boxModel.Padding.Bottom;
+
+            var scroll = parent.Scroll;
+
+            if (cursorBoundings.Left - parent.Scroll.X < leftBounds)
+            {
+                var characterBounds = this.GetCharacterBoundings(this.CursorPosition);
+
+                scroll.X = (uint)(characterBounds.Left - leftBounds);
+            }
+            else if (cursorBoundings.Right - parent.Scroll.X > rightBounds)
+            {
+                var position        = this.CursorPosition.ClampSubtract(1);
+                var characterBounds = this.GetCharacterBoundings(position);
+
+                scroll.X = (uint)(characterBounds.Right + cursorBoundings.Size.Height - rightBounds);
+            }
+
+            if (cursorBoundings.Top - parent.Scroll.Y < topBounds)
+            {
+                var characterBounds = this.GetCharacterBoundings(this.CursorPosition);
+
+                scroll.Y = (uint)(characterBounds.Top - topBounds);
+            }
+            else if (cursorBoundings.Bottom - parent.Scroll.Y > bottomBounds)
+            {
+                var position        = this.CursorPosition.ClampSubtract(1);
+                var characterBounds = this.GetCharacterBoundings(position);
+
+                scroll.Y = (uint)(characterBounds.Bottom + cursorBoundings.Size.Height - bottomBounds);
+            }
+
+            parent.Scroll = scroll;
+        }
+        else
+        {
+            parent.Scroll = default;
+        }
+    }
 
     protected override void Adopted(Node parent)
     {
@@ -83,6 +140,8 @@ public sealed class TextNode : ContainerNode
             this.Layout.ClearSelection();
             this.CursorPosition = range.Value.Start;
         }
+
+        this.AdjustScroll();
     }
 
     public Rect<int> GetCursorBoundings()

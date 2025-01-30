@@ -13,6 +13,7 @@ using Timer = Age.Scene.Timer;
 
 using static Age.Shaders.CanvasShader;
 using Age.Styling;
+using Age.Extensions;
 
 namespace Age.Elements.Layouts;
 
@@ -56,6 +57,8 @@ internal sealed partial class TextLayout : Layout
             {
                 field = value;
                 this.ShowCaret();
+
+                this.Target.AdjustScroll();
             }
         }
     }
@@ -646,10 +649,10 @@ internal sealed partial class TextLayout : Layout
 
         if (isCursorBelow(startRect.Position.Y + startRect.Size.Height / 2))
         {
+            var length = this.Text!.Length + 1;
+
             if (isCursorBelow(endRect.Position.Y - endRect.Size.Height))
             {
-                var length = this.Text!.Length + 1;
-
                 for (var i = (int)end; i < length; i++)
                 {
                     var command = (RectCommand)this.target.Commands[i];
@@ -659,7 +662,7 @@ internal sealed partial class TextLayout : Layout
                         break;
                     }
 
-                    end = (uint)i + 1;
+                    end = (uint)i;
                 }
             }
             else
@@ -670,11 +673,16 @@ internal sealed partial class TextLayout : Layout
 
                     if (isCursorBelow(command.Rect.Position.Y - command.Rect.Size.Height))
                     {
-                        end = (uint)i + 1;
+                        end = (uint)i;
 
                         break;
                     }
                 }
+            }
+
+            if (end + 1 == length)
+            {
+                end++;
             }
         }
         else if (isCursorAbove(endRect.Position.Y))
@@ -688,7 +696,7 @@ internal sealed partial class TextLayout : Layout
                     break;
                 }
 
-                end = (uint)i;
+                end = (uint)i - 1;
             }
         }
         else
@@ -699,14 +707,14 @@ internal sealed partial class TextLayout : Layout
 
                 if (isCursorAbove(command.Rect.Position.Y))
                 {
-                    end = (uint)i;
+                    end = (uint)i - 1;
 
                     break;
                 }
             }
         }
 
-        end--;
+        end = end.ClampSubtract(1);
 
         this.Selection     = selection.WithEnd(end);
         this.CaretPosition = end;
