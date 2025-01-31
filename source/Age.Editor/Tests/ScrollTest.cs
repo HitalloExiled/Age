@@ -1,6 +1,7 @@
 using Age.Numerics;
 using Age.Elements;
 using Age.Styling;
+using Age.Components;
 
 namespace Age.Editor.Tests;
 
@@ -91,49 +92,45 @@ public class ScrollTest
         // Aenean ex tortor, sodales a urna eget, tristique vestibulum lectus.
         // """;
 
-        // var text =
-        // """
-        // Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-        // Sed et malesuada urna.
-        // Duis quam nisi, ultricies ut elit ac, feugiat tincidunt dolor.
-        // Aliquam auctor, urna id hendrerit elementum, mi elit fermentum tortor, et posuere nisi ex ac eros.
-        // Aenean interdum orci luctus, ornare libero in, sollicitudin tortor.
-        // Phasellus consequat sed eros eget consectetur.
-        // In in diam sem.
-        // Maecenas turpis arcu, porttitor sed tortor eu, dictum varius nibh.
-        // Duis eget felis eget tellus cursus luctus.
-        // Curabitur non justo nisi.
-        // Vivamus eleifend lorem ut purus tincidunt, id ullamcorper nunc iaculis.
-        // Morbi molestie ultricies sem sed imperdiet.
-        // Curabitur sapien sapien, volutpat consectetur neque non, dictum volutpat elit.
-        // Proin id enim libero.
-        // Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-        // Vivamus consequat mollis magna, non ultrices erat luctus id.
-
-        // Ut ipsum nunc, pharetra nec purus ac, gravida mattis velit.
-        // Integer viverra rhoncus dui, eget suscipit augue rhoncus quis.
-        // In ultricies, sem eu malesuada accumsan, felis justo eleifend elit, ac placerat ante tellus sed massa.
-        // Ut ac orci eget mi laoreet interdum ac egestas lorem.
-        // In hac habitasse platea dictumst.
-        // Interdum et malesuada fames ac ante ipsum primis in faucibus.
-        // Nullam ut dui elit.
-        // Ut lacus massa, dictum ac turpis sit amet, cursus dapibus sapien.
-        // Morbi ut dapibus orci, vitae varius libero.
-        // Phasellus quis ultricies metus.
-        // Fusce dignissim sit amet magna ut vulputate.
-        // Sed laoreet, augue vitae hendrerit elementum, elit nunc pulvinar lacus, vel efficitur orci augue eget arcu.
-        // Aenean sodales, nisi in ornare tincidunt, leo mi pulvinar odio, in rhoncus velit tellus accumsan risus.
-        // Nam vitae pellentesque tortor.
-        // """;
         var text =
         """
-        111111111111111
-        222222222222222
-        333333333333333
-        333333333333333
-        222222222222222
-        111111111111111
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        Sed et malesuada urna.
+        Duis quam nisi, ultricies ut elit ac, feugiat tincidunt dolor.
+        Aliquam auctor, urna id hendrerit elementum, mi elit fermentum tortor, et posuere nisi ex ac eros.
+        Aenean interdum orci luctus, ornare libero in, sollicitudin tortor.
+        Phasellus consequat sed eros eget consectetur.
+        In in diam sem.
+
+        Ut ipsum nunc, pharetra nec purus ac, gravida mattis velit.
+        Integer viverra rhoncus dui, eget suscipit augue rhoncus quis.
+        In ultricies, sem eu malesuada accumsan, felis justo eleifend elit, ac placerat ante tellus sed massa.
+        Ut ac orci eget mi laoreet interdum ac egestas lorem.
+        In hac habitasse platea dictumst.
+
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        Sed et malesuada urna.
+        Duis quam nisi, ultricies ut elit ac, feugiat tincidunt dolor.
+        Aliquam auctor, urna id hendrerit elementum, mi elit fermentum tortor, et posuere nisi ex ac eros.
+        Aenean interdum orci luctus, ornare libero in, sollicitudin tortor.
+        Phasellus consequat sed eros eget consectetur.
+        In in diam sem.
+
+        Ut ipsum nunc, pharetra nec purus ac, gravida mattis velit.
+        Integer viverra rhoncus dui, eget suscipit augue rhoncus quis.
+        In ultricies, sem eu malesuada accumsan, felis justo eleifend elit, ac placerat ante tellus sed massa.
+        Ut ac orci eget mi laoreet interdum ac egestas lorem.
+        In hac habitasse platea dictumst.
         """;
+        // var text =
+        // """
+        // 111111111111111
+        // 222222222222222
+        // 333333333333333
+        // 333333333333333
+        // 222222222222222
+        // 111111111111111
+        // """;
 
         var conteiner = new FlexBox()
         {
@@ -141,14 +138,32 @@ public class ScrollTest
             Text  = text,
             Style = new()
             {
+                Margin   = new((Pixel)20),
                 Border   = new(borderSize, 0, Color.Red),
                 Padding  = new((Pixel)10),
-                // Overflow = OverflowKind.Scroll,
-                // Size     = new((Pixel)400),
+                Overflow = OverflowKind.Scroll,
+                Size     = new((Pixel)200),
+                Color    = Color.White,
+            },
+        };
+
+        var textBox = new TextBox()
+        {
+            Name  = "conteiner",
+            Value = text,
+            Multiline = true,
+            Style = new()
+            {
+                Margin   = new((Pixel)20),
+                Border   = new(borderSize, 0, Color.Red),
+                Padding  = new((Pixel)10),
+                Overflow = OverflowKind.Scroll,
+                Size     = new((Pixel)200),
                 Color    = Color.White,
             },
         };
 
         canvas.AppendChild(conteiner);
+        canvas.AppendChild(textBox);
     }
 }

@@ -23,7 +23,11 @@ internal sealed partial class TextLayout : Layout
 
     #region 8-bytes
     private readonly Timer    caretTimer;
+    private readonly Timer    selectionTimer;
     private readonly TextNode target;
+
+    private SKTypeface? typeface;
+    private SKPaint?    paint;
 
     public string? Text
     {
@@ -84,8 +88,7 @@ internal sealed partial class TextLayout : Layout
     private bool        caretIsVisible;
     private bool        selectionIsDirty;
     private bool        textIsDirty;
-    private SKTypeface? typeface;
-    private SKPaint?    paint;
+    private bool        isMouseOverText;
 
     public override bool IsParentDependent { get; }
     #endregion
@@ -118,14 +121,22 @@ internal sealed partial class TextLayout : Layout
     public TextLayout(TextNode target)
     {
         this.target = target;
-        this.caretTimer  = new()
+
+        this.caretTimer = new()
         {
             WaitTime = TimeSpan.FromMilliseconds(500),
         };
 
+        this.selectionTimer = new()
+        {
+            WaitTime = TimeSpan.FromMilliseconds(16),
+        };
+
         this.caretTimer.Timeout += this.BlinkCaret;
+        this.selectionTimer.Timeout += this.UpdateSelection;
 
         target.AppendChild(this.caretTimer);
+        target.AppendChild(this.selectionTimer);
 
         var caretCommand = rectCommandPool.Get();
 
@@ -566,12 +577,25 @@ internal sealed partial class TextLayout : Layout
         this.HideCaret();
     }
 
+    public void TargetActivated()
+    {
+        if (this.Parent!.State.Style.TextSelection == false)
+        {
+            return;
+        }
+
+        this.selectionTimer.Start();
+    }
+
     public void TargetAdopted(Element parentElement)
     {
         parentElement.Layout.State.Changed += this.TargetParentStyleChanged;
 
         this.TargetParentStyleChanged(StyleProperty.All);
     }
+
+    public void TargetDeactivated() =>
+        this.selectionTimer.Stop();
 
     public void TargetIndexed()
     {
@@ -600,6 +624,8 @@ internal sealed partial class TextLayout : Layout
             this.Parent!.IsHoveringText = false;
             renderTree.Window.Cursor = this.Parent?.State.Style.Cursor ?? default;
         }
+
+        this.isMouseOverText = false;
     }
 
     public void TargetMouseOver()
@@ -614,10 +640,24 @@ internal sealed partial class TextLayout : Layout
             this.Parent!.IsHoveringText = true;
             renderTree.Window.Cursor = CursorKind.Text;
         }
+
+        this.isMouseOverText = true;
     }
 
     public void TargetRemoved(Element parentElement) =>
         parentElement.Layout.State.Changed -= this.TargetParentStyleChanged;
+
+    private void UpdateSelection()
+    {
+        if (this.isMouseOverText)
+        {
+            return;
+        }
+
+        var position = Input.GetMousePosition();
+
+        this.UpdateSelection(position.X, position.Y);
+    }
 
     public void UpdateSelection(ushort x, ushort y)
     {
@@ -628,6 +668,14 @@ internal sealed partial class TextLayout : Layout
 
         var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition);
         var cursor    = this.Target.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
+
+        Console.WriteLine($"cursor: {cursor}");
+
+        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        // bool isCursorAfter(float x) => cursor.X > x;
+
+        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        // bool isCursorBefore(float x) => cursor.X < x;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorAbove(float y) => cursor.Y > y;
@@ -646,6 +694,8 @@ internal sealed partial class TextLayout : Layout
 
         var start = selection.Start + 1;
         var end   = selection.End   + 1;
+
+        Console.WriteLine($"[Before] selection: {selection}");
 
         if (isCursorBelow(startRect.Position.Y + startRect.Size.Height / 2))
         {
@@ -718,6 +768,8 @@ internal sealed partial class TextLayout : Layout
 
         this.Selection     = selection.WithEnd(end);
         this.CaretPosition = end;
+
+        Console.WriteLine($"[After] selection: {this.Selection}");
     }
 
     public void UpdateSelection(ushort x, ushort y, uint character)

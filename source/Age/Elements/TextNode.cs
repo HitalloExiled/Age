@@ -62,32 +62,35 @@ public sealed class TextNode : ContainerNode
 
             var scroll = parent.Scroll;
 
-            if (cursorBoundings.Left - parent.Scroll.X < leftBounds)
-            {
-                var characterBounds = this.GetCharacterBoundings(this.CursorPosition);
+            var position = this.CursorPosition == this.Value.Length ?
+                this.CursorPosition.ClampSubtract(1)
+                : this.CursorPosition;
 
-                scroll.X = (uint)(characterBounds.Left - leftBounds);
-            }
-            else if (cursorBoundings.Right - parent.Scroll.X > rightBounds)
+            if (cursorBoundings.Left < leftBounds)
             {
-                var position        = this.CursorPosition.ClampSubtract(1);
                 var characterBounds = this.GetCharacterBoundings(position);
 
-                scroll.X = (uint)(characterBounds.Right + cursorBoundings.Size.Height - rightBounds);
+                scroll.X = (uint)(characterBounds.Left + scroll.X - leftBounds);
+
+            }
+            else if (cursorBoundings.Right > rightBounds)
+            {
+                var characterBounds = this.GetCharacterBoundings(position.ClampSubtract(1));
+
+                scroll.X = (uint)(characterBounds.Right + scroll.X + cursorBoundings.Size.Width - rightBounds);
             }
 
-            if (cursorBoundings.Top - parent.Scroll.Y < topBounds)
+            if (cursorBoundings.Top < topBounds)
             {
-                var characterBounds = this.GetCharacterBoundings(this.CursorPosition);
-
-                scroll.Y = (uint)(characterBounds.Top - topBounds);
-            }
-            else if (cursorBoundings.Bottom - parent.Scroll.Y > bottomBounds)
-            {
-                var position        = this.CursorPosition.ClampSubtract(1);
                 var characterBounds = this.GetCharacterBoundings(position);
 
-                scroll.Y = (uint)(characterBounds.Bottom + cursorBoundings.Size.Height - bottomBounds);
+                scroll.Y = (uint)(characterBounds.Top + scroll.Y - topBounds);
+            }
+            else if (cursorBoundings.Bottom > bottomBounds)
+            {
+                var characterBounds = this.GetCharacterBoundings(position.ClampSubtract(1));
+
+                scroll.Y = (uint)(characterBounds.Bottom + scroll.Y + cursorBoundings.Size.Height - bottomBounds);
             }
 
             parent.Scroll = scroll;
@@ -97,6 +100,12 @@ public sealed class TextNode : ContainerNode
             parent.Scroll = default;
         }
     }
+
+    internal void InvokeActivate() =>
+        this.Layout.TargetActivated();
+
+    internal void InvokeDeactivate() =>
+        this.Layout.TargetDeactivated();
 
     protected override void Adopted(Node parent)
     {
@@ -150,9 +159,11 @@ public sealed class TextNode : ContainerNode
 
         var rect = this.Layout.CursorRect;
 
+        var transform = this.TransformWithOffset;
+
         var position = new Point<int>(
-            (int)(this.Transform.Position.X + rect.Position.X),
-            -(int)(this.Transform.Position.Y + rect.Position.Y)
+            (int)(transform.Position.X + rect.Position.X),
+            -(int)(transform.Position.Y + rect.Position.Y)
         );
 
         return new(rect.Size.Cast<int>(), position);
@@ -160,7 +171,7 @@ public sealed class TextNode : ContainerNode
 
     public Rect<int> GetCharacterBoundings(uint index)
     {
-        if (index > this.Value?.Length)
+        if (index >= this.Value?.Length)
         {
             throw new IndexOutOfRangeException();
         }
@@ -169,9 +180,11 @@ public sealed class TextNode : ContainerNode
 
         var rect = ((RectCommand)this.Commands[(int)index + 1]).Rect;
 
+        var transform = this.TransformWithOffset;
+
         var position = new Point<int>(
-            (int)(this.Transform.Position.X + rect.Position.X),
-            -(int)(this.Transform.Position.Y + rect.Position.Y)
+            (int)(transform.Position.X + rect.Position.X),
+            -(int)(transform.Position.Y + rect.Position.Y)
         );
 
         return new(rect.Size.Cast<int>(), position);
@@ -199,9 +212,11 @@ public sealed class TextNode : ContainerNode
             rect.Grow(command.Rect);
         }
 
+        var transform = this.TransformWithOffset;
+
         var position = new Point<float>(
-            (float)(this.Transform.Position.X + rect.Position.X),
-            -(float)(this.Transform.Position.Y + rect.Position.Y)
+            (float)(transform.Position.X + rect.Position.X),
+            -(float)(transform.Position.Y + rect.Position.Y)
         );
 
         rect.Position = position;

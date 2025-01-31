@@ -69,8 +69,10 @@ public abstract class ContainerNode : Node2D
     {
         this.UpdateIndependentAncestorLayout();
 
+        var transform = this.TransformWithOffset;
+
         var size     = this.Layout.Boundings.Cast<int>();
-        var position = new Point<int>((int)this.Transform.Position.X, -(int)this.Transform.Position.Y);
+        var position = new Point<int>((int)transform.Position.X, -(int)transform.Position.Y);
 
         return new(size, position);
     }

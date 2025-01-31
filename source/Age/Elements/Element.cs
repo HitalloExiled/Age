@@ -31,9 +31,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     private event KeyEventHandler?   keyUp;
     private event MouseEventHandler? scrolled;
 
+    public event Action?              Activated;
     public event MouseEventHandler?   Blured;
     public event MouseEventHandler?   Clicked;
     public event ContextEventHandler? Context;
+    public event Action?              Deactivated;
     public event MouseEventHandler?   DoubleClicked;
     public event MouseEventHandler?   Focused;
     public event MouseEventHandler?   MouseDown;
@@ -471,8 +473,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     protected override void Indexed() =>
         this.Layout.TargetIndexed();
 
-    internal void InvokeActivate() =>
+    internal void InvokeActivate()
+    {
         this.Layout.State.AddState(StyledStateManager.State.Active);
+        this.Activated?.Invoke();
+    }
 
     internal void InvokeBlur(in PlatformMouseEvent platformMouseEvent)
     {
@@ -490,8 +495,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     internal void InvokeContext(in PlatformContextEvent platformContextEvent) =>
         this.Context?.Invoke(this.CreateEvent(platformContextEvent));
 
-    internal void InvokeDeactivate() =>
+    internal void InvokeDeactivate()
+    {
         this.Layout.State.RemoveState(StyledStateManager.State.Active);
+        this.Deactivated?.Invoke();
+    }
 
     internal void InvokeDoubleClick(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
         this.DoubleClicked?.Invoke(this.CreateEvent(platformMouseEvent, indirect));

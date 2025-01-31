@@ -57,12 +57,13 @@ public partial class TextBox : Element
 
         this.AppendChild(this.text);
 
-        this.Blured     += this.OnBlur;
-        this.MouseDown  += this.OnMouseDown;
-        this.Focused    += this.OnFocused;
-        this.Input      += this.OnInput;
-        this.KeyDown    += this.OnKeyDown;
-        this.MouseMoved += this.OnMouseMove;
+        this.Blured      += this.OnBlur;
+        this.Focused     += this.OnFocused;
+        this.Input       += this.OnInput;
+        this.KeyDown     += this.OnKeyDown;
+        this.MouseDown   += this.OnMouseDown;
+        this.Activated   += this.text.InvokeActivate;
+        this.Deactivated += this.text.InvokeDeactivate;
     }
 
     private void ApplyHistory(in HistoryEntry entry)
@@ -460,14 +461,6 @@ public partial class TextBox : Element
             this.text.Layout.SetCaret(mouseEvent.X, mouseEvent.Y);
         }
     }
-
-    private void OnMouseMove(in MouseEvent mouseEvent)
-    {
-        if (this.IsFocused && this.text.Value != null && !mouseEvent.Indirect && mouseEvent.IsHoldingPrimaryButton)
-        {
-            this.text.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y);
-        }
-     }
 
     private void SaveHistory() =>
         this.undo.Push(this.CreateHistory());

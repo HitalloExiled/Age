@@ -728,18 +728,23 @@ internal sealed partial class BoxLayout : Layout
 
     private void OnScroll(in MouseEvent mouseEvent)
     {
+        if (!this.target.IsHovered)
+        {
+            return;
+        }
+
         if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlag(Platforms.Display.MouseKeyStates.Shift))
         {
             this.ContentOffset = this.ContentOffset with
             {
-                X = (uint)(this.ContentOffset.X + 5 * -mouseEvent.Delta)
+                X = (uint)(this.ContentOffset.X + 10 * -mouseEvent.Delta)
             };
         }
         else if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY)
         {
             this.ContentOffset = this.ContentOffset with
             {
-                Y = (uint)(this.ContentOffset.Y + 5 * -mouseEvent.Delta)
+                Y = (uint)(this.ContentOffset.Y + 10 * -mouseEvent.Delta)
             };
         }
     }

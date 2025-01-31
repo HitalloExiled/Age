@@ -1,3 +1,4 @@
+using Age.Numerics;
 using Age.Platforms.Display;
 
 namespace Age;
@@ -12,9 +13,10 @@ public static class Input
 {
     private static readonly Dictionary<Key, ulong> keys = [];
     private static readonly Dictionary<MouseButton, ulong> mouseButtons = [];
-    private static float mouseWheel;
 
-    private static uint currentIteration;
+    private static uint          currentIteration;
+    private static Point<ushort> mousePosition;
+    private static float         mouseWheel;
 
     private static void OnKeyDown(Key key) =>
         keys.TryAdd(key, currentIteration);
@@ -22,19 +24,23 @@ public static class Input
     private static void OnKeyUp(Key key) =>
         keys.Remove(key);
 
-    private static void OnMouseDown(in MouseEvent eventArgs) =>
-        mouseButtons.TryAdd(eventArgs.Button, currentIteration);
+    private static void OnMouseDown(in MouseEvent mouseEvent) =>
+        mouseButtons.TryAdd(mouseEvent.Button, currentIteration);
 
-    private static void OnClickUp(in MouseEvent eventArgs) =>
-        mouseButtons.Remove(eventArgs.Button);
+    private static void OnMouseMove(in MouseEvent mouseEvent) =>
+        mousePosition = new(mouseEvent.X, mouseEvent.Y);
 
-    private static void OnMouseWheel(in MouseEvent eventArgs) =>
-        mouseWheel = eventArgs.Delta;
+    private static void OnMouseUp(in MouseEvent mouseEvent) =>
+        mouseButtons.Remove(mouseEvent.Button);
+
+    private static void OnMouseWheel(in MouseEvent mouseEvent) =>
+        mouseWheel = mouseEvent.Delta;
 
     internal static void ListenInputEvents(Window window)
     {
         window.MouseDown  += OnMouseDown;
-        window.MouseUp    += OnClickUp;
+        window.MouseMove  += OnMouseMove;
+        window.MouseUp    += OnMouseUp;
         window.KeyDown    += OnKeyDown;
         window.KeyUp      += OnKeyUp;
         window.MouseWhell += OnMouseWheel;
@@ -43,7 +49,8 @@ public static class Input
     internal static void UnlistenInputEvents(Window window)
     {
         window.MouseDown  -= OnMouseDown;
-        window.MouseUp    -= OnClickUp;
+        window.MouseMove  -= OnMouseMove;
+        window.MouseUp    -= OnMouseUp;
         window.KeyDown    -= OnKeyDown;
         window.KeyUp      -= OnKeyUp;
         window.MouseWhell -= OnMouseWheel;
@@ -95,6 +102,9 @@ public static class Input
     public static bool IsMouseButtonReleased(MouseButton mouseButton) =>
         mouseButtons.TryGetValue(mouseButton, out var iteration) && iteration == 0;
 
-    public static float GetMouseWheel() => mouseWheel;
+    public static Point<ushort> GetMousePosition() =>
+        mousePosition;
 
+    public static float GetMouseWheel() =>
+        mouseWheel;
 }
