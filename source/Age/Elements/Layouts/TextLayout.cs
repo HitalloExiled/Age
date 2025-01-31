@@ -677,11 +677,23 @@ internal sealed partial class TextLayout : Layout
         // [MethodImpl(MethodImplOptions.AggressiveInlining)]
         // bool isCursorBefore(float x) => cursor.X < x;
 
+        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        // bool isCursorAbove(float y) => cursor.Y > y;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorAbove(float y) => cursor.Y > y;
+        bool isCursorAboveTop(in Rect<float> rect) => cursor.Y > rect.Position.Y;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorAboveBottom(in Rect<float> rect) => cursor.Y > rect.Position.Y - rect.Size.Height;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorBelow(float y) => cursor.Y < y;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorBelowTop(in Rect<float> rect) => cursor.Y < rect.Position.Y;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorBelowBottom(in Rect<float> rect) => cursor.Y < rect.Position.Y - rect.Size.Height;
 
         var (startIndex, endIndex) = selection.Start == selection.End
             ? (selection.Start, selection.End)
@@ -701,13 +713,13 @@ internal sealed partial class TextLayout : Layout
         {
             var length = this.Text!.Length + 1;
 
-            if (isCursorBelow(endRect.Position.Y - endRect.Size.Height))
+            if (isCursorBelowBottom(endRect))
             {
                 for (var i = (int)end; i < length; i++)
                 {
                     var command = (RectCommand)this.target.Commands[i];
 
-                    if (isCursorAbove(command.Rect.Position.Y - command.Rect.Size.Height))
+                    if (isCursorAboveBottom(command.Rect))
                     {
                         break;
                     }
@@ -721,7 +733,7 @@ internal sealed partial class TextLayout : Layout
                 {
                     var command = (RectCommand)this.target.Commands[i];
 
-                    if (isCursorBelow(command.Rect.Position.Y - command.Rect.Size.Height))
+                    if (isCursorBelowBottom(command.Rect))
                     {
                         end = (uint)i;
 
@@ -735,13 +747,13 @@ internal sealed partial class TextLayout : Layout
                 end++;
             }
         }
-        else if (isCursorAbove(endRect.Position.Y))
+        else if (isCursorAboveTop(endRect))
         {
             for (var i = (int)end - 1; i > 0; i--)
             {
                 var command = (RectCommand)this.target.Commands[i];
 
-                if (isCursorBelow(command.Rect.Position.Y))
+                if (isCursorBelowTop(command.Rect))
                 {
                     break;
                 }
@@ -755,7 +767,7 @@ internal sealed partial class TextLayout : Layout
             {
                 var command = (RectCommand)this.target.Commands[i];
 
-                if (isCursorAbove(command.Rect.Position.Y))
+                if (isCursorAboveTop(command.Rect))
                 {
                     end = (uint)i - 1;
 
