@@ -50,7 +50,8 @@ internal sealed partial class TextLayout : Layout
     #region 4-bytes
     private readonly int caretWidth = 2;
 
-    private float fontLeading;
+    private float          fontLeading;
+    private Vector2<float> previouCursor;
 
     public uint CaretPosition
     {
@@ -62,7 +63,10 @@ internal sealed partial class TextLayout : Layout
                 field = value;
                 this.ShowCaret();
 
-                this.Target.AdjustScroll();
+                if (this.Parent!.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX or OverflowKind.ScrollY)
+                {
+                    this.AdjustScroll();
+                }
             }
         }
     }
@@ -84,11 +88,13 @@ internal sealed partial class TextLayout : Layout
     #endregion
 
     #region 1-byte
-    private bool        caretIsDirty;
-    private bool        caretIsVisible;
-    private bool        selectionIsDirty;
-    private bool        textIsDirty;
-    private bool        isMouseOverText;
+    private bool caretIsDirty;
+    private bool caretIsVisible;
+    private bool selectionIsDirty;
+    private bool textIsDirty;
+    private bool isMouseOverText;
+    private bool canScrollX;
+    private bool canScrollY;
 
     public override bool IsParentDependent { get; }
     #endregion
@@ -412,7 +418,7 @@ internal sealed partial class TextLayout : Layout
     {
         if (property != StyleProperty.Color)
         {
-            var style = this.target.ParentElement!.Layout.State.Style;
+            var style = this.Parent!.State.Style;
 
             var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
             var fontWeight = (int)(style.FontWeight ?? FontWeight.Normal);
@@ -439,6 +445,9 @@ internal sealed partial class TextLayout : Layout
                 this.BaseLine    = (int)float.Round(-metrics.Ascent);
                 this.fontLeading = metrics.Leading;
             }
+
+            this.canScrollX = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX;
+            this.canScrollY = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY;
         }
 
         this.textIsDirty = true;
@@ -449,6 +458,72 @@ internal sealed partial class TextLayout : Layout
     {
         this.paint?.Dispose();
         this.typeface?.Dispose();
+    }
+
+    public void AdjustScroll()
+    {
+        var parent = this.Target.ParentElement;
+
+        if (!this.canScrollX || !this.canScrollY || parent == null)
+        {
+            return;
+        }
+
+        if (this.Text?.Length > 0)
+        {
+            var boxModel        = parent.GetBoxModel();
+            var cursorBoundings = this.Target.GetCursorBoundings();
+
+            var leftBounds   = boxModel.Boundings.Left   + boxModel.Border.Left   + boxModel.Padding.Left;
+            var rightBounds  = boxModel.Boundings.Right  - boxModel.Border.Right  - boxModel.Padding.Right;
+            var topBounds    = boxModel.Boundings.Top    + boxModel.Border.Top    + boxModel.Padding.Top;
+            var bottomBounds = boxModel.Boundings.Bottom - boxModel.Border.Bottom - boxModel.Padding.Bottom;
+
+            var scroll = parent.Scroll;
+
+            var position = this.CaretPosition == this.Text.Length ?
+                this.CaretPosition.ClampSubtract(1)
+                : this.CaretPosition;
+
+            if (this.canScrollX)
+            {
+                if (cursorBoundings.Left < leftBounds)
+                {
+                    var characterBounds = this.Target.GetCharacterBoundings(position);
+
+                    scroll.X = (uint)(characterBounds.Left + scroll.X - leftBounds);
+
+                }
+                else if (cursorBoundings.Right > rightBounds)
+                {
+                    var characterBounds = this.Target.GetCharacterBoundings(position.ClampSubtract(1));
+
+                    scroll.X = (uint)(characterBounds.Right + scroll.X + cursorBoundings.Size.Width - rightBounds);
+                }
+            }
+
+            if (this.canScrollY)
+            {
+                if (cursorBoundings.Top < topBounds)
+                {
+                    var characterBounds = this.Target.GetCharacterBoundings(position);
+
+                    scroll.Y = (uint)(characterBounds.Top + scroll.Y - topBounds);
+                }
+                else if (cursorBoundings.Bottom > bottomBounds)
+                {
+                    var characterBounds = this.Target.GetCharacterBoundings(position.ClampSubtract(1));
+
+                    scroll.Y = (uint)(characterBounds.Bottom + scroll.Y + cursorBoundings.Size.Height - bottomBounds);
+                }
+            }
+
+            parent.Scroll = scroll;
+        }
+        else
+        {
+            parent.Scroll = default;
+        }
     }
 
     public void ClearSelection() =>
@@ -666,8 +741,16 @@ internal sealed partial class TextLayout : Layout
             return;
         }
 
+        var cursor = this.Target.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
+
+        if (cursor == this.previouCursor)
+        {
+            return;
+        }
+
+        this.previouCursor = cursor;
+
         var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition);
-        var cursor    = this.Target.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
 
         Console.WriteLine($"cursor: {cursor}");
 
@@ -679,6 +762,12 @@ internal sealed partial class TextLayout : Layout
 
         // [MethodImpl(MethodImplOptions.AggressiveInlining)]
         // bool isCursorAbove(float y) => cursor.Y > y;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorAfter(float x) => cursor.X > x;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorBefore(in Rect<float> rect) => cursor.X > rect.Position.X;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorAboveTop(in Rect<float> rect) => cursor.Y > rect.Position.Y;
@@ -704,8 +793,9 @@ internal sealed partial class TextLayout : Layout
         var startRect = ((RectCommand)this.target.Commands[(int)startIndex]).Rect;
         var endRect   = ((RectCommand)this.target.Commands[(int)endIndex]).Rect;
 
-        var start = selection.Start + 1;
-        var end   = selection.End   + 1;
+        var start     = selection.Start + 1;
+        var end       = selection.End   + 1;
+        var position  = end;
 
         Console.WriteLine($"[Before] selection: {selection}");
 
@@ -719,67 +809,115 @@ internal sealed partial class TextLayout : Layout
                 {
                     var command = (RectCommand)this.target.Commands[i];
 
-                    if (isCursorAboveBottom(command.Rect))
+                    if (isCursorAboveTop(command.Rect))
                     {
                         break;
                     }
 
-                    end = (uint)i;
+                    position = (uint)i;
                 }
             }
-            else
+            else if (isCursorAboveTop(endRect))
             {
                 for (var i = (int)end - 1; i > start - 1; i--)
                 {
                     var command = (RectCommand)this.target.Commands[i];
 
-                    if (isCursorBelowBottom(command.Rect))
+                    if (isCursorBelowTop(command.Rect))
                     {
-                        end = (uint)i;
+                        position = (uint)i;
 
                         break;
                     }
                 }
             }
-
-            if (end + 1 == length)
+            else
             {
-                end++;
-            }
-        }
-        else if (isCursorAboveTop(endRect))
-        {
-            for (var i = (int)end - 1; i > 0; i--)
-            {
-                var command = (RectCommand)this.target.Commands[i];
-
-                if (isCursorBelowTop(command.Rect))
+                if (isCursorAfter(endRect.Position.X + endRect.Size.Width / 2))
                 {
-                    break;
-                }
+                    Console.WriteLine($"Same Line After - position: {position}");
 
-                end = (uint)i - 1;
+                    for (var i = (int)end; i < length; i++)
+                    {
+                        var command = (RectCommand)this.target.Commands[i];
+
+                        if (isCursorAboveTop(command.Rect))
+                        {
+                            break;
+                        }
+
+                        position = (uint)i;
+                    }
+
+                    Console.WriteLine($"Same Line After - position: {position}");
+                    Console.WriteLine("Same Line After!!!");
+                }
+                else
+                {
+                    Console.WriteLine($"Same Line Before - position: {position}");
+
+                    for (var i = (int)end - 1; i > 0 - 1; i--)
+                    {
+                        var command = (RectCommand)this.target.Commands[i];
+
+                        if (isCursorBelowBottom(command.Rect))
+                        {
+                            break;
+                        }
+
+                        position = (uint)i;
+                    }
+
+                    Console.WriteLine($"Same Line Before - position: {position}");
+                    Console.WriteLine("Same Line Before!!!");
+                }
+            }
+
+            if (position + 1 == length)
+            {
+                position++;
             }
         }
         else
         {
-            for (var i = (int)end; i < start - 1; i++)
+            if (isCursorAboveTop(endRect))
             {
-                var command = (RectCommand)this.target.Commands[i];
-
-                if (isCursorAboveTop(command.Rect))
+                for (var i = (int)end - 1; i > 0; i--)
                 {
-                    end = (uint)i - 1;
+                    var command = (RectCommand)this.target.Commands[i];
 
-                    break;
+                    if (isCursorBelowTop(command.Rect))
+                    {
+                        break;
+                    }
+
+                    position = (uint)i - 1;
                 }
+            }
+            else if (isCursorBelowBottom(endRect))
+            {
+                for (var i = (int)end; i < start - 1; i++)
+                {
+                    var command = (RectCommand)this.target.Commands[i];
+
+                    if (isCursorAboveTop(command.Rect))
+                    {
+                        position = (uint)i - 1;
+
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("Same Line!!!");
             }
         }
 
-        end = end.ClampSubtract(1);
+        position = position.ClampSubtract(1);
 
-        this.Selection     = selection.WithEnd(end);
-        this.CaretPosition = end;
+        this.Selection     = selection.WithEnd(position);
+        this.CaretPosition = position;
 
         Console.WriteLine($"[After] selection: {this.Selection}");
     }
