@@ -14,6 +14,7 @@ using Timer = Age.Scene.Timer;
 using static Age.Shaders.CanvasShader;
 using Age.Styling;
 using Age.Extensions;
+using static Age.Styling.StyledStateManager;
 
 namespace Age.Elements.Layouts;
 
@@ -58,7 +59,7 @@ internal sealed partial class TextLayout : Layout
         get;
         set
         {
-            if (field != value)
+            if (field != value || !this.caretTimer.Running)
             {
                 field = value;
                 this.ShowCaret();
@@ -96,10 +97,12 @@ internal sealed partial class TextLayout : Layout
     private bool canScrollX;
     private bool canScrollY;
 
+    private RectCommand CaretCommand => (RectCommand)this.Target.Commands[^1];
+    private bool        CanSelect    => this.Parent?.State.Style.TextSelection != false;
+
     public override bool IsParentDependent { get; }
     #endregion
 
-    private RectCommand CaretCommand => (RectCommand)this.target.Commands[0];
 
     public Rect<float> CursorRect => this.CaretCommand.Rect;
 
@@ -144,17 +147,7 @@ internal sealed partial class TextLayout : Layout
         target.AppendChild(this.caretTimer);
         target.AppendChild(this.selectionTimer);
 
-        var caretCommand = rectCommandPool.Get();
-
-        caretCommand.Color           = Color.White;
-        caretCommand.Flags           = Flags.ColorAsBackground;
-        caretCommand.MappedTexture   = MappedTexture.Default;
-        caretCommand.PipelineVariant = PipelineVariant.Color;
-        caretCommand.StencilLayer    = this.StencilLayer;
-        caretCommand.Metadata        = default;
-        caretCommand.Rect            = default;
-
-        target.Commands.Add(caretCommand);
+        target.Commands.Add(rectCommandPool.Get());
     }
 
     private static void AllocateCommands(List<Command> commands, int length)
@@ -176,14 +169,12 @@ internal sealed partial class TextLayout : Layout
     {
         if (count > 0)
         {
-            var index = commands.Count - count;
-
-            for (var i = index; i < commands.Count; i++)
+            for (var i = 0; i < commands.Count; i++)
             {
                 rectCommandPool.Return((RectCommand)commands[i]);
             }
 
-            commands.RemoveRange(index, count);
+            commands.RemoveRange(0, count);
         }
     }
 
@@ -230,7 +221,7 @@ internal sealed partial class TextLayout : Layout
 
     private void DrawCaret()
     {
-        var caretCommand = (RectCommand)this.target.Commands[0];
+        var caretCommand = this.CaretCommand;
 
         if (this.Text?.Length > 0)
         {
@@ -238,7 +229,7 @@ internal sealed partial class TextLayout : Layout
 
             if (this.CaretPosition == this.Text.Length)
             {
-                var rect = ((RectCommand)this.target.Commands[this.Text.Length]).Rect;
+                var rect = ((RectCommand)this.target.Commands[this.Text.Length - 1]).Rect;
 
                 if (this.Text[^1] == '\n')
                 {
@@ -253,7 +244,7 @@ internal sealed partial class TextLayout : Layout
             }
             else
             {
-                position = ((RectCommand)this.target.Commands[(int)this.CaretPosition + 1]).Rect.Position;
+                position = ((RectCommand)this.target.Commands[(int)this.CaretPosition]).Rect.Position;
             }
 
             caretCommand.Rect = new(new(this.caretWidth, this.LineHeight), position);
@@ -276,12 +267,12 @@ internal sealed partial class TextLayout : Layout
 
             for (var i = 0; i < textLength; i++)
             {
-                this.ApplySelection(i, range, (RectCommand)this.target.Commands[i + 1]);
+                this.ApplySelection(i, range, (RectCommand)this.target.Commands[i]);
             }
         }
         else
         {
-            for (var i = 1; i <= textLength; i++)
+            for (var i = 0; i < textLength; i++)
             {
                 this.ClearSelection((RectCommand)this.target.Commands[i]);
             }
@@ -301,9 +292,8 @@ internal sealed partial class TextLayout : Layout
         var font   = this.paint.ToFont();
         var atlas  = TextStorage.Singleton.GetAtlas(this.typeface!.FamilyName, (uint)this.paint.TextSize);
 
-
-        Span<SKRect> glyphsBounds = stackalloc SKRect[glyphs.Length];
-        Span<float>  glyphsWidths = stackalloc float[glyphs.Length];
+        var glyphsBounds = new SKRect[glyphs.Length];
+        var glyphsWidths = new float[glyphs.Length];
 
         font.GetGlyphWidths(glyphs, glyphsWidths, glyphsBounds, this.paint);
 
@@ -323,7 +313,7 @@ internal sealed partial class TextLayout : Layout
         {
             var character = text[i];
 
-            var selectionCommand = (RectCommand)this.target.Commands[i + 1];
+            var selectionCommand = (RectCommand)this.target.Commands[i];
 
             selectionCommand.MappedTexture = MappedTexture.Default;
             selectionCommand.ObjectId      = (uint)(((i + 1) << 12) | elementIndex);
@@ -350,7 +340,7 @@ internal sealed partial class TextLayout : Layout
                     P4 = new Point<float>(glyph.Position.X, glyph.Position.Y + glyph.Size.Height) / atlasSize,
                 };
 
-                var characterIndex = text.Length + textOffset + 1;
+                var characterIndex = text.Length + textOffset;
 
                 selectionCommand.Metadata = (uint)characterIndex;
 
@@ -392,6 +382,16 @@ internal sealed partial class TextLayout : Layout
             }
         }
 
+        var caretCommand = (RectCommand)this.target.Commands[^1];
+
+        caretCommand.Color           = Color.White;
+        caretCommand.Flags           = Flags.ColorAsBackground;
+        caretCommand.MappedTexture   = MappedTexture.Default;
+        caretCommand.PipelineVariant = PipelineVariant.Color;
+        caretCommand.StencilLayer    = this.StencilLayer;
+        caretCommand.Metadata        = default;
+        caretCommand.Rect            = default;
+
         atlas.Update();
 
         this.Boundings = boundings;
@@ -404,7 +404,7 @@ internal sealed partial class TextLayout : Layout
             return;
         }
 
-        var command = (RectCommand)this.target.Commands[(int)character + 1];
+        var command = (RectCommand)this.target.Commands[(int)character];
 
         var cursor = this.Target.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
@@ -543,7 +543,7 @@ internal sealed partial class TextLayout : Layout
 
     public void PropagateSelection(uint characterPosition)
     {
-        if (this.Parent?.State.Style.TextSelection == false || this.Text == null || char.IsWhiteSpace(this.Text[(int)characterPosition]))
+        if (!this.CanSelect || this.Text == null || char.IsWhiteSpace(this.Text[(int)characterPosition]))
         {
             return;
         }
@@ -570,7 +570,7 @@ internal sealed partial class TextLayout : Layout
 
     public void SetCaret(ushort x, ushort y)
     {
-        if (this.Text == null || this.Parent?.State.Style.TextSelection == false)
+        if (this.Text == null || !this.CanSelect)
         {
             return;
         }
@@ -584,7 +584,7 @@ internal sealed partial class TextLayout : Layout
 
         bool isCursorWithinRect(in Rect<float> rect) => cursor.Y >= rect.Position.Y - rect.Size.Height && cursor.Y <= rect.Position.Y;
 
-        for (var i = 1; i < length; i++)
+        for (var i = 0; i < length; i++)
         {
             var rect = ((RectCommand)this.target.Commands[i]).Rect;
 
@@ -613,14 +613,12 @@ internal sealed partial class TextLayout : Layout
             }
         }
 
-        position--;
-
         this.CaretPosition = position;
     }
 
     public void SetCaret(ushort x, ushort y, uint position)
     {
-        if (this.Parent?.State.Style.TextSelection == false)
+        if (!this.CanSelect)
         {
             return;
         }
@@ -644,7 +642,7 @@ internal sealed partial class TextLayout : Layout
 
     public void ClearCaret()
     {
-        if (this.Parent?.State.Style.TextSelection == false)
+        if (!this.CanSelect)
         {
             return;
         }
@@ -654,7 +652,7 @@ internal sealed partial class TextLayout : Layout
 
     public void TargetActivated()
     {
-        if (this.Parent!.State.Style.TextSelection == false)
+        if (!this.CanSelect)
         {
             return;
         }
@@ -675,21 +673,17 @@ internal sealed partial class TextLayout : Layout
     public void TargetIndexed()
     {
         var parentIndex = this.Target.Index + 1;
-        var i           = 1;
+        var commands    = this.Target.Commands.AsSpan(0, this.Text?.Length ?? 0);
 
-        foreach (var command in this.Target.Commands.AsSpan())
+        for (var i = 0; i < commands.Length; i++)
         {
-            if (command.PipelineVariant.HasFlag(PipelineVariant.Index))
-            {
-                command.ObjectId = (uint)((i << 12) | parentIndex);
-                i++;
-            }
+            commands[i].ObjectId = (uint)(((i + 1) << 12) | parentIndex);
         }
     }
 
     public void TargetMouseOut()
     {
-        if (this.Parent?.State.Style.TextSelection == false)
+        if (!this.CanSelect)
         {
             return;
         }
@@ -705,7 +699,7 @@ internal sealed partial class TextLayout : Layout
 
     public void TargetMouseOver()
     {
-        if (this.Parent?.State.Style.TextSelection == false)
+        if (!this.CanSelect)
         {
             return;
         }
@@ -736,7 +730,7 @@ internal sealed partial class TextLayout : Layout
 
     public void UpdateSelection(ushort x, ushort y)
     {
-        if (this.Parent!.State.Style.TextSelection == false)
+        if (string.IsNullOrEmpty(this.Text) || !this.CanSelect)
         {
             return;
         }
@@ -748,11 +742,14 @@ internal sealed partial class TextLayout : Layout
             return;
         }
 
-        this.previouCursor = cursor;
+        this.previouCursor = cursor; // TODO Uncomment
 
         var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition);
 
-        Console.WriteLine($"cursor: {cursor}");
+        //cursor = new(-29, -200);
+        //selection = new(212, 265);
+
+        Console.WriteLine($"cursor: {cursor}, cursor: {selection}");
 
         // [MethodImpl(MethodImplOptions.AggressiveInlining)]
         // bool isCursorAfter(float x) => cursor.X > x;
@@ -764,10 +761,22 @@ internal sealed partial class TextLayout : Layout
         // bool isCursorAbove(float y) => cursor.Y > y;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorAfter(float x) => cursor.X > x;
+        bool isCursorBefore(in Rect<float> rect) => cursor.X < rect.Position.X + rect.Size.Width / 2;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorBefore(in Rect<float> rect) => cursor.X > rect.Position.X;
+        bool isCursorAfter(in Rect<float> rect) => cursor.X > rect.Position.X + rect.Size.Width / 2;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool onCursorLine(in Rect<float> rect) => isCursorBelowTop(rect) && isCursorAboveBottom(rect);
+
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //bool isCursorAfterRight(in Rect<float> rect) => cursor.X > rect.Position.X + rect.Size.Width;
+
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //bool isCursorBeforeLeft(in Rect<float> rect) => cursor.X < rect.Position.X;
+
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //bool isCursorBefore(in Rect<float> rect) => cursor.X < rect.Position.X;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorAboveTop(in Rect<float> rect) => cursor.Y > rect.Position.Y;
@@ -776,7 +785,7 @@ internal sealed partial class TextLayout : Layout
         bool isCursorAboveBottom(in Rect<float> rect) => cursor.Y > rect.Position.Y - rect.Size.Height;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorBelow(float y) => cursor.Y < y;
+        bool isCursorBelow(in Rect<float> rect) => cursor.Y < rect.Position.Y - rect.Size.Height / 2;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorBelowTop(in Rect<float> rect) => cursor.Y < rect.Position.Y;
@@ -784,123 +793,26 @@ internal sealed partial class TextLayout : Layout
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorBelowBottom(in Rect<float> rect) => cursor.Y < rect.Position.Y - rect.Size.Height;
 
-        var (startIndex, endIndex) = selection.Start == selection.End
-            ? (selection.Start, selection.End)
-            : selection.Inverted
-                ? (selection.Start, selection.End + 1)
-                : (selection.Start + 1, selection.End);
+        var start = uint.Min(selection.Start, (uint)(this.Text.Length - 1));
+        var end   = uint.Min(selection.End,   (uint)(this.Text.Length - 1));
 
-        var startRect = ((RectCommand)this.target.Commands[(int)startIndex]).Rect;
-        var endRect   = ((RectCommand)this.target.Commands[(int)endIndex]).Rect;
+        var startRect = ((RectCommand)this.target.Commands[(int)start]).Rect;
+        var endRect   = ((RectCommand)this.target.Commands[(int)end]).Rect;
 
-        var start     = selection.Start + 1;
-        var end       = selection.End   + 1;
-        var position  = end;
+        var position = selection.End;
 
-        Console.WriteLine($"[Before] selection: {selection}");
-
-        if (isCursorBelow(startRect.Position.Y + startRect.Size.Height / 2))
+        
+        if (onCursorLine(endRect))
         {
-            var length = this.Text!.Length + 1;
-
-            if (isCursorBelowBottom(endRect))
+            if (isCursorAfter(endRect))
             {
-                for (var i = (int)end; i < length; i++)
+                Console.WriteLine("[Same Line] Quadrant: [0, 1]");
+
+                for (var i = (int)end; i < this.Text.Length; i++)
                 {
                     var command = (RectCommand)this.target.Commands[i];
 
-                    if (isCursorAboveTop(command.Rect))
-                    {
-                        break;
-                    }
-
-                    position = (uint)i;
-                }
-            }
-            else if (isCursorAboveTop(endRect))
-            {
-                for (var i = (int)end - 1; i > start - 1; i--)
-                {
-                    var command = (RectCommand)this.target.Commands[i];
-
-                    if (isCursorBelowTop(command.Rect))
-                    {
-                        position = (uint)i;
-
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                if (isCursorAfter(endRect.Position.X + endRect.Size.Width / 2))
-                {
-                    Console.WriteLine($"Same Line After - position: {position}");
-
-                    for (var i = (int)end; i < length; i++)
-                    {
-                        var command = (RectCommand)this.target.Commands[i];
-
-                        if (isCursorAboveTop(command.Rect))
-                        {
-                            break;
-                        }
-
-                        position = (uint)i;
-                    }
-
-                    Console.WriteLine($"Same Line After - position: {position}");
-                    Console.WriteLine("Same Line After!!!");
-                }
-                else
-                {
-                    Console.WriteLine($"Same Line Before - position: {position}");
-
-                    for (var i = (int)end - 1; i > 0 - 1; i--)
-                    {
-                        var command = (RectCommand)this.target.Commands[i];
-
-                        if (isCursorBelowBottom(command.Rect))
-                        {
-                            break;
-                        }
-
-                        position = (uint)i;
-                    }
-
-                    Console.WriteLine($"Same Line Before - position: {position}");
-                    Console.WriteLine("Same Line Before!!!");
-                }
-            }
-
-            if (position + 1 == length)
-            {
-                position++;
-            }
-        }
-        else
-        {
-            if (isCursorAboveTop(endRect))
-            {
-                for (var i = (int)end - 1; i > 0; i--)
-                {
-                    var command = (RectCommand)this.target.Commands[i];
-
-                    if (isCursorBelowTop(command.Rect))
-                    {
-                        break;
-                    }
-
-                    position = (uint)i - 1;
-                }
-            }
-            else if (isCursorBelowBottom(endRect))
-            {
-                for (var i = (int)end; i < start - 1; i++)
-                {
-                    var command = (RectCommand)this.target.Commands[i];
-
-                    if (isCursorAboveTop(command.Rect))
+                    if (!onCursorLine(command.Rect))
                     {
                         position = (uint)i - 1;
 
@@ -910,21 +822,181 @@ internal sealed partial class TextLayout : Layout
             }
             else
             {
-                Console.WriteLine("Same Line!!!");
+                Console.WriteLine("[Same Line] Quadrant: [0, -1]");
+
+                for (var i = (int)end; i > -1; i--)
+                {
+                    var command = (RectCommand)this.target.Commands[i];
+
+                    if (!onCursorLine(command.Rect))
+                    {
+                        position = (uint)i + 1;
+
+                        break;
+                    }
+                }
             }
         }
+        else if (isCursorBelow(startRect))
+        {
+            if (isCursorBelowTop(endRect))
+            {
+                if (isCursorAfter(endRect))
+                {
+                    position = (uint)this.Text.Length;
 
-        position = position.ClampSubtract(1);
+                    Console.WriteLine("[Below Start] Quadrant: [-1, 1]");
+
+                    for (var i = (int)end; i < this.Text.Length; i++)
+                    {
+                        var command = (RectCommand)this.target.Commands[i];
+
+                        if (isCursorAboveTop(command.Rect))
+                        {
+                            position = (uint)i - 1;
+
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("[Below Start] Quadrant: [-1, -1]");
+
+                    for (var i = (int)end; i < this.Text.Length; i++)
+                    {
+                        var command = (RectCommand)this.target.Commands[i];
+
+                        if (isCursorAboveBottom(command.Rect))
+                        {
+                            position = (uint)i;
+
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (isCursorAfter(endRect))
+                {
+                    Console.WriteLine("[Below Start] Quadrant: [1, 1]");
+
+                    for (var i = (int)end; i > start - 1; i--)
+                    {
+                        var command = (RectCommand)this.target.Commands[i];
+
+                        if (isCursorBelowTop(command.Rect))
+                        {
+                            position = (uint)i;
+
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("[Below Start] Quadrant: [1, -1]");
+
+                    for (var i = (int)end + 1; i > start - 1; i--)
+                    {
+                        var command = (RectCommand)this.target.Commands[i];
+
+                        if (isCursorBelowBottom(command.Rect))
+                        {
+                            position = (uint)i + 1;
+
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (isCursorAboveBottom(endRect))
+            {
+                position = 0;
+
+                if (isCursorAfter(endRect))
+                {
+                    Console.WriteLine("[Above Start] Quadrant: [1, 1]");
+
+                    for (var i = (int)end; i > -1; i--)
+                    {
+                        var command = (RectCommand)this.target.Commands[i];
+
+                        if (isCursorBelowTop(command.Rect))
+                        {
+                            position = (uint)i;
+
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("[Above Start] Quadrant: [-1, 1]");
+
+                    for (var i = (int)end; i > -1; i--)
+                    {
+                        var command = (RectCommand)this.target.Commands[i];
+
+                        if (isCursorBelowBottom(command.Rect))
+                        {
+                            position = (uint)i + 1;
+
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (isCursorAfter(endRect))
+                {
+                    Console.WriteLine("[Above Start] Quadrant: [-1, 1]");
+
+                    for (var i = (int)end; i < start - 1; i++)
+                    {
+                        var command = (RectCommand)this.target.Commands[i];
+
+                        if (isCursorAboveTop(command.Rect))
+                        {
+                            position = (uint)i - 1;
+
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("[Above Start] Quadrant: [-1, 1]");
+
+                    for (var i = (int)end; i < start - 1; i++)
+                    {
+                        var command = (RectCommand)this.target.Commands[i];
+
+                        if (isCursorAboveBottom(command.Rect))
+                        {
+                            position = (uint)i;
+
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
         this.Selection     = selection.WithEnd(position);
         this.CaretPosition = position;
 
-        Console.WriteLine($"[After] selection: {this.Selection}");
+        //Console.WriteLine($"[After] selection: {this.Selection}");
     }
 
     public void UpdateSelection(ushort x, ushort y, uint character)
     {
-        if (this.Parent?.State.Style.TextSelection == false)
+        if (!this.CanSelect)
         {
             return;
         }
