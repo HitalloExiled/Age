@@ -742,56 +742,9 @@ internal sealed partial class TextLayout : Layout
             return;
         }
 
-        this.previouCursor = cursor; // TODO Uncomment
+        this.previouCursor = cursor;
 
         var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition);
-
-        //cursor = new(-29, -200);
-        //selection = new(212, 265);
-
-        Console.WriteLine($"cursor: {cursor}, cursor: {selection}");
-
-        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        // bool isCursorAfter(float x) => cursor.X > x;
-
-        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        // bool isCursorBefore(float x) => cursor.X < x;
-
-        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        // bool isCursorAbove(float y) => cursor.Y > y;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorBefore(in Rect<float> rect) => cursor.X < rect.Position.X + rect.Size.Width / 2;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorAfter(in Rect<float> rect) => cursor.X > rect.Position.X + rect.Size.Width / 2;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool onCursorLine(in Rect<float> rect) => isCursorBelowTop(rect) && isCursorAboveBottom(rect);
-
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //bool isCursorAfterRight(in Rect<float> rect) => cursor.X > rect.Position.X + rect.Size.Width;
-
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //bool isCursorBeforeLeft(in Rect<float> rect) => cursor.X < rect.Position.X;
-
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //bool isCursorBefore(in Rect<float> rect) => cursor.X < rect.Position.X;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorAboveTop(in Rect<float> rect) => cursor.Y > rect.Position.Y;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorAboveBottom(in Rect<float> rect) => cursor.Y > rect.Position.Y - rect.Size.Height;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorBelow(in Rect<float> rect) => cursor.Y < rect.Position.Y - rect.Size.Height / 2;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorBelowTop(in Rect<float> rect) => cursor.Y < rect.Position.Y;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorBelowBottom(in Rect<float> rect) => cursor.Y < rect.Position.Y - rect.Size.Height;
 
         var start = uint.Min(selection.Start, (uint)(this.Text.Length - 1));
         var end   = uint.Min(selection.End,   (uint)(this.Text.Length - 1));
@@ -801,43 +754,219 @@ internal sealed partial class TextLayout : Layout
 
         var position = selection.End;
 
-        
-        if (onCursorLine(endRect))
+        if (isOnCursorLine(endRect))
         {
-            if (isCursorAfter(endRect))
+            locateOnCursorLine(ref position);
+        }
+        else if (isCursorBelow(startRect))
+        {
+            locateBelowStart(ref position);
+        }
+        else
+        {
+            locateAboveStart(ref position);
+        }
+
+        this.Selection     = selection.WithEnd(position);
+        this.CaretPosition = position;
+
+        #region local methods
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateCursorStartLine(ref uint position)
+        {
+            for (var i = (int)end; i < this.Text.Length; i++)
             {
-                Console.WriteLine("[Same Line] Quadrant: [0, 1]");
+                var command = (RectCommand)this.target.Commands[i];
 
-                for (var i = (int)end; i < this.Text.Length; i++)
+                if (!isOnCursorLine(command.Rect))
                 {
-                    var command = (RectCommand)this.target.Commands[i];
+                    position = (uint)i - 1;
 
-                    if (!onCursorLine(command.Rect))
-                    {
-                        position = (uint)i - 1;
-
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                Console.WriteLine("[Same Line] Quadrant: [0, -1]");
-
-                for (var i = (int)end; i > -1; i--)
-                {
-                    var command = (RectCommand)this.target.Commands[i];
-
-                    if (!onCursorLine(command.Rect))
-                    {
-                        position = (uint)i + 1;
-
-                        break;
-                    }
+                    break;
                 }
             }
         }
-        else if (isCursorBelow(startRect))
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateCursorEndLine(ref uint position)
+        {
+            for (var i = (int)end; i > -1; i--)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (!isOnCursorLine(command.Rect))
+                {
+                    position = (uint)i + 1;
+
+                    break;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateOnCursorLine(ref uint position)
+        {
+            if (isCursorAfter(endRect))
+            {
+                locateCursorStartLine(ref position);
+            }
+            else
+            {
+                locateCursorEndLine(ref position);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorAfter(in Rect<float> rect) => cursor.X > rect.Position.X + rect.Size.Width / 2;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isOnCursorLine(in Rect<float> rect) => isCursorBelowTop(rect) && isCursorAboveBottom(rect);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorBelow(in Rect<float> rect) => cursor.Y < rect.Position.Y - rect.Size.Height / 2;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorAboveTop(in Rect<float> rect) => cursor.Y > rect.Position.Y;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorBelowTop(in Rect<float> rect) => cursor.Y < rect.Position.Y;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorAboveBottom(in Rect<float> rect) => cursor.Y > rect.Position.Y - rect.Size.Height;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorBelowBottom(in Rect<float> rect) => cursor.Y < rect.Position.Y - rect.Size.Height;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateForwardDownCursorStartLine(ref uint position)
+        {
+            for (var i = (int)end + 1; i < this.Text.Length; i++)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (isCursorAboveBottom(command.Rect))
+                {
+                    position = (uint)i;
+
+                    break;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateForwardDownCursorEndLine(ref uint position)
+        {
+            for (var i = (int)end + 1; i < this.Text.Length; i++)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (isCursorAboveTop(command.Rect))
+                {
+                    position = (uint)i - 1;
+
+                    break;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateBackwardDownCursorEndLine(ref uint position)
+        {
+            for (var i = (int)end; i > start - 1; i--)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (isCursorBelowTop(command.Rect))
+                {
+                    position = (uint)i;
+
+                    break;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateBackwardDownCursorStartLine(ref uint position)
+        {
+            for (var i = (int)end; i > start - 1; i--)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (isCursorBelowBottom(command.Rect))
+                {
+                    position = (uint)i + 1;
+
+                    break;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateBackwardUpCursorEndLine(ref uint position)
+        {
+            for (var i = (int)end - 1; i > -1; i--)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (isCursorBelowTop(command.Rect))
+                {
+                    position = (uint)i;
+
+                    break;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateBackwardUpCursorStartLine(ref uint position)
+        {
+            for (var i = (int)end - 1; i > -1; i--)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (isCursorBelowBottom(command.Rect))
+                {
+                    position = (uint)i + 1;
+
+                    break;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateForwardUpCursorEndLine(ref uint position)
+        {
+            for (var i = (int)end; i < start - 1; i++)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (isCursorAboveTop(command.Rect))
+                {
+                    position = (uint)i - 1;
+
+                    break;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateForwardUpCursorStartLine(ref uint position)
+        {
+            for (var i = (int)end; i < start - 1; i++)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (isCursorAboveBottom(command.Rect))
+                {
+                    position = (uint)i;
+
+                    break;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateBelowStart(ref uint position)
         {
             if (isCursorBelowTop(endRect))
             {
@@ -845,74 +974,25 @@ internal sealed partial class TextLayout : Layout
                 {
                     position = (uint)this.Text.Length;
 
-                    Console.WriteLine("[Below Start] Quadrant: [-1, 1]");
-
-                    for (var i = (int)end; i < this.Text.Length; i++)
-                    {
-                        var command = (RectCommand)this.target.Commands[i];
-
-                        if (isCursorAboveTop(command.Rect))
-                        {
-                            position = (uint)i - 1;
-
-                            break;
-                        }
-                    }
+                    locateForwardDownCursorEndLine(ref position);
                 }
                 else
                 {
-                    Console.WriteLine("[Below Start] Quadrant: [-1, -1]");
-
-                    for (var i = (int)end; i < this.Text.Length; i++)
-                    {
-                        var command = (RectCommand)this.target.Commands[i];
-
-                        if (isCursorAboveBottom(command.Rect))
-                        {
-                            position = (uint)i;
-
-                            break;
-                        }
-                    }
+                    locateForwardDownCursorStartLine(ref position);
                 }
+            }
+            else if (isCursorAfter(endRect))
+            {
+                locateBackwardDownCursorEndLine(ref position);
             }
             else
             {
-                if (isCursorAfter(endRect))
-                {
-                    Console.WriteLine("[Below Start] Quadrant: [1, 1]");
-
-                    for (var i = (int)end; i > start - 1; i--)
-                    {
-                        var command = (RectCommand)this.target.Commands[i];
-
-                        if (isCursorBelowTop(command.Rect))
-                        {
-                            position = (uint)i;
-
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("[Below Start] Quadrant: [1, -1]");
-
-                    for (var i = (int)end + 1; i > start - 1; i--)
-                    {
-                        var command = (RectCommand)this.target.Commands[i];
-
-                        if (isCursorBelowBottom(command.Rect))
-                        {
-                            position = (uint)i + 1;
-
-                            break;
-                        }
-                    }
-                }
+                locateBackwardDownCursorStartLine(ref position);
             }
         }
-        else
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        uint locateAboveStart(ref uint position)
         {
             if (isCursorAboveBottom(endRect))
             {
@@ -920,78 +1000,25 @@ internal sealed partial class TextLayout : Layout
 
                 if (isCursorAfter(endRect))
                 {
-                    Console.WriteLine("[Above Start] Quadrant: [1, 1]");
-
-                    for (var i = (int)end; i > -1; i--)
-                    {
-                        var command = (RectCommand)this.target.Commands[i];
-
-                        if (isCursorBelowTop(command.Rect))
-                        {
-                            position = (uint)i;
-
-                            break;
-                        }
-                    }
+                    locateBackwardUpCursorEndLine(ref position);
                 }
                 else
                 {
-                    Console.WriteLine("[Above Start] Quadrant: [-1, 1]");
-
-                    for (var i = (int)end; i > -1; i--)
-                    {
-                        var command = (RectCommand)this.target.Commands[i];
-
-                        if (isCursorBelowBottom(command.Rect))
-                        {
-                            position = (uint)i + 1;
-
-                            break;
-                        }
-                    }
+                    locateBackwardUpCursorStartLine(ref position);
                 }
+            }
+            else if (isCursorAfter(endRect))
+            {
+                locateForwardUpCursorEndLine(ref position);
             }
             else
             {
-                if (isCursorAfter(endRect))
-                {
-                    Console.WriteLine("[Above Start] Quadrant: [-1, 1]");
-
-                    for (var i = (int)end; i < start - 1; i++)
-                    {
-                        var command = (RectCommand)this.target.Commands[i];
-
-                        if (isCursorAboveTop(command.Rect))
-                        {
-                            position = (uint)i - 1;
-
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("[Above Start] Quadrant: [-1, 1]");
-
-                    for (var i = (int)end; i < start - 1; i++)
-                    {
-                        var command = (RectCommand)this.target.Commands[i];
-
-                        if (isCursorAboveBottom(command.Rect))
-                        {
-                            position = (uint)i;
-
-                            break;
-                        }
-                    }
-                }
+                locateForwardUpCursorStartLine(ref position);
             }
+
+            return position;
         }
-
-        this.Selection     = selection.WithEnd(position);
-        this.CaretPosition = position;
-
-        //Console.WriteLine($"[After] selection: {this.Selection}");
+        #endregion
     }
 
     public void UpdateSelection(ushort x, ushort y, uint character)
