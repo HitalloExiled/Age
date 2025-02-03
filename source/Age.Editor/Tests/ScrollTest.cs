@@ -122,32 +122,89 @@ public class ScrollTest
         //Ut ac orci eget mi laoreet interdum ac egestas lorem.
         //In hac habitasse platea dictumst.
         //""";
-        var text =
-        """
-        00000_00000-x-00000_00000
-        11111_11111-x-11111_11111
-        22222_22222-x-22222_22222
-        33333_33333-x-33333_33333
-        44444_44444-x-44444_44444
-        55555_55555-x-55555_55555
-        66666_66666-x-66666_66666
-        77777_77777-x-77777_77777
-        88888_88888-x-88888_88888
-        99999_99999-x-99999_99999
-        """;
 
-        var conteiner = new FlexBox()
+        var conteiner1 = new FlexBox()
         {
-            Name  = "conteiner",
-            Text  = text,
+            Name  = "conteiner1",
+            Text  = "0",
             Style = new()
             {
-                Margin   = new((Pixel)20),
-                Border   = new(borderSize, 0, Color.Red),
-                Padding  = new((Pixel)10),
-                //Overflow = OverflowKind.Scroll,
-                //Size     = new((Pixel)100),
-                Color    = Color.White,
+                Margin  = new((Pixel)20),
+                Border  = new(borderSize, 0, Color.Red),
+                Padding = new((Pixel)10),
+                Color   = Color.White,
+            },
+        };
+
+        var conteiner2 = new FlexBox()
+        {
+            Name  = "conteiner2",
+            Text  = "00",
+            Style = new()
+            {
+                Margin  = new((Pixel)20),
+                Border  = new(borderSize, 0, Color.Red),
+                Padding = new((Pixel)10),
+                Color   = Color.White,
+            },
+        };
+
+        var conteiner3 = new FlexBox()
+        {
+            Name  = "conteiner3",
+            Text  =
+            """
+            0
+            0
+            """,
+            Style = new()
+            {
+                Margin  = new((Pixel)20),
+                Border  = new(borderSize, 0, Color.Red),
+                Padding = new((Pixel)10),
+                Color   = Color.White,
+            },
+        };
+
+        var conteiner4 = new FlexBox()
+        {
+            Name  = "conteiner4",
+            Text  =
+            """
+            00
+            00
+            """,
+            Style = new()
+            {
+                Margin  = new((Pixel)20),
+                Border  = new(borderSize, 0, Color.Red),
+                Padding = new((Pixel)10),
+                Color   = Color.White,
+            },
+        };
+
+        var conteiner5 = new FlexBox()
+        {
+            Name  = "conteiner5",
+            Text  =
+            """
+            00000_00000-x-00000_00000
+            11111_11111-x-11111_11111
+            22222_22222-x-22222_22222
+            33333_33333-x-33333_33333
+            44444_44444-x-44444_44444
+            55555_55555-x-55555_55555
+            66666_66666-x-66666_66666
+            77777_77777-x-77777_77777
+            88888_88888-x-88888_88888
+            99999_99999-x-99999_99999
+            """,
+            Style = new()
+            {
+                Margin  = new((Pixel)20),
+                Border  = new(borderSize, 0, Color.Red),
+                Padding = new((Pixel)10),
+                Color   = Color.White,
             },
         };
 
@@ -167,7 +224,11 @@ public class ScrollTest
         //    },
         //};
 
-        canvas.AppendChild(conteiner);
+        canvas.AppendChild(conteiner1);
+        canvas.AppendChild(conteiner2);
+        canvas.AppendChild(conteiner3);
+        canvas.AppendChild(conteiner4);
+        canvas.AppendChild(conteiner5);
         //canvas.AppendChild(textBox);
     }
 }

@@ -746,11 +746,11 @@ internal sealed partial class TextLayout : Layout
 
         var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition);
 
-        var start = uint.Min(selection.Start, (uint)(this.Text.Length - 1));
-        var end   = uint.Min(selection.End,   (uint)(this.Text.Length - 1));
+        var start = int.Min((int)selection.Start, this.Text.Length - 1);
+        var end   = int.Min((int)selection.End,   this.Text.Length - 1);
 
-        var startRect = ((RectCommand)this.target.Commands[(int)start]).Rect;
-        var endRect   = ((RectCommand)this.target.Commands[(int)end]).Rect;
+        var startRect = ((RectCommand)this.target.Commands[start]).Rect;
+        var endRect   = ((RectCommand)this.target.Commands[end]).Rect;
 
         var position = selection.End;
 
@@ -810,7 +810,7 @@ internal sealed partial class TextLayout : Layout
         {
             position = (uint)this.Text.Length;
 
-            for (var i = (int)end; i < this.Text.Length; i++)
+            for (var i = end; i < this.Text.Length; i++)
             {
                 var command = (RectCommand)this.target.Commands[i];
 
@@ -828,7 +828,7 @@ internal sealed partial class TextLayout : Layout
         {
             position = 0;
 
-            for (var i = (int)end; i > -1; i--)
+            for (var i = end; i > -1; i--)
             {
                 var command = (RectCommand)this.target.Commands[i];
 
@@ -844,7 +844,7 @@ internal sealed partial class TextLayout : Layout
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void locateForwardDownCursorStartLine(ref uint position)
         {
-            for (var i = (int)end + 1; i < this.Text.Length; i++)
+            for (var i = end + 1; i < this.Text.Length; i++)
             {
                 var command = (RectCommand)this.target.Commands[i];
 
@@ -860,7 +860,9 @@ internal sealed partial class TextLayout : Layout
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void locateForwardDownCursorEndLine(ref uint position)
         {
-            for (var i = (int)end + 1; i < this.Text.Length; i++)
+            position = (uint)this.Text.Length;
+
+            for (var i = end + 1; i < this.Text.Length; i++)
             {
                 var command = (RectCommand)this.target.Commands[i];
 
@@ -876,7 +878,7 @@ internal sealed partial class TextLayout : Layout
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void locateBackwardDownCursorEndLine(ref uint position)
         {
-            for (var i = (int)end; i > start - 1; i--)
+            for (var i = end - 1; i > start - 1; i--)
             {
                 var command = (RectCommand)this.target.Commands[i];
 
@@ -892,7 +894,7 @@ internal sealed partial class TextLayout : Layout
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void locateBackwardDownCursorStartLine(ref uint position)
         {
-            for (var i = (int)end; i > start - 1; i--)
+            for (var i = end - 1; i > start - 1; i--)
             {
                 var command = (RectCommand)this.target.Commands[i];
 
@@ -908,7 +910,7 @@ internal sealed partial class TextLayout : Layout
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void locateBackwardUpCursorEndLine(ref uint position)
         {
-            for (var i = (int)end - 1; i > -1; i--)
+            for (var i = end - 1; i > -1; i--)
             {
                 var command = (RectCommand)this.target.Commands[i];
 
@@ -924,7 +926,7 @@ internal sealed partial class TextLayout : Layout
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void locateBackwardUpCursorStartLine(ref uint position)
         {
-            for (var i = (int)end - 1; i > -1; i--)
+            for (var i = end - 1; i > -1; i--)
             {
                 var command = (RectCommand)this.target.Commands[i];
 
@@ -940,7 +942,7 @@ internal sealed partial class TextLayout : Layout
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void locateForwardUpCursorEndLine(ref uint position)
         {
-            for (var i = (int)end; i < start - 1; i++)
+            for (var i = end + 1; i < start - 1; i++)
             {
                 var command = (RectCommand)this.target.Commands[i];
 
@@ -956,7 +958,7 @@ internal sealed partial class TextLayout : Layout
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void locateForwardUpCursorStartLine(ref uint position)
         {
-            for (var i = (int)end; i < start - 1; i++)
+            for (var i = end + 1; i < start - 1; i++)
             {
                 var command = (RectCommand)this.target.Commands[i];
 
@@ -976,8 +978,6 @@ internal sealed partial class TextLayout : Layout
             {
                 if (isCursorAfter(endRect))
                 {
-                    position = (uint)this.Text.Length;
-
                     locateForwardDownCursorEndLine(ref position);
                 }
                 else
@@ -996,7 +996,7 @@ internal sealed partial class TextLayout : Layout
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        uint locateAboveStart(ref uint position)
+        void locateAboveStart(ref uint position)
         {
             if (isCursorAboveBottom(endRect))
             {
@@ -1019,8 +1019,6 @@ internal sealed partial class TextLayout : Layout
             {
                 locateForwardUpCursorStartLine(ref position);
             }
-
-            return position;
         }
         #endregion
     }
