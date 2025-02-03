@@ -772,51 +772,6 @@ internal sealed partial class TextLayout : Layout
 
         #region local methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateCursorStartLine(ref uint position)
-        {
-            for (var i = (int)end; i < this.Text.Length; i++)
-            {
-                var command = (RectCommand)this.target.Commands[i];
-
-                if (!isOnCursorLine(command.Rect))
-                {
-                    position = (uint)i - 1;
-
-                    break;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateCursorEndLine(ref uint position)
-        {
-            for (var i = (int)end; i > -1; i--)
-            {
-                var command = (RectCommand)this.target.Commands[i];
-
-                if (!isOnCursorLine(command.Rect))
-                {
-                    position = (uint)i + 1;
-
-                    break;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateOnCursorLine(ref uint position)
-        {
-            if (isCursorAfter(endRect))
-            {
-                locateCursorStartLine(ref position);
-            }
-            else
-            {
-                locateCursorEndLine(ref position);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorAfter(in Rect<float> rect) => cursor.X > rect.Position.X + rect.Size.Width / 2;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -836,6 +791,55 @@ internal sealed partial class TextLayout : Layout
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorBelowBottom(in Rect<float> rect) => cursor.Y < rect.Position.Y - rect.Size.Height;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateOnCursorLine(ref uint position)
+        {
+            if (isCursorAfter(endRect))
+            {
+                locateCursorEndLine(ref position);
+            }
+            else
+            {
+                locateCursorStartLine(ref position);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateCursorEndLine(ref uint position)
+        {
+            position = (uint)this.Text.Length;
+
+            for (var i = (int)end; i < this.Text.Length; i++)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (!isOnCursorLine(command.Rect))
+                {
+                    position = (uint)i - 1;
+
+                    break;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void locateCursorStartLine(ref uint position)
+        {
+            position = 0;
+
+            for (var i = (int)end; i > -1; i--)
+            {
+                var command = (RectCommand)this.target.Commands[i];
+
+                if (!isOnCursorLine(command.Rect))
+                {
+                    position = (uint)i + 1;
+
+                    break;
+                }
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void locateForwardDownCursorStartLine(ref uint position)
