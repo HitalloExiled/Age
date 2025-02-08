@@ -1,11 +1,10 @@
 using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Elements;
-using Age.Extensions;
 using Age.Scene;
 using Age.Themes;
 
-using Key       = Age.Platforms.Display.Key;
+using Key = Age.Platforms.Display.Key;
 using KeyStates = Age.Platforms.Display.KeyStates;
 
 namespace Age.Components;

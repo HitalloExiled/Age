@@ -1,7 +1,6 @@
 using Age.Commands;
 using Age.Core.Extensions;
 using Age.Elements.Layouts;
-using Age.Extensions;
 using Age.Numerics;
 using Age.Scene;
 
@@ -40,7 +39,7 @@ public sealed class TextNode : ContainerNode
 
     public TextNode(string value) : this() =>
         this.Value = value;
-    
+
     internal void InvokeActivate() =>
         this.Layout.TargetActivated();
 
@@ -118,7 +117,7 @@ public sealed class TextNode : ContainerNode
 
         this.UpdateIndependentAncestorLayout();
 
-        var rect = ((RectCommand)this.Commands[(int)index + 1]).Rect;
+        var rect = ((RectCommand)this.Commands[(int)index]).Rect;
 
         var transform = this.TransformWithOffset;
 

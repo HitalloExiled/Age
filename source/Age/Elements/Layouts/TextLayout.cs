@@ -1,31 +1,32 @@
 using Age.Commands;
 using Age.Core.Extensions;
 using Age.Core;
+using Age.Extensions;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Resources;
 using Age.Scene;
 using Age.Services;
+using Age.Styling;
 using SkiaSharp;
 using System.Runtime.CompilerServices;
 
-using Timer = Age.Scene.Timer;
-
 using static Age.Shaders.CanvasShader;
-using Age.Styling;
-using Age.Extensions;
-using static Age.Styling.StyledStateManager;
+
+using Timer = Age.Scene.Timer;
+using Age.Resources.Loaders.Wavefront;
 
 namespace Age.Elements.Layouts;
 
 internal sealed partial class TextLayout : Layout
 {
-    private static readonly ObjectPool<RectCommand> rectCommandPool = new(static () => new());
+    private static readonly ObjectPool<TextCommand> rectCommandPool = new(static () => new());
 
     #region 8-bytes
-    private readonly Timer    caretTimer;
-    private readonly Timer    selectionTimer;
-    private readonly TextNode target;
+    private readonly Timer               caretTimer;
+    private readonly List<TextSelection> lines = new(1);
+    private readonly Timer               selectionTimer;
+    private readonly TextNode            target;
 
     private SKTypeface? typeface;
     private SKPaint?    paint;
@@ -62,12 +63,9 @@ internal sealed partial class TextLayout : Layout
             if (field != value || !this.caretTimer.Running)
             {
                 field = value;
-                this.ShowCaret();
 
-                if (this.Parent!.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX or OverflowKind.ScrollY)
-                {
-                    this.AdjustScroll();
-                }
+                this.ShowCaret();
+                this.AdjustScroll();
             }
         }
     }
@@ -97,7 +95,7 @@ internal sealed partial class TextLayout : Layout
     private bool canScrollX;
     private bool canScrollY;
 
-    private RectCommand CaretCommand => (RectCommand)this.Target.Commands[^1];
+    private TextCommand CaretCommand => (TextCommand)this.Target.Commands[^1];
     private bool        CanSelect    => this.Parent?.State.Style.TextSelection != false;
 
     public override bool IsParentDependent { get; }
@@ -171,7 +169,7 @@ internal sealed partial class TextLayout : Layout
         {
             for (var i = 0; i < commands.Count; i++)
             {
-                rectCommandPool.Return((RectCommand)commands[i]);
+                rectCommandPool.Return((TextCommand)commands[i]);
             }
 
             commands.RemoveRange(0, count);
@@ -179,7 +177,7 @@ internal sealed partial class TextLayout : Layout
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ApplySelection(int index, in TextSelection selection, RectCommand selectionCommand)
+    private void ApplySelection(int index, in TextSelection selection, TextCommand selectionCommand)
     {
         if (index >= selection.Start && index < selection.End)
         {
@@ -187,9 +185,9 @@ internal sealed partial class TextLayout : Layout
             selectionCommand.Flags           = Flags.ColorAsBackground;
             selectionCommand.PipelineVariant = PipelineVariant.Index | PipelineVariant.Color;
 
-            if (selectionCommand.Metadata != default)
+            if (selectionCommand.Index != default)
             {
-                ((RectCommand)this.target.Commands[(int)selectionCommand.Metadata]).Color = Color.White;
+                ((TextCommand)this.target.Commands[selectionCommand.Index]).Color = Color.White;
             }
         }
         else
@@ -207,15 +205,15 @@ internal sealed partial class TextLayout : Layout
         this.RequestUpdate(false);
     }
 
-    private void ClearSelection(RectCommand selectionCommand)
+    private void ClearSelection(TextCommand selectionCommand)
     {
         selectionCommand.Color           = default;
         selectionCommand.Flags           = default;
         selectionCommand.PipelineVariant = PipelineVariant.Index;
 
-        if (selectionCommand.Metadata != default)
+        if (selectionCommand.Index != default)
         {
-            ((RectCommand)this.target.Commands[(int)selectionCommand.Metadata]).Color = this.Parent?.State.Style.Color ?? default;
+            ((TextCommand)this.target.Commands[selectionCommand.Index]).Color = this.Parent?.State.Style.Color ?? default;
         }
     }
 
@@ -267,14 +265,14 @@ internal sealed partial class TextLayout : Layout
 
             for (var i = 0; i < textLength; i++)
             {
-                this.ApplySelection(i, range, (RectCommand)this.target.Commands[i]);
+                this.ApplySelection(i, range, (TextCommand)this.target.Commands[i]);
             }
         }
         else
         {
             for (var i = 0; i < textLength; i++)
             {
-                this.ClearSelection((RectCommand)this.target.Commands[i]);
+                this.ClearSelection((TextCommand)this.target.Commands[i]);
             }
         }
     }
@@ -301,25 +299,32 @@ internal sealed partial class TextLayout : Layout
         var cursor     = new Point<int>(0, baseLine);
         var boundings  = new Size<uint>(0, this.LineHeight);
 
-        AllocateCommands(this.target.Commands, text.Length + text.AsSpan().CountNonWhitespaceCharacters() + 1);
+        text.AsSpan().GetTextInfo(out var nonWhitespaceCount, out var linesCount);
+
+        this.lines.Resize(linesCount, default);
+
+        var lines = this.lines.AsSpan();
+
+        AllocateCommands(this.target.Commands, text.Length + nonWhitespaceCount + 1);
 
         var elementIndex = this.target.Index + 1;
-
-        var range = this.Selection?.Ordered();
+        var range        = this.Selection?.Ordered();
 
         var textOffset = 0;
+        var lineIndex  = 0;
 
         for (var i = 0; i < text.Length; i++)
         {
             var character = text[i];
 
-            var selectionCommand = (RectCommand)this.target.Commands[i];
+            var selectionCommand = (TextCommand)this.target.Commands[i];
 
             selectionCommand.MappedTexture = MappedTexture.Default;
             selectionCommand.ObjectId      = (uint)(((i + 1) << 12) | elementIndex);
             selectionCommand.Rect          = new(new(glyphsWidths[i], this.LineHeight), new(cursor.X, cursor.Y - baseLine));
             selectionCommand.StencilLayer  = this.StencilLayer;
-            selectionCommand.Metadata      = default;
+            selectionCommand.Index         = default;
+            selectionCommand.Line          = lineIndex;
 
             if (!char.IsWhiteSpace(character))
             {
@@ -342,9 +347,9 @@ internal sealed partial class TextLayout : Layout
 
                 var characterIndex = text.Length + textOffset;
 
-                selectionCommand.Metadata = (uint)characterIndex;
+                selectionCommand.Index = characterIndex;
 
-                var characterCommand = (RectCommand)this.target.Commands[characterIndex];
+                var characterCommand = (TextCommand)this.target.Commands[characterIndex];
 
                 characterCommand.Rect            = new(size, position);
                 characterCommand.Color           = color;
@@ -352,6 +357,8 @@ internal sealed partial class TextLayout : Layout
                 characterCommand.PipelineVariant = PipelineVariant.Color;
                 characterCommand.MappedTexture   = new(atlas.Texture, uv);
                 characterCommand.StencilLayer    = this.StencilLayer;
+                characterCommand.Index           = selectionCommand.Index;
+                characterCommand.Line            = selectionCommand.Line;
 
                 cursor.X += (int)float.Round(glyphsWidths[i]);
 
@@ -364,6 +371,15 @@ internal sealed partial class TextLayout : Layout
                 cursor.Y -= (int)(this.LineHeight + -this.fontLeading);
 
                 boundings.Height += this.LineHeight + (uint)this.fontLeading;
+
+                lines[(int)lineIndex].End = (uint)i;
+
+                lineIndex++;
+
+                if (lineIndex < lines.Length)
+                {
+                    lines[(int)lineIndex].Start = (uint)int.Min(i + 1, text.Length - 1);
+                }
             }
             else
             {
@@ -382,14 +398,17 @@ internal sealed partial class TextLayout : Layout
             }
         }
 
-        var caretCommand = (RectCommand)this.target.Commands[^1];
+        lines[^1].End = (uint)text.Length - 1;
+
+        var caretCommand = (TextCommand)this.target.Commands[^1];
 
         caretCommand.Color           = Color.White;
         caretCommand.Flags           = Flags.ColorAsBackground;
         caretCommand.MappedTexture   = MappedTexture.Default;
         caretCommand.PipelineVariant = PipelineVariant.Color;
         caretCommand.StencilLayer    = this.StencilLayer;
-        caretCommand.Metadata        = default;
+        caretCommand.Index           = default;
+        caretCommand.Line            = default;
         caretCommand.Rect            = default;
 
         atlas.Update();
@@ -474,47 +493,44 @@ internal sealed partial class TextLayout : Layout
             var boxModel        = parent.GetBoxModel();
             var cursorBoundings = this.Target.GetCursorBoundings();
 
-            var leftBounds   = boxModel.Boundings.Left   + boxModel.Border.Left   + boxModel.Padding.Left;
-            var rightBounds  = boxModel.Boundings.Right  - boxModel.Border.Right  - boxModel.Padding.Right;
-            var topBounds    = boxModel.Boundings.Top    + boxModel.Border.Top    + boxModel.Padding.Top;
-            var bottomBounds = boxModel.Boundings.Bottom - boxModel.Border.Bottom - boxModel.Padding.Bottom;
+            var boundsLeft   = boxModel.Boundings.Left   + boxModel.Border.Left   + boxModel.Padding.Left;
+            var boundsRight  = boxModel.Boundings.Right  - boxModel.Border.Right  - boxModel.Padding.Right;
+            var boundsTop    = boxModel.Boundings.Top    + boxModel.Border.Top    + boxModel.Padding.Top;
+            var boundsBottom = boxModel.Boundings.Bottom - boxModel.Border.Bottom - boxModel.Padding.Bottom;
 
             var scroll = parent.Scroll;
 
-            var position = this.CaretPosition == this.Text.Length ?
-                this.CaretPosition.ClampSubtract(1)
-                : this.CaretPosition;
+            var position = this.CaretPosition;
 
             if (this.canScrollX)
             {
-                if (cursorBoundings.Left < leftBounds)
+                if (cursorBoundings.Left < boundsLeft)
                 {
-                    var characterBounds = this.Target.GetCharacterBoundings(position);
+                    var characterLeft = this.Target.GetCharacterBoundings(position).Left + scroll.X;
 
-                    scroll.X = (uint)(characterBounds.Left + scroll.X - leftBounds);
-
+                    scroll.X = (uint)(characterLeft - boundsLeft);
                 }
-                else if (cursorBoundings.Right > rightBounds)
+                else if (cursorBoundings.Right > boundsRight)
                 {
-                    var characterBounds = this.Target.GetCharacterBoundings(position.ClampSubtract(1));
+                    var characterRight = this.Target.GetCharacterBoundings(position.ClampSubtract(1)).Right + scroll.X;
 
-                    scroll.X = (uint)(characterBounds.Right + scroll.X + cursorBoundings.Size.Width - rightBounds);
+                    scroll.X = (uint)(characterRight - boundsRight);
                 }
             }
 
             if (this.canScrollY)
             {
-                if (cursorBoundings.Top < topBounds)
+                if (cursorBoundings.Top < boundsTop)
                 {
-                    var characterBounds = this.Target.GetCharacterBoundings(position);
+                    var characterTop = this.Target.GetCharacterBoundings(position).Top + scroll.Y;
 
-                    scroll.Y = (uint)(characterBounds.Top + scroll.Y - topBounds);
+                    scroll.Y = (uint)(characterTop - boundsTop);
                 }
-                else if (cursorBoundings.Bottom > bottomBounds)
+                else if (cursorBoundings.Bottom > boundsBottom)
                 {
-                    var characterBounds = this.Target.GetCharacterBoundings(position.ClampSubtract(1));
+                    var characterBottom = this.Target.GetCharacterBoundings(position.ClampSubtract(1)).Bottom + scroll.Y;
 
-                    scroll.Y = (uint)(characterBounds.Bottom + scroll.Y + cursorBoundings.Size.Height - bottomBounds);
+                    scroll.Y = (uint)(characterBottom - boundsBottom);
                 }
             }
 
@@ -746,25 +762,51 @@ internal sealed partial class TextLayout : Layout
 
         var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition);
 
-        var start = int.Min((int)selection.Start, this.Text.Length - 1);
-        var end   = int.Min((int)selection.End,   this.Text.Length - 1);
+        //Console.WriteLine($"cursor: {cursor}, selection: {selection}");
 
-        var startRect = ((RectCommand)this.target.Commands[start]).Rect;
-        var endRect   = ((RectCommand)this.target.Commands[end]).Rect;
+        //cursor    = new(252, 21);
+        //selection = new(66, 161);
 
-        var position = selection.End;
+        var startIndex = int.Min((int)selection.Start, this.Text.Length - 1);
+        var endIndex   = int.Min((int)selection.End,   this.Text.Length - 1);
 
-        if (isOnCursorLine(endRect))
+        var lineSpan     = this.lines.AsSpan();
+        var commandsSpan = this.target.Commands.AsSpan();
+
+        var startAnchor = (TextCommand)commandsSpan[startIndex];
+        var endAnchor   = (TextCommand)commandsSpan[endIndex];
+
+        var position = selection.End;        
+
+        if (isOnCursorLine(endAnchor.Rect))
         {
-            locateOnCursorLine(ref position);
+            resolveLine(lineSpan, endAnchor.Line, ref position);
         }
-        else if (isCursorBelow(startRect))
+        else if (isCursorBelow(startAnchor.Rect))
         {
-            locateBelowStart(ref position);
+            if (isCursorBelowTop(endAnchor.Rect))
+            {
+                position = (uint)this.Text.Length;
+
+                scanBelow(commandsSpan, endAnchor.Line, lineSpan.Length, lineSpan, ref position);
+            }
+            else
+            {
+                scanAbove(commandsSpan, endAnchor.Line, startAnchor.Line, lineSpan, ref position);
+            }
         }
         else
         {
-            locateAboveStart(ref position);
+            if (isCursorAboveBottom(endAnchor.Rect))
+            {
+                position = 0;
+
+                scanAbove(commandsSpan, endAnchor.Line, -1, lineSpan, ref position);
+            }
+            else
+            {
+                scanBelow(commandsSpan, endAnchor.Line, startAnchor.Line + 1, lineSpan, ref position);
+            }
         }
 
         this.Selection     = selection.WithEnd(position);
@@ -772,7 +814,18 @@ internal sealed partial class TextLayout : Layout
 
         #region local methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void resolveLine(scoped Span<TextSelection> lines, int index, ref uint position) =>
+            position = isCursorBefore(endAnchor.Rect)
+                ? lines[index].Start
+                : index + 1 == lines.Length
+                    ? (uint)this.Text.Length
+                    : lines[index].End;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorAfter(in Rect<float> rect) => cursor.X > rect.Position.X + rect.Size.Width / 2;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool isCursorBefore(in Rect<float> rect) => !isCursorAfter(rect);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isOnCursorLine(in Rect<float> rect) => isCursorBelowTop(rect) && isCursorAboveBottom(rect);
@@ -781,110 +834,21 @@ internal sealed partial class TextLayout : Layout
         bool isCursorBelow(in Rect<float> rect) => cursor.Y < rect.Position.Y - rect.Size.Height / 2;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorAboveTop(in Rect<float> rect) => cursor.Y > rect.Position.Y;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorBelowTop(in Rect<float> rect) => cursor.Y < rect.Position.Y;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorAboveBottom(in Rect<float> rect) => cursor.Y > rect.Position.Y - rect.Size.Height;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorBelowBottom(in Rect<float> rect) => cursor.Y < rect.Position.Y - rect.Size.Height;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateOnCursorLine(ref uint position)
+        void scanAbove(scoped Span<Command> commands, int start, int end, scoped Span<TextSelection> lines, ref uint position)
         {
-            if (isCursorAfter(endRect))
+            for (var i = start; i > end; i--)
             {
-                locateCursorEndLine(ref position);
-            }
-            else
-            {
-                locateCursorStartLine(ref position);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateCursorEndLine(ref uint position)
-        {
-            position = (uint)this.Text.Length;
-
-            for (var i = end; i < this.Text.Length; i++)
-            {
-                var command = (RectCommand)this.target.Commands[i];
-
-                if (!isOnCursorLine(command.Rect))
-                {
-                    position = (uint)i - 1;
-
-                    break;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateCursorStartLine(ref uint position)
-        {
-            position = 0;
-
-            for (var i = end; i > -1; i--)
-            {
-                var command = (RectCommand)this.target.Commands[i];
-
-                if (!isOnCursorLine(command.Rect))
-                {
-                    position = (uint)i + 1;
-
-                    break;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateForwardDownCursorStartLine(ref uint position)
-        {
-            for (var i = end + 1; i < this.Text.Length; i++)
-            {
-                var command = (RectCommand)this.target.Commands[i];
-
-                if (isCursorAboveBottom(command.Rect))
-                {
-                    position = (uint)i;
-
-                    break;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateForwardDownCursorEndLine(ref uint position)
-        {
-            position = (uint)this.Text.Length;
-
-            for (var i = end + 1; i < this.Text.Length; i++)
-            {
-                var command = (RectCommand)this.target.Commands[i];
-
-                if (isCursorAboveTop(command.Rect))
-                {
-                    position = (uint)i - 1;
-
-                    break;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateBackwardDownCursorEndLine(ref uint position)
-        {
-            for (var i = end - 1; i > start - 1; i--)
-            {
-                var command = (RectCommand)this.target.Commands[i];
+                var command = (TextCommand)commands[(int)lines[i].Start];
 
                 if (isCursorBelowTop(command.Rect))
                 {
-                    position = (uint)i;
+                    resolveLine(lines, i, ref position);
 
                     break;
                 }
@@ -892,133 +856,20 @@ internal sealed partial class TextLayout : Layout
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateBackwardDownCursorStartLine(ref uint position)
+        void scanBelow(scoped Span<Command> commands, int start, int end, scoped Span<TextSelection> lines, ref uint position)
         {
-            for (var i = end - 1; i > start - 1; i--)
+            for (var i = start; i < end; i++)
             {
-                var command = (RectCommand)this.target.Commands[i];
-
-                if (isCursorBelowBottom(command.Rect))
-                {
-                    position = (uint)i + 1;
-
-                    break;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateBackwardUpCursorEndLine(ref uint position)
-        {
-            for (var i = end - 1; i > -1; i--)
-            {
-                var command = (RectCommand)this.target.Commands[i];
-
-                if (isCursorBelowTop(command.Rect))
-                {
-                    position = (uint)i;
-
-                    break;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateBackwardUpCursorStartLine(ref uint position)
-        {
-            for (var i = end - 1; i > -1; i--)
-            {
-                var command = (RectCommand)this.target.Commands[i];
-
-                if (isCursorBelowBottom(command.Rect))
-                {
-                    position = (uint)i + 1;
-
-                    break;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateForwardUpCursorEndLine(ref uint position)
-        {
-            for (var i = end + 1; i < start - 1; i++)
-            {
-                var command = (RectCommand)this.target.Commands[i];
-
-                if (isCursorAboveTop(command.Rect))
-                {
-                    position = (uint)i - 1;
-
-                    break;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateForwardUpCursorStartLine(ref uint position)
-        {
-            for (var i = end + 1; i < start - 1; i++)
-            {
-                var command = (RectCommand)this.target.Commands[i];
+                var command = (TextCommand)commands[(int)lines[i].Start];
 
                 if (isCursorAboveBottom(command.Rect))
                 {
-                    position = (uint)i;
+                    resolveLine(lines, i, ref position);
 
                     break;
                 }
             }
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateBelowStart(ref uint position)
-        {
-            if (isCursorBelowTop(endRect))
-            {
-                if (isCursorAfter(endRect))
-                {
-                    locateForwardDownCursorEndLine(ref position);
-                }
-                else
-                {
-                    locateForwardDownCursorStartLine(ref position);
-                }
-            }
-            else if (isCursorAfter(endRect))
-            {
-                locateBackwardDownCursorEndLine(ref position);
-            }
-            else
-            {
-                locateBackwardDownCursorStartLine(ref position);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void locateAboveStart(ref uint position)
-        {
-            if (isCursorAboveBottom(endRect))
-            {
-                position = 0;
-
-                if (isCursorAfter(endRect))
-                {
-                    locateBackwardUpCursorEndLine(ref position);
-                }
-                else
-                {
-                    locateBackwardUpCursorStartLine(ref position);
-                }
-            }
-            else if (isCursorAfter(endRect))
-            {
-                locateForwardUpCursorEndLine(ref position);
-            }
-            else
-            {
-                locateForwardUpCursorStartLine(ref position);
-            }
         }
         #endregion
     }

@@ -14,7 +14,7 @@ public class StringHandlerTest
     [Fact]
     public void Append()
     {
-        using var handler = new StringHandler();
+        var handler = new StringHandler();
 
         handler.Append("Hello");
 
@@ -28,7 +28,7 @@ public class StringHandlerTest
     [Fact]
     public void Insert()
     {
-        using var handler = new StringHandler("HelloWorld");
+        var handler = new StringHandler("HelloWorld");
 
         AssertIt(handler, "HelloWorld", 10);
 
@@ -44,7 +44,7 @@ public class StringHandlerTest
     [Fact]
     public void Remove()
     {
-        using var handler = new StringHandler("Hello World!!!");
+        var handler = new StringHandler("Hello World!!!");
 
         handler.Remove(11, 3);
 
