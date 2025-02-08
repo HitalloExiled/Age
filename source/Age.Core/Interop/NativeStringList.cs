@@ -43,7 +43,7 @@ public unsafe class NativeStringList : Disposable, IEnumerable<string?>
         }
     }
 
-    public NativeStringList(Span<string?> values) : this(values.Length)
+    public NativeStringList(scoped ReadOnlySpan<string?> values) : this(values.Length)
     {
         for (var i = 0; i < values.Length; i++)
         {
@@ -89,6 +89,16 @@ public unsafe class NativeStringList : Disposable, IEnumerable<string?>
         }
     }
 
+    private void ShiftElements(int sourceIndex, int destinationIndex, int elementCount)
+    {
+        if (elementCount <= 0)
+        {
+            return;
+        }
+
+        Array.Copy(this.handles, sourceIndex, this.handles, destinationIndex, elementCount);
+    }
+
     protected override void Disposed(bool disposing) =>
         this.Clear();
 
@@ -124,21 +134,26 @@ public unsafe class NativeStringList : Disposable, IEnumerable<string?>
         return this.handles[index];
     }
 
-    public void Remove(int index)
+    public void Remove(int startIndex, int length = 1)
     {
-        this.CheckIndex(index);
+        this.CheckIndex(startIndex);
         this.ThrowIfDisposed();
 
-        this.Count -= 1;
+        var endIndex = startIndex + length;
 
-        for (var i = index; i < this.Count; i++)
+        var shiftCount = this.Count - endIndex;
+
+        for (var i = startIndex; i < endIndex; i++)
         {
-            this.handles[i] = this.handles[i + 1];
+            Marshal.FreeHGlobal(this.handles[i]);
         }
 
-        Marshal.FreeHGlobal(this.Count);
+        if (shiftCount > 0)
+        {
+            this.ShiftElements(endIndex, startIndex, shiftCount);
+        }
 
-        this.handles[this.Count] = default;
+        this.Count = int.Max(this.Count - length, 0);
     }
 
     public IEnumerator<string?> GetEnumerator()

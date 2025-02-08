@@ -4,17 +4,24 @@ namespace Age.Tests.Core.Interop;
 
 public unsafe class NativeListTests
 {
+    private static void AssertIt(NativeList<int> list, ReadOnlySpan<int> values, int capacity)
+    {
+        Assert.Equal(capacity, list.Capacity);
+        Assert.Equal(values.Length, list.Count);
+
+        Assert.True(list.AsSpan().SequenceEqual(values));
+    }
+
     [Fact]
     public void Add()
     {
         using var list = new NativeList<int> { 1, 2, 3 };
 
-        Assert.Equal(4, list.Capacity);
-        Assert.Equal(3, list.Count);
+        AssertIt(list, [1, 2, 3], 4);
 
-        Assert.Equal(1, list[0]);
-        Assert.Equal(2, list[1]);
-        Assert.Equal(3, list[2]);
+        list.Add(4);
+
+        AssertIt(list, [1, 2, 3, 4], 4);
     }
 
     [Fact]
@@ -22,20 +29,27 @@ public unsafe class NativeListTests
     {
         using var list = new NativeList<int>([4, 5, 6]);
 
-        Assert.Equal(3, list.Capacity);
-        Assert.Equal(3, list.Count);
-
-        Assert.Equal(4, list[0]);
-        Assert.Equal(5, list[1]);
-        Assert.Equal(6, list[2]);
+        AssertIt(list, [4, 5, 6], 3);
 
         list.Remove(1);
 
-        Assert.Equal(3, list.Capacity);
-        Assert.Equal(2, list.Count);
+        AssertIt(list, [4, 6], 3);
+    }
 
-        Assert.Equal(4, list[0]);
-        Assert.Equal(6, list[1]);
+    [Fact]
+    public void RemoveWithLength()
+    {
+        using var list = new NativeList<int>([1, 2, 3, 4, 5, 6]);
+
+        AssertIt(list, [1, 2, 3, 4, 5, 6], 6);
+
+        list.Remove(2, 2);
+
+        AssertIt(list, [1, 2, 5, 6], 6);
+
+        list.Remove(2, 2);
+
+        AssertIt(list, [1, 2], 6);
     }
 
     [Fact]

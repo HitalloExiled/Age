@@ -16,4 +16,22 @@ public static class StringExtensions
 
         return count;
     }
+
+    public static void GetTextInfo(this ReadOnlySpan<char> value, out int nonWhitespaceCount, out int linesCount)
+    {
+        nonWhitespaceCount = 0;
+        linesCount         = 1;
+
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (!char.IsWhiteSpace(value[i]))
+            {
+                nonWhitespaceCount++;
+            }
+            else if (value[i] == '\n')
+            {
+                linesCount++;
+            }
+        }
+    }
 }
