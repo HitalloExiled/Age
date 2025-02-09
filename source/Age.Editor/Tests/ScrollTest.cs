@@ -242,7 +242,7 @@ public class ScrollTest
         //canvas.AppendChild(conteiner2);
         //canvas.AppendChild(conteiner3);
         //canvas.AppendChild(conteiner4);
-        canvas.AppendChild(conteiner5);
-        //canvas.AppendChild(textBox);
+        //canvas.AppendChild(conteiner5);
+        canvas.AppendChild(textBox);
     }
 }

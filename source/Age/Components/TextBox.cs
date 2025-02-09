@@ -1,6 +1,7 @@
 using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Elements;
+using Age.Extensions;
 using Age.Scene;
 using Age.Themes;
 
@@ -256,19 +257,21 @@ public partial class TextBox : Element
                 break;
 
             case Key.Up:
-                if (this.Multiline && this.text.Value != null && this.CursorPosition > 0)
+                if (this.Multiline && !string.IsNullOrEmpty(this.text.Value) && this.CursorPosition > 0)
                 {
                     this.SaveHistory();
 
-                    var lineInfo     = new LineInfo(this.text.Value, this.CursorPosition);
-                    var position     = lineInfo.Start;
-                    var previousLine = lineInfo.PreviousLine();
+                    var cursor = uint.Min(this.CursorPosition, (uint)this.text.Value.Length - 1);
 
-                    if (!previousLine.IsEmpty && !(this.CursorPosition == this.text.Value.Length && this.text.Value[^1] == '\n'))
+                    var currentLine  = this.text.GetCharacterLine(cursor);
+                    var previousLine = this.text.GetCharacterPreviousLine(cursor);
+                    var position     = this.CursorPosition;
+
+                    if (previousLine != currentLine && !(this.CursorPosition == this.text.Value.Length && this.text.Value[^1] == '\n'))
                     {
-                        var column = this.CursorPosition - lineInfo.Start;
+                        var column = this.CursorPosition - currentLine.Start;
 
-                        position = column < previousLine.Length ? previousLine.Start + column : previousLine.End;
+                        position = column < previousLine.Offset ? previousLine.Start + column : previousLine.End;
                     }
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
@@ -290,15 +293,15 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
-                    var lineInfo = new LineInfo(this.text.Value, this.CursorPosition);
-                    var position = lineInfo.End + 1;
-                    var nextLine = lineInfo.NextLine();
+                    var currentLine = this.text.GetCharacterLine(this.CursorPosition);
+                    var nextLine    = this.text.GetCharacterNextLine(this.CursorPosition);
+                    var position    = currentLine.End + 1;
 
-                    if (!nextLine.IsEmpty)
+                    if (nextLine != currentLine)
                     {
-                        var column  = this.CursorPosition - lineInfo.Start;
+                        var column  = this.CursorPosition - currentLine.Start;
 
-                        position = column < nextLine.Length
+                        position = column < nextLine.Offset
                             ? nextLine.Start + column
                             : nextLine.End == this.text.Value.Length - 1
                                 ? (uint)this.text.Value.Length

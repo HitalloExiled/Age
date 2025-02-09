@@ -28,7 +28,7 @@ public static class ListExtensions
         }
         else
         {
-            source.RemoveRange(0, size);
+            source.RemoveRange(0, source.Count - size);
         }
     }
 }

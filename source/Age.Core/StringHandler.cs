@@ -1,11 +1,9 @@
 using System.Buffers;
 using System.Collections;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace Age.Core;
 
-public sealed class StringHandler : Disposable, IEnumerable<char>
+public sealed class StringHandler : IEnumerable<char>
 {
     private char[] buffer = [];
 
@@ -39,11 +37,11 @@ public sealed class StringHandler : Disposable, IEnumerable<char>
                         throw new InvalidOperationException("Capacity exceeds maximum allowed size");
                     }
 
-                    var newBuffer = ArrayPool<char>.Shared.Rent(value);
+                    var newBuffer = GC.AllocateUninitializedArray<char>(value);
 
                     this.buffer.AsSpan(0, this.Length).CopyTo(newBuffer);
 
-                    ArrayPool<char>.Shared.Return(this.buffer);
+                    // ArrayPool<char>.Shared.Return(this.buffer);
 
                     this.buffer = newBuffer;
                 }
@@ -69,6 +67,14 @@ public sealed class StringHandler : Disposable, IEnumerable<char>
         }
     }
 
+    private void EnsureCapacity(int capacity)
+    {
+        if (capacity > this.Capacity)
+        {
+            this.Capacity = int.Min(int.Max(this.Capacity * 2, capacity), int.MaxValue);
+        }
+    }
+
     private void ShiftElements(int sourceIndex, int destinationIndex, int elementCount)
     {
         if (elementCount <= 0)
@@ -79,9 +85,6 @@ public sealed class StringHandler : Disposable, IEnumerable<char>
         Array.Copy(this.buffer, sourceIndex, this.buffer, destinationIndex, elementCount);
     }
 
-    protected override void Disposed(bool disposing) =>
-        ArrayPool<char>.Shared.Return(this.buffer);
-
     IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
     public ReadOnlySpan<char> AsSpan() =>
@@ -89,12 +92,12 @@ public sealed class StringHandler : Disposable, IEnumerable<char>
 
     public void Append(scoped ReadOnlySpan<char> value)
     {
-        this.ThrowIfDisposed();
+        // this.ThrowIfDisposed();
 
-        if (value.IsEmpty)
-        {
-            return;
-        }
+        // if (value.IsEmpty)
+        // {
+        //     return;
+        // }
 
         this.EnsureCapacity(this.Length + value.Length);
 
@@ -111,8 +114,8 @@ public sealed class StringHandler : Disposable, IEnumerable<char>
 
     public StringHandler Concat(StringHandler other)
     {
-        this.ThrowIfDisposed();
-        other.ThrowIfDisposed();
+        // this.ThrowIfDisposed();
+        // other.ThrowIfDisposed();
 
         var handler = new StringHandler(this.Length + other.Length);
 
@@ -124,17 +127,8 @@ public sealed class StringHandler : Disposable, IEnumerable<char>
 
     public void Clear()
     {
-        this.ThrowIfDisposed();
+        // this.ThrowIfDisposed();
         this.Length = 0;
-    }
-
-    public void EnsureCapacity(int capacity)
-    {
-        this.ThrowIfDisposed();
-        if (capacity > this.Capacity)
-        {
-            this.Capacity = int.Min(int.Max(this.Capacity * 2, capacity), int.MaxValue);
-        }
     }
 
     public IEnumerator<char> GetEnumerator()
@@ -147,7 +141,7 @@ public sealed class StringHandler : Disposable, IEnumerable<char>
 
     public void Insert(scoped ReadOnlySpan<char> value, int index)
     {
-        this.ThrowIfDisposed();
+        // this.ThrowIfDisposed();
         this.CheckIndex(index);
 
         if (value.IsEmpty)
@@ -165,7 +159,7 @@ public sealed class StringHandler : Disposable, IEnumerable<char>
 
     public void Remove(int index, int length = 1)
     {
-        this.ThrowIfDisposed();
+        // this.ThrowIfDisposed();
         this.CheckIndex(index);
 
         if (length == 0)
@@ -187,7 +181,7 @@ public sealed class StringHandler : Disposable, IEnumerable<char>
 
     public void Set(scoped ReadOnlySpan<char> value)
     {
-        this.ThrowIfDisposed();
+        // this.ThrowIfDisposed();
         this.Clear();
         this.Append(value);
     }

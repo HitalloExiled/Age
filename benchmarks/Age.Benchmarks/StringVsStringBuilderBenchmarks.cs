@@ -12,46 +12,46 @@ public class StringVsStringBuilderBenchmarks
 {
     private StringBuilder builder = new();
     private StringHandler handler = new();
+    private string        text = "";
 
-    [Params("Hello world!!!")]
-    public string Text = null!;
+    public string[] Text = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
 
     [Benchmark(Baseline = true)]
     public string RawText()
     {
-        var value = "";
+        this.text = "";
 
         foreach (var item in this.Text)
         {
-            value += item;
+            this.text += item;
         }
 
-        return value;
+        return this.text;
     }
 
     [Benchmark]
     public string StringBuilder()
     {
-        builder.Clear();
+        this.builder.Clear();
 
         foreach (var item in this.Text)
         {
-            builder.Append([item]);
+            this.builder.Append(item);
         }
 
-        return builder.ToString();
+        return this.builder.ToString();
     }
 
     [Benchmark]
     public string StringHandler()
     {
-        handler.Clear();
+        this.handler.Clear();
 
         foreach (var item in this.Text)
         {
-            handler.Append([item]);
+            this.handler.Append(item);
         }
 
-        return handler.ToString();
+        return this.handler.ToString();
     }
 }

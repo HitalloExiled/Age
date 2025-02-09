@@ -313,6 +313,8 @@ internal sealed partial class TextLayout : Layout
         var textOffset = 0;
         var lineIndex  = 0;
 
+        lines[0].Start = 0;
+
         for (var i = 0; i < text.Length; i++)
         {
             var character = text[i];
@@ -545,6 +547,22 @@ internal sealed partial class TextLayout : Layout
     public void ClearSelection() =>
         this.Selection = default;
 
+    public TextSelection GetCharacterLine(uint index) =>
+        this.lines[this.GetCharacterLineIndex(index)];
+
+    public int GetCharacterLineIndex(uint index) =>
+        ((TextCommand)this.Target.Commands[(int)index]).Line;
+
+    public TextSelection GetCharacterNextLine(uint index) =>
+        string.IsNullOrEmpty(this.Text)
+            ? default
+            : this.lines[int.Min(this.lines.Count - 1, this.GetCharacterLineIndex(index) + 1)];
+
+    public TextSelection GetCharacterPreviousLine(uint index) =>
+        string.IsNullOrEmpty(this.Text)
+            ? default
+            : this.lines[int.Max(0, this.GetCharacterLineIndex(index) - 1)];
+
     public void HideCaret()
     {
         this.caretIsDirty   = true;
@@ -761,11 +779,6 @@ internal sealed partial class TextLayout : Layout
         this.previouCursor = cursor;
 
         var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition);
-
-        //Console.WriteLine($"cursor: {cursor}, selection: {selection}");
-
-        //cursor    = new(252, 21);
-        //selection = new(66, 161);
 
         var startIndex = int.Min((int)selection.Start, this.Text.Length - 1);
         var endIndex   = int.Min((int)selection.End,   this.Text.Length - 1);
