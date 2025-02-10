@@ -167,12 +167,14 @@ internal sealed partial class TextLayout : Layout
     {
         if (count > 0)
         {
-            for (var i = 0; i < commands.Count; i++)
+            var index = commands.Count - count;
+
+            for (var i = index; i < commands.Count; i++)
             {
                 rectCommandPool.Return((TextCommand)commands[i]);
             }
 
-            commands.RemoveRange(0, count);
+            commands.RemoveRange(index, count);
         }
     }
 
@@ -789,7 +791,7 @@ internal sealed partial class TextLayout : Layout
         var startAnchor = (TextCommand)commandsSpan[startIndex];
         var endAnchor   = (TextCommand)commandsSpan[endIndex];
 
-        var position = selection.End;        
+        var position = selection.End;
 
         if (isOnCursorLine(endAnchor.Rect))
         {
