@@ -14,7 +14,6 @@ using System.Runtime.CompilerServices;
 using static Age.Shaders.CanvasShader;
 
 using Timer = Age.Scene.Timer;
-using Age.Resources.Loaders.Wavefront;
 
 namespace Age.Elements.Layouts;
 
@@ -146,6 +145,7 @@ internal sealed partial class TextLayout : Layout
         target.AppendChild(this.selectionTimer);
 
         target.Commands.Add(rectCommandPool.Get());
+        this.SetupCaret((TextCommand)target.Commands[0]);
     }
 
     private static void AllocateCommands(List<Command> commands, int length)
@@ -249,7 +249,10 @@ internal sealed partial class TextLayout : Layout
                 position = ((RectCommand)this.target.Commands[(int)this.CaretPosition]).Rect.Position;
             }
 
-            caretCommand.Rect = new(new(this.caretWidth, this.LineHeight), position);
+            caretCommand.Rect = caretCommand.Rect with
+            {
+                Position = position,
+            };
         }
         else
         {
@@ -325,12 +328,15 @@ internal sealed partial class TextLayout : Layout
 
             var selectionCommand = (TextCommand)this.target.Commands[i];
 
+            selectionCommand.Border        = default;
+            selectionCommand.Color         = default;
+            selectionCommand.Flags         = default;
+            selectionCommand.Index         = default;
+            selectionCommand.Line          = lineIndex;
             selectionCommand.MappedTexture = MappedTexture.Default;
             selectionCommand.ObjectId      = (uint)(((i + 1) << 12) | elementIndex);
             selectionCommand.Rect          = new(new(glyphsWidths[i], this.LineHeight), new(cursor.X, cursor.Y - baseLine));
             selectionCommand.StencilLayer  = this.StencilLayer;
-            selectionCommand.Index         = default;
-            selectionCommand.Line          = lineIndex;
 
             if (!char.IsWhiteSpace(character))
             {
@@ -357,14 +363,16 @@ internal sealed partial class TextLayout : Layout
 
                 var characterCommand = (TextCommand)this.target.Commands[characterIndex];
 
-                characterCommand.Rect            = new(size, position);
+                characterCommand.Border          = default;
                 characterCommand.Color           = color;
                 characterCommand.Flags           = Flags.GrayscaleTexture | Flags.MultiplyColor;
-                characterCommand.PipelineVariant = PipelineVariant.Color;
-                characterCommand.MappedTexture   = new(atlas.Texture, uv);
-                characterCommand.StencilLayer    = this.StencilLayer;
                 characterCommand.Index           = selectionCommand.Index;
                 characterCommand.Line            = selectionCommand.Line;
+                characterCommand.MappedTexture   = new(atlas.Texture, uv);
+                characterCommand.ObjectId        = default;
+                characterCommand.PipelineVariant = PipelineVariant.Color;
+                characterCommand.Rect            = new(size, position);
+                characterCommand.StencilLayer    = this.StencilLayer;
 
                 cursor.X += (int)float.Round(glyphsWidths[i]);
 
@@ -378,13 +386,13 @@ internal sealed partial class TextLayout : Layout
 
                 boundings.Height += this.LineHeight + (uint)this.fontLeading;
 
-                lines[(int)lineIndex].End = (uint)i;
+                lines[lineIndex].End = (uint)i + 1;
 
                 lineIndex++;
 
                 if (lineIndex < lines.Length)
                 {
-                    lines[(int)lineIndex].Start = (uint)int.Min(i + 1, text.Length - 1);
+                    lines[lineIndex].Start = (uint)int.Min(i + 1, text.Length - 1);
                 }
             }
             else
@@ -404,18 +412,10 @@ internal sealed partial class TextLayout : Layout
             }
         }
 
-        lines[^1].End = (uint)text.Length - 1;
+        lines[^1].End = (uint)text.Length;
 
         var caretCommand = (TextCommand)this.target.Commands[^1];
-
-        caretCommand.Color           = Color.White;
-        caretCommand.Flags           = Flags.ColorAsBackground;
-        caretCommand.MappedTexture   = MappedTexture.Default;
-        caretCommand.PipelineVariant = PipelineVariant.Color;
-        caretCommand.StencilLayer    = this.StencilLayer;
-        caretCommand.Index           = default;
-        caretCommand.Line            = default;
-        caretCommand.Rect            = default;
+        this.SetupCaret(caretCommand);
 
         atlas.Update();
 
@@ -437,6 +437,21 @@ internal sealed partial class TextLayout : Layout
         {
             character++;
         }
+    }
+
+    private void SetupCaret(TextCommand caretCommand)
+    {
+        caretCommand.Border          = default;
+        caretCommand.Color           = Color.White;
+        caretCommand.Flags           = Flags.ColorAsBackground;
+        caretCommand.Index           = default;
+        caretCommand.Line            = default;
+        caretCommand.MappedTexture   = MappedTexture.Default;
+        caretCommand.ObjectId        = default;
+        caretCommand.PipelineVariant = PipelineVariant.Color;
+        caretCommand.Rect            = default;
+        caretCommand.StencilLayer    = this.StencilLayer;
+        caretCommand.Rect            = new(new(this.caretWidth, this.LineHeight), default);
     }
 
     private void TargetParentStyleChanged(StyleProperty property)
@@ -506,7 +521,9 @@ internal sealed partial class TextLayout : Layout
 
             var scroll = parent.Scroll;
 
-            var position = this.CaretPosition;
+            var position = this.CaretPosition < this.Text.Length
+                ? this.CaretPosition
+                : this.CaretPosition.ClampSubtract(1);
 
             if (this.canScrollX)
             {
@@ -528,13 +545,13 @@ internal sealed partial class TextLayout : Layout
             {
                 if (cursorBoundings.Top < boundsTop)
                 {
-                    var characterTop = this.Target.GetCharacterBoundings(position).Top + scroll.Y;
+                    var characterTop = cursorBoundings.Top + scroll.Y;
 
                     scroll.Y = (uint)(characterTop - boundsTop);
                 }
                 else if (cursorBoundings.Bottom > boundsBottom)
                 {
-                    var characterBottom = this.Target.GetCharacterBoundings(position.ClampSubtract(1)).Bottom + scroll.Y;
+                    var characterBottom = cursorBoundings.Bottom + scroll.Y;
 
                     scroll.Y = (uint)(characterBottom - boundsBottom);
                 }
@@ -608,44 +625,36 @@ internal sealed partial class TextLayout : Layout
 
     public void SetCaret(ushort x, ushort y)
     {
-        if (this.Text == null || !this.CanSelect)
+        if (string.IsNullOrEmpty(this.Text) || !this.CanSelect)
         {
             return;
         }
 
-        this.ClearSelection();
-
-        var length   = this.Text.Length + 1;
-        var position = (uint)length;
-
         var cursor = this.Target.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
 
-        bool isCursorWithinRect(in Rect<float> rect) => cursor.Y >= rect.Position.Y - rect.Size.Height && cursor.Y <= rect.Position.Y;
-
-        for (var i = 0; i < length; i++)
+        if (cursor == this.previouCursor)
         {
-            var rect = ((RectCommand)this.target.Commands[i]).Rect;
+            return;
+        }
 
-            if (isCursorWithinRect(rect))
+        this.previouCursor = cursor;
+
+        this.ClearSelection();
+
+        bool isOnCursorLine(in Rect<float> rect) => cursor.Y >= rect.Position.Y - rect.Size.Height && cursor.Y <= rect.Position.Y;
+
+        var lineSpan = this.lines.AsSpan();
+        var position = (uint)this.Text.Length;
+
+        for (var i = 0; i < lineSpan.Length; i++)
+        {
+            var rect = ((TextCommand)this.target.Commands[(int)lineSpan[i].Start]).Rect;
+
+            if (isOnCursorLine(rect))
             {
-                position = (uint)i;
-
-                for (var j = i + 1; j < length; j++)
-                {
-                    rect = ((RectCommand)this.target.Commands[j]).Rect;
-
-                    if (!isCursorWithinRect(rect))
-                    {
-                        break;
-                    }
-
-                    position = (uint)j;
-                }
-
-                if (position == this.Text.Length)
-                {
-                    position += 1;
-                }
+                position = lineSpan[i].End == this.Text.Length && this.Text[^1] != '\n'
+                    ? lineSpan[i].End
+                    : lineSpan[i].End - 1;
 
                 break;
             }
@@ -835,8 +844,8 @@ internal sealed partial class TextLayout : Layout
             position = isCursorBefore(endAnchor.Rect)
                 ? lines[index].Start
                 : index + 1 == lines.Length
-                    ? (uint)this.Text.Length
-                    : lines[index].End;
+                    ? lines[index].End
+                    : lines[index].End.ClampSubtract(1);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorAfter(in Rect<float> rect) => cursor.X > rect.Position.X + rect.Size.Width / 2;
@@ -886,7 +895,6 @@ internal sealed partial class TextLayout : Layout
                     break;
                 }
             }
-
         }
         #endregion
     }
@@ -910,10 +918,15 @@ internal sealed partial class TextLayout : Layout
         {
             if (string.IsNullOrEmpty(this.Text))
             {
-                ReleaseCommands(this.target.Commands, this.target.Commands.Count - 1);
+                if (this.textIsDirty)
+                {
+                    ReleaseCommands(this.target.Commands, this.target.Commands.Count - 1);
 
-                this.Selection = default;
-                this.Boundings = default;
+                    this.SetupCaret((TextCommand)this.target.Commands[0]);
+
+                    this.Selection = default;
+                    this.Boundings = default;
+                }
             }
             else
             {

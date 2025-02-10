@@ -20,6 +20,8 @@ public partial class TextBox : Element
 
     private string? previousText;
 
+    private uint TrimmedCursorPosition => string.IsNullOrEmpty(this.text.Value) ? 0 : uint.Min(this.CursorPosition, (uint)this.text.Value.Length - 1);
+
     public override string NodeName { get; } = nameof(TextBox);
 
     public uint CursorPosition
@@ -261,17 +263,20 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
-                    var cursor = uint.Min(this.CursorPosition, (uint)this.text.Value.Length - 1);
-
+                    var cursor       = this.TrimmedCursorPosition;
+                    var position     = this.CursorPosition;
                     var currentLine  = this.text.GetCharacterLine(cursor);
                     var previousLine = this.text.GetCharacterPreviousLine(cursor);
-                    var position     = this.CursorPosition;
 
-                    if (previousLine != currentLine && !(this.CursorPosition == this.text.Value.Length && this.text.Value[^1] == '\n'))
+                    if (previousLine != currentLine)
                     {
                         var column = this.CursorPosition - currentLine.Start;
 
-                        position = column < previousLine.Offset ? previousLine.Start + column : previousLine.End;
+                        position = this.CursorPosition == this.text.Value.Length && this.text.Value[^1] == '\n'
+                            ? currentLine.Start
+                            : column < previousLine.Offset
+                                ? previousLine.Start + column
+                                : previousLine.End - 1;
                     }
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
@@ -293,24 +298,33 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
-                    var currentLine = this.text.GetCharacterLine(this.CursorPosition);
-                    var nextLine    = this.text.GetCharacterNextLine(this.CursorPosition);
-                    var position    = currentLine.End + 1;
+                    var cursor      = this.TrimmedCursorPosition;
+                    var position    = this.CursorPosition;
+                    var currentLine = this.text.GetCharacterLine(cursor);
+                    var nextLine    = this.text.GetCharacterNextLine(cursor);
 
                     if (nextLine != currentLine)
                     {
-                        var column  = this.CursorPosition - currentLine.Start;
+                        var column = this.CursorPosition - currentLine.Start;
 
-                        position = column < nextLine.Offset
-                            ? nextLine.Start + column
-                            : nextLine.End == this.text.Value.Length - 1
-                                ? (uint)this.text.Value.Length
-                                : nextLine.End;
+                        // position = column < nextLine.Offset
+                        //     ? nextLine.Start + column
+                        //     : nextLine.End == this.text.Value.Length || this.text.Value[(int)nextLine.Start] == '\n'
+                        //         ? nextLine.End
+                        //         : nextLine.End - 1;
+
+                        position = nextLine.End == this.text.Value.Length && this.text.Value[^1] == '\n'
+                            ? nextLine.End - 1
+                            : column < nextLine.Offset
+                                ? nextLine.Start + column
+                                : nextLine.End == this.text.Value.Length
+                                    ? nextLine.End
+                                    : nextLine.End - 1;
                     }
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
-                        this.text.Selection = this.text.Selection?.WithEnd(position) ?? new(this.CursorPosition, position);
+                        this.text.Selection = this.text.Selection?.WithEnd(position) ?? new(cursor, position);
                     }
                     else if (this.text.Selection != null)
                     {
@@ -329,7 +343,7 @@ public partial class TextBox : Element
 
                     var position = (!this.Multiline || keyEvent.Modifiers.HasFlag(KeyStates.Control))
                         ? 0u
-                        : new LineInfo(this.text.Value, this.CursorPosition).Start;
+                        : this.text.GetCharacterLine(this.TrimmedCursorPosition).Start;
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
@@ -358,9 +372,9 @@ public partial class TextBox : Element
                     }
                     else
                     {
-                        var lineInfo = new LineInfo(this.text.Value, this.CursorPosition);
+                        var line = this.text.GetCharacterLine(this.TrimmedCursorPosition);
 
-                        position = lineInfo.End == this.text.Value.Length - 1 && this.text.Value[^1] != '\n' ? lineInfo.End + 1 : lineInfo.End;
+                        position = line.End == this.text.Value.Length && this.text.Value[^1] != '\n' ? line.End : line.End - 1;
                     }
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))

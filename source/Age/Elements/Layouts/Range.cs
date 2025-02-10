@@ -15,4 +15,3 @@ public record struct TextSelection(uint Start, uint End)
     public override readonly string ToString() =>
         $"[{this.Start}..{this.End}]";
 }
-

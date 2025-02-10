@@ -213,18 +213,9 @@ public class ScrollTest
         var textBox = new TextBox()
         {
             Name = "conteiner",
-            Value = 
+            Value =
             """
-            00000_00000-x-00000_00000
-            11111_11111-x-11111_11111
-            22222_22222-x-22222_22222
-            33333_33333-x-33333_33333
-            44444_44444-x-44444_44444
-            55555_55555-x-55555_55555
-            66666_66666-x-66666_66666
-            77777_77777-x-77777_77777
-            88888_88888-x-88888_88888
-            99999_99999-x-99999_99999
+            00
             """,
             Multiline = true,
             Style = new()
@@ -233,7 +224,7 @@ public class ScrollTest
                 Border = new(borderSize, 0, Color.Red),
                 Padding = new((Pixel)10),
                 Overflow = OverflowKind.Scroll,
-                Size = new((Pixel)100),
+                Size = new((Pixel)200),
                 Color = Color.White,
             },
         };
