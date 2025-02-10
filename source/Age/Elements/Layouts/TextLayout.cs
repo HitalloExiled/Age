@@ -150,6 +150,8 @@ internal sealed partial class TextLayout : Layout
 
     private static void AllocateCommands(List<Command> commands, int length)
     {
+        commands.EnsureCapacity(length);
+
         if (length < commands.Count)
         {
             ReleaseCommands(commands, commands.Count - length);
