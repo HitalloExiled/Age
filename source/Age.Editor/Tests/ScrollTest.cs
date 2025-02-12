@@ -204,8 +204,8 @@ public class ScrollTest
                 Margin  = new((Pixel)20),
                 Border  = new(borderSize, 0, Color.Red),
                 Padding = new((Pixel)10),
-                Overflow = OverflowKind.Scroll,
-                Size    = new((Pixel)100),
+                //Overflow = OverflowKind.Scroll,
+                //Size    = new((Pixel)100),
                 Color   = Color.White,
             },
         };

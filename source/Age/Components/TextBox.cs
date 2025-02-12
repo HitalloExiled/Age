@@ -268,15 +268,15 @@ public partial class TextBox : Element
                     var currentLine  = this.text.GetCharacterLine(cursor);
                     var previousLine = this.text.GetCharacterPreviousLine(cursor);
 
-                    if (previousLine != currentLine)
+                    if (previousLine.HasValue)
                     {
                         var column = this.CursorPosition - currentLine.Start;
 
                         position = this.CursorPosition == this.text.Value.Length && this.text.Value[^1] == '\n'
                             ? currentLine.Start
-                            : column < previousLine.Offset
-                                ? previousLine.Start + column
-                                : previousLine.End - 1;
+                            : column < previousLine.Value.Lenght
+                                ? previousLine.Value.Start + column
+                                : previousLine.Value.End;
                     }
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
@@ -303,23 +303,15 @@ public partial class TextBox : Element
                     var currentLine = this.text.GetCharacterLine(cursor);
                     var nextLine    = this.text.GetCharacterNextLine(cursor);
 
-                    if (nextLine != currentLine)
+                    if (nextLine.HasValue)
                     {
                         var column = this.CursorPosition - currentLine.Start;
 
-                        // position = column < nextLine.Offset
-                        //     ? nextLine.Start + column
-                        //     : nextLine.End == this.text.Value.Length || this.text.Value[(int)nextLine.Start] == '\n'
-                        //         ? nextLine.End
-                        //         : nextLine.End - 1;
-
-                        position = nextLine.End == this.text.Value.Length && this.text.Value[^1] == '\n'
-                            ? nextLine.End - 1
-                            : column < nextLine.Offset
-                                ? nextLine.Start + column
-                                : nextLine.End == this.text.Value.Length
-                                    ? nextLine.End
-                                    : nextLine.End - 1;
+                        position = column < nextLine.Value.Lenght
+                            ? nextLine.Value.Start + column
+                            : nextLine.Value.End + 1 == this.text.Value.Length
+                                ? (uint)this.text.Value.Length
+                                : nextLine.Value.End;
                     }
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
@@ -341,7 +333,7 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
-                    var position = (!this.Multiline || keyEvent.Modifiers.HasFlag(KeyStates.Control))
+                    var position = (!this.Multiline || keyEvent.Modifiers.HasFlag(KeyStates.Control)) && this.CursorPosition < this.text.Value?.Length
                         ? 0u
                         : this.text.GetCharacterLine(this.TrimmedCursorPosition).Start;
 
@@ -374,7 +366,7 @@ public partial class TextBox : Element
                     {
                         var line = this.text.GetCharacterLine(this.TrimmedCursorPosition);
 
-                        position = line.End == this.text.Value.Length && this.text.Value[^1] != '\n' ? line.End : line.End - 1;
+                        position = line.End + 1 == this.text.Value.Length && this.text.Value[^1] != '\n' ? (uint)this.text.Value.Length : line.End;
                     }
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))

@@ -129,13 +129,13 @@ public sealed class TextNode : ContainerNode
         return new(rect.Size.Cast<int>(), position);
     }
 
-    public TextSelection GetCharacterLine(uint index) =>
+    public TextLine GetCharacterLine(uint index) =>
         this.Layout.GetCharacterLine(index);
 
-    public TextSelection GetCharacterNextLine(uint index) =>
+    public TextLine? GetCharacterNextLine(uint index) =>
         this.Layout.GetCharacterNextLine(index);
 
-    public TextSelection GetCharacterPreviousLine(uint index) =>
+    public TextLine? GetCharacterPreviousLine(uint index) =>
         this.Layout.GetCharacterPreviousLine(index);
 
     public Rect<int> GetTextSelectionBounds(TextSelection textSelection)

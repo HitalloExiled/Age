@@ -22,10 +22,10 @@ internal sealed partial class TextLayout : Layout
     private static readonly ObjectPool<TextCommand> rectCommandPool = new(static () => new());
 
     #region 8-bytes
-    private readonly Timer               caretTimer;
-    private readonly List<TextSelection> lines = new(1);
-    private readonly Timer               selectionTimer;
-    private readonly TextNode            target;
+    private readonly Timer          caretTimer;
+    private readonly List<TextLine> textLines = new(1);
+    private readonly Timer          selectionTimer;
+    private readonly TextNode       target;
 
     private SKTypeface? typeface;
     private SKPaint?    paint;
@@ -308,9 +308,9 @@ internal sealed partial class TextLayout : Layout
 
         text.AsSpan().GetTextInfo(out var nonWhitespaceCount, out var linesCount);
 
-        this.lines.Resize(linesCount, default);
+        this.textLines.Resize(linesCount, default);
 
-        var lines = this.lines.AsSpan();
+        var lines = this.textLines.AsSpan();
 
         AllocateCommands(this.target.Commands, text.Length + nonWhitespaceCount + 1);
 
@@ -386,14 +386,11 @@ internal sealed partial class TextLayout : Layout
 
                 boundings.Height += this.LineHeight + (uint)this.fontLeading;
 
-                lines[lineIndex].End = (uint)i + 1;
+                lines[lineIndex].Lenght = (uint)i + 1 - lines[lineIndex].Start;
 
                 lineIndex++;
 
-                if (lineIndex < lines.Length)
-                {
-                    lines[lineIndex].Start = (uint)int.Min(i + 1, text.Length - 1);
-                }
+                lines[lineIndex].Start = (uint)i + 1;
             }
             else
             {
@@ -412,7 +409,7 @@ internal sealed partial class TextLayout : Layout
             }
         }
 
-        lines[^1].End = (uint)text.Length;
+        lines[^1].Lenght = (uint)text.Length + 1 - lines[^1].Start;
 
         var caretCommand = (TextCommand)this.target.Commands[^1];
         this.SetupCaret(caretCommand);
@@ -568,21 +565,31 @@ internal sealed partial class TextLayout : Layout
     public void ClearSelection() =>
         this.Selection = default;
 
-    public TextSelection GetCharacterLine(uint index) =>
-        this.lines[this.GetCharacterLineIndex(index)];
+    public TextLine GetCharacterLine(uint index) =>
+        this.textLines[this.GetCharacterLineIndex(index)];
 
     public int GetCharacterLineIndex(uint index) =>
         ((TextCommand)this.Target.Commands[(int)index]).Line;
 
-    public TextSelection GetCharacterNextLine(uint index) =>
-        string.IsNullOrEmpty(this.Text)
-            ? default
-            : this.lines[int.Min(this.lines.Count - 1, this.GetCharacterLineIndex(index) + 1)];
+    public TextLine? GetCharacterNextLine(uint index)
+    {
+        if (!string.IsNullOrEmpty(this.Text) && this.GetCharacterLineIndex(index) + 1 is var lineIndex && lineIndex < this.textLines.Count)
+        {
+            return this.textLines[lineIndex];
+        }
 
-    public TextSelection GetCharacterPreviousLine(uint index) =>
-        string.IsNullOrEmpty(this.Text)
-            ? default
-            : this.lines[int.Max(0, this.GetCharacterLineIndex(index) - 1)];
+        return default;
+    }
+
+    public TextLine? GetCharacterPreviousLine(uint index)
+    {
+        if (!string.IsNullOrEmpty(this.Text) && this.GetCharacterLineIndex(index) - 1 is var lineIndex && lineIndex > -1)
+        {
+            return this.textLines[lineIndex];
+        }
+
+        return default;
+    }
 
     public void HideCaret()
     {
@@ -643,7 +650,7 @@ internal sealed partial class TextLayout : Layout
 
         bool isOnCursorLine(in Rect<float> rect) => cursor.Y >= rect.Position.Y - rect.Size.Height && cursor.Y <= rect.Position.Y;
 
-        var lineSpan = this.lines.AsSpan();
+        var lineSpan = this.textLines.AsSpan();
         var position = (uint)this.Text.Length;
 
         for (var i = 0; i < lineSpan.Length; i++)
@@ -652,15 +659,15 @@ internal sealed partial class TextLayout : Layout
 
             if (isOnCursorLine(rect))
             {
-                position = lineSpan[i].End == this.Text.Length && this.Text[^1] != '\n'
-                    ? lineSpan[i].End
-                    : lineSpan[i].End - 1;
+                position = lineSpan[i].End + 1 == this.Text.Length && this.Text[^1] != '\n'
+                    ? (uint)this.Text.Length
+                    : lineSpan[i].End;
 
                 break;
             }
         }
 
-        this.CaretPosition = position;
+        this.CaretPosition = (uint)position;
     }
 
     public void SetCaret(ushort x, ushort y, uint position)
@@ -796,7 +803,7 @@ internal sealed partial class TextLayout : Layout
         var startIndex = int.Min((int)selection.Start, this.Text.Length - 1);
         var endIndex   = int.Min((int)selection.End,   this.Text.Length - 1);
 
-        var lineSpan     = this.lines.AsSpan();
+        var lineSpan     = this.textLines.AsSpan();
         var commandsSpan = this.target.Commands.AsSpan();
 
         var startAnchor = (TextCommand)commandsSpan[startIndex];
@@ -840,12 +847,12 @@ internal sealed partial class TextLayout : Layout
 
         #region local methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void resolveLine(scoped Span<TextSelection> lines, int index, ref uint position) =>
+        void resolveLine(scoped Span<TextLine> lines, int index, ref uint position) =>
             position = isCursorBefore(endAnchor.Rect)
                 ? lines[index].Start
-                : index + 1 == lines.Length
-                    ? lines[index].End
-                    : lines[index].End.ClampSubtract(1);
+                : lines[index].End + 1 == this.Text.Length
+                    ? (uint)this.Text.Length
+                    : lines[index].End;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorAfter(in Rect<float> rect) => cursor.X > rect.Position.X + rect.Size.Width / 2;
@@ -866,7 +873,7 @@ internal sealed partial class TextLayout : Layout
         bool isCursorAboveBottom(in Rect<float> rect) => cursor.Y > rect.Position.Y - rect.Size.Height;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void scanAbove(scoped Span<Command> commands, int start, int end, scoped Span<TextSelection> lines, ref uint position)
+        void scanAbove(scoped Span<Command> commands, int start, int end, scoped Span<TextLine> lines, ref uint position)
         {
             for (var i = start; i > end; i--)
             {
@@ -882,7 +889,7 @@ internal sealed partial class TextLayout : Layout
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void scanBelow(scoped Span<Command> commands, int start, int end, scoped Span<TextSelection> lines, ref uint position)
+        void scanBelow(scoped Span<Command> commands, int start, int end, scoped Span<TextLine> lines, ref uint position)
         {
             for (var i = start; i < end; i++)
             {
