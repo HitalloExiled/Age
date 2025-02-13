@@ -1,7 +1,6 @@
 using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Elements;
-using Age.Extensions;
 using Age.Scene;
 using Age.Themes;
 
@@ -259,24 +258,20 @@ public partial class TextBox : Element
                 break;
 
             case Key.Up:
-                if (this.Multiline && !string.IsNullOrEmpty(this.text.Value) && this.CursorPosition > 0)
+                if (this.Multiline && this.text.Value != null && this.CursorPosition > 0)
                 {
                     this.SaveHistory();
 
                     var cursor       = this.TrimmedCursorPosition;
-                    var position     = this.CursorPosition;
                     var currentLine  = this.text.GetCharacterLine(cursor);
                     var previousLine = this.text.GetCharacterPreviousLine(cursor);
+                    var position     = currentLine.Start;
 
-                    if (previousLine.HasValue)
+                    if (previousLine.HasValue && !(this.CursorPosition == this.text.Value.Length && this.text.Value[^1] == '\n'))
                     {
                         var column = this.CursorPosition - currentLine.Start;
 
-                        position = this.CursorPosition == this.text.Value.Length && this.text.Value[^1] == '\n'
-                            ? currentLine.Start
-                            : column < previousLine.Value.Lenght
-                                ? previousLine.Value.Start + column
-                                : previousLine.Value.End;
+                        position = column < previousLine.Value.Length ? previousLine.Value.Start + column : previousLine.Value.End;
                     }
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
@@ -299,24 +294,24 @@ public partial class TextBox : Element
                     this.SaveHistory();
 
                     var cursor      = this.TrimmedCursorPosition;
-                    var position    = this.CursorPosition;
                     var currentLine = this.text.GetCharacterLine(cursor);
                     var nextLine    = this.text.GetCharacterNextLine(cursor);
+                    var position    = currentLine.End + 1;
 
                     if (nextLine.HasValue)
                     {
-                        var column = this.CursorPosition - currentLine.Start;
+                        var column  = this.CursorPosition - currentLine.Start;
 
-                        position = column < nextLine.Value.Lenght
+                        position = column < nextLine.Value.Length
                             ? nextLine.Value.Start + column
-                            : nextLine.Value.End + 1 == this.text.Value.Length
+                            : nextLine.Value.End == this.text.Value.Length - 1
                                 ? (uint)this.text.Value.Length
                                 : nextLine.Value.End;
                     }
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
                     {
-                        this.text.Selection = this.text.Selection?.WithEnd(position) ?? new(cursor, position);
+                        this.text.Selection = this.text.Selection?.WithEnd(position) ?? new(this.CursorPosition, position);
                     }
                     else if (this.text.Selection != null)
                     {
@@ -333,7 +328,7 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
-                    var position = (!this.Multiline || keyEvent.Modifiers.HasFlag(KeyStates.Control)) && this.CursorPosition < this.text.Value?.Length
+                    var position = (!this.Multiline || keyEvent.Modifiers.HasFlag(KeyStates.Control))
                         ? 0u
                         : this.text.GetCharacterLine(this.TrimmedCursorPosition).Start;
 
@@ -364,9 +359,9 @@ public partial class TextBox : Element
                     }
                     else
                     {
-                        var line = this.text.GetCharacterLine(this.TrimmedCursorPosition);
+                        var currentLine = this.text.GetCharacterLine(this.TrimmedCursorPosition);
 
-                        position = line.End + 1 == this.text.Value.Length && this.text.Value[^1] != '\n' ? (uint)this.text.Value.Length : line.End;
+                        position = currentLine.End == this.text.Value.Length - 1 && this.text.Value[^1] != '\n' ? currentLine.End + 1 : currentLine.End;
                     }
 
                     if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))

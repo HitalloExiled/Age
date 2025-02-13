@@ -94,14 +94,14 @@ internal sealed partial class TextLayout : Layout
     private bool canScrollX;
     private bool canScrollY;
 
-    private TextCommand CaretCommand => (TextCommand)this.Target.Commands[^1];
+    private RectCommand caretCommand;
     private bool        CanSelect    => this.Parent?.State.Style.TextSelection != false;
 
     public override bool IsParentDependent { get; }
     #endregion
 
 
-    public Rect<float> CursorRect => this.CaretCommand.Rect;
+    public Rect<float> CursorRect => this.caretCommand.Rect;
 
     public override StencilLayer? StencilLayer
     {
@@ -144,8 +144,17 @@ internal sealed partial class TextLayout : Layout
         target.AppendChild(this.caretTimer);
         target.AppendChild(this.selectionTimer);
 
-        target.Commands.Add(rectCommandPool.Get());
-        this.SetupCaret((TextCommand)target.Commands[0]);
+        this.caretCommand = new RectCommand
+        {
+            Color           = Color.White,
+            Flags           = Flags.ColorAsBackground,
+            MappedTexture   = MappedTexture.Default,
+            PipelineVariant = PipelineVariant.Color,
+            Rect            = new(new(this.caretWidth, this.LineHeight), default),
+            StencilLayer    = this.StencilLayer
+        };
+
+        target.Commands.Add(caretCommand);
     }
 
     private static void AllocateCommands(List<Command> commands, int length)
@@ -204,7 +213,7 @@ internal sealed partial class TextLayout : Layout
     {
         this.caretIsVisible = !this.caretIsVisible;
 
-        this.CaretCommand.PipelineVariant = this.caretIsVisible ? PipelineVariant.Color : default;
+        this.caretCommand.PipelineVariant = this.caretIsVisible ? PipelineVariant.Color : default;
 
         this.RequestUpdate(false);
     }
@@ -223,8 +232,6 @@ internal sealed partial class TextLayout : Layout
 
     private void DrawCaret()
     {
-        var caretCommand = this.CaretCommand;
-
         if (this.Text?.Length > 0)
         {
             Point<float> position;
@@ -249,14 +256,14 @@ internal sealed partial class TextLayout : Layout
                 position = ((RectCommand)this.target.Commands[(int)this.CaretPosition]).Rect.Position;
             }
 
-            caretCommand.Rect = caretCommand.Rect with
+            this.caretCommand.Rect = this.caretCommand.Rect with
             {
                 Position = position,
             };
         }
         else
         {
-            caretCommand.Rect = new()
+            this.caretCommand.Rect = new()
             {
                 Position = default,
                 Size     = new(this.caretWidth, this.LineHeight),
@@ -312,7 +319,11 @@ internal sealed partial class TextLayout : Layout
 
         var lines = this.textLines.AsSpan();
 
-        AllocateCommands(this.target.Commands, text.Length + nonWhitespaceCount + 1);
+        this.target.Commands.RemoveAt(this.target.Commands.Count - 1);
+
+        AllocateCommands(this.target.Commands, text.Length + nonWhitespaceCount);
+
+        this.target.Commands.Add(this.caretCommand);
 
         var elementIndex = this.target.Index + 1;
         var range        = this.Selection?.Ordered();
@@ -386,7 +397,7 @@ internal sealed partial class TextLayout : Layout
 
                 boundings.Height += this.LineHeight + (uint)this.fontLeading;
 
-                lines[lineIndex].Lenght = (uint)i + 1 - lines[lineIndex].Start;
+                lines[lineIndex].Length = (uint)i + 1 - lines[lineIndex].Start;
 
                 lineIndex++;
 
@@ -409,10 +420,7 @@ internal sealed partial class TextLayout : Layout
             }
         }
 
-        lines[^1].Lenght = (uint)text.Length + 1 - lines[^1].Start;
-
-        var caretCommand = (TextCommand)this.target.Commands[^1];
-        this.SetupCaret(caretCommand);
+        lines[^1].Length = (uint)text.Length + 1 - lines[^1].Start;
 
         atlas.Update();
 
@@ -434,21 +442,6 @@ internal sealed partial class TextLayout : Layout
         {
             character++;
         }
-    }
-
-    private void SetupCaret(TextCommand caretCommand)
-    {
-        caretCommand.Border          = default;
-        caretCommand.Color           = Color.White;
-        caretCommand.Flags           = Flags.ColorAsBackground;
-        caretCommand.Index           = default;
-        caretCommand.Line            = default;
-        caretCommand.MappedTexture   = MappedTexture.Default;
-        caretCommand.ObjectId        = default;
-        caretCommand.PipelineVariant = PipelineVariant.Color;
-        caretCommand.Rect            = default;
-        caretCommand.StencilLayer    = this.StencilLayer;
-        caretCommand.Rect            = new(new(this.caretWidth, this.LineHeight), default);
     }
 
     private void TargetParentStyleChanged(StyleProperty property)
@@ -481,6 +474,13 @@ internal sealed partial class TextLayout : Layout
                 this.LineHeight  = (uint)float.Round(-metrics.Ascent + metrics.Descent);
                 this.BaseLine    = (int)float.Round(-metrics.Ascent);
                 this.fontLeading = metrics.Leading;
+
+                this.caretCommand.Rect = this.caretCommand.Rect with
+                {
+                    Size = new(this.caretWidth, this.LineHeight),
+                };
+
+                this.caretIsDirty = true;
             }
 
             this.canScrollX = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX;
@@ -596,7 +596,7 @@ internal sealed partial class TextLayout : Layout
         this.caretIsDirty   = true;
         this.caretIsVisible = false;
 
-        this.CaretCommand.PipelineVariant = default;
+        this.caretCommand.PipelineVariant = default;
 
         this.caretTimer.Stop();
 
@@ -687,7 +687,7 @@ internal sealed partial class TextLayout : Layout
         this.caretIsDirty   = true;
         this.caretIsVisible = true;
 
-        this.CaretCommand.PipelineVariant = PipelineVariant.Color;
+        this.caretCommand.PipelineVariant = PipelineVariant.Color;
 
         this.caretTimer.Start();
 
@@ -927,9 +927,11 @@ internal sealed partial class TextLayout : Layout
             {
                 if (this.textIsDirty)
                 {
-                    ReleaseCommands(this.target.Commands, this.target.Commands.Count - 1);
+                    this.target.Commands.RemoveAt(this.target.Commands.Count - 1);
 
-                    this.SetupCaret((TextCommand)this.target.Commands[0]);
+                    ReleaseCommands(this.target.Commands, this.target.Commands.Count);
+
+                    this.target.Commands.Add(this.caretCommand);
 
                     this.Selection = default;
                     this.Boundings = default;
