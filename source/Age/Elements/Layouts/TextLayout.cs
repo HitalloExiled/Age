@@ -397,11 +397,14 @@ internal sealed partial class TextLayout : Layout
 
                 boundings.Height += this.LineHeight + (uint)this.fontLeading;
 
-                lines[lineIndex].Length = (uint)i + 1 - lines[lineIndex].Start;
+                lines[lineIndex].Length = (uint)i - lines[lineIndex].Start + 1;
 
                 lineIndex++;
 
-                lines[lineIndex].Start = (uint)i + 1;
+                if (lineIndex < lines.Length)
+                {
+                    lines[lineIndex].Start = (uint)i + 1;
+                }
             }
             else
             {
@@ -420,7 +423,7 @@ internal sealed partial class TextLayout : Layout
             }
         }
 
-        lines[^1].Length = (uint)text.Length + 1 - lines[^1].Start;
+        lines[^1].Length = (uint)text.Length - 1 - lines[^1].Start + 1;
 
         atlas.Update();
 

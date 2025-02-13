@@ -12,10 +12,6 @@ public sealed class TextNode : ContainerNode
 
     public override string NodeName { get; } = nameof(TextNode);
 
-    public string? SelectedText => this.Layout.Text != null && this.Selection?.Ordered() is TextSelection selection
-        ? this.Layout.Text.Substring((int)selection.Start, (int)(selection.End - selection.Start))
-        : null;
-
     public uint CursorPosition
     {
         get => this.Layout.CaretPosition;
@@ -74,22 +70,63 @@ public sealed class TextNode : ContainerNode
     public void ClearSelection() =>
         this.Layout.ClearSelection();
 
-    public void DeleteSelected()
+    public string? Copy(TextSelection selection)
     {
-        var range = this.Layout.Selection?.Ordered();
-
-        if (range.HasValue && this.Layout.Text != null)
+        if (this.Layout.Text == null)
         {
-            var start = this.Layout.Text.AsSpan(..(int)range.Value.Start);
-            var end   = this.Layout.Text.AsSpan((int)range.Value.End..);
+            return null;
+        }
+
+        var range = selection.Ordered();
+
+        return this.Layout.Text.Substring((int)range.Start, (int)(range.End - range.Start));
+    }
+
+    public string? CopySelected()
+    {
+        if (!this.Selection.HasValue)
+        {
+            return null;
+        }
+
+        return this.Copy(this.Selection.Value);
+    }
+
+    public string? Cut(TextSelection selection)
+    {
+        var content = this.Copy(selection);
+
+        this.Delete(selection);
+
+        return content;
+    }
+
+    public string? CutSelected() =>
+        !this.Selection.HasValue ? null : this.Cut(this.Selection.Value);
+
+    public void Delete(TextSelection selection)
+    {
+        if (this.Layout.Text != null)
+        {
+            var range = selection.Ordered();
+            var start = this.Layout.Text.AsSpan(..(int)range.Start);
+            var end   = this.Layout.Text.AsSpan((int)range.End..);
 
             this.Layout.Text = string.Concat(start, end);
 
             this.Layout.ClearSelection();
-            this.CursorPosition = range.Value.Start;
-        }
+            this.CursorPosition = range.Start;
 
-        this.Layout.AdjustScroll();
+            this.Layout.AdjustScroll();
+        }
+    }
+
+    public void DeleteSelected()
+    {
+        if (this.Layout.Selection.HasValue)
+        {
+            this.Delete(this.Layout.Selection.Value);
+        }
     }
 
     public Rect<int> GetCursorBoundings()

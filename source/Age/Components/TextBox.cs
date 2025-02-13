@@ -141,7 +141,16 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
-                    if (this.text.Selection != null)
+                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    {
+                        var currentLine = this.text.GetCharacterLine(this.TrimmedCursorPosition);
+
+                        if (this.Tree is RenderTree tree && this.text.Cut(new(currentLine.Start, currentLine.End + 1)) is string text)
+                        {
+                            tree.Window.SetClipboardData(text);
+                        }
+                    }
+                    else if (this.text.Selection != null)
                     {
                         this.DeleteSelected();
                     }
@@ -304,7 +313,7 @@ public partial class TextBox : Element
 
                         position = column < nextLine.Value.Length
                             ? nextLine.Value.Start + column
-                            : nextLine.Value.End == this.text.Value.Length - 1
+                            : nextLine.Value.End + 1 == this.text.Value.Length
                                 ? (uint)this.text.Value.Length
                                 : nextLine.Value.End;
                     }
@@ -422,14 +431,12 @@ public partial class TextBox : Element
 
             case Key.X:
                 {
-                    if (keyEvent.Modifiers.HasFlag(KeyStates.Control) && this.text.Selection != null && this.Tree is RenderTree renderTree)
+                    if (keyEvent.Modifiers.HasFlag(KeyStates.Control) && this.Tree is RenderTree renderTree)
                     {
-                        if (this.text.SelectedText is string text)
+                        this.SaveHistory();
+
+                        if (this.text.CutSelected() is string text)
                         {
-                            this.SaveHistory();
-
-                            this.DeleteSelected();
-
                             renderTree.Window.SetClipboardData(text);
                         }
                     }

@@ -180,7 +180,7 @@ public sealed partial class RenderTree : NodeTree
 
     private void OnKeyDown(Key key)
     {
-        if (key == Key.C && Input.IsKeyPressed(Key.Control) && this.lastFocusedTextNode?.SelectedText is string selectedText)
+        if (key == Key.C && Input.IsKeyPressed(Key.Control) && this.lastFocusedTextNode?.CopySelected() is string selectedText)
         {
             this.Window.SetClipboardData(selectedText);
         }

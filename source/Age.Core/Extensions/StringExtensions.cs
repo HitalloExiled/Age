@@ -28,7 +28,7 @@ public static class StringExtensions
             {
                 nonWhitespaceCount++;
             }
-            else if (value[i] == '\n')
+            else if (value[i] == '\n' && i + 1 < value.Length)
             {
                 linesCount++;
             }
