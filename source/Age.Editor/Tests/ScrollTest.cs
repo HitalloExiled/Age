@@ -220,12 +220,12 @@ public class ScrollTest
             Multiline = true,
             Style = new()
             {
-                Margin = new((Pixel)20),
-                Border = new(borderSize, 0, Color.Red),
-                Padding = new((Pixel)10),
+                Margin   = new((Pixel)20),
+                Border   = new(borderSize, 0, Color.Red),
+                Padding  = new((Pixel)10),
                 Overflow = OverflowKind.Scroll,
-                Size = new((Pixel)200),
-                Color = Color.White,
+                Size     = new((Pixel)200),
+                Color    = Color.White,
             },
         };
 

@@ -1,10 +1,12 @@
-using System.Buffers;
-using System.Collections;
+using System.Runtime.CompilerServices;
 
 namespace Age.Core;
 
-public sealed class StringHandler : IEnumerable<char>
+public sealed class StringHandler
 {
+    public event Action? Changed;
+    public event Action? Modified;
+
     private char[] buffer = [];
 
     public char this[int index]
@@ -53,6 +55,8 @@ public sealed class StringHandler : IEnumerable<char>
 
     public int Length { get; private set; }
 
+    public bool IsEmpty => this.Length == 0;
+
     public StringHandler(int capacity = 32) =>
         this.Capacity = capacity;
 
@@ -85,51 +89,59 @@ public sealed class StringHandler : IEnumerable<char>
         Array.Copy(this.buffer, sourceIndex, this.buffer, destinationIndex, elementCount);
     }
 
-    IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-
     public ReadOnlySpan<char> AsSpan() =>
         new(this.buffer, 0, this.Length);
 
-    public void Append(scoped ReadOnlySpan<char> value)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void Append(scoped ReadOnlySpan<char> value, bool dispatchEvent)
     {
-        // this.ThrowIfDisposed();
-
-        // if (value.IsEmpty)
-        // {
-        //     return;
-        // }
+        if (value.IsEmpty)
+        {
+            return;
+        }
 
         this.EnsureCapacity(this.Length + value.Length);
 
         value.CopyTo(this.buffer.AsSpan(this.Length));
 
         this.Length += value.Length;
+
+        if (dispatchEvent)
+        {
+            this.Modified?.Invoke();
+        }
     }
+
+    public void Append(scoped ReadOnlySpan<char> value) =>
+        this.Append(value, true);
 
     public void AppendLine(scoped ReadOnlySpan<char> value)
     {
-        this.Append(value);
-        this.Append(['\n']);
+        this.Append(value, false);
+        this.Append(['\n'], false);
+
+        this.Modified?.Invoke();
     }
 
     public StringHandler Concat(StringHandler other)
     {
-        // this.ThrowIfDisposed();
-        // other.ThrowIfDisposed();
-
         var handler = new StringHandler(this.Length + other.Length);
 
-        handler.Append(this.buffer.AsSpan(0, this.Length));
-        handler.Append(other.buffer.AsSpan(0, other.Length));
+        handler.Append(this.buffer.AsSpan(0, this.Length), false);
+        handler.Append(other.buffer.AsSpan(0, other.Length), false);
 
         return handler;
     }
 
     public void Clear()
     {
-        // this.ThrowIfDisposed();
         this.Length = 0;
+
+        this.Modified?.Invoke();
     }
+
+    public bool Equals(ReadOnlySpan<char> value) =>
+        value.SequenceEqual(this.AsSpan());
 
     public IEnumerator<char> GetEnumerator()
     {
@@ -141,7 +153,6 @@ public sealed class StringHandler : IEnumerable<char>
 
     public void Insert(scoped ReadOnlySpan<char> value, int index)
     {
-        // this.ThrowIfDisposed();
         this.CheckIndex(index);
 
         if (value.IsEmpty)
@@ -155,11 +166,12 @@ public sealed class StringHandler : IEnumerable<char>
         value.CopyTo(this.buffer.AsSpan(index));
 
         this.Length += value.Length;
+
+        this.Modified?.Invoke();
     }
 
     public void Remove(int index, int length = 1)
     {
-        // this.ThrowIfDisposed();
         this.CheckIndex(index);
 
         if (length == 0)
@@ -177,15 +189,26 @@ public sealed class StringHandler : IEnumerable<char>
         }
 
         this.Length = int.Max(this.Length - length, 0);
+
+        this.Modified?.Invoke();
     }
 
     public void Set(scoped ReadOnlySpan<char> value)
     {
-        // this.ThrowIfDisposed();
-        this.Clear();
-        this.Append(value);
+        if (this.Equals(value))
+        {
+            return;
+        }
+
+        this.Length = 0;
+        this.Append(value, true);
+
+        this.Changed?.Invoke();
     }
 
     public override string ToString() =>
         new(this.buffer, 0, this.Length);
+
+    public ReadOnlySpan<char> Substring(int start, int length) =>
+        this.AsSpan().Slice(start, length);
 }

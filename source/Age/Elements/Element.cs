@@ -267,7 +267,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             {
                 if (node is TextNode textNode)
                 {
-                    builder.Append(textNode.Value);
+                    builder.Append(textNode.Buffer);
 
                     if (this.Layout.State.Style.Stack == StackKind.Vertical)
                     {
@@ -298,7 +298,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
                 {
                     this.RemoveChildren();
 
-                    this.AppendChild(new TextNode() { Value = value });
+                    this.AppendChild(new TextNode(value));
                 }
 
                 this.text = value;

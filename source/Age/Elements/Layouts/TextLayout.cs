@@ -29,23 +29,6 @@ internal sealed partial class TextLayout : Layout
 
     private SKTypeface? typeface;
     private SKPaint?    paint;
-
-    public string? Text
-    {
-        get;
-        internal set
-        {
-            if (value != field)
-            {
-                field = value;
-
-                this.Selection   = this.Selection?.WithEnd(uint.Min(this.Selection.Value.End, (uint)(field?.Length ?? 0)));
-                this.textIsDirty = true;
-
-                this.RequestUpdate(true);
-            }
-        }
-    }
     #endregion
 
     #region 4-bytes
@@ -100,7 +83,6 @@ internal sealed partial class TextLayout : Layout
     public override bool IsParentDependent { get; }
     #endregion
 
-
     public Rect<float> CursorRect => this.caretCommand.Rect;
 
     public override StencilLayer? StencilLayer
@@ -149,12 +131,13 @@ internal sealed partial class TextLayout : Layout
             Color           = Color.White,
             Flags           = Flags.ColorAsBackground,
             MappedTexture   = MappedTexture.Default,
-            PipelineVariant = PipelineVariant.Color,
             Rect            = new(new(this.caretWidth, this.LineHeight), default),
             StencilLayer    = this.StencilLayer
         };
 
-        target.Commands.Add(caretCommand);
+        target.Commands.Add(this.caretCommand);
+
+        this.target.Buffer.Modified += this.OnTextChange;
     }
 
     private static void AllocateCommands(List<Command> commands, int length)
@@ -232,15 +215,15 @@ internal sealed partial class TextLayout : Layout
 
     private void DrawCaret()
     {
-        if (this.Text?.Length > 0)
+        if (this.target.Buffer.Length > 0)
         {
             Point<float> position;
 
-            if (this.CaretPosition == this.Text.Length)
+            if (this.CaretPosition == this.target.Buffer.Length)
             {
-                var rect = ((RectCommand)this.target.Commands[this.Text.Length - 1]).Rect;
+                var rect = ((RectCommand)this.target.Commands[this.target.Buffer.Length - 1]).Rect;
 
-                if (this.Text[^1] == '\n')
+                if (this.target.Buffer[^1] == '\n')
                 {
                     position.X = 0;
                     position.Y = rect.Position.Y - this.LineHeight;
@@ -271,36 +254,40 @@ internal sealed partial class TextLayout : Layout
         }
     }
 
-    private void DrawSelection(int textLength)
+    private void DrawSelection()
     {
+        var text = this.target.Buffer.AsSpan();
+
         if (this.Selection.HasValue)
         {
             var range = this.Selection.Value.Ordered();
 
-            for (var i = 0; i < textLength; i++)
+            for (var i = 0; i < text.Length; i++)
             {
                 this.ApplySelection(i, range, (TextCommand)this.target.Commands[i]);
             }
         }
         else
         {
-            for (var i = 0; i < textLength; i++)
+            for (var i = 0; i < text.Length; i++)
             {
                 this.ClearSelection((TextCommand)this.target.Commands[i]);
             }
         }
     }
 
-    private void DrawText(string text)
+    private void DrawText()
     {
         if (this.typeface == null || this.paint == null)
         {
             throw new InvalidOperationException();
         }
 
+        var text = this.target.Buffer.AsSpan();
+
         var style = this.target.ParentElement!.Layout.State.Style;
 
-        var glyphs = this.typeface.GetGlyphs(this.Text);
+        var glyphs = this.typeface.GetGlyphs(text);
         var font   = this.paint.ToFont();
         var atlas  = TextStorage.Singleton.GetAtlas(this.typeface!.FamilyName, (uint)this.paint.TextSize);
 
@@ -313,7 +300,7 @@ internal sealed partial class TextLayout : Layout
         var cursor     = new Point<int>(0, baseLine);
         var boundings  = new Size<uint>(0, this.LineHeight);
 
-        text.AsSpan().GetTextInfo(out var nonWhitespaceCount, out var linesCount);
+        text.GetTextInfo(out var nonWhitespaceCount, out var linesCount);
 
         this.textLines.Resize(linesCount, default);
 
@@ -432,19 +419,27 @@ internal sealed partial class TextLayout : Layout
 
     private void GetCharacterOffset(ushort x, ushort y, ref uint character)
     {
-        if (char.IsControl(this.Text![(int)character]))
+        if (char.IsControl(this.target.Buffer[(int)character]))
         {
             return;
         }
 
         var command = (RectCommand)this.target.Commands[(int)character];
 
-        var cursor = this.Target.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
+        var cursor = this.target.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
         if (cursor.X > command.Rect.Position.X + command.Rect.Size.Width / 2)
         {
             character++;
         }
+    }
+
+    private void OnTextChange()
+    {
+        this.Selection   = this.Selection?.WithEnd(uint.Min(this.Selection.Value.End, (uint)this.target.Buffer.Length));
+        this.textIsDirty = true;
+
+        this.RequestUpdate(true);
     }
 
     private void TargetParentStyleChanged(StyleProperty property)
@@ -502,17 +497,17 @@ internal sealed partial class TextLayout : Layout
 
     public void AdjustScroll()
     {
-        var parent = this.Target.ParentElement;
+        var parent = this.target.ParentElement;
 
         if (!this.canScrollX || !this.canScrollY || parent == null)
         {
             return;
         }
 
-        if (this.Text?.Length > 0)
+        if (!this.target.Buffer.IsEmpty)
         {
             var boxModel        = parent.GetBoxModel();
-            var cursorBoundings = this.Target.GetCursorBoundings();
+            var cursorBoundings = this.target.GetCursorBoundings();
 
             var boundsLeft   = boxModel.Boundings.Left   + boxModel.Border.Left   + boxModel.Padding.Left;
             var boundsRight  = boxModel.Boundings.Right  - boxModel.Border.Right  - boxModel.Padding.Right;
@@ -521,7 +516,7 @@ internal sealed partial class TextLayout : Layout
 
             var scroll = parent.Scroll;
 
-            var position = this.CaretPosition < this.Text.Length
+            var position = this.CaretPosition < this.target.Buffer.Length
                 ? this.CaretPosition
                 : this.CaretPosition.ClampSubtract(1);
 
@@ -529,13 +524,13 @@ internal sealed partial class TextLayout : Layout
             {
                 if (cursorBoundings.Left < boundsLeft)
                 {
-                    var characterLeft = this.Target.GetCharacterBoundings(position).Left + scroll.X;
+                    var characterLeft = this.target.GetCharacterBoundings(position).Left + scroll.X;
 
                     scroll.X = (uint)(characterLeft - boundsLeft);
                 }
                 else if (cursorBoundings.Right > boundsRight)
                 {
-                    var characterRight = this.Target.GetCharacterBoundings(position.ClampSubtract(1)).Right + scroll.X;
+                    var characterRight = this.target.GetCharacterBoundings(position.ClampSubtract(1)).Right + scroll.X;
 
                     scroll.X = (uint)(characterRight - boundsRight);
                 }
@@ -572,11 +567,11 @@ internal sealed partial class TextLayout : Layout
         this.textLines[this.GetCharacterLineIndex(index)];
 
     public int GetCharacterLineIndex(uint index) =>
-        ((TextCommand)this.Target.Commands[(int)index]).Line;
+        ((TextCommand)this.target.Commands[(int)index]).Line;
 
     public TextLine? GetCharacterNextLine(uint index)
     {
-        if (!string.IsNullOrEmpty(this.Text) && this.GetCharacterLineIndex(index) + 1 is var lineIndex && lineIndex < this.textLines.Count)
+        if (!this.target.Buffer.IsEmpty && this.GetCharacterLineIndex(index) + 1 is var lineIndex && lineIndex < this.textLines.Count)
         {
             return this.textLines[lineIndex];
         }
@@ -586,7 +581,7 @@ internal sealed partial class TextLayout : Layout
 
     public TextLine? GetCharacterPreviousLine(uint index)
     {
-        if (!string.IsNullOrEmpty(this.Text) && this.GetCharacterLineIndex(index) - 1 is var lineIndex && lineIndex > -1)
+        if (!this.target.Buffer.IsEmpty && this.GetCharacterLineIndex(index) - 1 is var lineIndex && lineIndex > -1)
         {
             return this.textLines[lineIndex];
         }
@@ -608,7 +603,9 @@ internal sealed partial class TextLayout : Layout
 
     public void PropagateSelection(uint characterPosition)
     {
-        if (!this.CanSelect || this.Text == null || char.IsWhiteSpace(this.Text[(int)characterPosition]))
+        var text = this.target.Buffer.AsSpan();
+
+        if (!this.CanSelect || text.Length == 0 || char.IsWhiteSpace(text[(int)characterPosition]))
         {
             return;
         }
@@ -616,14 +613,14 @@ internal sealed partial class TextLayout : Layout
         var start = (int)characterPosition - 1;
         var end   = (int)characterPosition;
 
-        while (start > -1 && !char.IsWhiteSpace(this.Text[start]))
+        while (start > -1 && !char.IsWhiteSpace(text[start]))
         {
             start--;
         }
 
         start++;
 
-        while (end < this.Text.Length && !char.IsWhiteSpace(this.Text[end]))
+        while (end < text.Length && !char.IsWhiteSpace(text[end]))
         {
             end++;
         }
@@ -635,12 +632,12 @@ internal sealed partial class TextLayout : Layout
 
     public void SetCaret(ushort x, ushort y)
     {
-        if (string.IsNullOrEmpty(this.Text) || !this.CanSelect)
+        if (this.target.Buffer.IsEmpty || !this.CanSelect)
         {
             return;
         }
 
-        var cursor = this.Target.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
+        var cursor = this.target.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
 
         if (cursor == this.previouCursor)
         {
@@ -653,8 +650,10 @@ internal sealed partial class TextLayout : Layout
 
         bool isOnCursorLine(in Rect<float> rect) => cursor.Y >= rect.Position.Y - rect.Size.Height && cursor.Y <= rect.Position.Y;
 
+        var text = this.target.Buffer;
+
         var lineSpan = this.textLines.AsSpan();
-        var position = (uint)this.Text.Length;
+        var position = (uint)text.Length;
 
         for (var i = 0; i < lineSpan.Length; i++)
         {
@@ -662,8 +661,8 @@ internal sealed partial class TextLayout : Layout
 
             if (isOnCursorLine(rect))
             {
-                position = lineSpan[i].End + 1 == this.Text.Length && this.Text[^1] != '\n'
-                    ? (uint)this.Text.Length
+                position = lineSpan[i].End + 1 == text.Length && text[^1] != '\n'
+                    ? (uint)text.Length
                     : lineSpan[i].End;
 
                 break;
@@ -729,8 +728,8 @@ internal sealed partial class TextLayout : Layout
 
     public void TargetIndexed()
     {
-        var parentIndex = this.Target.Index + 1;
-        var commands    = this.Target.Commands.AsSpan(0, this.Text?.Length ?? 0);
+        var parentIndex = this.target.Index + 1;
+        var commands    = this.target.Commands.AsSpan(0, this.target.Buffer.Length);
 
         for (var i = 0; i < commands.Length; i++)
         {
@@ -787,12 +786,12 @@ internal sealed partial class TextLayout : Layout
 
     public void UpdateSelection(ushort x, ushort y)
     {
-        if (string.IsNullOrEmpty(this.Text) || !this.CanSelect)
+        if (this.target.Buffer.IsEmpty || !this.CanSelect)
         {
             return;
         }
 
-        var cursor = this.Target.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
+        var cursor = this.target.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
 
         if (cursor == this.previouCursor)
         {
@@ -803,8 +802,8 @@ internal sealed partial class TextLayout : Layout
 
         var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition);
 
-        var startIndex = int.Min((int)selection.Start, this.Text.Length - 1);
-        var endIndex   = int.Min((int)selection.End,   this.Text.Length - 1);
+        var startIndex = int.Min((int)selection.Start, this.target.Buffer.Length - 1);
+        var endIndex   = int.Min((int)selection.End,   this.target.Buffer.Length - 1);
 
         var lineSpan     = this.textLines.AsSpan();
         var commandsSpan = this.target.Commands.AsSpan();
@@ -822,7 +821,7 @@ internal sealed partial class TextLayout : Layout
         {
             if (isCursorBelowTop(endAnchor.Rect))
             {
-                position = (uint)this.Text.Length;
+                position = (uint)this.target.Buffer.Length;
 
                 scanBelow(commandsSpan, endAnchor.Line, lineSpan.Length, lineSpan, ref position);
             }
@@ -853,8 +852,8 @@ internal sealed partial class TextLayout : Layout
         void resolveLine(scoped Span<TextLine> lines, int index, ref uint position) =>
             position = isCursorBefore(endAnchor.Rect)
                 ? lines[index].Start
-                : lines[index].End + 1 == this.Text.Length
-                    ? (uint)this.Text.Length
+                : lines[index].End + 1 == this.target.Buffer.Length
+                    ? (uint)this.target.Buffer.Length
                     : lines[index].End;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -926,7 +925,7 @@ internal sealed partial class TextLayout : Layout
     {
         if (this.IsDirty)
         {
-            if (string.IsNullOrEmpty(this.Text))
+            if (this.target.Buffer.IsEmpty)
             {
                 if (this.textIsDirty)
                 {
@@ -944,11 +943,11 @@ internal sealed partial class TextLayout : Layout
             {
                 if (this.textIsDirty)
                 {
-                    this.DrawText(this.Text);
+                    this.DrawText();
                 }
                 else if (this.selectionIsDirty)
                 {
-                    this.DrawSelection(this.Text.Length);
+                    this.DrawSelection();
                 }
             }
 

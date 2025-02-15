@@ -6,7 +6,7 @@ public record struct TextSelection(uint Start, uint End)
     public uint End   = End;
 
     public readonly bool Inverted => this.Start > this.End;
-    public readonly int  Offset   => (int)this.End - (int)this.Start;
+    public readonly int  Length   => (int)this.End - (int)this.Start;
 
     public readonly TextSelection Ordered() => this.Inverted ? new(this.End, this.Start) : this;
     public readonly TextSelection WithStart(uint start) => new(start, this.End);

@@ -1,5 +1,6 @@
 using Age.Commands;
 using Age.Core.Extensions;
+using Age.Core;
 using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Scene;
@@ -8,10 +9,15 @@ namespace Age.Elements;
 
 public sealed class TextNode : ContainerNode
 {
+    #region 4-bytes
     internal override TextLayout Layout { get; }
 
     public override string NodeName { get; } = nameof(TextNode);
 
+    public StringHandler Buffer { get; } = new();
+    #endregion
+
+    #region 2-bytes
     public uint CursorPosition
     {
         get => this.Layout.CaretPosition;
@@ -23,24 +29,19 @@ public sealed class TextNode : ContainerNode
         get => this.Layout.Selection;
         set => this.Layout.Selection = value;
     }
+    #endregion
 
     public string? Value
     {
-        get => this.Layout.Text;
-        set => this.Layout.Text = value;
+        get => this.Buffer.ToString();
+        set => this.Buffer.Set(value);
     }
 
     public TextNode() =>
         this.Layout = new(this);
 
-    public TextNode(string value) : this() =>
-        this.Value = value;
-
-    internal void InvokeActivate() =>
-        this.Layout.TargetActivated();
-
-    internal void InvokeDeactivate() =>
-        this.Layout.TargetDeactivated();
+    public TextNode(string? value) : this() =>
+        this.Buffer.Set(value);
 
     protected override void Adopted(Node parent)
     {
@@ -67,19 +68,25 @@ public sealed class TextNode : ContainerNode
     protected override void Indexed() =>
         this.Layout.TargetIndexed();
 
+    internal void InvokeActivate() =>
+        this.Layout.TargetActivated();
+
+    internal void InvokeDeactivate() =>
+        this.Layout.TargetDeactivated();
+
     public void ClearSelection() =>
         this.Layout.ClearSelection();
 
     public string? Copy(TextSelection selection)
     {
-        if (this.Layout.Text == null)
+        if (this.Buffer.Length == 0)
         {
             return null;
         }
 
         var range = selection.Ordered();
 
-        return this.Layout.Text.Substring((int)range.Start, (int)(range.End - range.Start));
+        return new(this.Buffer.Substring((int)range.Start, (int)(range.End - range.Start)));
     }
 
     public string? CopySelected()
@@ -106,13 +113,11 @@ public sealed class TextNode : ContainerNode
 
     public void Delete(TextSelection selection)
     {
-        if (this.Layout.Text != null)
+        if (!this.Buffer.IsEmpty)
         {
             var range = selection.Ordered();
-            var start = this.Layout.Text.AsSpan(..(int)range.Start);
-            var end   = this.Layout.Text.AsSpan((int)range.End..);
 
-            this.Layout.Text = string.Concat(start, end);
+            this.Buffer.Remove((int)range.Start, range.Length);
 
             this.Layout.ClearSelection();
             this.CursorPosition = range.Start;
@@ -129,25 +134,9 @@ public sealed class TextNode : ContainerNode
         }
     }
 
-    public Rect<int> GetCursorBoundings()
-    {
-        this.Layout.Update();
-
-        var rect = this.Layout.CursorRect;
-
-        var transform = this.TransformWithOffset;
-
-        var position = new Point<int>(
-            (int)(transform.Position.X + rect.Position.X),
-            -(int)(transform.Position.Y + rect.Position.Y)
-        );
-
-        return new(rect.Size.Cast<int>(), position);
-    }
-
     public Rect<int> GetCharacterBoundings(uint index)
     {
-        if (index >= this.Value?.Length)
+        if (index >= this.Buffer?.Length)
         {
             throw new IndexOutOfRangeException();
         }
@@ -175,11 +164,27 @@ public sealed class TextNode : ContainerNode
     public TextLine? GetCharacterPreviousLine(uint index) =>
         this.Layout.GetCharacterPreviousLine(index);
 
+    public Rect<int> GetCursorBoundings()
+    {
+        this.Layout.Update();
+
+        var rect = this.Layout.CursorRect;
+
+        var transform = this.TransformWithOffset;
+
+        var position = new Point<int>(
+            (int)(transform.Position.X + rect.Position.X),
+            -(int)(transform.Position.Y + rect.Position.Y)
+        );
+
+        return new(rect.Size.Cast<int>(), position);
+    }
+
     public Rect<int> GetTextSelectionBounds(TextSelection textSelection)
     {
         textSelection = textSelection.Ordered();
 
-        if (this.Value == null || textSelection.Start > this.Value.Length || textSelection.End > this.Value.Length)
+        if (this.Buffer == null || textSelection.Start > this.Buffer.Length || textSelection.End > this.Buffer.Length)
         {
             throw new IndexOutOfRangeException();
         }
@@ -216,5 +221,5 @@ public sealed class TextNode : ContainerNode
         this.Layout.ShowCaret();
 
     public override string ToString() =>
-        this.Value ?? "";
+        this.Buffer.ToString();
 }
