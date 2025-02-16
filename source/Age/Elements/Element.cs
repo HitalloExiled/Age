@@ -580,4 +580,58 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             Content   = content,
         };
     }
+
+    public void ScrollTo(in Rect<int> boundings)
+    {
+        if (!this.Layout.CanScrollX || !this.Layout.CanScrollY)
+        {
+            return;
+        }
+
+        var boxModel = this.GetBoxModel();
+
+        var boundsLeft   = boxModel.Boundings.Left   + boxModel.Border.Left   + boxModel.Padding.Left;
+        var boundsRight  = boxModel.Boundings.Right  - boxModel.Border.Right  - boxModel.Padding.Right;
+        var boundsTop    = boxModel.Boundings.Top    + boxModel.Border.Top    + boxModel.Padding.Top;
+        var boundsBottom = boxModel.Boundings.Bottom - boxModel.Border.Bottom - boxModel.Padding.Bottom;
+
+        var scroll = this.Scroll;
+
+        if (this.Layout.CanScrollX)
+        {
+            if (boundings.Left < boundsLeft)
+            {
+                var characterLeft = boundings.Left + scroll.X;
+
+                scroll.X = (uint)(characterLeft - boundsLeft);
+            }
+            else if (boundings.Right > boundsRight)
+            {
+                var characterRight = boundings.Right + scroll.X;
+
+                scroll.X = (uint)(characterRight - boundsRight);
+            }
+        }
+
+        if (this.Layout.CanScrollY)
+        {
+            if (boundings.Top < boundsTop)
+            {
+                var characterTop = boundings.Top + scroll.Y;
+
+                scroll.Y = (uint)(characterTop - boundsTop);
+            }
+            else if (boundings.Bottom > boundsBottom)
+            {
+                var characterBottom = boundings.Bottom + scroll.Y;
+
+                scroll.Y = (uint)(characterBottom - boundsBottom);
+            }
+        }
+
+        this.Scroll = scroll;
+    }
+
+    public void ScrollTo(Element element) =>
+        this.ScrollTo(element.GetBoundings());
 }

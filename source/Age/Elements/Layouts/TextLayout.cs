@@ -74,8 +74,6 @@ internal sealed partial class TextLayout : Layout
     private bool selectionIsDirty;
     private bool textIsDirty;
     private bool isMouseOverText;
-    private bool canScrollX;
-    private bool canScrollY;
 
     private RectCommand caretCommand;
     private bool        CanSelect    => this.Parent?.State.Style.TextSelection != false;
@@ -480,9 +478,6 @@ internal sealed partial class TextLayout : Layout
 
                 this.caretIsDirty = true;
             }
-
-            this.canScrollX = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX;
-            this.canScrollY = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY;
         }
 
         this.textIsDirty = true;
@@ -495,70 +490,8 @@ internal sealed partial class TextLayout : Layout
         this.typeface?.Dispose();
     }
 
-    public void AdjustScroll()
-    {
-        var parent = this.target.ParentElement;
-
-        if (!this.canScrollX || !this.canScrollY || parent == null)
-        {
-            return;
-        }
-
-        if (!this.target.Buffer.IsEmpty)
-        {
-            var boxModel        = parent.GetBoxModel();
-            var cursorBoundings = this.target.GetCursorBoundings();
-
-            var boundsLeft   = boxModel.Boundings.Left   + boxModel.Border.Left   + boxModel.Padding.Left;
-            var boundsRight  = boxModel.Boundings.Right  - boxModel.Border.Right  - boxModel.Padding.Right;
-            var boundsTop    = boxModel.Boundings.Top    + boxModel.Border.Top    + boxModel.Padding.Top;
-            var boundsBottom = boxModel.Boundings.Bottom - boxModel.Border.Bottom - boxModel.Padding.Bottom;
-
-            var scroll = parent.Scroll;
-
-            var position = this.CaretPosition < this.target.Buffer.Length
-                ? this.CaretPosition
-                : this.CaretPosition.ClampSubtract(1);
-
-            if (this.canScrollX)
-            {
-                if (cursorBoundings.Left < boundsLeft)
-                {
-                    var characterLeft = this.target.GetCharacterBoundings(position).Left + scroll.X;
-
-                    scroll.X = (uint)(characterLeft - boundsLeft);
-                }
-                else if (cursorBoundings.Right > boundsRight)
-                {
-                    var characterRight = this.target.GetCharacterBoundings(position.ClampSubtract(1)).Right + scroll.X;
-
-                    scroll.X = (uint)(characterRight - boundsRight);
-                }
-            }
-
-            if (this.canScrollY)
-            {
-                if (cursorBoundings.Top < boundsTop)
-                {
-                    var characterTop = cursorBoundings.Top + scroll.Y;
-
-                    scroll.Y = (uint)(characterTop - boundsTop);
-                }
-                else if (cursorBoundings.Bottom > boundsBottom)
-                {
-                    var characterBottom = cursorBoundings.Bottom + scroll.Y;
-
-                    scroll.Y = (uint)(characterBottom - boundsBottom);
-                }
-            }
-
-            parent.Scroll = scroll;
-        }
-        else
-        {
-            parent.Scroll = default;
-        }
-    }
+    public void AdjustScroll() =>
+        this.target.ParentElement?.ScrollTo(this.target.GetCursorBoundings());
 
     public void ClearSelection() =>
         this.Selection = default;

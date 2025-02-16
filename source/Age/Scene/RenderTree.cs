@@ -287,8 +287,6 @@ public sealed partial class RenderTree : NodeTree
             this.lastHoveredElement  = null;
         }
 
-        // var isHoldingPrimaryButton = mouseEvent.IsHoldingPrimaryButton;
-
         if (textNode != null)
         {
             if (mouseEvent.IsHoldingPrimaryButton && textNode == this.lastFocusedTextNode)
@@ -304,15 +302,8 @@ public sealed partial class RenderTree : NodeTree
                 textNode.Layout.TargetMouseOver();
             }
         }
-        else /* if (this.lastFocusedTextNode != null) */
+        else
         {
-            // if (isHoldingPrimaryButton)
-            // {
-            //     // this.lastFocusedTextNode.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y);
-            // }
-            // else
-            // {
-            // }
             this.lastHoveredTextNode?.Layout.TargetMouseOut();
             this.lastHoveredTextNode = null;
         }

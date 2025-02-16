@@ -201,21 +201,30 @@ public class ScrollTest
             """,
             Style = new()
             {
-                Margin  = new((Pixel)20),
-                Border  = new(borderSize, 0, Color.Red),
-                Padding = new((Pixel)10),
-                //Overflow = OverflowKind.Scroll,
-                //Size    = new((Pixel)100),
-                Color   = Color.White,
+                Margin   = new((Pixel)20),
+                Border   = new(borderSize, 0, Color.Red),
+                Padding  = new((Pixel)10),
+                Overflow = OverflowKind.Scroll,
+                Size     = new((Pixel)100),
+                Color    = Color.White,
             },
         };
 
         var textBox = new TextBox()
         {
-            Name = "conteiner",
+            Name  = "conteiner",
             Value =
             """
-            00
+            00000_00000-x-00000_00000
+            11111_11111-x-11111_11111
+            22222_22222-x-22222_22222
+            33333_33333-x-33333_33333
+            44444_44444-x-44444_44444
+            55555_55555-x-55555_55555
+            66666_66666-x-66666_66666
+            77777_77777-x-77777_77777
+            88888_88888-x-88888_88888
+            99999_99999-x-99999_99999
             """,
             Multiline = true,
             Style = new()
@@ -224,7 +233,7 @@ public class ScrollTest
                 Border   = new(borderSize, 0, Color.Red),
                 Padding  = new((Pixel)10),
                 Overflow = OverflowKind.Scroll,
-                Size     = new((Pixel)200),
+                Size     = new((Pixel)100),
                 Color    = Color.White,
             },
         };
@@ -233,7 +242,7 @@ public class ScrollTest
         //canvas.AppendChild(conteiner2);
         //canvas.AppendChild(conteiner3);
         //canvas.AppendChild(conteiner4);
-        //canvas.AppendChild(conteiner5);
+        canvas.AppendChild(conteiner5);
         canvas.AppendChild(textBox);
     }
 }

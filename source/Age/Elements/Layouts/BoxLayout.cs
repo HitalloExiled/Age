@@ -78,6 +78,8 @@ internal sealed partial class BoxLayout : Layout
 
     public uint FontSize { get; private set; }
 
+    
+
     public RectEdges  Border  => this.border;
     public Size<uint> Content => this.content;
     public RectEdges  Margin  => this.margin;
@@ -87,9 +89,14 @@ internal sealed partial class BoxLayout : Layout
     #region 1-byte
     private bool childsChanged;
     private bool dependenciesHasChanged;
+    private bool canScrollX;
+    private bool canScrollY;
 
     public bool IsScrollable { get; internal set; }
     public bool IsHoveringText { get; set; }
+
+    public bool CanScrollY => this.canScrollX;
+    public bool CanScrollX => this.canScrollY;
 
     public override bool IsParentDependent => this.parentDependent != Dependency.None;
     #endregion
@@ -105,6 +112,7 @@ internal sealed partial class BoxLayout : Layout
     public override BoxLayout?  Parent    => this.target.ParentElement?.Layout;
     public override Element     Target    => this.target;
     public override Transform2D Transform => (this.State.Style.Transform ?? new Transform2D()) * base.Transform;
+
 
     public BoxLayout(Element target)
     {
@@ -751,24 +759,29 @@ internal sealed partial class BoxLayout : Layout
 
     private void StyleChanged(StyleProperty property)
     {
-        var hidden = this.State.Style.Hidden == true;
+        var style = this.State.Style;
 
-        this.FontSize = this.State.Style.FontSize ?? 16;
+        var hidden = style.Hidden == true;
+
+        this.FontSize = style.FontSize ?? 16;
+
+        this.canScrollX = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX;
+        this.canScrollY = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY;
 
         if (property is StyleProperty.All or StyleProperty.Border)
         {
             this.border = new()
             {
-                Top    = this.State.Style.Border?.Top.Thickness ?? 0,
-                Right  = this.State.Style.Border?.Right.Thickness ?? 0,
-                Bottom = this.State.Style.Border?.Bottom.Thickness ?? 0,
-                Left   = this.State.Style.Border?.Left.Thickness ?? 0,
+                Top    = style.Border?.Top.Thickness ?? 0,
+                Right  = style.Border?.Right.Thickness ?? 0,
+                Bottom = style.Border?.Bottom.Thickness ?? 0,
+                Left   = style.Border?.Left.Thickness ?? 0,
             };
         }
 
         if (property is StyleProperty.All or StyleProperty.Cursor && this.target.IsHovered && !this.IsHoveringText && this.target.Tree is RenderTree renderTree)
         {
-            renderTree.Window.Cursor = this.State.Style.Cursor ?? default;
+            renderTree.Window.Cursor = style.Cursor ?? default;
         }
 
         var oldParentDependent = this.parentDependent;
@@ -779,24 +792,24 @@ internal sealed partial class BoxLayout : Layout
             this.contentDependent = Dependency.None;
             this.parentDependent  = Dependency.None;
 
-            if (this.State.Style.Size?.Width == null && this.State.Style.MinSize?.Width == null && this.State.Style.MaxSize?.Width == null)
+            if (style.Size?.Width == null && style.MinSize?.Width == null && style.MaxSize?.Width == null)
             {
                 this.contentDependent |= Dependency.Width;
 
                 relativePropertiesHasChanged = true;
             }
-            else if (this.State.Style.Size?.Width?.Kind == UnitKind.Percentage || this.State.Style.MinSize?.Width?.Kind == UnitKind.Percentage || this.State.Style.MaxSize?.Width?.Kind == UnitKind.Percentage)
+            else if (style.Size?.Width?.Kind == UnitKind.Percentage || style.MinSize?.Width?.Kind == UnitKind.Percentage || style.MaxSize?.Width?.Kind == UnitKind.Percentage)
             {
                 this.parentDependent |= Dependency.Width;
 
                 relativePropertiesHasChanged = true;
             }
 
-            if (this.State.Style.Size?.Height == null && this.State.Style.MinSize?.Height == null && this.State.Style.MaxSize?.Height == null)
+            if (style.Size?.Height == null && style.MinSize?.Height == null && style.MaxSize?.Height == null)
             {
                 this.contentDependent |= Dependency.Height;
             }
-            else if (this.State.Style.Size?.Height?.Kind == UnitKind.Percentage || this.State.Style.MinSize?.Height?.Kind == UnitKind.Percentage || this.State.Style.MaxSize?.Height?.Kind == UnitKind.Percentage)
+            else if (style.Size?.Height?.Kind == UnitKind.Percentage || style.MinSize?.Height?.Kind == UnitKind.Percentage || style.MaxSize?.Height?.Kind == UnitKind.Percentage)
             {
                 this.parentDependent |= Dependency.Height;
 
@@ -806,7 +819,7 @@ internal sealed partial class BoxLayout : Layout
 
         if (property is StyleProperty.All or StyleProperty.Margin)
         {
-            if (this.State.Style.Margin?.Top?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Right?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Bottom?.Kind == UnitKind.Percentage || this.State.Style.Margin?.Left?.Kind == UnitKind.Percentage)
+            if (style.Margin?.Top?.Kind == UnitKind.Percentage || style.Margin?.Right?.Kind == UnitKind.Percentage || style.Margin?.Bottom?.Kind == UnitKind.Percentage || style.Margin?.Left?.Kind == UnitKind.Percentage)
             {
                 this.parentDependent |= Dependency.Margin;
 
@@ -816,7 +829,7 @@ internal sealed partial class BoxLayout : Layout
 
         if (property is StyleProperty.All or StyleProperty.Padding)
         {
-            if (this.State.Style.Padding?.Top?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Right?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Bottom?.Kind == UnitKind.Percentage || this.State.Style.Padding?.Left?.Kind == UnitKind.Percentage)
+            if (style.Padding?.Top?.Kind == UnitKind.Percentage || style.Padding?.Right?.Kind == UnitKind.Percentage || style.Padding?.Bottom?.Kind == UnitKind.Percentage || style.Padding?.Left?.Kind == UnitKind.Percentage)
             {
                 this.parentDependent |= Dependency.Padding;
 
@@ -859,7 +872,7 @@ internal sealed partial class BoxLayout : Layout
 
         if (property is StyleProperty.All or StyleProperty.Overflow)
         {
-            var currentIsScrollable = this.State.Style.Overflow is not OverflowKind.None and not OverflowKind.Clipping && this.contentDependent != (Dependency.Width | Dependency.Height);
+            var currentIsScrollable = style.Overflow is not OverflowKind.None and not OverflowKind.Clipping && this.contentDependent != (Dependency.Width | Dependency.Height);
 
             if (currentIsScrollable != this.IsScrollable)
             {
@@ -876,7 +889,7 @@ internal sealed partial class BoxLayout : Layout
                 this.IsScrollable = currentIsScrollable;
             }
 
-            if (this.State.Style.Overflow is not (null or OverflowKind.None) && this.contentDependent != (Dependency.Width | Dependency.Height))
+            if (style.Overflow is not (null or OverflowKind.None) && this.contentDependent != (Dependency.Width | Dependency.Height))
             {
                 if (this.ownStencilLayer == null)
                 {

@@ -43,8 +43,6 @@ public sealed class StringHandler
 
                     this.buffer.AsSpan(0, this.Length).CopyTo(newBuffer);
 
-                    // ArrayPool<char>.Shared.Return(this.buffer);
-
                     this.buffer = newBuffer;
                 }
 
