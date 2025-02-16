@@ -440,6 +440,14 @@ internal sealed partial class TextLayout : Layout
         this.RequestUpdate(true);
     }
 
+    private void SetTextCursor(bool enabled)
+    {
+        if (this.target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = enabled ? CursorKind.Text : this.Parent?.State.Style.Cursor ?? default;
+        }
+    }
+
     private void TargetParentStyleChanged(StyleProperty property)
     {
         if (property != StyleProperty.Color)
@@ -647,6 +655,8 @@ internal sealed partial class TextLayout : Layout
         }
 
         this.selectionTimer.Start();
+
+        this.Parent!.IsChildSelectingText = true;
     }
 
     public void TargetAdopted(Element parentElement)
@@ -656,8 +666,14 @@ internal sealed partial class TextLayout : Layout
         this.TargetParentStyleChanged(StyleProperty.All);
     }
 
-    public void TargetDeactivated() =>
+    public void TargetDeactivated()
+    {
         this.selectionTimer.Stop();
+
+        this.Parent!.IsChildSelectingText = false;
+
+        this.SetTextCursor(false);
+    }
 
     public void TargetIndexed()
     {
@@ -677,12 +693,9 @@ internal sealed partial class TextLayout : Layout
             return;
         }
 
-        if (this.target.Tree is RenderTree renderTree)
-        {
-            this.Parent!.IsHoveringText = false;
-            renderTree.Window.Cursor = this.Parent?.State.Style.Cursor ?? default;
-        }
+        this.SetTextCursor(this.selectionTimer.Running);
 
+        this.Parent!.IsChildHoveringText = false;
         this.isMouseOverText = false;
     }
 
@@ -693,12 +706,9 @@ internal sealed partial class TextLayout : Layout
             return;
         }
 
-        if (this.target.Tree is RenderTree renderTree)
-        {
-            this.Parent!.IsHoveringText = true;
-            renderTree.Window.Cursor = CursorKind.Text;
-        }
+        this.SetTextCursor(true);
 
+        this.Parent!.IsChildHoveringText = true;
         this.isMouseOverText = true;
     }
 

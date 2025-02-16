@@ -1,4 +1,5 @@
 using Age.Numerics;
+using Age.Platforms.Display;
 using Age.Styling;
 
 namespace Age.Themes;
@@ -84,7 +85,11 @@ public class Theme
                     BackgroundColor = Color.Black,
                     Padding         = new((Pixel)4),
                     MinSize         = new((Pixel)100, (Em)1.5)
-                }
+                },
+                Hovered = new()
+                {
+                    Cursor = CursorKind.Text,
+                }                
             }
         }
     };

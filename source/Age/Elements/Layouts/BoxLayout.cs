@@ -93,7 +93,8 @@ internal sealed partial class BoxLayout : Layout
     private bool canScrollY;
 
     public bool IsScrollable { get; internal set; }
-    public bool IsHoveringText { get; set; }
+    public bool IsChildHoveringText  { get; set; }
+    public bool IsChildSelectingText { get; set; }
 
     public bool CanScrollY => this.canScrollX;
     public bool CanScrollX => this.canScrollY;
@@ -779,7 +780,7 @@ internal sealed partial class BoxLayout : Layout
             };
         }
 
-        if (property is StyleProperty.All or StyleProperty.Cursor && this.target.IsHovered && !this.IsHoveringText && this.target.Tree is RenderTree renderTree)
+        if (property is StyleProperty.All or StyleProperty.Cursor && this.target.IsHovered && !this.IsChildHoveringText && !this.IsChildSelectingText && this.target.Tree is RenderTree renderTree)
         {
             renderTree.Window.Cursor = style.Cursor ?? default;
         }
@@ -1399,7 +1400,7 @@ internal sealed partial class BoxLayout : Layout
 
     public void TargetMouseOut()
     {
-        if (this.target.Tree is RenderTree renderTree)
+        if (this.target.Tree is RenderTree renderTree && !this.IsChildSelectingText)
         {
             renderTree.Window.Cursor = default;
         }
