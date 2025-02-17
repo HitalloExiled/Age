@@ -155,6 +155,9 @@ internal sealed partial class TextLayout : Layout
         }
     }
 
+    private static ulong CombineIds(int characterIndex, int elementIndex) =>
+        ((ulong)characterIndex << 24) | ((uint)elementIndex);
+
     private static void ReleaseCommands(List<Command> commands, int count)
     {
         if (count > 0)
@@ -330,7 +333,7 @@ internal sealed partial class TextLayout : Layout
             selectionCommand.Index         = default;
             selectionCommand.Line          = lineIndex;
             selectionCommand.MappedTexture = MappedTexture.Default;
-            selectionCommand.ObjectId      = (uint)(((i + 1) << 12) | elementIndex);
+            selectionCommand.ObjectId      = CombineIds(i + 1, elementIndex);
             selectionCommand.Rect          = new(new(glyphsWidths[i], this.LineHeight), new(cursor.X, cursor.Y - baseLine));
             selectionCommand.StencilLayer  = this.StencilLayer;
 
@@ -677,12 +680,12 @@ internal sealed partial class TextLayout : Layout
 
     public void TargetIndexed()
     {
-        var parentIndex = this.target.Index + 1;
-        var commands    = this.target.Commands.AsSpan(0, this.target.Buffer.Length);
+        var elementIndex = this.target.Index + 1;
+        var commands     = this.target.Commands.AsSpan(0, this.target.Buffer.Length);
 
         for (var i = 0; i < commands.Length; i++)
         {
-            commands[i].ObjectId = (uint)(((i + 1) << 12) | parentIndex);
+            commands[i].ObjectId = CombineIds(i + 1, elementIndex);
         }
     }
 

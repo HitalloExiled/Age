@@ -1,3 +1,5 @@
+using Age.Numerics.Converters;
+
 namespace Age.Numerics;
 
 public record struct Color
@@ -26,6 +28,26 @@ public record struct Color
         this.A = a;
     }
 
+    public Color(uint value)
+    {
+        Bit.Split(value, out var r, out var g, out var b, out var a);
+
+        this.R = r / (float)0xFF;
+        this.G = g / (float)0xFF;
+        this.B = b / (float)0xFF;
+        this.A = a / (float)0xFF;
+    }
+
+    public Color(ulong value)
+    {
+        Bit.Split(value, out var r, out var g, out var b, out var a);
+
+        this.R = r / (float)0xFFFF;
+        this.G = g / (float)0xFFFF;
+        this.B = b / (float)0xFFFF;
+        this.A = a / (float)0xFFFF;
+    }
+
     public readonly byte[] ToByteArray() =>
         [
             (byte)Math.Ceiling(this.R * 255),
@@ -35,7 +57,7 @@ public record struct Color
         ];
 
     public override readonly string ToString() =>
-        $"#{Convert.ToString((uint)this, 16)}";
+        $"#{Convert.ToString((uint)this, 16).PadLeft(8, '0')}";
 
     public readonly Color WithAlpha(float value) =>
         new(this.R, this.G, this.B, value);
@@ -64,17 +86,22 @@ public record struct Color
     public static Color operator /(Color left, Color right) =>
         new(left.R / right.R, left.G / right.G, left.B / right.B, left.A / right.A);
 
-    public static implicit operator Color(uint value) =>
-        new(
-            (value       & 255) / 255f,
-            (value >> 8  & 255) / 255f,
-            (value >> 16 & 255) / 255f,
-            (value >> 24 & 255) / 255f
-        );
+    public static implicit operator Color(uint value)  => new(value);
+    public static implicit operator Color(ulong value) => new(value);
 
     public static implicit operator uint(Color value) =>
-        (uint)Math.Min(value.R * 255, 255)
-        | ((uint)Math.Min(value.G * 255, 255) <<  8)
-        | ((uint)Math.Min(value.B * 255, 255) << 16)
-        | ((uint)Math.Min(value.A * 255, 255) << 24);
+        Bit.Combine(
+            (byte)float.Min(value.R * byte.MaxValue, byte.MaxValue),
+            (byte)float.Min(value.G * byte.MaxValue, byte.MaxValue),
+            (byte)float.Min(value.B * byte.MaxValue, byte.MaxValue),
+            (byte)float.Min(value.A * byte.MaxValue, byte.MaxValue)
+        );
+
+    public static implicit operator ulong(Color value) =>
+        Bit.Combine(
+            (ushort)float.Min(value.R * ushort.MaxValue, ushort.MaxValue),
+            (ushort)float.Min(value.G * ushort.MaxValue, ushort.MaxValue),
+            (ushort)float.Min(value.B * ushort.MaxValue, ushort.MaxValue),
+            (ushort)float.Min(value.A * ushort.MaxValue, ushort.MaxValue)
+        );
 }

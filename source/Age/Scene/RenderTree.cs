@@ -122,20 +122,20 @@ public sealed partial class RenderTree : NodeTree
                 this.bufferVersion = Time.Redraws;
             }
 
-            this.buffer.Allocation.Memory.Map(0, (uint)this.buffer.Allocation.Size, 0, out var imageIndexBuffer);
+            this.buffer.Map(out var imageIndexBuffer);
 
-            var imageIndex = new Span<uint>((uint*)imageIndexBuffer, (int)this.buffer.Allocation.Size / sizeof(uint));
+            var imageIndex = new Span<ulong>(imageIndexBuffer.ToPointer(), (int)this.buffer.Size / sizeof(ulong));
 
             var index = x + y * image.Extent.Width;
             var pixel = imageIndex[(int)index];
 
-            var id = (int)(pixel & 0x00000FFF) - 1;
+            var id = (int)(pixel & 0x0000FFFFFF) - 1;
 
-            this.buffer.Allocation.Memory.Unmap();
+            this.buffer.Unmap();
 
             if (id > -1 && id < this.Nodes.Count)
             {
-                characterPosition = ((pixel >> 12) & 0xFFF) - 1;
+                characterPosition = (uint)((pixel >> 24) & 0xFFFFFF) - 1;
 
                 return this.Nodes[id];
             }
@@ -337,7 +337,7 @@ public sealed partial class RenderTree : NodeTree
 
         var image = this.canvasIndexRenderGraphPass.ColorImage;
 
-        var size = image.Extent.Width * image.Extent.Height * sizeof(uint);
+        var size = image.Extent.Width * image.Extent.Height * sizeof(ulong);
 
         this.buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
     }
