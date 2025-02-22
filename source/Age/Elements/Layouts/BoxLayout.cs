@@ -78,8 +78,6 @@ internal sealed partial class BoxLayout : Layout
 
     public uint FontSize { get; private set; }
 
-    
-
     public RectEdges  Border  => this.border;
     public Size<uint> Content => this.content;
     public RectEdges  Margin  => this.margin;
@@ -113,7 +111,6 @@ internal sealed partial class BoxLayout : Layout
     public override BoxLayout?  Parent    => this.target.ParentElement?.Layout;
     public override Element     Target    => this.target;
     public override Transform2D Transform => (this.State.Style.Transform ?? new Transform2D()) * base.Transform;
-
 
     public BoxLayout(Element target)
     {
@@ -549,7 +546,7 @@ internal sealed partial class BoxLayout : Layout
                         }
                         else
                         {
-                            content.Width = uint.Max(size.Width, (uint)content.Width);
+                            content.Width = uint.Max(size.Width, content.Width);
                         }
 
                         size.Width = size.Width
@@ -672,7 +669,7 @@ internal sealed partial class BoxLayout : Layout
                         }
                         else
                         {
-                            content.Height = uint.Max(size.Height, (uint)content.Height);
+                            content.Height = uint.Max(size.Height, content.Height);
                         }
 
                         size.Height = size.Height

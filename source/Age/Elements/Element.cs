@@ -171,8 +171,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     #region 1-byte
     protected bool IsFocusable { get; set; }
 
-    public bool IsFocused { get; internal set; }
-    public bool IsHovered { get; internal set; }
+    public bool IsFocused { get; private set; }
+    public bool IsHovered { get; private set; }
     #endregion
 
     public Element? FirstElementChild

@@ -222,7 +222,7 @@ public sealed partial class RenderTree : NodeTree
         {
             element = node as Element;
 
-            if (this.lastFocusedTextNode != null && this.lastFocusedTextNode.ParentElement != element)
+            if (this.lastFocusedTextNode != null)
             {
                 if (mouseEvent.Button == mouseEvent.PrimaryButton)
                 {
@@ -230,8 +230,9 @@ public sealed partial class RenderTree : NodeTree
                 }
 
                 this.lastFocusedTextNode.Layout.ClearCaret();
-                this.lastFocusedTextNode = null;
             }
+
+            this.lastFocusedTextNode = null;
         }
 
         if (element != null)

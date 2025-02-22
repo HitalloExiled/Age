@@ -53,7 +53,7 @@ internal abstract class Layout : Disposable
         {
             this.MakeDirty();
 
-            if (affectsBoundings && this.Parent != null)
+            if ((this.IsParentDependent || affectsBoundings) && this.Parent != null)
             {
                 this.Parent.RequestUpdate(affectsBoundings);
             }
