@@ -2,7 +2,7 @@ using Age.Commands;
 
 namespace Age.Scene;
 
-public abstract class RenderNode : Node
+public abstract class Renderable : Node
 {
     internal List<Command> Commands { get; init; } = [];
 

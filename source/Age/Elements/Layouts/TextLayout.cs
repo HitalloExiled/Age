@@ -25,7 +25,7 @@ internal sealed partial class TextLayout : Layout
     private readonly Timer          caretTimer;
     private readonly List<TextLine> textLines = new(1);
     private readonly Timer          selectionTimer;
-    private readonly TextNode       target;
+    private readonly Text           target;
 
     private SKTypeface? typeface;
     private SKPaint?    paint;
@@ -102,9 +102,9 @@ internal sealed partial class TextLayout : Layout
 
     public override BoxLayout? Parent => this.target.ParentElement?.Layout;
 
-    public override TextNode Target => this.target;
+    public override Text Target => this.target;
 
-    public TextLayout(TextNode target)
+    public TextLayout(Text target)
     {
         this.target = target;
 

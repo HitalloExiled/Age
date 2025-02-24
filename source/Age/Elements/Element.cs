@@ -24,7 +24,7 @@ public delegate void MouseEventHandler(in MouseEvent mouseEvent);
 public delegate void KeyEventHandler(in KeyEvent keyEvent);
 public delegate void InputEventHandler(char keyEvent);
 
-public abstract partial class Element : ContainerNode, IEnumerable<Element>
+public abstract partial class Element : Layoutable, IEnumerable<Element>
 {
     private event InputEventHandler? input;
     private event KeyEventHandler?   keyDown;
@@ -265,9 +265,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
             foreach (var node in this.Traverse())
             {
-                if (node is TextNode textNode)
+                if (node is Text text)
                 {
-                    builder.Append(textNode.Buffer);
+                    builder.Append(text.Buffer);
 
                     if (this.Layout.State.Style.Stack == StackKind.Vertical)
                     {
@@ -282,23 +282,23 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             if (value != this.text)
             {
-                if (this.FirstChild is TextNode textNode)
+                if (this.FirstChild is Text text)
                 {
-                    if (textNode != this.LastChild)
+                    if (text != this.LastChild)
                     {
-                        if (textNode.NextSibling != null && this.LastChild != null)
+                        if (text.NextSibling != null && this.LastChild != null)
                         {
-                            this.RemoveChildrenInRange(textNode.NextSibling, this.LastChild);
+                            this.RemoveChildrenInRange(text.NextSibling, this.LastChild);
                         }
                     }
 
-                    textNode.Value = value;
+                    text.Value = value;
                 }
                 else
                 {
                     this.RemoveChildren();
 
-                    this.AppendChild(new TextNode(value));
+                    this.AppendChild(new Text(value));
                 }
 
                 this.text = value;
@@ -430,27 +430,27 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     protected override void ChildAppended(Node child)
     {
-        if (child is ContainerNode containerNode)
+        if (child is Layoutable layoutable)
         {
-            if (containerNode is Element element)
+            if (layoutable is Element element)
             {
                 this.Layout.ElementAppended(element);
             }
 
-            this.Layout.ContainerNodeAppended(containerNode);
+            this.Layout.LayoutableAppended(layoutable);
         }
     }
 
     protected override void ChildRemoved(Node child)
     {
-        if (child is ContainerNode containerNode)
+        if (child is Layoutable layoutable)
         {
-            if (containerNode is Element element)
+            if (layoutable is Element element)
             {
                 this.Layout.ElementRemoved(element);
             }
 
-            this.Layout.ContainerNodeRemoved(containerNode);
+            this.Layout.LayoutableRemoved(layoutable);
         }
     }
 

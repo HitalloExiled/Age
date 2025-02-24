@@ -9,9 +9,9 @@ namespace Age.Internal;
 public unsafe class BvhTree
 {
     private const int MAX_ELEMENTS = 4;
-    private readonly BvhNode<ContainerNode> root = new();
+    private readonly BvhNode<Layoutable> root = new();
 
-    private static AABB<float> GetBounding(Span<ContainerNode> nodes, Dictionary<ContainerNode, int> depths)
+    private static AABB<float> GetBounding(Span<Layoutable> nodes, Dictionary<Layoutable, int> depths)
     {
         var aabb = new AABB<float>();
 
@@ -23,7 +23,7 @@ public unsafe class BvhTree
         return aabb;
     }
 
-    private static void Split(BvhNode<ContainerNode> bvhNode, Span<ContainerNode> nodes, Dictionary<ContainerNode, int> depths)
+    private static void Split(BvhNode<Layoutable> bvhNode, Span<Layoutable> nodes, Dictionary<Layoutable, int> depths)
     {
         var particion = bvhNode.AABB.Size.X > bvhNode.AABB.Size.Y
             ? new AABB<float>(
@@ -43,8 +43,8 @@ public unsafe class BvhTree
                 bvhNode.AABB.Position.Z
             );
 
-        var leftNodes  = new List<ContainerNode>();
-        var rightNodes = new List<ContainerNode>();
+        var leftNodes  = new List<Layoutable>();
+        var rightNodes = new List<Layoutable>();
         var leftAABB   = new AABB<float>();
         var rightAABB  = new AABB<float>();
 
@@ -175,13 +175,13 @@ public unsafe class BvhTree
 #endif
     }
 
-    private static IEnumerable<(ContainerNode, int)> Traverse(Node node, int depth = 0)
+    private static IEnumerable<(Layoutable, int)> Traverse(Node node, int depth = 0)
     {
         foreach (var child in node)
         {
-            if (child is ContainerNode containerNode)
+            if (child is Layoutable layoutContainer)
             {
-                yield return (containerNode, depth);
+                yield return (layoutContainer, depth);
             }
 
             foreach (var pair in Traverse(child, depth + 1))
@@ -191,7 +191,7 @@ public unsafe class BvhTree
         }
     }
 
-    internal static BvhDebugNode Draw(BvhNode<ContainerNode> bvhNode, Color color)
+    internal static BvhDebugNode Draw(BvhNode<Layoutable> bvhNode, Color color)
     {
         var node = new BvhDebugNode
         {
@@ -226,10 +226,10 @@ public unsafe class BvhTree
 
     public void Build(NodeTree tree)
     {
-        var depths = new Dictionary<ContainerNode, int>();
+        var depths = new Dictionary<Layoutable, int>();
 
         var aabb  = new AABB<float>();
-        var nodes = new List<ContainerNode>();
+        var nodes = new List<Layoutable>();
 
         foreach (var (node, depth) in Traverse(tree.Root))
         {

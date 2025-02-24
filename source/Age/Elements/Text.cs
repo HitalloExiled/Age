@@ -7,12 +7,12 @@ using Age.Scene;
 
 namespace Age.Elements;
 
-public sealed class TextNode : ContainerNode
+public sealed class Text : Layoutable
 {
     #region 4-bytes
     internal override TextLayout Layout { get; }
 
-    public override string NodeName { get; } = nameof(TextNode);
+    public override string NodeName { get; } = nameof(Text);
 
     public StringHandler Buffer { get; } = new();
     #endregion
@@ -37,10 +37,10 @@ public sealed class TextNode : ContainerNode
         set => this.Buffer.Set(value);
     }
 
-    public TextNode() =>
+    public Text() =>
         this.Layout = new(this);
 
-    public TextNode(string? value) : this() =>
+    public Text(string? value) : this() =>
         this.Buffer.Set(value);
 
     protected override void Adopted(Node parent)

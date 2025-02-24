@@ -5,7 +5,7 @@ using Age.Scene;
 
 namespace Age.Elements;
 
-public abstract class ContainerNode : Node2D
+public abstract class Layoutable : Spatial2D
 {
     internal abstract Layout Layout { get; }
 
@@ -46,7 +46,7 @@ public abstract class ContainerNode : Node2D
 
         while (current.Layout.IsParentDependent)
         {
-            if (current.Parent is not ContainerNode parent)
+            if (current.Parent is not Layoutable parent)
             {
                 break;
             }

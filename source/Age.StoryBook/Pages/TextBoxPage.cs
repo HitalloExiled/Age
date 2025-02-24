@@ -39,7 +39,7 @@ public class TextBoxPage : Page
                     Style    = containerStyle,
                     Children =
                     [
-                        new TextNode("Default"),
+                        new Text("Default"),
                         new TextBox
                         {
                             Style = textBoxStyle,
@@ -51,7 +51,7 @@ public class TextBoxPage : Page
                     Style    = containerStyle,
                     Children =
                     [
-                        new TextNode("Multiline"),
+                        new Text("Multiline"),
                         new TextBox
                         {
                             Style     = textBoxStyle,
@@ -64,7 +64,7 @@ public class TextBoxPage : Page
                     Style    = containerStyle,
                     Children =
                     [
-                        new TextNode("Fixed Size"),
+                        new Text("Fixed Size"),
                         new TextBox
                         {
                             Style = textBoxStyle with
@@ -80,7 +80,7 @@ public class TextBoxPage : Page
                     Style    = containerStyle,
                     Children =
                     [
-                        new TextNode("Fixed Size Multiline"),
+                        new Text("Fixed Size Multiline"),
                         new TextBox
                         {
                             Text      =

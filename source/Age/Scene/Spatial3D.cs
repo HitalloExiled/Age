@@ -3,14 +3,14 @@ using Age.Numerics;
 
 namespace Age.Scene;
 
-public abstract class Node3D : RenderNode
+public abstract class Spatial3D : Renderable
 {
     internal static int CacheVersion { get; set; } = 1;
 
     private CacheValue<Transform3D> transformCache;
 
-    private Transform3D ParentTransform      => (this.Parent as Node3D)?.Transform ?? new();
-    private Transform3D ParentTransformCache => (this.Parent as Node3D)?.TransformCache ?? new();
+    private Transform3D ParentTransform      => (this.Parent as Spatial3D)?.Transform ?? new();
+    private Transform3D ParentTransformCache => (this.Parent as Spatial3D)?.TransformCache ?? new();
     private Transform3D PivotedTransform     => Transform3D.Translated(this.Pivot) * this.LocalTransform * Transform3D.Translated(-this.Pivot);
 
     internal protected virtual Transform3D TransformCache

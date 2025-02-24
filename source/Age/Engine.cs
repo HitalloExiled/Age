@@ -122,8 +122,8 @@ public sealed class Engine : Disposable
 
                 Time.Frames++;
 
-                Node2D.CacheVersion++;
-                Node3D.CacheVersion++;
+                Spatial2D.CacheVersion++;
+                Spatial3D.CacheVersion++;
 
                 this.Running = false;
 

@@ -13,7 +13,7 @@ public partial class TextBox : Element
     public event Action? Changed;
 
     private readonly DropoutStack<HistoryEntry> redo = new(50);
-    private readonly TextNode                   text = new();
+    private readonly Text                       text = new();
     private readonly DropoutStack<HistoryEntry> undo = new(50);
 
     private string? previousText;

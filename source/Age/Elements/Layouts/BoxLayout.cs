@@ -207,9 +207,9 @@ internal sealed partial class BoxLayout : Layout
         {
             var current = enumerator.Current!;
 
-            if (current is ContainerNode containerNode)
+            if (current is Layoutable layoutContainer)
             {
-                if (containerNode.Layout.StencilLayer == stencilLayer)
+                if (layoutContainer.Layout.StencilLayer == stencilLayer)
                 {
                     enumerator.SkipToNextSibling();
                 }
@@ -230,7 +230,7 @@ internal sealed partial class BoxLayout : Layout
                 }
                 else
                 {
-                    containerNode.Layout.StencilLayer = stencilLayer;
+                    layoutContainer.Layout.StencilLayer = stencilLayer;
                 }
             }
         }
@@ -314,7 +314,7 @@ internal sealed partial class BoxLayout : Layout
 
         foreach (var node in this.Target)
         {
-            if (node is not ContainerNode child)
+            if (node is not Layoutable child)
             {
                 continue;
             }
@@ -701,7 +701,7 @@ internal sealed partial class BoxLayout : Layout
         this.content = content;
     }
 
-    private void CheckHightestInlineChild(StackKind stack, ContainerNode child)
+    private void CheckHightestInlineChild(StackKind stack, Layoutable child)
     {
         if (child.Layout.BaseLine == -1)
         {
@@ -1171,7 +1171,7 @@ internal sealed partial class BoxLayout : Layout
 
         foreach (var node in this.Target)
         {
-            if (node is not ContainerNode child || child.Layout.Hidden)
+            if (node is not Layoutable child || child.Layout.Hidden)
             {
                 continue;
             }
@@ -1340,9 +1340,9 @@ internal sealed partial class BoxLayout : Layout
     protected override void Disposed() =>
         this.ownStencilLayer?.Dispose();
 
-    public void ContainerNodeAppended(ContainerNode containerNode)
+    public void LayoutableAppended(Layoutable layoutContainer)
     {
-        if (!containerNode.Layout.Hidden)
+        if (!layoutContainer.Layout.Hidden)
         {
             this.childsChanged = true;
             this.renderableNodesCount++;
@@ -1350,9 +1350,9 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    public void ContainerNodeRemoved(ContainerNode containerNode)
+    public void LayoutableRemoved(Layoutable layoutContainer)
     {
-        if (!containerNode.Layout.Hidden)
+        if (!layoutContainer.Layout.Hidden)
         {
             this.childsChanged = true;
             this.renderableNodesCount--;
