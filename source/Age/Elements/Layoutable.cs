@@ -7,9 +7,15 @@ namespace Age.Elements;
 
 public abstract class Layoutable : Spatial2D
 {
+    #region 8-bytes
     internal abstract Layout Layout { get; }
 
+    public Slot? Slot { get; internal set; }
+    #endregion
+
+    #region 4-bytes
     private CacheValue<Transform2D> transformCache;
+    #endregion
 
     private Transform2D Offset => Transform2D.CreateTranslated((this.ParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
 

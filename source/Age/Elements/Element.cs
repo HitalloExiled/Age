@@ -163,6 +163,9 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
     #region 8-bytes
     private string? text;
 
+    internal ShadowTree?              ShadowTree { get; set; }
+    internal Dictionary<string, Slot> Slots      { get; } = [];
+
     internal override BoxLayout Layout { get; }
 
     public Canvas? Canvas { get; private set; }
@@ -314,6 +317,14 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
         this.Flags  = NodeFlags.IgnoreUpdates;
     }
 
+    protected Element(bool useShadowTree) : this()
+    {
+        if (useShadowTree)
+        {
+            this.ShadowTree = new(this);
+        }
+    }
+
     IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
     {
         foreach (var node in this)
@@ -439,6 +450,10 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
 
             this.Layout.LayoutableAppended(layoutable);
         }
+        else if (child is Slot slot)
+        {
+            this.Slots[slot.Name ?? ""] = slot;
+        }
     }
 
     protected override void ChildRemoved(Node child)
@@ -451,6 +466,10 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
             }
 
             this.Layout.LayoutableRemoved(layoutable);
+        }
+        else if (child is Slot slot)
+        {
+            this.Slots.Remove(slot.Name ?? "");
         }
     }
 

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using Age.Core;
 
@@ -16,7 +17,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public Node? Parent          { get; private set; }
     public Node? PreviousSibling { get; private set; }
 
-    public string? Name { get; set; }
+    public virtual string? Name { get; set; }
     #endregion
 
     #region 4-bytes
@@ -35,6 +36,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public NodeFlags Flags { get; protected set; }
     #endregion
+    public Node[] Children
+    {
+        get => [.. this];
+        set => this.ReplaceChildren(value);
+    }
 
     public NodeTree? Tree
     {
@@ -69,10 +75,19 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
-    public Node[] Children
+    public Node Root
     {
-        get => [.. this];
-        set => this.ReplaceChildren(value);
+        get
+        {
+            var current = this;
+
+            while (current.Parent != null)
+            {
+                current = current.Parent;
+            }
+
+            return current;
+        }
     }
 
     [MemberNotNullWhen(true, nameof(Tree))]
