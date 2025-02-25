@@ -19,11 +19,11 @@ internal struct StyleData
     public string?                   FontFamily;
     public FontWeight?               FontWeight;
     public ItemsAlignmentKind?       ItemsAlignment;
-    public RectEdges?                Margin;
+    public StyleRectEdges?           Margin;
     public SizeUnit?                 MaxSize;
     public SizeUnit?                 MinSize;
     public OverflowKind?             Overflow;
-    public RectEdges?                Padding;
+    public StyleRectEdges?           Padding;
     public PositionKind?             Positioning;
     public SizeUnit?                 Size;
     public StackKind?                Stack;

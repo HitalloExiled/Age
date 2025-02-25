@@ -36,6 +36,22 @@ public unsafe class NativeStringListTests
     }
 
     [Fact]
+    public void RemoveWithLength()
+    {
+        using var list = new NativeStringList(["one", "two", "three", "four", "five", "six"]);
+
+        AssertList(list, 6, ["one", "two", "three", "four", "five", "six"]);
+
+        list.Remove(2, 2);
+
+        AssertList(list, 6, ["one", "two", "five", "six"]);
+
+        list.Remove(2, 2);
+
+        AssertList(list, 6, ["one", "two"]);
+    }
+
+    [Fact]
     public void Clear()
     {
         using var list = new NativeStringList(["four", "five", "six"]);

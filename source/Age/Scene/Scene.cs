@@ -1,3 +1,3 @@
 namespace Age.Scene;
 
-public abstract class Scene : RenderNode;
+public abstract class Scene : Renderable;

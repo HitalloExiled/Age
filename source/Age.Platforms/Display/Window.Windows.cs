@@ -25,10 +25,10 @@ public partial class Window
     public static short HiWord(nint value) => HiWord((uint)value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static ushort GetXLParam(LPARAM lParam) => (ushort)LoWord(lParam);
+    private static ushort GetXLParam(LPARAM lParam) => (ushort)short.Max(0, LoWord(lParam));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static ushort GetYLParam(LPARAM lParam) => (ushort)HiWord(lParam);
+    private static ushort GetYLParam(LPARAM lParam) => (ushort)short.Max(0, HiWord(lParam));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static int GetKeyStateWParam(WPARAM wParam) => LoWord(wParam);
@@ -77,6 +77,10 @@ public partial class Window
         {
             switch (msg)
             {
+                case User32.WINDOW_MESSAGE.WM_CHAR:
+                    window.Input?.Invoke((char)wParam.Value);
+
+                    break;
                 case User32.WINDOW_MESSAGE.WM_KEYDOWN:
                     window.KeyDown?.Invoke((Key)wParam.Value);
                     window.KeyPress?.Invoke((Key)wParam.Value);
@@ -95,7 +99,6 @@ public partial class Window
                     window.MouseWhell?.Invoke(GetMouseEventArgs(MouseButton.None, msg, wParam, lParam));
 
                     break;
-
                 case User32.WINDOW_MESSAGE.WM_LBUTTONDOWN:
                 case User32.WINDOW_MESSAGE.WM_MBUTTONDOWN:
                 case User32.WINDOW_MESSAGE.WM_RBUTTONDOWN:
@@ -137,7 +140,6 @@ public partial class Window
                     }
 
                     break;
-
                 case User32.WINDOW_MESSAGE.WM_LBUTTONUP:
                 case User32.WINDOW_MESSAGE.WM_MBUTTONUP:
                 case User32.WINDOW_MESSAGE.WM_RBUTTONUP:
@@ -319,6 +321,20 @@ public partial class Window
 		}
 
         WindowsMap[this.Handle] = this;
+    }
+
+    protected string? PlatformGetClipboardData()
+    {
+        if (User32.OpenClipboard(this.Handle))
+        {
+            var text = User32.GetClipboardTextData();
+
+            User32.CloseClipboard();
+
+            return text;
+        }
+
+        return null;
     }
 
     protected void PlatformSetClipboardData(string value)

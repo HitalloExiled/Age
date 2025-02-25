@@ -59,6 +59,8 @@ public sealed class TextureAtlas : Disposable
             this.cursor.Y += this.maxHeight;
         }
 
+        // TODO - implements Buffer.BlockCopy
+
         while (sourceCursor.Y < size.Height)
         {
             while (sourceCursor.X < size.Width)

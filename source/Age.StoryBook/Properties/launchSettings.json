@@ -1,0 +1,10 @@
+{
+    "profiles":
+    {
+        "Age.StoryBook":
+        {
+            "commandName": "Project",
+            "workingDirectory": "../.."
+        }
+    }
+}

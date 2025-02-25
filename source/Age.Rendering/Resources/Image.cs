@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;
@@ -233,6 +234,19 @@ public sealed class Image : Resource<VkImage>
         return images;
     }
 
+    private unsafe Buffer ReadBuffer(VkImageAspectFlags aspectMask, out nint data)
+    {
+        var size = (ulong)(this.Extent.Width * this.Extent.Height * this.BytesPerPixel);
+
+        using var buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+
+        this.CopyToBuffer(buffer, aspectMask);
+
+        buffer.Allocation.Memory.Map(0, size, 0, out data);
+
+        return buffer;
+    }
+
     protected override void Disposed()
     {
         if (this.allocation != null)
@@ -323,15 +337,87 @@ public sealed class Image : Resource<VkImage>
 
     public unsafe uint[] ReadBuffer(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
     {
-        var size = this.Extent.Width * this.Extent.Height;
+        using var buffer = this.ReadBuffer(aspectMask, out var data);
 
-        using var buffer = VulkanRenderer.Singleton.CreateBuffer(size * sizeof(uint), VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+        var pixels = new uint[this.Extent.Width * this.Extent.Height];
 
-        this.CopyToBuffer(buffer, aspectMask);
+        switch (this.BytesPerPixel)
+        {
+            case 1:
+                {
+                    var span = new Span<byte>(data.ToPointer(), pixels.Length).ToArray();
 
-        buffer.Allocation.Memory.Map(0, size, 0, out var data);
+                    for (var i = 0; i < span.Length; i++)
+                    {
+                        pixels[i] = span[i];
+                    }
+                }
+                break;
+            case 2:
+                {
+                    var span = new Span<ushort>(data.ToPointer(), pixels.Length).ToArray();
 
-        var pixels = new Span<uint>((uint*)data, (int)size).ToArray();
+                    for (var i = 0; i < span.Length; i++)
+                    {
+                        pixels[i] = span[i];
+                    }
+                }
+                break;
+            case 4:
+                new Span<uint>(data.ToPointer(), pixels.Length).CopyTo(pixels.AsSpan());
+
+                break;
+
+            case 8:
+                throw new InvalidOperationException();
+        }
+
+        return pixels;
+    }
+
+    public unsafe ulong[] ReadBuffer64bits(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
+    {
+        using var buffer = this.ReadBuffer(aspectMask, out var data);
+
+        var pixels = new ulong[this.Extent.Width * this.Extent.Height];
+
+        switch (this.BytesPerPixel)
+        {
+            case 1:
+                {
+                    var span = new Span<byte>(data.ToPointer(), pixels.Length).ToArray();
+
+                    for (var i = 0; i < span.Length; i++)
+                    {
+                        pixels[i] = span[i];
+                    }
+                }
+                break;
+            case 2:
+                {
+                    var span = new Span<ushort>(data.ToPointer(), pixels.Length).ToArray();
+
+                    for (var i = 0; i < span.Length; i++)
+                    {
+                        pixels[i] = span[i];
+                    }
+                }
+                break;
+            case 4:
+                {
+                    var span = new Span<uint>(data.ToPointer(), pixels.Length).ToArray();
+
+                    for (var i = 0; i < span.Length; i++)
+                    {
+                        pixels[i] = span[i];
+                    }
+                }
+                break;
+            case 8:
+                new Span<ulong>(data.ToPointer(), pixels.Length).CopyTo(pixels.AsSpan());
+
+                break;
+        }
 
         return pixels;
     }

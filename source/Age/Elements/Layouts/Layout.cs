@@ -12,17 +12,26 @@ internal abstract class Layout : Disposable
     #endregion
 
     #region 4-bytes
-    public int            BaseLine   { get; protected set; } = -1;
+    public int BaseLine { get; protected set; } = -1;
+
+    public Size<uint> Boundings
+    {
+        get;
+        protected set;
+    }
+
     public uint           LineHeight { get; set; }
     public Vector2<float> Offset     { get; internal set; }
-    public Size<uint>     Size       { get; protected set; }
 
     public virtual Transform2D Transform => Transform2D.CreateTranslated(this.Offset);
     #endregion
 
     #region 1-byte
-    public bool HasPendingUpdate { get; set; }
+    public bool IsDirty { get; private set; }
+
     public virtual bool Hidden { get; set; }
+
+    public abstract bool IsParentDependent { get; }
     #endregion
 
     public abstract Layout? Parent { get; }
@@ -38,22 +47,35 @@ internal abstract class Layout : Disposable
 
     protected abstract void Disposed();
 
-    public void RequestUpdate()
+    public void RequestUpdate(bool affectsBoundings)
     {
-        if (!this.HasPendingUpdate && !this.Hidden)
+        if (!this.IsDirty && !this.Hidden)
         {
-            this.HasPendingUpdate = true;
+            this.MakeDirty();
 
-            if (this.Parent != null)
+            if ((this.IsParentDependent || affectsBoundings) && this.Parent != null)
             {
-                this.Parent.RequestUpdate();
+                this.Parent.RequestUpdate(affectsBoundings);
             }
             else if (this.Target.Tree is RenderTree renderTree)
             {
-                renderTree.IsDirty = true;
+                if (this.Parent?.Target != renderTree.Root)
+                {
+                    renderTree.AddDeferredUpdate(this.Update);
+                }
+                else
+                {
+                    renderTree.MakeDirty();
+                }
             }
         }
     }
+
+    public void MakeDirty() =>
+        this.IsDirty = true;
+
+    public void MakePristine() =>
+        this.IsDirty = false;
 
     public virtual void TargetConnected() =>
         this.StencilLayer = this.Parent?.ContentStencilLayer;

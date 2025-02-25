@@ -87,7 +87,7 @@ public record Style
         set => this.Set(ref this.data.ItemsAlignment, value, StyleProperty.ItemsAlignment);
     }
 
-    public RectEdges? Margin
+    public StyleRectEdges? Margin
     {
         get => this.data.Margin;
         set => this.Set(ref this.data.Margin, value, StyleProperty.Margin);
@@ -111,7 +111,7 @@ public record Style
         set => this.Set(ref this.data.Overflow, value, StyleProperty.Overflow);
     }
 
-    public RectEdges? Padding
+    public StyleRectEdges? Padding
     {
         get => this.data.Padding;
         set => this.Set(ref this.data.Padding, value, StyleProperty.Padding);

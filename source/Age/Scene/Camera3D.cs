@@ -3,7 +3,7 @@ using Age.Resources;
 
 namespace Age.Scene;
 
-public sealed class Camera3D : Node3D
+public sealed class Camera3D : Spatial3D
 {
     public override string NodeName { get; } = nameof(Camera3D);
 
@@ -13,7 +13,7 @@ public sealed class Camera3D : Node3D
 
     public List<RenderTarget> RenderTargets { get; }  = [];
 
-    public void LookAt(Node3D node, Vector3<float> up) =>
+    public void LookAt(Spatial3D node, Vector3<float> up) =>
         this.Transform = this.Transform.LookingAt(node.Transform.Position, up);
 
     public void LookAt(Vector3<float> target, Vector3<float> up) =>

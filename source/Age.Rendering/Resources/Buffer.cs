@@ -11,6 +11,8 @@ public sealed class Buffer(VkBuffer instance) : Resource<VkBuffer>
 
     public override VkBuffer Instance => instance;
 
+    public ulong Size => this.Allocation.Size;
+
     private static void Copy(Buffer source, Buffer destination)
     {
         var commandBuffer = VulkanRenderer.Singleton.BeginSingleTimeCommands();
@@ -36,6 +38,15 @@ public sealed class Buffer(VkBuffer instance) : Resource<VkBuffer>
 
     public void CopyTo(Buffer destination) =>
         Copy(this, destination);
+
+    public void Map(out nint handle) =>
+        this.Allocation.Memory.Map(0, (uint)this.Allocation.Size, 0, out handle);
+
+    public void Map(uint flags, out nint handle) =>
+        this.Allocation.Memory.Map(0, (uint)this.Allocation.Size, flags, out handle);
+
+    public void Unmap() =>
+        this.Allocation.Memory.Unmap();
 
     public void Update<T>(T data) where T : unmanaged =>
         this.Update([data]);

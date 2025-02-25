@@ -12,16 +12,14 @@ public enum ButtonVariant
 
 public class Button : Element
 {
-    private ButtonVariant variant;
-
     public override string NodeName { get; } = nameof(Button);
 
     public ButtonVariant Variant
     {
-        get => this.variant;
+        get;
         set
         {
-            if (this.variant != value)
+            if (field != value)
             {
                 this.States = value switch
                 {
@@ -30,7 +28,7 @@ public class Button : Element
                    ButtonVariant.Text or _ => Theme.Current.Button.Text,
                 };
 
-                this.variant = value;
+                field = value;
             }
         }
     }

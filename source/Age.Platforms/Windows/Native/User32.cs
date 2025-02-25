@@ -224,6 +224,16 @@ internal static unsafe partial class User32
     public static partial BOOL GetClientRect(HWND hWnd, out RECT lpRect);
 
     /// <summary>
+    /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getclipboarddata"></see>
+    /// </summary>
+    [LibraryImport(nameof(User32))]
+    public static partial HANDLE GetClipboardData(STANDARD_CLIPBOARD_FORMATS uFormat);
+
+    /// <inheritdoc cref="GetClipboardData" />
+    public static string? GetClipboardTextData() =>
+        Marshal.PtrToStringAnsi(GetClipboardData(STANDARD_CLIPBOARD_FORMATS.CF_TEXT));
+
+    /// <summary>
     /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getcursorpos"></see>
     /// </summary>
     [LibraryImport(nameof(User32))]

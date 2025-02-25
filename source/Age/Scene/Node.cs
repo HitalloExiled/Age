@@ -20,24 +20,21 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     #endregion
 
     #region 4-bytes
-    private int index;
-
-    public NodeFlags Flags { get; protected set; }
-    #endregion
-
-
     internal int Index
     {
-        get => this.index;
+        get;
         set
         {
-            if (this.index != value)
+            if (field != value)
             {
-                this.index = value;
+                field = value;
                 this.Indexed();
             }
         }
     }
+
+    public NodeFlags Flags { get; protected set; }
+    #endregion
 
     public NodeTree? Tree
     {
@@ -231,7 +228,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         node.Parent = this;
         node.Tree   = this.Tree;
-        node.Adopted();
+        node.Adopted(this);
 
         this.ChildAppended(node);
     }
@@ -303,7 +300,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             node.Parent = this;
             node.Tree = this.Tree;
 
-            node.Adopted();
+            node.Adopted(this);
             this.ChildAppended(node);
         }
     }
@@ -363,7 +360,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         node.Parent = this;
         node.Tree   = this.Tree;
 
-        node.Adopted();
+        node.Adopted(this);
         this.ChildAppended(node);
     }
 
@@ -448,7 +445,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         {
             node.Parent = this;
             node.Tree   = this.Tree;
-            node.Adopted();
+            node.Adopted(this);
 
             this.ChildAppended(node);
         }
@@ -477,7 +474,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             current.Parent          = null;
             current.Tree            = null;
 
-            current.Removed();
+            current.Removed(this);
             this.ChildRemoved(current);
         }
 
@@ -532,7 +529,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             current.Parent          = null;
             current.Tree            = null;
 
-            current.Removed();
+            current.Removed(this);
             this.ChildRemoved(current);
 
             if (current == end)
@@ -555,10 +552,10 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
-    protected virtual void Adopted()
+    protected virtual void Adopted(Node parent)
     { }
 
-    protected virtual void Removed()
+    protected virtual void Removed(Node parent)
     { }
 
     protected virtual void ChildAppended(Node child)
@@ -736,7 +733,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         node.Parent          = null;
         node.Tree            = null;
 
-        node.Removed();
+        node.Removed(this);
         this.ChildRemoved(node);
     }
 
@@ -793,10 +790,10 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         target.NextSibling     = null;
         target.Tree            = null;
 
-        target.Removed();
+        target.Removed(this);
         this.ChildRemoved(target);
 
-        node.Adopted();
+        node.Adopted(this);
         this.ChildAppended(node);
     }
 
@@ -888,14 +885,14 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         target.NextSibling     = null;
         target.Tree            = null;
 
-        target.Removed();
+        target.Removed(this);
         this.ChildRemoved(target);
 
         foreach (var node in nodes)
         {
             node.Parent = this;
             node.Tree   = this.Tree;
-            node.Adopted();
+            node.Adopted(this);
 
             this.ChildAppended(node);
         }

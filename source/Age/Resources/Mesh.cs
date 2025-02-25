@@ -6,7 +6,7 @@ using static Age.Shaders.GeometryShader;
 
 namespace Age.Resources;
 
-public sealed class Mesh : Node3D
+public sealed class Mesh : Spatial3D
 {
     public override string NodeName { get; } = nameof(Mesh);
 

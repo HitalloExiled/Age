@@ -1,8 +1,10 @@
 using Age.Numerics;
+using Age.Numerics.Converters;
+using Microsoft.VisualBasic;
 
 namespace Age.Tests.Numerics;
 
-public class Vecto2Tests
+public class Vector2Tests
 {
     [Fact]
     public void Vector2Angle()

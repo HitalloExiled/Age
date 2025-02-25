@@ -4,7 +4,7 @@ using Age.Resources;
 
 namespace Age.Commands;
 
-public sealed record RectCommand : Command
+public record RectCommand : Command
 {
     #region 8-bytes
     public MappedTexture MappedTexture { get; set; } = MappedTexture.Default;

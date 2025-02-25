@@ -1,8 +1,10 @@
 {
-  "profiles": {
-    "Age.Editor": {
-      "commandName": "Project",
-      "workingDirectory": "../.."
+    "profiles":
+    {
+        "Age.Editor":
+        {
+            "commandName": "Project",
+            "workingDirectory": "../.."
+        }
     }
-  }
 }

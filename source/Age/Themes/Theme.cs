@@ -1,4 +1,6 @@
 using Age.Numerics;
+using Age.Platforms.Display;
+using Age.Styling;
 
 namespace Age.Themes;
 
@@ -6,7 +8,7 @@ public class Theme
 {
     public static Theme Dark { get; } = new()
     {
-        Button = new()
+        Button  = new()
         {
             Flat = new()
             {
@@ -72,6 +74,24 @@ public class Theme
                 },
             }
         },
+        TextBox = new()
+        {
+            Outlined = new()
+            {
+                Base = new()
+                {
+                    Border          = new(1, 4, Color.Green),
+                    Color           = Color.Green,
+                    BackgroundColor = Color.Black,
+                    Padding         = new((Pixel)4),
+                    MinSize         = new((Pixel)100, (Em)1.5)
+                },
+                Hovered = new()
+                {
+                    Cursor = CursorKind.Text,
+                }                
+            }
+        }
     };
 
     // public static Theme Light { get; } = new()
@@ -81,5 +101,6 @@ public class Theme
 
     public static Theme Current => Dark;
 
-    public required ButtonStyles Button { get; init; }
+    public required ButtonStyles  Button  { get; init; }
+    public required TextBoxStyles TextBox { get; init; }
 }

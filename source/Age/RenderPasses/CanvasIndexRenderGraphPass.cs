@@ -1,5 +1,4 @@
 using Age.Commands;
-using Age.Converters;
 using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Shaders;
@@ -76,7 +75,7 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         {
             ArrayLayers   = 1,
             Extent        = extent,
-            Format        = this.Window.Surface.Swapchain.Format,
+            Format        = VkFormat.R16G16B16A16Unorm,
             ImageType     = VkImageType.N2D,
             InitialLayout = VkImageLayout.Undefined,
             MipLevels     = 1,
@@ -132,7 +131,7 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
                         {
                             Color  = new VkAttachmentDescription
                             {
-                                Format         = this.Window.Surface.Swapchain.Format,
+                                Format         = VkFormat.R16G16B16A16Unorm,
                                 Samples        = VkSampleCountFlags.N1,
                                 InitialLayout  = VkImageLayout.Undefined,
                                 FinalLayout    = VkImageLayout.General,
@@ -209,7 +208,7 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             var constant = new CanvasShader.PushConstant
             {
                 Border    = command.Border,
-                Color     = ColorFormatConverter.RGBAtoBGRA(0xFF000000 | command.ObjectId),
+                Color     = 0xFFFF_0000_0000_0000 | command.ObjectId,
                 Flags     = command.Flags,
                 Rect      = command.Rect,
                 Transform = transform,

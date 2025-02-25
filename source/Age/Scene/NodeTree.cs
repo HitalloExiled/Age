@@ -6,9 +6,17 @@ public abstract class NodeTree : Disposable
 {
     public event Action? Updated;
 
+    #region 8-bytes
+    private readonly Queue<Action> updatesQueue = [];
+
     internal List<Timer> Timers { get; } = [];
 
     public Root Root { get; }
+    #endregion
+
+    #region 1-bytes
+    public bool IsDirty { get; private set; }
+    #endregion
 
     protected NodeTree() =>
         this.Root = new() { Tree = this };
@@ -74,9 +82,26 @@ public abstract class NodeTree : Disposable
             else
             {
                 current.Update();
+
+                if (current.Flags.HasFlag(NodeFlags.IgnoreChildrenUpdates))
+                {
+                    enumerator.SkipToNextSibling();
+                }
             }
         }
     }
+
+    internal void AddDeferredUpdate(Action action)
+    {
+        this.updatesQueue.Enqueue(action);
+        this.MakeDirty();
+    }
+
+    public void MakeDirty() =>
+        this.IsDirty = true;
+
+    internal void MakePristine() =>
+        this.IsDirty = false;
 
     public virtual void Initialize()
     {
@@ -91,5 +116,10 @@ public abstract class NodeTree : Disposable
         this.LateUpdateTree();
 
         this.Updated?.Invoke();
+
+        while (this.updatesQueue.Count > 0)
+        {
+            this.updatesQueue.Dequeue().Invoke();
+        }
     }
 }

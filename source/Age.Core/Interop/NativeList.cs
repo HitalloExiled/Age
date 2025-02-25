@@ -3,11 +3,10 @@ using System.Runtime.InteropServices;
 
 namespace Age.Core.Interop;
 
-public unsafe class NativeList<T> : IDisposable, IEnumerable<T> where T : unmanaged
+public unsafe class NativeList<T> : Disposable, IEnumerable<T> where T : unmanaged
 {
     private int  capacity;
     private T*   buffer;
-    private bool disposed;
 
     public int Capacity
     {
@@ -64,21 +63,16 @@ public unsafe class NativeList<T> : IDisposable, IEnumerable<T> where T : unmana
         this.Count = values.Length;
     }
 
-    ~NativeList() => this.Dispose();
-
     public ref T this[int index]
     {
         get
         {
-            this.CheckDisposed();
+            this.ThrowIfDisposed();
             this.CheckIndex(index);
 
             return ref this.buffer[index];
         }
     }
-
-    private void CheckDisposed() =>
-        ObjectDisposedException.ThrowIf(this.disposed, this);
 
     private void CheckIndex(int index)
     {
@@ -96,22 +90,15 @@ public unsafe class NativeList<T> : IDisposable, IEnumerable<T> where T : unmana
         }
     }
 
-    public void Dispose()
+    protected override void Disposed(bool disposed)
     {
-        if (!this.disposed)
-        {
-            this.disposed = true;
-
-            NativeMemory.Free(this.buffer);
-            this.buffer = default;
-        }
-
-        GC.SuppressFinalize(this);
+        NativeMemory.Free(this.buffer);
+        this.buffer = default;
     }
 
     public ref T Add()
     {
-        this.CheckDisposed();
+        this.ThrowIfDisposed();
         this.EnsureCapacity();
 
         ref var element = ref this.buffer[this.Count];
@@ -130,29 +117,26 @@ public unsafe class NativeList<T> : IDisposable, IEnumerable<T> where T : unmana
 
     public void Clear()
     {
-        this.CheckDisposed();
-
-        for (var i = 0; i < this.Count; i++)
-        {
-            this.buffer[i] = default;
-        }
-
+        this.ThrowIfDisposed();
         this.Count = 0;
     }
 
-    public void Remove(int index)
+    public void Remove(int startIndex, int lenght = 1)
     {
-        this.CheckIndex(index);
-        this.CheckDisposed();
+        this.ThrowIfDisposed();
+        this.CheckIndex(startIndex);
 
-        this.Count -= 1;
+        var endIndex = startIndex + lenght;
 
-        for (var i = index; i < this.Count; i++)
+        if (endIndex < this.Count)
         {
-            this.buffer[i] = this.buffer[i + 1];
+            var source      = new Span<T>(this.buffer + endIndex, this.Count - endIndex);
+            var destination = new Span<T>(this.buffer + startIndex, endIndex - startIndex);
+
+            source.CopyTo(destination);
         }
 
-        this.buffer[this.Count] = default;
+        this.Count = int.Max(this.Count - lenght, 0);
     }
 
     public T* AsPointer() => this.buffer;

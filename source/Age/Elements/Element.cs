@@ -1,4 +1,5 @@
 using Age.Elements.Layouts;
+using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Scene;
 using Age.Styling;
@@ -7,6 +8,7 @@ using System.Text;
 using Key                  = Age.Platforms.Display.Key;
 using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
 using PlatformMouseEvent   = Age.Platforms.Display.MouseEvent;
+using AgeInput             = Age.Input;
 
 namespace Age.Elements;
 
@@ -20,21 +22,56 @@ public struct KeyEvent
 public delegate void ContextEventHandler(in ContextEvent mouseEvent);
 public delegate void MouseEventHandler(in MouseEvent mouseEvent);
 public delegate void KeyEventHandler(in KeyEvent keyEvent);
+public delegate void InputEventHandler(char keyEvent);
 
-public abstract partial class Element : ContainerNode, IEnumerable<Element>
+public abstract partial class Element : Layoutable, IEnumerable<Element>
 {
-    private event KeyEventHandler? keyDown;
-    private event KeyEventHandler? keyUp;
-    private event MouseEventHandler? scroll;
+    private event InputEventHandler? input;
+    private event KeyEventHandler?   keyDown;
+    private event KeyEventHandler?   keyUp;
+    private event MouseEventHandler? scrolled;
 
+    public event Action?              Activated;
     public event MouseEventHandler?   Blured;
     public event MouseEventHandler?   Clicked;
     public event ContextEventHandler? Context;
+    public event Action?              Deactivated;
     public event MouseEventHandler?   DoubleClicked;
     public event MouseEventHandler?   Focused;
+    public event MouseEventHandler?   MouseDown;
     public event MouseEventHandler?   MouseMoved;
     public event MouseEventHandler?   MouseOut;
     public event MouseEventHandler?   MouseOver;
+    public event MouseEventHandler?   MouseUp;
+
+    public event InputEventHandler? Input
+    {
+        add
+        {
+            lock(this.elementLock)
+            {
+                if (this.Tree is RenderTree renderTree && keyDown == null)
+                {
+                    renderTree.Window.Input += this.OnInput;
+                }
+            }
+
+            input += value;
+
+        }
+        remove
+        {
+            input -= value;
+
+            lock(this.elementLock)
+            {
+                if (this.Tree is RenderTree renderTree && keyDown == null)
+                {
+                    renderTree.Window.Input -= this.OnInput;
+                }
+            }
+        }
+    }
 
     public event KeyEventHandler? KeyDown
     {
@@ -93,27 +130,27 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    public event MouseEventHandler? Scroll
+    public event MouseEventHandler? Scrolled
     {
         add
         {
             lock(this.elementLock)
             {
-                if (this.Tree is RenderTree renderTree && scroll == null)
+                if (this.Tree is RenderTree renderTree && scrolled == null)
                 {
                     renderTree.Window.MouseWhell += this.OnScroll;
                 }
             }
 
-            scroll += value;
+            scrolled += value;
         }
         remove
         {
-            scroll -= value;
+            scrolled -= value;
 
             lock(this.elementLock)
             {
-                if (this.Tree is RenderTree renderTree && scroll == null)
+                if (this.Tree is RenderTree renderTree && scrolled == null)
                 {
                     renderTree.Window.MouseWhell -= this.OnScroll;
                 }
@@ -134,8 +171,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     #region 1-byte
     protected bool IsFocusable { get; set; }
 
-    public bool IsFocused { get; internal set; }
-    public bool IsHovered { get; internal set; }
+    public bool IsFocused { get; private set; }
+    public bool IsHovered { get; private set; }
     #endregion
 
     public Element? FirstElementChild
@@ -202,6 +239,12 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
+    public Point<uint> Scroll
+    {
+        get => this.Layout.ContentOffset;
+        set => this.Layout.ContentOffset = value;
+    }
+
     public Style Style
     {
         get => this.Layout.State.UserStyle ??= new();
@@ -222,9 +265,9 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
             foreach (var node in this.Traverse())
             {
-                if (node is TextNode textNode)
+                if (node is Text text)
                 {
-                    builder.Append(textNode.Value);
+                    builder.Append(text.Buffer);
 
                     if (this.Layout.State.Style.Stack == StackKind.Vertical)
                     {
@@ -239,28 +282,28 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             if (value != this.text)
             {
-                if (this.FirstChild is TextNode textNode)
+                if (this.FirstChild is Text text)
                 {
-                    if (textNode != this.LastChild)
+                    if (text != this.LastChild)
                     {
-                        if (textNode.NextSibling != null && this.LastChild != null)
+                        if (text.NextSibling != null && this.LastChild != null)
                         {
-                            this.RemoveChildrenInRange(textNode.NextSibling, this.LastChild);
+                            this.RemoveChildrenInRange(text.NextSibling, this.LastChild);
                         }
                     }
 
-                    textNode.Value = value;
+                    text.Value = value;
                 }
                 else
                 {
                     this.RemoveChildren();
 
-                    this.AppendChild(new TextNode() { Value = value });
+                    this.AppendChild(new Text(value));
                 }
 
                 this.text = value;
 
-                this.Layout.RequestUpdate();
+                this.Layout.RequestUpdate(true);
             }
         }
     }
@@ -282,15 +325,17 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         }
     }
 
-    private MouseEvent CreateEvent(in PlatformMouseEvent mouseEvent) =>
+    private MouseEvent CreateEvent(in PlatformMouseEvent mouseEvent, bool indirect) =>
         new()
         {
-            Target    = this,
-            Button    = mouseEvent.Button,
-            Delta     = mouseEvent.Delta,
-            KeyStates = mouseEvent.KeyStates,
-            X         = mouseEvent.X,
-            Y         = mouseEvent.Y,
+            Target        = this,
+            Button        = mouseEvent.Button,
+            Delta         = mouseEvent.Delta,
+            KeyStates     = mouseEvent.KeyStates,
+            PrimaryButton = mouseEvent.PrimaryButton,
+            X             = mouseEvent.X,
+            Y             = mouseEvent.Y,
+            Indirect      = indirect,
         };
 
     private ContextEvent CreateEvent(in PlatformContextEvent platformContextEvent) =>
@@ -303,6 +348,14 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             ScreenY = platformContextEvent.ScreenY,
         };
 
+    private void OnInput(char character)
+    {
+        if (this.IsFocused)
+        {
+            this.input?.Invoke(character);
+        }
+    }
+
     private void OnKeyDown(Key key)
     {
         if (this.IsFocused)
@@ -310,8 +363,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             var keyEvent = new KeyEvent
             {
                 Key       = key,
-                Holding   = !Input.IsKeyJustPressed(key),
-                Modifiers = Input.GetModifiers(),
+                Holding   = !AgeInput.IsKeyJustPressed(key),
+                Modifiers = AgeInput.GetModifiers(),
             };
 
             this.keyDown?.Invoke(keyEvent);
@@ -325,8 +378,8 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             var keyEvent = new KeyEvent
             {
                 Key       = key,
-                Holding   = !Input.IsKeyJustPressed(key),
-                Modifiers = Input.GetModifiers(),
+                Holding   = !AgeInput.IsKeyJustPressed(key),
+                Modifiers = AgeInput.GetModifiers(),
             };
 
             this.keyUp?.Invoke(keyEvent);
@@ -337,14 +390,19 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         if (this.Layout.IsScrollable)
         {
-            var mouseEvent = this.CreateEvent(platformMouseEvent);
+            var mouseEvent = this.CreateEvent(platformMouseEvent, false);
 
-            this.scroll?.Invoke(mouseEvent);
+            this.scrolled?.Invoke(mouseEvent);
         }
     }
 
     protected override void Connected(RenderTree renderTree)
     {
+        if (this.input != null)
+        {
+            renderTree.Window.Input += this.OnInput;
+        }
+
         if (this.keyDown != null)
         {
             renderTree.Window.KeyDown += this.OnKeyDown;
@@ -355,14 +413,14 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
             renderTree.Window.KeyUp += this.OnKeyUp;
         }
 
-        if (this.scroll != null)
+        if (this.scrolled != null)
         {
             renderTree.Window.MouseWhell += this.OnScroll;
         }
 
         if (!renderTree.IsDirty && !this.Layout.Hidden)
         {
-            renderTree.IsDirty = true;
+            renderTree.MakeDirty();
         }
 
         this.Canvas = this.ParentElement?.Canvas ?? this.Parent as Canvas;
@@ -372,27 +430,27 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
 
     protected override void ChildAppended(Node child)
     {
-        if (child is ContainerNode containerNode)
+        if (child is Layoutable layoutable)
         {
-            if (containerNode is Element element)
+            if (layoutable is Element element)
             {
                 this.Layout.ElementAppended(element);
             }
 
-            this.Layout.ContainerNodeAppended(containerNode);
+            this.Layout.LayoutableAppended(layoutable);
         }
     }
 
     protected override void ChildRemoved(Node child)
     {
-        if (child is ContainerNode containerNode)
+        if (child is Layoutable layoutable)
         {
-            if (containerNode is Element element)
+            if (layoutable is Element element)
             {
                 this.Layout.ElementRemoved(element);
             }
 
-            this.Layout.ContainerNodeRemoved(containerNode);
+            this.Layout.LayoutableRemoved(layoutable);
         }
     }
 
@@ -400,12 +458,13 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     {
         this.Canvas = null;
 
+        renderTree.Window.Input   -= this.OnInput;
         renderTree.Window.KeyDown -= this.OnKeyDown;
         renderTree.Window.KeyUp   -= this.OnKeyUp;
 
         if (!renderTree.IsDirty && !this.Layout.Hidden)
         {
-            renderTree.IsDirty = true;
+            renderTree.MakeDirty();
         }
 
         this.Layout.TargetDisconnected();
@@ -414,8 +473,11 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
     protected override void Indexed() =>
         this.Layout.TargetIndexed();
 
-    internal void InvokeActivate() =>
+    internal void InvokeActivate()
+    {
         this.Layout.State.AddState(StyledStateManager.State.Active);
+        this.Activated?.Invoke();
+    }
 
     internal void InvokeBlur(in PlatformMouseEvent platformMouseEvent)
     {
@@ -423,21 +485,24 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             this.Layout.State.RemoveState(StyledStateManager.State.Focus);
             this.IsFocused = false;
-            this.Blured?.Invoke(this.CreateEvent(platformMouseEvent));
+            this.Blured?.Invoke(this.CreateEvent(platformMouseEvent, false));
         }
     }
 
-    internal void InvokeClick(in PlatformMouseEvent platformMouseEvent) =>
-        this.Clicked?.Invoke(this.CreateEvent(platformMouseEvent));
+    internal void InvokeClick(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
+        this.Clicked?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
     internal void InvokeContext(in PlatformContextEvent platformContextEvent) =>
         this.Context?.Invoke(this.CreateEvent(platformContextEvent));
 
-    internal void InvokeDeactivate() =>
+    internal void InvokeDeactivate()
+    {
         this.Layout.State.RemoveState(StyledStateManager.State.Active);
+        this.Deactivated?.Invoke();
+    }
 
-    internal void InvokeDoubleClick(in PlatformMouseEvent platformMouseEvent) =>
-        this.DoubleClicked?.Invoke(this.CreateEvent(platformMouseEvent));
+    internal void InvokeDoubleClick(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
+        this.DoubleClicked?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
     internal void InvokeFocus(in PlatformMouseEvent platformMouseEvent)
     {
@@ -445,19 +510,25 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         {
             this.IsFocused = true;
             this.Layout.State.AddState(StyledStateManager.State.Focus);
-            this.Focused?.Invoke(this.CreateEvent(platformMouseEvent));
+            this.Focused?.Invoke(this.CreateEvent(platformMouseEvent, false));
         }
     }
 
-    internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent) =>
-        this.MouseMoved?.Invoke(this.CreateEvent(platformMouseEvent));
+    internal void InvokeMouseDown(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
+        this.MouseDown?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+
+    internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
+        this.MouseMoved?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+
+    internal void InvokeMouseUp(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
+        this.MouseUp?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
     {
         this.IsHovered = false;
         this.Layout.State.RemoveState(StyledStateManager.State.Hovered);
         this.Layout.TargetMouseOut();
-        this.MouseOut?.Invoke(this.CreateEvent(platformMouseEvent));
+        this.MouseOut?.Invoke(this.CreateEvent(platformMouseEvent, false));
     }
 
     internal void InvokeMouseOver(in PlatformMouseEvent platformMouseEvent)
@@ -465,7 +536,7 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.IsHovered = true;
         this.Layout.State.AddState(StyledStateManager.State.Hovered);
         this.Layout.TargetMouseOver();
-        this.MouseOver?.Invoke(this.CreateEvent(platformMouseEvent));
+        this.MouseOver?.Invoke(this.CreateEvent(platformMouseEvent, false));
     }
 
     protected override void Disposed() =>
@@ -490,4 +561,77 @@ public abstract partial class Element : ContainerNode, IEnumerable<Element>
         this.IsFocused = true;
         this.Focused?.Invoke(new() { Target = this });
     }
+
+    public BoxModel GetBoxModel()
+    {
+        var boundings = this.GetBoundings();
+
+        var padding = this.Layout.Padding;
+        var border  = this.Layout.Border;
+        var content = this.Layout.Content;
+        var margin  = this.Layout.Margin;
+
+        return new()
+        {
+            Margin    = margin,
+            Boundings = boundings,
+            Border    = border,
+            Padding   = padding,
+            Content   = content,
+        };
+    }
+
+    public void ScrollTo(in Rect<int> boundings)
+    {
+        if (!this.Layout.CanScrollX || !this.Layout.CanScrollY)
+        {
+            return;
+        }
+
+        var boxModel = this.GetBoxModel();
+
+        var boundsLeft   = boxModel.Boundings.Left   + boxModel.Border.Left   + boxModel.Padding.Left;
+        var boundsRight  = boxModel.Boundings.Right  - boxModel.Border.Right  - boxModel.Padding.Right;
+        var boundsTop    = boxModel.Boundings.Top    + boxModel.Border.Top    + boxModel.Padding.Top;
+        var boundsBottom = boxModel.Boundings.Bottom - boxModel.Border.Bottom - boxModel.Padding.Bottom;
+
+        var scroll = this.Scroll;
+
+        if (this.Layout.CanScrollX)
+        {
+            if (boundings.Left < boundsLeft)
+            {
+                var characterLeft = boundings.Left + scroll.X;
+
+                scroll.X = (uint)(characterLeft - boundsLeft);
+            }
+            else if (boundings.Right > boundsRight)
+            {
+                var characterRight = boundings.Right + scroll.X;
+
+                scroll.X = (uint)(characterRight - boundsRight);
+            }
+        }
+
+        if (this.Layout.CanScrollY)
+        {
+            if (boundings.Top < boundsTop)
+            {
+                var characterTop = boundings.Top + scroll.Y;
+
+                scroll.Y = (uint)(characterTop - boundsTop);
+            }
+            else if (boundings.Bottom > boundsBottom)
+            {
+                var characterBottom = boundings.Bottom + scroll.Y;
+
+                scroll.Y = (uint)(characterBottom - boundsBottom);
+            }
+        }
+
+        this.Scroll = scroll;
+    }
+
+    public void ScrollTo(Element element) =>
+        this.ScrollTo(element.GetBoundings());
 }

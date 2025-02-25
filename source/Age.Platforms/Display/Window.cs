@@ -6,6 +6,7 @@ namespace Age.Platforms.Display;
 public delegate void MouseEventHandler(in MouseEvent mouseEvent);
 public delegate void ContextEventHandler(in ContextEvent mouseEvent);
 public delegate void KeyEventHandler(Key key);
+public delegate void InputEventHandler(char character);
 
 public partial class Window : Disposable
 {
@@ -13,6 +14,7 @@ public partial class Window : Disposable
     public event Action?              Closed;
     public event ContextEventHandler? Context;
     public event MouseEventHandler?   DoubleClick;
+    public event InputEventHandler?   Input;
     public event KeyEventHandler?     KeyDown;
     public event KeyEventHandler?     KeyPress;
     public event KeyEventHandler?     KeyUp;
@@ -172,6 +174,9 @@ public partial class Window : Disposable
             this.IsClosed = true;
         }
     }
+
+    public string? GetClipboardData() =>
+        this.PlatformGetClipboardData();
 
     public void SetClipboardData(string value) =>
         this.PlatformSetClipboardData(value);
