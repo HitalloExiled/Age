@@ -9,6 +9,7 @@ using Key                  = Age.Platforms.Display.Key;
 using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
 using PlatformMouseEvent   = Age.Platforms.Display.MouseEvent;
 using AgeInput             = Age.Input;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Elements;
 
@@ -163,8 +164,8 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
     #region 8-bytes
     private string? text;
 
-    internal ShadowTree?              ShadowTree { get; set; }
-    internal Dictionary<string, Slot> Slots      { get; } = [];
+    internal protected ShadowTree? ShadowTree { get; set; }
+    internal Dictionary<string, Slot> Slots   { get; } = [];
 
     internal override BoxLayout Layout { get; }
 
@@ -407,6 +408,9 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
         }
     }
 
+    [MemberNotNull(nameof(ShadowTree))]
+    protected void AttachShadowTree() => this.ShadowTree = new(this);
+
     protected override void Connected(RenderTree renderTree)
     {
         if (this.input != null)
@@ -434,7 +438,12 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
             renderTree.MakeDirty();
         }
 
-        this.Canvas = this.ParentElement?.Canvas ?? this.Parent as Canvas;
+        this.Canvas = this.ParentElementOrShadowTreeHost?.Canvas ?? this.Parent as Canvas;
+
+        if (this.ShadowTree != null)
+        {
+            this.ShadowTree.Tree = renderTree;
+        }
 
         this.Layout.TargetConnected();
     }
@@ -484,6 +493,11 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
         if (!renderTree.IsDirty && !this.Layout.Hidden)
         {
             renderTree.MakeDirty();
+        }
+
+        if (this.ShadowTree != null)
+        {
+            this.ShadowTree.Tree = null;
         }
 
         this.Layout.TargetDisconnected();

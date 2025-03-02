@@ -100,8 +100,6 @@ internal sealed partial class TextLayout : Layout
         }
     }
 
-    public override BoxLayout? Parent => this.target.ParentElement?.Layout;
-
     public override Text Target => this.target;
 
     public TextLayout(Text target)
@@ -286,7 +284,7 @@ internal sealed partial class TextLayout : Layout
 
         var text = this.target.Buffer.AsSpan();
 
-        var style = this.target.ParentElement!.Layout.State.Style;
+        var style = this.target.ParentElementOrShadowTreeHost!.Layout.State.Style;
 
         var glyphs = this.typeface.GetGlyphs(text);
         var font   = this.paint.ToFont();
@@ -502,7 +500,7 @@ internal sealed partial class TextLayout : Layout
     }
 
     public void AdjustScroll() =>
-        this.target.ParentElement?.ScrollTo(this.target.GetCursorBoundings());
+        this.target.ParentElementOrShadowTreeHost?.ScrollTo(this.target.GetCursorBoundings());
 
     public void ClearSelection() =>
         this.Selection = default;

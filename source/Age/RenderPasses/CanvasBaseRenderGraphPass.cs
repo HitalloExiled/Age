@@ -128,7 +128,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
                     this.CommandBuffer.BindVertexBuffer(pipeline.VertexBuffer);
                     this.CommandBuffer.BindIndexBuffer(pipeline.IndexBuffer);
 
-                    foreach (var entry in this.Window.Tree.Enumerate2DCommands())
+                    foreach (var entry in this.Window.Tree.Get2DCommands())
                     {
                         switch (entry.Command)
                         {

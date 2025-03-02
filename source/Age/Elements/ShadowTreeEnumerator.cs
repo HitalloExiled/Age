@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Runtime.CompilerServices;
 using Age.Scene;
 
 namespace Age.Elements;
@@ -24,19 +25,19 @@ public struct ShadowTreeEnumerator(Element target) : IEnumerator<Layoutable>
             case 0:
                 if (target.ShadowTree != null)
                 {
-                    this.current = target.ShadowTree.FirstChild;
+                    this.current = getNextLayoutableOrSlot(target.ShadowTree.FirstChild);
                     this.state   = 1;
-
-                    goto case 1;
                 }
                 else
                 {
-                    this.current = target.FirstChild;
+                    this.current = getNextLayoutable(target.FirstChild);
                     this.state   = 3;
-
-                    goto case 3;
                 }
+
+                break;
             case 1:
+                this.current = getNextLayoutableOrSlot(this.current!.NextSibling);
+
                 while (this.current != null && this.current is not (Layoutable or Slot))
                 {
                     this.current = this.current.NextSibling;
@@ -67,8 +68,10 @@ public struct ShadowTreeEnumerator(Element target) : IEnumerator<Layoutable>
                 {
                     for (++this.slotIndex; this.slotIndex < this.slot!.Nodes.Count; this.slotIndex++)
                     {
-                        if ((this.current = this.slot.Nodes[this.slotIndex]) is Layoutable)
+                        if (this.slot.Nodes[this.slotIndex] is Layoutable)
                         {
+                            this.current = this.slot.Nodes[this.slotIndex];
+
                             break;
                         }
                     }
@@ -76,12 +79,31 @@ public struct ShadowTreeEnumerator(Element target) : IEnumerator<Layoutable>
 
                 break;
             case 3:
-                while (this.current != null && (this.current is not Layoutable layoutable || layoutable.Slot != null))
-                {
-                    this.current = this.current.NextSibling;
-                }
+                this.current = getNextLayoutable(this.current!.NextSibling);
 
                 break;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Node? getNextLayoutable(Node? node)
+        {
+            while (node != null && (node is not Layoutable layoutable || layoutable.Slot != null))
+            {
+                node = node.NextSibling;
+            }
+
+            return node;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Node? getNextLayoutableOrSlot(Node? node)
+        {
+            while (node != null && node is not (Slot or Layoutable))
+            {
+                node = node.NextSibling;
+            }
+
+            return node;
         }
 
         return this.current != null;

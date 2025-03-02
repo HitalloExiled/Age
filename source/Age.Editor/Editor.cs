@@ -25,7 +25,7 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = ScrollTest.Setup;
+        this.setup = ShadowTreeTest.Setup;
 
         this.Reload();
         // this.CreateDemoScene();

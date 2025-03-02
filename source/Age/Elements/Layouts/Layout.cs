@@ -34,8 +34,9 @@ internal abstract class Layout : Disposable
     public abstract bool IsParentDependent { get; }
     #endregion
 
-    public abstract Layout? Parent { get; }
-    public abstract Node    Target { get; }
+    public BoxLayout? Parent => this.Target.ParentElementOrShadowTreeHost?.Layout;
+
+    public abstract Layoutable Target { get; }
 
     protected override void Disposed(bool disposing)
     {
@@ -59,7 +60,7 @@ internal abstract class Layout : Disposable
             }
             else if (this.Target.Tree is RenderTree renderTree)
             {
-                if (this.Parent?.Target != renderTree.Root)
+                if (this.Target.Parent != renderTree.Root)
                 {
                     renderTree.AddDeferredUpdate(this.Update);
                 }

@@ -195,7 +195,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
                         commandBuffer.BeginRenderPass(this.RenderPass, renderTarget.Framebuffer, [colorClearValue, default, depthClearValue]);
                         commandBuffer.SetViewport(renderTarget.Size.ToExtent2D());
 
-                        foreach (var entry in this.Window.Tree.Enumerate3DCommands())
+                        foreach (var entry in this.Window.Tree.Get3DCommands())
                         {
                             switch (entry.Command)
                             {

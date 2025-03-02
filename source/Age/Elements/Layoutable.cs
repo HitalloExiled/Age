@@ -17,7 +17,7 @@ public abstract class Layoutable : Spatial2D
     private CacheValue<Transform2D> transformCache;
     #endregion
 
-    private Transform2D Offset => Transform2D.CreateTranslated((this.ParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
+    private Transform2D Offset => Transform2D.CreateTranslated((this.ParentElementOrShadowTreeHost?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
 
     internal Transform2D TransformWithOffset => this.Offset * this.Transform;
 
@@ -37,6 +37,8 @@ public abstract class Layoutable : Spatial2D
             return this.transformCache.Value;
         }
     }
+
+    internal Element? ParentElementOrShadowTreeHost => this.Parent is ShadowTree shadowTree ? shadowTree.Host : this.ParentElement;
 
     public override Transform2D Transform
     {

@@ -13,8 +13,8 @@ namespace Age.Scene;
 public sealed partial class RenderTree : NodeTree
 {
     #region 8-bytes
-    private readonly List<Command2DEntry> command2DEntriesCache = [];
-    private readonly List<Command3DEntry> command3DEntriesCache = [];
+    private readonly List<Command2DEntry> command2DEntries = [];
+    private readonly List<Command3DEntry> command3DEntries = [];
 
     private Buffer                     buffer = null!;
     private ulong                      bufferVersion;
@@ -37,68 +37,93 @@ public sealed partial class RenderTree : NodeTree
         this.Window.Closed += this.Dispose;
     }
 
-    private IEnumerable<CommandEntry> EnumerateCommands()
+    private void BuildIndexedTreeAndCollectCommands()
     {
-        var enumerator = this.Root.GetTraverseEnumerator();
+        var nodeIndex = 0;
 
-        var index = 0;
+        var stack = new Stack<(Node Root, Node Node)>();
 
-        while (enumerator.MoveNext())
+        stack.Push((this.Root, this.Root));
+
+        while (stack.Count > 0)
         {
-            if (enumerator.Current is Renderable current)
+            var (root, current) = stack.Pop();
+
+            if (current is ShadowTree)
             {
-                if (current.Visible == true)
+                root = current;
+            }
+
+            foreach (var node in current)
+            {
+                if (root is ShadowTree && node is Slot slot && slot.Nodes.Count > 0)
                 {
-                    current.Index = index;
-
-                    if (index == this.Nodes.Count)
+                    foreach (var slottedNode in slot.Nodes)
                     {
-                        this.Nodes.Add(current);
-                    }
-                    else
-                    {
-                        this.Nodes[index] = current;
-                    }
-
-                    index++;
-
-                    if (current is Spatial2D spatial2D)
-                    {
-                        var transform = spatial2D.TransformCache;
-
-                        foreach (var command in spatial2D.Commands)
-                        {
-                            var entry = new Command2DEntry(command, transform);
-
-                            this.command2DEntriesCache.Add(entry);
-
-                            yield return entry;
-                        }
-                    }
-                    else if (current is Spatial3D spatial3D)
-                    {
-                        var transform = (Matrix4x4<float>)spatial3D.TransformCache;
-
-                        foreach (var command in spatial3D.Commands)
-                        {
-                            var entry = new Command3DEntry(command, transform);
-
-                            this.command3DEntriesCache.Add(entry);
-
-                            yield return entry;
-                        }
+                        this.CollectChildCommands(stack, root, slottedNode, ref nodeIndex);
                     }
                 }
-                else
+                else if (node is not Layoutable layoutable || layoutable.Slot == null)
                 {
-                    enumerator.SkipToNextSibling();
+                    this.CollectChildCommands(stack, root, node, ref nodeIndex);
                 }
             }
         }
 
-        if (index < this.Nodes.Count)
+        if (nodeIndex < this.Nodes.Count)
         {
-            this.Nodes.RemoveRange(index, this.Nodes.Count - index);
+            this.Nodes.RemoveRange(nodeIndex, this.Nodes.Count - nodeIndex);
+        }
+    }
+
+    private void CollectChildCommands(Stack<(Node, Node)> stack, Node root, Node node, ref int nodeIndex)
+    {
+        stack.Push((root, node));
+
+        if (node is Renderable current)
+        {
+            if (current.Visible)
+            {
+                current.Index = nodeIndex;
+
+                if (nodeIndex == this.Nodes.Count)
+                {
+                    this.Nodes.Add(current);
+                }
+                else
+                {
+                    this.Nodes[nodeIndex] = current;
+                }
+
+                nodeIndex++;
+
+                if (current is Element element && element.ShadowTree != null)
+                {
+                    stack.Push((root, element.ShadowTree));
+                }
+                else if (current is Spatial2D spatial2D)
+                {
+                    var transform = spatial2D.TransformCache;
+
+                    foreach (var command in spatial2D.Commands)
+                    {
+                        var entry = new Command2DEntry(command, transform);
+
+                        this.command2DEntries.Add(entry);
+                    }
+                }
+                else if (current is Spatial3D spatial3D)
+                {
+                    var transform = (Matrix4x4<float>)spatial3D.TransformCache;
+
+                    foreach (var command in spatial3D.Commands)
+                    {
+                        var entry = new Command3DEntry(command, transform);
+
+                        this.command3DEntries.Add(entry);
+                    }
+                }
+            }
         }
     }
 
@@ -106,7 +131,7 @@ public sealed partial class RenderTree : NodeTree
         this.GetNode(x, y, out _) switch
         {
             Element element => element,
-            Text    text    => text.ParentElement,
+            Text    text    => text.ParentElementOrShadowTreeHost,
             _ => null,
         };
 
@@ -148,8 +173,8 @@ public sealed partial class RenderTree : NodeTree
 
     private void ResetCache()
     {
-        this.command2DEntriesCache.Clear();
-        this.command3DEntriesCache.Clear();
+        this.command2DEntries.Clear();
+        this.command3DEntries.Clear();
     }
 
     private void OnContext(in Platforms.Display.ContextEvent contextEvent)
@@ -168,7 +193,7 @@ public sealed partial class RenderTree : NodeTree
         if (node is Text text)
         {
             text.Layout.PropagateSelection(characterPosition);
-            element = text.ParentElement;
+            element = text.ParentElementOrShadowTreeHost;
         }
         else
         {
@@ -194,7 +219,7 @@ public sealed partial class RenderTree : NodeTree
 
         if (node is Text text)
         {
-            element = text.ParentElement;
+            element = text.ParentElementOrShadowTreeHost;
 
             if (mouseEvent.IsPrimaryButtonPressed)
             {
@@ -268,7 +293,7 @@ public sealed partial class RenderTree : NodeTree
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var character);
 
         var text    = node as Text;
-        var element = text?.ParentElement ?? node as Element;
+        var element = text?.ParentElementOrShadowTreeHost ?? node as Element;
 
         if (element != null)
         {
@@ -315,7 +340,7 @@ public sealed partial class RenderTree : NodeTree
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out _);
 
         var text    = node as Text;
-        var element = text?.ParentElement ?? node as Element;
+        var element = text?.ParentElementOrShadowTreeHost ?? node as Element;
 
         if (element != null)
         {
@@ -343,47 +368,11 @@ public sealed partial class RenderTree : NodeTree
         this.buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
     }
 
-    internal IEnumerable<Command2DEntry> Enumerate2DCommands()
-    {
-        if (this.command2DEntriesCache.Count > 0)
-        {
-            for (var i = 0; i < this.command2DEntriesCache.Count; i++)
-            {
-                yield return this.command2DEntriesCache[i];
-            }
-        }
-        else
-        {
-            foreach (var entry in this.EnumerateCommands())
-            {
-                if (entry.TryGetCommand2DEntry(out var command2DEntry))
-                {
-                    yield return command2DEntry;
-                }
-            }
-        }
-    }
+    internal IEnumerable<Command2DEntry> Get2DCommands() =>
+        this.command2DEntries;
 
-    internal IEnumerable<Command3DEntry> Enumerate3DCommands()
-    {
-        if (this.command3DEntriesCache.Count > 0)
-        {
-            for (var i = 0; i < this.command3DEntriesCache.Count; i++)
-            {
-                yield return this.command3DEntriesCache[i];
-            }
-        }
-        else
-        {
-            foreach (var entry in this.EnumerateCommands())
-            {
-                if (entry.TryGetCommand3DEntry(out var command3DEntry))
-                {
-                    yield return command3DEntry;
-                }
-            }
-        }
-    }
+    internal IEnumerable<Command3DEntry> Get3DCommands() =>
+        this.command3DEntries;
 
     protected override void Disposed(bool disposing)
     {
@@ -422,5 +411,6 @@ public sealed partial class RenderTree : NodeTree
     {
         this.ResetCache();
         base.Update();
+        this.BuildIndexedTreeAndCollectCommands();
     }
 }

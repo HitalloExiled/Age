@@ -108,7 +108,6 @@ internal sealed partial class BoxLayout : Layout
 
     public StyledStateManager State { get; } = new();
 
-    public override BoxLayout?  Parent    => this.target.ParentElement?.Layout;
     public override Element     Target    => this.target;
     public override Transform2D Transform => (this.State.Style.Transform ?? new Transform2D()) * base.Transform;
 
@@ -312,12 +311,11 @@ internal sealed partial class BoxLayout : Layout
         this.staticContent = new Size<uint>();
         this.BaseLine      = -1;
 
-        foreach (var node in this.Target)
+        var enumerator = new ShadowTreeEnumerator(this.Target);
+
+        while (enumerator.MoveNext())
         {
-            if (node is not Layoutable child)
-            {
-                continue;
-            }
+            var child = enumerator.Current;
 
             child.Layout.Update();
 
@@ -1169,8 +1167,12 @@ internal sealed partial class BoxLayout : Layout
 
         var index = 0;
 
-        foreach (var node in this.Target)
+        var enumerator = new ShadowTreeEnumerator(this.Target);
+
+        while (enumerator.MoveNext())
         {
+            var node = enumerator.Current;
+
             if (node is not Layoutable child || child.Layout.Hidden)
             {
                 continue;

@@ -119,35 +119,6 @@ where TVertexInput  : IVertexInput
         Logger.Trace($"Compiling Shader [{this.filepath}]");
         var start = Stopwatch.GetTimestamp();
 
-        if (this.dependenciesHash.Count > 0)
-        {
-            var lockTaken = false;
-            spinLock.Enter(ref lockTaken);
-
-            foreach (var entry in this.dependenciesHash)
-            {
-                ref var users = ref dependenciesUsers.GetValueRefOrNullRef(entry.Key);
-
-                if (!Unsafe.IsNullRef(ref users))
-                {
-                    users--;
-
-                    if (users == 0)
-                    {
-                        watcher.Filters.Remove(Path.GetRelativePath(shadersPath, entry.Key));
-                        dependenciesUsers.Remove(entry.Key);
-                    }
-                }
-            }
-
-            if (lockTaken)
-            {
-                spinLock.Exit(false);
-            }
-        }
-
-        this.dependenciesHash.Clear();
-
         using var request = new SlangCompileRequest(this.slangSession);
 
         var translationUnitIndex = request.AddTranslationUnit(SlangSourceLanguage.Slang, Path.GetFileName(this.filepath.AsSpan()));
@@ -159,6 +130,16 @@ where TVertexInput  : IVertexInput
         if (request.Compile())
         {
             var dependencies = request.GetDependencyFiles().AsSpan(1);
+
+            var dependenciesToRemove = new List<string>(this.dependenciesHash.Count);
+
+            foreach (var key in this.dependenciesHash.Keys)
+            {
+                if (!dependencies.Contains(key))
+                {
+                    dependenciesToRemove.Add(key);
+                }
+            }
 
             if (dependencies.Length > 0)
             {
@@ -196,6 +177,35 @@ where TVertexInput  : IVertexInput
                     spinLock.Exit(false);
                 }
             }
+
+            if (dependenciesToRemove.Count > 0)
+            {
+                var lockTaken = false;
+                spinLock.Enter(ref lockTaken);
+
+                foreach (var dependecy in dependenciesToRemove)
+                {
+                    ref var users = ref dependenciesUsers.GetValueRefOrNullRef(dependecy);
+
+                    if (!Unsafe.IsNullRef(ref users))
+                    {
+                        users--;
+
+                        if (users == 0)
+                        {
+                            watcher.Filters.Remove(Path.GetRelativePath(shadersPath, dependecy));
+                            dependenciesUsers.Remove(dependecy);
+                        }
+                    }
+                }
+
+                if (lockTaken)
+                {
+                    spinLock.Exit(false);
+                }
+            }
+
+            this.dependenciesHash.Clear();
 
             this.UpdatePipeline(request);
 

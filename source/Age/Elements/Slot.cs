@@ -6,7 +6,7 @@ public sealed class Slot : Node
 {
     public override string NodeName { get; } = nameof(Slot);
 
-    internal readonly List<Node> Nodes = [];
+    internal List<Node> Nodes { get; } = [];
 
     public Node[] AssignedNodes => [.. this.Nodes];
 
