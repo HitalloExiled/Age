@@ -179,9 +179,9 @@ public unsafe class BvhTree
     {
         foreach (var child in node)
         {
-            if (child is Layoutable layoutContainer)
+            if (child is Layoutable layoutable)
             {
-                yield return (layoutContainer, depth);
+                yield return (layoutable, depth);
             }
 
             foreach (var pair in Traverse(child, depth + 1))

@@ -2,7 +2,7 @@ using Age.Scene;
 
 namespace Age.Elements;
 
-public sealed class Slot : Node
+public sealed class Slot : Element
 {
     public override string NodeName { get; } = nameof(Slot);
 
@@ -20,7 +20,7 @@ public sealed class Slot : Node
                 if (this.Root is ShadowTree shadowTree)
                 {
                     shadowTree.Host.Slots.Remove(field ?? "");
-                    shadowTree.Host.Slots[value ?? ""] = this;
+                    shadowTree.Host.Slots.TryAdd(value ?? "", this);
                 }
 
                 field = value;
@@ -28,6 +28,35 @@ public sealed class Slot : Node
         }
     }
 
-    internal void Add(Node node)    => this.Nodes.Add(node);
-    internal void Remove(Node node) => this.Nodes.Remove(node);
+    protected override void Connected(NodeTree tree)
+    {
+        base.Connected(tree);
+
+        if (this.Root is ShadowTree shadowTree)
+        {
+            shadowTree.Host.Slots.TryAdd(this.Name ?? "", this);
+        }
+    }
+
+    protected override void Disconnected(NodeTree tree)
+    {
+        base.Disconnected(tree);
+
+        if (this.Root is ShadowTree shadowTree)
+        {
+            shadowTree.Host.Slots.Remove(this.Name ?? "");
+        }
+    }
+
+    internal void Assign(Layoutable layoutable)
+    {
+        layoutable.AssignedSlot = this;
+        this.Nodes.Add(layoutable);
+    }
+
+    internal void Unassign(Layoutable layoutable)
+    {
+        this.Nodes.Remove(layoutable);
+        layoutable.AssignedSlot = null;
+    }
 }

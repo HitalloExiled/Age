@@ -63,7 +63,7 @@ public sealed partial class RenderTree : NodeTree
                         this.CollectChildCommands(stack, root, slottedNode, ref nodeIndex);
                     }
                 }
-                else if (node is not Layoutable layoutable || layoutable.Slot == null)
+                else if (node is not Layoutable layoutable || layoutable.AssignedSlot == null)
                 {
                     this.CollectChildCommands(stack, root, node, ref nodeIndex);
                 }

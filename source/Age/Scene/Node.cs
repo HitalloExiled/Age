@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Text;
 using Age.Core;
 
@@ -93,7 +92,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     [MemberNotNullWhen(true, nameof(Tree))]
     public bool IsConnected => this.Tree != null;
 
-    public bool HasChildNodes => this.FirstChild != null;
+    [MemberNotNullWhen(false, nameof(FirstChild), nameof(LastChild))]
+    public bool IsLeaf => this.FirstChild == null;
 
     public abstract string NodeName { get; }
 
@@ -916,11 +916,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public void ReplaceSelfWith(Span<Node> nodes) =>
         this.Parent?.ReplaceWith(this, nodes);
 
-    public IEnumerable<Node> Reverse() =>
-        new ReverseEnumerator(this);
+    public ReverseEnumerator Reverse() =>
+        new(this);
 
-    public IEnumerable<Node> Traverse() =>
-        new TraverseEnumerator(this);
+    public TraverseEnumerator Traverse() =>
+        new(this);
 
     public virtual void Initialize()
     { }

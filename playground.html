@@ -67,12 +67,21 @@
             border: var(--border) solid magenta;
             /* box-sizing: border-box; */
         }
+
+        slot {
+            width: 100%;
+            border: 1px green solid;
+        }
     </style>
 </head>
 <body>
     <button id="clicker">Click Me</button>
-    <span class="green">
-        <span class="red"></span>
+    <span style="display: flex; width: 100px; height: 100px;">
+        <slot>
+            <span class="green">
+                <span class="red"></span>
+            </span>
+        </slot>
     </span>
 
     <!-- <span class="stack">

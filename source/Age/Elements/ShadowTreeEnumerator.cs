@@ -87,7 +87,7 @@ public struct ShadowTreeEnumerator(Element target) : IEnumerator<Layoutable>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static Node? getNextLayoutable(Node? node)
         {
-            while (node != null && (node is not Layoutable layoutable || layoutable.Slot != null))
+            while (node != null && (node is not Layoutable layoutable || layoutable.AssignedSlot != null))
             {
                 node = node.NextSibling;
             }

@@ -10,12 +10,76 @@ public abstract class Layoutable : Spatial2D
     #region 8-bytes
     internal abstract Layout Layout { get; }
 
-    public Slot? Slot { get; internal set; }
+    public Slot? AssignedSlot { get; internal set; }
     #endregion
 
     #region 4-bytes
     private CacheValue<Transform2D> transformCache;
     #endregion
+
+    public Element? FirstElementChild
+    {
+        get
+        {
+            for (var node = this.FirstChild; node != null; node = node?.NextSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public Element? LastElementChild
+    {
+        get
+        {
+            for (var node = this.LastChild; node != null; node = node?.PreviousSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public Element? NextElementSibling
+    {
+        get
+        {
+            for (var node = this.NextSibling; node != null; node = node?.NextSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public Element? PreviousElementSibling
+    {
+        get
+        {
+            for (var node = this.PreviousSibling; node != null; node = node?.PreviousSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+    }
 
     private Transform2D Offset => Transform2D.CreateTranslated((this.ParentElementOrShadowTreeHost?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
 

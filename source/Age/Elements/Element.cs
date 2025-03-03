@@ -3,13 +3,13 @@ using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Scene;
 using Age.Styling;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 using Key                  = Age.Platforms.Display.Key;
 using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
 using PlatformMouseEvent   = Age.Platforms.Display.MouseEvent;
 using AgeInput             = Age.Input;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Elements;
 
@@ -27,6 +27,7 @@ public delegate void InputEventHandler(char keyEvent);
 
 public abstract partial class Element : Layoutable, IEnumerable<Element>
 {
+    #region events
     private event InputEventHandler? input;
     private event KeyEventHandler?   keyDown;
     private event KeyEventHandler?   keyUp;
@@ -158,18 +159,39 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
             }
         }
     }
-
-    private readonly Lock elementLock = new();
+    #endregion events
 
     #region 8-bytes
+    private readonly Lock elementLock = new();
+
     private string? text;
 
     internal protected ShadowTree? ShadowTree { get; set; }
-    internal Dictionary<string, Slot> Slots   { get; } = [];
+
+    internal Dictionary<string, List<Node>> WaitingSlots { get; } = [];
+    internal Dictionary<string, Slot> Slots              { get; } = [];
 
     internal override BoxLayout Layout { get; }
 
     public Canvas? Canvas { get; private set; }
+
+    public string? Slot
+    {
+        get;
+        set
+        {
+            if (field != value)
+            {
+                if (this.Parent is Element parentElement && parentElement.ShadowTree != null)
+                {
+                    this.UnassignSlot(parentElement, field ?? "");
+                    this.AssignSlot(parentElement, value ?? "");
+                }
+
+                field = value;
+            }
+        }
+    }
     #endregion
 
     #region 1-byte
@@ -178,70 +200,6 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
     public bool IsFocused { get; private set; }
     public bool IsHovered { get; private set; }
     #endregion
-
-    public Element? FirstElementChild
-    {
-        get
-        {
-            for (var node = this.FirstChild; node != null; node = node?.NextSibling)
-            {
-                if (node is Element element)
-                {
-                    return element;
-                }
-            }
-
-            return null;
-        }
-    }
-
-    public Element? NextElementSibling
-    {
-        get
-        {
-            for (var node = this.NextSibling; node != null; node = node?.NextSibling)
-            {
-                if (node is Element element)
-                {
-                    return element;
-                }
-            }
-
-            return null;
-        }
-    }
-
-    public Element? PreviousElementSibling
-    {
-        get
-        {
-            for (var node = this.PreviousSibling; node != null; node = node?.PreviousSibling)
-            {
-                if (node is Element element)
-                {
-                    return element;
-                }
-            }
-
-            return null;
-        }
-    }
-
-    public Element? LastElementChild
-    {
-        get
-        {
-            for (var node = this.LastChild; node != null; node = node?.PreviousSibling)
-            {
-                if (node is Element element)
-                {
-                    return element;
-                }
-            }
-
-            return null;
-        }
-    }
 
     public Point<uint> Scroll
     {
@@ -337,6 +295,33 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
         }
     }
 
+    private void AssignSlot(Element parent, string name)
+    {
+        if (!parent.WaitingSlots.TryGetValue(name, out var waitingSlots))
+        {
+            parent.WaitingSlots[name] = waitingSlots = [];
+        }
+
+        if (parent.Slots.TryGetValue(name, out var slot))
+        {
+            waitingSlots.Remove(this);
+
+            slot.Assign(this);
+        }
+        else
+        {
+            waitingSlots.Add(this);
+        }
+    }
+
+    private void UnassignSlot(Element parent, string name)
+    {
+        if (parent.Slots.TryGetValue(name, out var slot) == true)
+        {
+            slot.Unassign(this);
+        }
+    }
+
     private MouseEvent CreateEvent(in PlatformMouseEvent mouseEvent, bool indirect) =>
         new()
         {
@@ -411,6 +396,21 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
     [MemberNotNull(nameof(ShadowTree))]
     protected void AttachShadowTree() => this.ShadowTree = new(this);
 
+    protected override void Connected(NodeTree tree)
+    {
+        base.Connected(tree);
+
+        if (this.ShadowTree != null)
+        {
+            this.ShadowTree.Tree = tree;
+        }
+
+        if (this.Parent is Element parentElement && parentElement.ShadowTree != null)
+        {
+            this.AssignSlot(parentElement, this.Slot ?? "");
+        }
+    }
+
     protected override void Connected(RenderTree renderTree)
     {
         if (this.input != null)
@@ -440,11 +440,6 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
 
         this.Canvas = this.ParentElementOrShadowTreeHost?.Canvas ?? this.Parent as Canvas;
 
-        if (this.ShadowTree != null)
-        {
-            this.ShadowTree.Tree = renderTree;
-        }
-
         this.Layout.TargetConnected();
     }
 
@@ -459,10 +454,6 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
 
             this.Layout.LayoutableAppended(layoutable);
         }
-        else if (child is Slot slot)
-        {
-            this.Slots[slot.Name ?? ""] = slot;
-        }
     }
 
     protected override void ChildRemoved(Node child)
@@ -476,14 +467,22 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
 
             this.Layout.LayoutableRemoved(layoutable);
         }
-        else if (child is Slot slot)
+    }
+
+    protected override void Disconnected(NodeTree tree)
+    {
+        base.Disconnected(tree);
+
+        if (this.ShadowTree != null)
         {
-            this.Slots.Remove(slot.Name ?? "");
+            this.ShadowTree.Tree = null;
         }
     }
 
     protected override void Disconnected(RenderTree renderTree)
     {
+        base.Disconnected(renderTree);
+
         this.Canvas = null;
 
         renderTree.Window.Input   -= this.OnInput;
@@ -495,16 +494,21 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
             renderTree.MakeDirty();
         }
 
-        if (this.ShadowTree != null)
-        {
-            this.ShadowTree.Tree = null;
-        }
-
         this.Layout.TargetDisconnected();
     }
 
     protected override void Indexed() =>
         this.Layout.TargetIndexed();
+
+    protected override void Removed(Node parent)
+    {
+        base.Removed(parent);
+
+        if (parent is Element parentElement && parentElement.ShadowTree != null)
+        {
+            this.UnassignSlot(parentElement, this.Slot ?? "");
+        }
+    }
 
     internal void InvokeActivate()
     {

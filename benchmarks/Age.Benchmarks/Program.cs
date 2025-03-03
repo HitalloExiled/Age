@@ -5,6 +5,7 @@ using BenchmarkDotNet.Running;
 var config = DefaultConfig.Instance;
 
 // _ = BenchmarkRunner.Run<GenericMathBenchmarks>(config, args);
-_ = BenchmarkRunner.Run<NodeTraversalBenchmarks>(config, args);
+// _ = BenchmarkRunner.Run<NodeTraversalBenchmarks>(config, args);
 // _ = BenchmarkRunner.Run<TypeCastBenchmarks>(config, args);
 // _ = BenchmarkRunner.Run<StringVsStringBuilderBenchmarks>(config, args);
+_ = BenchmarkRunner.Run<NodeShadowTreeTraversalBenchmarks>(config, args);
