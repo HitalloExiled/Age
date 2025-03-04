@@ -76,22 +76,15 @@ public abstract partial class Node
 
                     if (element.ShadowTree != null)
                     {
-                        this.PushChildren(element);
-
-                        this.stack.Push((element.ShadowTree, false));
-
-                        continue;
+                        this.PushChildren(element.ShadowTree);
                     }
                 }
 
                 this.PushChildren(currentNode);
 
-                if (currentNode != this.root && currentNode is not ShadowTree)
-                {
-                    this.current = currentNode;
+                this.current = currentNode;
 
-                    return true;
-                }
+                return true;
             }
 
             return false;
@@ -101,7 +94,16 @@ public abstract partial class Node
         {
             this.current = null;
             this.stack.Clear();
-            this.stack.Push((this.root, false));
+
+            if (this.root is Element rootElement && rootElement.ShadowTree != null)
+            {
+                this.PushChildren(rootElement);
+                this.PushChildren(rootElement.ShadowTree);
+            }
+            else
+            {
+                this.PushChildren(this.root);
+            }
         }
 
         public readonly void SkipToNextSibling()
