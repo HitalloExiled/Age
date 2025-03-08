@@ -31,4 +31,9 @@ public static class ListExtensions
             source.RemoveRange(0, source.Count - size);
         }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SetCount<T>(this List<T> source, int count) =>
+        CollectionsMarshal.SetCount(source, count);
+
 }
