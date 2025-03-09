@@ -5,174 +5,7 @@ namespace Age.Tests.Age.Scene;
 
 #pragma warning disable CA1001
 
-public class TestTree : NodeTree
-{
-    protected override void Disposed(bool disposing) => throw new NotImplementedException();
-}
-
-public class TestElement : Element
-{
-    public override string NodeName { get; } = nameof(TestElement);
-}
-
-public class HostElement : Element
-{
-    public override string NodeName { get; } = nameof(HostElement);
-
-    public Element[] ShadowNodes { get; }
-
-    public HostElement(string name)
-    {
-        this.AttachShadowTree();
-
-        this.Name = name;
-
-        TestElement       child1;
-        TestElement       child21;
-        TestElement       child22;
-        Slot              child22Slot;
-        TestElement       child23;
-        TestElement       child2;
-        TestElement       child31;
-        Slot              child31Slot;
-        TestElement       child31Slot1;
-        TestElement       child32;
-        TestElement       child3;
-        NestedHostElement child4;
-        TestElement       child5;
-        TestElement       child51;
-
-        this.ShadowTree.Children =
-        [
-            child1 = new TestElement { Name = $"{name}.#.1" },
-            child2 = new TestElement
-            {
-                Name     = $"{name}.#.2",
-                Children =
-                [
-                    child21 = new TestElement { Name = $"{name}.#.2.1" },
-                    child22 = new TestElement
-                    {
-                        Name     = $"{name}.#.2.2",
-                        Children =
-                        [
-                            child22Slot = new Slot
-                            {
-                                Name     = $"{name}.#.2.2.(1)",
-                                Children =
-                                [
-                                    new TestElement { Name = "ignored" },
-                                ],
-                            }
-                        ],
-                    },
-                    child23 = new TestElement { Name = $"{name}.#.2.3" },
-                ],
-            },
-            child3 = new TestElement
-            {
-                Name     = $"{name}.#.3",
-                Children =
-                [
-                    child31 = new TestElement
-                    {
-                        Name     = $"{name}.#.3.1",
-                        Children =
-                        [
-                            child31Slot = new Slot
-                            {
-                                Name     = $"{name}.#.3.1.(1)",
-                                Children =
-                                [
-                                    child31Slot1 = new TestElement { Name = $"{name}.#.3.1.(1).1" },
-                                ]
-                            },
-                        ],
-                    },
-                    child32 = new TestElement { Name = $"{name}.#.3.2" },
-                ],
-            },
-            child4 = new NestedHostElement($"{name}.#.4"),
-            child5 = new TestElement
-            {
-                Name     = $"{name}.#.5",
-                Children =
-                [
-                    child51 = new TestElement { Name = $"{name}.#.5.1" },
-                ],
-            },
-        ];
-
-        this.ShadowNodes =
-        [
-            child1,
-            child2,
-            child21,
-            child22,
-            child22Slot,
-            child23,
-            child3,
-            child31,
-            child31Slot,
-            child31Slot1,
-            child32,
-            child4,
-            child5,
-            child51,
-        ];
-    }
-}
-
-public class NestedHostElement : Element
-{
-    public override string NodeName { get; } = nameof(NestedHostElement);
-
-    public Element[] ShadowNodes { get; }
-
-    public NestedHostElement(string name)
-    {
-        this.AttachShadowTree();
-
-        TestElement nestedChild0;
-        TestElement nestedChild1;
-        TestElement nestedChild11;
-        TestElement nestedChild12;
-        TestElement nestedChild13;
-
-        this.Name = name;
-
-        this.ShadowTree.Children =
-        [
-            nestedChild0 = new TestElement
-            {
-                Name     = $"{name}.#.1",
-                Children =
-                [],
-            },
-            nestedChild1 = new TestElement
-            {
-                Name     = $"{name}.#.2",
-                Children =
-                [
-                    nestedChild11 = new TestElement { Name = $"{name}.#.2.1" },
-                    nestedChild12 = new TestElement { Name = $"{name}.#.2.2", },
-                    nestedChild13 = new TestElement { Name = $"{name}.#.2.3" },
-                ],
-            },
-        ];
-
-        this.ShadowNodes =
-        [
-            nestedChild0,
-            nestedChild1,
-            nestedChild11,
-            nestedChild12,
-            nestedChild13,
-        ];
-    }
-}
-
-public class ShadowTreeTest
+public partial class ShadowTreeTest
 {
     private readonly TestTree tree = new();
 
@@ -245,6 +78,29 @@ public class ShadowTreeTest
         this.tree.Root.AppendChild(this.host);
     }
 
+    private static void AddChilds(Node parent, ref int parentDepth)
+    {
+        if (parentDepth > 0)
+        {
+            parentDepth--;
+
+            for (var i = 0; i < 3; i++)
+            {
+                var child   = new HostElement($"{parent.Name}.{i + 1}");
+
+                parent.AppendChild(child);
+
+                var depth = parentDepth;
+
+                AddChilds(child, ref depth);
+            }
+
+            var slotted = new HostElement($"{parent.Name}.4") { Slot = $"{parent.Name}.#.2.2.(1)" };
+
+            parent.AppendChild(slotted);
+        }
+    }
+
     [Fact]
     public void TraverseShadowTree()
     {
@@ -252,6 +108,7 @@ public class ShadowTreeTest
 
         Node[] shadowNodes =
         [
+            this.host,
             ..this.host.ShadowNodes[0..5],
             this.child1Slot1,
             this.child1Slot11,
@@ -282,7 +139,7 @@ public class ShadowTreeTest
 
         var actual = new List<string>(expected.Length);
 
-        var enumerator = new Node.TraverseShadowTreeEnumerator(this.host);
+        var enumerator = new Node.TraverseShadowTreeEnumerator(this.tree.Root);
 
         while (enumerator.MoveNext())
         {
@@ -299,6 +156,7 @@ public class ShadowTreeTest
 
         Node[] shadowNodes =
         [
+            this.host,
             ..this.host.ShadowNodes[0..5],
             this.child1Slot1,
             this.child1Slot11,
@@ -329,7 +187,7 @@ public class ShadowTreeTest
 
         var actual = new List<string>(expected.Length);
 
-        var enumerator = new Node.TraverseShadowTreeEnumeratorV2(this.host);
+        var enumerator = new Node.TraverseShadowTreeEnumeratorV2(this.tree.Root);
 
         while (enumerator.MoveNext())
         {
@@ -342,11 +200,14 @@ public class ShadowTreeTest
     [Fact]
     public void SkipToNextSibling()
     {
+        var nestedHost = (NestedHostElement)this.host.ShadowNodes[11];
+
         Node[] shadowNodes =
         [
             ..this.host.ShadowNodes[0..4],
             ..this.host.ShadowNodes[5..8],
-            ..this.host.ShadowNodes[10..],
+            this.host.ShadowNodes[10],
+            ..this.host.ShadowNodes[12..],
         ];
 
         Node[] lightNodes  =
@@ -371,7 +232,7 @@ public class ShadowTreeTest
 
         while (enumerator.MoveNext())
         {
-            if (enumerator.Current == this.child3 || enumerator.Current is Slot)
+            if (enumerator.Current == this.child3 || enumerator.Current == nestedHost || enumerator.Current is Slot)
             {
                 enumerator.SkipToNextSibling();
             }
@@ -382,5 +243,88 @@ public class ShadowTreeTest
         }
 
         Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void SkipToNextSiblingV2()
+    {
+        var nestedHost = (NestedHostElement)this.host.ShadowNodes[11];
+
+        Node[] shadowNodes =
+        [
+            ..this.host.ShadowNodes[0..4],
+            ..this.host.ShadowNodes[5..8],
+            this.host.ShadowNodes[10],
+            ..this.host.ShadowNodes[12..],
+        ];
+
+        Node[] lightNodes  =
+        [
+            this.child1,
+            this.child2,
+            this.child11,
+            this.child12,
+            this.child13,
+            this.child4,
+            this.child31,
+        ];
+
+        var expected = shadowNodes
+            .Concat(lightNodes)
+            .Select(x  => x.Name)
+            .ToArray();
+
+        var actual = new List<string>(expected.Length);
+
+        var enumerator = new Node.TraverseShadowTreeEnumeratorV2(this.host);
+
+        while (enumerator.MoveNext())
+        {
+            if (enumerator.Current == this.child3 || enumerator.Current == nestedHost || enumerator.Current is Slot)
+            {
+                enumerator.SkipToNextSibling();
+            }
+            else
+            {
+                actual.Add(enumerator.Current.Name!);
+            }
+        }
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void TestName()
+    {
+        var tree1 = new TestTree();
+        var tree2 = new TestTree();
+
+        tree1.Root.Name = "$";
+        tree2.Root.Name = "$";
+
+        var depth1 = 10;
+        var depth2 = 10;
+
+        AddChilds(tree1.Root, ref depth1);
+        AddChilds(tree2.Root, ref depth2);
+
+        var list1 = new List<string>();
+        var list2 = new List<string>();
+
+        var enumerator1 = new Node.TraverseShadowTreeEnumerator(tree1.Root);
+        var enumerator2 = new Node.TraverseShadowTreeEnumeratorV2(tree2.Root);
+
+        while (enumerator1.MoveNext())
+        {
+            list1.Add(enumerator1.Current.Name!);
+        }
+
+        while (enumerator2.MoveNext())
+        {
+            list2.Add(enumerator2.Current.Name!);
+        }
+
+        Assert.Equal(list1.Count, list2.Count);
+        Assert.Equal(list1, list2);
     }
 }

@@ -27,65 +27,55 @@ public class HostElement : Element
 
         this.ShadowTree.Children =
         [
+            new TestElement(),
             new TestElement
             {
-                Name     = "#.0",
-                Children =
-                [],
-            },
-            new TestElement
-            {
-                Name     = "#.1",
                 Children =
                 [
-                    new TestElement { Name = "#.1.1" },
+                    new TestElement(),
                     new TestElement
                     {
-                        Name     = "#.1.2",
                         Children =
                         [
                             new Slot
                             {
-                                Name     = "#.1.2.(0)",
+                                Name     = "slot",
                                 Children =
                                 [
-                                    new TestElement { Name = "ignored" },
+                                    new TestElement(),
                                 ],
                             }
                         ],
                     },
-                    new TestElement { Name = "#.1.3" },
+                    new TestElement(),
                 ],
             },
             new TestElement
             {
-                Name     = "#.2",
                 Children =
                 [
                     new TestElement
                     {
-                        Name     = "#.2.1",
                         Children =
                         [
                             new Slot
                             {
-                                Name     = "#.2.1.(0)",
+                                Name     = "unused",
                                 Children =
                                 [
-                                    new TestElement { Name = "#.2.1.(1).1" },
+                                    new TestElement(),
                                 ]
                             },
                         ],
                     },
-                    new TestElement { Name = "#.2.2" },
+                    new TestElement(),
                 ],
             },
             new TestElement
             {
-                Name     = "#.3",
                 Children =
                 [
-                    new TestElement { Name = "#.3.1" },
+                    new TestElement(),
                 ],
             },
         ];
@@ -97,77 +87,10 @@ public class HostElement : Element
 [MemoryDiagnoser]
 public class NodeShadowTreeTraversalBenchmarks
 {
-    private static IEnumerable<Node> Traverse(Node node)
-    {
-        foreach (var child in node)
-        {
-            yield return child;
-
-            foreach (var granChild in Traverse(child))
-            {
-                yield return granChild;
-            }
-        }
-    }
-
     private readonly TestTree tree = new();
 
-    public NodeShadowTreeTraversalBenchmarks()
-    {
-        var host = new HostElement
-        {
-            Name     = "$",
-            Children =
-            [
-                new TestElement
-                {
-                    Name     = "$.[#.1.2.(0)]",
-                    Slot     = "#.1.2.(0)",
-                    Children =
-                    [
-                        new TestElement { Name = "$.[#.1.2.(0)].1" },
-                    ]
-                },
-                new TestElement
-                {
-                    Name     = "$.0",
-                    Children =
-                    [],
-                },
-                new TestElement
-                {
-                    Name     = "$.1",
-                    Children =
-                    [
-                        new TestElement { Name = "$.1.1" },
-                        new TestElement { Name = "$.1.2" },
-                        new TestElement { Name = "$.1.3" },
-                    ],
-                },
-                new TestElement
-                {
-                    Name     = "$.2",
-                    Children =
-                    [
-                        new TestElement { Name = "$.2.1" },
-                        new TestElement { Name = "$.2.2" },
-                    ],
-                },
-                new TestElement
-                {
-                    Name     = "$.3",
-                    Children =
-                    [
-                        new TestElement { Name = "$.3.1" },
-                    ],
-                },
-            ]
-        };
-
-        var tree = new TestTree();
-
-        tree.Root.AppendChild(host);
-    }
+    [Params(1, 3, 5)]
+    public int Depth;
 
     public static IEnumerable<Node> TraverseRecursive(Node root)
     {
@@ -215,7 +138,6 @@ public class NodeShadowTreeTraversalBenchmarks
         }
     }
 
-    // Ignore this
     public static IEnumerable<Node> TraverseNonRecursive(Node root)
     {
         var stack = new Stack<(Node Node, bool IsSlotted)>();
@@ -278,6 +200,38 @@ public class NodeShadowTreeTraversalBenchmarks
         }
     }
 
+    private static void AddChilds(Node parent, ref int parentDepth)
+    {
+        if (parentDepth > 0)
+        {
+            parentDepth--;
+
+            for (var i = 0; i < 3; i++)
+            {
+                var child = new HostElement();
+
+                parent.AppendChild(child);
+
+                var depth = parentDepth;
+
+                AddChilds(child, ref depth);
+            }
+
+            var slotted = new HostElement { Slot = "slot" };
+            parent.AppendChild(slotted);
+        }
+    }
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        var current = this.tree.Root;
+
+        var depth = this.Depth;
+
+        AddChilds(current, ref depth);
+    }
+
     [Benchmark(Baseline = true)]
     public int NodeTraversalRecursive()
     {
@@ -291,6 +245,7 @@ public class NodeShadowTreeTraversalBenchmarks
         return count;
     }
 
+    [Benchmark]
     public int NodeTraversalNonRecursive()
     {
         var count = 0;
@@ -319,11 +274,39 @@ public class NodeShadowTreeTraversalBenchmarks
     }
 
     [Benchmark]
+    public int NodeTraversalIteratorV2()
+    {
+        var count = 0;
+
+        var enumerator = new Node.TraverseShadowTreeEnumeratorV2(this.tree.Root);
+
+        while (enumerator.MoveNext())
+        {
+            count++;
+        }
+
+        return count;
+    }
+
+    [Benchmark]
     public int NodeTraversalIteratorInForeach()
     {
         var count = 0;
 
         foreach (var node in new Node.TraverseShadowTreeEnumerator(this.tree.Root))
+        {
+            count++;
+        }
+
+        return count;
+    }
+
+    [Benchmark]
+    public int NodeTraversalIteratorInForeachV2()
+    {
+        var count = 0;
+
+        foreach (var node in new Node.TraverseShadowTreeEnumeratorV2(this.tree.Root))
         {
             count++;
         }

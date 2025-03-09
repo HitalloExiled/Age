@@ -76,7 +76,12 @@ public abstract partial class Node
 
                     if (element.ShadowTree != null)
                     {
+                        this.PushChildren(currentNode);
                         this.PushChildren(element.ShadowTree);
+
+                        this.current = currentNode;
+
+                        return true;
                     }
                 }
 
@@ -117,6 +122,14 @@ public abstract partial class Node
             }
             else
             {
+                if (this.current is Element element && element.ShadowTree != null)
+                {
+                    while (this.stack.Count > 0 && this.stack.Peek().Node.Parent == element.ShadowTree)
+                    {
+                        this.stack.Pop();
+                    }
+                }
+
                 while (this.stack.Count > 0 && this.stack.Peek().Node.Parent == this.current)
                 {
                     this.stack.Pop();
