@@ -27,10 +27,13 @@ public abstract partial class Node
         readonly IEnumerator IEnumerable.GetEnumerator() =>
             this.GetEnumerator();
 
+        readonly IEnumerator<Node> IEnumerable<Node>.GetEnumerator() =>
+            this.GetEnumerator();
+
         public readonly void Dispose()
         { }
 
-        public readonly IEnumerator<Node> GetEnumerator() => this;
+        private readonly TraverseShadowTreeEnumerator GetEnumerator() => this;
 
         private readonly void PushChildren(Node parent)
         {
@@ -58,14 +61,14 @@ public abstract partial class Node
             {
                 var (currentNode, isSlotted) = this.stack.Pop();
 
-                if (currentNode is Element element)
+                if (currentNode is Layoutable layoutable)
                 {
-                    if (!isSlotted && element.AssignedSlot != null)
+                    if (!isSlotted && layoutable.AssignedSlot != null)
                     {
                         continue;
                     }
 
-                    if (element is Slot slot && slot.Nodes.Count > 0)
+                    if (layoutable is Slot slot && slot.Nodes.Count > 0)
                     {
                         this.PushSlots(slot);
 
@@ -74,7 +77,7 @@ public abstract partial class Node
                         return true;
                     }
 
-                    if (element.ShadowTree != null)
+                    if (layoutable is Element element && element.ShadowTree != null)
                     {
                         this.PushChildren(currentNode);
                         this.PushChildren(element.ShadowTree);

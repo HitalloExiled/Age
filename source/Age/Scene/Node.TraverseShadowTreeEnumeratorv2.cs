@@ -16,8 +16,7 @@ public abstract partial class Node
         #endregion
 
         #region 1-byte
-        private bool  first = true;
-        private bool  skipToNextSibling;
+        private bool skipToNextSibling;
         #endregion
 
         public TraverseShadowTreeEnumeratorV2(Node root)
@@ -42,19 +41,18 @@ public abstract partial class Node
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private readonly Node? GetFirstChild(Node node, bool ignoreShadowTree)
         {
-            if (node is Slot slot && slot.Nodes.Count > 0)
+            if (node is Slot slot)
             {
-                this.stack.Add((slot, 0));
-
-                return slot.Nodes[0];
-            }
-
-            if (!ignoreShadowTree)
-            {
-                if (node is Element element && element.ShadowTree != null)
+                if (slot.Nodes.Count > 0)
                 {
-                    return element.ShadowTree.FirstChild;
+                    this.stack.Add((slot, 0));
+
+                    return slot.Nodes[0];
                 }
+            }
+            else if (!ignoreShadowTree && node is Element element && element.ShadowTree != null)
+            {
+                return element.ShadowTree.FirstChild;
             }
 
             return this.GetNodeOrNext(node.FirstChild);
@@ -63,7 +61,7 @@ public abstract partial class Node
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private readonly Node? GetNextChild(Node node, out Node? parent)
         {
-            parent = null;
+            parent = node.Parent;
 
             if (node is ShadowTree shadowTree)
             {
@@ -93,12 +91,13 @@ public abstract partial class Node
             }
 
             return this.GetNodeOrNext(node.NextSibling);
+
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private readonly Node? GetNodeOrNext(Node? node)
         {
-            while (node != null && node is Element element && element.AssignedSlot != null && !this.IsCurrentSlot(element.AssignedSlot))
+            while (node is Layoutable layoutable && layoutable.AssignedSlot != null && !this.IsCurrentSlot(layoutable.AssignedSlot))
             {
                 node = node.NextSibling;
             }
@@ -116,12 +115,7 @@ public abstract partial class Node
 
         public bool MoveNext()
         {
-            if (this.first)
-            {
-                this.first   = false;
-                this.current = this.GetFirstChild(this.root, false);
-            }
-            else if (!this.skipToNextSibling && this.GetFirstChild(this.current!, false) is Node first)
+            if (!this.skipToNextSibling && this.GetFirstChild(this.current!, false) is Node first)
             {
                 this.current = first;
             }
@@ -138,7 +132,7 @@ public abstract partial class Node
                         break;
                     }
 
-                    this.current = parent ?? (this.current.Parent == this.root ? null : this.current.Parent);
+                    this.current = parent == this.root ? null : parent;
                 }
             }
 
@@ -148,8 +142,7 @@ public abstract partial class Node
         public void Reset()
         {
             this.skipToNextSibling = false;
-            this.first             = true;
-            this.current           = null;
+            this.current           = this.root;
 
             this.stack.Clear();
         }

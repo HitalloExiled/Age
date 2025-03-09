@@ -294,7 +294,7 @@ public partial class ShadowTreeTest
     }
 
     [Fact]
-    public void TestName()
+    public void CompareV1toV2()
     {
         var tree1 = new TestTree();
         var tree2 = new TestTree();
