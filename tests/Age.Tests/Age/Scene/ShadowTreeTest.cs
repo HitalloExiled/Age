@@ -12,16 +12,16 @@ public partial class ShadowTreeTest
     private readonly TestElement child1Slot1;
     private readonly TestElement child1Slot11;
     private readonly TestElement child2Slot1;
-    private readonly TestElement child1;
+    private readonly TestElement child3;
     private readonly TestElement child11;
     private readonly TestElement child12;
     private readonly TestElement child13;
-    private readonly TestElement child2;
+    private readonly TestElement child4;
     private readonly TestElement child21;
     private readonly TestElement child22;
-    private readonly TestElement child3;
+    private readonly TestElement child5;
     private readonly TestElement child31;
-    private readonly TestElement child4;
+    private readonly TestElement child6;
     private readonly HostElement host;
 
     public ShadowTreeTest()
@@ -44,32 +44,32 @@ public partial class ShadowTreeTest
                     Name     = "$.2[#.2.2.(1)]",
                     Slot     = "$.#.2.2.(1)",
                 },
-                this.child1 = new TestElement { Name = "$.1", },
-                this.child2 = new TestElement
-                {
-                    Name     = "$.2",
-                    Children =
-                    [
-                        this.child11 = new TestElement { Name = "$.2.1" },
-                        this.child12 = new TestElement { Name = "$.2.2" },
-                        this.child13 = new TestElement { Name = "$.2.3" },
-                    ],
-                },
-                this.child3 = new TestElement
-                {
-                    Name     = "$.3",
-                    Children =
-                    [
-                        this.child21 = new TestElement { Name = "$.3.1" },
-                        this.child22 = new TestElement { Name = "$.3.2" },
-                    ],
-                },
+                this.child3 = new TestElement { Name = "$.3", },
                 this.child4 = new TestElement
                 {
                     Name     = "$.4",
                     Children =
                     [
-                        this.child31 = new TestElement { Name = "$.4.1" },
+                        this.child11 = new TestElement { Name = "$.4.1" },
+                        this.child12 = new TestElement { Name = "$.4.2" },
+                        this.child13 = new TestElement { Name = "$.4.3" },
+                    ],
+                },
+                this.child5 = new TestElement
+                {
+                    Name     = "$.5",
+                    Children =
+                    [
+                        this.child21 = new TestElement { Name = "$.5.1" },
+                        this.child22 = new TestElement { Name = "$.5.2" },
+                    ],
+                },
+                this.child6 = new TestElement
+                {
+                    Name     = "$.6",
+                    Children =
+                    [
+                        this.child31 = new TestElement { Name = "$.6.1" },
                     ],
                 },
             ]
@@ -120,15 +120,15 @@ public partial class ShadowTreeTest
 
         Node[] lightNodes  =
         [
-            this.child1,
-            this.child2,
+            this.child3,
+            this.child4,
             this.child11,
             this.child12,
             this.child13,
-            this.child3,
+            this.child5,
             this.child21,
             this.child22,
-            this.child4,
+            this.child6,
             this.child31,
         ];
 
@@ -168,15 +168,15 @@ public partial class ShadowTreeTest
 
         Node[] lightNodes  =
         [
-            this.child1,
-            this.child2,
+            this.child3,
+            this.child4,
             this.child11,
             this.child12,
             this.child13,
-            this.child3,
+            this.child5,
             this.child21,
             this.child22,
-            this.child4,
+            this.child6,
             this.child31,
         ];
 
@@ -212,12 +212,12 @@ public partial class ShadowTreeTest
 
         Node[] lightNodes  =
         [
-            this.child1,
-            this.child2,
+            this.child3,
+            this.child4,
             this.child11,
             this.child12,
             this.child13,
-            this.child4,
+            this.child6,
             this.child31,
         ];
 
@@ -232,7 +232,7 @@ public partial class ShadowTreeTest
 
         while (enumerator.MoveNext())
         {
-            if (enumerator.Current == this.child3 || enumerator.Current == nestedHost || enumerator.Current is Slot)
+            if (enumerator.Current == this.child5 || enumerator.Current == nestedHost || enumerator.Current is Slot)
             {
                 enumerator.SkipToNextSibling();
             }
@@ -260,12 +260,12 @@ public partial class ShadowTreeTest
 
         Node[] lightNodes  =
         [
-            this.child1,
-            this.child2,
+            this.child3,
+            this.child4,
             this.child11,
             this.child12,
             this.child13,
-            this.child4,
+            this.child6,
             this.child31,
         ];
 
@@ -280,7 +280,7 @@ public partial class ShadowTreeTest
 
         while (enumerator.MoveNext())
         {
-            if (enumerator.Current == this.child3 || enumerator.Current == nestedHost || enumerator.Current is Slot)
+            if (enumerator.Current == this.child5 || enumerator.Current == nestedHost || enumerator.Current is Slot)
             {
                 enumerator.SkipToNextSibling();
             }
