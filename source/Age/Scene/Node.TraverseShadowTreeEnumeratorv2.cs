@@ -31,6 +31,69 @@ public abstract partial class Node
         readonly object IEnumerator.Current => this.Current;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private readonly bool IsAssignedToCurrentSlot(Node node) =>
+            this.stack.Count > 0 && node is Layoutable layoutable && this.stack.Peek().Slot == layoutable.AssignedSlot;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private readonly bool IsCurrentSlot(Slot slot) =>
+            this.stack.Count > 0 && this.stack.Peek().Slot == slot;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private readonly Node? GetFirstChild(Node node)
+        {
+            if (node is Slot slot)
+            {
+                if (slot.Nodes.Count > 0)
+                {
+                    this.stack.Push((slot, 0));
+
+                    return slot.Nodes[0];
+                }
+                else
+                {
+                    return slot.FirstChild;
+                }
+            }
+            else if (node is Element element && element.ShadowTree != null)
+            {
+                return element.ShadowTree.FirstChild;
+            }
+
+            return this.GetNodeOrSkip(node.FirstChild);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private readonly Node? GetNextSibling(Node node, out Node? parent)
+        {
+            if (node is ShadowTree shadowTree)
+            {
+                parent = shadowTree.Host;
+
+                return this.GetNodeOrSkip(shadowTree.Host.FirstChild);
+            }
+
+            if (this.IsAssignedToCurrentSlot(node))
+            {
+                var (slot, index) = this.stack.Pop();
+
+                parent = slot;
+
+                if (++index < slot.Nodes.Count)
+                {
+                    this.stack.Push((slot, index));
+
+                    return slot.Nodes[index];
+                }
+
+                return null;
+            }
+
+            parent = node.Parent;
+
+            return this.GetNodeOrSkip(node.NextSibling);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private readonly Node? GetNodeOrSkip(Node? node)
         {
             while (node is Layoutable layoutable && layoutable.AssignedSlot != null && !this.IsCurrentSlot(layoutable.AssignedSlot))
@@ -41,52 +104,24 @@ public abstract partial class Node
             return node;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly bool IsCurrentSlot(Slot slot) =>
-            this.stack.Count > 0 && this.stack.Peek().Slot == slot;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly bool IsSlotted(Node node) =>
-            this.stack.Count > 0 && node is Layoutable layoutable && this.stack.Peek().Slot == layoutable.AssignedSlot;
-
         readonly IEnumerator IEnumerable.GetEnumerator() =>
+            this.GetEnumerator();
+
+        readonly IEnumerator<Node> IEnumerable<Node>.GetEnumerator() =>
             this.GetEnumerator();
 
         public readonly void Dispose()
         { }
 
-        public readonly IEnumerator<Node> GetEnumerator() => this;
+        public readonly TraverseShadowTreeEnumeratorV2 GetEnumerator() => this;
 
         public bool MoveNext()
         {
-            Node? first = null;
-
-            if (!this.skipToNextSibling)
+            if (!this.skipToNextSibling && this.GetFirstChild(this.current!) is Node firstChild)
             {
-                if (this.current is Slot slot)
-                {
-                    if (slot.Nodes.Count > 0)
-                    {
-                        this.stack.Push((slot, 0));
+                this.current = firstChild;
 
-                        first = slot.Nodes[0];
-                    }
-                    else
-                    {
-                        first = slot.FirstChild;
-                    }
-                }
-                else
-                {
-                    first = this.current is Element element && element.ShadowTree != null
-                        ? element.ShadowTree.FirstChild
-                        : this.GetNodeOrSkip(this.current!.FirstChild);
-                }
-            }
-
-            if (first != null)
-            {
-                this.current = first;
+                return true;
             }
             else
             {
@@ -94,47 +129,23 @@ public abstract partial class Node
 
                 while (this.current != null)
                 {
-                    var parent = this.current.Parent;
-                    Node? next = null;
-
-                    if (this.current is ShadowTree shadowTree)
+                    if (this.GetNextSibling(this.current, out var parent) is Node nextSibling)
                     {
-                        parent = shadowTree.Host;
+                        this.current = nextSibling;
 
-                        next = this.GetNodeOrSkip(shadowTree.Host.FirstChild);
-                    }
-                    else if (this.IsSlotted(this.current))
-                    {
-                        var (slot, index) = this.stack.Pop();
-
-                        if (++index < slot.Nodes.Count)
-                        {
-                            this.stack.Push((slot, index));
-
-                            next = slot.Nodes[index];
-                        }
-                        else
-                        {
-                            parent = slot;
-                        }
-                    }
-                    else
-                    {
-                        next = this.GetNodeOrSkip(this.current.NextSibling);
+                        return true;
                     }
 
-                    if (next != null)
+                    if (parent == this.root)
                     {
-                        this.current = next;
-
-                        break;
+                        return false;
                     }
 
-                    this.current = parent == this.root ? null : parent;
+                    this.current = parent;
                 }
             }
 
-            return this.current != null;
+            return false;
         }
 
         public void Reset()
