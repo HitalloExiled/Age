@@ -308,8 +308,8 @@ public partial class ShadowTreeTest
         AddChilds(tree1.Root, ref depth1);
         AddChilds(tree2.Root, ref depth2);
 
-        var list1 = new List<string>();
-        var list2 = new List<string>();
+        var list1 = new List<string>(2450493);
+        var list2 = new List<string>(2450493);
 
         var enumerator1 = new Node.TraverseShadowTreeEnumerator(tree1.Root);
         var enumerator2 = new Node.TraverseShadowTreeEnumeratorV2(tree2.Root);

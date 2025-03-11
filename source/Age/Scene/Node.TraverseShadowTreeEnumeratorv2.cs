@@ -65,13 +65,6 @@ public abstract partial class Node
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private readonly Node? GetNextSibling(Node node, out Node? parent)
         {
-            if (node is ShadowTree shadowTree)
-            {
-                parent = shadowTree.Host;
-
-                return this.GetNodeOrSkip(shadowTree.Host.FirstChild);
-            }
-
             if (this.IsAssignedToCurrentSlot(node))
             {
                 var (slot, index) = this.stack.Pop();
@@ -90,7 +83,19 @@ public abstract partial class Node
 
             parent = node.Parent;
 
-            return this.GetNodeOrSkip(node.NextSibling);
+            if (this.GetNodeOrSkip(node.NextSibling) is Node nextSibling)
+            {
+                return nextSibling;
+            }
+
+            if (parent is ShadowTree shadowTree)
+            {
+                parent = shadowTree.Host;
+
+                return this.GetNodeOrSkip(shadowTree.Host.FirstChild);
+            }
+
+            return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -123,26 +128,24 @@ public abstract partial class Node
 
                 return true;
             }
-            else
+
+            this.skipToNextSibling = false;
+
+            while (this.current != null)
             {
-                this.skipToNextSibling = false;
-
-                while (this.current != null)
+                if (this.GetNextSibling(this.current, out var parent) is Node nextSibling)
                 {
-                    if (this.GetNextSibling(this.current, out var parent) is Node nextSibling)
-                    {
-                        this.current = nextSibling;
+                    this.current = nextSibling;
 
-                        return true;
-                    }
-
-                    if (parent == this.root)
-                    {
-                        return false;
-                    }
-
-                    this.current = parent;
+                    return true;
                 }
+
+                if (parent == this.root)
+                {
+                    return false;
+                }
+
+                this.current = parent;
             }
 
             return false;
