@@ -85,7 +85,7 @@ public class HostElement : Element
 
 [ShortRunJob]
 [MemoryDiagnoser]
-public class NodeShadowTreeTraversalBenchmarks
+public class ComposedTreeTraversalEnumeratorBenchmarks
 {
     private readonly TestTree tree = new();
 
@@ -148,14 +148,14 @@ public class NodeShadowTreeTraversalBenchmarks
         {
             var (current, isSlotted) = stack.Pop();
 
-            if (current is Element element)
+            if (current is Layoutable layoutable)
             {
-                if (!isSlotted && element.AssignedSlot != null)
+                if (!isSlotted && layoutable.AssignedSlot != null)
                 {
                     continue;
                 }
 
-                if (element is Slot slot && slot.Nodes.Count > 0)
+                if (layoutable is Slot slot && slot.Nodes.Count > 0)
                 {
                     yield return slot;
 
@@ -167,9 +167,9 @@ public class NodeShadowTreeTraversalBenchmarks
                     continue;
                 }
 
-                if (element.ShadowTree != null)
+                if (layoutable is Element element && element.ShadowTree != null)
                 {
-                    var node = element.LastChild;
+                    var node = layoutable.LastChild;
 
                     while (node != null)
                     {
@@ -259,11 +259,11 @@ public class NodeShadowTreeTraversalBenchmarks
     }
 
     [Benchmark]
-    public int NodeTraversalIterator()
+    public int ComposedTreeTraversalEnumerator()
     {
         var count = 0;
 
-        var enumerator = new Node.TraverseShadowTreeEnumerator(this.tree.Root);
+        var enumerator = new Node.ComposedTreeTraversalEnumerator(this.tree.Root);
 
         while (enumerator.MoveNext())
         {
@@ -274,11 +274,11 @@ public class NodeShadowTreeTraversalBenchmarks
     }
 
     [Benchmark]
-    public int NodeTraversalIteratorV2()
+    public int ComposedTreeTraversalEnumeratorV2()
     {
         var count = 0;
 
-        var enumerator = new Node.TraverseShadowTreeEnumeratorV2(this.tree.Root);
+        var enumerator = new Node.ComposedTreeTraversalEnumeratorV2(this.tree.Root);
 
         while (enumerator.MoveNext())
         {
@@ -289,11 +289,11 @@ public class NodeShadowTreeTraversalBenchmarks
     }
 
     [Benchmark]
-    public int NodeTraversalIteratorInForeach()
+    public int ComposedTreeTraversalEnumeratorInForeach()
     {
         var count = 0;
 
-        foreach (var node in new Node.TraverseShadowTreeEnumerator(this.tree.Root))
+        foreach (var node in new Node.ComposedTreeTraversalEnumerator(this.tree.Root))
         {
             count++;
         }
@@ -302,11 +302,11 @@ public class NodeShadowTreeTraversalBenchmarks
     }
 
     [Benchmark]
-    public int NodeTraversalIteratorInForeachV2()
+    public int ComposedTreeTraversalEnumeratorV2InForeachV2()
     {
         var count = 0;
 
-        foreach (var node in new Node.TraverseShadowTreeEnumeratorV2(this.tree.Root))
+        foreach (var node in new Node.ComposedTreeTraversalEnumeratorV2(this.tree.Root))
         {
             count++;
         }

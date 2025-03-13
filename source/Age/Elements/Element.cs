@@ -225,7 +225,7 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
         {
             var builder = new StringBuilder();
 
-            foreach (var node in this.Traverse())
+            foreach (var node in this.GetTraversalEnumerator())
             {
                 if (node is Text text)
                 {

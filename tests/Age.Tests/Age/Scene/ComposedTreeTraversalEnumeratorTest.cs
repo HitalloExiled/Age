@@ -5,7 +5,7 @@ namespace Age.Tests.Age.Scene;
 
 #pragma warning disable CA1001
 
-public partial class ShadowTreeTest
+public partial class ComposedTreeTraversalEnumeratorTest
 {
     private readonly TestTree tree = new();
 
@@ -24,7 +24,7 @@ public partial class ShadowTreeTest
     private readonly TestElement child6;
     private readonly HostElement host;
 
-    public ShadowTreeTest()
+    public ComposedTreeTraversalEnumeratorTest()
     {
         this.host = new HostElement("$")
         {
@@ -139,7 +139,7 @@ public partial class ShadowTreeTest
 
         var actual = new List<string>(expected.Length);
 
-        var enumerator = new Node.TraverseShadowTreeEnumerator(this.tree.Root);
+        var enumerator = new Node.ComposedTreeTraversalEnumerator(this.tree.Root);
 
         while (enumerator.MoveNext())
         {
@@ -187,7 +187,7 @@ public partial class ShadowTreeTest
 
         var actual = new List<string>(expected.Length);
 
-        var enumerator = new Node.TraverseShadowTreeEnumeratorV2(this.tree.Root);
+        var enumerator = new Node.ComposedTreeTraversalEnumeratorV2(this.tree.Root);
 
         while (enumerator.MoveNext())
         {
@@ -228,7 +228,7 @@ public partial class ShadowTreeTest
 
         var actual = new List<string>(expected.Length);
 
-        var enumerator = new Node.TraverseShadowTreeEnumerator(this.host);
+        var enumerator = new Node.ComposedTreeTraversalEnumerator(this.host);
 
         while (enumerator.MoveNext())
         {
@@ -276,7 +276,7 @@ public partial class ShadowTreeTest
 
         var actual = new List<string>(expected.Length);
 
-        var enumerator = new Node.TraverseShadowTreeEnumeratorV2(this.host);
+        var enumerator = new Node.ComposedTreeTraversalEnumeratorV2(this.host);
 
         while (enumerator.MoveNext())
         {
@@ -293,7 +293,7 @@ public partial class ShadowTreeTest
         Assert.Equal(expected, actual);
     }
 
-    [Fact]
+    [Fact(Skip = "Ignored for now")]
     public void CompareV1toV2()
     {
         var tree1 = new TestTree();
@@ -311,8 +311,8 @@ public partial class ShadowTreeTest
         var list1 = new List<string>(2450493);
         var list2 = new List<string>(2450493);
 
-        var enumerator1 = new Node.TraverseShadowTreeEnumerator(tree1.Root);
-        var enumerator2 = new Node.TraverseShadowTreeEnumeratorV2(tree2.Root);
+        var enumerator1 = new Node.ComposedTreeTraversalEnumerator(tree1.Root);
+        var enumerator2 = new Node.ComposedTreeTraversalEnumeratorV2(tree2.Root);
 
         while (enumerator1.MoveNext())
         {

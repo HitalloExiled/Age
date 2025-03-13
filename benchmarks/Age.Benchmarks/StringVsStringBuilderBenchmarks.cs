@@ -10,8 +10,8 @@ namespace Age.Benchmarks;
 [MemoryDiagnoser]
 public class StringVsStringBuilderBenchmarks
 {
-    private StringBuilder builder = new();
-    private StringHandler handler = new();
+    private readonly StringBuilder builder = new();
+    private readonly StringHandler handler = new();
     private string        text = "";
 
     public string[] Text = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];

@@ -23,7 +23,7 @@ public abstract class NodeTree : Disposable
 
     private void InitializeTree()
     {
-        var enumerator = this.Root.GetTraverseEnumerator();
+        var enumerator = this.Root.GetTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
@@ -42,7 +42,7 @@ public abstract class NodeTree : Disposable
 
     private void LateUpdateTree()
     {
-        var enumerator = this.Root.GetTraverseEnumerator();
+        var enumerator = this.Root.GetTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
@@ -69,7 +69,7 @@ public abstract class NodeTree : Disposable
 
     private void UpdateTree()
     {
-        var enumerator = this.Root.GetTraverseEnumerator();
+        var enumerator = this.Root.GetTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {

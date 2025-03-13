@@ -12,7 +12,7 @@ public class BenchNode : Node
 
 [ShortRunJob]
 [MemoryDiagnoser]
-public class NodeTraversalBenchmarks
+public class TraversalBenchmarks
 {
     private static IEnumerable<Node> Traverse(Node node)
     {
@@ -84,7 +84,7 @@ public class NodeTraversalBenchmarks
     {
         var count = 0;
 
-        var enumerator = this.tree.GetTraverseEnumerator();
+        var enumerator = this.tree.GetTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
@@ -99,7 +99,7 @@ public class NodeTraversalBenchmarks
     {
         var count = 0;
 
-        foreach (var node in this.tree.Traverse())
+        foreach (var node in this.tree.GetTraversalEnumerator())
         {
             count++;
         }

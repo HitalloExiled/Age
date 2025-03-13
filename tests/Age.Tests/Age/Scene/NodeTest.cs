@@ -643,7 +643,7 @@ public class NodeTest
          .Select(x  => x.Name)
          .ToArray();
 
-        foreach (var node in parent.Traverse())
+        foreach (var node in parent.GetTraversalEnumerator())
         {
             nodes.Add(node.Name!);
         }
@@ -679,7 +679,7 @@ public class NodeTest
 
         var nodes = new List<string>();
 
-        var enumerator = new Node.TraverseEnumerator(parent);
+        var enumerator = new Node.TraversalEnumerator(parent);
 
         var expected = new TestNode[]
         {

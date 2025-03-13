@@ -66,7 +66,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
                 setTree(this, value);
 
-                foreach (var node in this.Traverse())
+                foreach (var node in this.GetTraversalEnumerator())
                 {
                     setTree(node, value);
                 }
@@ -201,6 +201,9 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     }
 
     IEnumerator IEnumerable.GetEnumerator() =>
+        this.GetEnumerator();
+
+    IEnumerator<Node> IEnumerable<Node>.GetEnumerator() =>
         this.GetEnumerator();
 
     private void AppendOrPrepend(Node node, bool append)
@@ -560,7 +563,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         {
             this.Disposed();
 
-            foreach (var child in this.Traverse())
+            foreach (var child in this.GetTraversalEnumerator())
             {
                 child.Disposed();
             }
@@ -670,10 +673,13 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         return depth;
     }
 
-    public IEnumerator<Node> GetEnumerator() =>
-        new Enumerator(this);
+    public Enumerator GetEnumerator() =>
+        new(this);
 
-    public TraverseEnumerator GetTraverseEnumerator() =>
+    public ComposedTreeTraversalEnumeratorV2 GetComposedTreeTraversalEnumerator() =>
+        new(this);
+
+    public TraversalEnumerator GetTraversalEnumerator() =>
         new(this);
 
     public void InsertAfter(Node reference, Node node) =>
@@ -915,12 +921,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void ReplaceSelfWith(Span<Node> nodes) =>
         this.Parent?.ReplaceWith(this, nodes);
-
-    public ReverseEnumerator Reverse() =>
-        new(this);
-
-    public TraverseEnumerator Traverse() =>
-        new(this);
 
     public virtual void Initialize()
     { }

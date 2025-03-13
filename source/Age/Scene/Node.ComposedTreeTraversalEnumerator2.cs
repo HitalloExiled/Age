@@ -7,7 +7,7 @@ namespace Age.Scene;
 
 public abstract partial class Node
 {
-    public struct TraverseShadowTreeEnumeratorV2 : IEnumerator<Node>, IEnumerable<Node>
+    public struct ComposedTreeTraversalEnumeratorV2 : IEnumerator<Node>, IEnumerable<Node>
     {
         #region 8-bytes
         private readonly Node root;
@@ -19,7 +19,7 @@ public abstract partial class Node
         private bool skipToNextSibling;
         #endregion
 
-        public TraverseShadowTreeEnumeratorV2(Node root)
+        public ComposedTreeTraversalEnumeratorV2(Node root)
         {
             this.root = root;
 
@@ -118,7 +118,7 @@ public abstract partial class Node
         public readonly void Dispose()
         { }
 
-        public readonly TraverseShadowTreeEnumeratorV2 GetEnumerator() => this;
+        public readonly ComposedTreeTraversalEnumeratorV2 GetEnumerator() => this;
 
         public bool MoveNext()
         {

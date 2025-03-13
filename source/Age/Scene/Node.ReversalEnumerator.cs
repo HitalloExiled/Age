@@ -4,7 +4,7 @@ namespace Age.Scene;
 
 public abstract partial class Node
 {
-    public struct ReverseEnumerator(Node node) : IEnumerator<Node>, IEnumerable<Node>
+    public struct ReversalEnumerator(Node node) : IEnumerator<Node>, IEnumerable<Node>
     {
         private Node? current;
         private bool  last = true;
