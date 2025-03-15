@@ -9,71 +9,90 @@ public partial class ComposedTreeTraversalEnumeratorTest
 {
     private readonly TestTree tree = new();
 
-    private readonly TestElement child1Slot1;
-    private readonly TestElement child1Slot11;
-    private readonly TestElement child2Slot1;
-    private readonly TestElement child3;
-    private readonly TestElement child11;
-    private readonly TestElement child12;
-    private readonly TestElement child13;
-    private readonly TestElement child4;
-    private readonly TestElement child21;
-    private readonly TestElement child22;
-    private readonly TestElement child5;
-    private readonly TestElement child31;
-    private readonly TestElement child6;
     private readonly HostElement host;
+    private readonly Node[]      lightNodes;
 
     public ComposedTreeTraversalEnumeratorTest()
     {
+        TestElement child1Slot1;
+        TestElement child1Slot11;
+        TestElement child2Slot1;
+        TestElement child3;
+        TestElement child41;
+        TestElement child42;
+        TestElement child43;
+        TestElement child4;
+        TestElement child51;
+        TestElement child52;
+        TestElement child5;
+        TestElement child61;
+        TestElement child6;
+
         this.host = new HostElement("$")
         {
             Children =
             [
-                this.child1Slot1 = new TestElement
+                child1Slot1 = new TestElement
                 {
                     Name     = "$.1[#.2.2.(1)]",
                     Slot     = "$.#.2.2.(1)",
                     Children =
                     [
-                        this.child1Slot11 = new TestElement { Name = "$.1[#.2.2.(1)].1" },
+                        child1Slot11 = new TestElement { Name = "$.1[#.2.2.(1)].1" },
                     ]
                 },
-                this.child2Slot1 = new TestElement
+                child2Slot1 = new TestElement
                 {
                     Name     = "$.2[#.2.2.(1)]",
                     Slot     = "$.#.2.2.(1)",
                 },
-                this.child3 = new TestElement { Name = "$.3", },
-                this.child4 = new TestElement
+                child3 = new TestElement { Name = "$.3", },
+                child4 = new TestElement
                 {
                     Name     = "$.4",
                     Children =
                     [
-                        this.child11 = new TestElement { Name = "$.4.1" },
-                        this.child12 = new TestElement { Name = "$.4.2" },
-                        this.child13 = new TestElement { Name = "$.4.3" },
+                        child41 = new TestElement { Name = "$.4.1" },
+                        child42 = new TestElement { Name = "$.4.2" },
+                        child43 = new TestElement { Name = "$.4.3" },
                     ],
                 },
-                this.child5 = new TestElement
+                child5 = new TestElement
                 {
                     Name     = "$.5",
                     Children =
                     [
-                        this.child21 = new TestElement { Name = "$.5.1" },
-                        this.child22 = new TestElement { Name = "$.5.2" },
+                        child51 = new TestElement { Name = "$.5.1" },
+                        child52 = new TestElement { Name = "$.5.2" },
                     ],
                 },
-                this.child6 = new TestElement
+                child6 = new TestElement
                 {
                     Name     = "$.6",
                     Children =
                     [
-                        this.child31 = new TestElement { Name = "$.6.1" },
+                        child61 = new TestElement { Name = "$.6.1" },
                     ],
                 },
             ]
         };
+
+        this.lightNodes =
+        [
+            child1Slot1,
+            child1Slot11,
+            child2Slot1,
+            child3,
+            child4,
+            child41,
+            child42,
+            child43,
+            child5,
+            child51,
+            child52,
+            child6,
+            child61,
+        ];
 
         this.tree.Root.AppendChild(this.host);
     }
@@ -106,34 +125,18 @@ public partial class ComposedTreeTraversalEnumeratorTest
     {
         var nestedHost = (NestedHostElement)this.host.ShadowNodes[11];
 
-        Node[] shadowNodes =
+        Node[] nodes =
         [
             this.host,
             ..this.host.ShadowNodes[0..5],
-            this.child1Slot1,
-            this.child1Slot11,
-            this.child2Slot1,
+            ..this.lightNodes[..3],
             ..this.host.ShadowNodes[5..12],
             ..nestedHost.ShadowNodes,
-            ..this.host.ShadowNodes[12..]
+            ..this.host.ShadowNodes[12..],
+            ..this.lightNodes[3..]
         ];
 
-        Node[] lightNodes  =
-        [
-            this.child3,
-            this.child4,
-            this.child11,
-            this.child12,
-            this.child13,
-            this.child5,
-            this.child21,
-            this.child22,
-            this.child6,
-            this.child31,
-        ];
-
-        var expected = shadowNodes
-            .Concat(lightNodes)
+        var expected = nodes
             .Select(x  => x.Name)
             .ToArray();
 
@@ -152,29 +155,20 @@ public partial class ComposedTreeTraversalEnumeratorTest
     [Fact]
     public void SkipToNextSibling()
     {
-        var nestedHost = (NestedHostElement)this.host.ShadowNodes[11];
+        var nestedHost = this.host.ShadowNodes[11];
+        var child5     = this.lightNodes[8];
 
-        Node[] shadowNodes =
+        Node[] nodes =
         [
             ..this.host.ShadowNodes[0..4],
             ..this.host.ShadowNodes[5..8],
             this.host.ShadowNodes[10],
             ..this.host.ShadowNodes[12..],
+            ..this.lightNodes[3..8],
+            ..this.lightNodes[11..],
         ];
 
-        Node[] lightNodes  =
-        [
-            this.child3,
-            this.child4,
-            this.child11,
-            this.child12,
-            this.child13,
-            this.child6,
-            this.child31,
-        ];
-
-        var expected = shadowNodes
-            .Concat(lightNodes)
+        var expected = nodes
             .Select(x  => x.Name)
             .ToArray();
 
@@ -184,7 +178,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
 
         while (enumerator.MoveNext())
         {
-            if (enumerator.Current == this.child5 || enumerator.Current == nestedHost || enumerator.Current is Slot)
+            if (enumerator.Current == child5 || enumerator.Current == nestedHost || enumerator.Current is Slot)
             {
                 enumerator.SkipToNextSibling();
             }
