@@ -198,39 +198,36 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    private static void SetStencilLayer(BoxLayout layout, StencilLayer? stencilLayer)
+    private static void SetStencilLayer(Element target, StencilLayer? stencilLayer)
     {
-        var enumerator = layout.target.GetComposedTreeTraversalEnumerator();
+        var enumerator = target.GetComposedTreeTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
             var current = enumerator.Current!;
 
-            if (current is Layoutable layoutContainer)
+            if (current.Layout.StencilLayer == stencilLayer)
             {
-                if (layoutContainer.Layout.StencilLayer == stencilLayer)
+                enumerator.SkipToNextSibling();
+            }
+            else if (current is Element element && element.Layout.ownStencilLayer != null)
+            {
+                if (stencilLayer != null)
                 {
-                    enumerator.SkipToNextSibling();
-                }
-                else if (current is Element element && element.Layout.ownStencilLayer != null)
-                {
-                    if (stencilLayer != null)
-                    {
-                        stencilLayer.AppendChild(element.Layout.ownStencilLayer);
-                    }
-                    else
-                    {
-                        element.Layout.ownStencilLayer.Detach();
-                    }
-
-                    element.Layout.StencilLayer = stencilLayer;
-
-                    enumerator.SkipToNextSibling();
+                    stencilLayer.AppendChild(element.Layout.ownStencilLayer);
                 }
                 else
                 {
-                    layoutContainer.Layout.StencilLayer = stencilLayer;
+                    element.Layout.ownStencilLayer.Detach();
                 }
+
+                element.Layout.StencilLayer = stencilLayer;
+
+                enumerator.SkipToNextSibling();
+            }
+            else
+            {
+                current.Layout.StencilLayer = stencilLayer;
             }
         }
     }
@@ -311,7 +308,7 @@ internal sealed partial class BoxLayout : Layout
         this.staticContent = new Size<uint>();
         this.BaseLine      = -1;
 
-        var enumerator = new ShadowTreeEnumerator(this.Target);
+        var enumerator = this.Target.GetComposedTreeEnumerator();
 
         while (enumerator.MoveNext())
         {
@@ -902,7 +899,7 @@ internal sealed partial class BoxLayout : Layout
                 this.ownStencilLayer = null;
             }
 
-            SetStencilLayer(this, this.ContentStencilLayer);
+            SetStencilLayer(this.Target, this.ContentStencilLayer);
         }
 
         var affectsBoundings = !nonBoundingAffectingProperties.Contains(property);
@@ -1167,7 +1164,7 @@ internal sealed partial class BoxLayout : Layout
 
         var index = 0;
 
-        var enumerator = new ShadowTreeEnumerator(this.Target);
+        var enumerator = this.Target.GetComposedTreeEnumerator();
 
         while (enumerator.MoveNext())
         {

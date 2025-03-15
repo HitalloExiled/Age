@@ -513,8 +513,8 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
     internal ComposedTreeEnumerator GetComposedTreeEnumerator() =>
         new(this);
 
-    internal ComposedTreeTraversalEnumerator GetComposedTreeTraversalEnumerator() =>
-        new(this);
+    internal ComposedTreeTraversalEnumerator GetComposedTreeTraversalEnumerator(Stack<(Slot, int)>? stack = null) =>
+        new(this, stack);
 
     internal void InvokeActivate()
     {
@@ -582,8 +582,11 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
         this.MouseOver?.Invoke(this.CreateEvent(platformMouseEvent, false));
     }
 
-    protected override void Disposed() =>
+    protected override void Disposed()
+    {
         this.Layout.Dispose();
+        this.ShadowTree?.Dispose();
+    }
 
     public void Blur()
     {

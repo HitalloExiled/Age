@@ -4,6 +4,7 @@ using Age.Platforms.Display;
 using Age.Rendering.Vulkan;
 using Age.RenderPasses;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using ThirdParty.Vulkan.Flags;
 
 using Buffer = Age.Rendering.Resources.Buffer;
@@ -13,8 +14,9 @@ namespace Age.Scene;
 public sealed partial class RenderTree : NodeTree
 {
     #region 8-bytes
-    private readonly List<Command2DEntry> command2DEntries = [];
-    private readonly List<Command3DEntry> command3DEntries = [];
+    private readonly List<Command2DEntry> command2DEntries  = [];
+    private readonly List<Command3DEntry> command3DEntries  = [];
+    private readonly Stack<(Slot, int)>   composedTreeStack = [];
 
     private Buffer                     buffer = null!;
     private ulong                      bufferVersion;
@@ -37,93 +39,88 @@ public sealed partial class RenderTree : NodeTree
         this.Window.Closed += this.Dispose;
     }
 
-    private void BuildIndexedTreeAndCollectCommands()
+    private void BuildIndexAndCollectCommands()
     {
-        var nodeIndex = 0;
+        var index = 0;
 
-        var stack = new Stack<(Node Root, Node Node)>();
+        var traversalEnumerator = this.Root.GetTraversalEnumerator();
 
-        stack.Push((this.Root, this.Root));
-
-        while (stack.Count > 0)
+        while (traversalEnumerator.MoveNext())
         {
-            var (root, current) = stack.Pop();
-
-            if (current is ShadowTree)
+            if (traversalEnumerator.Current is Renderable renderable && renderable.Visible)
             {
-                root = current;
-            }
+                updateIndex(renderable);
 
-            foreach (var node in current)
-            {
-                if (root is ShadowTree && node is Slot slot && slot.Nodes.Count > 0)
+                if (renderable is Canvas canvas)
                 {
-                    foreach (var slottedNode in slot.Nodes)
+                    traversalEnumerator.SkipToNextSibling();
+
+                    var composedTreeTraversalEnumerator = canvas.GetComposedTreeTraversalEnumerator(this.composedTreeStack);
+
+                    while (composedTreeTraversalEnumerator.MoveNext())
                     {
-                        this.CollectChildCommands(stack, root, slottedNode, ref nodeIndex);
+                        updateIndex(composedTreeTraversalEnumerator.Current);
+
+                        collect2D(composedTreeTraversalEnumerator.Current);
                     }
                 }
-                else if (node is not Layoutable layoutable || layoutable.AssignedSlot == null)
+                else if (renderable is Spatial2D spatial2D)
                 {
-                    this.CollectChildCommands(stack, root, node, ref nodeIndex);
+                    collect2D(spatial2D);
+                }
+                else if (renderable is Spatial3D spatial3D)
+                {
+                    collect3D(spatial3D);
                 }
             }
         }
 
-        if (nodeIndex < this.Nodes.Count)
+        if (index < this.Nodes.Count)
         {
-            this.Nodes.RemoveRange(nodeIndex, this.Nodes.Count - nodeIndex);
+            this.Nodes.RemoveRange(index, this.Nodes.Count - index);
         }
-    }
 
-    private void CollectChildCommands(Stack<(Node, Node)> stack, Node root, Node node, ref int nodeIndex)
-    {
-        stack.Push((root, node));
-
-        if (node is Renderable current)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void collect2D(Spatial2D spatial2D)
         {
-            if (current.Visible)
+            var transform = spatial2D.TransformCache;
+
+            foreach (var command in spatial2D.Commands)
             {
-                current.Index = nodeIndex;
+                var entry = new Command2DEntry(command, transform);
 
-                if (nodeIndex == this.Nodes.Count)
-                {
-                    this.Nodes.Add(current);
-                }
-                else
-                {
-                    this.Nodes[nodeIndex] = current;
-                }
-
-                nodeIndex++;
-
-                if (current is Element element && element.ShadowTree != null)
-                {
-                    stack.Push((root, element.ShadowTree));
-                }
-                else if (current is Spatial2D spatial2D)
-                {
-                    var transform = spatial2D.TransformCache;
-
-                    foreach (var command in spatial2D.Commands)
-                    {
-                        var entry = new Command2DEntry(command, transform);
-
-                        this.command2DEntries.Add(entry);
-                    }
-                }
-                else if (current is Spatial3D spatial3D)
-                {
-                    var transform = (Matrix4x4<float>)spatial3D.TransformCache;
-
-                    foreach (var command in spatial3D.Commands)
-                    {
-                        var entry = new Command3DEntry(command, transform);
-
-                        this.command3DEntries.Add(entry);
-                    }
-                }
+                this.command2DEntries.Add(entry);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void collect3D(Spatial3D spatial3D)
+        {
+            var transform = (Matrix4x4<float>)spatial3D.TransformCache;
+
+            foreach (var command in spatial3D.Commands)
+            {
+                var entry = new Command3DEntry(command, transform);
+
+                this.command3DEntries.Add(entry);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void updateIndex(Node current)
+        {
+            current.Index = index;
+
+            if (index == this.Nodes.Count)
+            {
+                this.Nodes.Add(current);
+            }
+            else
+            {
+                this.Nodes[index] = current;
+            }
+
+            index++;
         }
     }
 
@@ -409,8 +406,12 @@ public sealed partial class RenderTree : NodeTree
 
     public sealed override void Update()
     {
-        this.ResetCache();
         base.Update();
-        this.BuildIndexedTreeAndCollectCommands();
+
+        if (this.IsDirty)
+        {
+            this.ResetCache();
+            this.BuildIndexAndCollectCommands();
+        }
     }
 }

@@ -10,8 +10,9 @@ public abstract partial class Element
     internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnumerable<Layoutable>
     {
         #region 8-bytes
-        private readonly Element root;
-        private readonly Stack<StackEntry> stack = [];
+        private readonly Element           root;
+        private readonly Stack<StackEntry> stack;
+
         private Layoutable? current;
         #endregion
 
@@ -19,9 +20,10 @@ public abstract partial class Element
         private bool skipToNextSibling;
         #endregion
 
-        public ComposedTreeTraversalEnumerator(Element root)
+        public ComposedTreeTraversalEnumerator(Element root, Stack<StackEntry>? stack = null)
         {
-            this.root = root;
+            this.root  = root;
+            this.stack = stack ?? [];
 
             this.Reset();
         }
