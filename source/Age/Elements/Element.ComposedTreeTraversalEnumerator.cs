@@ -5,12 +5,12 @@ using StackEntry = (Age.Elements.Slot Slot, int Index);
 
 namespace Age.Elements;
 
-public abstract partial class Layoutable
+public abstract partial class Element
 {
-    public struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnumerable<Layoutable>
+    internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnumerable<Layoutable>
     {
         #region 8-bytes
-        private readonly Layoutable root;
+        private readonly Element root;
         private readonly Stack<StackEntry> stack = [];
         private Layoutable? current;
         #endregion
@@ -19,7 +19,7 @@ public abstract partial class Layoutable
         private bool skipToNextSibling;
         #endregion
 
-        public ComposedTreeTraversalEnumerator(Layoutable root)
+        public ComposedTreeTraversalEnumerator(Element root)
         {
             this.root = root;
 
@@ -158,7 +158,9 @@ public abstract partial class Layoutable
 
                 node = parent;
             }
-            while (true);
+            while (node != null);
+
+            return false;
         }
 
         public void Reset()

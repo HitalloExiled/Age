@@ -273,7 +273,7 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
     {
         var count = 0;
 
-        var enumerator = new Layoutable.ComposedTreeTraversalEnumerator(this.root);
+        var enumerator = new Element.ComposedTreeTraversalEnumerator(this.root);
 
         while (enumerator.MoveNext())
         {
@@ -288,7 +288,7 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
     {
         var count = 0;
 
-        foreach (var node in new Layoutable.ComposedTreeTraversalEnumerator(this.root))
+        foreach (var node in new Element.ComposedTreeTraversalEnumerator(this.root))
         {
             count++;
         }

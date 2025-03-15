@@ -38,7 +38,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/Age.sln",
+                "${workspaceFolder}/Age.slnx",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -50,7 +50,7 @@
             "type": "process",
             "args": [
                 "clean",
-                "${workspaceFolder}/Age.sln"
+                "${workspaceFolder}/Age.slnx"
             ],
             "problemMatcher": "$msCompile"
         },
@@ -69,7 +69,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/Age.sln",
+                "${workspaceFolder}/Age.slnx",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],

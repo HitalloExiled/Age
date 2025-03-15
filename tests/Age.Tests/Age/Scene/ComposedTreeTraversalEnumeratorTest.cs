@@ -144,7 +144,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
 
         var actual = new List<string>(expected.Length);
 
-        var enumerator = new Layoutable.ComposedTreeTraversalEnumerator(this.root);
+        var enumerator = new Element.ComposedTreeTraversalEnumerator(this.root);
 
         while (enumerator.MoveNext())
         {
@@ -176,7 +176,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
 
         var actual = new List<string>(expected.Length);
 
-        var enumerator = new Layoutable.ComposedTreeTraversalEnumerator(this.host);
+        var enumerator = new Element.ComposedTreeTraversalEnumerator(this.host);
 
         while (enumerator.MoveNext())
         {

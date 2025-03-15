@@ -148,7 +148,4 @@ public abstract partial class Layoutable : Spatial2D
 
         return new(size, position);
     }
-
-    public ComposedTreeTraversalEnumerator GetComposedTreeTraversalEnumerator() =>
-        new(this);
 }

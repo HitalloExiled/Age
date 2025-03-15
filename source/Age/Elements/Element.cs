@@ -510,6 +510,12 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
         }
     }
 
+    internal ComposedTreeEnumerator GetComposedTreeEnumerator() =>
+        new(this);
+
+    internal ComposedTreeTraversalEnumerator GetComposedTreeTraversalEnumerator() =>
+        new(this);
+
     internal void InvokeActivate()
     {
         this.Layout.State.AddState(StyledStateManager.State.Active);
