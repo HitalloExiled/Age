@@ -6,9 +6,9 @@ public sealed class Slot : Element
 {
     public override string NodeName { get; } = nameof(Slot);
 
-    internal List<Node> Nodes { get; } = [];
+    internal List<Layoutable> Nodes { get; } = [];
 
-    public Node[] AssignedNodes => [.. this.Nodes];
+    public Layoutable[] AssignedNodes => [.. this.Nodes];
 
     public sealed override string? Name
     {

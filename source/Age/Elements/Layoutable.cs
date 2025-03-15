@@ -5,7 +5,7 @@ using Age.Scene;
 
 namespace Age.Elements;
 
-public abstract class Layoutable : Spatial2D
+public abstract partial class Layoutable : Spatial2D
 {
     #region 8-bytes
     internal abstract Layout Layout { get; }
@@ -148,4 +148,7 @@ public abstract class Layoutable : Spatial2D
 
         return new(size, position);
     }
+
+    public ComposedTreeTraversalEnumerator GetComposedTreeTraversalEnumerator() =>
+        new(this);
 }

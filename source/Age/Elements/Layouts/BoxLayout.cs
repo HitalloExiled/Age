@@ -200,7 +200,7 @@ internal sealed partial class BoxLayout : Layout
 
     private static void SetStencilLayer(BoxLayout layout, StencilLayer? stencilLayer)
     {
-        var enumerator = layout.target.GetTraversalEnumerator();
+        var enumerator = layout.target.GetComposedTreeTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {

@@ -9,6 +9,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
 {
     private readonly TestTree tree = new();
 
+    private readonly TestElement root = new();
     private readonly HostElement host;
     private readonly Node[]      lightNodes;
 
@@ -94,7 +95,8 @@ public partial class ComposedTreeTraversalEnumeratorTest
             child61,
         ];
 
-        this.tree.Root.AppendChild(this.host);
+        this.root.AppendChild(this.host);
+        this.tree.Root.AppendChild(this.root);
     }
 
     private static void AddChilds(Node parent, ref int parentDepth)
@@ -121,7 +123,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
     }
 
     [Fact]
-    public void TraverseShadowTree()
+    public void TraverseComposedTree()
     {
         var nestedHost = (NestedHostElement)this.host.ShadowNodes[11];
 
@@ -142,7 +144,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
 
         var actual = new List<string>(expected.Length);
 
-        var enumerator = new Node.ComposedTreeTraversalEnumerator(this.tree.Root);
+        var enumerator = new Layoutable.ComposedTreeTraversalEnumerator(this.root);
 
         while (enumerator.MoveNext())
         {
@@ -174,7 +176,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
 
         var actual = new List<string>(expected.Length);
 
-        var enumerator = new Node.ComposedTreeTraversalEnumerator(this.host);
+        var enumerator = new Layoutable.ComposedTreeTraversalEnumerator(this.host);
 
         while (enumerator.MoveNext())
         {

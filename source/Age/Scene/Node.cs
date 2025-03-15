@@ -676,9 +676,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public Enumerator GetEnumerator() =>
         new(this);
 
-    public ComposedTreeTraversalEnumerator GetComposedTreeTraversalEnumerator() =>
-        new(this);
-
     public TraversalEnumerator GetTraversalEnumerator() =>
         new(this);
 

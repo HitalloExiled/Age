@@ -1,32 +1,32 @@
-using Age.Elements;
 using System.Collections;
 using System.Runtime.CompilerServices;
+using Age.Scene;
 using StackEntry = (Age.Elements.Slot Slot, int Index);
 
-namespace Age.Scene;
+namespace Age.Elements;
 
-public abstract partial class Node
+public abstract partial class Layoutable
 {
-    public struct ComposedTreeTraversalEnumerator : IEnumerator<Node>, IEnumerable<Node>
+    public struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnumerable<Layoutable>
     {
         #region 8-bytes
-        private readonly Node root;
+        private readonly Layoutable root;
         private readonly Stack<StackEntry> stack = [];
-        private Node? current;
+        private Layoutable? current;
         #endregion
 
         #region 1-byte
         private bool skipToNextSibling;
         #endregion
 
-        public ComposedTreeTraversalEnumerator(Node root)
+        public ComposedTreeTraversalEnumerator(Layoutable root)
         {
             this.root = root;
 
             this.Reset();
         }
 
-        public readonly Node Current => this.current!;
+        public readonly Layoutable Current => this.current!;
 
         readonly object IEnumerator.Current => this.Current;
 
@@ -35,11 +35,11 @@ public abstract partial class Node
             this.stack.Count > 0 && node is Layoutable layoutable && this.stack.Peek().Slot == layoutable.AssignedSlot;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly bool IsCurrentSlot(Slot slot) =>
-            this.stack.Count > 0 && this.stack.Peek().Slot == slot;
+        private readonly bool IsAssignedToCurrentSlot(Layoutable layoutable) =>
+            this.stack.Count > 0 && this.stack.Peek().Slot == layoutable.AssignedSlot;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly Node? GetFirstChild(Node node)
+        private readonly Layoutable? GetFirstChild(Node node)
         {
             if (node is Slot slot)
             {
@@ -51,19 +51,19 @@ public abstract partial class Node
                 }
                 else
                 {
-                    return slot.FirstChild;
+                    return this.GetLayoutableOrSkip(slot.FirstChild);
                 }
             }
             else if (node is Element element && element.ShadowTree != null)
             {
-                return element.ShadowTree.FirstChild;
+                return this.GetLayoutableOrSkip(element.ShadowTree.FirstChild);
             }
 
-            return this.GetNodeOrSkip(node.FirstChild);
+            return this.GetLayoutableOrSkip(node.FirstChild);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly Node? GetNextSibling(Node node, out Node? parent)
+        private readonly Layoutable? GetNextSibling(Node node, out Node parent)
         {
             if (this.IsAssignedToCurrentSlot(node))
             {
@@ -81,9 +81,9 @@ public abstract partial class Node
                 return null;
             }
 
-            parent = node.Parent;
+            parent = node.Parent!;
 
-            if (this.GetNodeOrSkip(node.NextSibling) is Node nextSibling)
+            if (this.GetLayoutableOrSkip(node.NextSibling) is Layoutable nextSibling)
             {
                 return nextSibling;
             }
@@ -92,27 +92,36 @@ public abstract partial class Node
             {
                 parent = shadowTree.Host;
 
-                return this.GetNodeOrSkip(shadowTree.Host.FirstChild);
+                return this.GetLayoutableOrSkip(shadowTree.Host.FirstChild);
             }
 
             return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly Node? GetNodeOrSkip(Node? node)
+        private readonly Layoutable? GetLayoutableOrSkip(Node? node)
         {
-            while (node is Layoutable layoutable && layoutable.AssignedSlot != null && !this.IsCurrentSlot(layoutable.AssignedSlot))
+            do
             {
+                if (node is Layoutable layoutable && (layoutable.AssignedSlot == null || this.IsAssignedToCurrentSlot(layoutable)))
+                {
+                    return layoutable;
+                }
+
+                if (node?.NextSibling == null)
+                {
+                    return null;
+                }
+
                 node = node.NextSibling;
             }
-
-            return node;
+            while (true);
         }
 
         readonly IEnumerator IEnumerable.GetEnumerator() =>
             this.GetEnumerator();
 
-        readonly IEnumerator<Node> IEnumerable<Node>.GetEnumerator() =>
+        readonly IEnumerator<Layoutable> IEnumerable<Layoutable>.GetEnumerator() =>
             this.GetEnumerator();
 
         public readonly void Dispose()
@@ -122,7 +131,7 @@ public abstract partial class Node
 
         public bool MoveNext()
         {
-            if (!this.skipToNextSibling && this.GetFirstChild(this.current!) is Node firstChild)
+            if (!this.skipToNextSibling && this.GetFirstChild(this.current!) is Layoutable firstChild)
             {
                 this.current = firstChild;
 
@@ -131,9 +140,11 @@ public abstract partial class Node
 
             this.skipToNextSibling = false;
 
-            while (this.current != null)
+            Node node = this.current!;
+
+            do
             {
-                if (this.GetNextSibling(this.current, out var parent) is Node nextSibling)
+                if (this.GetNextSibling(node, out var parent) is Layoutable nextSibling)
                 {
                     this.current = nextSibling;
 
@@ -145,10 +156,9 @@ public abstract partial class Node
                     return false;
                 }
 
-                this.current = parent;
+                node = parent;
             }
-
-            return false;
+            while (true);
         }
 
         public void Reset()

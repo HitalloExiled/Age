@@ -17,6 +17,11 @@ public class TestElement : Element
     public override string NodeName { get; } = nameof(TestElement);
 }
 
+public class RootElement : Element
+{
+    public override string NodeName { get; } = nameof(RootElement);
+}
+
 public class HostElement : Element
 {
     public override string NodeName { get; } = nameof(HostElement);
@@ -87,10 +92,19 @@ public class HostElement : Element
 [MemoryDiagnoser]
 public class ComposedTreeTraversalEnumeratorBenchmarks
 {
-    private readonly TestTree tree = new();
+    private readonly RootElement root;
+    private readonly TestTree    tree;
 
     [Params(1, 3, 5)]
     public int Depth;
+
+    public ComposedTreeTraversalEnumeratorBenchmarks()
+    {
+        this.tree = new();
+        this.root = new();
+
+        this.tree.Root.AppendChild(this.root);
+    }
 
     public static IEnumerable<Node> TraverseRecursive(Node root)
     {
@@ -225,9 +239,8 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        var current = this.tree.Root;
-
-        var depth = this.Depth;
+        var current = this.root;
+        var depth   = this.Depth;
 
         AddChilds(current, ref depth);
     }
@@ -237,7 +250,7 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
     {
         var count = 0;
 
-        foreach (var node in TraverseRecursive(this.tree.Root))
+        foreach (var node in TraverseRecursive(this.root))
         {
             count++;
         }
@@ -250,7 +263,7 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
     {
         var count = 0;
 
-        foreach (var node in TraverseNonRecursive(this.tree.Root))
+        foreach (var node in TraverseNonRecursive(this.root))
         {
             count++;
         }
@@ -263,7 +276,7 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
     {
         var count = 0;
 
-        var enumerator = new Node.ComposedTreeTraversalEnumerator(this.tree.Root);
+        var enumerator = new Layoutable.ComposedTreeTraversalEnumerator(this.root);
 
         while (enumerator.MoveNext())
         {
@@ -274,11 +287,11 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
     }
 
     [Benchmark]
-    public int ComposedTreeTraversalEnumeratorV2InForeach()
+    public int ComposedTreeTraversalEnumeratorInForeach()
     {
         var count = 0;
 
-        foreach (var node in new Node.ComposedTreeTraversalEnumerator(this.tree.Root))
+        foreach (var node in new Layoutable.ComposedTreeTraversalEnumerator(this.root))
         {
             count++;
         }
