@@ -106,7 +106,7 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
         this.tree.Root.AppendChild(this.root);
     }
 
-    public static IEnumerable<Node> TraverseRecursive(Node root)
+    public static IEnumerable<Layoutable> TraverseRecursive(Node root)
     {
         if (root is Element rootElement && rootElement.ShadowTree != null)
         {
@@ -118,14 +118,14 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
 
         foreach (var node in root)
         {
-            if (node is Element element)
+            if (node is Layoutable layoutable)
             {
-                if (element.AssignedSlot != null)
+                if (layoutable.AssignedSlot != null)
                 {
                     continue;
                 }
 
-                if (element is Slot slot && slot.Nodes.Count > 0)
+                if (layoutable is Slot slot && slot.Nodes.Count > 0)
                 {
                     yield return slot;
 
@@ -141,9 +141,9 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
 
                     continue;
                 }
-            }
 
-            yield return node;
+                yield return layoutable;
+            }
 
             foreach (var item in TraverseRecursive(node))
             {
@@ -152,7 +152,7 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
         }
     }
 
-    public static IEnumerable<Node> TraverseNonRecursive(Node root)
+    public static IEnumerable<Layoutable> TraverseNonRecursive(Node root)
     {
         var stack = new Stack<(Node Node, bool IsSlotted)>();
 
@@ -196,11 +196,8 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
 
                     continue;
                 }
-            }
 
-            if (current != root && current is not ShadowTree)
-            {
-                yield return current;
+                yield return layoutable;
             }
 
             var child = current.LastChild;
