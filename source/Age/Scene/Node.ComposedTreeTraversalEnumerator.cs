@@ -1,5 +1,7 @@
 using Age.Elements;
 using System.Collections;
+using System.Runtime.CompilerServices;
+using StackEntry = (Age.Elements.Slot Slot, int Index);
 
 namespace Age.Scene;
 
@@ -9,20 +11,103 @@ public abstract partial class Node
     {
         #region 8-bytes
         private readonly Node root;
-        private readonly Stack<(Node Node, bool IsSlotted)> stack;
+        private readonly Stack<StackEntry> stack = [];
         private Node? current;
         #endregion
 
-        public ComposedTreeTraversalEnumerator(Node root, Stack<(Node Node, bool IsSlotted)>? stack = null)
+        #region 1-byte
+        private bool skipToNextSibling;
+        #endregion
+
+        public ComposedTreeTraversalEnumerator(Node root)
         {
-            this.root  = root;
-            this.stack = stack ?? [];
+            this.root = root;
+
             this.Reset();
         }
 
         public readonly Node Current => this.current!;
 
         readonly object IEnumerator.Current => this.Current;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private readonly bool IsAssignedToCurrentSlot(Node node) =>
+            this.stack.Count > 0 && node is Layoutable layoutable && this.stack.Peek().Slot == layoutable.AssignedSlot;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private readonly bool IsCurrentSlot(Slot slot) =>
+            this.stack.Count > 0 && this.stack.Peek().Slot == slot;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private readonly Node? GetFirstChild(Node node)
+        {
+            if (node is Slot slot)
+            {
+                if (slot.Nodes.Count > 0)
+                {
+                    this.stack.Push((slot, 0));
+
+                    return slot.Nodes[0];
+                }
+                else
+                {
+                    return slot.FirstChild;
+                }
+            }
+            else if (node is Element element && element.ShadowTree != null)
+            {
+                return element.ShadowTree.FirstChild;
+            }
+
+            return this.GetNodeOrSkip(node.FirstChild);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private readonly Node? GetNextSibling(Node node, out Node? parent)
+        {
+            if (this.IsAssignedToCurrentSlot(node))
+            {
+                var (slot, index) = this.stack.Pop();
+
+                parent = slot;
+
+                if (++index < slot.Nodes.Count)
+                {
+                    this.stack.Push((slot, index));
+
+                    return slot.Nodes[index];
+                }
+
+                return null;
+            }
+
+            parent = node.Parent;
+
+            if (this.GetNodeOrSkip(node.NextSibling) is Node nextSibling)
+            {
+                return nextSibling;
+            }
+
+            if (parent is ShadowTree shadowTree)
+            {
+                parent = shadowTree.Host;
+
+                return this.GetNodeOrSkip(shadowTree.Host.FirstChild);
+            }
+
+            return null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private readonly Node? GetNodeOrSkip(Node? node)
+        {
+            while (node is Layoutable layoutable && layoutable.AssignedSlot != null && !this.IsCurrentSlot(layoutable.AssignedSlot))
+            {
+                node = node.NextSibling;
+            }
+
+            return node;
+        }
 
         readonly IEnumerator IEnumerable.GetEnumerator() =>
             this.GetEnumerator();
@@ -33,66 +118,34 @@ public abstract partial class Node
         public readonly void Dispose()
         { }
 
-        private readonly ComposedTreeTraversalEnumerator GetEnumerator() => this;
-
-        private readonly void PushChildren(Node parent)
-        {
-            var node = parent.LastChild;
-
-            while (node != null)
-            {
-                this.stack.Push((node, false));
-
-                node = node.PreviousSibling;
-            }
-        }
-
-        private readonly void PushSlots(Slot slot)
-        {
-            for (var i = slot.Nodes.Count - 1; i >= 0; i--)
-            {
-                this.stack.Push((slot.Nodes[i], true));
-            }
-        }
+        public readonly ComposedTreeTraversalEnumerator GetEnumerator() => this;
 
         public bool MoveNext()
         {
-            while (this.stack.Count > 0)
+            if (!this.skipToNextSibling && this.GetFirstChild(this.current!) is Node firstChild)
             {
-                var (currentNode, isSlotted) = this.stack.Pop();
-
-                if (currentNode is Layoutable layoutable)
-                {
-                    if (!isSlotted && layoutable.AssignedSlot != null)
-                    {
-                        continue;
-                    }
-
-                    if (layoutable is Slot slot && slot.Nodes.Count > 0)
-                    {
-                        this.PushSlots(slot);
-
-                        this.current = slot;
-
-                        return true;
-                    }
-
-                    if (layoutable is Element element && element.ShadowTree != null)
-                    {
-                        this.PushChildren(currentNode);
-                        this.PushChildren(element.ShadowTree);
-
-                        this.current = currentNode;
-
-                        return true;
-                    }
-                }
-
-                this.PushChildren(currentNode);
-
-                this.current = currentNode;
+                this.current = firstChild;
 
                 return true;
+            }
+
+            this.skipToNextSibling = false;
+
+            while (this.current != null)
+            {
+                if (this.GetNextSibling(this.current, out var parent) is Node nextSibling)
+                {
+                    this.current = nextSibling;
+
+                    return true;
+                }
+
+                if (parent == this.root)
+                {
+                    return false;
+                }
+
+                this.current = parent;
             }
 
             return false;
@@ -100,44 +153,13 @@ public abstract partial class Node
 
         public void Reset()
         {
-            this.current = null;
+            this.skipToNextSibling = false;
+            this.current           = this.root;
+
             this.stack.Clear();
-
-            if (this.root is Element rootElement && rootElement.ShadowTree != null)
-            {
-                this.PushChildren(rootElement);
-                this.PushChildren(rootElement.ShadowTree);
-            }
-            else
-            {
-                this.PushChildren(this.root);
-            }
         }
 
-        public readonly void SkipToNextSibling()
-        {
-            if (this.current is Slot slot && slot.Nodes.Count > 0)
-            {
-                while (this.stack.Count > 0 && this.stack.Peek().Node is Element element && element.AssignedSlot == slot)
-                {
-                    this.stack.Pop();
-                }
-            }
-            else
-            {
-                if (this.current is Element element && element.ShadowTree != null)
-                {
-                    while (this.stack.Count > 0 && this.stack.Peek().Node.Parent == element.ShadowTree)
-                    {
-                        this.stack.Pop();
-                    }
-                }
-
-                while (this.stack.Count > 0 && this.stack.Peek().Node.Parent == this.current)
-                {
-                    this.stack.Pop();
-                }
-            }
-        }
+        public void SkipToNextSibling() =>
+            this.skipToNextSibling = true;
     }
 }

@@ -274,39 +274,11 @@ public class ComposedTreeTraversalEnumeratorBenchmarks
     }
 
     [Benchmark]
-    public int ComposedTreeTraversalEnumeratorV2()
-    {
-        var count = 0;
-
-        var enumerator = new Node.ComposedTreeTraversalEnumeratorV2(this.tree.Root);
-
-        while (enumerator.MoveNext())
-        {
-            count++;
-        }
-
-        return count;
-    }
-
-    [Benchmark]
-    public int ComposedTreeTraversalEnumeratorInForeach()
+    public int ComposedTreeTraversalEnumeratorV2InForeach()
     {
         var count = 0;
 
         foreach (var node in new Node.ComposedTreeTraversalEnumerator(this.tree.Root))
-        {
-            count++;
-        }
-
-        return count;
-    }
-
-    [Benchmark]
-    public int ComposedTreeTraversalEnumeratorV2InForeachV2()
-    {
-        var count = 0;
-
-        foreach (var node in new Node.ComposedTreeTraversalEnumeratorV2(this.tree.Root))
         {
             count++;
         }
