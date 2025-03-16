@@ -1,6 +1,6 @@
 using Age.Elements;
 
-namespace Age.Tests.Age.Scene;
+namespace Age.Tests.Age.Elements;
 
 #pragma warning disable CA1001
 
@@ -26,20 +26,18 @@ public partial class ComposedTreeTraversalEnumeratorTest
 
         this.ShadowTree.Children =
         [
-            nestedChild0 = new TestElement
+            nestedChild0 = new TestElement($"{name}.#.1")
             {
-                Name     = $"{name}.#.1",
                 Children =
                 [],
             },
-            nestedChild1 = new TestElement
+            nestedChild1 = new TestElement($"{name}.#.2")
             {
-                Name     = $"{name}.#.2",
                 Children =
                 [
-                    nestedChild11 = new TestElement { Name = $"{name}.#.2.1" },
-                    nestedChild12 = new TestElement { Name = $"{name}.#.2.2", },
-                    nestedChild13 = new TestElement { Name = $"{name}.#.2.3" },
+                    nestedChild11 = new TestElement($"{name}.#.2.1"),
+                    nestedChild12 = new TestElement($"{name}.#.2.2"),
+                    nestedChild13 = new TestElement($"{name}.#.2.3"),
                 ],
             },
         ];

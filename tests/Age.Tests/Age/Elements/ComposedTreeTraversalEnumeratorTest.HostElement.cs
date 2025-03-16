@@ -1,6 +1,6 @@
 using Age.Elements;
 
-namespace Age.Tests.Age.Scene;
+namespace Age.Tests.Age.Elements;
 
 #pragma warning disable CA1001
 
@@ -35,16 +35,14 @@ public partial class ComposedTreeTraversalEnumeratorTest
 
         this.ShadowTree.Children =
         [
-            child1 = new TestElement { Name = $"{name}.#.1" },
-            child2 = new TestElement
+            child1 = new TestElement($"{name}.#.1"),
+            child2 = new TestElement($"{name}.#.2")
             {
-                Name     = $"{name}.#.2",
                 Children =
                 [
-                    child21 = new TestElement { Name = $"{name}.#.2.1" },
-                    child22 = new TestElement
+                    child21 = new TestElement($"{name}.#.2.1"),
+                    child22 = new TestElement($"{name}.#.2.2")
                     {
-                        Name     = $"{name}.#.2.2",
                         Children =
                         [
                             child22Slot = new Slot
@@ -52,22 +50,20 @@ public partial class ComposedTreeTraversalEnumeratorTest
                                 Name     = $"{name}.#.2.2.(1)",
                                 Children =
                                 [
-                                    new TestElement { Name = "ignored" },
+                                    new TestElement("ignored"),
                                 ],
                             }
                         ],
                     },
-                    child23 = new TestElement { Name = $"{name}.#.2.3" },
+                    child23 = new TestElement($"{name}.#.2.3"),
                 ],
             },
-            child3 = new TestElement
+            child3 = new TestElement($"{name}.#.3")
             {
-                Name     = $"{name}.#.3",
                 Children =
                 [
-                    child31 = new TestElement
+                    child31 = new TestElement($"{name}.#.3.1")
                     {
-                        Name     = $"{name}.#.3.1",
                         Children =
                         [
                             child31Slot = new Slot
@@ -75,21 +71,20 @@ public partial class ComposedTreeTraversalEnumeratorTest
                                 Name     = $"{name}.#.3.1.(1)",
                                 Children =
                                 [
-                                    child31Slot1 = new TestElement { Name = $"{name}.#.3.1.(1).1" },
+                                    child31Slot1 = new TestElement($"{name}.#.3.1.(1).1"),
                                 ]
                             },
                         ],
                     },
-                    child32 = new TestElement { Name = $"{name}.#.3.2" },
+                    child32 = new TestElement($"{name}.#.3.2"),
                 ],
             },
             child4 = new NestedHostElement($"{name}.#.4"),
-            child5 = new TestElement
+            child5 = new TestElement($"{name}.#.5")
             {
-                Name     = $"{name}.#.5",
                 Children =
                 [
-                    child51 = new TestElement { Name = $"{name}.#.5.1" },
+                    child51 = new TestElement($"{name}.#.5.1"),
                 ],
             },
         ];

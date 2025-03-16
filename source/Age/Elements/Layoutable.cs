@@ -81,7 +81,7 @@ public abstract partial class Layoutable : Spatial2D
         }
     }
 
-    private Transform2D Offset => Transform2D.CreateTranslated((this.AncestorElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
+    private Transform2D Offset => Transform2D.CreateTranslated((this.ComposedParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
 
     internal Transform2D TransformWithOffset => this.Offset * this.Transform;
 
@@ -108,8 +108,9 @@ public abstract partial class Layoutable : Spatial2D
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
 
-    public Element? AncestorElement => this.AssignedSlot ?? (this.Parent is ShadowTree shadowTree ? shadowTree.Host : this.ParentElement);
-    public Element? ParentElement   => this.Parent as Element;
+    public Element? ComposedParentElement  => this.AssignedSlot ?? this.EffectiveParentElement;
+    public Element? EffectiveParentElement => this.Parent is ShadowTree shadowTree ? shadowTree.Host : this.ParentElement;
+    public Element? ParentElement          => this.Parent as Element;
 
     private protected Layout GetIndependentLayoutAncestor()
     {

@@ -10,6 +10,8 @@ using Key                  = Age.Platforms.Display.Key;
 using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
 using PlatformMouseEvent   = Age.Platforms.Display.MouseEvent;
 using AgeInput             = Age.Input;
+using Age.Core.Extensions;
+using System.Runtime.CompilerServices;
 
 namespace Age.Elements;
 
@@ -25,7 +27,7 @@ public delegate void MouseEventHandler(in MouseEvent mouseEvent);
 public delegate void KeyEventHandler(in KeyEvent keyEvent);
 public delegate void InputEventHandler(char keyEvent);
 
-public abstract partial class Element : Layoutable, IEnumerable<Element>
+public abstract partial class Element : Layoutable, IComparable<Element>, IEnumerable<Element>
 {
     #region events
     private event InputEventHandler? input;
@@ -438,7 +440,7 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
             renderTree.MakeDirty();
         }
 
-        this.Canvas = this.AncestorElement?.Canvas ?? this.Parent as Canvas;
+        this.Canvas = this.ComposedParentElement?.Canvas ?? this.Parent as Canvas;
 
         this.Layout.TargetConnected();
     }
@@ -578,6 +580,21 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
         this.ShadowTree?.Dispose();
     }
 
+    internal int GetEffectiveDepth()
+    {
+        var depth = 0;
+
+        var node = this.EffectiveParentElement;
+
+        while (node != null)
+        {
+            depth++;
+            node = node.EffectiveParentElement;
+        }
+
+        return depth;
+    }
+
     public void Blur()
     {
         this.IsFocused = false;
@@ -589,6 +606,105 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
     {
         this.Layout.State.AddState(StyledStateManager.State.Active);
         this.Clicked?.Invoke(new() { Target = this });
+    }
+
+    public int CompareTo(Element? other)
+    {
+        if (other == null)
+        {
+            return 1;
+        }
+        else if (this == other)
+        {
+            return 0;
+        }
+
+        var left  = this;
+        var right = other;
+
+        var leftParent  = left.EffectiveParentElement;
+        var rightParent = right.EffectiveParentElement;
+
+        if (leftParent != rightParent)
+        {
+            var leftDepth  = getDepth(leftParent);
+            var rightDepth = getDepth(rightParent);
+
+            while (leftDepth > rightDepth)
+            {
+                leftParent = left.EffectiveParentElement;
+
+                if (leftParent == right)
+                {
+                    return 1;
+                }
+
+                left = leftParent!;
+                leftDepth--;
+            }
+
+            while (leftDepth < rightDepth)
+            {
+                rightParent = right.EffectiveParentElement;
+
+                if (rightParent == left)
+                {
+                    return -1;
+                }
+
+                right = rightParent!;
+                rightDepth--;
+            }
+
+            leftParent  = left.EffectiveParentElement;
+            rightParent = right.EffectiveParentElement;
+
+            while (leftParent != rightParent)
+            {
+                left  = leftParent!;
+                right = rightParent!;
+
+                leftParent  = left.EffectiveParentElement;
+                rightParent = right.EffectiveParentElement;
+            }
+        }
+
+        if (leftParent == rightParent)
+        {
+            if (leftParent == null)
+            {
+                throw new InvalidOperationException("Can't compare an root node to another");
+            }
+
+            if (left.Parent == right.Parent)
+            {
+                if (left == right.NextSibling)
+                {
+                    return 1;
+                }
+
+                if (left != right.PreviousSibling)
+                {
+                    for (var node = left!.PreviousSibling; node != null; node = node?.PreviousSibling)
+                    {
+                        if (node == right)
+                        {
+                            return 1;
+                        }
+                    }
+                }
+            }
+            else if (right.Parent is ShadowTree)
+            {
+                return 1;
+            }
+        }
+
+        return -1;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static int getDepth(Element? parentElement) =>
+            parentElement == null ? 0 : parentElement.GetEffectiveDepth() + 1;
     }
 
     public void Focus()

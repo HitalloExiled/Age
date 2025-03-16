@@ -284,7 +284,7 @@ internal sealed partial class TextLayout : Layout
 
         var text = this.target.Buffer.AsSpan();
 
-        var style = this.target.AncestorElement!.Layout.State.Style;
+        var style = this.target.ComposedParentElement!.Layout.State.Style;
 
         var glyphs = this.typeface.GetGlyphs(text);
         var font   = this.paint.ToFont();
@@ -500,7 +500,7 @@ internal sealed partial class TextLayout : Layout
     }
 
     public void AdjustScroll() =>
-        this.target.AncestorElement?.ScrollTo(this.target.GetCursorBoundings());
+        this.target.ComposedParentElement?.ScrollTo(this.target.GetCursorBoundings());
 
     public void ClearSelection() =>
         this.Selection = default;

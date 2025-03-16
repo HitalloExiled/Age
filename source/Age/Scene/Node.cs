@@ -616,28 +616,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         if (left.Parent != right.Parent)
         {
-            var leftDepth  = 0;
-            var rightDepth = 0;
-
-            while (left.Parent != null || right.Parent != null)
-            {
-                if (left.Parent != null)
-                {
-                    left = left.Parent;
-
-                    leftDepth++;
-                }
-
-                if (right.Parent != null)
-                {
-                    right = right.Parent;
-
-                    rightDepth++;
-                }
-            }
-
-            left  = this;
-            right = other;
+            var leftDepth  = left.GetDepth();
+            var rightDepth = right.GetDepth();
 
             while (leftDepth > rightDepth)
             {
@@ -675,15 +655,12 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
                 throw new InvalidOperationException("Can't compare an root node to another");
             }
 
-            if (left == right.PreviousSibling)
-            {
-                return -1;
-            }
-            else if (left == right.NextSibling)
+            if (left == right.NextSibling)
             {
                 return 1;
             }
-            else
+
+            if (left != right.PreviousSibling)
             {
                 for (var node = left.PreviousSibling; node != null; node = node?.PreviousSibling)
                 {
@@ -692,12 +669,10 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
                         return 1;
                     }
                 }
-
-                return -1;
             }
         }
 
-        return 0;
+        return -1;
     }
 
     public void Detach() =>

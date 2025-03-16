@@ -1,7 +1,7 @@
 using Age.Elements;
 using Age.Scene;
 
-namespace Age.Tests.Age.Scene;
+namespace Age.Tests.Age.Elements;
 
 #pragma warning disable CA1001
 
@@ -9,7 +9,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
 {
     private readonly TestTree tree = new();
 
-    private readonly TestElement root = new();
+    private readonly TestElement root = new("$");
     private readonly HostElement host;
     private readonly Node[]      lightNodes;
 
@@ -33,46 +33,41 @@ public partial class ComposedTreeTraversalEnumeratorTest
         {
             Children =
             [
-                child1Slot1 = new TestElement
+                child1Slot1 = new TestElement("$.1[#.2.2.(1)]")
                 {
-                    Name     = "$.1[#.2.2.(1)]",
                     Slot     = "$.#.2.2.(1)",
                     Children =
                     [
-                        child1Slot11 = new TestElement { Name = "$.1[#.2.2.(1)].1" },
+                        child1Slot11 = new TestElement("$.1[#.2.2.(1)].1"),
                     ]
                 },
-                child2Slot1 = new TestElement
+                child2Slot1 = new TestElement("$.2[#.2.2.(1)]")
                 {
-                    Name     = "$.2[#.2.2.(1)]",
-                    Slot     = "$.#.2.2.(1)",
+                    Slot = "$.#.2.2.(1)",
                 },
-                child3 = new TestElement { Name = "$.3", },
-                child4 = new TestElement
+                child3 = new TestElement("$.3"),
+                child4 = new TestElement("$.4")
                 {
-                    Name     = "$.4",
                     Children =
                     [
-                        child41 = new TestElement { Name = "$.4.1" },
-                        child42 = new TestElement { Name = "$.4.2" },
-                        child43 = new TestElement { Name = "$.4.3" },
+                        child41 = new TestElement("$.4.1"),
+                        child42 = new TestElement("$.4.2"),
+                        child43 = new TestElement("$.4.3"),
                     ],
                 },
-                child5 = new TestElement
+                child5 = new TestElement("$.5")
                 {
-                    Name     = "$.5",
                     Children =
                     [
-                        child51 = new TestElement { Name = "$.5.1" },
-                        child52 = new TestElement { Name = "$.5.2" },
+                        child51 = new TestElement("$.5.1"),
+                        child52 = new TestElement("$.5.2"),
                     ],
                 },
-                child6 = new TestElement
+                child6 = new TestElement("$.6")
                 {
-                    Name     = "$.6",
                     Children =
                     [
-                        child61 = new TestElement { Name = "$.6.1" },
+                        child61 = new TestElement("$.6.1"),
                     ],
                 },
             ]

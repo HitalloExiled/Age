@@ -128,7 +128,7 @@ public sealed partial class RenderTree : NodeTree
         this.GetNode(x, y, out _) switch
         {
             Element element => element,
-            Text    text    => text.AncestorElement,
+            Text    text    => text.ComposedParentElement,
             _ => null,
         };
 
@@ -190,7 +190,7 @@ public sealed partial class RenderTree : NodeTree
         if (node is Text text)
         {
             text.Layout.PropagateSelection(characterPosition);
-            element = text.AncestorElement;
+            element = text.ComposedParentElement;
         }
         else
         {
@@ -216,7 +216,7 @@ public sealed partial class RenderTree : NodeTree
 
         if (node is Text text)
         {
-            element = text.AncestorElement;
+            element = text.ComposedParentElement;
 
             if (mouseEvent.IsPrimaryButtonPressed)
             {
@@ -290,7 +290,7 @@ public sealed partial class RenderTree : NodeTree
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var character);
 
         var text    = node as Text;
-        var element = text?.AncestorElement ?? node as Element;
+        var element = text?.ComposedParentElement ?? node as Element;
 
         if (element != null)
         {
@@ -337,7 +337,7 @@ public sealed partial class RenderTree : NodeTree
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out _);
 
         var text    = node as Text;
-        var element = text?.AncestorElement ?? node as Element;
+        var element = text?.ComposedParentElement ?? node as Element;
 
         if (element != null)
         {
