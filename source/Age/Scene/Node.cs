@@ -610,21 +610,84 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         {
             return 0;
         }
-        else if (this.Parent == other.Parent)
+
+        var left  = this;
+        var right = other;
+
+        if (left.Parent != right.Parent)
         {
-            if (this == other.PreviousSibling)
+            var leftDepth  = 0;
+            var rightDepth = 0;
+
+            while (left.Parent != null || right.Parent != null)
+            {
+                if (left.Parent != null)
+                {
+                    left = left.Parent;
+
+                    leftDepth++;
+                }
+
+                if (right.Parent != null)
+                {
+                    right = right.Parent;
+
+                    rightDepth++;
+                }
+            }
+
+            left  = this;
+            right = other;
+
+            while (leftDepth > rightDepth)
+            {
+                if (left.Parent == right)
+                {
+                    return 1;
+                }
+
+                left = left.Parent!;
+                leftDepth--;
+            }
+
+            while (leftDepth < rightDepth)
+            {
+                if (right.Parent == left)
+                {
+                    return -1;
+                }
+
+                right = right.Parent!;
+                rightDepth--;
+            }
+
+            while (left.Parent != right.Parent)
+            {
+                left  = left.Parent!;
+                right = right.Parent!;
+            }
+        }
+
+        if (left.Parent == right.Parent)
+        {
+            if (left.Parent == null)
+            {
+                throw new InvalidOperationException("Can't compare an root node to another");
+            }
+
+            if (left == right.PreviousSibling)
             {
                 return -1;
             }
-            else if (this == other.NextSibling)
+            else if (left == right.NextSibling)
             {
                 return 1;
             }
             else
             {
-                for (var node = this.PreviousSibling; node != null; node = node?.PreviousSibling)
+                for (var node = left.PreviousSibling; node != null; node = node?.PreviousSibling)
                 {
-                    if (node == other)
+                    if (node == right)
                     {
                         return 1;
                     }
@@ -632,18 +695,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
                 return -1;
             }
-        }
-        else if (other.Parent == this || this.Parent == null && other.Parent != null)
-        {
-            return -1;
-        }
-        else if (this.Parent == other || this.Parent != null && other.Parent == null)
-        {
-            return 1;
-        }
-        else if (this.Parent != null && other.Parent != null)
-        {
-            return this.Parent.CompareTo(other.Parent);
         }
 
         return 0;
