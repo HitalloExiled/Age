@@ -34,7 +34,7 @@ internal abstract class Layout : Disposable
     public abstract bool IsParentDependent { get; }
     #endregion
 
-    public BoxLayout? Parent => this.Target.ParentElementOrShadowTreeHost?.Layout;
+    public BoxLayout? Parent => this.Target.AncestorElement?.Layout;
 
     public abstract Layoutable Target { get; }
 

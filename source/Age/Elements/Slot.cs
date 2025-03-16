@@ -52,11 +52,15 @@ public sealed class Slot : Element
     {
         layoutable.AssignedSlot = this;
         this.Nodes.Add(layoutable);
+
+        this.Layout.LayoutableAppended(layoutable);
     }
 
     internal void Unassign(Layoutable layoutable)
     {
         this.Nodes.Remove(layoutable);
         layoutable.AssignedSlot = null;
+
+        this.Layout.LayoutableRemoved(layoutable);
     }
 }

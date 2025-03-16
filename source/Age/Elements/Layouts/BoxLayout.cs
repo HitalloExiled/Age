@@ -308,7 +308,7 @@ internal sealed partial class BoxLayout : Layout
         this.staticContent = new Size<uint>();
         this.BaseLine      = -1;
 
-        var enumerator = this.Target.GetComposedTreeEnumerator();
+        var enumerator = this.GetComposedTargetEnumerator();
 
         while (enumerator.MoveNext())
         {
@@ -727,6 +727,9 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
+    private TargetEnumerator GetComposedTargetEnumerator() =>
+        new(this.Target);
+
     private void OnScroll(in MouseEvent mouseEvent)
     {
         if (!this.target.IsHovered)
@@ -848,7 +851,15 @@ internal sealed partial class BoxLayout : Layout
 
                 if (this.parentDependent != Dependency.None)
                 {
-                    this.Parent.dependents.Add(this.Target);
+                    if (this.Target.AssignedSlot != null)
+                    {
+                        this.Target.AssignedSlot.Layout.dependents.Add(this.Target);
+                    }
+                    else
+                    {
+                        this.Parent.dependents.Add(this.Target);
+                    }
+
                     this.Parent.dependents.Sort();
                 }
             }
@@ -859,7 +870,14 @@ internal sealed partial class BoxLayout : Layout
                     this.Parent.renderableNodesCount--;
                 }
 
-                this.Parent.dependents.Remove(this.Target);
+                if (this.Target.AssignedSlot != null)
+                {
+                    this.Target.AssignedSlot.Layout.dependents.Remove(this.Target);
+                }
+                else
+                {
+                    this.Parent.dependents.Remove(this.Target);
+                }
             }
         }
 
@@ -1164,7 +1182,7 @@ internal sealed partial class BoxLayout : Layout
 
         var index = 0;
 
-        var enumerator = this.Target.GetComposedTreeEnumerator();
+        var enumerator = this.GetComposedTargetEnumerator();
 
         while (enumerator.MoveNext())
         {
@@ -1339,9 +1357,14 @@ internal sealed partial class BoxLayout : Layout
     protected override void Disposed() =>
         this.ownStencilLayer?.Dispose();
 
-    public void LayoutableAppended(Layoutable layoutContainer)
+    public void LayoutableAppended(Layoutable layoutable)
     {
-        if (!layoutContainer.Layout.Hidden)
+        if (layoutable is Element element)
+        {
+            this.ElementAppended(element);
+        }
+
+        if (!layoutable.Layout.Hidden)
         {
             this.childsChanged = true;
             this.renderableNodesCount++;
@@ -1349,9 +1372,14 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    public void LayoutableRemoved(Layoutable layoutContainer)
+    public void LayoutableRemoved(Layoutable layoutable)
     {
-        if (!layoutContainer.Layout.Hidden)
+        if (layoutable is Element element)
+        {
+            this.ElementRemoved(element);
+        }
+
+        if (!layoutable.Layout.Hidden)
         {
             this.childsChanged = true;
             this.renderableNodesCount--;

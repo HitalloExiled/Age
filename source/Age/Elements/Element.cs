@@ -438,7 +438,7 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
             renderTree.MakeDirty();
         }
 
-        this.Canvas = this.ParentElementOrShadowTreeHost?.Canvas ?? this.Parent as Canvas;
+        this.Canvas = this.AncestorElement?.Canvas ?? this.Parent as Canvas;
 
         this.Layout.TargetConnected();
     }
@@ -447,11 +447,6 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
     {
         if (child is Layoutable layoutable)
         {
-            if (layoutable is Element element)
-            {
-                this.Layout.ElementAppended(element);
-            }
-
             this.Layout.LayoutableAppended(layoutable);
         }
     }
@@ -460,11 +455,6 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
     {
         if (child is Layoutable layoutable)
         {
-            if (layoutable is Element element)
-            {
-                this.Layout.ElementRemoved(element);
-            }
-
             this.Layout.LayoutableRemoved(layoutable);
         }
     }
