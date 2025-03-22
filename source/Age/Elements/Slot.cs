@@ -5,10 +5,10 @@ namespace Age.Elements;
 public sealed class Slot : Element
 {
     public override string NodeName { get; } = nameof(Slot);
-
     internal List<Layoutable> Nodes { get; } = [];
 
-    public Layoutable[] AssignedNodes => [.. this.Nodes];
+    public Layoutable[] AssignedNodes    => [.. this.Nodes];
+    public bool         HasAssignedNodes => this.Nodes.Count > 0;
 
     public sealed override string? Name
     {

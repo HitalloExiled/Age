@@ -1453,7 +1453,6 @@ internal sealed partial class BoxLayout : Layout
                     this.childsChanged          = false;
                     this.dependenciesHasChanged = false;
                 }
-
             }
 
             this.MakePristine();

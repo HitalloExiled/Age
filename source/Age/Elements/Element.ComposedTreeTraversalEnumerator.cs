@@ -94,7 +94,7 @@ public abstract partial class Element
             {
                 parent = shadowTree.Host;
 
-                return this.GetLayoutableOrSkip(shadowTree.Host.FirstChild);
+                // return this.GetLayoutableOrSkip(shadowTree.Host.FirstChild);
             }
 
             return null;
@@ -105,7 +105,7 @@ public abstract partial class Element
         {
             do
             {
-                if (node is Layoutable layoutable && (layoutable.AssignedSlot == null || this.IsAssignedToCurrentSlot(layoutable)))
+                if (node is Layoutable layoutable/*  && (layoutable.AssignedSlot == null || this.IsAssignedToCurrentSlot(layoutable)) */)
                 {
                     return layoutable;
                 }

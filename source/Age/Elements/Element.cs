@@ -166,8 +166,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     #region 8-bytes
     private readonly Lock elementLock = new();
 
-    private string? text;
-
     internal protected ShadowTree? ShadowTree { get; set; }
 
     internal Dictionary<string, List<Node>> WaitingSlots { get; } = [];
@@ -244,31 +242,26 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
         set
         {
-            if (value != this.text)
+            if (this.FirstChild is Text text)
             {
-                if (this.FirstChild is Text text)
+                if (text != this.LastChild)
                 {
-                    if (text != this.LastChild)
+                    if (text.NextSibling != null && this.LastChild != null)
                     {
-                        if (text.NextSibling != null && this.LastChild != null)
-                        {
-                            this.RemoveChildrenInRange(text.NextSibling, this.LastChild);
-                        }
+                        this.RemoveChildrenInRange(text.NextSibling, this.LastChild);
                     }
-
-                    text.Value = value;
-                }
-                else
-                {
-                    this.RemoveChildren();
-
-                    this.AppendChild(new Text(value));
                 }
 
-                this.text = value;
-
-                this.Layout.RequestUpdate(true);
+                text.Value = value;
             }
+            else
+            {
+                this.RemoveChildren();
+
+                this.AppendChild(new Text(value));
+            }
+
+            this.Layout.RequestUpdate(true);
         }
     }
 
@@ -447,7 +440,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     protected override void ChildAppended(Node child)
     {
-        if (child is Layoutable layoutable)
+        if (this.ShadowTree == null && child is Layoutable layoutable)
         {
             this.Layout.LayoutableAppended(layoutable);
         }
@@ -455,7 +448,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     protected override void ChildRemoved(Node child)
     {
-        if (child is Layoutable layoutable)
+        if (this.ShadowTree == null && child is Layoutable layoutable)
         {
             this.Layout.LayoutableRemoved(layoutable);
         }

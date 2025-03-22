@@ -31,7 +31,7 @@ public abstract partial class Element
                     }
                     else
                     {
-                        this.current = getLayoutableOrSkip(this.target.FirstChild);
+                        this.current = this.target.FirstChild;
                         this.state   = 2;
                     }
 
@@ -39,15 +39,10 @@ public abstract partial class Element
                 case 1:
                     this.current = getLayoutableOrSkip(this.current!.NextSibling);
 
-                    if (this.current == null)
-                    {
-                        this.current = getLayoutableOrSkip(this.target.FirstChild);
-                        this.state   = 2;
-                    }
-
                     break;
+
                 case 2:
-                    this.current = getLayoutableOrSkip(this.current!.NextSibling);
+                    this.current = this.current!.NextSibling;
 
                     break;
             }

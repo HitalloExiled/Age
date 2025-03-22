@@ -130,7 +130,7 @@ public class Editor : Node
 
         if (Input.IsKeyJustPressed(Key.Num1))
         {
-            this.setup = AlignmentTest.Setup;
+            this.setup = ShadowTreeTest.Setup;
         }
         else if (Input.IsKeyJustPressed(Key.Num2))
         {

@@ -81,7 +81,8 @@ public abstract partial class Layoutable : Spatial2D
         }
     }
 
-    private Transform2D Offset => Transform2D.CreateTranslated((this.ComposedParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
+    private Transform2D ParentTransformCache => ((this.ComposedParentElement ?? this.Parent) as Spatial2D)?.TransformCache ?? new();
+    private Transform2D Offset               => Transform2D.CreateTranslated((this.ComposedParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
 
     internal Transform2D TransformWithOffset => this.Offset * this.Transform;
 
@@ -93,7 +94,7 @@ public abstract partial class Layoutable : Spatial2D
             {
                 this.transformCache = new()
                 {
-                    Value   = this.Offset * this.Layout.Transform * base.TransformCache,
+                    Value   = this.Offset * this.Layout.Transform * this.ParentTransformCache * this.LocalTransform,
                     Version = CacheVersion
                 };
             }

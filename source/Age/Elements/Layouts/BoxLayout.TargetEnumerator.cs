@@ -13,7 +13,7 @@ internal partial class BoxLayout
 
         public TargetEnumerator(Element target)
         {
-            if (target is Slot slot)
+            if (target is Slot slot && slot.HasAssignedNodes)
             {
                 this.slotEnumerator = new(slot);
                 this.isSlot         = true;

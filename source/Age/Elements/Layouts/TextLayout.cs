@@ -21,21 +21,25 @@ internal sealed partial class TextLayout : Layout
 {
     private static readonly ObjectPool<TextCommand> rectCommandPool = new(static () => new());
 
-    #region 8-bytes
+    private readonly RectCommand    caretCommand;
     private readonly Timer          caretTimer;
-    private readonly List<TextLine> textLines = new(1);
+    private readonly int            caretWidth = 2;
     private readonly Timer          selectionTimer;
     private readonly Text           target;
+    private readonly List<TextLine> textLines = new(1);
 
-    private SKTypeface? typeface;
-    private SKPaint?    paint;
-    #endregion
-
-    #region 4-bytes
-    private readonly int caretWidth = 2;
-
+    private bool           caretIsDirty;
+    private bool           caretIsVisible;
     private float          fontLeading;
+    private bool           isMouseOverText;
+    private SKPaint?       paint;
     private Vector2<float> previouCursor;
+    private bool           selectionIsDirty;
+    private bool           textIsDirty;
+    private SKTypeface?    typeface;
+
+    private bool CanSelect        => this.Parent?.State.Style.TextSelection != false;
+    public Rect<float> CursorRect => this.caretCommand.Rect;
 
     public uint CaretPosition
     {
@@ -66,22 +70,6 @@ internal sealed partial class TextLayout : Layout
             }
         }
     }
-    #endregion
-
-    #region 1-byte
-    private bool caretIsDirty;
-    private bool caretIsVisible;
-    private bool selectionIsDirty;
-    private bool textIsDirty;
-    private bool isMouseOverText;
-
-    private RectCommand caretCommand;
-    private bool        CanSelect    => this.Parent?.State.Style.TextSelection != false;
-
-    public override bool IsParentDependent { get; }
-    #endregion
-
-    public Rect<float> CursorRect => this.caretCommand.Rect;
 
     public override StencilLayer? StencilLayer
     {
@@ -100,6 +88,7 @@ internal sealed partial class TextLayout : Layout
         }
     }
 
+    public override bool IsParentDependent { get; }
     public override Text Target => this.target;
 
     public TextLayout(Text target)
