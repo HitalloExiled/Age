@@ -9,7 +9,6 @@
   </Folder>
   <Folder Name="/source/">
     <Project Path="source/Age.Core/Age.Core.csproj" />
-    <Project Path="source/Age.Editor/Age.Editor.csproj" />
     <Project Path="source/Age.Numerics/Age.Numerics.csproj" />
     <Project Path="source/Age.Platforms/Age.Platforms.csproj" />
     <Project Path="source/Age.Playground/Age.Playground.csproj" />

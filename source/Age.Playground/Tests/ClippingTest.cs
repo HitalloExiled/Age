@@ -1,0 +1,118 @@
+using Age.Numerics;
+using Age.Elements;
+using Age.Styling;
+
+namespace Age.Playground.Tests;
+
+public class ClippingTest
+{
+    public static void Setup(Canvas canvas)
+    {
+        var borderSize = 10u;
+
+        var n1_layer = new FlexBox()
+        {
+            Name  = "n1_layer",
+            Style = new()
+            {
+                Border   = new(borderSize, 100, Color.Red),
+                Overflow = OverflowKind.Scroll,
+                Size     = new((Pixel)50, (Pixel)50),
+            }
+        };
+
+        n1_layer.Clicked += (in MouseEvent _) =>
+        {
+            n1_layer.Style.Overflow = n1_layer.Style.Overflow == OverflowKind.Scroll ? OverflowKind.None : OverflowKind.Scroll;
+        };
+
+        var n2_a_layer = new FlexBox()
+        {
+            Name  = "n2_a_layer",
+            Text  = "Clipped\nContent",
+            Style = new()
+            {
+                Border    = new(borderSize, 60, Color.Green),
+                Color     = Color.White,
+                FontSize  = 24,
+                // Transform = Transform2D.CreateTranslated(25, -40),
+                // Overflow  = OverflowKind.Clipping,
+                // Size      = new((Pixel)100, (Pixel)100),
+            }
+        };
+
+        n2_a_layer.Clicked += (in MouseEvent _) =>
+        {
+            n2_a_layer.Style.Overflow = n2_a_layer.Style.Overflow == OverflowKind.Clipping ? OverflowKind.None : OverflowKind.Clipping;
+        };
+
+        //n2_a_layer.Clicked += (in MouseEvent _) =>
+        //    n2_a_layer.Detach();
+
+        var n3_no_layer = new FlexBox()
+        {
+            Name  = "n3_no_layer",
+            Text  = "X\nY\nZ",
+            Style = new()
+            {
+                Color  = Color.White,
+                FontSize = 36,
+                ContentJustification = ContentJustificationKind.SpaceAround,
+                Border = new(borderSize, 60, Color.Blue),
+                //Overflow  = OverflowKind.Clipping,
+                //BackgroundColor = Color.Margenta,
+                Transform = Transform2D.CreateTranslated(25, 60),
+                Size   = new((Pixel)100, (Pixel)100),
+            }
+        };
+
+        var n4_layer = new FlexBox()
+        {
+            Name  = "n4_layer",
+            Style = new()
+            {
+                Border   = new(1, 0, Color.Blue),
+                // Overflow = OverflowKind.Clipping,
+                Transform = Transform2D.CreateTranslated(-20, 20),
+                Size     = new((Pixel)200, (Pixel)100),
+            }
+        };
+
+        var n5_no_layer = new FlexBox()
+        {
+            Name  = "n5_no_layer",
+            Style = new()
+            {
+                Border = new(borderSize, 50, Color.Green),
+                Size   = new((Pixel)200, (Pixel)100),
+            }
+        };
+
+        var n2_b_non_layer = new FlexBox()
+        {
+            Name  = "n2_b_non_layer",
+            Style = new()
+            {
+                Border = new(borderSize, 0, Color.Green),
+                Size   = new((Pixel)200, (Pixel)100),
+            }
+        };
+
+        canvas.AppendChild(n1_layer);
+           n1_layer.AppendChild(n2_a_layer);
+            //    n2_a_layer.AppendChild(n3_no_layer);
+                //    n3_no_layer.AppendChild(n4_layer);
+                //        n4_layer.AppendChild(n5_no_layer);
+            //canvas.AppendChild(n2_b_non_layer);
+
+
+
+
+        //                 n4_layer.AppendChild(n5_no_layer);
+        //             n3_no_layer.AppendChild(n4_layer);
+        //         n2_a_layer.AppendChild(n3_no_layer);
+        //     n1_layer.AppendChild(n2_a_layer);
+        //     n1_layer.AppendChild(n2_b_non_layer);
+        // canvas.AppendChild(n1_layer);
+    }
+}

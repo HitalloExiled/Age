@@ -127,18 +127,6 @@
             "problemMatcher": []
         },
         {
-            "label": "watch",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "watch",
-                "run",
-                "--project",
-                "${workspaceFolder}/source/Age.Editor"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
             "label": "shader:compile",
             "windows": {
                 "command": "glslc ${file} -o ${file}.spv -S;"

@@ -3,23 +3,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Editor",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/source/Age.Editor/bin/Debug/net9.0/Age.Editor.exe",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "console": "internalConsole",
-            "stopAtEntry": false,
-            "justMyCode": true,
-            "symbolOptions": {
-                "searchMicrosoftSymbolServer": false,
-                "searchNuGetOrgSymbolServer": false,
-            },
-            "enableStepFiltering": true,
-        },
-        {
             "name": "Launch Playground",
             "type": "coreclr",
             "request": "launch",

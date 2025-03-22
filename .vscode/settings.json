@@ -1,24 +1,22 @@
 {
-    // "csharp.semanticHighlighting.enabled": false
+    "[slang]": {
+        "editor.formatOnPaste": false,
+        "editor.formatOnSave": false,
+        "editor.formatOnType": false
+    },
     "files.exclude": {
-        "**/.git": true,
-        "**/.svn": true,
-        "**/.hg": true,
-        "**/CVS": true,
-        "**/.DS_Store": true,
-        "**/Thumbs.db": true,
+        "**/*.bkp": true,
         "**/*.spv": true,
+        "**/.DS_Store": true,
+        "**/.git": true,
+        "**/.hg": true,
+        "**/.svn": true,
+        "**/CVS": true,
         "**/TestResults": true,
+        "**/Thumbs.db": true,
         "**/bin": true,
         "**/obj": true,
         ".coverage": true,
-        "**/*.bkp": true,
         "BenchmarkDotNet.Artifacts": true
-    },
-    "explorerExclude.backup": {},
-    "[slang]": {
-        "editor.formatOnSave": false,
-        "editor.formatOnPaste": false,
-        "editor.formatOnType": false
     }
 }

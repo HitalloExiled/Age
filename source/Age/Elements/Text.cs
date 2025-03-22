@@ -14,7 +14,7 @@ public sealed class Text : Layoutable
 
     public override string NodeName { get; } = nameof(Text);
 
-    public StringHandler Buffer { get; } = new();
+    public StringBuffer Buffer { get; } = new();
     #endregion
 
     #region 2-bytes

@@ -52,6 +52,7 @@ public sealed class Slot : Element
     {
         layoutable.AssignedSlot = this;
         this.Nodes.Add(layoutable);
+        this.Nodes.Sort();
 
         this.Layout.LayoutableAppended(layoutable);
     }

@@ -1392,6 +1392,7 @@ internal sealed partial class BoxLayout : Layout
         if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
         {
             this.dependents.Add(element);
+            this.dependents.Sort();
         }
     }
 
