@@ -505,7 +505,7 @@ public sealed class Image : Resource<VkImage>
         this.FinalLayout = newLayout;
     }
 
-    public void Update(Span<byte> data)
+    public void Update(scoped ReadOnlySpan<byte> data)
     {
         using var buffer = VulkanRenderer.Singleton.CreateBuffer((ulong)data.Length, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 

@@ -10,7 +10,7 @@ public unsafe class NativeStringArray : IDisposable
 
     private bool disposed;
 
-    public NativeStringArray(Span<string> source)
+    public NativeStringArray(scoped ReadOnlySpan<string> source)
     {
         var ppData = (byte**)NativeMemory.Alloc((uint)(sizeof(byte*) * source.Length));
 

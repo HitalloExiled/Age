@@ -42,7 +42,7 @@ public unsafe class SlangReflectionEntryPoint : ManagedSlang<SlangReflectionEntr
     internal SlangReflectionEntryPoint(Handle<SlangReflectionEntryPoint> handle) : base(handle)
     { }
 
-    public void GetComputeThreadGroupSize(ulong axisCount, Span<ulong> outSizeAlongAxis)
+    public void GetComputeThreadGroupSize(ulong axisCount, scoped ReadOnlySpan<ulong> outSizeAlongAxis)
     {
         fixed (ulong* pOutSizeAlongAxis = outSizeAlongAxis)
         {
@@ -50,7 +50,7 @@ public unsafe class SlangReflectionEntryPoint : ManagedSlang<SlangReflectionEntr
         }
     }
 
-    public void GetComputeWaveSize(Span<ulong> outWaveSize)
+    public void GetComputeWaveSize(scoped ReadOnlySpan<ulong> outWaveSize)
     {
         fixed (ulong* pOutWaveSize = outWaveSize)
         {

@@ -240,13 +240,13 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         };
     }
 
-    public IndexBuffer CreateIndexBuffer(Span<ushort> indices) =>
+    public IndexBuffer CreateIndexBuffer(scoped ReadOnlySpan<ushort> indices) =>
         this.CreateIndexBuffer(indices, VkIndexType.Uint16);
 
-    public IndexBuffer CreateIndexBuffer(Span<uint> indices) =>
+    public IndexBuffer CreateIndexBuffer(scoped ReadOnlySpan<uint> indices) =>
         this.CreateIndexBuffer(indices, VkIndexType.Uint32);
 
-    public IndexBuffer CreateIndexBuffer<T>(Span<T> indices, VkIndexType indexType) where T : unmanaged, INumber<T>
+    public IndexBuffer CreateIndexBuffer<T>(scoped ReadOnlySpan<T> indices, VkIndexType indexType) where T : unmanaged, INumber<T>
     {
         var bufferSize = (ulong)(sizeof(T) * indices.Length);
 
@@ -268,7 +268,7 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
     public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
         this.Context.CreateSurface(handle, clientSize);
-    public VertexBuffer CreateVertexBuffer<T>(Span<T> data) where T : unmanaged
+    public VertexBuffer CreateVertexBuffer<T>(scoped ReadOnlySpan<T> data) where T : unmanaged
     {
         var size = (ulong)(data.Length * sizeof(T));
         var buffer = this.CreateBuffer(
@@ -303,7 +303,7 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         }
     }
 
-    public void DeferredDispose(Span<IDisposable> disposables)
+    public void DeferredDispose(scoped ReadOnlySpan<IDisposable> disposables)
     {
         lock (this.@lock)
         {
@@ -373,10 +373,10 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         commandBuffer.Dispose();
     }
 
-    public VkFormat FindSupportedFormat(Span<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features) =>
+    public VkFormat FindSupportedFormat(scoped ReadOnlySpan<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features) =>
         this.Context.FindSupportedFormat(candidates, tiling, features);
 
-    public void UpdateDescriptorSets(Span<VkWriteDescriptorSet> descriptorWrites, Span<VkCopyDescriptorSet> descriptorCopies) =>
+    public void UpdateDescriptorSets(scoped ReadOnlySpan<VkWriteDescriptorSet> descriptorWrites, scoped ReadOnlySpan<VkCopyDescriptorSet> descriptorCopies) =>
         this.Context.Device.UpdateDescriptorSets(descriptorWrites, descriptorCopies);
 
     public void WaitIdle() =>

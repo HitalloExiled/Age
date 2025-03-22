@@ -51,7 +51,7 @@ public sealed class Buffer(VkBuffer instance) : Resource<VkBuffer>
     public void Update<T>(T data) where T : unmanaged =>
         this.Update([data]);
 
-    public void Update<T>(Span<T> data) where T : unmanaged
+    public void Update<T>(scoped ReadOnlySpan<T> data) where T : unmanaged
     {
         var stagingBuffer = VulkanRenderer.Singleton.CreateBuffer(this.Allocation.Size, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 

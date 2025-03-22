@@ -251,7 +251,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         this.ChildAppended(node);
     }
 
-    private void AppendOrPrepend(Span<Node> nodes, bool append)
+    private void AppendOrPrepend(scoped ReadOnlySpan<Node> nodes, bool append)
     {
         if (nodes.Length == 0)
         {
@@ -382,7 +382,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         this.ChildAppended(node);
     }
 
-    private void InsertAfterOrBefore(Node reference, Span<Node> nodes, bool after)
+    private void InsertAfterOrBefore(Node reference, scoped ReadOnlySpan<Node> nodes, bool after)
     {
         if (reference.Parent != this)
         {
@@ -597,7 +597,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public void AppendChild(Node node) =>
         this.AppendOrPrepend(node, true);
 
-    public void AppendChildren(Span<Node> nodes) =>
+    public void AppendChildren(scoped ReadOnlySpan<Node> nodes) =>
         this.AppendOrPrepend(nodes, true);
 
     public int CompareTo(Node? other)
@@ -717,16 +717,16 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public void InsertBeforeSelf(Node node) =>
         this.Parent?.InsertBefore(node, this);
 
-    public void InsertNodesAfterSelf(Span<Node> nodes) =>
+    public void InsertNodesAfterSelf(scoped ReadOnlySpan<Node> nodes) =>
         this.Parent?.InsertNodesAfter(this, nodes);
 
-    public void InsertNodesAfter(Node reference, Span<Node> nodes) =>
+    public void InsertNodesAfter(Node reference, scoped ReadOnlySpan<Node> nodes) =>
         this.InsertAfterOrBefore(reference, nodes, true);
 
-    public void InsertNodesBefore(Span<Node> nodes, Node reference) =>
+    public void InsertNodesBefore(scoped ReadOnlySpan<Node> nodes, Node reference) =>
         this.InsertAfterOrBefore(reference, nodes, false);
 
-    public void InsertNodesBeforeSelf(Span<Node> nodes) =>
+    public void InsertNodesBeforeSelf(scoped ReadOnlySpan<Node> nodes) =>
         this.Parent?.InsertNodesBefore(nodes, this);
 
     public bool IsDescendent(Node other)
@@ -744,7 +744,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public void PrependChild(Node node) =>
         this.AppendOrPrepend(node, false);
 
-    public void PrependChildren(Span<Node> nodes) =>
+    public void PrependChildren(scoped ReadOnlySpan<Node> nodes) =>
         this.AppendOrPrepend(nodes, false);
 
     public void RemoveChild(Node node)
@@ -850,7 +850,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         this.AppendChild(node);
     }
 
-    public void ReplaceChildren(Span<Node> nodes)
+    public void ReplaceChildren(scoped ReadOnlySpan<Node> nodes)
     {
         if (this.FirstChild != null)
         {
@@ -860,7 +860,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         this.AppendChildren(nodes);
     }
 
-    public void ReplaceWith(Node target, Span<Node> nodes)
+    public void ReplaceWith(Node target, scoped ReadOnlySpan<Node> nodes)
     {
         if (target.Parent != this)
         {
@@ -942,7 +942,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
-    public void ReplaceSelfWith(Span<Node> nodes) =>
+    public void ReplaceSelfWith(scoped ReadOnlySpan<Node> nodes) =>
         this.Parent?.ReplaceWith(this, nodes);
 
     public virtual void Initialize()

@@ -72,7 +72,7 @@ public unsafe class NativeArray<T>(int lenght = 1) : IDisposable where T : unman
     private bool disposed;
     private T* buffer = (T*)NativeMemory.Alloc((uint)(sizeof(T) * lenght));
 
-    public NativeArray(Span<T> values) : this(values.Length)
+    public NativeArray(scoped ReadOnlySpan<T> values) : this(values.Length)
     {
         for (var i = 0; i < values.Length; i++)
         {

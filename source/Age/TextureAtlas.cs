@@ -42,7 +42,7 @@ public sealed class TextureAtlas : Disposable
         this.Texture = new(textureCreateInfo);
     }
 
-    public Point<uint> Pack(Span<uint> pixels, Size<uint> size)
+    public Point<uint> Pack(scoped ReadOnlySpan<uint> pixels, Size<uint> size)
     {
         var sourceCursor = new Point<uint>();
 

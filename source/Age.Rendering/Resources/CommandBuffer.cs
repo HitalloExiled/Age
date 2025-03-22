@@ -43,7 +43,7 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
         this.BeginRenderPass(renderPass, framebuffer, [clearValue]);
     }
 
-    public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, Span<Color> clearColors)
+    public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, scoped ReadOnlySpan<Color> clearColors)
     {
         Span<VkClearValue> clearValues = stackalloc VkClearValue[clearColors.Length];
 
@@ -58,7 +58,7 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
         this.BeginRenderPass(renderPass, framebuffer, clearValues);
     }
 
-    public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, Span<VkClearValue> clearValues)
+    public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, scoped ReadOnlySpan<VkClearValue> clearValues)
     {
         fixed (VkClearValue* pClearValues = clearValues)
         {
@@ -88,7 +88,7 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
     public void BindVertexBuffer(VertexBuffer vertexBuffer) =>
         this.Instance.BindVertexBuffers(0, 1, [vertexBuffer.Buffer.Instance], [0]);
 
-    public void BindVertexBuffer(Span<VertexBuffer> vertexBuffers)
+    public void BindVertexBuffer(scoped ReadOnlySpan<VertexBuffer> vertexBuffers)
     {
         var handles = new VkBuffer[vertexBuffers.Length];
 
@@ -103,10 +103,10 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
     public void BindUniformSet(UniformSet uniformSet) =>
         this.Instance.BindDescriptorSets(uniformSet.Shader.BindPoint, uniformSet.Shader.PipelineLayout, 0, uniformSet.DescriptorSets, []);
 
-    public void ClearAttachments(Span<VkClearAttachment> attachments, Span<VkClearRect> rects) =>
+    public void ClearAttachments(scoped ReadOnlySpan<VkClearAttachment> attachments, scoped ReadOnlySpan<VkClearRect> rects) =>
         this.Instance.ClearAttachments(attachments, rects);
 
-    public void ClearImageColor(Image image, VkImageLayout imageLayout, VkClearColorValue color, Span<VkImageSubresourceRange> ranges) =>
+    public void ClearImageColor(Image image, VkImageLayout imageLayout, VkClearColorValue color, scoped ReadOnlySpan<VkImageSubresourceRange> ranges) =>
         this.Instance.ClearColorImage(image, imageLayout, color, ranges);
 
     public void Draw(VertexBuffer vertexBuffer, uint instanceCount = 1, uint firstVertex = 0, uint firstInstance = 0) =>

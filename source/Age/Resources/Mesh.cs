@@ -12,7 +12,7 @@ public sealed class Mesh : Spatial3D
 
     public Material Material { get; set; } = new();
 
-    public Mesh(Span<Vertex> vertices, Span<uint> indices) =>
+    public Mesh(scoped ReadOnlySpan<Vertex> vertices, scoped ReadOnlySpan<uint> indices) =>
         this.SingleCommand = new MeshCommand
         {
             VertexBuffer = VulkanRenderer.Singleton.CreateVertexBuffer(vertices),

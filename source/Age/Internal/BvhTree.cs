@@ -11,7 +11,7 @@ public unsafe class BvhTree
     private const int MAX_ELEMENTS = 4;
     private readonly BvhNode<Layoutable> root = new();
 
-    private static AABB<float> GetBounding(Span<Layoutable> nodes, Dictionary<Layoutable, int> depths)
+    private static AABB<float> GetBounding(scoped ReadOnlySpan<Layoutable> nodes, Dictionary<Layoutable, int> depths)
     {
         var aabb = new AABB<float>();
 
@@ -23,7 +23,7 @@ public unsafe class BvhTree
         return aabb;
     }
 
-    private static void Split(BvhNode<Layoutable> bvhNode, Span<Layoutable> nodes, Dictionary<Layoutable, int> depths)
+    private static void Split(BvhNode<Layoutable> bvhNode, scoped ReadOnlySpan<Layoutable> nodes, Dictionary<Layoutable, int> depths)
     {
         var particion = bvhNode.AABB.Size.X > bvhNode.AABB.Size.Y
             ? new AABB<float>(

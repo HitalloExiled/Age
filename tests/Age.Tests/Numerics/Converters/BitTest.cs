@@ -4,10 +4,10 @@ namespace Age.Tests.Numerics.Converters;
 
 public class BitTest
 {
-    private static void AssertIt(Span<byte> actual, Span<byte> expected) =>
+    private static void AssertIt(scoped ReadOnlySpan<byte> actual, scoped ReadOnlySpan<byte> expected) =>
         Assert.True(actual.SequenceEqual(expected));
 
-    private static void AssertIt(Span<ushort> actual, Span<ushort> expected) =>
+    private static void AssertIt(scoped ReadOnlySpan<ushort> actual, scoped ReadOnlySpan<ushort> expected) =>
         Assert.True(actual.SequenceEqual(expected));
 
     [Fact]

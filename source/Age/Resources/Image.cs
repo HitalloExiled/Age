@@ -16,7 +16,7 @@ public sealed class Image : Disposable
 
     public Size<uint> Size { get; }
 
-    public Image(Span<byte> buffer, Size<uint> size)
+    public Image(scoped ReadOnlySpan<byte> buffer, Size<uint> size)
     {
         this.Size = size;
 

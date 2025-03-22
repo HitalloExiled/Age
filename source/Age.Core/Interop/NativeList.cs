@@ -53,7 +53,7 @@ public unsafe class NativeList<T> : Disposable, IEnumerable<T> where T : unmanag
         }
     }
 
-    public NativeList(Span<T> values) : this(values.Length)
+    public NativeList(scoped ReadOnlySpan<T> values) : this(values.Length)
     {
         for (var i = 0; i < values.Length; i++)
         {

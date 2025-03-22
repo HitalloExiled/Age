@@ -793,7 +793,7 @@ internal sealed partial class TextLayout : Layout
 
         #region local methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void resolveLine(scoped Span<TextLine> lines, int index, ref uint position) =>
+        void resolveLine(scoped ReadOnlySpan<TextLine> lines, int index, ref uint position) =>
             position = isCursorBefore(endAnchor.Rect)
                 ? lines[index].Start
                 : lines[index].End + 1 == this.target.Buffer.Length
@@ -819,7 +819,7 @@ internal sealed partial class TextLayout : Layout
         bool isCursorAboveBottom(in Rect<float> rect) => cursor.Y > rect.Position.Y - rect.Size.Height;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void scanAbove(scoped Span<Command> commands, int start, int end, scoped Span<TextLine> lines, ref uint position)
+        void scanAbove(scoped ReadOnlySpan<Command> commands, int start, int end, scoped ReadOnlySpan<TextLine> lines, ref uint position)
         {
             for (var i = start; i > end; i--)
             {
@@ -835,7 +835,7 @@ internal sealed partial class TextLayout : Layout
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void scanBelow(scoped Span<Command> commands, int start, int end, scoped Span<TextLine> lines, ref uint position)
+        void scanBelow(scoped ReadOnlySpan<Command> commands, int start, int end, scoped ReadOnlySpan<TextLine> lines, ref uint position)
         {
             for (var i = start; i < end; i++)
             {

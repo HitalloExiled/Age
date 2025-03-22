@@ -51,7 +51,7 @@ public sealed unsafe partial class VkFence : VkDeviceResource<VkFence>
     }
 
     /// <inheritdoc cref="PInvoke.vkResetFences" />
-    public static void Reset(VkDevice device, Span<VkFence> fences) =>
+    public static void Reset(VkDevice device, scoped ReadOnlySpan<VkFence> fences) =>
         Reset(device.Handle, VkHandle.GetHandles(fences));
 
     /// <inheritdoc cref="PInvoke.vkWaitForFences" />
@@ -64,7 +64,7 @@ public sealed unsafe partial class VkFence : VkDeviceResource<VkFence>
     }
 
     /// <inheritdoc cref="PInvoke.vkWaitForFences" />
-    public static void Wait(VkDevice device, Span<VkFence> fences, bool waitAll, ulong timeout) =>
+    public static void Wait(VkDevice device, scoped ReadOnlySpan<VkFence> fences, bool waitAll, ulong timeout) =>
         Wait(device.Handle, VkHandle.GetHandles(fences), waitAll, timeout);
 
     protected override void Disposed()

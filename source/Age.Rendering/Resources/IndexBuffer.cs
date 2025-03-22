@@ -20,6 +20,6 @@ public sealed class IndexBuffer : Disposable
     public void Update<T>(T data) where T : unmanaged =>
         this.Buffer.Update(data);
 
-    public void Update<T>(Span<T> data) where T : unmanaged =>
+    public void Update<T>(scoped ReadOnlySpan<T> data) where T : unmanaged =>
         this.Buffer.Update(data);
 }
