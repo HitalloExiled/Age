@@ -7,15 +7,33 @@ namespace Age.Elements;
 
 public abstract partial class Layoutable : Spatial2D
 {
-    #region 8-bytes
+    private CacheValue<Transform2D> transformCache;
+
+    private Transform2D ParentTransformCache => ((this.ComposedParentElement ?? this.Parent) as Spatial2D)?.TransformCache ?? new();
+    private Transform2D Offset               => Transform2D.CreateTranslated((this.ComposedParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
+
+    internal Transform2D TransformWithOffset => this.Offset * this.Transform;
+
     internal abstract Layout Layout { get; }
 
-    public Slot? AssignedSlot { get; internal set; }
-    #endregion
+    internal override Transform2D TransformCache
+    {
+        get
+        {
+            if (this.transformCache.Version != CacheVersion)
+            {
+                this.transformCache = new()
+                {
+                    Value   = this.Offset * this.Layout.Transform * this.ParentTransformCache * this.LocalTransform,
+                    Version = CacheVersion
+                };
+            }
 
-    #region 4-bytes
-    private CacheValue<Transform2D> transformCache;
-    #endregion
+            return this.transformCache.Value;
+        }
+    }
+
+    public Slot? AssignedSlot { get; internal set; }
 
     public Element? FirstElementChild
     {
@@ -81,37 +99,15 @@ public abstract partial class Layoutable : Spatial2D
         }
     }
 
-    private Transform2D ParentTransformCache => ((this.ComposedParentElement ?? this.Parent) as Spatial2D)?.TransformCache ?? new();
-    private Transform2D Offset               => Transform2D.CreateTranslated((this.ComposedParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
-
-    internal Transform2D TransformWithOffset => this.Offset * this.Transform;
-
-    internal override Transform2D TransformCache
-    {
-        get
-        {
-            if (this.transformCache.Version != CacheVersion)
-            {
-                this.transformCache = new()
-                {
-                    Value   = this.Offset * this.Layout.Transform * this.ParentTransformCache * this.LocalTransform,
-                    Version = CacheVersion
-                };
-            }
-
-            return this.transformCache.Value;
-        }
-    }
+    public Element? ComposedParentElement  => this.AssignedSlot ?? this.EffectiveParentElement;
+    public Element? EffectiveParentElement => this.Parent is ShadowTree shadowTree ? shadowTree.Host : this.ParentElement;
+    public Element? ParentElement          => this.Parent as Element;
 
     public override Transform2D Transform
     {
         get => this.Layout.Transform * base.Transform;
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
-
-    public Element? ComposedParentElement  => this.AssignedSlot ?? this.EffectiveParentElement;
-    public Element? EffectiveParentElement => this.Parent is ShadowTree shadowTree ? shadowTree.Host : this.ParentElement;
-    public Element? ParentElement          => this.Parent as Element;
 
     private protected Layout GetIndependentLayoutAncestor()
     {

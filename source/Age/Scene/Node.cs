@@ -7,19 +7,10 @@ namespace Age.Scene;
 
 public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<Node>
 {
-    #region 8-bytes
+    #pragma warning disable IDE0032 // Use auto property
     private NodeTree? tree;
+    #pragma warning restore IDE0032 // Use auto property
 
-    public Node? FirstChild      { get; private set; }
-    public Node? LastChild       { get; private set; }
-    public Node? NextSibling     { get; private set; }
-    public Node? Parent          { get; private set; }
-    public Node? PreviousSibling { get; private set; }
-
-    public virtual string? Name { get; set; }
-    #endregion
-
-    #region 4-bytes
     internal int Index
     {
         get;
@@ -33,13 +24,13 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
+    public Node? FirstChild      { get; private set; }
+    public Node? LastChild       { get; private set; }
+    public Node? NextSibling     { get; private set; }
+    public Node? Parent          { get; private set; }
+    public Node? PreviousSibling { get; private set; }
+
     public NodeFlags Flags { get; protected set; }
-    #endregion
-    public Node[] Children
-    {
-        get => [.. this];
-        set => this.ReplaceChildren(value);
-    }
 
     public NodeTree? Tree
     {
@@ -74,6 +65,18 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
+    public Node[] Children
+    {
+        get => [.. this];
+        set => this.ReplaceChildren(value);
+    }
+
+    [MemberNotNullWhen(true, nameof(Tree))]
+    public bool IsConnected => this.Tree != null;
+
+    [MemberNotNullWhen(false, nameof(FirstChild), nameof(LastChild))]
+    public bool IsLeaf => this.FirstChild == null;
+
     public Node Root
     {
         get
@@ -89,11 +92,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
-    [MemberNotNullWhen(true, nameof(Tree))]
-    public bool IsConnected => this.Tree != null;
-
-    [MemberNotNullWhen(false, nameof(FirstChild), nameof(LastChild))]
-    public bool IsLeaf => this.FirstChild == null;
+    public virtual string? Name { get; set; }
 
     public abstract string NodeName { get; }
 

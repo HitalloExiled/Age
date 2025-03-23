@@ -6,37 +6,26 @@ namespace Age.Elements.Layouts;
 
 internal abstract class Layout : Disposable
 {
-    #region 8-bytes
     protected virtual StencilLayer? ContentStencilLayer { get; }
-    public virtual StencilLayer? StencilLayer { get; set; }
-    #endregion
 
-    #region 4-bytes
-    public int BaseLine { get; protected set; } = -1;
-
-    public Size<uint> Boundings
-    {
-        get;
-        protected set;
-    }
-
-    public uint           LineHeight { get; set; }
-    public Vector2<float> Offset     { get; internal set; }
-
-    public virtual Transform2D Transform => Transform2D.CreateTranslated(this.Offset);
-    #endregion
-
-    #region 1-byte
     public bool IsDirty { get; private set; }
 
-    public virtual bool Hidden { get; set; }
+    public int        BaseLine  { get; protected set; } = -1;
+    public Size<uint> Boundings { get; protected set; }
 
-    public abstract bool IsParentDependent { get; }
-    #endregion
+    public Vector2<float> Offset { get; internal set; }
+
+    public uint LineHeight { get; set; }
 
     public BoxLayout? Parent => this.Target.ComposedParentElement?.Layout;
 
-    public abstract Layoutable Target { get; }
+    public virtual bool          Hidden       { get; set; }
+    public virtual StencilLayer? StencilLayer { get; set; }
+
+    public virtual Transform2D Transform => Transform2D.CreateTranslated(this.Offset);
+
+    public abstract bool       IsParentDependent { get; }
+    public abstract Layoutable Target            { get; }
 
     protected override void Disposed(bool disposing)
     {

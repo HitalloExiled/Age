@@ -13,21 +13,9 @@ namespace Age.Elements;
 
 internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<StencilLayer>
 {
-    #region 8-bytes
     private readonly SKPath path = new();
 
-    public Element Owner { get; } = owner;
-
-    public StencilLayer? FirstChild      { get; private set; }
-    public StencilLayer? LastChild       { get; private set; }
-    public StencilLayer? NextSibling     { get; private set; }
-    public StencilLayer? Parent          { get; private set; }
-    public StencilLayer? PreviousSibling { get; private set; }
-
-    public MappedTexture MappedTexture { get; private set; } = MappedTexture.Default;
-    #endregion
-
-    #region 4-bytes
+    private bool        isDirty;
     private Transform2D transform;
 
     internal Transform2D Transform
@@ -44,14 +32,21 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         }
     }
 
-    public Size<uint> Size { get; private set; }
-    #endregion
+    public Element Owner { get; } = owner;
 
-    #region 1-byte
-    private bool isDirty;
-    #endregion
+    public StencilLayer? FirstChild      { get; private set; }
+    public StencilLayer? LastChild       { get; private set; }
+    public MappedTexture MappedTexture   { get; private set; } = MappedTexture.Default;
+    public StencilLayer? NextSibling     { get; private set; }
+    public StencilLayer? Parent          { get; private set; }
+    public StencilLayer? PreviousSibling { get; private set; }
+    public Size<uint>    Size            { get; private set; }
 
-    IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() =>
+        this.GetEnumerator();
+
+    IEnumerator<StencilLayer> IEnumerable<StencilLayer>.GetEnumerator() =>
+        this.GetEnumerator();
 
     private void UpdatePath(Size<uint> bounds, Border border)
     {
@@ -223,8 +218,8 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         }
     }
 
-    public IEnumerator<StencilLayer> GetEnumerator() =>
-        new Enumerator(this);
+    public Enumerator GetEnumerator() =>
+        new(this);
 
     public void MakeDirty()
     {

@@ -13,7 +13,6 @@ namespace Age.Scene;
 
 public sealed partial class RenderTree : NodeTree
 {
-    #region 8-bytes
     private readonly List<Command2DEntry> command2DEntries  = [];
     private readonly List<Command3DEntry> command3DEntries  = [];
     private readonly Stack<(Slot, int)>   composedTreeStack = [];
@@ -30,7 +29,6 @@ public sealed partial class RenderTree : NodeTree
     internal List<Scene3D> Scenes3D { get; } = [];
 
     public Window Window { get; }
-    #endregion
 
     public RenderTree(Window window)
     {

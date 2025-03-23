@@ -200,7 +200,7 @@ public partial class Window
 
                         if (size.Width != window.Size.Width || size.Height != window.Size.Height)
                         {
-                            window.size = size;
+                            window.Size = size;
 
                             window.Resized.Invoke();
                         }
@@ -211,7 +211,7 @@ public partial class Window
                     {
                         User32.GetWindowPlacement(hwnd, out var placement);
 
-                        window.position = new(placement.rcNormalPosition.left, placement.rcNormalPosition.top);
+                        window.Position = new(placement.rcNormalPosition.left, placement.rcNormalPosition.top);
                     }
 
                     break;

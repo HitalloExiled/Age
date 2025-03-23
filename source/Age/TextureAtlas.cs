@@ -11,19 +11,12 @@ namespace Age;
 
 public sealed class TextureAtlas : Disposable
 {
-    #region 8-bytes
+    private Point<uint> cursor;
+    private bool        isDirty;
+    private uint        maxHeight;
+
     public Bitmap  Bitmap  { get; }
     public Texture Texture { get; }
-    #endregion
-
-    #region 4-bytes
-    private Point<uint> cursor;
-    private uint        maxHeight;
-    #endregion
-
-    #region 2-bytes
-    private bool isDirty;
-    #endregion
 
     public Size<uint> Size => this.Bitmap.Size;
 

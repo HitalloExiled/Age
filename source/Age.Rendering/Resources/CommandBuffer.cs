@@ -1,5 +1,4 @@
 using Age.Numerics;
-using Age.Rendering.Interfaces;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;

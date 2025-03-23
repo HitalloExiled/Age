@@ -6,17 +6,13 @@ public abstract class NodeTree : Disposable
 {
     public event Action? Updated;
 
-    #region 8-bytes
     private readonly Queue<Action> updatesQueue = [];
 
     internal List<Timer> Timers { get; } = [];
 
     public Root Root { get; }
-    #endregion
 
-    #region 1-bytes
     public bool IsDirty { get; private set; }
-    #endregion
 
     protected NodeTree() =>
         this.Root = new() { Tree = this };

@@ -7,6 +7,9 @@ namespace Age.Styling;
 
 internal struct StyleData
 {
+    // 8-bytes
+    public string? FontFamily;
+
     // 4-bytes
     public AlignmentKind?            Alignment;
     public Color?                    BackgroundColor;
@@ -16,7 +19,6 @@ internal struct StyleData
     public Color?                    Color;
     public ContentJustificationKind? ContentJustification;
     public CursorKind?               Cursor;
-    public string?                   FontFamily;
     public FontWeight?               FontWeight;
     public ItemsAlignmentKind?       ItemsAlignment;
     public StyleRectEdges?           Margin;

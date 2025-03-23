@@ -10,6 +10,7 @@ public delegate void InputEventHandler(char character);
 
 public partial class Window : Disposable
 {
+    #region events
     public event MouseEventHandler?   Click;
     public event Action?              Closed;
     public event ContextEventHandler? Context;
@@ -23,49 +24,40 @@ public partial class Window : Disposable
     public event MouseEventHandler?   MouseUp;
     public event MouseEventHandler?   MouseWhell;
     public event Action?              Resized;
+    #endregion events
 
     private static string? className;
 
-    protected static readonly Dictionary<nint, Window> WindowsMap = [];
-    protected static bool Registered { get; set; }
+    protected static Dictionary<nint, Window> WindowsMap { get; } = [];
 
     public static IEnumerable<Window> Windows => WindowsMap.Values;
 
+    protected static bool Registered { get; set; }
 
-    #region 8-bytes
-    private string title;
-
-    protected readonly List<Window> Children = [];
-
-    public nint    Handle { get; private set; }
-    public Window? Parent { get; }
-
-    #endregion
-
-    #region 4-bytes
-    private CursorKind cursor;
     private Point<int> position;
     private Size<uint> size;
+    private string     title;
 
-    #endregion
+    protected List<Window> Children { get; } = [];
 
-    #region 1-byte
+    public Window? Parent { get; }
+
+    public nint Handle      { get; private set; }
     public bool IsClosed    { get; private set; }
     public bool IsMaximized { get; private set; }
     public bool IsMinimized { get; private set; }
     public bool IsVisible   { get; private set; } = true;
-    #endregion
 
     public Size<uint> ClientSize => this.PlatformGetClientSize();
 
     public CursorKind Cursor
     {
-        get => this.cursor;
+        get;
         set
         {
-            if (this.cursor != value)
+            if (field != value)
             {
-                this.cursor = value;
+                field = value;
                 PlatformSetCursor(value);
             }
         }

@@ -1,7 +1,6 @@
 using Age.Commands;
 using Age.Core.Extensions;
 using Age.Core;
-using Age.Extensions;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Resources;
@@ -38,8 +37,7 @@ internal sealed partial class TextLayout : Layout
     private bool           textIsDirty;
     private SKTypeface?    typeface;
 
-    private bool CanSelect        => this.Parent?.State.Style.TextSelection != false;
-    public Rect<float> CursorRect => this.caretCommand.Rect;
+    private bool CanSelect => this.Parent?.State.Style.TextSelection != false;
 
     public uint CaretPosition
     {
@@ -88,7 +86,10 @@ internal sealed partial class TextLayout : Layout
         }
     }
 
+    public Rect<float> CursorRect => this.caretCommand.Rect;
+
     public override bool IsParentDependent { get; }
+
     public override Text Target => this.target;
 
     public TextLayout(Text target)

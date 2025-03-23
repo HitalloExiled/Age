@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;
@@ -9,20 +8,16 @@ namespace Age.Rendering.Resources;
 
 public sealed class Image : Resource<VkImage>
 {
-    #region 8-bytes
     private readonly Allocation? allocation;
     private readonly VkImage     instance;
-    #endregion
-
-    #region 4-bytes
-    public VkImageLayout FinalLayout { get; private set; }
 
     public VkExtent3D        Extent        { get; }
     public VkFormat          Format        { get; }
     public VkImageLayout     InitialLayout { get; }
     public VkImageType       Type          { get; }
     public VkImageUsageFlags Usage         { get; }
-    #endregion
+
+    public VkImageLayout FinalLayout { get; private set; }
 
     public VkImageAspectFlags Aspect
     {

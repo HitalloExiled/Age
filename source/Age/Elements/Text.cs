@@ -9,15 +9,12 @@ namespace Age.Elements;
 
 public sealed class Text : Layoutable
 {
-    #region 4-bytes
     internal override TextLayout Layout { get; }
+
+    public StringBuffer Buffer { get; } = new();
 
     public override string NodeName { get; } = nameof(Text);
 
-    public StringBuffer Buffer { get; } = new();
-    #endregion
-
-    #region 2-bytes
     public uint CursorPosition
     {
         get => this.Layout.CaretPosition;
@@ -29,7 +26,6 @@ public sealed class Text : Layoutable
         get => this.Layout.Selection;
         set => this.Layout.Selection = value;
     }
-    #endregion
 
     public string? Value
     {

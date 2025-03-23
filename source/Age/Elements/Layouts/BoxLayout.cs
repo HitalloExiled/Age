@@ -24,39 +24,37 @@ internal sealed partial class BoxLayout : Layout
         StyleProperty.Transform,
     ];
 
-    #region 8-bytes
     private readonly List<Element> dependents = [];
     private readonly Element       target;
 
+    private RectEdges     border;
+    private bool          canScrollX;
+    private bool          canScrollY;
+    private bool          childsChanged;
+    private Size<uint>    content;
+    private Dependency    contentDependent;
+    private bool          dependenciesHasChanged;
+    private RectEdges     margin;
     private StencilLayer? ownStencilLayer;
+    private RectEdges     padding;
+    private Dependency    parentDependent;
+    private uint          renderableNodesCount;
+    private Size<uint>    size;
+    private Size<uint>    staticContent;
+
+    private Size<uint> BoundingsWithMargin =>
+        new(
+            this.size.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
+            this.size.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
+        );
 
     protected override StencilLayer? ContentStencilLayer => this.ownStencilLayer ?? this.StencilLayer;
 
-    public override StencilLayer? StencilLayer
-    {
-        get => base.StencilLayer;
-        set
-        {
-            if (base.StencilLayer != value)
-            {
-                var command = this.GetRectCommand();
+    public StyledStateManager State { get; } = new();
 
-                base.StencilLayer = command.StencilLayer = value;
-            }
-        }
-    }
-    #endregion
+    public uint FontSize { get; private set; }
 
-    #region 4-bytes
-    private RectEdges    border;
-    private Size<uint>   content;
-    private Dependency   contentDependent;
-    private RectEdges    margin;
-    private RectEdges    padding;
-    private Dependency   parentDependent;
-    private uint         renderableNodesCount;
-    private Size<uint>   size;
-    private Size<uint>   staticContent;
+    public bool IsScrollable { get; internal set; }
 
     public Point<uint> ContentOffset
     {
@@ -76,40 +74,33 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    public uint FontSize { get; private set; }
-
-    public RectEdges  Border  => this.border;
-    public Size<uint> Content => this.content;
-    public RectEdges  Margin  => this.margin;
-    public RectEdges  Padding => this.padding;
-    #endregion
-
-    #region 1-byte
-    private bool childsChanged;
-    private bool dependenciesHasChanged;
-    private bool canScrollX;
-    private bool canScrollY;
-
-    public bool IsScrollable { get; internal set; }
     public bool IsChildHoveringText  { get; set; }
     public bool IsChildSelectingText { get; set; }
 
-    public bool CanScrollY => this.canScrollX;
-    public bool CanScrollX => this.canScrollY;
+    public RectEdges  Border     => this.border;
+    public Size<uint> Content    => this.content;
+    public RectEdges  Margin     => this.margin;
+    public RectEdges  Padding    => this.padding;
+    public bool       CanScrollY => this.canScrollX;
+    public bool       CanScrollX => this.canScrollY;
 
-    public override bool IsParentDependent => this.parentDependent != Dependency.None;
-    #endregion
+    public override StencilLayer? StencilLayer
+    {
+        get => base.StencilLayer;
+        set
+        {
+            if (base.StencilLayer != value)
+            {
+                var command = this.GetRectCommand();
 
-    private Size<uint> BoundingsWithMargin =>
-        new(
-            this.size.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
-            this.size.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
-        );
+                base.StencilLayer = command.StencilLayer = value;
+            }
+        }
+    }
 
-    public StyledStateManager State { get; } = new();
-
-    public override Element     Target    => this.target;
-    public override Transform2D Transform => (this.State.Style.Transform ?? new Transform2D()) * base.Transform;
+    public override bool        IsParentDependent => this.parentDependent != Dependency.None;
+    public override Element     Target            => this.target;
+    public override Transform2D Transform         => (this.State.Style.Transform ?? new Transform2D()) * base.Transform;
 
     public BoxLayout(Element target)
     {
