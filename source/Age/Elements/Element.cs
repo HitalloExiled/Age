@@ -30,23 +30,78 @@ public delegate void InputEventHandler(char keyEvent);
 public abstract partial class Element : Layoutable, IComparable<Element>, IEnumerable<Element>
 {
     #region events
-    private event InputEventHandler? input;
-    private event KeyEventHandler?   keyDown;
-    private event KeyEventHandler?   keyUp;
-    private event MouseEventHandler? scrolled;
 
-    public event Action?              Activated;
-    public event MouseEventHandler?   Blured;
-    public event MouseEventHandler?   Clicked;
-    public event ContextEventHandler? Context;
-    public event Action?              Deactivated;
-    public event MouseEventHandler?   DoubleClicked;
-    public event MouseEventHandler?   Focused;
-    public event MouseEventHandler?   MouseDown;
-    public event MouseEventHandler?   MouseMoved;
-    public event MouseEventHandler?   MouseOut;
-    public event MouseEventHandler?   MouseOver;
-    public event MouseEventHandler?   MouseUp;
+    public event Action? Activated
+    {
+        add => this.AddEvent(nameof(Activated), value);
+        remove => this.RemoveEvent(nameof(Activated), value);
+    }
+
+    public event MouseEventHandler? Blured
+    {
+        add => this.AddEvent(nameof(Blured), value);
+        remove => this.RemoveEvent(nameof(Blured), value);
+    }
+
+    public event MouseEventHandler? Clicked
+    {
+        add => this.AddEvent(nameof(Clicked), value);
+        remove => this.RemoveEvent(nameof(Clicked), value);
+    }
+
+    public event ContextEventHandler? Context
+    {
+        add => this.AddEvent(nameof(Context), value);
+        remove => this.RemoveEvent(nameof(Context), value);
+    }
+
+    public event Action? Deactivated
+    {
+        add => this.AddEvent(nameof(Deactivated), value);
+        remove => this.RemoveEvent(nameof(Deactivated), value);
+    }
+
+    public event MouseEventHandler? DoubleClicked
+    {
+        add => this.AddEvent(nameof(DoubleClicked), value);
+        remove => this.RemoveEvent(nameof(DoubleClicked), value);
+    }
+
+    public event MouseEventHandler? Focused
+    {
+        add => this.AddEvent(nameof(Focused), value);
+        remove => this.RemoveEvent(nameof(Focused), value);
+    }
+
+    public event MouseEventHandler? MouseDown
+    {
+        add => this.AddEvent(nameof(MouseDown), value);
+        remove => this.RemoveEvent(nameof(MouseDown), value);
+    }
+
+    public event MouseEventHandler? MouseMoved
+    {
+        add => this.AddEvent(nameof(MouseMoved), value);
+        remove => this.RemoveEvent(nameof(MouseMoved), value);
+    }
+
+    public event MouseEventHandler? MouseOut
+    {
+        add => this.AddEvent(nameof(MouseOut), value);
+        remove => this.RemoveEvent(nameof(MouseOut), value);
+    }
+
+    public event MouseEventHandler? MouseOver
+    {
+        add => this.AddEvent(nameof(MouseOver), value);
+        remove => this.RemoveEvent(nameof(MouseOver), value);
+    }
+
+    public event MouseEventHandler? MouseUp
+    {
+        add => this.AddEvent(nameof(MouseUp), value);
+        remove => this.RemoveEvent(nameof(MouseUp), value);
+    }
 
     public event InputEventHandler? Input
     {
@@ -54,22 +109,21 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock(this.elementLock)
             {
-                if (this.Tree is RenderTree renderTree && keyDown == null)
+                this.AddEvent(nameof(Input), value, out var added);
+
+                if (this.Tree is RenderTree renderTree && added)
                 {
                     renderTree.Window.Input += this.OnInput;
                 }
             }
-
-            input += value;
-
         }
         remove
         {
-            input -= value;
-
             lock(this.elementLock)
             {
-                if (this.Tree is RenderTree renderTree && keyDown == null)
+                this.RemoveEvent(nameof(Input), value, out var removed);
+
+                if (this.Tree is RenderTree renderTree && removed)
                 {
                     renderTree.Window.Input -= this.OnInput;
                 }
@@ -83,22 +137,23 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock(this.elementLock)
             {
-                if (this.Tree is RenderTree renderTree && keyDown == null)
+                this.AddEvent(nameof(KeyDown), value, out var added);
+
+                if (this.Tree is RenderTree renderTree && added)
                 {
                     renderTree.Window.KeyDown += this.OnKeyDown;
                 }
             }
 
-            keyDown += value;
 
         }
         remove
         {
-            keyDown -= value;
-
             lock(this.elementLock)
             {
-                if (this.Tree is RenderTree renderTree && keyDown == null)
+                this.RemoveEvent(nameof(KeyDown), value, out var removed);
+
+                if (this.Tree is RenderTree renderTree && removed)
                 {
                     renderTree.Window.KeyDown -= this.OnKeyDown;
                 }
@@ -112,21 +167,21 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock(this.elementLock)
             {
-                if (this.Tree is RenderTree renderTree && keyUp == null)
+                this.AddEvent(nameof(KeyUp), value, out var added);
+
+                if (this.Tree is RenderTree renderTree && added)
                 {
                     renderTree.Window.KeyUp += this.OnKeyUp;
                 }
             }
-
-            keyUp += value;
         }
         remove
         {
-            keyUp -= value;
-
             lock(this.elementLock)
             {
-                if (this.Tree is RenderTree renderTree && keyUp == null)
+                this.RemoveEvent(nameof(KeyUp), value, out var removed);
+
+                if (this.Tree is RenderTree renderTree && removed)
                 {
                     renderTree.Window.KeyUp -= this.OnKeyUp;
                 }
@@ -140,21 +195,21 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock(this.elementLock)
             {
-                if (this.Tree is RenderTree renderTree && scrolled == null)
+                this.AddEvent(nameof(Scrolled), value, out var added);
+
+                if (this.Tree is RenderTree renderTree && added)
                 {
                     renderTree.Window.MouseWhell += this.OnScroll;
                 }
             }
-
-            scrolled += value;
         }
         remove
         {
-            scrolled -= value;
-
             lock(this.elementLock)
             {
-                if (this.Tree is RenderTree renderTree && scrolled == null)
+                this.RemoveEvent(nameof(Scrolled), value, out var removed);
+
+                if (this.Tree is RenderTree renderTree && removed)
                 {
                     renderTree.Window.MouseWhell -= this.OnScroll;
                 }
@@ -163,17 +218,44 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     }
     #endregion events
 
-    #region 8-bytes
     private readonly Lock elementLock = new();
+    private readonly Dictionary<string, Delegate> events = [];
+
+    private Action?              ActivatedEvent     => this.GetEvent<Action>(nameof(Activated));
+    private MouseEventHandler?   BluredEvent        => this.GetEvent<MouseEventHandler>(nameof(Blured));
+    private MouseEventHandler?   ClickedEvent       => this.GetEvent<MouseEventHandler>(nameof(Clicked));
+    private ContextEventHandler? ContextEvent       => this.GetEvent<ContextEventHandler>(nameof(Context));
+    private Action?              DeactivatedEvent   => this.GetEvent<Action>(nameof(Deactivated));
+    private MouseEventHandler?   DoubleClickedEvent => this.GetEvent<MouseEventHandler>(nameof(DoubleClicked));
+    private MouseEventHandler?   FocusedEvent       => this.GetEvent<MouseEventHandler>(nameof(Focused));
+    private InputEventHandler?   InputEvent         => this.GetEvent<InputEventHandler>(nameof(Input));
+    private KeyEventHandler?     KeyDownEvent       => this.GetEvent<KeyEventHandler>(nameof(KeyDown));
+    private KeyEventHandler?     KeyUpEvent         => this.GetEvent<KeyEventHandler>(nameof(KeyUp));
+    private MouseEventHandler?   MouseDownEvent     => this.GetEvent<MouseEventHandler>(nameof(MouseDown));
+    private MouseEventHandler?   MouseMovedEvent    => this.GetEvent<MouseEventHandler>(nameof(MouseMoved));
+    private MouseEventHandler?   MouseOutEvent      => this.GetEvent<MouseEventHandler>(nameof(MouseOut));
+    private MouseEventHandler?   MouseOverEvent     => this.GetEvent<MouseEventHandler>(nameof(MouseOver));
+    private MouseEventHandler?   MouseUpEvent       => this.GetEvent<MouseEventHandler>(nameof(MouseUp));
+    private MouseEventHandler?   ScrolledEvent      => this.GetEvent<MouseEventHandler>(nameof(Scrolled));
+
+    protected bool IsFocusable { get; set; }
 
     internal protected ShadowTree? ShadowTree { get; set; }
 
     internal Dictionary<string, List<Node>> WaitingSlots { get; } = [];
-    internal Dictionary<string, Slot> Slots              { get; } = [];
+    internal Dictionary<string, Slot>       Slots        { get; } = [];
 
     internal override BoxLayout Layout { get; }
 
-    public Canvas? Canvas { get; private set; }
+    public Canvas? Canvas    { get; private set; }
+    public bool    IsFocused { get; private set; }
+    public bool    IsHovered { get; private set; }
+
+    public Point<uint> Scroll
+    {
+        get => this.Layout.ContentOffset;
+        set => this.Layout.ContentOffset = value;
+    }
 
     public string? Slot
     {
@@ -192,31 +274,17 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             }
         }
     }
-    #endregion
 
-    #region 1-byte
-    protected bool IsFocusable { get; set; }
-
-    public bool IsFocused { get; private set; }
-    public bool IsHovered { get; private set; }
-    #endregion
-
-    public Point<uint> Scroll
+    public StyledStates? States
     {
-        get => this.Layout.ContentOffset;
-        set => this.Layout.ContentOffset = value;
+        get => this.Layout.State.Styles;
+        set => this.Layout.State.Styles = value;
     }
 
     public Style Style
     {
         get => this.Layout.State.UserStyle ??= new();
         set => this.Layout.State.UserStyle = value;
-    }
-
-    public StyledStates? States
-    {
-        get => this.Layout.State.Styles;
-        set => this.Layout.State.Styles = value;
     }
 
     public string? Text
@@ -290,6 +358,18 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
+    private void AddEvent(string name, Delegate? handler, out bool added)
+    {
+        ref var @delegate = ref this.events.GetValueRefOrAddDefault(name, out var exists);
+
+        @delegate = Delegate.Combine(@delegate, handler);
+
+        added = !exists;
+    }
+
+    private void AddEvent(string name, Delegate? handler) =>
+        this.AddEvent(name, handler, out _);
+
     private void AssignSlot(Element parent, string name)
     {
         if (!parent.WaitingSlots.TryGetValue(name, out var waitingSlots))
@@ -308,6 +388,29 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             waitingSlots.Add(this);
         }
     }
+
+    private void RemoveEvent(string name, Delegate? handler) =>
+        this.RemoveEvent(name, handler, out _);
+
+    private void RemoveEvent(string name, Delegate? handler, out bool removed)
+    {
+        ref var @delegate = ref this.events.GetValueRefOrNullRef(name);
+
+        if (removed = Unsafe.IsNullRef(ref @delegate))
+        {
+            return;
+        }
+
+        @delegate = Delegate.Remove(@delegate, handler);
+
+        if (removed = @delegate == null)
+        {
+            this.events.Remove(name);
+        }
+    }
+
+    private T? GetEvent<T>(string name) where T : Delegate =>
+        this.events.TryGetValue(name, out var @delegate) ? (T)@delegate : null;
 
     private void UnassignSlot(Element parent, string name)
     {
@@ -340,11 +443,13 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             ScreenY = platformContextEvent.ScreenY,
         };
 
+
+
     private void OnInput(char character)
     {
         if (this.IsFocused)
         {
-            this.input?.Invoke(character);
+            this.InputEvent?.Invoke(character);
         }
     }
 
@@ -359,7 +464,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 Modifiers = AgeInput.GetModifiers(),
             };
 
-            this.keyDown?.Invoke(keyEvent);
+            this.KeyDownEvent?.Invoke(keyEvent);
         }
     }
 
@@ -374,7 +479,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 Modifiers = AgeInput.GetModifiers(),
             };
 
-            this.keyUp?.Invoke(keyEvent);
+            this.KeyUpEvent?.Invoke(keyEvent);
         }
     }
 
@@ -384,7 +489,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             var mouseEvent = this.CreateEvent(platformMouseEvent, false);
 
-            this.scrolled?.Invoke(mouseEvent);
+            this.ScrolledEvent?.Invoke(mouseEvent);
         }
     }
 
@@ -408,22 +513,22 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     protected override void Connected(RenderTree renderTree)
     {
-        if (this.input != null)
+        if (this.events.ContainsKey(nameof(Input)))
         {
             renderTree.Window.Input += this.OnInput;
         }
 
-        if (this.keyDown != null)
+        if (this.events.ContainsKey(nameof(KeyDown)))
         {
             renderTree.Window.KeyDown += this.OnKeyDown;
         }
 
-        if (this.keyUp != null)
+        if (this.events.ContainsKey(nameof(KeyUp)))
         {
             renderTree.Window.KeyUp += this.OnKeyUp;
         }
 
-        if (this.scrolled != null)
+        if (this.events.ContainsKey(nameof(Scrolled)))
         {
             renderTree.Window.MouseWhell += this.OnScroll;
         }
@@ -470,9 +575,10 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         this.Canvas = null;
 
-        renderTree.Window.Input   -= this.OnInput;
-        renderTree.Window.KeyDown -= this.OnKeyDown;
-        renderTree.Window.KeyUp   -= this.OnKeyUp;
+        renderTree.Window.Input      -= this.OnInput;
+        renderTree.Window.KeyDown    -= this.OnKeyDown;
+        renderTree.Window.KeyUp      -= this.OnKeyUp;
+        renderTree.Window.MouseWhell -= this.OnScroll;
 
         if (!renderTree.IsDirty && !this.Layout.Hidden)
         {
@@ -504,7 +610,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     internal void InvokeActivate()
     {
         this.Layout.State.AddState(StyledStateManager.State.Active);
-        this.Activated?.Invoke();
+        this.ActivatedEvent?.Invoke();
     }
 
     internal void InvokeBlur(in PlatformMouseEvent platformMouseEvent)
@@ -513,24 +619,24 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             this.Layout.State.RemoveState(StyledStateManager.State.Focus);
             this.IsFocused = false;
-            this.Blured?.Invoke(this.CreateEvent(platformMouseEvent, false));
+            this.BluredEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
         }
     }
 
     internal void InvokeClick(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
-        this.Clicked?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        this.ClickedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
     internal void InvokeContext(in PlatformContextEvent platformContextEvent) =>
-        this.Context?.Invoke(this.CreateEvent(platformContextEvent));
+        this.ContextEvent?.Invoke(this.CreateEvent(platformContextEvent));
 
     internal void InvokeDeactivate()
     {
         this.Layout.State.RemoveState(StyledStateManager.State.Active);
-        this.Deactivated?.Invoke();
+        this.DeactivatedEvent?.Invoke();
     }
 
     internal void InvokeDoubleClick(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
-        this.DoubleClicked?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        this.DoubleClickedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
     internal void InvokeFocus(in PlatformMouseEvent platformMouseEvent)
     {
@@ -538,25 +644,25 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             this.IsFocused = true;
             this.Layout.State.AddState(StyledStateManager.State.Focus);
-            this.Focused?.Invoke(this.CreateEvent(platformMouseEvent, false));
+            this.FocusedEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
         }
     }
 
     internal void InvokeMouseDown(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
-        this.MouseDown?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        this.MouseDownEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
     internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
-        this.MouseMoved?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        this.MouseMovedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
     internal void InvokeMouseUp(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
-        this.MouseUp?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        this.MouseUpEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
 
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
     {
         this.IsHovered = false;
         this.Layout.State.RemoveState(StyledStateManager.State.Hovered);
         this.Layout.TargetMouseOut();
-        this.MouseOut?.Invoke(this.CreateEvent(platformMouseEvent, false));
+        this.MouseOutEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
     }
 
     internal void InvokeMouseOver(in PlatformMouseEvent platformMouseEvent)
@@ -564,7 +670,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.IsHovered = true;
         this.Layout.State.AddState(StyledStateManager.State.Hovered);
         this.Layout.TargetMouseOver();
-        this.MouseOver?.Invoke(this.CreateEvent(platformMouseEvent, false));
+        this.MouseOverEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
     }
 
     protected override void Disposed()
@@ -592,13 +698,13 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         this.IsFocused = false;
         this.Layout.State.RemoveState(StyledStateManager.State.Focus);
-        this.Blured?.Invoke(new() { Target = this });
+        this.BluredEvent?.Invoke(new() { Target = this });
     }
 
     public void Click()
     {
         this.Layout.State.AddState(StyledStateManager.State.Active);
-        this.Clicked?.Invoke(new() { Target = this });
+        this.ClickedEvent?.Invoke(new() { Target = this });
     }
 
     public int CompareTo(Element? other)
@@ -704,7 +810,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         this.Layout.State.AddState(StyledStateManager.State.Focus);
         this.IsFocused = true;
-        this.Focused?.Invoke(new() { Target = this });
+        this.FocusedEvent?.Invoke(new() { Target = this });
     }
 
     public BoxModel GetBoxModel()
