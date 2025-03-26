@@ -1,3 +1,4 @@
+using Age.Core.Interop;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;
@@ -330,11 +331,11 @@ public sealed class Image : Resource<VkImage>
         commandBuffer.Instance.CopyImageToBuffer(this.instance, VkImageLayout.TransferSrcOptimal, buffer.Instance, [bufferImageCopy]);
     }
 
-    public unsafe uint[] ReadBuffer(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
+    public unsafe NativeArray<uint> ReadBuffer(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
     {
         using var buffer = this.ReadBuffer(aspectMask, out var data);
 
-        var pixels = new uint[this.Extent.Width * this.Extent.Height];
+        var pixels = new NativeArray<uint>(this.Extent.Width * this.Extent.Height);
 
         switch (this.BytesPerPixel)
         {
@@ -370,11 +371,11 @@ public sealed class Image : Resource<VkImage>
         return pixels;
     }
 
-    public unsafe ulong[] ReadBuffer64bits(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
+    public unsafe NativeArray<ulong> ReadBuffer64bits(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
     {
         using var buffer = this.ReadBuffer(aspectMask, out var data);
 
-        var pixels = new ulong[this.Extent.Width * this.Extent.Height];
+        var pixels = new NativeArray<ulong>(this.Extent.Width * this.Extent.Height);
 
         switch (this.BytesPerPixel)
         {

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Runtime.InteropServices;
 
 namespace Age.Core.Interop;
@@ -67,18 +68,12 @@ public unsafe class NativeArray(int lenght = 1) : IDisposable
     public static implicit operator nint(NativeArray value) => new(value.buffer);
 }
 
-public unsafe class NativeArray<T>(int lenght = 1) : IDisposable where T : unmanaged
+public unsafe class NativeArray<T>(int lenght = 1) : IDisposable, IEnumerable<T> where T : unmanaged
 {
     private bool disposed;
     private T* buffer = (T*)NativeMemory.Alloc((uint)(sizeof(T) * lenght));
 
-    public NativeArray(scoped ReadOnlySpan<T> values) : this(values.Length)
-    {
-        for (var i = 0; i < values.Length; i++)
-        {
-            this.buffer[i] = values[i];
-        }
-    }
+    public int Length => lenght;
 
     public T this[int index]
     {
@@ -98,6 +93,17 @@ public unsafe class NativeArray<T>(int lenght = 1) : IDisposable where T : unman
         }
     }
 
+    public NativeArray(uint lenght) : this((int)lenght)
+    { }
+
+    public NativeArray(scoped ReadOnlySpan<T> values) : this(values.Length)
+    {
+        for (var i = 0; i < values.Length; i++)
+        {
+            this.buffer[i] = values[i];
+        }
+    }
+
     ~NativeArray() => this.Dispose();
 
     private void CheckDisposed() =>
@@ -111,7 +117,11 @@ public unsafe class NativeArray<T>(int lenght = 1) : IDisposable where T : unman
         }
     }
 
+    IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+    IEnumerator<T> IEnumerable<T>.GetEnumerator() => this.GetEnumerator();
+
     public T* AsPointer() => this.buffer;
+    public Span<T> AsSpan() => new(this.buffer, lenght);
 
     public void Dispose()
     {
@@ -125,4 +135,6 @@ public unsafe class NativeArray<T>(int lenght = 1) : IDisposable where T : unman
 
         GC.SuppressFinalize(this);
     }
+
+    public UnsafeEnumerator<T> GetEnumerator() => new(this.buffer, this.Length);
 }

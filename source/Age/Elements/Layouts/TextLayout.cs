@@ -13,6 +13,7 @@ using System.Runtime.CompilerServices;
 using static Age.Shaders.CanvasShader;
 
 using Timer = Age.Scene.Timer;
+using Age.Core.Interop;
 
 namespace Age.Elements.Layouts;
 
@@ -280,8 +281,10 @@ internal sealed partial class TextLayout : Layout
         var font   = this.paint.ToFont();
         var atlas  = TextStorage.Singleton.GetAtlas(this.typeface!.FamilyName, (uint)this.paint.TextSize);
 
-        var glyphsBounds = new SKRect[glyphs.Length];
-        var glyphsWidths = new float[glyphs.Length];
+        using var glyphsBoundsRef = new RefArray<SKRect>(glyphs.Length);
+        using var glyphsWidths    = new RefArray<float>(glyphs.Length);
+
+        var glyphsBounds = glyphsBoundsRef.AsSpan();
 
         font.GetGlyphWidths(glyphs, glyphsWidths, glyphsBounds, this.paint);
 

@@ -58,8 +58,7 @@ public sealed class UniformSet : Resource
     public unsafe void Update(scoped ReadOnlySpan<Uniform> uniforms)
     {
         using var disposables = new Disposables();
-
-        var writes = new List<VkWriteDescriptorSet>();
+        using var writes      = new RefList<VkWriteDescriptorSet>();
 
         foreach (var uniform in uniforms)
         {
@@ -122,6 +121,6 @@ public sealed class UniformSet : Resource
             }
         }
 
-        VulkanRenderer.Singleton.UpdateDescriptorSets(writes.AsSpan(), []);
+        VulkanRenderer.Singleton.UpdateDescriptorSets(writes, []);
     }
 }

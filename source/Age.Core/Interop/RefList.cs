@@ -1,16 +1,16 @@
-using System.Collections;
 using System.Runtime.InteropServices;
 
 namespace Age.Core.Interop;
 
-public unsafe class NativeList<T> : Disposable, IEnumerable<T> where T : unmanaged
+public unsafe ref struct RefList<T> : IDisposable where T : unmanaged
 {
-    private int  capacity;
-    private T*   buffer;
+    private T* buffer;
+
+    private int capacity;
 
     public int Capacity
     {
-        get => this.capacity;
+        readonly get => this.capacity;
         set
         {
             if (value == 0)
@@ -43,7 +43,7 @@ public unsafe class NativeList<T> : Disposable, IEnumerable<T> where T : unmanag
 
     public int Count { get; private set; }
 
-    public NativeList(int capacity = 0)
+    public RefList(int capacity = 0)
     {
         if (capacity > 0)
         {
@@ -53,7 +53,7 @@ public unsafe class NativeList<T> : Disposable, IEnumerable<T> where T : unmanag
         }
     }
 
-    public NativeList(scoped ReadOnlySpan<T> values) : this(values.Length)
+    public RefList(scoped ReadOnlySpan<T> values) : this(values.Length)
     {
         for (var i = 0; i < values.Length; i++)
         {
@@ -67,14 +67,13 @@ public unsafe class NativeList<T> : Disposable, IEnumerable<T> where T : unmanag
     {
         get
         {
-            this.ThrowIfDisposed();
             this.CheckIndex(index);
 
             return ref this.buffer[index];
         }
     }
 
-    private void CheckIndex(int index)
+    private readonly void CheckIndex(int index)
     {
         if (index >= this.Count)
         {
@@ -90,18 +89,14 @@ public unsafe class NativeList<T> : Disposable, IEnumerable<T> where T : unmanag
         }
     }
 
-    protected override void Disposed(bool disposed)
+    public void Dispose()
     {
         NativeMemory.Free(this.buffer);
         this.buffer = default;
     }
 
-    IEnumerator<T> IEnumerable<T>.GetEnumerator() => this.GetEnumerator();
-    IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-
     public ref T Add()
     {
-        this.ThrowIfDisposed();
         this.EnsureCapacity();
 
         ref var element = ref this.buffer[this.Count];
@@ -118,15 +113,10 @@ public unsafe class NativeList<T> : Disposable, IEnumerable<T> where T : unmanag
         element = item;
     }
 
-    public void Clear()
-    {
-        this.ThrowIfDisposed();
-        this.Count = 0;
-    }
+    public void Clear() => this.Count = 0;
 
     public void Remove(int startIndex, int lenght = 1)
     {
-        this.ThrowIfDisposed();
         this.CheckIndex(startIndex);
 
         var endIndex = startIndex + lenght;
@@ -142,8 +132,9 @@ public unsafe class NativeList<T> : Disposable, IEnumerable<T> where T : unmanag
         this.Count = int.Max(this.Count - lenght, 0);
     }
 
-    public T* AsPointer() => this.buffer;
-    public Span<T> AsSpan() => new(this.buffer, this.Count);
+    public readonly Span<T> AsSpan() => new(this.buffer, this.Count);
+    public readonly T* AsPointer() => this.buffer;
 
-    public UnsafeEnumerator<T> GetEnumerator() => new(this.buffer, this.Count);
+    public static implicit operator Span<T>(in RefList<T> refList) =>
+        refList.AsSpan();
 }

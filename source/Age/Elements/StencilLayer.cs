@@ -1,5 +1,6 @@
 using Age.Core;
 using Age.Core.Extensions;
+using Age.Core.Interop;
 using Age.Extensions;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
@@ -133,15 +134,15 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
 
         var bufferSize = imageSize.Width * imageSize.Height;
 
-        var pixels = bitmap.Pixels.AsSpan();
+        var pixels = bitmap.GetPixelSpan().Cast<byte, SKColor>();
 
-        var buffer = new byte[bufferSize];
+        using var buffer = new RefArray<byte>((int)bufferSize);
 
         for (var y = 0; y < bounds.Height; y++)
         {
             for (var x = 0; x < bounds.Width; x++)
             {
-                var sourceIndex = (int)(x + bounds.Width * y);
+                var sourceIndex      = (int)(x + bounds.Width * y);
                 var destinationIndex = (int)(x + imageSize.Width * y);
 
                 buffer[destinationIndex] = pixels[sourceIndex].Alpha;
