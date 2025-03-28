@@ -12,13 +12,16 @@ public sealed class Mesh : Spatial3D
 
     public Material Material { get; set; } = new();
 
-    public Mesh(scoped ReadOnlySpan<Vertex> vertices, scoped ReadOnlySpan<uint> indices) =>
-        this.SingleCommand = new MeshCommand
-        {
-            VertexBuffer = VulkanRenderer.Singleton.CreateVertexBuffer(vertices),
-            IndexBuffer  = VulkanRenderer.Singleton.CreateIndexBuffer(indices),
-            Mesh         = this,
-        };
+    public Mesh(scoped ReadOnlySpan<Vertex> vertices, scoped ReadOnlySpan<uint> indices)
+    {
+        var command = CommandPool.MeshCommand.Get();
+
+        command.VertexBuffer = VulkanRenderer.Singleton.CreateVertexBuffer(vertices);
+        command.IndexBuffer  = VulkanRenderer.Singleton.CreateIndexBuffer(indices);
+        command.Mesh         = this;
+
+        this.SingleCommand = command;
+    }
 
     protected override void Disposed()
     {
@@ -26,6 +29,8 @@ public sealed class Mesh : Spatial3D
         {
             command.IndexBuffer.Dispose();
             command.VertexBuffer.Dispose();
+
+            CommandPool.MeshCommand.Return(command);
         }
     }
 }

@@ -19,8 +19,6 @@ namespace Age.Elements.Layouts;
 
 internal sealed partial class TextLayout : Layout
 {
-    private static readonly ObjectPool<TextCommand> rectCommandPool = new(static () => new());
-
     private readonly RectCommand    caretCommand;
     private readonly Timer          caretTimer;
     private readonly int            caretWidth = 2;
@@ -113,14 +111,12 @@ internal sealed partial class TextLayout : Layout
         target.AppendChild(this.caretTimer);
         target.AppendChild(this.selectionTimer);
 
-        this.caretCommand = new RectCommand
-        {
-            Color           = Color.White,
-            Flags           = Flags.ColorAsBackground,
-            MappedTexture   = MappedTexture.Default,
-            Rect            = new(new(this.caretWidth, this.LineHeight), default),
-            StencilLayer    = this.StencilLayer
-        };
+        this.caretCommand                 = CommandPool.RectCommand.Get();
+        this.caretCommand.Color           = Color.White;
+        this.caretCommand.Flags           = Flags.ColorAsBackground;
+        this.caretCommand.MappedTexture   = MappedTexture.Default;
+        this.caretCommand.Rect            = new(new(this.caretWidth, this.LineHeight), default);
+        this.caretCommand.StencilLayer    = this.StencilLayer;
 
         target.Commands.Add(this.caretCommand);
 
@@ -139,7 +135,7 @@ internal sealed partial class TextLayout : Layout
         {
             for (var i = commands.Count; i < length; i++)
             {
-                commands.Add(rectCommandPool.Get());
+                commands.Add(CommandPool.TextCommand.Get());
             }
         }
     }
@@ -155,7 +151,7 @@ internal sealed partial class TextLayout : Layout
 
             for (var i = index; i < commands.Count; i++)
             {
-                rectCommandPool.Return((TextCommand)commands[i]);
+                CommandPool.TextCommand.Return((TextCommand)commands[i]);
             }
 
             commands.RemoveRange(index, count);
@@ -488,6 +484,13 @@ internal sealed partial class TextLayout : Layout
 
     protected override void Disposed()
     {
+        foreach (var command in this.Target.Commands)
+        {
+            CommandPool.RectCommand.Return(this.caretCommand);
+            CommandPool.TextCommand.Return((TextCommand)command);
+            this.Target.Commands.Clear();
+        }
+
         this.paint?.Dispose();
         this.typeface?.Dispose();
     }

@@ -281,11 +281,10 @@ internal sealed partial class BoxLayout : Layout
     {
         if (this.Target.SingleCommand is not RectCommand command)
         {
-            this.Target.SingleCommand = command = new()
-            {
-                Flags           = Flags.ColorAsBackground,
-                PipelineVariant = PipelineVariant.Color | PipelineVariant.Index,
-            };
+            this.Target.SingleCommand = command = CommandPool.RectCommand.Get();
+
+            command.Flags           = Flags.ColorAsBackground;
+            command.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
         }
 
         return command;
@@ -1345,8 +1344,17 @@ internal sealed partial class BoxLayout : Layout
         this.ownStencilLayer?.MakeDirty();
     }
 
-    protected override void Disposed() =>
+    protected override void Disposed()
+    {
         this.ownStencilLayer?.Dispose();
+
+        foreach (var item in this.target.Commands)
+        {
+            CommandPool.RectCommand.Return((RectCommand)item);
+        }
+
+        this.target.Commands.Clear();
+    }
 
     public void LayoutableAppended(Layoutable layoutable)
     {

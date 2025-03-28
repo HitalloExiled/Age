@@ -200,7 +200,7 @@ public partial class Window
 
                         if (size.Width != window.Size.Width || size.Height != window.Size.Height)
                         {
-                            window.Size = size;
+                            window.size = size;
 
                             window.Resized.Invoke();
                         }
@@ -211,7 +211,7 @@ public partial class Window
                     {
                         User32.GetWindowPlacement(hwnd, out var placement);
 
-                        window.Position = new(placement.rcNormalPosition.left, placement.rcNormalPosition.top);
+                        window.position = new(placement.rcNormalPosition.left, placement.rcNormalPosition.top);
                     }
 
                     break;
@@ -371,9 +371,12 @@ public partial class Window
     protected void PlatformRestore() =>
         User32.ShowWindow(this.Handle, User32.SHOW_WINDOW_COMMANDS.SW_RESTORE);
 
-    protected void PlatformSetPosition(in Point<int> value) => throw new NotImplementedException();
-    protected void PlatformSetSize(in Size<uint> value) => throw new NotImplementedException();
-    protected void PlatformSetTitle(string value) => throw new NotImplementedException();
+    protected void PlatformSetPosition(in Point<int> value) =>
+        throw new NotImplementedException();
+    protected void PlatformSetSize(in Size<uint> value) =>
+        throw new NotImplementedException();
+    protected void PlatformSetTitle(string value) =>
+        throw new NotImplementedException();
 
     protected void PlatformShow() =>
         User32.ShowWindow(this.Handle, User32.SHOW_WINDOW_COMMANDS.SW_SHOW);
