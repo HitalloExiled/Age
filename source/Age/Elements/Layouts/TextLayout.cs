@@ -1,6 +1,5 @@
 using Age.Commands;
 using Age.Core.Extensions;
-using Age.Core;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Resources;
@@ -14,6 +13,7 @@ using static Age.Shaders.CanvasShader;
 
 using Timer = Age.Scene.Timer;
 using Age.Core.Interop;
+using System.Runtime.InteropServices;
 
 namespace Age.Elements.Layouts;
 
@@ -34,7 +34,6 @@ internal sealed partial class TextLayout : Layout
     private Vector2<float> previouCursor;
     private bool           selectionIsDirty;
     private bool           textIsDirty;
-    private SKTypeface?    typeface;
 
     private bool CanSelect => this.Parent?.State.Style.TextSelection != false;
 
@@ -123,19 +122,25 @@ internal sealed partial class TextLayout : Layout
         this.target.Buffer.Modified += this.OnTextChange;
     }
 
-    private static void AllocateCommands(List<Command> commands, int length)
+    private static void AllocateCommands(List<Command> commands, int count)
     {
-        commands.EnsureCapacity(length);
+        commands.EnsureCapacity(count);
 
-        if (length < commands.Count)
+        if (count < commands.Count)
         {
-            ReleaseCommands(commands, commands.Count - length);
+            ReleaseCommands(commands, commands.Count - count);
         }
         else
         {
-            for (var i = commands.Count; i < length; i++)
+            var previousCount = commands.Count;
+
+            commands.SetCount(count);
+
+            var span = commands.AsSpan();
+
+            for (var i = previousCount; i < span.Length; i++)
             {
-                commands.Add(CommandPool.TextCommand.Get());
+                span[i] = CommandPool.TextCommand.Get();
             }
         }
     }
@@ -147,14 +152,17 @@ internal sealed partial class TextLayout : Layout
     {
         if (count > 0)
         {
-            var index = commands.Count - count;
+            var span  = commands.AsSpan();
+            var start = span.Length - count;
 
-            for (var i = index; i < commands.Count; i++)
+            for (var i = start; i < span.Length; i++)
             {
-                CommandPool.TextCommand.Return((TextCommand)commands[i]);
+                CommandPool.TextCommand.Return((TextCommand)span[i]);
+
+                span[i] = default!;
             }
 
-            commands.RemoveRange(index, count);
+            commands.SetCount(start);
         }
     }
 
@@ -264,7 +272,7 @@ internal sealed partial class TextLayout : Layout
 
     private void DrawText()
     {
-        if (this.typeface == null || this.paint == null)
+        if (this.paint == null)
         {
             throw new InvalidOperationException();
         }
@@ -273,9 +281,9 @@ internal sealed partial class TextLayout : Layout
 
         var style = this.target.ComposedParentElement!.Layout.State.Style;
 
-        var glyphs = this.typeface.GetGlyphs(text);
+        var glyphs = this.paint.Typeface.GetGlyphs(text);
         var font   = this.paint.ToFont();
-        var atlas  = TextStorage.Singleton.GetAtlas(this.typeface!.FamilyName, (uint)this.paint.TextSize);
+        var atlas  = TextStorage.Singleton.GetAtlas(this.paint.Typeface!.FamilyName, (uint)this.paint.TextSize);
 
         using var glyphsBoundsRef = new RefArray<SKRect>(glyphs.Length);
         using var glyphsWidths    = new RefArray<float>(glyphs.Length);
@@ -328,7 +336,7 @@ internal sealed partial class TextLayout : Layout
             {
                 ref readonly var bounds = ref glyphsBounds[i];
 
-                var glyph    = TextStorage.Singleton.DrawGlyph(atlas, character, this.typeface.FamilyName, (ushort)this.paint.TextSize, bounds, this.paint);
+                var glyph    = TextStorage.Singleton.DrawGlyph(atlas, character, this.paint.Typeface.FamilyName, (ushort)this.paint.TextSize, bounds, this.paint);
                 var size     = new Size<float>(bounds.Width, bounds.Height);
                 var position = new Point<float>(float.Round(cursor.X + bounds.Left), float.Round(cursor.Y - bounds.Top));
                 var color    = style.Color ?? new();
@@ -447,22 +455,9 @@ internal sealed partial class TextLayout : Layout
             var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
             var fontWeight = (int)(style.FontWeight ?? FontWeight.Normal);
 
-            if (this.paint?.TextSize != this.Parent!.FontSize || this.typeface?.FamilyName != fontFamily || this.typeface?.FontWeight != fontWeight)
+            if (this.paint?.TextSize != this.Parent.FontSize || this.paint.Typeface.FamilyName != fontFamily || this.paint.Typeface.FontWeight != fontWeight)
             {
-                this.typeface?.Dispose();
-                this.paint?.Dispose();
-
-                this.typeface = SKTypeface.FromFamilyName(fontFamily, (SKFontStyleWeight)fontWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-                this.paint    = new SKPaint
-                {
-                    Color        = SKColors.Black,
-                    IsAntialias  = true,
-                    TextAlign    = SKTextAlign.Left,
-                    TextSize     = this.Parent!.FontSize,
-                    Typeface     = this.typeface,
-                    SubpixelText = false,
-                };
-
+                this.paint = TextStorage.Singleton.GetPaint(fontFamily, this.Parent.FontSize, fontWeight);
                 this.paint.GetFontMetrics(out var metrics);
 
                 this.LineHeight  = (uint)float.Round(-metrics.Ascent + metrics.Descent);
@@ -490,9 +485,6 @@ internal sealed partial class TextLayout : Layout
             CommandPool.TextCommand.Return((TextCommand)command);
             this.Target.Commands.Clear();
         }
-
-        this.paint?.Dispose();
-        this.typeface?.Dispose();
     }
 
     public void AdjustScroll() =>

@@ -1,3 +1,4 @@
+using Age.Core;
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
@@ -5,7 +6,7 @@ using SkiaSharp;
 
 namespace Age.Services;
 
-internal partial class TextStorage : IDisposable
+internal partial class TextStorage : Disposable
 {
     private static TextStorage? singleton;
 
@@ -13,9 +14,8 @@ internal partial class TextStorage : IDisposable
 
     private readonly Dictionary<int, TextureAtlas> atlases = [];
     private readonly Dictionary<int, Glyph>        glyphs = [];
+    private readonly Dictionary<int, SKPaint>      paints = [];
     private readonly VulkanRenderer                renderer;
-
-    private bool disposed;
 
     public TextStorage(VulkanRenderer renderer)
     {
@@ -27,6 +27,25 @@ internal partial class TextStorage : IDisposable
         singleton = this;
 
         this.renderer = renderer;
+    }
+
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            foreach (var atlas in this.atlases.Values)
+            {
+                this.renderer.DeferredDispose(atlas);
+            }
+
+            foreach (var paint in this.paints.Values)
+            {
+                paint.Dispose();
+            }
+
+            this.atlases.Clear();
+            this.paints.Clear();
+        }
     }
 
     public Glyph DrawGlyph(TextureAtlas atlas, char character, string fontFamily, ushort fontSize, in SKRect bounds, SKPaint paint)
@@ -66,36 +85,38 @@ internal partial class TextStorage : IDisposable
     {
         var hashcode = familyName.GetHashCode() ^ fontSize.GetHashCode();
 
-        if (!this.atlases.TryGetValue(hashcode, out var atlas))
+        ref var atlas = ref this.atlases.GetValueRefOrAddDefault(hashcode, out var exists);
+
+        if (!exists)
         {
             var axisSize = uint.Max(fontSize * 8, 256);
             var size     = new Size<uint>(axisSize, axisSize);
 
-            this.atlases[hashcode] = atlas = new(size, ColorMode.Grayscale);
+            atlas = new(size, ColorMode.Grayscale);
         }
 
-        return atlas;
+        return atlas!;
     }
 
-    protected virtual void Dispose(bool disposing)
+    public SKPaint GetPaint(string fontFamily, float fontSize, int fontWeight)
     {
-        if (!this.disposed)
+        var hashcode = HashCode.Combine(fontFamily, fontSize, fontWeight);
+
+        ref var paint = ref this.paints.GetValueRefOrAddDefault(hashcode, out var exists);
+
+        if (!exists)
         {
-            if (disposing)
+            paint = new SKPaint
             {
-                foreach (var atlas in this.atlases.Values)
-                {
-                    this.renderer.DeferredDispose(atlas);
-                }
-            }
-
-            this.disposed = true;
+                Color        = SKColors.Black,
+                IsAntialias  = true,
+                TextAlign    = SKTextAlign.Left,
+                TextSize     = fontSize,
+                Typeface     = SKTypeface.FromFamilyName(fontFamily, (SKFontStyleWeight)fontWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright),
+                SubpixelText = false,
+            };
         }
-    }
 
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
+        return paint!;
     }
 }
