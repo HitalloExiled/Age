@@ -1,3 +1,4 @@
+using Age.Core.Extensions;
 using Age.Elements;
 using Age.Numerics;
 using Age.Platforms.Display;
@@ -220,7 +221,7 @@ public sealed partial class RenderTree : NodeTree
             {
                 text.InvokeActivate();
 
-                if (mouseEvent.KeyStates.HasFlag(MouseKeyStates.Shift) && this.lastFocusedText == text)
+                if (mouseEvent.KeyStates.HasFlags(MouseKeyStates.Shift) && this.lastFocusedText == text)
                 {
                     text.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y, characterPosition);
                 }

@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Age.Commands;
+using Age.Core.Extensions;
 using Age.Extensions;
 using Age.Numerics;
 using Age.Scene;
@@ -232,15 +233,15 @@ internal sealed partial class BoxLayout : Layout
 
         alignmentAxis = AlignmentAxis.Horizontal | AlignmentAxis.Vertical;
 
-        if (alignmentKind.HasFlag(AlignmentKind.Left) || stack == StackKind.Vertical && (itemsAlignment == ItemsAlignmentKind.Begin || alignmentKind.HasFlag(AlignmentKind.Start)))
+        if (alignmentKind.HasFlags(AlignmentKind.Left) || stack == StackKind.Vertical && (itemsAlignment == ItemsAlignmentKind.Begin || alignmentKind.HasFlags(AlignmentKind.Start)))
         {
             x = -1;
         }
-        else if (alignmentKind.HasFlag(AlignmentKind.Right) || stack == StackKind.Vertical && (itemsAlignment == ItemsAlignmentKind.End || alignmentKind.HasFlag(AlignmentKind.End)))
+        else if (alignmentKind.HasFlags(AlignmentKind.Right) || stack == StackKind.Vertical && (itemsAlignment == ItemsAlignmentKind.End || alignmentKind.HasFlags(AlignmentKind.End)))
         {
             x = 1;
         }
-        else if (alignmentKind.HasFlag(AlignmentKind.Center) || stack == StackKind.Vertical && itemsAlignment == ItemsAlignmentKind.Center)
+        else if (alignmentKind.HasFlags(AlignmentKind.Center) || stack == StackKind.Vertical && itemsAlignment == ItemsAlignmentKind.Center)
         {
             x = 0;
         }
@@ -249,21 +250,21 @@ internal sealed partial class BoxLayout : Layout
             alignmentAxis &= ~AlignmentAxis.Horizontal;
         }
 
-        if (alignmentKind.HasFlag(AlignmentKind.Top) || stack == StackKind.Horizontal && (itemsAlignment == ItemsAlignmentKind.Begin || alignmentKind.HasFlag(AlignmentKind.Start)))
+        if (alignmentKind.HasFlags(AlignmentKind.Top) || stack == StackKind.Horizontal && (itemsAlignment == ItemsAlignmentKind.Begin || alignmentKind.HasFlags(AlignmentKind.Start)))
         {
             y = -1;
         }
-        else if (alignmentKind.HasFlag(AlignmentKind.Bottom) || stack == StackKind.Horizontal && (itemsAlignment == ItemsAlignmentKind.End || alignmentKind.HasFlag(AlignmentKind.End)))
+        else if (alignmentKind.HasFlags(AlignmentKind.Bottom) || stack == StackKind.Horizontal && (itemsAlignment == ItemsAlignmentKind.End || alignmentKind.HasFlags(AlignmentKind.End)))
         {
             y = 1;
         }
-        else if (alignmentKind.HasFlag(AlignmentKind.Center) || stack == StackKind.Horizontal && itemsAlignment == ItemsAlignmentKind.Center)
+        else if (alignmentKind.HasFlags(AlignmentKind.Center) || stack == StackKind.Horizontal && itemsAlignment == ItemsAlignmentKind.Center)
         {
             y = 0;
         }
         else
         {
-            if (itemsAlignment == ItemsAlignmentKind.Baseline || alignmentKind.HasFlag(AlignmentKind.Baseline))
+            if (itemsAlignment == ItemsAlignmentKind.Baseline || alignmentKind.HasFlags(AlignmentKind.Baseline))
             {
                 alignmentAxis |= AlignmentAxis.Baseline;
             }
@@ -327,7 +328,7 @@ internal sealed partial class BoxLayout : Layout
 
             if (stack == StackKind.Horizontal)
             {
-                if (!dependencies.HasFlag(Dependency.Width))
+                if (!dependencies.HasFlags(Dependency.Width))
                 {
                     this.staticContent.Width += childSize.Width;
                     this.staticContent.Height = uint.Max(this.staticContent.Height, childSize.Height);
@@ -340,7 +341,7 @@ internal sealed partial class BoxLayout : Layout
             }
             else
             {
-                if (!dependencies.HasFlag(Dependency.Height))
+                if (!dependencies.HasFlags(Dependency.Height))
                 {
                     this.staticContent.Width = uint.Max(this.staticContent.Width, childSize.Width);
                     this.staticContent.Height += childSize.Height;
@@ -356,7 +357,7 @@ internal sealed partial class BoxLayout : Layout
             }
         }
 
-        if (this.contentDependent.HasFlag(Dependency.Width) || this.contentDependent.HasFlag(Dependency.Height))
+        if (this.contentDependent.HasAnyFlag(Dependency.Width | Dependency.Height))
         {
             this.CalculatePendingMargin(ref this.content);
         }
@@ -390,16 +391,16 @@ internal sealed partial class BoxLayout : Layout
 
         foreach (var dependent in this.dependents)
         {
-            if (dependent.Layout.parentDependent.HasFlag(Dependency.Padding) || dependent.Layout.parentDependent.HasFlag(Dependency.Margin))
+            if (dependent.Layout.parentDependent.HasAnyFlag(Dependency.Padding | Dependency.Margin))
             {
                 var margin = dependent.Layout.margin;
 
-                if (!this.parentDependent.HasFlag(Dependency.Width))
+                if (!this.parentDependent.HasFlags(Dependency.Width))
                 {
                     CalculatePendingMarginHorizontal(dependent.Layout, stack, size, ref margin, ref contentSize);
                 }
 
-                if (!this.parentDependent.HasFlag(Dependency.Height))
+                if (!this.parentDependent.HasFlags(Dependency.Height))
                 {
                     CalculatePendingMarginVertical(dependent.Layout, stack, size, ref margin, ref contentSize);
                 }
@@ -423,15 +424,15 @@ internal sealed partial class BoxLayout : Layout
             var padding = dependent.Layout.padding;
             var size    = dependent.Layout.size;
 
-            if (!this.contentDependent.HasFlag(Dependency.Width) || stack == StackKind.Vertical)
+            if (!this.contentDependent.HasFlags(Dependency.Width) || stack == StackKind.Vertical)
             {
-                if (!this.contentDependent.HasFlag(Dependency.Width))
+                if (!this.contentDependent.HasFlags(Dependency.Width))
                 {
                     CalculatePendingPaddingHorizontal(dependent.Layout, this.size, ref padding);
                     CalculatePendingMarginHorizontal(dependent.Layout, stack, this.size, ref margin, ref content);
                 }
 
-                if (dependent.Layout.parentDependent.HasFlag(Dependency.Width))
+                if (dependent.Layout.parentDependent.HasFlags(Dependency.Width))
                 {
                     var modified = false;
 
@@ -542,15 +543,15 @@ internal sealed partial class BoxLayout : Layout
                 }
             }
 
-            if (!this.contentDependent.HasFlag(Dependency.Height) || stack == StackKind.Horizontal)
+            if (!this.contentDependent.HasFlags(Dependency.Height) || stack == StackKind.Horizontal)
             {
-                if (!this.contentDependent.HasFlag(Dependency.Height))
+                if (!this.contentDependent.HasFlags(Dependency.Height))
                 {
                     CalculatePendingPaddingVertical(dependent.Layout, this.size, ref padding);
                     CalculatePendingMarginVertical(dependent.Layout, stack, this.size, ref margin, ref content);
                 }
 
-                if (dependent.Layout.parentDependent.HasFlag(Dependency.Height))
+                if (dependent.Layout.parentDependent.HasFlags(Dependency.Height))
                 {
                     var modified = false;
 
@@ -701,11 +702,8 @@ internal sealed partial class BoxLayout : Layout
             hasAlignment = element.Layout.State.Style.Alignment.HasValue
                 && (
                     element.Layout.State.Style.Alignment.Value == AlignmentKind.Center
-                    || element.Layout.State.Style.Alignment.Value.HasFlag(AlignmentKind.Top)
-                    || element.Layout.State.Style.Alignment.Value.HasFlag(AlignmentKind.Bottom)
-                    || stack == StackKind.Vertical && element.Layout.State.Style.Alignment.Value.HasFlag(AlignmentKind.Start)
-                    || stack == StackKind.Vertical && element.Layout.State.Style.Alignment.Value.HasFlag(AlignmentKind.Center)
-                    || stack == StackKind.Vertical && element.Layout.State.Style.Alignment.Value.HasFlag(AlignmentKind.End)
+                    || element.Layout.State.Style.Alignment.Value.HasAnyFlag(AlignmentKind.Top | AlignmentKind.Bottom)
+                    || stack == StackKind.Vertical && element.Layout.State.Style.Alignment.Value.HasAnyFlag(AlignmentKind.Start | AlignmentKind.Center | AlignmentKind.End)
                 );
 
             baseline += (int)(element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top);
@@ -727,7 +725,7 @@ internal sealed partial class BoxLayout : Layout
             return;
         }
 
-        if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlag(Platforms.Display.MouseKeyStates.Shift))
+        if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlags(Platforms.Display.MouseKeyStates.Shift))
         {
             this.ContentOffset = this.ContentOffset with
             {
@@ -931,9 +929,9 @@ internal sealed partial class BoxLayout : Layout
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ResolveHeight(ref uint height)
     {
-        var resolved = !this.parentDependent.HasFlag(Dependency.Height);
+        var resolved = !this.parentDependent.HasFlags(Dependency.Height);
 
-        if (!this.contentDependent.HasFlag(Dependency.Height))
+        if (!this.contentDependent.HasFlags(Dependency.Height))
         {
             if (this.State.Style.Size?.Height?.TryGetPixel(out var pixel) == true)
             {
@@ -1041,7 +1039,7 @@ internal sealed partial class BoxLayout : Layout
             this.margin.Top = (uint)(leftEm * this.FontSize);
         }
 
-        return !this.parentDependent.HasFlag(Dependency.Margin);
+        return !this.parentDependent.HasFlags(Dependency.Margin);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1083,15 +1081,15 @@ internal sealed partial class BoxLayout : Layout
             this.padding.Top = (uint)(leftEm * this.FontSize);
         }
 
-        return !this.parentDependent.HasFlag(Dependency.Padding);
+        return !this.parentDependent.HasFlags(Dependency.Padding);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ResolveWidth(ref uint width)
     {
-        var resolved = !this.parentDependent.HasFlag(Dependency.Width);
+        var resolved = !this.parentDependent.HasFlags(Dependency.Width);
 
-        if (!this.contentDependent.HasFlag(Dependency.Width))
+        if (!this.contentDependent.HasFlags(Dependency.Width))
         {
             if (this.State.Style.Size?.Width?.TryGetPixel(out var pixel) == true)
             {
@@ -1209,7 +1207,7 @@ internal sealed partial class BoxLayout : Layout
                     avaliableSpace.Width += childBoundings.Width;
                 }
 
-                if (contentJustification == ContentJustificationKind.None && alignmentAxis.HasFlag(AlignmentAxis.Horizontal))
+                if (contentJustification == ContentJustificationKind.None && alignmentAxis.HasFlags(AlignmentAxis.Horizontal))
                 {
                     position.X = avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X;
                 }
@@ -1234,16 +1232,16 @@ internal sealed partial class BoxLayout : Layout
                     position.X = avaliableSpace.Width / (this.renderableNodesCount + 1);
                 }
 
-                if (alignmentAxis.HasFlag(AlignmentAxis.Vertical))
+                if (alignmentAxis.HasFlags(AlignmentAxis.Vertical))
                 {
                     position.Y = size.Height.ClampSubtract(childBoundings.Height) * alignment.Y;
                 }
-                else if (alignmentAxis.HasFlag(AlignmentAxis.Baseline) && child.Layout.BaseLine > -1)
+                else if (alignmentAxis.HasFlags(AlignmentAxis.Baseline) && child.Layout.BaseLine > -1)
                 {
                     position.Y = this.BaseLine - (contentOffsetY + child.Layout.BaseLine);
                 }
 
-                usedSpace.Width = alignmentAxis.HasFlag(AlignmentAxis.Horizontal)
+                usedSpace.Width = alignmentAxis.HasFlags(AlignmentAxis.Horizontal)
                     ? float.Max(childBoundings.Width, avaliableSpace.Width - position.X)
                     : childBoundings.Width;
 
@@ -1261,7 +1259,7 @@ internal sealed partial class BoxLayout : Layout
 
                 position.X = size.Width.ClampSubtract(childBoundings.Width) * alignment.X;
 
-                if (contentJustification == ContentJustificationKind.None && alignmentAxis.HasFlag(AlignmentAxis.Vertical))
+                if (contentJustification == ContentJustificationKind.None && alignmentAxis.HasFlags(AlignmentAxis.Vertical))
                 {
                     position.Y = (uint)(avaliableSpace.Height.ClampSubtract(childBoundings.Height) * alignment.Y);
                 }
@@ -1286,7 +1284,7 @@ internal sealed partial class BoxLayout : Layout
                     position.Y = avaliableSpace.Height / (this.renderableNodesCount + 1);
                 }
 
-                usedSpace.Height = alignmentAxis.HasFlag(AlignmentAxis.Vertical)
+                usedSpace.Height = alignmentAxis.HasFlags(AlignmentAxis.Vertical)
                     ? float.Max(childBoundings.Height, avaliableSpace.Height - position.Y)
                     : childBoundings.Height;
 

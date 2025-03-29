@@ -147,17 +147,17 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
         var counts = physicalDeviceProperties.Limits.FramebufferColorSampleCounts & physicalDeviceProperties.Limits.FramebufferDepthSampleCounts;
 
-        this.MaxUsableSampleCount = counts.HasFlag(VkSampleCountFlags.N64)
+        this.MaxUsableSampleCount = counts.HasFlags(VkSampleCountFlags.N64)
             ? VkSampleCountFlags.N64
-            : counts.HasFlag(VkSampleCountFlags.N32)
+            : counts.HasFlags(VkSampleCountFlags.N32)
                 ? VkSampleCountFlags.N32
-                : counts.HasFlag(VkSampleCountFlags.N16)
+                : counts.HasFlags(VkSampleCountFlags.N16)
                     ? VkSampleCountFlags.N16
-                    : counts.HasFlag(VkSampleCountFlags.N8)
+                    : counts.HasFlags(VkSampleCountFlags.N8)
                         ? VkSampleCountFlags.N8
-                        : counts.HasFlag(VkSampleCountFlags.N4)
+                        : counts.HasFlags(VkSampleCountFlags.N4)
                             ? VkSampleCountFlags.N4
-                            : counts.HasFlag(VkSampleCountFlags.N2)
+                            : counts.HasFlags(VkSampleCountFlags.N2)
                                 ? VkSampleCountFlags.N2
                                 : VkSampleCountFlags.N1;
     }

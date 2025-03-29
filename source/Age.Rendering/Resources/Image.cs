@@ -1,3 +1,4 @@
+using Age.Core.Extensions;
 using Age.Core.Interop;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
@@ -26,12 +27,12 @@ public sealed class Image : Resource<VkImage>
         {
             VkImageAspectFlags aspect = default;
 
-            if (this.Usage.HasFlag(VkImageUsageFlags.ColorAttachment) || this.Usage.HasFlag(VkImageUsageFlags.Sampled))
+            if (this.Usage.HasFlags(VkImageUsageFlags.ColorAttachment) || this.Usage.HasFlags(VkImageUsageFlags.Sampled))
             {
                 aspect |= VkImageAspectFlags.Color;
             }
 
-            if (this.Usage.HasFlag(VkImageUsageFlags.DepthStencilAttachment))
+            if (this.Usage.HasFlags(VkImageUsageFlags.DepthStencilAttachment))
             {
                 aspect |= VkImageAspectFlags.Depth | VkImageAspectFlags.Stencil;
             }

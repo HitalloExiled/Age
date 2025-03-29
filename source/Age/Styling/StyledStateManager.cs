@@ -1,5 +1,7 @@
 namespace Age.Styling;
 
+using Age.Core.Extensions;
+
 internal partial class StyledStateManager
 {
     public event Action<StyleProperty>? Changed;
@@ -18,7 +20,7 @@ internal partial class StyledStateManager
             if (this.states != value)
             {
                 static bool hasValue(Style? style, State state, State previous, State current) =>
-                    style != null && (previous.HasFlag(state) || current.HasFlag(state));
+                    style != null && (previous.HasFlags(state) || current.HasFlags(state));
 
                 var shouldNotify =
                     hasValue(this.Styles?.Focus,    State.Focus,    this.states, value)
@@ -60,32 +62,32 @@ internal partial class StyledStateManager
                     this.style.Merge(this.UserStyle, false);
                 }
 
-                if (this.States.HasFlag(State.Focus) && this.Styles?.Focus != null)
+                if (this.States.HasFlags(State.Focus) && this.Styles?.Focus != null)
                 {
                     this.style.Merge(this.Styles.Focus, false);
                 }
 
-                if (this.States.HasFlag(State.Hovered) && this.Styles?.Hovered != null)
+                if (this.States.HasFlags(State.Hovered) && this.Styles?.Hovered != null)
                 {
                     this.style.Merge(this.Styles.Hovered, false);
                 }
 
-                if (this.States.HasFlag(State.Disabled) && this.Styles?.Disabled != null)
+                if (this.States.HasFlags(State.Disabled) && this.Styles?.Disabled != null)
                 {
                     this.style.Merge(this.Styles.Disabled, false);
                 }
 
-                if (this.States.HasFlag(State.Enabled) && this.Styles?.Enabled != null)
+                if (this.States.HasFlags(State.Enabled) && this.Styles?.Enabled != null)
                 {
                     this.style.Merge(this.Styles.Enabled, false);
                 }
 
-                if (this.States.HasFlag(State.Checked) && this.Styles?.Checked != null)
+                if (this.States.HasFlags(State.Checked) && this.Styles?.Checked != null)
                 {
                     this.style.Merge(this.Styles.Checked, false);
                 }
 
-                if (this.States.HasFlag(State.Active) && this.Styles?.Active != null)
+                if (this.States.HasFlags(State.Active) && this.Styles?.Active != null)
                 {
                     this.style.Merge(this.Styles.Active, false);
                 }

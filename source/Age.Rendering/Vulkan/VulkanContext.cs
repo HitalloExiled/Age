@@ -356,7 +356,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
             {
                 var queue = queueFamilyProperties[i];
 
-                if (queue.QueueFlags.HasFlag(VkQueueFlags.Graphics | VkQueueFlags.Transfer))
+                if (queue.QueueFlags.HasFlags(VkQueueFlags.Graphics | VkQueueFlags.Transfer))
                 {
                     graphicsQueueFounded = (int)i;
                 }
@@ -478,7 +478,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
 
         for (var i = 0u; i < memProperties.MemoryTypeCount; i++)
         {
-            if ((typeFilter & (1 << (int)i)) != 0 && ((VkMemoryType*)memProperties.MemoryTypes)[i].PropertyFlags.HasFlag(properties))
+            if ((typeFilter & (1 << (int)i)) != 0 && ((VkMemoryType*)memProperties.MemoryTypes)[i].PropertyFlags.HasFlags(properties))
             {
                 return i;
             }
@@ -493,11 +493,11 @@ internal sealed unsafe partial class VulkanContext : Disposable
         {
             this.physicalDevice.GetFormatProperties(format, out var props);
 
-            if (tiling == VkImageTiling.Linear && props.LinearTilingFeatures.HasFlag(features))
+            if (tiling == VkImageTiling.Linear && props.LinearTilingFeatures.HasFlags(features))
             {
                 return format;
             }
-            else if (tiling == VkImageTiling.Optimal && props.OptimalTilingFeatures.HasFlag(features))
+            else if (tiling == VkImageTiling.Optimal && props.OptimalTilingFeatures.HasFlags(features))
             {
                 return format;
             }

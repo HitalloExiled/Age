@@ -3,6 +3,7 @@ using Age.Elements;
 using Age.Styling;
 using Age.Platforms.Display;
 using Age.Extensions;
+using Age.Core.Extensions;
 
 namespace Age.Playground.Tests;
 
@@ -107,7 +108,7 @@ public class AlignmentTest
                 return;
             }
 
-            if (keyEvent.Modifiers.HasFlag(KeyStates.Control))
+            if (keyEvent.Modifiers.HasFlags(KeyStates.Control))
             {
                 switch (keyEvent.Key)
                 {

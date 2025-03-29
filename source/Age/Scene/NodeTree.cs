@@ -1,4 +1,5 @@
 using Age.Core;
+using Age.Core.Extensions;
 
 namespace Age.Scene;
 
@@ -25,7 +26,7 @@ public abstract class NodeTree : Disposable
         {
             var current = enumerator.Current;
 
-            if (current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+            if (current.Flags.HasFlags(NodeFlags.IgnoreUpdates))
             {
                 enumerator.SkipToNextSibling();
             }
@@ -44,7 +45,7 @@ public abstract class NodeTree : Disposable
         {
             var current = enumerator.Current;
 
-            if (current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+            if (current.Flags.HasFlags(NodeFlags.IgnoreUpdates))
             {
                 enumerator.SkipToNextSibling();
             }
@@ -71,7 +72,7 @@ public abstract class NodeTree : Disposable
         {
             var current = enumerator.Current;
 
-            if (current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+            if (current.Flags.HasFlags(NodeFlags.IgnoreUpdates))
             {
                 enumerator.SkipToNextSibling();
             }
@@ -79,7 +80,7 @@ public abstract class NodeTree : Disposable
             {
                 current.Update();
 
-                if (current.Flags.HasFlag(NodeFlags.IgnoreChildrenUpdates))
+                if (current.Flags.HasFlags(NodeFlags.IgnoreChildrenUpdates))
                 {
                     enumerator.SkipToNextSibling();
                 }

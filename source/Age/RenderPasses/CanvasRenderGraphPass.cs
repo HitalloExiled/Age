@@ -8,6 +8,7 @@ using Age.Services;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
+using Age.Core.Extensions;
 
 namespace Age.RenderPasses;
 
@@ -202,7 +203,7 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
     protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
     {
-        if (command.PipelineVariant.HasFlag(PipelineVariant.Color) || command.PipelineVariant.HasFlag(PipelineVariant.Wireframe))
+        if (command.PipelineVariant.HasAnyFlag(PipelineVariant.Color | PipelineVariant.Wireframe))
         {
             var constant = new CanvasShader.PushConstant
             {
