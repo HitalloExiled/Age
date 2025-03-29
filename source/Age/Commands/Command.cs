@@ -1,4 +1,4 @@
-using Age.Core;
+using Age.Core.Interfaces;
 using Age.Elements;
 
 namespace Age.Commands;
