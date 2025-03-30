@@ -2,9 +2,9 @@ using Age.Core.Interop;
 
 namespace Age.Tests.Core.Interop;
 
-public unsafe class NativeArrayTests
+public unsafe class RefArrayTest
 {
-    private static void AssertIt(NativeArray<int> list, ReadOnlySpan<int> values)
+    private static void AssertIt(in RefArray<int> list, ReadOnlySpan<int> values)
     {
         Assert.Equal(values.Length, list.Length);
 
@@ -14,7 +14,7 @@ public unsafe class NativeArrayTests
     [Fact]
     public void Create()
     {
-        using var array = new NativeArray<int>(4);
+        using var array = new RefArray<int>(4);
 
         var ptr = array.AsPointer();
 
@@ -31,14 +31,5 @@ public unsafe class NativeArrayTests
         array[3] = 5;
 
         AssertIt(array, [2, 3, 4, 5]);
-    }
-
-    [Fact]
-    public void GenericPointerAccessAfterDisposedShouldThows()
-    {
-        var pointer = new NativeArray<int>(4);
-        pointer.Dispose();
-
-        Assert.Throws<ObjectDisposedException>(() => pointer[0] == 1);
     }
 }

@@ -2,9 +2,9 @@ using Age.Core.Interop;
 
 namespace Age.Tests.Core.Interop;
 
-public unsafe class NativeListTests
+public unsafe class RefListTests
 {
-    private static void AssertIt(NativeList<int> list, ReadOnlySpan<int> values, int capacity)
+    private static void AssertIt(scoped in RefList<int> list, ReadOnlySpan<int> values, int capacity)
     {
         Assert.Equal(capacity, list.Capacity);
         Assert.Equal(values.Length, list.Count);
@@ -15,7 +15,7 @@ public unsafe class NativeListTests
     [Fact]
     public void Add()
     {
-        using var list = new NativeList<int> { 1, 2, 3 };
+        using var list = new RefList<int> { 1, 2, 3 };
 
         AssertIt(list, [1, 2, 3], 4);
 
@@ -27,7 +27,7 @@ public unsafe class NativeListTests
     [Fact]
     public void Insert()
     {
-        using var list = new NativeList<int> { 1, 3, 4 };
+        using var list = new RefList<int> { 1, 3, 4 };
 
         AssertIt(list, [1, 3, 4], 4);
 
@@ -47,16 +47,26 @@ public unsafe class NativeListTests
     [Fact]
     public void Index()
     {
-        using var list = new NativeList<int> { 1, 2, 3 };
+        using var list = new RefList<int> { 1, 2, 3 };
 
         Assert.Equal(1, list[0]);
         Assert.Equal(3, list[^1]);
     }
 
     [Fact]
+    public void Slice()
+    {
+        using var list = new RefList<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+        using var slice = list[3..6];
+
+        AssertIt(slice, [4, 5, 6], 3);
+    }
+
+    [Fact]
     public void Remove()
     {
-        using var list = new NativeList<int>([4, 5, 6]);
+        using var list = new RefList<int>([4, 5, 6]);
 
         AssertIt(list, [4, 5, 6], 3);
 
@@ -68,7 +78,7 @@ public unsafe class NativeListTests
     [Fact]
     public void RemoveAt()
     {
-        using var list = new NativeList<int>([4, 5, 6]);
+        using var list = new RefList<int>([4, 5, 6]);
 
         AssertIt(list, [4, 5, 6], 3);
 
@@ -80,7 +90,7 @@ public unsafe class NativeListTests
     [Fact]
     public void RemoveWithLength()
     {
-        using var list = new NativeList<int>([1, 2, 3, 4, 5, 6]);
+        using var list = new RefList<int>([1, 2, 3, 4, 5, 6]);
 
         AssertIt(list, [1, 2, 3, 4, 5, 6], 6);
 
@@ -96,7 +106,7 @@ public unsafe class NativeListTests
     [Fact]
     public void Clear()
     {
-        using var list = new NativeList<int>([4, 5, 6]);
+        using var list = new RefList<int>([4, 5, 6]);
 
         Assert.Equal(3, list.Capacity);
         Assert.Equal(3, list.Count);
@@ -108,13 +118,13 @@ public unsafe class NativeListTests
         list.Clear();
 
         Assert.Equal(3, list.Capacity);
-        Assert.Empty(list);
+        Assert.Equal(0, list.Count);
     }
 
     [Fact]
     public void IncreaseCapacity()
     {
-        using var list = new NativeList<int>([1, 2, 3]);
+        var list = new RefList<int>([1, 2, 3]);
 
         Assert.Equal(3, list.Capacity);
         Assert.Equal(3, list.Count);
@@ -134,12 +144,14 @@ public unsafe class NativeListTests
 
         Assert.Equal(6, list.Capacity);
         Assert.Equal(6, list.Count);
+
+        list.Dispose();
     }
 
     [Fact]
     public void DecreaseCapacity()
     {
-        using var list = new NativeList<int>([1, 2, 3, 4, 5, 6]);
+        var list = new RefList<int>([1, 2, 3, 4, 5, 6]);
 
         Assert.Equal(6, list.Capacity);
         Assert.Equal(6, list.Count);
@@ -159,5 +171,7 @@ public unsafe class NativeListTests
         Assert.Equal(1, list[0]);
         Assert.Equal(2, list[1]);
         Assert.Equal(3, list[2]);
+
+        list.Dispose();
     }
 }

@@ -1,99 +1,54 @@
 using System.Collections;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Age.Core.Interop;
 
-public unsafe class NativeArray(int lenght = 1) : IDisposable
+[DebuggerDisplay("Length = {Length}")]
+[DebuggerTypeProxy(typeof(NativeArray<>.DebugView))]
+public unsafe partial class NativeArray<T>(int length = 0) : Disposable, IEnumerable<T> where T : unmanaged
 {
-    private void* buffer = NativeMemory.Alloc((uint)lenght);
-    private bool disposed;
+    public static NativeArray<T> Empty { get; } = [];
 
-    private int Length => lenght;
+    private T* buffer = (T*)NativeMemory.AllocZeroed((uint)(sizeof(T) * length));
 
-    private void CheckOffset(int index)
+    public int Length { get; private set; } = length;
+
+    public T this[uint index]
     {
-        if (index >= lenght)
-        {
-            throw new IndexOutOfRangeException();
-        }
+        get => this[(int)index];
+        set => this[(int)index] = value;
     }
-
-    private void CheckDisposed() =>
-        ObjectDisposedException.ThrowIf(this.disposed, this);
-
-    public void Dispose()
-    {
-        if (!this.disposed)
-        {
-            this.disposed = true;
-
-            NativeMemory.Free(this.buffer);
-            this.buffer = default;
-        }
-
-        GC.SuppressFinalize(this);
-    }
-
-    public void* AsPointer() => this.buffer;
-    public T* AsPointer<T>() where T : unmanaged => (T*)this.buffer;
-
-    public ref T Get<T>(int offset) where T : unmanaged
-    {
-        this.CheckDisposed();
-        this.CheckOffset(offset);
-
-        return ref ((T*)this.buffer)[offset];
-    }
-
-    public T Set<T>(int offset, in T value) where T : unmanaged
-    {
-        this.CheckDisposed();
-        this.CheckOffset(offset);
-
-        return ((T*)this.buffer)[offset] = value;
-    }
-
-    public static T* ToPointer<T>(IList<T> values) where T : unmanaged
-    {
-        var ptr = (T*)NativeMemory.Alloc((uint)(sizeof(T) * values.Count));
-
-        for (var i = 0; i < values.Count; i++)
-        {
-            ptr[i] = values[i];
-        }
-
-        return ptr;
-    }
-
-    public static implicit operator nint(NativeArray value) => new(value.buffer);
-}
-
-public unsafe class NativeArray<T>(int lenght = 1) : IDisposable, IEnumerable<T> where T : unmanaged
-{
-    private bool disposed;
-    private T* buffer = (T*)NativeMemory.Alloc((uint)(sizeof(T) * lenght));
-
-    public int Length => lenght;
 
     public T this[int index]
     {
         get
         {
-            this.CheckDisposed();
+            this.ThrowIfDisposed();
             this.CheckIndex(index);
 
             return this.buffer[index];
         }
         set
         {
-            this.CheckDisposed();
+            this.ThrowIfDisposed();
             this.CheckIndex(index);
 
             this.buffer[index] = value;
         }
     }
 
-    public NativeArray(uint lenght) : this((int)lenght)
+    public NativeArray<T> this[Range range]
+    {
+        get
+        {
+            var (start, length) = range.GetOffsetAndLength(this.Length);
+
+            return this.Slice(start, length);
+        }
+    }
+
+    public NativeArray(uint length) : this((int)length)
     { }
 
     public NativeArray(scoped ReadOnlySpan<T> values) : this(values.Length)
@@ -104,37 +59,104 @@ public unsafe class NativeArray<T>(int lenght = 1) : IDisposable, IEnumerable<T>
         }
     }
 
-    ~NativeArray() => this.Dispose();
-
-    private void CheckDisposed() =>
-        ObjectDisposedException.ThrowIf(this.disposed, this);
-
     private void CheckIndex(int index)
     {
-        if (index >= lenght)
+        if (index >= this.Length)
         {
             throw new IndexOutOfRangeException();
         }
     }
 
-    IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-    IEnumerator<T> IEnumerable<T>.GetEnumerator() => this.GetEnumerator();
-
-    public T* AsPointer() => this.buffer;
-    public Span<T> AsSpan() => new(this.buffer, lenght);
-
-    public void Dispose()
+    protected override void Disposed(bool disposing)
     {
-        if (!this.disposed)
-        {
-            this.disposed = true;
-
-            NativeMemory.Free(this.buffer);
-            this.buffer = default;
-        }
-
-        GC.SuppressFinalize(this);
+        NativeMemory.Free(this.buffer);
+        this.buffer = default;
+        this.Length = 0;
     }
 
-    public UnsafeEnumerator<T> GetEnumerator() => new(this.buffer, this.Length);
+    IEnumerator IEnumerable.GetEnumerator() =>
+        this.GetEnumerator();
+
+    IEnumerator<T> IEnumerable<T>.GetEnumerator() =>
+        this.GetEnumerator();
+
+    public T* AsPointer()
+    {
+        this.ThrowIfDisposed();
+
+        return this.buffer;
+    }
+
+    public Span<T> AsSpan()
+    {
+        this.ThrowIfDisposed();
+
+        return new(this.buffer, this.Length);
+    }
+
+    public void Clear()
+    {
+        this.ThrowIfDisposed();
+
+        this.AsSpan().Clear();
+    }
+
+    public bool Contains(T item)
+    {
+        this.ThrowIfDisposed();
+
+        return this.IndexOf(item) > -1;
+    }
+
+    public void CopyTo(T[] array, int arrayIndex)
+    {
+        this.ThrowIfDisposed();
+
+        this.AsSpan()[arrayIndex..].CopyTo(array);
+    }
+
+    public UnsafeEnumerator<T> GetEnumerator()
+    {
+        this.ThrowIfDisposed();
+
+        return new(this.buffer, this.Length);
+    }
+
+    public int IndexOf(T item)
+    {
+        this.ThrowIfDisposed();
+
+        for (var i = 0; i < this.Length; i++)
+        {
+            if (this.buffer[i].Equals(item))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    public void Resize(int length)
+    {
+        this.ThrowIfDisposed();
+
+        this.buffer = (T*)NativeMemory.Realloc(this.buffer, (uint)(sizeof(T) * length));
+        this.Length = length;
+    }
+
+    public void ResizeCopy(scoped ReadOnlySpan<T> source)
+    {
+        if (source.Length != this.Length)
+        {
+            this.Resize(source.Length);
+        }
+
+        source.CopyTo(this);
+    }
+
+    public NativeArray<T> Slice(int start, int length) =>
+        new(new Span<T>(this.buffer + start, length));
+
+    public static implicit operator Span<T>(NativeArray<T> value) => value.AsSpan();
 }

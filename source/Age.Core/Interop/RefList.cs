@@ -1,16 +1,18 @@
+using System.Collections;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Age.Core.Interop;
 
-public unsafe ref struct RefList<T> : IDisposable where T : unmanaged
+[DebuggerDisplay("Count = {Count}")]
+[DebuggerTypeProxy(typeof(RefList<>.DebugView))]
+public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where T : unmanaged
 {
     private T* buffer;
 
-    private int capacity;
-
     public int Capacity
     {
-        readonly get => this.capacity;
+        readonly get => field;
         set
         {
             if (value == 0)
@@ -23,9 +25,9 @@ public unsafe ref struct RefList<T> : IDisposable where T : unmanaged
             {
                 this.buffer = (T*)NativeMemory.Realloc(this.buffer, (uint)(sizeof(T) * value));
 
-                if (value > this.capacity)
+                if (value > field)
                 {
-                    for (var i = this.capacity; i < value; i++)
+                    for (var i = field; i < value; i++)
                     {
                         this.buffer[i] = default;
                     }
@@ -37,11 +39,43 @@ public unsafe ref struct RefList<T> : IDisposable where T : unmanaged
                 }
             }
 
-            this.capacity = value;
+            field = value;
         }
     }
 
     public int Count { get; private set; }
+
+    public T this[uint index]
+    {
+        get => this[(int)index];
+        set => this[(int)index] = value;
+    }
+
+    public T this[int index]
+    {
+        get
+        {
+            this.CheckIndex(index);
+
+            return this.buffer[index];
+        }
+        set
+        {
+            this.CheckIndex(index);
+
+            this.buffer[index] = value;
+        }
+    }
+
+    public readonly RefList<T> this[Range range]
+    {
+        get
+        {
+            var (start, length) = range.GetOffsetAndLength(this.Count);
+
+            return this.Slice(start, length);
+        }
+    }
 
     public RefList(int capacity = 0)
     {
@@ -49,7 +83,7 @@ public unsafe ref struct RefList<T> : IDisposable where T : unmanaged
         {
             this.buffer = (T*)NativeMemory.AllocZeroed((uint)(sizeof(T) * capacity));
 
-            this.capacity = capacity;
+            this.Capacity = capacity;
         }
     }
 
@@ -61,16 +95,6 @@ public unsafe ref struct RefList<T> : IDisposable where T : unmanaged
         }
 
         this.Count = values.Length;
-    }
-
-    public ref T this[int index]
-    {
-        get
-        {
-            this.CheckIndex(index);
-
-            return ref this.buffer[index];
-        }
     }
 
     private readonly void CheckIndex(int index)
@@ -85,15 +109,15 @@ public unsafe ref struct RefList<T> : IDisposable where T : unmanaged
     {
         if (this.Count + 1 > this.Capacity)
         {
-            this.Capacity = int.Min(this.Capacity == 0 ? 4 : this.Capacity * 2, int.MaxValue);
+            this.Capacity = int.Min(this.Capacity == 0 ? 4 : this.Count * 2, int.MaxValue);
         }
     }
 
-    public void Dispose()
-    {
-        NativeMemory.Free(this.buffer);
-        this.buffer = default;
-    }
+    readonly IEnumerator<T> IEnumerable<T>.GetEnumerator() =>
+        this.GetEnumerator();
+
+    readonly IEnumerator IEnumerable.GetEnumerator() =>
+        this.GetEnumerator();
 
     public ref T Add()
     {
@@ -106,20 +130,105 @@ public unsafe ref struct RefList<T> : IDisposable where T : unmanaged
         return ref element;
     }
 
-    public void Add(in T item)
+    public void Add(T item)
     {
         ref var element = ref this.Add();
 
         element = item;
     }
 
-    public void Clear() => this.Count = 0;
+    public readonly T* AsPointer() =>
+        this.buffer;
 
-    public void Remove(int startIndex, int lenght = 1)
+    public readonly Span<T> AsSpan() =>
+        new(this.buffer, this.Count);
+
+    public void Clear() =>
+        this.Count = 0;
+
+    public bool Contains(T item) =>
+        this.IndexOf(item) > -1;
+
+    public readonly void CopyTo(T[] array, int arrayIndex) =>
+        this.AsSpan()[arrayIndex..].CopyTo(array);
+
+    public void EnsureCapacity(int capacity)
+    {
+        if (capacity > this.Capacity)
+        {
+            this.Capacity = capacity;
+        }
+    }
+
+    public void Dispose()
+    {
+        NativeMemory.Free(this.buffer);
+        this.buffer = default;
+        this.Count  = 0;
+    }
+
+    public readonly UnsafeEnumerator<T> GetEnumerator() =>
+        new(this.buffer, this.Count);
+
+    public int IndexOf(T item)
+    {
+        for (var i = 0; i < this.Count; i++)
+        {
+            if (this.buffer[i].Equals(item))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    public void Insert(int index, T item)
+    {
+        if (index > this.Count)
+        {
+            throw new IndexOutOfRangeException();
+        }
+
+        this.EnsureCapacity();
+
+        this.Count++;
+
+        var length = this.Count - index - 1;
+
+        if (length > 0)
+        {
+            var source      = new Span<T>(this.buffer + index, length);
+            var destination = new Span<T>(this.buffer + index + 1, length);
+
+            source.CopyTo(destination);
+        }
+
+        this.buffer[index] = item;
+    }
+
+    public bool Remove(T item)
+    {
+        var index = this.IndexOf(item);
+
+        if (index > -1)
+        {
+            this.RemoveAt(index);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public void RemoveAt(int index) =>
+        this.RemoveAt(index, 1);
+
+    public void RemoveAt(int startIndex, int count)
     {
         this.CheckIndex(startIndex);
 
-        var endIndex = startIndex + lenght;
+        var endIndex = startIndex + count;
 
         if (endIndex < this.Count)
         {
@@ -129,12 +238,11 @@ public unsafe ref struct RefList<T> : IDisposable where T : unmanaged
             source.CopyTo(destination);
         }
 
-        this.Count = int.Max(this.Count - lenght, 0);
+        this.Count = int.Max(this.Count - count, 0);
     }
 
-    public readonly Span<T> AsSpan() => new(this.buffer, this.Count);
-    public readonly T* AsPointer() => this.buffer;
+    public readonly RefList<T> Slice(int start, int length) =>
+        new(new Span<T>(this.buffer + start, length));
 
-    public static implicit operator Span<T>(in RefList<T> refList) =>
-        refList.AsSpan();
+    public static implicit operator Span<T>(in RefList<T> value) => value.AsSpan();
 }

@@ -3,16 +3,15 @@ using System.Text;
 
 namespace Age.Core.Interop;
 
-public unsafe class NativeStringArray : IDisposable
+public unsafe class NativeStringArray : Disposable
 {
-    public int    Length { get; }
-    public byte** PpData { get; private set; }
+    private byte** buffer;
 
-    private bool disposed;
+    public int Length { get; }
 
     public NativeStringArray(scoped ReadOnlySpan<string> source)
     {
-        var ppData = (byte**)NativeMemory.Alloc((uint)(sizeof(byte*) * source.Length));
+        var buffer = (byte**)NativeMemory.Alloc((uint)(sizeof(byte*) * source.Length));
 
         for (var i = 0; i < source.Length; i++)
         {
@@ -24,31 +23,23 @@ public unsafe class NativeStringArray : IDisposable
 
             bytes.AsSpan().CopyTo(new Span<byte>(pData, bytes.Length));
 
-            ppData[i] = pData;
+            buffer[i] = pData;
         }
 
-        this.PpData = ppData;
+        this.buffer = buffer;
         this.Length = source.Length;
     }
 
-    ~NativeStringArray() =>
-        this.Dispose(false);
-
-    protected virtual void Dispose(bool disposing)
+    protected override void Disposed(bool disposing)
     {
-        if (!this.disposed)
+        for (var i = 0; i < this.Length; i++)
         {
-            for (var i = 0; i < this.Length; i++)
-            {
-                NativeMemory.Free(this.PpData[i]);
-            }
-
-            NativeMemory.Free(this.PpData);
-
-            this.PpData = null;
-
-            this.disposed = true;
+            NativeMemory.Free(this.buffer[i]);
         }
+
+        NativeMemory.Free(this.buffer);
+
+        this.buffer = null;
     }
 
     public static string[] ToArray(byte** ppSource, uint length)
@@ -63,14 +54,10 @@ public unsafe class NativeStringArray : IDisposable
         return result;
     }
 
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
-    }
+    public byte** AsPointer() => this.buffer;
 
     public string[] ToArray() =>
-        ToArray(this.PpData, (uint)this.Length);
+        ToArray(this.buffer, (uint)this.Length);
 
-    public static implicit operator byte**(NativeStringArray value) => value.PpData;
+    public static implicit operator byte**(NativeStringArray value) => value.buffer;
 }

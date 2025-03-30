@@ -7,7 +7,7 @@ public record struct Line<T> where T : IFloatingPoint<T>, IFloatingPointIeee754<
     public Vector2<T> A;
     public Vector2<T> B;
 
-    public readonly T Lenght => (this.A - this.B).Length;
+    public readonly T Length => (this.A - this.B).Length;
 
     public Line() { }
 
@@ -24,5 +24,5 @@ public record struct Line<T> where T : IFloatingPoint<T>, IFloatingPointIeee754<
         Vector2<T>.CrossProduct(point - this.A, this.B - this.A);
 
     public readonly T DistanceTo(in Vector2<T> point) =>
-        T.Abs(this.CrossProduct(point)) / this.Lenght;
+        T.Abs(this.CrossProduct(point)) / this.Length;
 }

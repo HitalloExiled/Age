@@ -76,7 +76,7 @@ public static class EnumExtensions
                 return (longValue & longFlag) != 0;
             }
             default:
-                throw new NotSupportedException("Enum with size of " + Unsafe.SizeOf<T>() + " are not supported");
+                throw new NotSupportedException($"Enum with size of {sizeof(T)} are not supported");
         }
     }
 }
