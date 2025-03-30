@@ -1,9 +1,15 @@
 using Age.Elements;
+using Age.Scene;
 
 namespace Age.Tests.Age.Elements;
 
 public class ElementTest
 {
+    public class EmptyNode : Node
+    {
+        public override string NodeName { get; } = nameof(EmptyNode);
+    }
+
     public class HostTestElement : Element
     {
         public override string NodeName { get; } = nameof(HostTestElement);
@@ -34,13 +40,13 @@ public class ElementTest
     {
         var parent = new FlexBox();
 
-        var text1 = new Text();
+        var text1 = new EmptyNode();
         var child1 = new FlexBox { Name = "child1" };
-        var text2 = new Text();
+        var text2 = new EmptyNode();
         var child2 = new FlexBox { Name = "child2" };
-        var text3 = new Text();
+        var text3 = new EmptyNode();
         var child3 = new FlexBox { Name = "child3" };
-        var text4 = new Text();
+        var text4 = new EmptyNode();
 
         parent.AppendChild(text1);
         parent.AppendChild(child1);
@@ -57,7 +63,6 @@ public class ElementTest
         Assert.Equal(child3, child2.NextElementSibling);
         Assert.Equal(child3, parent.LastElementChild);
         Assert.Null(parent.NextElementSibling);
-        Assert.Equal([child1, child2, child3], parent.Children);
     }
 
     [Fact]

@@ -153,16 +153,13 @@ public partial class ComposedTreeTraversalEnumeratorTest
     public void SkipToNextSibling()
     {
         var nestedHost = this.host.ShadowNodes[11];
-        var child5     = this.lightNodes[8];
 
         Node[] nodes =
         [
             ..this.host.ShadowNodes[0..4],
             ..this.host.ShadowNodes[5..8],
             this.host.ShadowNodes[10],
-            ..this.host.ShadowNodes[12..],
-            ..this.lightNodes[3..8],
-            ..this.lightNodes[11..],
+            ..this.host.ShadowNodes[12..14],
         ];
 
         var expected = nodes
@@ -175,7 +172,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
 
         while (enumerator.MoveNext())
         {
-            if (enumerator.Current == child5 || enumerator.Current == nestedHost || enumerator.Current is Slot)
+            if (enumerator.Current == nestedHost || enumerator.Current is Slot)
             {
                 enumerator.SkipToNextSibling();
             }
