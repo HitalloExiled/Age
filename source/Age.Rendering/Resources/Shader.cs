@@ -21,11 +21,11 @@ public abstract class Shader(RenderPass renderPass) : Resource
 
     public abstract VkShaderStageFlags PushConstantStages { get; }
 
-    public abstract VkPipelineBindPoint   BindPoint           { get; }
-    public abstract VkDescriptorSetLayout DescriptorSetLayout { get; }
-    public abstract VkPipeline            Pipeline            { get; }
-    public abstract VkPipelineLayout      PipelineLayout      { get; }
-    public abstract VkDescriptorType[]    UniformBindings     { get; }
+    public abstract VkPipelineBindPoint           BindPoint           { get; }
+    public abstract VkDescriptorSetLayout         DescriptorSetLayout { get; }
+    public abstract VkPipeline                    Pipeline            { get; }
+    public abstract VkPipelineLayout              PipelineLayout      { get; }
+    public abstract NativeArray<VkDescriptorType> UniformBindings     { get; }
 
     protected void InvokeChanged() =>
         this.Changed?.Invoke();
@@ -43,18 +43,18 @@ where TVertexInput  : IVertexInput
 
     private static SpinLock spinLock;
 
-    private readonly Lock                        @lock            = new();
-    private readonly Dictionary<string, MD5Hash> dependenciesHash = [];
-    private readonly string                      filepath;
-    private readonly SlangSession                slangSession     = new();
+    private readonly Lock                          @lock            = new();
+    private readonly Dictionary<string, MD5Hash>   dependenciesHash = [];
+    private readonly string                        filepath;
+    private readonly SlangSession                  slangSession     = new();
+    private readonly NativeArray<byte>             source;
+    private readonly NativeArray<VkDescriptorType> uniformBindings  = new();
 
-    private CancellationTokenSource cancellationTokenSource = new();
-    private VkDescriptorSetLayout   descriptorSetLayout;
-    private MD5Hash                 hash;
-    private VkPipeline              pipeline;
-    private VkPipelineLayout        pipelineLayout;
-    private byte[]                  source;
-    private VkDescriptorType[]      uniformBindings;
+    private CancellationTokenSource       cancellationTokenSource = new();
+    private VkDescriptorSetLayout         descriptorSetLayout;
+    private MD5Hash                       hash;
+    private VkPipeline                    pipeline;
+    private VkPipelineLayout              pipelineLayout;
 
     private ShaderOptions      options;
     private VkShaderStageFlags pushConstantStages;
@@ -62,17 +62,17 @@ where TVertexInput  : IVertexInput
     public abstract string              Name              { get; }
     public abstract VkPrimitiveTopology PrimitiveTopology { get; }
 
-    public sealed override VkDescriptorSetLayout DescriptorSetLayout => this.descriptorSetLayout;
-    public sealed override VkPipeline            Pipeline            => this.pipeline;
-    public sealed override VkPipelineLayout      PipelineLayout      => this.pipelineLayout;
-    public sealed override VkShaderStageFlags    PushConstantStages  => this.pushConstantStages;
-    public sealed override VkDescriptorType[]    UniformBindings     => this.uniformBindings;
+    public sealed override VkDescriptorSetLayout         DescriptorSetLayout => this.descriptorSetLayout;
+    public sealed override VkPipeline                    Pipeline            => this.pipeline;
+    public sealed override VkPipelineLayout              PipelineLayout      => this.pipelineLayout;
+    public sealed override VkShaderStageFlags            PushConstantStages  => this.pushConstantStages;
+    public sealed override NativeArray<VkDescriptorType> UniformBindings     => this.uniformBindings;
 
     public Shader(string file, RenderPass renderPass, in ShaderOptions options) : base(renderPass)
     {
         this.filepath = string.Intern(Path.IsPathRooted(file) ? file : Path.GetFullPath(Path.Join(shadersPath, file)));
         this.options  = options;
-        this.source   = File.ReadAllBytes(this.filepath);
+        this.source   = FileReader.ReadAllBytes(this.filepath);
         this.hash     = MD5Hash.Create(this.source);
 
         var filename = string.Intern(Path.GetFileName(this.filepath));
@@ -113,7 +113,7 @@ where TVertexInput  : IVertexInput
         }
     }
 
-    [MemberNotNull(nameof(pipeline), nameof(pipelineLayout), nameof(descriptorSetLayout), nameof(uniformBindings))]
+    [MemberNotNull(nameof(pipeline), nameof(pipelineLayout), nameof(descriptorSetLayout))]
     private void CompileShader()
     {
         Logger.Trace($"Compiling Shader [{this.filepath}]");
@@ -152,7 +152,9 @@ where TVertexInput  : IVertexInput
                 {
                     ref var dependencieHash = ref this.dependenciesHash.GetValueRefOrAddDefault(dependecy, out var exists);
 
-                    MD5Hash.Update(File.ReadAllBytes(dependecy), ref dependencieHash);
+                    using var bytes = FileReader.ReadAllBytesAsRef(dependecy);
+
+                    MD5Hash.Update(bytes, ref dependencieHash);
                 }
 
                 var lockTaken = false;
@@ -227,17 +229,20 @@ where TVertexInput  : IVertexInput
 
         if (dependency != null)
         {
-            hasChanged = !this.dependenciesHash.TryGetValue(dependency, out var dependencyHash) || dependencyHash != MD5Hash.Create(File.ReadAllBytes(dependency));
+            using var bytes = FileReader.ReadAllBytesAsRef(dependency);
+
+            hasChanged = !this.dependenciesHash.TryGetValue(dependency, out var dependencyHash) || dependencyHash != MD5Hash.Create(bytes);
         }
         else
         {
-            var source = File.ReadAllBytes(this.filepath);
+            var source = FileReader.ReadAllBytesAsRef(this.filepath);
             var hash   = MD5Hash.Create(source);
 
             if (hasChanged = this.hash != hash)
             {
-                this.source = source;
-                this.hash   = hash;
+                this.source.ResizeCopy(source);
+
+                this.hash = hash;
             }
         }
 
@@ -295,14 +300,14 @@ where TVertexInput  : IVertexInput
         }
     }
 
-    [MemberNotNull(nameof(pipeline), nameof(pipelineLayout), nameof(descriptorSetLayout), nameof(uniformBindings))]
+    [MemberNotNull(nameof(pipeline), nameof(pipelineLayout), nameof(descriptorSetLayout))]
     private void UpdatePipeline(SlangCompileRequest compileRequest)
     {
         var reflection = compileRequest.GetReflection();
 
-        var bindings                       = new List<VkDescriptorSetLayoutBinding>((int)reflection.ParameterCount);
-        var pipelineShaderStageCreateInfos = new List<VkPipelineShaderStageCreateInfo>((int)reflection.EntryPointCount);
-        var pushConstantRanges             = new List<VkPushConstantRange>();
+        using var bindings                       = new RefList<VkDescriptorSetLayoutBinding>((int)reflection.ParameterCount);
+        using var pipelineShaderStageCreateInfos = new RefList<VkPipelineShaderStageCreateInfo>((int)reflection.EntryPointCount);
+        using var pushConstantRanges             = new RefList<VkPushConstantRange>();
 
         var entryPoints = reflection.EntryPoints;
         var parameters  = reflection.Parameters;
@@ -337,7 +342,7 @@ where TVertexInput  : IVertexInput
             pipelineShaderStageCreateInfos.Add(createInfo);
         }
 
-        var uniformBindings = new List<VkDescriptorType>(parameters.Length);
+        using var uniformBindings = new RefList<VkDescriptorType>(parameters.Length);
 
         for (var i = 0; i < parameters.Length; i++)
         {
@@ -396,10 +401,10 @@ where TVertexInput  : IVertexInput
             }
         }
 
-        this.uniformBindings = [..uniformBindings];
+        this.uniformBindings.ResizeCopy(uniformBindings);
 
-        var vertexInputAttributeDescription = TVertexInput.GetAttributes();
-        var vertexInputBindingDescription   = TVertexInput.GetBindings();
+        using var vertexInputAttributeDescription = TVertexInput.GetAttributes();
+        var vertexInputBindingDescription = TVertexInput.GetBindings();
 
         Span<VkDynamicState> dynamicStates =
         [
@@ -408,7 +413,7 @@ where TVertexInput  : IVertexInput
         ];
 
         fixed (VkDescriptorSetLayoutBinding*      pBindings                       = bindings.AsSpan())
-        fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription)
+        fixed (VkVertexInputAttributeDescription* pVertexAttributeDescriptions    = vertexInputAttributeDescription.AsSpan())
         fixed (VkDynamicState*                    pDynamicStates                  = dynamicStates)
         fixed (VkPipelineShaderStageCreateInfo*   pPipelineShaderStageCreateInfos = pipelineShaderStageCreateInfos.AsSpan())
         fixed (VkPushConstantRange*               pPushConstantRanges             = pushConstantRanges.AsSpan())
@@ -552,6 +557,8 @@ where TVertexInput  : IVertexInput
 
     protected override void Disposed()
     {
+        this.source.Dispose();
+
         watcher.Filters.Remove(this.filepath);
 
         watcher.Changed -= this.OnFileChanged;
