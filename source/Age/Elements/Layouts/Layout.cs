@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Age.Core;
 using Age.Numerics;
 using Age.Scene;
@@ -49,9 +50,9 @@ internal abstract class Layout : Disposable
             }
             else if (this.Target.Tree is RenderTree renderTree)
             {
-                if (this.Target.Parent != renderTree.Root)
+                if (this.Target.Parent != renderTree.Root && this.Target is not Canvas)
                 {
-                    renderTree.AddDeferredUpdate(this.Update);
+                    renderTree.AddDeferredUpdate(this.UpdateDirtyLayout);
                 }
                 else
                 {
@@ -75,6 +76,16 @@ internal abstract class Layout : Disposable
 
     public override string ToString() =>
         $"{{ Target: {this.Target} }}";
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void UpdateDirtyLayout()
+    {
+        if (this.IsDirty)
+        {
+            this.Update();
+            this.MakePristine();
+        }
+    }
 
     public abstract void Update();
 }

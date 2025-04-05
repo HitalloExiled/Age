@@ -128,41 +128,61 @@ public class Editor : Node
     {
         var reload = true;
 
+        var window = ((RenderTree)this.canvas.Tree!).Window;
+
         if (Input.IsKeyJustPressed(Key.Num1))
         {
             this.setup = ShadowTreeTest.Setup;
+
+            window.Title = nameof(ShadowTreeTest);
         }
         else if (Input.IsKeyJustPressed(Key.Num2))
         {
             this.setup = BaselineTest.Setup;
+
+            window.Title = nameof(BaselineTest);
         }
         else if (Input.IsKeyJustPressed(Key.Num3))
         {
             this.setup = BoxModelTest.Setup;
+
+            window.Title = nameof(BoxModelTest);
         }
         else if (Input.IsKeyJustPressed(Key.Num4))
         {
             this.setup = BoxSizingTest.Setup;
+
+            window.Title = nameof(BoxSizingTest);
         }
         else if (Input.IsKeyJustPressed(Key.Num5))
         {
             this.setup = ContentJustificationTest.Setup;
+
+            window.Title = nameof(ContentJustificationTest);
         }
         else if (Input.IsKeyJustPressed(Key.Num6))
         {
             this.setup = ClippingTest.Setup;
+
+            window.Title = nameof(ClippingTest);
         }
         else if (Input.IsKeyJustPressed(Key.Num7))
         {
             this.setup = MarginTest.Setup;
+
+            window.Title = nameof(MarginTest);
         }
         else if (Input.IsKeyJustPressed(Key.Num8))
         {
             this.setup = PaddingTest.Setup;
+
+            window.Title = nameof(PaddingTest);
         }
         else if (Input.IsKeyJustPressed(Key.Num9))
         {
             this.setup = Tests.Playground.Setup;
+
+            window.Title = nameof(Playground);
         }
         else if (Input.IsKeyPressed(Key.Control) && Input.IsKeyJustPressed(Key.P))
         {

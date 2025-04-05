@@ -19,8 +19,8 @@ public sealed class Slot : Element
             {
                 if (this.Root is ShadowTree shadowTree)
                 {
-                    shadowTree.Host.Slots.Remove(field ?? "");
-                    shadowTree.Host.Slots.TryAdd(value ?? "", this);
+                    shadowTree.Host.RemoveSlot(this, field ?? "", true);
+                    shadowTree.Host.AddSlot(this, value ?? "");
                 }
 
                 field = value;
@@ -28,28 +28,39 @@ public sealed class Slot : Element
         }
     }
 
-    protected override void Connected(NodeTree tree)
+    protected override void Adopted(Node parent)
     {
-        base.Connected(tree);
+        base.Adopted(parent);
 
-        if (this.Root is ShadowTree shadowTree)
+        if (parent is ShadowTree shadowTree)
         {
-            shadowTree.Host.Slots.TryAdd(this.Name ?? "", this);
+            shadowTree.Host.AddSlot(this, this.Name ?? "");
         }
     }
 
-    protected override void Disconnected(NodeTree tree)
+    protected override void Removed(Node parent)
     {
-        base.Disconnected(tree);
+        base.Removed(parent);
 
-        if (this.Root is ShadowTree shadowTree)
+        if (parent is ShadowTree shadowTree)
         {
-            shadowTree.Host.Slots.Remove(this.Name ?? "");
+            shadowTree.Host.RemoveSlot(this, this.Name ?? "");
         }
     }
 
     internal void Assign(Layoutable layoutable)
     {
+        if (this.Nodes.Count == 0)
+        {
+            foreach (var child in this)
+            {
+                if (child is Layoutable layoutableChild)
+                {
+                    this.Layout.LayoutableRemoved(layoutableChild);
+                }
+            }
+        }
+
         layoutable.AssignedSlot = this;
         this.Nodes.Add(layoutable);
         this.Nodes.Sort();
@@ -63,5 +74,16 @@ public sealed class Slot : Element
         layoutable.AssignedSlot = null;
 
         this.Layout.LayoutableRemoved(layoutable);
+
+        if (this.Nodes.Count == 0)
+        {
+            foreach (var child in this)
+            {
+                if (child is Layoutable layoutableChild)
+                {
+                    this.Layout.LayoutableAppended(layoutableChild);
+                }
+            }
+        }
     }
 }

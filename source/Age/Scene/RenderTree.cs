@@ -58,9 +58,16 @@ public sealed partial class RenderTree : NodeTree
 
                     while (composedTreeTraversalEnumerator.MoveNext())
                     {
-                        updateIndex(composedTreeTraversalEnumerator.Current);
+                        if (composedTreeTraversalEnumerator.Current.Visible)
+                        {
+                            updateIndex(composedTreeTraversalEnumerator.Current);
 
-                        collect2D(composedTreeTraversalEnumerator.Current);
+                            collect2D(composedTreeTraversalEnumerator.Current);
+                        }
+                        else
+                        {
+                            composedTreeTraversalEnumerator.SkipToNextSibling();
+                        }
                     }
                 }
                 else if (renderable is Spatial2D spatial2D)

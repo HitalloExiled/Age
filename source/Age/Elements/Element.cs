@@ -218,8 +218,10 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     }
     #endregion events
 
-    private readonly Lock elementLock = new();
-    private readonly Dictionary<string, Delegate> events = [];
+    private readonly Lock                         elementLock    = new();
+    private readonly Dictionary<string, Delegate> events         = [];
+    private readonly Dictionary<string, Slot>     slots          = [];
+    private readonly List<Layoutable>             waitingForSlot = [];
 
     private Action?              ActivatedEvent     => this.GetEvent<Action>(nameof(Activated));
     private MouseEventHandler?   BluredEvent        => this.GetEvent<MouseEventHandler>(nameof(Blured));
@@ -242,8 +244,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal protected ShadowTree? ShadowTree { get; set; }
 
-    internal Dictionary<string, List<Node>> WaitingSlots { get; } = [];
-    internal Dictionary<string, Slot>       Slots        { get; } = [];
+
 
     internal override BoxLayout Layout { get; }
 
@@ -255,24 +256,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         get => this.Layout.ContentOffset;
         set => this.Layout.ContentOffset = value;
-    }
-
-    public string? Slot
-    {
-        get;
-        set
-        {
-            if (field != value)
-            {
-                if (this.Parent is Element parentElement && parentElement.ShadowTree != null)
-                {
-                    this.UnassignSlot(parentElement, field ?? "");
-                    this.AssignSlot(parentElement, value ?? "");
-                }
-
-                field = value;
-            }
-        }
     }
 
     public StyledStates? States
@@ -370,22 +353,17 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private void AddEvent(string name, Delegate? handler) =>
         this.AddEvent(name, handler, out _);
 
-    private void AssignSlot(Element parent, string name)
+    internal void AssignSlot(string name, Layoutable layoutable)
     {
-        if (!parent.WaitingSlots.TryGetValue(name, out var waitingSlots))
+        if (this.slots.TryGetValue(name, out var slot))
         {
-            parent.WaitingSlots[name] = waitingSlots = [];
-        }
+            this.waitingForSlot.Remove(layoutable);
 
-        if (parent.Slots.TryGetValue(name, out var slot))
-        {
-            waitingSlots.Remove(this);
-
-            slot.Assign(this);
+            slot.Assign(layoutable);
         }
-        else
+        else if (!this.waitingForSlot.Contains(layoutable))
         {
-            waitingSlots.Add(this);
+            this.waitingForSlot.Add(layoutable);
         }
     }
 
@@ -412,11 +390,13 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private T? GetEvent<T>(string name) where T : Delegate =>
         this.events.TryGetValue(name, out var @delegate) ? (T)@delegate : null;
 
-    private void UnassignSlot(Element parent, string name)
+    internal void UnassignSlot(string name, Layoutable layoutable)
     {
-        if (parent.Slots.TryGetValue(name, out var slot) == true)
+        if (this.slots.TryGetValue(name, out var slot))
         {
-            slot.Unassign(this);
+            slot.Unassign(layoutable);
+
+            this.waitingForSlot.Add(layoutable);
         }
     }
 
@@ -442,8 +422,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             ScreenX = platformContextEvent.ScreenX,
             ScreenY = platformContextEvent.ScreenY,
         };
-
-
 
     private void OnInput(char character)
     {
@@ -503,11 +481,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         if (this.ShadowTree != null)
         {
             this.ShadowTree.Tree = tree;
-        }
-
-        if (this.Parent is Element parentElement && parentElement.ShadowTree != null)
-        {
-            this.AssignSlot(parentElement, this.Slot ?? "");
         }
     }
 
@@ -591,13 +564,37 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     protected override void Indexed() =>
         this.Layout.TargetIndexed();
 
-    protected override void Removed(Node parent)
+    internal void AddSlot(Slot slot, string name)
     {
-        base.Removed(parent);
-
-        if (parent is Element parentElement && parentElement.ShadowTree != null)
+        if (this.slots.TryAdd(name, slot))
         {
-            this.UnassignSlot(parentElement, this.Slot ?? "");
+            foreach (var node in this.waitingForSlot.ToArray())
+            {
+                if ((node.Slot ?? "") == name)
+                {
+                    slot.Assign(node);
+
+                    this.waitingForSlot.Remove(node);
+                }
+            }
+        }
+    }
+
+    internal void RemoveSlot(Slot slot, string name, bool preserveAssignedNodes = false)
+    {
+        if (this.slots.TryGetValue(name, out var stored) && stored == slot)
+        {
+            if (!preserveAssignedNodes && slot.Nodes.Count > 0)
+            {
+                foreach (var node in slot.Nodes.ToArray())
+                {
+                    slot.Unassign(node);
+
+                    this.waitingForSlot.Add(node);
+                }
+            }
+
+            this.slots.Remove(name);
         }
     }
 

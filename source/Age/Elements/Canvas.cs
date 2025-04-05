@@ -1,3 +1,4 @@
+using Age.Numerics;
 using Age.Scene;
 using Age.Styling;
 
@@ -15,6 +16,7 @@ public sealed class Canvas : Element
         this.Style = new()
         {
             // Padding = new((Pixel)PADDING),
+            Color = Color.White,
         };
     }
 
@@ -42,6 +44,11 @@ public sealed class Canvas : Element
         renderTree.Window.Resized -= this.OnWindowSizeChanged;
     }
 
-    public override void Update() =>
-        this.Layout.Update();
+    public override void Update()
+    {
+        if (!this.Layout.Hidden)
+        {
+            this.Layout.UpdateDirtyLayout();
+        }
+    }
 }

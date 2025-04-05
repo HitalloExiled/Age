@@ -855,44 +855,39 @@ internal sealed partial class TextLayout : Layout
 
     public override void Update()
     {
-        if (this.IsDirty)
+        if (this.target.Buffer.IsEmpty)
         {
-            if (this.target.Buffer.IsEmpty)
+            if (this.textIsDirty)
             {
-                if (this.textIsDirty)
-                {
-                    this.target.Commands.RemoveAt(this.target.Commands.Count - 1);
+                this.target.Commands.RemoveAt(this.target.Commands.Count - 1);
 
-                    ReleaseCommands(this.target.Commands, this.target.Commands.Count);
+                ReleaseCommands(this.target.Commands, this.target.Commands.Count);
 
-                    this.target.Commands.Add(this.caretCommand);
+                this.target.Commands.Add(this.caretCommand);
 
-                    this.Selection = default;
-                    this.Boundings = default;
-                }
+                this.Selection = default;
+                this.Boundings = default;
             }
-            else
-            {
-                if (this.textIsDirty)
-                {
-                    this.DrawText();
-                }
-                else if (this.selectionIsDirty)
-                {
-                    this.DrawSelection();
-                }
-            }
-
-            if (this.caretIsDirty)
-            {
-                this.DrawCaret();
-            }
-
-            this.caretIsDirty     = false;
-            this.selectionIsDirty = false;
-            this.textIsDirty      = false;
-
-            this.MakePristine();
         }
+        else
+        {
+            if (this.textIsDirty)
+            {
+                this.DrawText();
+            }
+            else if (this.selectionIsDirty)
+            {
+                this.DrawSelection();
+            }
+        }
+
+        if (this.caretIsDirty)
+        {
+            this.DrawCaret();
+        }
+
+        this.caretIsDirty     = false;
+        this.selectionIsDirty = false;
+        this.textIsDirty      = false;
     }
 }

@@ -34,7 +34,7 @@ internal partial class StyledStateManager
 
                 if (shouldNotify)
                 {
-                    this.InvokeChanged();
+                    this.InvokeChanged(); // TODO: implements style properties differ
                 }
             }
         }
