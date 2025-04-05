@@ -47,14 +47,14 @@ where TVertexInput  : IVertexInput
     private readonly Dictionary<string, MD5Hash>   dependenciesHash = [];
     private readonly string                        filepath;
     private readonly SlangSession                  slangSession     = new();
-    private readonly NativeArray<byte>             source;
     private readonly NativeArray<VkDescriptorType> uniformBindings  = new();
 
-    private CancellationTokenSource       cancellationTokenSource = new();
-    private VkDescriptorSetLayout         descriptorSetLayout;
-    private MD5Hash                       hash;
-    private VkPipeline                    pipeline;
-    private VkPipelineLayout              pipelineLayout;
+    private CancellationTokenSource cancellationTokenSource = new();
+    private VkDescriptorSetLayout   descriptorSetLayout;
+    private MD5Hash                 hash;
+    private VkPipeline              pipeline;
+    private VkPipelineLayout        pipelineLayout;
+    private NativeArray<byte>       source;
 
     private ShaderOptions      options;
     private VkShaderStageFlags pushConstantStages;
@@ -235,12 +235,13 @@ where TVertexInput  : IVertexInput
         }
         else
         {
-            var source = FileReader.ReadAllBytesAsRef(this.filepath);
+            var source = FileReader.ReadAllBytes(this.filepath);
             var hash   = MD5Hash.Create(source);
 
             if (hasChanged = this.hash != hash)
             {
-                this.source.ResizeCopy(source);
+                this.source.Dispose();
+                this.source = source;
 
                 this.hash = hash;
             }

@@ -338,38 +338,47 @@ public sealed class Image : Resource<VkImage>
 
         var pixels = new NativeArray<uint>(this.Extent.Width * this.Extent.Height);
 
-        switch (this.BytesPerPixel)
+        try
         {
-            case 1:
-                {
-                    var span = new Span<byte>(data.ToPointer(), pixels.Length).ToArray();
-
-                    for (var i = 0; i < span.Length; i++)
+            switch (this.BytesPerPixel)
+            {
+                case 1:
                     {
-                        pixels[i] = span[i];
-                    }
-                }
-                break;
-            case 2:
-                {
-                    var span = new Span<ushort>(data.ToPointer(), pixels.Length).ToArray();
+                        var span = new Span<byte>(data.ToPointer(), pixels.Length).ToArray();
 
-                    for (var i = 0; i < span.Length; i++)
+                        for (var i = 0; i < span.Length; i++)
+                        {
+                            pixels[i] = span[i];
+                        }
+                    }
+                    break;
+                case 2:
                     {
-                        pixels[i] = span[i];
+                        var span = new Span<ushort>(data.ToPointer(), pixels.Length).ToArray();
+
+                        for (var i = 0; i < span.Length; i++)
+                        {
+                            pixels[i] = span[i];
+                        }
                     }
-                }
-                break;
-            case 4:
-                new Span<uint>(data.ToPointer(), pixels.Length).CopyTo(pixels.AsSpan());
+                    break;
+                case 4:
+                    new Span<uint>(data.ToPointer(), pixels.Length).CopyTo(pixels.AsSpan());
 
-                break;
+                    break;
 
-            case 8:
-                throw new InvalidOperationException();
+                case 8:
+                    throw new InvalidOperationException();
+            }
+
+            return pixels;
         }
+        catch
+        {
+            pixels.Dispose();
 
-        return pixels;
+            throw;
+        }
     }
 
     public unsafe NativeArray<ulong> ReadBuffer64bits(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
@@ -378,45 +387,54 @@ public sealed class Image : Resource<VkImage>
 
         var pixels = new NativeArray<ulong>(this.Extent.Width * this.Extent.Height);
 
-        switch (this.BytesPerPixel)
+        try
         {
-            case 1:
-                {
-                    var span = new Span<byte>(data.ToPointer(), pixels.Length).ToArray();
-
-                    for (var i = 0; i < span.Length; i++)
+            switch (this.BytesPerPixel)
+            {
+                case 1:
                     {
-                        pixels[i] = span[i];
-                    }
-                }
-                break;
-            case 2:
-                {
-                    var span = new Span<ushort>(data.ToPointer(), pixels.Length).ToArray();
+                        var span = new Span<byte>(data.ToPointer(), pixels.Length).ToArray();
 
-                    for (var i = 0; i < span.Length; i++)
+                        for (var i = 0; i < span.Length; i++)
+                        {
+                            pixels[i] = span[i];
+                        }
+                    }
+                    break;
+                case 2:
                     {
-                        pixels[i] = span[i];
-                    }
-                }
-                break;
-            case 4:
-                {
-                    var span = new Span<uint>(data.ToPointer(), pixels.Length).ToArray();
+                        var span = new Span<ushort>(data.ToPointer(), pixels.Length).ToArray();
 
-                    for (var i = 0; i < span.Length; i++)
+                        for (var i = 0; i < span.Length; i++)
+                        {
+                            pixels[i] = span[i];
+                        }
+                    }
+                    break;
+                case 4:
                     {
-                        pixels[i] = span[i];
-                    }
-                }
-                break;
-            case 8:
-                new Span<ulong>(data.ToPointer(), pixels.Length).CopyTo(pixels.AsSpan());
+                        var span = new Span<uint>(data.ToPointer(), pixels.Length).ToArray();
 
-                break;
+                        for (var i = 0; i < span.Length; i++)
+                        {
+                            pixels[i] = span[i];
+                        }
+                    }
+                    break;
+                case 8:
+                    new Span<ulong>(data.ToPointer(), pixels.Length).CopyTo(pixels.AsSpan());
+
+                    break;
+            }
+
+            return pixels;
         }
+        catch
+        {
+            pixels.Dispose();
 
-        return pixels;
+            throw;
+        }
     }
 
     public void TransitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout)
