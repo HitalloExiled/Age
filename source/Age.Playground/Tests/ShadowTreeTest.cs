@@ -1,10 +1,8 @@
 using Age.Components;
 using Age.Elements;
 using Age.Numerics;
-using Age.Resources.Loaders.Wavefront;
 using Age.Scene;
 using Age.Styling;
-using Age.Themes;
 
 namespace Age.Playground.Tests;
 

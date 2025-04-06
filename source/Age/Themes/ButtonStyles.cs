@@ -6,10 +6,11 @@ public class ButtonStyles
 {
     public static Style Base { get; } = new()
     {
-        TextSelection  = false,
-        Padding        = new((Pixel)4),
-        FontWeight     = FontWeight.Medium,
+        TextSelection        = false,
+        Padding              = new((Pixel)4),
+        FontWeight           = FontWeight.Medium,
         ContentJustification = ContentJustificationKind.Center,
+        Cursor               = Platforms.Display.CursorKind.Hand,
     };
 
     public required StyledStates Flat     { get; init; }

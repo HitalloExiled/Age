@@ -12,7 +12,7 @@ public sealed class Canvas : Element
 
     public Canvas()
     {
-        this.Flags = NodeFlags.IgnoreChildrenUpdates;
+        this.Flags = NodeFlags.IgnoreUpdates;
         this.Style = new()
         {
             // Padding = new((Pixel)PADDING),
@@ -35,6 +35,7 @@ public sealed class Canvas : Element
         renderTree.Window.Resized += this.OnWindowSizeChanged;
 
         this.OnWindowSizeChanged();
+        this.Layout.UpdateDirtyLayout();
     }
 
     protected override void Disconnected(RenderTree renderTree)
@@ -42,13 +43,5 @@ public sealed class Canvas : Element
         base.Disconnected(renderTree);
 
         renderTree.Window.Resized -= this.OnWindowSizeChanged;
-    }
-
-    public override void Update()
-    {
-        if (!this.Layout.Hidden)
-        {
-            this.Layout.UpdateDirtyLayout();
-        }
     }
 }

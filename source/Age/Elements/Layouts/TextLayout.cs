@@ -1,9 +1,9 @@
 using Age.Commands;
 using Age.Core.Extensions;
+using Age.Core.Interop;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Resources;
-using Age.Scene;
 using Age.Services;
 using Age.Styling;
 using SkiaSharp;
@@ -12,8 +12,6 @@ using System.Runtime.CompilerServices;
 using static Age.Shaders.CanvasShader;
 
 using Timer = Age.Scene.Timer;
-using Age.Core.Interop;
-using System.Runtime.InteropServices;
 
 namespace Age.Elements.Layouts;
 
@@ -438,14 +436,6 @@ internal sealed partial class TextLayout : Layout
         this.RequestUpdate(true);
     }
 
-    private void SetTextCursor(bool enabled)
-    {
-        if (this.target.Tree is RenderTree renderTree)
-        {
-            renderTree.Window.Cursor = enabled ? CursorKind.Text : this.Parent?.State.Style.Cursor ?? default;
-        }
-    }
-
     private void TargetParentStyleChanged(StyleProperty property)
     {
         if (property != StyleProperty.Color)
@@ -645,7 +635,7 @@ internal sealed partial class TextLayout : Layout
 
         this.selectionTimer.Start();
 
-        this.Parent!.IsChildSelectingText = true;
+        IsSelectingText = true;
     }
 
     public void TargetAdopted(Element parentElement)
@@ -659,9 +649,7 @@ internal sealed partial class TextLayout : Layout
     {
         this.selectionTimer.Stop();
 
-        this.Parent!.IsChildSelectingText = false;
-
-        this.SetTextCursor(false);
+        IsSelectingText = false;
     }
 
     public void TargetIndexed()
@@ -682,10 +670,7 @@ internal sealed partial class TextLayout : Layout
             return;
         }
 
-        this.SetTextCursor(this.selectionTimer.Running);
-
-        this.Parent!.IsChildHoveringText = false;
-        this.isMouseOverText = false;
+        this.isMouseOverText = IsHoveringText = false;
     }
 
     public void TargetMouseOver()
@@ -695,10 +680,9 @@ internal sealed partial class TextLayout : Layout
             return;
         }
 
-        this.SetTextCursor(true);
+        this.isMouseOverText = IsHoveringText = true;
 
-        this.Parent!.IsChildHoveringText = true;
-        this.isMouseOverText = true;
+        this.SetCursor(CursorKind.Text);
     }
 
     public void TargetRemoved(Element parentElement) =>

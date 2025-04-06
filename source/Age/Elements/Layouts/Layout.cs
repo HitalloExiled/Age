@@ -1,12 +1,16 @@
 using System.Runtime.CompilerServices;
 using Age.Core;
 using Age.Numerics;
+using Age.Platforms.Display;
 using Age.Scene;
 
 namespace Age.Elements.Layouts;
 
 internal abstract class Layout : Disposable
 {
+    public static bool IsHoveringText  { get; set; }
+    public static bool IsSelectingText { get; set; }
+
     protected virtual StencilLayer? ContentStencilLayer { get; }
 
     public bool IsDirty { get; private set; }
@@ -28,6 +32,14 @@ internal abstract class Layout : Disposable
     public abstract bool       IsParentDependent { get; }
     public abstract Layoutable Target            { get; }
 
+    protected void SetCursor(CursorKind? cursor)
+    {
+        if (this.Target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = cursor ?? default;
+        }
+    }
+
     protected override void Disposed(bool disposing)
     {
         if (disposing)
@@ -38,7 +50,7 @@ internal abstract class Layout : Disposable
 
     protected abstract void Disposed();
 
-    public void RequestUpdate(bool affectsBoundings)
+    public void RequestUpdate(bool affectsBoundings) // TODO: Remove recursion
     {
         if (!this.IsDirty && !this.Hidden)
         {
@@ -50,7 +62,7 @@ internal abstract class Layout : Disposable
             }
             else if (this.Target.Tree is RenderTree renderTree)
             {
-                if (this.Target.Parent != renderTree.Root && this.Target is not Canvas)
+                if (this.Target.Parent != renderTree.Root)
                 {
                     renderTree.AddDeferredUpdate(this.UpdateDirtyLayout);
                 }

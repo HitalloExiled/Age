@@ -657,16 +657,26 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
     {
         this.IsHovered = false;
-        this.Layout.State.RemoveState(StyledStateManager.State.Hovered);
-        this.Layout.TargetMouseOut();
+
+        if (!Layouts.Layout.IsSelectingText)
+        {
+            this.Layout.State.RemoveState(StyledStateManager.State.Hovered);
+            this.Layout.TargetMouseOut();
+        }
+
         this.MouseOutEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
     }
 
     internal void InvokeMouseOver(in PlatformMouseEvent platformMouseEvent)
     {
         this.IsHovered = true;
-        this.Layout.State.AddState(StyledStateManager.State.Hovered);
-        this.Layout.TargetMouseOver();
+
+        if (!Layouts.Layout.IsSelectingText)
+        {
+            this.Layout.State.AddState(StyledStateManager.State.Hovered);
+            this.Layout.TargetMouseOver();
+        }
+
         this.MouseOverEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
     }
 

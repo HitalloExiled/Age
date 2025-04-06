@@ -81,9 +81,6 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    public bool IsChildHoveringText  { get; set; }
-    public bool IsChildSelectingText { get; set; }
-
     public RectEdges  Border     => this.border;
     public Size<uint> Content    => this.content;
     public RectEdges  Margin     => this.margin;
@@ -247,7 +244,7 @@ internal sealed partial class BoxLayout : Layout
         {
             x = 1;
         }
-        else if (alignmentKind.HasFlags(AlignmentKind.Center) || stack == StackKind.Horizontal && itemsAlignment == ItemsAlignmentKind.Center)
+        else if (alignmentKind.HasFlags(AlignmentKind.Center) || stack == StackKind.Vertical && itemsAlignment == ItemsAlignmentKind.Center)
         {
             x = 0;
         }
@@ -264,7 +261,7 @@ internal sealed partial class BoxLayout : Layout
         {
             y = 1;
         }
-        else if (alignmentKind.HasFlags(AlignmentKind.Center) || stack == StackKind.Vertical && itemsAlignment == ItemsAlignmentKind.Center)
+        else if (alignmentKind.HasFlags(AlignmentKind.Center) || stack == StackKind.Horizontal && itemsAlignment == ItemsAlignmentKind.Center)
         {
             y = 0;
         }
@@ -385,7 +382,7 @@ internal sealed partial class BoxLayout : Layout
 
         if (resolvedSize && resolvedMargin && resolvedPadding)
         {
-            if (this.dependents.Count > 0 && (sizeHasChanged || this.childsChanged || this.dependenciesHasChanged || this.Target is Canvas))
+            if (this.dependents.Count > 0 && (sizeHasChanged || this.childsChanged || this.dependenciesHasChanged))
             {
                 this.CalculatePendingLayouts();
             }
@@ -778,9 +775,9 @@ internal sealed partial class BoxLayout : Layout
             };
         }
 
-        if (property is StyleProperty.All or StyleProperty.Cursor && this.target.IsHovered && !this.IsChildHoveringText && !this.IsChildSelectingText && this.target.Tree is RenderTree renderTree)
+        if (property is StyleProperty.All or StyleProperty.Cursor && this.target.IsHovered)
         {
-            renderTree.Window.Cursor = style.Cursor ?? default;
+            this.SetCursor(style.Cursor);
         }
 
         var oldParentDependent  = this.parentDependent;
@@ -1426,21 +1423,10 @@ internal sealed partial class BoxLayout : Layout
             : this.State.Style.Border.HasValue || this.State.Style.BackgroundColor.HasValue ? (uint)(this.Target.Index + 1) : 0;
     }
 
-    public void TargetMouseOut()
-    {
-        if (this.target.Tree is RenderTree renderTree && !this.IsChildSelectingText)
-        {
-            renderTree.Window.Cursor = default;
-        }
-    }
+    public void TargetMouseOut() { }
 
-    public void TargetMouseOver()
-    {
-        if (this.State.Style.Cursor.HasValue && this.target.Tree is RenderTree renderTree)
-        {
-            renderTree.Window.Cursor = this.State.Style.Cursor.Value;
-        }
-    }
+    public void TargetMouseOver() =>
+        this.SetCursor(this.State.Style.Cursor);
 
     public override void Update()
     {

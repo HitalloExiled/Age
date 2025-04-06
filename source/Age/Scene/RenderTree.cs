@@ -1,5 +1,6 @@
 using Age.Core.Extensions;
 using Age.Elements;
+using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Rendering.Vulkan;
@@ -336,6 +337,11 @@ public sealed partial class RenderTree : NodeTree
             this.lastHoveredText?.Layout.TargetMouseOut();
             this.lastHoveredText = null;
         }
+
+        if (!Layout.IsSelectingText && element == null && text == null)
+        {
+            this.Window.Cursor = default;
+        }
     }
 
     private void OnMouseUp(in Platforms.Display.MouseEvent mouseEvent)
@@ -344,6 +350,8 @@ public sealed partial class RenderTree : NodeTree
 
         var text    = node as Text;
         var element = text?.ComposedParentElement ?? node as Element;
+
+        var wasSelectingText = Layout.IsSelectingText;
 
         if (element != null)
         {
@@ -357,6 +365,14 @@ public sealed partial class RenderTree : NodeTree
 
         this.lastFocusedElement?.InvokeDeactivate();
         this.lastFocusedText?.InvokeDeactivate();
+
+        if (wasSelectingText != Layout.IsSelectingText)
+        {
+            this.lastHoveredElement = null;
+            this.lastHoveredText    = null;
+
+            this.OnMouseMove(mouseEvent);
+        }
     }
 
     [MemberNotNull(nameof(buffer))]
