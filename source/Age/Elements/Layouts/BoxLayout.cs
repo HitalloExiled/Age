@@ -1021,7 +1021,7 @@ internal sealed partial class BoxLayout : Layout
         }
         else if (this.State.Style.Margin?.Right?.TryGetEm(out var rightEm) == true)
         {
-            this.margin.Top = (uint)(rightEm * this.FontSize);
+            this.margin.Right = (uint)(rightEm * this.FontSize);
         }
 
         if (this.State.Style.Margin?.Bottom?.TryGetPixel(out var bottomPixel) == true)
@@ -1030,7 +1030,7 @@ internal sealed partial class BoxLayout : Layout
         }
         else if (this.State.Style.Margin?.Bottom?.TryGetEm(out var bottomEm) == true)
         {
-            this.margin.Top = (uint)(bottomEm * this.FontSize);
+            this.margin.Bottom = (uint)(bottomEm * this.FontSize);
         }
 
         if (this.State.Style.Margin?.Left?.TryGetPixel(out var leftPixel) == true)
@@ -1039,7 +1039,7 @@ internal sealed partial class BoxLayout : Layout
         }
         else if (this.State.Style.Margin?.Left?.TryGetEm(out var leftEm) == true)
         {
-            this.margin.Top = (uint)(leftEm * this.FontSize);
+            this.margin.Left = (uint)(leftEm * this.FontSize);
         }
 
         return !this.parentDependent.HasFlags(Dependency.Margin);
@@ -1063,7 +1063,7 @@ internal sealed partial class BoxLayout : Layout
         }
         else if (this.State.Style.Padding?.Right?.TryGetEm(out var rightEm) == true)
         {
-            this.padding.Top = (uint)(rightEm * this.FontSize);
+            this.padding.Right = (uint)(rightEm * this.FontSize);
         }
 
         if (this.State.Style.Padding?.Bottom?.TryGetPixel(out var bottomPixel) == true)
@@ -1072,7 +1072,7 @@ internal sealed partial class BoxLayout : Layout
         }
         else if (this.State.Style.Padding?.Bottom?.TryGetEm(out var bottomEm) == true)
         {
-            this.padding.Top = (uint)(bottomEm * this.FontSize);
+            this.padding.Bottom = (uint)(bottomEm * this.FontSize);
         }
 
         if (this.State.Style.Padding?.Left?.TryGetPixel(out var leftPixel) == true)
@@ -1081,7 +1081,7 @@ internal sealed partial class BoxLayout : Layout
         }
         else if (this.State.Style.Padding?.Left?.TryGetEm(out var leftEm) == true)
         {
-            this.padding.Top = (uint)(leftEm * this.FontSize);
+            this.padding.Left = (uint)(leftEm * this.FontSize);
         }
 
         return !this.parentDependent.HasFlags(Dependency.Padding);
