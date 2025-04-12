@@ -437,7 +437,7 @@ internal sealed partial class TextLayout : Layout
 
     private void TargetParentStyleChanged(StyleProperty property)
     {
-        if (property.HasFlags(StyleProperty.FontFamily | StyleProperty.FontSize | StyleProperty.FontWeight))
+        if (property.HasAnyFlag(StyleProperty.FontFamily | StyleProperty.FontSize | StyleProperty.FontWeight))
         {
             var style = this.Parent!.State.Style;
 
