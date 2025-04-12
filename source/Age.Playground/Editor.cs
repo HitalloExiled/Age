@@ -134,55 +134,55 @@ public class Editor : Node
         {
             this.setup = ShadowTreeTest.Setup;
 
-            window.Title = nameof(ShadowTreeTest);
+            window.Title = $"1 - {nameof(ShadowTreeTest)}";
         }
         else if (Input.IsKeyJustPressed(Key.Num2))
         {
             this.setup = BaselineTest.Setup;
 
-            window.Title = nameof(BaselineTest);
+            window.Title = $"2 - {nameof(BaselineTest)}";
         }
         else if (Input.IsKeyJustPressed(Key.Num3))
         {
             this.setup = BoxModelTest.Setup;
 
-            window.Title = nameof(BoxModelTest);
+            window.Title = $"3 - {nameof(BoxModelTest)}";
         }
         else if (Input.IsKeyJustPressed(Key.Num4))
         {
             this.setup = BoxSizingTest.Setup;
 
-            window.Title = nameof(BoxSizingTest);
+            window.Title = $"4 - {nameof(BoxSizingTest)}";
         }
         else if (Input.IsKeyJustPressed(Key.Num5))
         {
             this.setup = ContentJustificationTest.Setup;
 
-            window.Title = nameof(ContentJustificationTest);
+            window.Title = $"5 - {nameof(ContentJustificationTest)}";
         }
         else if (Input.IsKeyJustPressed(Key.Num6))
         {
             this.setup = ClippingTest.Setup;
 
-            window.Title = nameof(ClippingTest);
+            window.Title = $"6 - {nameof(ClippingTest)}";
         }
         else if (Input.IsKeyJustPressed(Key.Num7))
         {
             this.setup = MarginTest.Setup;
 
-            window.Title = nameof(MarginTest);
+            window.Title = $"7 - {nameof(MarginTest)}";
         }
         else if (Input.IsKeyJustPressed(Key.Num8))
         {
             this.setup = PaddingTest.Setup;
 
-            window.Title = nameof(PaddingTest);
+            window.Title = $"8 - {nameof(PaddingTest)}";
         }
         else if (Input.IsKeyJustPressed(Key.Num9))
         {
             this.setup = Tests.Playground.Setup;
 
-            window.Title = nameof(Playground);
+            window.Title = $"9 - {nameof(Playground)}";
         }
         else if (Input.IsKeyPressed(Key.Control) && Input.IsKeyJustPressed(Key.P))
         {

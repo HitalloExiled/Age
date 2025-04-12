@@ -3,6 +3,7 @@ using Age.Commands;
 using Age.Core.Extensions;
 using Age.Extensions;
 using Age.Numerics;
+using Age.Scene;
 using Age.Styling;
 
 using static Age.Shaders.CanvasShader;
@@ -815,6 +816,11 @@ internal sealed partial class BoxLayout : Layout
 
     private void StyleChanged(StyleProperty property)
     {
+        if (!this.Target.IsConnected)
+        {
+            return;
+        }
+
         var style = this.State.Style;
 
         var hidden = style.Hidden == true;
@@ -899,16 +905,10 @@ internal sealed partial class BoxLayout : Layout
 
                 if (this.parentDependent != Dependency.None)
                 {
-                    if (this.Target.AssignedSlot != null)
-                    {
-                        this.Target.AssignedSlot.Layout.dependents.Add(this.Target);
-                    }
-                    else
-                    {
-                        this.Parent.dependents.Add(this.Target);
-                    }
+                    var dependents = this.Target.AssignedSlot?.Layout.dependents ?? this.Parent.dependents;
 
-                    this.Parent.dependents.Sort();
+                    dependents.Add(this.Target);
+                    dependents.Sort();
                 }
             }
             else if (justHidden || justUndependent)
@@ -918,14 +918,9 @@ internal sealed partial class BoxLayout : Layout
                     this.Parent.renderableNodesCount--;
                 }
 
-                if (this.Target.AssignedSlot != null)
-                {
-                    this.Target.AssignedSlot.Layout.dependents.Remove(this.Target);
-                }
-                else
-                {
-                    this.Parent.dependents.Remove(this.Target);
-                }
+                var dependents = this.Target.AssignedSlot?.Layout.dependents ?? this.Parent.dependents;
+
+                dependents.Remove(this.Target);
             }
         }
 
@@ -1423,11 +1418,6 @@ internal sealed partial class BoxLayout : Layout
 
     public void LayoutableAppended(Layoutable layoutable)
     {
-        if (layoutable is Element element)
-        {
-            this.ElementAppended(element);
-        }
-
         if (!layoutable.Layout.Hidden)
         {
             this.childsChanged = true;
@@ -1451,15 +1441,6 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    public void ElementAppended(Element element)
-    {
-        if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
-        {
-            this.dependents.Add(element);
-            this.dependents.Sort();
-        }
-    }
-
     public void ElementRemoved(Element element)
     {
         if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
@@ -1471,6 +1452,8 @@ internal sealed partial class BoxLayout : Layout
     public override void TargetConnected()
     {
         base.TargetConnected();
+
+        this.StyleChanged(StyleProperty.All);
 
         if (this.ownStencilLayer != null)
         {
