@@ -13,9 +13,10 @@ internal partial class TextStorage : Disposable
     public static TextStorage Singleton => singleton ?? throw new NullReferenceException();
 
     private readonly Dictionary<int, TextureAtlas> atlases = [];
-    private readonly Dictionary<int, Glyph>        glyphs = [];
-    private readonly Dictionary<int, SKPaint>      paints = [];
+    private readonly Dictionary<int, Glyph>        glyphs  = [];
+    private readonly Dictionary<int, SKFont>       fonts   = [];
     private readonly VulkanRenderer                renderer;
+    private readonly SKPaint                       paint;
 
     public TextStorage(VulkanRenderer renderer)
     {
@@ -27,6 +28,11 @@ internal partial class TextStorage : Disposable
         singleton = this;
 
         this.renderer = renderer;
+        this.paint    = new()
+        {
+            Color       = SKColors.Black,
+            IsAntialias = true,
+        };
     }
 
     protected override void Disposed(bool disposing)
@@ -38,21 +44,23 @@ internal partial class TextStorage : Disposable
                 this.renderer.DeferredDispose(atlas);
             }
 
-            foreach (var paint in this.paints.Values)
+            foreach (var font in this.fonts.Values)
             {
-                paint.Dispose();
+                font.Dispose();
             }
 
+            this.paint.Dispose();
+
             this.atlases.Clear();
-            this.paints.Clear();
+            this.fonts.Clear();
         }
     }
 
-    public Glyph DrawGlyph(TextureAtlas atlas, char character, string fontFamily, ushort fontSize, in SKRect bounds, SKPaint paint)
+    public Glyph DrawGlyph(SKFont font, TextureAtlas atlas, char character, in SKRect bounds)
     {
         const ushort PADDING = 2;
 
-        var hashcode = character.GetHashCode() ^ fontFamily.GetHashCode() ^ fontSize.GetHashCode();
+        var hashcode = character.GetHashCode() ^ font.GetHashCode() ^ font.Size.GetHashCode();
 
         if (!this.glyphs.TryGetValue(hashcode, out var glyph))
         {
@@ -65,7 +73,7 @@ internal partial class TextStorage : Disposable
 
             using var canvas = new SKCanvas(bitmap);
 
-            canvas.DrawText(charString, PADDING + -bounds.Location.X, PADDING + -bounds.Location.Y, paint);
+            canvas.DrawText(charString, PADDING + -bounds.Location.X, PADDING + -bounds.Location.Y, font, this.paint);
 
             var position = atlas.Pack(bitmap.GetPixelSpan().Cast<byte, uint>(), new((uint)bitmap.Width, (uint)bitmap.Height));
 
@@ -98,25 +106,21 @@ internal partial class TextStorage : Disposable
         return atlas!;
     }
 
-    public SKPaint GetPaint(string fontFamily, float fontSize, int fontWeight)
+    public SKFont GetFont(string fontFamily, float fontSize, int fontWeight)
     {
         var hashcode = HashCode.Combine(fontFamily, fontSize, fontWeight);
 
-        ref var paint = ref this.paints.GetValueRefOrAddDefault(hashcode, out var exists);
+        ref var font = ref this.fonts.GetValueRefOrAddDefault(hashcode, out var exists);
 
         if (!exists)
         {
-            paint = new SKPaint
+            font = new SKFont(SKTypeface.FromFamilyName(fontFamily, (SKFontStyleWeight)fontWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright))
             {
-                Color        = SKColors.Black,
-                IsAntialias  = true,
-                TextAlign    = SKTextAlign.Left,
-                TextSize     = fontSize,
-                Typeface     = SKTypeface.FromFamilyName(fontFamily, (SKFontStyleWeight)fontWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright),
-                SubpixelText = false,
+                Size     = fontSize,
+                Subpixel = false
             };
         }
 
-        return paint!;
+        return font!;
     }
 }

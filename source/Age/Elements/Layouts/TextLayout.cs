@@ -26,9 +26,9 @@ internal sealed partial class TextLayout : Layout
 
     private bool           caretIsDirty;
     private bool           caretIsVisible;
+    private SKFont?        font;
     private float          fontLeading;
     private bool           isMouseOverText;
-    private SKPaint?       paint;
     private Vector2<float> previouCursor;
     private bool           selectionIsDirty;
     private bool           textIsDirty;
@@ -270,7 +270,7 @@ internal sealed partial class TextLayout : Layout
 
     private void DrawText()
     {
-        if (this.paint == null)
+        if (this.font == null)
         {
             throw new InvalidOperationException();
         }
@@ -279,16 +279,15 @@ internal sealed partial class TextLayout : Layout
 
         var style = this.target.ComposedParentElement!.Layout.State.Style;
 
-        var glyphs = this.paint.Typeface.GetGlyphs(text);
-        var font   = this.paint.ToFont();
-        var atlas  = TextStorage.Singleton.GetAtlas(this.paint.Typeface!.FamilyName, (uint)this.paint.TextSize);
+        var glyphs = this.font.Typeface.GetGlyphs(text);
+        var atlas  = TextStorage.Singleton.GetAtlas(this.font.Typeface.FamilyName, (uint)this.font.Size);
 
         using var glyphsBoundsRef = new RefArray<SKRect>(glyphs.Length);
         using var glyphsWidths    = new RefArray<float>(glyphs.Length);
 
         var glyphsBounds = glyphsBoundsRef.AsSpan();
 
-        font.GetGlyphWidths(glyphs, glyphsWidths, glyphsBounds, this.paint);
+        this.font.GetGlyphWidths(glyphs, glyphsWidths, glyphsBounds);
 
         var baseLine   = -this.BaseLine;
         var cursor     = new Point<int>(0, baseLine);
@@ -334,7 +333,7 @@ internal sealed partial class TextLayout : Layout
             {
                 ref readonly var bounds = ref glyphsBounds[i];
 
-                var glyph    = TextStorage.Singleton.DrawGlyph(atlas, character, this.paint.Typeface.FamilyName, (ushort)this.paint.TextSize, bounds, this.paint);
+                var glyph    = TextStorage.Singleton.DrawGlyph(this.font, atlas, character, bounds);
                 var size     = new Size<float>(bounds.Width, bounds.Height);
                 var position = new Point<float>(float.Round(cursor.X + bounds.Left), float.Round(cursor.Y - bounds.Top));
                 var color    = style.Color ?? new();
@@ -445,10 +444,10 @@ internal sealed partial class TextLayout : Layout
             var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
             var fontWeight = (int)(style.FontWeight ?? FontWeight.Normal);
 
-            if (this.paint?.TextSize != this.Parent.FontSize || this.paint.Typeface.FamilyName != fontFamily || this.paint.Typeface.FontWeight != fontWeight)
+            if (this.font?.Size != this.Parent.FontSize || this.font.Typeface.FamilyName != fontFamily || this.font.Typeface.FontWeight != fontWeight)
             {
-                this.paint = TextStorage.Singleton.GetPaint(fontFamily, this.Parent.FontSize, fontWeight);
-                this.paint.GetFontMetrics(out var metrics);
+                this.font = TextStorage.Singleton.GetFont(fontFamily, this.Parent.FontSize, fontWeight);
+                this.font.GetFontMetrics(out var metrics);
 
                 this.LineHeight  = (uint)float.Round(-metrics.Ascent + metrics.Descent);
                 this.BaseLine    = (int)float.Round(-metrics.Ascent);
