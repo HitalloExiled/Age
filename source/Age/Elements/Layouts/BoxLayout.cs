@@ -43,16 +43,76 @@ internal sealed partial class BoxLayout : Layout
     private Size<uint>    size;
     private Size<uint>    staticContent;
 
-    private Size<uint> SizeWithMargin =>
+    private Size<uint> AbsoluteBoundings
+    {
+        get
+        {
+            var size    = this.size;
+            var padding = this.padding;
+            var margin  = this.margin;
+            var style   = this.State.Style;
+
+            if (this.parentDependent.HasFlags(Dependency.Width))
+            {
+                size.Width = this.content.Width;
+            }
+
+            if (this.parentDependent.HasFlags(Dependency.Height))
+            {
+                size.Height = this.content.Height;
+            }
+
+            if (style.Margin?.Left?.Kind == UnitKind.Percentage)
+            {
+                margin.Left = 0;
+            }
+
+            if (style.Margin?.Right?.Kind == UnitKind.Percentage)
+            {
+                margin.Right = 0;
+            }
+
+            if (style.Margin?.Top?.Kind == UnitKind.Percentage)
+            {
+                margin.Top = 0;
+            }
+
+            if (style.Margin?.Bottom?.Kind == UnitKind.Percentage)
+            {
+                margin.Bottom = 0;
+            }
+
+            if (style.Padding?.Left?.Kind == UnitKind.Percentage)
+            {
+                padding.Left = 0;
+            }
+
+            if (style.Padding?.Right?.Kind == UnitKind.Percentage)
+            {
+                padding.Right = 0;
+            }
+
+            if (style.Padding?.Top?.Kind == UnitKind.Percentage)
+            {
+                padding.Top = 0;
+            }
+
+            if (style.Padding?.Bottom?.Kind == UnitKind.Percentage)
+            {
+                padding.Bottom = 0;
+            }
+
+            return new(
+                size.Width  + padding.Horizontal + this.border.Horizontal + margin.Horizontal,
+                size.Height + padding.Vertical   + this.border.Vertical   + margin.Vertical
+            );
+        }
+    }
+
+    private Size<uint> BoundingsWithMargin =>
         new(
             this.size.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
             this.size.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
-        );
-
-    private Size<uint> ContentWithMargin =>
-        new(
-            this.content.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
-            this.content.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
         );
 
     protected override StencilLayer? ContentStencilLayer => this.ownStencilLayer ?? this.StencilLayer;
@@ -323,11 +383,10 @@ internal sealed partial class BoxLayout : Layout
             {
                 dependencies = element.Layout.parentDependent;
 
-                var sizeWithMargin    = element.Layout.SizeWithMargin;
-                var contentWithMargin = element.Layout.ContentWithMargin;
+                var boudings = element.Layout.AbsoluteBoundings;
 
-                childSize.Width  = dependencies.HasFlags(Dependency.Width)  ? contentWithMargin.Width  : sizeWithMargin.Width;
-                childSize.Height = dependencies.HasFlags(Dependency.Height) ? contentWithMargin.Height : sizeWithMargin.Height;
+                childSize.Width  = boudings.Width;
+                childSize.Height = boudings.Height;
             }
             else
             {
@@ -521,7 +580,7 @@ internal sealed partial class BoxLayout : Layout
 
                     if (modified)
                     {
-                        content.Width = content.Width.ClampSubtract(dependent.Layout.SizeWithMargin.Width);
+                        content.Width = content.Width.ClampSubtract(dependent.Layout.AbsoluteBoundings.Width);
 
                         if (stack == StackKind.Horizontal)
                         {
@@ -644,7 +703,7 @@ internal sealed partial class BoxLayout : Layout
 
                     if (modified)
                     {
-                        content.Height = content.Height.ClampSubtract(dependent.Layout.SizeWithMargin.Height);
+                        content.Height = content.Height.ClampSubtract(dependent.Layout.AbsoluteBoundings.Height);
 
                         if (stack == StackKind.Vertical)
                         {
@@ -1194,7 +1253,7 @@ internal sealed partial class BoxLayout : Layout
             {
                 margin         = element.Layout.margin;
                 contentOffsetY = element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top;
-                childBoundings = element.Layout.SizeWithMargin;
+                childBoundings = element.Layout.BoundingsWithMargin;
                 alignmentType  = element.Layout.State.Style.Alignment ?? AlignmentKind.None;
             }
 
