@@ -437,16 +437,17 @@ internal sealed partial class TextLayout : Layout
 
     private void TargetParentStyleChanged(StyleProperty property)
     {
-        if (property != StyleProperty.Color)
+        if (property.HasFlags(StyleProperty.FontFamily | StyleProperty.FontSize | StyleProperty.FontWeight))
         {
             var style = this.Parent!.State.Style;
 
             var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
             var fontWeight = (int)(style.FontWeight ?? FontWeight.Normal);
+            var fontSize   = this.Parent.FontSize;
 
-            if (this.font?.Size != this.Parent.FontSize || this.font.Typeface.FamilyName != fontFamily || this.font.Typeface.FontWeight != fontWeight)
+            if (this.font?.Size != fontSize || this.font.Typeface.FamilyName != fontFamily || this.font.Typeface.FontWeight != fontWeight)
             {
-                this.font = TextStorage.Singleton.GetFont(fontFamily, this.Parent.FontSize, fontWeight);
+                this.font = TextStorage.Singleton.GetFont(fontFamily, fontSize, fontWeight);
                 this.font.GetFontMetrics(out var metrics);
 
                 this.LineHeight  = (uint)float.Round(-metrics.Ascent + metrics.Descent);

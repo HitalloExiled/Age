@@ -9,6 +9,8 @@ public record Style
 
     private StyleData data;
 
+    internal StyleData Data => this.data;
+
     public AlignmentKind? Alignment
     {
         get => this.data.Alignment;
@@ -171,44 +173,17 @@ public record Style
         }
     }
 
-    internal void Clear(bool notify)
-    {
+    internal void Clear() =>
         this.data = default;
 
-        if (notify)
-        {
-            Changed?.Invoke(StyleProperty.All);
-        }
-    }
-
-    internal void Copy(Style source, bool notify)
-    {
+    internal void Copy(Style source) =>
         this.data = source.data;
 
-        if (notify)
-        {
-            Changed?.Invoke(StyleProperty.All);
-        }
-    }
+    internal void Copy(Style source, StyleProperty property) =>
+        this.data.Copy(source.data, property);
 
-    internal void Merge(Style source, bool notify)
-    {
+    internal void Merge(Style source) =>
         this.data.Merge(source.data);
-
-        if (notify)
-        {
-            Changed?.Invoke(StyleProperty.All);
-        }
-    }
-
-    public void Clear() =>
-        this.Clear(true);
-
-    public void Copy(Style source) =>
-        this.Copy(source, true);
-
-    public void Merge(Style source) =>
-        this.Merge(source, true);
 
     public override string ToString() =>
         this.data.ToString();

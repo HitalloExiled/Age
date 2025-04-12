@@ -1,146 +1,115 @@
-namespace Age.Styling;
 
 using Age.Core.Extensions;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+
+namespace Age.Styling;
 
 internal partial class StyledStateManager
 {
     public event Action<StyleProperty>? Changed;
 
-    private Style?        style;
-    private bool          isDirty;
-    private State         states;
-    private StyledStates? styles;
-    private Style?        userStyle;
-
     private State States
     {
-        get => this.states;
+        get;
         set
         {
-            if (this.states != value)
+            if (field != value)
             {
-                static bool hasValue(Style? style, State state, State previous, State current) =>
-                    style != null && (previous.HasFlags(state) || current.HasFlags(state));
+                field = value;
 
-                var shouldNotify =
-                    hasValue(this.Styles?.Focus,    State.Focus,    this.states, value)
-                 || hasValue(this.Styles?.Hovered,  State.Hovered,  this.states, value)
-                 || hasValue(this.Styles?.Disabled, State.Disabled, this.states, value)
-                 || hasValue(this.Styles?.Enabled,  State.Enabled,  this.states, value)
-                 || hasValue(this.Styles?.Checked,  State.Checked,  this.states, value)
-                 || hasValue(this.Styles?.Active,   State.Active,   this.states, value);
-
-                this.states = value;
-
-                if (shouldNotify)
-                {
-                    this.InvokeChanged(); // TODO: implements style properties differ
-                }
+                this.ApplyStyle(value);
             }
         }
     }
 
-    public Style Style
-    {
-        get
-        {
-            this.style ??= new();
-
-            if (this.isDirty)
-            {
-                if (this.Styles?.Base == null)
-                {
-                    this.style.Clear(false);
-                }
-                else
-                {
-                    this.style.Copy(this.Styles.Base, false);
-                }
-
-                if (this.UserStyle != null)
-                {
-                    this.style.Merge(this.UserStyle, false);
-                }
-
-                if (this.States.HasFlags(State.Focus) && this.Styles?.Focus != null)
-                {
-                    this.style.Merge(this.Styles.Focus, false);
-                }
-
-                if (this.States.HasFlags(State.Hovered) && this.Styles?.Hovered != null)
-                {
-                    this.style.Merge(this.Styles.Hovered, false);
-                }
-
-                if (this.States.HasFlags(State.Disabled) && this.Styles?.Disabled != null)
-                {
-                    this.style.Merge(this.Styles.Disabled, false);
-                }
-
-                if (this.States.HasFlags(State.Enabled) && this.Styles?.Enabled != null)
-                {
-                    this.style.Merge(this.Styles.Enabled, false);
-                }
-
-                if (this.States.HasFlags(State.Checked) && this.Styles?.Checked != null)
-                {
-                    this.style.Merge(this.Styles.Checked, false);
-                }
-
-                if (this.States.HasFlags(State.Active) && this.Styles?.Active != null)
-                {
-                    this.style.Merge(this.Styles.Active, false);
-                }
-
-                this.isDirty = false;
-            }
-
-            return this.style;
-        }
-    }
+    [field: AllowNull]
+    public Style Style => field ??= new();
 
     public StyledStates? Styles
     {
-        get => this.styles;
+        get;
         set
         {
-            if (this.styles != value)
+            if (field != value)
             {
-                this.styles = value;
+                this.ApplyStyle(this.States);
 
-                this.InvokeChanged();
+                field = value;
             }
         }
     }
 
     public Style? UserStyle
     {
-        get => this.userStyle;
+        get;
         set
         {
-            if (this.userStyle != value)
+            if (field != value)
             {
-                if (this.userStyle != null)
+                if (field != null)
                 {
-                    this.userStyle.Changed -= this.InvokeChanged;
+                    field.Changed -= this.OnStyleChanged;
                 }
 
                 if (value != null)
                 {
-                    value.Changed += this.InvokeChanged;
+                    value.Changed += this.OnStyleChanged;
                 }
 
-                this.userStyle = value;
+                field = value;
 
-                this.InvokeChanged();
+                this.ApplyStyle(this.States);
             }
         }
     }
 
-    private void InvokeChanged(StyleProperty property = StyleProperty.All)
+    private void OnStyleChanged(StyleProperty property)
     {
-        this.isDirty = true;
+        this.Style.Copy(this.UserStyle!, property);
         this.Changed?.Invoke(property);
+    }
+
+    private void ApplyStyle(State value)
+    {
+        var previous = this.Style.Data;
+
+        if (this.Styles?.Base != null)
+        {
+            this.Style.Copy(this.Styles.Base);
+        }
+        else
+        {
+            this.Style.Clear();
+        }
+
+        if (this.UserStyle != null)
+        {
+            this.Style.Merge(this.UserStyle);
+        }
+
+        merge(State.Focus,    this.Styles?.Focus);
+        merge(State.Hovered,  this.Styles?.Hovered);
+        merge(State.Disabled, this.Styles?.Disabled);
+        merge(State.Enabled,  this.Styles?.Enabled);
+        merge(State.Checked,  this.Styles?.Checked);
+        merge(State.Active,   this.Styles?.Active);
+
+        var changes = StyleData.Diff(this.Style.Data, previous);
+
+        if (changes != default)
+        {
+            this.Changed?.Invoke(changes);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void merge(State states, Style? style)
+        {
+            if (value.HasFlags(states) && style != null)
+            {
+                this.Style.Merge(style);
+            }
+        }
     }
 
     public void AddState(State state) =>

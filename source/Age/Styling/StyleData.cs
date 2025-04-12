@@ -67,6 +67,47 @@ internal struct StyleData
         target.Transform            = source.Transform            ?? fallback.Transform;
     }
 
+    public static StyleProperty Diff(in StyleData left, in StyleData right)
+    {
+        var changes = StyleProperty.None;
+
+        check(left.Alignment            == right.Alignment,            StyleProperty.Alignment);
+        check(left.BackgroundColor      == right.BackgroundColor,      StyleProperty.BackgroundColor);
+        check(left.Baseline             == right.Baseline,             StyleProperty.Baseline);
+        check(left.Border               == right.Border,               StyleProperty.Border);
+        check(left.BoxSizing            == right.BoxSizing,            StyleProperty.BoxSizing);
+        check(left.Color                == right.Color,                StyleProperty.Color);
+        check(left.ContentJustification == right.ContentJustification, StyleProperty.ContentJustification);
+        check(left.Cursor               == right.Cursor,               StyleProperty.Cursor);
+        check(left.FontFamily           == right.FontFamily,           StyleProperty.FontFamily);
+        check(left.FontSize             == right.FontSize,             StyleProperty.FontSize);
+        check(left.FontWeight           == right.FontWeight,           StyleProperty.FontWeight);
+        check(left.Hidden               == right.Hidden,               StyleProperty.Hidden);
+        check(left.ItemsAlignment       == right.ItemsAlignment,       StyleProperty.ItemsAlignment);
+        check(left.Margin               == right.Margin,               StyleProperty.Margin);
+        check(left.MaxSize              == right.MaxSize,              StyleProperty.MaxSize);
+        check(left.MinSize              == right.MinSize,              StyleProperty.MinSize);
+        check(left.Overflow             == right.Overflow,             StyleProperty.Overflow);
+        check(left.Padding              == right.Padding,              StyleProperty.Padding);
+        check(left.Positioning          == right.Positioning,          StyleProperty.Positioning);
+        check(left.Size                 == right.Size,                 StyleProperty.Size);
+        check(left.Stack                == right.Stack,                StyleProperty.Stack);
+        check(left.TextAlignment        == right.TextAlignment,        StyleProperty.TextAlignment);
+        check(left.TextSelection        == right.TextSelection,        StyleProperty.TextSelection);
+        check(left.Transform            == right.Transform,            StyleProperty.Transform);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void check(bool isEqual, StyleProperty property)
+        {
+            if (!isEqual)
+            {
+                changes |= property;
+            }
+        }
+
+        return changes;
+    }
+
     public static StyleData Merge(in StyleData left, in StyleData right)
     {
         Unsafe.SkipInit(out StyleData target);
@@ -121,5 +162,36 @@ internal struct StyleData
         appendProperty("Transform",            in this.Transform);
 
         return builder.ToString();
+    }
+
+    internal void Copy(in StyleData data, StyleProperty property)
+    {
+        switch (property)
+        {
+            case StyleProperty.Alignment:            this.Alignment            = data.Alignment;            break;
+            case StyleProperty.BackgroundColor:      this.BackgroundColor      = data.BackgroundColor;      break;
+            case StyleProperty.Baseline:             this.Baseline             = data.Baseline;             break;
+            case StyleProperty.Border:               this.Border               = data.Border;               break;
+            case StyleProperty.BoxSizing:            this.BoxSizing            = data.BoxSizing;            break;
+            case StyleProperty.Color:                this.Color                = data.Color;                break;
+            case StyleProperty.ContentJustification: this.ContentJustification = data.ContentJustification; break;
+            case StyleProperty.Cursor:               this.Cursor               = data.Cursor;               break;
+            case StyleProperty.FontFamily:           this.FontFamily           = data.FontFamily;           break;
+            case StyleProperty.FontSize:             this.FontSize             = data.FontSize;             break;
+            case StyleProperty.FontWeight:           this.FontWeight           = data.FontWeight;           break;
+            case StyleProperty.Hidden:               this.Hidden               = data.Hidden;               break;
+            case StyleProperty.ItemsAlignment:       this.ItemsAlignment       = data.ItemsAlignment;       break;
+            case StyleProperty.Margin:               this.Margin               = data.Margin;               break;
+            case StyleProperty.MaxSize:              this.MaxSize              = data.MaxSize;              break;
+            case StyleProperty.MinSize:              this.MinSize              = data.MinSize;              break;
+            case StyleProperty.Overflow:             this.Overflow             = data.Overflow;             break;
+            case StyleProperty.Padding:              this.Padding              = data.Padding;              break;
+            case StyleProperty.Positioning:          this.Positioning          = data.Positioning;          break;
+            case StyleProperty.Size:                 this.Size                 = data.Size;                 break;
+            case StyleProperty.Stack:                this.Stack                = data.Stack;                break;
+            case StyleProperty.TextAlignment:        this.TextAlignment        = data.TextAlignment;        break;
+            case StyleProperty.TextSelection:        this.TextSelection        = data.TextSelection;        break;
+            case StyleProperty.Transform:            this.Transform            = data.Transform;            break;
+        }
     }
 }
