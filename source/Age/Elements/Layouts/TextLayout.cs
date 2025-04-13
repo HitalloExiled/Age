@@ -461,10 +461,10 @@ internal sealed partial class TextLayout : Layout
 
                 this.caretIsDirty = true;
             }
-        }
 
-        this.textIsDirty = true;
-        this.RequestUpdate(true);
+            this.textIsDirty = true;
+            this.RequestUpdate(true);
+        }
     }
 
     protected override void Disposed()

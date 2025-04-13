@@ -50,26 +50,27 @@ internal abstract class Layout : Disposable
 
     protected abstract void Disposed();
 
-    public void RequestUpdate(bool affectsBoundings) // TODO: Remove recursion
+    public void RequestUpdate(bool affectsBoundings)
     {
-        if (!this.IsDirty && !this.Hidden)
+        for (var current = this; ; current = current.Parent)
         {
-            this.MakeDirty();
-
-            if ((this.IsParentDependent || affectsBoundings) && this.Parent != null)
+            if (current!.IsDirty || current.Hidden)
             {
-                this.Parent.RequestUpdate(affectsBoundings);
+                return;
             }
-            else if (this.Target.Tree is RenderTree renderTree)
+
+            current.MakeDirty();
+
+            var stopPropagation = !current.IsParentDependent && !affectsBoundings || current.Parent == null;
+
+            if (stopPropagation)
             {
-                if (this.Target.Parent != renderTree.Root)
+                if (current.Target.Tree is RenderTree renderTree)
                 {
-                    renderTree.AddDeferredUpdate(this.UpdateDirtyLayout);
+                    renderTree.AddDeferredUpdate(current.UpdateDirtyLayout);
                 }
-                else
-                {
-                    renderTree.MakeDirty();
-                }
+
+                return;
             }
         }
     }
