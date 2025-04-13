@@ -332,6 +332,21 @@ internal sealed partial class BoxLayout : Layout
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsAnyRelative(Unit? abs, Unit? min, Unit? max) =>
+        abs?.Kind == UnitKind.Percentage || min?.Kind == UnitKind.Percentage || max?.Kind == UnitKind.Percentage;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsAllNull(Unit? abs, Unit? min, Unit? max) =>
+        abs == null && min == null && max == null;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool HasRelativeEdges(StyleRectEdges? edges) =>
+            edges?.Top?.Kind   == UnitKind.Percentage
+        || edges?.Right?.Kind  == UnitKind.Percentage
+        || edges?.Bottom?.Kind == UnitKind.Percentage
+        || edges?.Left?.Kind   == UnitKind.Percentage;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ResolveDimension(uint fontSize, Unit? absUnit, Unit? minUnit, Unit? maxUnit, ref uint value, ref bool resolved)
     {
         if (absUnit?.TryGetPixel(out var pixel) == true)
@@ -882,9 +897,6 @@ internal sealed partial class BoxLayout : Layout
 
         var hidden = style.Hidden == true;
 
-        this.canScrollX = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX;
-        this.canScrollY = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY;
-
         if (property.HasFlags(StyleProperty.Border))
         {
             this.border = new()
@@ -901,88 +913,100 @@ internal sealed partial class BoxLayout : Layout
             this.SetCursor(style.Cursor);
         }
 
-        var oldParentDependent  = this.parentDependent;
-        var oldContentDependent = this.contentDependent;
+        var hasSizeChanges    = property.HasAnyFlag(StyleProperty.Size | StyleProperty.MinSize | StyleProperty.MaxSize);
+        var hasMarginChanges  = property.HasFlags(StyleProperty.Margin);
+        var hasPaddingChanges = property.HasFlags(StyleProperty.Padding);
 
-        if (property.HasAnyFlag(StyleProperty.Size | StyleProperty.MinSize | StyleProperty.MaxSize))
+        if (hasSizeChanges || hasMarginChanges || hasPaddingChanges)
         {
-            this.contentDependent = Dependency.None;
-            this.parentDependent  = Dependency.None;
+            var oldParentDependent  = this.parentDependent;
+            var oldContentDependent = this.contentDependent;
 
-            if (style.Size?.Width == null && style.MinSize?.Width == null && style.MaxSize?.Width == null)
+            if (hasSizeChanges)
             {
-                this.contentDependent |= Dependency.Width;
-            }
-            else if (style.Size?.Width?.Kind == UnitKind.Percentage || style.MinSize?.Width?.Kind == UnitKind.Percentage || style.MaxSize?.Width?.Kind == UnitKind.Percentage)
-            {
-                this.parentDependent |= Dependency.Width;
+                this.contentDependent = Dependency.None;
+                this.parentDependent  = Dependency.None;
+
+                var absWidth = style.Size?.Width;
+                var minWidth = style.MinSize?.Width;
+                var maxWidth = style.MaxSize?.Width;
+
+                var absHeight = style.Size?.Height;
+                var minHeight = style.MinSize?.Height;
+                var maxHeight = style.MaxSize?.Height;
+
+                if (IsAllNull(absWidth, minWidth, maxWidth))
+                {
+                    this.contentDependent |= Dependency.Width;
+                }
+                else if (IsAnyRelative(absWidth, minWidth, maxWidth))
+                {
+                    this.parentDependent |= Dependency.Width;
+                }
+
+                if (IsAllNull(absHeight, minHeight, maxHeight))
+                {
+                    this.contentDependent |= Dependency.Height;
+                }
+                else if (IsAnyRelative(absHeight, minHeight, maxHeight))
+                {
+                    this.parentDependent |= Dependency.Height;
+                }
             }
 
-            if (style.Size?.Height == null && style.MinSize?.Height == null && style.MaxSize?.Height == null)
-            {
-                this.contentDependent |= Dependency.Height;
-            }
-            else if (style.Size?.Height?.Kind == UnitKind.Percentage || style.MinSize?.Height?.Kind == UnitKind.Percentage || style.MaxSize?.Height?.Kind == UnitKind.Percentage)
-            {
-                this.parentDependent |= Dependency.Height;
-            }
-        }
-
-        if (property.HasFlags(StyleProperty.Margin))
-        {
-            if (style.Margin?.Top?.Kind == UnitKind.Percentage || style.Margin?.Right?.Kind == UnitKind.Percentage || style.Margin?.Bottom?.Kind == UnitKind.Percentage || style.Margin?.Left?.Kind == UnitKind.Percentage)
+            if (hasMarginChanges && HasRelativeEdges(style.Margin))
             {
                 this.parentDependent |= Dependency.Margin;
             }
-        }
 
-        if (property.HasFlags(StyleProperty.Padding))
-        {
-            if (style.Padding?.Top?.Kind == UnitKind.Percentage || style.Padding?.Right?.Kind == UnitKind.Percentage || style.Padding?.Bottom?.Kind == UnitKind.Percentage || style.Padding?.Left?.Kind == UnitKind.Percentage)
+            if (hasPaddingChanges && HasRelativeEdges(style.Padding))
             {
                 this.parentDependent |= Dependency.Padding;
             }
-        }
 
-        var justHidden      = hidden && !this.Hidden;
-        var justUnhidden    = !hidden && this.Hidden;
-        var justUndependent = oldParentDependent != Dependency.None && this.parentDependent == Dependency.None;
-        var justDependent   = oldParentDependent == Dependency.None && this.parentDependent != Dependency.None;
+            var justHidden      = hidden && !this.Hidden;
+            var justUnhidden    = !hidden && this.Hidden;
+            var justUndependent = oldParentDependent != Dependency.None && this.parentDependent == Dependency.None;
+            var justDependent   = oldParentDependent == Dependency.None && this.parentDependent != Dependency.None;
 
-        if (this.Parent != null)
-        {
-            this.Parent.dependenciesHasChanged = oldContentDependent != this.contentDependent || oldParentDependent != this.parentDependent;
-
-            if (justUnhidden || justDependent)
+            if (this.Parent != null)
             {
-                if (justUnhidden)
-                {
-                    this.Parent.renderableNodesCount++;
-                }
+                this.Parent.dependenciesHasChanged = oldContentDependent != this.contentDependent || oldParentDependent != this.parentDependent;
 
-                if (this.parentDependent != Dependency.None)
+                if (justUnhidden || justDependent)
                 {
+                    if (justUnhidden)
+                    {
+                        this.Parent.renderableNodesCount++;
+                    }
+
+                    if (this.parentDependent != Dependency.None)
+                    {
+                        var dependents = this.Target.AssignedSlot?.Layout.dependents ?? this.Parent.dependents;
+
+                        dependents.Add(this.Target);
+                        dependents.Sort();
+                    }
+                }
+                else if (justHidden || justUndependent)
+                {
+                    if (justHidden)
+                    {
+                        this.Parent.renderableNodesCount--;
+                    }
+
                     var dependents = this.Target.AssignedSlot?.Layout.dependents ?? this.Parent.dependents;
 
-                    dependents.Add(this.Target);
-                    dependents.Sort();
+                    dependents.Remove(this.Target);
                 }
-            }
-            else if (justHidden || justUndependent)
-            {
-                if (justHidden)
-                {
-                    this.Parent.renderableNodesCount--;
-                }
-
-                var dependents = this.Target.AssignedSlot?.Layout.dependents ?? this.Parent.dependents;
-
-                dependents.Remove(this.Target);
             }
         }
 
         if (property.HasFlags(StyleProperty.Overflow))
         {
+            this.canScrollX = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX;
+            this.canScrollY = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY;
+
             var currentIsScrollable = style.Overflow is not null and not OverflowKind.None and not OverflowKind.Clipping && this.contentDependent != (Dependency.Width | Dependency.Height);
 
             if (currentIsScrollable != this.IsScrollable)
@@ -1039,8 +1063,9 @@ internal sealed partial class BoxLayout : Layout
         this.Target.Visible = !hidden;
     }
 
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool ResolveHeight(ref uint height)
+    private bool ResolveHeight(ref uint value)
     {
         var resolved = !this.parentDependent.HasFlags(Dependency.Height);
 
@@ -1048,11 +1073,11 @@ internal sealed partial class BoxLayout : Layout
         {
             var style = this.ComputedStyle;
 
-            ResolveDimension(this.FontSize, style.Size?.Height, style.MinSize?.Height, style.MaxSize?.Height, ref height, ref resolved);
+            ResolveDimension(this.FontSize, style.Size?.Height, style.MinSize?.Height, style.MaxSize?.Height, ref value, ref resolved);
 
             if (this.State.Style.BoxSizing == BoxSizing.Border)
             {
-                height = height.ClampSubtract(this.border.Vertical);
+                value = value.ClampSubtract(this.border.Vertical);
             }
         }
 
@@ -1085,7 +1110,7 @@ internal sealed partial class BoxLayout : Layout
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool ResolveWidth(ref uint width)
+    private bool ResolveWidth(ref uint value)
     {
         var resolved = !this.parentDependent.HasFlags(Dependency.Width);
 
@@ -1093,11 +1118,11 @@ internal sealed partial class BoxLayout : Layout
         {
             var style = this.ComputedStyle;
 
-            ResolveDimension(this.FontSize, style.Size?.Width, style.MinSize?.Width, style.MaxSize?.Width, ref width, ref resolved);
+            ResolveDimension(this.FontSize, style.Size?.Width, style.MinSize?.Width, style.MaxSize?.Width, ref value, ref resolved);
 
             if (this.State.Style.BoxSizing == BoxSizing.Border)
             {
-                width = width.ClampSubtract(this.border.Horizontal);
+                value = value.ClampSubtract(this.border.Horizontal);
             }
         }
 
