@@ -1004,10 +1004,10 @@ internal sealed partial class BoxLayout : Layout
 
         if (property.HasFlags(StyleProperty.Overflow))
         {
-            this.canScrollX = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX;
-            this.canScrollY = style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY;
+            this.canScrollX = style.Overflow?.HasFlags(OverflowKind.ScrollX) == true;
+            this.canScrollY = style.Overflow?.HasFlags(OverflowKind.ScrollY) == true;
 
-            var currentIsScrollable = style.Overflow is not null and not OverflowKind.None and not OverflowKind.Clipping && this.contentDependent != (Dependency.Width | Dependency.Height);
+            var currentIsScrollable = (this.canScrollX || this.canScrollY) && this.contentDependent != (Dependency.Width | Dependency.Height);
 
             if (currentIsScrollable != this.IsScrollable)
             {
@@ -1024,7 +1024,7 @@ internal sealed partial class BoxLayout : Layout
                 this.IsScrollable = currentIsScrollable;
             }
 
-            if (style.Overflow is not (null or OverflowKind.None) && this.contentDependent != (Dependency.Width | Dependency.Height))
+            if (style.Overflow?.HasFlags(OverflowKind.Clipping) == true && this.contentDependent != (Dependency.Width | Dependency.Height))
             {
                 if (this.ownStencilLayer == null)
                 {
