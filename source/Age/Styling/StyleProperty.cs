@@ -31,3 +31,5 @@ public enum StyleProperty
 
     All = Alignment | BackgroundColor | Baseline | Border | BoxSizing | Color | ContentJustification | Cursor | FontFamily | FontSize | FontWeight | Hidden | ItemsAlignment | Margin | MaxSize | MinSize | Overflow | Padding | Positioning | Size | Stack | TextAlignment | TextSelection | Transform
 }
+
+

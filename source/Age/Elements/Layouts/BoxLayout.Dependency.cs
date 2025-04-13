@@ -12,5 +12,6 @@ internal partial class BoxLayout
         Height  = 1 << 1,
         Margin  = 1 << 2,
         Padding = 1 << 3,
+        Size    = Width | Height,
     }
 }

@@ -1,70 +1,114 @@
-using System.Runtime.CompilerServices;
-using System.Text;
 using Age.Numerics;
 using Age.Platforms.Display;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace Age.Styling;
 
 internal struct StyleData
 {
-    // 8-bytes
+    #region 8-bytes
+    /// <see cref="StyleProperty.FontFamily">
     public string? FontFamily;
+    #endregion
 
-    // 4-bytes
-    public AlignmentKind?            Alignment;
-    public Color?                    BackgroundColor;
-    public Unit?                     Baseline;
-    public Border?                   Border;
-    public BoxSizing?                BoxSizing;
-    public Color?                    Color;
+    #region 4-bytes
+    /// <see cref="StyleProperty.Alignment">
+    public AlignmentKind? Alignment;
+
+    /// <see cref="StyleProperty.BackgroundColor">
+    public Color? BackgroundColor;
+
+    /// <see cref="StyleProperty.Baseline">
+    public Unit? Baseline;
+
+    /// <see cref="StyleProperty.Border">
+    public Border? Border;
+
+    /// <see cref="StyleProperty.BoxSizing">
+    public BoxSizing? BoxSizing;
+
+    /// <see cref="StyleProperty.Color">
+    public Color? Color;
+
+    /// <see cref="StyleProperty.ContentJustification">
     public ContentJustificationKind? ContentJustification;
-    public CursorKind?               Cursor;
-    public FontWeight?               FontWeight;
-    public ItemsAlignmentKind?       ItemsAlignment;
-    public StyleRectEdges?           Margin;
-    public SizeUnit?                 MaxSize;
-    public SizeUnit?                 MinSize;
-    public OverflowKind?             Overflow;
-    public StyleRectEdges?           Padding;
-    public PositionKind?             Positioning;
-    public SizeUnit?                 Size;
-    public StackKind?                Stack;
-    public TextAlignmentKind?        TextAlignment;
-    public Transform2D?              Transform;
 
-    // 2-bytes
+    /// <see cref="StyleProperty.Cursor">
+    public CursorKind? Cursor;
+
+    /// <see cref="StyleProperty.FontWeight">
+    public FontWeight? FontWeight;
+
+    /// <see cref="StyleProperty.ItemsAlignment">
+    public ItemsAlignmentKind? ItemsAlignment;
+
+    /// <see cref="StyleProperty.Margin">
+    public StyleRectEdges? Margin;
+
+    /// <see cref="StyleProperty.MaxSize">
+    public SizeUnit? MaxSize;
+
+    /// <see cref="StyleProperty.MinSize">
+    public SizeUnit? MinSize;
+
+    /// <see cref="StyleProperty.Overflow">
+    public OverflowKind? Overflow;
+
+    /// <see cref="StyleProperty.Padding">
+    public StyleRectEdges? Padding;
+
+    /// <see cref="StyleProperty.Positioning">
+    public PositionKind? Positioning;
+
+    /// <see cref="StyleProperty.Size">
+    public SizeUnit? Size;
+
+    /// <see cref="StyleProperty.Stack">
+    public StackKind? Stack;
+
+    /// <see cref="StyleProperty.TextAlignment">
+    public TextAlignmentKind? TextAlignment;
+
+    /// <see cref="StyleProperty.Transform">
+    public Transform2D? Transform;
+    #endregion
+
+    #region 2-bytes
     public ushort? FontSize;
+    #endregion
 
-    // 1-byte aligment
+    #region 1-byte aligment
     public bool? Hidden;
     public bool? TextSelection;
+    #endregion
 
-    private static void Merge(ref StyleData target, in StyleData source, in StyleData fallback)
+    private static void Merge(ref StyleData target, in StyleData left, in StyleData right)
     {
-        target.Alignment            = source.Alignment            ?? fallback.Alignment;
-        target.BackgroundColor      = source.BackgroundColor      ?? fallback.BackgroundColor;
-        target.Baseline             = source.Baseline             ?? fallback.Baseline;
-        target.Border               = source.Border               ?? fallback.Border;
-        target.BoxSizing            = source.BoxSizing            ?? fallback.BoxSizing;
-        target.Color                = source.Color                ?? fallback.Color;
-        target.ContentJustification = source.ContentJustification ?? fallback.ContentJustification;
-        target.Cursor               = source.Cursor               ?? fallback.Cursor;
-        target.FontFamily           = source.FontFamily           ?? fallback.FontFamily;
-        target.FontSize             = source.FontSize             ?? fallback.FontSize;
-        target.FontWeight           = source.FontWeight           ?? fallback.FontWeight;
-        target.Hidden               = source.Hidden               ?? fallback.Hidden;
-        target.ItemsAlignment       = source.ItemsAlignment       ?? fallback.ItemsAlignment;
-        target.Margin               = source.Margin               ?? fallback.Margin;
-        target.MaxSize              = source.MaxSize              ?? fallback.MaxSize;
-        target.MinSize              = source.MinSize              ?? fallback.MinSize;
-        target.Overflow             = source.Overflow             ?? fallback.Overflow;
-        target.Padding              = source.Padding              ?? fallback.Padding;
-        target.Positioning          = source.Positioning          ?? fallback.Positioning;
-        target.Size                 = source.Size                 ?? fallback.Size;
-        target.Stack                = source.Stack                ?? fallback.Stack;
-        target.TextAlignment        = source.TextAlignment        ?? fallback.TextAlignment;
-        target.TextSelection        = source.TextSelection        ?? fallback.TextSelection;
-        target.Transform            = source.Transform            ?? fallback.Transform;
+        target.Alignment            = left.Alignment            ?? right.Alignment;
+        target.BackgroundColor      = left.BackgroundColor      ?? right.BackgroundColor;
+        target.Baseline             = left.Baseline             ?? right.Baseline;
+        target.Border               = left.Border               ?? right.Border;
+        target.BoxSizing            = left.BoxSizing            ?? right.BoxSizing;
+        target.Color                = left.Color                ?? right.Color;
+        target.ContentJustification = left.ContentJustification ?? right.ContentJustification;
+        target.Cursor               = left.Cursor               ?? right.Cursor;
+        target.FontFamily           = left.FontFamily           ?? right.FontFamily;
+        target.FontSize             = left.FontSize             ?? right.FontSize;
+        target.FontWeight           = left.FontWeight           ?? right.FontWeight;
+        target.Hidden               = left.Hidden               ?? right.Hidden;
+        target.ItemsAlignment       = left.ItemsAlignment       ?? right.ItemsAlignment;
+        target.Margin               = left.Margin               ?? right.Margin;
+        target.MaxSize              = left.MaxSize              ?? right.MaxSize;
+        target.MinSize              = left.MinSize              ?? right.MinSize;
+        target.Overflow             = left.Overflow             ?? right.Overflow;
+        target.Padding              = left.Padding              ?? right.Padding;
+        target.Positioning          = left.Positioning          ?? right.Positioning;
+        target.Size                 = left.Size                 ?? right.Size;
+        target.Stack                = left.Stack                ?? right.Stack;
+        target.TextAlignment        = left.TextAlignment        ?? right.TextAlignment;
+        target.TextSelection        = left.TextSelection        ?? right.TextSelection;
+        target.Transform            = left.Transform            ?? right.Transform;
     }
 
     public static StyleProperty Diff(in StyleData left, in StyleData right)
@@ -128,38 +172,40 @@ internal struct StyleData
         {
             if (value != null)
             {
-                if (builder.Length > 0)
-                {
-                    builder.Append("; ");
-                }
-
                 builder.Append($"{name}: {value}");
+                builder.Append("; ");
             }
         }
 
-        appendProperty("Alignment",            in this.Alignment);
-        appendProperty("BackgroundColor",      in this.BackgroundColor);
-        appendProperty("Baseline",             in this.Baseline);
-        appendProperty("Border",               in this.Border);
-        appendProperty("BoxSizing",            in this.BoxSizing);
-        appendProperty("Color",                in this.Color);
-        appendProperty("ContentJustification", in this.ContentJustification);
-        appendProperty("Cursor",               in this.Cursor);
-        appendProperty("FontFamily",           in this.FontFamily);
-        appendProperty("FontSize",             in this.FontSize);
-        appendProperty("FontWeight",           in this.FontWeight);
-        appendProperty("Hidden",               in this.Hidden);
-        appendProperty("ItemsAlignment",       in this.ItemsAlignment);
-        appendProperty("Margin",               in this.Margin);
-        appendProperty("MaxSize",              in this.MaxSize);
-        appendProperty("MinSize",              in this.MinSize);
-        appendProperty("Padding",              in this.Padding);
-        appendProperty("Positioning",          in this.Positioning);
-        appendProperty("Size",                 in this.Size);
-        appendProperty("Stack",                in this.Stack);
-        appendProperty("TextAlignment",        in this.TextAlignment);
-        appendProperty("TextSelection",        in this.TextSelection);
-        appendProperty("Transform",            in this.Transform);
+        appendProperty(nameof(StyleProperty.Alignment),            in this.Alignment);
+        appendProperty(nameof(StyleProperty.BackgroundColor),      in this.BackgroundColor);
+        appendProperty(nameof(StyleProperty.Baseline),             in this.Baseline);
+        appendProperty(nameof(StyleProperty.Border),               in this.Border);
+        appendProperty(nameof(StyleProperty.BoxSizing),            in this.BoxSizing);
+        appendProperty(nameof(StyleProperty.Color),                in this.Color);
+        appendProperty(nameof(StyleProperty.ContentJustification), in this.ContentJustification);
+        appendProperty(nameof(StyleProperty.Cursor),               in this.Cursor);
+        appendProperty(nameof(StyleProperty.FontFamily),           in this.FontFamily);
+        appendProperty(nameof(StyleProperty.FontSize),             in this.FontSize);
+        appendProperty(nameof(StyleProperty.FontWeight),           in this.FontWeight);
+        appendProperty(nameof(StyleProperty.Hidden),               in this.Hidden);
+        appendProperty(nameof(StyleProperty.ItemsAlignment),       in this.ItemsAlignment);
+        appendProperty(nameof(StyleProperty.Margin),               in this.Margin);
+        appendProperty(nameof(StyleProperty.MaxSize),              in this.MaxSize);
+        appendProperty(nameof(StyleProperty.MinSize),              in this.MinSize);
+        appendProperty(nameof(StyleProperty.Overflow),             in this.Overflow);
+        appendProperty(nameof(StyleProperty.Padding),              in this.Padding);
+        appendProperty(nameof(StyleProperty.Positioning),          in this.Positioning);
+        appendProperty(nameof(StyleProperty.Size),                 in this.Size);
+        appendProperty(nameof(StyleProperty.Stack),                in this.Stack);
+        appendProperty(nameof(StyleProperty.TextAlignment),        in this.TextAlignment);
+        appendProperty(nameof(StyleProperty.TextSelection),        in this.TextSelection);
+        appendProperty(nameof(StyleProperty.Transform),            in this.Transform);
+
+        if (builder.Length > 0)
+        {
+            builder.Remove(builder.Length - 2, 2);
+        }
 
         return builder.ToString();
     }

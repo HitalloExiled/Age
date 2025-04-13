@@ -654,6 +654,8 @@ internal sealed partial class TextLayout : Layout
 
     public void TargetIndexed()
     {
+        this.UpdateDirtyLayout();
+
         var elementIndex = this.target.Index + 1;
         var commands     = this.target.Commands.AsSpan(0, this.target.Buffer.Length);
 

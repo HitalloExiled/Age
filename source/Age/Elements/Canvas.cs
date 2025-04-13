@@ -35,7 +35,8 @@ public sealed class Canvas : Element
         renderTree.Window.Resized += this.OnWindowSizeChanged;
 
         this.OnWindowSizeChanged();
-        this.Layout.UpdateDirtyLayout();
+
+        renderTree.AddDeferredUpdate(this.Layout.UpdateDirtyLayout);
     }
 
     protected override void Disconnected(RenderTree renderTree)

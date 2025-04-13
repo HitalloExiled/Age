@@ -1,11 +1,12 @@
 
 using Age.Core.Extensions;
+using Age.Elements;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Age.Styling;
 
-internal partial class StyledStateManager
+internal partial class StyledStateManager(Element target)
 {
     public event Action<StyleProperty>? Changed;
 
@@ -18,7 +19,7 @@ internal partial class StyledStateManager
             {
                 field = value;
 
-                this.ApplyStyle(value);
+                this.Update();
             }
         }
     }
@@ -33,9 +34,9 @@ internal partial class StyledStateManager
         {
             if (field != value)
             {
-                this.ApplyStyle(this.States);
-
                 field = value;
+
+                this.Update();
             }
         }
     }
@@ -59,7 +60,7 @@ internal partial class StyledStateManager
 
                 field = value;
 
-                this.ApplyStyle(this.States);
+                this.Update();
             }
         }
     }
@@ -70,8 +71,21 @@ internal partial class StyledStateManager
         this.Changed?.Invoke(property);
     }
 
-    private void ApplyStyle(State value)
+
+
+    public void AddState(State state) =>
+        this.States |= state;
+
+    public void RemoveState(State state) =>
+        this.States &= ~state;
+
+    public void Update()
     {
+        if (!target.IsConnected)
+        {
+            return;
+        }
+
         var previous = this.Style.Data;
 
         if (this.Styles?.Base != null)
@@ -105,16 +119,13 @@ internal partial class StyledStateManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void merge(State states, Style? style)
         {
-            if (value.HasFlags(states) && style != null)
+            if (this.States.HasFlags(states) && style != null)
             {
                 this.Style.Merge(style);
             }
         }
     }
 
-    public void AddState(State state) =>
-        this.States |= state;
-
-    public void RemoveState(State state) =>
-        this.States &= ~state;
+    public override string ToString() =>
+        $"{{ Target: {target} }}";
 }
