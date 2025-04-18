@@ -1,7 +1,3 @@
-using System.Runtime.CompilerServices;
-using System.Text;
-using Age.Core;
-using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Platforms.Display;
 
@@ -11,504 +7,184 @@ public record Style
 {
     internal event Action<StyleProperty>? Changed;
 
-    private readonly Dictionary<StyleProperty, int>               values  = [];
-    private readonly Dictionary<StyleProperty, NativeArray<byte>> structs = [];
+    private StyleData data;
 
-    private static readonly NativeArrayPool<byte> arrayPool = new();
+    internal StyleData Data => this.data;
 
     public AlignmentKind? Alignment
     {
-        get => this.GetEnum<AlignmentKind>(StyleProperty.Alignment);
-        set => this.SetEnum(StyleProperty.Alignment, value);
+        get => this.data.Alignment;
+        set => this.Set(ref this.data.Alignment, value, StyleProperty.Alignment);
     }
 
     public Color? BackgroundColor
     {
-        get => this.GetStruct<Color>(StyleProperty.BackgroundColor);
-        set => this.SetStruct(StyleProperty.BackgroundColor, ref value);
+        get => this.data.BackgroundColor;
+        set => this.Set(ref this.data.BackgroundColor, value, StyleProperty.BackgroundColor);
     }
 
     public Unit? Baseline
     {
-        get => this.GetStruct<Unit>(StyleProperty.Baseline);
-        set => this.SetStruct(StyleProperty.Baseline, ref value);
+        get => this.data.Baseline;
+        set => this.Set(ref this.data.Baseline, value, StyleProperty.Baseline);
     }
 
     public Border? Border
     {
-        get => this.GetStruct<Border>(StyleProperty.Border);
-        set => this.SetStruct(StyleProperty.Border, ref value);
+        get => this.data.Border;
+        set => this.Set(ref this.data.Border, value, StyleProperty.Border);
     }
 
     public BoxSizing? BoxSizing
     {
-        get => this.GetEnum<BoxSizing>(StyleProperty.BoxSizing);
-        set => this.SetEnum(StyleProperty.BoxSizing, value);
+        get => this.data.BoxSizing;
+        set => this.Set(ref this.data.BoxSizing, value, StyleProperty.BoxSizing);
     }
 
     public Color? Color
     {
-        get => this.GetStruct<Color>(StyleProperty.Color);
-        set => this.SetStruct(StyleProperty.Color, ref value);
+        get => this.data.Color;
+        set => this.Set(ref this.data.Color, value, StyleProperty.Color);
     }
 
     public ContentJustificationKind? ContentJustification
     {
-        get => this.GetEnum<ContentJustificationKind>(StyleProperty.ContentJustification);
-        set => this.SetEnum(StyleProperty.ContentJustification, value);
+        get => this.data.ContentJustification;
+        set => this.Set(ref this.data.ContentJustification, value, StyleProperty.ContentJustification);
     }
 
     public CursorKind? Cursor
     {
-        get => this.GetEnum<CursorKind>(StyleProperty.Cursor);
-        set => this.SetEnum(StyleProperty.Cursor, value);
+        get => this.data.Cursor;
+        set => this.Set(ref this.data.Cursor, value, StyleProperty.Cursor);
     }
 
     public string? FontFamily
     {
-        get => this.GetString(StyleProperty.FontFamily);
-        set => this.SetString(StyleProperty.FontFamily, value);
+        get => this.data.FontFamily;
+        set => this.Set(ref this.data.FontFamily, value, StyleProperty.FontFamily);
     }
 
-    public uint? FontSize
+    public ushort? FontSize
     {
-        get => (uint?)this.GetValue(StyleProperty.FontSize);
-        set => this.SetValue(StyleProperty.FontSize, (int?)value);
+        get => this.data.FontSize;
+        set => this.Set(ref this.data.FontSize, value, StyleProperty.FontSize);
     }
 
     public FontWeight? FontWeight
     {
-        get => (FontWeight?)this.GetValue(StyleProperty.FontWeight);
-        set => this.SetValue(StyleProperty.FontWeight, (int?)value);
+        get => this.data.FontWeight;
+        set => this.Set(ref this.data.FontWeight, value, StyleProperty.FontWeight);
     }
 
     public bool? Hidden
     {
-        get => this.GetBool(StyleProperty.FontWeight);
-        set => this.SetBool(StyleProperty.FontWeight, value);
+        get => this.data.Hidden;
+        set => this.Set(ref this.data.Hidden, value, StyleProperty.Hidden);
     }
 
     public ItemsAlignmentKind? ItemsAlignment
     {
-        get => this.GetEnum<ItemsAlignmentKind>(StyleProperty.ItemsAlignment);
-        set => this.SetEnum(StyleProperty.ItemsAlignment, value);
+        get => this.data.ItemsAlignment;
+        set => this.Set(ref this.data.ItemsAlignment, value, StyleProperty.ItemsAlignment);
     }
 
     public StyleRectEdges? Margin
     {
-        get => this.GetStruct<StyleRectEdges>(StyleProperty.Margin);
-        set => this.SetStruct(StyleProperty.Margin, ref value);
+        get => this.data.Margin;
+        set => this.Set(ref this.data.Margin, value, StyleProperty.Margin);
     }
 
     public SizeUnit? MaxSize
     {
-        get => this.GetStruct<SizeUnit>(StyleProperty.MaxSize);
-        set => this.SetStruct(StyleProperty.MaxSize, ref value);
+        get => this.data.MaxSize;
+        set => this.Set(ref this.data.MaxSize, value, StyleProperty.MaxSize);
     }
 
     public SizeUnit? MinSize
     {
-        get => this.GetStruct<SizeUnit>(StyleProperty.MinSize);
-        set => this.SetStruct(StyleProperty.MinSize, ref value);
+        get => this.data.MinSize;
+        set => this.Set(ref this.data.MinSize, value, StyleProperty.MinSize);
     }
 
     public OverflowKind? Overflow
     {
-        get => this.GetEnum<OverflowKind>(StyleProperty.Overflow);
-        set => this.SetEnum(StyleProperty.Overflow, value);
+        get => this.data.Overflow;
+        set => this.Set(ref this.data.Overflow, value, StyleProperty.Overflow);
     }
 
     public StyleRectEdges? Padding
     {
-        get => this.GetStruct<StyleRectEdges>(StyleProperty.Padding);
-        set => this.SetStruct(StyleProperty.Padding, ref value);
+        get => this.data.Padding;
+        set => this.Set(ref this.data.Padding, value, StyleProperty.Padding);
     }
 
     public PositionKind? Positioning
     {
-        get => this.GetEnum<PositionKind>(StyleProperty.Positioning);
-        set => this.SetEnum(StyleProperty.Positioning, value);
+        get => this.data.Positioning;
+        set => this.Set(ref this.data.Positioning, value, StyleProperty.Positioning);
     }
 
     public SizeUnit? Size
     {
-        get => this.GetStruct<SizeUnit>(StyleProperty.Size);
-        set => this.SetStruct(StyleProperty.Size, ref value);
+        get => this.data.Size;
+        set => this.Set(ref this.data.Size, value, StyleProperty.Size);
     }
 
     public StackKind? Stack
     {
-        get => this.GetEnum<StackKind>(StyleProperty.Stack);
-        set => this.SetEnum(StyleProperty.Stack, value);
+        get => this.data.Stack;
+        set => this.Set(ref this.data.Stack, value, StyleProperty.Stack);
     }
 
     public TextAlignmentKind? TextAlignment
     {
-        get => this.GetEnum<TextAlignmentKind>(StyleProperty.TextAlignment);
-        set => this.SetEnum(StyleProperty.TextAlignment, value);
+        get => this.data.TextAlignment;
+        set => this.Set(ref this.data.TextAlignment, value, StyleProperty.TextAlignment);
     }
 
     public bool? TextSelection
     {
-        get => this.GetBool(StyleProperty.TextSelection);
-        set => this.SetBool(StyleProperty.TextSelection, value);
+        get => this.data.TextSelection;
+        set => this.Set(ref this.data.TextSelection, value, StyleProperty.TextSelection);
     }
 
     public Transform2D? Transform
     {
-        get => this.GetStruct<Transform2D>(StyleProperty.Transform);
-        set => this.SetStruct(StyleProperty.Transform, ref value);
+        get => this.data.Transform;
+        set => this.Set(ref this.data.Transform, value, StyleProperty.Transform);
     }
 
-    public Style(Style style)
+    private Style(StyleData data) =>
+        this.data = data;
+
+    public Style() { }
+
+    public static Style Merge(Style left, Style right) =>
+        new(StyleData.Merge(left.data, right.data));
+
+    private void Set<T>(ref T? field, T? value, StyleProperty property)
     {
-        this.values  = new(style.values);
-        this.structs = [];
-
-        foreach (var (key, value) in style.structs)
+        if (!Equals(field, value))
         {
-            this.structs[key] = arrayPool.GetCopy(value);
+            field = value;
+
+            Changed?.Invoke(property);
         }
     }
 
-    public static StyleProperty Diff(Style left, Style right)
-    {
-        StyleProperty changes = default;
+    internal void Clear() =>
+        this.data = default;
 
-        foreach (var (key, value) in right.values)
-        {
-            if (!left.values.TryGetValue(key, out var entry) || entry != value)
-            {
-                changes |= key;
-            }
-        }
+    internal void Copy(Style source) =>
+        this.data = source.data;
 
-        foreach (var (key, value) in right.structs)
-        {
-            if (!left.structs.TryGetValue(key, out var entry) || !entry.AsSpan().SequenceEqual(value))
-            {
-                changes |= key;
-            }
-        }
+    internal void Copy(Style source, StyleProperty property) =>
+        this.data.Copy(source.data, property);
 
-        foreach (var (key, value) in left.values)
-        {
-            if (changes.HasFlags(key))
-            {
-                continue;
-            }
+    internal void Merge(Style source) =>
+        this.data.Merge(source.data);
 
-            if (!right.values.ContainsKey(key))
-            {
-                changes |= key;
-            }
-        }
-
-        foreach (var (key, value) in left.structs)
-        {
-            if (changes.HasFlags(key))
-            {
-                continue;
-            }
-
-            if (!right.structs.ContainsKey(key))
-            {
-                changes |= key;
-            }
-        }
-
-        return changes;
-    }
-
-    public static Style Merge(Style left, Style right)
-    {
-        var style = new Style(left);
-
-        foreach (var (key, value) in right.values)
-        {
-            style.values.TryAdd(key, value);
-        }
-
-        foreach (var (key, value) in right.structs)
-        {
-            ref var entry = ref style.structs.GetValueRefOrAddDefault(key, out var exists);
-
-            if (!exists)
-            {
-                entry = arrayPool.GetCopy(value);
-            }
-        }
-
-        return style;
-    }
-
-    private static void CopyString(StyleProperty property, Style source, Style target)
-    {
-        if (source.structs.TryGetValue(property, out var sourceString))
-        {
-            ref var targetString = ref target.structs.GetValueRefOrAddDefault(property, out var exists);
-
-            if (!exists)
-            {
-                targetString = arrayPool.GetCopy(sourceString);
-            }
-            else
-            {
-                if (targetString!.Length != sourceString.Length)
-                {
-                    targetString.Resize(sourceString.Length);
-                }
-
-                sourceString.CopyTo(targetString!);
-            }
-        }
-        else
-        {
-            target.structs.Remove(property);
-        }
-    }
-
-    private static void CopyStruct(StyleProperty property, Style source, Style target)
-    {
-        if (source.structs.TryGetValue(property, out var sourceSruct))
-        {
-            ref var targetStruct = ref target.structs.GetValueRefOrAddDefault(property, out var exists);
-
-            if (!exists)
-            {
-                targetStruct = arrayPool.GetCopy(sourceSruct);
-            }
-            else
-            {
-                sourceSruct.CopyTo(targetStruct!);
-            }
-        }
-        else
-        {
-            target.structs.Remove(property);
-        }
-    }
-
-    private static void CopyValue(StyleProperty property, Style source, Style target)
-    {
-        if (source.values.TryGetValue(property, out var smallEntry))
-        {
-            target.values[property] = smallEntry;
-        }
-        else
-        {
-            target.values.Remove(property);
-        }
-    }
-
-    private bool? GetBool(StyleProperty property) =>
-        this.GetValue(property) is int value ? value == 1 : null;
-
-    private T? GetEnum<T>(StyleProperty property) where T : struct, Enum =>
-        this.values.TryGetValue(property, out var value) ? Unsafe.As<int, T>(ref value) : null;
-
-    private string? GetString(StyleProperty property) =>
-        this.structs.TryGetValue(property, out var buffer) ? new(buffer.AsSpan().Cast<byte, char>()) : null;
-
-    private T? GetStruct<T>(StyleProperty property) where T : unmanaged =>
-        this.structs.TryGetValue(property, out var buffer) ? buffer.AsSpan().AsStructRef<T>() : null;
-
-    private int? GetValue(StyleProperty property) =>
-        this.values.TryGetValue(property, out var value) ? value : null;
-
-    private void SetBool(StyleProperty property, bool? value) =>
-        this.SetValue(property, value.HasValue ? value.Value ? 1 : 0 : null);
-
-    private unsafe void SetEnum<T>(StyleProperty property, T? value) where T : unmanaged, Enum
-    {
-        if (sizeof(T) != sizeof(int))
-        {
-            throw new InvalidOperationException("The provided enum type must have an underlying type of int.");
-        }
-
-        this.SetValue(property, Unsafe.As<T?, int?>(ref value));
-    }
-
-    private unsafe void SetStruct<T>(StyleProperty property, ref T? value) where T : unmanaged, IEquatable<T>
-    {
-        if (!value.HasValue)
-        {
-            if (this.structs.Remove(property, out var entry))
-            {
-                arrayPool.Return(entry);
-            }
-        }
-        else
-        {
-            ref var buffer = ref this.structs.GetValueRefOrAddDefault(property, out var exists);
-
-            if (!exists)
-            {
-                buffer = arrayPool.Get(sizeof(T));
-            }
-
-            ref var left = ref buffer!.AsSpan().AsStructRef<T>();
-            ref readonly var right = ref Nullable.GetValueRefOrDefaultRef(ref value);
-
-            if (!exists || !left.Equals(right))
-            {
-                left = right;
-
-                this.Changed?.Invoke(property);
-            }
-        }
-    }
-
-    private unsafe void SetString(StyleProperty property, string? value)
-    {
-        if (value == null)
-        {
-            if (this.structs.Remove(property, out var entry))
-            {
-                arrayPool.Return(entry);
-            }
-        }
-        else
-        {
-            ref var entry = ref this.structs.GetValueRefOrAddDefault(property, out var exists);
-
-            var buffer = value.AsSpan().Cast<char, byte>();
-
-            if (!exists)
-            {
-                entry = arrayPool.Get(buffer.Length);
-            }
-            else if (entry!.Length != buffer.Length)
-            {
-                entry.Resize(buffer.Length);
-            }
-
-            if (!exists || !buffer.SequenceEqual(entry!))
-            {
-                buffer.CopyTo(entry!);
-
-                this.Changed?.Invoke(property);
-            }
-        }
-    }
-
-    private unsafe void SetValue(StyleProperty property, int? value)
-    {
-        if (!value.HasValue)
-        {
-            this.values.Remove(property);
-        }
-        else
-        {
-            ref var entry = ref this.values.GetValueRefOrAddDefault(property, out var exists);
-
-            if (!exists || entry != value)
-            {
-                entry = value.Value;
-                this.Changed?.Invoke(property);
-            }
-        }
-    }
-
-    internal void Clear()
-    {
-        foreach (var entry in this.structs.Values)
-        {
-            arrayPool.Return(entry);
-        }
-
-        this.values.Clear();
-        this.structs.Clear();
-    }
-
-    internal void Copy(Style source)
-    {
-        this.Clear();
-        this.Merge(source);
-    }
-
-    internal void Copy(Style source, StyleProperty property)
-    {
-        switch (property)
-        {
-            case StyleProperty.FontFamily:
-                CopyString(property, source, this);
-                break;
-
-            case StyleProperty.BackgroundColor:
-            case StyleProperty.Border:
-            case StyleProperty.Color:
-            case StyleProperty.Margin:
-            case StyleProperty.MaxSize:
-            case StyleProperty.MinSize:
-            case StyleProperty.Padding:
-            case StyleProperty.Size:
-            case StyleProperty.Transform:
-                CopyStruct(property, source, this);
-                break;
-
-            default:
-                CopyValue(property, source, this);
-                break;
-        }
-    }
-
-    internal void Merge(Style source)
-    {
-        foreach (var (key, value) in source.values)
-        {
-            this.values[key] = value;
-        }
-
-        foreach (var (key, value) in source.structs)
-        {
-            this.structs[key] = arrayPool.GetCopy(value);
-        }
-    }
-
-    public override string ToString()
-    {
-        var builder = new StringBuilder();
-
-        void appendProperty<T>(string name, in T? value)
-        {
-            if (value != null)
-            {
-                builder.Append($"{name}: {value}");
-                builder.Append("; ");
-            }
-        }
-
-        appendProperty(nameof(StyleProperty.Alignment),            this.Alignment);
-        appendProperty(nameof(StyleProperty.BackgroundColor),      this.BackgroundColor);
-        appendProperty(nameof(StyleProperty.Baseline),             this.Baseline);
-        appendProperty(nameof(StyleProperty.Border),               this.Border);
-        appendProperty(nameof(StyleProperty.BoxSizing),            this.BoxSizing);
-        appendProperty(nameof(StyleProperty.Color),                this.Color);
-        appendProperty(nameof(StyleProperty.ContentJustification), this.ContentJustification);
-        appendProperty(nameof(StyleProperty.Cursor),               this.Cursor);
-        appendProperty(nameof(StyleProperty.FontFamily),           this.FontFamily);
-        appendProperty(nameof(StyleProperty.FontSize),             this.FontSize);
-        appendProperty(nameof(StyleProperty.FontWeight),           this.FontWeight);
-        appendProperty(nameof(StyleProperty.Hidden),               this.Hidden);
-        appendProperty(nameof(StyleProperty.ItemsAlignment),       this.ItemsAlignment);
-        appendProperty(nameof(StyleProperty.Margin),               this.Margin);
-        appendProperty(nameof(StyleProperty.MaxSize),              this.MaxSize);
-        appendProperty(nameof(StyleProperty.MinSize),              this.MinSize);
-        appendProperty(nameof(StyleProperty.Overflow),             this.Overflow);
-        appendProperty(nameof(StyleProperty.Padding),              this.Padding);
-        appendProperty(nameof(StyleProperty.Positioning),          this.Positioning);
-        appendProperty(nameof(StyleProperty.Size),                 this.Size);
-        appendProperty(nameof(StyleProperty.Stack),                this.Stack);
-        appendProperty(nameof(StyleProperty.TextAlignment),        this.TextAlignment);
-        appendProperty(nameof(StyleProperty.TextSelection),        this.TextSelection);
-        appendProperty(nameof(StyleProperty.Transform),            this.Transform);
-
-        if (builder.Length > 0)
-        {
-            builder.Remove(builder.Length - 2, 2);
-        }
-
-        return builder.ToString();
-    }
+    public override string ToString() =>
+        this.data.ToString();
 }

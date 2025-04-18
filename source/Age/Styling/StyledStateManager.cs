@@ -1,6 +1,7 @@
 
 using Age.Core.Extensions;
 using Age.Elements;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Age.Styling;
@@ -9,9 +10,10 @@ internal partial class StyledStateManager(Element target)
 {
     public event Action<StyleProperty>? Changed;
 
-    public Style ComputedStyle { get; } = new();
+    [field: AllowNull]
+    public Style ComputedStyle => field ??= new();
 
-    private State States
+    public StyledStates? Styles
     {
         get;
         set
@@ -25,7 +27,7 @@ internal partial class StyledStateManager(Element target)
         }
     }
 
-    public StyledStates? Styles
+    private State States
     {
         get;
         set
@@ -69,6 +71,8 @@ internal partial class StyledStateManager(Element target)
         this.Changed?.Invoke(property);
     }
 
+
+
     public void AddState(State state) =>
         this.States |= state;
 
@@ -82,13 +86,15 @@ internal partial class StyledStateManager(Element target)
             return;
         }
 
-        var previous = new Style(this.ComputedStyle);
-
-        this.ComputedStyle.Clear();
+        var previous = this.ComputedStyle.Data;
 
         if (this.Styles?.Base != null)
         {
-            this.ComputedStyle.Merge(this.Styles.Base);
+            this.ComputedStyle.Copy(this.Styles.Base);
+        }
+        else
+        {
+            this.ComputedStyle.Clear();
         }
 
         if (this.UserStyle != null)
@@ -103,9 +109,7 @@ internal partial class StyledStateManager(Element target)
         merge(State.Checked,  this.Styles?.Checked);
         merge(State.Active,   this.Styles?.Active);
 
-        var changes = Style.Diff(this.ComputedStyle, previous);
-
-        previous.Clear();
+        var changes = StyleData.Diff(this.ComputedStyle.Data, previous);
 
         if (changes != default)
         {
@@ -113,11 +117,11 @@ internal partial class StyledStateManager(Element target)
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void merge(State states, Style? source)
+        void merge(State states, Style? style)
         {
-            if (this.States.HasFlags(states) && source != null)
+            if (this.States.HasFlags(states) && style != null)
             {
-                this.ComputedStyle.Merge(source);
+                this.ComputedStyle.Merge(style);
             }
         }
     }
