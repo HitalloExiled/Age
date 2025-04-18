@@ -33,7 +33,7 @@ internal sealed partial class TextLayout : Layout
     private bool           selectionIsDirty;
     private bool           textIsDirty;
 
-    private bool CanSelect => this.Parent?.State.Style.TextSelection != false;
+    private bool CanSelect => this.Parent?.State.ComputedStyle.TextSelection != false;
 
     public uint CaretPosition
     {
@@ -201,7 +201,7 @@ internal sealed partial class TextLayout : Layout
 
         if (selectionCommand.Index != default)
         {
-            ((TextCommand)this.target.Commands[selectionCommand.Index]).Color = this.Parent?.State.Style.Color ?? default;
+            ((TextCommand)this.target.Commands[selectionCommand.Index]).Color = this.Parent?.State.ComputedStyle.Color ?? default;
         }
     }
 
@@ -277,7 +277,7 @@ internal sealed partial class TextLayout : Layout
 
         var text = this.target.Buffer.AsSpan();
 
-        var style = this.target.ComposedParentElement!.Layout.State.Style;
+        var style = this.target.ComposedParentElement!.Layout.State.ComputedStyle;
 
         var glyphs = this.font.Typeface.GetGlyphs(text);
         var atlas  = TextStorage.Singleton.GetAtlas(this.font.Typeface.FamilyName, (uint)this.font.Size);
@@ -439,7 +439,7 @@ internal sealed partial class TextLayout : Layout
     {
         if (property.HasAnyFlag(StyleProperty.FontFamily | StyleProperty.FontSize | StyleProperty.FontWeight))
         {
-            var style = this.Parent!.State.Style;
+            var style = this.Parent!.State.ComputedStyle;
 
             var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
             var fontWeight = (int)(style.FontWeight ?? FontWeight.Normal);

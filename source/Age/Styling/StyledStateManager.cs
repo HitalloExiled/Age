@@ -10,7 +10,10 @@ internal partial class StyledStateManager(Element target)
 {
     public event Action<StyleProperty>? Changed;
 
-    private State States
+    [field: AllowNull]
+    public Style ComputedStyle => field ??= new();
+
+    public StyledStates? Styles
     {
         get;
         set
@@ -24,10 +27,7 @@ internal partial class StyledStateManager(Element target)
         }
     }
 
-    [field: AllowNull]
-    public Style Style => field ??= new();
-
-    public StyledStates? Styles
+    private State States
     {
         get;
         set
@@ -67,7 +67,7 @@ internal partial class StyledStateManager(Element target)
 
     private void OnStyleChanged(StyleProperty property)
     {
-        this.Style.Copy(this.UserStyle!, property);
+        this.ComputedStyle.Copy(this.UserStyle!, property);
         this.Changed?.Invoke(property);
     }
 
@@ -86,20 +86,20 @@ internal partial class StyledStateManager(Element target)
             return;
         }
 
-        var previous = this.Style.Data;
+        var previous = this.ComputedStyle.Data;
 
         if (this.Styles?.Base != null)
         {
-            this.Style.Copy(this.Styles.Base);
+            this.ComputedStyle.Copy(this.Styles.Base);
         }
         else
         {
-            this.Style.Clear();
+            this.ComputedStyle.Clear();
         }
 
         if (this.UserStyle != null)
         {
-            this.Style.Merge(this.UserStyle);
+            this.ComputedStyle.Merge(this.UserStyle);
         }
 
         merge(State.Focus,    this.Styles?.Focus);
@@ -109,7 +109,7 @@ internal partial class StyledStateManager(Element target)
         merge(State.Checked,  this.Styles?.Checked);
         merge(State.Active,   this.Styles?.Active);
 
-        var changes = StyleData.Diff(this.Style.Data, previous);
+        var changes = StyleData.Diff(this.ComputedStyle.Data, previous);
 
         if (changes != default)
         {
@@ -121,7 +121,7 @@ internal partial class StyledStateManager(Element target)
         {
             if (this.States.HasFlags(states) && style != null)
             {
-                this.Style.Merge(style);
+                this.ComputedStyle.Merge(style);
             }
         }
     }

@@ -288,7 +288,7 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         if (this.isDirty || this.transform != this.Owner.TransformCache)
         {
             var bounds = this.Owner.Layout.Boundings;
-            var border = this.Owner.Layout.State.Style.Border ?? default;
+            var border = this.Owner.Layout.State.ComputedStyle.Border ?? default;
 
             this.UpdatePath(bounds, border);
 

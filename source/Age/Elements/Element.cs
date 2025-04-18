@@ -282,7 +282,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 {
                     builder.Append(text.Buffer);
 
-                    if (this.Layout.State.Style.Stack == StackKind.Vertical)
+                    if (this.Layout.State.ComputedStyle.Stack == StackKind.Vertical)
                     {
                         builder.Append('\n');
                     }

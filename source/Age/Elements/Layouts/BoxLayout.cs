@@ -50,7 +50,7 @@ internal sealed partial class BoxLayout : Layout
             var size    = this.size;
             var padding = this.padding;
             var margin  = this.margin;
-            var style   = this.State.Style;
+            var style   = this.State.ComputedStyle;
 
             if (this.parentDependent.HasFlags(Dependency.Width))
             {
@@ -119,7 +119,7 @@ internal sealed partial class BoxLayout : Layout
 
     public StyledStateManager State { get; }
 
-    public uint FontSize => this.State.Style.FontSize ?? 16;
+    public uint FontSize => this.State.ComputedStyle.FontSize ?? 16;
 
     public bool IsScrollable { get; internal set; }
 
@@ -144,7 +144,7 @@ internal sealed partial class BoxLayout : Layout
     public RectEdges  Border        => this.border;
     public bool       CanScrollX    => this.canScrollY;
     public bool       CanScrollY    => this.canScrollX;
-    public Style      ComputedStyle => this.State.Style;
+    public Style      ComputedStyle => this.State.ComputedStyle;
     public Size<uint> Content       => this.content;
     public RectEdges  Margin        => this.margin;
     public RectEdges  Padding       => this.padding;
@@ -165,7 +165,7 @@ internal sealed partial class BoxLayout : Layout
 
     public override bool        IsParentDependent => this.parentDependent != Dependency.None;
     public override Element     Target            => this.target;
-    public override Transform2D Transform         => (this.State.Style.Transform ?? new Transform2D()) * base.Transform;
+    public override Transform2D Transform         => (this.State.ComputedStyle.Transform ?? new Transform2D()) * base.Transform;
 
 
 
@@ -483,7 +483,7 @@ internal sealed partial class BoxLayout : Layout
         var x = -1;
         var y = -1;
 
-        var itemsAlignment = this.State.Style.ItemsAlignment ?? ItemsAlignmentKind.None;
+        var itemsAlignment = this.State.ComputedStyle.ItemsAlignment ?? ItemsAlignmentKind.None;
 
         alignmentAxis = AlignmentAxis.Horizontal | AlignmentAxis.Vertical;
 
@@ -547,7 +547,7 @@ internal sealed partial class BoxLayout : Layout
 
     private void CalculateLayout()
     {
-        var stack = this.State.Style.Stack ?? StackKind.Horizontal;
+        var stack = this.State.ComputedStyle.Stack ?? StackKind.Horizontal;
 
         this.content       = new Size<uint>();
         this.staticContent = new Size<uint>();
@@ -645,7 +645,7 @@ internal sealed partial class BoxLayout : Layout
     {
         var contentSize = size;
 
-        var stack = this.State.Style.Stack ?? StackKind.Horizontal;
+        var stack = this.State.ComputedStyle.Stack ?? StackKind.Horizontal;
 
         foreach (var dependent in this.dependents)
         {
@@ -674,7 +674,7 @@ internal sealed partial class BoxLayout : Layout
     {
         var content        = this.content;
         var avaliableSpace = this.size.ClampSubtract(this.staticContent);
-        var stack          = this.State.Style.Stack ?? StackKind.Horizontal;
+        var stack          = this.State.ComputedStyle.Stack ?? StackKind.Horizontal;
 
         foreach (var dependent in this.dependents)
         {
@@ -870,14 +870,14 @@ internal sealed partial class BoxLayout : Layout
             return;
         }
 
-        if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlags(Platforms.Display.MouseKeyStates.Shift))
+        if (this.State.ComputedStyle.Overflow is OverflowKind.Scroll or OverflowKind.ScrollX && mouseEvent.KeyStates.HasFlags(Platforms.Display.MouseKeyStates.Shift))
         {
             this.ContentOffset = this.ContentOffset with
             {
                 X = (uint)(this.ContentOffset.X + 10 * -mouseEvent.Delta)
             };
         }
-        else if (this.State.Style.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY)
+        else if (this.State.ComputedStyle.Overflow is OverflowKind.Scroll or OverflowKind.ScrollY)
         {
             this.ContentOffset = this.ContentOffset with
             {
@@ -893,7 +893,7 @@ internal sealed partial class BoxLayout : Layout
             return;
         }
 
-        var style = this.State.Style;
+        var style = this.State.ComputedStyle;
 
         var hidden = style.Hidden == true;
 
@@ -1075,7 +1075,7 @@ internal sealed partial class BoxLayout : Layout
 
             ResolveDimension(this.FontSize, style.Size?.Height, style.MinSize?.Height, style.MaxSize?.Height, ref value, ref resolved);
 
-            if (this.State.Style.BoxSizing == BoxSizing.Border)
+            if (this.State.ComputedStyle.BoxSizing == BoxSizing.Border)
             {
                 value = value.ClampSubtract(this.border.Vertical);
             }
@@ -1120,7 +1120,7 @@ internal sealed partial class BoxLayout : Layout
 
             ResolveDimension(this.FontSize, style.Size?.Width, style.MinSize?.Width, style.MaxSize?.Width, ref value, ref resolved);
 
-            if (this.State.Style.BoxSizing == BoxSizing.Border)
+            if (this.State.ComputedStyle.BoxSizing == BoxSizing.Border)
             {
                 value = value.ClampSubtract(this.border.Horizontal);
             }
@@ -1138,8 +1138,8 @@ internal sealed partial class BoxLayout : Layout
 
         var cursor               = new Point<float>();
         var size                 = this.size;
-        var stack                = this.State.Style.Stack ?? StackKind.Horizontal;
-        var contentJustification = this.State.Style.ContentJustification ?? ContentJustificationKind.None;
+        var stack                = this.State.ComputedStyle.Stack ?? StackKind.Horizontal;
+        var contentJustification = this.State.ComputedStyle.ContentJustification ?? ContentJustificationKind.None;
 
         var avaliableSpace = stack == StackKind.Horizontal
             ? new Size<float>(size.Width.ClampSubtract(this.content.Width), size.Height)
@@ -1309,13 +1309,13 @@ internal sealed partial class BoxLayout : Layout
     {
         var command = this.GetRectCommand();
 
-        var isDrawable = this.State.Style.Border.HasValue || this.State.Style.BackgroundColor.HasValue;
+        var isDrawable = this.State.ComputedStyle.Border.HasValue || this.State.ComputedStyle.BackgroundColor.HasValue;
 
         if (isDrawable)
         {
             command.Rect            = new(this.Boundings.Cast<float>(), default);
-            command.Border          = this.State.Style.Border ?? default;
-            command.Color           = this.State.Style.BackgroundColor ?? default;
+            command.Border          = this.State.ComputedStyle.Border ?? default;
+            command.Color           = this.State.ComputedStyle.BackgroundColor ?? default;
             command.PipelineVariant |= PipelineVariant.Color;
         }
         else
@@ -1391,13 +1391,13 @@ internal sealed partial class BoxLayout : Layout
 
         command.ObjectId = this.Target.Index == -1
             ? default
-            : this.State.Style.Border.HasValue || this.State.Style.BackgroundColor.HasValue ? (uint)(this.Target.Index + 1) : 0;
+            : this.State.ComputedStyle.Border.HasValue || this.State.ComputedStyle.BackgroundColor.HasValue ? (uint)(this.Target.Index + 1) : 0;
     }
 
     public void TargetMouseOut() { }
 
     public void TargetMouseOver() =>
-        this.SetCursor(this.State.Style.Cursor);
+        this.SetCursor(this.State.ComputedStyle.Cursor);
 
     public override void Update()
     {
