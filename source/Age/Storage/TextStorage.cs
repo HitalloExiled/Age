@@ -112,9 +112,11 @@ internal partial class TextStorage : Disposable
 
         ref var font = ref this.fonts.GetValueRefOrAddDefault(hashcode, out var exists);
 
+        var typeface = SKTypeface.FromFamilyName(fontFamily, (SKFontStyleWeight)fontWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+
         if (!exists)
         {
-            font = new SKFont(SKTypeface.FromFamilyName(fontFamily, (SKFontStyleWeight)fontWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright))
+            font = new SKFont(typeface ?? SKTypeface.Default)
             {
                 Size     = fontSize,
                 Subpixel = false
