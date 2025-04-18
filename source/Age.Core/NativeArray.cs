@@ -2,7 +2,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Age.Core.Interop;
+namespace Age.Core;
 
 [DebuggerDisplay("Length = {Length}")]
 [DebuggerTypeProxy(typeof(NativeArray<>.DebugView))]
@@ -51,13 +51,8 @@ public unsafe partial class NativeArray<T>(int length = 0) : Disposable, IEnumer
     public NativeArray(uint length) : this((int)length)
     { }
 
-    public NativeArray(scoped ReadOnlySpan<T> values) : this(values.Length)
-    {
-        for (var i = 0; i < values.Length; i++)
-        {
-            this.buffer[i] = values[i];
-        }
-    }
+    public NativeArray(scoped ReadOnlySpan<T> values) : this(values.Length) =>
+        values.CopyTo(this);
 
     private void CheckIndex(int index)
     {
@@ -106,6 +101,13 @@ public unsafe partial class NativeArray<T>(int length = 0) : Disposable, IEnumer
         this.ThrowIfDisposed();
 
         return this.IndexOf(item) > -1;
+    }
+
+    public void CopyTo(Span<T> span)
+    {
+        this.ThrowIfDisposed();
+
+        this.AsSpan().CopyTo(span);
     }
 
     public void CopyTo(T[] array, int arrayIndex)

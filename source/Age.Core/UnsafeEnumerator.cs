@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace Age.Core.Interop;
+namespace Age.Core;
 
 public unsafe struct UnsafeEnumerator<T>(T* span, int length) : IEnumerator<T> where T : unmanaged
 {

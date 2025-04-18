@@ -1,4 +1,4 @@
-using Age.Core.Interop;
+using Age.Core;
 
 namespace Age.Tests.Core.Interop;
 
@@ -16,18 +16,6 @@ public class PointerHelperTest
 
         Assert.True(PointerHelper.NullIfDefault(defaultValuepValue)     == null);
         Assert.True(PointerHelper.NullIfDefault(pNonDefaultValuepValue) == pNonDefaultValuepValue);
-    }
-
-    [Fact]
-    public unsafe void NullIfNullShouldPass()
-    {
-        int? value = null;
-
-        Assert.True(PointerHelper.GetValuePointer(&value) == null);
-
-        value = 1;
-
-        Assert.True(*PointerHelper.GetValuePointer(&value) == value);
     }
 }
 

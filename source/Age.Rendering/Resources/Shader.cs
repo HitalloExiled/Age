@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Age.Core;
 using Age.Core.Extensions;
-using Age.Core.Interop;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Vulkan;
 using ThirdParty.Slang;

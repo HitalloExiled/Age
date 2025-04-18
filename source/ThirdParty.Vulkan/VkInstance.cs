@@ -1,10 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
-using Age.Core.Interop;
+using Age.Core;
 using ThirdParty.Vulkan.Interfaces;
 
-using static Age.Core.Interop.PointerHelper;
+using static Age.Core.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 

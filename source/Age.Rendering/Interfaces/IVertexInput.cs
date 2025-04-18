@@ -1,4 +1,4 @@
-using Age.Core.Interop;
+using Age.Core;
 using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Interfaces;

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Age.Core.Interop;
+namespace Age.Core;
 
 public unsafe partial class NativeArray<T> where T : unmanaged
 {

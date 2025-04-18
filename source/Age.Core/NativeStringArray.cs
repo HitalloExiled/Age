@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Age.Core.Interop;
+namespace Age.Core;
 
 public unsafe class NativeStringArray : Disposable
 {

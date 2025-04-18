@@ -2,14 +2,13 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Age.Core;
 using Age.Core.Extensions;
-using Age.Core.Interop;
 using Age.Numerics;
 using Age.Rendering.Resources;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Extensions;
 using ThirdParty.Vulkan.Flags;
-using static Age.Core.Interop.PointerHelper;
+using static Age.Core.PointerHelper;
 
 namespace Age.Rendering.Vulkan;
 

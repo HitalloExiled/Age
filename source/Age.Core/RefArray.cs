@@ -2,7 +2,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Age.Core.Interop;
+namespace Age.Core;
 
 [DebuggerDisplay("Length = {Length}")]
 [DebuggerTypeProxy(typeof(RefArray<>.DebugView))]

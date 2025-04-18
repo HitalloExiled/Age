@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Runtime.InteropServices;
 
-namespace Age.Core.Interop;
+namespace Age.Core;
 
 public unsafe partial class NativeStack<T> : Disposable, IEnumerable<T> where T : unmanaged
 {

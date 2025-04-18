@@ -2,17 +2,19 @@ using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Age.Core.Interop;
+namespace Age.Core;
 
 [DebuggerDisplay("Count = {Count}")]
-[DebuggerTypeProxy(typeof(RefList<>.DebugView))]
-public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where T : unmanaged
+[DebuggerTypeProxy(typeof(NativeList<>.DebugView))]
+public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T : unmanaged
 {
+    public static NativeList<T> Empty { get; } = [];
+
     private T* buffer;
 
     public int Capacity
     {
-        readonly get => field;
+        get => field;
         set
         {
             if (value == 0)
@@ -55,19 +57,21 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
     {
         get
         {
+            this.ThrowIfDisposed();
             this.CheckIndex(index);
 
             return this.buffer[index];
         }
         set
         {
+            this.ThrowIfDisposed();
             this.CheckIndex(index);
 
             this.buffer[index] = value;
         }
     }
 
-    public readonly RefList<T> this[Range range]
+    public NativeList<T> this[Range range]
     {
         get
         {
@@ -77,7 +81,7 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
         }
     }
 
-    public RefList(int capacity = 0)
+    public NativeList(int capacity = 0)
     {
         if (capacity > 0)
         {
@@ -87,7 +91,7 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
         }
     }
 
-    public RefList(scoped ReadOnlySpan<T> values) : this(values.Length)
+    public NativeList(scoped ReadOnlySpan<T> values) : this(values.Length)
     {
         for (var i = 0; i < values.Length; i++)
         {
@@ -97,7 +101,7 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
         this.Count = values.Length;
     }
 
-    private readonly void CheckIndex(int index)
+    private void CheckIndex(int index)
     {
         if (index >= this.Count)
         {
@@ -113,14 +117,30 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
         }
     }
 
-    readonly IEnumerator<T> IEnumerable<T>.GetEnumerator() =>
-        this.GetEnumerator();
+    protected override void Disposed(bool disposing)
+    {
+        NativeMemory.Free(this.buffer);
+        this.buffer = default;
+        this.Count  = 0;
+    }
 
-    readonly IEnumerator IEnumerable.GetEnumerator() =>
-        this.GetEnumerator();
+    IEnumerator<T> IEnumerable<T>.GetEnumerator()
+    {
+        this.ThrowIfDisposed();
+
+        return this.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        this.ThrowIfDisposed();
+
+        return this.GetEnumerator();
+    }
 
     public ref T Add()
     {
+        this.ThrowIfDisposed();
         this.EnsureCapacity();
 
         ref var element = ref this.buffer[this.Count];
@@ -137,41 +157,47 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
         element = item;
     }
 
-    public readonly T* AsPointer() =>
-        this.buffer;
+    public T* AsPointer()
+    {
+        this.ThrowIfDisposed();
+        return this.buffer;
+    }
 
-    public readonly Span<T> AsSpan() =>
-        new(this.buffer, this.Count);
+    public Span<T> AsSpan()
+    {
+        this.ThrowIfDisposed();
+        return new(this.buffer, this.Count);
+    }
 
-    public void Clear() =>
+    public void Clear()
+    {
+        this.ThrowIfDisposed();
         this.Count = 0;
+    }
 
     public bool Contains(T item) =>
         this.IndexOf(item) > -1;
 
-    public readonly void CopyTo(T[] array, int arrayIndex) =>
+    public void CopyTo(T[] array, int arrayIndex) =>
         this.AsSpan()[arrayIndex..].CopyTo(array);
 
     public void EnsureCapacity(int capacity)
     {
+        this.ThrowIfDisposed();
+
         if (capacity > this.Capacity)
         {
             this.Capacity = capacity;
         }
     }
 
-    public void Dispose()
-    {
-        NativeMemory.Free(this.buffer);
-        this.buffer = default;
-        this.Count  = 0;
-    }
-
-    public readonly UnsafeEnumerator<T> GetEnumerator() =>
+    public UnsafeEnumerator<T> GetEnumerator() =>
         new(this.buffer, this.Count);
 
     public int IndexOf(T item)
     {
+        this.ThrowIfDisposed();
+
         for (var i = 0; i < this.Count; i++)
         {
             if (this.buffer[i].Equals(item))
@@ -185,6 +211,8 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
 
     public void Insert(int index, T item)
     {
+        this.ThrowIfDisposed();
+
         if (index > this.Count)
         {
             throw new IndexOutOfRangeException();
@@ -226,6 +254,7 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
 
     public void RemoveAt(int startIndex, int count)
     {
+        this.ThrowIfDisposed();
         this.CheckIndex(startIndex);
 
         var endIndex = startIndex + count;
@@ -241,8 +270,12 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
         this.Count = int.Max(this.Count - count, 0);
     }
 
-    public readonly RefList<T> Slice(int start, int length) =>
-        new(new Span<T>(this.buffer + start, length));
+    public NativeList<T> Slice(int start, int length)
+    {
+        this.ThrowIfDisposed();
 
-    public static implicit operator Span<T>(in RefList<T> value) => value.AsSpan();
+        return new(new Span<T>(this.buffer + start, length));
+    }
+
+    public static implicit operator Span<T>(in NativeList<T> value) => value.AsSpan();
 }

@@ -1,6 +1,6 @@
 using ThirdParty.Vulkan.Enums;
 
-using static Age.Core.Interop.PointerHelper;
+using static Age.Core.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 

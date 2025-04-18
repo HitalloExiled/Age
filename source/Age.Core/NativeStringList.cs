@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Runtime.InteropServices;
 
-namespace Age.Core.Interop;
+namespace Age.Core;
 
 public unsafe class NativeStringList : Disposable, IEnumerable<string?>
 {

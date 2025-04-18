@@ -1,4 +1,4 @@
-using Age.Core.Interop;
+using Age.Core;
 
 namespace Age.Tests.Core.Interop;
 

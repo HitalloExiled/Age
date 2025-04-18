@@ -1,6 +1,4 @@
 using Age.Core;
-using Age.Core.Extensions;
-using Age.Core.Interop;
 using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;

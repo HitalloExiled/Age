@@ -1,5 +1,3 @@
-using Age.Core.Interop;
-
 namespace Age.Core;
 
 public static class FileReader
