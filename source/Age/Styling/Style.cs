@@ -165,7 +165,7 @@ public record Style
 
     private void Set<T>(ref T? field, T? value, StyleProperty property)
     {
-        if (!Equals(field, value))
+        if (!EqualityComparer<T>.Default.Equals(field, value))
         {
             field = value;
 
