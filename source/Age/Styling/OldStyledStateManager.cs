@@ -1,15 +1,14 @@
 
 using Age.Core.Extensions;
 using Age.Elements;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Age.Styling;
 
-internal partial class StyledStateManager(Element target)
+internal partial class OldStyledStateManager(Element target)
 {
     public event Action<StyleProperty>? Changed;
-
-    public Style ComputedStyle { get; } = new();
 
     private State States
     {
@@ -25,7 +24,10 @@ internal partial class StyledStateManager(Element target)
         }
     }
 
-    public StyledStates? Styles
+    [field: AllowNull]
+    public OldStyle Style => field ??= new();
+
+    public OldStyledStates? Styles
     {
         get;
         set
@@ -39,7 +41,7 @@ internal partial class StyledStateManager(Element target)
         }
     }
 
-    public Style? UserStyle
+    public OldStyle? UserStyle
     {
         get;
         set
@@ -65,9 +67,11 @@ internal partial class StyledStateManager(Element target)
 
     private void OnStyleChanged(StyleProperty property)
     {
-        this.ComputedStyle.Copy(this.UserStyle!, property);
+        this.Style.Copy(this.UserStyle!, property);
         this.Changed?.Invoke(property);
     }
+
+
 
     public void AddState(State state) =>
         this.States |= state;
@@ -82,18 +86,20 @@ internal partial class StyledStateManager(Element target)
             return;
         }
 
-        var previous = new Style(this.ComputedStyle);
-
-        this.ComputedStyle.Clear();
+        var previous = this.Style.Data;
 
         if (this.Styles?.Base != null)
         {
-            this.ComputedStyle.Merge(this.Styles.Base);
+            this.Style.Copy(this.Styles.Base);
+        }
+        else
+        {
+            this.Style.Clear();
         }
 
         if (this.UserStyle != null)
         {
-            this.ComputedStyle.Merge(this.UserStyle);
+            this.Style.Merge(this.UserStyle);
         }
 
         merge(State.Focus,    this.Styles?.Focus);
@@ -103,9 +109,7 @@ internal partial class StyledStateManager(Element target)
         merge(State.Checked,  this.Styles?.Checked);
         merge(State.Active,   this.Styles?.Active);
 
-        var changes = Style.Diff(this.ComputedStyle, previous);
-
-        previous.Clear();
+        var changes = StyleData.Diff(this.Style.Data, previous);
 
         if (changes != default)
         {
@@ -113,11 +117,11 @@ internal partial class StyledStateManager(Element target)
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void merge(State states, Style? source)
+        void merge(State states, OldStyle? style)
         {
-            if (this.States.HasFlags(states) && source != null)
+            if (this.States.HasFlags(states) && style != null)
             {
-                this.ComputedStyle.Merge(source);
+                this.Style.Merge(style);
             }
         }
     }
