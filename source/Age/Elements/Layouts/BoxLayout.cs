@@ -1309,12 +1309,12 @@ internal sealed partial class BoxLayout : Layout
     {
         var command = this.GetRectCommand();
 
-        var isDrawable = this.State.ComputedStyle.Border.HasValue || this.State.ComputedStyle.BackgroundColor.HasValue;
+        var isDrawable = this.State.ComputedStyle.Border != null || this.State.ComputedStyle.BackgroundColor.HasValue;
 
         if (isDrawable)
         {
             command.Rect            = new(this.Boundings.Cast<float>(), default);
-            command.Border          = this.State.ComputedStyle.Border ?? default;
+            command.Border          = this.State.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
             command.Color           = this.State.ComputedStyle.BackgroundColor ?? default;
             command.PipelineVariant |= PipelineVariant.Color;
         }
@@ -1391,7 +1391,7 @@ internal sealed partial class BoxLayout : Layout
 
         command.ObjectId = this.Target.Index == -1
             ? default
-            : this.State.ComputedStyle.Border.HasValue || this.State.ComputedStyle.BackgroundColor.HasValue ? (uint)(this.Target.Index + 1) : 0;
+            : this.State.ComputedStyle.Border != null || this.State.ComputedStyle.BackgroundColor.HasValue ? (uint)(this.Target.Index + 1) : 0;
     }
 
     public void TargetMouseOut() { }

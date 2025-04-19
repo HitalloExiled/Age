@@ -3,14 +3,16 @@ using Age.Shaders;
 
 namespace Age.Styling;
 
-public record struct Border
+public record Border
 {
     // 4-bytes
-    public BorderSide   Top;
-    public BorderSide   Right;
-    public BorderSide   Bottom;
-    public BorderSide   Left;
-    public BorderRadius Radius;
+    public BorderSide   Top    { get; init; }
+    public BorderSide   Right  { get; init; }
+    public BorderSide   Bottom { get; init; }
+    public BorderSide   Left   { get; init; }
+    public BorderRadius Radius { get; init; }
+
+    public Border() { }
 
     public Border(uint thickness, uint radius, in Color color)
     {
@@ -66,6 +68,6 @@ public record struct Border
             }
         };
 
-    public override readonly string ToString() =>
+    public override string ToString() =>
         $"{{ Top: {this.Top}, Right: {this.Right}, Bottom: {this.Bottom}, Left: {this.Left}, Radius: {this.Radius} }}";
 }

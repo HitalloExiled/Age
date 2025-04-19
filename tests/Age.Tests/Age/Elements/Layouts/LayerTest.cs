@@ -17,10 +17,10 @@ public class LayerTest
 
         var minRadius = uint.Min(bounds.Width, bounds.Height) / 2;
 
-        border.Radius.LeftTop     = uint.Min(border.Radius.LeftTop,     minRadius);
-        border.Radius.TopRight    = uint.Min(border.Radius.TopRight,    minRadius);
-        border.Radius.RightBottom = uint.Min(border.Radius.RightBottom, minRadius);
-        border.Radius.BottomLeft  = uint.Min(border.Radius.BottomLeft,  minRadius);
+        var leftTop     = uint.Min(border.Radius.LeftTop,     minRadius);
+        var topRight    = uint.Min(border.Radius.TopRight,    minRadius);
+        var rightBottom = uint.Min(border.Radius.RightBottom, minRadius);
+        var bottomLeft  = uint.Min(border.Radius.BottomLeft,  minRadius);
 
         bool tryCreateEllipse(uint radius, Point<uint> origin, Size<uint> thickness, float startAngle)
         {
@@ -42,24 +42,24 @@ public class LayerTest
             return false;
         }
 
-        path.MoveTo(uint.Max(border.Left.Thickness, border.Radius.LeftTop), border.Top.Thickness);
+        path.MoveTo(uint.Max(border.Left.Thickness, leftTop), border.Top.Thickness);
 
-        if (border.Radius.TopRight == 0 || !tryCreateEllipse(border.Radius.TopRight, new(1, 0), new(border.Right.Thickness, border.Top.Thickness), 270))
+        if (topRight == 0 || !tryCreateEllipse(topRight, new(1, 0), new(border.Right.Thickness, border.Top.Thickness), 270))
         {
             path.LineTo(bounds.Width - border.Right.Thickness, border.Top.Thickness);
         }
 
-        if (border.Radius.RightBottom == 0 || !tryCreateEllipse(border.Radius.RightBottom, new(1, 1), new(border.Right.Thickness, border.Bottom.Thickness), 0))
+        if (rightBottom == 0 || !tryCreateEllipse(rightBottom, new(1, 1), new(border.Right.Thickness, border.Bottom.Thickness), 0))
         {
             path.LineTo(bounds.Width - border.Right.Thickness, bounds.Height - border.Bottom.Thickness);
         }
 
-        if (border.Radius.BottomLeft == 0 || !tryCreateEllipse(border.Radius.BottomLeft, new(0, 1), new(border.Left.Thickness, border.Bottom.Thickness), 90))
+        if (bottomLeft == 0 || !tryCreateEllipse(bottomLeft, new(0, 1), new(border.Left.Thickness, border.Bottom.Thickness), 90))
         {
             path.LineTo(border.Left.Thickness, bounds.Height - border.Bottom.Thickness);
         }
 
-        if (border.Radius.LeftTop == 0 || !tryCreateEllipse(border.Radius.LeftTop, new(0, 0), new(border.Left.Thickness, border.Top.Thickness), 180))
+        if (leftTop == 0 || !tryCreateEllipse(leftTop, new(0, 0), new(border.Left.Thickness, border.Top.Thickness), 180))
         {
             path.LineTo(border.Left.Thickness, border.Top.Thickness);
         }
@@ -86,7 +86,7 @@ public class LayerTest
             Right  = new(10, default),
             Bottom = new(10, default),
             Left   = new(10, default),
-            Radius =
+            Radius = new()
             {
                 LeftTop     = 10,
                 TopRight    = 20,

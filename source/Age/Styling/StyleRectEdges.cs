@@ -1,11 +1,13 @@
 namespace Age.Styling;
 
-public record struct StyleRectEdges
+public record StyleRectEdges
 {
-    public Unit? Top;
-    public Unit? Right;
-    public Unit? Bottom;
-    public Unit? Left;
+    public Unit? Top    { get; init; }
+    public Unit? Right  { get; init; }
+    public Unit? Bottom { get; init; }
+    public Unit? Left   { get; init; }
+
+    public StyleRectEdges() { }
 
     public StyleRectEdges(Unit? top, Unit? right, Unit? bottom, Unit? left)
     {
