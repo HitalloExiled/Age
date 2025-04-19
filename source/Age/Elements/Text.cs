@@ -33,25 +33,40 @@ public sealed class Text : Layoutable
         set => this.Buffer.Set(value);
     }
 
-    public Text() =>
+    public Text()
+    {
         this.Layout = new(this);
+        this.Flags  = NodeFlags.Immutable;
+    }
 
     public Text(string? value) : this() =>
         this.Buffer.Set(value);
 
     protected override void Adopted(Node parent)
     {
-        if (parent is Element parentElement)
+        switch (parent)
         {
-            this.Layout.TargetAdopted(parentElement);
+            case Element parentElement:
+                this.Layout.TargetAdopted(parentElement);
+                break;
+
+            case ShadowTree shadowTree:
+                this.Layout.TargetAdopted(shadowTree.Host);
+                break;
         }
     }
 
     protected override void Removed(Node parent)
     {
-        if (parent is Element parentElement)
+        switch (parent)
         {
-            this.Layout.TargetRemoved(parentElement);
+            case Element parentElement:
+                this.Layout.TargetRemoved(parentElement);
+                break;
+
+            case ShadowTree shadowTree:
+                this.Layout.TargetRemoved(shadowTree.Host);
+                break;
         }
     }
 

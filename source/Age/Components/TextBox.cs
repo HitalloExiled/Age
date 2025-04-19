@@ -29,19 +29,22 @@ public partial class TextBox : Element
 
     public string? Value
     {
-        get => this.text.Buffer.ToString();
-        set => this.text.Buffer.Set(value);
+        get => this.text.Value;
+        set => this.text.Value = value;
     }
 
     public bool Multiline { get; set; }
 
     public TextBox()
     {
+        this.Flags       = NodeFlags.Immutable;
         this.IsFocusable = true;
 
         this.States = Theme.Current.TextBox.Outlined;
 
-        this.AppendChild(this.text);
+        this.AttachShadowTree();
+
+        this.ShadowTree.AppendChild(this.text);
 
         this.Blured      += this.OnBlur;
         this.Focused     += this.OnFocused;

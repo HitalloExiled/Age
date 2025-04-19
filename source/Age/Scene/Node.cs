@@ -2,6 +2,7 @@ using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Age.Core;
+using Age.Core.Extensions;
 
 namespace Age.Scene;
 
@@ -207,6 +208,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void AppendOrPrepend(Node node, bool append)
     {
+        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        {
+            return;
+        }
+
         if (node == this)
         {
             throw new InvalidOperationException("Cant add node to itself");
@@ -252,6 +258,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void AppendOrPrepend(scoped ReadOnlySpan<Node> nodes, bool append)
     {
+        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        {
+            return;
+        }
+
         if (nodes.Length == 0)
         {
             return;
@@ -324,6 +335,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void InsertAfterOrBefore(Node reference, Node node, bool after)
     {
+        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        {
+            return;
+        }
+
         if (reference.Parent != this)
         {
             throw new InvalidOperationException("Reference node is not child of this node");
@@ -383,6 +399,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void InsertAfterOrBefore(Node reference, scoped ReadOnlySpan<Node> nodes, bool after)
     {
+        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        {
+            return;
+        }
+
         if (reference.Parent != this)
         {
             throw new InvalidOperationException("Reference node is not child of this node");
@@ -470,6 +491,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void RemoveChildren(bool dispose = false)
     {
+        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        {
+            return;
+        }
+
         while (this.LastChild != null)
         {
             var current = this.LastChild;
@@ -500,6 +526,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void RemoveChildrenInRange(Node start, Node end, bool dispose)
     {
+        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        {
+            return;
+        }
+
         if (start.Parent != this || end.Parent != this)
         {
             throw new InvalidOperationException("Start and end must be child of this node");
@@ -748,6 +779,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void RemoveChild(Node node)
     {
+        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        {
+            return;
+        }
+
         if (node.Parent != this)
         {
             throw new InvalidOperationException("Node is not child of this node");
@@ -788,6 +824,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void Replace(Node target, Node node)
     {
+        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        {
+            return;
+        }
+
         if (target.Parent != this)
         {
             throw new InvalidOperationException("Target is not child of this node");

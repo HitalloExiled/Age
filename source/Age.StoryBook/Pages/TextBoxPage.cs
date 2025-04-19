@@ -83,7 +83,7 @@ public class TextBoxPage : Page
                         new Text("Fixed Size Multiline"),
                         new TextBox
                         {
-                            Text      =
+                            Value =
                             """
                             1111
                             2222
