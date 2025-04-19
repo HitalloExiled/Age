@@ -17,6 +17,7 @@ internal partial class TextStorage : Disposable
     private readonly Dictionary<int, SKFont>       fonts   = [];
     private readonly VulkanRenderer                renderer;
     private readonly SKPaint                       paint;
+    private readonly Dictionary<string, string>    fontMap = [];
 
     public TextStorage(VulkanRenderer renderer)
     {
@@ -33,6 +34,25 @@ internal partial class TextStorage : Disposable
             Color       = SKColors.Black,
             IsAntialias = true,
         };
+
+        this.CreateCustomFontsMap();
+    }
+
+    private void CreateCustomFontsMap()
+    {
+        var directory = new DirectoryInfo(Path.Join(AppContext.BaseDirectory, "Fonts"));
+
+        foreach (var file in directory.GetFiles())
+        {
+            if (file.Extension is ".ttf" or ".otf")
+            {
+                var typeface = SKTypeface.FromFile(file.FullName);
+
+                this.fontMap[typeface.FamilyName] = file.FullName;
+
+                typeface.Dispose();
+            }
+        }
     }
 
     protected override void Disposed(bool disposing)
@@ -112,10 +132,12 @@ internal partial class TextStorage : Disposable
 
         ref var font = ref this.fonts.GetValueRefOrAddDefault(hashcode, out var exists);
 
-        var typeface = SKTypeface.FromFamilyName(fontFamily, (SKFontStyleWeight)fontWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-
         if (!exists)
         {
+            var typeface = this.fontMap.TryGetValue(fontFamily, out var path)
+                ? SKTypeface.FromFile(path)
+                : SKTypeface.FromFamilyName(fontFamily, (SKFontStyleWeight)fontWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+
             font = new SKFont(typeface ?? SKTypeface.Default)
             {
                 Size     = fontSize,

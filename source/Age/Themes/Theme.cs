@@ -89,8 +89,8 @@ public class Theme
                 },
                 Hovered = new()
                 {
-                    Cursor = CursorKind.Text,
-                }                
+                    Cursor = Cursor.Text,
+                }
             }
         }
     };

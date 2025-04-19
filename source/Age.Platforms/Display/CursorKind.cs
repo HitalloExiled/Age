@@ -1,6 +1,6 @@
 namespace Age.Platforms.Display;
 
-public enum CursorKind
+public enum Cursor : byte
 {
     Default,
     Arrow = Default,

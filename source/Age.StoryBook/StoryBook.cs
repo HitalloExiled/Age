@@ -25,6 +25,7 @@ public sealed class StoryBook : Node
         };
 
         Button buttonLink;
+        Button iconLink;
         Button textBoxLink;
         Button emptyLink;
 
@@ -50,6 +51,12 @@ public sealed class StoryBook : Node
                         {
                             Name  = "ButtonLink",
                             Text  = "Button",
+                            Style = buttonLinkStyle,
+                        },
+                        iconLink = new Button
+                        {
+                            Name  = "IconLink",
+                            Text  = "Icon",
                             Style = buttonLinkStyle,
                         },
                         textBoxLink = new Button
@@ -119,8 +126,10 @@ public sealed class StoryBook : Node
             ]
         };
 
-        buttonLink.Clicked += (in MouseEvent _) => this.SetPage(new ButtonPage());
+        buttonLink.Clicked  += (in MouseEvent _) => this.SetPage(new ButtonPage());
+        iconLink.Clicked    += (in MouseEvent _) => this.SetPage(new IconPage());
         textBoxLink.Clicked += (in MouseEvent _) => this.SetPage(new TextBoxPage());
+
         emptyLink.Clicked += (in MouseEvent _) => this.outlet.RemoveChildren();
 
         this.AppendChild(this.canvas);

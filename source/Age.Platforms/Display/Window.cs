@@ -50,7 +50,7 @@ public partial class Window : Disposable
 
     public Size<uint> ClientSize => this.PlatformGetClientSize();
 
-    public CursorKind Cursor
+    public Cursor Cursor
     {
         get;
         set

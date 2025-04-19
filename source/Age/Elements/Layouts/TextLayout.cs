@@ -684,7 +684,7 @@ internal sealed partial class TextLayout : Layout
 
         this.isMouseOverText = IsHoveringText = true;
 
-        this.SetCursor(CursorKind.Text);
+        this.SetCursor(Cursor.Text);
     }
 
     public void TargetRemoved(Element parentElement) =>

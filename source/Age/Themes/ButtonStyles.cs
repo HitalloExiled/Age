@@ -10,7 +10,7 @@ public class ButtonStyles
         Padding              = new((Pixel)4),
         FontWeight           = FontWeight.Medium,
         ContentJustification = ContentJustification.Center,
-        Cursor               = Platforms.Display.CursorKind.Hand,
+        Cursor               = Platforms.Display.Cursor.Hand,
     };
 
     public required StyledStates Flat     { get; init; }

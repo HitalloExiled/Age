@@ -32,7 +32,7 @@ internal abstract class Layout : Disposable
     public abstract bool       IsParentDependent { get; }
     public abstract Layoutable Target            { get; }
 
-    protected void SetCursor(CursorKind? cursor)
+    protected void SetCursor(Cursor? cursor)
     {
         if (this.Target.Tree is RenderTree renderTree)
         {

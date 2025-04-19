@@ -25,7 +25,7 @@ public class TextSelectionTest
             {
                 Hovered = new()
                 {
-                    Cursor = CursorKind.Hand,
+                    Cursor = Cursor.Hand,
                 }
             }
         };
@@ -47,11 +47,11 @@ public class TextSelectionTest
             {
                 Hovered = new()
                 {
-                    Cursor = CursorKind.Busy,
+                    Cursor = Cursor.Busy,
                 },
                 Active = new()
                 {
-                    Cursor = CursorKind.Move,
+                    Cursor = Cursor.Move,
                     Border = new(20, 0, Color.White),
                 }
             }

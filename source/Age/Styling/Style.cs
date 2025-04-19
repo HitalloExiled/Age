@@ -53,7 +53,7 @@ public record Style
         set => this.Set(ref this.data.ContentJustification, value, StyleProperty.ContentJustification);
     }
 
-    public CursorKind? Cursor
+    public Cursor? Cursor
     {
         get => this.data.Cursor;
         set => this.Set(ref this.data.Cursor, value, StyleProperty.Cursor);
