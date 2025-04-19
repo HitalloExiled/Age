@@ -7,7 +7,7 @@ namespace Age.Playground;
 
 public class EditorViewport3D : Element
 {
-    public override string NodeName { get; } = nameof(EditorViewport3D);
+    public override string NodeName => nameof(EditorViewport3D);
 
     public Viewport Viewport { get; }
 

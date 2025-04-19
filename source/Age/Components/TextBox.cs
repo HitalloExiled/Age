@@ -19,7 +19,7 @@ public partial class TextBox : Element
 
     private string? previousText;
 
-    public override string NodeName { get; } = nameof(TextBox);
+    public override string NodeName => nameof(TextBox);
 
     public uint CursorPosition
     {

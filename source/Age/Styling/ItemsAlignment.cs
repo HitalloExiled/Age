@@ -1,6 +1,6 @@
 namespace Age.Styling;
 
-public enum ItemsAlignmentKind
+public enum ItemsAlignment : byte
 {
     None,
     Baseline,

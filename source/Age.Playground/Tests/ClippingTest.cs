@@ -16,14 +16,14 @@ public class ClippingTest
             Style = new()
             {
                 Border   = new(borderSize, 100, Color.Red),
-                Overflow = OverflowKind.Scroll,
+                Overflow = Overflow.Scroll,
                 Size     = new((Pixel)50, (Pixel)50),
             }
         };
 
         n1_layer.Clicked += (in MouseEvent _) =>
         {
-            n1_layer.Style.Overflow = n1_layer.Style.Overflow == OverflowKind.Scroll ? OverflowKind.None : OverflowKind.Scroll;
+            n1_layer.Style.Overflow = n1_layer.Style.Overflow == Overflow.Scroll ? Overflow.None : Overflow.Scroll;
         };
 
         var n2_a_layer = new FlexBox()
@@ -43,7 +43,7 @@ public class ClippingTest
 
         n2_a_layer.Clicked += (in MouseEvent _) =>
         {
-            n2_a_layer.Style.Overflow = n2_a_layer.Style.Overflow == OverflowKind.Clipping ? OverflowKind.None : OverflowKind.Clipping;
+            n2_a_layer.Style.Overflow = n2_a_layer.Style.Overflow == Overflow.Clipping ? Overflow.None : Overflow.Clipping;
         };
 
         //n2_a_layer.Clicked += (in MouseEvent _) =>
@@ -57,7 +57,7 @@ public class ClippingTest
             {
                 Color  = Color.White,
                 FontSize = 36,
-                ContentJustification = ContentJustificationKind.SpaceAround,
+                ContentJustification = ContentJustification.SpaceAround,
                 Border = new(borderSize, 60, Color.Blue),
                 //Overflow  = OverflowKind.Clipping,
                 //BackgroundColor = Color.Margenta,

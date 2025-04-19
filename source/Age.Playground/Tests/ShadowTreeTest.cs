@@ -8,7 +8,7 @@ namespace Age.Playground.Tests;
 
 public class Host : Element
 {
-    public override string NodeName { get; } = nameof(Host);
+    public override string NodeName => nameof(Host);
 
     public Host()
     {
@@ -43,8 +43,8 @@ public class Host : Element
             {
                 Style = new()
                 {
-                    Stack = StackKind.Vertical,
-                    Size  = new((Percentage)100, null),
+                    StackDirection = StackDirection.Vertical,
+                    Size           = new((Percentage)100, null),
                 },
                 Children =
                 [
@@ -132,7 +132,7 @@ public class ShadowTreeTest
             {
                 Style    = new()
                 {
-                    Stack = StackKind.Vertical,
+                    StackDirection = StackDirection.Vertical,
                 },
                 Children =
                 [
@@ -149,7 +149,7 @@ public class ShadowTreeTest
                 Name  = "host",
                 Style = new()
                 {
-                    Stack  = StackKind.Vertical,
+                    StackDirection  = StackDirection.Vertical,
                     //Size   = new((Pixel)100),
                     Border = new(1, 0, Color.Red),
                 },
@@ -165,7 +165,7 @@ public class ShadowTreeTest
                             Border   = new(1, 0, Color.Green),
                             Color    = Color.White,
                             //Size     = new((Percentage)10, null),
-                            Overflow = OverflowKind.Clipping,
+                            Overflow = Overflow.Clipping,
                         }
                     },
                     l2 = new FlexBox
@@ -179,7 +179,7 @@ public class ShadowTreeTest
                             Color     = Color.White,
                             //Size      = new((Percentage)10, null),
                             //Alignment = AlignmentKind.End,
-                            Overflow  = OverflowKind.Clipping,
+                            Overflow  = Overflow.Clipping,
                         }
                     }
                 ]

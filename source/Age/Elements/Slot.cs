@@ -4,7 +4,7 @@ namespace Age.Elements;
 
 public sealed class Slot : Element
 {
-    public override string NodeName { get; } = nameof(Slot);
+    public override string NodeName => nameof(Slot);
     internal List<Layoutable> Nodes { get; } = [];
 
     public Layoutable[] AssignedNodes    => [.. this.Nodes];

@@ -6,9 +6,9 @@ public class TextBoxStyles
 {
     public static Style Base { get; } = new()
     {
-        ContentJustification = ContentJustificationKind.Center,
+        ContentJustification = ContentJustification.Center,
         FontWeight           = FontWeight.Medium,
-        Overflow             = OverflowKind.Scroll,
+        Overflow             = Overflow.Scroll,
         Padding              = new((Pixel)4),
         TextSelection        = false,
     };

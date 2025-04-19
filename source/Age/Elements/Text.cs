@@ -13,7 +13,7 @@ public sealed class Text : Layoutable
 
     public StringBuffer Buffer { get; } = new();
 
-    public override string NodeName { get; } = nameof(Text);
+    public override string NodeName => nameof(Text);
 
     public uint CursorPosition
     {

@@ -15,8 +15,8 @@ public class Boxes : Element
             Name  = "BoxH",
             Style = new()
             {
-                Stack = StackKind.Horizontal,
-                Size  = new((Pixel)150),
+                StackDirection = StackDirection.Horizontal,
+                Size           = new((Pixel)150),
             }
         };
 
@@ -25,8 +25,8 @@ public class Boxes : Element
             Name  = "BoxV",
             Style = new()
             {
-                Stack = StackKind.Vertical,
-                Size  = new((Pixel)150),
+                StackDirection = StackDirection.Vertical,
+                Size           = new((Pixel)150),
             }
         };
 
@@ -54,7 +54,7 @@ public class Boxes : Element
             Name  = "bh",
             Style = new()
             {
-                Alignment   = AlignmentKind.Top,
+                Alignment   = Alignment.Top,
                 // BorderColor = Color.Green,
                 Color       = Color.Green,
                 Size        = new((Pixel)100),
@@ -93,7 +93,7 @@ public class Boxes : Element
             Name  = "bv",
             Style = new()
             {
-                Alignment   = AlignmentKind.Center/*  | AlignmentType.Top */,
+                Alignment   = Alignment.Center/*  | AlignmentType.Top */,
                 // BorderColor = Color.Green,
                 Color       = Color.Green,
                 Size        = new((Pixel)BLOCK_SIZE),

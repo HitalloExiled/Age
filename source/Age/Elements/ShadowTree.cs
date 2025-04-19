@@ -4,7 +4,7 @@ namespace Age.Elements;
 
 public sealed class ShadowTree(Element host) : Node
 {
-    public override string NodeName { get; } = nameof(ShadowTree);
+    public override string NodeName => nameof(ShadowTree);
 
     public Element Host { get; } = host;
 

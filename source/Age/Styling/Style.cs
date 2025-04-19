@@ -11,7 +11,7 @@ public record Style
 
     internal StyleData Data => this.data;
 
-    public AlignmentKind? Alignment
+    public Alignment? Alignment
     {
         get => this.data.Alignment;
         set => this.Set(ref this.data.Alignment, value, StyleProperty.Alignment);
@@ -47,7 +47,7 @@ public record Style
         set => this.Set(ref this.data.Color, value, StyleProperty.Color);
     }
 
-    public ContentJustificationKind? ContentJustification
+    public ContentJustification? ContentJustification
     {
         get => this.data.ContentJustification;
         set => this.Set(ref this.data.ContentJustification, value, StyleProperty.ContentJustification);
@@ -83,7 +83,7 @@ public record Style
         set => this.Set(ref this.data.Hidden, value, StyleProperty.Hidden);
     }
 
-    public ItemsAlignmentKind? ItemsAlignment
+    public ItemsAlignment? ItemsAlignment
     {
         get => this.data.ItemsAlignment;
         set => this.Set(ref this.data.ItemsAlignment, value, StyleProperty.ItemsAlignment);
@@ -107,7 +107,7 @@ public record Style
         set => this.Set(ref this.data.MinSize, value, StyleProperty.MinSize);
     }
 
-    public OverflowKind? Overflow
+    public Overflow? Overflow
     {
         get => this.data.Overflow;
         set => this.Set(ref this.data.Overflow, value, StyleProperty.Overflow);
@@ -119,7 +119,7 @@ public record Style
         set => this.Set(ref this.data.Padding, value, StyleProperty.Padding);
     }
 
-    public PositionKind? Positioning
+    public Positioning? Positioning
     {
         get => this.data.Positioning;
         set => this.Set(ref this.data.Positioning, value, StyleProperty.Positioning);
@@ -131,13 +131,13 @@ public record Style
         set => this.Set(ref this.data.Size, value, StyleProperty.Size);
     }
 
-    public StackKind? Stack
+    public StackDirection? StackDirection
     {
         get => this.data.Stack;
         set => this.Set(ref this.data.Stack, value, StyleProperty.Stack);
     }
 
-    public TextAlignmentKind? TextAlignment
+    public TextAlignment? TextAlignment
     {
         get => this.data.TextAlignment;
         set => this.Set(ref this.data.TextAlignment, value, StyleProperty.TextAlignment);

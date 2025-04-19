@@ -2,5 +2,5 @@ namespace Age.Elements;
 
 public sealed class FlexBox : Element
 {
-    public override string NodeName { get; } = nameof(FlexBox);
+    public override string NodeName => nameof(FlexBox);
 }

@@ -1,6 +1,6 @@
 namespace Age.Styling;
 
-public enum ContentJustificationKind
+public enum ContentJustification : byte
 {
     Start,
     Center,

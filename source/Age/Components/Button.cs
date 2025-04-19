@@ -12,7 +12,7 @@ public enum ButtonVariant
 
 public class Button : Element
 {
-    public override string NodeName { get; } = nameof(Button);
+    public override string NodeName => nameof(Button);
 
     public ButtonVariant Variant
     {

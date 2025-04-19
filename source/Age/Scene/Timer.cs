@@ -7,7 +7,7 @@ public sealed class Timer : Node
     public event Action? Timeout;
     private long timestamp;
 
-    public override string NodeName { get; } = nameof(Time);
+    public override string NodeName => nameof(Time);
 
     public TimeSpan WaitTime { get; set; }
 

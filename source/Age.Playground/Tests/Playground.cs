@@ -6,7 +6,7 @@ namespace Age.Playground.Tests;
 
 public class Playground : Element
 {
-    public override string NodeName { get; } = nameof(Playground);
+    public override string NodeName => nameof(Playground);
 
     public static void Setup(Canvas canvas)
     {
@@ -15,7 +15,7 @@ public class Playground : Element
             Name  = "Root",
             Style = new()
             {
-                Alignment = AlignmentKind.Center,
+                Alignment = Alignment.Center,
                 Border    = new(1, 0, Color.Red),
                 Size      = new((Pixel)200, (Pixel)200),
             }
@@ -27,7 +27,7 @@ public class Playground : Element
             // Text  = "Text",
             Style = new()
             {
-                Alignment = AlignmentKind.Center,
+                Alignment = Alignment.Center,
                 // Align     = new(1, 1),
                 // Margin    = new(0),
                 // Baseline  = 1,
@@ -43,7 +43,7 @@ public class Playground : Element
             // Text  = "Text",
             Style = new()
             {
-                Alignment = AlignmentKind.Center,
+                Alignment = Alignment.Center,
                 // Align     = new(1, 1),
                 // Margin    = new(0),
                 // Baseline  = 1,

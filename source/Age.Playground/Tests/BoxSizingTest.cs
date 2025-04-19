@@ -201,10 +201,10 @@ public class BoxSizingTest
             Name  = "BSC100v",
             Style = new()
             {
-                Border    = new(borderSize, 0, Color.Red),
-                Stack     = StackKind.Vertical,
-                Size      = new((Pixel)100),
-                BoxSizing = BoxSizing.Content,
+                Border         = new(borderSize, 0, Color.Red),
+                StackDirection = StackDirection.Vertical,
+                Size           = new((Pixel)100),
+                BoxSizing      = BoxSizing.Content,
             }
         };
 
@@ -233,10 +233,10 @@ public class BoxSizingTest
             Name  = "BSB100v",
             Style = new()
             {
-                Stack     = StackKind.Vertical,
-                Border    = new(borderSize, 0, Color.Green),
-                Size      = new((Pixel)100),
-                BoxSizing = BoxSizing.Border,
+                StackDirection = StackDirection.Vertical,
+                Border         = new(borderSize, 0, Color.Green),
+                Size           = new((Pixel)100),
+                BoxSizing      = BoxSizing.Border,
             }
         };
 

@@ -28,7 +28,7 @@ public class BaselineTest
                 Text  = "Vertical\nText",
                 Style = new()
                 {
-                    Alignment  = AlignmentKind.Baseline,
+                    Alignment  = Alignment.Baseline,
                     Border     = new(borderSize, 0, Color.Margenta),
                     Color      = Color.White,
                     FontFamily = "Impact",
@@ -45,7 +45,7 @@ public class BaselineTest
                     Color          = Color.White,
                     FontFamily     = "Impact",
                     FontSize       = 24,
-                    ItemsAlignment = ItemsAlignmentKind.Baseline,
+                    ItemsAlignment = ItemsAlignment.Baseline,
                 },
                 Children =
                 [
@@ -94,7 +94,7 @@ public class BaselineTest
                         Text = "Hello",
                         Style = new()
                         {
-                            Alignment = AlignmentKind.Bottom,
+                            Alignment = Alignment.Bottom,
                             Border    = new(borderSize, 0, Color.Margenta),
                             Color     = Color.White,
                             Margin    = new((Pixel)5)
@@ -106,7 +106,7 @@ public class BaselineTest
                         Text  = "World!!!",
                         Style = new()
                         {
-                            Alignment = AlignmentKind.Top,
+                            Alignment = Alignment.Top,
                             Border    = new(borderSize, 0, Color.Margenta),
                             Color     = Color.White,
                             Margin    = new((Pixel)5)
@@ -120,8 +120,8 @@ public class BaselineTest
                 Text  = "Horizontal",
                 Style = new()
                 {
-                    Alignment      = AlignmentKind.Baseline,
-                    ItemsAlignment = ItemsAlignmentKind.Baseline,
+                    Alignment      = Alignment.Baseline,
+                    ItemsAlignment = ItemsAlignment.Baseline,
                     Border         = new(borderSize, 0, Color.Margenta),
                     Color          = Color.White,
                     FontFamily     = "Impact",
@@ -173,11 +173,11 @@ public class BaselineTest
                 Name  = "horizontal_c_container",
                 Style = new()
                 {
-                    Border     = new(borderSize, 0, Color.Margenta),
-                    Color      = Color.White,
-                    FontFamily = "Impact",
-                    FontSize   = 24,
-                    Stack      = StackKind.Horizontal,
+                    Border         = new(borderSize, 0, Color.Margenta),
+                    Color          = Color.White,
+                    FontFamily     = "Impact",
+                    FontSize       = 24,
+                    StackDirection = StackDirection.Horizontal,
                 },
                 Children =
                 [
@@ -186,7 +186,7 @@ public class BaselineTest
                         Name  = "horizontal_c_child1",
                         Style = new()
                         {
-                            Alignment = AlignmentKind.Left,
+                            Alignment = Alignment.Left,
                             Border    = new(borderSize, 0, Color.Cyan),
                             Margin    = new((Pixel)10),
                             Size      = new((Pixel)100),
@@ -197,7 +197,7 @@ public class BaselineTest
                         Name  = "horizontal_c_child2",
                         Style = new()
                         {
-                            Alignment = AlignmentKind.Right,
+                            Alignment = Alignment.Right,
                             Border    = new(borderSize, 0, Color.Cyan),
                             Margin    = new((Pixel)10),
                             Size      = new((Pixel)100),
@@ -211,12 +211,12 @@ public class BaselineTest
                 // Text  = "Vertical",
                 Style = new()
                 {
-                    Alignment  = AlignmentKind.Baseline,
-                    Border     = new(borderSize, 0, Color.Margenta),
-                    Color      = Color.White,
-                    FontFamily = "Impact",
-                    FontSize   = 24,
-                    Stack      = StackKind.Vertical,
+                    Alignment      = Alignment.Baseline,
+                    Border         = new(borderSize, 0, Color.Margenta),
+                    Color          = Color.White,
+                    FontFamily     = "Impact",
+                    FontSize       = 24,
+                    StackDirection = StackDirection.Vertical,
                 },
                 Children =
                 [
@@ -261,7 +261,7 @@ public class BaselineTest
                         Text = "Hello",
                         Style = new()
                         {
-                            Alignment = AlignmentKind.Center,
+                            Alignment = Alignment.Center,
                             Border    = new(borderSize, 0, Color.Margenta),
                             Color     = Color.White,
                             Margin    = new((Pixel)10),
@@ -272,7 +272,7 @@ public class BaselineTest
                         Text = "World!!!",
                         Style = new()
                         {
-                            Alignment = AlignmentKind.Left,
+                            Alignment = Alignment.Left,
                             Border    = new(borderSize, 0, Color.Margenta),
                             Color     = Color.White,
                             Margin    = new((Pixel)10),
@@ -285,11 +285,11 @@ public class BaselineTest
                 Name  = "vertical_b_container",
                 Style = new()
                 {
-                    Border     = new(borderSize, 0, Color.Margenta),
-                    Color      = Color.White,
-                    FontFamily = "Impact",
-                    FontSize   = 24,
-                    Stack      = StackKind.Vertical,
+                    Border         = new(borderSize, 0, Color.Margenta),
+                    Color          = Color.White,
+                    FontFamily     = "Impact",
+                    FontSize       = 24,
+                    StackDirection = StackDirection.Vertical,
                 },
                 Children =
                 [
@@ -327,12 +327,12 @@ public class BaselineTest
                 Name  = "vertical_c_container",
                 Style = new()
                 {
-                    Alignment  = AlignmentKind.Baseline,
-                    Border     = new(borderSize, 0, Color.Cyan),
-                    Color      = Color.White,
-                    FontFamily = "Impact",
-                    FontSize   = 24,
-                    Stack      = StackKind.Vertical,
+                    Alignment      = Alignment.Baseline,
+                    Border         = new(borderSize, 0, Color.Cyan),
+                    Color          = Color.White,
+                    FontFamily     = "Impact",
+                    FontSize       = 24,
+                    StackDirection = StackDirection.Vertical,
                 },
                 Children =
                 [
@@ -340,8 +340,8 @@ public class BaselineTest
                     new FlexBox { Name = "X", Text = "X", Style = new() { Border = new(borderSize, 0, Color.Red),   FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } },
                     new FlexBox { Name = "Y", Text = "Y", Style = new() { Border = new(borderSize, 0, Color.Green), FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } },
                     new FlexBox { Name = "Z", Text = "Z", Style = new() { Border = new(borderSize, 0, Color.Blue),  FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } },
-                    new FlexBox { Text = "Hello",         Style = new() { Border = new(borderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Left,  Margin = new((Pixel)5) } },
-                    new FlexBox { Text = "World!!!",      Style = new() { Border = new(borderSize, 0, Color.Margenta), Color = Color.White, Alignment = AlignmentKind.Right, Margin = new((Pixel)5) } },
+                    new FlexBox { Text = "Hello",         Style = new() { Border = new(borderSize, 0, Color.Margenta), Color = Color.White, Alignment = Alignment.Left,  Margin = new((Pixel)5) } },
+                    new FlexBox { Text = "World!!!",      Style = new() { Border = new(borderSize, 0, Color.Margenta), Color = Color.White, Alignment = Alignment.Right, Margin = new((Pixel)5) } },
                 ],
             },
             new FlexBox
@@ -353,9 +353,9 @@ public class BaselineTest
                     Color      = Color.White,
                     FontFamily = "Impact",
                     FontSize   = 24,
-                    Stack      = StackKind.Vertical,
-                    Alignment      = AlignmentKind.Baseline,
-                    ItemsAlignment = ItemsAlignmentKind.Baseline,
+                    StackDirection      = StackDirection.Vertical,
+                    Alignment      = Alignment.Baseline,
+                    ItemsAlignment = ItemsAlignment.Baseline,
                 },
                 Children =
                 [
@@ -367,7 +367,7 @@ public class BaselineTest
                             Size      = new((Pixel)100),
                             Margin    = new((Pixel)10),
                             Border    = new(borderSize, 0, Color.Cyan),
-                            Alignment = AlignmentKind.Top,
+                            Alignment = Alignment.Top,
                         }
                     },
                     new FlexBox
@@ -378,7 +378,7 @@ public class BaselineTest
                             Size      = new((Pixel)100),
                             Margin    = new((Pixel)10),
                             Border    = new(borderSize, 0, Color.Cyan),
-                            Alignment = AlignmentKind.Bottom,
+                            Alignment = Alignment.Bottom,
                         }
                     },
                 ],

@@ -12,7 +12,7 @@ public static class ButtonTest
         {
             Style = new()
             {
-                ContentJustification = ContentJustificationKind.SpaceAround,
+                ContentJustification = ContentJustification.SpaceAround,
                 Size                 = new((Percentage)100, null),
                 Margin               = new((Pixel)10),
             }

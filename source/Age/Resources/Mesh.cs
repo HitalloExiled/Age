@@ -8,7 +8,7 @@ namespace Age.Resources;
 
 public sealed class Mesh : Spatial3D
 {
-    public override string NodeName { get; } = nameof(Mesh);
+    public override string NodeName => nameof(Mesh);
 
     public Material Material { get; set; } = new();
 

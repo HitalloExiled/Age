@@ -9,7 +9,7 @@ public class ButtonStyles
         TextSelection        = false,
         Padding              = new((Pixel)4),
         FontWeight           = FontWeight.Medium,
-        ContentJustification = ContentJustificationKind.Center,
+        ContentJustification = ContentJustification.Center,
         Cursor               = Platforms.Display.CursorKind.Hand,
     };
 

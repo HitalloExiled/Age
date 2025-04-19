@@ -20,7 +20,7 @@ public class AlignmentTest
             Style = new()
             {
                 Border         = new(borderSize, 0, Color.Green),
-                ItemsAlignment = ItemsAlignmentKind.Baseline,
+                ItemsAlignment = ItemsAlignment.Baseline,
             }
         };
 
@@ -33,7 +33,7 @@ public class AlignmentTest
                 Border         = new(borderSize, 0, Color.Margenta),
                 Color          = Color.White,
                 FontSize       = 32,
-                ItemsAlignment = ItemsAlignmentKind.Baseline,
+                ItemsAlignment = ItemsAlignment.Baseline,
             },
             States = new()
             {
@@ -76,7 +76,7 @@ public class AlignmentTest
             Text  = "Left",
             Style = new()
             {
-                Alignment = AlignmentKind.Left,
+                Alignment = Alignment.Left,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
                 Size      = new(null, (Percentage)100),
@@ -89,7 +89,7 @@ public class AlignmentTest
             Text  = "Right",
             Style = new()
             {
-                Alignment = AlignmentKind.Right,
+                Alignment = Alignment.Right,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
                 //Margin    = new((Pixel)marginSize),
@@ -202,7 +202,7 @@ public class AlignmentTest
             Text  = "Top",
             Style = new()
             {
-                Alignment = AlignmentKind.Top,
+                Alignment = Alignment.Top,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
             }
@@ -214,7 +214,7 @@ public class AlignmentTest
             Text  = "Down",
             Style = new()
             {
-                Alignment = AlignmentKind.Bottom,
+                Alignment = Alignment.Bottom,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
                 Margin    = new((Pixel)marginSize),
@@ -230,8 +230,8 @@ public class AlignmentTest
                 Border         = new(borderSize, 0, Color.Margenta),
                 Color          = Color.White,
                 FontSize       = 32,
-                ItemsAlignment = ItemsAlignmentKind.Baseline,
-                Stack          = StackKind.Vertical,
+                ItemsAlignment = ItemsAlignment.Baseline,
+                StackDirection = StackDirection.Vertical,
             }
         };
 
@@ -241,7 +241,7 @@ public class AlignmentTest
             Text  = "Left",
             Style = new()
             {
-                Alignment = AlignmentKind.Left,
+                Alignment = Alignment.Left,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
             }
@@ -253,7 +253,7 @@ public class AlignmentTest
             Text  = "Right",
             Style = new()
             {
-                Alignment = AlignmentKind.Right,
+                Alignment = Alignment.Right,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
             }
@@ -265,10 +265,10 @@ public class AlignmentTest
             Text  = "Vertical B",
             Style = new()
             {
-                Border   = new(borderSize, 0, Color.Margenta),
-                FontSize = 32,
-                Color    = Color.White,
-                Stack    = StackKind.Vertical,
+                Border         = new(borderSize, 0, Color.Margenta),
+                FontSize       = 32,
+                Color          = Color.White,
+                StackDirection = StackDirection.Vertical,
             }
         };
 
@@ -278,7 +278,7 @@ public class AlignmentTest
             Text  = "Top",
             Style = new()
             {
-                Alignment = AlignmentKind.Top,
+                Alignment = Alignment.Top,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
             }
@@ -290,7 +290,7 @@ public class AlignmentTest
             Text  = "Down",
             Style = new()
             {
-                Alignment = AlignmentKind.Bottom,
+                Alignment = Alignment.Bottom,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
             }

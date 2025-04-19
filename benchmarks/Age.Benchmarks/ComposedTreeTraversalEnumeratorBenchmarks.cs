@@ -14,17 +14,17 @@ public class TestTree : NodeTree
 
 public class TestElement : Element
 {
-    public override string NodeName { get; } = nameof(TestElement);
+    public override string NodeName => nameof(TestElement);
 }
 
 public class RootElement : Element
 {
-    public override string NodeName { get; } = nameof(RootElement);
+    public override string NodeName => nameof(RootElement);
 }
 
 public class HostElement : Element
 {
-    public override string NodeName { get; } = nameof(HostElement);
+    public override string NodeName => nameof(HostElement);
 
     public HostElement()
     {

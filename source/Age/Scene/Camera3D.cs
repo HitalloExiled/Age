@@ -5,7 +5,7 @@ namespace Age.Scene;
 
 public sealed class Camera3D : Spatial3D
 {
-    public override string NodeName { get; } = nameof(Camera3D);
+    public override string NodeName => nameof(Camera3D);
 
     public float Far  { get; set; } = 50;
     public float FoV  { get; set; } = Angle.DegreesToRadians(45f);
