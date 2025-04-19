@@ -67,7 +67,7 @@ public sealed class Texture : Resource
         this.ImageView = CreateImageView(image);
     }
 
-    public Texture(in TextureCreateInfo textureCreate, Span<byte> data) : this(textureCreate) =>
+    public Texture(in TextureCreateInfo textureCreate, scoped ReadOnlySpan<byte> data) : this(textureCreate) =>
         this.Image!.Update(data);
 
     protected override void Disposed()
@@ -81,6 +81,6 @@ public sealed class Texture : Resource
         this.Sampler.Dispose();
     }
 
-    public void Update(Span<byte> data) =>
+    public void Update(scoped ReadOnlySpan<byte> data) =>
         this.Image.Update(data);
 }

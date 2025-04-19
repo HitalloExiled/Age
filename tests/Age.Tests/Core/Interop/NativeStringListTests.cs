@@ -1,10 +1,10 @@
-using Age.Core.Interop;
+using Age.Core;
 
 namespace Age.Tests.Core.Interop;
 
 public unsafe class NativeStringListTests
 {
-    private static void AssertList(NativeStringList list, int capacty, Span<string> values)
+    private static void AssertList(NativeStringList list, int capacty, scoped ReadOnlySpan<string> values)
     {
         Assert.Equal(capacty, list.Capacity);
         Assert.Equal(values.Length, list.Count);

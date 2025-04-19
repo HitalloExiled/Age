@@ -5,15 +5,17 @@ using Age.Scene;
 
 namespace Age.Elements;
 
-public abstract class Layoutable : Spatial2D
+public abstract partial class Layoutable : Spatial2D
 {
-    internal abstract Layout Layout { get; }
-
     private CacheValue<Transform2D> transformCache;
 
-    private Transform2D Offset => Transform2D.CreateTranslated((this.ParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
+    private Transform2D ComposedParentTransform      => (this.ComposedParentElement as Spatial2D)?.Transform ?? new();
+    private Transform2D ComposedParentTransformCache => (this.ComposedParentElement as Spatial2D)?.TransformCache ?? new();
+    private Transform2D Offset                       => Transform2D.CreateTranslated((this.ComposedParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
 
     internal Transform2D TransformWithOffset => this.Offset * this.Transform;
+
+    internal abstract Layout Layout { get; }
 
     internal override Transform2D TransformCache
     {
@@ -23,7 +25,7 @@ public abstract class Layoutable : Spatial2D
             {
                 this.transformCache = new()
                 {
-                    Value   = this.Offset * this.Layout.Transform * base.TransformCache,
+                    Value   = this.Offset * this.Layout.Transform * this.ComposedParentTransformCache * this.LocalTransform,
                     Version = CacheVersion
                 };
             }
@@ -32,13 +34,99 @@ public abstract class Layoutable : Spatial2D
         }
     }
 
-    public override Transform2D Transform
+    public Slot? AssignedSlot { get; internal set; }
+
+    public Element? FirstElementChild
     {
-        get => this.Layout.Transform * base.Transform;
-        set => this.LocalTransform = value * this.Transform.Inverse();
+        get
+        {
+            for (var node = this.FirstChild; node != null; node = node?.NextSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
     }
 
-    public Element? ParentElement => this.Parent as Element;
+    public Element? LastElementChild
+    {
+        get
+        {
+            for (var node = this.LastChild; node != null; node = node?.PreviousSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public Element? NextElementSibling
+    {
+        get
+        {
+            for (var node = this.NextSibling; node != null; node = node?.NextSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public Element? PreviousElementSibling
+    {
+        get
+        {
+            for (var node = this.PreviousSibling; node != null; node = node?.PreviousSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public string? Slot
+    {
+        get;
+        set
+        {
+            if (field != value)
+            {
+                if (this.Parent is Element parentElement && parentElement.ShadowTree != null)
+                {
+                    parentElement.UnassignSlot(field ?? "", this);
+                    parentElement.AssignSlot(value ?? "", this);
+                }
+
+                field = value;
+            }
+        }
+    }
+
+    public Element? ComposedParentElement  => this.AssignedSlot ?? this.EffectiveParentElement;
+    public Element? EffectiveParentElement => this.Parent is ShadowTree shadowTree ? shadowTree.Host : this.ParentElement;
+    public Element? ParentElement          => this.Parent as Element;
+
+    public override Transform2D Transform
+    {
+        get => this.Layout.Transform * (this.ComposedParentTransform * this.LocalTransform);
+        set => this.LocalTransform = value * this.Transform.Inverse();
+    }
 
     private protected Layout GetIndependentLayoutAncestor()
     {
@@ -62,6 +150,26 @@ public abstract class Layoutable : Spatial2D
         if (this.Layout.IsDirty)
         {
             this.GetIndependentLayoutAncestor().Update();
+        }
+    }
+
+    protected override void Adopted(Node parent)
+    {
+        base.Adopted(parent);
+
+        if (parent is Element parentElement && parentElement.ShadowTree != null)
+        {
+            parentElement.AssignSlot(this.Slot ?? "", this);
+        }
+    }
+
+    protected override void Removed(Node parent)
+    {
+        base.Removed(parent);
+
+        if (parent is Element parentElement && parentElement.ShadowTree != null)
+        {
+            parentElement.UnassignSlot(this.Slot ?? "", this);
         }
     }
 

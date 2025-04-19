@@ -9,5 +9,6 @@
     <IsAotCompatible>true</IsAotCompatible>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
   </PropertyGroup>
 </Project>

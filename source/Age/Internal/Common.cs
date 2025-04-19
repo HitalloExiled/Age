@@ -66,7 +66,7 @@ public static class Common
         {
             var pixels = new SKColor[skBitmap.Pixels.Length];
 
-            var span = bitmap.Buffer.AsSpan().Cast<byte, short>();
+            var span = bitmap.AsSpan().Cast<byte, short>();
 
             for (var i = 0; i < pixels.Length; i++)
             {
@@ -77,7 +77,7 @@ public static class Common
         }
         else
         {
-            skBitmap.Pixels = bitmap.Buffer.AsSpan().Cast<byte, SKColor>().ToArray();
+            skBitmap.Pixels = bitmap.AsSpan().Cast<byte, SKColor>().ToArray();
         }
 
         SaveImage(skBitmap, filename);

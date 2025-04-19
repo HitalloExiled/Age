@@ -1,6 +1,6 @@
 namespace Age.Core;
 
-public static partial class Logger
+public static class Logger
 {
     public static LogLevel Level { get; set; } = LogLevel.Info;
     private static SpinLock spinLock;

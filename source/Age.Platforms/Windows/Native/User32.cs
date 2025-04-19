@@ -524,7 +524,7 @@ internal static unsafe partial class User32
     public static partial BOOL SetWindowTextW(HWND hWnd, LPCWSTR lpString);
 
     /// <inheritdoc cref="SetWindowTextW" />
-    public static BOOL SetWindowTextW(HWND hWnd, string? text)
+    public static BOOL SetWindowText(HWND hWnd, string? text)
     {
         fixed (char* lpString = text)
         {

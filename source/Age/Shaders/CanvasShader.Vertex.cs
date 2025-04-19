@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Interfaces;
 using ThirdParty.Vulkan;
@@ -20,15 +21,19 @@ public partial class CanvasShader
         public Vertex(Point<float> position) =>
             this.Position = position;
 
-        public static VkVertexInputAttributeDescription[] GetAttributes() =>
-            [
-                new()
-                {
-                    Format   = VkFormat.R32G32Sfloat,
-                    Location = 0,
-                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Position)),
-                },
-            ];
+        public static RefArray<VkVertexInputAttributeDescription> GetAttributes()
+        {
+            var attributes = new RefArray<VkVertexInputAttributeDescription>(1);
+
+            attributes[0] = new()
+            {
+                Format   = VkFormat.R32G32Sfloat,
+                Location = 0,
+                Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Position)),
+            };
+
+            return attributes;
+        }
 
         public unsafe static VkVertexInputBindingDescription GetBindings() =>
             new()

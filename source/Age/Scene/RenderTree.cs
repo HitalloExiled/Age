@@ -1,9 +1,12 @@
+using Age.Core.Extensions;
 using Age.Elements;
+using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Rendering.Vulkan;
 using Age.RenderPasses;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using ThirdParty.Vulkan.Flags;
 
 using Buffer = Age.Rendering.Resources.Buffer;
@@ -12,9 +15,9 @@ namespace Age.Scene;
 
 public sealed partial class RenderTree : NodeTree
 {
-    #region 8-bytes
-    private readonly List<Command2DEntry> command2DEntriesCache = [];
-    private readonly List<Command3DEntry> command3DEntriesCache = [];
+    private readonly List<Command2DEntry> command2DEntries  = [];
+    private readonly List<Command3DEntry> command3DEntries  = [];
+    private readonly Stack<(Slot, int)>   composedTreeStack = [];
 
     private Buffer                     buffer = null!;
     private ulong                      bufferVersion;
@@ -28,7 +31,6 @@ public sealed partial class RenderTree : NodeTree
     internal List<Scene3D> Scenes3D { get; } = [];
 
     public Window Window { get; }
-    #endregion
 
     public RenderTree(Window window)
     {
@@ -37,61 +39,45 @@ public sealed partial class RenderTree : NodeTree
         this.Window.Closed += this.Dispose;
     }
 
-    private IEnumerable<CommandEntry> EnumerateCommands()
+    private void BuildIndexAndCollectCommands()
     {
-        var enumerator = this.Root.GetTraverseEnumerator();
-
         var index = 0;
 
-        while (enumerator.MoveNext())
+        var traversalEnumerator = this.Root.GetTraversalEnumerator();
+
+        while (traversalEnumerator.MoveNext())
         {
-            if (enumerator.Current is Renderable current)
+            if (traversalEnumerator.Current is Renderable renderable && renderable.Visible)
             {
-                if (current.Visible == true)
+                updateIndex(renderable);
+
+                if (renderable is Canvas canvas)
                 {
-                    current.Index = index;
+                    traversalEnumerator.SkipToNextSibling();
 
-                    if (index == this.Nodes.Count)
+                    var composedTreeTraversalEnumerator = canvas.GetComposedTreeTraversalEnumerator(this.composedTreeStack);
+
+                    while (composedTreeTraversalEnumerator.MoveNext())
                     {
-                        this.Nodes.Add(current);
-                    }
-                    else
-                    {
-                        this.Nodes[index] = current;
-                    }
-
-                    index++;
-
-                    if (current is Spatial2D spatial2D)
-                    {
-                        var transform = spatial2D.TransformCache;
-
-                        foreach (var command in spatial2D.Commands)
+                        if (composedTreeTraversalEnumerator.Current.Visible)
                         {
-                            var entry = new Command2DEntry(command, transform);
+                            updateIndex(composedTreeTraversalEnumerator.Current);
 
-                            this.command2DEntriesCache.Add(entry);
-
-                            yield return entry;
+                            collect2D(composedTreeTraversalEnumerator.Current);
                         }
-                    }
-                    else if (current is Spatial3D spatial3D)
-                    {
-                        var transform = (Matrix4x4<float>)spatial3D.TransformCache;
-
-                        foreach (var command in spatial3D.Commands)
+                        else
                         {
-                            var entry = new Command3DEntry(command, transform);
-
-                            this.command3DEntriesCache.Add(entry);
-
-                            yield return entry;
+                            composedTreeTraversalEnumerator.SkipToNextSibling();
                         }
                     }
                 }
-                else
+                else if (renderable is Spatial2D spatial2D)
                 {
-                    enumerator.SkipToNextSibling();
+                    collect2D(spatial2D);
+                }
+                else if (renderable is Spatial3D spatial3D)
+                {
+                    collect3D(spatial3D);
                 }
             }
         }
@@ -100,13 +86,56 @@ public sealed partial class RenderTree : NodeTree
         {
             this.Nodes.RemoveRange(index, this.Nodes.Count - index);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void collect2D(Spatial2D spatial2D)
+        {
+            var transform = spatial2D.TransformCache;
+
+            foreach (var command in spatial2D.Commands)
+            {
+                var entry = new Command2DEntry(command, transform);
+
+                this.command2DEntries.Add(entry);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void collect3D(Spatial3D spatial3D)
+        {
+            var transform = (Matrix4x4<float>)spatial3D.TransformCache;
+
+            foreach (var command in spatial3D.Commands)
+            {
+                var entry = new Command3DEntry(command, transform);
+
+                this.command3DEntries.Add(entry);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void updateIndex(Node current)
+        {
+            current.Index = index;
+
+            if (index == this.Nodes.Count)
+            {
+                this.Nodes.Add(current);
+            }
+            else
+            {
+                this.Nodes[index] = current;
+            }
+
+            index++;
+        }
     }
 
     private Element? GetElement(ushort x, ushort y) =>
         this.GetNode(x, y, out _) switch
         {
             Element element => element,
-            Text    text    => text.ParentElement,
+            Text    text    => text.ComposedParentElement,
             _ => null,
         };
 
@@ -148,8 +177,8 @@ public sealed partial class RenderTree : NodeTree
 
     private void ResetCache()
     {
-        this.command2DEntriesCache.Clear();
-        this.command3DEntriesCache.Clear();
+        this.command2DEntries.Clear();
+        this.command3DEntries.Clear();
     }
 
     private void OnContext(in Platforms.Display.ContextEvent contextEvent)
@@ -168,7 +197,7 @@ public sealed partial class RenderTree : NodeTree
         if (node is Text text)
         {
             text.Layout.PropagateSelection(characterPosition);
-            element = text.ParentElement;
+            element = text.ComposedParentElement;
         }
         else
         {
@@ -194,13 +223,13 @@ public sealed partial class RenderTree : NodeTree
 
         if (node is Text text)
         {
-            element = text.ParentElement;
+            element = text.ComposedParentElement;
 
             if (mouseEvent.IsPrimaryButtonPressed)
             {
                 text.InvokeActivate();
 
-                if (mouseEvent.KeyStates.HasFlag(MouseKeyStates.Shift) && this.lastFocusedText == text)
+                if (mouseEvent.KeyStates.HasFlags(MouseKeyStates.Shift) && this.lastFocusedText == text)
                 {
                     text.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y, characterPosition);
                 }
@@ -268,7 +297,7 @@ public sealed partial class RenderTree : NodeTree
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var character);
 
         var text    = node as Text;
-        var element = text?.ParentElement ?? node as Element;
+        var element = text?.ComposedParentElement ?? node as Element;
 
         if (element != null)
         {
@@ -308,6 +337,11 @@ public sealed partial class RenderTree : NodeTree
             this.lastHoveredText?.Layout.TargetMouseOut();
             this.lastHoveredText = null;
         }
+
+        if (!Layout.IsSelectingText && element == null && text == null)
+        {
+            this.Window.Cursor = default;
+        }
     }
 
     private void OnMouseUp(in Platforms.Display.MouseEvent mouseEvent)
@@ -315,7 +349,9 @@ public sealed partial class RenderTree : NodeTree
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out _);
 
         var text    = node as Text;
-        var element = text?.ParentElement ?? node as Element;
+        var element = text?.ComposedParentElement ?? node as Element;
+
+        var wasSelectingText = Layout.IsSelectingText;
 
         if (element != null)
         {
@@ -329,6 +365,14 @@ public sealed partial class RenderTree : NodeTree
 
         this.lastFocusedElement?.InvokeDeactivate();
         this.lastFocusedText?.InvokeDeactivate();
+
+        if (wasSelectingText != Layout.IsSelectingText)
+        {
+            this.lastHoveredElement = null;
+            this.lastHoveredText    = null;
+
+            this.OnMouseMove(mouseEvent);
+        }
     }
 
     [MemberNotNull(nameof(buffer))]
@@ -343,47 +387,11 @@ public sealed partial class RenderTree : NodeTree
         this.buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
     }
 
-    internal IEnumerable<Command2DEntry> Enumerate2DCommands()
-    {
-        if (this.command2DEntriesCache.Count > 0)
-        {
-            for (var i = 0; i < this.command2DEntriesCache.Count; i++)
-            {
-                yield return this.command2DEntriesCache[i];
-            }
-        }
-        else
-        {
-            foreach (var entry in this.EnumerateCommands())
-            {
-                if (entry.TryGetCommand2DEntry(out var command2DEntry))
-                {
-                    yield return command2DEntry;
-                }
-            }
-        }
-    }
+    internal IEnumerable<Command2DEntry> Get2DCommands() =>
+        this.command2DEntries;
 
-    internal IEnumerable<Command3DEntry> Enumerate3DCommands()
-    {
-        if (this.command3DEntriesCache.Count > 0)
-        {
-            for (var i = 0; i < this.command3DEntriesCache.Count; i++)
-            {
-                yield return this.command3DEntriesCache[i];
-            }
-        }
-        else
-        {
-            foreach (var entry in this.EnumerateCommands())
-            {
-                if (entry.TryGetCommand3DEntry(out var command3DEntry))
-                {
-                    yield return command3DEntry;
-                }
-            }
-        }
-    }
+    internal IEnumerable<Command3DEntry> Get3DCommands() =>
+        this.command3DEntries;
 
     protected override void Disposed(bool disposing)
     {
@@ -420,7 +428,12 @@ public sealed partial class RenderTree : NodeTree
 
     public sealed override void Update()
     {
-        this.ResetCache();
         base.Update();
+
+        if (this.IsDirty)
+        {
+            this.ResetCache();
+            this.BuildIndexAndCollectCommands();
+        }
     }
 }

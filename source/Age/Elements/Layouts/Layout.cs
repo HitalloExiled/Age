@@ -1,41 +1,44 @@
+using System.Runtime.CompilerServices;
 using Age.Core;
 using Age.Numerics;
+using Age.Platforms.Display;
 using Age.Scene;
 
 namespace Age.Elements.Layouts;
 
 internal abstract class Layout : Disposable
 {
-    #region 8-bytes
+    public static bool IsHoveringText  { get; set; }
+    public static bool IsSelectingText { get; set; }
+
     protected virtual StencilLayer? ContentStencilLayer { get; }
-    public virtual StencilLayer? StencilLayer { get; set; }
-    #endregion
 
-    #region 4-bytes
-    public int BaseLine { get; protected set; } = -1;
-
-    public Size<uint> Boundings
-    {
-        get;
-        protected set;
-    }
-
-    public uint           LineHeight { get; set; }
-    public Vector2<float> Offset     { get; internal set; }
-
-    public virtual Transform2D Transform => Transform2D.CreateTranslated(this.Offset);
-    #endregion
-
-    #region 1-byte
     public bool IsDirty { get; private set; }
 
-    public virtual bool Hidden { get; set; }
+    public int        BaseLine  { get; protected set; } = -1;
+    public Size<uint> Boundings { get; protected set; }
 
-    public abstract bool IsParentDependent { get; }
-    #endregion
+    public Vector2<float> Offset { get; internal set; }
 
-    public abstract Layout? Parent { get; }
-    public abstract Node    Target { get; }
+    public uint LineHeight { get; set; }
+
+    public BoxLayout? Parent => this.Target.ComposedParentElement?.Layout;
+
+    public virtual bool          Hidden       { get; set; }
+    public virtual StencilLayer? StencilLayer { get; set; }
+
+    public virtual Transform2D Transform => Transform2D.CreateTranslated(this.Offset);
+
+    public abstract bool       IsParentDependent { get; }
+    public abstract Layoutable Target            { get; }
+
+    protected void SetCursor(CursorKind? cursor)
+    {
+        if (this.Target.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = cursor ?? default;
+        }
+    }
 
     protected override void Disposed(bool disposing)
     {
@@ -49,24 +52,25 @@ internal abstract class Layout : Disposable
 
     public void RequestUpdate(bool affectsBoundings)
     {
-        if (!this.IsDirty && !this.Hidden)
+        for (var current = this; ; current = current.Parent)
         {
-            this.MakeDirty();
-
-            if ((this.IsParentDependent || affectsBoundings) && this.Parent != null)
+            if (current!.IsDirty || current.Hidden)
             {
-                this.Parent.RequestUpdate(affectsBoundings);
+                return;
             }
-            else if (this.Target.Tree is RenderTree renderTree)
+
+            current.MakeDirty();
+
+            var stopPropagation = !current.IsParentDependent && !affectsBoundings || current.Parent == null;
+
+            if (stopPropagation)
             {
-                if (this.Parent?.Target != renderTree.Root)
+                if (current.Target.Tree is RenderTree renderTree)
                 {
-                    renderTree.AddDeferredUpdate(this.Update);
+                    renderTree.AddDeferredUpdate(current.UpdateDirtyLayout);
                 }
-                else
-                {
-                    renderTree.MakeDirty();
-                }
+
+                return;
             }
         }
     }
@@ -85,6 +89,16 @@ internal abstract class Layout : Disposable
 
     public override string ToString() =>
         $"{{ Target: {this.Target} }}";
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void UpdateDirtyLayout()
+    {
+        if (this.IsDirty)
+        {
+            this.Update();
+            this.MakePristine();
+        }
+    }
 
     public abstract void Update();
 }

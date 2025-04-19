@@ -1,65 +1,36 @@
-using Age.Core.Interop;
+using Age.Core;
 
 namespace Age.Tests.Core.Interop;
 
 public unsafe class NativeArrayTests
 {
-    [Fact]
-    public void NonGenericPointer()
+    private static void AssertIt(NativeArray<int> list, ReadOnlySpan<int> values)
     {
-        using var pointer = new NativeArray(sizeof(int) * 4);
+        Assert.Equal(values.Length, list.Length);
 
-        var ptr = pointer.AsPointer<int>();
-
-        ptr[0] = 1;
-        ptr[1] = 2;
-        ptr[2] = 3;
-        ptr[3] = 4;
-
-        Assert.True((nint)ptr == (nint)pointer);
-
-        Assert.Equal(ptr[0], pointer.Get<int>(0));
-        Assert.Equal(ptr[1], pointer.Get<int>(1));
-        Assert.Equal(ptr[2], pointer.Get<int>(2));
-        Assert.Equal(ptr[3], pointer.Get<int>(3));
-
-        pointer.Set(0, 2);
-        pointer.Set(1, 3);
-        pointer.Set(2, 4);
-        pointer.Set(3, 5);
-
-        Assert.Equal(ptr[0], pointer.Get<int>(0));
-        Assert.Equal(ptr[1], pointer.Get<int>(1));
-        Assert.Equal(ptr[2], pointer.Get<int>(2));
-        Assert.Equal(ptr[3], pointer.Get<int>(3));
+        Assert.True(list.AsSpan().SequenceEqual(values));
     }
 
     [Fact]
-    public void GenericPointer()
+    public void Create()
     {
-        var pointer = new NativeArray<int>(4);
+        using var array = new NativeArray<int>(4);
 
-        var ptr = pointer.AsPointer();
+        var ptr = array.AsPointer();
 
         ptr[0] = 1;
         ptr[1] = 2;
         ptr[2] = 3;
         ptr[3] = 4;
 
-        Assert.Equal(ptr[0], pointer[0]);
-        Assert.Equal(ptr[1], pointer[1]);
-        Assert.Equal(ptr[2], pointer[2]);
-        Assert.Equal(ptr[3], pointer[3]);
+        AssertIt(array, [1, 2, 3, 4]);
 
-        pointer[0] = 2;
-        pointer[1] = 3;
-        pointer[2] = 4;
-        pointer[3] = 5;
+        array[0] = 2;
+        array[1] = 3;
+        array[2] = 4;
+        array[3] = 5;
 
-        Assert.Equal(ptr[0], pointer[0]);
-        Assert.Equal(ptr[1], pointer[1]);
-        Assert.Equal(ptr[2], pointer[2]);
-        Assert.Equal(ptr[3], pointer[3]);
+        AssertIt(array, [2, 3, 4, 5]);
     }
 
     [Fact]
@@ -69,14 +40,5 @@ public unsafe class NativeArrayTests
         pointer.Dispose();
 
         Assert.Throws<ObjectDisposedException>(() => pointer[0] == 1);
-    }
-
-    [Fact]
-    public void NonGenericPointerAccessAfterDisposedShouldThows()
-    {
-        var pointer = new NativeArray(sizeof(int) * 4);
-        pointer.Dispose();
-
-        Assert.Throws<ObjectDisposedException>(() => pointer.Set(0, 1));
     }
 }

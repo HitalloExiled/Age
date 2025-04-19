@@ -1,5 +1,4 @@
 using Age.Core;
-using Age.Core.Interop;
 using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
@@ -10,17 +9,13 @@ public sealed partial class RenderPass : Resource<VkRenderPass>
 {
     public override VkRenderPass Instance { get; }
 
-    public SubPass[] SubPasses { get; }
-
     public unsafe RenderPass(in RenderPassCreateInfo createInfo)
     {
         using var disposables = new Disposables();
 
-        using var subpassDescriptions     = new NativeList<VkSubpassDescription>();
-        using var attachmentDescriptions  = new NativeList<VkAttachmentDescription>();
-        using var depthStencilAttachments = new NativeList<VkAttachmentDescription>();
-
-        var renderPassSubPasses = new List<SubPass>(createInfo.SubPasses.Length);
+        using var subpassDescriptions     = new RefList<VkSubpassDescription>();
+        using var attachmentDescriptions  = new RefList<VkAttachmentDescription>();
+        using var depthStencilAttachments = new RefList<VkAttachmentDescription>();
 
         foreach (var subpass in createInfo.SubPasses)
         {
@@ -28,7 +23,7 @@ public sealed partial class RenderPass : Resource<VkRenderPass>
             var resolveAttachmentReferences      = new NativeList<VkAttachmentReference>();
             var depthStencilAttachmentReferences = new NativeList<VkAttachmentReference>();
 
-            var subPassColorAttachments = new NativeList<SubPass.ColorAttachment>(subpass.ColorAttachments.Length);
+            using var subPassColorAttachments = new RefList<SubPass.ColorAttachment>(subpass.ColorAttachments.Length);
 
             disposables.Add(colorAttachmentReferences);
             disposables.Add(resolveAttachmentReferences);
@@ -79,20 +74,6 @@ public sealed partial class RenderPass : Resource<VkRenderPass>
             };
 
             subpassDescriptions.Add(subpassDescription);
-
-            var renderPassSubPass = new SubPass
-            {
-                PipelineBindPoint = subpass.PipelineBindPoint,
-                ColorAttachments  = [..subPassColorAttachments],
-                DepthStencilAttachment = subpass.DepthStencilAttachment.HasValue
-                    ? new()
-                    {
-                        Format  = subpass.DepthStencilAttachment.Value.Format,
-                        Samples = subpass.DepthStencilAttachment.Value.Samples,
-                    } : default,
-            };
-
-            renderPassSubPasses.Add(renderPassSubPass);
         }
 
         fixed (VkSubpassDependency* pDependencies = createInfo.SubpassDependencies)
@@ -110,7 +91,6 @@ public sealed partial class RenderPass : Resource<VkRenderPass>
             var renderPass = VulkanRenderer.Singleton.Context.Device.CreateRenderPass(renderPassCreateInfo);
 
             this.Instance  = renderPass;
-            this.SubPasses = [..renderPassSubPasses];
         }
     }
 

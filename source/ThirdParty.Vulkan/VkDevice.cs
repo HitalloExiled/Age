@@ -1,11 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
-using Age.Core.Interop;
+using Age.Core;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan.Interfaces;
 
-using static Age.Core.Interop.PointerHelper;
+using static Age.Core.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
@@ -89,7 +89,7 @@ public sealed unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
         new VkGraphicsPipeline(this, createInfo, pipelineCache);
 
     /// <inheritdoc cref="PInvoke.vkCreateGraphicsPipelines" />
-    public VkPipeline[] CreateGraphicsPipelines(VkPipelineCache pipelineCache, Span<VkGraphicsPipelineCreateInfo> createInfos)
+    public VkPipeline[] CreateGraphicsPipelines(VkPipelineCache pipelineCache, scoped ReadOnlySpan<VkGraphicsPipelineCreateInfo> createInfos)
     {
         Span<VkHandle<VkPipeline>> vkPipelines = stackalloc VkHandle<VkPipeline>[createInfos.Length];
 
@@ -159,7 +159,7 @@ public sealed unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
     }
 
     /// <inheritdoc cref="PInvoke.vkUpdateDescriptorSets" />
-    public void UpdateDescriptorSets(Span<VkWriteDescriptorSet> descriptorWrites, Span<VkCopyDescriptorSet> descriptorCopies)
+    public void UpdateDescriptorSets(scoped ReadOnlySpan<VkWriteDescriptorSet> descriptorWrites, scoped ReadOnlySpan<VkCopyDescriptorSet> descriptorCopies)
     {
         fixed (VkWriteDescriptorSet* pDescriptorWrites = descriptorWrites)
         fixed (VkCopyDescriptorSet*  pDescriptorCopies = descriptorCopies)

@@ -67,13 +67,29 @@
             border: var(--border) solid magenta;
             /* box-sizing: border-box; */
         }
+
+        slot {
+            width: 100%;
+            border: 1px green solid;
+        }
     </style>
 </head>
 <body>
-    <button id="clicker">Click Me</button>
-    <span class="green">
-        <span class="red"></span>
-    </span>
+    <!-- <button id="clicker">Click Me</button>
+    <span style="display: flex; width: 100px; height: 100px;">
+        <slot>
+            <span class="green">
+                <span class="red"></span>
+            </span>
+        </slot>
+    </span> -->
+    <div id="host" style="display: flex; flex-direction: column;">
+        <template shadowrootmode="open">
+            <span>I'm in the shadow DOM</span>
+            <!-- <slot></slot> -->
+        </template>
+        <span>I'm in the light DOM</span>
+    </div>
 
     <!-- <span class="stack">
         <span class="red">01</span>

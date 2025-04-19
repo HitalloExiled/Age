@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-using static Age.Core.Interop.PointerHelper;
+using static Age.Core.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
@@ -61,7 +61,7 @@ public sealed unsafe partial class VkDeviceMemory : VkDeviceResource<VkDeviceMem
     public void Write<T>(ulong offset, uint flags, T[] data) where T : unmanaged =>
         this.Write(offset, flags, data.AsSpan());
 
-    public void Write<T>(ulong offset, uint flags, Span<T> data) where T : unmanaged
+    public void Write<T>(ulong offset, uint flags, scoped ReadOnlySpan<T> data) where T : unmanaged
     {
         var ppData = (T**)NativeMemory.Alloc((uint)(sizeof(T*) * data.Length));
 

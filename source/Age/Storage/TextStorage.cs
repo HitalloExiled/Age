@@ -1,3 +1,4 @@
+using Age.Core;
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
@@ -5,17 +6,17 @@ using SkiaSharp;
 
 namespace Age.Services;
 
-internal partial class TextStorage : IDisposable
+internal partial class TextStorage : Disposable
 {
     private static TextStorage? singleton;
 
     public static TextStorage Singleton => singleton ?? throw new NullReferenceException();
 
     private readonly Dictionary<int, TextureAtlas> atlases = [];
-    private readonly Dictionary<int, Glyph>        glyphs = [];
+    private readonly Dictionary<int, Glyph>        glyphs  = [];
+    private readonly Dictionary<int, SKFont>       fonts   = [];
     private readonly VulkanRenderer                renderer;
-
-    private bool disposed;
+    private readonly SKPaint                       paint;
 
     public TextStorage(VulkanRenderer renderer)
     {
@@ -27,13 +28,39 @@ internal partial class TextStorage : IDisposable
         singleton = this;
 
         this.renderer = renderer;
+        this.paint    = new()
+        {
+            Color       = SKColors.Black,
+            IsAntialias = true,
+        };
     }
 
-    public Glyph DrawGlyph(TextureAtlas atlas, char character, string fontFamily, ushort fontSize, in SKRect bounds, SKPaint paint)
+    protected override void Disposed(bool disposing)
+    {
+        if (disposing)
+        {
+            foreach (var atlas in this.atlases.Values)
+            {
+                this.renderer.DeferredDispose(atlas);
+            }
+
+            foreach (var font in this.fonts.Values)
+            {
+                font.Dispose();
+            }
+
+            this.paint.Dispose();
+
+            this.atlases.Clear();
+            this.fonts.Clear();
+        }
+    }
+
+    public Glyph DrawGlyph(SKFont font, TextureAtlas atlas, char character, in SKRect bounds)
     {
         const ushort PADDING = 2;
 
-        var hashcode = character.GetHashCode() ^ fontFamily.GetHashCode() ^ fontSize.GetHashCode();
+        var hashcode = character.GetHashCode() ^ font.GetHashCode() ^ font.Size.GetHashCode();
 
         if (!this.glyphs.TryGetValue(hashcode, out var glyph))
         {
@@ -46,9 +73,9 @@ internal partial class TextStorage : IDisposable
 
             using var canvas = new SKCanvas(bitmap);
 
-            canvas.DrawText(charString, PADDING + -bounds.Location.X, PADDING + -bounds.Location.Y, paint);
+            canvas.DrawText(charString, PADDING + -bounds.Location.X, PADDING + -bounds.Location.Y, font, this.paint);
 
-            var position = atlas.Pack(bitmap.Pixels.AsSpan().Cast<SKColor, uint>(), new((uint)bitmap.Width, (uint)bitmap.Height));
+            var position = atlas.Pack(bitmap.GetPixelSpan().Cast<byte, uint>(), new((uint)bitmap.Width, (uint)bitmap.Height));
 
             this.glyphs[hashcode] = glyph = new()
             {
@@ -66,36 +93,36 @@ internal partial class TextStorage : IDisposable
     {
         var hashcode = familyName.GetHashCode() ^ fontSize.GetHashCode();
 
-        if (!this.atlases.TryGetValue(hashcode, out var atlas))
+        ref var atlas = ref this.atlases.GetValueRefOrAddDefault(hashcode, out var exists);
+
+        if (!exists)
         {
             var axisSize = uint.Max(fontSize * 8, 256);
             var size     = new Size<uint>(axisSize, axisSize);
 
-            this.atlases[hashcode] = atlas = new(size, ColorMode.Grayscale);
+            atlas = new(size, ColorMode.Grayscale);
         }
 
-        return atlas;
+        return atlas!;
     }
 
-    protected virtual void Dispose(bool disposing)
+    public SKFont GetFont(string fontFamily, float fontSize, int fontWeight)
     {
-        if (!this.disposed)
+        var hashcode = HashCode.Combine(fontFamily, fontSize, fontWeight);
+
+        ref var font = ref this.fonts.GetValueRefOrAddDefault(hashcode, out var exists);
+
+        var typeface = SKTypeface.FromFamilyName(fontFamily, (SKFontStyleWeight)fontWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+
+        if (!exists)
         {
-            if (disposing)
+            font = new SKFont(typeface ?? SKTypeface.Default)
             {
-                foreach (var atlas in this.atlases.Values)
-                {
-                    this.renderer.DeferredDispose(atlas);
-                }
-            }
-
-            this.disposed = true;
+                Size     = fontSize,
+                Subpixel = false
+            };
         }
-    }
 
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
+        return font!;
     }
 }

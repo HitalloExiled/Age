@@ -1,9 +1,10 @@
+using Age.Core;
 using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Interfaces;
 
 public interface IVertexInput
 {
-    static abstract VkVertexInputBindingDescription GetBindings();
-    static abstract VkVertexInputAttributeDescription[] GetAttributes();
+    public abstract static VkVertexInputBindingDescription GetBindings();
+    public abstract static RefArray<VkVertexInputAttributeDescription> GetAttributes();
 }

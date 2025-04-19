@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Interfaces;
 using ThirdParty.Vulkan;
@@ -14,34 +15,35 @@ public partial class GeometryShader
         public Color          Color    = color;
         public Vector2<float> UV       = uv;
 
-        public static VkVertexInputAttributeDescription[] GetAttributes()
+        public static RefArray<VkVertexInputAttributeDescription> GetAttributes()
         {
-            var attributeDescriptions = new VkVertexInputAttributeDescription[]
+            var attributes = new RefArray<VkVertexInputAttributeDescription>(3);
+
+            attributes[0] = new()
             {
-                new()
-                {
-                    Binding  = 0,
-                    Location = 0,
-                    Format   = VkFormat.R32G32B32Sfloat,
-                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Position))!,
-                },
-                new()
-                {
-                    Binding  = 0,
-                    Location = 1,
-                    Format   = VkFormat.R32G32B32A32Sfloat,
-                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Color))!,
-                },
-                new()
-                {
-                    Binding  = 0,
-                    Location = 2,
-                    Format   = VkFormat.R32G32Sfloat,
-                    Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(UV))!,
-                }
+                Binding  = 0,
+                Location = 0,
+                Format   = VkFormat.R32G32B32Sfloat,
+                Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Position))!,
             };
 
-            return attributeDescriptions;
+            attributes[1] = new()
+            {
+                Binding  = 0,
+                Location = 1,
+                Format   = VkFormat.R32G32B32A32Sfloat,
+                Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Color))!,
+            };
+
+            attributes[2] = new()
+            {
+                Binding  = 0,
+                Location = 2,
+                Format   = VkFormat.R32G32Sfloat,
+                Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(UV))!,
+            };
+
+            return attributes;
         }
 
         public static VkVertexInputBindingDescription GetBindings() =>

@@ -1,4 +1,5 @@
 using Age.Core;
+using Age.Core.Extensions;
 
 namespace Age.Scene;
 
@@ -6,30 +7,26 @@ public abstract class NodeTree : Disposable
 {
     public event Action? Updated;
 
-    #region 8-bytes
     private readonly Queue<Action> updatesQueue = [];
 
     internal List<Timer> Timers { get; } = [];
 
     public Root Root { get; }
-    #endregion
 
-    #region 1-bytes
     public bool IsDirty { get; private set; }
-    #endregion
 
     protected NodeTree() =>
         this.Root = new() { Tree = this };
 
     private void InitializeTree()
     {
-        var enumerator = this.Root.GetTraverseEnumerator();
+        var enumerator = this.Root.GetTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
             var current = enumerator.Current;
 
-            if (current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+            if (current.Flags.HasFlags(NodeFlags.IgnoreUpdates))
             {
                 enumerator.SkipToNextSibling();
             }
@@ -42,13 +39,13 @@ public abstract class NodeTree : Disposable
 
     private void LateUpdateTree()
     {
-        var enumerator = this.Root.GetTraverseEnumerator();
+        var enumerator = this.Root.GetTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
             var current = enumerator.Current;
 
-            if (current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+            if (current.Flags.HasFlags(NodeFlags.IgnoreUpdates))
             {
                 enumerator.SkipToNextSibling();
             }
@@ -69,13 +66,13 @@ public abstract class NodeTree : Disposable
 
     private void UpdateTree()
     {
-        var enumerator = this.Root.GetTraverseEnumerator();
+        var enumerator = this.Root.GetTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
             var current = enumerator.Current;
 
-            if (current.Flags.HasFlag(NodeFlags.IgnoreUpdates))
+            if (current.Flags.HasFlags(NodeFlags.IgnoreUpdates))
             {
                 enumerator.SkipToNextSibling();
             }
@@ -83,7 +80,7 @@ public abstract class NodeTree : Disposable
             {
                 current.Update();
 
-                if (current.Flags.HasFlag(NodeFlags.IgnoreChildrenUpdates))
+                if (current.Flags.HasFlags(NodeFlags.IgnoreChildrenUpdates))
                 {
                     enumerator.SkipToNextSibling();
                 }

@@ -1,6 +1,4 @@
 using Age.Core;
-using Age.Core.Extensions;
-using Age.Core.Interop;
 using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;
@@ -15,7 +13,7 @@ public sealed class UniformSet : Resource
     public DescriptorPool    DescriptorPool { get; }
     public VkDescriptorSet[] DescriptorSets { get; }
 
-    public unsafe UniformSet(Shader shader, Span<Uniform> uniforms)
+    public unsafe UniformSet(Shader shader, scoped ReadOnlySpan<Uniform> uniforms)
     {
         var key = CreatePoolKey(shader, uniforms);
 
@@ -35,7 +33,7 @@ public sealed class UniformSet : Resource
         this.Update(uniforms);
     }
 
-    private static unsafe DescriptorPoolKey CreatePoolKey(Shader shader, Span<Uniform> uniforms)
+    private static unsafe DescriptorPoolKey CreatePoolKey(Shader shader, scoped ReadOnlySpan<Uniform> uniforms)
     {
         DescriptorPoolKey poolKey = default;
 
@@ -55,11 +53,10 @@ public sealed class UniformSet : Resource
     protected override void Disposed() =>
         this.DescriptorPool.FreeDescriptorSets(this.DescriptorSets);
 
-    public unsafe void Update(Span<Uniform> uniforms)
+    public unsafe void Update(scoped ReadOnlySpan<Uniform> uniforms)
     {
         using var disposables = new Disposables();
-
-        var writes = new List<VkWriteDescriptorSet>();
+        using var writes      = new RefList<VkWriteDescriptorSet>();
 
         foreach (var uniform in uniforms)
         {
@@ -122,6 +119,6 @@ public sealed class UniformSet : Resource
             }
         }
 
-        VulkanRenderer.Singleton.UpdateDescriptorSets(writes.AsSpan(), []);
+        VulkanRenderer.Singleton.UpdateDescriptorSets(writes, []);
     }
 }

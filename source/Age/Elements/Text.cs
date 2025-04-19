@@ -9,15 +9,12 @@ namespace Age.Elements;
 
 public sealed class Text : Layoutable
 {
-    #region 4-bytes
     internal override TextLayout Layout { get; }
+
+    public StringBuffer Buffer { get; } = new();
 
     public override string NodeName { get; } = nameof(Text);
 
-    public StringHandler Buffer { get; } = new();
-    #endregion
-
-    #region 2-bytes
     public uint CursorPosition
     {
         get => this.Layout.CaretPosition;
@@ -29,7 +26,6 @@ public sealed class Text : Layoutable
         get => this.Layout.Selection;
         set => this.Layout.Selection = value;
     }
-    #endregion
 
     public string? Value
     {
@@ -37,25 +33,40 @@ public sealed class Text : Layoutable
         set => this.Buffer.Set(value);
     }
 
-    public Text() =>
+    public Text()
+    {
         this.Layout = new(this);
+        this.Flags  = NodeFlags.Immutable;
+    }
 
     public Text(string? value) : this() =>
         this.Buffer.Set(value);
 
     protected override void Adopted(Node parent)
     {
-        if (parent is Element parentElement)
+        switch (parent)
         {
-            this.Layout.TargetAdopted(parentElement);
+            case Element parentElement:
+                this.Layout.TargetAdopted(parentElement);
+                break;
+
+            case ShadowTree shadowTree:
+                this.Layout.TargetAdopted(shadowTree.Host);
+                break;
         }
     }
 
     protected override void Removed(Node parent)
     {
-        if (parent is Element parentElement)
+        switch (parent)
         {
-            this.Layout.TargetRemoved(parentElement);
+            case Element parentElement:
+                this.Layout.TargetRemoved(parentElement);
+                break;
+
+            case ShadowTree shadowTree:
+                this.Layout.TargetRemoved(shadowTree.Host);
+                break;
         }
     }
 

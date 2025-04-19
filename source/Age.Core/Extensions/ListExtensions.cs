@@ -21,9 +21,15 @@ public static class ListExtensions
 
         if (size > source.Count)
         {
-            while (size > source.Count)
+            var previous = source.Count;
+
+            source.SetCount(size);
+
+            var span = source.AsSpan();
+
+            for (var i = previous; i < span.Length; i++)
             {
-                source.Add(defaultValue);
+                span[i] = defaultValue;
             }
         }
         else
@@ -31,4 +37,9 @@ public static class ListExtensions
             source.RemoveRange(0, source.Count - size);
         }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SetCount<T>(this List<T> source, int count) =>
+        CollectionsMarshal.SetCount(source, count);
+
 }

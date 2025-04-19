@@ -643,7 +643,7 @@ public class NodeTest
          .Select(x  => x.Name)
          .ToArray();
 
-        foreach (var node in parent.Traverse())
+        foreach (var node in parent.GetTraversalEnumerator())
         {
             nodes.Add(node.Name!);
         }
@@ -679,7 +679,7 @@ public class NodeTest
 
         var nodes = new List<string>();
 
-        var enumerator = new Node.TraverseEnumerator(parent);
+        var enumerator = new Node.TraversalEnumerator(parent);
 
         var expected = new TestNode[]
         {
@@ -703,5 +703,70 @@ public class NodeTest
         }
 
         Assert.Equal(expected, nodes);
+    }
+
+    [Fact]
+    public void Compare()
+    {
+        TestNode node1;
+        TestNode node11;
+        TestNode node111;
+        TestNode node112;
+        TestNode node113;
+        TestNode node114;
+        TestNode node115;
+        TestNode node2;
+        TestNode node21;
+        TestNode node22;
+
+        var root = new TestNode
+        {
+            Name     = "Root",
+            Children =
+            [
+                node1 = new TestNode
+                {
+                    Name     = "$.1",
+                    Children =
+                    [
+                        node11 = new TestNode
+                        {
+                            Name     = "$.1.1",
+                            Children =
+                            [
+                                node111 = new TestNode { Name = "$.1.1.1" },
+                                node112 = new TestNode { Name = "$.1.1.2" },
+                                node113 = new TestNode { Name = "$.1.1.3" },
+                                node114 = new TestNode { Name = "$.1.1.4" },
+                                node115 = new TestNode { Name = "$.1.1.5" },
+                            ]
+                        },
+
+                    ]
+                },
+                node2 = new TestNode
+                {
+                    Name     = "$.2",
+                    Children =
+                    [
+                        node21 = new TestNode { Name = "$.2.1" },
+                        node22 = new TestNode { Name = "$.2.2" },
+                    ]
+                }
+            ]
+        };
+
+        Assert.Equal(-1, root.CompareTo(node1));
+        Assert.Equal(1,  node11.CompareTo(root));
+
+        Assert.Equal(1,  node113.CompareTo(node111));
+        Assert.Equal(1,  node113.CompareTo(node112));
+        Assert.Equal(0,  node113.CompareTo(node113));
+        Assert.Equal(-1, node113.CompareTo(node114));
+        Assert.Equal(-1, node113.CompareTo(node115));
+
+        Assert.Equal(-1, node1.CompareTo(node21));
+        Assert.Equal(1,  node22.CompareTo(node11));
+        Assert.Equal(-1, node11.CompareTo(node2));
     }
 }

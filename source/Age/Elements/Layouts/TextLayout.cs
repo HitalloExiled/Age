@@ -1,11 +1,9 @@
 using Age.Commands;
 using Age.Core.Extensions;
 using Age.Core;
-using Age.Extensions;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Resources;
-using Age.Scene;
 using Age.Services;
 using Age.Styling;
 using SkiaSharp;
@@ -19,23 +17,23 @@ namespace Age.Elements.Layouts;
 
 internal sealed partial class TextLayout : Layout
 {
-    private static readonly ObjectPool<TextCommand> rectCommandPool = new(static () => new());
-
-    #region 8-bytes
+    private readonly RectCommand    caretCommand;
     private readonly Timer          caretTimer;
-    private readonly List<TextLine> textLines = new(1);
+    private readonly int            caretWidth = 2;
     private readonly Timer          selectionTimer;
     private readonly Text           target;
+    private readonly List<TextLine> textLines = new(1);
 
-    private SKTypeface? typeface;
-    private SKPaint?    paint;
-    #endregion
-
-    #region 4-bytes
-    private readonly int caretWidth = 2;
-
+    private bool           caretIsDirty;
+    private bool           caretIsVisible;
+    private SKFont?        font;
     private float          fontLeading;
+    private bool           isMouseOverText;
     private Vector2<float> previouCursor;
+    private bool           selectionIsDirty;
+    private bool           textIsDirty;
+
+    private bool CanSelect => this.Parent?.State.ComputedStyle.TextSelection != false;
 
     public uint CaretPosition
     {
@@ -66,22 +64,6 @@ internal sealed partial class TextLayout : Layout
             }
         }
     }
-    #endregion
-
-    #region 1-byte
-    private bool caretIsDirty;
-    private bool caretIsVisible;
-    private bool selectionIsDirty;
-    private bool textIsDirty;
-    private bool isMouseOverText;
-
-    private RectCommand caretCommand;
-    private bool        CanSelect    => this.Parent?.State.Style.TextSelection != false;
-
-    public override bool IsParentDependent { get; }
-    #endregion
-
-    public Rect<float> CursorRect => this.caretCommand.Rect;
 
     public override StencilLayer? StencilLayer
     {
@@ -100,7 +82,9 @@ internal sealed partial class TextLayout : Layout
         }
     }
 
-    public override BoxLayout? Parent => this.target.ParentElement?.Layout;
+    public Rect<float> CursorRect => this.caretCommand.Rect;
+
+    public override bool IsParentDependent { get; }
 
     public override Text Target => this.target;
 
@@ -124,33 +108,37 @@ internal sealed partial class TextLayout : Layout
         target.AppendChild(this.caretTimer);
         target.AppendChild(this.selectionTimer);
 
-        this.caretCommand = new RectCommand
-        {
-            Color           = Color.White,
-            Flags           = Flags.ColorAsBackground,
-            MappedTexture   = MappedTexture.Default,
-            Rect            = new(new(this.caretWidth, this.LineHeight), default),
-            StencilLayer    = this.StencilLayer
-        };
+        this.caretCommand                 = CommandPool.RectCommand.Get();
+        this.caretCommand.Color           = Color.White;
+        this.caretCommand.Flags           = Flags.ColorAsBackground;
+        this.caretCommand.MappedTexture   = MappedTexture.Default;
+        this.caretCommand.Rect            = new(new(this.caretWidth, this.LineHeight), default);
+        this.caretCommand.StencilLayer    = this.StencilLayer;
 
         target.Commands.Add(this.caretCommand);
 
         this.target.Buffer.Modified += this.OnTextChange;
     }
 
-    private static void AllocateCommands(List<Command> commands, int length)
+    private static void AllocateCommands(List<Command> commands, int count)
     {
-        commands.EnsureCapacity(length);
+        commands.EnsureCapacity(count);
 
-        if (length < commands.Count)
+        if (count < commands.Count)
         {
-            ReleaseCommands(commands, commands.Count - length);
+            ReleaseCommands(commands, commands.Count - count);
         }
         else
         {
-            for (var i = commands.Count; i < length; i++)
+            var previousCount = commands.Count;
+
+            commands.SetCount(count);
+
+            var span = commands.AsSpan();
+
+            for (var i = previousCount; i < span.Length; i++)
             {
-                commands.Add(rectCommandPool.Get());
+                span[i] = CommandPool.TextCommand.Get();
             }
         }
     }
@@ -162,14 +150,17 @@ internal sealed partial class TextLayout : Layout
     {
         if (count > 0)
         {
-            var index = commands.Count - count;
+            var span  = commands.AsSpan();
+            var start = span.Length - count;
 
-            for (var i = index; i < commands.Count; i++)
+            for (var i = start; i < span.Length; i++)
             {
-                rectCommandPool.Return((TextCommand)commands[i]);
+                CommandPool.TextCommand.Return((TextCommand)span[i]);
+
+                span[i] = default!;
             }
 
-            commands.RemoveRange(index, count);
+            commands.SetCount(start);
         }
     }
 
@@ -210,7 +201,7 @@ internal sealed partial class TextLayout : Layout
 
         if (selectionCommand.Index != default)
         {
-            ((TextCommand)this.target.Commands[selectionCommand.Index]).Color = this.Parent?.State.Style.Color ?? default;
+            ((TextCommand)this.target.Commands[selectionCommand.Index]).Color = this.Parent?.State.ComputedStyle.Color ?? default;
         }
     }
 
@@ -279,23 +270,24 @@ internal sealed partial class TextLayout : Layout
 
     private void DrawText()
     {
-        if (this.typeface == null || this.paint == null)
+        if (this.font == null)
         {
             throw new InvalidOperationException();
         }
 
         var text = this.target.Buffer.AsSpan();
 
-        var style = this.target.ParentElement!.Layout.State.Style;
+        var style = this.target.ComposedParentElement!.Layout.State.ComputedStyle;
 
-        var glyphs = this.typeface.GetGlyphs(text);
-        var font   = this.paint.ToFont();
-        var atlas  = TextStorage.Singleton.GetAtlas(this.typeface!.FamilyName, (uint)this.paint.TextSize);
+        var glyphs = this.font.Typeface.GetGlyphs(text);
+        var atlas  = TextStorage.Singleton.GetAtlas(this.font.Typeface.FamilyName, (uint)this.font.Size);
 
-        var glyphsBounds = new SKRect[glyphs.Length];
-        var glyphsWidths = new float[glyphs.Length];
+        using var glyphsBoundsRef = new RefArray<SKRect>(glyphs.Length);
+        using var glyphsWidths    = new RefArray<float>(glyphs.Length);
 
-        font.GetGlyphWidths(glyphs, glyphsWidths, glyphsBounds, this.paint);
+        var glyphsBounds = glyphsBoundsRef.AsSpan();
+
+        this.font.GetGlyphWidths(glyphs, glyphsWidths, glyphsBounds);
 
         var baseLine   = -this.BaseLine;
         var cursor     = new Point<int>(0, baseLine);
@@ -341,7 +333,7 @@ internal sealed partial class TextLayout : Layout
             {
                 ref readonly var bounds = ref glyphsBounds[i];
 
-                var glyph    = TextStorage.Singleton.DrawGlyph(atlas, character, this.typeface.FamilyName, (ushort)this.paint.TextSize, bounds, this.paint);
+                var glyph    = TextStorage.Singleton.DrawGlyph(this.font, atlas, character, bounds);
                 var size     = new Size<float>(bounds.Width, bounds.Height);
                 var position = new Point<float>(float.Round(cursor.X + bounds.Left), float.Round(cursor.Y - bounds.Top));
                 var color    = style.Color ?? new();
@@ -443,40 +435,20 @@ internal sealed partial class TextLayout : Layout
         this.RequestUpdate(true);
     }
 
-    private void SetTextCursor(bool enabled)
-    {
-        if (this.target.Tree is RenderTree renderTree)
-        {
-            renderTree.Window.Cursor = enabled ? CursorKind.Text : this.Parent?.State.Style.Cursor ?? default;
-        }
-    }
-
     private void TargetParentStyleChanged(StyleProperty property)
     {
-        if (property != StyleProperty.Color)
+        if (property.HasAnyFlag(StyleProperty.FontFamily | StyleProperty.FontSize | StyleProperty.FontWeight))
         {
-            var style = this.Parent!.State.Style;
+            var style = this.Parent!.State.ComputedStyle;
 
             var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
             var fontWeight = (int)(style.FontWeight ?? FontWeight.Normal);
+            var fontSize   = this.Parent.FontSize;
 
-            if (this.paint?.TextSize != this.Parent!.FontSize || this.typeface?.FamilyName != fontFamily || this.typeface?.FontWeight != fontWeight)
+            if (this.font?.Size != fontSize || this.font.Typeface.FamilyName != fontFamily || this.font.Typeface.FontWeight != fontWeight)
             {
-                this.typeface?.Dispose();
-                this.paint?.Dispose();
-
-                this.typeface = SKTypeface.FromFamilyName(fontFamily, (SKFontStyleWeight)fontWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-                this.paint    = new SKPaint
-                {
-                    Color        = SKColors.Black,
-                    IsAntialias  = true,
-                    TextAlign    = SKTextAlign.Left,
-                    TextSize     = this.Parent!.FontSize,
-                    Typeface     = this.typeface,
-                    SubpixelText = false,
-                };
-
-                this.paint.GetFontMetrics(out var metrics);
+                this.font = TextStorage.Singleton.GetFont(fontFamily, fontSize, fontWeight);
+                this.font.GetFontMetrics(out var metrics);
 
                 this.LineHeight  = (uint)float.Round(-metrics.Ascent + metrics.Descent);
                 this.BaseLine    = (int)float.Round(-metrics.Ascent);
@@ -489,20 +461,24 @@ internal sealed partial class TextLayout : Layout
 
                 this.caretIsDirty = true;
             }
-        }
 
-        this.textIsDirty = true;
-        this.RequestUpdate(true);
+            this.textIsDirty = true;
+            this.RequestUpdate(true);
+        }
     }
 
     protected override void Disposed()
     {
-        this.paint?.Dispose();
-        this.typeface?.Dispose();
+        foreach (var command in this.Target.Commands)
+        {
+            CommandPool.RectCommand.Return(this.caretCommand);
+            CommandPool.TextCommand.Return((TextCommand)command);
+            this.Target.Commands.Clear();
+        }
     }
 
     public void AdjustScroll() =>
-        this.target.ParentElement?.ScrollTo(this.target.GetCursorBoundings());
+        this.target.ComposedParentElement?.ScrollTo(this.target.GetCursorBoundings());
 
     public void ClearSelection() =>
         this.Selection = default;
@@ -659,7 +635,7 @@ internal sealed partial class TextLayout : Layout
 
         this.selectionTimer.Start();
 
-        this.Parent!.IsChildSelectingText = true;
+        IsSelectingText = true;
     }
 
     public void TargetAdopted(Element parentElement)
@@ -673,13 +649,13 @@ internal sealed partial class TextLayout : Layout
     {
         this.selectionTimer.Stop();
 
-        this.Parent!.IsChildSelectingText = false;
-
-        this.SetTextCursor(false);
+        IsSelectingText = false;
     }
 
     public void TargetIndexed()
     {
+        this.UpdateDirtyLayout();
+
         var elementIndex = this.target.Index + 1;
         var commands     = this.target.Commands.AsSpan(0, this.target.Buffer.Length);
 
@@ -696,10 +672,7 @@ internal sealed partial class TextLayout : Layout
             return;
         }
 
-        this.SetTextCursor(this.selectionTimer.Running);
-
-        this.Parent!.IsChildHoveringText = false;
-        this.isMouseOverText = false;
+        this.isMouseOverText = IsHoveringText = false;
     }
 
     public void TargetMouseOver()
@@ -709,10 +682,9 @@ internal sealed partial class TextLayout : Layout
             return;
         }
 
-        this.SetTextCursor(true);
+        this.isMouseOverText = IsHoveringText = true;
 
-        this.Parent!.IsChildHoveringText = true;
-        this.isMouseOverText = true;
+        this.SetCursor(CursorKind.Text);
     }
 
     public void TargetRemoved(Element parentElement) =>
@@ -795,7 +767,7 @@ internal sealed partial class TextLayout : Layout
 
         #region local methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void resolveLine(scoped Span<TextLine> lines, int index, ref uint position) =>
+        void resolveLine(scoped ReadOnlySpan<TextLine> lines, int index, ref uint position) =>
             position = isCursorBefore(endAnchor.Rect)
                 ? lines[index].Start
                 : lines[index].End + 1 == this.target.Buffer.Length
@@ -821,7 +793,7 @@ internal sealed partial class TextLayout : Layout
         bool isCursorAboveBottom(in Rect<float> rect) => cursor.Y > rect.Position.Y - rect.Size.Height;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void scanAbove(scoped Span<Command> commands, int start, int end, scoped Span<TextLine> lines, ref uint position)
+        void scanAbove(scoped ReadOnlySpan<Command> commands, int start, int end, scoped ReadOnlySpan<TextLine> lines, ref uint position)
         {
             for (var i = start; i > end; i--)
             {
@@ -837,7 +809,7 @@ internal sealed partial class TextLayout : Layout
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void scanBelow(scoped Span<Command> commands, int start, int end, scoped Span<TextLine> lines, ref uint position)
+        void scanBelow(scoped ReadOnlySpan<Command> commands, int start, int end, scoped ReadOnlySpan<TextLine> lines, ref uint position)
         {
             for (var i = start; i < end; i++)
             {
@@ -869,44 +841,39 @@ internal sealed partial class TextLayout : Layout
 
     public override void Update()
     {
-        if (this.IsDirty)
+        if (this.target.Buffer.IsEmpty)
         {
-            if (this.target.Buffer.IsEmpty)
+            if (this.textIsDirty)
             {
-                if (this.textIsDirty)
-                {
-                    this.target.Commands.RemoveAt(this.target.Commands.Count - 1);
+                this.target.Commands.RemoveAt(this.target.Commands.Count - 1);
 
-                    ReleaseCommands(this.target.Commands, this.target.Commands.Count);
+                ReleaseCommands(this.target.Commands, this.target.Commands.Count);
 
-                    this.target.Commands.Add(this.caretCommand);
+                this.target.Commands.Add(this.caretCommand);
 
-                    this.Selection = default;
-                    this.Boundings = default;
-                }
+                this.Selection = default;
+                this.Boundings = default;
             }
-            else
-            {
-                if (this.textIsDirty)
-                {
-                    this.DrawText();
-                }
-                else if (this.selectionIsDirty)
-                {
-                    this.DrawSelection();
-                }
-            }
-
-            if (this.caretIsDirty)
-            {
-                this.DrawCaret();
-            }
-
-            this.caretIsDirty     = false;
-            this.selectionIsDirty = false;
-            this.textIsDirty      = false;
-
-            this.MakePristine();
         }
+        else
+        {
+            if (this.textIsDirty)
+            {
+                this.DrawText();
+            }
+            else if (this.selectionIsDirty)
+            {
+                this.DrawSelection();
+            }
+        }
+
+        if (this.caretIsDirty)
+        {
+            this.DrawCaret();
+        }
+
+        this.caretIsDirty     = false;
+        this.selectionIsDirty = false;
+        this.textIsDirty      = false;
     }
 }

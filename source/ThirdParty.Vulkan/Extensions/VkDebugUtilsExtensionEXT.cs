@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using Age.Core.Interop;
+using Age.Core;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Interfaces;
 

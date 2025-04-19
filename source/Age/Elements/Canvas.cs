@@ -1,3 +1,4 @@
+using Age.Numerics;
 using Age.Scene;
 using Age.Styling;
 
@@ -11,10 +12,11 @@ public sealed class Canvas : Element
 
     public Canvas()
     {
-        this.Flags = NodeFlags.IgnoreChildrenUpdates;
+        this.Flags = NodeFlags.IgnoreUpdates;
         this.Style = new()
         {
             // Padding = new((Pixel)PADDING),
+            Color = Color.White,
         };
     }
 
@@ -33,6 +35,8 @@ public sealed class Canvas : Element
         renderTree.Window.Resized += this.OnWindowSizeChanged;
 
         this.OnWindowSizeChanged();
+
+        renderTree.AddDeferredUpdate(this.Layout.UpdateDirtyLayout);
     }
 
     protected override void Disconnected(RenderTree renderTree)
@@ -41,7 +45,4 @@ public sealed class Canvas : Element
 
         renderTree.Window.Resized -= this.OnWindowSizeChanged;
     }
-
-    public override void Update() =>
-        this.Layout.Update();
 }

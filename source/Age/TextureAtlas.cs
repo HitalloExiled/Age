@@ -11,19 +11,12 @@ namespace Age;
 
 public sealed class TextureAtlas : Disposable
 {
-    #region 8-bytes
+    private Point<uint> cursor;
+    private bool        isDirty;
+    private uint        maxHeight;
+
     public Bitmap  Bitmap  { get; }
     public Texture Texture { get; }
-    #endregion
-
-    #region 4-bytes
-    private Point<uint> cursor;
-    private uint        maxHeight;
-    #endregion
-
-    #region 2-bytes
-    private bool isDirty;
-    #endregion
 
     public Size<uint> Size => this.Bitmap.Size;
 
@@ -42,7 +35,7 @@ public sealed class TextureAtlas : Disposable
         this.Texture = new(textureCreateInfo);
     }
 
-    public Point<uint> Pack(Span<uint> pixels, Size<uint> size)
+    public Point<uint> Pack(scoped ReadOnlySpan<uint> pixels, Size<uint> size)
     {
         var sourceCursor = new Point<uint>();
 
@@ -61,18 +54,29 @@ public sealed class TextureAtlas : Disposable
 
         // TODO - implements Buffer.BlockCopy
 
+        var bitmapSpan = this.Bitmap.AsSpan();
+
         while (sourceCursor.Y < size.Height)
         {
-            while (sourceCursor.X < size.Width)
+            if (this.Bitmap.ColorMode == ColorMode.Grayscale)
             {
+                while (sourceCursor.X < size.Width)
+                {
+                    var sourceIndex      = (int)(sourceCursor.X + size.Width * sourceCursor.Y);
+                    var destinationIndex = (int)(sourceCursor.X + this.cursor.X + this.Size.Width * (sourceCursor.Y + this.cursor.Y)) * (int)ColorMode.Grayscale;
+
+                    bitmapSpan[destinationIndex..].Cast<byte, uint>()[0] = pixels[sourceIndex] >> 16;
+
+                    sourceCursor.X++;
+                }
+            }
+            else
+            {
+                // TODO: Need tests
                 var sourceIndex      = (int)(sourceCursor.X + size.Width * sourceCursor.Y);
-                var destinationIndex = (int)(sourceCursor.X + this.cursor.X + this.Size.Width * (sourceCursor.Y + this.cursor.Y)) * this.Bitmap.BytesPerPixel;
+                var destinationIndex = (int)(sourceCursor.X + this.cursor.X + this.Size.Width * (sourceCursor.Y + this.cursor.Y)) * (int)ColorMode.RGBA;
 
-                var span = this.Bitmap.Buffer.AsSpan(destinationIndex).Cast<byte, uint>();
-
-                span[0] = this.Bitmap.ColorMode == ColorMode.Grayscale ? pixels[sourceIndex] >> 16 : pixels[sourceIndex];
-
-                sourceCursor.X++;
+                pixels[sourceIndex..(int)(sourceIndex + size.Width)].CopyTo(bitmapSpan[destinationIndex..].Cast<byte, uint>());
             }
 
             sourceCursor.X = 0;
@@ -90,13 +94,21 @@ public sealed class TextureAtlas : Disposable
 
     public uint[] GetPixels()
     {
-        var buffer = new uint[this.Size.Width * this.Size.Height];
+        var buffer     = new uint[this.Size.Width * this.Size.Height];
+        var bitmapSpan = this.Bitmap.AsSpan();
 
-        for (var i = 0; i < buffer.Length; i++)
+        if (this.Bitmap.ColorMode == ColorMode.Grayscale)
         {
-            var value = Unsafe.As<byte, uint>(ref this.Bitmap.Buffer[i * this.Bitmap.BytesPerPixel]);
+            for (var i = 0; i < buffer.Length; i++)
+            {
+                var value = Unsafe.As<byte, uint>(ref bitmapSpan[i * this.Bitmap.BytesPerPixel]);
 
-            buffer[i] = this.Bitmap.ColorMode == ColorMode.Grayscale ? value << 16 : value;
+                buffer[i] = value << 16;
+            }
+        }
+        else
+        {
+            bitmapSpan.Cast<byte, uint>().CopyTo(buffer);
         }
 
         return buffer;
@@ -106,7 +118,7 @@ public sealed class TextureAtlas : Disposable
     {
         if (this.isDirty)
         {
-            this.Texture.Update(this.Bitmap.Buffer);
+            this.Texture.Update(this.Bitmap);
 
             #if DEBUG
             Common.SaveImage(this.Bitmap, $"TextureAtlas_{this.Size.Width}x{this.Size.Height}.png");
@@ -121,6 +133,7 @@ public sealed class TextureAtlas : Disposable
         if (disposing)
         {
             this.Texture.Dispose();
+            this.Bitmap.Dispose();
         }
     }
 }

@@ -1,4 +1,5 @@
-using System.Runtime.CompilerServices;
+using Age.Core.Extensions;
+using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;
@@ -9,20 +10,16 @@ namespace Age.Rendering.Resources;
 
 public sealed class Image : Resource<VkImage>
 {
-    #region 8-bytes
     private readonly Allocation? allocation;
     private readonly VkImage     instance;
-    #endregion
-
-    #region 4-bytes
-    public VkImageLayout FinalLayout { get; private set; }
 
     public VkExtent3D        Extent        { get; }
     public VkFormat          Format        { get; }
     public VkImageLayout     InitialLayout { get; }
     public VkImageType       Type          { get; }
     public VkImageUsageFlags Usage         { get; }
-    #endregion
+
+    public VkImageLayout FinalLayout { get; private set; }
 
     public VkImageAspectFlags Aspect
     {
@@ -30,12 +27,12 @@ public sealed class Image : Resource<VkImage>
         {
             VkImageAspectFlags aspect = default;
 
-            if (this.Usage.HasFlag(VkImageUsageFlags.ColorAttachment) || this.Usage.HasFlag(VkImageUsageFlags.Sampled))
+            if (this.Usage.HasFlags(VkImageUsageFlags.ColorAttachment) || this.Usage.HasFlags(VkImageUsageFlags.Sampled))
             {
                 aspect |= VkImageAspectFlags.Color;
             }
 
-            if (this.Usage.HasFlag(VkImageUsageFlags.DepthStencilAttachment))
+            if (this.Usage.HasFlags(VkImageUsageFlags.DepthStencilAttachment))
             {
                 aspect |= VkImageAspectFlags.Depth | VkImageAspectFlags.Stencil;
             }
@@ -335,91 +332,109 @@ public sealed class Image : Resource<VkImage>
         commandBuffer.Instance.CopyImageToBuffer(this.instance, VkImageLayout.TransferSrcOptimal, buffer.Instance, [bufferImageCopy]);
     }
 
-    public unsafe uint[] ReadBuffer(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
+    public unsafe NativeArray<uint> ReadBuffer(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
     {
         using var buffer = this.ReadBuffer(aspectMask, out var data);
 
-        var pixels = new uint[this.Extent.Width * this.Extent.Height];
+        var pixels = new NativeArray<uint>(this.Extent.Width * this.Extent.Height);
 
-        switch (this.BytesPerPixel)
+        try
         {
-            case 1:
-                {
-                    var span = new Span<byte>(data.ToPointer(), pixels.Length).ToArray();
-
-                    for (var i = 0; i < span.Length; i++)
+            switch (this.BytesPerPixel)
+            {
+                case 1:
                     {
-                        pixels[i] = span[i];
-                    }
-                }
-                break;
-            case 2:
-                {
-                    var span = new Span<ushort>(data.ToPointer(), pixels.Length).ToArray();
+                        var span = new Span<byte>(data.ToPointer(), pixels.Length).ToArray();
 
-                    for (var i = 0; i < span.Length; i++)
+                        for (var i = 0; i < span.Length; i++)
+                        {
+                            pixels[i] = span[i];
+                        }
+                    }
+                    break;
+                case 2:
                     {
-                        pixels[i] = span[i];
+                        var span = new Span<ushort>(data.ToPointer(), pixels.Length).ToArray();
+
+                        for (var i = 0; i < span.Length; i++)
+                        {
+                            pixels[i] = span[i];
+                        }
                     }
-                }
-                break;
-            case 4:
-                new Span<uint>(data.ToPointer(), pixels.Length).CopyTo(pixels.AsSpan());
+                    break;
+                case 4:
+                    new Span<uint>(data.ToPointer(), pixels.Length).CopyTo(pixels.AsSpan());
 
-                break;
+                    break;
 
-            case 8:
-                throw new InvalidOperationException();
+                case 8:
+                    throw new InvalidOperationException();
+            }
+
+            return pixels;
         }
+        catch
+        {
+            pixels.Dispose();
 
-        return pixels;
+            throw;
+        }
     }
 
-    public unsafe ulong[] ReadBuffer64bits(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
+    public unsafe NativeArray<ulong> ReadBuffer64bits(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
     {
         using var buffer = this.ReadBuffer(aspectMask, out var data);
 
-        var pixels = new ulong[this.Extent.Width * this.Extent.Height];
+        var pixels = new NativeArray<ulong>(this.Extent.Width * this.Extent.Height);
 
-        switch (this.BytesPerPixel)
+        try
         {
-            case 1:
-                {
-                    var span = new Span<byte>(data.ToPointer(), pixels.Length).ToArray();
-
-                    for (var i = 0; i < span.Length; i++)
+            switch (this.BytesPerPixel)
+            {
+                case 1:
                     {
-                        pixels[i] = span[i];
-                    }
-                }
-                break;
-            case 2:
-                {
-                    var span = new Span<ushort>(data.ToPointer(), pixels.Length).ToArray();
+                        var span = new Span<byte>(data.ToPointer(), pixels.Length).ToArray();
 
-                    for (var i = 0; i < span.Length; i++)
+                        for (var i = 0; i < span.Length; i++)
+                        {
+                            pixels[i] = span[i];
+                        }
+                    }
+                    break;
+                case 2:
                     {
-                        pixels[i] = span[i];
-                    }
-                }
-                break;
-            case 4:
-                {
-                    var span = new Span<uint>(data.ToPointer(), pixels.Length).ToArray();
+                        var span = new Span<ushort>(data.ToPointer(), pixels.Length).ToArray();
 
-                    for (var i = 0; i < span.Length; i++)
+                        for (var i = 0; i < span.Length; i++)
+                        {
+                            pixels[i] = span[i];
+                        }
+                    }
+                    break;
+                case 4:
                     {
-                        pixels[i] = span[i];
-                    }
-                }
-                break;
-            case 8:
-                new Span<ulong>(data.ToPointer(), pixels.Length).CopyTo(pixels.AsSpan());
+                        var span = new Span<uint>(data.ToPointer(), pixels.Length).ToArray();
 
-                break;
+                        for (var i = 0; i < span.Length; i++)
+                        {
+                            pixels[i] = span[i];
+                        }
+                    }
+                    break;
+                case 8:
+                    new Span<ulong>(data.ToPointer(), pixels.Length).CopyTo(pixels.AsSpan());
+
+                    break;
+            }
+
+            return pixels;
         }
+        catch
+        {
+            pixels.Dispose();
 
-        return pixels;
+            throw;
+        }
     }
 
     public void TransitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout)
@@ -505,7 +520,7 @@ public sealed class Image : Resource<VkImage>
         this.FinalLayout = newLayout;
     }
 
-    public void Update(Span<byte> data)
+    public void Update(scoped ReadOnlySpan<byte> data)
     {
         using var buffer = VulkanRenderer.Singleton.CreateBuffer((ulong)data.Length, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 

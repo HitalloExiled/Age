@@ -1,0 +1,10 @@
+{
+    "profiles":
+    {
+        "Age.Playground":
+        {
+            "commandName": "Project",
+            "workingDirectory": "../.."
+        }
+    }
+}

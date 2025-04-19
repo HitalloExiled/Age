@@ -2,14 +2,13 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Age.Core;
 using Age.Core.Extensions;
-using Age.Core.Interop;
 using Age.Numerics;
 using Age.Rendering.Resources;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Extensions;
 using ThirdParty.Vulkan.Flags;
-using static Age.Core.Interop.PointerHelper;
+using static Age.Core.PointerHelper;
 
 namespace Age.Rendering.Vulkan;
 
@@ -279,7 +278,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
         }
     }
 
-    public VkFramebuffer CreateFrameBuffer(VkRenderPass renderPass, Span<VkImageView> attachments, VkExtent2D extent)
+    public VkFramebuffer CreateFrameBuffer(VkRenderPass renderPass, scoped ReadOnlySpan<VkImageView> attachments, VkExtent2D extent)
     {
         var attachmentHandles = VkHandle.GetHandles(attachments);
 
@@ -356,7 +355,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
             {
                 var queue = queueFamilyProperties[i];
 
-                if (queue.QueueFlags.HasFlag(VkQueueFlags.Graphics | VkQueueFlags.Transfer))
+                if (queue.QueueFlags.HasFlags(VkQueueFlags.Graphics | VkQueueFlags.Transfer))
                 {
                     graphicsQueueFounded = (int)i;
                 }
@@ -478,7 +477,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
 
         for (var i = 0u; i < memProperties.MemoryTypeCount; i++)
         {
-            if ((typeFilter & (1 << (int)i)) != 0 && ((VkMemoryType*)memProperties.MemoryTypes)[i].PropertyFlags.HasFlag(properties))
+            if ((typeFilter & (1 << (int)i)) != 0 && ((VkMemoryType*)memProperties.MemoryTypes)[i].PropertyFlags.HasFlags(properties))
             {
                 return i;
             }
@@ -487,17 +486,17 @@ internal sealed unsafe partial class VulkanContext : Disposable
         throw new Exception("Failed to find suitable memory type");
     }
 
-    public VkFormat FindSupportedFormat(Span<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+    public VkFormat FindSupportedFormat(scoped ReadOnlySpan<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
     {
         foreach (var format in candidates)
         {
             this.physicalDevice.GetFormatProperties(format, out var props);
 
-            if (tiling == VkImageTiling.Linear && props.LinearTilingFeatures.HasFlag(features))
+            if (tiling == VkImageTiling.Linear && props.LinearTilingFeatures.HasFlags(features))
             {
                 return format;
             }
-            else if (tiling == VkImageTiling.Optimal && props.OptimalTilingFeatures.HasFlag(features))
+            else if (tiling == VkImageTiling.Optimal && props.OptimalTilingFeatures.HasFlags(features))
             {
                 return format;
             }

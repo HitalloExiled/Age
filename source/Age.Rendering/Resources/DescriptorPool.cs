@@ -126,7 +126,7 @@ public sealed class DescriptorPool : Disposable
         }
     }
 
-    public void FreeDescriptorSets(Span<VkDescriptorSet> descriptorSets)
+    public void FreeDescriptorSets(scoped ReadOnlySpan<VkDescriptorSet> descriptorSets)
     {
         foreach (var descriptorSet in descriptorSets)
         {

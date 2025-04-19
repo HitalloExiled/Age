@@ -1,4 +1,4 @@
-using Age.Core.Interop;
+using Age.Core;
 
 namespace Age.Tests.Core.Interop;
 
@@ -25,13 +25,54 @@ public unsafe class NativeListTests
     }
 
     [Fact]
+    public void Insert()
+    {
+        using var list = new NativeList<int> { 1, 3, 4 };
+
+        AssertIt(list, [1, 3, 4], 4);
+
+        list.Insert(1, 2);
+
+        AssertIt(list, [1, 2, 3, 4], 4);
+
+        list.Insert(4, 5);
+
+        AssertIt(list, [1, 2, 3, 4, 5], 8);
+
+        list.Insert(0, 0);
+
+        AssertIt(list, [0, 1, 2, 3, 4, 5], 8);
+    }
+
+    [Fact]
+    public void Index()
+    {
+        using var list = new NativeList<int> { 1, 2, 3 };
+
+        Assert.Equal(1, list[0]);
+        Assert.Equal(3, list[^1]);
+    }
+
+    [Fact]
     public void Remove()
     {
         using var list = new NativeList<int>([4, 5, 6]);
 
         AssertIt(list, [4, 5, 6], 3);
 
-        list.Remove(1);
+        list.Remove(5);
+
+        AssertIt(list, [4, 6], 3);
+    }
+
+    [Fact]
+    public void RemoveAt()
+    {
+        using var list = new NativeList<int>([4, 5, 6]);
+
+        AssertIt(list, [4, 5, 6], 3);
+
+        list.RemoveAt(1);
 
         AssertIt(list, [4, 6], 3);
     }
@@ -43,11 +84,11 @@ public unsafe class NativeListTests
 
         AssertIt(list, [1, 2, 3, 4, 5, 6], 6);
 
-        list.Remove(2, 2);
+        list.RemoveAt(2, 2);
 
         AssertIt(list, [1, 2, 5, 6], 6);
 
-        list.Remove(2, 2);
+        list.RemoveAt(2, 2);
 
         AssertIt(list, [1, 2], 6);
     }
@@ -67,7 +108,7 @@ public unsafe class NativeListTests
         list.Clear();
 
         Assert.Equal(3, list.Capacity);
-        Assert.Equal(0, list.Count);
+        Assert.Empty(list);
     }
 
     [Fact]

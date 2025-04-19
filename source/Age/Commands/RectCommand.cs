@@ -6,14 +6,20 @@ namespace Age.Commands;
 
 public record RectCommand : Command
 {
-    #region 8-bytes
-    public MappedTexture MappedTexture { get; set; } = MappedTexture.Default;
-    #endregion
+    public CanvasShader.Border  Border        { get; set; }
+    public Color                Color         { get; set; }
+    public CanvasShader.Flags   Flags         { get; set; }
+    public MappedTexture        MappedTexture { get; set; } = MappedTexture.Default;
+    public Rect<float>          Rect          { get; set; }
 
-    #region 4-bytes
-    public CanvasShader.Border  Border { get; set; }
-    public Color                Color  { get; set; }
-    public CanvasShader.Flags   Flags  { get; set; }
-    public Rect<float>          Rect   { get; set; }
-    #endregion
+    public override void Reset()
+    {
+        base.Reset();
+
+        this.Border        = default;
+        this.Color         = default;
+        this.Flags         = default;
+        this.MappedTexture = MappedTexture.Default;
+        this.Rect          = default;
+    }
 }

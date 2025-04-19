@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Interfaces;
 
-using static Age.Core.Interop.PointerHelper;
+using static Age.Core.PointerHelper;
 
 namespace ThirdParty.Vulkan.Extensions;
 

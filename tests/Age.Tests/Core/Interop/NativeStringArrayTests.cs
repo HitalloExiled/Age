@@ -1,30 +1,9 @@
-using System.Runtime.InteropServices;
-using Age.Core.Interop;
+using Age.Core;
 
 namespace Age.Tests.Core.Interop;
 
 public class NativeStringArrayTests
 {
-    [Fact]
-    public unsafe void ConstructorShouldPass()
-    {
-        var list = new[]
-        {
-            "One",
-            "Two",
-            "Three",
-        };
-
-        using var stringArrayPtr = new NativeStringArray(list);
-
-        Assert.Equal(list.Length, stringArrayPtr.Length);
-
-        for (var i = 0; i < list.Length; i++)
-        {
-            Assert.Equal(list[i], Marshal.PtrToStringAnsi((nint)stringArrayPtr.PpData[i]));
-        }
-    }
-
     [Fact]
     public unsafe void ToListShouldPass()
     {
@@ -52,7 +31,7 @@ public class NativeStringArrayTests
 
         byte** ppData = stringArrayPtr;
 
-        Assert.True(ppData == stringArrayPtr.PpData);
+        Assert.True(ppData == stringArrayPtr.AsPointer());
     }
 
     [Fact]

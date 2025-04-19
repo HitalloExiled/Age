@@ -1,4 +1,5 @@
 using Age.Core.Collections;
+using Age.Core.Extensions;
 using Age.Elements;
 using Age.Scene;
 using Age.Themes;
@@ -28,19 +29,22 @@ public partial class TextBox : Element
 
     public string? Value
     {
-        get => this.text.Buffer.ToString();
-        set => this.text.Buffer.Set(value);
+        get => this.text.Value;
+        set => this.text.Value = value;
     }
 
     public bool Multiline { get; set; }
 
     public TextBox()
     {
+        this.Flags       = NodeFlags.Immutable;
         this.IsFocusable = true;
 
         this.States = Theme.Current.TextBox.Outlined;
 
-        this.AppendChild(this.text);
+        this.AttachShadowTree();
+
+        this.ShadowTree.AppendChild(this.text);
 
         this.Blured      += this.OnBlur;
         this.Focused     += this.OnFocused;
@@ -125,7 +129,7 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
-                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
                     {
                         var currentLine = this.text.GetCharacterLine(this.GetTrimmedCursorPosition());
 
@@ -207,7 +211,7 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
-                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
                     {
                         this.text.Selection = this.text.Selection?.WithEnd(this.text.CursorPosition - 1) ?? new(this.text.CursorPosition, this.text.CursorPosition - 1);
                     }
@@ -226,7 +230,7 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
-                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
                     {
                         this.text.Selection = this.text.Selection?.WithEnd(this.text.CursorPosition + 1) ?? new(this.text.CursorPosition, this.text.CursorPosition + 1);
                     }
@@ -257,7 +261,7 @@ public partial class TextBox : Element
                         position = column < previousLine.Value.Length ? previousLine.Value.Start + column : previousLine.Value.End;
                     }
 
-                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
                     {
                         this.text.Selection = this.text.Selection?.WithEnd(position) ?? new(this.text.CursorPosition, position);
                     }
@@ -292,7 +296,7 @@ public partial class TextBox : Element
                                 : nextLine.Value.End;
                     }
 
-                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
                     {
                         this.text.Selection = this.text.Selection?.WithEnd(position) ?? new(this.text.CursorPosition, position);
                     }
@@ -311,11 +315,11 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
-                    var position = (!this.Multiline || keyEvent.Modifiers.HasFlag(KeyStates.Control))
+                    var position = (!this.Multiline || keyEvent.Modifiers.HasFlags(KeyStates.Control))
                         ? 0u
                         : this.text.GetCharacterLine(this.GetTrimmedCursorPosition()).Start;
 
-                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
                     {
                         this.text.Selection = this.text.Selection?.WithEnd(position) ?? new(this.text.CursorPosition, position);
                     }
@@ -336,7 +340,7 @@ public partial class TextBox : Element
 
                     uint position;
 
-                    if (!this.Multiline || keyEvent.Modifiers.HasFlag(KeyStates.Control))
+                    if (!this.Multiline || keyEvent.Modifiers.HasFlags(KeyStates.Control))
                     {
                         position = (uint)this.text.Buffer.Length;
                     }
@@ -347,7 +351,7 @@ public partial class TextBox : Element
                         position = currentLine.End == this.text.Buffer.Length - 1 && this.text.Buffer[^1] != '\n' ? currentLine.End + 1 : currentLine.End;
                     }
 
-                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
                     {
                         this.text.Selection = this.text.Selection?.WithEnd(position) ?? new(this.text.CursorPosition, position);
                     }
@@ -362,7 +366,7 @@ public partial class TextBox : Element
                 break;
 
             case Key.A:
-                if (!this.text.Buffer.IsEmpty && keyEvent.Modifiers.HasFlag(KeyStates.Control))
+                if (!this.text.Buffer.IsEmpty && keyEvent.Modifiers.HasFlags(KeyStates.Control))
                 {
                     this.text.Selection = new(0, (uint)this.text.Buffer.Length);
 
@@ -373,7 +377,7 @@ public partial class TextBox : Element
 
             case Key.V:
                 {
-                    if (keyEvent.Modifiers.HasFlag(KeyStates.Control) && this.Tree is RenderTree renderTree)
+                    if (keyEvent.Modifiers.HasFlags(KeyStates.Control) && this.Tree is RenderTree renderTree)
                     {
                         this.SaveHistory();
 
@@ -399,7 +403,7 @@ public partial class TextBox : Element
 
             case Key.X:
                 {
-                    if (keyEvent.Modifiers.HasFlag(KeyStates.Control) && this.Tree is RenderTree renderTree)
+                    if (keyEvent.Modifiers.HasFlags(KeyStates.Control) && this.Tree is RenderTree renderTree)
                     {
                         this.SaveHistory();
 
@@ -413,9 +417,9 @@ public partial class TextBox : Element
                 break;
 
             case Key.Z:
-                if (keyEvent.Modifiers.HasFlag(KeyStates.Control))
+                if (keyEvent.Modifiers.HasFlags(KeyStates.Control))
                 {
-                    if (keyEvent.Modifiers.HasFlag(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
                     {
                         this.Redo();
                     }

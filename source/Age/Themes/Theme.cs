@@ -8,7 +8,7 @@ public class Theme
 {
     public static Theme Dark { get; } = new()
     {
-        Button  = new()
+        Button = new()
         {
             Flat = new()
             {
@@ -56,7 +56,8 @@ public class Theme
             {
                 Base = ButtonStyles.Base with
                 {
-                    Color = Color.Green,
+                    Color           = Color.Green,
+                    BackgroundColor = Color.Green.WithAlpha(0),
                 },
                 Focus = new()
                 {

@@ -1,12 +1,28 @@
-using System.Collections.Concurrent;
+using Age.Core.Interfaces;
 
 namespace Age.Core;
 
-public sealed class ObjectPool<T>(Func<T> generator) where T : class
+public abstract class ObjectPool<T> where T : class, IPoolable
 {
-    private readonly ConcurrentBag<T> entries = [];
+    private readonly Lock @lock = new();
+    private readonly Stack<T> entries = [];
 
-    public T Get() => this.entries.TryTake(out var item) ? item : generator.Invoke();
+    protected abstract T Create();
 
-    public void Return(T item) => this.entries.Add(item);
+    public T Get()
+    {
+        lock (this.@lock)
+        {
+            return this.entries.Count == 0 ? this.Create() : this.entries.Pop();
+        }
+    }
+
+    public void Return(T item)
+    {
+        lock (this.@lock)
+        {
+            item.Reset();
+            this.entries.Push(item);
+        }
+    }
 }

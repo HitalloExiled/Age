@@ -27,9 +27,7 @@ public abstract class Renderable : Node
         }
     }
 
-    #region 1-byte
     public bool Visible { get; set; } = true;
-    #endregion
 
     public RenderTree? RenderTree => this.Tree as RenderTree;
 

@@ -4,7 +4,12 @@ namespace Age.Tests.Numerics;
 
 public class Matrix3x2Test
 {
-    public static TheoryData<Vector2<float>> TranslateData => new([new(1, 1), new(0.5f, 0.5f), new(0.25f, 0.25f)]);
+    public static TheoryData<Vector2<float>> TranslateData =>
+    [
+        new Vector2<float>(1, 1),
+        new Vector2<float>(0.5f, 0.5f),
+        new Vector2<float>(0.25f, 0.25f)
+    ];
 
     [Theory]
     [MemberData(nameof(TranslateData), MemberType = typeof(Matrix3x2Test))]
@@ -30,7 +35,7 @@ public class Matrix3x2Test
         Assert.True(matrix.Scale.IsApprox(Vector2<float>.One));
     }
 
-    public static TheoryData<float> RotateData => new([0, 45, 90, 135, 179, -179, -135, -90, -45]);
+    public static TheoryData<float> RotateData => [0f, 45f, 90f, 135f, 179f, -179f, -135f, -90f, -45f];
 
     [Theory]
     [MemberData(nameof(RotateData), MemberType = typeof(Matrix3x2Test))]
@@ -58,7 +63,7 @@ public class Matrix3x2Test
         Assert.True(matrix.Scale.IsApprox(Vector2<float>.One));
     }
 
-    public static TheoryData<Vector2<float>> ScaleData => new([new(1, 1), new(0.5f, 0.5f)]);
+    public static TheoryData<Vector2<float>> ScaleData => [new Vector2<float>(1, 1), new Vector2<float>(0.5f, 0.5f)];
 
     [Theory]
     [MemberData(nameof(ScaleData), MemberType = typeof(Matrix3x2Test))]
@@ -80,14 +85,13 @@ public class Matrix3x2Test
         Assert.True(matrix.Scale.IsApprox(scale));
     }
 
-    public static TheoryData<(float, Vector2<float>)> RotateAndTranslateData => new(
+    public static TheoryData<(float, Vector2<float>)> RotateAndTranslateData =>
         [
-            (0,   new(1, 1)),
-            (45,  new(0.5f, 0.5f)),
-            (90,  new(0.5f, 0.25f)),
-            (135, new(0.25f, 0.75f)),
-        ]
-    );
+            (0f,   new Vector2<float>(1, 1)),
+            (45f,  new Vector2<float>(0.5f, 0.5f)),
+            (90f,  new Vector2<float>(0.5f, 0.25f)),
+            (135f, new Vector2<float>(0.25f, 0.75f)),
+        ];
 
     [Theory]
     [MemberData(nameof(RotateAndTranslateData), MemberType = typeof(Matrix3x2Test))]
@@ -119,14 +123,13 @@ public class Matrix3x2Test
         Assert.True(matrix.Scale.IsApprox(Vector2<float>.One));
     }
 
-    public static TheoryData<(float, Vector2<float>)> ScaleAndRotateData => new(
+    public static TheoryData<(float, Vector2<float>)> ScaleAndRotateData =>
         [
-            (0,  new(1, 1)),
-            (45, new(0.5f, 0.5f)),
-            (90, new(0.5f, 0.25f)),
-            (135, new(0.25f, 0.75f)),
-        ]
-    );
+            (0f,   new Vector2<float>(1, 1)),
+            (45f,  new Vector2<float>(0.5f, 0.5f)),
+            (90f,  new Vector2<float>(0.5f, 0.25f)),
+            (135f, new Vector2<float>(0.25f, 0.75f)),
+        ];
 
     [Theory]
     [MemberData(nameof(ScaleAndRotateData), MemberType = typeof(Matrix3x2Test))]
@@ -157,14 +160,13 @@ public class Matrix3x2Test
         Assert.True(matrix.Scale.IsApprox(data.Scale));
     }
 
-    public static TheoryData<(Vector2<float>, float, Vector2<float>)> ScaleRotateAndTranslateData => new(
+    public static TheoryData<(Vector2<float>, float, Vector2<float>)> ScaleRotateAndTranslateData =>
         [
-            (new(1, 1),           0, new(1, 1)),
-            (new(0.5f, 0.5f),    45, new(0.5f, 0.5f)),
-            (new(0.5f, 0.25f),   90, new(0.5f, 0.25f)),
-            (new(0.25f, 0.75f), 135, new(0.25f, 0.75f)),
-        ]
-    );
+            (new Vector2<float>(1, 1),           0f, new Vector2<float>(1, 1)),
+            (new Vector2<float>(0.5f, 0.5f),    45f, new Vector2<float>(0.5f, 0.5f)),
+            (new Vector2<float>(0.5f, 0.25f),   90f, new Vector2<float>(0.5f, 0.25f)),
+            (new Vector2<float>(0.25f, 0.75f), 135f, new Vector2<float>(0.25f, 0.75f)),
+        ];
 
     [Theory]
     [MemberData(nameof(ScaleRotateAndTranslateData), MemberType = typeof(Matrix3x2Test))]

@@ -1,0 +1,26 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Age.Benchmarks/Age.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/source/">
+    <Project Path="source/Age.Core/Age.Core.csproj" />
+    <Project Path="source/Age.Numerics/Age.Numerics.csproj" />
+    <Project Path="source/Age.Platforms/Age.Platforms.csproj" />
+    <Project Path="source/Age.Playground/Age.Playground.csproj" />
+    <Project Path="source/Age.Rendering/Age.Rendering.csproj" />
+    <Project Path="source/Age.Resources/Age.Resources.csproj" />
+    <Project Path="source/Age.StoryBook/Age.StoryBook.csproj" />
+    <Project Path="source/Age/Age.csproj" />
+    <Project Path="source/ThirdParty.Slang/ThirdParty.Slang.csproj" />
+    <Project Path="source/ThirdParty.Vulkan/ThirdParty.Vulkan.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Age.Tests/Age.Tests.csproj" />
+    <Project Path="tests/ThirdParty.Tests/ThirdParty.Tests.csproj" />
+  </Folder>
+</Solution>
