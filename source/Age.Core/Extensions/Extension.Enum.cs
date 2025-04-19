@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Age.Core.Extensions;
 
-public static class EnumExtensions
+public static partial class Extension
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe static bool HasFlags<T>(this T value, T flags) where T : unmanaged, Enum

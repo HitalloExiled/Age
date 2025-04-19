@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Age.Core.Extensions;
 
-public static class StructExtension
+public static partial class Extension
 {
     public static Span<byte> AsByteSpan<T>(this ref T value) where T : unmanaged =>
         MemoryMarshal.CreateSpan(ref value, 1).Cast<T, byte>();

@@ -1,6 +1,6 @@
 namespace Age.Core.Extensions;
 
-public static class StringExtensions
+public static partial class Extension
 {
     public static int CountNonWhitespaceCharacters(this ReadOnlySpan<char> value)
     {

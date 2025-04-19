@@ -3,7 +3,7 @@ using SkiaSharp;
 
 namespace Age.Extensions;
 
-public static class Matrix3x2Extensions
+public static partial class Extension
 {
     public static SKMatrix ToSKMatrix(this in Matrix3x2<float> matrix) =>
         new()

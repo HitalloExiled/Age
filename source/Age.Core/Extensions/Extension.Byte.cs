@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Age.Core.Extensions;
 
-public static class ByteExtension
+public static partial class Extension
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static string ConvertToString(this byte[] source) =>

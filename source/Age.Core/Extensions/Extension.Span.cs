@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Age.Core.Extensions;
 
-public static class SpanExtensions
+public static partial class Extension
 {
     public static Span<U> Cast<T, U>(this Span<T> span)
     where T : struct

@@ -2,7 +2,7 @@ using Age.Numerics;
 
 namespace Age.Extensions;
 
-public static class SizeExtensions
+public static partial class Extension
 {
     public static Size<uint> ClampSubtract(this in Size<uint> value, in Size<uint> other) =>
         new(

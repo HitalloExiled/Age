@@ -1,6 +1,6 @@
 namespace Age.Core.Extensions;
 
-public static class RangeExtensions
+public static partial class Extension
 {
     public static bool EqualsTo(this Range? range, Range? other) =>
         range.HasValue == other.HasValue && (!range.HasValue || range.Value.Equals(other!.Value));
