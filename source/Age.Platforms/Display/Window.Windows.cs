@@ -52,22 +52,22 @@ public partial class Window
     private static MouseButton GetPrimaryButton() =>
         User32.GetSystemMetrics(User32.SYSTEM_METRIC.SM_SWAPBUTTON) == 0 ? MouseButton.Left : MouseButton.Right;
 
-    private static User32.IDC_STANDARD_CURSORS GetPlatformCursor(CursorKind cursor) =>
+    private static User32.IDC_STANDARD_CURSORS GetPlatformCursor(Cursor cursor) =>
         cursor switch
         {
-            CursorKind.Arrow            => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
-            CursorKind.Busy             => User32.IDC_STANDARD_CURSORS.IDC_WAIT,
-            CursorKind.Cross            => User32.IDC_STANDARD_CURSORS.IDC_CROSS,
-            CursorKind.DiagonalResize1  => User32.IDC_STANDARD_CURSORS.IDC_SIZENWSE,
-            CursorKind.DiagonalResize2  => User32.IDC_STANDARD_CURSORS.IDC_SIZENESW,
-            CursorKind.Hand             => User32.IDC_STANDARD_CURSORS.IDC_HAND,
-            CursorKind.Help             => User32.IDC_STANDARD_CURSORS.IDC_HELP,
-            CursorKind.HorizontalResize => User32.IDC_STANDARD_CURSORS.IDC_SIZEWE,
-            CursorKind.Move             => User32.IDC_STANDARD_CURSORS.IDC_SIZEALL,
-            CursorKind.Progress         => User32.IDC_STANDARD_CURSORS.IDC_APPSTARTING,
-            CursorKind.Text             => User32.IDC_STANDARD_CURSORS.IDC_IBEAM,
-            CursorKind.Unavailable      => User32.IDC_STANDARD_CURSORS.IDC_NO,
-            CursorKind.VerticalResize   => User32.IDC_STANDARD_CURSORS.IDC_SIZENS,
+            Cursor.Arrow            => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
+            Cursor.Busy             => User32.IDC_STANDARD_CURSORS.IDC_WAIT,
+            Cursor.Cross            => User32.IDC_STANDARD_CURSORS.IDC_CROSS,
+            Cursor.DiagonalResize1  => User32.IDC_STANDARD_CURSORS.IDC_SIZENWSE,
+            Cursor.DiagonalResize2  => User32.IDC_STANDARD_CURSORS.IDC_SIZENESW,
+            Cursor.Hand             => User32.IDC_STANDARD_CURSORS.IDC_HAND,
+            Cursor.Help             => User32.IDC_STANDARD_CURSORS.IDC_HELP,
+            Cursor.HorizontalResize => User32.IDC_STANDARD_CURSORS.IDC_SIZEWE,
+            Cursor.Move             => User32.IDC_STANDARD_CURSORS.IDC_SIZEALL,
+            Cursor.Progress         => User32.IDC_STANDARD_CURSORS.IDC_APPSTARTING,
+            Cursor.Text             => User32.IDC_STANDARD_CURSORS.IDC_IBEAM,
+            Cursor.Unavailable      => User32.IDC_STANDARD_CURSORS.IDC_NO,
+            Cursor.VerticalResize   => User32.IDC_STANDARD_CURSORS.IDC_SIZENS,
             _ => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
         };
 
@@ -274,7 +274,7 @@ public partial class Window
         return new((uint)(rect.right - rect.left), (uint)(rect.bottom - rect.top));
     }
 
-    protected static void PlatformSetCursor(CursorKind value) =>
+    protected static void PlatformSetCursor(Cursor value) =>
         User32.SetCursor(User32.LoadCursorW(default, GetPlatformCursor(value)));
 
     protected virtual void PlatformClose()

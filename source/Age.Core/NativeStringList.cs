@@ -99,7 +99,7 @@ public unsafe class NativeStringList : Disposable, IEnumerable<string?>
         Array.Copy(this.handles, sourceIndex, this.handles, destinationIndex, elementCount);
     }
 
-    protected override void Disposed(bool disposing) =>
+    protected override void OnDisposed(bool disposing) =>
         this.Clear();
 
     public void Add(string? value)

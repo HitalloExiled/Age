@@ -6,12 +6,12 @@ public class TextBoxStyles
 {
     public static Style Base { get; } = new()
     {
-        ContentJustification = ContentJustificationKind.Center,
+        ContentJustification = ContentJustification.Center,
         FontWeight           = FontWeight.Medium,
-        Overflow             = OverflowKind.Scroll,
+        Overflow             = Overflow.Scroll,
         Padding              = new((Pixel)4),
         TextSelection        = false,
     };
 
-    public required StyledStates Outlined { get; init; }
+    public required StyleSheet Outlined { get; init; }
 }

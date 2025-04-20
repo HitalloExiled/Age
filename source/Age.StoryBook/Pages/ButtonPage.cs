@@ -6,8 +6,8 @@ namespace Age.StoryBook.Pages;
 
 public class ButtonPage : Page
 {
-    public override string NodeName { get; } = nameof(ButtonPage);
-    public override string Title    { get; } = nameof(Button);
+    public override string NodeName => nameof(ButtonPage);
+    public override string Title    => nameof(Button);
 
     public ButtonPage()
     {
@@ -16,37 +16,38 @@ public class ButtonPage : Page
             Margin = new((Pixel)2, null),
         };
 
-        var container = new FlexBox
-        {
-            Style = new()
+        this.Children =
+        [
+            new FlexBox
             {
-                ContentJustification = ContentJustificationKind.SpaceAround,
-                Size                 = new((Percentage)100, null),
-                Margin               = new((Pixel)10),
-            },
-            Children =
-            [
-                new Button
+                Style = new()
                 {
-                    Text    = "Flat",
-                    Variant = ButtonVariant.Flat,
-                    Style   = buttonStyle,
+                    ContentJustification = ContentJustification.SpaceAround,
+                    Size                 = new((Percentage)100, null),
+                    Margin               = new((Pixel)10),
                 },
-                new Button
-                {
-                    Text    = "Outlined",
-                    Variant = ButtonVariant.Outlined,
-                    Style   = buttonStyle,
-                },
-                new Button
-                {
-                    Text    = "Text",
-                    Variant = ButtonVariant.Text,
-                    Style   = buttonStyle,
-                }
-            ]
-        };
-
-        this.AppendChild(container);
+                Children =
+                [
+                    new Button
+                    {
+                        Text    = "Flat",
+                        Variant = ButtonVariant.Flat,
+                        Style   = buttonStyle,
+                    },
+                    new Button
+                    {
+                        Text    = "Outlined",
+                        Variant = ButtonVariant.Outlined,
+                        Style   = buttonStyle,
+                    },
+                    new Button
+                    {
+                        Text    = "Text",
+                        Variant = ButtonVariant.Text,
+                        Style   = buttonStyle,
+                    }
+                ]
+            }
+        ];
     }
 }

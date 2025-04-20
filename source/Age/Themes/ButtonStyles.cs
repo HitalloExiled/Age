@@ -9,11 +9,11 @@ public class ButtonStyles
         TextSelection        = false,
         Padding              = new((Pixel)4),
         FontWeight           = FontWeight.Medium,
-        ContentJustification = ContentJustificationKind.Center,
-        Cursor               = Platforms.Display.CursorKind.Hand,
+        ContentJustification = ContentJustification.Center,
+        Cursor               = Platforms.Display.Cursor.Hand,
     };
 
-    public required StyledStates Flat     { get; init; }
-    public required StyledStates Outlined { get; init; }
-    public required StyledStates Text     { get; init; }
+    public required StyleSheet Flat     { get; init; }
+    public required StyleSheet Outlined { get; init; }
+    public required StyleSheet Text     { get; init; }
 }

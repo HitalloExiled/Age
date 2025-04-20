@@ -11,12 +11,12 @@ public abstract class Disposable : IDisposable
     {
         if (!this.disposed)
         {
-            this.Disposed(disposing);
+            this.OnDisposed(disposing);
             this.disposed = true;
         }
     }
 
-    protected abstract void Disposed(bool disposing);
+    protected abstract void OnDisposed(bool disposing);
 
     protected void ThrowIfDisposed() =>
         ObjectDisposedException.ThrowIf(this.disposed, this);

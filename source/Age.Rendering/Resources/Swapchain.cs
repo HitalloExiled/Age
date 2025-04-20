@@ -13,7 +13,7 @@ public sealed class Swapchain : Disposable
     public required VkSwapchainKHR    Value      { get; init; }
     public required VkImageUsageFlags ImageUsage { get; init; }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

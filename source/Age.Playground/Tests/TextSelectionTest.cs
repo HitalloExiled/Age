@@ -21,11 +21,11 @@ public class TextSelectionTest
                 Border     = new(20, 0, Color.Red),
                 FontFamily = "Consolas",
             },
-            States = new()
+            StyleSheet = new()
             {
                 Hovered = new()
                 {
-                    Cursor = CursorKind.Hand,
+                    Cursor = Cursor.Hand,
                 }
             }
         };
@@ -43,15 +43,15 @@ public class TextSelectionTest
                 Border     = new(20, 0, Color.Red),
                 FontFamily = "Consolas",
             },
-            States = new()
+            StyleSheet = new()
             {
                 Hovered = new()
                 {
-                    Cursor = CursorKind.Busy,
+                    Cursor = Cursor.Busy,
                 },
                 Active = new()
                 {
-                    Cursor = CursorKind.Move,
+                    Cursor = Cursor.Move,
                     Border = new(20, 0, Color.White),
                 }
             }

@@ -13,9 +13,6 @@ internal struct StyleData
     #endregion
 
     #region 4-bytes
-    /// <see cref="StyleProperty.Alignment">
-    public AlignmentKind? Alignment;
-
     /// <see cref="StyleProperty.BackgroundColor">
     public Color? BackgroundColor;
 
@@ -25,23 +22,8 @@ internal struct StyleData
     /// <see cref="StyleProperty.Border">
     public Border? Border;
 
-    /// <see cref="StyleProperty.BoxSizing">
-    public BoxSizing? BoxSizing;
-
     /// <see cref="StyleProperty.Color">
     public Color? Color;
-
-    /// <see cref="StyleProperty.ContentJustification">
-    public ContentJustificationKind? ContentJustification;
-
-    /// <see cref="StyleProperty.Cursor">
-    public CursorKind? Cursor;
-
-    /// <see cref="StyleProperty.FontWeight">
-    public FontWeight? FontWeight;
-
-    /// <see cref="StyleProperty.ItemsAlignment">
-    public ItemsAlignmentKind? ItemsAlignment;
 
     /// <see cref="StyleProperty.Margin">
     public StyleRectEdges? Margin;
@@ -52,35 +34,61 @@ internal struct StyleData
     /// <see cref="StyleProperty.MinSize">
     public SizeUnit? MinSize;
 
-    /// <see cref="StyleProperty.Overflow">
-    public OverflowKind? Overflow;
-
     /// <see cref="StyleProperty.Padding">
     public StyleRectEdges? Padding;
 
-    /// <see cref="StyleProperty.Positioning">
-    public PositionKind? Positioning;
-
     /// <see cref="StyleProperty.Size">
     public SizeUnit? Size;
-
-    /// <see cref="StyleProperty.Stack">
-    public StackKind? Stack;
-
-    /// <see cref="StyleProperty.TextAlignment">
-    public TextAlignmentKind? TextAlignment;
 
     /// <see cref="StyleProperty.Transform">
     public Transform2D? Transform;
     #endregion
 
     #region 2-bytes
+    /// <see cref="StyleProperty.FontSize">
     public ushort? FontSize;
+
+    /// <see cref="StyleProperty.FontWeight">
+    public FontWeight? FontWeight;
     #endregion
 
     #region 1-byte aligment
+    /// <see cref="StyleProperty.Alignment">
+    public Alignment? Alignment;
+
+    /// <see cref="StyleProperty.BoxSizing">
+    public BoxSizing? BoxSizing;
+
+    /// <see cref="StyleProperty.ContentJustification">
+    public ContentJustification? ContentJustification;
+
+    /// <see cref="StyleProperty.Cursor">
+    public Cursor? Cursor;
+
+    /// <see cref="StyleProperty.FontFeature">
+    public FontFeature? FontFeature;
+
+    /// <see cref="StyleProperty.Hidden">
     public bool? Hidden;
+
+    /// <see cref="StyleProperty.ItemsAlignment">
+    public ItemsAlignment? ItemsAlignment;
+
+    /// <see cref="StyleProperty.Overflow">
+    public Overflow? Overflow;
+
+    /// <see cref="StyleProperty.Positioning">
+    public Positioning? Positioning;
+
+    /// <see cref="StyleProperty.Stack">
+    public StackDirection? Stack;
+
+    /// <see cref="StyleProperty.TextAlignment">
+    public TextAlignment? TextAlignment;
+
+    /// <see cref="StyleProperty.TextSelection">
     public bool? TextSelection;
+
     #endregion
 
     private static void Merge(ref StyleData target, in StyleData left, in StyleData right)
@@ -94,6 +102,7 @@ internal struct StyleData
         target.ContentJustification = left.ContentJustification ?? right.ContentJustification;
         target.Cursor               = left.Cursor               ?? right.Cursor;
         target.FontFamily           = left.FontFamily           ?? right.FontFamily;
+        target.FontFeature          = left.FontFeature          ?? right.FontFeature;
         target.FontSize             = left.FontSize             ?? right.FontSize;
         target.FontWeight           = left.FontWeight           ?? right.FontWeight;
         target.Hidden               = left.Hidden               ?? right.Hidden;
@@ -124,6 +133,7 @@ internal struct StyleData
         check(left.ContentJustification == right.ContentJustification, StyleProperty.ContentJustification);
         check(left.Cursor               == right.Cursor,               StyleProperty.Cursor);
         check(left.FontFamily           == right.FontFamily,           StyleProperty.FontFamily);
+        check(left.FontFeature          == right.FontFeature,          StyleProperty.FontFeature);
         check(left.FontSize             == right.FontSize,             StyleProperty.FontSize);
         check(left.FontWeight           == right.FontWeight,           StyleProperty.FontWeight);
         check(left.Hidden               == right.Hidden,               StyleProperty.Hidden);
@@ -186,6 +196,7 @@ internal struct StyleData
         appendProperty(nameof(StyleProperty.ContentJustification), in this.ContentJustification);
         appendProperty(nameof(StyleProperty.Cursor),               in this.Cursor);
         appendProperty(nameof(StyleProperty.FontFamily),           in this.FontFamily);
+        appendProperty(nameof(StyleProperty.FontFeature),          in this.FontFeature);
         appendProperty(nameof(StyleProperty.FontSize),             in this.FontSize);
         appendProperty(nameof(StyleProperty.FontWeight),           in this.FontWeight);
         appendProperty(nameof(StyleProperty.Hidden),               in this.Hidden);
@@ -222,6 +233,7 @@ internal struct StyleData
             case StyleProperty.Color:                this.Color                = data.Color;                break;
             case StyleProperty.ContentJustification: this.ContentJustification = data.ContentJustification; break;
             case StyleProperty.Cursor:               this.Cursor               = data.Cursor;               break;
+            case StyleProperty.FontFeature:          this.FontFeature          = data.FontFeature;           break;
             case StyleProperty.FontFamily:           this.FontFamily           = data.FontFamily;           break;
             case StyleProperty.FontSize:             this.FontSize             = data.FontSize;             break;
             case StyleProperty.FontWeight:           this.FontWeight           = data.FontWeight;           break;

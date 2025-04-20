@@ -9,7 +9,7 @@ namespace Age.StoryBook;
 
 public sealed class StoryBook : Node
 {
-    public override string NodeName { get; } = nameof(StoryBook);
+    public override string NodeName => nameof(StoryBook);
 
     private readonly Canvas  canvas;
     private readonly FlexBox header;
@@ -20,11 +20,12 @@ public sealed class StoryBook : Node
         var buttonLinkStyle = new Style
         {
             Size           = new((Percentage)100, null),
-            ItemsAlignment = ItemsAlignmentKind.Center,
+            ItemsAlignment = ItemsAlignment.Center,
             Margin         = new(null, (Pixel)2),
         };
 
         Button buttonLink;
+        Button iconLink;
         Button textBoxLink;
         Button emptyLink;
 
@@ -39,9 +40,9 @@ public sealed class StoryBook : Node
                     {
                         Size                 = new((Pixel)200, (Percentage)100),
                         Border               = new(1, 0, Color.Red),
-                        Stack                = StackKind.Vertical,
-                        ContentJustification = ContentJustificationKind.Start,
-                        ItemsAlignment       = ItemsAlignmentKind.Center,
+                        StackDirection       = StackDirection.Vertical,
+                        ContentJustification = ContentJustification.Start,
+                        ItemsAlignment       = ItemsAlignment.Center,
                         Padding              = new((Pixel)10),
                     },
                     Children =
@@ -50,6 +51,12 @@ public sealed class StoryBook : Node
                         {
                             Name  = "ButtonLink",
                             Text  = "Button",
+                            Style = buttonLinkStyle,
+                        },
+                        iconLink = new Button
+                        {
+                            Name  = "IconLink",
+                            Text  = "Icon",
                             Style = buttonLinkStyle,
                         },
                         textBoxLink = new Button
@@ -73,8 +80,8 @@ public sealed class StoryBook : Node
                     {
                         Size                 = new((Percentage)100),
                         Border               = new(1, 0, Color.Green),
-                        ContentJustification = ContentJustificationKind.Center,
-                        Stack                = StackKind.Vertical,
+                        ContentJustification = ContentJustification.Center,
+                        StackDirection       = StackDirection.Vertical,
                     },
                     Children =
                     [
@@ -87,7 +94,7 @@ public sealed class StoryBook : Node
                                 Border          = new(1, 0, Color.Blue),
                                 BackgroundColor = Color.White.WithAlpha(0.2f),
                                 Padding         = new(null, (Pixel)10),
-                                Stack           = StackKind.Vertical,
+                                StackDirection  = StackDirection.Vertical,
                             },
                             Children =
                             [
@@ -97,7 +104,7 @@ public sealed class StoryBook : Node
                                     Text = "Title",
                                     Style = new()
                                     {
-                                        Alignment  = AlignmentKind.Center,
+                                        Alignment  = Alignment.Center,
                                         Color      = Color.White,
                                         FontSize   = 24,
                                         FontWeight = FontWeight.Bold,
@@ -119,8 +126,10 @@ public sealed class StoryBook : Node
             ]
         };
 
-        buttonLink.Clicked += (in MouseEvent _) => this.SetPage(new ButtonPage());
+        buttonLink.Clicked  += (in MouseEvent _) => this.SetPage(new ButtonPage());
+        iconLink.Clicked    += (in MouseEvent _) => this.SetPage(new IconPage());
         textBoxLink.Clicked += (in MouseEvent _) => this.SetPage(new TextBoxPage());
+
         emptyLink.Clicked += (in MouseEvent _) => this.outlet.RemoveChildren();
 
         this.AppendChild(this.canvas);

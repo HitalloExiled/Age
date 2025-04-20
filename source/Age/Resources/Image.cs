@@ -54,7 +54,7 @@ public sealed class Image : Disposable
         return new(buffer.ToArray(), new((uint)bitmap.Width, (uint)bitmap.Height));
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

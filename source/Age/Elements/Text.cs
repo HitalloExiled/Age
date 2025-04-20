@@ -13,7 +13,7 @@ public sealed class Text : Layoutable
 
     public StringBuffer Buffer { get; } = new();
 
-    public override string NodeName { get; } = nameof(Text);
+    public override string NodeName => nameof(Text);
 
     public uint CursorPosition
     {
@@ -42,48 +42,48 @@ public sealed class Text : Layoutable
     public Text(string? value) : this() =>
         this.Buffer.Set(value);
 
-    protected override void Adopted(Node parent)
+    protected override void OnAdopted(Node parent)
     {
         switch (parent)
         {
             case Element parentElement:
-                this.Layout.TargetAdopted(parentElement);
+                this.Layout.HandleTargetAdopted(parentElement);
                 break;
 
             case ShadowTree shadowTree:
-                this.Layout.TargetAdopted(shadowTree.Host);
+                this.Layout.HandleTargetAdopted(shadowTree.Host);
                 break;
         }
     }
 
-    protected override void Removed(Node parent)
+    protected override void OnRemoved(Node parent)
     {
         switch (parent)
         {
             case Element parentElement:
-                this.Layout.TargetRemoved(parentElement);
+                this.Layout.HandleTargetRemoved(parentElement);
                 break;
 
             case ShadowTree shadowTree:
-                this.Layout.TargetRemoved(shadowTree.Host);
+                this.Layout.HandleTargetRemoved(shadowTree.Host);
                 break;
         }
     }
 
     protected override void Connected(RenderTree renderTree) =>
-        this.Layout.TargetConnected();
+        this.Layout.HandleTargetConnected();
 
     protected override void Disconnected(RenderTree renderTree) =>
-        this.Layout.TargetDisconnected();
+        this.Layout.HandleTargetDisconnected();
 
-    protected override void Indexed() =>
-        this.Layout.TargetIndexed();
+    protected override void OnIndexed() =>
+        this.Layout.HandleTargetIndexed();
 
     internal void InvokeActivate() =>
-        this.Layout.TargetActivated();
+        this.Layout.HandleTargetActivated();
 
     internal void InvokeDeactivate() =>
-        this.Layout.TargetDeactivated();
+        this.Layout.HandleTargetDeactivated();
 
     public void ClearSelection() =>
         this.Layout.ClearSelection();

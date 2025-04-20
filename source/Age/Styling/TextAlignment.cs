@@ -1,7 +1,7 @@
 namespace Age.Styling;
 
 [Flags]
-public enum TextAlignmentKind
+public enum TextAlignment : byte
 {
     None     = 0,
     Center   = 1 << 1,

@@ -4,7 +4,7 @@ namespace Age.Elements;
 
 public sealed class Slot : Element
 {
-    public override string NodeName { get; } = nameof(Slot);
+    public override string NodeName => nameof(Slot);
     internal List<Layoutable> Nodes { get; } = [];
 
     public Layoutable[] AssignedNodes    => [.. this.Nodes];
@@ -28,9 +28,9 @@ public sealed class Slot : Element
         }
     }
 
-    protected override void Adopted(Node parent)
+    protected override void OnAdopted(Node parent)
     {
-        base.Adopted(parent);
+        base.OnAdopted(parent);
 
         if (parent is ShadowTree shadowTree)
         {
@@ -38,9 +38,9 @@ public sealed class Slot : Element
         }
     }
 
-    protected override void Removed(Node parent)
+    protected override void OnRemoved(Node parent)
     {
-        base.Removed(parent);
+        base.OnRemoved(parent);
 
         if (parent is ShadowTree shadowTree)
         {
@@ -56,7 +56,7 @@ public sealed class Slot : Element
             {
                 if (child is Layoutable layoutableChild)
                 {
-                    this.Layout.LayoutableRemoved(layoutableChild);
+                    this.Layout.HandleLayoutableRemoved(layoutableChild);
                 }
             }
         }
@@ -65,7 +65,7 @@ public sealed class Slot : Element
         this.Nodes.Add(layoutable);
         this.Nodes.Sort();
 
-        this.Layout.LayoutableAppended(layoutable);
+        this.Layout.HandleLayoutableAppended(layoutable);
     }
 
     internal void Unassign(Layoutable layoutable)
@@ -73,7 +73,7 @@ public sealed class Slot : Element
         this.Nodes.Remove(layoutable);
         layoutable.AssignedSlot = null;
 
-        this.Layout.LayoutableRemoved(layoutable);
+        this.Layout.HandleLayoutableRemoved(layoutable);
 
         if (this.Nodes.Count == 0)
         {
@@ -81,7 +81,7 @@ public sealed class Slot : Element
             {
                 if (child is Layoutable layoutableChild)
                 {
-                    this.Layout.LayoutableAppended(layoutableChild);
+                    this.Layout.HandleLayoutableAppended(layoutableChild);
                 }
             }
         }

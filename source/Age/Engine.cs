@@ -56,7 +56,7 @@ public sealed class Engine : Disposable
         Input.ListenInputEvents(this.Window);
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

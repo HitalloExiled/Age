@@ -24,7 +24,7 @@ public unsafe sealed class Bitmap : Disposable
 
     public Span<byte> AsSpan() => new(this.buffer, this.length);
 
-    protected override void Disposed(bool disposing) =>
+    protected override void OnDisposed(bool disposing) =>
         NativeMemory.Free(this.buffer);
 
     public static implicit operator Span<byte>(Bitmap bitmap) => bitmap.AsSpan();

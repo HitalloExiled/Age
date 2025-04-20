@@ -4,7 +4,7 @@ namespace Age.Tests.Age.Scene;
 
 public class TestNode : Node
 {
-    public override string NodeName { get; } = nameof(TestNode);
+    public override string NodeName => nameof(TestNode);
 }
 
 public class NodeTest

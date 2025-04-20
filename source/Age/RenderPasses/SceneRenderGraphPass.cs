@@ -150,7 +150,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
         return uniformSet;
     }
 
-    protected unsafe override void Disposed(bool disposing)
+    protected unsafe override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

@@ -117,7 +117,7 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
         }
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         NativeMemory.Free(this.buffer);
         this.buffer = default;
@@ -258,11 +258,12 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
         this.CheckIndex(startIndex);
 
         var endIndex = startIndex + count;
+        var length   = this.Count - endIndex;
 
-        if (endIndex < this.Count)
+        if (length > 0)
         {
-            var source      = new Span<T>(this.buffer + endIndex, this.Count - endIndex);
-            var destination = new Span<T>(this.buffer + startIndex, endIndex - startIndex);
+            var source      = new Span<T>(this.buffer + endIndex,   length);
+            var destination = new Span<T>(this.buffer + startIndex, length);
 
             source.CopyTo(destination);
         }

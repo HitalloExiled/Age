@@ -50,7 +50,7 @@ public partial class Window : Disposable
 
     public Size<uint> ClientSize => this.PlatformGetClientSize();
 
-    public CursorKind Cursor
+    public Cursor Cursor
     {
         get;
         set
@@ -146,7 +146,7 @@ public partial class Window : Disposable
         }
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

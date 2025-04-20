@@ -1,6 +1,6 @@
 namespace Age.Styling;
 
-public enum StackKind
+public enum StackDirection : byte
 {
     Vertical,
     Horizontal,

@@ -12,7 +12,7 @@ namespace Age.Playground;
 
 public class DemoScene : Scene3D
 {
-    public override string NodeName { get; } = nameof(DemoScene);
+    public override string NodeName => nameof(DemoScene);
     private readonly Mesh axis;
     private readonly Mesh mesh;
 

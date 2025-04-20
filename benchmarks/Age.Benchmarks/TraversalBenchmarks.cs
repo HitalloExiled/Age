@@ -7,7 +7,7 @@ namespace Age.Benchmarks;
 
 public class BenchNode : Node
 {
-    public override string NodeName { get; } = nameof(BenchNode);
+    public override string NodeName => nameof(BenchNode);
 }
 
 [ShortRunJob]

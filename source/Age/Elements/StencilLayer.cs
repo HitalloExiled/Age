@@ -54,10 +54,10 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
 
         var minRadius = uint.Min(bounds.Width, bounds.Height) / 2;
 
-        border.Radius.LeftTop     = uint.Min(border.Radius.LeftTop,     minRadius);
-        border.Radius.TopRight    = uint.Min(border.Radius.TopRight,    minRadius);
-        border.Radius.RightBottom = uint.Min(border.Radius.RightBottom, minRadius);
-        border.Radius.BottomLeft  = uint.Min(border.Radius.BottomLeft,  minRadius);
+        var leftTop     = uint.Min(border.Radius.LeftTop,     minRadius);
+        var topRight    = uint.Min(border.Radius.TopRight,    minRadius);
+        var rightBottom = uint.Min(border.Radius.RightBottom, minRadius);
+        var bottomLeft  = uint.Min(border.Radius.BottomLeft,  minRadius);
 
         bool tryCreateEllipse(uint radius, Point<uint> origin, Size<uint> thickness, float startAngle)
         {
@@ -79,24 +79,24 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
             return false;
         }
 
-        this.path.MoveTo(uint.Max(border.Left.Thickness, border.Radius.LeftTop), border.Top.Thickness);
+        this.path.MoveTo(uint.Max(border.Left.Thickness, leftTop), border.Top.Thickness);
 
-        if (border.Radius.TopRight == 0 || !tryCreateEllipse(border.Radius.TopRight, new(1, 0), new(border.Right.Thickness, border.Top.Thickness), 270))
+        if (topRight == 0 || !tryCreateEllipse(topRight, new(1, 0), new(border.Right.Thickness, border.Top.Thickness), 270))
         {
             this.path.LineTo(bounds.Width - border.Right.Thickness, border.Top.Thickness);
         }
 
-        if (border.Radius.RightBottom == 0 || !tryCreateEllipse(border.Radius.RightBottom, new(1, 1), new(border.Right.Thickness, border.Bottom.Thickness), 0))
+        if (rightBottom == 0 || !tryCreateEllipse(rightBottom, new(1, 1), new(border.Right.Thickness, border.Bottom.Thickness), 0))
         {
             this.path.LineTo(bounds.Width - border.Right.Thickness, bounds.Height - border.Bottom.Thickness);
         }
 
-        if (border.Radius.BottomLeft == 0 || !tryCreateEllipse(border.Radius.BottomLeft, new(0, 1), new(border.Left.Thickness, border.Bottom.Thickness), 90))
+        if (bottomLeft == 0 || !tryCreateEllipse(bottomLeft, new(0, 1), new(border.Left.Thickness, border.Bottom.Thickness), 90))
         {
             this.path.LineTo(border.Left.Thickness, bounds.Height - border.Bottom.Thickness);
         }
 
-        if (border.Radius.LeftTop == 0 || !tryCreateEllipse(border.Radius.LeftTop, new(0, 0), new(border.Left.Thickness, border.Top.Thickness), 180))
+        if (leftTop == 0 || !tryCreateEllipse(leftTop, new(0, 0), new(border.Left.Thickness, border.Top.Thickness), 180))
         {
             this.path.LineTo(border.Left.Thickness, border.Top.Thickness);
         }
@@ -164,7 +164,7 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         this.MappedTexture = new(texture, uv);
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing && this.MappedTexture != MappedTexture.Default)
         {
@@ -288,7 +288,7 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         if (this.isDirty || this.transform != this.Owner.TransformCache)
         {
             var bounds = this.Owner.Layout.Boundings;
-            var border = this.Owner.Layout.State.ComputedStyle.Border ?? default;
+            var border = this.Owner.Layout.ComputedStyle.Border ?? new();
 
             this.UpdatePath(bounds, border);
 

@@ -7,12 +7,12 @@ public class ElementTest
 {
     public class EmptyNode : Node
     {
-        public override string NodeName { get; } = nameof(EmptyNode);
+        public override string NodeName => nameof(EmptyNode);
     }
 
     public class HostTestElement : Element
     {
-        public override string NodeName { get; } = nameof(HostTestElement);
+        public override string NodeName => nameof(HostTestElement);
 
         public HostTestElement(string name)
         {

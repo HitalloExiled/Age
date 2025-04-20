@@ -45,7 +45,7 @@ public class TextureStorage : Disposable
     public void Add(string name, Texture texture) =>
         this.textures[name] = texture;
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

@@ -45,7 +45,6 @@ where TVertexInput  : IVertexInput
     private readonly Lock                          @lock            = new();
     private readonly Dictionary<string, MD5Hash>   dependenciesHash = [];
     private readonly string                        filepath;
-    private readonly SlangSession                  slangSession     = new();
     private readonly NativeArray<VkDescriptorType> uniformBindings  = new();
 
     private CancellationTokenSource cancellationTokenSource = new();
@@ -53,7 +52,6 @@ where TVertexInput  : IVertexInput
     private MD5Hash                 hash;
     private VkPipeline              pipeline;
     private VkPipelineLayout        pipelineLayout;
-    private NativeArray<byte>       source;
 
     private ShaderOptions      options;
     private VkShaderStageFlags pushConstantStages;
@@ -71,8 +69,12 @@ where TVertexInput  : IVertexInput
     {
         this.filepath = string.Intern(Path.IsPathRooted(file) ? file : Path.GetFullPath(Path.Join(shadersPath, file)));
         this.options  = options;
-        this.source   = FileReader.ReadAllBytes(this.filepath);
-        this.hash     = MD5Hash.Create(this.source);
+
+        using var source = FileReader.ReadAllBytesAsRef(this.filepath);
+
+        this.CompileShader(source);
+
+        this.hash = MD5Hash.Create(source);
 
         var filename = string.Intern(Path.GetFileName(this.filepath));
 
@@ -85,8 +87,6 @@ where TVertexInput  : IVertexInput
         {
             watcher.Changed += this.OnFileChanged;
         }
-
-        this.CompileShader();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -113,18 +113,19 @@ where TVertexInput  : IVertexInput
     }
 
     [MemberNotNull(nameof(pipeline), nameof(pipelineLayout), nameof(descriptorSetLayout))]
-    private void CompileShader()
+    private void CompileShader(scoped ReadOnlySpan<byte> source)
     {
         Logger.Trace($"Compiling Shader [{this.filepath}]");
         var start = Stopwatch.GetTimestamp();
 
-        using var request = new SlangCompileRequest(this.slangSession);
+        using var session = new SlangSession();
+        using var request = new SlangCompileRequest(session);
 
         var translationUnitIndex = request.AddTranslationUnit(SlangSourceLanguage.Slang, Path.GetFileName(this.filepath.AsSpan()));
 
-        request.AddTranslationUnitSourceString(translationUnitIndex, this.filepath, this.source);
+        request.AddTranslationUnitSourceString(translationUnitIndex, this.filepath, source);
         request.SetCodeGenTarget(SlangCompileTarget.Spirv);
-        request.SetTargetProfile(0, this.slangSession.FindProfile("spirv_1_0"));
+        request.SetTargetProfile(0, session.FindProfile("spirv_1_0"));
 
         if (request.Compile())
         {
@@ -226,6 +227,8 @@ where TVertexInput  : IVertexInput
     {
         bool hasChanged;
 
+        using var source = FileReader.ReadAllBytesAsRef(this.filepath);
+
         if (dependency != null)
         {
             using var bytes = FileReader.ReadAllBytesAsRef(dependency);
@@ -234,14 +237,10 @@ where TVertexInput  : IVertexInput
         }
         else
         {
-            var source = FileReader.ReadAllBytes(this.filepath);
-            var hash   = MD5Hash.Create(source);
+            var hash = MD5Hash.Create(source);
 
             if (hasChanged = this.hash != hash)
             {
-                this.source.Dispose();
-                this.source = source;
-
                 this.hash = hash;
             }
         }
@@ -252,7 +251,7 @@ where TVertexInput  : IVertexInput
             {
                 Span<IDisposable> disposables = [this.pipeline, this.pipelineLayout, this.descriptorSetLayout];
 
-                this.CompileShader();
+                this.CompileShader(source);
 
                 VulkanRenderer.Singleton.DeferredDispose(disposables);
 
@@ -557,8 +556,6 @@ where TVertexInput  : IVertexInput
 
     protected override void Disposed()
     {
-        this.source.Dispose();
-
         watcher.Filters.Remove(this.filepath);
 
         watcher.Changed -= this.OnFileChanged;

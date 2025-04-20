@@ -7,7 +7,7 @@ namespace Age.Playground;
 
 public class FrameStatus : Element
 {
-    public override string NodeName { get; } = nameof(FrameStatus);
+    public override string NodeName => nameof(FrameStatus);
 
     private readonly FlexBox statusText;
 

@@ -7,7 +7,7 @@ public sealed class VertexBuffer : Disposable
     public required Buffer Buffer { get; init; }
     public required uint   Size   { get; init; }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

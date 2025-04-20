@@ -19,7 +19,7 @@ public partial class TextBox : Element
 
     private string? previousText;
 
-    public override string NodeName { get; } = nameof(TextBox);
+    public override string NodeName => nameof(TextBox);
 
     public uint CursorPosition
     {
@@ -40,7 +40,7 @@ public partial class TextBox : Element
         this.Flags       = NodeFlags.Immutable;
         this.IsFocusable = true;
 
-        this.States = Theme.Current.TextBox.Outlined;
+        this.StyleSheet = Theme.Current.TextBox.Outlined;
 
         this.AttachShadowTree();
 
@@ -114,7 +114,7 @@ public partial class TextBox : Element
         }
         else
         {
-            this.text.Buffer.Insert([character], (int)this.text.CursorPosition);
+            this.text.Buffer.Insert((int)this.text.CursorPosition, [character]);
         }
 
         this.text.CursorPosition++;
@@ -194,7 +194,7 @@ public partial class TextBox : Element
                     }
                     else
                     {
-                        this.text.Buffer.Insert(['\n'], (int)this.text.CursorPosition);
+                        this.text.Buffer.Insert((int)this.text.CursorPosition, ['\n']);
                     }
 
                     this.text.CursorPosition++;
@@ -391,7 +391,7 @@ public partial class TextBox : Element
                             }
                             else
                             {
-                                this.text.Buffer.Insert(text, (int)this.text.CursorPosition);
+                                this.text.Buffer.Insert((int)this.text.CursorPosition, text);
                             }
 
                             this.text.CursorPosition += (uint)text.Length;

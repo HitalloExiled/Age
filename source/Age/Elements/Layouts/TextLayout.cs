@@ -24,16 +24,18 @@ internal sealed partial class TextLayout : Layout
     private readonly Text           target;
     private readonly List<TextLine> textLines = new(1);
 
-    private bool           caretIsDirty;
-    private bool           caretIsVisible;
-    private SKFont?        font;
-    private float          fontLeading;
-    private bool           isMouseOverText;
-    private Vector2<float> previouCursor;
-    private bool           selectionIsDirty;
-    private bool           textIsDirty;
+    private bool                      caretIsDirty;
+    private bool                      caretIsVisible;
+    private Dictionary<string, int>?  codepoints;
+    private SKFont?                   font;
+    private float                     fontLeading;
+    private bool                      isMouseOverText;
+    private Vector2<float>            previouCursor;
+    private int                       renderedLength;
+    private bool                      selectionIsDirty;
+    private bool                      textIsDirty;
 
-    private bool CanSelect => this.Parent?.State.ComputedStyle.TextSelection != false;
+    private bool CanSelect => this.Parent?.ComputedStyle.TextSelection != false;
 
     public uint CaretPosition
     {
@@ -201,19 +203,19 @@ internal sealed partial class TextLayout : Layout
 
         if (selectionCommand.Index != default)
         {
-            ((TextCommand)this.target.Commands[selectionCommand.Index]).Color = this.Parent?.State.ComputedStyle.Color ?? default;
+            ((TextCommand)this.target.Commands[selectionCommand.Index]).Color = this.Parent?.ComputedStyle.Color ?? default;
         }
     }
 
     private void DrawCaret()
     {
-        if (this.target.Buffer.Length > 0)
+        if (this.renderedLength > 0)
         {
             Point<float> position;
 
-            if (this.CaretPosition == this.target.Buffer.Length)
+            if (this.CaretPosition == this.renderedLength)
             {
-                var rect = ((RectCommand)this.target.Commands[this.target.Buffer.Length - 1]).Rect;
+                var rect = ((RectCommand)this.target.Commands[this.renderedLength - 1]).Rect;
 
                 if (this.target.Buffer[^1] == '\n')
                 {
@@ -275,11 +277,15 @@ internal sealed partial class TextLayout : Layout
             throw new InvalidOperationException();
         }
 
-        var text = this.target.Buffer.AsSpan();
+        var textSpan = this.codepoints?.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(this.target.Buffer.AsSpan(), out var codepoint) == true
+            ? [(char)codepoint]
+            : this.target.Buffer.AsSpan();
 
-        var style = this.target.ComposedParentElement!.Layout.State.ComputedStyle;
+        this.renderedLength = textSpan.Length;
 
-        var glyphs = this.font.Typeface.GetGlyphs(text);
+        var style = this.target.ComposedParentElement!.Layout.ComputedStyle;
+
+        var glyphs = this.font.Typeface.GetGlyphs(textSpan);
         var atlas  = TextStorage.Singleton.GetAtlas(this.font.Typeface.FamilyName, (uint)this.font.Size);
 
         using var glyphsBoundsRef = new RefArray<SKRect>(glyphs.Length);
@@ -293,7 +299,7 @@ internal sealed partial class TextLayout : Layout
         var cursor     = new Point<int>(0, baseLine);
         var boundings  = new Size<uint>(0, this.LineHeight);
 
-        text.GetTextInfo(out var nonWhitespaceCount, out var linesCount);
+        textSpan.GetTextInfo(out var nonWhitespaceCount, out var linesCount);
 
         this.textLines.Resize(linesCount, default);
 
@@ -301,7 +307,7 @@ internal sealed partial class TextLayout : Layout
 
         this.target.Commands.RemoveAt(this.target.Commands.Count - 1);
 
-        AllocateCommands(this.target.Commands, text.Length + nonWhitespaceCount);
+        AllocateCommands(this.target.Commands, textSpan.Length + nonWhitespaceCount);
 
         this.target.Commands.Add(this.caretCommand);
 
@@ -313,9 +319,9 @@ internal sealed partial class TextLayout : Layout
 
         lines[0].Start = 0;
 
-        for (var i = 0; i < text.Length; i++)
+        for (var i = 0; i < textSpan.Length; i++)
         {
-            var character = text[i];
+            var character = textSpan[i];
 
             var selectionCommand = (TextCommand)this.target.Commands[i];
 
@@ -348,7 +354,7 @@ internal sealed partial class TextLayout : Layout
                     P4 = new Point<float>(glyph.Position.X, glyph.Position.Y + glyph.Size.Height) / atlasSize,
                 };
 
-                var characterIndex = text.Length + textOffset;
+                var characterIndex = textSpan.Length + textOffset;
 
                 selectionCommand.Index = characterIndex;
 
@@ -403,7 +409,7 @@ internal sealed partial class TextLayout : Layout
             }
         }
 
-        lines[^1].Length = (uint)text.Length - 1 - lines[^1].Start + 1;
+        lines[^1].Length = (uint)textSpan.Length - 1 - lines[^1].Start + 1;
 
         atlas.Update();
 
@@ -427,19 +433,11 @@ internal sealed partial class TextLayout : Layout
         }
     }
 
-    private void OnTextChange()
+    private void OnParentStyleChanged(StyleProperty property)
     {
-        this.Selection   = this.Selection?.WithEnd(uint.Min(this.Selection.Value.End, (uint)this.target.Buffer.Length));
-        this.textIsDirty = true;
-
-        this.RequestUpdate(true);
-    }
-
-    private void TargetParentStyleChanged(StyleProperty property)
-    {
-        if (property.HasAnyFlag(StyleProperty.FontFamily | StyleProperty.FontSize | StyleProperty.FontWeight))
+        if (property.HasAnyFlag(StyleProperty.FontFamily | StyleProperty.FontFeature | StyleProperty.FontSize | StyleProperty.FontWeight))
         {
-            var style = this.Parent!.State.ComputedStyle;
+            var style = this.Parent!.ComputedStyle;
 
             var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
             var fontWeight = (int)(style.FontWeight ?? FontWeight.Normal);
@@ -447,7 +445,7 @@ internal sealed partial class TextLayout : Layout
 
             if (this.font?.Size != fontSize || this.font.Typeface.FamilyName != fontFamily || this.font.Typeface.FontWeight != fontWeight)
             {
-                this.font = TextStorage.Singleton.GetFont(fontFamily, fontSize, fontWeight);
+                this.font = TextStorage.Singleton.GetFont(fontFamily, fontSize, fontWeight, this.Parent.StyleSheet?.FontFaces);
                 this.font.GetFontMetrics(out var metrics);
 
                 this.LineHeight  = (uint)float.Round(-metrics.Ascent + metrics.Descent);
@@ -462,12 +460,27 @@ internal sealed partial class TextLayout : Layout
                 this.caretIsDirty = true;
             }
 
+            if (property.HasFlags(StyleProperty.FontFeature))
+            {
+                this.codepoints = style.FontFeature == FontFeature.Liga
+                    ? TextStorage.Singleton.GetCodepoints(fontFamily, this.Parent.StyleSheet?.FontFaces)
+                    : null;
+            }
+
             this.textIsDirty = true;
             this.RequestUpdate(true);
         }
     }
 
-    protected override void Disposed()
+    private void OnTextChange()
+    {
+        this.Selection   = this.Selection?.WithEnd(uint.Min(this.Selection.Value.End, (uint)this.renderedLength));
+        this.textIsDirty = true;
+
+        this.RequestUpdate(true);
+    }
+
+    protected override void OnDisposed()
     {
         foreach (var command in this.Target.Commands)
         {
@@ -480,6 +493,16 @@ internal sealed partial class TextLayout : Layout
     public void AdjustScroll() =>
         this.target.ComposedParentElement?.ScrollTo(this.target.GetCursorBoundings());
 
+    public void ClearCaret()
+    {
+        if (!this.CanSelect)
+        {
+            return;
+        }
+
+        this.HideCaret();
+    }
+
     public void ClearSelection() =>
         this.Selection = default;
 
@@ -489,25 +512,80 @@ internal sealed partial class TextLayout : Layout
     public int GetCharacterLineIndex(uint index) =>
         ((TextCommand)this.target.Commands[(int)index]).Line;
 
-    public TextLine? GetCharacterNextLine(uint index)
+    public TextLine? GetCharacterNextLine(uint index) =>
+        !this.target.Buffer.IsEmpty && this.GetCharacterLineIndex(index) + 1 is var lineIndex && lineIndex < this.textLines.Count
+            ? this.textLines[lineIndex]
+            : (TextLine?)default;
+
+    public TextLine? GetCharacterPreviousLine(uint index) =>
+        !this.target.Buffer.IsEmpty && this.GetCharacterLineIndex(index) - 1 is var lineIndex && lineIndex > -1
+            ? this.textLines[lineIndex]
+            : (TextLine?)default;
+
+    public void HandleTargetActivated()
     {
-        if (!this.target.Buffer.IsEmpty && this.GetCharacterLineIndex(index) + 1 is var lineIndex && lineIndex < this.textLines.Count)
+        if (!this.CanSelect)
         {
-            return this.textLines[lineIndex];
+            return;
         }
 
-        return default;
+        this.selectionTimer.Start();
+
+        IsSelectingText = true;
     }
 
-    public TextLine? GetCharacterPreviousLine(uint index)
+    public void HandleTargetAdopted(Element parentElement)
     {
-        if (!this.target.Buffer.IsEmpty && this.GetCharacterLineIndex(index) - 1 is var lineIndex && lineIndex > -1)
+        parentElement.Layout.StyleChanged += this.OnParentStyleChanged;
+
+        this.OnParentStyleChanged(StyleProperty.All);
+    }
+
+    public void HandleTargetDeactivated()
+    {
+        this.selectionTimer.Stop();
+
+        IsSelectingText = false;
+    }
+
+    public void HandleTargetIndexed()
+    {
+        this.UpdateDirtyLayout();
+
+        var elementIndex = this.target.Index + 1;
+        var commands     = this.target.Commands.AsSpan(0, this.renderedLength);
+
+        for (var i = 0; i < commands.Length; i++)
         {
-            return this.textLines[lineIndex];
+            commands[i].ObjectId = CombineIds(i + 1, elementIndex);
+        }
+    }
+
+    public void HandleTargetMouseOut()
+    {
+        if (!this.CanSelect)
+        {
+            return;
         }
 
-        return default;
+        this.isMouseOverText = IsHoveringText = false;
     }
+
+    public void HandleTargetMouseOver()
+    {
+        if (!this.CanSelect)
+        {
+            return;
+        }
+
+        this.isMouseOverText = IsHoveringText = true;
+
+        this.SetCursor(Cursor.Text);
+    }
+
+    public void HandleTargetRemoved(Element parentElement) =>
+        parentElement.Layout.StyleChanged -= this.OnParentStyleChanged;
+
 
     public void HideCaret()
     {
@@ -616,80 +694,6 @@ internal sealed partial class TextLayout : Layout
         this.RequestUpdate(false);
     }
 
-    public void ClearCaret()
-    {
-        if (!this.CanSelect)
-        {
-            return;
-        }
-
-        this.HideCaret();
-    }
-
-    public void TargetActivated()
-    {
-        if (!this.CanSelect)
-        {
-            return;
-        }
-
-        this.selectionTimer.Start();
-
-        IsSelectingText = true;
-    }
-
-    public void TargetAdopted(Element parentElement)
-    {
-        parentElement.Layout.State.Changed += this.TargetParentStyleChanged;
-
-        this.TargetParentStyleChanged(StyleProperty.All);
-    }
-
-    public void TargetDeactivated()
-    {
-        this.selectionTimer.Stop();
-
-        IsSelectingText = false;
-    }
-
-    public void TargetIndexed()
-    {
-        this.UpdateDirtyLayout();
-
-        var elementIndex = this.target.Index + 1;
-        var commands     = this.target.Commands.AsSpan(0, this.target.Buffer.Length);
-
-        for (var i = 0; i < commands.Length; i++)
-        {
-            commands[i].ObjectId = CombineIds(i + 1, elementIndex);
-        }
-    }
-
-    public void TargetMouseOut()
-    {
-        if (!this.CanSelect)
-        {
-            return;
-        }
-
-        this.isMouseOverText = IsHoveringText = false;
-    }
-
-    public void TargetMouseOver()
-    {
-        if (!this.CanSelect)
-        {
-            return;
-        }
-
-        this.isMouseOverText = IsHoveringText = true;
-
-        this.SetCursor(CursorKind.Text);
-    }
-
-    public void TargetRemoved(Element parentElement) =>
-        parentElement.Layout.State.Changed -= this.TargetParentStyleChanged;
-
     private void UpdateSelection()
     {
         if (this.isMouseOverText)
@@ -720,8 +724,8 @@ internal sealed partial class TextLayout : Layout
 
         var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition);
 
-        var startIndex = int.Min((int)selection.Start, this.target.Buffer.Length - 1);
-        var endIndex   = int.Min((int)selection.End,   this.target.Buffer.Length - 1);
+        var startIndex = int.Min((int)selection.Start, this.renderedLength - 1);
+        var endIndex   = int.Min((int)selection.End,   this.renderedLength - 1);
 
         var lineSpan     = this.textLines.AsSpan();
         var commandsSpan = this.target.Commands.AsSpan();
@@ -739,7 +743,7 @@ internal sealed partial class TextLayout : Layout
         {
             if (isCursorBelowTop(endAnchor.Rect))
             {
-                position = (uint)this.target.Buffer.Length;
+                position = (uint)this.renderedLength;
 
                 scanBelow(commandsSpan, endAnchor.Line, lineSpan.Length, lineSpan, ref position);
             }
@@ -770,8 +774,8 @@ internal sealed partial class TextLayout : Layout
         void resolveLine(scoped ReadOnlySpan<TextLine> lines, int index, ref uint position) =>
             position = isCursorBefore(endAnchor.Rect)
                 ? lines[index].Start
-                : lines[index].End + 1 == this.target.Buffer.Length
-                    ? (uint)this.target.Buffer.Length
+                : lines[index].End + 1 == this.renderedLength
+                    ? (uint)this.renderedLength
                     : lines[index].End;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

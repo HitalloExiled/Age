@@ -28,9 +28,9 @@ public class BoxModelTest
                         Name  = "StackL",
                         Style = new()
                         {
-                            Stack  = StackKind.Vertical,
-                            Border = new(borderSize, 0, Color.Green),
-                            Size   = new((Percentage)50, (Percentage)100),
+                            StackDirection = StackDirection.Vertical,
+                            Border         = new(borderSize, 0, Color.Green),
+                            Size           = new((Percentage)50, (Percentage)100),
                         },
                         Children =
                         [
@@ -40,7 +40,7 @@ public class BoxModelTest
                                 Name  = "StackText",
                                 Style = new()
                                 {
-                                    Alignment = AlignmentKind.Center,
+                                    Alignment = Alignment.Center,
                                     Color     = Color.White,
                                     Border    = new(10, 0, Color.Margenta),
                                 }
@@ -70,7 +70,7 @@ public class BoxModelTest
                                 Name  = "BoxCL",
                                 Style = new()
                                 {
-                                    Alignment = AlignmentKind.Center,
+                                    Alignment = Alignment.Center,
                                     Color     = Color.White,
                                     Border    = new(borderSize, 0, Color.Yellow),
                                     Size      = new((Pixel)50),
@@ -83,9 +83,9 @@ public class BoxModelTest
                         Name = "StackR",
                         Style = new()
                         {
-                            Stack  = StackKind.Vertical,
-                            Border = new(borderSize, 0, Color.Blue),
-                            Size   = new((Percentage)100, (Percentage)100),
+                            StackDirection = StackDirection.Vertical,
+                            Border         = new(borderSize, 0, Color.Blue),
+                            Size           = new((Percentage)100, (Percentage)100),
                         },
                         Children =
                         [

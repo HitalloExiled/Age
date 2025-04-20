@@ -62,7 +62,7 @@ public unsafe partial class NativeArray<T>(int length = 0) : Disposable, IEnumer
         }
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         NativeMemory.Free(this.buffer);
         this.buffer = default;

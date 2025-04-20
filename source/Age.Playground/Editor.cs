@@ -20,7 +20,7 @@ public class Editor : Node
 
     private Setup setup;
 
-    public override string NodeName { get; } = nameof(Editor);
+    public override string NodeName => nameof(Editor);
 
     public Editor()
     {
@@ -48,9 +48,9 @@ public class Editor : Node
             Name  = "VStack",
             Style = new()
             {
-                Stack  = StackKind.Vertical,
-                Size   = new((Percentage)100),
-                Border = new(BORDER_SIZE, default, Color.Yellow),
+                StackDirection = StackDirection.Vertical,
+                Size           = new((Percentage)100),
+                Border         = new(BORDER_SIZE, default, Color.Yellow),
             }
         };
 
@@ -79,7 +79,7 @@ public class Editor : Node
             Name  = "Viewports",
             Style = new()
             {
-                Alignment = AlignmentKind.Center,
+                Alignment = Alignment.Center,
                 Border    = new(BORDER_SIZE, default, Color.Blue),
             }
         };
@@ -103,7 +103,7 @@ public class Editor : Node
         scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
         scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
 
-        var sideViews = new FlexBox() { Style = new() { Stack = StackKind.Vertical } };
+        var sideViews = new FlexBox() { Style = new() { StackDirection = StackDirection.Vertical } };
 
         this.canvas.AppendChild(root);
         this.AppendChild(scene);
@@ -217,10 +217,10 @@ public class Editor : Node
     }
 
 #if DEBUG
-    protected override void Connected(NodeTree tree) =>
+    protected override void OnConnected(NodeTree tree) =>
         HotReloadService.ApplicationUpdated += this.Reload;
 
-    protected override void Disconnected(NodeTree tree) =>
+    protected override void OnDisconnected(NodeTree tree) =>
         HotReloadService.ApplicationUpdated -= this.Reload;
 #endif
 

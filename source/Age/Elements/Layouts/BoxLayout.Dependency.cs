@@ -5,7 +5,7 @@ namespace Age.Elements.Layouts;
 internal partial class BoxLayout
 {
     [Flags]
-    public enum Dependency
+    private enum Dependency
     {
         None    = 0,
         Width   = 1 << 0,

@@ -32,7 +32,9 @@ internal abstract class Layout : Disposable
     public abstract bool       IsParentDependent { get; }
     public abstract Layoutable Target            { get; }
 
-    protected void SetCursor(CursorKind? cursor)
+    protected abstract void OnDisposed();
+
+    protected void SetCursor(Cursor? cursor)
     {
         if (this.Target.Tree is RenderTree renderTree)
         {
@@ -40,15 +42,13 @@ internal abstract class Layout : Disposable
         }
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {
-            this.Disposed();
+            this.OnDisposed();
         }
     }
-
-    protected abstract void Disposed();
 
     public void RequestUpdate(bool affectsBoundings)
     {
@@ -75,17 +75,17 @@ internal abstract class Layout : Disposable
         }
     }
 
+    public virtual void HandleTargetConnected() =>
+        this.StencilLayer = this.Parent?.ContentStencilLayer;
+
+    public virtual void HandleTargetDisconnected() =>
+        this.StencilLayer = null;
+
     public void MakeDirty() =>
         this.IsDirty = true;
 
     public void MakePristine() =>
         this.IsDirty = false;
-
-    public virtual void TargetConnected() =>
-        this.StencilLayer = this.Parent?.ContentStencilLayer;
-
-    public virtual void TargetDisconnected() =>
-        this.StencilLayer = null;
 
     public override string ToString() =>
         $"{{ Target: {this.Target} }}";

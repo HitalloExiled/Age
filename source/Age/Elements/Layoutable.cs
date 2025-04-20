@@ -153,9 +153,9 @@ public abstract partial class Layoutable : Spatial2D
         }
     }
 
-    protected override void Adopted(Node parent)
+    protected override void OnAdopted(Node parent)
     {
-        base.Adopted(parent);
+        base.OnAdopted(parent);
 
         if (parent is Element parentElement && parentElement.ShadowTree != null)
         {
@@ -163,9 +163,9 @@ public abstract partial class Layoutable : Spatial2D
         }
     }
 
-    protected override void Removed(Node parent)
+    protected override void OnRemoved(Node parent)
     {
-        base.Removed(parent);
+        base.OnRemoved(parent);
 
         if (parent is Element parentElement && parentElement.ShadowTree != null)
         {

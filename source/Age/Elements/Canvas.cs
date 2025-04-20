@@ -8,7 +8,7 @@ public sealed class Canvas : Element
 {
     // private const ushort PADDING = 8;
 
-    public override string NodeName { get; } = nameof(Canvas);
+    public override string NodeName => nameof(Canvas);
 
     public Canvas()
     {

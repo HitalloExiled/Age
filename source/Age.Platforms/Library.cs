@@ -6,7 +6,7 @@ public sealed partial class Library : Disposable
 {
     public bool IsLoaded => this.PlatformIsLoaded();
 
-    protected override void Disposed(bool disposing) =>
+    protected override void OnDisposed(bool disposing) =>
         this.PlatformDispose(disposing);
 
     public nint GetProcAddress(string proc) =>

@@ -7,16 +7,16 @@ namespace Age.StoryBook.Pages;
 
 public class TextBoxPage : Page
 {
-    public override string NodeName { get; } = nameof(TextBoxPage);
-    public override string Title    { get; } = nameof(TextBox);
+    public override string NodeName => nameof(TextBoxPage);
+    public override string Title    => nameof(TextBox);
 
     public TextBoxPage()
     {
         var containerStyle = new Style
         {
             Color                = Color.White,
-            Stack                = StackKind.Vertical,
-            ContentJustification = ContentJustificationKind.Start,
+            StackDirection       = StackDirection.Vertical,
+            ContentJustification = ContentJustification.Start,
         };
 
         var textBoxStyle = new Style
@@ -28,7 +28,7 @@ public class TextBoxPage : Page
         {
             Style = new()
             {
-                ContentJustification = ContentJustificationKind.SpaceAround,
+                ContentJustification = ContentJustification.SpaceAround,
                 Size                 = new((Percentage)100, null),
                 Margin               = new((Pixel)10),
             },
@@ -69,7 +69,7 @@ public class TextBoxPage : Page
                         {
                             Style = textBoxStyle with
                             {
-                                Overflow = OverflowKind.ScrollX,
+                                Overflow = Overflow.ScrollX,
                                 Size     = new((Pixel)100, null),
                             },
                         },
@@ -93,7 +93,7 @@ public class TextBoxPage : Page
                             Multiline = true,
                             Style     = textBoxStyle with
                             {
-                                Overflow = OverflowKind.Scroll,
+                                Overflow = Overflow.Scroll,
                                 Size     = new((Pixel)200),
                             },
                         },

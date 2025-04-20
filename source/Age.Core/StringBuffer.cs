@@ -69,24 +69,6 @@ public sealed class StringBuffer
         }
     }
 
-    private void EnsureCapacity(int capacity)
-    {
-        if (capacity > this.Capacity)
-        {
-            this.Capacity = int.Min(int.Max(this.Capacity * 2, capacity), int.MaxValue);
-        }
-    }
-
-    private void ShiftElements(int sourceIndex, int destinationIndex, int elementCount)
-    {
-        if (elementCount <= 0)
-        {
-            return;
-        }
-
-        Array.Copy(this.buffer, sourceIndex, this.buffer, destinationIndex, elementCount);
-    }
-
     public ReadOnlySpan<char> AsSpan() =>
         new(this.buffer, 0, this.Length);
 
@@ -100,7 +82,7 @@ public sealed class StringBuffer
 
         this.EnsureCapacity(this.Length + value.Length);
 
-        value.CopyTo(this.buffer.AsSpan(this.Length));
+        value.CopyTo(new Span<char>(this.buffer, this.Length, value.Length));
 
         this.Length += value.Length;
 
@@ -125,8 +107,8 @@ public sealed class StringBuffer
     {
         var handler = new StringBuffer(this.Length + other.Length);
 
-        handler.Append(this.buffer.AsSpan(0, this.Length), false);
-        handler.Append(other.buffer.AsSpan(0, other.Length), false);
+        handler.Append(this.AsSpan(), false);
+        handler.Append(other.AsSpan(), false);
 
         return handler;
     }
@@ -138,8 +120,16 @@ public sealed class StringBuffer
         this.Modified?.Invoke();
     }
 
-    public bool Equals(ReadOnlySpan<char> value) =>
+    public bool Equals(scoped ReadOnlySpan<char> value) =>
         value.SequenceEqual(this.AsSpan());
+
+    public void EnsureCapacity(int capacity)
+    {
+        if (capacity > this.Capacity)
+        {
+            this.Capacity = int.Min(int.Max(this.Capacity * 2, capacity), int.MaxValue);
+        }
+    }
 
     public IEnumerator<char> GetEnumerator()
     {
@@ -149,7 +139,7 @@ public sealed class StringBuffer
         }
     }
 
-    public void Insert(scoped ReadOnlySpan<char> value, int index)
+    public void Insert(int index, scoped ReadOnlySpan<char> value)
     {
         this.CheckIndex(index);
 
@@ -159,34 +149,40 @@ public sealed class StringBuffer
         }
 
         this.EnsureCapacity(this.Length + value.Length);
-        this.ShiftElements(index, index + value.Length, this.Length - index);
-
-        value.CopyTo(this.buffer.AsSpan(index));
 
         this.Length += value.Length;
+
+        var length = this.Length - index - value.Length;
+
+        if (length > 0)
+        {
+            var source      = new Span<char>(this.buffer, index, length);
+            var destination = new Span<char>(this.buffer, index + value.Length, length);
+
+            source.CopyTo(destination);
+        }
+
+        value.CopyTo(new Span<char>(this.buffer, index, value.Length));
 
         this.Modified?.Invoke();
     }
 
-    public void Remove(int index, int length = 1)
+    public void Remove(int index, int count = 1)
     {
         this.CheckIndex(index);
 
-        if (length == 0)
+        var offset = index + count;
+        var length = this.Length - offset;
+
+        if (length > 0)
         {
-            return;
+            var source      = this.buffer.AsSpan(offset, length);
+            var destination = this.buffer.AsSpan(index,  length);
+
+            source.CopyTo(destination);
         }
 
-        var endIndex   = index + length;
-        var shiftCount = this.Length - endIndex;
-
-        if (shiftCount > 0)
-        {
-            this.ShiftElements(endIndex, index, shiftCount);
-
-        }
-
-        this.Length = int.Max(this.Length - length, 0);
+        this.Length = int.Max(this.Length - count, 0);
 
         this.Modified?.Invoke();
     }

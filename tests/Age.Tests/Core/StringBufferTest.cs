@@ -32,11 +32,11 @@ public class StringBufferTest
 
         AssertIt(buffer, "HelloWorld", 10);
 
-        buffer.Insert([' '], 5);
+        buffer.Insert(5, [' ']);
 
         AssertIt(buffer, "Hello World", 20);
 
-        buffer.Insert("!!!", 11);
+        buffer.Insert(11, "!!!");
 
         AssertIt(buffer, "Hello World!!!", 20);
     }

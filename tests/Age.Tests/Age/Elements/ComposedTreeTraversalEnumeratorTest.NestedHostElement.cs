@@ -8,7 +8,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
 {
     public class NestedHostElement : Element
 {
-    public override string NodeName { get; } = nameof(NestedHostElement);
+    public override string NodeName => nameof(NestedHostElement);
 
     public Element[] ShadowNodes { get; }
 
