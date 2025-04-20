@@ -131,9 +131,9 @@ internal partial class TextStorage : Disposable
                 {
                     var line = reader.ReadLine();
 
-                    if (line?.Split(' ') is [var alias, var codepoint])
+                    if (line?.Split(' ') is [var ligature, var codepoint])
                     {
-                        entries[alias] = Convert.ToInt32(codepoint, 16);
+                        entries[ligature] = Convert.ToInt32(codepoint, 16);
                     }
                 }
             }

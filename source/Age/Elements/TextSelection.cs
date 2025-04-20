@@ -1,4 +1,4 @@
-namespace Age.Elements.Layouts;
+namespace Age.Elements;
 
 public record struct TextSelection(uint Start, uint End)
 {

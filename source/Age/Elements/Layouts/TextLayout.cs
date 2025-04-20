@@ -24,14 +24,16 @@ internal sealed partial class TextLayout : Layout
     private readonly Text           target;
     private readonly List<TextLine> textLines = new(1);
 
-    private bool           caretIsDirty;
-    private bool           caretIsVisible;
-    private SKFont?        font;
-    private float          fontLeading;
-    private bool           isMouseOverText;
-    private Vector2<float> previouCursor;
-    private bool           selectionIsDirty;
-    private bool           textIsDirty;
+    private bool                      caretIsDirty;
+    private bool                      caretIsVisible;
+    private Dictionary<string, int>?  codepoints;
+    private SKFont?                   font;
+    private float                     fontLeading;
+    private bool                      isMouseOverText;
+    private Vector2<float>            previouCursor;
+    private int                       renderedLength;
+    private bool                      selectionIsDirty;
+    private bool                      textIsDirty;
 
     private bool CanSelect => this.Parent?.ComputedStyle.TextSelection != false;
 
@@ -207,13 +209,13 @@ internal sealed partial class TextLayout : Layout
 
     private void DrawCaret()
     {
-        if (this.target.Buffer.Length > 0)
+        if (this.renderedLength > 0)
         {
             Point<float> position;
 
-            if (this.CaretPosition == this.target.Buffer.Length)
+            if (this.CaretPosition == this.renderedLength)
             {
-                var rect = ((RectCommand)this.target.Commands[this.target.Buffer.Length - 1]).Rect;
+                var rect = ((RectCommand)this.target.Commands[this.renderedLength - 1]).Rect;
 
                 if (this.target.Buffer[^1] == '\n')
                 {
@@ -275,11 +277,15 @@ internal sealed partial class TextLayout : Layout
             throw new InvalidOperationException();
         }
 
-        var text = this.target.Buffer.AsSpan();
+        var textSpan = this.codepoints?.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(this.target.Buffer.AsSpan(), out var codepoint) == true
+            ? [(char)codepoint]
+            : this.target.Buffer.AsSpan();
+
+        this.renderedLength = textSpan.Length;
 
         var style = this.target.ComposedParentElement!.Layout.ComputedStyle;
 
-        var glyphs = this.font.Typeface.GetGlyphs(text);
+        var glyphs = this.font.Typeface.GetGlyphs(textSpan);
         var atlas  = TextStorage.Singleton.GetAtlas(this.font.Typeface.FamilyName, (uint)this.font.Size);
 
         using var glyphsBoundsRef = new RefArray<SKRect>(glyphs.Length);
@@ -293,7 +299,7 @@ internal sealed partial class TextLayout : Layout
         var cursor     = new Point<int>(0, baseLine);
         var boundings  = new Size<uint>(0, this.LineHeight);
 
-        text.GetTextInfo(out var nonWhitespaceCount, out var linesCount);
+        textSpan.GetTextInfo(out var nonWhitespaceCount, out var linesCount);
 
         this.textLines.Resize(linesCount, default);
 
@@ -301,7 +307,7 @@ internal sealed partial class TextLayout : Layout
 
         this.target.Commands.RemoveAt(this.target.Commands.Count - 1);
 
-        AllocateCommands(this.target.Commands, text.Length + nonWhitespaceCount);
+        AllocateCommands(this.target.Commands, textSpan.Length + nonWhitespaceCount);
 
         this.target.Commands.Add(this.caretCommand);
 
@@ -313,9 +319,9 @@ internal sealed partial class TextLayout : Layout
 
         lines[0].Start = 0;
 
-        for (var i = 0; i < text.Length; i++)
+        for (var i = 0; i < textSpan.Length; i++)
         {
-            var character = text[i];
+            var character = textSpan[i];
 
             var selectionCommand = (TextCommand)this.target.Commands[i];
 
@@ -348,7 +354,7 @@ internal sealed partial class TextLayout : Layout
                     P4 = new Point<float>(glyph.Position.X, glyph.Position.Y + glyph.Size.Height) / atlasSize,
                 };
 
-                var characterIndex = text.Length + textOffset;
+                var characterIndex = textSpan.Length + textOffset;
 
                 selectionCommand.Index = characterIndex;
 
@@ -403,7 +409,7 @@ internal sealed partial class TextLayout : Layout
             }
         }
 
-        lines[^1].Length = (uint)text.Length - 1 - lines[^1].Start + 1;
+        lines[^1].Length = (uint)textSpan.Length - 1 - lines[^1].Start + 1;
 
         atlas.Update();
 
@@ -429,7 +435,7 @@ internal sealed partial class TextLayout : Layout
 
     private void OnParentStyleChanged(StyleProperty property)
     {
-        if (property.HasAnyFlag(StyleProperty.FontFamily | StyleProperty.FontSize | StyleProperty.FontWeight))
+        if (property.HasAnyFlag(StyleProperty.FontFamily | StyleProperty.FontFeature | StyleProperty.FontSize | StyleProperty.FontWeight))
         {
             var style = this.Parent!.ComputedStyle;
 
@@ -439,7 +445,7 @@ internal sealed partial class TextLayout : Layout
 
             if (this.font?.Size != fontSize || this.font.Typeface.FamilyName != fontFamily || this.font.Typeface.FontWeight != fontWeight)
             {
-                this.font = TextStorage.Singleton.GetFont(fontFamily, fontSize, fontWeight);
+                this.font = TextStorage.Singleton.GetFont(fontFamily, fontSize, fontWeight, this.Parent.StyleSheet?.FontFaces);
                 this.font.GetFontMetrics(out var metrics);
 
                 this.LineHeight  = (uint)float.Round(-metrics.Ascent + metrics.Descent);
@@ -454,6 +460,13 @@ internal sealed partial class TextLayout : Layout
                 this.caretIsDirty = true;
             }
 
+            if (property.HasFlags(StyleProperty.FontFeature))
+            {
+                this.codepoints = style.FontFeature == FontFeature.Liga
+                    ? TextStorage.Singleton.GetCodepoints(fontFamily, this.Parent.StyleSheet?.FontFaces)
+                    : null;
+            }
+
             this.textIsDirty = true;
             this.RequestUpdate(true);
         }
@@ -461,7 +474,7 @@ internal sealed partial class TextLayout : Layout
 
     private void OnTextChange()
     {
-        this.Selection   = this.Selection?.WithEnd(uint.Min(this.Selection.Value.End, (uint)this.target.Buffer.Length));
+        this.Selection   = this.Selection?.WithEnd(uint.Min(this.Selection.Value.End, (uint)this.renderedLength));
         this.textIsDirty = true;
 
         this.RequestUpdate(true);
@@ -509,7 +522,6 @@ internal sealed partial class TextLayout : Layout
             ? this.textLines[lineIndex]
             : (TextLine?)default;
 
-
     public void HandleTargetActivated()
     {
         if (!this.CanSelect)
@@ -541,7 +553,7 @@ internal sealed partial class TextLayout : Layout
         this.UpdateDirtyLayout();
 
         var elementIndex = this.target.Index + 1;
-        var commands     = this.target.Commands.AsSpan(0, this.target.Buffer.Length);
+        var commands     = this.target.Commands.AsSpan(0, this.renderedLength);
 
         for (var i = 0; i < commands.Length; i++)
         {
@@ -712,8 +724,8 @@ internal sealed partial class TextLayout : Layout
 
         var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition);
 
-        var startIndex = int.Min((int)selection.Start, this.target.Buffer.Length - 1);
-        var endIndex   = int.Min((int)selection.End,   this.target.Buffer.Length - 1);
+        var startIndex = int.Min((int)selection.Start, this.renderedLength - 1);
+        var endIndex   = int.Min((int)selection.End,   this.renderedLength - 1);
 
         var lineSpan     = this.textLines.AsSpan();
         var commandsSpan = this.target.Commands.AsSpan();
@@ -731,7 +743,7 @@ internal sealed partial class TextLayout : Layout
         {
             if (isCursorBelowTop(endAnchor.Rect))
             {
-                position = (uint)this.target.Buffer.Length;
+                position = (uint)this.renderedLength;
 
                 scanBelow(commandsSpan, endAnchor.Line, lineSpan.Length, lineSpan, ref position);
             }
@@ -762,8 +774,8 @@ internal sealed partial class TextLayout : Layout
         void resolveLine(scoped ReadOnlySpan<TextLine> lines, int index, ref uint position) =>
             position = isCursorBefore(endAnchor.Rect)
                 ? lines[index].Start
-                : lines[index].End + 1 == this.target.Buffer.Length
-                    ? (uint)this.target.Buffer.Length
+                : lines[index].End + 1 == this.renderedLength
+                    ? (uint)this.renderedLength
                     : lines[index].End;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

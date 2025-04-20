@@ -2,6 +2,8 @@ namespace Age.Styling;
 
 public record StyleSheet
 {
+    public Dictionary<string, string> FontFaces { get; } = [];
+
     public Style? Active   { get; init; }
     public Style? Base     { get; init; }
     public Style? Checked  { get; init; }

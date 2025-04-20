@@ -11,34 +11,37 @@ public class IconPage : Page
 
     public IconPage()
     {
-        var style = new Style
+        var styleSheet = new StyleSheet
         {
-            FontSize   = 30,
-            Color      = Color.White,
-            FontFamily = "Material Icons Outlined",
+            Base = new()
+            {
+                FontSize    = 30,
+                Color       = Color.White,
+                FontFeature = FontFeature.Liga,
+                FontFamily  = "Material Icons",
+            },
+            FontFaces =
+            {
+                ["Material Icons"] = Path.Join(AppContext.BaseDirectory, "Assets", "Fonts", "MaterialIcons-Regular.ttf")
+            }
         };
 
         this.Children =
         [
             new FlexBox
             {
-                Text  = char.ConvertFromUtf32(0xe8b6),
-                Style = style,
+                Text       = "search",
+                StyleSheet = styleSheet,
             },
             new FlexBox
             {
-                Text  = char.ConvertFromUtf32(0xea0b),
-                Style = style,
+                Text       = "home",
+                StyleSheet = styleSheet,
             },
             new FlexBox
             {
-                Text  = char.ConvertFromUtf32(0xe80d),
-                Style = style,
-            },
-            new FlexBox
-            {
-                Text  = char.ConvertFromUtf32(0xe0be),
-                Style = style,
+                Text       = "close",
+                StyleSheet = styleSheet,
             }
         ];
     }
