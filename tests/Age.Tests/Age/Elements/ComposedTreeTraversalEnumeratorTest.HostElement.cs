@@ -2,6 +2,8 @@ using Age.Elements;
 
 namespace Age.Tests.Age.Elements;
 
+#pragma warning disable CA1001 // TODO Remove;
+
 public partial class ComposedTreeTraversalEnumeratorTest
 {
     public class HostElement : Element

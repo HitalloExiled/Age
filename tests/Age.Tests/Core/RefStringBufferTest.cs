@@ -2,9 +2,9 @@ using Age.Core;
 
 namespace Age.Tests.Core;
 
-public class StringBufferTest
+public class RefStringBufferTest
 {
-    private static void AssertIt(StringBuffer buffer, string text, int capacity)
+    private static void AssertIt(RefStringBuffer buffer, string text, int capacity)
     {
         Assert.Equal(text, buffer.ToString());
         Assert.Equal(text.Length, buffer.Length);
@@ -14,7 +14,7 @@ public class StringBufferTest
     [Fact]
     public void Append()
     {
-        var buffer = new StringBuffer();
+        using var buffer = new RefStringBuffer(32);
 
         buffer.Append("Hello");
 
@@ -28,7 +28,7 @@ public class StringBufferTest
     [Fact]
     public void Insert()
     {
-        var buffer = new StringBuffer("HelloWorld");
+        using var buffer = new RefStringBuffer("HelloWorld");
 
         AssertIt(buffer, "HelloWorld", 10);
 
@@ -44,7 +44,7 @@ public class StringBufferTest
     [Fact]
     public void Remove()
     {
-        var buffer = new StringBuffer("Hello World!!!");
+        using var buffer = new RefStringBuffer("Hello World!!!");
 
         buffer.Remove(11, 3);
 

@@ -12,12 +12,12 @@ internal partial class TextStorage : Disposable
 
     public static TextStorage Singleton => singleton ?? throw new NullReferenceException();
 
-    private readonly Dictionary<int, TextureAtlas> atlases = [];
-    private readonly Dictionary<int, Glyph>        glyphs  = [];
-    private readonly Dictionary<int, SKFont>       fonts   = [];
-    private readonly VulkanRenderer                renderer;
-    private readonly SKPaint                       paint;
-    private readonly Dictionary<string, string>    fontMap = [];
+    private readonly Dictionary<int, TextureAtlas>               atlases    = [];
+    private readonly Dictionary<string, Dictionary<string, int>> codepoints = [];
+    private readonly Dictionary<int, SKFont>                     fonts      = [];
+    private readonly Dictionary<int, Glyph>                      glyphs     = [];
+    private readonly SKPaint                                     paint;
+    private readonly VulkanRenderer                              renderer;
 
     public TextStorage(VulkanRenderer renderer)
     {
@@ -34,25 +34,6 @@ internal partial class TextStorage : Disposable
             Color       = SKColors.Black,
             IsAntialias = true,
         };
-
-        this.CreateCustomFontsMap();
-    }
-
-    private void CreateCustomFontsMap()
-    {
-        var directory = new DirectoryInfo(Path.Join(AppContext.BaseDirectory, "Fonts"));
-
-        foreach (var file in directory.GetFiles())
-        {
-            if (file.Extension is ".ttf" or ".otf")
-            {
-                var typeface = SKTypeface.FromFile(file.FullName);
-
-                this.fontMap[typeface.FamilyName] = file.FullName;
-
-                typeface.Dispose();
-            }
-        }
     }
 
     protected override void OnDisposed(bool disposing)
@@ -126,7 +107,42 @@ internal partial class TextStorage : Disposable
         return atlas!;
     }
 
-    public SKFont GetFont(string fontFamily, float fontSize, int fontWeight)
+    public Dictionary<string, int>? GetCodepoints(string fontFamily, Dictionary<string, string>? externalSource)
+    {
+        ref var entries = ref this.codepoints.GetValueRefOrAddDefault(fontFamily, out var exists);
+
+        if (!exists)
+        {
+            if (externalSource?.TryGetValue(fontFamily, out var filename) != true)
+            {
+                return null;
+            }
+
+            var codepoints = Path.Join(Path.GetDirectoryName(filename).AsSpan(), Path.GetFileNameWithoutExtension(filename.AsSpan())) + ".codepoints";
+
+            if (File.Exists(codepoints))
+            {
+                entries = [];
+
+                using var stream = File.Open(codepoints, FileMode.Open);
+                using var reader = new StreamReader(stream);
+
+                while (!reader.EndOfStream)
+                {
+                    var line = reader.ReadLine();
+
+                    if (line?.Split(' ') is [var alias, var codepoint])
+                    {
+                        entries[alias] = Convert.ToInt32(codepoint, 16);
+                    }
+                }
+            }
+        }
+
+        return entries!;
+    }
+
+    public SKFont GetFont(string fontFamily, float fontSize, int fontWeight, Dictionary<string, string>? externalSource)
     {
         var hashcode = HashCode.Combine(fontFamily, fontSize, fontWeight);
 
@@ -134,8 +150,8 @@ internal partial class TextStorage : Disposable
 
         if (!exists)
         {
-            var typeface = this.fontMap.TryGetValue(fontFamily, out var path)
-                ? SKTypeface.FromFile(path)
+            var typeface = externalSource?.TryGetValue(fontFamily, out var filename) == true
+                ? SKTypeface.FromFile(filename)
                 : SKTypeface.FromFamilyName(fontFamily, (SKFontStyleWeight)fontWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
 
             font = new SKFont(typeface ?? SKTypeface.Default)

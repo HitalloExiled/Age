@@ -114,7 +114,7 @@ public partial class TextBox : Element
         }
         else
         {
-            this.text.Buffer.Insert([character], (int)this.text.CursorPosition);
+            this.text.Buffer.Insert((int)this.text.CursorPosition, [character]);
         }
 
         this.text.CursorPosition++;
@@ -194,7 +194,7 @@ public partial class TextBox : Element
                     }
                     else
                     {
-                        this.text.Buffer.Insert(['\n'], (int)this.text.CursorPosition);
+                        this.text.Buffer.Insert((int)this.text.CursorPosition, ['\n']);
                     }
 
                     this.text.CursorPosition++;
@@ -391,7 +391,7 @@ public partial class TextBox : Element
                             }
                             else
                             {
-                                this.text.Buffer.Insert(text, (int)this.text.CursorPosition);
+                                this.text.Buffer.Insert((int)this.text.CursorPosition, text);
                             }
 
                             this.text.CursorPosition += (uint)text.Length;
