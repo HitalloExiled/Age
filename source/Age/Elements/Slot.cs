@@ -4,7 +4,7 @@ namespace Age.Elements;
 
 public sealed class Slot : Element
 {
-    public override string NodeName => nameof(Slot);
+    public override string NodeName => nameof(Elements.Slot);
     internal List<Layoutable> Nodes { get; } = [];
 
     public Layoutable[] AssignedNodes    => [.. this.Nodes];
@@ -28,11 +28,11 @@ public sealed class Slot : Element
         }
     }
 
-    protected override void OnAdopted(Node parent)
+    protected override void OnConnected(NodeTree tree)
     {
-        base.OnAdopted(parent);
+        base.OnConnected(tree);
 
-        if (parent is ShadowTree shadowTree)
+        if (this.Root is ShadowTree shadowTree)
         {
             shadowTree.Host.AddSlot(this, this.Name ?? "");
         }
@@ -42,7 +42,7 @@ public sealed class Slot : Element
     {
         base.OnRemoved(parent);
 
-        if (parent is ShadowTree shadowTree)
+        if (parent.Root is ShadowTree shadowTree)
         {
             shadowTree.Host.RemoveSlot(this, this.Name ?? "");
         }
