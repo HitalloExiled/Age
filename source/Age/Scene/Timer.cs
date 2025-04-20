@@ -20,18 +20,18 @@ public sealed class Timer : Node
     private void UpdateTimestamp() =>
         this.timestamp = Stopwatch.GetTimestamp();
 
-    protected override void Connected(NodeTree tree)
+    protected override void OnConnected(NodeTree tree)
     {
-        base.Connected(tree);
+        base.OnConnected(tree);
 
         tree.Timers.Add(this);
 
         this.UpdateTimestamp();
     }
 
-    protected override void Disconnected(NodeTree tree)
+    protected override void OnDisconnected(NodeTree tree)
     {
-        base.Disconnected(tree);
+        base.OnDisconnected(tree);
 
         tree.Timers.Remove(this);
     }

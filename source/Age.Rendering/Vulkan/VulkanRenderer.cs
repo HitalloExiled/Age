@@ -162,7 +162,7 @@ public sealed unsafe partial class VulkanRenderer : Disposable
                                 : VkSampleCountFlags.N1;
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

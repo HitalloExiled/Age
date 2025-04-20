@@ -55,7 +55,7 @@ internal partial class TextStorage : Disposable
         }
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

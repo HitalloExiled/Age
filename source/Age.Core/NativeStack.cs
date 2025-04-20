@@ -79,7 +79,7 @@ public unsafe partial class NativeStack<T> : Disposable, IEnumerable<T> where T 
         }
     }
 
-    protected override void Disposed(bool disposed)
+    protected override void OnDisposed(bool disposed)
     {
         NativeMemory.Free(this.buffer);
         this.buffer = default;

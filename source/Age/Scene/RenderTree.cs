@@ -326,15 +326,15 @@ public sealed partial class RenderTree : NodeTree
 
             if (this.lastHoveredText != text)
             {
-                this.lastHoveredText?.Layout.TargetMouseOut();
+                this.lastHoveredText?.Layout.HandleTargetMouseOut();
                 this.lastHoveredText = text;
 
-                text.Layout.TargetMouseOver();
+                text.Layout.HandleTargetMouseOver();
             }
         }
         else
         {
-            this.lastHoveredText?.Layout.TargetMouseOut();
+            this.lastHoveredText?.Layout.HandleTargetMouseOut();
             this.lastHoveredText = null;
         }
 
@@ -393,7 +393,7 @@ public sealed partial class RenderTree : NodeTree
     internal IEnumerable<Command3DEntry> Get3DCommands() =>
         this.command3DEntries;
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

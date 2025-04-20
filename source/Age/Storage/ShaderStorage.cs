@@ -43,7 +43,7 @@ public class ShaderStorage : Disposable
         return shader ?? throw new InvalidOperationException($"Shader {name} not found");
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

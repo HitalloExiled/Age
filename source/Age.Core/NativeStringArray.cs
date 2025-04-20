@@ -30,7 +30,7 @@ public unsafe class NativeStringArray : Disposable
         this.Length = source.Length;
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         for (var i = 0; i < this.Length; i++)
         {

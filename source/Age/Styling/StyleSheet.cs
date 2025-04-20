@@ -1,6 +1,6 @@
 namespace Age.Styling;
 
-public record StyledStates
+public record StyleSheet
 {
     public Style? Active   { get; init; }
     public Style? Base     { get; init; }

@@ -21,7 +21,7 @@ public class TextSelectionTest
                 Border     = new(20, 0, Color.Red),
                 FontFamily = "Consolas",
             },
-            States = new()
+            StyleSheet = new()
             {
                 Hovered = new()
                 {
@@ -43,7 +43,7 @@ public class TextSelectionTest
                 Border     = new(20, 0, Color.Red),
                 FontFamily = "Consolas",
             },
-            States = new()
+            StyleSheet = new()
             {
                 Hovered = new()
                 {

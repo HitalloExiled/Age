@@ -44,6 +44,6 @@ public sealed class Viewport : Element
         command.MappedTexture = new(this.RenderTarget.Texture, UVRect.Normalized);
     }
 
-    protected override void Disposed() =>
+    protected override void OnDisposed() =>
         this.RenderTarget.Dispose();
 }

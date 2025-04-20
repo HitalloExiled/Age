@@ -31,9 +31,9 @@ public abstract class Renderable : Node
 
     public RenderTree? RenderTree => this.Tree as RenderTree;
 
-    protected override void Connected(NodeTree tree)
+    protected override void OnConnected(NodeTree tree)
     {
-        base.Connected(tree);
+        base.OnConnected(tree);
 
         if (tree is RenderTree renderTree)
         {
@@ -41,9 +41,9 @@ public abstract class Renderable : Node
         }
     }
 
-    protected override void Disconnected(NodeTree tree)
+    protected override void OnDisconnected(NodeTree tree)
     {
-        base.Disconnected(tree);
+        base.OnDisconnected(tree);
 
         if (tree is RenderTree renderTree)
         {

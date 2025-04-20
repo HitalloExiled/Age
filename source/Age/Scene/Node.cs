@@ -20,7 +20,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             if (field != value)
             {
                 field = value;
-                this.Indexed();
+                this.OnIndexed();
             }
         }
     }
@@ -48,11 +48,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
                     if (tree != null)
                     {
-                        node.Connected(tree);
+                        node.OnConnected(tree);
                     }
                     else if (oldTree != null)
                     {
-                        node.Disconnected(oldTree);
+                        node.OnDisconnected(oldTree);
                     }
                 }
 
@@ -251,9 +251,9 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         node.Parent = this;
         node.Tree   = this.Tree;
-        node.Adopted(this);
+        node.OnAdopted(this);
 
-        this.ChildAppended(node);
+        this.OnChildAppended(node);
     }
 
     private void AppendOrPrepend(scoped ReadOnlySpan<Node> nodes, bool append)
@@ -328,8 +328,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             node.Parent = this;
             node.Tree = this.Tree;
 
-            node.Adopted(this);
-            this.ChildAppended(node);
+            node.OnAdopted(this);
+            this.OnChildAppended(node);
         }
     }
 
@@ -393,8 +393,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         node.Parent = this;
         node.Tree   = this.Tree;
 
-        node.Adopted(this);
-        this.ChildAppended(node);
+        node.OnAdopted(this);
+        this.OnChildAppended(node);
     }
 
     private void InsertAfterOrBefore(Node reference, scoped ReadOnlySpan<Node> nodes, bool after)
@@ -483,9 +483,9 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         {
             node.Parent = this;
             node.Tree   = this.Tree;
-            node.Adopted(this);
+            node.OnAdopted(this);
 
-            this.ChildAppended(node);
+            this.OnChildAppended(node);
         }
     }
 
@@ -517,8 +517,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             current.Parent          = null;
             current.Tree            = null;
 
-            current.Removed(this);
-            this.ChildRemoved(current);
+            current.OnRemoved(this);
+            this.OnChildRemoved(current);
         }
 
         this.FirstChild = null;
@@ -577,8 +577,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             current.Parent          = null;
             current.Tree            = null;
 
-            current.Removed(this);
-            this.ChildRemoved(current);
+            current.OnRemoved(this);
+            this.OnChildRemoved(current);
 
             if (current == end)
             {
@@ -587,42 +587,27 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {
-            this.Disposed();
+            this.OnDisposed();
 
             foreach (var child in this.GetTraversalEnumerator())
             {
-                child.Disposed();
+                child.OnDisposed();
             }
         }
     }
 
-    protected virtual void Adopted(Node parent)
-    { }
-
-    protected virtual void Removed(Node parent)
-    { }
-
-    protected virtual void ChildAppended(Node child)
-    { }
-
-    protected virtual void ChildRemoved(Node child)
-    { }
-
-    protected virtual void Connected(NodeTree tree)
-    { }
-
-    protected virtual void Disposed()
-    { }
-
-    protected virtual void Disconnected(NodeTree tree)
-    { }
-
-    protected virtual void Indexed()
-    { }
+    protected virtual void OnAdopted(Node parent) { }
+    protected virtual void OnChildAppended(Node child) { }
+    protected virtual void OnChildRemoved(Node child) { }
+    protected virtual void OnConnected(NodeTree tree) { }
+    protected virtual void OnDisconnected(NodeTree tree) { }
+    protected virtual void OnDisposed() { }
+    protected virtual void OnIndexed() { }
+    protected virtual void OnRemoved(Node parent) { }
 
     public void AppendChild(Node node) =>
         this.AppendOrPrepend(node, true);
@@ -812,8 +797,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         node.Parent          = null;
         node.Tree            = null;
 
-        node.Removed(this);
-        this.ChildRemoved(node);
+        node.OnRemoved(this);
+        this.OnChildRemoved(node);
     }
 
     public void RemoveChildren() =>
@@ -874,11 +859,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         target.NextSibling     = null;
         target.Tree            = null;
 
-        target.Removed(this);
-        this.ChildRemoved(target);
+        target.OnRemoved(this);
+        this.OnChildRemoved(target);
 
-        node.Adopted(this);
-        this.ChildAppended(node);
+        node.OnAdopted(this);
+        this.OnChildAppended(node);
     }
 
     public void ReplaceSelf(Node node) =>
@@ -969,16 +954,16 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         target.NextSibling     = null;
         target.Tree            = null;
 
-        target.Removed(this);
-        this.ChildRemoved(target);
+        target.OnRemoved(this);
+        this.OnChildRemoved(target);
 
         foreach (var node in nodes)
         {
             node.Parent = this;
             node.Tree   = this.Tree;
-            node.Adopted(this);
+            node.OnAdopted(this);
 
-            this.ChildAppended(node);
+            this.OnChildAppended(node);
         }
     }
 

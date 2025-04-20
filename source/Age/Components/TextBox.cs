@@ -40,7 +40,7 @@ public partial class TextBox : Element
         this.Flags       = NodeFlags.Immutable;
         this.IsFocusable = true;
 
-        this.States = Theme.Current.TextBox.Outlined;
+        this.StyleSheet = Theme.Current.TextBox.Outlined;
 
         this.AttachShadowTree();
 

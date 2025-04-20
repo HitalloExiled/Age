@@ -217,10 +217,10 @@ public class Editor : Node
     }
 
 #if DEBUG
-    protected override void Connected(NodeTree tree) =>
+    protected override void OnConnected(NodeTree tree) =>
         HotReloadService.ApplicationUpdated += this.Reload;
 
-    protected override void Disconnected(NodeTree tree) =>
+    protected override void OnDisconnected(NodeTree tree) =>
         HotReloadService.ApplicationUpdated -= this.Reload;
 #endif
 

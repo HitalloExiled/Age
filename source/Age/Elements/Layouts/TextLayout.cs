@@ -33,7 +33,7 @@ internal sealed partial class TextLayout : Layout
     private bool           selectionIsDirty;
     private bool           textIsDirty;
 
-    private bool CanSelect => this.Parent?.State.ComputedStyle.TextSelection != false;
+    private bool CanSelect => this.Parent?.ComputedStyle.TextSelection != false;
 
     public uint CaretPosition
     {
@@ -201,7 +201,7 @@ internal sealed partial class TextLayout : Layout
 
         if (selectionCommand.Index != default)
         {
-            ((TextCommand)this.target.Commands[selectionCommand.Index]).Color = this.Parent?.State.ComputedStyle.Color ?? default;
+            ((TextCommand)this.target.Commands[selectionCommand.Index]).Color = this.Parent?.ComputedStyle.Color ?? default;
         }
     }
 
@@ -277,7 +277,7 @@ internal sealed partial class TextLayout : Layout
 
         var text = this.target.Buffer.AsSpan();
 
-        var style = this.target.ComposedParentElement!.Layout.State.ComputedStyle;
+        var style = this.target.ComposedParentElement!.Layout.ComputedStyle;
 
         var glyphs = this.font.Typeface.GetGlyphs(text);
         var atlas  = TextStorage.Singleton.GetAtlas(this.font.Typeface.FamilyName, (uint)this.font.Size);
@@ -427,19 +427,11 @@ internal sealed partial class TextLayout : Layout
         }
     }
 
-    private void OnTextChange()
-    {
-        this.Selection   = this.Selection?.WithEnd(uint.Min(this.Selection.Value.End, (uint)this.target.Buffer.Length));
-        this.textIsDirty = true;
-
-        this.RequestUpdate(true);
-    }
-
-    private void TargetParentStyleChanged(StyleProperty property)
+    private void OnParentStyleChanged(StyleProperty property)
     {
         if (property.HasAnyFlag(StyleProperty.FontFamily | StyleProperty.FontSize | StyleProperty.FontWeight))
         {
-            var style = this.Parent!.State.ComputedStyle;
+            var style = this.Parent!.ComputedStyle;
 
             var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
             var fontWeight = (int)(style.FontWeight ?? FontWeight.Normal);
@@ -467,7 +459,15 @@ internal sealed partial class TextLayout : Layout
         }
     }
 
-    protected override void Disposed()
+    private void OnTextChange()
+    {
+        this.Selection   = this.Selection?.WithEnd(uint.Min(this.Selection.Value.End, (uint)this.target.Buffer.Length));
+        this.textIsDirty = true;
+
+        this.RequestUpdate(true);
+    }
+
+    protected override void OnDisposed()
     {
         foreach (var command in this.Target.Commands)
         {
@@ -480,6 +480,16 @@ internal sealed partial class TextLayout : Layout
     public void AdjustScroll() =>
         this.target.ComposedParentElement?.ScrollTo(this.target.GetCursorBoundings());
 
+    public void ClearCaret()
+    {
+        if (!this.CanSelect)
+        {
+            return;
+        }
+
+        this.HideCaret();
+    }
+
     public void ClearSelection() =>
         this.Selection = default;
 
@@ -489,25 +499,81 @@ internal sealed partial class TextLayout : Layout
     public int GetCharacterLineIndex(uint index) =>
         ((TextCommand)this.target.Commands[(int)index]).Line;
 
-    public TextLine? GetCharacterNextLine(uint index)
+    public TextLine? GetCharacterNextLine(uint index) =>
+        !this.target.Buffer.IsEmpty && this.GetCharacterLineIndex(index) + 1 is var lineIndex && lineIndex < this.textLines.Count
+            ? this.textLines[lineIndex]
+            : (TextLine?)default;
+
+    public TextLine? GetCharacterPreviousLine(uint index) =>
+        !this.target.Buffer.IsEmpty && this.GetCharacterLineIndex(index) - 1 is var lineIndex && lineIndex > -1
+            ? this.textLines[lineIndex]
+            : (TextLine?)default;
+
+
+    public void HandleTargetActivated()
     {
-        if (!this.target.Buffer.IsEmpty && this.GetCharacterLineIndex(index) + 1 is var lineIndex && lineIndex < this.textLines.Count)
+        if (!this.CanSelect)
         {
-            return this.textLines[lineIndex];
+            return;
         }
 
-        return default;
+        this.selectionTimer.Start();
+
+        IsSelectingText = true;
     }
 
-    public TextLine? GetCharacterPreviousLine(uint index)
+    public void HandleTargetAdopted(Element parentElement)
     {
-        if (!this.target.Buffer.IsEmpty && this.GetCharacterLineIndex(index) - 1 is var lineIndex && lineIndex > -1)
+        parentElement.Layout.StyleChanged += this.OnParentStyleChanged;
+
+        this.OnParentStyleChanged(StyleProperty.All);
+    }
+
+    public void HandleTargetDeactivated()
+    {
+        this.selectionTimer.Stop();
+
+        IsSelectingText = false;
+    }
+
+    public void HandleTargetIndexed()
+    {
+        this.UpdateDirtyLayout();
+
+        var elementIndex = this.target.Index + 1;
+        var commands     = this.target.Commands.AsSpan(0, this.target.Buffer.Length);
+
+        for (var i = 0; i < commands.Length; i++)
         {
-            return this.textLines[lineIndex];
+            commands[i].ObjectId = CombineIds(i + 1, elementIndex);
+        }
+    }
+
+    public void HandleTargetMouseOut()
+    {
+        if (!this.CanSelect)
+        {
+            return;
         }
 
-        return default;
+        this.isMouseOverText = IsHoveringText = false;
     }
+
+    public void HandleTargetMouseOver()
+    {
+        if (!this.CanSelect)
+        {
+            return;
+        }
+
+        this.isMouseOverText = IsHoveringText = true;
+
+        this.SetCursor(Cursor.Text);
+    }
+
+    public void HandleTargetRemoved(Element parentElement) =>
+        parentElement.Layout.StyleChanged -= this.OnParentStyleChanged;
+
 
     public void HideCaret()
     {
@@ -615,80 +681,6 @@ internal sealed partial class TextLayout : Layout
 
         this.RequestUpdate(false);
     }
-
-    public void ClearCaret()
-    {
-        if (!this.CanSelect)
-        {
-            return;
-        }
-
-        this.HideCaret();
-    }
-
-    public void TargetActivated()
-    {
-        if (!this.CanSelect)
-        {
-            return;
-        }
-
-        this.selectionTimer.Start();
-
-        IsSelectingText = true;
-    }
-
-    public void TargetAdopted(Element parentElement)
-    {
-        parentElement.Layout.State.Changed += this.TargetParentStyleChanged;
-
-        this.TargetParentStyleChanged(StyleProperty.All);
-    }
-
-    public void TargetDeactivated()
-    {
-        this.selectionTimer.Stop();
-
-        IsSelectingText = false;
-    }
-
-    public void TargetIndexed()
-    {
-        this.UpdateDirtyLayout();
-
-        var elementIndex = this.target.Index + 1;
-        var commands     = this.target.Commands.AsSpan(0, this.target.Buffer.Length);
-
-        for (var i = 0; i < commands.Length; i++)
-        {
-            commands[i].ObjectId = CombineIds(i + 1, elementIndex);
-        }
-    }
-
-    public void TargetMouseOut()
-    {
-        if (!this.CanSelect)
-        {
-            return;
-        }
-
-        this.isMouseOverText = IsHoveringText = false;
-    }
-
-    public void TargetMouseOver()
-    {
-        if (!this.CanSelect)
-        {
-            return;
-        }
-
-        this.isMouseOverText = IsHoveringText = true;
-
-        this.SetCursor(Cursor.Text);
-    }
-
-    public void TargetRemoved(Element parentElement) =>
-        parentElement.Layout.State.Changed -= this.TargetParentStyleChanged;
 
     private void UpdateSelection()
     {

@@ -9,7 +9,7 @@ namespace Age.Benchmarks;
 
 public class TestTree : NodeTree
 {
-    protected override void Disposed(bool disposing) => throw new NotImplementedException();
+    protected override void OnDisposed(bool disposing) => throw new NotImplementedException();
 }
 
 public class TestElement : Element

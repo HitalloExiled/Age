@@ -21,7 +21,7 @@ public class Button : Element
         {
             if (field != value)
             {
-                this.States = value switch
+                this.StyleSheet = value switch
                 {
                    ButtonVariant.Flat      => Theme.Current.Button.Flat,
                    ButtonVariant.Outlined  => Theme.Current.Button.Outlined,
@@ -36,6 +36,6 @@ public class Button : Element
     public Button()
     {
         this.IsFocusable = true;
-        this.States      = Theme.Current.Button.Flat;
+        this.StyleSheet      = Theme.Current.Button.Flat;
     }
 }

@@ -9,7 +9,7 @@ using static Age.Shaders.CanvasShader;
 
 namespace Age.Elements.Layouts;
 
-internal sealed partial class BoxLayout : Layout
+internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 {
     private const StyleProperty LAYOUT_AFFECTED_PROPERTIES =
         StyleProperty.Border
@@ -26,19 +26,18 @@ internal sealed partial class BoxLayout : Layout
         | StyleProperty.Stack;
 
     private readonly List<Element> dependents = [];
-    private readonly Element       target;
 
     private RectEdges     border;
     private bool          canScrollX;
     private bool          canScrollY;
     private bool          childsChanged;
     private Size<uint>    content;
-    private Dependency    contentDependent = Dependency.Size;
+    private Dependency    contentDependencies = Dependency.Size;
     private bool          dependenciesHasChanged;
     private RectEdges     margin;
     private StencilLayer? ownStencilLayer;
     private RectEdges     padding;
-    private Dependency    parentDependent;
+    private Dependency    parentDependencies;
     private uint          renderableNodesCount;
     private Size<uint>    size;
     private Size<uint>    staticContent;
@@ -50,14 +49,14 @@ internal sealed partial class BoxLayout : Layout
             var size    = this.size;
             var padding = this.padding;
             var margin  = this.margin;
-            var style   = this.State.ComputedStyle;
+            var style   = this.ComputedStyle;
 
-            if (this.parentDependent.HasFlags(Dependency.Width))
+            if (this.parentDependencies.HasFlags(Dependency.Width))
             {
                 size.Width = this.content.Width;
             }
 
-            if (this.parentDependent.HasFlags(Dependency.Height))
+            if (this.parentDependencies.HasFlags(Dependency.Height))
             {
                 size.Height = this.content.Height;
             }
@@ -117,9 +116,7 @@ internal sealed partial class BoxLayout : Layout
 
     protected override StencilLayer? ContentStencilLayer => this.ownStencilLayer ?? this.StencilLayer;
 
-    public StyledStateManager State { get; }
-
-    public uint FontSize => this.State.ComputedStyle.FontSize ?? 16;
+    public uint FontSize => this.ComputedStyle.FontSize ?? 16;
 
     public bool IsScrollable { get; internal set; }
 
@@ -141,13 +138,12 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    public RectEdges  Border        => this.border;
-    public bool       CanScrollX    => this.canScrollY;
-    public bool       CanScrollY    => this.canScrollX;
-    public Style      ComputedStyle => this.State.ComputedStyle;
-    public Size<uint> Content       => this.content;
-    public RectEdges  Margin        => this.margin;
-    public RectEdges  Padding       => this.padding;
+    public RectEdges  Border     => this.border;
+    public bool       CanScrollX => this.canScrollY;
+    public bool       CanScrollY => this.canScrollX;
+    public Size<uint> Content    => this.content;
+    public RectEdges  Margin     => this.margin;
+    public RectEdges  Padding    => this.padding;
 
     public override StencilLayer? StencilLayer
     {
@@ -163,19 +159,8 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    public override bool        IsParentDependent => this.parentDependent != Dependency.None;
-    public override Element     Target            => this.target;
-    public override Transform2D Transform         => (this.State.ComputedStyle.Transform ?? new Transform2D()) * base.Transform;
-
-
-
-    public BoxLayout(Element target)
-    {
-        this.target = target;
-
-        this.State = new(target);
-        this.State.Changed += this.StyleChanged;
-    }
+    public override bool        IsParentDependent => this.parentDependencies != Dependency.None;
+    public override Transform2D Transform         => (this.ComputedStyle.Transform ?? new Transform2D()) * base.Transform;
 
     private static void CalculatePendingHeight(Element dependent, StackDirection direction, in uint reference, ref uint height, ref uint content, ref uint avaliableSpace)
     {
@@ -483,7 +468,7 @@ internal sealed partial class BoxLayout : Layout
         var x = -1;
         var y = -1;
 
-        var itemsAlignment = this.State.ComputedStyle.ItemsAlignment ?? ItemsAlignment.None;
+        var itemsAlignment = this.ComputedStyle.ItemsAlignment ?? ItemsAlignment.None;
 
         alignmentAxis = AlignmentAxis.Horizontal | AlignmentAxis.Vertical;
 
@@ -547,7 +532,7 @@ internal sealed partial class BoxLayout : Layout
 
     private void CalculateLayout()
     {
-        var direction = this.State.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
+        var direction = this.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
 
         this.content       = new Size<uint>();
         this.staticContent = new Size<uint>();
@@ -577,7 +562,7 @@ internal sealed partial class BoxLayout : Layout
                 childSize.Width  = boudings.Width;
                 childSize.Height = boudings.Height;
 
-                dependencies = element.Layout.parentDependent;
+                dependencies = element.Layout.parentDependencies;
             }
             else
             {
@@ -615,7 +600,7 @@ internal sealed partial class BoxLayout : Layout
             }
         }
 
-        if (this.contentDependent.HasAnyFlag(Dependency.Width | Dependency.Height))
+        if (this.contentDependencies.HasAnyFlag(Dependency.Width | Dependency.Height))
         {
             this.CalculatePendingMargin(ref this.content);
         }
@@ -645,20 +630,20 @@ internal sealed partial class BoxLayout : Layout
     {
         var contentSize = size;
 
-        var direction = this.State.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
+        var direction = this.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
 
         foreach (var dependent in this.dependents)
         {
-            if (dependent.Layout.parentDependent.HasAnyFlag(Dependency.Padding | Dependency.Margin))
+            if (dependent.Layout.parentDependencies.HasAnyFlag(Dependency.Padding | Dependency.Margin))
             {
                 var margin = dependent.Layout.margin;
 
-                if (!this.parentDependent.HasFlags(Dependency.Width))
+                if (!this.parentDependencies.HasFlags(Dependency.Width))
                 {
                     CalculatePendingMarginHorizontal(dependent.Layout, dependent.Layout.ComputedStyle.Margin, direction, size.Width, ref margin, ref contentSize);
                 }
 
-                if (!this.parentDependent.HasFlags(Dependency.Height))
+                if (!this.parentDependencies.HasFlags(Dependency.Height))
                 {
                     CalculatePendingMarginVertical(dependent.Layout, dependent.Layout.ComputedStyle.Margin, direction, size.Height, ref margin, ref contentSize);
                 }
@@ -674,7 +659,7 @@ internal sealed partial class BoxLayout : Layout
     {
         var content        = this.content;
         var avaliableSpace = this.size.ClampSubtract(this.staticContent);
-        var direction      = this.State.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
+        var direction      = this.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
 
         foreach (var dependent in this.dependents)
         {
@@ -682,29 +667,29 @@ internal sealed partial class BoxLayout : Layout
             var padding = dependent.Layout.padding;
             var size    = dependent.Layout.size;
 
-            if (!this.contentDependent.HasFlags(Dependency.Width) || direction == StackDirection.Vertical)
+            if (!this.contentDependencies.HasFlags(Dependency.Width) || direction == StackDirection.Vertical)
             {
-                if (!this.contentDependent.HasFlags(Dependency.Width))
+                if (!this.contentDependencies.HasFlags(Dependency.Width))
                 {
                     CalculatePendingPaddingHorizontal(dependent.Layout, dependent.Layout.ComputedStyle.Padding, this.size.Width, ref padding);
                     CalculatePendingMarginHorizontal(dependent.Layout, dependent.Layout.ComputedStyle.Margin, direction, this.size.Height, ref margin, ref content);
                 }
 
-                if (dependent.Layout.parentDependent.HasFlags(Dependency.Width))
+                if (dependent.Layout.parentDependencies.HasFlags(Dependency.Width))
                 {
                     CalculatePendingWidth(dependent, direction, this.size.Width, ref size.Width, ref content.Width, ref avaliableSpace.Width);
                 }
             }
 
-            if (!this.contentDependent.HasFlags(Dependency.Height) || direction == StackDirection.Horizontal)
+            if (!this.contentDependencies.HasFlags(Dependency.Height) || direction == StackDirection.Horizontal)
             {
-                if (!this.contentDependent.HasFlags(Dependency.Height))
+                if (!this.contentDependencies.HasFlags(Dependency.Height))
                 {
                     CalculatePendingPaddingVertical(dependent.Layout, dependent.Layout.ComputedStyle.Padding, this.size.Height, ref padding);
                     CalculatePendingMarginVertical(dependent.Layout, dependent.Layout.ComputedStyle.Margin, direction, this.size.Height, ref margin, ref content);
                 }
 
-                if (dependent.Layout.parentDependent.HasFlags(Dependency.Height))
+                if (dependent.Layout.parentDependencies.HasFlags(Dependency.Height))
                 {
                     CalculatePendingHeight(dependent, direction, this.size.Height, ref size.Height, ref content.Height, ref avaliableSpace.Height);
                 }
@@ -865,19 +850,19 @@ internal sealed partial class BoxLayout : Layout
 
     private void OnScroll(in MouseEvent mouseEvent)
     {
-        if (!this.target.IsHovered)
+        if (!this.Target.IsHovered)
         {
             return;
         }
 
-        if (this.State.ComputedStyle.Overflow is Overflow.Scroll or Overflow.ScrollX && mouseEvent.KeyStates.HasFlags(Platforms.Display.MouseKeyStates.Shift))
+        if (this.ComputedStyle.Overflow is Overflow.Scroll or Overflow.ScrollX && mouseEvent.KeyStates.HasFlags(Platforms.Display.MouseKeyStates.Shift))
         {
             this.ContentOffset = this.ContentOffset with
             {
                 X = (uint)(this.ContentOffset.X + 10 * -mouseEvent.Delta)
             };
         }
-        else if (this.State.ComputedStyle.Overflow is Overflow.Scroll or Overflow.ScrollY)
+        else if (this.ComputedStyle.Overflow is Overflow.Scroll or Overflow.ScrollY)
         {
             this.ContentOffset = this.ContentOffset with
             {
@@ -886,14 +871,14 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    private void StyleChanged(StyleProperty property)
+    protected override void OnStyleChanged(StyleProperty property)
     {
         if (!this.Target.IsConnected)
         {
             return;
         }
 
-        var style = this.State.ComputedStyle;
+        var style = this.ComputedStyle;
 
         var hidden = style.Hidden == true;
 
@@ -908,7 +893,7 @@ internal sealed partial class BoxLayout : Layout
             };
         }
 
-        if (property.HasFlags(StyleProperty.Cursor) && this.target.IsHovered)
+        if (property.HasFlags(StyleProperty.Cursor) && this.Target.IsHovered)
         {
             this.SetCursor(style.Cursor);
         }
@@ -919,13 +904,13 @@ internal sealed partial class BoxLayout : Layout
 
         if (hasSizeChanges || hasMarginChanges || hasPaddingChanges)
         {
-            var oldParentDependent  = this.parentDependent;
-            var oldContentDependent = this.contentDependent;
+            var oldParentDependencies  = this.parentDependencies;
+            var oldContentDependencies = this.contentDependencies;
 
             if (hasSizeChanges)
             {
-                this.contentDependent = Dependency.None;
-                this.parentDependent  = Dependency.None;
+                this.contentDependencies = Dependency.None;
+                this.parentDependencies  = Dependency.None;
 
                 var absWidth = style.Size?.Width;
                 var minWidth = style.MinSize?.Width;
@@ -937,41 +922,41 @@ internal sealed partial class BoxLayout : Layout
 
                 if (IsAllNull(absWidth, minWidth, maxWidth))
                 {
-                    this.contentDependent |= Dependency.Width;
+                    this.contentDependencies |= Dependency.Width;
                 }
                 else if (IsAnyRelative(absWidth, minWidth, maxWidth))
                 {
-                    this.parentDependent |= Dependency.Width;
+                    this.parentDependencies |= Dependency.Width;
                 }
 
                 if (IsAllNull(absHeight, minHeight, maxHeight))
                 {
-                    this.contentDependent |= Dependency.Height;
+                    this.contentDependencies |= Dependency.Height;
                 }
                 else if (IsAnyRelative(absHeight, minHeight, maxHeight))
                 {
-                    this.parentDependent |= Dependency.Height;
+                    this.parentDependencies |= Dependency.Height;
                 }
             }
 
             if (hasMarginChanges && HasRelativeEdges(style.Margin))
             {
-                this.parentDependent |= Dependency.Margin;
+                this.parentDependencies |= Dependency.Margin;
             }
 
             if (hasPaddingChanges && HasRelativeEdges(style.Padding))
             {
-                this.parentDependent |= Dependency.Padding;
+                this.parentDependencies |= Dependency.Padding;
             }
 
             var justHidden      = hidden && !this.Hidden;
             var justUnhidden    = !hidden && this.Hidden;
-            var justUndependent = oldParentDependent != Dependency.None && this.parentDependent == Dependency.None;
-            var justDependent   = oldParentDependent == Dependency.None && this.parentDependent != Dependency.None;
+            var justUndependent = oldParentDependencies != Dependency.None && this.parentDependencies == Dependency.None;
+            var justDependent   = oldParentDependencies == Dependency.None && this.parentDependencies != Dependency.None;
 
             if (this.Parent != null)
             {
-                this.Parent.dependenciesHasChanged = oldContentDependent != this.contentDependent || oldParentDependent != this.parentDependent;
+                this.Parent.dependenciesHasChanged = oldContentDependencies != this.contentDependencies || oldParentDependencies != this.parentDependencies;
 
                 if (justUnhidden || justDependent)
                 {
@@ -980,7 +965,7 @@ internal sealed partial class BoxLayout : Layout
                         this.Parent.renderableNodesCount++;
                     }
 
-                    if (this.parentDependent != Dependency.None)
+                    if (this.parentDependencies != Dependency.None)
                     {
                         var dependents = this.Target.AssignedSlot?.Layout.dependents ?? this.Parent.dependents;
 
@@ -1007,24 +992,24 @@ internal sealed partial class BoxLayout : Layout
             this.canScrollX = style.Overflow?.HasFlags(Overflow.ScrollX) == true;
             this.canScrollY = style.Overflow?.HasFlags(Overflow.ScrollY) == true;
 
-            var currentIsScrollable = (this.canScrollX || this.canScrollY) && this.contentDependent != (Dependency.Width | Dependency.Height);
+            var currentIsScrollable = (this.canScrollX || this.canScrollY) && this.contentDependencies != (Dependency.Width | Dependency.Height);
 
             if (currentIsScrollable != this.IsScrollable)
             {
                 if (currentIsScrollable)
                 {
-                    this.target.Scrolled += this.OnScroll;
+                    this.Target.Scrolled += this.OnScroll;
                 }
                 else
                 {
-                    this.target.Scrolled -= this.OnScroll;
+                    this.Target.Scrolled -= this.OnScroll;
                     this.ContentOffset = default;
                 }
 
                 this.IsScrollable = currentIsScrollable;
             }
 
-            if (style.Overflow?.HasFlags(Overflow.Clipping) == true && this.contentDependent != (Dependency.Width | Dependency.Height))
+            if (style.Overflow?.HasFlags(Overflow.Clipping) == true && this.contentDependencies != (Dependency.Width | Dependency.Height))
             {
                 if (this.ownStencilLayer == null)
                 {
@@ -1067,15 +1052,15 @@ internal sealed partial class BoxLayout : Layout
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ResolveHeight(ref uint value)
     {
-        var resolved = !this.parentDependent.HasFlags(Dependency.Height);
+        var resolved = !this.parentDependencies.HasFlags(Dependency.Height);
 
-        if (!this.contentDependent.HasFlags(Dependency.Height))
+        if (!this.contentDependencies.HasFlags(Dependency.Height))
         {
             var style = this.ComputedStyle;
 
             ResolveDimension(this.FontSize, style.Size?.Height, style.MinSize?.Height, style.MaxSize?.Height, ref value, ref resolved);
 
-            if (this.State.ComputedStyle.BoxSizing == BoxSizing.Border)
+            if (this.ComputedStyle.BoxSizing == BoxSizing.Border)
             {
                 value = value.ClampSubtract(this.border.Vertical);
             }
@@ -1098,7 +1083,7 @@ internal sealed partial class BoxLayout : Layout
     {
         ResolveRect(this.FontSize, this.ComputedStyle.Margin, ref this.margin);
 
-        return !this.parentDependent.HasFlags(Dependency.Margin);
+        return !this.parentDependencies.HasFlags(Dependency.Margin);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1106,21 +1091,21 @@ internal sealed partial class BoxLayout : Layout
     {
         ResolveRect(this.FontSize, this.ComputedStyle.Padding, ref this.padding);
 
-        return !this.parentDependent.HasFlags(Dependency.Padding);
+        return !this.parentDependencies.HasFlags(Dependency.Padding);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ResolveWidth(ref uint value)
     {
-        var resolved = !this.parentDependent.HasFlags(Dependency.Width);
+        var resolved = !this.parentDependencies.HasFlags(Dependency.Width);
 
-        if (!this.contentDependent.HasFlags(Dependency.Width))
+        if (!this.contentDependencies.HasFlags(Dependency.Width))
         {
             var style = this.ComputedStyle;
 
             ResolveDimension(this.FontSize, style.Size?.Width, style.MinSize?.Width, style.MaxSize?.Width, ref value, ref resolved);
 
-            if (this.State.ComputedStyle.BoxSizing == BoxSizing.Border)
+            if (this.ComputedStyle.BoxSizing == BoxSizing.Border)
             {
                 value = value.ClampSubtract(this.border.Horizontal);
             }
@@ -1138,8 +1123,8 @@ internal sealed partial class BoxLayout : Layout
 
         var cursor               = new Point<float>();
         var size                 = this.size;
-        var direction            = this.State.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
-        var contentJustification = this.State.ComputedStyle.ContentJustification ?? ContentJustification.None;
+        var direction            = this.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
+        var contentJustification = this.ComputedStyle.ContentJustification ?? ContentJustification.None;
 
         var avaliableSpace = direction == StackDirection.Horizontal
             ? new Size<float>(size.Width.ClampSubtract(this.content.Width), size.Height)
@@ -1309,13 +1294,13 @@ internal sealed partial class BoxLayout : Layout
     {
         var command = this.GetRectCommand();
 
-        var isDrawable = this.State.ComputedStyle.Border != null || this.State.ComputedStyle.BackgroundColor.HasValue;
+        var isDrawable = this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor.HasValue;
 
         if (isDrawable)
         {
             command.Rect            = new(this.Boundings.Cast<float>(), default);
-            command.Border          = this.State.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
-            command.Color           = this.State.ComputedStyle.BackgroundColor ?? default;
+            command.Border          = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
+            command.Color           = this.ComputedStyle.BackgroundColor ?? default;
             command.PipelineVariant |= PipelineVariant.Color;
         }
         else
@@ -1328,19 +1313,27 @@ internal sealed partial class BoxLayout : Layout
         this.ownStencilLayer?.MakeDirty();
     }
 
-    protected override void Disposed()
+    protected override void OnDisposed()
     {
         this.ownStencilLayer?.Dispose();
 
-        foreach (var item in this.target.Commands)
+        foreach (var item in this.Target.Commands)
         {
             CommandPool.RectCommand.Return((RectCommand)item);
         }
 
-        this.target.Commands.Clear();
+        this.Target.Commands.Clear();
     }
 
-    public void LayoutableAppended(Layoutable layoutable)
+    public void HandleElementRemoved(Element element)
+    {
+        if (!element.Layout.Hidden && element.Layout.parentDependencies != Dependency.None)
+        {
+            this.dependents.Remove(element);
+        }
+    }
+
+    public void HandleLayoutableAppended(Layoutable layoutable)
     {
         if (!layoutable.Layout.Hidden)
         {
@@ -1350,11 +1343,11 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    public void LayoutableRemoved(Layoutable layoutable)
+    public void HandleLayoutableRemoved(Layoutable layoutable)
     {
         if (layoutable is Element element)
         {
-            this.ElementRemoved(element);
+            this.HandleElementRemoved(element);
         }
 
         if (!layoutable.Layout.Hidden)
@@ -1365,19 +1358,11 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    public void ElementRemoved(Element element)
+    public override void HandleTargetConnected()
     {
-        if (!element.Layout.Hidden && element.Layout.parentDependent != Dependency.None)
-        {
-            this.dependents.Remove(element);
-        }
-    }
+        base.HandleTargetConnected();
 
-    public override void TargetConnected()
-    {
-        base.TargetConnected();
-
-        this.State.Update();
+        this.ComputeStyle();
 
         if (this.ownStencilLayer != null)
         {
@@ -1385,25 +1370,23 @@ internal sealed partial class BoxLayout : Layout
         }
     }
 
-    public void TargetIndexed()
+    public void HandleTargetIndexed()
     {
         var command = this.GetRectCommand();
 
         command.ObjectId = this.Target.Index == -1
             ? default
-            : this.State.ComputedStyle.Border != null || this.State.ComputedStyle.BackgroundColor.HasValue ? (uint)(this.Target.Index + 1) : 0;
+            : this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor.HasValue ? (uint)(this.Target.Index + 1) : 0;
     }
 
-    public void TargetMouseOut() { }
-
-    public void TargetMouseOver() =>
-        this.SetCursor(this.State.ComputedStyle.Cursor);
+    public void HandleTargetMouseOver() =>
+        this.SetCursor(this.ComputedStyle.Cursor);
 
     public override void Update()
     {
         this.CalculateLayout();
 
-        if (this.parentDependent == Dependency.None)
+        if (this.parentDependencies == Dependency.None)
         {
             this.UpdateDisposition();
             this.childsChanged          = false;

@@ -117,7 +117,7 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
         }
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         NativeMemory.Free(this.buffer);
         this.buffer = default;

@@ -21,7 +21,7 @@ public sealed class RenderGraph : Disposable
 
     public bool Disabled { get; set; }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

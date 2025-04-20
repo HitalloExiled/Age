@@ -35,7 +35,7 @@ public class AlignmentTest
                 FontSize       = 32,
                 ItemsAlignment = ItemsAlignment.Baseline,
             },
-            States = new()
+            StyleSheet = new()
             {
                 Active = new()
                 {

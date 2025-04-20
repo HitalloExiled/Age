@@ -5,7 +5,7 @@ namespace Age.Styling;
 
 public record Style
 {
-    internal event Action<StyleProperty>? Changed;
+    internal event Action<StyleProperty>? PropertyChanged;
 
     private StyleData data;
 
@@ -169,7 +169,7 @@ public record Style
         {
             field = value;
 
-            Changed?.Invoke(property);
+            PropertyChanged?.Invoke(property);
         }
     }
 

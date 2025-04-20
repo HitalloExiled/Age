@@ -21,7 +21,7 @@ public sealed class Surface : Disposable
     public Surface() =>
         Entries.Add(this);
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         Entries.Remove(this);
 

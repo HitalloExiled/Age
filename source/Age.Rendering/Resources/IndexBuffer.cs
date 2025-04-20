@@ -9,7 +9,7 @@ public sealed class IndexBuffer : Disposable
     public required uint        Size   { get; init; }
     public required VkIndexType Type   { get; init; }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

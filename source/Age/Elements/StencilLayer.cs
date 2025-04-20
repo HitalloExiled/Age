@@ -164,7 +164,7 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         this.MappedTexture = new(texture, uv);
     }
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing && this.MappedTexture != MappedTexture.Default)
         {
@@ -288,7 +288,7 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         if (this.isDirty || this.transform != this.Owner.TransformCache)
         {
             var bounds = this.Owner.Layout.Boundings;
-            var border = this.Owner.Layout.State.ComputedStyle.Border ?? new();
+            var border = this.Owner.Layout.ComputedStyle.Border ?? new();
 
             this.UpdatePath(bounds, border);
 

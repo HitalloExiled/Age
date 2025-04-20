@@ -9,7 +9,7 @@ public abstract class Scene3D : Scene
     protected override void Connected(RenderTree renderTree) =>
         renderTree.Scenes3D.Add(this);
 
-    protected override void ChildAppended(Node child)
+    protected override void OnChildAppended(Node child)
     {
         if (child is Camera3D camera)
         {
@@ -17,7 +17,7 @@ public abstract class Scene3D : Scene
         }
     }
 
-    protected override void ChildRemoved(Node child)
+    protected override void OnChildRemoved(Node child)
     {
         if (child is Camera3D camera)
         {

@@ -6,7 +6,7 @@ public abstract class Resource : Disposable
 {
     internal List<ResourceCache.Entry> Dependencies { get; } = [];
 
-    protected override void Disposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {

@@ -13,5 +13,5 @@ public class TextBoxStyles
         TextSelection        = false,
     };
 
-    public required StyledStates Outlined { get; init; }
+    public required StyleSheet Outlined { get; init; }
 }

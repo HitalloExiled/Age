@@ -13,7 +13,7 @@ public class ButtonStyles
         Cursor               = Platforms.Display.Cursor.Hand,
     };
 
-    public required StyledStates Flat     { get; init; }
-    public required StyledStates Outlined { get; init; }
-    public required StyledStates Text     { get; init; }
+    public required StyleSheet Flat     { get; init; }
+    public required StyleSheet Outlined { get; init; }
+    public required StyleSheet Text     { get; init; }
 }
