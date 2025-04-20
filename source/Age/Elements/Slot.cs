@@ -19,8 +19,8 @@ public sealed class Slot : Element
             {
                 if (this.Root is ShadowTree shadowTree)
                 {
-                    shadowTree.Host.RemoveSlot(this, field ?? "", true);
-                    shadowTree.Host.AddSlot(this, value ?? "");
+                    shadowTree.RemoveSlot(this, field ?? "", true);
+                    shadowTree.AddSlot(this, value ?? "");
                 }
 
                 field = value;
@@ -34,7 +34,7 @@ public sealed class Slot : Element
 
         if (this.Root is ShadowTree shadowTree)
         {
-            shadowTree.Host.AddSlot(this, this.Name ?? "");
+            shadowTree.AddSlot(this, this.Name ?? "");
         }
     }
 
@@ -44,7 +44,7 @@ public sealed class Slot : Element
 
         if (parent.Root is ShadowTree shadowTree)
         {
-            shadowTree.Host.RemoveSlot(this, this.Name ?? "");
+            shadowTree.RemoveSlot(this, this.Name ?? "");
         }
     }
 

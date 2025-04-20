@@ -220,8 +220,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     private readonly Lock                         elementLock    = new();
     private readonly Dictionary<string, Delegate> events         = [];
-    private readonly Dictionary<string, Slot>     slots          = [];
-    private readonly List<Layoutable>             waitingForSlot = [];
 
     private Action?              ActivatedEvent     => this.GetEvent<Action>(nameof(Activated));
     private MouseEventHandler?   BluredEvent        => this.GetEvent<MouseEventHandler>(nameof(Blured));
@@ -353,20 +351,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private void AddEvent(string name, Delegate? handler) =>
         this.AddEvent(name, handler, out _);
 
-    internal void AssignSlot(string name, Layoutable layoutable)
-    {
-        if (this.slots.TryGetValue(name, out var slot))
-        {
-            this.waitingForSlot.Remove(layoutable);
-
-            slot.Assign(layoutable);
-        }
-        else if (!this.waitingForSlot.Contains(layoutable))
-        {
-            this.waitingForSlot.Add(layoutable);
-        }
-    }
-
     private void RemoveEvent(string name, Delegate? handler) =>
         this.RemoveEvent(name, handler, out _);
 
@@ -389,16 +373,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     private T? GetEvent<T>(string name) where T : Delegate =>
         this.events.TryGetValue(name, out var @delegate) ? (T)@delegate : null;
-
-    internal void UnassignSlot(string name, Layoutable layoutable)
-    {
-        if (this.slots.TryGetValue(name, out var slot))
-        {
-            slot.Unassign(layoutable);
-
-            this.waitingForSlot.Add(layoutable);
-        }
-    }
 
     private MouseEvent CreateEvent(in PlatformMouseEvent mouseEvent, bool indirect) =>
         new()
@@ -569,40 +543,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     protected override void OnIndexed() =>
         this.Layout.HandleTargetIndexed();
-
-    internal void AddSlot(Slot slot, string name)
-    {
-        if (this.slots.TryAdd(name, slot))
-        {
-            foreach (var node in this.waitingForSlot.ToArray())
-            {
-                if ((node.Slot ?? "") == name)
-                {
-                    slot.Assign(node);
-
-                    this.waitingForSlot.Remove(node);
-                }
-            }
-        }
-    }
-
-    internal void RemoveSlot(Slot slot, string name, bool preserveAssignedNodes = false)
-    {
-        if (this.slots.TryGetValue(name, out var stored) && stored == slot)
-        {
-            if (!preserveAssignedNodes && slot.Nodes.Count > 0)
-            {
-                foreach (var node in slot.Nodes.ToArray())
-                {
-                    slot.Unassign(node);
-
-                    this.waitingForSlot.Add(node);
-                }
-            }
-
-            this.slots.Remove(name);
-        }
-    }
 
     internal ComposedTreeEnumerator GetComposedTreeEnumerator() =>
         new(this);

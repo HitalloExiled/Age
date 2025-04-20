@@ -109,8 +109,8 @@ public abstract partial class Layoutable : Spatial2D
             {
                 if (this.Parent is Element parentElement && parentElement.ShadowTree != null)
                 {
-                    parentElement.UnassignSlot(field ?? "", this);
-                    parentElement.AssignSlot(value ?? "", this);
+                    parentElement.ShadowTree.UnassignSlot(field ?? "", this);
+                    parentElement.ShadowTree.AssignSlot(value ?? "", this);
                 }
 
                 field = value;
@@ -159,7 +159,7 @@ public abstract partial class Layoutable : Spatial2D
 
         if (parent is Element parentElement && parentElement.ShadowTree != null)
         {
-            parentElement.AssignSlot(this.Slot ?? "", this);
+            parentElement.ShadowTree.AssignSlot(this.Slot ?? "", this);
         }
     }
 
@@ -169,7 +169,7 @@ public abstract partial class Layoutable : Spatial2D
 
         if (parent is Element parentElement && parentElement.ShadowTree != null)
         {
-            parentElement.UnassignSlot(this.Slot ?? "", this);
+            parentElement.ShadowTree.UnassignSlot(this.Slot ?? "", this);
         }
     }
 
