@@ -8,18 +8,17 @@ public unsafe sealed class Bitmap : Disposable
 {
     private readonly byte* buffer;
     private readonly int length;
-    public ColorMode  ColorMode { get; }
-    public Size<uint> Size      { get; }
 
-    public ushort BytesPerPixel => (ushort)this.ColorMode;
+    public int       BytesPerPixel { get; }
+    public Size<uint> Size          { get; }
 
-    public Bitmap(Size<uint> size, ColorMode colorMode)
+    public Bitmap(Size<uint> size, int bytesPerPixel)
     {
-        this.length = (int)((int)colorMode * size.Height * size.Width);
+        this.length = (int)(bytesPerPixel * size.Height * size.Width);
 
-        this.buffer    = (byte*)NativeMemory.AllocZeroed((uint)this.length);
-        this.ColorMode = colorMode;
-        this.Size      = size;
+        this.buffer        = (byte*)NativeMemory.AllocZeroed((uint)this.length);
+        this.BytesPerPixel = bytesPerPixel;
+        this.Size          = size;
     }
 
     public Span<byte> AsSpan() => new(this.buffer, this.length);

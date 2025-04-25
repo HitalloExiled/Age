@@ -62,7 +62,7 @@ public static class Common
     {
         using var skBitmap = new SKBitmap((int)bitmap.Size.Width, (int)bitmap.Size.Height);
 
-        if (bitmap.ColorMode == ColorMode.Grayscale)
+        if (bitmap.BytesPerPixel == 2)
         {
             var pixels = new SKColor[skBitmap.Pixels.Length];
 

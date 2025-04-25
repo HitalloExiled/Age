@@ -134,8 +134,10 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
             var combinedImageSampler = new CombinedImageSamplerUniform
             {
                 Binding     = 1,
-                Texture     = material.Diffuse,
                 ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
+                Image       = material.Diffuse.Image,
+                ImageView   = material.Diffuse.ImageView,
+                Sampler     = material.Diffuse.Sampler,
             };
 
             var uniformBuffer = new UniformBufferUniform

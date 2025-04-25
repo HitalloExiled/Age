@@ -9,7 +9,6 @@ using Age.RenderPasses;
 using Age.Rendering.Vulkan;
 
 using ImageResource   = Age.Rendering.Resources.Image;
-using TextureResource = Age.Rendering.Resources.Texture;
 
 namespace Age.Resources;
 
@@ -18,10 +17,8 @@ public sealed class RenderTarget : Resource
     internal Framebuffer     Framebuffer { get; private set; }
     internal ImageResource[] Attachments { get; private set; } = new ImageResource[3];
 
-    public TextureResource Texture { get; private set; }
-
-    public VkFormat   Format => this.Texture.Image.Format;
-    public Size<uint> Size   => this.Texture.Image.Extent.ToSize();
+    public Texture2D Texture { get; private set; }
+    public Size<uint> Size   => this.Texture.Size;
 
     public RenderTarget(in Size<uint> size, VkFormat format = VkFormat.B8G8R8A8Unorm) =>
         this.Update(size, format);
@@ -93,7 +90,7 @@ public sealed class RenderTarget : Resource
         this.Attachments[2] = depthImage;
     }
 
-    protected override void Disposed()
+    protected override void OnDisposed()
     {
         this.Texture.Dispose();
         this.Framebuffer.Dispose();

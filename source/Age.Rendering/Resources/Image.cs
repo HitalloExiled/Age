@@ -244,7 +244,7 @@ public sealed class Image : Resource<VkImage>
         return buffer;
     }
 
-    protected override void Disposed()
+    protected override void OnDisposed()
     {
         if (this.allocation != null)
         {

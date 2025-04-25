@@ -554,7 +554,7 @@ where TVertexInput  : IVertexInput
         }
     }
 
-    protected override void Disposed()
+    protected override void OnDisposed()
     {
         watcher.Filters.Remove(this.filepath);
 

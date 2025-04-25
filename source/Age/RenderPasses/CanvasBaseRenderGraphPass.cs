@@ -9,12 +9,13 @@ using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Flags;
 using System.Runtime.CompilerServices;
+using Age.Resources;
 
 namespace Age.RenderPasses;
 
 public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer, Window window) : RenderGraphPass(renderer, window)
 {
-    protected ResourceCache<Texture, UniformSet> UniformSets { get; } = new();
+    protected ResourceCache<Texture2D, UniformSet> UniformSets { get; } = new();
 
     private Size<float>? previousViewport;
 
@@ -63,8 +64,10 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
             var stencil = new CombinedImageSamplerUniform
             {
                 Binding     = 0,
-                Texture     = stencilLayer.MappedTexture.Texture,
                 ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
+                Image       = stencilLayer.MappedTexture.Texture.Image,
+                ImageView   = stencilLayer.MappedTexture.Texture.ImageView,
+                Sampler     = stencilLayer.MappedTexture.Texture.Sampler,
             };
 
             this.UniformSets.Set(stencilLayer.MappedTexture.Texture, uniformSet = new UniformSet(this.CanvasStencilMaskShader, [stencil]));

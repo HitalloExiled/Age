@@ -1,9 +1,8 @@
 using Age.Numerics;
-using Age.Storage;
 
 namespace Age.Resources;
 
-public record struct MappedTexture(Rendering.Resources.Texture Texture, UVRect UV)
+public record struct MappedTexture(Texture2D Texture, UVRect UV)
 {
-    public static MappedTexture Default => new(TextureStorage.Singleton.EmptyTexture, UVRect.Normalized);
+    public static MappedTexture Default => new(Texture2D.Empty, UVRect.Normalized);
 }

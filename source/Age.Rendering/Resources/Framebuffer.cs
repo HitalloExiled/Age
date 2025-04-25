@@ -50,7 +50,7 @@ public sealed class Framebuffer : Resource<VkFramebuffer>
         return VulkanRenderer.Singleton.Context.Device.CreateImageView(imageViewCreateInfo);
     }
 
-    protected override void Disposed()
+    protected override void OnDisposed()
     {
         this.Instance.Dispose();
 

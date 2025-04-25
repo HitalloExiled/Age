@@ -10,7 +10,7 @@ public abstract class Resource : Disposable
     {
         if (disposing)
         {
-            this.Disposed();
+            this.OnDisposed();
 
             foreach (var dependecy in this.Dependencies)
             {
@@ -21,7 +21,7 @@ public abstract class Resource : Disposable
         }
     }
 
-    protected abstract void Disposed();
+    protected abstract void OnDisposed();
 }
 
 public abstract class Resource<T> : Resource

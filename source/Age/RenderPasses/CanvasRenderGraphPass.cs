@@ -221,8 +221,10 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                 var diffuse = new CombinedImageSamplerUniform
                 {
                     Binding     = 0,
-                    Texture     = command.MappedTexture.Texture,
                     ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
+                    Image       = command.MappedTexture.Texture.Image,
+                    ImageView   = command.MappedTexture.Texture.ImageView,
+                    Sampler     = command.MappedTexture.Texture.Sampler,
                 };
 
                 this.UniformSets.Set(command.MappedTexture.Texture, uniformSet = new UniformSet(resource.Shader, [diffuse]));
