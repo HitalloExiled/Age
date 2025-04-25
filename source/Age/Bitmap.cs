@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Age.Core;
+using Age.Core.Extensions;
 using Age.Numerics;
 
 namespace Age;
@@ -25,6 +26,15 @@ public unsafe sealed class Bitmap : Disposable
 
     protected override void OnDisposed(bool disposing) =>
         NativeMemory.Free(this.buffer);
+
+    public uint[] GetPixels()
+    {
+        var buffer = new uint[this.Size.Width * this.Size.Height];
+
+        this.AsSpan().CopyTo(this.BytesPerPixel, buffer, true);
+
+        return buffer;
+    }
 
     public static implicit operator Span<byte>(Bitmap bitmap) => bitmap.AsSpan();
 }

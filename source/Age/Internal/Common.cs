@@ -1,5 +1,6 @@
 
 using Age.Core.Extensions;
+using Age.Numerics;
 using Age.Numerics.Converters;
 using Age.Rendering.Resources;
 using SkiaSharp;
@@ -60,25 +61,10 @@ public static class Common
 
     public static void SaveImage(Bitmap bitmap, string filename)
     {
-        using var skBitmap = new SKBitmap((int)bitmap.Size.Width, (int)bitmap.Size.Height);
-
-        if (bitmap.BytesPerPixel == 2)
+        using var skBitmap = new SKBitmap((int)bitmap.Size.Width, (int)bitmap.Size.Height)
         {
-            var pixels = new SKColor[skBitmap.Pixels.Length];
-
-            var span = bitmap.AsSpan().Cast<byte, short>();
-
-            for (var i = 0; i < pixels.Length; i++)
-            {
-                pixels[i] = (uint)(span[i] << 16);
-            }
-
-            skBitmap.Pixels = pixels;
-        }
-        else
-        {
-            skBitmap.Pixels = bitmap.AsSpan().Cast<byte, SKColor>().ToArray();
-        }
+            Pixels = bitmap.GetPixels().AsSpan().Cast<uint, SKColor>().ToArray()
+        };
 
         SaveImage(skBitmap, filename);
     }

@@ -19,10 +19,8 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
 
     public Size<uint> Size => this.Bitmap.Size;
 
-    public Point<uint> Pack(scoped ReadOnlySpan<uint> pixels, Size<uint> size)
+    public Point<uint> Pack(scoped ReadOnlySpan<uint> pixels, in Size<uint> size)
     {
-        var sourceCursor = new Point<uint>();
-
         this.maxHeight = Math.Max(this.maxHeight, size.Height);
 
         if (this.cursor.X + size.Width > this.Size.Width)
@@ -36,33 +34,18 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
             this.cursor.Y += this.maxHeight;
         }
 
-        var bitmapSpan = this.Bitmap.AsSpan();
-
-        while (sourceCursor.Y < size.Height)
+        switch (this.Texture.Format)
         {
-            if (this.Texture.Format == TextureFormat.R8G8Unorm)
-            {
-                while (sourceCursor.X < size.Width)
-                {
-                    var sourceIndex      = (int)(sourceCursor.X + size.Width * sourceCursor.Y);
-                    var destinationIndex = (int)(sourceCursor.X + this.cursor.X + this.Size.Width * (sourceCursor.Y + this.cursor.Y)) * this.Bitmap.BytesPerPixel;
+            case TextureFormat.R8Unorm:
+                copy<byte>(pixels, size);
+                break;
 
-                    bitmapSpan[destinationIndex..].Cast<byte, uint>()[0] = pixels[sourceIndex] >> 16;
-
-                    sourceCursor.X++;
-                }
-            }
-            else
-            {
-                // TODO: Need tests
-                var sourceIndex      = (int)(sourceCursor.X + size.Width * sourceCursor.Y);
-                var destinationIndex = (int)(sourceCursor.X + this.cursor.X + this.Size.Width * (sourceCursor.Y + this.cursor.Y)) * this.Bitmap.BytesPerPixel;
-
-                pixels[sourceIndex..(int)(sourceIndex + size.Width)].CopyTo(bitmapSpan[destinationIndex..].Cast<byte, uint>());
-            }
-
-            sourceCursor.X = 0;
-            sourceCursor.Y++;
+            case TextureFormat.R8G8Unorm:
+                copy<ushort>(pixels, size);
+                break;
+            default:
+                copy<uint>(pixels, size);
+                break;
         }
 
         var position = this.cursor;
@@ -72,28 +55,23 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
         this.isDirty = true;
 
         return position;
-    }
 
-    public uint[] GetPixels()
-    {
-        var buffer     = new uint[this.Size.Width * this.Size.Height];
-        var bitmapSpan = this.Bitmap.AsSpan();
-
-        if (this.Texture.Format == TextureFormat.R8G8Unorm)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe void copy<T>(scoped ReadOnlySpan<uint> pixels, in Size<uint> size) where T : unmanaged
         {
-            for (var i = 0; i < buffer.Length; i++)
-            {
-                var value = Unsafe.As<byte, uint>(ref bitmapSpan[i * this.Bitmap.BytesPerPixel]);
+            var atlasWidth = this.Size.Width;
+            var bitmapSpan = this.Bitmap.AsSpan();
+            var startX     = this.cursor.X;
+            var startY     = this.cursor.Y;
 
-                buffer[i] = value << 16;
+            for (var y = 0; y < size.Height; y++)
+            {
+                var sourceIndex      = (int)(size.Width * y);
+                var destinationIndex = (int)(startX + atlasWidth * (y + startY)) * sizeof(T);
+
+                pixels.Slice(sourceIndex, (int)size.Width).CopyTo(bitmapSpan[destinationIndex..].Cast<byte, T>(), true);
             }
         }
-        else
-        {
-            bitmapSpan.Cast<byte, uint>().CopyTo(buffer);
-        }
-
-        return buffer;
     }
 
     public void Update()
