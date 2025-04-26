@@ -8,8 +8,20 @@ namespace Age.Styling;
 internal struct StyleData
 {
     #region 8-bytes
+    /// <see cref="StyleProperty.BackgroundImage">
+    public Image? BackgroundImage;
+
+    /// <see cref="StyleProperty.Border">
+    public Border? Border;
+
     /// <see cref="StyleProperty.FontFamily">
     public string? FontFamily;
+
+    /// <see cref="StyleProperty.Margin">
+    public StyleRectEdges? Margin;
+
+    /// <see cref="StyleProperty.Padding">
+    public StyleRectEdges? Padding;
     #endregion
 
     #region 4-bytes
@@ -19,23 +31,15 @@ internal struct StyleData
     /// <see cref="StyleProperty.Baseline">
     public Unit? Baseline;
 
-    /// <see cref="StyleProperty.Border">
-    public Border? Border;
 
     /// <see cref="StyleProperty.Color">
     public Color? Color;
-
-    /// <see cref="StyleProperty.Margin">
-    public StyleRectEdges? Margin;
 
     /// <see cref="StyleProperty.MaxSize">
     public SizeUnit? MaxSize;
 
     /// <see cref="StyleProperty.MinSize">
     public SizeUnit? MinSize;
-
-    /// <see cref="StyleProperty.Padding">
-    public StyleRectEdges? Padding;
 
     /// <see cref="StyleProperty.Size">
     public SizeUnit? Size;
@@ -95,6 +99,7 @@ internal struct StyleData
     {
         target.Alignment            = left.Alignment            ?? right.Alignment;
         target.BackgroundColor      = left.BackgroundColor      ?? right.BackgroundColor;
+        target.BackgroundImage      = left.BackgroundImage      ?? right.BackgroundImage;
         target.Baseline             = left.Baseline             ?? right.Baseline;
         target.Border               = left.Border               ?? right.Border;
         target.BoxSizing            = left.BoxSizing            ?? right.BoxSizing;
@@ -126,6 +131,7 @@ internal struct StyleData
 
         check(left.Alignment            == right.Alignment,            StyleProperty.Alignment);
         check(left.BackgroundColor      == right.BackgroundColor,      StyleProperty.BackgroundColor);
+        check(left.BackgroundImage      == right.BackgroundImage,      StyleProperty.BackgroundImage);
         check(left.Baseline             == right.Baseline,             StyleProperty.Baseline);
         check(left.Border               == right.Border,               StyleProperty.Border);
         check(left.BoxSizing            == right.BoxSizing,            StyleProperty.BoxSizing);
@@ -189,6 +195,7 @@ internal struct StyleData
 
         appendProperty(nameof(StyleProperty.Alignment),            in this.Alignment);
         appendProperty(nameof(StyleProperty.BackgroundColor),      in this.BackgroundColor);
+        appendProperty(nameof(StyleProperty.BackgroundImage),      in this.BackgroundImage);
         appendProperty(nameof(StyleProperty.Baseline),             in this.Baseline);
         appendProperty(nameof(StyleProperty.Border),               in this.Border);
         appendProperty(nameof(StyleProperty.BoxSizing),            in this.BoxSizing);
@@ -227,6 +234,7 @@ internal struct StyleData
         {
             case StyleProperty.Alignment:            this.Alignment            = data.Alignment;            break;
             case StyleProperty.BackgroundColor:      this.BackgroundColor      = data.BackgroundColor;      break;
+            case StyleProperty.BackgroundImage:      this.BackgroundImage      = data.BackgroundImage;      break;
             case StyleProperty.Baseline:             this.Baseline             = data.Baseline;             break;
             case StyleProperty.Border:               this.Border               = data.Border;               break;
             case StyleProperty.BoxSizing:            this.BoxSizing            = data.BoxSizing;            break;

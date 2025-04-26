@@ -23,6 +23,12 @@ public record Style
         set => this.Set(ref this.data.BackgroundColor, value, StyleProperty.BackgroundColor);
     }
 
+    public Image? BackgroundImage
+    {
+        get => this.data.BackgroundImage;
+        set => this.Set(ref this.data.BackgroundImage, value, StyleProperty.BackgroundImage);
+    }
+
     public Unit? Baseline
     {
         get => this.data.Baseline;

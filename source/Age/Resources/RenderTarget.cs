@@ -82,7 +82,7 @@ public sealed class RenderTarget : Resource
             ]
         };
 
-        this.Texture     = new(resolveImage);
+        this.Texture     = new(resolveImage, (TextureFormat)format);
         this.Framebuffer = new(framebufferCreateInfo);
 
         this.Attachments[0] = colorImage;

@@ -1,5 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Age.Core;
+using Age.Core.Extensions;
 using Age.Rendering.Vulkan;
 using Age.Resources;
 
@@ -17,14 +19,39 @@ public class TextureStorage : Disposable
 
     public static TextureStorage Singleton => singleton ?? throw new NullReferenceException();
 
-    private readonly VulkanRenderer renderer;
-    private readonly Dictionary<string, ResourceEntry<Texture2D>> textures = [];
+    private readonly VulkanRenderer                            renderer;
+    private readonly Dictionary<string, int>                   stringMap = [];
+    private readonly Dictionary<int, ResourceEntry<Texture2D>> textures  = [];
 
     public TextureStorage(VulkanRenderer renderer)
     {
         singleton = this;
 
         this.renderer = renderer;
+    }
+
+    private void Release(int hashcode)
+    {
+        ref var entry = ref this.textures.GetValueRefOrNullRef(hashcode);
+
+        if (!Unsafe.IsNullRef(in entry))
+        {
+            entry.Users--;
+
+            if (entry.Users == 0)
+            {
+                entry.Resource.Dispose();
+                this.textures.Remove(hashcode);
+
+                foreach (var (key, value) in this.stringMap)
+                {
+                    if (value == hashcode)
+                    {
+                        this.stringMap.Remove(key);
+                    }
+                }
+            }
+        }
     }
 
     protected override void OnDisposed(bool disposing)
@@ -40,16 +67,27 @@ public class TextureStorage : Disposable
         }
     }
 
-    public void Add(string name, Texture2D texture) =>
-        this.textures.Add(name, new(texture, 1));
+    public void Add(string name, Texture2D texture)
+    {
+        var hashcode = texture.GetHashCode();
+
+        this.textures.Add(hashcode, new(texture, 1));
+        this.stringMap.Add(name, hashcode);
+    }
 
     public Texture2D Get(string name) =>
-        this.textures[name].Resource;
+        this.TryGet(name, out var texture)
+            ? texture
+            : throw new InvalidOperationException($"texture {name} not found");
 
     public bool TryGet(string name, [NotNullWhen(true)] out Texture2D? texture)
     {
-        if (this.textures.TryGetValue(name, out var entry))
+        if (this.stringMap.TryGetValue(name, out var hash))
         {
+            ref var entry = ref this.textures.GetValueRefOrNullRef(hash);
+
+            entry.Users++;
+
             texture = entry.Resource;
             return true;
         }
@@ -57,4 +95,15 @@ public class TextureStorage : Disposable
         texture = null;
         return false;
     }
+
+    public void Release(string name)
+    {
+        if (this.stringMap.TryGetValue(name, out var hash))
+        {
+            this.Release(hash);
+        }
+    }
+
+    public void Release(Texture2D texture) =>
+        this.Release(texture.GetHashCode());
 }

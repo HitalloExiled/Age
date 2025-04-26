@@ -1,11 +1,15 @@
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using Age.Commands;
 using Age.Core.Extensions;
 using Age.Extensions;
 using Age.Numerics;
+using Age.Resources;
+using Age.Storage;
 using Age.Styling;
-
+using static Age.Services.TextStorage;
 using static Age.Shaders.CanvasShader;
+using StyleImage = Age.Styling.Image;
 
 namespace Age.Elements.Layouts;
 
@@ -34,6 +38,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
     private Size<uint>    content;
     private Dependency    contentDependencies = Dependency.Size;
     private bool          dependenciesHasChanged;
+    private LayoutCommand layoutCommands;
     private RectEdges     margin;
     private StencilLayer? ownStencilLayer;
     private RectEdges     padding;
@@ -61,50 +66,31 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                 size.Height = this.content.Height;
             }
 
-            if (style.Margin?.Left?.Kind == UnitKind.Percentage)
-            {
-                margin.Left = 0;
-            }
-
-            if (style.Margin?.Right?.Kind == UnitKind.Percentage)
-            {
-                margin.Right = 0;
-            }
-
-            if (style.Margin?.Top?.Kind == UnitKind.Percentage)
-            {
-                margin.Top = 0;
-            }
-
-            if (style.Margin?.Bottom?.Kind == UnitKind.Percentage)
-            {
-                margin.Bottom = 0;
-            }
-
-            if (style.Padding?.Left?.Kind == UnitKind.Percentage)
-            {
-                padding.Left = 0;
-            }
-
-            if (style.Padding?.Right?.Kind == UnitKind.Percentage)
-            {
-                padding.Right = 0;
-            }
-
-            if (style.Padding?.Top?.Kind == UnitKind.Percentage)
-            {
-                padding.Top = 0;
-            }
-
-            if (style.Padding?.Bottom?.Kind == UnitKind.Percentage)
-            {
-                padding.Bottom = 0;
-            }
+            checkRect(style.Margin,  ref padding);
+            checkRect(style.Padding, ref padding);
 
             return new(
                 size.Width  + padding.Horizontal + this.border.Horizontal + margin.Horizontal,
                 size.Height + padding.Vertical   + this.border.Vertical   + margin.Vertical
             );
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static void check(Unit? unit, ref uint value)
+            {
+                if (unit?.Kind == UnitKind.Percentage)
+                {
+                    value = 0;
+                }
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static void checkRect(StyleRectEdges? styleRectEdges, ref RectEdges rectEdges)
+            {
+                check(styleRectEdges?.Left,   ref rectEdges.Left);
+                check(styleRectEdges?.Right,  ref rectEdges.Right);
+                check(styleRectEdges?.Top,    ref rectEdges.Top);
+                check(styleRectEdges?.Bottom, ref rectEdges.Bottom);
+            }
         }
     }
 
@@ -113,6 +99,14 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             this.size.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
             this.size.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
         );
+
+    private Size<uint> SizeWithPadding =>
+        new(
+            this.size.Width  + this.padding.Horizontal,
+            this.size.Height + this.padding.Vertical
+        );
+
+    private bool IsDrawable => this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor.HasValue || this.ComputedStyle.BackgroundImage != null;
 
     protected override StencilLayer? ContentStencilLayer => this.ownStencilLayer ?? this.StencilLayer;
 
@@ -152,9 +146,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         {
             if (base.StencilLayer != value)
             {
-                var command = this.GetRectCommand();
-
-                base.StencilLayer = command.StencilLayer = value;
+                base.StencilLayer = this.GetLayoutCommandBox().StencilLayer = value;
             }
         }
     }
@@ -331,6 +323,40 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         || edges?.Bottom?.Kind == UnitKind.Percentage
         || edges?.Left?.Kind   == UnitKind.Percentage;
 
+    private static void PropageteStencilLayer(Element target, StencilLayer? stencilLayer)
+    {
+        var enumerator = target.GetComposedTreeTraversalEnumerator();
+
+        while (enumerator.MoveNext())
+        {
+            var current = enumerator.Current!;
+
+            if (current.Layout.StencilLayer == stencilLayer)
+            {
+                enumerator.SkipToNextSibling();
+            }
+            else if (current is Element element && element.Layout.ownStencilLayer != null)
+            {
+                if (stencilLayer != null)
+                {
+                    stencilLayer.AppendChild(element.Layout.ownStencilLayer);
+                }
+                else
+                {
+                    element.Layout.ownStencilLayer.Detach();
+                }
+
+                element.Layout.StencilLayer = stencilLayer;
+
+                enumerator.SkipToNextSibling();
+            }
+            else
+            {
+                current.Layout.StencilLayer = stencilLayer;
+            }
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ResolveDimension(uint fontSize, Unit? absUnit, Unit? minUnit, Unit? maxUnit, ref uint value, ref bool resolved)
     {
@@ -384,6 +410,123 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         }
     }
 
+    private void ResolveImageSize(Image image, in Size<float> size, out Rect<float> rect, out UVRect uv)
+    {
+        var imageSize = image.Size;
+        var repeat    = image.Repeat;
+
+        switch (image.Size.Kind)
+        {
+            case ImageSizeKind.Fit:
+                {
+                    var boundings = this.SizeWithPadding.Cast<float>();
+                    var offset    = new Point<float>(this.border.Left, -this.border.Top);
+
+                    rect = new(boundings, offset);
+                    uv   = UVRect.Normalized;
+
+                    break;
+                }
+
+            case ImageSizeKind.KeepAspect:
+                {
+                    var boundings = this.SizeWithPadding.Cast<float>();
+
+                    uv = UVRect.Normalized;
+
+                    if (boundings == default)
+                    {
+                        rect = default;
+
+                        break;
+                    }
+
+                    var scale       = float.Min(boundings.Width, boundings.Height) / float.Max(size.Width, size.Height);
+                    var correctSize = size * scale;
+
+                    var offset = (Point<float>)(new Point<float>(this.border.Left, this.border.Top) + (boundings - correctSize) / 2);
+
+                    rect = new(correctSize, offset.InvertedY);
+
+                    break;
+                }
+            default:
+                {
+                    var boundings = this.SizeWithPadding.Cast<float>();
+
+                    if (boundings == default)
+                    {
+                        rect = default;
+                        uv   = default;
+
+                        break;
+                    }
+
+                    var width  = ResolveUnit(imageSize.Value.Width,  (uint)boundings.Width,  this.FontSize);
+                    var height = ResolveUnit(imageSize.Value.Height, (uint)boundings.Height, this.FontSize);
+
+                    var p1x = 0f;
+                    var p2x = 1f;
+                    var p3x = p2x;
+                    var p4x = p1x;
+
+                    var p1y = 0f;
+                    var p2y = p1y;
+                    var p3y = 1f;
+                    var p4y = p3y;
+
+                    var offset = new Point<float>();
+
+                    if (repeat.HasFlags(ImageRepeat.RepeatX))
+                    {
+                        var scale = boundings.Width / width;
+
+                        p1x = (1 - scale) / 2;
+                        p2x = (1 + scale) / 2;
+                        p3x = p2x;
+                        p4x = p1x;
+
+                        width = (uint)boundings.Width;
+
+                        offset.X = this.border.Left;
+                    }
+                    else
+                    {
+                        offset.X = this.border.Left + (boundings.Width - width) / 2;
+                    }
+
+                    if (repeat.HasFlags(ImageRepeat.RepeatY))
+                    {
+                        var scale = boundings.Height / height;
+
+                        p1y = (1 - scale) / 2;
+                        p2y = p1y;
+                        p3y = (1 + scale) / 2;
+                        p4y = p3y;
+
+                        height = (uint)boundings.Height;
+
+                        offset.Y = this.border.Top;
+                    }
+                    else
+                    {
+                        offset.Y = this.border.Top + (boundings.Height - height) / 2;
+                    }
+
+                    rect = new(new(width, height), offset.InvertedY);
+                    uv   = new()
+                    {
+                        P1 = new(p1x, p1y),
+                        P2 = new(p2x, p2y),
+                        P3 = new(p3x, p3y),
+                        P4 = new(p4x, p4y),
+                    };
+
+                    break;
+                }
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ResolveRect(uint fontSize, in StyleRectEdges? styleRectEdges, ref RectEdges rectEdges)
     {
@@ -429,105 +572,29 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         }
     }
 
-    private static void SetStencilLayer(Element target, StencilLayer? stencilLayer)
+    private static uint ResolveUnit(Unit? unit, uint size, uint fontSize)
     {
-        var enumerator = target.GetComposedTreeTraversalEnumerator();
-
-        while (enumerator.MoveNext())
+        if (!unit.HasValue)
         {
-            var current = enumerator.Current!;
-
-            if (current.Layout.StencilLayer == stencilLayer)
-            {
-                enumerator.SkipToNextSibling();
-            }
-            else if (current is Element element && element.Layout.ownStencilLayer != null)
-            {
-                if (stencilLayer != null)
-                {
-                    stencilLayer.AppendChild(element.Layout.ownStencilLayer);
-                }
-                else
-                {
-                    element.Layout.ownStencilLayer.Detach();
-                }
-
-                element.Layout.StencilLayer = stencilLayer;
-
-                enumerator.SkipToNextSibling();
-            }
-            else
-            {
-                current.Layout.StencilLayer = stencilLayer;
-            }
-        }
-    }
-
-    private Point<float> GetAlignment(StackDirection direction, Alignment alignmentKind, out AlignmentAxis alignmentAxis)
-    {
-        var x = -1;
-        var y = -1;
-
-        var itemsAlignment = this.ComputedStyle.ItemsAlignment ?? ItemsAlignment.None;
-
-        alignmentAxis = AlignmentAxis.Horizontal | AlignmentAxis.Vertical;
-
-        if (alignmentKind.HasFlags(Alignment.Left) || direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start)))
-        {
-            x = -1;
-        }
-        else if (alignmentKind.HasFlags(Alignment.Right) || direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End)))
-        {
-            x = 1;
-        }
-        else if (alignmentKind.HasFlags(Alignment.Center) || direction == StackDirection.Vertical && itemsAlignment == ItemsAlignment.Center)
-        {
-            x = 0;
-        }
-        else
-        {
-            alignmentAxis &= ~AlignmentAxis.Horizontal;
+            return size;
         }
 
-        if (alignmentKind.HasFlags(Alignment.Top) || direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start)))
+        if (unit.Value.TryGetPixel(out var pixel))
         {
-            y = -1;
-        }
-        else if (alignmentKind.HasFlags(Alignment.Bottom) || direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End)))
-        {
-            y = 1;
-        }
-        else if (alignmentKind.HasFlags(Alignment.Center) || direction == StackDirection.Horizontal && itemsAlignment == ItemsAlignment.Center)
-        {
-            y = 0;
-        }
-        else
-        {
-            if (itemsAlignment == ItemsAlignment.Baseline || alignmentKind.HasFlags(Alignment.Baseline))
-            {
-                alignmentAxis |= AlignmentAxis.Baseline;
-            }
-
-            alignmentAxis &= ~AlignmentAxis.Vertical;
+            return pixel;
         }
 
-        static float normalize(float value) =>
-            (1 + value) / 2;
-
-        return new(normalize(x), normalize(y));
-    }
-
-    private RectCommand GetRectCommand()
-    {
-        if (this.Target.SingleCommand is not RectCommand command)
+        if (unit.Value.TryGetPercentage(out var percentage))
         {
-            this.Target.SingleCommand = command = CommandPool.RectCommand.Get();
-
-            command.Flags           = Flags.ColorAsBackground;
-            command.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
+            return (uint)(percentage * size);
         }
 
-        return command;
+        if (unit.Value.TryGetEm(out var em))
+        {
+            return (uint)(em * fontSize);
+        }
+
+        return 0;
     }
 
     private void CalculateLayout()
@@ -845,8 +912,101 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         }
     }
 
+    private Point<float> GetAlignment(StackDirection direction, Alignment alignmentKind, out AlignmentAxis alignmentAxis)
+    {
+        var x = -1;
+        var y = -1;
+
+        var itemsAlignment = this.ComputedStyle.ItemsAlignment ?? ItemsAlignment.None;
+
+        alignmentAxis = AlignmentAxis.Horizontal | AlignmentAxis.Vertical;
+
+        if (alignmentKind.HasFlags(Alignment.Left) || direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start)))
+        {
+            x = -1;
+        }
+        else if (alignmentKind.HasFlags(Alignment.Right) || direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End)))
+        {
+            x = 1;
+        }
+        else if (alignmentKind.HasFlags(Alignment.Center) || direction == StackDirection.Vertical && itemsAlignment == ItemsAlignment.Center)
+        {
+            x = 0;
+        }
+        else
+        {
+            alignmentAxis &= ~AlignmentAxis.Horizontal;
+        }
+
+        if (alignmentKind.HasFlags(Alignment.Top) || direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start)))
+        {
+            y = -1;
+        }
+        else if (alignmentKind.HasFlags(Alignment.Bottom) || direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End)))
+        {
+            y = 1;
+        }
+        else if (alignmentKind.HasFlags(Alignment.Center) || direction == StackDirection.Horizontal && itemsAlignment == ItemsAlignment.Center)
+        {
+            y = 0;
+        }
+        else
+        {
+            if (itemsAlignment == ItemsAlignment.Baseline || alignmentKind.HasFlags(Alignment.Baseline))
+            {
+                alignmentAxis |= AlignmentAxis.Baseline;
+            }
+
+            alignmentAxis &= ~AlignmentAxis.Vertical;
+        }
+
+        static float normalize(float value) =>
+            (1 + value) / 2;
+
+        return new(normalize(x), normalize(y));
+    }
+
     private TargetEnumerator GetComposedTargetEnumerator() =>
         new(this.Target);
+
+    private RectCommand GetLayoutCommand(LayoutCommand layoutCommand)
+    {
+        var mask  = layoutCommand - 1;
+        var index = BitOperations.PopCount((uint)(this.layoutCommands & mask));
+
+        if (this.layoutCommands.HasFlags(layoutCommand))
+        {
+            return (RectCommand)this.Target.Commands[index];
+        }
+
+        var command = CommandPool.RectCommand.Get();
+
+        switch (layoutCommand)
+        {
+            case LayoutCommand.Box:
+                command.Flags           = Flags.ColorAsBackground;
+                command.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
+
+                break;
+
+            case LayoutCommand.Image:
+                command.PipelineVariant = PipelineVariant.Color;
+
+                break;
+        }
+
+        this.Target.Commands.Insert(index, command);
+
+        this.layoutCommands |= layoutCommand;
+
+        return command;
+    }
+
+    private RectCommand GetLayoutCommandBox() =>
+        this.GetLayoutCommand(LayoutCommand.Box);
+
+    private RectCommand GetLayoutCommandImage() =>
+        this.GetLayoutCommand(LayoutCommand.Image);
 
     private void OnScroll(in MouseEvent mouseEvent)
     {
@@ -871,183 +1031,28 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         }
     }
 
-    protected override void OnStyleChanged(StyleProperty property)
+    private void ReleaseLayoutCommand(LayoutCommand layoutCommand)
     {
-        if (!this.Target.IsConnected)
+        if (this.layoutCommands.HasFlags(layoutCommand))
         {
-            return;
+            var mask  = layoutCommand - 1;
+            var index = BitOperations.PopCount((uint)(this.layoutCommands & mask));
+
+            var command = (RectCommand)this.Target.Commands[index];
+
+            CommandPool.RectCommand.Return(command);
+
+            this.Target.Commands.RemoveAt(index);
+
+            this.layoutCommands &= ~layoutCommand;
         }
-
-        var style = this.ComputedStyle;
-
-        var hidden = style.Hidden == true;
-
-        if (property.HasFlags(StyleProperty.Border))
-        {
-            this.border = new()
-            {
-                Top    = style.Border?.Top.Thickness ?? 0,
-                Right  = style.Border?.Right.Thickness ?? 0,
-                Bottom = style.Border?.Bottom.Thickness ?? 0,
-                Left   = style.Border?.Left.Thickness ?? 0,
-            };
-        }
-
-        if (property.HasFlags(StyleProperty.Cursor) && this.Target.IsHovered)
-        {
-            this.SetCursor(style.Cursor);
-        }
-
-        var hasSizeChanges    = property.HasAnyFlag(StyleProperty.Size | StyleProperty.MinSize | StyleProperty.MaxSize);
-        var hasMarginChanges  = property.HasFlags(StyleProperty.Margin);
-        var hasPaddingChanges = property.HasFlags(StyleProperty.Padding);
-
-        if (hasSizeChanges || hasMarginChanges || hasPaddingChanges)
-        {
-            var oldParentDependencies  = this.parentDependencies;
-            var oldContentDependencies = this.contentDependencies;
-
-            if (hasSizeChanges)
-            {
-                this.contentDependencies = Dependency.None;
-                this.parentDependencies  = Dependency.None;
-
-                var absWidth = style.Size?.Width;
-                var minWidth = style.MinSize?.Width;
-                var maxWidth = style.MaxSize?.Width;
-
-                var absHeight = style.Size?.Height;
-                var minHeight = style.MinSize?.Height;
-                var maxHeight = style.MaxSize?.Height;
-
-                if (IsAllNull(absWidth, minWidth, maxWidth))
-                {
-                    this.contentDependencies |= Dependency.Width;
-                }
-                else if (IsAnyRelative(absWidth, minWidth, maxWidth))
-                {
-                    this.parentDependencies |= Dependency.Width;
-                }
-
-                if (IsAllNull(absHeight, minHeight, maxHeight))
-                {
-                    this.contentDependencies |= Dependency.Height;
-                }
-                else if (IsAnyRelative(absHeight, minHeight, maxHeight))
-                {
-                    this.parentDependencies |= Dependency.Height;
-                }
-            }
-
-            if (hasMarginChanges && HasRelativeEdges(style.Margin))
-            {
-                this.parentDependencies |= Dependency.Margin;
-            }
-
-            if (hasPaddingChanges && HasRelativeEdges(style.Padding))
-            {
-                this.parentDependencies |= Dependency.Padding;
-            }
-
-            var justHidden      = hidden && !this.Hidden;
-            var justUnhidden    = !hidden && this.Hidden;
-            var justUndependent = oldParentDependencies != Dependency.None && this.parentDependencies == Dependency.None;
-            var justDependent   = oldParentDependencies == Dependency.None && this.parentDependencies != Dependency.None;
-
-            if (this.Parent != null)
-            {
-                this.Parent.dependenciesHasChanged = oldContentDependencies != this.contentDependencies || oldParentDependencies != this.parentDependencies;
-
-                if (justUnhidden || justDependent)
-                {
-                    if (justUnhidden)
-                    {
-                        this.Parent.renderableNodesCount++;
-                    }
-
-                    if (this.parentDependencies != Dependency.None)
-                    {
-                        var dependents = this.Target.AssignedSlot?.Layout.dependents ?? this.Parent.dependents;
-
-                        dependents.Add(this.Target);
-                        dependents.Sort();
-                    }
-                }
-                else if (justHidden || justUndependent)
-                {
-                    if (justHidden)
-                    {
-                        this.Parent.renderableNodesCount--;
-                    }
-
-                    var dependents = this.Target.AssignedSlot?.Layout.dependents ?? this.Parent.dependents;
-
-                    dependents.Remove(this.Target);
-                }
-            }
-        }
-
-        if (property.HasFlags(StyleProperty.Overflow))
-        {
-            this.canScrollX = style.Overflow?.HasFlags(Overflow.ScrollX) == true;
-            this.canScrollY = style.Overflow?.HasFlags(Overflow.ScrollY) == true;
-
-            var currentIsScrollable = (this.canScrollX || this.canScrollY) && this.contentDependencies != (Dependency.Width | Dependency.Height);
-
-            if (currentIsScrollable != this.IsScrollable)
-            {
-                if (currentIsScrollable)
-                {
-                    this.Target.Scrolled += this.OnScroll;
-                }
-                else
-                {
-                    this.Target.Scrolled -= this.OnScroll;
-                    this.ContentOffset = default;
-                }
-
-                this.IsScrollable = currentIsScrollable;
-            }
-
-            if (style.Overflow?.HasFlags(Overflow.Clipping) == true && this.contentDependencies != (Dependency.Width | Dependency.Height))
-            {
-                if (this.ownStencilLayer == null)
-                {
-                    this.ownStencilLayer = new StencilLayer(this.Target);
-
-                    this.StencilLayer?.AppendChild(this.ownStencilLayer);
-                }
-            }
-            else if (this.ownStencilLayer != null)
-            {
-                this.ownStencilLayer.Detach();
-                this.ownStencilLayer.Dispose();
-
-                this.ownStencilLayer = null;
-            }
-
-            SetStencilLayer(this.Target, this.ContentStencilLayer);
-        }
-
-        var affectsBoundings = property.HasAnyFlag(LAYOUT_AFFECTED_PROPERTIES);
-
-        if (hidden)
-        {
-            this.RequestUpdate(affectsBoundings);
-
-            this.Hidden = hidden;
-        }
-        else
-        {
-            this.Hidden = hidden;
-
-            this.UpdateRect();
-            this.RequestUpdate(affectsBoundings);
-        }
-
-        this.Target.Visible = !hidden;
     }
 
+    private void ReleaseLayoutCommand() =>
+        this.ReleaseLayoutCommand(LayoutCommand.Box);
+
+    private void ReleaseLayoutCommandImage() =>
+        this.ReleaseLayoutCommand(LayoutCommand.Image);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ResolveHeight(ref uint value)
@@ -1112,6 +1117,49 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         }
 
         return resolved;
+    }
+
+    private void SetBackgroundImage(StyleImage? image)
+    {
+        var command = this.GetLayoutCommandImage();
+
+        if (image != null)
+        {
+            if (!TextureStorage.Singleton.TryGet(image.Uri, out var texture))
+            {
+                if (File.Exists(image.Uri))
+                {
+                    texture = Texture2D.Load(image.Uri);
+                    TextureStorage.Singleton.Add(image.Uri, texture);
+                }
+            }
+
+            if (texture != null)
+            {
+                this.ownStencilLayer = new StencilLayer(this.Target);
+
+                command.MappedTexture   = new(texture, UVRect.Normalized);
+                command.PipelineVariant = PipelineVariant.Color;
+                command.StencilLayer    = new StencilLayer(this.Target);
+
+                this.StencilLayer?.AppendChild(command.StencilLayer);
+
+                return;
+            }
+        }
+
+        if (!command.MappedTexture.IsDefault)
+        {
+            TextureStorage.Singleton.Release(command.MappedTexture.Texture);
+        }
+
+        if (command.StencilLayer != null)
+        {
+            command.StencilLayer.Dispose();
+            command.StencilLayer.Detach();
+        }
+
+        this.ReleaseLayoutCommandImage();
     }
 
     private void UpdateDisposition()
@@ -1287,28 +1335,39 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             this.size.Height + this.padding.Vertical + this.border.Vertical
         );
 
-        this.UpdateRect();
+        this.UpdateCommands();
     }
 
-    private void UpdateRect()
+    private void UpdateCommands()
     {
-        var command = this.GetRectCommand();
+        var layoutCommandBox = this.GetLayoutCommandBox();
 
-        var isDrawable = this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor.HasValue;
-
-        if (isDrawable)
+        if (this.IsDrawable)
         {
-            command.Rect            = new(this.Boundings.Cast<float>(), default);
-            command.Border          = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
-            command.Color           = this.ComputedStyle.BackgroundColor ?? default;
-            command.PipelineVariant |= PipelineVariant.Color;
+            var style = this.ComputedStyle;
+
+            layoutCommandBox.Rect            = new(this.Boundings.Cast<float>(), default);
+            layoutCommandBox.Border          = style.Border ?? default(Shaders.CanvasShader.Border);
+            layoutCommandBox.Color           = style.BackgroundColor ?? default;
+            layoutCommandBox.PipelineVariant |= PipelineVariant.Color;
+
+            if (style.BackgroundImage != null)
+            {
+                var layoutCommandImage  = this.GetLayoutCommandImage();
+
+                this.ResolveImageSize(style.BackgroundImage, layoutCommandImage.MappedTexture.Texture.Size.Cast<float>(), out var rect, out var uv);
+
+                layoutCommandImage.Rect          = rect;
+                layoutCommandImage.MappedTexture = layoutCommandImage.MappedTexture with { UV = uv };
+                layoutCommandImage.StencilLayer!.MakeDirty();
+            }
         }
         else
         {
-            command.PipelineVariant &= ~PipelineVariant.Color;
+            layoutCommandBox.PipelineVariant &= ~PipelineVariant.Color;
         }
 
-        command.StencilLayer = this.StencilLayer;
+        layoutCommandBox.StencilLayer = this.StencilLayer;
 
         this.ownStencilLayer?.MakeDirty();
     }
@@ -1317,12 +1376,201 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
     {
         this.ownStencilLayer?.Dispose();
 
+        var layoutCommandImage = this.GetLayoutCommandImage();
+
+        if (!layoutCommandImage.MappedTexture.IsDefault)
+        {
+            TextureStorage.Singleton.Release(layoutCommandImage.MappedTexture.Texture);
+        }
+
         foreach (var item in this.Target.Commands)
         {
             CommandPool.RectCommand.Return((RectCommand)item);
         }
 
         this.Target.Commands.Clear();
+    }
+
+    protected override void OnStyleChanged(StyleProperty property)
+    {
+        if (!this.Target.IsConnected)
+        {
+            return;
+        }
+
+        var style = this.ComputedStyle;
+
+        var hidden = style.Hidden == true;
+
+        if (property.HasFlags(StyleProperty.BackgroundImage))
+        {
+            this.SetBackgroundImage(style.BackgroundImage);
+        }
+
+        if (property.HasFlags(StyleProperty.Border))
+        {
+            this.border = new()
+            {
+                Top    = style.Border?.Top.Thickness ?? 0,
+                Right  = style.Border?.Right.Thickness ?? 0,
+                Bottom = style.Border?.Bottom.Thickness ?? 0,
+                Left   = style.Border?.Left.Thickness ?? 0,
+            };
+        }
+
+        if (property.HasFlags(StyleProperty.Cursor) && this.Target.IsHovered)
+        {
+            this.SetCursor(style.Cursor);
+        }
+
+        var hasSizeChanges    = property.HasAnyFlag(StyleProperty.Size | StyleProperty.MinSize | StyleProperty.MaxSize);
+        var hasMarginChanges  = property.HasFlags(StyleProperty.Margin);
+        var hasPaddingChanges = property.HasFlags(StyleProperty.Padding);
+
+        if (hasSizeChanges || hasMarginChanges || hasPaddingChanges)
+        {
+            var oldParentDependencies  = this.parentDependencies;
+            var oldContentDependencies = this.contentDependencies;
+
+            if (hasSizeChanges)
+            {
+                this.contentDependencies = Dependency.None;
+                this.parentDependencies  = Dependency.None;
+
+                var absWidth = style.Size?.Width;
+                var minWidth = style.MinSize?.Width;
+                var maxWidth = style.MaxSize?.Width;
+
+                var absHeight = style.Size?.Height;
+                var minHeight = style.MinSize?.Height;
+                var maxHeight = style.MaxSize?.Height;
+
+                if (IsAllNull(absWidth, minWidth, maxWidth))
+                {
+                    this.contentDependencies |= Dependency.Width;
+                }
+                else if (IsAnyRelative(absWidth, minWidth, maxWidth))
+                {
+                    this.parentDependencies |= Dependency.Width;
+                }
+
+                if (IsAllNull(absHeight, minHeight, maxHeight))
+                {
+                    this.contentDependencies |= Dependency.Height;
+                }
+                else if (IsAnyRelative(absHeight, minHeight, maxHeight))
+                {
+                    this.parentDependencies |= Dependency.Height;
+                }
+            }
+
+            if (hasMarginChanges && HasRelativeEdges(style.Margin))
+            {
+                this.parentDependencies |= Dependency.Margin;
+            }
+
+            if (hasPaddingChanges && HasRelativeEdges(style.Padding))
+            {
+                this.parentDependencies |= Dependency.Padding;
+            }
+
+            var justHidden      = hidden && !this.Hidden;
+            var justUnhidden    = !hidden && this.Hidden;
+            var justUndependent = oldParentDependencies != Dependency.None && this.parentDependencies == Dependency.None;
+            var justDependent   = oldParentDependencies == Dependency.None && this.parentDependencies != Dependency.None;
+
+            if (this.Parent != null)
+            {
+                this.Parent.dependenciesHasChanged = oldContentDependencies != this.contentDependencies || oldParentDependencies != this.parentDependencies;
+
+                if (justUnhidden || justDependent)
+                {
+                    if (justUnhidden)
+                    {
+                        this.Parent.renderableNodesCount++;
+                    }
+
+                    if (this.parentDependencies != Dependency.None)
+                    {
+                        var dependents = this.Target.AssignedSlot?.Layout.dependents ?? this.Parent.dependents;
+
+                        dependents.Add(this.Target);
+                        dependents.Sort();
+                    }
+                }
+                else if (justHidden || justUndependent)
+                {
+                    if (justHidden)
+                    {
+                        this.Parent.renderableNodesCount--;
+                    }
+
+                    var dependents = this.Target.AssignedSlot?.Layout.dependents ?? this.Parent.dependents;
+
+                    dependents.Remove(this.Target);
+                }
+            }
+        }
+
+        if (property.HasFlags(StyleProperty.Overflow))
+        {
+            this.canScrollX = style.Overflow?.HasFlags(Overflow.ScrollX) == true;
+            this.canScrollY = style.Overflow?.HasFlags(Overflow.ScrollY) == true;
+
+            var currentIsScrollable = (this.canScrollX || this.canScrollY) && this.contentDependencies != (Dependency.Width | Dependency.Height);
+
+            if (currentIsScrollable != this.IsScrollable)
+            {
+                if (currentIsScrollable)
+                {
+                    this.Target.Scrolled += this.OnScroll;
+                }
+                else
+                {
+                    this.Target.Scrolled -= this.OnScroll;
+                    this.ContentOffset = default;
+                }
+
+                this.IsScrollable = currentIsScrollable;
+            }
+
+            if (style.Overflow?.HasFlags(Overflow.Clipping) == true && this.contentDependencies != (Dependency.Width | Dependency.Height))
+            {
+                if (this.ownStencilLayer == null)
+                {
+                    this.ownStencilLayer = new StencilLayer(this.Target);
+
+                    this.StencilLayer?.AppendChild(this.ownStencilLayer);
+                }
+            }
+            else if (this.ownStencilLayer != null)
+            {
+                this.ownStencilLayer.Detach();
+                this.ownStencilLayer.Dispose();
+
+                this.ownStencilLayer = null;
+            }
+
+            PropageteStencilLayer(this.Target, this.ContentStencilLayer);
+        }
+
+        var affectsBoundings = property.HasAnyFlag(LAYOUT_AFFECTED_PROPERTIES);
+
+        if (hidden)
+        {
+            this.RequestUpdate(affectsBoundings);
+
+            this.Hidden = hidden;
+        }
+        else
+        {
+            this.Hidden = hidden;
+
+            this.UpdateCommands();
+            this.RequestUpdate(affectsBoundings);
+        }
+
+        this.Target.Visible = !hidden;
     }
 
     public void HandleElementRemoved(Element element)
@@ -1372,7 +1620,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
     public void HandleTargetIndexed()
     {
-        var command = this.GetRectCommand();
+        var command = this.GetLayoutCommandBox();
 
         command.ObjectId = this.Target.Index == -1
             ? default

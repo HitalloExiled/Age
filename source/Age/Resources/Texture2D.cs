@@ -25,10 +25,11 @@ public sealed class Texture2D : Resource
 
     public Size<uint> Size => this.Image.Extent.ToSize();
 
-    internal Texture2D(Image image)
+    internal Texture2D(Image image, TextureFormat format)
     {
         this.Image     = image;
         this.ImageView = CreateImageView(image);
+        this.Format    = format;
     }
 
     public Texture2D(in Size<uint> size, TextureFormat format = TextureFormat.B8G8R8A8Unorm, TextureSamples samples = TextureSamples.N1, uint mipmap = 1)
@@ -46,9 +47,9 @@ public sealed class Texture2D : Resource
             Usage         = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled,
         };
 
+        this.imageOwner = true;
         this.Image      = new(imageCreateInfo);
         this.ImageView  = CreateImageView(this.Image);
-        this.imageOwner = true;
         this.Format     = format;
     }
 

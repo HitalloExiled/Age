@@ -8,6 +8,10 @@ public record struct Point<T> where T : INumber<T>
     public T X;
     public T Y;
 
+    public readonly Point<T> Inverted  => new(-this.X, -this.Y);
+    public readonly Point<T> InvertedX => new(-this.X, this.Y);
+    public readonly Point<T> InvertedY => new(this.X, -this.Y);
+
     public Point(T value) : this(value, value)
     { }
 
@@ -54,7 +58,7 @@ public record struct Point<T> where T : INumber<T>
         new(point.X * value, point.Y * value);
 
     public static implicit operator Point<T>(in Size<T> size) =>
-        new(size.Height, size.Width);
+        new(size.Width, size.Height);
 
     public static implicit operator Point<T>(in Vector2<float> vector) =>
         vector.ToPoint<T>();
