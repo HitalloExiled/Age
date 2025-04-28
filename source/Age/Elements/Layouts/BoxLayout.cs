@@ -7,9 +7,8 @@ using Age.Numerics;
 using Age.Resources;
 using Age.Storage;
 using Age.Styling;
-using static Age.Services.TextStorage;
+
 using static Age.Shaders.CanvasShader;
-using StyleImage = Age.Styling.Image;
 
 namespace Age.Elements.Layouts;
 
@@ -1119,7 +1118,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         return resolved;
     }
 
-    private void SetBackgroundImage(StyleImage? image)
+    private void SetBackgroundImage(Image? image)
     {
         var command = this.GetLayoutCommandImage();
 
@@ -1136,8 +1135,6 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
             if (texture != null)
             {
-                this.ownStencilLayer = new StencilLayer(this.Target);
-
                 command.MappedTexture   = new(texture, UVRect.Normalized);
                 command.PipelineVariant = PipelineVariant.Color;
                 command.StencilLayer    = new StencilLayer(this.Target);
