@@ -1,9 +1,10 @@
+using Age.Core.Interfaces;
 using Age.Numerics;
 using Age.Platforms.Display;
 
 namespace Age.Styling;
 
-public record Style
+public record Style : IPoolable
 {
     internal event Action<StyleProperty>? PropertyChanged;
 
@@ -174,6 +175,9 @@ public record Style
 
     public static Style Merge(Style left, Style right) =>
         new(StyleData.Merge(left.data, right.data));
+
+    void IPoolable.Reset() =>
+        this.Clear();
 
     private void Set<T>(ref T? field, T? value, StyleProperty property)
     {
