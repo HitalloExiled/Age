@@ -101,11 +101,11 @@ public sealed class Texture2D : Resource
     {
         if (this.imageOwner)
         {
-            this.Image.Dispose();
+            VulkanRenderer.Singleton.DeferredDispose(this.Image);
         }
 
-        this.ImageView.Dispose();
-        this.Sampler.Dispose();
+        VulkanRenderer.Singleton.DeferredDispose(this.ImageView);
+        VulkanRenderer.Singleton.DeferredDispose(this.Sampler);
     }
 
     public void Update(scoped ReadOnlySpan<byte> buffer) =>
