@@ -20,7 +20,7 @@ public sealed class Canvas : Element
         };
     }
 
-    private void OnWindowSizeChanged()
+    private void OnWindowResized()
     {
         if (this.Tree is RenderTree renderTree)
         {
@@ -32,9 +32,9 @@ public sealed class Canvas : Element
     {
         base.Connected(renderTree);
 
-        renderTree.Window.Resized += this.OnWindowSizeChanged;
+        renderTree.Window.Resized += this.OnWindowResized;
 
-        this.OnWindowSizeChanged();
+        this.OnWindowResized();
 
         renderTree.AddDeferredUpdate(this.Layout.UpdateDirtyLayout);
     }
@@ -43,6 +43,6 @@ public sealed class Canvas : Element
     {
         base.Disconnected(renderTree);
 
-        renderTree.Window.Resized -= this.OnWindowSizeChanged;
+        renderTree.Window.Resized -= this.OnWindowResized;
     }
 }

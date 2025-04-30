@@ -4,6 +4,7 @@
 
 #if Windows
 using System.Runtime.CompilerServices;
+using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Platforms.Windows.Native;
 using Age.Platforms.Windows.Native.Types;
@@ -12,6 +13,7 @@ namespace Age.Platforms.Display;
 
 public partial class Window
 {
+
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static short LoWord(uint value) => (short)((int)value & 0xffff);
 
@@ -80,25 +82,25 @@ public partial class Window
                 case User32.WINDOW_MESSAGE.WM_CHAR:
                     window.Input?.Invoke((char)wParam.Value);
 
-                    break;
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_KEYDOWN:
                     window.KeyDown?.Invoke((Key)wParam.Value);
                     window.KeyPress?.Invoke((Key)wParam.Value);
 
-                    break;
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_KEYUP:
                     window.KeyUp?.Invoke((Key)wParam.Value);
                     window.KeyPress?.Invoke((Key)wParam.Value);
 
-                    break;
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_MOUSEMOVE:
                     window.MouseMove?.Invoke(GetMouseEventArgs(MouseButton.None, msg, wParam, lParam));
 
-                    break;
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_MOUSEWHEEL:
-                    window.MouseWhell?.Invoke(GetMouseEventArgs(MouseButton.None, msg, wParam, lParam));
+                    window.MouseWheel?.Invoke(GetMouseEventArgs(MouseButton.None, msg, wParam, lParam));
 
-                    break;
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_LBUTTONDOWN:
                 case User32.WINDOW_MESSAGE.WM_MBUTTONDOWN:
                 case User32.WINDOW_MESSAGE.WM_RBUTTONDOWN:
@@ -117,7 +119,7 @@ public partial class Window
                         window.MouseDown.Invoke(GetMouseEventArgs(button, msg, wParam, lParam));
                     }
 
-                    break;
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_LBUTTONDBLCLK:
                 case User32.WINDOW_MESSAGE.WM_MBUTTONDBLCLK:
                 case User32.WINDOW_MESSAGE.WM_RBUTTONDBLCLK:
@@ -139,7 +141,7 @@ public partial class Window
                         window.DoubleClick?.Invoke(mouseEvent);
                     }
 
-                    break;
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_LBUTTONUP:
                 case User32.WINDOW_MESSAGE.WM_MBUTTONUP:
                 case User32.WINDOW_MESSAGE.WM_RBUTTONUP:
@@ -165,7 +167,7 @@ public partial class Window
                         }
                     }
 
-                    break;
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_CONTEXTMENU:
                     if (window.Context != null)
                     {
@@ -187,38 +189,20 @@ public partial class Window
                         window.Context.Invoke(contextEvent);
                     }
 
-                    break;
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_SIZE:
-                    if (window.Resized != null)
-                    {
-                        User32.GetWindowPlacement(hwnd, out var placement);
+                case User32.WINDOW_MESSAGE.WM_SIZING:
+                    window.windowChanges |= WindowChanges.Size;
 
-                        window.IsMaximized = placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMAXIMIZED;
-                        window.IsMinimized = placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMINIMIZED;
-
-                        var size = PlatformGetWindowSize(hwnd);
-
-                        if (size.Width != window.Size.Width || size.Height != window.Size.Height)
-                        {
-                            window.size = size;
-
-                            window.Resized.Invoke();
-                        }
-                    }
-
-                    break;
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_MOVING:
-                    {
-                        User32.GetWindowPlacement(hwnd, out var placement);
+                    window.windowChanges |= WindowChanges.Position;
 
-                        window.position = new(placement.rcNormalPosition.left, placement.rcNormalPosition.top);
-                    }
-
-                    break;
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_CLOSE:
-                    window.Close();
+                    window.windowChanges |= WindowChanges.Close;
 
-                    break;
+                    return 0;
                 case User32.WINDOW_MESSAGE.WM_SETCURSOR:
                     if ((User32.HIT_TEST)LoWord(lParam) == User32.HIT_TEST.HTCLIENT)
                     {
@@ -351,9 +335,43 @@ public partial class Window
     {
         while (User32.PeekMessageW(out var msg, this.Handle, 0, 0, User32.PEEK_MESSAGE.PM_REMOVE) && !this.IsClosed)
         {
+            Console.WriteLine("PeekMessageW");
             User32.TranslateMessage(msg);
             User32.DispatchMessageW(msg);
         }
+
+        if (this.windowChanges.HasFlags(WindowChanges.Close))
+        {
+            this.Close();
+
+            return;
+        }
+
+        if (Resized != null && this.windowChanges.HasFlags(WindowChanges.Size))
+        {
+            User32.GetWindowPlacement(this.Handle, out var placement);
+
+            this.IsMaximized = placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMAXIMIZED;
+            this.IsMinimized = placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMINIMIZED;
+
+            var size = PlatformGetWindowSize(this.Handle);
+
+            if (size.Width != this.Size.Width || size.Height != this.Size.Height)
+            {
+                this.size = size;
+
+                this.Resized.Invoke();
+            }
+        }
+
+        if (this.windowChanges.HasFlags(WindowChanges.Position))
+        {
+            User32.GetWindowPlacement(this.Handle, out var placement);
+
+            this.position = new(placement.rcNormalPosition.left, placement.rcNormalPosition.top);
+        }
+
+        this.windowChanges = WindowChanges.None;
     }
 
     protected Size<uint> PlatformGetClientSize() =>
