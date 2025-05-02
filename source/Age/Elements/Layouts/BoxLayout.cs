@@ -159,7 +159,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
     }
 
     public override bool        IsParentDependent => this.parentDependencies != Dependency.None;
-    public override Transform2D Transform         => (this.ComputedStyle.Transform ?? new Transform2D()) * base.Transform;
+    public override Transform2D Transform         => (this.ComputedStyle.Transform ?? Transform2D.Identity) * base.Transform;
 
     private static void CalculatePendingHeight(Element dependent, StackDirection direction, in uint reference, ref uint height, ref uint content, ref uint avaliableSpace)
     {
@@ -423,8 +423,9 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
     private void ResolveImageSize(Image image, in Size<float> textureSize, out Size<float> size, out Transform2D transform, out UVRect uv)
     {
-        var imageSize = image.Size;
-        var repeat    = image.Repeat;
+        var imageSize      = image.Size;
+        var imageRepeat    = image.Repeat;
+        var imageTransform = image.Transform;
 
         switch (image.Size.Kind)
         {
@@ -433,9 +434,12 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                     var boundings = this.SizeWithPadding.Cast<float>();
                     var offset    = new Point<float>(this.border.Left, -this.border.Top);
 
-                    size      = boundings;
-                    transform = Transform2D.CreateTranslated(offset);
-                    uv        = UVRect.Normalized;
+                    size       = boundings;
+
+                    var origin = Transform2D.CreateTranslated(-size.Width / 2, size.Height / 2);
+
+                    transform  = origin * imageTransform * origin.Inverse() * Transform2D.CreateTranslated(offset);
+                    uv         = UVRect.Normalized;
 
                     break;
                 }
@@ -449,7 +453,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                     if (boundings == default)
                     {
                         size      = default;
-                        transform = new();
+                        transform = Transform2D.Identity;
 
                         break;
                     }
@@ -460,7 +464,9 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
                     var offset = (Point<float>)(new Point<float>(this.border.Left, this.border.Top) + (boundings - size) / 2);
 
-                    transform = Transform2D.CreateTranslated(offset.InvertedY);
+                    var origin = Transform2D.CreateTranslated(-size.Width / 2, size.Height / 2);
+
+                    transform = origin * imageTransform * origin.Inverse() * Transform2D.CreateTranslated(offset.InvertedY);
 
                     break;
                 }
@@ -471,7 +477,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                     if (boundings == default)
                     {
                         size      = default;
-                        transform = new();
+                        transform = Transform2D.Identity;
                         uv        = default;
 
                         break;
@@ -494,7 +500,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
                     var offset = new Point<float>();
 
-                    if (repeat.HasFlags(ImageRepeat.RepeatX))
+                    if (imageRepeat.HasFlags(ImageRepeat.RepeatX))
                     {
                         var scale = boundings.Width / width;
 
@@ -512,7 +518,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                         offset.X = this.border.Left + (boundings.Width - width) / 2;
                     }
 
-                    if (repeat.HasFlags(ImageRepeat.RepeatY))
+                    if (imageRepeat.HasFlags(ImageRepeat.RepeatY))
                     {
                         var scale = boundings.Height / height;
 
@@ -530,8 +536,10 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                         offset.Y = this.border.Top + (boundings.Height - height) / 2;
                     }
 
+                    var origin = Transform2D.CreateTranslated(-width / 2, height / 2);
+
                     size      = new(width, height);
-                    transform = Transform2D.CreateTranslated(offset.InvertedY);
+                    transform = origin * imageTransform * origin.Inverse() * Transform2D.CreateTranslated(offset.InvertedY);
                     uv        = new()
                     {
                         P1 = new(p1x, p1y),

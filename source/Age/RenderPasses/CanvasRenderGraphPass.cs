@@ -211,7 +211,7 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                 Color     = command.Color,
                 Flags     = command.Flags,
                 Size      = command.Size,
-                Transform = transform * command.Transform,
+                Transform = command.Transform * transform,
                 UV        = command.MappedTexture.UV,
                 Viewport  = viewport,
             };

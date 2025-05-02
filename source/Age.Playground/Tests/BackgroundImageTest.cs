@@ -14,38 +14,44 @@ public class BackgroundImageTest : Element
 
         var border = 10u;
 
-        FlexBox img1;
-        FlexBox img2;
-        FlexBox img3;
-
         canvas.Children =
         [
-            img1 = new FlexBox
+            new FlexBox
             {
                 Style = new Style
                 {
                     BackgroundColor = Color.White,
-                    BackgroundImage = new(uri, ImageSize.Fit()),
+                    BackgroundImage = new()
+                    {
+                        Uri       = uri,
+                        Size      = ImageSize.Fit(),
+                        Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(45f))
+                    },
                     Size            = new((Pixel)100, (Pixel)200),
                     Border          = new(border, 0, Color.Red)
                 }
             },
-            img2 = new FlexBox
+            new FlexBox
             {
                 Style = new Style
                 {
                     BackgroundColor = Color.White,
-                    BackgroundImage = new(uri, ImageSize.KeepAspect()),
+                    BackgroundImage = new()
+                    {
+                        Uri       = uri,
+                        Size      = ImageSize.KeepAspect(),
+                        Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(45f))
+                    },
                     Size            = new((Pixel)100, (Pixel)200),
                     Border          = new(border, 0, Color.Green)
                 }
             },
-            img3 = new FlexBox
+            new FlexBox
             {
                 Style = new Style
                 {
                     BackgroundColor = Color.White,
-                    BackgroundImage = new(uri, ImageSize.Size((Pixel)50), ImageRepeat.NoRepeat),
+                    BackgroundImage = new() { Uri = uri, Size = ImageSize.Size((Pixel)50), Repeat = ImageRepeat.NoRepeat },
                     Size            = new((Pixel)100, (Pixel)200),
                     Border          = new(border, 0, Color.Blue)
                 }
@@ -56,9 +62,15 @@ public class BackgroundImageTest : Element
                 {
                     //Margin          = new((Pixel)50),
                     BackgroundColor = Color.White,
-                    BackgroundImage = new(uri, ImageSize.Size((Pixel)75), ImageRepeat.Repeat),
-                    Size            = new((Pixel)150, (Pixel)200),
-                    Border          = new(border, 0, Color.Margenta)
+                    BackgroundImage = new()
+                    {
+                        Uri       = uri,
+                        Size      = ImageSize.Size((Pixel)75),
+                        Repeat    = ImageRepeat.Repeat,
+                    },
+                    Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(45f)),
+                    Size      = new((Pixel)150, (Pixel)200),
+                    Border    = new(border, 0, Color.Margenta)
                 }
             },
             new FlexBox
@@ -67,7 +79,13 @@ public class BackgroundImageTest : Element
                 {
                     //Margin          = new((Pixel)50),
                     BackgroundColor = Color.White,
-                    BackgroundImage = new(uri, ImageSize.Size((Pixel)75), ImageRepeat.RepeatX),
+                    BackgroundImage = new()
+                    {
+                        Uri       = uri,
+                        Size      = ImageSize.Size((Pixel)75),
+                        Repeat    = ImageRepeat.RepeatX,
+                        Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(-45f))
+                    },
                     Size            = new((Pixel)150, (Pixel)200),
                     Border          = new(border, 0, Color.Yellow)
                 }
@@ -78,20 +96,34 @@ public class BackgroundImageTest : Element
                 {
                     //Margin          = new((Pixel)50),
                     BackgroundColor = Color.White,
-                    BackgroundImage = new(uri, ImageSize.Size((Pixel)75), ImageRepeat.RepeatY),
+                    BackgroundImage = new()
+                    {
+                        Uri       = uri,
+                        Size      = ImageSize.Size((Pixel)75),
+                        Repeat    = ImageRepeat.RepeatY,
+                        Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(-45f))
+                    },
+                    Size            = new((Pixel)150, (Pixel)200),
+                    Border          = new(border, 0, Color.Cyan)
+                }
+            },
+            new FlexBox
+            {
+                Style = new Style
+                {
+                    //Margin          = new((Pixel)50),
+                    BackgroundColor = Color.White,
+                    BackgroundImage = new()
+                    {
+                        Uri       = uri,
+                        Size      = ImageSize.Size((Pixel)75),
+                        Repeat    = ImageRepeat.NoRepeat,
+                        Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(45f))
+                    },
                     Size            = new((Pixel)150, (Pixel)200),
                     Border          = new(border, 0, Color.Cyan)
                 }
             }
         ];
-
-        void onClick(in MouseEvent mouseEvent) =>
-            mouseEvent.Target.Style.BackgroundImage = mouseEvent.Target.Style.BackgroundImage == null
-                ? new(uri, ImageSize.Fit())
-                : null;
-
-        img1.Clicked += onClick;
-        img2.Clicked += onClick;
-        img3.Clicked += onClick;
     }
 }

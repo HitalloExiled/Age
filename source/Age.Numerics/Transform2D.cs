@@ -2,6 +2,8 @@ namespace Age.Numerics;
 
 public record struct Transform2D
 {
+    public static Transform2D Identity => new();
+
     private Matrix3x2<float> matrix;
 
     public readonly Matrix3x2<float> Matrix => this.matrix;

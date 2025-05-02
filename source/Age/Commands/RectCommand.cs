@@ -11,7 +11,7 @@ public record RectCommand : Command
     public CanvasShader.Flags   Flags         { get; set; }
     public MappedTexture        MappedTexture { get; set; } = MappedTexture.Default;
     public Size<float>          Size          { get; set; }
-    public Transform2D          Transform     { get; set; } = new();
+    public Transform2D          Transform     { get; set; } = Transform2D.Identity;
 
     public Rect<float> GetAffineRect() => new(this.Size, this.Transform.Position);
 
@@ -24,6 +24,6 @@ public record RectCommand : Command
         this.Flags         = default;
         this.MappedTexture = MappedTexture.Default;
         this.Size          = default;
-        this.Transform     = new();
+        this.Transform     = Transform2D.Identity;
     }
 }

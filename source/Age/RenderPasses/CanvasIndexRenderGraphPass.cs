@@ -212,7 +212,7 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
                 Color     = 0xFFFF_0000_0000_0000 | command.ObjectId,
                 Flags     = command.Flags,
                 Size      = command.Size,
-                Transform = transform * command.Transform,
+                Transform = command.Transform * transform,
                 UV        = command.MappedTexture.UV,
                 Viewport  = viewport,
             };

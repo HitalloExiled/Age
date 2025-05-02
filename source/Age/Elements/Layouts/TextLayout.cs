@@ -237,7 +237,7 @@ internal sealed partial class TextLayout : Layout
         }
         else
         {
-            this.caretCommand.Transform = new();
+            this.caretCommand.Transform = Transform2D.Identity;
         }
     }
 
