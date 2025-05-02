@@ -11,8 +11,8 @@ public partial class CanvasShader
 
         // [8-bytes boundary]
         public Size<float>      Viewport;
+        public Size<float>      Size;
         public Matrix3x2<float> Transform;
-        public Rect<float>      Rect;
         public UVRect           UV;
         public Border           Border;
 

@@ -10,8 +10,8 @@ public struct PushConstant
 
     // [8-bytes boundary]
     public float2    viewport;
+    public float2    size;
     public Transform transform;
-    public Rect      rect;
     public float2    uv[4];
     public Border    border;
 

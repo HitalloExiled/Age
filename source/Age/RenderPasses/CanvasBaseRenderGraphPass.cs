@@ -75,7 +75,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
         var constant = new CanvasShader.PushConstant
         {
-            Rect      = new(stencilLayer.Size.Cast<float>(), default),
+            Size      = stencilLayer.Size.Cast<float>(),
             Transform = stencilLayer.Transform,
             UV        = stencilLayer.MappedTexture.UV,
             Viewport  = viewport,

@@ -421,7 +421,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         }
     }
 
-    private void ResolveImageSize(Image image, in Size<float> size, out Rect<float> rect, out UVRect uv)
+    private void ResolveImageSize(Image image, in Size<float> textureSize, out Size<float> size, out Transform2D transform, out UVRect uv)
     {
         var imageSize = image.Size;
         var repeat    = image.Repeat;
@@ -433,8 +433,9 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                     var boundings = this.SizeWithPadding.Cast<float>();
                     var offset    = new Point<float>(this.border.Left, -this.border.Top);
 
-                    rect = new(boundings, offset);
-                    uv   = UVRect.Normalized;
+                    size      = boundings;
+                    transform = Transform2D.CreateTranslated(offset);
+                    uv        = UVRect.Normalized;
 
                     break;
                 }
@@ -447,17 +448,19 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
                     if (boundings == default)
                     {
-                        rect = default;
+                        size      = default;
+                        transform = new();
 
                         break;
                     }
 
-                    var scale       = float.Min(boundings.Width, boundings.Height) / float.Max(size.Width, size.Height);
-                    var correctSize = size * scale;
+                    var scale = float.Min(boundings.Width, boundings.Height) / float.Max(textureSize.Width, textureSize.Height);
 
-                    var offset = (Point<float>)(new Point<float>(this.border.Left, this.border.Top) + (boundings - correctSize) / 2);
+                    size = textureSize * scale;
 
-                    rect = new(correctSize, offset.InvertedY);
+                    var offset = (Point<float>)(new Point<float>(this.border.Left, this.border.Top) + (boundings - size) / 2);
+
+                    transform = Transform2D.CreateTranslated(offset.InvertedY);
 
                     break;
                 }
@@ -467,8 +470,9 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
                     if (boundings == default)
                     {
-                        rect = default;
-                        uv   = default;
+                        size      = default;
+                        transform = new();
+                        uv        = default;
 
                         break;
                     }
@@ -526,8 +530,9 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                         offset.Y = this.border.Top + (boundings.Height - height) / 2;
                     }
 
-                    rect = new(new(width, height), offset.InvertedY);
-                    uv   = new()
+                    size      = new(width, height);
+                    transform = Transform2D.CreateTranslated(offset.InvertedY);
+                    uv        = new()
                     {
                         P1 = new(p1x, p1y),
                         P2 = new(p2x, p2y),
@@ -1359,7 +1364,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         if (this.IsDrawable)
         {
-            layoutCommandBox.Rect            = new(this.Boundings.Cast<float>(), default);
+            layoutCommandBox.Size            = this.Boundings.Cast<float>();
             layoutCommandBox.Border          = style.Border ?? default(Shaders.CanvasShader.Border);
             layoutCommandBox.Color           = style.BackgroundColor ?? default;
             layoutCommandBox.PipelineVariant |= PipelineVariant.Color;
@@ -1368,9 +1373,10 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             {
                 var layoutCommandImage  = this.GetLayoutCommandImage();
 
-                this.ResolveImageSize(style.BackgroundImage, layoutCommandImage.MappedTexture.Texture.Size.Cast<float>(), out var rect, out var uv);
+                this.ResolveImageSize(style.BackgroundImage, layoutCommandImage.MappedTexture.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
 
-                layoutCommandImage.Rect          = rect;
+                layoutCommandImage.Size          = size;
+                layoutCommandImage.Transform     = transform;
                 layoutCommandImage.MappedTexture = layoutCommandImage.MappedTexture with { UV = uv };
                 layoutCommandImage.StencilLayer!.MakeDirty();
             }

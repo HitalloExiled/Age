@@ -40,7 +40,7 @@ public sealed class Viewport : Element
             this.SingleCommand = command = new();
         }
 
-        command.Rect          = new Rect<float>(this.RenderTarget.Size.Cast<float>(), default);
+        command.Size          = this.RenderTarget.Size.Cast<float>();
         command.MappedTexture = new(this.RenderTarget.Texture, UVRect.Normalized);
     }
 
