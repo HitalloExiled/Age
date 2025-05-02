@@ -150,7 +150,7 @@ where TVertexInput  : IVertexInput
 
                 foreach (var dependecy in dependencies)
                 {
-                    ref var dependencieHash = ref this.dependenciesHash.GetValueRefOrAddDefault(dependecy, out var exists);
+                    ref var dependencieHash = ref this.dependenciesHash.GetValueRefOrAddDefault(dependecy, out var _);
 
                     using var bytes = FileReader.ReadAllBytesAsRef(dependecy);
 
@@ -187,6 +187,8 @@ where TVertexInput  : IVertexInput
 
                 foreach (var dependecy in dependenciesToRemove)
                 {
+                    this.dependenciesHash.Remove(dependecy);
+
                     ref var users = ref dependenciesUsers.GetValueRefOrNullRef(dependecy);
 
                     if (!Unsafe.IsNullRef(ref users))
@@ -206,8 +208,6 @@ where TVertexInput  : IVertexInput
                     spinLock.Exit(false);
                 }
             }
-
-            this.dependenciesHash.Clear();
 
             this.UpdatePipeline(request);
 

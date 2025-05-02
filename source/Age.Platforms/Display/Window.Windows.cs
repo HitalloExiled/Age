@@ -335,7 +335,6 @@ public partial class Window
     {
         while (User32.PeekMessageW(out var msg, this.Handle, 0, 0, User32.PEEK_MESSAGE.PM_REMOVE) && !this.IsClosed)
         {
-            Console.WriteLine("PeekMessageW");
             User32.TranslateMessage(msg);
             User32.DispatchMessageW(msg);
         }
