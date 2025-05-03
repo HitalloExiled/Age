@@ -211,21 +211,21 @@ internal sealed partial class TextLayout : Layout
     {
         if (this.renderedLength > 0)
         {
-            Point<float> position;
+            Vector2<float> position;
 
             if (this.CaretPosition == this.renderedLength)
             {
-                var rect = ((RectCommand)this.target.Commands[this.renderedLength - 1]).GetAffineRect();
+                var command = (RectCommand)this.target.Commands[this.renderedLength - 1];
 
                 if (this.target.Buffer[^1] == '\n')
                 {
                     position.X = 0;
-                    position.Y = rect.Position.Y - this.LineHeight;
+                    position.Y = command.Transform.Position.Y - this.LineHeight;
                 }
                 else
                 {
-                    position = rect.Position;
-                    position.X += rect.Size.Width;
+                    position = command.Transform.Position;
+                    position.X += command.Size.Width;
                 }
             }
             else
@@ -333,10 +333,10 @@ internal sealed partial class TextLayout : Layout
             {
                 ref readonly var bounds = ref glyphsBounds[i];
 
-                var glyph    = TextStorage.Singleton.DrawGlyph(this.font, atlas, character, bounds);
-                var size     = new Size<float>(bounds.Width, bounds.Height);
-                var position = new Point<float>(float.Round(cursor.X + bounds.Left), float.Round(cursor.Y - bounds.Top));
-                var color    = style.Color ?? new();
+                var glyph  = TextStorage.Singleton.DrawGlyph(this.font, atlas, character, bounds);
+                var size   = new Size<float>(bounds.Width, bounds.Height);
+                var offset = new Vector2<float>(float.Round(cursor.X + bounds.Left), float.Round(cursor.Y - bounds.Top));
+                var color  = style.Color ?? new();
 
                 var atlasSize = new Point<float>(atlas.Size.Width, atlas.Size.Height);
 
@@ -363,7 +363,7 @@ internal sealed partial class TextLayout : Layout
                 characterCommand.ObjectId        = default;
                 characterCommand.PipelineVariant = PipelineVariant.Color;
                 characterCommand.Size            = size;
-                characterCommand.Transform       = Transform2D.CreateTranslated(position);
+                characterCommand.Transform       = Transform2D.CreateTranslated(offset);
                 characterCommand.StencilLayer    = this.StencilLayer;
 
                 cursor.X += (int)float.Round(glyphsWidths[i]);

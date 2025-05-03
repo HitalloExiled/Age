@@ -88,6 +88,9 @@ public record struct Vector2<T> where T : IFloatingPoint<T>, IFloatingPointIeee7
         return new(this.X * cos - this.Y * sin, this.X * sin + this.Y * cos);
     }
 
+    public readonly Point<T> ToPoint() =>
+        new(this.X, this.Y);
+
     public readonly Point<U> ToPoint<U>() where U : INumber<U> =>
         new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
 

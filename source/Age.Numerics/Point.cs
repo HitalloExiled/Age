@@ -24,6 +24,9 @@ public record struct Point<T> where T : INumber<T>
     public readonly Point<U> Cast<U>() where U : INumber<U> =>
         new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
 
+    public readonly Vector2<float> ToVector2() =>
+        new(float.CreateChecked(this.X), float.CreateChecked(this.Y));
+
     public readonly Vector2<U> ToVector2<U>() where U : IFloatingPoint<U>, IFloatingPointIeee754<U>, IRootFunctions<U>, ITrigonometricFunctions<U> =>
         new(U.CreateChecked(this.X), U.CreateChecked(this.Y));
 
@@ -56,19 +59,4 @@ public record struct Point<T> where T : INumber<T>
 
     public static Point<T> operator *(in Point<T> point, T value) =>
         new(point.X * value, point.Y * value);
-
-    public static implicit operator Point<T>(in Size<T> size) =>
-        new(size.Width, size.Height);
-
-    public static implicit operator Point<T>(in Vector2<float> vector) =>
-        vector.ToPoint<T>();
-
-    public static implicit operator Vector2<float>(in Point<T> point) =>
-        point.ToVector2<float>();
-
-    public static implicit operator Point<T>(in Vector2<double> vector) =>
-        vector.ToPoint<T>();
-
-    public static implicit operator Vector2<double>(in Point<T> point) =>
-        point.ToVector2<double>();
 }

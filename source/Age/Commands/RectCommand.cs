@@ -13,7 +13,7 @@ public record RectCommand : Command
     public Size<float>          Size          { get; set; }
     public Transform2D          Transform     { get; set; } = Transform2D.Identity;
 
-    public Rect<float> GetAffineRect() => new(this.Size, this.Transform.Position);
+    public Rect<float> GetAffineRect() => new(this.Size, this.Transform.Position.ToPoint());
 
     public override void Reset()
     {

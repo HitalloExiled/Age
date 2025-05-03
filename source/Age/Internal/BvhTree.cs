@@ -17,7 +17,7 @@ public unsafe class BvhTree
 
         foreach (var node in nodes)
         {
-            aabb.Extends(new(node.Layout.Boundings, 1), new(node.Transform.Position.InvertedY, depths[node]));
+            aabb.Extends(new(node.Layout.Boundings.ToVector(), 1), new(node.Transform.Position.InvertedY, depths[node]));
         }
 
         return aabb;
@@ -50,7 +50,7 @@ public unsafe class BvhTree
 
         foreach (var node in nodes)
         {
-            var aabb = new AABB<float>(new(node.Layout.Boundings, 1), new(node.Transform.Position.InvertedY, depths[node]));
+            var aabb = new AABB<float>(new(node.Layout.Boundings.ToVector(), 1), new(node.Transform.Position.InvertedY, depths[node]));
 
             var intersection = particion.Intersection(aabb);
 
@@ -234,7 +234,7 @@ public unsafe class BvhTree
                 depths[node] = depth;
                 nodes.Add(node);
 
-                aabb.Extends(new(node.Layout.Boundings, 1), new(node.Transform.Position.InvertedY, depth));
+                aabb.Extends(new(node.Layout.Boundings.ToVector(), 1), new(node.Transform.Position.InvertedY, depth));
             }
         }
 
