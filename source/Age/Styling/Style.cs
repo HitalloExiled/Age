@@ -162,10 +162,16 @@ public record Style : IPoolable
         set => this.Set(ref this.data.TextSelection, value, StyleProperty.TextSelection);
     }
 
-    public Transform2D? Transform
+    public TransformUnit? Transform
     {
         get => this.data.Transform;
         set => this.Set(ref this.data.Transform, value, StyleProperty.Transform);
+    }
+
+    public PointUnit? TransformOrigin
+    {
+        get => this.data.TransformOrigin;
+        set => this.Set(ref this.data.TransformOrigin, value, StyleProperty.TransformOrigin);
     }
 
     private Style(StyleData data) =>

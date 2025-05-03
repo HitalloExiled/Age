@@ -18,12 +18,14 @@ public readonly record struct Em(float Value)
     public static implicit operator float(Em em) => em.Value;
 }
 
-public readonly record struct Pixel(uint Value)
+public readonly record struct Pixel(int Value)
 {
     public override readonly string ToString() => $"{this.Value}px";
 
-    public static explicit operator Pixel(uint value) => new(value);
-    public static implicit operator uint(Pixel pixel) => pixel.Value;
+    public static explicit operator Pixel(int value)  => new(value);
+    public static explicit operator Pixel(uint value) => new((int)value);
+    public static implicit operator int(Pixel pixel)  => pixel.Value;
+    public static implicit operator uint(Pixel pixel) => (uint)pixel.Value;
 }
 
 public readonly record struct Percentage(float Value)
@@ -71,7 +73,7 @@ public readonly record struct Unit
 
     public static Em         Em(float value) => new(value);
     public static Percentage Pc(float value) => new(value);
-    public static Pixel      Px(uint value) => new(value);
+    public static Pixel      Px(int value) => new(value);
 
     public readonly bool TryGetEm(out Em em)
     {

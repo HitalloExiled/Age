@@ -61,7 +61,7 @@ public class ClippingTest
                 Border = new(borderSize, 60, Color.Blue),
                 //Overflow  = OverflowKind.Clipping,
                 //BackgroundColor = Color.Margenta,
-                Transform = Transform2D.CreateTranslated(25, 60),
+                Transform = new() { Position = new(Unit.Px(25), Unit.Px(60)) },
                 Size   = new((Pixel)100, (Pixel)100),
             }
         };
@@ -73,7 +73,7 @@ public class ClippingTest
             {
                 Border   = new(1, 0, Color.Blue),
                 // Overflow = OverflowKind.Clipping,
-                Transform = Transform2D.CreateTranslated(-20, 20),
+                Transform = new() { Position = new(Unit.Px(-20), Unit.Px(20)) },
                 Size     = new((Pixel)200, (Pixel)100),
             }
         };

@@ -73,9 +73,15 @@ public class BackgroundImageTest : Element
                         Uri       = uri,
                         Size      = ImageSize.Size((Pixel)75),
                         Repeat    = ImageRepeat.Repeat,
-                        Position  = new(Unit.Pc(50)),
+                        Position  = new(Unit.Pc(0), Unit.Pc(50)),
                     },
-                    //Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(45f)),
+                    TransformOrigin = new(Unit.Pc(100), Unit.Pc(100)),
+                    Transform       = new()
+                    {
+                        Rotation = Angle.DegreesToRadians(-5f),
+                        Position = new(Unit.Pc(0), Unit.Pc(50)),
+                        Scale    = new(1.25f, 0.75f),
+                    },
                     Size      = new((Pixel)150, (Pixel)200),
                     Border    = new(border, 0, Color.Margenta)
                 }

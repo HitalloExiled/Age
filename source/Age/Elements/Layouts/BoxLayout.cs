@@ -159,7 +159,41 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
     }
 
     public override bool        IsParentDependent => this.parentDependencies != Dependency.None;
-    public override Transform2D Transform         => (this.ComputedStyle.Transform ?? Transform2D.Identity) * base.Transform;
+    public override Transform2D Transform
+    {
+        get
+        {
+            var style = this.ComputedStyle;
+
+            if (style.Transform != null)
+            {
+                var boundings       = this.Boundings;
+                var fontSize        = GetFontSize(style);
+                var transformOrigin = style.TransformOrigin ?? new(Unit.Pc(50));
+
+                var positionX = 0f;
+                var positionY = 0f;
+
+                if (style.Transform.Position.HasValue)
+                {
+                    positionX = ResolveUnit(style.Transform.Position.Value.X, boundings.Width, fontSize);
+                    positionY = ResolveUnit(style.Transform.Position.Value.Y, boundings.Height, fontSize);
+                }
+
+                var x = ResolveUnit(transformOrigin.X, boundings.Width, fontSize);
+                var y = ResolveUnit(transformOrigin.Y, boundings.Height, fontSize);
+
+                var origin      = Transform2D.CreateTranslated(-x, y);
+                var translation = Transform2D.CreateTranslated(positionX, -positionY);
+                var rotation    = Transform2D.CreateRotated(style.Transform.Rotation);
+                var scale       = Transform2D.CreateScaled(style.Transform.Scale.ToVector2());
+
+                return origin * translation * scale * rotation * origin.Inverse() * base.Transform;
+            }
+
+            return base.Transform;
+        }
+    }
 
     private static void CalculatePendingHeight(Element dependent, StackDirection direction, in uint reference, ref uint height, ref uint content, ref uint avaliableSpace)
     {
@@ -489,8 +523,8 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                     var width  = ResolveUnit(imageSize.Value.Width,  (uint)boundings.Width,  fontSize);
                     var height = ResolveUnit(imageSize.Value.Height, (uint)boundings.Height, fontSize);
 
-                    var x = (float)ResolveUnit(imagePosition.X, (uint)boundings.Width - width, fontSize);
-                    var y = (float)ResolveUnit(imagePosition.Y, (uint)boundings.Height - height, fontSize);
+                    var x = ResolveUnit(imagePosition.X, (uint)(boundings.Width - width), fontSize);
+                    var y = ResolveUnit(imagePosition.Y, (uint)(boundings.Height - height), fontSize);
 
                     var offsetX = 0f;
                     var offsetY = 0f;
@@ -505,7 +539,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                         repeatX = boundings.Width / width;
                         offsetX = x / width;
 
-                        width = (uint)boundings.Width;
+                        width = boundings.Width;
 
                         offset.X = this.border.Left;
                     }
@@ -519,7 +553,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                         repeatY = boundings.Height / height;
                         offsetY = -(y / height);
 
-                        height = (uint)boundings.Height;
+                        height = boundings.Height;
 
                         offset.Y = this.border.Top;
                     }
@@ -589,7 +623,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static uint ResolveUnit(Unit? unit, uint size, uint fontSize)
+    private static float ResolveUnit(Unit? unit, uint size, uint fontSize)
     {
         if (!unit.HasValue)
         {
@@ -598,17 +632,17 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         if (unit.Value.TryGetPixel(out var pixel))
         {
-            return pixel;
+            return pixel.Value;
         }
 
         if (unit.Value.TryGetPercentage(out var percentage))
         {
-            return (uint)(percentage * size);
+            return percentage * size;
         }
 
         if (unit.Value.TryGetEm(out var em))
         {
-            return (uint)(em * fontSize);
+            return em * fontSize;
         }
 
         return 0;

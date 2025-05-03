@@ -1,6 +1,7 @@
 using Age.Elements;
 using Age.Numerics;
 using Age.Platforms.Display;
+using Age.Styling;
 
 namespace Age.Playground.Tests;
 
@@ -16,7 +17,13 @@ public class TextSelectionTest
                 Color      = Color.White,
                 FontSize   = 100,
                 // Transform  = Transform2D.CreateTranslated(20, -20),
-                Transform  = Transform2D.CreateScaled(0.5f) * Transform2D.CreateRotated(Angle.DegreesToRadians(45f)) * Transform2D.CreateTranslated(200, -20),
+                //Transform  = Transform2D.CreateScaled(0.5f) * Transform2D.CreateRotated(Angle.DegreesToRadians(45f)) * Transform2D.CreateTranslated(200, -20),
+                Transform = new()
+                {
+                    Position = new(Unit.Px(200), Unit.Px(-20)),
+                    Rotation = Angle.DegreesToRadians(45f),
+                    Scale    = new(0.5f),
+                },
                 // FontFamily = "Cascadia Code",
                 Border     = new(20, 0, Color.Red),
                 FontFamily = "Consolas",
@@ -38,7 +45,13 @@ public class TextSelectionTest
                 Color      = Color.White,
                 FontSize   = 100,
                 // Transform  = Transform2D.CreateTranslated(20, -20),
-                Transform  = Transform2D.CreateRotated(Angle.DegreesToRadians(-45f)) * Transform2D.CreateTranslated(0, -100),
+                //Transform  = Transform2D.CreateRotated(Angle.DegreesToRadians(-45f)) * Transform2D.CreateTranslated(0, -100),
+                Transform = new()
+                {
+                    Position = new(Unit.Px(0), Unit.Px(-100)),
+                    Rotation = Angle.DegreesToRadians(-45f),
+                    Scale    = new(0.5f),
+                },
                 // FontFamily = "Cascadia Code",
                 Border     = new(20, 0, Color.Red),
                 FontFamily = "Consolas",

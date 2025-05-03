@@ -302,4 +302,14 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
         return result;
     }
+
+    public static Vector2<T> operator *(in Vector2<T> vector, in Matrix3x2<T> matrix)
+    {
+        Unsafe.SkipInit(out Vector2<T> result);
+
+        result.X = vector.X * matrix.M11 + vector.Y * matrix.M12 + matrix.M31;
+        result.Y = vector.X * matrix.M21 + vector.Y * matrix.M22 + matrix.M32;
+
+        return result;
+    }
 }

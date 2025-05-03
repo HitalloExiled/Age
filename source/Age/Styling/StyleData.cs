@@ -45,7 +45,10 @@ internal struct StyleData
     public SizeUnit? Size;
 
     /// <see cref="StyleProperty.Transform">
-    public Transform2D? Transform;
+    public TransformUnit? Transform;
+
+    /// <see cref="StyleProperty.TransformOrigin">
+    public PointUnit? TransformOrigin;
     #endregion
 
     #region 2-bytes
@@ -123,6 +126,7 @@ internal struct StyleData
         target.TextAlignment        = left.TextAlignment        ?? right.TextAlignment;
         target.TextSelection        = left.TextSelection        ?? right.TextSelection;
         target.Transform            = left.Transform            ?? right.Transform;
+        target.TransformOrigin      = left.TransformOrigin      ?? right.TransformOrigin;
     }
 
     public static StyleProperty Diff(in StyleData left, in StyleData right)
@@ -155,6 +159,7 @@ internal struct StyleData
         check(left.TextAlignment        == right.TextAlignment,        StyleProperty.TextAlignment);
         check(left.TextSelection        == right.TextSelection,        StyleProperty.TextSelection);
         check(left.Transform            == right.Transform,            StyleProperty.Transform);
+        check(left.TransformOrigin      == right.TransformOrigin,      StyleProperty.TransformOrigin);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void check(bool isEqual, StyleProperty property)
@@ -219,6 +224,7 @@ internal struct StyleData
         appendProperty(nameof(StyleProperty.TextAlignment),        in this.TextAlignment);
         appendProperty(nameof(StyleProperty.TextSelection),        in this.TextSelection);
         appendProperty(nameof(StyleProperty.Transform),            in this.Transform);
+        appendProperty(nameof(StyleProperty.TransformOrigin),      in this.TransformOrigin);
 
         if (builder.Length > 0)
         {
@@ -258,6 +264,7 @@ internal struct StyleData
             case StyleProperty.TextAlignment:        this.TextAlignment        = data.TextAlignment;        break;
             case StyleProperty.TextSelection:        this.TextSelection        = data.TextSelection;        break;
             case StyleProperty.Transform:            this.Transform            = data.Transform;            break;
+            case StyleProperty.TransformOrigin:      this.TransformOrigin      = data.TransformOrigin;      break;
         }
     }
 }
