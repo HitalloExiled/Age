@@ -423,22 +423,24 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
     private void ResolveImageSize(Image image, in Size<float> textureSize, out Size<float> size, out Transform2D transform, out UVRect uv)
     {
-        var imageSize      = image.Size;
-        var imageRepeat    = image.Repeat;
-        var imageTransform = image.Transform;
+        var fontSize      = this.FontSize;
+        var imageSize     = image.Size;
+        var imageRepeat   = image.Repeat;
+        var imagePosition = image.Position;
 
         switch (image.Size.Kind)
         {
             case ImageSizeKind.Fit:
                 {
                     var boundings = this.SizeWithPadding.Cast<float>();
-                    var offset    = new Point<float>(this.border.Left, -this.border.Top);
+
+                    var x = ResolveUnit(imagePosition.X, (uint)boundings.Width, fontSize);
+                    var y = ResolveUnit(imagePosition.Y, (uint)boundings.Height, fontSize);
+
+                    var offset = new Vector2<float>(x + this.border.Left, -y + -this.border.Top);
 
                     size       = boundings;
-
-                    var origin = Transform2D.CreateTranslated(-size.Width / 2, size.Height / 2);
-
-                    transform  = origin * imageTransform * origin.Inverse() * Transform2D.CreateTranslated(offset);
+                    transform  = Transform2D.CreateTranslated(offset);
                     uv         = UVRect.Normalized;
 
                     break;
@@ -462,11 +464,12 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
                     size = textureSize * scale;
 
-                    var offset = (Point<float>)(new Point<float>(this.border.Left, this.border.Top) + (boundings - size) / 2);
+                    var x = ResolveUnit(imagePosition.X, (uint)size.Width, fontSize);
+                    var y = ResolveUnit(imagePosition.Y, (uint)size.Height, fontSize);
 
-                    var origin = Transform2D.CreateTranslated(-size.Width / 2, size.Height / 2);
+                    var offset = new Vector2<float>(x + this.border.Left, y + this.border.Top);
 
-                    transform = origin * imageTransform * origin.Inverse() * Transform2D.CreateTranslated(offset.InvertedY);
+                    transform = Transform2D.CreateTranslated(offset.InvertedY);
 
                     break;
                 }
@@ -483,31 +486,24 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                         break;
                     }
 
-                    var fontSize = this.FontSize;
-
                     var width  = ResolveUnit(imageSize.Value.Width,  (uint)boundings.Width,  fontSize);
                     var height = ResolveUnit(imageSize.Value.Height, (uint)boundings.Height, fontSize);
 
-                    var p1x = 0f;
-                    var p2x = 1f;
-                    var p3x = p2x;
-                    var p4x = p1x;
+                    var x = (float)ResolveUnit(imagePosition.X, (uint)boundings.Width - width, fontSize);
+                    var y = (float)ResolveUnit(imagePosition.Y, (uint)boundings.Height - height, fontSize);
 
-                    var p1y = 0f;
-                    var p2y = p1y;
-                    var p3y = 1f;
-                    var p4y = p3y;
+                    var offsetX = 0f;
+                    var offsetY = 0f;
 
-                    var offset = new Point<float>();
+                    var repeatX = 1f;
+                    var repeatY = 1f;
+
+                    var offset = new Vector2<float>();
 
                     if (imageRepeat.HasFlags(ImageRepeat.RepeatX))
                     {
-                        var scale = boundings.Width / width;
-
-                        p1x = (1 - scale) / 2;
-                        p2x = (1 + scale) / 2;
-                        p3x = p2x;
-                        p4x = p1x;
+                        repeatX = boundings.Width / width;
+                        offsetX = x / width;
 
                         width = (uint)boundings.Width;
 
@@ -515,17 +511,13 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                     }
                     else
                     {
-                        offset.X = this.border.Left + (boundings.Width - width) / 2;
+                        offset.X = this.border.Left + x;
                     }
 
                     if (imageRepeat.HasFlags(ImageRepeat.RepeatY))
                     {
-                        var scale = boundings.Height / height;
-
-                        p1y = (1 - scale) / 2;
-                        p2y = p1y;
-                        p3y = (1 + scale) / 2;
-                        p4y = p3y;
+                        repeatY = boundings.Height / height;
+                        offsetY = -(y / height);
 
                         height = (uint)boundings.Height;
 
@@ -533,19 +525,17 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                     }
                     else
                     {
-                        offset.Y = this.border.Top + (boundings.Height - height) / 2;
+                        offset.Y = this.border.Top + y;
                     }
 
-                    var origin = Transform2D.CreateTranslated(-width / 2, height / 2);
-
                     size      = new(width, height);
-                    transform = origin * imageTransform * origin.Inverse() * Transform2D.CreateTranslated(offset.InvertedY);
+                    transform = Transform2D.CreateTranslated(offset.InvertedY);
                     uv        = new()
                     {
-                        P1 = new(p1x, p1y),
-                        P2 = new(p2x, p2y),
-                        P3 = new(p3x, p3y),
-                        P4 = new(p4x, p4y),
+                        P1 = new(offsetX, offsetY),
+                        P2 = new(offsetX + repeatX, offsetY),
+                        P3 = new(offsetX + repeatX, offsetY + repeatY),
+                        P4 = new(offsetX, offsetY + repeatY),
                     };
 
                     break;
@@ -598,11 +588,12 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint ResolveUnit(Unit? unit, uint size, uint fontSize)
     {
         if (!unit.HasValue)
         {
-            return size;
+            return 0;
         }
 
         if (unit.Value.TryGetPixel(out var pixel))

@@ -25,7 +25,7 @@ public class BackgroundImageTest : Element
                     {
                         Uri       = uri,
                         Size      = ImageSize.Fit(),
-                        Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(45f))
+                        Position  = new(Unit.Pc(50)),
                     },
                     Size            = new((Pixel)100, (Pixel)200),
                     Border          = new(border, 0, Color.Red)
@@ -40,7 +40,7 @@ public class BackgroundImageTest : Element
                     {
                         Uri       = uri,
                         Size      = ImageSize.KeepAspect(),
-                        Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(45f))
+                        Position  = new(Unit.Pc(0), Unit.Pc(50)),
                     },
                     Size            = new((Pixel)100, (Pixel)200),
                     Border          = new(border, 0, Color.Green)
@@ -51,7 +51,13 @@ public class BackgroundImageTest : Element
                 Style = new Style
                 {
                     BackgroundColor = Color.White,
-                    BackgroundImage = new() { Uri = uri, Size = ImageSize.Size((Pixel)50), Repeat = ImageRepeat.NoRepeat },
+                    BackgroundImage = new()
+                    {
+                        Uri    = uri,
+                        Size   = ImageSize.Size((Pixel)50),
+                        Repeat = ImageRepeat.NoRepeat,
+                        Position = new(Unit.Px(25)),
+                    },
                     Size            = new((Pixel)100, (Pixel)200),
                     Border          = new(border, 0, Color.Blue)
                 }
@@ -67,8 +73,9 @@ public class BackgroundImageTest : Element
                         Uri       = uri,
                         Size      = ImageSize.Size((Pixel)75),
                         Repeat    = ImageRepeat.Repeat,
+                        Position  = new(Unit.Pc(50)),
                     },
-                    Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(45f)),
+                    //Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(45f)),
                     Size      = new((Pixel)150, (Pixel)200),
                     Border    = new(border, 0, Color.Margenta)
                 }
@@ -84,7 +91,7 @@ public class BackgroundImageTest : Element
                         Uri       = uri,
                         Size      = ImageSize.Size((Pixel)75),
                         Repeat    = ImageRepeat.RepeatX,
-                        Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(-45f))
+                        Position  = new(Unit.Pc(50)),
                     },
                     Size            = new((Pixel)150, (Pixel)200),
                     Border          = new(border, 0, Color.Yellow)
@@ -101,7 +108,7 @@ public class BackgroundImageTest : Element
                         Uri       = uri,
                         Size      = ImageSize.Size((Pixel)75),
                         Repeat    = ImageRepeat.RepeatY,
-                        Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(-45f))
+                        Position  = new(Unit.Pc(50)),
                     },
                     Size            = new((Pixel)150, (Pixel)200),
                     Border          = new(border, 0, Color.Cyan)
@@ -118,7 +125,7 @@ public class BackgroundImageTest : Element
                         Uri       = uri,
                         Size      = ImageSize.Size((Pixel)75),
                         Repeat    = ImageRepeat.NoRepeat,
-                        Transform = Transform2D.CreateRotated(Angle.DegreesToRadians(45f))
+                        Position  = new(Unit.Pc(50)),
                     },
                     Size            = new((Pixel)150, (Pixel)200),
                     Border          = new(border, 0, Color.Cyan)
