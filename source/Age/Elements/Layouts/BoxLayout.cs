@@ -76,7 +76,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             static void check(Unit? unit, ref uint value)
             {
-                if (unit?.Kind == UnitKind.Percentage)
+                if (unit?.kind == Unit.Kind.Percentage)
                 {
                     value = 0;
                 }
@@ -176,12 +176,12 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
                 if (style.Transform.Position.HasValue)
                 {
-                    positionX = ResolveUnit(style.Transform.Position.Value.X, boundings.Width, fontSize);
-                    positionY = ResolveUnit(style.Transform.Position.Value.Y, boundings.Height, fontSize);
+                    positionX = Unit.Resolve(style.Transform.Position.Value.X, boundings.Width, fontSize);
+                    positionY = Unit.Resolve(style.Transform.Position.Value.Y, boundings.Height, fontSize);
                 }
 
-                var x = ResolveUnit(transformOrigin.X, boundings.Width, fontSize);
-                var y = ResolveUnit(transformOrigin.Y, boundings.Height, fontSize);
+                var x = Unit.Resolve(transformOrigin.X, boundings.Width, fontSize);
+                var y = Unit.Resolve(transformOrigin.Y, boundings.Height, fontSize);
 
                 var origin      = Transform2D.CreateTranslated(-x, y);
                 var translation = Transform2D.CreateTranslated(positionX, -positionY);
@@ -351,7 +351,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsAnyRelative(Unit? abs, Unit? min, Unit? max) =>
-        abs?.Kind == UnitKind.Percentage || min?.Kind == UnitKind.Percentage || max?.Kind == UnitKind.Percentage;
+        abs?.kind == Unit.Kind.Percentage || min?.kind == Unit.Kind.Percentage || max?.kind == Unit.Kind.Percentage;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsAllNull(Unit? abs, Unit? min, Unit? max) =>
@@ -363,10 +363,10 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool HasRelativeEdges(StyleRectEdges? edges) =>
-            edges?.Top?.Kind   == UnitKind.Percentage
-        || edges?.Right?.Kind  == UnitKind.Percentage
-        || edges?.Bottom?.Kind == UnitKind.Percentage
-        || edges?.Left?.Kind   == UnitKind.Percentage;
+            edges?.Top?.kind   == Unit.Kind.Percentage
+        || edges?.Right?.kind  == Unit.Kind.Percentage
+        || edges?.Bottom?.kind == Unit.Kind.Percentage
+        || edges?.Left?.kind   == Unit.Kind.Percentage;
 
     private static void PropageteStencilLayer(Element target, StencilLayer? stencilLayer)
     {
@@ -407,13 +407,13 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
     {
         if (absUnit?.TryGetPixel(out var pixel) == true)
         {
-            value = pixel;
+            value = (uint)pixel;
 
             resolved = true;
         }
         else if (absUnit?.TryGetEm(out var em) == true)
         {
-            value = (uint)(em.Value * fontSize);
+            value = (uint)(em * fontSize);
 
             resolved = true;
         }
@@ -424,20 +424,20 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
             if (minUnit?.TryGetPixel(out var minPixel) == true)
             {
-                min = minPixel;
+                min = (uint)minPixel;
             }
             else if (minUnit?.TryGetEm(out var minEm) == true)
             {
-                min = (uint)(minEm.Value * fontSize);
+                min = (uint)(minEm * fontSize);
             }
 
             if (maxUnit?.TryGetPixel(out var maxPixel) == true)
             {
-                max = maxPixel;
+                max = (uint)maxPixel;
             }
             else if (maxUnit?.TryGetEm(out var maxEm) == true)
             {
-                max = (uint)(maxEm.Value * fontSize);
+                max = (uint)(maxEm * fontSize);
             }
 
             if (value < min)
@@ -468,8 +468,8 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                 {
                     var boundings = this.SizeWithPadding.Cast<float>();
 
-                    var x = ResolveUnit(imagePosition.X, (uint)boundings.Width, fontSize);
-                    var y = ResolveUnit(imagePosition.Y, (uint)boundings.Height, fontSize);
+                    var x = Unit.Resolve(imagePosition.X, (uint)boundings.Width, fontSize);
+                    var y = Unit.Resolve(imagePosition.Y, (uint)boundings.Height, fontSize);
 
                     var offset = new Vector2<float>(x + this.border.Left, -y + -this.border.Top);
 
@@ -498,8 +498,8 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
                     size = textureSize * scale;
 
-                    var x = ResolveUnit(imagePosition.X, (uint)size.Width, fontSize);
-                    var y = ResolveUnit(imagePosition.Y, (uint)size.Height, fontSize);
+                    var x = Unit.Resolve(imagePosition.X, (uint)size.Width, fontSize);
+                    var y = Unit.Resolve(imagePosition.Y, (uint)size.Height, fontSize);
 
                     var offset = new Vector2<float>(x + this.border.Left, y + this.border.Top);
 
@@ -520,11 +520,11 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                         break;
                     }
 
-                    var width  = ResolveUnit(imageSize.Value.Width,  (uint)boundings.Width,  fontSize);
-                    var height = ResolveUnit(imageSize.Value.Height, (uint)boundings.Height, fontSize);
+                    var width  = Unit.Resolve(imageSize.Value.Width,  (uint)boundings.Width,  fontSize);
+                    var height = Unit.Resolve(imageSize.Value.Height, (uint)boundings.Height, fontSize);
 
-                    var x = ResolveUnit(imagePosition.X, (uint)(boundings.Width - width), fontSize);
-                    var y = ResolveUnit(imagePosition.Y, (uint)(boundings.Height - height), fontSize);
+                    var x = Unit.Resolve(imagePosition.X, (uint)(boundings.Width - width), fontSize);
+                    var y = Unit.Resolve(imagePosition.Y, (uint)(boundings.Height - height), fontSize);
 
                     var offsetX = 0f;
                     var offsetY = 0f;
@@ -587,7 +587,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         if (left?.TryGetPixel(out var leftPixel) == true)
         {
-            rectEdges.Left = leftPixel;
+            rectEdges.Left = (uint)leftPixel;
         }
         else if (left?.TryGetEm(out var leftEm) == true)
         {
@@ -596,7 +596,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         if (right?.TryGetPixel(out var rightPixel) == true)
         {
-            rectEdges.Right = rightPixel;
+            rectEdges.Right = (uint)rightPixel;
         }
         else if (right?.TryGetEm(out var rightEm) == true)
         {
@@ -605,7 +605,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         if (top?.TryGetPixel(out var topPixel) == true)
         {
-            rectEdges.Top = topPixel;
+            rectEdges.Top = (uint)topPixel;
         }
         else if (top?.TryGetEm(out var topEm) == true)
         {
@@ -614,38 +614,12 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         if (bottom?.TryGetPixel(out var bottomPixel) == true)
         {
-            rectEdges.Bottom = bottomPixel;
+            rectEdges.Bottom = (uint)bottomPixel;
         }
         else if (bottom?.TryGetEm(out var bottomEm) == true)
         {
             rectEdges.Bottom = (uint)(bottomEm * fontSize);
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float ResolveUnit(Unit? unit, uint size, uint fontSize)
-    {
-        if (!unit.HasValue)
-        {
-            return 0;
-        }
-
-        if (unit.Value.TryGetPixel(out var pixel))
-        {
-            return pixel.Value;
-        }
-
-        if (unit.Value.TryGetPercentage(out var percentage))
-        {
-            return percentage * size;
-        }
-
-        if (unit.Value.TryGetEm(out var em))
-        {
-            return em * fontSize;
-        }
-
-        return 0;
     }
 
     private void CalculateLayout(Style style)
@@ -852,8 +826,8 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         {
             dimension = (uint)(reference * percentage);
 
-            Pixel min = default;
-            Pixel max = default;
+            var min = 0;
+            var max = 0;
 
             var hasMin = minUnit?.TryGetPixel(out min) == true;
             var hasMax = minUnit?.TryGetPixel(out min) == true;
@@ -862,25 +836,25 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             {
                 if (dimension < min)
                 {
-                    dimension = min;
+                    dimension = (uint)min;
                 }
                 else if (dimension > max)
                 {
-                    dimension = max;
+                    dimension = (uint)max;
                 }
             }
             else if (hasMin)
             {
                 if (dimension < min)
                 {
-                    dimension = min;
+                    dimension = (uint)min;
                 }
             }
             else if (hasMax)
             {
                 if (dimension > max)
                 {
-                    dimension = max;
+                    dimension = (uint)max;
                 }
             }
 
@@ -888,8 +862,8 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         }
         else
         {
-            Percentage min = default;
-            Percentage max = default;
+            var min = 0f;
+            var max = 0f;
 
             var hasMin = minUnit?.TryGetPercentage(out min) == true;
             var hasMax = minUnit?.TryGetPercentage(out min) == true;

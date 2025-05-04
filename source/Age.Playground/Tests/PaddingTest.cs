@@ -25,7 +25,7 @@ public class PaddingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.Margenta * 0.8f),
-                Size   = new((Pixel)100),
+                Size   = new(Unit.Px(100)),
             }
         };
 
@@ -35,7 +35,7 @@ public class PaddingTest
             Style = new()
             {
                 Border  = new(borderSize, 0, Color.Red),
-                Padding = new((Pixel)10),
+                Padding = new(Unit.Px(10)),
             }
         };
 
@@ -45,7 +45,7 @@ public class PaddingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.Red * 0.8f),
-                Size   = new((Pixel)100),
+                Size   = new(Unit.Px(100)),
             }
         };
 
@@ -55,7 +55,7 @@ public class PaddingTest
             Style = new()
             {
                 Border  = new(borderSize, 0, Color.Green),
-                Padding = new((Pixel)10),
+                Padding = new(Unit.Px(10)),
             }
         };
 
@@ -66,7 +66,7 @@ public class PaddingTest
             {
 
                 Border = new(borderSize, 0, Color.Green * 0.8f),
-                Size   = new((Percentage)100),
+                Size   = new(Unit.Pc(100)),
             }
         };
 
@@ -76,7 +76,7 @@ public class PaddingTest
             Style = new()
             {
                 Border = new(1, 0, Color.Yellow),
-                Size   = new((Pixel)200),
+                Size   = new(Unit.Px(200)),
             }
         };
 
@@ -86,7 +86,7 @@ public class PaddingTest
             Style = new()
             {
                 Border  = new(borderSize, 0, Color.Blue),
-                Padding = new((Percentage)10),
+                Padding = new(Unit.Pc(10)),
             }
         };
 
@@ -97,7 +97,7 @@ public class PaddingTest
             {
 
                 Border = new(borderSize, 0, Color.Blue * 0.8f),
-                Size   = new((Pixel)100),
+                Size   = new(Unit.Px(100)),
             }
         };
 
@@ -107,7 +107,7 @@ public class PaddingTest
             Style = new()
             {
                 Border = new(1, 0, Color.Yellow),
-                Size   = new((Pixel)200),
+                Size   = new(Unit.Px(200)),
             }
         };
 
@@ -117,8 +117,8 @@ public class PaddingTest
             Style = new()
             {
                 Border  = new(borderSize, 0, Color.Cyan),
-                Padding = new((Percentage)10),
-                Size    = new((Percentage)100),
+                Padding = new(Unit.Pc(10)),
+                Size    = new(Unit.Pc(100)),
             }
         };
 
@@ -129,7 +129,7 @@ public class PaddingTest
             {
 
                 Border = new(borderSize, 0, Color.Cyan * 0.8f),
-                Size   = new((Pixel)100),
+                Size   = new(Unit.Px(100)),
             }
         };
 
@@ -140,7 +140,7 @@ public class PaddingTest
             {
                 Color   = Color.White,
                 Border  = new(borderSize, 0, Color.White * 0.8f),
-                Padding = new((Pixel)20, (Pixel)10),
+                Padding = new(Unit.Px(20), Unit.Px(10)),
             }
         };
 

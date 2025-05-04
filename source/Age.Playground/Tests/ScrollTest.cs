@@ -98,11 +98,11 @@ public class ScrollTest
             Text  = lorenText,
             Style = new()
             {
-                Margin   = new((Pixel)20),
+                Margin   = new(Unit.Px(20)),
                 Border   = new(borderSize, 0, Color.Red),
-                Padding  = new((Pixel)10),
+                Padding  = new(Unit.Px(10)),
                 Overflow = Overflow.Scroll,
-                Size     = new((Percentage)100),
+                Size     = new(Unit.Pc(100)),
                 Color    = Color.White,
             },
         };
@@ -113,9 +113,9 @@ public class ScrollTest
             Text  = "0",
             Style = new()
             {
-                Margin  = new((Pixel)20),
+                Margin  = new(Unit.Px(20)),
                 Border  = new(borderSize, 0, Color.Red),
-                Padding = new((Pixel)10),
+                Padding = new(Unit.Px(10)),
                 Color   = Color.White,
             },
         };
@@ -126,9 +126,9 @@ public class ScrollTest
             Text  = "00",
             Style = new()
             {
-                Margin  = new((Pixel)20),
+                Margin  = new(Unit.Px(20)),
                 Border  = new(borderSize, 0, Color.Red),
-                Padding = new((Pixel)10),
+                Padding = new(Unit.Px(10)),
                 Color   = Color.White,
             },
         };
@@ -143,9 +143,9 @@ public class ScrollTest
             """,
             Style = new()
             {
-                Margin  = new((Pixel)20),
+                Margin  = new(Unit.Px(20)),
                 Border  = new(borderSize, 0, Color.Red),
-                Padding = new((Pixel)10),
+                Padding = new(Unit.Px(10)),
                 Color   = Color.White,
             },
         };
@@ -160,9 +160,9 @@ public class ScrollTest
             """,
             Style = new()
             {
-                Margin  = new((Pixel)20),
+                Margin  = new(Unit.Px(20)),
                 Border  = new(borderSize, 0, Color.Red),
-                Padding = new((Pixel)10),
+                Padding = new(Unit.Px(10)),
                 Color   = Color.White,
             },
         };
@@ -185,11 +185,11 @@ public class ScrollTest
             """,
             Style = new()
             {
-                Margin   = new((Pixel)20),
+                Margin   = new(Unit.Px(20)),
                 Border   = new(borderSize, 0, Color.Red),
-                Padding  = new((Pixel)10),
+                Padding  = new(Unit.Px(10)),
                 Overflow = Overflow.Scroll,
-                Size     = new((Pixel)100),
+                Size     = new(Unit.Px(100)),
                 Color    = Color.White,
             },
         };
@@ -213,11 +213,11 @@ public class ScrollTest
             Multiline = true,
             Style = new()
             {
-                Margin   = new((Pixel)20),
+                Margin   = new(Unit.Px(20)),
                 Border   = new(borderSize, 0, Color.Red),
-                Padding  = new((Pixel)10),
+                Padding  = new(Unit.Px(10)),
                 Overflow = Overflow.Scroll,
-                Size     = new((Pixel)200),
+                Size     = new(Unit.Px(200)),
                 Color    = Color.White,
             },
         };

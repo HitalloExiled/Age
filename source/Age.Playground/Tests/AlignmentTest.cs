@@ -12,7 +12,7 @@ public class AlignmentTest
     public static void Setup(Canvas canvas)
     {
         var borderSize = 10u;
-        var marginSize = 10u;
+        var marginSize = 10;
 
         var root = new FlexBox()
         {
@@ -79,7 +79,7 @@ public class AlignmentTest
                 Alignment = Alignment.Left,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
-                Size      = new(null, (Percentage)100),
+                Size      = new(null, Unit.Pc(100)),
             }
         };
 
@@ -92,12 +92,12 @@ public class AlignmentTest
                 Alignment = Alignment.Right,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
-                //Margin    = new((Pixel)marginSize),
+                //Margin    = new(Unit.Px(marginSize)),
             }
         };
 
-        var verticalPixelSize      = 30u;
-        var verticalPercentageSize = 100u;
+        var verticalPixelSize      = 30;
+        var verticalPercentageSize = 100f;
         var percentage             = false;
         var text                   = "Changed";
 
@@ -143,7 +143,7 @@ public class AlignmentTest
                     case Key.Up:
                         if (percentage)
                         {
-                            verticalPercentageSize = uint.Min(verticalPercentageSize + 1, 100);
+                            verticalPercentageSize = float.Min(verticalPercentageSize + 1, 100);
                         }
                         else
                         {
@@ -176,8 +176,8 @@ public class AlignmentTest
                 if (updateSize)
                 {
                     horizontal_a_right.Style.Size = !percentage
-                        ? new(null, (Pixel)verticalPixelSize)
-                        : new(null, (Percentage)verticalPercentageSize);
+                        ? new(null, Unit.Px(verticalPixelSize))
+                        : new(null, Unit.Pc(verticalPercentageSize));
                 }
             }
         };
@@ -217,7 +217,7 @@ public class AlignmentTest
                 Alignment = Alignment.Bottom,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
-                Margin    = new((Pixel)marginSize),
+                Margin    = new(Unit.Px(marginSize)),
             }
         };
 

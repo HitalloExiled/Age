@@ -17,7 +17,7 @@ public class ClippingTest
             {
                 Border   = new(borderSize, 100, Color.Red),
                 Overflow = Overflow.Scroll,
-                Size     = new((Pixel)50, (Pixel)50),
+                Size     = new(Unit.Px(50), Unit.Px(50)),
             }
         };
 
@@ -37,7 +37,7 @@ public class ClippingTest
                 FontSize  = 24,
                 // Transform = Transform2D.CreateTranslated(25, -40),
                 // Overflow  = OverflowKind.Clipping,
-                // Size      = new((Pixel)100, (Pixel)100),
+                // Size      = new(Unit.Px(100), Unit.Px(100)),
             }
         };
 
@@ -62,7 +62,7 @@ public class ClippingTest
                 //Overflow  = OverflowKind.Clipping,
                 //BackgroundColor = Color.Margenta,
                 Transform = new() { Position = new(Unit.Px(25), Unit.Px(60)) },
-                Size   = new((Pixel)100, (Pixel)100),
+                Size   = new(Unit.Px(100), Unit.Px(100)),
             }
         };
 
@@ -74,7 +74,7 @@ public class ClippingTest
                 Border   = new(1, 0, Color.Blue),
                 // Overflow = OverflowKind.Clipping,
                 Transform = new() { Position = new(Unit.Px(-20), Unit.Px(20)) },
-                Size     = new((Pixel)200, (Pixel)100),
+                Size     = new(Unit.Px(200), Unit.Px(100)),
             }
         };
 
@@ -84,7 +84,7 @@ public class ClippingTest
             Style = new()
             {
                 Border = new(borderSize, 50, Color.Green),
-                Size   = new((Pixel)200, (Pixel)100),
+                Size   = new(Unit.Px(200), Unit.Px(100)),
             }
         };
 
@@ -94,7 +94,7 @@ public class ClippingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.Green),
-                Size   = new((Pixel)200, (Pixel)100),
+                Size   = new(Unit.Px(200), Unit.Px(100)),
             }
         };
 

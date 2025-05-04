@@ -18,7 +18,7 @@ public class BoxModelTest
                 Style = new()
                 {
                     Border    = new(borderSize, 0, Color.Red),
-                    Size      = new((Percentage)100),
+                    Size      = new(Unit.Pc(100)),
                     BoxSizing = BoxSizing.Border
                 },
                 Children =
@@ -30,7 +30,7 @@ public class BoxModelTest
                         {
                             StackDirection = StackDirection.Vertical,
                             Border         = new(borderSize, 0, Color.Green),
-                            Size           = new((Percentage)50, (Percentage)100),
+                            Size           = new(Unit.Pc(50), Unit.Pc(100)),
                         },
                         Children =
                         [
@@ -52,7 +52,7 @@ public class BoxModelTest
                                 {
                                     Color  = Color.White,
                                     Border = new(borderSize, 0, Color.Cyan),
-                                    Size   = new((Percentage)100, (Percentage)50),
+                                    Size   = new(Unit.Pc(100), Unit.Pc(50)),
                                 }
                             },
                             new FlexBox
@@ -62,7 +62,7 @@ public class BoxModelTest
                                 {
                                     Color  = Color.White,
                                     Border = new(borderSize, 0, Color.White),
-                                    Size   = new((Percentage)100, (Percentage)50),
+                                    Size   = new(Unit.Pc(100), Unit.Pc(50)),
                                 }
                             },
                             new FlexBox
@@ -73,7 +73,7 @@ public class BoxModelTest
                                     Alignment = Alignment.Center,
                                     Color     = Color.White,
                                     Border    = new(borderSize, 0, Color.Yellow),
-                                    Size      = new((Pixel)50),
+                                    Size      = new(Unit.Px(50)),
                                 }
                             }
                         ]
@@ -85,7 +85,7 @@ public class BoxModelTest
                         {
                             StackDirection = StackDirection.Vertical,
                             Border         = new(borderSize, 0, Color.Blue),
-                            Size           = new((Percentage)100, (Percentage)100),
+                            Size           = new(Unit.Pc(100), Unit.Pc(100)),
                         },
                         Children =
                         [
@@ -96,7 +96,7 @@ public class BoxModelTest
                                 {
                                     Color  = Color.White,
                                     Border = new(borderSize, 0, Color.Cyan),
-                                    Size   = new((Pixel)50),
+                                    Size   = new(Unit.Px(50)),
                                 }
                             },
                             new FlexBox
@@ -106,7 +106,7 @@ public class BoxModelTest
                                 {
                                     Color  = Color.White,
                                     Border = new(borderSize, 0, Color.White),
-                                    Size   = new((Percentage)100),
+                                    Size   = new(Unit.Pc(100)),
                                 }
                             },
                             new FlexBox
@@ -116,7 +116,7 @@ public class BoxModelTest
                                 {
                                     Color  = Color.White,
                                     Border = new(borderSize, 0, Color.Yellow),
-                                    Size   = new((Pixel)50),
+                                    Size   = new(Unit.Px(50)),
                                 }
                             }
                         ],

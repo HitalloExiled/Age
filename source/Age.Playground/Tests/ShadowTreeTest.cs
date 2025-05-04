@@ -24,7 +24,7 @@ public class Host : Element
 
         var buttonStyle = new Style
         {
-            Size = new((Percentage)100, null),
+            Size = new(Unit.Pc(100), null),
         };
 
         this.ShadowTree.Children =
@@ -36,7 +36,7 @@ public class Host : Element
                 {
                     Border = new(1, 0, Color.Red),
                     Color  = Color.White,
-                    Size   = new((Percentage)100, null),
+                    Size   = new(Unit.Pc(100), null),
                 }
             },
             new FlexBox
@@ -44,7 +44,7 @@ public class Host : Element
                 Style = new()
                 {
                     StackDirection = StackDirection.Vertical,
-                    Size           = new((Percentage)100, null),
+                    Size           = new(Unit.Pc(100), null),
                 },
                 Children =
                 [
@@ -123,7 +123,7 @@ public class ShadowTreeTest
 
         var buttonStyle = new Style
         {
-            Size = new((Percentage)100, null),
+            Size = new(Unit.Pc(100), null),
         };
 
         canvas.Children =
@@ -164,7 +164,7 @@ public class ShadowTreeTest
                         {
                             Border   = new(1, 0, Color.Green),
                             Color    = Color.White,
-                            //Size     = new((Percentage)10, null),
+                            //Size     = new(Unit.Pc(10), null),
                             Overflow = Overflow.Clipping,
                         }
                     },
@@ -177,7 +177,7 @@ public class ShadowTreeTest
                         {
                             Border    = new(1, 0, Color.Blue),
                             Color     = Color.White,
-                            //Size      = new((Percentage)10, null),
+                            //Size      = new(Unit.Pc(10), null),
                             //Alignment = AlignmentKind.End,
                             Overflow  = Overflow.Clipping,
                         }

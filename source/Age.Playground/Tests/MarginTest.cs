@@ -27,7 +27,7 @@ public class MarginTest
                         Style = new()
                         {
                             Border = new(borderSize, 0, Color.Margenta * 0.8f),
-                            Size   = new((Pixel)100),
+                            Size   = new(Unit.Px(100)),
                         }
                     }
                 ]
@@ -46,9 +46,9 @@ public class MarginTest
                         Name  = "margin_pc50_px10",
                         Style = new()
                         {
-                            Margin = new((Pixel)10),
+                            Margin = new(Unit.Px(10)),
                             Border = new(borderSize, 0, Color.Red * 0.8f),
-                            Size   = new((Percentage)50),
+                            Size   = new(Unit.Pc(50)),
                         }
                     }
                 ]
@@ -67,9 +67,9 @@ public class MarginTest
                         Name  = "margin_px100_px10",
                         Style = new()
                         {
-                            Margin = new((Pixel)10),
+                            Margin = new(Unit.Px(10)),
                             Border = new(borderSize, 0, Color.Green * 0.8f),
-                            Size   = new((Pixel)100),
+                            Size   = new(Unit.Px(100)),
                         }
                     }
                 ]
@@ -88,9 +88,9 @@ public class MarginTest
                         Name  = "margin_px100_pc10",
                         Style = new()
                         {
-                            Margin = new((Percentage)10),
+                            Margin = new(Unit.Pc(10)),
                             Border = new(borderSize, 0, Color.Blue * 0.8f),
-                            Size   = new((Pixel)100),
+                            Size   = new(Unit.Px(100)),
                         }
                     }
                 ]
@@ -109,9 +109,9 @@ public class MarginTest
                         Name  = "margin_pc100_pc10",
                         Style = new()
                         {
-                            Margin = new((Percentage)10),
+                            Margin = new(Unit.Pc(10)),
                             Border = new(borderSize, 0, Color.Cyan * 0.8f),
-                            Size   = new((Percentage)100),
+                            Size   = new(Unit.Pc(100)),
                         }
                     }
                 ]

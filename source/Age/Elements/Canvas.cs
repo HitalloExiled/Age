@@ -15,7 +15,7 @@ public sealed class Canvas : Element
         this.Flags = NodeFlags.IgnoreUpdates;
         this.Style = new()
         {
-            // Padding = new((Pixel)PADDING),
+            // Padding = new(Unit.Px(PADDING)),
             Color = Color.White,
         };
     }
@@ -24,7 +24,7 @@ public sealed class Canvas : Element
     {
         if (this.Tree is RenderTree renderTree)
         {
-            this.Style.Size = new((Pixel)renderTree.Window.ClientSize.Width, (Pixel)renderTree.Window.ClientSize.Height);
+            this.Style.Size = new(Unit.Px(renderTree.Window.ClientSize.Width), Unit.Px(renderTree.Window.ClientSize.Height));
         }
     }
 

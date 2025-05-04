@@ -38,7 +38,7 @@ public class Editor : Node
             Name  = "Root",
             Style = new()
             {
-                Size   = new((Percentage)100),
+                Size   = new(Unit.Pc(100)),
                 Border = new(BORDER_SIZE, default, Color.Margenta),
             }
         };
@@ -49,7 +49,7 @@ public class Editor : Node
             Style = new()
             {
                 StackDirection = StackDirection.Vertical,
-                Size           = new((Percentage)100),
+                Size           = new(Unit.Pc(100)),
                 Border         = new(BORDER_SIZE, default, Color.Yellow),
             }
         };
@@ -59,7 +59,7 @@ public class Editor : Node
             Name  = "Header",
             Style = new()
             {
-                Size   = new((Percentage)100, null),
+                Size   = new(Unit.Pc(100), null),
                 Border = new(BORDER_SIZE, default, Color.Red),
             }
         };
@@ -69,7 +69,7 @@ public class Editor : Node
             Name  = "Content",
             Style = new()
             {
-                Size   = new((Percentage)100),
+                Size   = new(Unit.Pc(100)),
                 Border = new(BORDER_SIZE, default, Color.Green),
             }
         };

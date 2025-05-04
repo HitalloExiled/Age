@@ -27,7 +27,7 @@ public class BackgroundImageTest : Element
                         Size      = ImageSize.Fit(),
                         Position  = new(Unit.Pc(50)),
                     },
-                    Size            = new((Pixel)100, (Pixel)200),
+                    Size            = new(Unit.Px(100), Unit.Px(200)),
                     Border          = new(border, 0, Color.Red)
                 }
             },
@@ -42,7 +42,7 @@ public class BackgroundImageTest : Element
                         Size      = ImageSize.KeepAspect(),
                         Position  = new(Unit.Pc(0), Unit.Pc(50)),
                     },
-                    Size            = new((Pixel)100, (Pixel)200),
+                    Size            = new(Unit.Px(100), Unit.Px(200)),
                     Border          = new(border, 0, Color.Green)
                 }
             },
@@ -54,11 +54,11 @@ public class BackgroundImageTest : Element
                     BackgroundImage = new()
                     {
                         Uri    = uri,
-                        Size   = ImageSize.Size((Pixel)50),
+                        Size   = ImageSize.Size(Unit.Px(50)),
                         Repeat = ImageRepeat.NoRepeat,
                         Position = new(Unit.Px(25)),
                     },
-                    Size            = new((Pixel)100, (Pixel)200),
+                    Size            = new(Unit.Px(100), Unit.Px(200)),
                     Border          = new(border, 0, Color.Blue)
                 }
             },
@@ -66,12 +66,12 @@ public class BackgroundImageTest : Element
             {
                 Style = new Style
                 {
-                    //Margin          = new((Pixel)50),
+                    //Margin          = new(Unit.Px(50)),
                     BackgroundColor = Color.White,
                     BackgroundImage = new()
                     {
                         Uri       = uri,
-                        Size      = ImageSize.Size((Pixel)75),
+                        Size      = ImageSize.Size(Unit.Px(75)),
                         Repeat    = ImageRepeat.Repeat,
                         Position  = new(Unit.Pc(0), Unit.Pc(50)),
                     },
@@ -82,7 +82,7 @@ public class BackgroundImageTest : Element
                         Position = new(Unit.Pc(0), Unit.Pc(50)),
                         Scale    = new(1.25f, 0.75f),
                     },
-                    Size      = new((Pixel)150, (Pixel)200),
+                    Size      = new(Unit.Px(150), Unit.Px(200)),
                     Border    = new(border, 0, Color.Margenta)
                 }
             },
@@ -90,16 +90,16 @@ public class BackgroundImageTest : Element
             {
                 Style = new Style
                 {
-                    //Margin          = new((Pixel)50),
+                    //Margin          = new(Unit.Px(50)),
                     BackgroundColor = Color.White,
                     BackgroundImage = new()
                     {
                         Uri       = uri,
-                        Size      = ImageSize.Size((Pixel)75),
+                        Size      = ImageSize.Size(Unit.Px(75)),
                         Repeat    = ImageRepeat.RepeatX,
                         Position  = new(Unit.Pc(50)),
                     },
-                    Size            = new((Pixel)150, (Pixel)200),
+                    Size            = new(Unit.Px(150), Unit.Px(200)),
                     Border          = new(border, 0, Color.Yellow)
                 }
             },
@@ -107,16 +107,16 @@ public class BackgroundImageTest : Element
             {
                 Style = new Style
                 {
-                    //Margin          = new((Pixel)50),
+                    //Margin          = new(Unit.Px(50)),
                     BackgroundColor = Color.White,
                     BackgroundImage = new()
                     {
                         Uri       = uri,
-                        Size      = ImageSize.Size((Pixel)75),
+                        Size      = ImageSize.Size(Unit.Px(75)),
                         Repeat    = ImageRepeat.RepeatY,
                         Position  = new(Unit.Pc(50)),
                     },
-                    Size            = new((Pixel)150, (Pixel)200),
+                    Size            = new(Unit.Px(150), Unit.Px(200)),
                     Border          = new(border, 0, Color.Cyan)
                 }
             },
@@ -124,16 +124,16 @@ public class BackgroundImageTest : Element
             {
                 Style = new Style
                 {
-                    //Margin          = new((Pixel)50),
+                    //Margin          = new(Unit.Px(50)),
                     BackgroundColor = Color.White,
                     BackgroundImage = new()
                     {
                         Uri       = uri,
-                        Size      = ImageSize.Size((Pixel)75),
+                        Size      = ImageSize.Size(Unit.Px(75)),
                         Repeat    = ImageRepeat.NoRepeat,
                         Position  = new(Unit.Pc(50)),
                     },
-                    Size            = new((Pixel)150, (Pixel)200),
+                    Size            = new(Unit.Px(150), Unit.Px(200)),
                     Border          = new(border, 0, Color.Cyan)
                 }
             }

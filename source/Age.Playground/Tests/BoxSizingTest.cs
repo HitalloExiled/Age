@@ -26,7 +26,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.White),
-                Size   = new((Percentage)100),
+                Size   = new(Unit.Pc(100)),
             }
         };
 
@@ -36,7 +36,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border    = new(borderSize, 0, Color.Cyan),
-                Size      = new((Pixel)100, null),
+                Size      = new(Unit.Px(100), null),
                 BoxSizing = BoxSizing.Content,
             }
         };
@@ -47,7 +47,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.White),
-                Size   = new((Percentage)100),
+                Size   = new(Unit.Pc(100)),
             }
         };
 
@@ -57,7 +57,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border    = new(borderSize, 0, Color.Cyan),
-                Size      = new(null, (Pixel)100),
+                Size      = new(null, Unit.Px(100)),
                 BoxSizing = BoxSizing.Content,
             }
         };
@@ -68,7 +68,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.White),
-                Size   = new((Percentage)100),
+                Size   = new(Unit.Pc(100)),
             }
         };
 
@@ -88,7 +88,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.White),
-                Size   = new((Percentage)100),
+                Size   = new(Unit.Pc(100)),
             }
         };
 
@@ -98,7 +98,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border    = new(borderSize, 0, Color.Margenta),
-                Size      = new((Pixel)100, null),
+                Size      = new(Unit.Px(100), null),
                 BoxSizing = BoxSizing.Border,
             }
         };
@@ -109,7 +109,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.White),
-                Size   = new((Percentage)100),
+                Size   = new(Unit.Pc(100)),
             }
         };
 
@@ -119,7 +119,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border    = new(borderSize, 0, Color.Margenta),
-                Size      = new(null, (Pixel)100),
+                Size      = new(null, Unit.Px(100)),
                 BoxSizing = BoxSizing.Border,
             }
         };
@@ -130,7 +130,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.White),
-                Size   = new((Percentage)100),
+                Size   = new(Unit.Pc(100)),
             }
         };
 
@@ -140,7 +140,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border    = new(borderSize, 0, Color.Red),
-                Size      = new((Pixel)100),
+                Size      = new(Unit.Px(100)),
                 BoxSizing = BoxSizing.Content,
             }
         };
@@ -151,7 +151,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.Red * 0.9f),
-                Size   = new((Percentage)50),
+                Size   = new(Unit.Pc(50)),
             }
         };
 
@@ -161,7 +161,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.Red * 0.8f),
-                Size   = new((Percentage)50),
+                Size   = new(Unit.Pc(50)),
             }
         };
 
@@ -171,7 +171,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border    = new(borderSize, 0, Color.Green),
-                Size      = new((Pixel)100),
+                Size      = new(Unit.Px(100)),
                 BoxSizing = BoxSizing.Border,
             }
         };
@@ -182,7 +182,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.Green * 0.9f),
-                Size   = new((Percentage)50),
+                Size   = new(Unit.Pc(50)),
             }
         };
 
@@ -192,7 +192,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.Green * 0.8f),
-                Size   = new((Percentage)50),
+                Size   = new(Unit.Pc(50)),
             }
         };
 
@@ -203,7 +203,7 @@ public class BoxSizingTest
             {
                 Border         = new(borderSize, 0, Color.Red),
                 StackDirection = StackDirection.Vertical,
-                Size           = new((Pixel)100),
+                Size           = new(Unit.Px(100)),
                 BoxSizing      = BoxSizing.Content,
             }
         };
@@ -214,7 +214,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.Red * 0.9f),
-                Size   = new((Percentage)50),
+                Size   = new(Unit.Pc(50)),
             }
         };
 
@@ -224,7 +224,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.Red * 0.8f),
-                Size   = new((Percentage)50),
+                Size   = new(Unit.Pc(50)),
             }
         };
 
@@ -235,7 +235,7 @@ public class BoxSizingTest
             {
                 StackDirection = StackDirection.Vertical,
                 Border         = new(borderSize, 0, Color.Green),
-                Size           = new((Pixel)100),
+                Size           = new(Unit.Px(100)),
                 BoxSizing      = BoxSizing.Border,
             }
         };
@@ -246,7 +246,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.Green * 0.9f),
-                Size   = new((Percentage)50),
+                Size   = new(Unit.Pc(50)),
             }
         };
 
@@ -256,7 +256,7 @@ public class BoxSizingTest
             Style = new()
             {
                 Border = new(borderSize, 0, Color.Green * 0.8f),
-                Size   = new((Percentage)50),
+                Size   = new(Unit.Pc(50)),
             }
         };
 

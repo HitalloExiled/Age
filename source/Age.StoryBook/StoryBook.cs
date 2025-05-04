@@ -19,9 +19,9 @@ public sealed class StoryBook : Node
     {
         var buttonLinkStyle = new Style
         {
-            Size           = new((Percentage)100, null),
+            Size           = new(Unit.Pc(100), null),
             ItemsAlignment = ItemsAlignment.Center,
-            Margin         = new(null, (Pixel)2),
+            Margin         = new(null, Unit.Px(2)),
         };
 
         Button buttonLink;
@@ -38,12 +38,12 @@ public sealed class StoryBook : Node
                     Name  = "NavBar",
                     Style = new()
                     {
-                        Size                 = new((Pixel)200, (Percentage)100),
+                        Size                 = new(Unit.Px(200), Unit.Pc(100)),
                         Border               = new(1, 0, Color.Red),
                         StackDirection       = StackDirection.Vertical,
                         ContentJustification = ContentJustification.Start,
                         ItemsAlignment       = ItemsAlignment.Center,
-                        Padding              = new((Pixel)10),
+                        Padding              = new(Unit.Px(10)),
                     },
                     Children =
                     [
@@ -78,7 +78,7 @@ public sealed class StoryBook : Node
                     Name  = "Content",
                     Style = new()
                     {
-                        Size                 = new((Percentage)100),
+                        Size                 = new(Unit.Pc(100)),
                         Border               = new(1, 0, Color.Green),
                         ContentJustification = ContentJustification.Center,
                         StackDirection       = StackDirection.Vertical,
@@ -90,10 +90,10 @@ public sealed class StoryBook : Node
                             Name = "Header",
                             Style = new()
                             {
-                                Size            = new((Percentage)100, null),
+                                Size            = new(Unit.Pc(100), null),
                                 Border          = new(1, 0, Color.Blue),
                                 BackgroundColor = Color.White.WithAlpha(0.2f),
-                                Padding         = new(null, (Pixel)10),
+                                Padding         = new(null, Unit.Px(10)),
                                 StackDirection  = StackDirection.Vertical,
                             },
                             Children =
@@ -117,7 +117,7 @@ public sealed class StoryBook : Node
                             Name  = "Outlet",
                             Style = new()
                             {
-                                Size   = new((Percentage)100),
+                                Size   = new(Unit.Pc(100)),
                                 Border = new(1, 0, Color.Green),
                             },
                         }
