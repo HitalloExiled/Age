@@ -73,17 +73,11 @@ public class BackgroundImageTest : Element
                         Uri       = uri,
                         Size      = ImageSize.Size(Unit.Px(75)),
                         Repeat    = ImageRepeat.Repeat,
-                        Position  = new(Unit.Pc(0), Unit.Pc(50)),
+                        Position  = new(Unit.Pc(50)),
                     },
-                    TransformOrigin = new(Unit.Pc(100), Unit.Pc(100)),
-                    Transform       = new()
-                    {
-                        Rotation = Angle.DegreesToRadians(-5f),
-                        Position = new(Unit.Pc(0), Unit.Pc(50)),
-                        Scale    = new(1.25f, 0.75f),
-                    },
-                    Size      = new(Unit.Px(150), Unit.Px(200)),
-                    Border    = new(border, 0, Color.Margenta)
+                    Transforms = [TransformOp.Rotate(Angle.DegreesToRadians(45f))],
+                    Size       = new(Unit.Px(150), Unit.Px(200)),
+                    Border     = new(border, 0, Color.Margenta)
                 }
             },
             new FlexBox

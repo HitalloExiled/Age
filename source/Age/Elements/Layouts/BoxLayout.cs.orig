@@ -175,7 +175,12 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
                 for (var i = 0; i < style.Transforms.Length; i++)
                 {
+<<<<<<< Updated upstream
+                    positionX = Unit.Resolve(style.Transform.Position.Value.X, boundings.Width, fontSize);
+                    positionY = Unit.Resolve(style.Transform.Position.Value.Y, boundings.Height, fontSize);
+=======
                     transform *= TransformOp.Resolve(in style.Transforms[i], boundings, fontSize);
+>>>>>>> Stashed changes
                 }
 
                 var x = Unit.Resolve(transformOrigin.X, boundings.Width, fontSize);

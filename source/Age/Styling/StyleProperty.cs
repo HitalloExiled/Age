@@ -29,10 +29,10 @@ public enum StyleProperty
     Stack                = 1 << 22,
     TextAlignment        = 1 << 23,
     TextSelection        = 1 << 24,
-    Transform            = 1 << 25,
+    Transforms            = 1 << 25,
     TransformOrigin      = 1 << 26,
 
-    All = Alignment | BackgroundColor | BackgroundImage | Baseline | Border | BoxSizing | Color | ContentJustification | Cursor | FontFamily | FontFeature | FontSize | FontWeight | Hidden | ItemsAlignment | Margin | MaxSize | MinSize | Overflow | Padding | Positioning | Size | Stack | TextAlignment | TextSelection | Transform | TransformOrigin
+    All = Alignment | BackgroundColor | BackgroundImage | Baseline | Border | BoxSizing | Color | ContentJustification | Cursor | FontFamily | FontFeature | FontSize | FontWeight | Hidden | ItemsAlignment | Margin | MaxSize | MinSize | Overflow | Padding | Positioning | Size | Stack | TextAlignment | TextSelection | Transforms | TransformOrigin
 }
 
 

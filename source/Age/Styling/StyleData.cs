@@ -22,6 +22,9 @@ internal struct StyleData
 
     /// <see cref="StyleProperty.Padding">
     public StyleRectEdges? Padding;
+
+    /// <see cref="StyleProperty.Transforms">
+    public TransformOp[]? Transforms;
     #endregion
 
     #region 4-bytes
@@ -43,9 +46,6 @@ internal struct StyleData
 
     /// <see cref="StyleProperty.Size">
     public SizeUnit? Size;
-
-    /// <see cref="StyleProperty.Transform">
-    public TransformUnit? Transform;
 
     /// <see cref="StyleProperty.TransformOrigin">
     public PointUnit? TransformOrigin;
@@ -125,7 +125,7 @@ internal struct StyleData
         target.Stack                = left.Stack                ?? right.Stack;
         target.TextAlignment        = left.TextAlignment        ?? right.TextAlignment;
         target.TextSelection        = left.TextSelection        ?? right.TextSelection;
-        target.Transform            = left.Transform            ?? right.Transform;
+        target.Transforms            = left.Transforms            ?? right.Transforms;
         target.TransformOrigin      = left.TransformOrigin      ?? right.TransformOrigin;
     }
 
@@ -158,7 +158,7 @@ internal struct StyleData
         check(left.Stack                == right.Stack,                StyleProperty.Stack);
         check(left.TextAlignment        == right.TextAlignment,        StyleProperty.TextAlignment);
         check(left.TextSelection        == right.TextSelection,        StyleProperty.TextSelection);
-        check(left.Transform            == right.Transform,            StyleProperty.Transform);
+        check(left.Transforms            == right.Transforms,            StyleProperty.Transforms);
         check(left.TransformOrigin      == right.TransformOrigin,      StyleProperty.TransformOrigin);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -223,7 +223,7 @@ internal struct StyleData
         appendProperty(nameof(StyleProperty.Stack),                in this.Stack);
         appendProperty(nameof(StyleProperty.TextAlignment),        in this.TextAlignment);
         appendProperty(nameof(StyleProperty.TextSelection),        in this.TextSelection);
-        appendProperty(nameof(StyleProperty.Transform),            in this.Transform);
+        appendProperty(nameof(StyleProperty.Transforms),            in this.Transforms);
         appendProperty(nameof(StyleProperty.TransformOrigin),      in this.TransformOrigin);
 
         if (builder.Length > 0)
@@ -263,7 +263,7 @@ internal struct StyleData
             case StyleProperty.Stack:                this.Stack                = data.Stack;                break;
             case StyleProperty.TextAlignment:        this.TextAlignment        = data.TextAlignment;        break;
             case StyleProperty.TextSelection:        this.TextSelection        = data.TextSelection;        break;
-            case StyleProperty.Transform:            this.Transform            = data.Transform;            break;
+            case StyleProperty.Transforms:            this.Transforms            = data.Transforms;            break;
             case StyleProperty.TransformOrigin:      this.TransformOrigin      = data.TransformOrigin;      break;
         }
     }

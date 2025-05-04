@@ -2,13 +2,13 @@ namespace Age.Styling;
 
 public record struct PointUnit
 {
-    public Unit? X;
-    public Unit? Y;
+    public Unit X;
+    public Unit Y;
 
-    public PointUnit(Unit? value) : this(value, value)
+    public PointUnit(Unit value) : this(value, value)
     { }
 
-    public PointUnit(Unit? x, Unit? y)
+    public PointUnit(Unit x, Unit y)
     {
         this.X = x;
         this.Y = y;
