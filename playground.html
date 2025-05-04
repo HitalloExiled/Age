@@ -74,24 +74,25 @@
         }
 
         .box {
-            width:  400px;
-            height: 400px;
+            width:  200px;
+            height: 200px;
             border: solid 1px red;
         }
 
         .cat {
-            width:  400px;
-            height: 400px;
+            width:  200px;
+            height: 200px;
             border: solid 1px blue;
             background-image:  url('https://i.etsystatic.com/45893541/r/il/545bc4/6453954482/il_794xN.6453954482_q062.jpg');
             background-size:   100px;
-            background-repeat: no-repeat;
+            background-repeat: repeat;
             background-position: 50%;
-            transform-origin: 100% 0;
+            transform-origin: 0% 0;
             transform:
                 translate(0, 50%)
                 rotate(-5deg)
-                scale(0.5, 2);
+                scale(0.5, 1)
+                matrix(1.2, 0.5, 0.5, 1.2, 10, 20);
         }
     </style>
 </head>

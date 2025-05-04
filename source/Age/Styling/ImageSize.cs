@@ -1,12 +1,5 @@
 namespace Age.Styling;
 
-public enum ImageSizeKind
-{
-    Fit,
-    KeepAspect,
-    Size,
-}
-
 public readonly struct ImageSize
 {
     public readonly ImageSizeKind Kind;

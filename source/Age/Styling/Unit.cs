@@ -6,30 +6,30 @@ namespace Age.Styling;
 public partial record struct Unit
 {
     [FieldOffset(0)]
-    internal Kind kind;
+    internal UnitKind Kind;
 
     [FieldOffset(4)]
-    internal Data data;
+    internal UnitData Data;
 
     public static Unit Em(float em) =>
         new()
         {
-            kind = Kind.Em,
-            data = new() { Em = em },
+            Kind = UnitKind.Em,
+            Data = new() { Em = em },
         };
 
     public static Unit Pc(float percentage) =>
         new()
         {
-            kind = Kind.Percentage,
-            data = new() { Percentage = percentage / 100 },
+            Kind = UnitKind.Percentage,
+            Data = new() { Percentage = percentage / 100 },
         };
 
     public static Unit Px(int pixel) =>
         new()
         {
-            kind = Kind.Pixel,
-            data = new() { Pixel = pixel },
+            Kind = UnitKind.Pixel,
+            Data = new() { Pixel = pixel },
         };
 
     public static Unit Px(uint pixel) =>
@@ -42,20 +42,20 @@ public partial record struct Unit
             return 0;
         }
 
-        return unit.Value.kind switch
+        return unit.Value.Kind switch
         {
-            Kind.Pixel      => unit.Value.data.Pixel,
-            Kind.Percentage => unit.Value.data.Percentage * size,
-            Kind.Em         => unit.Value.data.Em * fontSize,
-            _ => throw new NotSupportedException(),
+            UnitKind.Pixel      => unit.Value.Data.Pixel,
+            UnitKind.Percentage => unit.Value.Data.Percentage * size,
+            UnitKind.Em         => unit.Value.Data.Em * fontSize,
+            _               => unit.Value.Data.Pixel,
         };
     }
 
     public readonly bool TryGetEm(out float em)
     {
-        if (this.kind == Kind.Em)
+        if (this.Kind == UnitKind.Em)
         {
-            em = this.data.Em;
+            em = this.Data.Em;
 
             return true;
         }
@@ -67,9 +67,9 @@ public partial record struct Unit
 
     public readonly bool TryGetPercentage(out float percentage)
     {
-        if (this.kind == Kind.Percentage)
+        if (this.Kind == UnitKind.Percentage)
         {
-            percentage = this.data.Percentage;
+            percentage = this.Data.Percentage;
 
             return true;
         }
@@ -81,9 +81,9 @@ public partial record struct Unit
 
     public readonly bool TryGetPixel(out int pixel)
     {
-        if (this.kind == Kind.Pixel)
+        if (this.Kind == UnitKind.Pixel)
         {
-            pixel = this.data.Pixel;
+            pixel = this.Data.Pixel;
 
             return true;
         }
@@ -94,11 +94,11 @@ public partial record struct Unit
     }
 
     public override readonly string ToString() =>
-        this.kind switch
+        this.Kind switch
         {
-            Kind.Em         => $"{this.data.Em}em",
-            Kind.Pixel      => $"{this.data.Pixel}px",
-            Kind.Percentage => $"{this.data.Percentage * 100}%",
+            UnitKind.Em         => $"{this.Data.Em}em",
+            UnitKind.Pixel      => $"{this.Data.Pixel}px",
+            UnitKind.Percentage => $"{this.Data.Percentage * 100}%",
             _ => "",
         };
 }

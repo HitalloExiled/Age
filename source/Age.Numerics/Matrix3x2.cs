@@ -110,6 +110,16 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public readonly bool IsOrthonormalized => this.M11 * this.M21 + this.M12 * this.M22 == T.Zero;
 
+    public Matrix3x2(T m11, T m12, T m21, T m22, T m31, T m32)
+    {
+        this.M11 = m11;
+        this.M12 = m12;
+        this.M21 = m21;
+        this.M22 = m22;
+        this.M31 = m31;
+        this.M32 = m32;
+    }
+
     public Matrix3x2(in Vector2<T> column1, in Vector2<T> column2, in Vector2<T> column3)
     {
         this.M11 = column1.X;

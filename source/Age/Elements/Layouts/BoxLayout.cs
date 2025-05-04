@@ -76,7 +76,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             static void check(Unit? unit, ref uint value)
             {
-                if (unit?.kind == Unit.Kind.Percentage)
+                if (unit?.Kind == UnitKind.Percentage)
                 {
                     value = 0;
                 }
@@ -171,17 +171,17 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                 var fontSize        = GetFontSize(style);
                 var transformOrigin = style.TransformOrigin ?? new(Unit.Pc(50));
 
-                var transform = Transform2D.Identity;
-
-                for (var i = 0; i < style.Transforms.Length; i++)
-                {
-                    transform *= TransformOp.Resolve(in style.Transforms[i], boundings, fontSize);
-                }
-
                 var x = Unit.Resolve(transformOrigin.X, boundings.Width, fontSize);
                 var y = Unit.Resolve(transformOrigin.Y, boundings.Height, fontSize);
 
                 var origin = Transform2D.CreateTranslated(-x, y);
+
+                var transform = Transform2D.Identity;
+
+                for (var i = style.Transforms.Length - 1; i >= 0; i--)
+                {
+                    transform *= TransformOp.Resolve(in style.Transforms[i], boundings, fontSize);
+                }
 
                 return origin * transform * origin.Inverse() * base.Transform;
             }
@@ -346,7 +346,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsAnyRelative(Unit? abs, Unit? min, Unit? max) =>
-        abs?.kind == Unit.Kind.Percentage || min?.kind == Unit.Kind.Percentage || max?.kind == Unit.Kind.Percentage;
+        abs?.Kind == UnitKind.Percentage || min?.Kind == UnitKind.Percentage || max?.Kind == UnitKind.Percentage;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsAllNull(Unit? abs, Unit? min, Unit? max) =>
@@ -358,10 +358,10 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool HasRelativeEdges(StyleRectEdges? edges) =>
-           edges?.Top?.kind    == Unit.Kind.Percentage
-        || edges?.Right?.kind  == Unit.Kind.Percentage
-        || edges?.Bottom?.kind == Unit.Kind.Percentage
-        || edges?.Left?.kind   == Unit.Kind.Percentage;
+           edges?.Top?.Kind    == UnitKind.Percentage
+        || edges?.Right?.Kind  == UnitKind.Percentage
+        || edges?.Bottom?.Kind == UnitKind.Percentage
+        || edges?.Left?.Kind   == UnitKind.Percentage;
 
     private static void PropageteStencilLayer(Element target, StencilLayer? stencilLayer)
     {

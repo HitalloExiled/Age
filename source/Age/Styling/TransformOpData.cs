@@ -4,7 +4,7 @@ using Age.Numerics;
 namespace Age.Styling;
 
 [StructLayout(LayoutKind.Explicit)]
-internal struct TransformOpValue
+internal struct TransformOpData
 {
     [FieldOffset(0)] public PointUnit        Translation;
     [FieldOffset(0)] public float            Rotation;

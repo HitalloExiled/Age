@@ -18,118 +18,137 @@ public class BackgroundImageTest : Element
         [
             new FlexBox
             {
-                Style = new Style
-                {
-                    BackgroundColor = Color.White,
-                    BackgroundImage = new()
-                    {
-                        Uri       = uri,
-                        Size      = ImageSize.Fit(),
-                        Position  = new(Unit.Pc(50)),
-                    },
-                    Size            = new(Unit.Px(100), Unit.Px(200)),
-                    Border          = new(border, 0, Color.Red)
-                }
+               Style = new Style
+               {
+                   BackgroundColor = Color.White,
+                   BackgroundImage = new()
+                   {
+                       Uri       = uri,
+                       Size      = ImageSize.Fit(),
+                       Position  = new(Unit.Pc(50)),
+                   },
+                   Size            = new(Unit.Px(100), Unit.Px(200)),
+                   Border          = new(border, 0, Color.Red)
+               }
+            },
+            new FlexBox
+            {
+               Style = new Style
+               {
+                   BackgroundColor = Color.White,
+                   BackgroundImage = new()
+                   {
+                       Uri       = uri,
+                       Size      = ImageSize.KeepAspect(),
+                       Position  = new(Unit.Pc(0), Unit.Pc(50)),
+                   },
+                   Size            = new(Unit.Px(100), Unit.Px(200)),
+                   Border          = new(border, 0, Color.Green)
+               }
+            },
+            new FlexBox
+            {
+               Style = new Style
+               {
+                   BackgroundColor = Color.White,
+                   BackgroundImage = new()
+                   {
+                       Uri    = uri,
+                       Size   = ImageSize.Size(Unit.Px(50)),
+                       Repeat = ImageRepeat.NoRepeat,
+                       Position = new(Unit.Px(25)),
+                   },
+                   Size            = new(Unit.Px(100), Unit.Px(200)),
+                   Border          = new(border, 0, Color.Blue)
+               }
             },
             new FlexBox
             {
                 Style = new Style
                 {
-                    BackgroundColor = Color.White,
-                    BackgroundImage = new()
+                    Size = new(Unit.Px(200), Unit.Px(200)),
+                    Border = new(1, 0, Color.Red),
+                },
+                Children =
+                [
+                    new FlexBox
                     {
-                        Uri       = uri,
-                        Size      = ImageSize.KeepAspect(),
-                        Position  = new(Unit.Pc(0), Unit.Pc(50)),
+                        Style = new Style
+                        {
+                            //Margin          = new(Unit.Px(50)),
+
+                            BackgroundColor = Color.White,
+                            BackgroundImage = new()
+                            {
+                                Uri       = uri,
+                                Size      = ImageSize.Size(Unit.Px(100)),
+                                Repeat    = ImageRepeat.Repeat,
+                                Position  = new(Unit.Pc(50)),
+                            },
+                            TransformOrigin = new(Unit.Pc(0), default),
+                            Transforms =
+                            [
+                                TransformOp.Translate(default, Unit.Pc(50)),
+                                TransformOp.Rotate(Angle.DegreesToRadians(-5f)),
+                                TransformOp.Scale(0.5f, 1),
+                                TransformOp.Matrix(1.2f, 0.5f, 0.5f, 1.2f, 10, 20),
+                            ],
+                            Size   = new(Unit.Px(200), Unit.Px(200)),
+                            //Border = new(0, 0, Color.Margenta)
+                        }
                     },
-                    Size            = new(Unit.Px(100), Unit.Px(200)),
-                    Border          = new(border, 0, Color.Green)
-                }
+                ]
             },
             new FlexBox
             {
-                Style = new Style
-                {
-                    BackgroundColor = Color.White,
-                    BackgroundImage = new()
-                    {
-                        Uri    = uri,
-                        Size   = ImageSize.Size(Unit.Px(50)),
-                        Repeat = ImageRepeat.NoRepeat,
-                        Position = new(Unit.Px(25)),
-                    },
-                    Size            = new(Unit.Px(100), Unit.Px(200)),
-                    Border          = new(border, 0, Color.Blue)
-                }
+               Style = new Style
+               {
+                   //Margin          = new(Unit.Px(50)),
+                   BackgroundColor = Color.White,
+                   BackgroundImage = new()
+                   {
+                       Uri       = uri,
+                       Size      = ImageSize.Size(Unit.Px(75)),
+                       Repeat    = ImageRepeat.RepeatX,
+                       Position  = new(Unit.Pc(50)),
+                   },
+                   Size            = new(Unit.Px(150), Unit.Px(200)),
+                   Border          = new(border, 0, Color.Yellow)
+               }
             },
             new FlexBox
             {
-                Style = new Style
-                {
-                    //Margin          = new(Unit.Px(50)),
-                    BackgroundColor = Color.White,
-                    BackgroundImage = new()
-                    {
-                        Uri       = uri,
-                        Size      = ImageSize.Size(Unit.Px(75)),
-                        Repeat    = ImageRepeat.Repeat,
-                        Position  = new(Unit.Pc(50)),
-                    },
-                    Transforms = [TransformOp.Rotate(Angle.DegreesToRadians(45f))],
-                    Size       = new(Unit.Px(150), Unit.Px(200)),
-                    Border     = new(border, 0, Color.Margenta)
-                }
+               Style = new Style
+               {
+                   //Margin          = new(Unit.Px(50)),
+                   BackgroundColor = Color.White,
+                   BackgroundImage = new()
+                   {
+                       Uri       = uri,
+                       Size      = ImageSize.Size(Unit.Px(75)),
+                       Repeat    = ImageRepeat.RepeatY,
+                       Position  = new(Unit.Pc(50)),
+                   },
+                   Size            = new(Unit.Px(150), Unit.Px(200)),
+                   Border          = new(border, 0, Color.Cyan)
+               }
             },
             new FlexBox
             {
-                Style = new Style
-                {
-                    //Margin          = new(Unit.Px(50)),
-                    BackgroundColor = Color.White,
-                    BackgroundImage = new()
-                    {
-                        Uri       = uri,
-                        Size      = ImageSize.Size(Unit.Px(75)),
-                        Repeat    = ImageRepeat.RepeatX,
-                        Position  = new(Unit.Pc(50)),
-                    },
-                    Size            = new(Unit.Px(150), Unit.Px(200)),
-                    Border          = new(border, 0, Color.Yellow)
-                }
-            },
-            new FlexBox
-            {
-                Style = new Style
-                {
-                    //Margin          = new(Unit.Px(50)),
-                    BackgroundColor = Color.White,
-                    BackgroundImage = new()
-                    {
-                        Uri       = uri,
-                        Size      = ImageSize.Size(Unit.Px(75)),
-                        Repeat    = ImageRepeat.RepeatY,
-                        Position  = new(Unit.Pc(50)),
-                    },
-                    Size            = new(Unit.Px(150), Unit.Px(200)),
-                    Border          = new(border, 0, Color.Cyan)
-                }
-            },
-            new FlexBox
-            {
-                Style = new Style
-                {
-                    //Margin          = new(Unit.Px(50)),
-                    BackgroundColor = Color.White,
-                    BackgroundImage = new()
-                    {
-                        Uri       = uri,
-                        Size      = ImageSize.Size(Unit.Px(75)),
-                        Repeat    = ImageRepeat.NoRepeat,
-                        Position  = new(Unit.Pc(50)),
-                    },
-                    Size            = new(Unit.Px(150), Unit.Px(200)),
-                    Border          = new(border, 0, Color.Cyan)
-                }
+               Style = new Style
+               {
+                   //Margin          = new(Unit.Px(50)),
+                   BackgroundColor = Color.White,
+                   BackgroundImage = new()
+                   {
+                       Uri       = uri,
+                       Size      = ImageSize.Size(Unit.Px(75)),
+                       Repeat    = ImageRepeat.NoRepeat,
+                       Position  = new(Unit.Pc(50)),
+                   },
+                   Size            = new(Unit.Px(150), Unit.Px(200)),
+                   Border          = new(border, 0, Color.Cyan)
+               }
             }
         ];
     }
