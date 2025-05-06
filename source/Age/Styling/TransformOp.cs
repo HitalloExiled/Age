@@ -35,7 +35,7 @@ public partial struct TransformOp
     public static TransformOp Translate(PointUnit translation) =>
         new()
         {
-            Kind  = TransformOpKind.Translation,
+            Kind = TransformOpKind.Translation,
             Data = new() { Translation = translation },
         };
 
@@ -45,14 +45,14 @@ public partial struct TransformOp
     public static TransformOp Rotate(float rotation) =>
         new()
         {
-            Kind  = TransformOpKind.Rotation,
+            Kind = TransformOpKind.Rotation,
             Data = new() { Rotation = rotation },
         };
 
     public static TransformOp Scale(Point<float> scale) =>
         new()
         {
-            Kind  = TransformOpKind.Scale,
+            Kind = TransformOpKind.Scale,
             Data = new() { Scale = scale },
         };
 
@@ -75,14 +75,14 @@ public partial struct TransformOp
     public static TransformOp Matrix(Matrix3x2<float> matrix) =>
         new()
         {
-            Kind  = TransformOpKind.Matrix,
+            Kind = TransformOpKind.Matrix,
             Data = new() { Matrix = matrix },
         };
 
     public static TransformOp Matrix(float m11, float m12, float m21, float m22, float m31, float m32) =>
         new()
         {
-            Kind  = TransformOpKind.Matrix,
+            Kind = TransformOpKind.Matrix,
             Data = new() { Matrix = new(m11, -m12, -m21, m22, m31, -m32) },
         };
 

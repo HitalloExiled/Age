@@ -2,6 +2,6 @@ namespace Age.Extensions;
 
 public static partial class Extension
 {
-    public static float ClampSubtract(this float value, float other) =>
+    public static int ClampSubtract(this int value, int other) =>
         value > other ? value - other : 0;
 }
