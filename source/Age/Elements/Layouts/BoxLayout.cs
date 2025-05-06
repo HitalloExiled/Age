@@ -31,8 +31,6 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
     private readonly List<Element> dependents = [];
 
     private RectEdges     border;
-    private bool          canScrollX;
-    private bool          canScrollY;
     private bool          childsChanged;
     private Size<uint>    content;
     private Dependency    contentDependencies = Dependency.Size;
@@ -42,7 +40,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
     private StencilLayer? ownStencilLayer;
     private RectEdges     padding;
     private Dependency    parentDependencies;
-    private uint          renderableNodesCount;
+    private ushort        renderableNodesCount;
     private Size<uint>    size;
     private Size<uint>    staticContent;
 
@@ -74,7 +72,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             );
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static void check(Unit? unit, ref uint value)
+            static void check(Unit? unit, ref ushort value)
             {
                 if (unit?.Kind == UnitKind.Percentage)
                 {
@@ -105,16 +103,6 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             this.size.Height + this.padding.Vertical
         );
 
-    private bool IsDrawable
-    {
-        get
-        {
-            var style = this.ComputedStyle;
-
-            return style.Border != null || style.BackgroundColor != null || style.BackgroundImage != null;
-        }
-    }
-
     protected override StencilLayer? ContentStencilLayer => this.ownStencilLayer ?? this.StencilLayer;
 
     public uint FontSize => GetFontSize(this.ComputedStyle);
@@ -140,8 +128,8 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
     }
 
     public RectEdges  Border     => this.border;
-    public bool       CanScrollX => this.canScrollY;
-    public bool       CanScrollY => this.canScrollX;
+    public bool       CanScrollX => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollX) == true;
+    public bool       CanScrollY => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollY) == true;
     public Size<uint> Content    => this.content;
     public RectEdges  Margin     => this.margin;
     public RectEdges  Padding    => this.padding;
@@ -231,12 +219,12 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
     {
         if (stylePadding?.Left?.TryGetPercentage(out var left) == true)
         {
-            padding.Left = (uint)(reference * left);
+            padding.Left = (ushort)(reference * left);
         }
 
         if (stylePadding?.Right?.TryGetPercentage(out var right) == true)
         {
-            padding.Right = (uint)(reference * right);
+            padding.Right = (ushort)(reference * right);
         }
     }
 
@@ -244,12 +232,12 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
     {
         if (stylePadding?.Top?.TryGetPercentage(out var top) == true)
         {
-            padding.Top = (uint)(reference * top);
+            padding.Top = (ushort)(reference * top);
         }
 
         if (stylePadding?.Bottom?.TryGetPercentage(out var bottom) == true)
         {
-            padding.Bottom = (uint)(reference * bottom);
+            padding.Bottom = (ushort)(reference * bottom);
         }
     }
 
@@ -259,12 +247,12 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         if (styleMargin?.Left?.TryGetPercentage(out var left) == true)
         {
-            horizontal += margin.Left = (uint)(reference * left);
+            horizontal += margin.Left = (ushort)(reference * left);
         }
 
         if (styleMargin?.Right?.TryGetPercentage(out var right) == true)
         {
-            horizontal += margin.Right = (uint)(reference * right);
+            horizontal += margin.Right = (ushort)(reference * right);
         }
 
         if (horizontal > 0)
@@ -286,12 +274,12 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         if (styleMargin?.Top?.TryGetPercentage(out var top) == true)
         {
-            vertical += margin.Top = (uint)(reference * top);
+            vertical += margin.Top = (ushort)(reference * top);
         }
 
         if (styleMargin?.Bottom?.TryGetPercentage(out var bottom) == true)
         {
-            vertical += margin.Bottom = (uint)(reference * bottom);
+            vertical += margin.Bottom = (ushort)(reference * bottom);
         }
 
         if (vertical > 0)
@@ -582,38 +570,38 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         if (left?.TryGetPixel(out var leftPixel) == true)
         {
-            rectEdges.Left = (uint)leftPixel;
+            rectEdges.Left = (ushort)leftPixel;
         }
         else if (left?.TryGetEm(out var leftEm) == true)
         {
-            rectEdges.Left = (uint)(leftEm * fontSize);
+            rectEdges.Left = (ushort)(leftEm * fontSize);
         }
 
         if (right?.TryGetPixel(out var rightPixel) == true)
         {
-            rectEdges.Right = (uint)rightPixel;
+            rectEdges.Right = (ushort)rightPixel;
         }
         else if (right?.TryGetEm(out var rightEm) == true)
         {
-            rectEdges.Right = (uint)(rightEm * fontSize);
+            rectEdges.Right = (ushort)(rightEm * fontSize);
         }
 
         if (top?.TryGetPixel(out var topPixel) == true)
         {
-            rectEdges.Top = (uint)topPixel;
+            rectEdges.Top = (ushort)topPixel;
         }
         else if (top?.TryGetEm(out var topEm) == true)
         {
-            rectEdges.Top = (uint)(topEm * fontSize);
+            rectEdges.Top = (ushort)(topEm * fontSize);
         }
 
         if (bottom?.TryGetPixel(out var bottomPixel) == true)
         {
-            rectEdges.Bottom = (uint)bottomPixel;
+            rectEdges.Bottom = (ushort)bottomPixel;
         }
         else if (bottom?.TryGetEm(out var bottomEm) == true)
         {
-            rectEdges.Bottom = (uint)(bottomEm * fontSize);
+            rectEdges.Bottom = (ushort)(bottomEm * fontSize);
         }
     }
 
@@ -929,7 +917,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                     || direction == StackDirection.Vertical && alignment.Value.HasAnyFlag(Alignment.Start | Alignment.Center | Alignment.End)
                 );
 
-            baseline += (int)(element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top);
+            baseline += element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top;
         }
 
         if (!hasAlignment && baseline > this.BaseLine)
@@ -1225,7 +1213,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             if (child is Element element)
             {
                 margin         = element.Layout.margin;
-                contentOffsetY = element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top;
+                contentOffsetY = (uint)(element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top);
                 childBoundings = element.Layout.BoundingsWithMargin;
                 alignmentType  = element.Layout.ComputedStyle.Alignment ?? Alignment.None;
             }
@@ -1364,7 +1352,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
     {
         var layoutCommandBox = this.GetLayoutCommandBox();
 
-        if (this.IsDrawable)
+        if (style.Border != null || style.BackgroundColor != null || style.BackgroundImage != null)
         {
             layoutCommandBox.Size            = this.Boundings.Cast<float>();
             layoutCommandBox.Border          = style.Border ?? default(Shaders.CanvasShader.Border);
@@ -1535,10 +1523,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         if (property.HasFlags(StyleProperty.Overflow))
         {
-            this.canScrollX = style.Overflow?.HasFlags(Overflow.ScrollX) == true;
-            this.canScrollY = style.Overflow?.HasFlags(Overflow.ScrollY) == true;
-
-            var currentIsScrollable = (this.canScrollX || this.canScrollY) && this.contentDependencies != (Dependency.Width | Dependency.Height);
+            var currentIsScrollable = (style.Overflow?.HasFlags(Overflow.ScrollX) == true || style.Overflow?.HasFlags(Overflow.ScrollY) == true) && this.contentDependencies != (Dependency.Width | Dependency.Height);
 
             if (currentIsScrollable != this.IsScrollable)
             {

@@ -14,7 +14,7 @@ public record Border
 
     public Border() { }
 
-    public Border(uint thickness, uint radius, in Color color)
+    public Border(ushort thickness, ushort radius, in Color color)
     {
         this.Top    = new(thickness, color);
         this.Right  = new(thickness, color);
@@ -22,6 +22,9 @@ public record Border
         this.Left   = new(thickness, color);
         this.Radius = new(radius);
     }
+
+    public Border(uint thickness, uint radius, in Color color) : this((ushort)thickness, (ushort)radius, color)
+    { }
 
     public Border(in BorderSide horizontal, in BorderSide vertical, in BorderRadius borderRadius)
     {
@@ -32,7 +35,7 @@ public record Border
         this.Radius = borderRadius;
     }
 
-    public Border(in BorderSide horizontal, in BorderSide vertical, uint radius = 0) : this(horizontal, vertical, new BorderRadius(radius))
+    public Border(in BorderSide horizontal, in BorderSide vertical, ushort radius = 0) : this(horizontal, vertical, new BorderRadius(radius))
     { }
 
     public static implicit operator CanvasShader.Border(in Border value) =>
