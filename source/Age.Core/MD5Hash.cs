@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -6,7 +5,6 @@ using System.Security.Cryptography;
 namespace Age.Core;
 
 [InlineArray(SIZE)]
-[DebuggerDisplay("{ToString()}")]
 public struct MD5Hash
 {
     private const int SIZE = 16;
@@ -30,6 +28,9 @@ public struct MD5Hash
     public unsafe Span<byte> AsSpan() =>
         MemoryMarshal.CreateSpan(ref this.element, SIZE);
 
+    public readonly unsafe ReadOnlySpan<byte> AsReadOnlySpan() =>
+        MemoryMarshal.CreateReadOnlySpan(in this.element, SIZE);
+
     public bool Equals(MD5Hash other) =>
         this.AsSpan().SequenceEqual(other);
 
@@ -46,7 +47,7 @@ public struct MD5Hash
     }
 
     public override readonly string ToString() =>
-        Convert.ToHexStringLower(this);
+        Convert.ToHexStringLower(this.AsReadOnlySpan());
 
     public static bool operator ==(MD5Hash left, MD5Hash right) => left.Equals(right);
 

@@ -50,7 +50,7 @@ public sealed class UniformSet : Resource
         return poolKey;
     }
 
-    protected override void Disposed() =>
+    protected override void OnDisposed() =>
         this.DescriptorPool.FreeDescriptorSets(this.DescriptorSets);
 
     public unsafe void Update(scoped ReadOnlySpan<Uniform> uniforms)
@@ -66,8 +66,8 @@ public sealed class UniformSet : Resource
                 {
                     var descriptorImageInfo = new VkDescriptorImageInfo
                     {
-                        Sampler     = combinedImageSampler.Texture.Sampler.Value.Handle,
-                        ImageView   = combinedImageSampler.Texture.ImageView.Handle,
+                        Sampler     = combinedImageSampler.Sampler.Handle,
+                        ImageView   = combinedImageSampler.ImageView.Handle,
                         ImageLayout = combinedImageSampler.ImageLayout,
                     };
 

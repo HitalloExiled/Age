@@ -27,7 +27,7 @@ public sealed class Buffer(VkBuffer instance) : Resource<VkBuffer>
         VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
     }
 
-    protected override void Disposed()
+    protected override void OnDisposed()
     {
         this.Allocation.Dispose();
         this.Instance.Dispose();

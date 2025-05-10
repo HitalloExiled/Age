@@ -2,81 +2,60 @@ using System.Runtime.InteropServices;
 
 namespace Age.Styling;
 
-public enum UnitKind
-{
-    Pixel      = 1,
-    Percentage = 2,
-    Em         = 3,
-}
-
-public readonly record struct Em(float Value)
-{
-    public override readonly string ToString() => $"{this.Value}em";
-
-    public static explicit operator Em(float value) => new(value);
-    public static implicit operator float(Em em) => em.Value;
-}
-
-public readonly record struct Pixel(uint Value)
-{
-    public override readonly string ToString() => $"{this.Value}px";
-
-    public static explicit operator Pixel(uint value) => new(value);
-    public static implicit operator uint(Pixel pixel) => pixel.Value;
-}
-
-public readonly record struct Percentage(float Value)
-{
-    public readonly float Value = Value / 100;
-
-    public override readonly string ToString() => $"{this.Value * 100}%";
-
-    public static explicit operator Percentage(float value) => new(value);
-    public static implicit operator float(Percentage pixel) => pixel.Value;
-}
-
 [StructLayout(LayoutKind.Explicit)]
-public readonly record struct Unit
+public partial record struct Unit
 {
     [FieldOffset(0)]
-    public readonly UnitKind Kind;
+    internal UnitKind Kind;
 
     [FieldOffset(4)]
-    private readonly Percentage percentage;
+    internal UnitData Data;
 
-    [FieldOffset(4)]
-    private readonly Pixel pixel;
+    public static Unit Em(float em) =>
+        new()
+        {
+            Kind = UnitKind.Em,
+            Data = new() { Em = em },
+        };
 
-    [FieldOffset(4)]
-    private readonly Em em;
+    public static Unit Pc(float percentage) =>
+        new()
+        {
+            Kind = UnitKind.Percentage,
+            Data = new() { Percentage = percentage / 100 },
+        };
 
-    public Unit(Pixel pixel)
+    public static Unit Px(int pixel) =>
+        new()
+        {
+            Kind = UnitKind.Pixel,
+            Data = new() { Pixel = pixel },
+        };
+
+    public static Unit Px(uint pixel) =>
+        Px((int)pixel);
+
+    internal static float Resolve(Unit? unit, uint size, uint fontSize)
     {
-        this.Kind  = UnitKind.Pixel;
-        this.pixel = pixel;
+        if (!unit.HasValue)
+        {
+            return 0;
+        }
+
+        return unit.Value.Kind switch
+        {
+            UnitKind.Pixel      => unit.Value.Data.Pixel,
+            UnitKind.Percentage => unit.Value.Data.Percentage * size,
+            UnitKind.Em         => unit.Value.Data.Em * fontSize,
+            _               => unit.Value.Data.Pixel,
+        };
     }
 
-    public Unit(Percentage percentage)
-    {
-        this.Kind       = UnitKind.Percentage;
-        this.percentage = percentage;
-    }
-
-    public Unit(Em em)
-    {
-        this.Kind = UnitKind.Em;
-        this.em   = em;
-    }
-
-    public static Em         Em(float value) => new(value);
-    public static Percentage Pc(float value) => new(value);
-    public static Pixel      Px(uint value) => new(value);
-
-    public readonly bool TryGetEm(out Em em)
+    public readonly bool TryGetEm(out float em)
     {
         if (this.Kind == UnitKind.Em)
         {
-            em = this.em;
+            em = this.Data.Em;
 
             return true;
         }
@@ -86,11 +65,11 @@ public readonly record struct Unit
         return false;
     }
 
-    public readonly bool TryGetPercentage(out Percentage percentage)
+    public readonly bool TryGetPercentage(out float percentage)
     {
         if (this.Kind == UnitKind.Percentage)
         {
-            percentage = this.percentage;
+            percentage = this.Data.Percentage;
 
             return true;
         }
@@ -100,11 +79,11 @@ public readonly record struct Unit
         return false;
     }
 
-    public readonly bool TryGetPixel(out Pixel pixel)
+    public readonly bool TryGetPixel(out int pixel)
     {
         if (this.Kind == UnitKind.Pixel)
         {
-            pixel = this.pixel;
+            pixel = this.Data.Pixel;
 
             return true;
         }
@@ -117,13 +96,9 @@ public readonly record struct Unit
     public override readonly string ToString() =>
         this.Kind switch
         {
-            UnitKind.Em         => this.em.ToString(),
-            UnitKind.Pixel      => this.pixel.ToString(),
-            UnitKind.Percentage => this.percentage.ToString(),
+            UnitKind.Em         => $"{this.Data.Em}em",
+            UnitKind.Pixel      => $"{this.Data.Pixel}px",
+            UnitKind.Percentage => $"{this.Data.Percentage * 100}%",
             _ => "",
         };
-
-    public static implicit operator Unit(Em em) => new(em);
-    public static implicit operator Unit(Pixel pixel) => new(pixel);
-    public static implicit operator Unit(Percentage percentage) => new(percentage);
 }

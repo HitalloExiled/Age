@@ -7,7 +7,7 @@ public class ButtonStyles
     public static Style Base { get; } = new()
     {
         TextSelection        = false,
-        Padding              = new((Pixel)4),
+        Padding              = new(Unit.Px(4)),
         FontWeight           = FontWeight.Medium,
         ContentJustification = ContentJustification.Center,
         Cursor               = Platforms.Display.Cursor.Hand,

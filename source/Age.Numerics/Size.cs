@@ -34,6 +34,12 @@ public record struct Size<T> where T : INumber<T>
     public override readonly string ToString() =>
         string.Create(CultureInfo.InvariantCulture, $"{{ Width: {this.Width}, Height: {this.Height} }}");
 
+    public readonly Vector2<float> ToVector() =>
+        new(float.CreateChecked(this.Width), float.CreateChecked(this.Height));
+
+    public readonly Vector2<U> ToVector<U>() where U : IFloatingPoint<U>, IFloatingPointIeee754<U>, IRootFunctions<U>, ITrigonometricFunctions<U>  =>
+        new(U.CreateChecked(this.Width), U.CreateChecked(this.Height));
+
     public static Size<T> operator +(Size<T> size, T value) =>
         new(size.Width + value, size.Height + value);
 
@@ -57,19 +63,4 @@ public record struct Size<T> where T : INumber<T>
 
     public static Size<T> operator *(Size<T> left, T value) =>
         new(left.Width * value, left.Height * value);
-
-    public static implicit operator Size<T>(Point<T> point) =>
-        new(point.X, point.Y);
-
-    public static implicit operator Size<T>(Vector2<float> vector) =>
-        new(T.CreateChecked(vector.X), T.CreateChecked(vector.Y));
-
-    public static implicit operator Vector2<float>(Size<T> point) =>
-        new(float.CreateChecked(point.Width), float.CreateChecked(point.Height));
-
-    public static implicit operator Size<T>(Vector2<double> vector) =>
-        new(T.CreateChecked(vector.X), T.CreateChecked(vector.Y));
-
-    public static implicit operator Vector2<double>(Size<T> point) =>
-        new(double.CreateChecked(point.Width), double.CreateChecked(point.Height));
 }

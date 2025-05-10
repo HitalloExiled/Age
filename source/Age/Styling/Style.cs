@@ -1,9 +1,10 @@
+using Age.Core.Interfaces;
 using Age.Numerics;
 using Age.Platforms.Display;
 
 namespace Age.Styling;
 
-public record Style
+public record Style : IPoolable
 {
     internal event Action<StyleProperty>? PropertyChanged;
 
@@ -21,6 +22,12 @@ public record Style
     {
         get => this.data.BackgroundColor;
         set => this.Set(ref this.data.BackgroundColor, value, StyleProperty.BackgroundColor);
+    }
+
+    public Image? BackgroundImage
+    {
+        get => this.data.BackgroundImage;
+        set => this.Set(ref this.data.BackgroundImage, value, StyleProperty.BackgroundImage);
     }
 
     public Unit? Baseline
@@ -155,10 +162,16 @@ public record Style
         set => this.Set(ref this.data.TextSelection, value, StyleProperty.TextSelection);
     }
 
-    public Transform2D? Transform
+    public TransformOp[]? Transforms
     {
-        get => this.data.Transform;
-        set => this.Set(ref this.data.Transform, value, StyleProperty.Transform);
+        get => this.data.Transforms;
+        set => this.Set(ref this.data.Transforms, value, StyleProperty.Transforms);
+    }
+
+    public PointUnit? TransformOrigin
+    {
+        get => this.data.TransformOrigin;
+        set => this.Set(ref this.data.TransformOrigin, value, StyleProperty.TransformOrigin);
     }
 
     private Style(StyleData data) =>
@@ -168,6 +181,9 @@ public record Style
 
     public static Style Merge(Style left, Style right) =>
         new(StyleData.Merge(left.data, right.data));
+
+    void IPoolable.Reset() =>
+        this.Clear();
 
     private void Set<T>(ref T? field, T? value, StyleProperty property)
     {

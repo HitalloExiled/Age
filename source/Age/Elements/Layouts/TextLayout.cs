@@ -84,7 +84,7 @@ internal sealed partial class TextLayout : Layout
         }
     }
 
-    public Rect<float> CursorRect => this.caretCommand.Rect;
+    public Rect<float> CursorRect => this.caretCommand.GetAffineRect();
 
     public override bool IsParentDependent { get; }
 
@@ -114,7 +114,7 @@ internal sealed partial class TextLayout : Layout
         this.caretCommand.Color           = Color.White;
         this.caretCommand.Flags           = Flags.ColorAsBackground;
         this.caretCommand.MappedTexture   = MappedTexture.Default;
-        this.caretCommand.Rect            = new(new(this.caretWidth, this.LineHeight), default);
+        this.caretCommand.Size            = new(this.caretWidth, this.LineHeight);
         this.caretCommand.StencilLayer    = this.StencilLayer;
 
         target.Commands.Add(this.caretCommand);
@@ -211,40 +211,33 @@ internal sealed partial class TextLayout : Layout
     {
         if (this.renderedLength > 0)
         {
-            Point<float> position;
+            Vector2<float> position;
 
             if (this.CaretPosition == this.renderedLength)
             {
-                var rect = ((RectCommand)this.target.Commands[this.renderedLength - 1]).Rect;
+                var command = (RectCommand)this.target.Commands[this.renderedLength - 1];
 
                 if (this.target.Buffer[^1] == '\n')
                 {
                     position.X = 0;
-                    position.Y = rect.Position.Y - this.LineHeight;
+                    position.Y = command.Transform.Position.Y - this.LineHeight;
                 }
                 else
                 {
-                    position = rect.Position;
-                    position.X += rect.Size.Width;
+                    position = command.Transform.Position;
+                    position.X += command.Size.Width;
                 }
             }
             else
             {
-                position = ((RectCommand)this.target.Commands[(int)this.CaretPosition]).Rect.Position;
+                position = ((RectCommand)this.target.Commands[(int)this.CaretPosition]).Transform.Position;
             }
 
-            this.caretCommand.Rect = this.caretCommand.Rect with
-            {
-                Position = position,
-            };
+            this.caretCommand.Transform = Transform2D.CreateTranslated(position);
         }
         else
         {
-            this.caretCommand.Rect = new()
-            {
-                Position = default,
-                Size     = new(this.caretWidth, this.LineHeight),
-            };
+            this.caretCommand.Transform = Transform2D.Identity;
         }
     }
 
@@ -332,17 +325,18 @@ internal sealed partial class TextLayout : Layout
             selectionCommand.Line          = lineIndex;
             selectionCommand.MappedTexture = MappedTexture.Default;
             selectionCommand.ObjectId      = CombineIds(i + 1, elementIndex);
-            selectionCommand.Rect          = new(new(glyphsWidths[i], this.LineHeight), new(cursor.X, cursor.Y - baseLine));
+            selectionCommand.Size          = new(glyphsWidths[i], this.LineHeight);
+            selectionCommand.Transform     = Transform2D.CreateTranslated(new(cursor.X, cursor.Y - baseLine));
             selectionCommand.StencilLayer  = this.StencilLayer;
 
             if (!char.IsWhiteSpace(character))
             {
                 ref readonly var bounds = ref glyphsBounds[i];
 
-                var glyph    = TextStorage.Singleton.DrawGlyph(this.font, atlas, character, bounds);
-                var size     = new Size<float>(bounds.Width, bounds.Height);
-                var position = new Point<float>(float.Round(cursor.X + bounds.Left), float.Round(cursor.Y - bounds.Top));
-                var color    = style.Color ?? new();
+                var glyph  = TextStorage.Singleton.DrawGlyph(this.font, atlas, character, bounds);
+                var size   = new Size<float>(bounds.Width, bounds.Height);
+                var offset = new Vector2<float>(float.Round(cursor.X + bounds.Left), float.Round(cursor.Y - bounds.Top));
+                var color  = style.Color ?? new();
 
                 var atlasSize = new Point<float>(atlas.Size.Width, atlas.Size.Height);
 
@@ -368,7 +362,8 @@ internal sealed partial class TextLayout : Layout
                 characterCommand.MappedTexture   = new(atlas.Texture, uv);
                 characterCommand.ObjectId        = default;
                 characterCommand.PipelineVariant = PipelineVariant.Color;
-                characterCommand.Rect            = new(size, position);
+                characterCommand.Size            = size;
+                characterCommand.Transform       = Transform2D.CreateTranslated(offset);
                 characterCommand.StencilLayer    = this.StencilLayer;
 
                 cursor.X += (int)float.Round(glyphsWidths[i]);
@@ -427,7 +422,7 @@ internal sealed partial class TextLayout : Layout
 
         var cursor = this.target.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
-        if (cursor.X > command.Rect.Position.X + command.Rect.Size.Width / 2)
+        if (cursor.X > command.Transform.Position.X + command.Size.Width / 2)
         {
             character++;
         }
@@ -452,10 +447,7 @@ internal sealed partial class TextLayout : Layout
                 this.BaseLine    = (int)float.Round(-metrics.Ascent);
                 this.fontLeading = metrics.Leading;
 
-                this.caretCommand.Rect = this.caretCommand.Rect with
-                {
-                    Size = new(this.caretWidth, this.LineHeight),
-                };
+                this.caretCommand.Size = new(this.caretWidth, this.LineHeight);
 
                 this.caretIsDirty = true;
             }
@@ -655,7 +647,7 @@ internal sealed partial class TextLayout : Layout
 
         for (var i = 0; i < lineSpan.Length; i++)
         {
-            var rect = ((TextCommand)this.target.Commands[(int)lineSpan[i].Start]).Rect;
+            var rect = ((TextCommand)this.target.Commands[(int)lineSpan[i].Start]).GetAffineRect();
 
             if (isOnCursorLine(rect))
             {
@@ -667,7 +659,7 @@ internal sealed partial class TextLayout : Layout
             }
         }
 
-        this.CaretPosition = (uint)position;
+        this.CaretPosition = position;
     }
 
     public void SetCaret(ushort x, ushort y, uint position)
@@ -733,15 +725,18 @@ internal sealed partial class TextLayout : Layout
         var startAnchor = (TextCommand)commandsSpan[startIndex];
         var endAnchor   = (TextCommand)commandsSpan[endIndex];
 
+        var startAnchorRect = startAnchor.GetAffineRect();
+        var endAnchorRect   = endAnchor.GetAffineRect();
+
         var position = selection.End;
 
-        if (isOnCursorLine(endAnchor.Rect))
+        if (isOnCursorLine(endAnchorRect))
         {
             resolveLine(lineSpan, endAnchor.Line, ref position);
         }
-        else if (isCursorBelow(startAnchor.Rect))
+        else if (isCursorBelow(startAnchorRect))
         {
-            if (isCursorBelowTop(endAnchor.Rect))
+            if (isCursorBelowTop(endAnchorRect))
             {
                 position = (uint)this.renderedLength;
 
@@ -754,7 +749,7 @@ internal sealed partial class TextLayout : Layout
         }
         else
         {
-            if (isCursorAboveBottom(endAnchor.Rect))
+            if (isCursorAboveBottom(endAnchorRect))
             {
                 position = 0;
 
@@ -772,7 +767,7 @@ internal sealed partial class TextLayout : Layout
         #region local methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void resolveLine(scoped ReadOnlySpan<TextLine> lines, int index, ref uint position) =>
-            position = isCursorBefore(endAnchor.Rect)
+            position = isCursorBefore(endAnchorRect)
                 ? lines[index].Start
                 : lines[index].End + 1 == this.renderedLength
                     ? (uint)this.renderedLength
@@ -801,9 +796,9 @@ internal sealed partial class TextLayout : Layout
         {
             for (var i = start; i > end; i--)
             {
-                var command = (TextCommand)commands[(int)lines[i].Start];
+                var rect = ((TextCommand)commands[(int)lines[i].Start]).GetAffineRect();
 
-                if (isCursorBelowTop(command.Rect))
+                if (isCursorBelowTop(rect))
                 {
                     resolveLine(lines, i, ref position);
 
@@ -817,9 +812,9 @@ internal sealed partial class TextLayout : Layout
         {
             for (var i = start; i < end; i++)
             {
-                var command = (TextCommand)commands[(int)lines[i].Start];
+                var rect = ((TextCommand)commands[(int)lines[i].Start]).GetAffineRect();
 
-                if (isCursorAboveBottom(command.Rect))
+                if (isCursorAboveBottom(rect))
                 {
                     resolveLine(lines, i, ref position);
 

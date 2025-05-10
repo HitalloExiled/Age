@@ -2,6 +2,7 @@ using Age.Core;
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
+using Age.Resources;
 using SkiaSharp;
 
 namespace Age.Services;
@@ -101,7 +102,7 @@ internal partial class TextStorage : Disposable
             var axisSize = uint.Max(fontSize * 8, 256);
             var size     = new Size<uint>(axisSize, axisSize);
 
-            atlas = new(size, ColorMode.Grayscale);
+            atlas = new(size, TextureFormat.R8G8Unorm);
         }
 
         return atlas!;

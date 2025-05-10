@@ -41,8 +41,7 @@ public VertexOutput main(in VertexInput input)
 
     var vertex = input.position / 2 + 0.5;
     vertex.y *= -1;
-    vertex *= data.rect.size;
-    vertex += data.rect.position;
+    vertex *= data.size;
     vertex = (mul(float3(vertex, 1), matrix)).xy;
     vertex.y *= -1;
     vertex /= data.viewport;

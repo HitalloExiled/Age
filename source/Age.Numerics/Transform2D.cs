@@ -2,6 +2,8 @@ namespace Age.Numerics;
 
 public record struct Transform2D
 {
+    public static Transform2D Identity => new();
+
     private Matrix3x2<float> matrix;
 
     public readonly Matrix3x2<float> Matrix => this.matrix;
@@ -62,6 +64,12 @@ public record struct Transform2D
 
     public static Transform2D operator *(in Transform2D left, in Transform2D right) =>
         new(left.matrix * right.matrix);
+
+    public static Vector2<float> operator *(in Transform2D left, in Vector2<float> right) =>
+        left.matrix * right;
+
+    public static Vector2<float> operator *(in Vector2<float> left, in Transform2D right) =>
+        left * right.matrix;
 
     public static implicit operator Matrix3x2<float>(in Transform2D transform) =>
         transform.matrix;

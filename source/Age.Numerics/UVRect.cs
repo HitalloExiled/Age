@@ -11,11 +11,14 @@ public record struct UVRect
 
     public UVRect() { }
 
-    public UVRect(Point<float> p1, Point<float> p2, Point<float> p3, Point<float> p4) : this()
+    public UVRect(Point<float> p1, Point<float> p2, Point<float> p3, Point<float> p4)
     {
         this.P1 = p1;
         this.P2 = p2;
         this.P3 = p3;
         this.P4 = p4;
     }
+
+    public override readonly string ToString() =>
+        $"P1: {this.P1}, P2: {this.P2}, P3: {this.P3}, P4: {this.P4}";
 }

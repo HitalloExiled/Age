@@ -15,16 +15,16 @@ public sealed class Canvas : Element
         this.Flags = NodeFlags.IgnoreUpdates;
         this.Style = new()
         {
-            // Padding = new((Pixel)PADDING),
+            // Padding = new(Unit.Px(PADDING)),
             Color = Color.White,
         };
     }
 
-    private void OnWindowSizeChanged()
+    private void OnWindowResized()
     {
         if (this.Tree is RenderTree renderTree)
         {
-            this.Style.Size = new((Pixel)renderTree.Window.ClientSize.Width, (Pixel)renderTree.Window.ClientSize.Height);
+            this.Style.Size = new(Unit.Px(renderTree.Window.ClientSize.Width), Unit.Px(renderTree.Window.ClientSize.Height));
         }
     }
 
@@ -32,9 +32,9 @@ public sealed class Canvas : Element
     {
         base.Connected(renderTree);
 
-        renderTree.Window.Resized += this.OnWindowSizeChanged;
+        renderTree.Window.Resized += this.OnWindowResized;
 
-        this.OnWindowSizeChanged();
+        this.OnWindowResized();
 
         renderTree.AddDeferredUpdate(this.Layout.UpdateDirtyLayout);
     }
@@ -43,6 +43,6 @@ public sealed class Canvas : Element
     {
         base.Disconnected(renderTree);
 
-        renderTree.Window.Resized -= this.OnWindowSizeChanged;
+        renderTree.Window.Resized -= this.OnWindowResized;
     }
 }

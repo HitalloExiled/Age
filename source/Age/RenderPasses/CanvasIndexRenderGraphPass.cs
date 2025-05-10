@@ -211,8 +211,8 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
                 Border    = command.Border,
                 Color     = 0xFFFF_0000_0000_0000 | command.ObjectId,
                 Flags     = command.Flags,
-                Rect      = command.Rect,
-                Transform = transform,
+                Size      = command.Size,
+                Transform = command.Transform * transform,
                 UV        = command.MappedTexture.UV,
                 Viewport  = viewport,
             };

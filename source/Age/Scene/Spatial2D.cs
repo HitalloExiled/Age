@@ -9,8 +9,8 @@ public abstract class Spatial2D : Renderable
 
     private CacheValue<Transform2D> transformCache;
 
-    private Transform2D ParentTransform      => (this.Parent as Spatial2D)?.Transform ?? new();
-    private Transform2D ParentTransformCache => (this.Parent as Spatial2D)?.TransformCache ?? new();
+    private Transform2D ParentTransform      => (this.Parent as Spatial2D)?.Transform ?? Transform2D.Identity;
+    private Transform2D ParentTransformCache => (this.Parent as Spatial2D)?.TransformCache ?? Transform2D.Identity;
 
     internal virtual Transform2D TransformCache
     {
@@ -33,7 +33,7 @@ public abstract class Spatial2D : Renderable
     {
         get;
         set => this.Set(ref field, value, this.TransformChanged);
-    } = new();
+    } = Transform2D.Identity;
 
     public virtual Transform2D Transform
     {

@@ -500,11 +500,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         {
             var current = this.LastChild;
 
-            if (dispose)
-            {
-                current.Dispose();
-            }
-
             this.LastChild = current.PreviousSibling;
 
             if (this.LastChild != null)
@@ -519,6 +514,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
             current.OnRemoved(this);
             this.OnChildRemoved(current);
+
+            if (dispose)
+            {
+                current.Dispose();
+            }
         }
 
         this.FirstChild = null;
@@ -565,11 +565,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         {
             var current = next;
 
-            if (dispose)
-            {
-                current.Dispose();
-            }
-
             next = current.NextSibling;
 
             current.PreviousSibling = null;
@@ -579,6 +574,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
             current.OnRemoved(this);
             this.OnChildRemoved(current);
+
+            if (dispose)
+            {
+                current.Dispose();
+            }
 
             if (current == end)
             {

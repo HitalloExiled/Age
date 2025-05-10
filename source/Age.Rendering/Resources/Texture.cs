@@ -70,7 +70,7 @@ public sealed class Texture : Resource
     public Texture(in TextureCreateInfo textureCreate, scoped ReadOnlySpan<byte> data) : this(textureCreate) =>
         this.Image!.Update(data);
 
-    protected override void Disposed()
+    protected override void OnDisposed()
     {
         if (this.imageOwner)
         {

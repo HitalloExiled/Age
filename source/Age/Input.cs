@@ -43,7 +43,7 @@ public static class Input
         window.MouseUp    += OnMouseUp;
         window.KeyDown    += OnKeyDown;
         window.KeyUp      += OnKeyUp;
-        window.MouseWhell += OnMouseWheel;
+        window.MouseWheel += OnMouseWheel;
     }
 
     internal static void UnlistenInputEvents(Window window)
@@ -53,7 +53,7 @@ public static class Input
         window.MouseUp    -= OnMouseUp;
         window.KeyDown    -= OnKeyDown;
         window.KeyUp      -= OnKeyUp;
-        window.MouseWhell -= OnMouseWheel;
+        window.MouseWheel -= OnMouseWheel;
     }
 
     internal static void Update()

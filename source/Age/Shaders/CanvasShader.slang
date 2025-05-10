@@ -15,7 +15,7 @@ public FragmentOutput main(in FragmentInput input)
 
     if (hasBorder(data))
     {
-        var position = data.rect.size * input.uv;
+        var position = data.size * input.uv;
 
         BorderSide side;
         CornerKind corner;

@@ -9,7 +9,7 @@ public class ContentJustificationTest
     public static void Setup(Canvas canvas)
     {
         var borderSize = 10u;
-        var marginSize = 4u;
+        var marginSize = 4;
 
         var horizontal_a_container = new FlexBox()
         {
@@ -19,7 +19,7 @@ public class ContentJustificationTest
                 Border               = new(borderSize, 0, Color.Margenta),
                 Color                = Color.White,
                 FontSize             = 32,
-                Size                 = new((Pixel)200, null),
+                Size                 = new(Unit.Px(200), null),
                 ContentJustification = ContentJustification.Start,
             }
         };
@@ -42,7 +42,7 @@ public class ContentJustificationTest
             {
                 Border = new(borderSize, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new((Pixel)marginSize)
+                Margin = new(Unit.Px(marginSize))
             }
         };
         var horizontal_a_item_03 = new FlexBox()
@@ -64,7 +64,7 @@ public class ContentJustificationTest
                 Border               = new(borderSize, 0, Color.Margenta),
                 Color                = Color.White,
                 FontSize             = 32,
-                Size                 = new((Pixel)200, null),
+                Size                 = new(Unit.Px(200), null),
                 ContentJustification = ContentJustification.Center,
             }
         };
@@ -88,7 +88,7 @@ public class ContentJustificationTest
             {
                 Border = new(borderSize, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new((Pixel)marginSize)
+                Margin = new(Unit.Px(marginSize))
             }
         };
 
@@ -111,7 +111,7 @@ public class ContentJustificationTest
                 Border               = new(borderSize, 0, Color.Margenta),
                 Color                = Color.White,
                 FontSize             = 32,
-                Size                 = new((Pixel)200, null),
+                Size                 = new(Unit.Px(200), null),
                 ContentJustification = ContentJustification.End,
             }
         };
@@ -135,7 +135,7 @@ public class ContentJustificationTest
             {
                 Border = new(borderSize, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new((Pixel)marginSize),
+                Margin = new(Unit.Px(marginSize)),
             }
         };
 
@@ -158,7 +158,7 @@ public class ContentJustificationTest
                 Border               = new(borderSize, 0, Color.Margenta),
                 Color                = Color.White,
                 FontSize             = 32,
-                Size                 = new((Pixel)200, null),
+                Size                 = new(Unit.Px(200), null),
                 ContentJustification = ContentJustification.SpaceAround,
             }
         };
@@ -182,7 +182,7 @@ public class ContentJustificationTest
             {
                 Border = new(borderSize, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new((Pixel)marginSize),
+                Margin = new(Unit.Px(marginSize)),
             }
         };
 
@@ -205,7 +205,7 @@ public class ContentJustificationTest
                 Border               = new(borderSize, 0, Color.Margenta),
                 Color                = Color.White,
                 FontSize             = 32,
-                Size                 = new((Pixel)200, null),
+                Size                 = new(Unit.Px(200), null),
                 ContentJustification = ContentJustification.SpaceBetween,
             }
         };
@@ -229,7 +229,7 @@ public class ContentJustificationTest
             {
                 Border = new(borderSize, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new((Pixel)marginSize),
+                Margin = new(Unit.Px(marginSize)),
             }
         };
 
@@ -252,7 +252,7 @@ public class ContentJustificationTest
                 Border               = new(borderSize, 0, Color.Margenta),
                 Color                = Color.White,
                 FontSize             = 32,
-                Size                 = new((Pixel)200, null),
+                Size                 = new(Unit.Px(200), null),
                 ContentJustification = ContentJustification.SpaceEvenly,
             }
         };
@@ -276,7 +276,7 @@ public class ContentJustificationTest
             {
                 Border = new(borderSize, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new((Pixel)marginSize),
+                Margin = new(Unit.Px(marginSize)),
             }
         };
 
@@ -300,7 +300,7 @@ public class ContentJustificationTest
                 Color                = Color.White,
                 ContentJustification = ContentJustification.Start,
                 FontSize             = 32,
-                Size                 = new(null, (Pixel)200),
+                Size                 = new(null, Unit.Px(200)),
                 StackDirection       = StackDirection.Vertical,
             }
         };
@@ -323,7 +323,7 @@ public class ContentJustificationTest
             {
                 Border = new(borderSize, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new((Pixel)marginSize),
+                Margin = new(Unit.Px(marginSize)),
             }
         };
         var vertical_a_item_03 = new FlexBox()
@@ -346,7 +346,7 @@ public class ContentJustificationTest
                 Color                = Color.White,
                 ContentJustification = ContentJustification.Center,
                 FontSize             = 32,
-                Size                 = new(null, (Pixel)200),
+                Size                 = new(null, Unit.Px(200)),
                 StackDirection       = StackDirection.Vertical,
             }
         };
@@ -370,7 +370,7 @@ public class ContentJustificationTest
             {
                 Border = new(borderSize, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new((Pixel)marginSize),
+                Margin = new(Unit.Px(marginSize)),
             }
         };
 
@@ -394,7 +394,7 @@ public class ContentJustificationTest
                 Color                = Color.White,
                 ContentJustification = ContentJustification.End,
                 FontSize             = 32,
-                Size                 = new(null, (Pixel)200),
+                Size                 = new(null, Unit.Px(200)),
                 StackDirection       = StackDirection.Vertical,
             }
         };
@@ -418,7 +418,7 @@ public class ContentJustificationTest
             {
                 Border = new(borderSize, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new((Pixel)marginSize),
+                Margin = new(Unit.Px(marginSize)),
             }
         };
 
@@ -442,7 +442,7 @@ public class ContentJustificationTest
                 Color                = Color.White,
                 ContentJustification = ContentJustification.SpaceAround,
                 FontSize             = 32,
-                Size                 = new(null, (Pixel)200),
+                Size                 = new(null, Unit.Px(200)),
                 StackDirection       = StackDirection.Vertical,
             }
         };
@@ -489,7 +489,7 @@ public class ContentJustificationTest
                 Color                = Color.White,
                 ContentJustification = ContentJustification.SpaceBetween,
                 FontSize             = 32,
-                Size                 = new(null, (Pixel)200),
+                Size                 = new(null, Unit.Px(200)),
                 StackDirection       = StackDirection.Vertical,
             }
         };
@@ -513,7 +513,7 @@ public class ContentJustificationTest
             {
                 Border = new(borderSize, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new((Pixel)marginSize),
+                Margin = new(Unit.Px(marginSize)),
             }
         };
 
@@ -537,7 +537,7 @@ public class ContentJustificationTest
                 Color                = Color.White,
                 ContentJustification = ContentJustification.SpaceEvenly,
                 FontSize             = 32,
-                Size                 = new(null, (Pixel)200),
+                Size                 = new(null, Unit.Px(200)),
                 StackDirection       = StackDirection.Vertical,
             }
         };
@@ -561,7 +561,7 @@ public class ContentJustificationTest
             {
                 Border = new(borderSize, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new((Pixel)marginSize)
+                Margin = new(Unit.Px(marginSize))
             }
         };
 

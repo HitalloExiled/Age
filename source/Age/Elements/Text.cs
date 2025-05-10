@@ -154,7 +154,7 @@ public sealed class Text : Layoutable
 
         this.UpdateIndependentAncestorLayout();
 
-        var rect = ((RectCommand)this.Commands[(int)index]).Rect;
+        var rect = ((RectCommand)this.Commands[(int)index]).GetAffineRect();
 
         var transform = this.TransformWithOffset;
 
@@ -210,7 +210,7 @@ public sealed class Text : Layoutable
         {
             var command = (RectCommand)slice[i];
 
-            rect.Grow(command.Rect);
+            rect.Grow(command.GetAffineRect());
         }
 
         var transform = this.TransformWithOffset;

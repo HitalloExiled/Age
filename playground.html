@@ -72,6 +72,28 @@
             width: 100%;
             border: 1px green solid;
         }
+
+        .box {
+            width:  200px;
+            height: 200px;
+            border: solid 1px red;
+        }
+
+        .cat {
+            width:  200px;
+            height: 200px;
+            border: solid 1px blue;
+            background-image:  url('https://i.etsystatic.com/45893541/r/il/545bc4/6453954482/il_794xN.6453954482_q062.jpg');
+            background-size:   100px;
+            background-repeat: repeat;
+            background-position: 50%;
+            transform-origin: 0% 0;
+            transform:
+                translate(0, 50%)
+                rotate(-5deg)
+                scale(0.5, 1)
+                matrix(1.2, 0.5, 0.5, 1.2, 10, 20);
+        }
     </style>
 </head>
 <body>
@@ -83,12 +105,16 @@
             </span>
         </slot>
     </span> -->
-    <div id="host" style="display: flex; flex-direction: column;">
+    <!-- <div id="host" style="display: flex; flex-direction: column;">
         <template shadowrootmode="open">
             <span>I'm in the shadow DOM</span>
-            <!-- <slot></slot> -->
         </template>
         <span>I'm in the light DOM</span>
+    </div> -->
+
+
+    <div class="box">
+        <div class="cat"></div>
     </div>
 
     <!-- <span class="stack">

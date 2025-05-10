@@ -9,8 +9,8 @@ public abstract partial class Layoutable : Spatial2D
 {
     private CacheValue<Transform2D> transformCache;
 
-    private Transform2D ComposedParentTransform      => (this.ComposedParentElement as Spatial2D)?.Transform ?? new();
-    private Transform2D ComposedParentTransformCache => (this.ComposedParentElement as Spatial2D)?.TransformCache ?? new();
+    private Transform2D ComposedParentTransform      => (this.ComposedParentElement as Spatial2D)?.Transform ?? Transform2D.Identity;
+    private Transform2D ComposedParentTransformCache => (this.ComposedParentElement as Spatial2D)?.TransformCache ?? Transform2D.Identity;
     private Transform2D Offset                       => Transform2D.CreateTranslated((this.ComposedParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
 
     internal Transform2D TransformWithOffset => this.Offset * this.Transform;
@@ -25,7 +25,7 @@ public abstract partial class Layoutable : Spatial2D
             {
                 this.transformCache = new()
                 {
-                    Value   = this.Offset * this.Layout.Transform * this.ComposedParentTransformCache * this.LocalTransform,
+                    Value   = this.Offset * this.Layout.Transform * this.LocalTransform * this.ComposedParentTransformCache,
                     Version = CacheVersion
                 };
             }
@@ -124,7 +124,7 @@ public abstract partial class Layoutable : Spatial2D
 
     public override Transform2D Transform
     {
-        get => this.Layout.Transform * (this.ComposedParentTransform * this.LocalTransform);
+        get => this.Layout.Transform * (this.LocalTransform * this.ComposedParentTransform);
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
 

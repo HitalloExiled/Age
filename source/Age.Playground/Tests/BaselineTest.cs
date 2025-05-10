@@ -19,7 +19,7 @@ public class BaselineTest
                 Style = new()
                 {
                     Border = new(borderSize, 0, Color.Cyan),
-                    Size   = new((Pixel)100),
+                    Size   = new(Unit.Px(100)),
                 },
             },
             new FlexBox()
@@ -40,7 +40,7 @@ public class BaselineTest
                 Name  = "horizontal_container",
                 Style = new()
                 {
-                    Padding        = new((Pixel)20),
+                    Padding        = new(Unit.Px(20)),
                     Border         = new(borderSize, 0, Color.Cyan),
                     Color          = Color.White,
                     FontFamily     = "Impact",
@@ -61,7 +61,7 @@ public class BaselineTest
                             FontFamily = "Helvetica Neue",
                             FontSize   = 48,
                             Hidden     = false,
-                            Margin     = new(null, (Pixel)10),
+                            Margin     = new(null, Unit.Px(10)),
                         }
                     },
                     new FlexBox
@@ -97,7 +97,7 @@ public class BaselineTest
                             Alignment = Alignment.Bottom,
                             Border    = new(borderSize, 0, Color.Margenta),
                             Color     = Color.White,
-                            Margin    = new((Pixel)5)
+                            Margin    = new(Unit.Px(5))
                         }
                     },
                     new FlexBox
@@ -109,7 +109,7 @@ public class BaselineTest
                             Alignment = Alignment.Top,
                             Border    = new(borderSize, 0, Color.Margenta),
                             Color     = Color.White,
-                            Margin    = new((Pixel)5)
+                            Margin    = new(Unit.Px(5))
                         }
                     }
                 ]
@@ -188,8 +188,8 @@ public class BaselineTest
                         {
                             Alignment = Alignment.Left,
                             Border    = new(borderSize, 0, Color.Cyan),
-                            Margin    = new((Pixel)10),
-                            Size      = new((Pixel)100),
+                            Margin    = new(Unit.Px(10)),
+                            Size      = new(Unit.Px(100)),
                         }
                     },
                     new FlexBox
@@ -199,8 +199,8 @@ public class BaselineTest
                         {
                             Alignment = Alignment.Right,
                             Border    = new(borderSize, 0, Color.Cyan),
-                            Margin    = new((Pixel)10),
-                            Size      = new((Pixel)100),
+                            Margin    = new(Unit.Px(10)),
+                            Size      = new(Unit.Px(100)),
                         }
                     }
                 ],
@@ -264,7 +264,7 @@ public class BaselineTest
                             Alignment = Alignment.Center,
                             Border    = new(borderSize, 0, Color.Margenta),
                             Color     = Color.White,
-                            Margin    = new((Pixel)10),
+                            Margin    = new(Unit.Px(10)),
                         }
                     },
                     new FlexBox
@@ -275,7 +275,7 @@ public class BaselineTest
                             Alignment = Alignment.Left,
                             Border    = new(borderSize, 0, Color.Margenta),
                             Color     = Color.White,
-                            Margin    = new((Pixel)10),
+                            Margin    = new(Unit.Px(10)),
                         }
                     },
                 ],
@@ -298,7 +298,7 @@ public class BaselineTest
                         Name = "vertical_b_child1",
                         Style = new()
                         {
-                            Size   = new((Pixel)10, (Pixel)200),
+                            Size   = new(Unit.Px(10), Unit.Px(200)),
                             Border = new(borderSize, 0, Color.Red),
                         }
                     },
@@ -307,7 +307,7 @@ public class BaselineTest
                         Name  = "vertical_b_child2",
                         Style = new()
                         {
-                            Size   = new((Pixel)10, (Pixel)100),
+                            Size   = new(Unit.Px(10), Unit.Px(100)),
                             Border = new(borderSize, 0, Color.Green),
                         }
                     },
@@ -316,7 +316,7 @@ public class BaselineTest
                         Name  = "vertical_b_child3",
                         Style = new()
                         {
-                            Size   = new((Pixel)10, (Pixel)50),
+                            Size   = new(Unit.Px(10), Unit.Px(50)),
                             Border = new(borderSize, 0, Color.Blue),
                         }
                     },
@@ -336,12 +336,12 @@ public class BaselineTest
                 },
                 Children =
                 [
-                    new FlexBox { Name = "Vertical", Text = "Vertical", Style = new() { Border = new(borderSize, 0, Color.Red), Margin = new(null, (Pixel)0), FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } },
+                    new FlexBox { Name = "Vertical", Text = "Vertical", Style = new() { Border = new(borderSize, 0, Color.Red), Margin = new(null, Unit.Px(0)), FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } },
                     new FlexBox { Name = "X", Text = "X", Style = new() { Border = new(borderSize, 0, Color.Red),   FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } },
                     new FlexBox { Name = "Y", Text = "Y", Style = new() { Border = new(borderSize, 0, Color.Green), FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } },
                     new FlexBox { Name = "Z", Text = "Z", Style = new() { Border = new(borderSize, 0, Color.Blue),  FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } },
-                    new FlexBox { Text = "Hello",         Style = new() { Border = new(borderSize, 0, Color.Margenta), Color = Color.White, Alignment = Alignment.Left,  Margin = new((Pixel)5) } },
-                    new FlexBox { Text = "World!!!",      Style = new() { Border = new(borderSize, 0, Color.Margenta), Color = Color.White, Alignment = Alignment.Right, Margin = new((Pixel)5) } },
+                    new FlexBox { Text = "Hello",         Style = new() { Border = new(borderSize, 0, Color.Margenta), Color = Color.White, Alignment = Alignment.Left,  Margin = new(Unit.Px(5)) } },
+                    new FlexBox { Text = "World!!!",      Style = new() { Border = new(borderSize, 0, Color.Margenta), Color = Color.White, Alignment = Alignment.Right, Margin = new(Unit.Px(5)) } },
                 ],
             },
             new FlexBox
@@ -364,8 +364,8 @@ public class BaselineTest
                         Name  = "vertical_d_child1",
                         Style = new()
                         {
-                            Size      = new((Pixel)100),
-                            Margin    = new((Pixel)10),
+                            Size      = new(Unit.Px(100)),
+                            Margin    = new(Unit.Px(10)),
                             Border    = new(borderSize, 0, Color.Cyan),
                             Alignment = Alignment.Top,
                         }
@@ -375,8 +375,8 @@ public class BaselineTest
                         Name  = "vertical_d_child2",
                         Style = new()
                         {
-                            Size      = new((Pixel)100),
-                            Margin    = new((Pixel)10),
+                            Size      = new(Unit.Px(100)),
+                            Margin    = new(Unit.Px(10)),
                             Border    = new(borderSize, 0, Color.Cyan),
                             Alignment = Alignment.Bottom,
                         }

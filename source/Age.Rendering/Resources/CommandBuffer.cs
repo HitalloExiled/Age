@@ -7,20 +7,20 @@ namespace Age.Rendering.Resources;
 
 public sealed class CommandBuffer : Resource<VkCommandBuffer>
 {
-    private readonly bool disposable;
     private readonly VkCommandBuffer instance;
+    private readonly bool            owner;
 
     public override VkCommandBuffer Instance => this.instance;
 
-    internal CommandBuffer(VkCommandBuffer instance, bool disposable)
+    internal CommandBuffer(VkCommandBuffer instance, bool owner)
     {
         this.instance = instance;
-        this.disposable = disposable;
+        this.owner    = owner;
     }
 
-    protected override void Disposed()
+    protected override void OnDisposed()
     {
-        if (this.disposable)
+        if (this.owner)
         {
             this.Instance.Dispose();
         }

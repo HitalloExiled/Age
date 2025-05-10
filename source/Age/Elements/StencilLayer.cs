@@ -109,7 +109,7 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
 
         var texture = this.MappedTexture.Texture;
 
-        var imageSize = new Size<uint>(texture.Image.Extent.Width, texture.Image.Extent.Height);
+        var imageSize = texture.Size;
 
         var isWithinMargin =
             bounds.Width / (float)imageSize.Width is >= MIN_MARGIN_RATIO and <= MAX_MARGIN_RATIO
@@ -119,16 +119,7 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         {
             imageSize = (bounds.Cast<float>() * 1.5f).Cast<uint>();
 
-            var textureInfo = new TextureCreateInfo
-            {
-                Depth     = 1,
-                Format    = VkFormat.R8Unorm,
-                Height    = imageSize.Height,
-                ImageType = VkImageType.N2D,
-                Width     = imageSize.Width,
-            };
-
-            texture = new(textureInfo);
+            texture = new(imageSize, format: TextureFormat.R8Unorm);
         }
 
         var bufferSize = imageSize.Width * imageSize.Height;

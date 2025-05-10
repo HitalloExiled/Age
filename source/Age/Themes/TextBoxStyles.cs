@@ -9,7 +9,7 @@ public class TextBoxStyles
         ContentJustification = ContentJustification.Center,
         FontWeight           = FontWeight.Medium,
         Overflow             = Overflow.Scroll,
-        Padding              = new((Pixel)4),
+        Padding              = new(Unit.Px(4)),
         TextSelection        = false,
     };
 

@@ -22,7 +22,7 @@ public partial class Window : Disposable
     public event MouseEventHandler?   MouseDown;
     public event MouseEventHandler?   MouseMove;
     public event MouseEventHandler?   MouseUp;
-    public event MouseEventHandler?   MouseWhell;
+    public event MouseEventHandler?   MouseWheel;
     public event Action?              Resized;
     #endregion events
 
@@ -34,9 +34,10 @@ public partial class Window : Disposable
 
     protected static bool Registered { get; set; }
 
-    private Point<int> position;
-    private Size<uint> size;
-    private string     title;
+    private Point<int>    position;
+    private Size<uint>    size;
+    private string        title;
+    private WindowChanges windowChanges;
 
     protected List<Window> Children { get; } = [];
 

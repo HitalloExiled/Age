@@ -19,7 +19,7 @@ public sealed class Viewport : Element
         {
             if (this.RenderTarget.Size != value)
             {
-                this.Style.MinSize = new((Pixel)value.Width, (Pixel)value.Height);
+                this.Style.MinSize = new(Unit.Px(value.Width), Unit.Px(value.Height));
                 this.RenderTarget.Update(value);
                 this.UpdateCommand();
             }
@@ -28,7 +28,7 @@ public sealed class Viewport : Element
 
     public Viewport(in Size<uint> size)
     {
-        this.Style.MinSize = new((Pixel)size.Width, (Pixel)size.Height);
+        this.Style.MinSize = new(Unit.Px(size.Width), Unit.Px(size.Height));
         this.RenderTarget  = new(size);
         this.UpdateCommand();
     }
@@ -40,7 +40,7 @@ public sealed class Viewport : Element
             this.SingleCommand = command = new();
         }
 
-        command.Rect          = new Rect<float>(this.RenderTarget.Size.Cast<float>(), default);
+        command.Size          = this.RenderTarget.Size.Cast<float>();
         command.MappedTexture = new(this.RenderTarget.Texture, UVRect.Normalized);
     }
 

@@ -2,12 +2,12 @@ namespace Age.Styling;
 
 public record struct BorderRadius
 {
-    public uint LeftTop;
-    public uint TopRight;
-    public uint RightBottom;
-    public uint BottomLeft;
+    public ushort LeftTop;
+    public ushort TopRight;
+    public ushort RightBottom;
+    public ushort BottomLeft;
 
-    public BorderRadius(uint radius)
+    public BorderRadius(ushort radius)
     {
         this.LeftTop     = radius;
         this.TopRight    = radius;
@@ -15,7 +15,7 @@ public record struct BorderRadius
         this.BottomLeft  = radius;
     }
 
-    public BorderRadius(uint top, uint bottom)
+    public BorderRadius(ushort top, ushort bottom)
     {
         this.LeftTop     = top;
         this.TopRight    = top;
@@ -23,7 +23,7 @@ public record struct BorderRadius
         this.BottomLeft  = bottom;
     }
 
-    public BorderRadius(uint leftTop, uint topRight, uint rightBottom, uint bottomLeft)
+    public BorderRadius(ushort leftTop, ushort topRight, ushort rightBottom, ushort bottomLeft)
     {
         this.LeftTop     = leftTop;
         this.TopRight    = topRight;

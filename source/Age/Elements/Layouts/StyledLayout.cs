@@ -9,6 +9,14 @@ internal abstract partial class StyledLayout(Element target) : Layout
 {
     public event Action<StyleProperty>? StyleChanged;
 
+    private static readonly Style     empty     = new();
+    private static readonly StylePool stylePool = new();
+
+    private Style? computedStyle;
+
+    [MemberNotNullWhen(true, nameof(computedStyle), nameof(StyleSheet))]
+    private bool NeedsCompute => this.StyleSheet != null;
+
     private ElementState States
     {
         get;
@@ -18,13 +26,15 @@ internal abstract partial class StyledLayout(Element target) : Layout
             {
                 field = value;
 
-                this.ComputeStyle();
+                if (this.NeedsCompute)
+                {
+                    this.ComputeStyle(this.ComputedStyle.Data);
+                }
             }
         }
     }
 
-    [field: AllowNull]
-    public Style ComputedStyle { get; } = new();
+    public Style ComputedStyle => this.computedStyle ?? this.UserStyle ?? empty;
 
     public override Element Target => target;
 
@@ -37,7 +47,9 @@ internal abstract partial class StyledLayout(Element target) : Layout
             {
                 field = value;
 
-                this.ComputeStyle();
+                var previous = this.ComputedStyle.Data;
+                this.HandleComputedStyleAllocation(value != null);
+                this.ComputeStyle(previous);
             }
         }
     }
@@ -59,10 +71,82 @@ internal abstract partial class StyledLayout(Element target) : Layout
                     value.PropertyChanged += this.OnPropertyChanged;
                 }
 
+                var previous = this.ComputedStyle.Data;
+
                 field = value;
 
-                this.ComputeStyle();
+                this.ComputeStyle(previous);
             }
+        }
+    }
+
+    private void CompareAndInvoke(in StyleData left, in StyleData right)
+    {
+        var changes = StyleData.Diff(left, right);
+
+        if (changes != default)
+        {
+            this.InvokeStyleChanged(changes);
+        }
+    }
+
+    private void ComputeStyle(in StyleData previous)
+    {
+        if (!target.IsConnected)
+        {
+            return;
+        }
+
+        if (!this.NeedsCompute)
+        {
+            this.CompareAndInvoke(this.ComputedStyle.Data, previous);
+
+            return;
+        }
+
+        if (this.StyleSheet.Base != null)
+        {
+            this.computedStyle.Copy(this.StyleSheet.Base);
+        }
+        else
+        {
+            this.computedStyle.Clear();
+        }
+
+        if (this.UserStyle != null)
+        {
+            this.computedStyle.Merge(this.UserStyle);
+        }
+
+        merge(ElementState.Focus,    this.StyleSheet.Focus);
+        merge(ElementState.Hovered,  this.StyleSheet.Hovered);
+        merge(ElementState.Disabled, this.StyleSheet.Disabled);
+        merge(ElementState.Enabled,  this.StyleSheet.Enabled);
+        merge(ElementState.Checked,  this.StyleSheet.Checked);
+        merge(ElementState.Active,   this.StyleSheet.Active);
+
+        this.CompareAndInvoke(this.computedStyle.Data, previous);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void merge(ElementState states, Style? style)
+        {
+            if (this.States.HasFlags(states) && style != null)
+            {
+                this.computedStyle.Merge(style);
+            }
+        }
+    }
+
+    private void HandleComputedStyleAllocation(bool allocating)
+    {
+        if (allocating)
+        {
+            this.computedStyle ??= stylePool.Get();
+        }
+        else
+        {
+            stylePool.Return(this.computedStyle!);
+            this.computedStyle = null;
         }
     }
 
@@ -74,7 +158,7 @@ internal abstract partial class StyledLayout(Element target) : Layout
 
     private void OnPropertyChanged(StyleProperty property)
     {
-        this.ComputedStyle.Copy(this.UserStyle!, property);
+        this.computedStyle?.Copy(this.UserStyle!, property);
         this.InvokeStyleChanged(property);
     }
 
@@ -83,52 +167,8 @@ internal abstract partial class StyledLayout(Element target) : Layout
     public void AddState(ElementState state) =>
         this.States |= state;
 
-    public void ComputeStyle()
-    {
-        if (!target.IsConnected)
-        {
-            return;
-        }
-
-        var previous = this.ComputedStyle.Data;
-
-        if (this.StyleSheet?.Base != null)
-        {
-            this.ComputedStyle.Copy(this.StyleSheet.Base);
-        }
-        else
-        {
-            this.ComputedStyle.Clear();
-        }
-
-        if (this.UserStyle != null)
-        {
-            this.ComputedStyle.Merge(this.UserStyle);
-        }
-
-        merge(ElementState.Focus,    this.StyleSheet?.Focus);
-        merge(ElementState.Hovered,  this.StyleSheet?.Hovered);
-        merge(ElementState.Disabled, this.StyleSheet?.Disabled);
-        merge(ElementState.Enabled,  this.StyleSheet?.Enabled);
-        merge(ElementState.Checked,  this.StyleSheet?.Checked);
-        merge(ElementState.Active,   this.StyleSheet?.Active);
-
-        var changes = StyleData.Diff(this.ComputedStyle.Data, previous);
-
-        if (changes != default)
-        {
-            this.InvokeStyleChanged(changes);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void merge(ElementState states, Style? style)
-        {
-            if (this.States.HasFlags(states) && style != null)
-            {
-                this.ComputedStyle.Merge(style);
-            }
-        }
-    }
+    public void ComputeStyle() =>
+        this.ComputeStyle(default);
 
     public void RemoveState(ElementState state) =>
         this.States &= ~state;

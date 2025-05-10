@@ -84,8 +84,8 @@ public class Theme
                     Border          = new(1, 4, Color.Green),
                     Color           = Color.Green,
                     BackgroundColor = Color.Black,
-                    Padding         = new((Pixel)4),
-                    MinSize         = new((Pixel)100, (Em)1.5)
+                    Padding         = new(Unit.Px(4)),
+                    MinSize         = new(Unit.Px(100), Unit.Em(1.5f))
                 },
                 Hovered = new()
                 {

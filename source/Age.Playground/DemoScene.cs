@@ -88,7 +88,7 @@ public class DemoScene : Scene3D
 
     private static Mesh LoadMesh(string modelName, string textureName)
     {
-        var texture = Texture.Load(Path.Join(AppContext.BaseDirectory, "Assets", "Textures", textureName));
+        var texture = Texture2D.Load(Path.Join(AppContext.BaseDirectory, "Assets", "Textures", textureName));
         var data    = WavefrontLoader.Load(Path.Join(AppContext.BaseDirectory, "Assets", "Models", modelName));
 
         var uniqueVertices = new Dictionary<Vertex, uint>();

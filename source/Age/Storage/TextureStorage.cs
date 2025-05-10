@@ -1,10 +1,17 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Age.Core;
-using Age.Numerics;
-using Age.Rendering.Resources;
+using Age.Core.Extensions;
 using Age.Rendering.Vulkan;
-using ThirdParty.Vulkan.Enums;
+using Age.Resources;
 
 namespace Age.Storage;
+
+public struct ResourceEntry<T>(T resource, int users)
+{
+    public T   Resource = resource;
+    public int Users    = users;
+}
 
 public class TextureStorage : Disposable
 {
@@ -12,46 +19,91 @@ public class TextureStorage : Disposable
 
     public static TextureStorage Singleton => singleton ?? throw new NullReferenceException();
 
-    private readonly VulkanRenderer renderer;
-    private readonly Dictionary<string, Texture> textures = [];
-
-    public Texture DefaultTexture { get; }
-    public Texture EmptyTexture   { get; }
+    private readonly VulkanRenderer                            renderer;
+    private readonly Dictionary<string, int>                   stringMap = [];
+    private readonly Dictionary<int, ResourceEntry<Texture2D>> textures  = [];
 
     public TextureStorage(VulkanRenderer renderer)
     {
         singleton = this;
 
         this.renderer = renderer;
-
-        const int DEFAULT_SIZE = 2;
-
-        var textureCreateInfo = new TextureCreateInfo
-        {
-            Format    = VkFormat.B8G8R8A8Unorm,
-            ImageType = VkImageType.N2D,
-            Width     = DEFAULT_SIZE,
-            Height    = DEFAULT_SIZE,
-            Depth     = 1,
-        };
-
-        this.DefaultTexture = new(textureCreateInfo);
-        this.DefaultTexture.Image.ClearColor(Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
-
-        this.EmptyTexture = new(textureCreateInfo);
-        this.EmptyTexture.Image.ClearColor(default, VkImageLayout.ShaderReadOnlyOptimal);
     }
 
-    public void Add(string name, Texture texture) =>
-        this.textures[name] = texture;
+    private void Release(int hashcode)
+    {
+        ref var entry = ref this.textures.GetValueRefOrNullRef(hashcode);
+
+        if (!Unsafe.IsNullRef(in entry))
+        {
+            entry.Users--;
+
+            if (entry.Users == 0)
+            {
+                entry.Resource.Dispose();
+                this.textures.Remove(hashcode);
+
+                foreach (var (key, value) in this.stringMap)
+                {
+                    if (value == hashcode)
+                    {
+                        this.stringMap.Remove(key);
+                    }
+                }
+            }
+        }
+    }
 
     protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {
-            this.renderer.DeferredDispose(this.DefaultTexture);
-            this.renderer.DeferredDispose(this.EmptyTexture);
-            this.renderer.DeferredDispose(this.textures.Values);
+            foreach (var entry in this.textures.Values)
+            {
+                this.renderer.DeferredDispose(entry.Resource);
+            }
+
+            this.textures.Clear();
         }
     }
+
+    public void Add(string name, Texture2D texture)
+    {
+        var hashcode = texture.GetHashCode();
+
+        this.textures.Add(hashcode, new(texture, 1));
+        this.stringMap.Add(name, hashcode);
+    }
+
+    public Texture2D Get(string name) =>
+        this.TryGet(name, out var texture)
+            ? texture
+            : throw new InvalidOperationException($"texture {name} not found");
+
+    public bool TryGet(string name, [NotNullWhen(true)] out Texture2D? texture)
+    {
+        if (this.stringMap.TryGetValue(name, out var hash))
+        {
+            ref var entry = ref this.textures.GetValueRefOrNullRef(hash);
+
+            entry.Users++;
+
+            texture = entry.Resource;
+            return true;
+        }
+
+        texture = null;
+        return false;
+    }
+
+    public void Release(string name)
+    {
+        if (this.stringMap.TryGetValue(name, out var hash))
+        {
+            this.Release(hash);
+        }
+    }
+
+    public void Release(Texture2D texture) =>
+        this.Release(texture.GetHashCode());
 }

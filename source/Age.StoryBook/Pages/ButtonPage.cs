@@ -13,7 +13,7 @@ public class ButtonPage : Page
     {
         var buttonStyle = new Style
         {
-            Margin = new((Pixel)2, null),
+            Margin = new(Unit.Px(2), null),
         };
 
         this.Children =
@@ -23,8 +23,8 @@ public class ButtonPage : Page
                 Style = new()
                 {
                     ContentJustification = ContentJustification.SpaceAround,
-                    Size                 = new((Percentage)100, null),
-                    Margin               = new((Pixel)10),
+                    Size                 = new(Unit.Pc(100), null),
+                    Margin               = new(Unit.Px(10)),
                 },
                 Children =
                 [

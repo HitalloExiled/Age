@@ -21,7 +21,7 @@ public class TextBoxPage : Page
 
         var textBoxStyle = new Style
         {
-            Margin = new((Pixel)2, null),
+            Margin = new(Unit.Px(2), null),
         };
 
         var container = new FlexBox
@@ -29,8 +29,8 @@ public class TextBoxPage : Page
             Style = new()
             {
                 ContentJustification = ContentJustification.SpaceAround,
-                Size                 = new((Percentage)100, null),
-                Margin               = new((Pixel)10),
+                Size                 = new(Unit.Pc(100), null),
+                Margin               = new(Unit.Px(10)),
             },
             Children =
             [
@@ -70,7 +70,7 @@ public class TextBoxPage : Page
                             Style = textBoxStyle with
                             {
                                 Overflow = Overflow.ScrollX,
-                                Size     = new((Pixel)100, null),
+                                Size     = new(Unit.Px(100), null),
                             },
                         },
                     ]
@@ -94,7 +94,7 @@ public class TextBoxPage : Page
                             Style     = textBoxStyle with
                             {
                                 Overflow = Overflow.Scroll,
-                                Size     = new((Pixel)200),
+                                Size     = new(Unit.Px(200)),
                             },
                         },
                     ]

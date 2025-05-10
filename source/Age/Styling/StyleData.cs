@@ -8,8 +8,23 @@ namespace Age.Styling;
 internal struct StyleData
 {
     #region 8-bytes
+    /// <see cref="StyleProperty.BackgroundImage">
+    public Image? BackgroundImage;
+
+    /// <see cref="StyleProperty.Border">
+    public Border? Border;
+
     /// <see cref="StyleProperty.FontFamily">
     public string? FontFamily;
+
+    /// <see cref="StyleProperty.Margin">
+    public StyleRectEdges? Margin;
+
+    /// <see cref="StyleProperty.Padding">
+    public StyleRectEdges? Padding;
+
+    /// <see cref="StyleProperty.Transforms">
+    public TransformOp[]? Transforms;
     #endregion
 
     #region 4-bytes
@@ -19,14 +34,9 @@ internal struct StyleData
     /// <see cref="StyleProperty.Baseline">
     public Unit? Baseline;
 
-    /// <see cref="StyleProperty.Border">
-    public Border? Border;
 
     /// <see cref="StyleProperty.Color">
     public Color? Color;
-
-    /// <see cref="StyleProperty.Margin">
-    public StyleRectEdges? Margin;
 
     /// <see cref="StyleProperty.MaxSize">
     public SizeUnit? MaxSize;
@@ -34,14 +44,11 @@ internal struct StyleData
     /// <see cref="StyleProperty.MinSize">
     public SizeUnit? MinSize;
 
-    /// <see cref="StyleProperty.Padding">
-    public StyleRectEdges? Padding;
-
     /// <see cref="StyleProperty.Size">
     public SizeUnit? Size;
 
-    /// <see cref="StyleProperty.Transform">
-    public Transform2D? Transform;
+    /// <see cref="StyleProperty.TransformOrigin">
+    public PointUnit? TransformOrigin;
     #endregion
 
     #region 2-bytes
@@ -95,6 +102,7 @@ internal struct StyleData
     {
         target.Alignment            = left.Alignment            ?? right.Alignment;
         target.BackgroundColor      = left.BackgroundColor      ?? right.BackgroundColor;
+        target.BackgroundImage      = left.BackgroundImage      ?? right.BackgroundImage;
         target.Baseline             = left.Baseline             ?? right.Baseline;
         target.Border               = left.Border               ?? right.Border;
         target.BoxSizing            = left.BoxSizing            ?? right.BoxSizing;
@@ -117,7 +125,8 @@ internal struct StyleData
         target.Stack                = left.Stack                ?? right.Stack;
         target.TextAlignment        = left.TextAlignment        ?? right.TextAlignment;
         target.TextSelection        = left.TextSelection        ?? right.TextSelection;
-        target.Transform            = left.Transform            ?? right.Transform;
+        target.Transforms            = left.Transforms            ?? right.Transforms;
+        target.TransformOrigin      = left.TransformOrigin      ?? right.TransformOrigin;
     }
 
     public static StyleProperty Diff(in StyleData left, in StyleData right)
@@ -126,6 +135,7 @@ internal struct StyleData
 
         check(left.Alignment            == right.Alignment,            StyleProperty.Alignment);
         check(left.BackgroundColor      == right.BackgroundColor,      StyleProperty.BackgroundColor);
+        check(left.BackgroundImage      == right.BackgroundImage,      StyleProperty.BackgroundImage);
         check(left.Baseline             == right.Baseline,             StyleProperty.Baseline);
         check(left.Border               == right.Border,               StyleProperty.Border);
         check(left.BoxSizing            == right.BoxSizing,            StyleProperty.BoxSizing);
@@ -148,7 +158,8 @@ internal struct StyleData
         check(left.Stack                == right.Stack,                StyleProperty.Stack);
         check(left.TextAlignment        == right.TextAlignment,        StyleProperty.TextAlignment);
         check(left.TextSelection        == right.TextSelection,        StyleProperty.TextSelection);
-        check(left.Transform            == right.Transform,            StyleProperty.Transform);
+        check(left.Transforms            == right.Transforms,            StyleProperty.Transforms);
+        check(left.TransformOrigin      == right.TransformOrigin,      StyleProperty.TransformOrigin);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void check(bool isEqual, StyleProperty property)
@@ -189,6 +200,7 @@ internal struct StyleData
 
         appendProperty(nameof(StyleProperty.Alignment),            in this.Alignment);
         appendProperty(nameof(StyleProperty.BackgroundColor),      in this.BackgroundColor);
+        appendProperty(nameof(StyleProperty.BackgroundImage),      in this.BackgroundImage);
         appendProperty(nameof(StyleProperty.Baseline),             in this.Baseline);
         appendProperty(nameof(StyleProperty.Border),               in this.Border);
         appendProperty(nameof(StyleProperty.BoxSizing),            in this.BoxSizing);
@@ -211,7 +223,8 @@ internal struct StyleData
         appendProperty(nameof(StyleProperty.Stack),                in this.Stack);
         appendProperty(nameof(StyleProperty.TextAlignment),        in this.TextAlignment);
         appendProperty(nameof(StyleProperty.TextSelection),        in this.TextSelection);
-        appendProperty(nameof(StyleProperty.Transform),            in this.Transform);
+        appendProperty(nameof(StyleProperty.Transforms),            in this.Transforms);
+        appendProperty(nameof(StyleProperty.TransformOrigin),      in this.TransformOrigin);
 
         if (builder.Length > 0)
         {
@@ -227,6 +240,7 @@ internal struct StyleData
         {
             case StyleProperty.Alignment:            this.Alignment            = data.Alignment;            break;
             case StyleProperty.BackgroundColor:      this.BackgroundColor      = data.BackgroundColor;      break;
+            case StyleProperty.BackgroundImage:      this.BackgroundImage      = data.BackgroundImage;      break;
             case StyleProperty.Baseline:             this.Baseline             = data.Baseline;             break;
             case StyleProperty.Border:               this.Border               = data.Border;               break;
             case StyleProperty.BoxSizing:            this.BoxSizing            = data.BoxSizing;            break;
@@ -249,7 +263,8 @@ internal struct StyleData
             case StyleProperty.Stack:                this.Stack                = data.Stack;                break;
             case StyleProperty.TextAlignment:        this.TextAlignment        = data.TextAlignment;        break;
             case StyleProperty.TextSelection:        this.TextSelection        = data.TextSelection;        break;
-            case StyleProperty.Transform:            this.Transform            = data.Transform;            break;
+            case StyleProperty.Transforms:            this.Transforms            = data.Transforms;            break;
+            case StyleProperty.TransformOrigin:      this.TransformOrigin      = data.TransformOrigin;      break;
         }
     }
 }

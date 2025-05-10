@@ -32,8 +32,8 @@ public class FrameStatus : Element
                 Color    = Color.Green,
                 FontSize = 16,
                 Border   = new(10, 0, Color.Green),
-                Padding  = new((Pixel)10),
-                MinSize  = new((Pixel)150, (Pixel)162),
+                Padding  = new(Unit.Px(10)),
+                MinSize  = new(Unit.Px(150), Unit.Px(162)),
                 // BackgroundColor = new Color(1, 1, 0)
             }
         };

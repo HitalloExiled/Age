@@ -25,7 +25,7 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = ShadowTreeTest.Setup;
+        this.setup = BackgroundImageTest.Setup;
 
         this.Reload();
         // this.CreateDemoScene();
@@ -38,7 +38,7 @@ public class Editor : Node
             Name  = "Root",
             Style = new()
             {
-                Size   = new((Percentage)100),
+                Size   = new(Unit.Pc(100)),
                 Border = new(BORDER_SIZE, default, Color.Margenta),
             }
         };
@@ -49,7 +49,7 @@ public class Editor : Node
             Style = new()
             {
                 StackDirection = StackDirection.Vertical,
-                Size           = new((Percentage)100),
+                Size           = new(Unit.Pc(100)),
                 Border         = new(BORDER_SIZE, default, Color.Yellow),
             }
         };
@@ -59,7 +59,7 @@ public class Editor : Node
             Name  = "Header",
             Style = new()
             {
-                Size   = new((Percentage)100, null),
+                Size   = new(Unit.Pc(100), null),
                 Border = new(BORDER_SIZE, default, Color.Red),
             }
         };
@@ -69,7 +69,7 @@ public class Editor : Node
             Name  = "Content",
             Style = new()
             {
-                Size   = new((Percentage)100),
+                Size   = new(Unit.Pc(100)),
                 Border = new(BORDER_SIZE, default, Color.Green),
             }
         };
@@ -180,9 +180,9 @@ public class Editor : Node
         }
         else if (Input.IsKeyJustPressed(Key.Num9))
         {
-            this.setup = Tests.Playground.Setup;
+            this.setup = BackgroundImageTest.Setup;
 
-            window.Title = $"9 - {nameof(Playground)}";
+            window.Title = $"9 - {nameof(BackgroundImageTest)}";
         }
         else if (Input.IsKeyPressed(Key.Control) && Input.IsKeyJustPressed(Key.P))
         {

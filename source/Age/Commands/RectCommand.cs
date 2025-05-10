@@ -10,7 +10,10 @@ public record RectCommand : Command
     public Color                Color         { get; set; }
     public CanvasShader.Flags   Flags         { get; set; }
     public MappedTexture        MappedTexture { get; set; } = MappedTexture.Default;
-    public Rect<float>          Rect          { get; set; }
+    public Size<float>          Size          { get; set; }
+    public Transform2D          Transform     { get; set; } = Transform2D.Identity;
+
+    public Rect<float> GetAffineRect() => new(this.Size, this.Transform.Position.ToPoint());
 
     public override void Reset()
     {
@@ -20,6 +23,7 @@ public record RectCommand : Command
         this.Color         = default;
         this.Flags         = default;
         this.MappedTexture = MappedTexture.Default;
-        this.Rect          = default;
+        this.Size          = default;
+        this.Transform     = Transform2D.Identity;
     }
 }

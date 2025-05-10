@@ -11,6 +11,6 @@ public sealed class Allocation : Resource
     public required ulong          Offset     { get; init; }
     public required ulong          Size       { get; init; }
 
-    protected override void Disposed() =>
+    protected override void OnDisposed() =>
         this.Memory.Dispose();
 }

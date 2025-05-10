@@ -199,7 +199,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
                 if (this.Tree is RenderTree renderTree && added)
                 {
-                    renderTree.Window.MouseWhell += this.OnScroll;
+                    renderTree.Window.MouseWheel += this.OnScroll;
                 }
             }
         }
@@ -211,7 +211,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
                 if (this.Tree is RenderTree renderTree && removed)
                 {
-                    renderTree.Window.MouseWhell -= this.OnScroll;
+                    renderTree.Window.MouseWheel -= this.OnScroll;
                 }
             }
         }
@@ -477,7 +477,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         if (this.events.ContainsKey(nameof(Scrolled)))
         {
-            renderTree.Window.MouseWhell += this.OnScroll;
+            renderTree.Window.MouseWheel += this.OnScroll;
         }
 
         if (!renderTree.IsDirty && !this.Layout.Hidden)
@@ -525,7 +525,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         renderTree.Window.Input      -= this.OnInput;
         renderTree.Window.KeyDown    -= this.OnKeyDown;
         renderTree.Window.KeyUp      -= this.OnKeyUp;
-        renderTree.Window.MouseWhell -= this.OnScroll;
+        renderTree.Window.MouseWheel -= this.OnScroll;
 
         if (!renderTree.IsDirty && !this.Layout.Hidden)
         {
