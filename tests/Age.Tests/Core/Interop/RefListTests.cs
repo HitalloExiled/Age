@@ -12,6 +12,13 @@ public unsafe class RefListTests
         Assert.True(list.AsSpan().SequenceEqual(values));
     }
 
+    private static void AssertIt(scoped in Span<int> list, ReadOnlySpan<int> values, int capacity)
+    {
+        Assert.Equal(values.Length, list.Length);
+
+        Assert.True(list.SequenceEqual(values));
+    }
+
     [Fact]
     public void Add()
     {
@@ -58,7 +65,7 @@ public unsafe class RefListTests
     {
         using var list = new RefList<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-        using var slice = list[3..6];
+        var slice = list[3..6];
 
         AssertIt(slice, [4, 5, 6], 3);
     }

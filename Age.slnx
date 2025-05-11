@@ -16,6 +16,7 @@
     <Project Path="source/Age.Resources/Age.Resources.csproj" />
     <Project Path="source/Age.StoryBook/Age.StoryBook.csproj" />
     <Project Path="source/Age/Age.csproj" />
+    <Project Path="source/ThirdParty.Skia/ThirdParty.Skia.csproj" />
     <Project Path="source/ThirdParty.Slang/ThirdParty.Slang.csproj" />
     <Project Path="source/ThirdParty.Vulkan/ThirdParty.Vulkan.csproj" />
   </Folder>

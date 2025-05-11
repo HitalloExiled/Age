@@ -1,0 +1,1280 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
+using System.Xml;
+using System.Xml.Linq;
+using SkiaSharp;
+
+namespace ThirdParty.Skia.Svg;
+
+public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
+{
+    private const float DEFAULT_PPI = 160f;
+    private const bool  DEFAULT_THROW_ON_UNSUPPORTED_ELEMENT = false;
+
+    private static readonly Regex           clipPathUrlPattern = CreateClipPathUrlPattern();
+    private static readonly Regex           fillUrlPattern     = CreateFillUrlPattern();
+    private static readonly IFormatProvider icult              = CultureInfo.InvariantCulture;
+    private static readonly Regex           keyValuePattern    = CreateKeyValuePattern();
+    private static readonly Regex           percPattern        = CreatePercPattern();
+    private static readonly XNamespace      svg                = "http://www.w3.org/2000/svg";
+    private static readonly Regex           unitPattern        = CreateUnitPattern();
+    private static readonly char[]          ws                 = [' ', '\t', '\n', '\r'];
+    private static readonly Regex           wsPattern          = CreateWS();
+    private static readonly XNamespace      xlink              = "http://www.w3.org/1999/xlink";
+
+    private readonly Dictionary<string, XElement> defs = [];
+
+    private readonly XmlReaderSettings xmlReaderSettings = new()
+    {
+        DtdProcessing  = DtdProcessing.Ignore,
+        IgnoreComments = true
+    };
+
+    public float PixelsPerInch { get; set; } = pixelsPerInch;
+
+    public bool ThrowOnUnsupportedElement { get; set; } = false;
+
+    public SKRect ViewBox { get; private set; }
+
+    public SKSize CanvasSize { get; private set; } = canvasSize;
+
+    public SKPicture? Picture { get; private set; }
+
+    public string? Description { get; private set; }
+
+    public string? Title { get; private set; }
+
+    public string? Version { get; private set; }
+
+    public SkSvg() : this(160f, SKSize.Empty)
+    { }
+
+    public SkSvg(float pixelsPerInch) : this(pixelsPerInch, SKSize.Empty)
+    { }
+
+    public SkSvg(SKSize canvasSize) : this(160f, canvasSize)
+    { }
+
+    public SKPicture Load(string filename)
+    {
+        using var stream = File.OpenRead(filename);
+        return this.Load(stream);
+    }
+
+    public SKPicture Load(Stream stream)
+    {
+        using var reader = XmlReader.Create(stream, this.xmlReaderSettings, CreateSvgXmlContext());
+        return this.Load(reader);
+    }
+
+    public SKPicture Load(XmlReader reader)
+    {
+        return this.Load(XDocument.Load(reader));
+    }
+
+    private static XmlParserContext CreateSvgXmlContext()
+    {
+        var xmlNamespaceManager = new XmlNamespaceManager(new NameTable());
+        xmlNamespaceManager.AddNamespace(string.Empty, svg.NamespaceName);
+        xmlNamespaceManager.AddNamespace("xlink", xlink.NamespaceName);
+        return new XmlParserContext(null, xmlNamespaceManager, null, XmlSpace.None);
+    }
+
+    private SKPicture Load(XDocument xdoc)
+    {
+        var root = xdoc.Root!;
+        var @namespace = root.Name.Namespace;
+        foreach (var item in root.Descendants())
+        {
+            var text = item.Attribute("id")?.Value?.Trim();
+            if (!string.IsNullOrEmpty(text))
+            {
+                this.defs[text] = this.ReadDefinition(item);
+            }
+        }
+
+        this.Version = root.Attribute("version")?.Value;
+        this.Title = root.Element(@namespace + "title")?.Value;
+        this.Description = root.Element(@namespace + "desc")?.Value ?? root.Element(@namespace + "description")?.Value;
+        var text2 = root.Attribute("preserveAspectRatio")?.Value;
+        var xAttribute = root.Attribute("viewBox") ?? root.Attribute("viewPort");
+        if (xAttribute != null)
+        {
+            this.ViewBox = this.ReadRectangle(xAttribute.Value);
+        }
+
+        if (this.CanvasSize.IsEmpty)
+        {
+            var xAttribute2 = root.Attribute("width")!;
+            var xAttribute3 = root.Attribute("height")!;
+            var width = this.ReadNumber(xAttribute2);
+            var height = this.ReadNumber(xAttribute3);
+            var canvasSize = new SKSize(width, height);
+            if (xAttribute2 == null)
+            {
+                canvasSize.Width = this.ViewBox.Width;
+            }
+            else if (xAttribute2.Value.Contains("%"))
+            {
+                canvasSize.Width *= this.ViewBox.Width;
+            }
+
+            if (xAttribute3 == null)
+            {
+                canvasSize.Height = this.ViewBox.Height;
+            }
+            else if (xAttribute3 != null && xAttribute3.Value.Contains("%"))
+            {
+                canvasSize.Height *= this.ViewBox.Height;
+            }
+
+            this.CanvasSize = canvasSize;
+        }
+
+        using (var sKPictureRecorder = new SKPictureRecorder())
+        {
+            using var sKCanvas = sKPictureRecorder.BeginRecording(SKRect.Create(this.CanvasSize));
+            if (!this.ViewBox.IsEmpty && (this.ViewBox.Width != this.CanvasSize.Width || this.ViewBox.Height != this.CanvasSize.Height))
+            {
+                if (text2 == "none")
+                {
+                    sKCanvas.Scale(this.CanvasSize.Width / this.ViewBox.Width, this.CanvasSize.Height / this.ViewBox.Height);
+                }
+                else
+                {
+                    var num = Math.Min(this.CanvasSize.Width / this.ViewBox.Width, this.CanvasSize.Height / this.ViewBox.Height);
+                    var sKRect = SKRect.Create(this.CanvasSize).AspectFit(this.ViewBox.Size);
+                    sKCanvas.Translate(sKRect.Left, sKRect.Top);
+                    sKCanvas.Scale(num, num);
+                }
+            }
+
+            sKCanvas.Translate(0f - this.ViewBox.Left, 0f - this.ViewBox.Top);
+            if (!this.ViewBox.IsEmpty)
+            {
+                sKCanvas.ClipRect(this.ViewBox);
+            }
+
+            SKPaint? stroke = null;
+            var fill = CreatePaint();
+            this.ReadPaints(root, ref stroke, ref fill, isGroup: true);
+            this.LoadElements(root.Elements(), sKCanvas, stroke, fill);
+            this.Picture = sKPictureRecorder.EndRecording();
+        }
+
+        return this.Picture;
+    }
+
+    private void LoadElements(IEnumerable<XElement> elements, SKCanvas canvas, SKPaint? stroke, SKPaint? fill)
+    {
+        foreach (var element in elements)
+        {
+            this.ReadElement(element, canvas, stroke, fill);
+        }
+    }
+
+    private void ReadElement(XElement e, SKCanvas canvas, SKPaint? stroke, SKPaint? fill)
+    {
+        if (e.Attribute("display")?.Value == "none")
+        {
+            return;
+        }
+
+        var m = this.ReadTransform(e.Attribute("transform")?.Value ?? string.Empty);
+        canvas.Save();
+        canvas.Concat(in m);
+        var sKPath = this.ReadClipPath(e.Attribute("clip-path")?.Value ?? string.Empty);
+        if (sKPath != null)
+        {
+            canvas.ClipPath(sKPath);
+        }
+
+        var localName = e.Name.LocalName;
+        var isGroup = localName == "g";
+        var style = this.ReadPaints(e, ref stroke, ref fill, isGroup);
+        switch (localName)
+        {
+            case "image":
+                {
+                    var sKSvgImage = this.ReadImage(e);
+                    if (sKSvgImage.Bytes == null)
+                    {
+                        break;
+                    }
+
+                    using var sKBitmap = SKBitmap.Decode(sKSvgImage.Bytes);
+                    if (sKBitmap != null)
+                    {
+                        canvas.DrawBitmap(sKBitmap, sKSvgImage.Rect);
+                    }
+
+                    break;
+                }
+            case "text":
+                if (stroke != null || fill != null)
+                {
+                    var sKText = this.ReadText(e, stroke?.Clone()!, fill?.Clone()!);
+                    if (sKText.Any())
+                    {
+                        canvas.DrawText(sKText, 0, 0, paint);
+                    }
+                }
+
+                break;
+            case "rect":
+            case "ellipse":
+            case "circle":
+            case "path":
+            case "polygon":
+            case "polyline":
+            case "line":
+                {
+                    if (stroke == null && fill == null)
+                    {
+                        break;
+                    }
+
+                    var sKPath2 = this.ReadElement(e);
+                    if (sKPath2 != null)
+                    {
+                        if (fill != null)
+                        {
+                            canvas.DrawPath(sKPath2, fill);
+                        }
+
+                        if (stroke != null)
+                        {
+                            canvas.DrawPath(sKPath2, stroke);
+                        }
+                    }
+
+                    break;
+                }
+            case "g":
+                {
+                    if (!e.HasElements)
+                    {
+                        break;
+                    }
+
+                    var num = this.ReadOpacity(style);
+                    if (num != 1f)
+                    {
+                        var alpha = (byte)(255f * num);
+                        var paint = new SKPaint
+                        {
+                            Color = SKColors.Black.WithAlpha(alpha)
+                        };
+                        canvas.SaveLayer(paint);
+                    }
+
+                    foreach (var item in e.Elements())
+                    {
+                        this.ReadElement(item, canvas, stroke?.Clone()!, fill?.Clone()!);
+                    }
+
+                    if (num != 1f)
+                    {
+                        canvas.Restore();
+                    }
+
+                    break;
+                }
+            case "use":
+                if (e.HasAttributes)
+                {
+                    var xElement = this.ReadHref(e);
+                    if (xElement != null)
+                    {
+                        var num2 = this.ReadNumber(e.Attribute("x")!);
+                        var num3 = this.ReadNumber(e.Attribute("y")!);
+                        var m2 = SKMatrix.CreateTranslation(num2, num3);
+                        canvas.Save();
+                        canvas.Concat(in m2);
+                        this.ReadElement(xElement, canvas, stroke?.Clone()!, fill?.Clone()!);
+                        canvas.Restore();
+                    }
+                }
+
+                break;
+            case "switch":
+                if (!e.HasElements)
+                {
+                    break;
+                }
+
+                foreach (var item2 in e.Elements())
+                {
+                    var xAttribute = item2.Attribute("requiredFeatures");
+                    var xAttribute2 = item2.Attribute("requiredExtensions");
+                    var xAttribute3 = item2.Attribute("systemLanguage");
+                    if (xAttribute == null && xAttribute2 == null && xAttribute3 == null)
+                    {
+                        this.ReadElement(item2, canvas, stroke?.Clone()!, fill?.Clone()!);
+                    }
+                }
+
+                break;
+            default:
+                this.LogOrThrow($"SVG element '{localName}' is not supported");
+                break;
+            case "defs":
+            case "title":
+            case "desc":
+            case "description":
+                break;
+        }
+
+        canvas.Restore();
+    }
+
+    private SKSvgImage ReadImage(XElement e)
+    {
+        var x = this.ReadNumber(e.Attribute("x")!);
+        var y = this.ReadNumber(e.Attribute("y")!);
+        var width = this.ReadNumber(e.Attribute("width")!);
+        var height = this.ReadNumber(e.Attribute("height")!);
+        var rect = SKRect.Create(x, y, width, height);
+        byte[]? bytes = null;
+        var text = ReadHrefString(e);
+        if (text != null)
+        {
+            if (text.StartsWith("data:"))
+            {
+                bytes = ReadUriBytes(text);
+            }
+            else
+            {
+                this.LogOrThrow("Remote images are not supported");
+            }
+        }
+
+        return new SKSvgImage(rect, text, bytes);
+    }
+
+    private SKPath? ReadElement(XElement e)
+    {
+        var sKPath = new SKPath();
+        var localName = e.Name.LocalName;
+        switch (localName)
+        {
+            case "rect":
+                {
+                    var sKRoundedRect = this.ReadRoundedRect(e);
+                    if (sKRoundedRect.IsRounded)
+                    {
+                        sKPath.AddRoundRect(sKRoundedRect.Rect, sKRoundedRect.RadiusX, sKRoundedRect.RadiusY, SKPathDirection.Clockwise);
+                    }
+                    else
+                    {
+                        sKPath.AddRect(sKRoundedRect.Rect);
+                    }
+
+                    break;
+                }
+            case "ellipse":
+                sKPath.AddOval(this.ReadOval(e).BoundingRect);
+                break;
+            case "circle":
+                {
+                    var sKCircle = this.ReadCircle(e);
+                    sKPath.AddCircle(sKCircle.Center.X, sKCircle.Center.Y, sKCircle.Radius);
+                    break;
+                }
+            case "path":
+                {
+                    var text2 = e.Attribute("d")?.Value;
+                    if (!string.IsNullOrWhiteSpace(text2))
+                    {
+                        sKPath.Dispose();
+                        sKPath = SKPath.ParseSvgPathData(text2);
+                    }
+
+                    break;
+                }
+            case "polygon":
+            case "polyline":
+                {
+                    var flag = localName == "polygon";
+                    var text = e.Attribute("points")?.Value;
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        text = "M" + text;
+                        if (flag)
+                        {
+                            text += " Z";
+                        }
+
+                        sKPath.Dispose();
+                        sKPath = SKPath.ParseSvgPathData(text);
+                    }
+
+                    break;
+                }
+            case "line":
+                {
+                    var sKLine = this.ReadLine(e);
+                    sKPath.MoveTo(sKLine.P1);
+                    sKPath.LineTo(sKLine.P2);
+                    break;
+                }
+            default:
+                sKPath.Dispose();
+                sKPath = null;
+                break;
+        }
+
+        return sKPath;
+    }
+
+    private SKOval ReadOval(XElement e)
+    {
+        var x = this.ReadNumber(e.Attribute("cx")!);
+        var y = this.ReadNumber(e.Attribute("cy")!);
+        return new SKOval(rx: this.ReadNumber(e.Attribute("rx")!), ry: this.ReadNumber(e.Attribute("ry")!), center: new SKPoint(x, y));
+    }
+
+    private SKCircle ReadCircle(XElement e)
+    {
+        var x = this.ReadNumber(e.Attribute("cx")!);
+        var y = this.ReadNumber(e.Attribute("cy")!);
+        return new SKCircle(radius: this.ReadNumber(e.Attribute("r")!), center: new SKPoint(x, y));
+    }
+
+    private SKLine ReadLine(XElement e)
+    {
+        var x = this.ReadNumber(e.Attribute("x1")!);
+        var x2 = this.ReadNumber(e.Attribute("x2")!);
+        var y = this.ReadNumber(e.Attribute("y1")!);
+        return new SKLine(p2: new SKPoint(x2, this.ReadNumber(e.Attribute("y2")!)), p1: new SKPoint(x, y));
+    }
+
+    private SKRoundedRect ReadRoundedRect(XElement e)
+    {
+        var x = this.ReadNumber(e.Attribute("x")!);
+        var y = this.ReadNumber(e.Attribute("y")!);
+        var width = this.ReadNumber(e.Attribute("width")!);
+        var height = this.ReadNumber(e.Attribute("height")!);
+        var num = this.ReadOptionalNumber(e.Attribute("rx")!);
+        var num2 = this.ReadOptionalNumber(e.Attribute("ry")!);
+        return new SKRoundedRect(SKRect.Create(x, y, width, height), num ?? num2 ?? 0f, num2 ?? num ?? 0f);
+    }
+
+    private SKText ReadText(XElement e, SKPaint stroke, SKPaint fill)
+    {
+        var x = this.ReadNumber(e.Attribute("x")!);
+        var y = this.ReadNumber(e.Attribute("y")!);
+        var xy = new SKPoint(x, y);
+        var textAlign = this.ReadTextAlignment(e);
+        var baselineShift = this.ReadBaselineShift(e);
+        this.ReadFontAttributes(e, fill);
+        return this.ReadTextSpans(e, xy, textAlign, baselineShift, stroke, fill);
+    }
+
+    private SKText ReadTextSpans(XElement e, SKPoint xy, SKTextAlign textAlign, float baselineShift, SKPaint stroke, SKPaint fill)
+    {
+        var sKText = new SKText(xy, textAlign);
+        var value = baselineShift;
+        fill.TextAlign = SKTextAlign.Left;
+        var array = e.Nodes().ToArray();
+        for (var i = 0; i < array.Length; i++)
+        {
+            var xNode = array[i];
+            var flag = i == 0;
+            var flag2 = i == array.Length - 1;
+            if (xNode.NodeType == XmlNodeType.Text)
+            {
+                var array2 = ((XText)xNode).Value.Split(new char[2] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                var num = array2.Length;
+                if (num > 0)
+                {
+                    if (flag)
+                    {
+                        array2[0] = array2[0].TrimStart(Array.Empty<char>());
+                    }
+
+                    if (flag2)
+                    {
+                        array2[num - 1] = array2[num - 1].TrimEnd(Array.Empty<char>());
+                    }
+
+                    var text = wsPattern.Replace(string.Concat(array2), " ");
+                    sKText.Append(new SKTextSpan(text, fill.Clone(), null, null, value));
+                }
+            }
+            else if (xNode.NodeType == XmlNodeType.Element)
+            {
+                var xElement = (XElement)xNode;
+                if (xElement.Name.LocalName == "tspan")
+                {
+                    var x = this.ReadOptionalNumber(xElement.Attribute("x")!);
+                    var y = this.ReadOptionalNumber(xElement.Attribute("y")!);
+                    var value2 = xElement.Value;
+                    var sKPaint = fill.Clone();
+                    this.ReadFontAttributes(xElement, sKPaint);
+                    value = this.ReadBaselineShift(xElement);
+                    sKText.Append(new SKTextSpan(value2, sKPaint, x, y, value));
+                }
+            }
+        }
+
+        return sKText;
+    }
+
+    private void ReadFontAttributes(XElement e, SKPaint paint, SKTypeface? typeface)
+    {
+        var dictionary = this.ReadStyle(e);
+        if (!dictionary.TryGetValue("font-family", out var value) || string.IsNullOrWhiteSpace(value))
+        {
+            value = typeface?.FamilyName;
+        }
+
+        var weight = this.ReadFontWeight(dictionary, typeface?.FontWeight ?? 400);
+        var width = this.ReadFontWidth(dictionary, typeface?.FontWidth ?? 5);
+        var slant = ReadFontStyle(dictionary, typeface?.FontSlant ?? SKFontStyleSlant.Upright);
+        typeface = SKTypeface.FromFamilyName(value, weight, width, slant);
+        if (dictionary.TryGetValue("font-size", out var value2) && !string.IsNullOrWhiteSpace(value2))
+        {
+            paint.TextSize = this.ReadNumber(value2);
+        }
+    }
+
+    private static SKFontStyleSlant ReadFontStyle(Dictionary<string, string> fontStyle, SKFontStyleSlant defaultStyle = SKFontStyleSlant.Upright)
+    {
+        var result = defaultStyle;
+        if (fontStyle.TryGetValue("font-style", out var value) && !string.IsNullOrWhiteSpace(value))
+        {
+            result = value switch
+            {
+                "italic" => SKFontStyleSlant.Italic,
+                "oblique" => SKFontStyleSlant.Oblique,
+                "normal" => SKFontStyleSlant.Upright,
+                _ => defaultStyle,
+            };
+        }
+
+        return result;
+    }
+
+    private int ReadFontWidth(Dictionary<string, string> fontStyle, int defaultWidth = 5)
+    {
+        var result = defaultWidth;
+        if (fontStyle.TryGetValue("font-stretch", out var value) && !string.IsNullOrWhiteSpace(value) && !int.TryParse(value, out result))
+        {
+            result = value switch
+            {
+                "ultra-condensed" => 1,
+                "extra-condensed" => 2,
+                "condensed" => 3,
+                "semi-condensed" => 4,
+                "normal" => 5,
+                "semi-expanded" => 6,
+                "expanded" => 7,
+                "extra-expanded" => 8,
+                "ultra-expanded" => 9,
+                "wider" => result + 1,
+                "narrower" => result - 1,
+                _ => defaultWidth,
+            };
+        }
+
+        return Math.Min(Math.Max(1, result), 9);
+    }
+
+    private int ReadFontWeight(Dictionary<string, string> fontStyle, int defaultWeight = 400)
+    {
+        var result = defaultWeight;
+        if (fontStyle.TryGetValue("font-weight", out var value) && !string.IsNullOrWhiteSpace(value) && !int.TryParse(value, out result))
+        {
+            result = value switch
+            {
+                "normal" => 400,
+                "bold" => 700,
+                "bolder" => result + 100,
+                "lighter" => result - 100,
+                _ => defaultWeight,
+            };
+        }
+
+        return Math.Min(Math.Max(100, result), 1000);
+    }
+
+    private void LogOrThrow(string message)
+    {
+        if (this.ThrowOnUnsupportedElement)
+        {
+            throw new NotSupportedException(message);
+        }
+    }
+
+    private string GetString(Dictionary<string, string> style, string name, string defaultValue = "")
+    {
+        if (style.TryGetValue(name, out var value))
+        {
+            return value;
+        }
+
+        return defaultValue;
+    }
+
+    private Dictionary<string, string> ReadStyle(string style)
+    {
+        var dictionary = new Dictionary<string, string>();
+        var array = style.Split(new char[1] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+        foreach (var input in array)
+        {
+            var match = keyValuePattern.Match(input);
+            if (match.Success)
+            {
+                var value = match.Groups[1].Value;
+                var value2 = match.Groups[2].Value;
+                dictionary[value] = value2;
+            }
+        }
+
+        return dictionary;
+    }
+
+    private Dictionary<string, string> ReadStyle(XElement e)
+    {
+        var dictionary = (from a in e.Attributes()
+                                                 where HasSvgNamespace(a.Name)
+                                                 select a).ToDictionary((XAttribute k) => k.Name.LocalName, (XAttribute v) => v.Value);
+        var text = e.Attribute("style")?.Value;
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            foreach (var item in this.ReadStyle(text))
+            {
+                dictionary[item.Key] = item.Value;
+            }
+        }
+
+        return dictionary;
+    }
+
+    private static bool HasSvgNamespace(XName name)
+    {
+        if (!string.IsNullOrEmpty(name.Namespace?.NamespaceName) && !(name.Namespace == svg))
+        {
+            return name.Namespace == xlink;
+        }
+
+        return true;
+    }
+
+    private Dictionary<string, string> ReadPaints(XElement e, ref SKPaint? stroke, ref SKPaint? fill, bool isGroup)
+    {
+        var dictionary = this.ReadStyle(e);
+        this.ReadPaints(dictionary, ref stroke, ref fill, isGroup);
+        return dictionary;
+    }
+
+    private void ReadPaints(Dictionary<string, string> style, ref SKPaint? strokePaint, ref SKPaint? fillPaint, bool isGroup)
+    {
+        var num = (isGroup ? 1f : this.ReadOpacity(style));
+        var text = this.GetString(style, "stroke").Trim();
+        if (text.Equals("none", StringComparison.OrdinalIgnoreCase))
+        {
+            strokePaint = null;
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(text))
+            {
+                if (strokePaint == null)
+                {
+                    strokePaint = CreatePaint(stroke: true);
+                }
+
+                if (ColorHelper.TryParse(text, out var color))
+                {
+                    if (color.Alpha == byte.MaxValue)
+                    {
+                        strokePaint.Color = color.WithAlpha(strokePaint.Color.Alpha);
+                    }
+                    else
+                    {
+                        strokePaint.Color = color;
+                    }
+                }
+            }
+
+            var @string = this.GetString(style, "stroke-dasharray");
+            if (!string.IsNullOrWhiteSpace(@string))
+            {
+                if ("none".Equals(@string, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (strokePaint != null)
+                    {
+                        strokePaint.PathEffect = null;
+                    }
+                }
+                else
+                {
+                    if (strokePaint == null)
+                    {
+                        strokePaint = CreatePaint(stroke: true);
+                    }
+
+                    var array = @string.Split(new char[2] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                    var array2 = array.Select(this.ReadNumber).ToArray();
+                    if (array.Length % 2 == 1)
+                    {
+                        array2 = array2.Concat(array2).ToArray();
+                    }
+
+                    var phase = this.ReadNumber(style, "stroke-dashoffset", 0f);
+                    strokePaint.PathEffect = SKPathEffect.CreateDash(array2.ToArray(), phase);
+                }
+            }
+
+            var string2 = this.GetString(style, "stroke-width");
+            if (!string.IsNullOrWhiteSpace(string2))
+            {
+                if (strokePaint == null)
+                {
+                    strokePaint = CreatePaint(stroke: true);
+                }
+
+                strokePaint.StrokeWidth = this.ReadNumber(string2);
+            }
+
+            var string3 = this.GetString(style, "stroke-opacity");
+            if (!string.IsNullOrWhiteSpace(string3))
+            {
+                if (strokePaint == null)
+                {
+                    strokePaint = CreatePaint(stroke: true);
+                }
+
+                strokePaint.Color = strokePaint.Color.WithAlpha((byte)(this.ReadNumber(string3) * 255f));
+            }
+
+            if (strokePaint != null)
+            {
+                strokePaint.Color = strokePaint.Color.WithAlpha((byte)((float)(int)strokePaint.Color.Alpha * num));
+            }
+        }
+
+        var text2 = this.GetString(style, "fill").Trim();
+        if (text2.Equals("none", StringComparison.OrdinalIgnoreCase))
+        {
+            fillPaint = null;
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(text2))
+        {
+            if (fillPaint == null)
+            {
+                fillPaint = CreatePaint();
+            }
+
+            if (ColorHelper.TryParse(text2, out var color2))
+            {
+                if (color2.Alpha == byte.MaxValue)
+                {
+                    fillPaint.Color = color2.WithAlpha(fillPaint.Color.Alpha);
+                }
+                else
+                {
+                    fillPaint.Color = color2;
+                }
+            }
+            else
+            {
+                var flag = false;
+                var match = fillUrlPattern.Match(text2);
+                if (match.Success)
+                {
+                    var text3 = match.Groups[1].Value.Trim();
+                    if (this.defs.TryGetValue(text3, out var value))
+                    {
+                        var sKShader = this.ReadGradient(value);
+                        if (sKShader != null)
+                        {
+                            fillPaint.Shader = sKShader;
+                            flag = true;
+                        }
+                    }
+                    else
+                    {
+                        this.LogOrThrow($"Invalid fill url reference: {text3}");
+                    }
+                }
+
+                if (!flag)
+                {
+                    this.LogOrThrow($"Unsupported fill: {text2}");
+                }
+            }
+        }
+
+        var string4 = this.GetString(style, "fill-opacity");
+
+        if (!string.IsNullOrWhiteSpace(string4))
+        {
+            fillPaint ??= CreatePaint();
+
+            fillPaint.Color = fillPaint.Color.WithAlpha((byte)(this.ReadNumber(string4) * 255f));
+        }
+
+        if (fillPaint != null)
+        {
+            fillPaint.Color = fillPaint.Color.WithAlpha((byte)((float)(int)fillPaint.Color.Alpha * num));
+        }
+    }
+
+    private static SKPaint CreatePaint(bool stroke = false) =>
+        new()
+        {
+            IsAntialias = true,
+            IsStroke    = stroke,
+            Color       = SKColors.Black
+        };
+
+    private SKMatrix ReadTransform(string raw)
+    {
+        SKMatrix result = SKMatrix.CreateIdentity();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return result;
+        }
+
+        var array = raw.Trim().Split(new char[1] { ')' }, StringSplitOptions.RemoveEmptyEntries);
+        for (var i = 0; i < array.Length; i++)
+        {
+            var array2 = array[i].Split(new char[6] { '(', ',', ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            SKMatrix sKMatrix = SKMatrix.CreateIdentity();
+            switch (array2[0])
+            {
+                case "matrix":
+                    if (array2.Length == 7)
+                    {
+                        sKMatrix.Values = new float[9]
+                        {
+                        this.ReadNumber(array2[1]),
+                        this.ReadNumber(array2[3]),
+                        this.ReadNumber(array2[5]),
+                        this.ReadNumber(array2[2]),
+                        this.ReadNumber(array2[4]),
+                        this.ReadNumber(array2[6]),
+                        0f,
+                        0f,
+                        1f
+                        };
+                    }
+                    else
+                    {
+                        this.LogOrThrow($"Matrices are expected to have 6 elements, this one has {array2.Length - 1}");
+                    }
+
+                    break;
+                case "translate":
+                    if (array2.Length >= 3)
+                    {
+                        sKMatrix = SKMatrix.CreateTranslation(this.ReadNumber(array2[1]), this.ReadNumber(array2[2]));
+                    }
+                    else if (array2.Length >= 2)
+                    {
+                        sKMatrix = SKMatrix.CreateTranslation(this.ReadNumber(array2[1]), 0f);
+                    }
+
+                    break;
+                case "scale":
+                    if (array2.Length >= 3)
+                    {
+                        sKMatrix = SKMatrix.CreateScale(this.ReadNumber(array2[1]), this.ReadNumber(array2[2]));
+                    }
+                    else if (array2.Length >= 2)
+                    {
+                        var num4 = this.ReadNumber(array2[1]);
+                        sKMatrix = SKMatrix.CreateScale(num4, num4);
+                    }
+
+                    break;
+                case "rotate":
+                    {
+                        var num = this.ReadNumber(array2[1]);
+                        if (array2.Length >= 4)
+                        {
+                            var num2 = this.ReadNumber(array2[2]);
+                            var num3 = this.ReadNumber(array2[3]);
+                            var sKMatrix2 = SKMatrix.CreateTranslation(num2, num3);
+                            var sKMatrix3 = SKMatrix.CreateRotationDegrees(num);
+                            var sKMatrix4 = SKMatrix.CreateTranslation(0f - num2, 0f - num3);
+                            sKMatrix = SKMatrix.Concat(sKMatrix2, sKMatrix3);
+                            sKMatrix = SKMatrix.Concat(sKMatrix, sKMatrix4);
+                        }
+                        else
+                        {
+                            sKMatrix = SKMatrix.CreateRotationDegrees(num);
+                        }
+
+                        break;
+                    }
+                default:
+                    this.LogOrThrow($"Can't transform {array2[0]}");
+                    break;
+            }
+
+            result = SKMatrix.Concat(result, sKMatrix);
+        }
+
+        return result;
+    }
+
+    private SKPath? ReadClipPath(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+
+        SKPath? sKPath = null;
+        var flag = false;
+        var match = clipPathUrlPattern.Match(raw);
+        if (match.Success)
+        {
+            var text = match.Groups[1].Value.Trim();
+            if (this.defs.TryGetValue(text, out var value))
+            {
+                sKPath = this.ReadClipPathDefinition(value);
+                if (sKPath != null)
+                {
+                    flag = true;
+                }
+            }
+            else
+            {
+                this.LogOrThrow($"Invalid clip-path url reference: {text}");
+            }
+        }
+
+        if (!flag)
+        {
+            this.LogOrThrow($"Unsupported clip-path: {raw}");
+        }
+
+        return sKPath;
+    }
+
+    private SKPath? ReadClipPathDefinition(XElement e)
+    {
+        if (e.Name.LocalName != "clipPath" || !e.HasElements)
+        {
+            return null;
+        }
+
+        var sKPath = new SKPath();
+        foreach (var item in e.Elements())
+        {
+            var sKPath2 = this.ReadElement(item);
+            if (sKPath2 != null)
+            {
+                sKPath.AddPath(sKPath2);
+            }
+            else
+            {
+                this.LogOrThrow($"SVG element '{item.Name.LocalName}' is not supported in clipPath.");
+            }
+        }
+
+        return sKPath;
+    }
+
+    private SKTextAlign ReadTextAlignment(XElement element)
+    {
+        string? text = null;
+        if (element != null)
+        {
+            var xAttribute = element.Attribute("text-anchor");
+            if (xAttribute != null && !string.IsNullOrWhiteSpace(xAttribute.Value))
+            {
+                text = xAttribute.Value;
+            }
+            else
+            {
+                var xAttribute2 = element.Attribute("style");
+                if (xAttribute2 != null && !string.IsNullOrWhiteSpace(xAttribute2.Value))
+                {
+                    text = this.GetString(this.ReadStyle(xAttribute2.Value), "text-anchor");
+                }
+            }
+        }
+
+        if (!(text == "end"))
+        {
+            if (text == "middle")
+            {
+                return SKTextAlign.Center;
+            }
+
+            return SKTextAlign.Left;
+        }
+
+        return SKTextAlign.Right;
+    }
+
+    private float ReadBaselineShift(XElement element)
+    {
+        string? raw = null;
+        if (element != null)
+        {
+            var xAttribute = element.Attribute("baseline-shift");
+            if (xAttribute != null && !string.IsNullOrWhiteSpace(xAttribute.Value))
+            {
+                raw = xAttribute.Value;
+            }
+            else
+            {
+                var xAttribute2 = element.Attribute("style");
+                if (xAttribute2 != null && !string.IsNullOrWhiteSpace(xAttribute2.Value))
+                {
+                    raw = this.GetString(this.ReadStyle(xAttribute2.Value), "baseline-shift");
+                }
+            }
+        }
+
+        return this.ReadNumber(raw);
+    }
+
+    private SKShader? ReadGradient(XElement defE)
+    {
+        var localName = defE.Name.LocalName;
+        if (!(localName == "linearGradient"))
+        {
+            if (localName == "radialGradient")
+            {
+                return this.ReadRadialGradient(defE);
+            }
+
+            return null;
+        }
+
+        return this.ReadLinearGradient(defE);
+    }
+
+    private SKShader ReadRadialGradient(XElement e)
+    {
+        var x = this.ReadNumber(e.Attribute("cx")!);
+        var y = this.ReadNumber(e.Attribute("cy")!);
+        var radius = this.ReadNumber(e.Attribute("r")!);
+        var mode = ReadSpreadMethod(e);
+        var sortedDictionary = this.ReadStops(e);
+        return SKShader.CreateRadialGradient(new SKPoint(x, y), radius, sortedDictionary.Values.ToArray(), sortedDictionary.Keys.ToArray(), mode);
+    }
+
+    private SKShader ReadLinearGradient(XElement e)
+    {
+        var x = this.ReadNumber(e.Attribute("x1")!);
+        var y = this.ReadNumber(e.Attribute("y1")!);
+        var x2 = this.ReadNumber(e.Attribute("x2")!);
+        var y2 = this.ReadNumber(e.Attribute("y2")!);
+        var mode = ReadSpreadMethod(e);
+        var sortedDictionary = this.ReadStops(e);
+        return SKShader.CreateLinearGradient(new SKPoint(x, y), new SKPoint(x2, y2), sortedDictionary.Values.ToArray(), sortedDictionary.Keys.ToArray(), mode);
+    }
+
+    private static SKShaderTileMode ReadSpreadMethod(XElement e)
+    {
+        return e.Attribute("spreadMethod")?.Value switch
+        {
+            "reflect" => SKShaderTileMode.Mirror,
+            "repeat" => SKShaderTileMode.Repeat,
+            _ => SKShaderTileMode.Clamp,
+        };
+    }
+
+    private XElement ReadDefinition(XElement e)
+    {
+        var union = new XElement(e.Name);
+        union.Add(e.Elements());
+        union.Add(e.Attributes());
+        var xElement = this.ReadHref(e);
+        if (xElement != null)
+        {
+            union.Add(xElement.Elements());
+            union.Add(from a in xElement.Attributes()
+                      where union.Attribute(a.Name) == null
+                      select a);
+        }
+
+        return union;
+    }
+
+    private XElement? ReadHref(XElement e)
+    {
+        var text = ReadHrefString(e)?.Substring(1);
+        if (string.IsNullOrEmpty(text) || !this.defs.TryGetValue(text, out var value))
+        {
+            return null;
+        }
+
+        return value;
+    }
+
+    private static string? ReadHrefString(XElement e) =>
+        (e.Attribute("href") ?? e.Attribute(xlink + "href"))?.Value;
+
+    private SortedDictionary<float, SKColor> ReadStops(XElement e)
+    {
+        var sortedDictionary = new SortedDictionary<float, SKColor>();
+        var @namespace = e.Name.Namespace;
+        foreach (var item in e.Elements(@namespace + "stop"))
+        {
+            var dictionary = this.ReadStyle(item);
+            var key = this.ReadNumber(dictionary["offset"]);
+            var color = SKColors.Black;
+            var alpha = byte.MaxValue;
+            if (dictionary.TryGetValue("stop-color", out var value) && ColorHelper.TryParse(value, out color) && color.Alpha == byte.MaxValue)
+            {
+                alpha = color.Alpha;
+            }
+
+            if (dictionary.TryGetValue("stop-opacity", out var value2))
+            {
+                alpha = (byte)(this.ReadNumber(value2) * 255f);
+            }
+
+            color = color.WithAlpha(alpha);
+            sortedDictionary[key] = color;
+        }
+
+        return sortedDictionary;
+    }
+
+    private float ReadOpacity(Dictionary<string, string> style)
+    {
+        return Math.Min(Math.Max(0f, this.ReadNumber(style, "opacity", 1f)), 1f);
+    }
+
+    private float ReadNumber(Dictionary<string, string> style, string key, float defaultValue)
+    {
+        var result = defaultValue;
+        if (style.TryGetValue(key, out var value))
+        {
+            result = this.ReadNumber(value);
+        }
+
+        return result;
+    }
+
+    private static byte[]? ReadUriBytes(string uri)
+    {
+        if (!string.IsNullOrEmpty(uri))
+        {
+            var num = uri.IndexOf(",");
+            if (num != -1 && num - 1 < uri.Length)
+            {
+                uri = uri.Substring(num + 1);
+                return Convert.FromBase64String(uri);
+            }
+        }
+
+        return null;
+    }
+
+    private float ReadNumber(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return 0f;
+        }
+
+        var text = raw.Trim();
+        var num = 1f;
+        if (unitPattern.IsMatch(text))
+        {
+            if (text.EndsWith("in", StringComparison.Ordinal))
+            {
+                num = this.PixelsPerInch;
+            }
+            else if (text.EndsWith("cm", StringComparison.Ordinal))
+            {
+                num = this.PixelsPerInch / 2.54f;
+            }
+            else if (text.EndsWith("mm", StringComparison.Ordinal))
+            {
+                num = this.PixelsPerInch / 25.4f;
+            }
+            else if (text.EndsWith("pt", StringComparison.Ordinal))
+            {
+                num = this.PixelsPerInch / 72f;
+            }
+            else if (text.EndsWith("pc", StringComparison.Ordinal))
+            {
+                num = this.PixelsPerInch / 6f;
+            }
+
+            text = text.Substring(0, text.Length - 2);
+        }
+        else if (percPattern.IsMatch(text))
+        {
+            text = text.Substring(0, text.Length - 1);
+            num = 0.01f;
+        }
+
+        if (!float.TryParse(text, NumberStyles.Float, icult, out var result))
+        {
+            result = 0f;
+        }
+
+        return num * result;
+    }
+
+    private float ReadNumber(XAttribute a)
+    {
+        return this.ReadNumber(a?.Value);
+    }
+
+    private float? ReadOptionalNumber(XAttribute a)
+    {
+        if (a != null)
+        {
+            return this.ReadNumber(a.Value);
+        }
+
+        return null;
+    }
+
+    private SKRect ReadRectangle(string s)
+    {
+        var result = default(SKRect);
+        var array = s.Split(ws, StringSplitOptions.RemoveEmptyEntries);
+        if (array.Length != 0)
+        {
+            result.Left = this.ReadNumber(array[0]);
+        }
+
+        if (array.Length > 1)
+        {
+            result.Top = this.ReadNumber(array[1]);
+        }
+
+        if (array.Length > 2)
+        {
+            result.Right = result.Left + this.ReadNumber(array[2]);
+        }
+
+        if (array.Length > 3)
+        {
+            result.Bottom = result.Top + this.ReadNumber(array[3]);
+        }
+
+        return result;
+    }
+
+    [GeneratedRegex("\\s{2,}")]
+    private static partial Regex CreateWS();
+    [GeneratedRegex("px|pt|em|ex|pc|cm|mm|in")]
+    private static partial Regex CreateUnitPattern();
+    [GeneratedRegex("%")]
+    private static partial Regex CreatePercPattern();
+    [GeneratedRegex("url\\s*\\(\\s*#([^\\)]+)\\)")]
+    private static partial Regex CreateFillUrlPattern();
+    [GeneratedRegex("url\\s*\\(\\s*#([^\\)]+)\\)")]
+    private static partial Regex CreateClipPathUrlPattern();
+    [GeneratedRegex("\\s*([\\w-]+)\\s*:\\s*(.*)")]
+    private static partial Regex CreateKeyValuePattern();
+}

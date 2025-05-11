@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 
 namespace Age.Core;
 
-[DebuggerDisplay("Length = {Length}")]
 [DebuggerTypeProxy(typeof(RefArray<>.DebugView))]
 public unsafe ref partial struct RefArray<T>(int length = 0) : IDisposable, IEnumerable<T> where T : unmanaged
 {
@@ -17,6 +16,8 @@ public unsafe ref partial struct RefArray<T>(int length = 0) : IDisposable, IEnu
         get => this[(int)index];
         set => this[(int)index] = value;
     }
+
+    public readonly bool IsEmpty => this.Length == 0;
 
     public readonly T this[int index]
     {
@@ -34,7 +35,7 @@ public unsafe ref partial struct RefArray<T>(int length = 0) : IDisposable, IEnu
         }
     }
 
-    public readonly RefArray<T> this[Range range]
+    public readonly Span<T> this[Range range]
     {
         get
         {
@@ -123,8 +124,8 @@ public unsafe ref partial struct RefArray<T>(int length = 0) : IDisposable, IEnu
         source.CopyTo(this);
     }
 
-    public readonly RefArray<T> Slice(int start, int length) =>
-        new(new Span<T>(this.buffer + start, length));
+    public readonly Span<T> Slice(int start, int length) =>
+        new(this.buffer + start, length);
 
     public static implicit operator Span<T>(RefArray<T> value) => value.AsSpan();
 }

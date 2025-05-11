@@ -38,3 +38,4 @@ packages/
 .debug/*
 
 /BenchmarkDotNet.Artifacts
+.debug

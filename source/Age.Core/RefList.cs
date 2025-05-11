@@ -67,7 +67,7 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
         }
     }
 
-    public readonly RefList<T> this[Range range]
+    public readonly Span<T> this[Range range]
     {
         get
         {
@@ -242,8 +242,8 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
         this.Count = int.Max(this.Count - count, 0);
     }
 
-    public readonly RefList<T> Slice(int start, int length) =>
-        new(new Span<T>(this.buffer + start, length));
+    public readonly Span<T> Slice(int start, int length) =>
+        new(this.buffer + start, length);
 
     public static implicit operator Span<T>(in RefList<T> value) => value.AsSpan();
 }
