@@ -5,7 +5,7 @@ using Age.Rendering.Vulkan;
 using Age.Resources;
 using SkiaSharp;
 
-namespace Age.Services;
+namespace Age.Storage;
 
 internal partial class TextStorage : Disposable
 {

@@ -2,15 +2,14 @@ using SkiaSharp;
 
 namespace ThirdParty.Skia.Svg;
 
-internal class SKTextSpan(string text, SKPaint? fill, float? x = null, float? y = null, float? baselineShift = null)
+internal readonly struct SKTextSpan(string text, SKFont font, float? x, float? y, float baselineShift)
 {
-    public string   Text          { get; } = text;
-    public SKPaint? Fill          { get; } = fill;
-    public float?   X             { get; } = x;
-    public float?   Y             { get; } = y;
-    public float?   BaselineShift { get; } = baselineShift;
+    public readonly string Text = text;
+    public readonly SKFont Font = font;
 
-#pragma warning disable CS0618 // Type or member is obsolete
-    public float MeasureTextWidth() => this.Fill?.MeasureText(this.Text) ?? 0;
-#pragma warning restore CS0618 // Type or member is obsolete
+    public readonly float? X             = x;
+    public readonly float? Y             = y;
+    public readonly float  BaselineShift = baselineShift;
+
+    public float TextWidth => this.Font.MeasureText(this.Text);
 }

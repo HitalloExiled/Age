@@ -476,12 +476,35 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
             case "text":
                 if (fill != null)
                 {
-                    var svgText = this.ReadText(element, fill.Clone());
+                    var svgText = this.ReadText(element);
 
-                    if (svgText.Any())
+                    var currentX = svgText.Location.X;
+                    var currentY = svgText.Location.Y;
+
+                    var textWidth = svgText.MeasureTextWidth();
+
+                    switch (svgText.TextAlign)
                     {
-                        throw new NotImplementedException();
-                        // canvas.DrawText(svgText, 0, 0, fill); FIXME
+                        case SKTextAlign.Left:
+                            break;
+                        case SKTextAlign.Center:
+                            currentX -= textWidth / 2;
+                            break;
+                        case SKTextAlign.Right:
+                            currentX -= textWidth;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    foreach (var span in svgText.Spans)
+                    {
+                        currentY = span.Y ?? currentY;
+                        currentX = span.X ?? currentX;
+
+                        canvas.DrawText(span.Text, currentX, currentY - span.BaselineShift, span.Font, fill);
+
+                        currentX += span.TextWidth;
                     }
                 }
 
@@ -654,7 +677,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         return new SKRoundedRect(SKRect.Create(x, y, width, height), num ?? num2 ?? 0f, num2 ?? num ?? 0f);
     }
 
-    private SKText ReadText(XElement element, SKPaint fill)
+    private SKText ReadText(XElement element)
     {
         var x = this.ReadNumber(element.Attribute("x")!);
         var y = this.ReadNumber(element.Attribute("y")!);
@@ -664,12 +687,12 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         var textAlign     = ReadTextAlignment(element);
         var baselineShift = this.ReadBaselineShift(element);
 
-        this.ReadFontAttributes(element, fill);
+        this.ReadFontAttributes(element, out var font);
 
-        return this.ReadTextSpans(element, xy, textAlign, baselineShift, fill);
+        return this.ReadTextSpans(element, xy, font, textAlign, baselineShift);
     }
 
-    private SKText ReadTextSpans(XElement element, SKPoint xy, SKTextAlign textAlign, float baselineShift, SKPaint? fill)
+    private SKText ReadTextSpans(XElement element, SKPoint xy, SKFont font, SKTextAlign textAlign, float baselineShift)
     {
         var skText = new SKText(xy, textAlign);
         var currentBaselineShift = baselineShift;
@@ -705,7 +728,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
                     var text = wsPattern.Replace(string.Concat(lines), " ");
 
-                    skText.Append(new SKTextSpan(text, fill?.Clone(), null, null, currentBaselineShift));
+                    skText.Append(new SKTextSpan(text, font, default, default, currentBaselineShift));
                 }
             }
             else if (node.NodeType == XmlNodeType.Element)
@@ -713,16 +736,15 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                 var tspanElement = (XElement)node;
                 if (tspanElement.Name.LocalName == "tspan")
                 {
-                    var tspanX     = this.ReadOptionalNumber(tspanElement.Attribute("x")!);
-                    var tspanY     = this.ReadOptionalNumber(tspanElement.Attribute("y")!);
+                    var tspanX     = this.ReadNumber(tspanElement.Attribute("x")!);
+                    var tspanY     = this.ReadNumber(tspanElement.Attribute("y")!);
                     var tspanValue = tspanElement.Value;
-                    var tspanPaint = fill!.Clone();
 
-                    this.ReadFontAttributes(tspanElement, tspanPaint);
+                    this.ReadFontAttributes(tspanElement, out var spanFont);
 
                     currentBaselineShift = this.ReadBaselineShift(tspanElement);
 
-                    skText.Append(new SKTextSpan(tspanValue, tspanPaint, tspanX, tspanY, currentBaselineShift));
+                    skText.Append(new SKTextSpan(tspanValue, spanFont, tspanX, tspanY, currentBaselineShift));
                 }
             }
         }
@@ -730,29 +752,24 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         return skText;
     }
 
-    private void ReadFontAttributes(XElement element, SKPaint paint)
+    private void ReadFontAttributes(XElement element, out SKFont font)
     {
-        // TODO: Remove obsolete apis usage
-#pragma warning disable CS0618 // Type or member is obsolete
         var style = ReadStyle(element);
 
-        if (!style.TryGetValue("font-family", out var value) || string.IsNullOrWhiteSpace(value))
+        var slant = ReadFontStyle(style, SKFontStyleSlant.Upright);
+        var weight = ReadFontWeight(style, 400);
+        var width = ReadFontWidth(style, 5);
+
+        var familyName = style.TryGetValue("font-family", out var value)
+            ? value
+            : SKTypeface.Default.FamilyName;
+
+        font = new(SKTypeface.FromFamilyName(familyName, weight, width, slant));
+
+        if (style.TryGetValue("font-size", out var fontSize))
         {
-            value = paint.Typeface?.FamilyName;
+            font.Size = this.ReadNumber(fontSize);
         }
-
-        var weight = ReadFontWeight(style, paint.Typeface?.FontWeight ?? 400);
-        var width  = ReadFontWidth(style, paint.Typeface?.FontWidth ?? 5);
-
-        var slant = ReadFontStyle(style, paint.Typeface?.FontSlant ?? SKFontStyleSlant.Upright);
-
-        paint.Typeface = SKTypeface.FromFamilyName(value, weight, width, slant);
-
-        if (style.TryGetValue("font-size", out var value2) && !string.IsNullOrWhiteSpace(value2))
-        {
-            paint.TextSize = this.ReadNumber(value2);
-        }
-#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     private SKMatrix ReadTransform(ReadOnlySpan<char> raw)
@@ -1031,13 +1048,15 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         this.Title       = root.Element(@namespace + "title")?.Value;
         this.Description = root.Element(@namespace + "desc")?.Value ?? root.Element(@namespace + "description")?.Value;
 
+        var lookup = this.references.GetAlternateLookup<ReadOnlySpan<char>>();
+
         foreach (var element in root.Descendants())
         {
-            var id = element.Attribute("id")?.Value?.Trim();
+            var id = (element.Attribute("id")?.Value ?? "").AsSpan().Trim();
 
-            if (!string.IsNullOrEmpty(id))
+            if (!id.IsEmpty)
             {
-                this.references[id] = this.ReadDefinition(element);
+                lookup[id] = this.ReadDefinition(element);
             }
         }
 

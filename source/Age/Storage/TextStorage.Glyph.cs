@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Age.Numerics;
 
-namespace Age.Services;
+namespace Age.Storage;
 
 internal partial class TextStorage
 {

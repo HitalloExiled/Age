@@ -20,6 +20,7 @@ public sealed class Engine : Disposable
 
     public Window Window { get; }
 
+    private readonly IconStorage    iconStorage;
     private readonly ShaderStorage  shaderStorage;
     private readonly TextStorage    textStorage;
     private readonly TextureStorage textureStorage;
@@ -32,6 +33,7 @@ public sealed class Engine : Disposable
 
         this.Window           = new Window(name, windowSize, windowPosition);
         this.renderingService = new RenderingService(this.renderer);
+        this.iconStorage      = new IconStorage(this.renderer);
         this.shaderStorage    = new ShaderStorage(this.renderer);
         this.textStorage      = new TextStorage(this.renderer);
         this.textureStorage   = new TextureStorage(this.renderer);
@@ -63,9 +65,10 @@ public sealed class Engine : Disposable
             Platforms.Display.Window.CloseAll();
 
             this.renderingService.Dispose();
+            this.iconStorage.Dispose();
+            this.shaderStorage.Dispose();
             this.textStorage.Dispose();
             this.textureStorage.Dispose();
-            this.shaderStorage.Dispose();
 
             GC.Collect();
 

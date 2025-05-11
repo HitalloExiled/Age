@@ -74,6 +74,9 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
         }
     }
 
+    public Point<uint> Pack(scoped ReadOnlySpan<byte> pixels, in Size<uint> size) =>
+        this.Pack(pixels.Cast<byte, uint>(), size);
+
     public void Update()
     {
         if (this.isDirty)

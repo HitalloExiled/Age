@@ -1,23 +1,18 @@
-using System.Collections;
 using SkiaSharp;
 
 namespace ThirdParty.Skia.Svg;
 
-internal class SKText(SKPoint location, SKTextAlign textAlign) : IEnumerable<SKTextSpan>, IEnumerable
+internal class SKText(SKPoint location, SKTextAlign textAlign)
 {
     private readonly List<SKTextSpan> spans = [];
 
     public SKPoint     Location  { get; } = location;
     public SKTextAlign TextAlign { get; } = textAlign;
 
-    IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-    IEnumerator<SKTextSpan> IEnumerable<SKTextSpan>.GetEnumerator() => this.GetEnumerator();
+    public IReadOnlyList<SKTextSpan> Spans => this.spans;
 
     public void Append(SKTextSpan span) =>
         this.spans.Add(span);
-
-    public IEnumerator<SKTextSpan> GetEnumerator() =>
-        this.spans.GetEnumerator();
 
     public float MeasureTextWidth()
     {
@@ -25,7 +20,7 @@ internal class SKText(SKPoint location, SKTextAlign textAlign) : IEnumerable<SKT
 
         foreach (var span in this.spans)
         {
-            width += span.MeasureTextWidth();
+            width += span.TextWidth;
         }
 
         return width;
