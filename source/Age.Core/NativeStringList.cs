@@ -54,14 +54,14 @@ public unsafe partial class NativeStringList : Disposable, IEnumerable<string?>
         this.Count = values.Length;
     }
 
-    public string? this[int index]
+    public string this[int index]
     {
         get
         {
             this.ThrowIfDisposed();
             this.CheckIndex(index);
 
-            return Marshal.PtrToStringAnsi(this.handles[index]);
+            return Marshal.PtrToStringAnsi(this.handles[index])!;
         }
         set
         {

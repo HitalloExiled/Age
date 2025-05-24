@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 using Age.Core;
+using Microsoft.VisualBasic;
 using SkiaSharp;
 
 namespace ThirdParty.Skia.Svg;
@@ -430,7 +431,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         return sKPath;
     }
 
-    private void ReadElement(XElement element, SKCanvas canvas, SKPaint? stroke, SKPaint? fill)
+    private void ReadElement(XElement element, SKCanvas canvas, SKPaint? parentFillPaint, SKPaint? parentStrokePaint)
     {
         if (element.Attribute("display")?.Value == "none")
         {
@@ -451,7 +452,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
         var localName = element.Name.LocalName;
         var isGroup   = localName == "g";
-        var style     = this.ReadPaints(element, ref stroke, ref fill, isGroup);
+        var style     = this.ReadPaints(element, isGroup, parentFillPaint, parentStrokePaint, out var fillPaint, out var strokePaint);
 
         switch (localName)
         {
@@ -474,9 +475,9 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                     break;
                 }
             case "text":
-                if (fill != null)
+                if (fillPaint != null)
                 {
-                    var svgText = this.ReadText(element);
+                    var svgText = this.ReadText(element, fillPaint, strokePaint);
 
                     var currentX = svgText.Location.X;
                     var currentY = svgText.Location.Y;
@@ -502,7 +503,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                         currentY = span.Y ?? currentY;
                         currentX = span.X ?? currentX;
 
-                        canvas.DrawText(span.Text, currentX, currentY - span.BaselineShift, span.Font, fill);
+                        canvas.DrawText(span.Text, currentX, currentY - span.BaselineShift, span.Font, span.Fill);
 
                         currentX += span.TextWidth;
                     }
@@ -517,7 +518,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
             case "polyline":
             case "line":
                 {
-                    if (stroke == null && fill == null)
+                    if (strokePaint == null && fillPaint == null)
                     {
                         break;
                     }
@@ -526,14 +527,14 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
                     if (path != null)
                     {
-                        if (fill != null)
+                        if (fillPaint != null)
                         {
-                            canvas.DrawPath(path, fill);
+                            canvas.DrawPath(path, fillPaint);
                         }
 
-                        if (stroke != null)
+                        if (strokePaint != null)
                         {
-                            canvas.DrawPath(path, stroke);
+                            canvas.DrawPath(path, strokePaint);
                         }
                     }
 
@@ -558,7 +559,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
                     foreach (var child in element.Elements())
                     {
-                        this.ReadElement(child, canvas, stroke?.Clone(), fill?.Clone());
+                        this.ReadElement(child, canvas, fillPaint, strokePaint);
                     }
 
                     if (opacity != 1f)
@@ -581,7 +582,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                         canvas.Save();
                         canvas.Concat(in translationMatrix);
 
-                        this.ReadElement(referencedElement, canvas, stroke?.Clone(), fill?.Clone());
+                        this.ReadElement(referencedElement, canvas, strokePaint?.Clone(), fillPaint?.Clone());
 
                         canvas.Restore();
                     }
@@ -602,7 +603,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
                     if (requiredFeatures == null && requiredExtensions == null && systemLanguage == null)
                     {
-                        this.ReadElement(child, canvas, stroke?.Clone(), fill?.Clone());
+                        this.ReadElement(child, canvas, strokePaint?.Clone(), fillPaint?.Clone());
                     }
                 }
 
@@ -677,7 +678,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         return new SKRoundedRect(SKRect.Create(x, y, width, height), num ?? num2 ?? 0f, num2 ?? num ?? 0f);
     }
 
-    private SKText ReadText(XElement element)
+    private SKText ReadText(XElement element, SKPaint fillPaint, SKPaint? strokePaint)
     {
         var x = this.ReadNumber(element.Attribute("x")!);
         var y = this.ReadNumber(element.Attribute("y")!);
@@ -689,10 +690,10 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
         this.ReadFontAttributes(element, out var font);
 
-        return this.ReadTextSpans(element, xy, font, textAlign, baselineShift);
+        return this.ReadTextSpans(element, xy, font, textAlign, baselineShift, fillPaint, strokePaint);
     }
 
-    private SKText ReadTextSpans(XElement element, SKPoint xy, SKFont font, SKTextAlign textAlign, float baselineShift)
+    private SKText ReadTextSpans(XElement element, SKPoint xy, SKFont font, SKTextAlign textAlign, float baselineShift, SKPaint? parentFillPaint, SKPaint? parentStrokePaint)
     {
         var skText = new SKText(xy, textAlign);
         var currentBaselineShift = baselineShift;
@@ -718,22 +719,23 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                 {
                     if (isFirst)
                     {
-                        lines[0] = lines[0]!.TrimStart([]);
+                        lines[0] = lines[0].TrimStart([]);
                     }
 
                     if (isLast)
                     {
-                        lines[^1] = lines[^1]!.TrimEnd([]);
+                        lines[^1] = lines[^1].TrimEnd([]);
                     }
 
                     var text = wsPattern.Replace(string.Concat(lines), " ");
 
-                    skText.Append(new SKTextSpan(text, font, default, default, currentBaselineShift));
+                    skText.Append(new SKTextSpan(text, font, parentFillPaint, parentStrokePaint, null, null, currentBaselineShift));
                 }
             }
             else if (node.NodeType == XmlNodeType.Element)
             {
                 var tspanElement = (XElement)node;
+
                 if (tspanElement.Name.LocalName == "tspan")
                 {
                     var tspanX     = this.ReadNumber(tspanElement.Attribute("x")!);
@@ -744,7 +746,9 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
                     currentBaselineShift = this.ReadBaselineShift(tspanElement);
 
-                    skText.Append(new SKTextSpan(tspanValue, spanFont, tspanX, tspanY, currentBaselineShift));
+                    this.ReadPaints(tspanElement, false, parentFillPaint, parentStrokePaint, out var fillPaint, out var strokePaint);
+
+                    skText.Append(new SKTextSpan(tspanValue, spanFont, fillPaint, strokePaint, tspanX, tspanY, currentBaselineShift));
                 }
             }
         }
@@ -1126,21 +1130,18 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
             canvas.ClipRect(this.ViewBox);
         }
 
-        SKPaint? stroke = null;
+        this.ReadPaints(root, true, CreatePaint(), null, out var fillPaint, out var strokePaint);
 
-        var fill = CreatePaint();
-
-        this.ReadPaints(root, ref stroke, ref fill, true);
-        this.LoadElements(root.Elements(), canvas, stroke, fill);
+        this.LoadElements(root.Elements(), canvas, fillPaint, strokePaint);
 
         return this.Picture = pictureRecorder.EndRecording();
     }
 
-    private void LoadElements(IEnumerable<XElement> elements, SKCanvas canvas, SKPaint? stroke, SKPaint? fill)
+    private void LoadElements(IEnumerable<XElement> elements, SKCanvas canvas, SKPaint? fillPaint, SKPaint? strokePaint)
     {
         foreach (var element in elements)
         {
-            this.ReadElement(element, canvas, stroke, fill);
+            this.ReadElement(element, canvas, fillPaint, strokePaint);
         }
     }
 
@@ -1187,19 +1188,91 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
     private float ReadOpacity(Dictionary<string, string> style) =>
         Math.Min(Math.Max(0f, this.ReadNumber(style, "opacity", 1f)), 1f);
 
-    private Dictionary<string, string> ReadPaints(XElement element, ref SKPaint? stroke, ref SKPaint? fill, bool isGroup)
+    private Dictionary<string, string> ReadPaints(XElement element, bool isGroup, SKPaint? parentFillPaint, SKPaint? parentStrokePaint, out SKPaint? fillPaint, out SKPaint? strokePaint)
     {
         var style = ReadStyle(element);
 
-        this.ReadPaints(style, ref stroke, ref fill, isGroup);
+        this.ReadPaints(style, isGroup, parentFillPaint, parentStrokePaint, out fillPaint, out strokePaint);
 
         return style;
     }
 
-    private void ReadPaints(Dictionary<string, string> style, ref SKPaint? strokePaint, ref SKPaint? fillPaint, bool isGroup)
+    private void ReadPaints(Dictionary<string, string> style, bool isGroup, SKPaint? parentFillPaint, SKPaint? parentStrokePaint, out SKPaint? fillPaint, out SKPaint? strokePaint)
     {
         var opacity     = isGroup ? 1f : this.ReadOpacity(style);
         var strokeValue = GetString(style, "stroke").Trim();
+
+        var fillValue = GetString(style, "fill").Trim();
+
+        if (fillValue.Equals("none", StringComparison.OrdinalIgnoreCase))
+        {
+            fillPaint = null;
+        }
+        else
+        {
+            fillPaint = parentFillPaint?.Clone();
+
+            if (!fillValue.IsEmpty)
+            {
+                fillPaint ??= CreatePaint();
+
+                if (ColorHelper.TryParse(fillValue, out var fillColor))
+                {
+                    fillPaint.Color = fillColor.Alpha == byte.MaxValue ? fillColor.WithAlpha(fillPaint.Color.Alpha) : fillColor;
+                }
+                else
+                {
+                    var fillUrlHandled = false;
+
+                    var enumerator = fillUrlPattern.EnumerateMatches(fillValue);
+
+                    if (enumerator.MoveNext())
+                    {
+                        var content = fillValue.Slice(enumerator.Current);
+
+                        var groupEnumerator = content.EnumerateRegexGroups();
+
+                        groupEnumerator.MoveNext();
+
+                        var fillUrlKey = content.Slice(groupEnumerator.Current).Trim();
+
+                        if (this.references.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(fillUrlKey, out var fillDefElement))
+                        {
+                            var fillShader = this.ReadGradient(fillDefElement);
+
+                            if (fillShader != null)
+                            {
+                                fillPaint.Shader = fillShader;
+                                fillUrlHandled = true;
+                            }
+                        }
+                        else
+                        {
+                            this.LogOrThrow($"Invalid fill url reference: {fillUrlKey}");
+                        }
+                    }
+
+                    if (!fillUrlHandled)
+                    {
+                        this.LogOrThrow($"Unsupported fill: {fillValue}");
+                    }
+                }
+            }
+
+            var fillOpacityValue = GetString(style, "fill-opacity");
+
+            if (!fillOpacityValue.IsEmpty)
+            {
+                fillPaint ??= CreatePaint();
+
+                fillPaint.Color = fillPaint.Color.WithAlpha((byte)(this.ReadNumber(fillOpacityValue) * 255f));
+            }
+
+            if (fillPaint != null)
+            {
+                fillPaint.Color = fillPaint.Color.WithAlpha((byte)(fillPaint.Color.Alpha * opacity));
+            }
+        }
 
         if (strokeValue.Equals("none", StringComparison.OrdinalIgnoreCase))
         {
@@ -1207,9 +1280,11 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         }
         else
         {
+            strokePaint = parentStrokePaint?.Clone();
+
             if (!strokeValue.IsEmpty)
             {
-                strokePaint ??= CreatePaint(true);
+                strokePaint = CreatePaint(true);
 
                 if (ColorHelper.TryParse(strokeValue, out var strokeColor))
                 {
@@ -1272,75 +1347,6 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
             {
                 strokePaint.Color = strokePaint.Color.WithAlpha((byte)(strokePaint.Color.Alpha * opacity));
             }
-        }
-
-        var fillValue = GetString(style, "fill").Trim();
-
-        if (fillValue.Equals("none", StringComparison.OrdinalIgnoreCase))
-        {
-            fillPaint = null;
-            return;
-        }
-
-        if (!fillValue.IsEmpty)
-        {
-            fillPaint ??= CreatePaint();
-
-            if (ColorHelper.TryParse(fillValue, out var fillColor))
-            {
-                fillPaint.Color = fillColor.Alpha == byte.MaxValue ? fillColor.WithAlpha(fillPaint.Color.Alpha) : fillColor;
-            }
-            else
-            {
-                var fillUrlHandled = false;
-
-                var enumerator = fillUrlPattern.EnumerateMatches(fillValue);
-
-                if (enumerator.MoveNext())
-                {
-                    var content = fillValue.Slice(enumerator.Current);
-
-                    var groupEnumerator = content.EnumerateRegexGroups();
-
-                    groupEnumerator.MoveNext();
-
-                    var fillUrlKey = content.Slice(groupEnumerator.Current).Trim();
-
-                    if (this.references.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(fillUrlKey, out var fillDefElement))
-                    {
-                        var fillShader = this.ReadGradient(fillDefElement);
-
-                        if (fillShader != null)
-                        {
-                            fillPaint.Shader = fillShader;
-                            fillUrlHandled   = true;
-                        }
-                    }
-                    else
-                    {
-                        this.LogOrThrow($"Invalid fill url reference: {fillUrlKey}");
-                    }
-                }
-
-                if (!fillUrlHandled)
-                {
-                    this.LogOrThrow($"Unsupported fill: {fillValue}");
-                }
-            }
-        }
-
-        var fillOpacityValue = GetString(style, "fill-opacity");
-
-        if (!fillOpacityValue.IsEmpty)
-        {
-            fillPaint ??= CreatePaint();
-
-            fillPaint.Color = fillPaint.Color.WithAlpha((byte)(this.ReadNumber(fillOpacityValue) * 255f));
-        }
-
-        if (fillPaint != null)
-        {
-            fillPaint.Color = fillPaint.Color.WithAlpha((byte)(fillPaint.Color.Alpha * opacity));
         }
     }
 
