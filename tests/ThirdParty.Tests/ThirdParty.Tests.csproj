@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="./Skia/Svg/Icons/*.svg"  CopyToOutputDirectory="PreserveNewest" />
+    <None Include="./Skia/Svg/Files/*.svg"  CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

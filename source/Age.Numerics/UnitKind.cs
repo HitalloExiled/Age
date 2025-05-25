@@ -1,6 +1,6 @@
-namespace Age.Styling;
+namespace Age.Numerics;
 
-internal enum UnitKind
+public enum UnitKind
 {
     Pixel      = 1,
     Percentage = 2,

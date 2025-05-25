@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Age.Styling;
+namespace Age.Numerics;
 
 [StructLayout(LayoutKind.Explicit)]
 internal struct UnitData

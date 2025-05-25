@@ -9,6 +9,6 @@ public unsafe partial class NativeStringList
         private readonly NativeStringList source = source;
 
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public readonly string?[] Elements => [.. this.source];
+        public readonly string[] Elements => [.. this.source];
     }
 }

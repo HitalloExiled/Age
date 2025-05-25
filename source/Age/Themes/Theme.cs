@@ -1,6 +1,5 @@
 using Age.Numerics;
 using Age.Platforms.Display;
-using Age.Styling;
 
 namespace Age.Themes;
 

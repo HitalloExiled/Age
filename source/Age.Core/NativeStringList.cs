@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace Age.Core;
 
 [DebuggerTypeProxy(typeof(DebugView))]
-public unsafe partial class NativeStringList : Disposable, IEnumerable<string?>
+public unsafe partial class NativeStringList : Disposable, IEnumerable<string>
 {
     private nint* handles;
 
@@ -156,13 +156,13 @@ public unsafe partial class NativeStringList : Disposable, IEnumerable<string?>
         this.Count = int.Max(this.Count - count, 0);
     }
 
-    public IEnumerator<string?> GetEnumerator()
+    public IEnumerator<string> GetEnumerator()
     {
         var span = this.AsSpan().ToArray();
 
         for (var i = 0; i < this.Count; i++)
         {
-            yield return Marshal.PtrToStringAnsi(span[i]);
+            yield return Marshal.PtrToStringAnsi(span[i])!;
         }
     }
 }

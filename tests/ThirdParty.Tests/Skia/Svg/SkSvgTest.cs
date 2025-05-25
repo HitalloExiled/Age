@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text;
 using SkiaSharp;
 using ThirdParty.Skia.Svg;
 
@@ -12,7 +11,7 @@ public class SkSvgTest
         : Directory.GetCurrentDirectory();
 
     private static readonly string debugDirectory = Path.Join(workingDirectory, "Skia", "Svg", ".debug");
-    private static readonly string iconsFolder = Path.Join(workingDirectory, "Skia", "Svg", "Icons");
+    private static readonly string iconsFolder = Path.Join(workingDirectory, "Skia", "Svg", "Files");
 
     private static string GetAssetPath(string name) =>
         Path.Join(iconsFolder, $"{name}.svg");
@@ -38,7 +37,7 @@ public class SkSvgTest
     [Fact]
     public void Load()
     {
-        var name = "check_box";
+        var name     = "text_path";
         var filename = GetAssetPath(name);
 
         var svg = new SkSvg();
@@ -61,26 +60,5 @@ public class SkSvgTest
 
             Write(svg, file.Name);
         }
-    }
-
-    [Fact]
-    public void LoadText()
-    {
-        var source =
-        """
-        <svg height="40" width="250" xmlns="http://www.w3.org/2000/svg">
-            <text x="5" y="30" fill="red" font-size="35">I Love
-                <tspan fill="none" stroke="green">SVG</tspan>!
-            </text>
-        </svg>
-        """;
-
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(source));
-
-        var svg = new SkSvg();
-
-        svg.Load(stream);
-
-        Write(svg, "text");
     }
 }

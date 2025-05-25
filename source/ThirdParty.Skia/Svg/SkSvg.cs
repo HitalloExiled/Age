@@ -1,20 +1,22 @@
 
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 using Age.Core;
-using Microsoft.VisualBasic;
+using Age.Numerics;
 using SkiaSharp;
 
 namespace ThirdParty.Skia.Svg;
 
 public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 {
+
+
     private static readonly Regex                 clipPathUrlPattern = CreateClipPathUrlPattern();
     private static readonly Regex                 fillUrlPattern     = CreateFillUrlPattern();
+    private static readonly Regex                 groupPattern       = CreateGroupPattern();
     private static readonly Regex                 keyValuePattern    = CreateKeyValuePattern();
     private static readonly Regex                 percPattern        = CreatePercPattern();
     private readonly Dictionary<string, XElement> references         = [];
@@ -58,6 +60,9 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
     [GeneratedRegex("\\s*([\\w-]+)\\s*:\\s*(.*)")]
     private static partial Regex CreateKeyValuePattern();
 
+    [GeneratedRegex(@"(?<!\\)\((?!\?:)[^[\]]*?(?<!\\)\)")]
+    private static partial Regex CreateGroupPattern();
+
     [GeneratedRegex("%")]
     private static partial Regex CreatePercPattern();
 
@@ -71,8 +76,8 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         new()
         {
             IsAntialias = true,
-            IsStroke    = stroke,
-            Color       = SKColors.Black
+            IsStroke = stroke,
+            Color = SKColors.Black
         };
 
     private static XmlParserContext CreateSvgXmlContext()
@@ -135,15 +140,15 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
             {
                 "ultra-condensed" => 1,
                 "extra-condensed" => 2,
-                "condensed" => 3,
-                "semi-condensed" => 4,
-                "normal" => 5,
-                "semi-expanded" => 6,
-                "expanded" => 7,
-                "extra-expanded" => 8,
-                "ultra-expanded" => 9,
-                "wider" => result + 1,
-                "narrower" => result - 1,
+                "condensed"       => 3,
+                "semi-condensed"  => 4,
+                "normal"          => 5,
+                "semi-expanded"   => 6,
+                "expanded"        => 7,
+                "extra-expanded"  => 8,
+                "ultra-expanded"  => 9,
+                "wider"           => result + 1,
+                "narrower"        => result - 1,
                 _ => defaultWidth,
             };
         }
@@ -157,19 +162,19 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
         foreach (var range in style.Split(';'))
         {
-            foreach (var match in keyValuePattern.EnumerateMatches(style[range]))
+            var content = style[range];
+
+            if (!content.IsEmpty)
             {
-                var content = style.Slice(match);
-
-                var enumerator = content.EnumerateRegexGroups();
+                var enumerator = content.Split(':');
 
                 enumerator.MoveNext();
 
-                var key = content.Slice(enumerator.Current);
+                var key = content[enumerator.Current].Trim();
 
                 enumerator.MoveNext();
 
-                var value = content.Slice(enumerator.Current);
+                var value = content[enumerator.Current].Trim();
 
                 dictionary[new(key)] = new(value);
             }
@@ -301,7 +306,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         {
             var content = raw.Slice(enumerator.Current);
 
-            var groupEnumerator = content.EnumerateRegexGroups();
+            var groupEnumerator = groupPattern.EnumerateMatches(content);
 
             groupEnumerator.MoveNext();
 
@@ -387,11 +392,11 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                 }
             case "path":
                 {
-                    var text2 = element.Attribute("d")?.Value;
-                    if (!string.IsNullOrWhiteSpace(text2))
+                    var d = element.Attribute("d")?.Value;
+                    if (!string.IsNullOrWhiteSpace(d))
                     {
                         sKPath.Dispose();
-                        sKPath = SKPath.ParseSvgPathData(text2);
+                        sKPath = SKPath.ParseSvgPathData(d);
                     }
 
                     break;
@@ -431,7 +436,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         return sKPath;
     }
 
-    private void ReadElement(XElement element, SKCanvas canvas, SKPaint? parentFillPaint, SKPaint? parentStrokePaint)
+    private void ReadElement(XElement element, SKCanvas canvas, SKFont font, SKPaint? parentFillPaint, SKPaint? parentStrokePaint)
     {
         if (element.Attribute("display")?.Value == "none")
         {
@@ -475,9 +480,9 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                     break;
                 }
             case "text":
-                if (fillPaint != null)
+                if (fillPaint != null || strokePaint != null)
                 {
-                    var svgText = this.ReadText(element, fillPaint, strokePaint);
+                    using var svgText = this.ReadText(element, font, fillPaint, strokePaint);
 
                     var currentX = svgText.Location.X;
                     var currentY = svgText.Location.Y;
@@ -503,7 +508,14 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                         currentY = span.Y ?? currentY;
                         currentX = span.X ?? currentX;
 
-                        canvas.DrawText(span.Text, currentX, currentY - span.BaselineShift, span.Font, span.Fill);
+                        if (span.TextPath != null)
+                        {
+                            canvas.DrawTextOnPath(span.Text, span.TextPath.Path, span.TextPath.StartOffset ?? 0, 0, span.Font, span.Fill ?? span.Stroke);
+                        }
+                        else
+                        {
+                            canvas.DrawText(span.Text, currentX, currentY - span.BaselineShift, span.Font, span.Fill ?? span.Stroke);
+                        }
 
                         currentX += span.TextWidth;
                     }
@@ -559,7 +571,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
                     foreach (var child in element.Elements())
                     {
-                        this.ReadElement(child, canvas, fillPaint, strokePaint);
+                        this.ReadElement(child, canvas, font, fillPaint, strokePaint);
                     }
 
                     if (opacity != 1f)
@@ -582,7 +594,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                         canvas.Save();
                         canvas.Concat(in translationMatrix);
 
-                        this.ReadElement(referencedElement, canvas, strokePaint?.Clone(), fillPaint?.Clone());
+                        this.ReadElement(referencedElement, canvas, font, strokePaint, fillPaint);
 
                         canvas.Restore();
                     }
@@ -603,7 +615,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
                     if (requiredFeatures == null && requiredExtensions == null && systemLanguage == null)
                     {
-                        this.ReadElement(child, canvas, strokePaint?.Clone(), fillPaint?.Clone());
+                        this.ReadElement(child, canvas, font, strokePaint, fillPaint);
                     }
                 }
 
@@ -619,6 +631,9 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         }
 
         canvas.Restore();
+
+        fillPaint?.Dispose();
+        strokePaint?.Dispose();
     }
 
     private SKSvgImage ReadImage(XElement element)
@@ -678,7 +693,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         return new SKRoundedRect(SKRect.Create(x, y, width, height), num ?? num2 ?? 0f, num2 ?? num ?? 0f);
     }
 
-    private SKText ReadText(XElement element, SKPaint fillPaint, SKPaint? strokePaint)
+    private SKText ReadText(XElement element, SKFont parentFont, SKPaint? fillPaint, SKPaint? strokePaint)
     {
         var x = this.ReadNumber(element.Attribute("x")!);
         var y = this.ReadNumber(element.Attribute("y")!);
@@ -688,14 +703,14 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         var textAlign     = ReadTextAlignment(element);
         var baselineShift = this.ReadBaselineShift(element);
 
-        this.ReadFontAttributes(element, out var font);
+        this.ReadFontAttributes(element, parentFont, out var font);
 
         return this.ReadTextSpans(element, xy, font, textAlign, baselineShift, fillPaint, strokePaint);
     }
 
     private SKText ReadTextSpans(XElement element, SKPoint xy, SKFont font, SKTextAlign textAlign, float baselineShift, SKPaint? parentFillPaint, SKPaint? parentStrokePaint)
     {
-        var skText = new SKText(xy, textAlign);
+        var skText               = new SKText(xy, textAlign);
         var currentBaselineShift = baselineShift;
 
         var nodes = element.Nodes().ToArray();
@@ -729,7 +744,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
                     var text = wsPattern.Replace(string.Concat(lines), " ");
 
-                    skText.Append(new SKTextSpan(text, font, parentFillPaint, parentStrokePaint, null, null, currentBaselineShift));
+                    skText.Append(new SKTextSpan(text, font, parentFillPaint, parentStrokePaint, null, null, currentBaselineShift, null));
                 }
             }
             else if (node.NodeType == XmlNodeType.Element)
@@ -738,17 +753,76 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
                 if (tspanElement.Name.LocalName == "tspan")
                 {
-                    var tspanX     = this.ReadNumber(tspanElement.Attribute("x")!);
-                    var tspanY     = this.ReadNumber(tspanElement.Attribute("y")!);
-                    var tspanValue = tspanElement.Value;
+                    var tspanX     = this.ReadOptionalNumber(tspanElement.Attribute("x")!);
+                    var tspanY     = this.ReadOptionalNumber(tspanElement.Attribute("y")!);
 
-                    this.ReadFontAttributes(tspanElement, out var spanFont);
+                    this.ReadFontAttributes(tspanElement, font, out var spanFont);
 
                     currentBaselineShift = this.ReadBaselineShift(tspanElement);
 
                     this.ReadPaints(tspanElement, false, parentFillPaint, parentStrokePaint, out var fillPaint, out var strokePaint);
 
-                    skText.Append(new SKTextSpan(tspanValue, spanFont, fillPaint, strokePaint, tspanX, tspanY, currentBaselineShift));
+                    skText.Append(new SKTextSpan(tspanElement.Value, spanFont, fillPaint, strokePaint, tspanX, tspanY, currentBaselineShift, null));
+                }
+                else if (tspanElement.Name.LocalName == "textPath")
+                {
+                    var href = this.ReadHref(tspanElement);
+
+                    if (href != null)
+                    {
+                        var d = href.Attribute("d")?.Value;
+
+                        if (!string.IsNullOrWhiteSpace(d))
+                        {
+                            var text            = tspanElement.Value;
+                            var path            = SKPath.ParseSvgPathData(d);
+                            var lengthAdjust    = tspanElement.Attribute("lengthAdjust")?.Value;
+                            var method          = tspanElement.Attribute("method")?.Value;
+                            var spacing         = tspanElement.Attribute("spacing")?.Value;
+                            var startOffsetUnit = this.ReadOptionalUnit(tspanElement.Attribute("startOffset")!);
+                            var textLengthUnit  = this.ReadOptionalUnit(tspanElement.Attribute("textLength")!);
+
+                            float? startOffset = null;
+                            float? textLength  = null;
+
+                            using var pathMeasure = new SKPathMeasure(path);
+
+                            var pathLength = pathMeasure.Length / 2;
+
+                            if (startOffsetUnit?.TryGetPercentage(out var startOffsetPc) == true)
+                            {
+                                startOffset = pathLength * startOffsetPc;
+                            }
+                            else if (startOffsetUnit?.TryGetPixel(out var startOffsetPx) == true)
+                            {
+                                startOffset = startOffsetPx / 2;
+                            }
+
+                            if (textLengthUnit?.TryGetPercentage(out var textLengthPc) == true)
+                            {
+                                textLength = pathLength * textLengthPc;
+                            }
+                            else if (textLengthUnit?.TryGetPixel(out var textLengthPx) == true)
+                            {
+                                textLength = textLengthPx;
+                            }
+
+                            var textPath = new SkTextSpanPath(
+                                path,
+                                lengthAdjust,
+                                method,
+                                spacing,
+                                startOffset,
+                                textLength
+                            );
+
+                            skText.Append(new SKTextSpan(text, font, parentFillPaint, parentStrokePaint, null, null, currentBaselineShift, textPath));
+                        }
+                    }
+                }
+                else
+                {
+                    this.LogOrThrow($"Unsuported element {tspanElement.Name.LocalName}.");
                 }
             }
         }
@@ -756,23 +830,27 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         return skText;
     }
 
-    private void ReadFontAttributes(XElement element, out SKFont font)
+    private void ReadFontAttributes(XElement element, SKFont? parentFont, out SKFont font)
     {
         var style = ReadStyle(element);
 
-        var slant = ReadFontStyle(style, SKFontStyleSlant.Upright);
-        var weight = ReadFontWeight(style, 400);
-        var width = ReadFontWidth(style, 5);
+        var slant  = ReadFontStyle(style,  SKFontStyleSlant.Upright);
+        var weight = ReadFontWeight(style, parentFont?.Typeface.FontWeight ?? 400);
+        var width  = ReadFontWidth(style,  parentFont?.Typeface.FontWidth ?? 5);
 
         var familyName = style.TryGetValue("font-family", out var value)
             ? value
-            : SKTypeface.Default.FamilyName;
+            : parentFont?.Typeface.FamilyName ?? SKTypeface.Default.FamilyName;
 
         font = new(SKTypeface.FromFamilyName(familyName, weight, width, slant));
 
         if (style.TryGetValue("font-size", out var fontSize))
         {
             font.Size = this.ReadNumber(fontSize);
+        }
+        else if (parentFont != null)
+        {
+            font.Size = parentFont.Size;
         }
     }
 
@@ -922,8 +1000,9 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
             return 0f;
         }
 
-        var text = raw.Trim();
+        var text       = raw.Trim();
         var multiplier = 1f;
+
         if (unitPattern.IsMatch(text))
         {
             if (text.EndsWith("in", StringComparison.Ordinal))
@@ -951,7 +1030,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         }
         else if (percPattern.IsMatch(text))
         {
-            text = text[..^1];
+            text       = text[..^1];
             multiplier = 0.01f;
         }
 
@@ -980,6 +1059,9 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
     private float? ReadOptionalNumber(XAttribute attribute) =>
         attribute != null ? this.ReadNumber(attribute.Value) : null;
+
+    private Unit? ReadOptionalUnit(XAttribute attribute) =>
+        attribute != null ? this.ReadUnit(attribute.Value) : null;
 
     private SKShader ReadRadialGradient(XElement e)
     {
@@ -1043,6 +1125,28 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         return sortedDictionary;
     }
 
+    private Unit ReadUnit(ReadOnlySpan<char> raw)
+    {
+        if (raw.IsEmpty)
+        {
+            return Unit.Px(0);
+        }
+
+        var text = raw.Trim();
+
+        if (text.EndsWith("%", StringComparison.Ordinal))
+        {
+            if (!float.TryParse(text[..^1], NumberStyles.Float, CultureInfo.InvariantCulture, out var result))
+            {
+                result = 0f;
+            }
+
+            return Unit.Pc(result);
+        }
+
+        return Unit.Px((int)this.ReadNumber(raw));
+    }
+
     private SKPicture Load(XDocument xdoc)
     {
         var root       = xdoc.Root!;
@@ -1096,7 +1200,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
             {
                 canvasSize.Height = this.ViewBox.Height;
             }
-            else if (heightAttribute != null && heightAttribute.Value.Contains("%"))
+            else if (heightAttribute != null && heightAttribute.Value.Contains('%'))
             {
                 canvasSize.Height *= this.ViewBox.Height;
             }
@@ -1132,16 +1236,22 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
 
         this.ReadPaints(root, true, CreatePaint(), null, out var fillPaint, out var strokePaint);
 
-        this.LoadElements(root.Elements(), canvas, fillPaint, strokePaint);
+        // using var font = new SKFont(SKTypeface.Default);
+        using var font = new SKFont(SKTypeface.FromFamilyName("Times New Roman")); // TODO: Remove
+
+        this.LoadElements(root.Elements(), canvas, font, fillPaint, strokePaint);
+
+        fillPaint?.Dispose();
+        strokePaint?.Dispose();
 
         return this.Picture = pictureRecorder.EndRecording();
     }
 
-    private void LoadElements(IEnumerable<XElement> elements, SKCanvas canvas, SKPaint? fillPaint, SKPaint? strokePaint)
+    private void LoadElements(IEnumerable<XElement> elements, SKCanvas canvas, SKFont font, SKPaint? fillPaint, SKPaint? strokePaint)
     {
         foreach (var element in elements)
         {
-            this.ReadElement(element, canvas, fillPaint, strokePaint);
+            this.ReadElement(element, canvas, font, fillPaint, strokePaint);
         }
     }
 
@@ -1178,11 +1288,11 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         return union;
     }
 
-    private XElement? ReadHref(XElement e)
+    private XElement? ReadHref(XElement element)
     {
-        var text = ReadHrefString(e)[1..];
+        var text = ReadHrefString(element);
 
-        return text.IsEmpty || !this.references.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(text, out var value) ? null : value;
+        return text.IsEmpty || !this.references.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(text[1..], out var value) ? null : value;
     }
 
     private float ReadOpacity(Dictionary<string, string> style) =>
@@ -1200,9 +1310,9 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
     private void ReadPaints(Dictionary<string, string> style, bool isGroup, SKPaint? parentFillPaint, SKPaint? parentStrokePaint, out SKPaint? fillPaint, out SKPaint? strokePaint)
     {
         var opacity     = isGroup ? 1f : this.ReadOpacity(style);
-        var strokeValue = GetString(style, "stroke").Trim();
 
-        var fillValue = GetString(style, "fill").Trim();
+        var strokeValue = GetString(style, "stroke").Trim();
+        var fillValue   = GetString(style, "fill").Trim();
 
         if (fillValue.Equals("none", StringComparison.OrdinalIgnoreCase))
         {
@@ -1230,7 +1340,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                     {
                         var content = fillValue.Slice(enumerator.Current);
 
-                        var groupEnumerator = content.EnumerateRegexGroups();
+                        var groupEnumerator = groupPattern.EnumerateMatches(content);;
 
                         groupEnumerator.MoveNext();
 

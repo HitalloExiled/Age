@@ -2,7 +2,6 @@ using Age.Commands;
 using Age.Elements;
 using Age.Numerics;
 using Age.Resources;
-using Age.Styling;
 
 namespace Age.Scene;
 

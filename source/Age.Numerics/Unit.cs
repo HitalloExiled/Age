@@ -1,12 +1,12 @@
 using System.Runtime.InteropServices;
 
-namespace Age.Styling;
+namespace Age.Numerics;
 
 [StructLayout(LayoutKind.Explicit)]
 public partial record struct Unit
 {
     [FieldOffset(0)]
-    internal UnitKind Kind;
+    public UnitKind Kind;
 
     [FieldOffset(4)]
     internal UnitData Data;
@@ -35,7 +35,7 @@ public partial record struct Unit
     public static Unit Px(uint pixel) =>
         Px((int)pixel);
 
-    internal static float Resolve(Unit? unit, uint size, uint fontSize)
+    public static float Resolve(Unit? unit, uint size, uint fontSize)
     {
         if (!unit.HasValue)
         {
