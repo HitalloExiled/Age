@@ -1,4 +1,3 @@
-using Age.Rendering.Resources;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 

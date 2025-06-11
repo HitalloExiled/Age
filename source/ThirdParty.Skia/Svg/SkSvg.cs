@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
-using Age.Core;
+using Age.Core.Collections;
 using Age.Numerics;
 using SkiaSharp;
 

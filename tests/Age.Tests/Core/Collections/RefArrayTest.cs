@@ -1,6 +1,6 @@
-using Age.Core;
+using Age.Core.Collections;
 
-namespace Age.Tests.Core.Interop;
+namespace Age.Tests.Core.Collections;
 
 public unsafe class RefArrayTest
 {

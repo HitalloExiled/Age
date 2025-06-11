@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
-using Age.Core;
+using Age.Core.Collections;
 using ThirdParty.Vulkan.Interfaces;
 
 using static Age.Core.PointerHelper;

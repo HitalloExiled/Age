@@ -2,7 +2,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Age.Core;
+namespace Age.Core.Collections;
 
 [DebuggerDisplay("Count = {Count}")]
 [DebuggerTypeProxy(typeof(NativeList<>.DebugView))]

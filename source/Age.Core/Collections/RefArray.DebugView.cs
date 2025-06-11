@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Age.Core;
+namespace Age.Core.Collections;
 
 public unsafe ref partial struct RefArray<T> where T : unmanaged
 {

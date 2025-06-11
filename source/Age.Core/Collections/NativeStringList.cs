@@ -2,7 +2,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Age.Core;
+namespace Age.Core.Collections;
 
 [DebuggerTypeProxy(typeof(DebugView))]
 public unsafe partial class NativeStringList : Disposable, IEnumerable<string>

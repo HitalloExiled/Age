@@ -1,5 +1,4 @@
 using System.Globalization;
-using Microsoft.VisualBasic;
 using SkiaSharp;
 
 namespace ThirdParty.Skia.Svg;

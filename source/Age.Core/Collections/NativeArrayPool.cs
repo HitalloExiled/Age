@@ -1,4 +1,4 @@
-namespace Age.Core;
+namespace Age.Core.Collections;
 
 public class NativeArrayPool<T> where T : unmanaged
 {

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Age.Core;
+namespace Age.Core.Collections;
 
 [DebuggerTypeProxy(typeof(RefArray<>.DebugView))]
 public unsafe ref partial struct RefArray<T>(int length = 0) : IDisposable, IEnumerable<T> where T : unmanaged

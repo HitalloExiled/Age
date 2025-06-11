@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace Age.Core;
+namespace Age.Core.Collections;
 
 public unsafe partial class NativeStack<T> where T : unmanaged
 {
