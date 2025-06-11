@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 
 namespace Age.Core.Collections;
 
-[DebuggerDisplay("Length = {Length}")]
 [DebuggerTypeProxy(typeof(NativeArray<>.DebugView))]
 public unsafe partial class NativeArray<T>(int length = 0) : Disposable, IEnumerable<T> where T : unmanaged
 {
