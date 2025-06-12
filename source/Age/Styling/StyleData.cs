@@ -125,7 +125,7 @@ internal struct StyleData
         target.Stack                = left.Stack                ?? right.Stack;
         target.TextAlignment        = left.TextAlignment        ?? right.TextAlignment;
         target.TextSelection        = left.TextSelection        ?? right.TextSelection;
-        target.Transforms            = left.Transforms            ?? right.Transforms;
+        target.Transforms           = left.Transforms           ?? right.Transforms;
         target.TransformOrigin      = left.TransformOrigin      ?? right.TransformOrigin;
     }
 

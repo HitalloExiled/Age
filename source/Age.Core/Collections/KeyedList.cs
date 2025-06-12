@@ -175,12 +175,14 @@ where TValue : notnull
     public TValue Get(TKey key) =>
         this.TryGet(key, out var value) ? value : throw new InvalidOperationException($"The key '{key}' does not exist in the collection.");
 
-    public bool Remove(TKey key)
+    public bool Remove(TKey key, [NotNullWhen(true)] out TValue? value)
     {
         ThrowIfNotSingleFlag(key);
 
         if (!this.keys.HasFlags(key))
         {
+            value = default;
+
             return false;
         }
 
@@ -197,12 +199,17 @@ where TValue : notnull
             source.CopyTo(destination);
         }
 
-        this.Count              = int.Max(this.Count - 1, 0);
-        this.keys               = this.keys.RemoveFlag(key);
+        this.Count = int.Max(this.Count - 1, 0);
+        this.keys  = this.keys.RemoveFlag(key);
+
+        value = this.values[this.Count];
         this.values[this.Count] = default!;
 
         return true;
     }
+
+    public bool Remove(TKey key) =>
+        this.Remove(key, out _);
 
     public bool TryGet(TKey key, [NotNullWhen(true)] out TValue? value)
     {

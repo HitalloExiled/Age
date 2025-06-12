@@ -1,3 +1,4 @@
+using Age.Core.Collections;
 using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Platforms.Display;
@@ -5,13 +6,12 @@ using Age.Scene;
 using Age.Styling;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Runtime.CompilerServices;
 
+using AgeInput             = Age.Input;
 using Key                  = Age.Platforms.Display.Key;
 using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
 using PlatformMouseEvent   = Age.Platforms.Display.MouseEvent;
-using AgeInput             = Age.Input;
-using Age.Core.Extensions;
-using System.Runtime.CompilerServices;
 
 namespace Age.Elements;
 
@@ -33,74 +33,74 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     public event Action? Activated
     {
-        add => this.AddEvent(nameof(Activated), value);
-        remove => this.RemoveEvent(nameof(Activated), value);
+        add => this.AddEvent(EventProperty.Activated, value);
+        remove => this.RemoveEvent(EventProperty.Activated, value);
     }
 
     public event MouseEventHandler? Blured
     {
-        add => this.AddEvent(nameof(Blured), value);
-        remove => this.RemoveEvent(nameof(Blured), value);
+        add => this.AddEvent(EventProperty.Blured, value);
+        remove => this.RemoveEvent(EventProperty.Blured, value);
     }
 
     public event MouseEventHandler? Clicked
     {
-        add => this.AddEvent(nameof(Clicked), value);
-        remove => this.RemoveEvent(nameof(Clicked), value);
+        add => this.AddEvent(EventProperty.Clicked, value);
+        remove => this.RemoveEvent(EventProperty.Clicked, value);
     }
 
     public event ContextEventHandler? Context
     {
-        add => this.AddEvent(nameof(Context), value);
-        remove => this.RemoveEvent(nameof(Context), value);
+        add => this.AddEvent(EventProperty.Context, value);
+        remove => this.RemoveEvent(EventProperty.Context, value);
     }
 
     public event Action? Deactivated
     {
-        add => this.AddEvent(nameof(Deactivated), value);
-        remove => this.RemoveEvent(nameof(Deactivated), value);
+        add => this.AddEvent(EventProperty.Deactivated, value);
+        remove => this.RemoveEvent(EventProperty.Deactivated, value);
     }
 
     public event MouseEventHandler? DoubleClicked
     {
-        add => this.AddEvent(nameof(DoubleClicked), value);
-        remove => this.RemoveEvent(nameof(DoubleClicked), value);
+        add => this.AddEvent(EventProperty.DoubleClicked, value);
+        remove => this.RemoveEvent(EventProperty.DoubleClicked, value);
     }
 
     public event MouseEventHandler? Focused
     {
-        add => this.AddEvent(nameof(Focused), value);
-        remove => this.RemoveEvent(nameof(Focused), value);
+        add => this.AddEvent(EventProperty.Focused, value);
+        remove => this.RemoveEvent(EventProperty.Focused, value);
     }
 
     public event MouseEventHandler? MouseDown
     {
-        add => this.AddEvent(nameof(MouseDown), value);
-        remove => this.RemoveEvent(nameof(MouseDown), value);
+        add => this.AddEvent(EventProperty.MouseDown, value);
+        remove => this.RemoveEvent(EventProperty.MouseDown, value);
     }
 
     public event MouseEventHandler? MouseMoved
     {
-        add => this.AddEvent(nameof(MouseMoved), value);
-        remove => this.RemoveEvent(nameof(MouseMoved), value);
+        add => this.AddEvent(EventProperty.MouseMoved, value);
+        remove => this.RemoveEvent(EventProperty.MouseMoved, value);
     }
 
     public event MouseEventHandler? MouseOut
     {
-        add => this.AddEvent(nameof(MouseOut), value);
-        remove => this.RemoveEvent(nameof(MouseOut), value);
+        add => this.AddEvent(EventProperty.MouseOut, value);
+        remove => this.RemoveEvent(EventProperty.MouseOut, value);
     }
 
     public event MouseEventHandler? MouseOver
     {
-        add => this.AddEvent(nameof(MouseOver), value);
-        remove => this.RemoveEvent(nameof(MouseOver), value);
+        add => this.AddEvent(EventProperty.MouseOver, value);
+        remove => this.RemoveEvent(EventProperty.MouseOver, value);
     }
 
     public event MouseEventHandler? MouseUp
     {
-        add => this.AddEvent(nameof(MouseUp), value);
-        remove => this.RemoveEvent(nameof(MouseUp), value);
+        add => this.AddEvent(EventProperty.MouseUp, value);
+        remove => this.RemoveEvent(EventProperty.MouseUp, value);
     }
 
     public event InputEventHandler? Input
@@ -109,7 +109,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock(this.elementLock)
             {
-                this.AddEvent(nameof(Input), value, out var added);
+                this.AddEvent(EventProperty.Input, value, out var added);
 
                 if (this.Tree is RenderTree renderTree && added)
                 {
@@ -121,7 +121,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock(this.elementLock)
             {
-                this.RemoveEvent(nameof(Input), value, out var removed);
+                this.RemoveEvent(EventProperty.Input, value, out var removed);
 
                 if (this.Tree is RenderTree renderTree && removed)
                 {
@@ -137,7 +137,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock(this.elementLock)
             {
-                this.AddEvent(nameof(KeyDown), value, out var added);
+                this.AddEvent(EventProperty.KeyDown, value, out var added);
 
                 if (this.Tree is RenderTree renderTree && added)
                 {
@@ -151,7 +151,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock(this.elementLock)
             {
-                this.RemoveEvent(nameof(KeyDown), value, out var removed);
+                this.RemoveEvent(EventProperty.KeyDown, value, out var removed);
 
                 if (this.Tree is RenderTree renderTree && removed)
                 {
@@ -167,7 +167,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock(this.elementLock)
             {
-                this.AddEvent(nameof(KeyUp), value, out var added);
+                this.AddEvent(EventProperty.KeyUp, value, out var added);
 
                 if (this.Tree is RenderTree renderTree && added)
                 {
@@ -179,7 +179,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock(this.elementLock)
             {
-                this.RemoveEvent(nameof(KeyUp), value, out var removed);
+                this.RemoveEvent(EventProperty.KeyUp, value, out var removed);
 
                 if (this.Tree is RenderTree renderTree && removed)
                 {
@@ -195,7 +195,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock(this.elementLock)
             {
-                this.AddEvent(nameof(Scrolled), value, out var added);
+                this.AddEvent(EventProperty.Scrolled, value, out var added);
 
                 if (this.Tree is RenderTree renderTree && added)
                 {
@@ -207,7 +207,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock(this.elementLock)
             {
-                this.RemoveEvent(nameof(Scrolled), value, out var removed);
+                this.RemoveEvent(EventProperty.Scrolled, value, out var removed);
 
                 if (this.Tree is RenderTree renderTree && removed)
                 {
@@ -218,25 +218,25 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     }
     #endregion events
 
-    private readonly Lock                         elementLock    = new();
-    private readonly Dictionary<string, Delegate> events         = [];
+    private readonly Lock                               elementLock = new();
+    private readonly KeyedList<EventProperty, Delegate> events      = [];
 
-    private Action?              ActivatedEvent     => this.GetEvent<Action>(nameof(Activated));
-    private MouseEventHandler?   BluredEvent        => this.GetEvent<MouseEventHandler>(nameof(Blured));
-    private MouseEventHandler?   ClickedEvent       => this.GetEvent<MouseEventHandler>(nameof(Clicked));
-    private ContextEventHandler? ContextEvent       => this.GetEvent<ContextEventHandler>(nameof(Context));
-    private Action?              DeactivatedEvent   => this.GetEvent<Action>(nameof(Deactivated));
-    private MouseEventHandler?   DoubleClickedEvent => this.GetEvent<MouseEventHandler>(nameof(DoubleClicked));
-    private MouseEventHandler?   FocusedEvent       => this.GetEvent<MouseEventHandler>(nameof(Focused));
-    private InputEventHandler?   InputEvent         => this.GetEvent<InputEventHandler>(nameof(Input));
-    private KeyEventHandler?     KeyDownEvent       => this.GetEvent<KeyEventHandler>(nameof(KeyDown));
-    private KeyEventHandler?     KeyUpEvent         => this.GetEvent<KeyEventHandler>(nameof(KeyUp));
-    private MouseEventHandler?   MouseDownEvent     => this.GetEvent<MouseEventHandler>(nameof(MouseDown));
-    private MouseEventHandler?   MouseMovedEvent    => this.GetEvent<MouseEventHandler>(nameof(MouseMoved));
-    private MouseEventHandler?   MouseOutEvent      => this.GetEvent<MouseEventHandler>(nameof(MouseOut));
-    private MouseEventHandler?   MouseOverEvent     => this.GetEvent<MouseEventHandler>(nameof(MouseOver));
-    private MouseEventHandler?   MouseUpEvent       => this.GetEvent<MouseEventHandler>(nameof(MouseUp));
-    private MouseEventHandler?   ScrolledEvent      => this.GetEvent<MouseEventHandler>(nameof(Scrolled));
+    private Action?              ActivatedEvent     => this.GetEvent<Action>(EventProperty.Activated);
+    private MouseEventHandler?   BluredEvent        => this.GetEvent<MouseEventHandler>(EventProperty.Blured);
+    private MouseEventHandler?   ClickedEvent       => this.GetEvent<MouseEventHandler>(EventProperty.Clicked);
+    private ContextEventHandler? ContextEvent       => this.GetEvent<ContextEventHandler>(EventProperty.Context);
+    private Action?              DeactivatedEvent   => this.GetEvent<Action>(EventProperty.Deactivated);
+    private MouseEventHandler?   DoubleClickedEvent => this.GetEvent<MouseEventHandler>(EventProperty.DoubleClicked);
+    private MouseEventHandler?   FocusedEvent       => this.GetEvent<MouseEventHandler>(EventProperty.Focused);
+    private InputEventHandler?   InputEvent         => this.GetEvent<InputEventHandler>(EventProperty.Input);
+    private KeyEventHandler?     KeyDownEvent       => this.GetEvent<KeyEventHandler>(EventProperty.KeyDown);
+    private KeyEventHandler?     KeyUpEvent         => this.GetEvent<KeyEventHandler>(EventProperty.KeyUp);
+    private MouseEventHandler?   MouseDownEvent     => this.GetEvent<MouseEventHandler>(EventProperty.MouseDown);
+    private MouseEventHandler?   MouseMovedEvent    => this.GetEvent<MouseEventHandler>(EventProperty.MouseMoved);
+    private MouseEventHandler?   MouseOutEvent      => this.GetEvent<MouseEventHandler>(EventProperty.MouseOut);
+    private MouseEventHandler?   MouseOverEvent     => this.GetEvent<MouseEventHandler>(EventProperty.MouseOver);
+    private MouseEventHandler?   MouseUpEvent       => this.GetEvent<MouseEventHandler>(EventProperty.MouseUp);
+    private MouseEventHandler?   ScrolledEvent      => this.GetEvent<MouseEventHandler>(EventProperty.Scrolled);
 
     protected bool IsFocusable { get; set; }
 
@@ -339,40 +339,47 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void AddEvent(string name, Delegate? handler, out bool added)
+    private void AddEvent(EventProperty key, Delegate? handler, out bool added)
     {
-        ref var @delegate = ref this.events.GetValueRefOrAddDefault(name, out var exists);
+        if (handler == null)
+        {
+            added = false;
+            return;
+        }
+
+        added = !this.events.TryGet(key, out var @delegate);
 
         @delegate = Delegate.Combine(@delegate, handler);
 
-        added = !exists;
+        this.events[key] = @delegate;
     }
 
-    private void AddEvent(string name, Delegate? handler) =>
-        this.AddEvent(name, handler, out _);
+    private void AddEvent(EventProperty key, Delegate? handler) =>
+        this.AddEvent(key, handler, out _);
 
-    private void RemoveEvent(string name, Delegate? handler) =>
-        this.RemoveEvent(name, handler, out _);
+    private void RemoveEvent(EventProperty key, Delegate? handler) =>
+        this.RemoveEvent(key, handler, out _);
 
-    private void RemoveEvent(string name, Delegate? handler, out bool removed)
+    private void RemoveEvent(EventProperty key, Delegate? handler, out bool removed)
     {
-        ref var @delegate = ref this.events.GetValueRefOrNullRef(name);
-
-        if (removed = Unsafe.IsNullRef(ref @delegate))
+        if (handler == null)
         {
+            removed = false;
             return;
         }
+
+        this.events.TryGet(key, out var @delegate);
 
         @delegate = Delegate.Remove(@delegate, handler);
 
         if (removed = @delegate == null)
         {
-            this.events.Remove(name);
+            this.events.Remove(key);
         }
     }
 
-    private T? GetEvent<T>(string name) where T : Delegate =>
-        this.events.TryGetValue(name, out var @delegate) ? (T)@delegate : null;
+    private T? GetEvent<T>(EventProperty key) where T : Delegate =>
+        this.events.TryGet(key, out var @delegate) ? (T)@delegate : null;
 
     private MouseEvent CreateEvent(in PlatformMouseEvent mouseEvent, bool indirect) =>
         new()
@@ -460,22 +467,22 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     protected override void Connected(RenderTree renderTree)
     {
-        if (this.events.ContainsKey(nameof(Input)))
+        if (this.events.ContainsKey(EventProperty.Input))
         {
             renderTree.Window.Input += this.OnInput;
         }
 
-        if (this.events.ContainsKey(nameof(KeyDown)))
+        if (this.events.ContainsKey(EventProperty.KeyDown))
         {
             renderTree.Window.KeyDown += this.OnKeyDown;
         }
 
-        if (this.events.ContainsKey(nameof(KeyUp)))
+        if (this.events.ContainsKey(EventProperty.KeyUp))
         {
             renderTree.Window.KeyUp += this.OnKeyUp;
         }
 
-        if (this.events.ContainsKey(nameof(Scrolled)))
+        if (this.events.ContainsKey(EventProperty.Scrolled))
         {
             renderTree.Window.MouseWheel += this.OnScroll;
         }
