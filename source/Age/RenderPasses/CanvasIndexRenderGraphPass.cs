@@ -30,8 +30,10 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
     protected override CommandBuffer           CommandBuffer           => this.commandBuffer;
     protected override Framebuffer             Framebuffer             => this.framebuffer;
     protected override RenderPipelines[]       Pipelines               { get; } = [];
+    protected override PipelineVariant         PipelineVariants        { get; } = PipelineVariant.Index;
 
     public override RenderPass RenderPass => this.renderPass;
+
 
     public CanvasIndexRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)
     {
@@ -204,22 +206,19 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
     protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
     {
-        if (command.PipelineVariant.HasFlags(PipelineVariant.Index))
+        var constant = new CanvasShader.PushConstant
         {
-            var constant = new CanvasShader.PushConstant
-            {
-                Border    = command.Border,
-                Color     = 0xFFFF_0000_0000_0000 | command.ObjectId,
-                Flags     = command.Flags,
-                Size      = command.Size,
-                Transform = command.Transform * transform,
-                UV        = command.MappedTexture.UV,
-                Viewport  = viewport,
-            };
+            Border    = command.Border,
+            Color     = 0xFFFF_0000_0000_0000 | command.ObjectId,
+            Flags     = command.Flags,
+            Size      = command.Size,
+            Transform = command.Transform * transform,
+            UV        = command.MappedTexture.UV,
+            Viewport  = viewport,
+        };
 
-            this.CommandBuffer.PushConstant(resource.Shader, constant);
-            this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
-        }
+        this.CommandBuffer.PushConstant(resource.Shader, constant);
+        this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
     }
 
     protected override void Disposed()

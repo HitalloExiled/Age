@@ -30,6 +30,7 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
     protected override CommandBuffer           CommandBuffer           => this.Renderer.CurrentCommandBuffer;
     protected override Framebuffer             Framebuffer             => this.framebuffers[this.Window.Surface.CurrentBuffer];
     protected override RenderPipelines[]       Pipelines               { get; } = [];
+    protected override PipelineVariant         PipelineVariants        { get; } = PipelineVariant.Color | PipelineVariant.Wireframe;
 
     public override RenderPass RenderPass => this.renderPass;
 
@@ -203,43 +204,40 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
     protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
     {
-        if (command.PipelineVariant.HasAnyFlag(PipelineVariant.Color | PipelineVariant.Wireframe))
+        var constant = new CanvasShader.PushConstant
         {
-            var constant = new CanvasShader.PushConstant
+            Border    = command.Border,
+            Color     = command.Color,
+            Flags     = command.Flags,
+            Size      = command.Size,
+            Transform = command.Transform * transform,
+            UV        = command.MappedTexture.UV,
+            Viewport  = viewport,
+        };
+
+        if (!this.UniformSets.TryGetValue(command.MappedTexture.Texture, out var uniformSet))
+        {
+            var diffuse = new CombinedImageSamplerUniform
             {
-                Border    = command.Border,
-                Color     = command.Color,
-                Flags     = command.Flags,
-                Size      = command.Size,
-                Transform = command.Transform * transform,
-                UV        = command.MappedTexture.UV,
-                Viewport  = viewport,
+                Binding     = 0,
+                ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
+                Image       = command.MappedTexture.Texture.Image,
+                ImageView   = command.MappedTexture.Texture.ImageView,
+                Sampler     = command.MappedTexture.Texture.Sampler,
             };
 
-            if (!this.UniformSets.TryGetValue(command.MappedTexture.Texture, out var uniformSet))
-            {
-                var diffuse = new CombinedImageSamplerUniform
-                {
-                    Binding     = 0,
-                    ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
-                    Image       = command.MappedTexture.Texture.Image,
-                    ImageView   = command.MappedTexture.Texture.ImageView,
-                    Sampler     = command.MappedTexture.Texture.Sampler,
-                };
-
-                this.UniformSets.Set(command.MappedTexture.Texture, uniformSet = new UniformSet(resource.Shader, [diffuse]));
-            }
-
-            if (uniformSet != null && uniformSet != this.lastUniformSet)
-            {
-                this.CommandBuffer.BindUniformSet(uniformSet);
-
-                this.lastUniformSet = uniformSet;
-            }
-
-            this.CommandBuffer.PushConstant(resource.Shader, constant);
-            this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
+            this.UniformSets.Set(command.MappedTexture.Texture, uniformSet = new UniformSet(resource.Shader, [diffuse]));
         }
+
+        if (uniformSet != null && uniformSet != this.lastUniformSet)
+        {
+            this.CommandBuffer.BindUniformSet(uniformSet);
+
+            this.lastUniformSet = uniformSet;
+        }
+
+        this.CommandBuffer.PushConstant(resource.Shader, constant);
+        this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
     }
 
     protected override void Disposed()
