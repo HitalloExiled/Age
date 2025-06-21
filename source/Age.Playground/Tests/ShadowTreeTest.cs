@@ -102,9 +102,9 @@ public class Host : Element
         slotS1.Detach();
         slotS2.Detach();
 
-        toggleSlotDefaultButton.Clicked += (in MouseEvent _) => toogle(slotDefault);
-        toggleSlotS1Button.Clicked += (in MouseEvent _) => toogle(slotS1);
-        toggleSlotS2Button.Clicked += (in MouseEvent _) => toogle(slotS2);
+        toggleSlotDefaultButton.Clicked += (in _) => toogle(slotDefault);
+        toggleSlotS1Button.Clicked += (in _) => toogle(slotS1);
+        toggleSlotS2Button.Clicked += (in _) => toogle(slotS2);
     }
 }
 
@@ -186,12 +186,12 @@ public static class ShadowTreeTest
             }
         ];
 
-        moveL1toSlotDefaultButton.Clicked += (in MouseEvent _) => l1.Slot = null;
-        moveL1toSlotS1Button.Clicked += (in MouseEvent _) => l1.Slot = "s-1";
-        moveL1toSlotS2Button.Clicked += (in MouseEvent _) => l1.Slot = "s-2";
+        moveL1toSlotDefaultButton.Clicked += (in _) => l1.Slot = null;
+        moveL1toSlotS1Button.Clicked += (in _) => l1.Slot = "s-1";
+        moveL1toSlotS2Button.Clicked += (in _) => l1.Slot = "s-2";
 
-        moveL2toSlotDefaultButton.Clicked += (in MouseEvent _) => l2.Slot = null;
-        moveL2toSlotS1Button.Clicked += (in MouseEvent _) => l2.Slot = "s-1";
-        moveL2toSlotS2Button.Clicked += (in MouseEvent _) => l2.Slot = "s-2";
+        moveL2toSlotDefaultButton.Clicked += (in _) => l2.Slot = null;
+        moveL2toSlotS1Button.Clicked += (in _) => l2.Slot = "s-1";
+        moveL2toSlotS2Button.Clicked += (in _) => l2.Slot = "s-2";
     }
 }

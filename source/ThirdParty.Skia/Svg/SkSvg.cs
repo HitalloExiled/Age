@@ -1376,10 +1376,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                 fillPaint.Color = fillPaint.Color.WithAlpha((byte)(this.ReadNumber(fillOpacityValue) * 255f));
             }
 
-            if (fillPaint != null)
-            {
-                fillPaint.Color = fillPaint.Color.WithAlpha((byte)(fillPaint.Color.Alpha * opacity));
-            }
+            fillPaint?.Color = fillPaint.Color.WithAlpha((byte)(fillPaint.Color.Alpha * opacity));
         }
 
         if (strokeValue.Equals("none", StringComparison.OrdinalIgnoreCase))
@@ -1406,10 +1403,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
             {
                 if ("none".Equals(strokeDashArray, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (strokePaint != null)
-                    {
-                        strokePaint.PathEffect = null;
-                    }
+                    strokePaint?.PathEffect = null;
                 }
                 else
                 {
@@ -1451,10 +1445,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                 strokePaint.Color = strokePaint.Color.WithAlpha((byte)(this.ReadNumber(strokeOpacityValue) * 255f));
             }
 
-            if (strokePaint != null)
-            {
-                strokePaint.Color = strokePaint.Color.WithAlpha((byte)(strokePaint.Color.Alpha * opacity));
-            }
+            strokePaint?.Color = strokePaint.Color.WithAlpha((byte)(strokePaint.Color.Alpha * opacity));
         }
     }
 

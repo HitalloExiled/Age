@@ -53,7 +53,7 @@ public static class AlignmentTest
             }
         };
 
-        horizontal_a_container.KeyDown += (in KeyEvent keyEvent) =>
+        horizontal_a_container.KeyDown += (in keyEvent) =>
         {
             if (keyEvent.Holding)
             {
@@ -101,7 +101,7 @@ public static class AlignmentTest
         var percentage             = false;
         var text                   = "Changed";
 
-        horizontal_a_right.KeyDown += (in KeyEvent keyEvent) =>
+        horizontal_a_right.KeyDown += (in keyEvent) =>
         {
             if (keyEvent.Holding)
             {

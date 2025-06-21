@@ -502,10 +502,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
             this.LastChild = current.PreviousSibling;
 
-            if (this.LastChild != null)
-            {
-                this.LastChild.NextSibling = null;
-            }
+            this.LastChild?.NextSibling = null;
 
             current.PreviousSibling = null;
             current.NextSibling     = null;

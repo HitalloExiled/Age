@@ -459,10 +459,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         base.OnConnected(tree);
 
-        if (this.ShadowTree != null)
-        {
-            this.ShadowTree.Tree = tree;
-        }
+        this.ShadowTree?.Tree = tree;
     }
 
     protected override void Connected(RenderTree renderTree)
@@ -517,10 +514,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         base.OnDisconnected(tree);
 
-        if (this.ShadowTree != null)
-        {
-            this.ShadowTree.Tree = null;
-        }
+        this.ShadowTree?.Tree = null;
     }
 
     protected override void Disconnected(RenderTree renderTree)
