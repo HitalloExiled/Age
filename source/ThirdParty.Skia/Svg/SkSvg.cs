@@ -230,7 +230,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
             }
         }
 
-        return !(text == "end") ? text == "middle" ? SKTextAlign.Center : SKTextAlign.Left : SKTextAlign.Right;
+        return text != "end" ? text == "middle" ? SKTextAlign.Center : SKTextAlign.Left : SKTextAlign.Right;
     }
 
     private static RefArray<byte> ReadUriBytes(ReadOnlySpan<char> uri)
@@ -243,7 +243,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
             {
                 uri = uri[(index + 1)..];
 
-                var bytesLenght = uri.Length * 3 / 4 - 2;
+                var bytesLenght = (uri.Length * 3 / 4) - 2;
 
                 var bytes = new RefArray<byte>(bytesLenght);
 
@@ -498,8 +498,6 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
                             break;
                         case SKTextAlign.Right:
                             currentX -= textWidth;
-                            break;
-                        default:
                             break;
                     }
 
@@ -1200,7 +1198,7 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
             {
                 canvasSize.Height = this.ViewBox.Height;
             }
-            else if (heightAttribute != null && heightAttribute.Value.Contains('%'))
+            else if (heightAttribute?.Value.Contains('%') == true)
             {
                 canvasSize.Height *= this.ViewBox.Height;
             }

@@ -211,8 +211,6 @@ public partial class Window
                     }
 
                     break;
-                default:
-                    break;
             }
         }
 

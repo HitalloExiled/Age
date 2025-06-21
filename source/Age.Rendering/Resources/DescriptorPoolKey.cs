@@ -65,8 +65,6 @@ public struct DescriptorPoolKey : IEquatable<DescriptorPoolKey>
                     case VkDescriptorType.MutableEXT:
                         span[16] = value;
                         break;
-                    default:
-                        break;
                 };
             }
         }

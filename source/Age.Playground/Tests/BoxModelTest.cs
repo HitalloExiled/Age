@@ -4,11 +4,11 @@ using Age.Styling;
 
 namespace Age.Playground.Tests;
 
-public class BoxModelTest
+public static class BoxModelTest
 {
     public static void Setup(Canvas canvas)
     {
-        var borderSize = 10u;
+        const uint BORDER_SIZE = 10u;
 
         canvas.Children =
         [
@@ -17,7 +17,7 @@ public class BoxModelTest
                 Name  = "BoxModel",
                 Style = new()
                 {
-                    Border    = new(borderSize, 0, Color.Red),
+                    Border    = new(BORDER_SIZE, 0, Color.Red),
                     Size      = new(Unit.Pc(100)),
                     BoxSizing = BoxSizing.Border
                 },
@@ -29,7 +29,7 @@ public class BoxModelTest
                         Style = new()
                         {
                             StackDirection = StackDirection.Vertical,
-                            Border         = new(borderSize, 0, Color.Green),
+                            Border         = new(BORDER_SIZE, 0, Color.Green),
                             Size           = new(Unit.Pc(50), Unit.Pc(100)),
                         },
                         Children =
@@ -51,7 +51,7 @@ public class BoxModelTest
                                 Style = new()
                                 {
                                     Color  = Color.White,
-                                    Border = new(borderSize, 0, Color.Cyan),
+                                    Border = new(BORDER_SIZE, 0, Color.Cyan),
                                     Size   = new(Unit.Pc(100), Unit.Pc(50)),
                                 }
                             },
@@ -61,7 +61,7 @@ public class BoxModelTest
                                 Style = new()
                                 {
                                     Color  = Color.White,
-                                    Border = new(borderSize, 0, Color.White),
+                                    Border = new(BORDER_SIZE, 0, Color.White),
                                     Size   = new(Unit.Pc(100), Unit.Pc(50)),
                                 }
                             },
@@ -72,7 +72,7 @@ public class BoxModelTest
                                 {
                                     Alignment = Alignment.Center,
                                     Color     = Color.White,
-                                    Border    = new(borderSize, 0, Color.Yellow),
+                                    Border    = new(BORDER_SIZE, 0, Color.Yellow),
                                     Size      = new(Unit.Px(50)),
                                 }
                             }
@@ -84,7 +84,7 @@ public class BoxModelTest
                         Style = new()
                         {
                             StackDirection = StackDirection.Vertical,
-                            Border         = new(borderSize, 0, Color.Blue),
+                            Border         = new(BORDER_SIZE, 0, Color.Blue),
                             Size           = new(Unit.Pc(100), Unit.Pc(100)),
                         },
                         Children =
@@ -95,7 +95,7 @@ public class BoxModelTest
                                 Style = new()
                                 {
                                     Color  = Color.White,
-                                    Border = new(borderSize, 0, Color.Cyan),
+                                    Border = new(BORDER_SIZE, 0, Color.Cyan),
                                     Size   = new(Unit.Px(50)),
                                 }
                             },
@@ -105,7 +105,7 @@ public class BoxModelTest
                                 Style = new()
                                 {
                                     Color  = Color.White,
-                                    Border = new(borderSize, 0, Color.White),
+                                    Border = new(BORDER_SIZE, 0, Color.White),
                                     Size   = new(Unit.Pc(100)),
                                 }
                             },
@@ -115,7 +115,7 @@ public class BoxModelTest
                                 Style = new()
                                 {
                                     Color  = Color.White,
-                                    Border = new(borderSize, 0, Color.Yellow),
+                                    Border = new(BORDER_SIZE, 0, Color.Yellow),
                                     Size   = new(Unit.Px(50)),
                                 }
                             }

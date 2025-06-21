@@ -430,9 +430,6 @@ public partial class TextBox : Element
                 }
 
                 break;
-
-            default:
-                break;
         }
     }
 

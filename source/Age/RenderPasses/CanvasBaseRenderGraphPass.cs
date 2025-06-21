@@ -161,8 +161,6 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
                                 }
 
                                 break;
-                            default:
-                                break;
                         }
                     }
                 }

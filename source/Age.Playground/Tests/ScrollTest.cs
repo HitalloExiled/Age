@@ -5,13 +5,13 @@ using Age.Components;
 
 namespace Age.Playground.Tests;
 
-public class ScrollTest
+public static class ScrollTest
 {
     public static void Setup(Canvas canvas)
     {
-        var borderSize = 2u;
+        const uint BORDER_SIZE = 2u;
 
-        var lorenText =
+        const string LOREN_TEXT =
         """
         Lorem ipsum dolor sit amet, consectetur adipiscing elit.
         Sed et malesuada urna.
@@ -95,11 +95,11 @@ public class ScrollTest
         var loren = new FlexBox()
         {
             Name  = "loren",
-            Text  = lorenText,
+            Text  = LOREN_TEXT,
             Style = new()
             {
                 Margin   = new(Unit.Px(20)),
-                Border   = new(borderSize, 0, Color.Red),
+                Border   = new(BORDER_SIZE, 0, Color.Red),
                 Padding  = new(Unit.Px(10)),
                 Overflow = Overflow.Scroll,
                 Size     = new(Unit.Pc(100)),
@@ -114,7 +114,7 @@ public class ScrollTest
             Style = new()
             {
                 Margin  = new(Unit.Px(20)),
-                Border  = new(borderSize, 0, Color.Red),
+                Border  = new(BORDER_SIZE, 0, Color.Red),
                 Padding = new(Unit.Px(10)),
                 Color   = Color.White,
             },
@@ -127,7 +127,7 @@ public class ScrollTest
             Style = new()
             {
                 Margin  = new(Unit.Px(20)),
-                Border  = new(borderSize, 0, Color.Red),
+                Border  = new(BORDER_SIZE, 0, Color.Red),
                 Padding = new(Unit.Px(10)),
                 Color   = Color.White,
             },
@@ -144,7 +144,7 @@ public class ScrollTest
             Style = new()
             {
                 Margin  = new(Unit.Px(20)),
-                Border  = new(borderSize, 0, Color.Red),
+                Border  = new(BORDER_SIZE, 0, Color.Red),
                 Padding = new(Unit.Px(10)),
                 Color   = Color.White,
             },
@@ -161,7 +161,7 @@ public class ScrollTest
             Style = new()
             {
                 Margin  = new(Unit.Px(20)),
-                Border  = new(borderSize, 0, Color.Red),
+                Border  = new(BORDER_SIZE, 0, Color.Red),
                 Padding = new(Unit.Px(10)),
                 Color   = Color.White,
             },
@@ -186,7 +186,7 @@ public class ScrollTest
             Style = new()
             {
                 Margin   = new(Unit.Px(20)),
-                Border   = new(borderSize, 0, Color.Red),
+                Border   = new(BORDER_SIZE, 0, Color.Red),
                 Padding  = new(Unit.Px(10)),
                 Overflow = Overflow.Scroll,
                 Size     = new(Unit.Px(100)),
@@ -214,7 +214,7 @@ public class ScrollTest
             Style = new()
             {
                 Margin   = new(Unit.Px(20)),
-                Border   = new(borderSize, 0, Color.Red),
+                Border   = new(BORDER_SIZE, 0, Color.Red),
                 Padding  = new(Unit.Px(10)),
                 Overflow = Overflow.Scroll,
                 Size     = new(Unit.Px(200)),

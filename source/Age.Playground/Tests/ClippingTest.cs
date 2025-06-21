@@ -4,18 +4,18 @@ using Age.Styling;
 
 namespace Age.Playground.Tests;
 
-public class ClippingTest
+public static class ClippingTest
 {
     public static void Setup(Canvas canvas)
     {
-        var borderSize = 10u;
+        const uint BORDER_SIZE = 10u;
 
         var n1_layer = new FlexBox()
         {
             Name  = "n1_layer",
             Style = new()
             {
-                Border   = new(borderSize, 100, Color.Red),
+                Border   = new(BORDER_SIZE, 100, Color.Red),
                 Overflow = Overflow.Scroll,
                 Size     = new(Unit.Px(50), Unit.Px(50)),
             }
@@ -32,7 +32,7 @@ public class ClippingTest
             Text  = "Clipped\nContent",
             Style = new()
             {
-                Border    = new(borderSize, 60, Color.Green),
+                Border    = new(BORDER_SIZE, 60, Color.Green),
                 Color     = Color.White,
                 FontSize  = 24,
                 // Transform = Transform2D.CreateTranslated(25, -40),
@@ -58,7 +58,7 @@ public class ClippingTest
                 Color  = Color.White,
                 FontSize = 36,
                 ContentJustification = ContentJustification.SpaceAround,
-                Border = new(borderSize, 60, Color.Blue),
+                Border = new(BORDER_SIZE, 60, Color.Blue),
                 //Overflow  = OverflowKind.Clipping,
                 //BackgroundColor = Color.Margenta,
                 Transforms = [TransformOp.Translate(new(Unit.Px(25), Unit.Px(60)))],
@@ -83,7 +83,7 @@ public class ClippingTest
             Name  = "n5_no_layer",
             Style = new()
             {
-                Border = new(borderSize, 50, Color.Green),
+                Border = new(BORDER_SIZE, 50, Color.Green),
                 Size   = new(Unit.Px(200), Unit.Px(100)),
             }
         };
@@ -93,7 +93,7 @@ public class ClippingTest
             Name  = "n2_b_non_layer",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Size   = new(Unit.Px(200), Unit.Px(100)),
             }
         };

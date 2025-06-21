@@ -7,12 +7,12 @@ using Age.Core.Extensions;
 
 namespace Age.Playground.Tests;
 
-public class AlignmentTest
+public static class AlignmentTest
 {
     public static void Setup(Canvas canvas)
     {
         var borderSize = 10u;
-        var marginSize = 10;
+        const int MARGIN_SIZE = 10;
 
         var root = new FlexBox()
         {
@@ -119,9 +119,6 @@ public class AlignmentTest
                     case Key.Subtract:
                         borderSize = borderSize.ClampSubtract(1);
                         break;
-
-                    default:
-                        break;
                 }
 
                 horizontal_a_right.Style.Border = new(borderSize, 0, Color.Cyan);
@@ -169,8 +166,6 @@ public class AlignmentTest
 
                         updateSize = true;
                         break;
-                    default:
-                        break;
                 }
 
                 if (updateSize)
@@ -217,7 +212,7 @@ public class AlignmentTest
                 Alignment = Alignment.Bottom,
                 Border    = new(borderSize, 0, Color.Cyan),
                 Color     = Color.White,
-                Margin    = new(Unit.Px(marginSize)),
+                Margin    = new(Unit.Px(MARGIN_SIZE)),
             }
         };
 

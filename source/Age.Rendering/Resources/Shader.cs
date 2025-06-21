@@ -396,8 +396,6 @@ where TVertexInput  : IVertexInput
                         bindings.Add(layout);
                     }
                     break;
-                default:
-                    break;
             }
         }
 

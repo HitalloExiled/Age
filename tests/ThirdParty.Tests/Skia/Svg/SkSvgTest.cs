@@ -37,14 +37,14 @@ public class SkSvgTest
     [Fact]
     public void Load()
     {
-        var name     = "text_path";
-        var filename = GetAssetPath(name);
+        const string NAME = "text_path";
+        var filename = GetAssetPath(NAME);
 
         var svg = new SkSvg();
 
         svg.Load(filename);
 
-        Write(svg, name);
+        Write(svg, NAME);
     }
 
     [Fact]

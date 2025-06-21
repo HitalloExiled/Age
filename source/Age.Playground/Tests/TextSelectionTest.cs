@@ -5,7 +5,7 @@ using Age.Styling;
 
 namespace Age.Playground.Tests;
 
-public class TextSelectionTest
+public static class TextSelectionTest
 {
     public static void Setup(Canvas canvas)
     {

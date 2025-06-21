@@ -108,7 +108,7 @@ public class Host : Element
     }
 }
 
-public class ShadowTreeTest
+public static class ShadowTreeTest
 {
     public static void Setup(Canvas canvas)
     {

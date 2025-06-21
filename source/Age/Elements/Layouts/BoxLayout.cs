@@ -813,7 +813,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             var max = 0;
 
             var hasMin = minUnit?.TryGetPixel(out min) == true;
-            var hasMax = minUnit?.TryGetPixel(out min) == true;
+            var hasMax = maxUnit?.TryGetPixel(out max) == true;
 
             if (hasMin && hasMax)
             {
@@ -849,7 +849,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             var max = 0f;
 
             var hasMin = minUnit?.TryGetPercentage(out min) == true;
-            var hasMax = minUnit?.TryGetPercentage(out min) == true;
+            var hasMax = maxUnit?.TryGetPercentage(out max) == true;
 
             if (hasMin && hasMax)
             {

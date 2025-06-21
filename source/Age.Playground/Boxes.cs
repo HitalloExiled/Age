@@ -44,7 +44,7 @@ public class Boxes : Element
                 // Alignment   = AlignmentType.Center | AlignmentType.Bottom,
                 // BorderColor = Color.Red,
                 Color       = Color.Red,
-                Size        = new(Unit.Px((int)BLOCK_SIZE)),
+                Size        = new(Unit.Px(BLOCK_SIZE)),
             }
         };
 

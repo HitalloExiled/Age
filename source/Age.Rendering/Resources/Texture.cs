@@ -16,9 +16,9 @@ public sealed class Texture : Resource
 
     public Texture(in TextureCreateInfo textureCreateInfo)
     {
-        var samples = VkSampleCountFlags.N1;
-        var tiling  = VkImageTiling.Optimal;
-        var usage   = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
+        const VkSampleCountFlags SAMPLES = VkSampleCountFlags.N1;
+        const VkImageTiling      TILING  = VkImageTiling.Optimal;
+        const VkImageUsageFlags  USAGE   = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
 
         var imageCreateInfo = new VkImageCreateInfo
         {
@@ -33,9 +33,9 @@ public sealed class Texture : Resource
             ImageType     = textureCreateInfo.ImageType,
             InitialLayout = VkImageLayout.Undefined,
             MipLevels     = 1,
-            Samples       = samples,
-            Tiling        = tiling,
-            Usage         = usage,
+            Samples       = SAMPLES,
+            Tiling        = TILING,
+            Usage         = USAGE,
         };
 
         this.Image      = new Image(imageCreateInfo, VkImageLayout.TransferDstOptimal);

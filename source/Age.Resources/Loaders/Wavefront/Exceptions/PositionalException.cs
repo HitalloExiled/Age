@@ -1,8 +1,24 @@
 namespace Age.Resources.Loaders.Wavefront.Exceptions;
 
-public abstract class PositionalException(string message, int line, int column, int index) : Exception(message)
+public abstract class PositionalException : Exception
 {
-    public int Column { get; } = column;
-    public int Index  { get; } = index;
-    public int Line   { get; } = line;
+    protected PositionalException()
+    { }
+
+    protected PositionalException(string? message) : base(message)
+    { }
+
+    protected PositionalException(string? message, Exception? innerException) : base(message, innerException)
+    { }
+
+    protected PositionalException(string message, int line, int column, int index) : base(message)
+    {
+        this.Column = column;
+        this.Index  = index;
+        this.Line   = line;
+    }
+
+    public int Column { get; }
+    public int Index  { get; }
+    public int Line   { get; }
 }

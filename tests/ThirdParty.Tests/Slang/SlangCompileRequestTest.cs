@@ -22,7 +22,7 @@ public class SlangCompileRequestTest
         using var session = new SlangSession();
         using var request = new SlangCompileRequest(session);
 
-        var source =
+        const string SOURCE =
         """
         struct VSOutput
         {
@@ -42,7 +42,7 @@ public class SlangCompileRequestTest
         var translationUnitIndex = request.AddTranslationUnit(SlangSourceLanguage.Slang, null);
         var entryPointIndex      = request.AddEntryPoint(translationUnitIndex, "main", SlangStage.Vertex);
 
-        request.AddTranslationUnitSourceString(translationUnitIndex, "shader.slang", source);
+        request.AddTranslationUnitSourceString(translationUnitIndex, "shader.slang", SOURCE);
 
         request.SetCodeGenTarget(SlangCompileTarget.Spirv);
         request.SetTargetProfile(0, session.FindProfile("spirv_1_0"));
@@ -66,7 +66,7 @@ public class SlangCompileRequestTest
         using var session = new SlangSession();
         using var request = new SlangCompileRequest(session);
 
-        var source =
+        const string SOURCE =
         """
         struct UniformBufferObject
         {
@@ -138,7 +138,7 @@ public class SlangCompileRequestTest
 
         var translationUnitIndex = request.AddTranslationUnit(SlangSourceLanguage.Slang, null);
 
-        request.AddTranslationUnitSourceString(translationUnitIndex, "shader.slang", source);
+        request.AddTranslationUnitSourceString(translationUnitIndex, "shader.slang", SOURCE);
 
         request.SetCodeGenTarget(SlangCompileTarget.Spirv);
         request.SetTargetProfile(0, session.FindProfile("spirv_1_0"));

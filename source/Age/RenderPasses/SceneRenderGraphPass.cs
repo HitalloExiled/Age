@@ -211,8 +211,6 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
                                     commandBuffer.DrawIndexed(meshCommand.IndexBuffer);
 
                                     break;
-                                default:
-                                    break;
                             }
                         }
 

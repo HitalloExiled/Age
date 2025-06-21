@@ -12,7 +12,7 @@ public class BackgroundImageTest : Element
     {
         var uri = Path.Join(AppContext.BaseDirectory, "Assets", "Textures", "Cat.jpg");
 
-        var border = 10u;
+        const uint BORDER = 10u;
 
         canvas.Children =
         [
@@ -28,7 +28,7 @@ public class BackgroundImageTest : Element
                        Position  = new(Unit.Pc(50)),
                    },
                    Size            = new(Unit.Px(100), Unit.Px(200)),
-                   Border          = new(border, 0, Color.Red)
+                   Border          = new(BORDER, 0, Color.Red)
                }
             },
             new FlexBox
@@ -43,7 +43,7 @@ public class BackgroundImageTest : Element
                        Position  = new(Unit.Pc(0), Unit.Pc(50)),
                    },
                    Size            = new(Unit.Px(100), Unit.Px(200)),
-                   Border          = new(border, 0, Color.Green)
+                   Border          = new(BORDER, 0, Color.Green)
                }
             },
             new FlexBox
@@ -59,7 +59,7 @@ public class BackgroundImageTest : Element
                        Position = new(Unit.Px(25)),
                    },
                    Size            = new(Unit.Px(100), Unit.Px(200)),
-                   Border          = new(border, 0, Color.Blue)
+                   Border          = new(BORDER, 0, Color.Blue)
                }
             },
             new FlexBox
@@ -113,7 +113,7 @@ public class BackgroundImageTest : Element
                        Position  = new(Unit.Pc(50)),
                    },
                    Size            = new(Unit.Px(150), Unit.Px(200)),
-                   Border          = new(border, 0, Color.Yellow)
+                   Border          = new(BORDER, 0, Color.Yellow)
                }
             },
             new FlexBox
@@ -130,7 +130,7 @@ public class BackgroundImageTest : Element
                        Position  = new(Unit.Pc(50)),
                    },
                    Size            = new(Unit.Px(150), Unit.Px(200)),
-                   Border          = new(border, 0, Color.Cyan)
+                   Border          = new(BORDER, 0, Color.Cyan)
                }
             },
             new FlexBox
@@ -147,7 +147,7 @@ public class BackgroundImageTest : Element
                        Position  = new(Unit.Pc(50)),
                    },
                    Size            = new(Unit.Px(150), Unit.Px(200)),
-                   Border          = new(border, 0, Color.Cyan)
+                   Border          = new(BORDER, 0, Color.Cyan)
                }
             }
         ];

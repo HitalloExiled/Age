@@ -4,19 +4,19 @@ using Age.Styling;
 
 namespace Age.Playground.Tests;
 
-public class ContentJustificationTest
+public static class ContentJustificationTest
 {
     public static void Setup(Canvas canvas)
     {
-        var borderSize = 10u;
-        var marginSize = 4;
+        const uint BORDER_SIZE = 10u;
+        const int  MARGIN_SIZE = 4;
 
         var horizontal_a_container = new FlexBox()
         {
             Name  = "horizontal_a_container",
             Style = new()
             {
-                Border               = new(borderSize, 0, Color.Margenta),
+                Border               = new(BORDER_SIZE, 0, Color.Margenta),
                 Color                = Color.White,
                 FontSize             = 32,
                 Size                 = new(Unit.Px(200), null),
@@ -30,7 +30,7 @@ public class ContentJustificationTest
             Text  = "01",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Red),
+                Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
             }
         };
@@ -40,9 +40,9 @@ public class ContentJustificationTest
             Text  = "02",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new(Unit.Px(marginSize))
+                Margin = new(Unit.Px(MARGIN_SIZE))
             }
         };
         var horizontal_a_item_03 = new FlexBox()
@@ -51,7 +51,7 @@ public class ContentJustificationTest
             Text  = "03",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Blue),
+                Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
             }
         };
@@ -61,7 +61,7 @@ public class ContentJustificationTest
             Name  = "horizontal_b_container",
             Style = new()
             {
-                Border               = new(borderSize, 0, Color.Margenta),
+                Border               = new(BORDER_SIZE, 0, Color.Margenta),
                 Color                = Color.White,
                 FontSize             = 32,
                 Size                 = new(Unit.Px(200), null),
@@ -75,7 +75,7 @@ public class ContentJustificationTest
             Text  = "01",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Red),
+                Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
             }
         };
@@ -86,9 +86,9 @@ public class ContentJustificationTest
             Text  = "02",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new(Unit.Px(marginSize))
+                Margin = new(Unit.Px(MARGIN_SIZE))
             }
         };
 
@@ -98,7 +98,7 @@ public class ContentJustificationTest
             Text  = "03",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Blue),
+                Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
             }
         };
@@ -108,7 +108,7 @@ public class ContentJustificationTest
             Name  = "horizontal_c_container",
             Style = new()
             {
-                Border               = new(borderSize, 0, Color.Margenta),
+                Border               = new(BORDER_SIZE, 0, Color.Margenta),
                 Color                = Color.White,
                 FontSize             = 32,
                 Size                 = new(Unit.Px(200), null),
@@ -122,7 +122,7 @@ public class ContentJustificationTest
             Text  = "01",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Red),
+                Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
             }
         };
@@ -133,9 +133,9 @@ public class ContentJustificationTest
             Text  = "02",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new(Unit.Px(marginSize)),
+                Margin = new(Unit.Px(MARGIN_SIZE)),
             }
         };
 
@@ -145,7 +145,7 @@ public class ContentJustificationTest
             Text  = "03",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Blue),
+                Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
             }
         };
@@ -155,7 +155,7 @@ public class ContentJustificationTest
             Name  = "horizontal_d_container",
             Style = new()
             {
-                Border               = new(borderSize, 0, Color.Margenta),
+                Border               = new(BORDER_SIZE, 0, Color.Margenta),
                 Color                = Color.White,
                 FontSize             = 32,
                 Size                 = new(Unit.Px(200), null),
@@ -169,7 +169,7 @@ public class ContentJustificationTest
             Text  = "01",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Red),
+                Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
             }
         };
@@ -180,9 +180,9 @@ public class ContentJustificationTest
             Text  = "02",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new(Unit.Px(marginSize)),
+                Margin = new(Unit.Px(MARGIN_SIZE)),
             }
         };
 
@@ -192,7 +192,7 @@ public class ContentJustificationTest
             Text  = "03",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Blue),
+                Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
             }
         };
@@ -202,7 +202,7 @@ public class ContentJustificationTest
             Name  = "horizontal_e_container",
             Style = new()
             {
-                Border               = new(borderSize, 0, Color.Margenta),
+                Border               = new(BORDER_SIZE, 0, Color.Margenta),
                 Color                = Color.White,
                 FontSize             = 32,
                 Size                 = new(Unit.Px(200), null),
@@ -216,7 +216,7 @@ public class ContentJustificationTest
             Text  = "01",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Red),
+                Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
             }
         };
@@ -227,9 +227,9 @@ public class ContentJustificationTest
             Text  = "02",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new(Unit.Px(marginSize)),
+                Margin = new(Unit.Px(MARGIN_SIZE)),
             }
         };
 
@@ -239,7 +239,7 @@ public class ContentJustificationTest
             Text  = "03",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Blue),
+                Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
             }
         };
@@ -249,7 +249,7 @@ public class ContentJustificationTest
             Name  = "horizontal_f_container",
             Style = new()
             {
-                Border               = new(borderSize, 0, Color.Margenta),
+                Border               = new(BORDER_SIZE, 0, Color.Margenta),
                 Color                = Color.White,
                 FontSize             = 32,
                 Size                 = new(Unit.Px(200), null),
@@ -263,7 +263,7 @@ public class ContentJustificationTest
             Text  = "01",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Red),
+                Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
             }
         };
@@ -274,9 +274,9 @@ public class ContentJustificationTest
             Text  = "02",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new(Unit.Px(marginSize)),
+                Margin = new(Unit.Px(MARGIN_SIZE)),
             }
         };
 
@@ -286,7 +286,7 @@ public class ContentJustificationTest
             Text  = "03",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Blue),
+                Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
             }
         };
@@ -296,7 +296,7 @@ public class ContentJustificationTest
             Name  = "vertical_a_container",
             Style = new()
             {
-                Border               = new(borderSize, 0, Color.Cyan),
+                Border               = new(BORDER_SIZE, 0, Color.Cyan),
                 Color                = Color.White,
                 ContentJustification = ContentJustification.Start,
                 FontSize             = 32,
@@ -311,7 +311,7 @@ public class ContentJustificationTest
             Text  = "01",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Red),
+                Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
             }
         };
@@ -321,9 +321,9 @@ public class ContentJustificationTest
             Text  = "02",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new(Unit.Px(marginSize)),
+                Margin = new(Unit.Px(MARGIN_SIZE)),
             }
         };
         var vertical_a_item_03 = new FlexBox()
@@ -332,7 +332,7 @@ public class ContentJustificationTest
             Text  = "03",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Blue),
+                Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
             }
         };
@@ -342,7 +342,7 @@ public class ContentJustificationTest
             Name  = "vertical_b_container",
             Style = new()
             {
-                Border               = new(borderSize, 0, Color.Cyan),
+                Border               = new(BORDER_SIZE, 0, Color.Cyan),
                 Color                = Color.White,
                 ContentJustification = ContentJustification.Center,
                 FontSize             = 32,
@@ -357,7 +357,7 @@ public class ContentJustificationTest
             Text  = "01",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Red),
+                Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
             }
         };
@@ -368,9 +368,9 @@ public class ContentJustificationTest
             Text  = "02",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new(Unit.Px(marginSize)),
+                Margin = new(Unit.Px(MARGIN_SIZE)),
             }
         };
 
@@ -380,7 +380,7 @@ public class ContentJustificationTest
             Text  = "03",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Blue),
+                Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
             }
         };
@@ -390,7 +390,7 @@ public class ContentJustificationTest
             Name  = "vertical_c_container",
             Style = new()
             {
-                Border               = new(borderSize, 0, Color.Cyan),
+                Border               = new(BORDER_SIZE, 0, Color.Cyan),
                 Color                = Color.White,
                 ContentJustification = ContentJustification.End,
                 FontSize             = 32,
@@ -405,7 +405,7 @@ public class ContentJustificationTest
             Text  = "01",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Red),
+                Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
             }
         };
@@ -416,9 +416,9 @@ public class ContentJustificationTest
             Text  = "02",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new(Unit.Px(marginSize)),
+                Margin = new(Unit.Px(MARGIN_SIZE)),
             }
         };
 
@@ -428,7 +428,7 @@ public class ContentJustificationTest
             Text  = "03",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Blue),
+                Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
             }
         };
@@ -438,7 +438,7 @@ public class ContentJustificationTest
             Name  = "vertical_d_container",
             Style = new()
             {
-                Border               = new(borderSize, 0, Color.Cyan),
+                Border               = new(BORDER_SIZE, 0, Color.Cyan),
                 Color                = Color.White,
                 ContentJustification = ContentJustification.SpaceAround,
                 FontSize             = 32,
@@ -453,7 +453,7 @@ public class ContentJustificationTest
             Text  = "01",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Red),
+                Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
             }
         };
@@ -464,7 +464,7 @@ public class ContentJustificationTest
             Text  = "02",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
             }
         };
@@ -475,7 +475,7 @@ public class ContentJustificationTest
             Text  = "03",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Blue),
+                Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
             }
         };
@@ -485,7 +485,7 @@ public class ContentJustificationTest
             Name  = "vertical_e_container",
             Style = new()
             {
-                Border               = new(borderSize, 0, Color.Cyan),
+                Border               = new(BORDER_SIZE, 0, Color.Cyan),
                 Color                = Color.White,
                 ContentJustification = ContentJustification.SpaceBetween,
                 FontSize             = 32,
@@ -500,7 +500,7 @@ public class ContentJustificationTest
             Text  = "01",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Red),
+                Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
             }
         };
@@ -511,9 +511,9 @@ public class ContentJustificationTest
             Text  = "02",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new(Unit.Px(marginSize)),
+                Margin = new(Unit.Px(MARGIN_SIZE)),
             }
         };
 
@@ -523,7 +523,7 @@ public class ContentJustificationTest
             Text  = "03",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Blue),
+                Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
             }
         };
@@ -533,7 +533,7 @@ public class ContentJustificationTest
             Name  = "vertical_f_container",
             Style = new()
             {
-                Border               = new(borderSize, 0, Color.Cyan),
+                Border               = new(BORDER_SIZE, 0, Color.Cyan),
                 Color                = Color.White,
                 ContentJustification = ContentJustification.SpaceEvenly,
                 FontSize             = 32,
@@ -548,7 +548,7 @@ public class ContentJustificationTest
             Text  = "01",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Red),
+                Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
             }
         };
@@ -559,9 +559,9 @@ public class ContentJustificationTest
             Text  = "02",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Green),
+                Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
-                Margin = new(Unit.Px(marginSize))
+                Margin = new(Unit.Px(MARGIN_SIZE))
             }
         };
 
@@ -571,7 +571,7 @@ public class ContentJustificationTest
             Text  = "03",
             Style = new()
             {
-                Border = new(borderSize, 0, Color.Blue),
+                Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
             }
         };
