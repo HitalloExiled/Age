@@ -211,22 +211,22 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             Flags     = command.Flags,
             Size      = command.Size,
             Transform = command.Transform * transform,
-            UV        = command.MappedTexture.UV,
+            UV        = command.TextureMap.UV,
             Viewport  = viewport,
         };
 
-        if (!this.UniformSets.TryGetValue(command.MappedTexture.Texture, out var uniformSet))
+        if (!this.UniformSets.TryGetValue(command.TextureMap.Texture, out var uniformSet))
         {
             var diffuse = new CombinedImageSamplerUniform
             {
                 Binding     = 0,
                 ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
-                Image       = command.MappedTexture.Texture.Image,
-                ImageView   = command.MappedTexture.Texture.ImageView,
-                Sampler     = command.MappedTexture.Texture.Sampler,
+                Image       = command.TextureMap.Texture.Image,
+                ImageView   = command.TextureMap.Texture.ImageView,
+                Sampler     = command.TextureMap.Texture.Sampler,
             };
 
-            this.UniformSets.Set(command.MappedTexture.Texture, uniformSet = new UniformSet(resource.Shader, [diffuse]));
+            this.UniformSets.Set(command.TextureMap.Texture, uniformSet = new UniformSet(resource.Shader, [diffuse]));
         }
 
         if (uniformSet != null && uniformSet != this.lastUniformSet)

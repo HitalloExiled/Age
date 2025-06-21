@@ -110,12 +110,12 @@ internal sealed class TextLayout : Layout
         target.AppendChild(this.caretTimer);
         target.AppendChild(this.selectionTimer);
 
-        this.caretCommand                 = CommandPool.RectCommand.Get();
-        this.caretCommand.Color           = Color.White;
-        this.caretCommand.Flags           = Flags.ColorAsBackground;
-        this.caretCommand.MappedTexture   = MappedTexture.Default;
-        this.caretCommand.Size            = new(this.caretWidth, this.LineHeight);
-        this.caretCommand.StencilLayer    = this.StencilLayer;
+        this.caretCommand              = CommandPool.RectCommand.Get();
+        this.caretCommand.Color        = Color.White;
+        this.caretCommand.Flags        = Flags.ColorAsBackground;
+        this.caretCommand.TextureMap   = TextureMap.Default;
+        this.caretCommand.Size         = new(this.caretWidth, this.LineHeight);
+        this.caretCommand.StencilLayer = this.StencilLayer;
 
         target.Commands.Add(this.caretCommand);
 
@@ -318,16 +318,16 @@ internal sealed class TextLayout : Layout
 
             var selectionCommand = (TextCommand)this.target.Commands[i];
 
-            selectionCommand.Border        = default;
-            selectionCommand.Color         = default;
-            selectionCommand.Flags         = default;
-            selectionCommand.Index         = default;
-            selectionCommand.Line          = lineIndex;
-            selectionCommand.MappedTexture = MappedTexture.Default;
-            selectionCommand.ObjectId      = CombineIds(i + 1, elementIndex);
-            selectionCommand.Size          = new(glyphsWidths[i], this.LineHeight);
-            selectionCommand.Transform     = Transform2D.CreateTranslated(new(cursor.X, cursor.Y - baseLine));
-            selectionCommand.StencilLayer  = this.StencilLayer;
+            selectionCommand.Border       = default;
+            selectionCommand.Color        = default;
+            selectionCommand.Flags        = default;
+            selectionCommand.Index        = default;
+            selectionCommand.Line         = lineIndex;
+            selectionCommand.TextureMap   = TextureMap.Default;
+            selectionCommand.ObjectId     = CombineIds(i + 1, elementIndex);
+            selectionCommand.Size         = new(glyphsWidths[i], this.LineHeight);
+            selectionCommand.Transform    = Transform2D.CreateTranslated(new(cursor.X, cursor.Y - baseLine));
+            selectionCommand.StencilLayer = this.StencilLayer;
 
             if (!char.IsWhiteSpace(character))
             {
@@ -350,7 +350,7 @@ internal sealed class TextLayout : Layout
                 characterCommand.Flags           = Flags.GrayscaleTexture | Flags.MultiplyColor;
                 characterCommand.Index           = selectionCommand.Index;
                 characterCommand.Line            = selectionCommand.Line;
-                characterCommand.MappedTexture   = glyph.TextureMap;
+                characterCommand.TextureMap      = glyph.TextureMap;
                 characterCommand.ObjectId        = default;
                 characterCommand.PipelineVariant = PipelineVariant.Color;
                 characterCommand.Size            = size;

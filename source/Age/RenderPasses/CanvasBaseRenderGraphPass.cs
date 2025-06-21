@@ -61,25 +61,25 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
     {
         stencilLayer.Update();
 
-        if (!this.UniformSets.TryGetValue(stencilLayer.MappedTexture.Texture, out var uniformSet))
+        if (!this.UniformSets.TryGetValue(stencilLayer.TextureMap.Texture, out var uniformSet))
         {
             var stencil = new CombinedImageSamplerUniform
             {
                 Binding     = 0,
                 ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
-                Image       = stencilLayer.MappedTexture.Texture.Image,
-                ImageView   = stencilLayer.MappedTexture.Texture.ImageView,
-                Sampler     = stencilLayer.MappedTexture.Texture.Sampler,
+                Image       = stencilLayer.TextureMap.Texture.Image,
+                ImageView   = stencilLayer.TextureMap.Texture.ImageView,
+                Sampler     = stencilLayer.TextureMap.Texture.Sampler,
             };
 
-            this.UniformSets.Set(stencilLayer.MappedTexture.Texture, uniformSet = new UniformSet(this.CanvasStencilMaskShader, [stencil]));
+            this.UniformSets.Set(stencilLayer.TextureMap.Texture, uniformSet = new UniformSet(this.CanvasStencilMaskShader, [stencil]));
         }
 
         var constant = new CanvasShader.PushConstant
         {
             Size      = stencilLayer.Size.Cast<float>(),
             Transform = stencilLayer.Transform,
-            UV        = stencilLayer.MappedTexture.UV,
+            UV        = stencilLayer.TextureMap.UV,
             Viewport  = viewport,
         };
 

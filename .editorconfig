@@ -350,6 +350,7 @@ dotnet_diagnostic.IDE0078.severity = none       # Use pattern matching
 dotnet_diagnostic.IDE0080.severity = suggestion # Remove unnecessary suppression operator
 dotnet_diagnostic.IDE0082.severity = suggestion # Convert typeof to nameof
 dotnet_diagnostic.IDE1006.severity = suggestion # Remove unnecessary suppression operator
+dotnet_diagnostic.RCS1123.severity = none       # Add parentheses when
 dotnet_diagnostic.RCS1242.severity = none       # Do not pass non-read-only struct by read-only reference
 
 [**/*Extensions.cs]

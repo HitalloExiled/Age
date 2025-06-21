@@ -8,6 +8,8 @@ using Age.Resources;
 using Age.Styling;
 using SkiaSharp;
 using System.Collections;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Age.Elements;
 
@@ -36,11 +38,21 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
 
     public StencilLayer? FirstChild      { get; private set; }
     public StencilLayer? LastChild       { get; private set; }
-    public MappedTexture MappedTexture   { get; private set; } = MappedTexture.Default;
     public StencilLayer? NextSibling     { get; private set; }
     public StencilLayer? Parent          { get; private set; }
     public StencilLayer? PreviousSibling { get; private set; }
     public Size<uint>    Size            { get; private set; }
+    public TextureMap    TextureMap      { get; private set; } = TextureMap.Default;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsWithinMargin(in Size<uint> bounds, in Size<uint> size)
+    {
+        const float MIN_MARGIN_RATIO = 0.33333334f;
+        const float MAX_MARGIN_RATIO = 1;
+
+        return bounds.Width / (float)size.Width is >= MIN_MARGIN_RATIO and <= MAX_MARGIN_RATIO
+            && bounds.Height / (float)size.Height is >= MIN_MARGIN_RATIO and <= MAX_MARGIN_RATIO;
+    }
 
     IEnumerator IEnumerable.GetEnumerator() =>
         this.GetEnumerator();
@@ -104,18 +116,10 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
 
     private void UpdateTexture(Size<uint> bounds, SKBitmap bitmap)
     {
-        const float MIN_MARGIN_RATIO = 0.33333334f;
-        const float MAX_MARGIN_RATIO = 1;
+        var texture   = this.TextureMap.Texture;
+        var imageSize = this.TextureMap.Texture.Size;
 
-        var texture = this.MappedTexture.Texture;
-
-        var imageSize = texture.Size;
-
-        var isWithinMargin =
-            bounds.Width / (float)imageSize.Width is >= MIN_MARGIN_RATIO and <= MAX_MARGIN_RATIO
-            && bounds.Height / (float)imageSize.Height is >= MIN_MARGIN_RATIO and <= MAX_MARGIN_RATIO;
-
-        if (texture == MappedTexture.Default.Texture || !isWithinMargin)
+        if (this.TextureMap.IsDefault || !IsWithinMargin(bounds, imageSize))
         {
             imageSize = (bounds.Cast<float>() * 1.5f).Cast<uint>();
 
@@ -130,13 +134,10 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
 
         for (var y = 0; y < bounds.Height; y++)
         {
-            for (var x = 0; x < bounds.Width; x++)
-            {
-                var sourceIndex      = (int)(x + (bounds.Width * y));
-                var destinationIndex = (int)(x + (imageSize.Width * y));
+            var sourceIndex      = (int)(bounds.Width * y);
+            var destinationIndex = (int)(imageSize.Width * y);
 
-                buffer[destinationIndex] = pixels[sourceIndex].Alpha;
-            }
+            pixels.Slice(sourceIndex, (int)bounds.Width).CopyTo(buffer[destinationIndex..], true);
         }
 
         texture.Update(buffer);
@@ -152,14 +153,14 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
             P4 = new(0, uvY),
         };
 
-        this.MappedTexture = new(texture, uv);
+        this.TextureMap = new(texture, uv);
     }
 
     protected override void OnDisposed(bool disposing)
     {
-        if (disposing && this.MappedTexture != MappedTexture.Default)
+        if (disposing && this.TextureMap != TextureMap.Default)
         {
-            VulkanRenderer.Singleton.DeferredDispose(this.MappedTexture.Texture);
+            VulkanRenderer.Singleton.DeferredDispose(this.TextureMap.Texture);
         }
     }
 

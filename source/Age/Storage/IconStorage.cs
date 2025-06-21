@@ -16,7 +16,7 @@ internal class IconStorage : Disposable
     public static IconStorage Singleton => field ?? throw new NullReferenceException();
 
     private readonly TextureAtlas                       atlas = new(new(512), TextureFormat.R8G8Unorm);
-    private readonly KeyedList<Icon, MappedTexture> icons = [];
+    private readonly KeyedList<Icon, TextureMap> icons = [];
     private readonly VulkanRenderer                     renderer;
 
     public IconStorage(VulkanRenderer renderer)
@@ -88,6 +88,6 @@ internal class IconStorage : Disposable
         }
     }
 
-    public MappedTexture GetIcon(Icon name) =>
+    public TextureMap GetIcon(Icon name) =>
         this.icons[name];
 }

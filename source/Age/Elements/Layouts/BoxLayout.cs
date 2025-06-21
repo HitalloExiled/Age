@@ -1147,7 +1147,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
             if (texture != null)
             {
-                command.MappedTexture   = new(texture, UVRect.Normalized);
+                command.TextureMap      = new(texture, UVRect.Normalized);
                 command.PipelineVariant = PipelineVariant.Color;
                 command.StencilLayer    = new StencilLayer(this.Target);
 
@@ -1157,9 +1157,9 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             }
         }
 
-        if (!command.MappedTexture.IsDefault)
+        if (!command.TextureMap.IsDefault)
         {
-            TextureStorage.Singleton.Release(command.MappedTexture.Texture);
+            TextureStorage.Singleton.Release(command.TextureMap.Texture);
         }
 
         if (command.StencilLayer != null)
@@ -1362,11 +1362,11 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             {
                 var layoutCommandImage  = this.GetLayoutCommandImage();
 
-                this.ResolveImageSize(style.BackgroundImage, layoutCommandImage.MappedTexture.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
+                this.ResolveImageSize(style.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
 
                 layoutCommandImage.Size          = size;
                 layoutCommandImage.Transform     = transform;
-                layoutCommandImage.MappedTexture = layoutCommandImage.MappedTexture with { UV = uv };
+                layoutCommandImage.TextureMap = layoutCommandImage.TextureMap with { UV = uv };
                 layoutCommandImage.StencilLayer!.MakeDirty();
             }
         }
@@ -1386,9 +1386,9 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         var layoutCommandImage = this.GetLayoutCommandImage();
 
-        if (!layoutCommandImage.MappedTexture.IsDefault)
+        if (!layoutCommandImage.TextureMap.IsDefault)
         {
-            TextureStorage.Singleton.Release(layoutCommandImage.MappedTexture.Texture);
+            TextureStorage.Singleton.Release(layoutCommandImage.TextureMap.Texture);
         }
 
         foreach (var item in this.Target.Commands)
