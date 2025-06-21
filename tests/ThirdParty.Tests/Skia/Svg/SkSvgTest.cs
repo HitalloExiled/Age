@@ -16,7 +16,7 @@ public class SkSvgTest
     private static string GetAssetPath(string name) =>
         Path.Join(iconsFolder, $"{name}.svg");
 
-    private static void Write(SkSvg svg, string filename)
+    private static void Write(SKSvg svg, string filename)
     {
         using var bitmap = new SKBitmap((int)svg.CanvasSize.Width, (int)svg.CanvasSize.Height);
         using var canvas = new SKCanvas(bitmap);
@@ -40,7 +40,7 @@ public class SkSvgTest
         const string NAME = "text_path";
         var filename = GetAssetPath(NAME);
 
-        var svg = new SkSvg();
+        var svg = new SKSvg();
 
         svg.Load(filename);
 
@@ -54,7 +54,7 @@ public class SkSvgTest
 
         foreach (var file in iconsDirectory.GetFiles())
         {
-            var svg = new SkSvg();
+            var svg = new SKSvg();
 
             svg.Load(file.FullName);
 

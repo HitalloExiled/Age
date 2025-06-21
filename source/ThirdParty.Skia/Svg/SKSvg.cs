@@ -10,10 +10,8 @@ using SkiaSharp;
 
 namespace ThirdParty.Skia.Svg;
 
-public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
+public partial class SKSvg(float pixelsPerInch, SKSize canvasSize)
 {
-
-
     private static readonly Regex                 clipPathUrlPattern = CreateClipPathUrlPattern();
     private static readonly Regex                 fillUrlPattern     = CreateFillUrlPattern();
     private static readonly Regex                 groupPattern       = CreateGroupPattern();
@@ -42,13 +40,13 @@ public partial class SkSvg(float pixelsPerInch, SKSize canvasSize)
         IgnoreComments = true
     };
 
-    public SkSvg() : this(160f, SKSize.Empty)
+    public SKSvg() : this(160f, SKSize.Empty)
     { }
 
-    public SkSvg(float pixelsPerInch) : this(pixelsPerInch, SKSize.Empty)
+    public SKSvg(float pixelsPerInch) : this(pixelsPerInch, SKSize.Empty)
     { }
 
-    public SkSvg(SKSize canvasSize) : this(160f, canvasSize)
+    public SKSvg(SKSize canvasSize) : this(160f, canvasSize)
     { }
 
     [GeneratedRegex("url\\s*\\(\\s*#([^\\)]+)\\)")]
