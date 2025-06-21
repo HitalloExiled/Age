@@ -6,7 +6,7 @@ namespace ThirdParty.Vulkan;
 /// <summary>
 /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VKPhysicalDevice.html">VKPhysicalDevice</see>
 /// </summary>
-public sealed unsafe partial class VkPhysicalDevice : ManagedHandle<VkPhysicalDevice>
+public sealed unsafe class VkPhysicalDevice : ManagedHandle<VkPhysicalDevice>
 {
     internal VkInstance Instance { get; }
 

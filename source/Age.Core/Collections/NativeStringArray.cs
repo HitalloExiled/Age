@@ -17,7 +17,7 @@ public unsafe class NativeStringArray : Disposable
         {
             var bytes = Encoding.UTF8.GetBytes(source[i]);
 
-            var pData = (byte*)NativeMemory.Alloc((uint)(sizeof(byte) * bytes.Length + 1));
+            var pData = (byte*)NativeMemory.Alloc((uint)((sizeof(byte) * bytes.Length) + 1));
 
             pData[bytes.Length] = 0;
 

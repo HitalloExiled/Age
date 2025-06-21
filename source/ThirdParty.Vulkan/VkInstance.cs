@@ -11,7 +11,7 @@ namespace ThirdParty.Vulkan;
 /// <summary>
 /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkInstance.html">VkInstance</see>
 /// </summary>
-public sealed unsafe partial class VkInstance : DisposableManagedHandle<VkInstance>
+public sealed unsafe class VkInstance : DisposableManagedHandle<VkInstance>
 {
     private readonly HashSet<string> enabledExtensions = [];
 

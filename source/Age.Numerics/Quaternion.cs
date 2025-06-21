@@ -41,7 +41,7 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
     {
         get
         {
-            var sinHalfAngle = T.Sqrt(T.One - this.W * this.W);
+            var sinHalfAngle = T.Sqrt(T.One - (this.W * this.W));
 
             return sinHalfAngle < T.CreateChecked(0.001)
                 ? new(T.One, T.Zero, T.Zero)
@@ -76,7 +76,7 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
         value * new Vector4<T>(-T.One, -T.One, -T.One, T.One);
 
     public static T Dot(in Quaternion<T> left, in Quaternion<T> right) =>
-        left.X * right.X + left.Y * right.Y + left.Z * right.Z + left.W * right.W;
+        (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z) + (left.W * right.W);
 
     public readonly T Dot(in Quaternion<T> other) =>
         Dot(this, other);
@@ -100,10 +100,10 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
     {
         Unsafe.SkipInit<Quaternion<T>>(out var result);
 
-        result.X = left.W * right.X + left.X * right.W + left.Y * right.Z - left.Z * right.Y;
-        result.Y = left.W * right.Y - left.X * right.Z + left.Y * right.W + left.Z * right.X;
-        result.Z = left.W * right.Z + left.X * right.Y - left.Y * right.X + left.Z * right.W;
-        result.W = left.W * right.W - left.X * right.X - left.Y * right.Y - left.Z * right.Z;
+        result.X = (left.W * right.X) + (left.X * right.W) + (left.Y * right.Z) - (left.Z * right.Y);
+        result.Y = (left.W * right.Y) - (left.X * right.Z) + (left.Y * right.W) + (left.Z * right.X);
+        result.Z = (left.W * right.Z) + (left.X * right.Y) - (left.Y * right.X) + (left.Z * right.W);
+        result.W = (left.W * right.W) - (left.X * right.X) - (left.Y * right.Y) - (left.Z * right.Z);
 
         return result;
     }
@@ -116,7 +116,7 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
 
     public static Quaternion<T> operator /(in Quaternion<T> left, in Quaternion<T> right)
     {
-        var denominator        = right.X * right.X + right.Y * right.Y + right.Z * right.Z + right.W * right.W;
+        var denominator        = (right.X * right.X) + (right.Y * right.Y) + (right.Z * right.Z) + (right.W * right.W);
         var inverseDenominator = T.One / denominator;
 
         var inverseX2 = (T.Zero - right.X) * inverseDenominator;
@@ -124,18 +124,18 @@ public record struct Quaternion<T> where T : IFloatingPoint<T>, IFloatingPointIe
         var inverseZ2 = (T.Zero - right.Z) * inverseDenominator;
         var inverseW2 = right.W * inverseDenominator;
 
-        var crossX = left.Y * inverseZ2 - left.Z * inverseY2;
-        var crossY = left.Z * inverseX2 - left.X * inverseZ2;
-        var crossZ = left.X * inverseY2 - left.Y * inverseX2;
+        var crossX = (left.Y * inverseZ2) - (left.Z * inverseY2);
+        var crossY = (left.Z * inverseX2) - (left.X * inverseZ2);
+        var crossZ = (left.X * inverseY2) - (left.Y * inverseX2);
 
-        var dotProduct = left.X * inverseX2 + left.Y * inverseY2 + left.Z * inverseZ2;
+        var dotProduct = (left.X * inverseX2) + (left.Y * inverseY2) + (left.Z * inverseZ2);
 
         Unsafe.SkipInit(out Quaternion<T> result);
 
-        result.X = left.X * inverseW2 + inverseX2 * left.W + crossX;
-        result.Y = left.Y * inverseW2 + inverseY2 * left.W + crossY;
-        result.Z = left.Z * inverseW2 + inverseZ2 * left.W + crossZ;
-        result.W = left.W * inverseW2 - dotProduct;
+        result.X = (left.X * inverseW2) + (inverseX2 * left.W) + crossX;
+        result.Y = (left.Y * inverseW2) + (inverseY2 * left.W) + crossY;
+        result.Z = (left.Z * inverseW2) + (inverseZ2 * left.W) + crossZ;
+        result.W = (left.W * inverseW2) - dotProduct;
 
         return result;
     }

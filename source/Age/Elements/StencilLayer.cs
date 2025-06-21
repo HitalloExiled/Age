@@ -63,8 +63,8 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         {
             if (radius > thickness.Width && radius > thickness.Height)
             {
-                origin.X = origin.X * (bounds.Width  - radius * 2) + radius;
-                origin.Y = origin.Y * (bounds.Height - radius * 2) + radius;
+                origin.X = (origin.X * (bounds.Width  - (radius * 2))) + radius;
+                origin.Y = (origin.Y * (bounds.Height - (radius * 2))) + radius;
 
                 var radiusX = radius - thickness.Width;
                 var radiusY = radius - thickness.Height;
@@ -132,8 +132,8 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         {
             for (var x = 0; x < bounds.Width; x++)
             {
-                var sourceIndex      = (int)(x + bounds.Width * y);
-                var destinationIndex = (int)(x + imageSize.Width * y);
+                var sourceIndex      = (int)(x + (bounds.Width * y));
+                var destinationIndex = (int)(x + (imageSize.Width * y));
 
                 buffer[destinationIndex] = pixels[sourceIndex].Alpha;
             }

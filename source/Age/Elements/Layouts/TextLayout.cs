@@ -15,7 +15,7 @@ using Age.Core.Collections;
 
 namespace Age.Elements.Layouts;
 
-internal sealed partial class TextLayout : Layout
+internal sealed class TextLayout : Layout
 {
     private readonly RectCommand    caretCommand;
     private readonly Timer          caretTimer;
@@ -350,7 +350,7 @@ internal sealed partial class TextLayout : Layout
                 characterCommand.Flags           = Flags.GrayscaleTexture | Flags.MultiplyColor;
                 characterCommand.Index           = selectionCommand.Index;
                 characterCommand.Line            = selectionCommand.Line;
-                characterCommand.MappedTexture   = new(atlas.Texture, glyph.UV);
+                characterCommand.MappedTexture   = glyph.TextureMap;
                 characterCommand.ObjectId        = default;
                 characterCommand.PipelineVariant = PipelineVariant.Color;
                 characterCommand.Size            = size;

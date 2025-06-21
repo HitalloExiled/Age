@@ -155,7 +155,7 @@ public sealed partial class RenderTree : NodeTree
 
             var imageIndex = new Span<ulong>(imageIndexBuffer.ToPointer(), (int)this.buffer.Size / sizeof(ulong));
 
-            var index = x + y * image.Extent.Width;
+            var index = x + (y * image.Extent.Width);
             var pixel = imageIndex[(int)index];
 
             var id = (int)(pixel & 0x0000FFFFFF) - 1;

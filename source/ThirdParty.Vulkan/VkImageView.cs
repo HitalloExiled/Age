@@ -2,7 +2,7 @@ using static Age.Core.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
-public sealed unsafe partial class VkImageView : VkDeviceResource<VkImageView>
+public sealed unsafe class VkImageView : VkDeviceResource<VkImageView>
 {
     public VkImageView(VkDevice device, in VkImageViewCreateInfo createInfo) : base(device)
     {

@@ -189,11 +189,11 @@ public class DemoScene : Scene3D
         input = input.Normalized();
         rotation = (float)(rotation * Time.DeltaTime);
 
-        var movement = -this.FreeCamera.Transform.Forward * input.Z + this.FreeCamera.Transform.Right * input.X + Vector3<float>.Up * input.Y;
+        var movement = (-this.FreeCamera.Transform.Forward * input.Z) + (this.FreeCamera.Transform.Right * input.X) + (Vector3<float>.Up * input.Y);
 
         this.FreeCamera.Transform = this.FreeCamera.Transform with
         {
-            Position = this.FreeCamera.Transform.Position + movement * (float)Time.DeltaTime,
+            Position = this.FreeCamera.Transform.Position + (movement * (float)Time.DeltaTime),
             Rotation = this.FreeCamera.Transform.Rotation * new Quaternion<float>(Vector3<float>.Up, Angle.DegreesToRadians(rotation))
         };
     }

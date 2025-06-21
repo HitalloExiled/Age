@@ -352,6 +352,9 @@ dotnet_diagnostic.IDE0082.severity = suggestion # Convert typeof to nameof
 dotnet_diagnostic.IDE1006.severity = suggestion # Remove unnecessary suppression operator
 dotnet_diagnostic.RCS1242.severity = none       # Do not pass non-read-only struct by read-only reference
 
+[**/*Extensions.cs]
+dotnet_diagnostic.CA1822.severity = none
+
 [**/obj/**.cs]
 dotnet_diagnostic.CS8019.severity = none
 

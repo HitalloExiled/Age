@@ -3,7 +3,7 @@ using ThirdParty.Vulkan.Flags;
 
 namespace ThirdParty.Vulkan;
 
-public sealed unsafe partial class VkCommandBuffer : DisposableManagedHandle<VkCommandBuffer>
+public sealed unsafe class VkCommandBuffer : DisposableManagedHandle<VkCommandBuffer>
 {
     private readonly VkDevice      device;
     private readonly VkCommandPool commandPool;

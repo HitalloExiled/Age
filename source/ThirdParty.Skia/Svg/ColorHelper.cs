@@ -240,6 +240,6 @@ internal static class ColorHelper
             source = $"#{r:X2}{g:X2}{b:X2}";
         }
 
-        return TryParseColor(source, out color) || HexValues.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(source, out var value) && TryParseColor(value, out color);
+        return TryParseColor(source, out color) || (HexValues.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(source, out var value) && TryParseColor(value, out color));
     }
 }

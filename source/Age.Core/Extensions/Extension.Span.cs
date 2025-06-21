@@ -23,7 +23,7 @@ public static partial class Extension
             for (var i = 0; i < length; i++)
             {
                 var sourceSlice      = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref sourceRef, i * sizeOfSource), sizeOfSource);
-                var destinationSlice = MemoryMarshal.CreateSpan(ref destination[i * sizeOfDestination + offset], sizeOfDestination);
+                var destinationSlice = MemoryMarshal.CreateSpan(ref destination[(i * sizeOfDestination) + offset], sizeOfDestination);
 
                 sourceSlice.CopyTo(destinationSlice);
             }
@@ -34,7 +34,7 @@ public static partial class Extension
 
             for (var i = 0; i < length; i++)
             {
-                var sourceSlice      = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref sourceRef, i * sizeOfSource + offset), sizeOfDestination);
+                var sourceSlice      = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref sourceRef, (i * sizeOfSource) + offset), sizeOfDestination);
                 var destinationSlice = MemoryMarshal.CreateSpan(ref destination[i * sizeOfDestination], sizeOfDestination);
 
                 sourceSlice.CopyTo(destinationSlice);

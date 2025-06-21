@@ -18,15 +18,15 @@ public class Theme
                 },
                 Focus = new()
                 {
-                    BackgroundColor = Color.Green + Color.White * 0.5f,
+                    BackgroundColor = Color.Green + (Color.White * 0.5f),
                 },
                 Hovered = new()
                 {
-                    BackgroundColor = Color.Green + Color.White * 0.6f,
+                    BackgroundColor = Color.Green + (Color.White * 0.6f),
                 },
                 Active = new()
                 {
-                    BackgroundColor = Color.Green + Color.White * 0.9f,
+                    BackgroundColor = Color.Green + (Color.White * 0.9f),
                 },
             },
             Outlined = new()
@@ -42,12 +42,12 @@ public class Theme
                 },
                 Hovered = new()
                 {
-                    Color           = Color.Green + Color.White * 0.6f,
+                    Color           = Color.Green + (Color.White * 0.6f),
                     BackgroundColor = Color.Green.WithAlpha(0.2f),
                 },
                 Active = new()
                 {
-                    Color           = Color.Green + Color.White * 0.9f,
+                    Color           = Color.Green + (Color.White * 0.9f),
                     BackgroundColor = Color.Green.WithAlpha(0.5f),
                 },
             },
@@ -64,12 +64,12 @@ public class Theme
                 },
                 Hovered = new()
                 {
-                    Color           = Color.Green + Color.White * 0.6f,
+                    Color           = Color.Green + (Color.White * 0.6f),
                     BackgroundColor = Color.Green.WithAlpha(0.2f),
                 },
                 Active = new()
                 {
-                    Color           = Color.Green + Color.White * 0.9f,
+                    Color           = Color.Green + (Color.White * 0.9f),
                     BackgroundColor = Color.Green.WithAlpha(0.5f),
                 },
             }

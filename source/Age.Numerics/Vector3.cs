@@ -64,10 +64,10 @@ public record struct Vector3<T> where T : IFloatingPoint<T>, IFloatingPointIeee7
     }
 
     public static Vector3<T> Cross(in Vector3<T> v1, in Vector3<T> v2) =>
-        new(v1.Y * v2.Z - v1.Z * v2.Y, v1.Z * v2.X - v1.X * v2.Z, v1.X * v2.Y - v1.Y * v2.X);
+        new((v1.Y * v2.Z) - (v1.Z * v2.Y), (v1.Z * v2.X) - (v1.X * v2.Z), (v1.X * v2.Y) - (v1.Y * v2.X));
 
     public static T Dot(in Vector3<T> v1, in Vector3<T> v2) =>
-        v1.X * v2.X + v1.Y * v2.Y + v1.Z * v2.Z;
+        (v1.X * v2.X) + (v1.Y * v2.Y) + (v1.Z * v2.Z);
 
     public static bool IsAprox(in Vector3<T> left, in Vector3<T> right) =>
         Math<T>.IsApprox(left.X, right.X) && Math<T>.IsApprox(left.Y, right.Y) && Math<T>.IsApprox(left.Z, right.Z);

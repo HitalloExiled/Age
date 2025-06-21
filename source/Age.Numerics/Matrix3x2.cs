@@ -14,7 +14,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public T this[int column, int row]
     {
-        readonly get => (row * 2 + column) switch
+        readonly get => ((row * 2) + column) switch
         {
             0 => this.M11,
             1 => this.M12,
@@ -26,7 +26,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         };
         set
         {
-            switch (row * 2 + column)
+            switch ((row * 2) + column)
             {
                 case 0: this.M11 = value; break;
                 case 1: this.M12 = value; break;
@@ -98,7 +98,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         set => Unsafe.As<T, Vector2<T>>(ref this.M31) = value;
     }
 
-    public readonly T Determinant => this.M11 * this.M22 - this.M12 * this.M21;
+    public readonly T Determinant => (this.M11 * this.M22) - (this.M12 * this.M21);
 
     public readonly bool IsIdentity =>
         this.M11 == T.One  &&
@@ -108,7 +108,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         this.M31 == T.Zero &&
         this.M32 == T.Zero;
 
-    public readonly bool IsOrthonormalized => this.M11 * this.M21 + this.M12 * this.M22 == T.Zero;
+    public readonly bool IsOrthonormalized => (this.M11 * this.M21) + (this.M12 * this.M22) == T.Zero;
 
     public Matrix3x2(T m11, T m12, T m21, T m22, T m31, T m32)
     {
@@ -155,8 +155,8 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         var cos = T.Cos(radians);
         var sin = T.Sin(radians);
 
-        var translationX = origin.X * (T.One - cos) + origin.Y * sin;
-        var translationY = origin.Y * (T.One - cos) - origin.X * sin;
+        var translationX = (origin.X * (T.One - cos)) + (origin.Y * sin);
+        var translationY = (origin.Y * (T.One - cos)) - (origin.X * sin);
 
         matrix.M11 = cos;
         matrix.M12 = -sin;
@@ -251,8 +251,8 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         result.M12 = -this.M12 * reciprocal;
         result.M21 = -this.M21 * reciprocal;
         result.M22 = this.M11  * reciprocal;
-        result.M31 = -(this.M31 * result.M11 + this.M32 * result.M21);
-        result.M32 = -(this.M31 * result.M12 + this.M32 * result.M22);
+        result.M31 = -((this.M31 * result.M11) + (this.M32 * result.M21));
+        result.M32 = -((this.M31 * result.M12) + (this.M32 * result.M22));
 
         return result;
     }
@@ -273,8 +273,8 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         var cos = T.Cos(radians);
         var sin = T.Sin(radians);
 
-        var translationX = origin.X * (T.One - cos) + origin.Y * sin;
-        var translationY = origin.Y * (T.One - cos) - origin.X * sin;
+        var translationX = (origin.X * (T.One - cos)) + (origin.Y * sin);
+        var translationY = (origin.Y * (T.One - cos)) - (origin.X * sin);
 
         var scale = this.Scale;
 
@@ -293,12 +293,12 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     {
         Unsafe.SkipInit(out Matrix3x2<T> result);
 
-        result.M11 = left.M11 * right.M11 + left.M12 * right.M21;
-        result.M12 = left.M11 * right.M12 + left.M12 * right.M22;
-        result.M21 = left.M21 * right.M11 + left.M22 * right.M21;
-        result.M22 = left.M21 * right.M12 + left.M22 * right.M22;
-        result.M31 = left.M31 * right.M11 + left.M32 * right.M21 + right.M31;
-        result.M32 = left.M31 * right.M12 + left.M32 * right.M22 + right.M32;
+        result.M11 = (left.M11 * right.M11) + (left.M12 * right.M21);
+        result.M12 = (left.M11 * right.M12) + (left.M12 * right.M22);
+        result.M21 = (left.M21 * right.M11) + (left.M22 * right.M21);
+        result.M22 = (left.M21 * right.M12) + (left.M22 * right.M22);
+        result.M31 = (left.M31 * right.M11) + (left.M32 * right.M21) + right.M31;
+        result.M32 = (left.M31 * right.M12) + (left.M32 * right.M22) + right.M32;
 
         return result;
     }
@@ -307,8 +307,8 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     {
         Unsafe.SkipInit(out Vector2<T> result);
 
-        result.X = vector.X * matrix.M11 + vector.Y * matrix.M21 + matrix.M31;
-        result.Y = vector.X * matrix.M12 + vector.Y * matrix.M22 + matrix.M32;
+        result.X = (vector.X * matrix.M11) + (vector.Y * matrix.M21) + matrix.M31;
+        result.Y = (vector.X * matrix.M12) + (vector.Y * matrix.M22) + matrix.M32;
 
         return result;
     }
@@ -317,8 +317,8 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     {
         Unsafe.SkipInit(out Vector2<T> result);
 
-        result.X = vector.X * matrix.M11 + vector.Y * matrix.M12 + matrix.M31;
-        result.Y = vector.X * matrix.M21 + vector.Y * matrix.M22 + matrix.M32;
+        result.X = (vector.X * matrix.M11) + (vector.Y * matrix.M12) + matrix.M31;
+        result.Y = (vector.X * matrix.M21) + (vector.Y * matrix.M22) + matrix.M32;
 
         return result;
     }

@@ -61,7 +61,7 @@ internal abstract class Layout : Disposable
 
             current.MakeDirty();
 
-            var stopPropagation = !current.IsParentDependent && !affectsBoundings || current.Parent == null;
+            var stopPropagation = (!current.IsParentDependent && !affectsBoundings) || current.Parent == null;
 
             if (stopPropagation)
             {

@@ -913,7 +913,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                 && (
                     alignment.Value == Alignment.Center
                     || alignment.Value.HasAnyFlag(Alignment.Top | Alignment.Bottom)
-                    || direction == StackDirection.Vertical && alignment.Value.HasAnyFlag(Alignment.Start | Alignment.Center | Alignment.End)
+                    || (direction == StackDirection.Vertical && alignment.Value.HasAnyFlag(Alignment.Start | Alignment.Center | Alignment.End))
                 );
 
             baseline += element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top;
@@ -934,15 +934,15 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         alignmentAxis = AlignmentAxis.Horizontal | AlignmentAxis.Vertical;
 
-        if (alignmentKind.HasFlags(Alignment.Left) || direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start)))
+        if (alignmentKind.HasFlags(Alignment.Left) || (direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start))))
         {
             x = -1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Right) || direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End)))
+        else if (alignmentKind.HasFlags(Alignment.Right) || (direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End))))
         {
             x = 1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Center) || direction == StackDirection.Vertical && itemsAlignment == ItemsAlignment.Center)
+        else if (alignmentKind.HasFlags(Alignment.Center) || (direction == StackDirection.Vertical && itemsAlignment == ItemsAlignment.Center))
         {
             x = 0;
         }
@@ -951,15 +951,15 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             alignmentAxis &= ~AlignmentAxis.Horizontal;
         }
 
-        if (alignmentKind.HasFlags(Alignment.Top) || direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start)))
+        if (alignmentKind.HasFlags(Alignment.Top) || (direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start))))
         {
             y = -1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Bottom) || direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End)))
+        else if (alignmentKind.HasFlags(Alignment.Bottom) || (direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End))))
         {
             y = 1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Center) || direction == StackDirection.Horizontal && itemsAlignment == ItemsAlignment.Center)
+        else if (alignmentKind.HasFlags(Alignment.Center) || (direction == StackDirection.Horizontal && itemsAlignment == ItemsAlignment.Center))
         {
             y = 0;
         }
@@ -1034,14 +1034,14 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         {
             this.ContentOffset = this.ContentOffset with
             {
-                X = (uint)(this.ContentOffset.X + 10 * -mouseEvent.Delta)
+                X = (uint)(this.ContentOffset.X + (10 * -mouseEvent.Delta))
             };
         }
         else if (overflow.HasFlags(Overflow.ScrollY))
         {
             this.ContentOffset = this.ContentOffset with
             {
-                Y = (uint)(this.ContentOffset.Y + 10 * -mouseEvent.Delta)
+                Y = (uint)(this.ContentOffset.Y + (10 * -mouseEvent.Delta))
             };
         }
     }

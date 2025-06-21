@@ -57,8 +57,8 @@ public class FrameStatus : Element
     public override void Update()
     {
         this.delta = this.increasing
-            ? double.Min(this.delta + Time.DeltaTime * 0.1f, 1)
-            : double.Max(this.delta - Time.DeltaTime * 0.1f, -1);
+            ? double.Min(this.delta + (Time.DeltaTime * 0.1f), 1)
+            : double.Max(this.delta - (Time.DeltaTime * 0.1f), -1);
 
         if (this.increasing && this.delta == 1)
         {

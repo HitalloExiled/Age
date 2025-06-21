@@ -1,6 +1,6 @@
 namespace ThirdParty.Vulkan;
 
-public sealed unsafe partial class VkQueue : ManagedHandle<VkQueue>
+public sealed unsafe class VkQueue : ManagedHandle<VkQueue>
 {
     public uint FamilyIndex { get; }
     public uint Index       { get; }

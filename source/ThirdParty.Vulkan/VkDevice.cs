@@ -12,7 +12,7 @@ namespace ThirdParty.Vulkan;
 /// <summary>
 /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkDevice.html">VkDevice</see>
 /// </summary>
-public sealed unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
+public sealed unsafe class VkDevice : DisposableManagedHandle<VkDevice>
 {
     private readonly HashSet<string> enabledExtensions = [];
 

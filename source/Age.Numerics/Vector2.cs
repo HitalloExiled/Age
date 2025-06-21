@@ -57,10 +57,10 @@ public record struct Vector2<T> where T : IFloatingPoint<T>, IFloatingPointIeee7
         T.Atan2(CrossProduct(v1, v2), Dot(v1, v2));
 
     public static T CrossProduct(in Vector2<T> v1, in Vector2<T> v2) =>
-        v1.X * v2.Y - v1.Y * v2.X;
+        (v1.X * v2.Y) - (v1.Y * v2.X);
 
     public static T Dot(in Vector2<T> v1, in Vector2<T> v2) =>
-        v1.X * v2.X + v1.Y * v2.Y;
+        (v1.X * v2.X) + (v1.Y * v2.Y);
 
     public static bool IsApprox(in Vector2<T> left, in Vector2<T> right) =>
         Math<T>.IsApprox(left.X, right.X) && Math<T>.IsApprox(left.Y, right.Y);
@@ -85,7 +85,7 @@ public record struct Vector2<T> where T : IFloatingPoint<T>, IFloatingPointIeee7
         var cos = T.Cos(radians);
         var sin = T.Sin(radians);
 
-        return new(this.X * cos - this.Y * sin, this.X * sin + this.Y * cos);
+        return new((this.X * cos) - (this.Y * sin), (this.X * sin) + (this.Y * cos));
     }
 
     public readonly Point<T> ToPoint() =>
