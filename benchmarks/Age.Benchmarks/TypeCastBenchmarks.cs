@@ -24,7 +24,6 @@ public abstract class Kindable
     public abstract Kind Kind { get; }
 }
 
-
 public class N1 : Kindable
 {
     public override Kind Kind => Kind.N1;

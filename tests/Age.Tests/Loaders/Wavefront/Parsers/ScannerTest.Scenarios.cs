@@ -45,5 +45,4 @@ public partial class ScannerTest
         public static TheoryData<ValidScenario>   Valid   => new(valid);
         public static TheoryData<InvalidScenario> Invalid => new(invalid);
     }
-
 }

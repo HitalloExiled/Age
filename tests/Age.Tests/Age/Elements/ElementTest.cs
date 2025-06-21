@@ -56,7 +56,6 @@ public class ElementTest
         parent.AppendChild(child3);
         parent.AppendChild(text4);
 
-
         Assert.Null(parent.PreviousElementSibling);
         Assert.Equal(child1, parent.FirstElementChild);
         Assert.Equal(child1, child2.PreviousElementSibling);

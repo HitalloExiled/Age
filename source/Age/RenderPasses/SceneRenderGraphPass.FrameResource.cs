@@ -12,4 +12,3 @@ public partial class SceneRenderGraphPass
         public FrameResource() { }
     }
 }
-

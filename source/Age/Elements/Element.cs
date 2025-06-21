@@ -144,8 +144,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                     renderTree.Window.KeyDown += this.OnKeyDown;
                 }
             }
-
-
         }
         remove
         {
@@ -241,8 +239,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     protected bool IsFocusable { get; set; }
 
     internal protected ShadowTree? ShadowTree { get; set; }
-
-
 
     internal override BoxLayout Layout { get; }
 

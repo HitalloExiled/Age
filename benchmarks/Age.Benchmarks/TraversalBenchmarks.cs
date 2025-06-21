@@ -29,7 +29,6 @@ public class TraversalBenchmarks
 
     private readonly Stack<Node> stack = [];
 
-
     [Params(1, 5, 10)]
     public int Depth;
 

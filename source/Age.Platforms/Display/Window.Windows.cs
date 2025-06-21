@@ -13,7 +13,6 @@ namespace Age.Platforms.Display;
 
 public partial class Window
 {
-
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static short LoWord(uint value) => (short)((int)value & 0xffff);
 

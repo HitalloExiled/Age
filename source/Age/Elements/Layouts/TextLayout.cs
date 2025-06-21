@@ -369,7 +369,6 @@ internal sealed partial class TextLayout : Layout
                 cursor.X += (int)float.Round(glyphsWidths[i]);
 
                 textOffset++;
-
             }
             else if (character == '\n')
             {
@@ -577,7 +576,6 @@ internal sealed partial class TextLayout : Layout
 
     public void HandleTargetRemoved(Element parentElement) =>
         parentElement.Layout.StyleChanged -= this.OnParentStyleChanged;
-
 
     public void HideCaret()
     {

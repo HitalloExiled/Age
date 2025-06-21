@@ -24,5 +24,3 @@ public partial class RenderPass
         public required Attachment?         DepthStencilAttachment { get; init; }
     }
 }
-
-

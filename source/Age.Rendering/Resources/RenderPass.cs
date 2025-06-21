@@ -98,5 +98,3 @@ public sealed partial class RenderPass : Resource<VkRenderPass>
     protected override void OnDisposed() =>
         this.Instance.Dispose();
 }
-
-

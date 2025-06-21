@@ -34,7 +34,6 @@ internal struct StyleData
     /// <see cref="StyleProperty.Baseline">
     public Unit? Baseline;
 
-
     /// <see cref="StyleProperty.Color">
     public Color? Color;
 

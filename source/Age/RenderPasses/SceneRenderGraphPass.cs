@@ -224,4 +224,3 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
     public override void Recreate()
     { }
 }
-

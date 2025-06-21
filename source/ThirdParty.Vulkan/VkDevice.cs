@@ -137,7 +137,6 @@ public sealed unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
     public T GetExtension<T>() where T : IDeviceExtension<T> =>
         this.TryGetExtension<T>(out var extension) ? extension : throw new InvalidOperationException($"Can't load required extension {T.Name}");
 
-
     /// <inheritdoc cref="PInvoke.vkGetDeviceProcAddr" />
     public T GetProcAddr<T>(string name) where T : Delegate
     {

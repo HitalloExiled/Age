@@ -12,7 +12,6 @@ public class ShaderStorage : Disposable
 
     public static ShaderStorage Singleton => singleton ?? throw new NullReferenceException();
 
-
     private readonly Dictionary<string, Shader> shaders = [];
     private readonly VulkanRenderer renderer;
 

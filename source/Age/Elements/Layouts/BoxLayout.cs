@@ -747,7 +747,6 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             var size           = dependent.Layout.size;
             var dependentStyle = dependent.Layout.ComputedStyle;
 
-
             if (!this.contentDependencies.HasFlags(Dependency.Width) || direction == StackDirection.Vertical)
             {
                 if (!this.contentDependencies.HasFlags(Dependency.Width))

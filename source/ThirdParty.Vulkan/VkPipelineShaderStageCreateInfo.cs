@@ -17,7 +17,6 @@ public unsafe struct VkPipelineShaderStageCreateInfo
     public byte*                            PName;
     public VkSpecializationInfo*            PSpecializationInfo;
 
-
     public VkPipelineShaderStageCreateInfo() =>
         this.SType = VkStructureType.PipelineShaderStageCreateInfo;
 }

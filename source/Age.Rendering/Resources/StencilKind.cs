@@ -6,4 +6,3 @@ public enum StencilKind
     Mask,
     Content,
 }
-

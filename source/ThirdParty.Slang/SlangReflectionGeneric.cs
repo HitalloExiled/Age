@@ -11,7 +11,6 @@ public unsafe class SlangReflectionGeneric : ManagedSlang<SlangReflectionGeneric
     [field: AllowNull]
     public SlangReflectionDecl? InnerDecl => field ??= PInvoke.spReflectionGeneric_GetInnerDecl(this.Handle) is var x && x != default ? new(x) : null;
 
-
     [field: AllowNull]
     public string Name => field ??= Marshal.PtrToStringAnsi((nint)PInvoke.spReflectionGeneric_GetName(this.Handle))!;
 

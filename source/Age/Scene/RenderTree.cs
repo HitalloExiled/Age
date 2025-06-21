@@ -275,7 +275,6 @@ public sealed partial class RenderTree : NodeTree
             {
                 this.lastFocusedElement?.InvokeBlur(mouseEvent);
                 this.lastFocusedElement = element;
-
             }
 
             if (!element.IsFocused)

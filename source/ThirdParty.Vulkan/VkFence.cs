@@ -31,7 +31,6 @@ public sealed unsafe partial class VkFence : VkDeviceResource<VkFence>
     private static void Wait(VkHandle<VkDevice> device, VkHandle<VkFence> fence, bool waitAll, ulong timeout) =>
         VkException.Check(PInvoke.vkWaitForFences(device, 1, &fence, waitAll, timeout));
 
-
     /// <inheritdoc cref="PInvoke.vkWaitForFences" />
     private static void Wait(VkHandle<VkDevice> device, VkHandle<VkFence>[] fences, bool waitAll, ulong timeout)
     {

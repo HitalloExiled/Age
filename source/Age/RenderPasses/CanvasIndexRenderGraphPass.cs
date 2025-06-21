@@ -34,7 +34,6 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
     public override RenderPass RenderPass => this.renderPass;
 
-
     public CanvasIndexRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)
     {
         var vertices = new CanvasShader.Vertex[4]

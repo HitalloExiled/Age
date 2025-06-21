@@ -106,7 +106,6 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
             var trace = this.M11 + this.M22 + this.M33;
 
-
             if (trace > T.Zero)
             {
                 var scalar        = T.Sqrt(trace + T.One);

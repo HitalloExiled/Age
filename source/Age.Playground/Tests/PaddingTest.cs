@@ -63,7 +63,6 @@ public static class PaddingTest
             Name  = "content_padding_px10_100pc",
             Style = new()
             {
-
                 Border = new(BORDER_SIZE, 0, Color.Green * 0.8f),
                 Size   = new(Unit.Pc(100)),
             }
@@ -94,7 +93,6 @@ public static class PaddingTest
             Name  = "content_padding_pc10_100pc",
             Style = new()
             {
-
                 Border = new(BORDER_SIZE, 0, Color.Blue * 0.8f),
                 Size   = new(Unit.Px(100)),
             }
@@ -126,7 +124,6 @@ public static class PaddingTest
             Name  = "content_padding_100pc_pc10_100pc",
             Style = new()
             {
-
                 Border = new(BORDER_SIZE, 0, Color.Cyan * 0.8f),
                 Size   = new(Unit.Px(100)),
             }

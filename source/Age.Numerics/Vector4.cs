@@ -10,7 +10,6 @@ public record struct Vector4<T> where T : IFloatingPoint<T>, IFloatingPointIeee7
     public T Z;
     public T W;
 
-
     public T this[int index]
     {
         readonly get => index switch
