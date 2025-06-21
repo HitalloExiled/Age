@@ -1578,6 +1578,12 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         this.Target.Visible = !hidden;
     }
 
+    public RectCommand GetLayoutLayer(LayoutLayer layer) =>
+        this.GetLayoutCommand((LayoutCommand)layer);
+
+    public void ReleaseLayoutLayer(LayoutLayer layer) =>
+        this.ReleaseLayoutCommand((LayoutCommand)layer);
+
     public void HandleElementRemoved(Element element)
     {
         if (!element.Layout.Hidden && element.Layout.parentDependencies != Dependency.None)

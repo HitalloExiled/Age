@@ -338,15 +338,6 @@ internal sealed partial class TextLayout : Layout
                 var offset = new Vector2<float>(float.Round(cursor.X + bounds.Left), float.Round(cursor.Y - bounds.Top));
                 var color  = style.Color ?? new();
 
-                var atlasSize = new Point<float>(atlas.Size.Width, atlas.Size.Height);
-
-                var uv = new UVRect
-                {
-                    P1 = new Point<float>(glyph.Position.X, glyph.Position.Y) / atlasSize,
-                    P2 = new Point<float>(glyph.Position.X + glyph.Size.Width, glyph.Position.Y) / atlasSize,
-                    P3 = new Point<float>(glyph.Position.X + glyph.Size.Width, glyph.Position.Y + glyph.Size.Height) / atlasSize,
-                    P4 = new Point<float>(glyph.Position.X, glyph.Position.Y + glyph.Size.Height) / atlasSize,
-                };
 
                 var characterIndex = textSpan.Length + textOffset;
 
@@ -359,7 +350,7 @@ internal sealed partial class TextLayout : Layout
                 characterCommand.Flags           = Flags.GrayscaleTexture | Flags.MultiplyColor;
                 characterCommand.Index           = selectionCommand.Index;
                 characterCommand.Line            = selectionCommand.Line;
-                characterCommand.MappedTexture   = new(atlas.Texture, uv);
+                characterCommand.MappedTexture   = new(atlas.Texture, glyph.UV);
                 characterCommand.ObjectId        = default;
                 characterCommand.PipelineVariant = PipelineVariant.Color;
                 characterCommand.Size            = size;
@@ -421,7 +412,7 @@ internal sealed partial class TextLayout : Layout
 
         var cursor = this.target.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
-        if (cursor.X > command.Transform.Position.X + command.Size.Width / 2)
+        if (cursor.X > command.Transform.Position.X + (command.Size.Width / 2))
         {
             character++;
         }
@@ -772,7 +763,7 @@ internal sealed partial class TextLayout : Layout
                     : lines[index].End;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorAfter(in Rect<float> rect) => cursor.X > rect.Position.X + rect.Size.Width / 2;
+        bool isCursorAfter(in Rect<float> rect) => cursor.X > rect.Position.X + (rect.Size.Width / 2);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorBefore(in Rect<float> rect) => !isCursorAfter(rect);
@@ -781,7 +772,7 @@ internal sealed partial class TextLayout : Layout
         bool isOnCursorLine(in Rect<float> rect) => isCursorBelowTop(rect) && isCursorAboveBottom(rect);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool isCursorBelow(in Rect<float> rect) => cursor.Y < rect.Position.Y - rect.Size.Height / 2;
+        bool isCursorBelow(in Rect<float> rect) => cursor.Y < rect.Position.Y - (rect.Size.Height / 2);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorBelowTop(in Rect<float> rect) => cursor.Y < rect.Position.Y;

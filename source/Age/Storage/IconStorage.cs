@@ -1,20 +1,23 @@
 using System.Reflection;
 using Age.Core;
+using Age.Core.Collections;
+using Age.Numerics;
 using Age.Rendering.Vulkan;
 using Age.Resources;
-using SkiaSharp.Extended.Svg;
+using SkiaSharp;
+using ThirdParty.Skia.Svg;
 
 namespace Age.Storage;
 
-internal partial class IconStorage : Disposable
+internal class IconStorage : Disposable
 {
     private static IconStorage? singleton;
 
     public static IconStorage Singleton => field ?? throw new NullReferenceException();
 
-    private readonly TextureAtlas               atlas = new(new(512), TextureFormat.R8G8Unorm);
-    private readonly Dictionary<IconName, Icon> icons = [];
-    private readonly VulkanRenderer             renderer;
+    private readonly TextureAtlas                       atlas = new(new(512), TextureFormat.R8G8Unorm);
+    private readonly KeyedList<Icon, MappedTexture> icons = [];
+    private readonly VulkanRenderer                     renderer;
 
     public IconStorage(VulkanRenderer renderer)
     {
@@ -32,27 +35,48 @@ internal partial class IconStorage : Disposable
 
     private void BuildAtlas()
     {
-        var assembly  = Assembly.GetExecutingAssembly();
-        var resources = assembly.GetManifestResourceNames();
+        var assembly = Assembly.GetExecutingAssembly();
 
-        foreach (var resource in resources)
+        foreach (var resource in assembly.GetManifestResourceNames())
         {
-            using var stream = assembly.GetManifestResourceStream(resource);
+            using var stream = assembly.GetManifestResourceStream(resource)!;
 
             var svg = new SKSvg();
 
-            // svg.Load(stream);
+            svg.Load(stream);
 
-            // var size = new SKSize(24, 24);
+            var size = new SKSize(24, 24);
 
-            // using var bitmap = new SKBitmap((int)size.Width, (int)size.Height);
-            // using var canvas = new SKCanvas(bitmap);
+            using var bitmap = new SKBitmap((int)size.Width, (int)size.Height);
+            using var canvas = new SKCanvas(bitmap);
 
-            // canvas.Clear(SKColors.Transparent);
+            canvas.Clear(SKColors.Transparent);
 
-            // canvas.DrawPicture(svg.Picture);
+            canvas.DrawPicture(svg.Picture);
 
-            // this.atlas.Pack(bitmap.GetPixelSpan(), new(24));
+            var position = this.atlas.Pack(bitmap.GetPixelSpan(), new(24));
+
+            var span       = resource.AsSpan();
+            var enumerator = resource.AsSpan().Split('.');
+
+            enumerator.MoveNext();
+            enumerator.MoveNext();
+            enumerator.MoveNext();
+            enumerator.MoveNext();
+
+            var atlasSize = new Point<float>(this.atlas.Size.Width, this.atlas.Size.Height);
+
+            var uv = new UVRect
+            {
+                P1 = new Point<float>(position.X, position.Y) / atlasSize,
+                P2 = new Point<float>(position.X + size.Width, position.Y) / atlasSize,
+                P3 = new Point<float>(position.X + size.Width, position.Y + size.Height) / atlasSize,
+                P4 = new Point<float>(position.X, position.Y + size.Height) / atlasSize,
+            };
+
+            var name = Icon.Parse(span[enumerator.Current]);
+
+            this.icons[name] = new(this.atlas.Texture, uv);
         }
     }
 
@@ -64,36 +88,6 @@ internal partial class IconStorage : Disposable
         }
     }
 
-    // public Glyph DrawGlyph(SKFont font, TextureAtlas atlas, char character, in SKRect bounds)
-    // {
-    //     const ushort PADDING = 2;
-
-    //     var hashcode = character.GetHashCode() ^ font.GetHashCode() ^ font.Size.GetHashCode();
-
-    //     if (!this.glyphs.TryGetValue(hashcode, out var glyph))
-    //     {
-    //         var charString = character.ToString();
-
-    //         using var bitmap = new SKBitmap(
-    //             (int)bounds.Width + PADDING * 2,
-    //             (int)bounds.Height + PADDING * 2
-    //         );
-
-    //         using var canvas = new SKCanvas(bitmap);
-
-    //         canvas.DrawText(charString, PADDING + -bounds.Location.X, PADDING + -bounds.Location.Y, font, this.paint);
-
-    //         var position = atlas.Pack(bitmap.GetPixelSpan().Cast<byte, uint>(), new((uint)bitmap.Width, (uint)bitmap.Height));
-
-    //         this.glyphs[hashcode] = glyph = new()
-    //         {
-    //             Atlas     = atlas,
-    //             Character = character,
-    //             Position  = position + PADDING,
-    //             Size      = new((uint)bounds.Width, (uint)bounds.Height),
-    //         };
-    //     }
-
-    //     return glyph;
-    // }
+    public MappedTexture GetIcon(Icon name) =>
+        this.icons[name];
 }

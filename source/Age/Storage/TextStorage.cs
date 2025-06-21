@@ -69,22 +69,30 @@ internal partial class TextStorage : Disposable
             var charString = character.ToString();
 
             using var bitmap = new SKBitmap(
-                (int)bounds.Width + PADDING * 2,
-                (int)bounds.Height + PADDING * 2
+                (int)bounds.Width + (PADDING * 2),
+                (int)bounds.Height + (PADDING * 2)
             );
 
             using var canvas = new SKCanvas(bitmap);
 
             canvas.DrawText(charString, PADDING + -bounds.Location.X, PADDING + -bounds.Location.Y, font, this.paint);
 
-            var position = atlas.Pack(bitmap.GetPixelSpan().Cast<byte, uint>(), new((uint)bitmap.Width, (uint)bitmap.Height));
+            var position = atlas.Pack(bitmap.GetPixelSpan().Cast<byte, uint>(), new((uint)bitmap.Width, (uint)bitmap.Height)) + PADDING;
+
+            var atlasSize = new Point<float>(atlas.Size.Width, atlas.Size.Height);
+
+            var uv = new UVRect
+            {
+                P1 = new Point<float>(position.X, position.Y) / atlasSize,
+                P2 = new Point<float>(position.X + bounds.Width, position.Y) / atlasSize,
+                P3 = new Point<float>(position.X + bounds.Width, position.Y + bounds.Height) / atlasSize,
+                P4 = new Point<float>(position.X, position.Y + bounds.Height) / atlasSize,
+            };
 
             this.glyphs[hashcode] = glyph = new()
             {
-                Atlas     = atlas,
-                Character = character,
-                Position  = position + PADDING,
-                Size      = new((uint)bounds.Width, (uint)bounds.Height),
+                TextureMap = new(atlas.Texture, uv),
+                Character  = character,
             };
         }
 
