@@ -16,7 +16,7 @@ internal partial class TextStorage : Disposable
     private readonly Dictionary<int, TextureAtlas>               atlases    = [];
     private readonly Dictionary<string, Dictionary<string, int>> codepoints = [];
     private readonly Dictionary<int, SKFont>                     fonts      = [];
-    private readonly Dictionary<int, Glyph>                      glyphs     = [];
+    private readonly Dictionary<int, TextureMap>                 glyphs     = [];
     private readonly SKPaint                                     paint;
     private readonly VulkanRenderer                              renderer;
 
@@ -58,24 +58,19 @@ internal partial class TextStorage : Disposable
         }
     }
 
-    public Glyph DrawGlyph(SKFont font, TextureAtlas atlas, char character, in SKRect bounds)
+    public TextureMap DrawGlyph(SKFont font, TextureAtlas atlas, scoped ReadOnlySpan<char> chars, in SKRect bounds)
     {
         const ushort PADDING = 2;
 
-        var hashcode = character.GetHashCode() ^ font.GetHashCode() ^ font.Size.GetHashCode();
+        var hashcode = string.GetHashCode(chars) ^ font.GetHashCode() ^ font.Size.GetHashCode();
 
         if (!this.glyphs.TryGetValue(hashcode, out var glyph))
         {
-            var charString = character.ToString();
+            using var bitmap   = new SKBitmap((int)bounds.Width + (PADDING * 2), (int)bounds.Height + (PADDING * 2));
+            using var canvas   = new SKCanvas(bitmap);
+            using var textBlob = SKTextBlob.Create(chars, font);
 
-            using var bitmap = new SKBitmap(
-                (int)bounds.Width + (PADDING * 2),
-                (int)bounds.Height + (PADDING * 2)
-            );
-
-            using var canvas = new SKCanvas(bitmap);
-
-            canvas.DrawText(charString, PADDING + -bounds.Location.X, PADDING + -bounds.Location.Y, font, this.paint);
+            canvas.DrawText(textBlob, PADDING + -bounds.Location.X, PADDING + -bounds.Location.Y, this.paint);
 
             var position = atlas.Pack(bitmap.GetPixelSpan().Cast<byte, uint>(), new((uint)bitmap.Width, (uint)bitmap.Height)) + PADDING;
 
@@ -89,11 +84,7 @@ internal partial class TextStorage : Disposable
                 P4 = new Point<float>(position.X, position.Y + bounds.Height) / atlasSize,
             };
 
-            this.glyphs[hashcode] = glyph = new()
-            {
-                TextureMap = new(atlas.Texture, uv),
-                Character  = character,
-            };
+            this.glyphs[hashcode] = glyph = new(atlas.Texture, uv);
         }
 
         return glyph;

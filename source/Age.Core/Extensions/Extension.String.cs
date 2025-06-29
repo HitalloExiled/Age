@@ -17,16 +17,16 @@ public static partial class Extension
         return count;
     }
 
-    public static void GetTextInfo(this ReadOnlySpan<char> value, out int nonWhitespaceCount, out int linesCount)
+    public static void GetTextInfo(this ReadOnlySpan<char> value, out int visibleCharacterCount, out int linesCount)
     {
-        nonWhitespaceCount = 0;
-        linesCount         = 1;
+        visibleCharacterCount = 0;
+        linesCount            = 1;
 
         for (var i = 0; i < value.Length; i++)
         {
-            if (!char.IsWhiteSpace(value[i]))
+            if (!char.IsWhiteSpace(value[i]) && !char.IsLowSurrogate(value[i]))
             {
-                nonWhitespaceCount++;
+                visibleCharacterCount++;
             }
             else if (value[i] == '\n' && i + 1 < value.Length)
             {

@@ -100,15 +100,8 @@ public sealed class Text : Layoutable
         return new(this.Buffer.Substring((int)range.Start, (int)(range.End - range.Start)));
     }
 
-    public string? CopySelected()
-    {
-        if (!this.Selection.HasValue)
-        {
-            return null;
-        }
-
-        return this.Copy(this.Selection.Value);
-    }
+    public string? CopySelected() =>
+        !this.Selection.HasValue ? null : this.Copy(this.Selection.Value);
 
     public string? Cut(TextSelection selection)
     {
@@ -215,12 +208,10 @@ public sealed class Text : Layoutable
 
         var transform = this.TransformWithOffset;
 
-        var position = new Point<float>(
+        rect.Position = new Point<float>(
             (float)(transform.Position.X + rect.Position.X),
             -(float)(transform.Position.Y + rect.Position.Y)
         );
-
-        rect.Position = position;
 
         return rect.Cast<int>();
     }
