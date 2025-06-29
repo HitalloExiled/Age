@@ -1,15 +1,17 @@
 namespace Age.Commands;
 
-public sealed record TextCommand : RectCommand
+public sealed partial record TextCommand : RectCommand
 {
-    public int Index { get; set; }
-    public int Line  { get; set; }
+    public int           Index     { get; set; }
+    public int           Line      { get; set; }
+    public SurrogateKind Surrogate { get; set; }
 
     public override void Reset()
     {
         base.Reset();
 
-        this.Index = default;
-        this.Line  = default;
+        this.Surrogate = default;
+        this.Index     = default;
+        this.Line      = default;
     }
 }

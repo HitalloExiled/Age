@@ -88,14 +88,14 @@ bool intersectsBorders(in PushConstant data, in float2 position, BorderKind bord
 
 public bool hasBorder(in PushConstant data)
 {
-    return data.border.top.thickness
-        + data.border.right.thickness
-        + data.border.bottom.thickness
-        + data.border.left.thickness
-        + data.border.radius.leftTop
-        + data.border.radius.topRight
-        + data.border.radius.rightBottom
-        + data.border.radius.bottomLeft > 0;
+    return data.border.top.thickness      != 0
+        || data.border.right.thickness    != 0
+        || data.border.bottom.thickness   != 0
+        || data.border.left.thickness     != 0
+        || data.border.radius.leftTop     != 0
+        || data.border.radius.topRight    != 0
+        || data.border.radius.rightBottom != 0
+        || data.border.radius.bottomLeft  != 0;
 }
 
 public bool isBorder(in PushConstant data, in float2 position, out BorderSide side)
