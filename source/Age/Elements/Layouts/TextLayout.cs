@@ -43,7 +43,9 @@ internal sealed class TextLayout : Layout
         {
             if (field != value || !this.caretTimer.Running)
             {
-                field = value;
+                field = value < this.Target.Buffer.Length && char.IsLowSurrogate(this.Target.Buffer[(int)value])
+                    ? value > field ? value + 1 : value - 1
+                    : value;
 
                 this.ShowCaret();
                 this.AdjustScroll();
