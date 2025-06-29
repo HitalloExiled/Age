@@ -211,16 +211,23 @@ public partial class TextBox : Element
                 {
                     this.SaveHistory();
 
+                    var cursorPosition = this.text.CursorPosition;
+
+                    if (cursorPosition > 1 && char.IsLowSurrogate(this.text.Buffer[(int)cursorPosition]))
+                    {
+                        cursorPosition--;
+                    }
+
                     if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
                     {
-                        this.text.Selection = this.text.Selection?.WithEnd(this.text.CursorPosition - 1) ?? new(this.text.CursorPosition, this.text.CursorPosition - 1);
+                        this.text.Selection = this.text.Selection?.WithEnd(cursorPosition - 1) ?? new(cursorPosition, cursorPosition - 1);
                     }
                     else if (this.text.Selection != null)
                     {
                         this.text.ClearSelection();
                     }
 
-                    this.text.CursorPosition--;
+                    this.text.CursorPosition = --cursorPosition;
                 }
 
                 break;
@@ -229,6 +236,13 @@ public partial class TextBox : Element
                 if (this.text.CursorPosition < this.text.Buffer.Length)
                 {
                     this.SaveHistory();
+
+                    var cursorPosition = this.text.CursorPosition;
+
+                    if (cursorPosition < this.text.Buffer.Length && char.IsHighSurrogate(this.text.Buffer[(int)cursorPosition]))
+                    {
+                        cursorPosition++;
+                    }
 
                     if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
                     {
@@ -239,7 +253,7 @@ public partial class TextBox : Element
                         this.text.ClearSelection();
                     }
 
-                    this.text.CursorPosition++;
+                    this.text.CursorPosition = ++cursorPosition;
                 }
 
                 break;
