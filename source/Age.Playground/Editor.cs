@@ -8,6 +8,8 @@ using Age.Styling;
 using ThirdParty.Vulkan.Flags;
 
 using Common = Age.Internal.Common;
+using Age.Playground.Tests.Styling;
+using Age.Playground.Tests.Components;
 
 namespace Age.Playground;
 
@@ -25,7 +27,7 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = BackgroundImageTest.Setup;
+        this.setup = TextBoxTest.Setup;
 
         this.Reload();
         // this.CreateDemoScene();
