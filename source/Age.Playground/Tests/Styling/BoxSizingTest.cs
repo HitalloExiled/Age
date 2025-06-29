@@ -2,7 +2,7 @@ using Age.Numerics;
 using Age.Elements;
 using Age.Styling;
 
-namespace Age.Playground.Tests;
+namespace Age.Playground.Tests.Styling;
 
 public static class BoxSizingTest
 {

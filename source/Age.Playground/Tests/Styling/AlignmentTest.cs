@@ -5,7 +5,7 @@ using Age.Platforms.Display;
 using Age.Extensions;
 using Age.Core.Extensions;
 
-namespace Age.Playground.Tests;
+namespace Age.Playground.Tests.Styling;
 
 public static class AlignmentTest
 {

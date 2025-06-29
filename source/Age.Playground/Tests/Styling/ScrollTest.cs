@@ -3,7 +3,7 @@ using Age.Elements;
 using Age.Styling;
 using Age.Components;
 
-namespace Age.Playground.Tests;
+namespace Age.Playground.Tests.Styling;
 
 public static class ScrollTest
 {
