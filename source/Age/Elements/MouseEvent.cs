@@ -5,7 +5,7 @@ namespace Age.Elements;
 
 public struct MouseEvent
 {
-    public required Element Target;
+    public required EventTarget Target;
     public MouseButton    Button;
     public float          Delta;
     public MouseKeyStates KeyStates;
@@ -18,6 +18,6 @@ public struct MouseEvent
     public readonly bool IsPrimaryButtonPressed => this.Button == this.PrimaryButton;
 
     public readonly bool IsHoldingPrimaryButton =>
-        (this.PrimaryButton == MouseButton.Left && this.KeyStates.HasFlags(MouseKeyStates.LeftButton))
-        || (this.PrimaryButton == MouseButton.Right && this.KeyStates.HasFlags(MouseKeyStates.RightButton));
+        this.PrimaryButton == MouseButton.Left && this.KeyStates.HasFlags(MouseKeyStates.LeftButton)
+        || this.PrimaryButton == MouseButton.Right && this.KeyStates.HasFlags(MouseKeyStates.RightButton);
 }

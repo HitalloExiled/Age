@@ -30,8 +30,8 @@ public static class IconTest
                         Style    = style,
                         Children =
                         [
-                            new Text("search"),
-                            new Icon("search")
+                            // new Text("search"),
+                            new Icon("search", 32, Color.Red)
                         ]
                     },
                     new FlexBox
@@ -39,8 +39,8 @@ public static class IconTest
                         Style    = style with { FontSize = 100 },
                         Children =
                         [
-                            new Text("home"),
-                            new Icon("home")
+                            // new Text("home"),
+                            new Icon("home", 100, Color.Green)
                         ]
                     },
                     new FlexBox
@@ -48,8 +48,8 @@ public static class IconTest
                         Style    = style,
                         Children =
                         [
-                            new Text("close"),
-                            new Icon("close")
+                            // new Text("close"),
+                            new Icon("close", 24, Color.Blue)
                         ]
                     }
                 ]

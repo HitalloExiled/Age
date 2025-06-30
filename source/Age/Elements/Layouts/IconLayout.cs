@@ -10,7 +10,7 @@ using static Age.Shaders.CanvasShader;
 
 namespace Age.Elements.Layouts;
 
-internal sealed class IconLayout : Layout
+internal sealed class IconLayout : StyledLayout
 {
     private const string MATERIAL_ICONS_OUTLINED = nameof(MATERIAL_ICONS_OUTLINED);
 
@@ -20,7 +20,7 @@ internal sealed class IconLayout : Layout
     };
 
     private Dictionary<string, int>? codepoints;
-    private SKFont?                  font;
+    private SKFont                   font;
     private bool                     isDirty;
 
     public IconLayout(Icon target)
@@ -30,6 +30,9 @@ internal sealed class IconLayout : Layout
         var command = CommandPool.RectCommand.Get();
 
         this.Target.Commands.Add(command);
+
+        this.font       = TextStorage.Singleton.GetFont(MATERIAL_ICONS_OUTLINED, this.FontSize, (int)FontWeight.Normal, defaultFontFaces);
+        this.codepoints = TextStorage.Singleton.GetCodepoints(MATERIAL_ICONS_OUTLINED, defaultFontFaces);
     }
 
     public override StencilLayer? StencilLayer
@@ -121,17 +124,17 @@ internal sealed class IconLayout : Layout
     private RectCommand GetRectCommand() =>
         (RectCommand)this.Target.Commands[0];
 
-    private void OnParentStyleChanged(StyleProperty property)
+    protected override void OnStyleChanged(StyleProperty property)
     {
         if (property.HasAnyFlag(StyleProperty.FontFamily | StyleProperty.FontFeature | StyleProperty.FontWeight))
         {
-            var style = this.Parent!.ComputedStyle;
+            var style = this.ComputedStyle;
 
             var fontFamily = string.Intern(style.FontFamily ?? MATERIAL_ICONS_OUTLINED);
             var fontWeight = (int)(style.FontWeight ?? FontWeight.Normal);
-            var fontSize   = this.Parent.FontSize;
+            var fontSize   = this.FontSize;
 
-            var fontFaces = this.Parent.StyleSheet?.FontFaces ?? defaultFontFaces;
+            var fontFaces = this.StyleSheet?.FontFaces ?? defaultFontFaces;
 
             if (this.font?.Size != fontSize || this.font.Typeface.FamilyName != fontFamily || this.font.Typeface.FontWeight != fontWeight)
             {
@@ -156,13 +159,6 @@ internal sealed class IconLayout : Layout
         this.Target.Commands.Clear();
     }
 
-    public void HandleTargetAdopted(Element parentElement)
-    {
-        parentElement.Layout.StyleChanged += this.OnParentStyleChanged;
-
-        this.OnParentStyleChanged(StyleProperty.All);
-    }
-
     public void HandleTargetIndexed()
     {
         this.UpdateDirtyLayout();
@@ -171,9 +167,6 @@ internal sealed class IconLayout : Layout
 
         command.ObjectId = (ulong)(this.Target.Index + 1);
     }
-
-    public void HandleTargetRemoved(Element parentElement) =>
-        parentElement.Layout.StyleChanged -= this.OnParentStyleChanged;
 
     public override void Update()
     {
