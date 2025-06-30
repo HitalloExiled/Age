@@ -503,12 +503,13 @@ internal sealed class TextLayout : Layout
 
     protected override void OnDisposed()
     {
-        foreach (var command in this.Target.Commands)
+        foreach (var command in this.Target.Commands[..^1])
         {
-            CommandPool.RectCommand.Return(this.caretCommand);
             CommandPool.TextCommand.Return((TextCommand)command);
-            this.Target.Commands.Clear();
         }
+
+        CommandPool.RectCommand.Return(this.caretCommand);
+        this.Target.Commands.Clear();
     }
 
     public void AdjustScroll() =>
