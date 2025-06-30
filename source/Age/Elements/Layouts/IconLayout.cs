@@ -1,21 +1,27 @@
 using Age.Commands;
 using Age.Core.Extensions;
 using Age.Numerics;
+using Age.Resources;
 using Age.Storage;
 using Age.Styling;
 using SkiaSharp;
 
 using static Age.Shaders.CanvasShader;
-using Age.Core.Collections;
-using Age.Resources;
 
 namespace Age.Elements.Layouts;
 
 internal sealed class IconLayout : Layout
 {
-    private Dictionary<string, int>?  codepoints;
-    private SKFont?                   font;
-    private bool                      isDirty;
+    private const string MATERIAL_ICONS_OUTLINED = nameof(MATERIAL_ICONS_OUTLINED);
+
+    private static readonly Dictionary<string, string> defaultFontFaces = new()
+    {
+        [MATERIAL_ICONS_OUTLINED] = Path.Join(AppContext.BaseDirectory, "Assets", "Fonts", "MaterialIconsOutlined-Regular.otf")
+    };
+
+    private Dictionary<string, int>? codepoints;
+    private SKFont?                  font;
+    private bool                     isDirty;
 
     public IconLayout(Icon target)
     {
@@ -57,6 +63,7 @@ internal sealed class IconLayout : Layout
                 field = value;
 
                 this.isDirty = true;
+                this.RequestUpdate(true);
             }
         }
     }
@@ -96,19 +103,19 @@ internal sealed class IconLayout : Layout
         ref var bounds = ref glyphsBounds[0];
 
         var glyph = TextStorage.Singleton.DrawGlyph(this.font, atlas, [(char)codepoint], bounds);
-        var size  = new Size<float>(bounds.Width, bounds.Height);
 
         command.Color           = style.Color ?? new();
         command.Flags           = Flags.GrayscaleTexture | Flags.MultiplyColor;
-        command.TextureMap      = glyph;
         command.ObjectId        = default;
         command.PipelineVariant = PipelineVariant.Color;
-        command.Size            = size;
+        command.Size            = new Size<float>(bounds.Width, bounds.Height);
         command.StencilLayer    = this.StencilLayer;
+        command.TextureMap      = glyph;
+        command.Transform       = Transform2D.CreateTranslated(float.Round(bounds.Left), float.Round(-this.BaseLine - bounds.Top));
 
         atlas.Update();
 
-        this.Boundings = size.Cast<uint>();
+        this.Boundings = command.Size.Cast<uint>();
     }
 
     private RectCommand GetRectCommand() =>
@@ -120,20 +127,22 @@ internal sealed class IconLayout : Layout
         {
             var style = this.Parent!.ComputedStyle;
 
-            var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
+            var fontFamily = string.Intern(style.FontFamily ?? MATERIAL_ICONS_OUTLINED);
             var fontWeight = (int)(style.FontWeight ?? FontWeight.Normal);
             var fontSize   = this.Parent.FontSize;
 
+            var fontFaces = this.Parent.StyleSheet?.FontFaces ?? defaultFontFaces;
+
             if (this.font?.Size != fontSize || this.font.Typeface.FamilyName != fontFamily || this.font.Typeface.FontWeight != fontWeight)
             {
-                this.font = TextStorage.Singleton.GetFont(fontFamily, fontSize, fontWeight, this.Parent.StyleSheet?.FontFaces);
+                this.font = TextStorage.Singleton.GetFont(fontFamily, fontSize, fontWeight, fontFaces);
                 this.font.GetFontMetrics(out var metrics);
 
-                this.LineHeight  = (uint)float.Round(-metrics.Ascent + metrics.Descent);
-                this.BaseLine    = (int)float.Round(-metrics.Ascent);
+                this.LineHeight = (uint)float.Round(-metrics.Ascent + metrics.Descent);
+                this.BaseLine   = (int)float.Round(-metrics.Ascent);
             }
 
-            this.codepoints = TextStorage.Singleton.GetCodepoints(fontFamily, this.Parent.StyleSheet?.FontFaces);
+            this.codepoints = TextStorage.Singleton.GetCodepoints(fontFamily, fontFaces);
 
             this.isDirty = true;
             this.RequestUpdate(true);

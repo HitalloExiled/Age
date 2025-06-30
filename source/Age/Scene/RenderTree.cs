@@ -408,7 +408,7 @@ public sealed partial class RenderTree : NodeTree
         }
     }
 
-    public sealed override void Initialize()
+    public override void Initialize()
     {
         this.canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasIndexRenderGraphPass>();
         this.canvasIndexRenderGraphPass.Recreated += this.UpdateBuffer;
@@ -425,7 +425,7 @@ public sealed partial class RenderTree : NodeTree
         base.Initialize();
     }
 
-    public sealed override void Update()
+    public override void Update()
     {
         base.Update();
 
