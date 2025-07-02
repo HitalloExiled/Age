@@ -27,9 +27,9 @@ public sealed class Canvas : Element
         }
     }
 
-    protected override void OnConnected(RenderTree renderTree)
+    protected override void Connected(RenderTree renderTree)
     {
-        base.OnConnected(renderTree);
+        base.Connected(renderTree);
 
         renderTree.Window.Resized += this.OnWindowResized;
 
@@ -38,9 +38,9 @@ public sealed class Canvas : Element
         renderTree.AddDeferredUpdate(this.Layout.UpdateDirtyLayout);
     }
 
-    protected override void OnDisconnected(RenderTree renderTree)
+    protected override void Disconnected(RenderTree renderTree)
     {
-        base.OnDisconnected(renderTree);
+        base.Disconnected(renderTree);
 
         renderTree.Window.Resized -= this.OnWindowResized;
     }

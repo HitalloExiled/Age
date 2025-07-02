@@ -1,9 +1,9 @@
 using Age.Elements.Layouts;
-using Age.Numerics;
+using Age.Scene;
 
 namespace Age.Elements;
 
-public class Icon : Styleable
+public class Icon : Layoutable
 {
     public override string NodeName => nameof(Icon);
 
@@ -15,22 +15,36 @@ public class Icon : Styleable
         set => this.Layout.IconName = value;
     }
 
-    public Icon(string? iconName = null, ushort? size = null, Color? color = null)
+    public Icon() => this.Layout = new(this);
+
+    public Icon(string iconName) : this() =>
+        this.Layout.IconName = iconName;
+
+    protected override void OnAdopted(Node parent)
     {
-        this.Layout = new(this);
-
-        this.Style = new()
+        switch (parent)
         {
-            Color    = color,
-            FontSize = size,
-        };
+            case Element parentElement:
+                this.Layout.HandleTargetAdopted(parentElement);
+                break;
 
-        this.IconName = iconName;
+            case ShadowTree shadowTree:
+                this.Layout.HandleTargetAdopted(shadowTree.Host);
+                break;
+        }
     }
 
-    protected sealed override void OnIndexed()
+    protected override void OnRemoved(Node parent)
     {
-        base.OnIndexed();
-        this.Layout.HandleTargetIndexed();
+        switch (parent)
+        {
+            case Element parentElement:
+                this.Layout.HandleTargetRemoved(parentElement);
+                break;
+
+            case ShadowTree shadowTree:
+                this.Layout.HandleTargetRemoved(shadowTree.Host);
+                break;
+        }
     }
 }

@@ -18,12 +18,11 @@ internal abstract class Layout : Disposable
     public int        BaseLine  { get; protected set; } = -1;
     public Size<uint> Boundings { get; protected set; }
 
-    public Vector2<float> Offset       { get; internal set; }
-    public bool           IsScrollable { get; internal set; }
+    public Vector2<float> Offset { get; internal set; }
 
     public uint LineHeight { get; set; }
 
-    public StyledLayout? Parent => this.Target.ComposedParentElement?.Layout;
+    public BoxLayout? Parent => this.Target.ComposedParentElement?.Layout;
 
     public virtual bool          Hidden       { get; set; }
     public virtual StencilLayer? StencilLayer { get; set; }
@@ -62,7 +61,7 @@ internal abstract class Layout : Disposable
 
             current.MakeDirty();
 
-            var stopPropagation = !current.IsParentDependent && !affectsBoundings || current.Parent == null;
+            var stopPropagation = (!current.IsParentDependent && !affectsBoundings) || current.Parent == null;
 
             if (stopPropagation)
             {

@@ -70,10 +70,10 @@ public sealed class Text : Layoutable
         }
     }
 
-    protected override void OnConnected(RenderTree renderTree) =>
+    protected override void Connected(RenderTree renderTree) =>
         this.Layout.HandleTargetConnected();
 
-    protected override void OnDisconnected(RenderTree renderTree) =>
+    protected override void Disconnected(RenderTree renderTree) =>
         this.Layout.HandleTargetDisconnected();
 
     protected override void OnIndexed() =>

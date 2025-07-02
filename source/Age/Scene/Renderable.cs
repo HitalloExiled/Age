@@ -37,7 +37,7 @@ public abstract class Renderable : Node
 
         if (tree is RenderTree renderTree)
         {
-            this.OnConnected(renderTree);
+            this.Connected(renderTree);
         }
     }
 
@@ -47,10 +47,10 @@ public abstract class Renderable : Node
 
         if (tree is RenderTree renderTree)
         {
-            this.OnDisconnected(renderTree);
+            this.Disconnected(renderTree);
         }
     }
 
-    protected virtual void OnConnected(RenderTree renderTree) { }
-    protected virtual void OnDisconnected(RenderTree renderTree) { }
+    protected virtual void Connected(RenderTree renderTree) { }
+    protected virtual void Disconnected(RenderTree renderTree) { }
 }
