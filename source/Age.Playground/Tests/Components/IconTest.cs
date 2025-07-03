@@ -11,47 +11,24 @@ public static class IconTest
         var style = new Style
         {
             Color          = Color.White,
-            FontSize       = 32,
+            FontSize       = 24,
             ItemsAlignment = ItemsAlignment.Baseline,
+            Border         = new(1, 0, Color.Cyan)
         };
 
         canvas.Children =
         [
             new FlexBox
             {
-                Style = new Style
-                {
-                    ItemsAlignment = ItemsAlignment.Baseline,
-                },
+                Style    = style,
                 Children =
                 [
-                    new FlexBox
-                    {
-                        Style    = style,
-                        Children =
-                        [
-                            new Text("search"),
-                            new Icon("search")
-                        ]
-                    },
-                    new FlexBox
-                    {
-                        Style    = style with { FontSize = 100 },
-                        Children =
-                        [
-                            new Text("home"),
-                            new Icon("home")
-                        ]
-                    },
-                    new FlexBox
-                    {
-                        Style    = style,
-                        Children =
-                        [
-                            new Text("close"),
-                            new Icon("close")
-                        ]
-                    }
+                    new Text("search"),
+                    new Icon("search", color: Color.Red) { Text = "Ignored" },
+                    new Text("home"),
+                    new Icon("home",   color: Color.Green) { Style = { Margin = new(10) } },
+                    new Text("close"),
+                    new Icon("close",  color: Color.Blue),
                 ]
             }
         ];

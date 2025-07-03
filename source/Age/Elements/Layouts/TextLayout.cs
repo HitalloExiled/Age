@@ -25,12 +25,10 @@ internal sealed class TextLayout : Layout
 
     private bool                      caretIsDirty;
     private bool                      caretIsVisible;
-    private Dictionary<string, int>?  codepoints;
     private SKFont?                   font;
     private float                     fontLeading;
     private bool                      isMouseOverText;
     private Vector2<float>            previouCursor;
-    private int                       renderedLength;
     private bool                      selectionIsDirty;
     private bool                      textIsDirty;
 
@@ -220,13 +218,15 @@ internal sealed class TextLayout : Layout
 
     private void DrawCaret()
     {
-        if (this.renderedLength > 0)
+        var textLength = this.Target.Buffer.Length;
+
+        if (textLength > 0)
         {
             Vector2<float> position;
 
-            if (this.CaretPosition == this.renderedLength)
+            if (this.CaretPosition == textLength)
             {
-                var command = (RectCommand)this.Target.Commands[this.renderedLength - 1];
+                var command = (RectCommand)this.Target.Commands[textLength - 1];
 
                 if (this.Target.Buffer[^1] == '\n')
                 {
@@ -281,11 +281,7 @@ internal sealed class TextLayout : Layout
             throw new InvalidOperationException();
         }
 
-        var textSpan = this.codepoints?.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(this.Target.Buffer.AsSpan(), out var codepoint) == true
-            ? [(char)codepoint]
-            : this.Target.Buffer.AsSpan();
-
-        this.renderedLength = textSpan.Length;
+        var textSpan = this.Target.Buffer.AsSpan();
 
         var style = this.Target.ComposedParentElement!.Layout.ComputedStyle;
 
@@ -481,13 +477,6 @@ internal sealed class TextLayout : Layout
                 this.caretIsDirty = true;
             }
 
-            if (property.HasFlags(StyleProperty.FontFeature))
-            {
-                this.codepoints = style.FontFeature == FontFeature.Liga
-                    ? TextStorage.Singleton.GetCodepoints(fontFamily, this.Parent.StyleSheet?.FontFaces)
-                    : null;
-            }
-
             this.textIsDirty = true;
             this.RequestUpdate(true);
         }
@@ -495,7 +484,7 @@ internal sealed class TextLayout : Layout
 
     private void OnTextChange()
     {
-        this.Selection   = this.Selection?.WithEnd(uint.Min(this.Selection.Value.End, (uint)this.renderedLength));
+        this.Selection   = this.Selection?.WithEnd(uint.Min(this.Selection.Value.End, (uint)this.Target.Buffer.Length));
         this.textIsDirty = true;
 
         this.RequestUpdate(true);
@@ -575,7 +564,7 @@ internal sealed class TextLayout : Layout
         this.UpdateDirtyLayout();
 
         var elementIndex = this.Target.Index + 1;
-        var commands     = this.Target.Commands.AsSpan(0, this.renderedLength);
+        var commands     = this.Target.Commands.AsSpan(0, this.Target.Buffer.Length);
 
         for (var i = 0; i < commands.Length; i++)
         {
@@ -755,8 +744,10 @@ internal sealed class TextLayout : Layout
 
         var selection = this.Selection ?? new(this.CaretPosition, this.CaretPosition);
 
-        var startIndex = int.Min((int)selection.Start, this.renderedLength - 1);
-        var endIndex   = int.Min((int)selection.End,   this.renderedLength - 1);
+        var textLength = this.Target.Buffer.Length;
+
+        var startIndex = int.Min((int)selection.Start, textLength - 1);
+        var endIndex   = int.Min((int)selection.End, textLength - 1);
 
         var lineSpan     = this.textLines.AsSpan();
         var commandsSpan = this.Target.Commands.AsSpan();
@@ -777,7 +768,7 @@ internal sealed class TextLayout : Layout
         {
             if (isCursorBelowTop(endAnchorRect))
             {
-                position = (uint)this.renderedLength;
+                position = (uint)textLength;
 
                 scanBelow(commandsSpan, endAnchor.Line, lineSpan.Length, lineSpan, ref position);
             }
@@ -808,9 +799,7 @@ internal sealed class TextLayout : Layout
         void resolveLine(scoped ReadOnlySpan<TextLine> lines, int index, ref uint position) =>
             position = isCursorBefore(endAnchorRect)
                 ? lines[index].Start
-                : lines[index].End + 1 == this.renderedLength
-                    ? (uint)this.renderedLength
-                    : lines[index].End;
+                : lines[index].End + 1 == textLength ? (uint)textLength : lines[index].End;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool isCursorAfter(in Rect<float> rect) => cursor.X > rect.Position.X + (rect.Size.Width / 2);
