@@ -1,50 +1,90 @@
-using Age.Elements.Layouts;
+using Age.Core.Extensions;
+using Age.Numerics;
 using Age.Scene;
+using Age.Storage;
+using Age.Styling;
 
 namespace Age.Elements;
 
-public class Icon : Layoutable
+public class Icon : Element
 {
     public override string NodeName => nameof(Icon);
 
-    internal override IconLayout Layout { get; }
+    private const string MATERIAL_ICONS_OUTLINED = nameof(MATERIAL_ICONS_OUTLINED);
+
+    private readonly Text text = new();
+
+    private Dictionary<string, int>? codepoints;
 
     public string? IconName
     {
-        get => this.Layout.IconName;
-        set => this.Layout.IconName = value;
-    }
-
-    public Icon() => this.Layout = new(this);
-
-    public Icon(string iconName) : this() =>
-        this.Layout.IconName = iconName;
-
-    protected override void OnAdopted(Node parent)
-    {
-        switch (parent)
+        get;
+        set
         {
-            case Element parentElement:
-                this.Layout.HandleTargetAdopted(parentElement);
-                break;
+            if (field != value)
+            {
+                this.SetCodepoint(value);
 
-            case ShadowTree shadowTree:
-                this.Layout.HandleTargetAdopted(shadowTree.Host);
-                break;
+                field = value;
+            }
         }
     }
 
-    protected override void OnRemoved(Node parent)
+    public Icon(string? iconName = null, ushort? fontSize = null, Color? color = null)
     {
-        switch (parent)
-        {
-            case Element parentElement:
-                this.Layout.HandleTargetRemoved(parentElement);
-                break;
+        this.Flags = NodeFlags.Immutable;
 
-            case ShadowTree shadowTree:
-                this.Layout.HandleTargetRemoved(shadowTree.Host);
-                break;
+        this.IconName = iconName;
+
+        if (fontSize.HasValue)
+        {
+            this.Style.FontSize = fontSize;
+        }
+
+        if (color.HasValue)
+        {
+            this.Style.Color = color;
+        }
+
+        this.StyleSheet = new()
+        {
+            Base = new()
+            {
+                FontFamily    = MATERIAL_ICONS_OUTLINED,
+                FontSize      = 24,
+                TextSelection = false,
+            },
+            FontFaces =
+            {
+                [MATERIAL_ICONS_OUTLINED] = Path.Join(AppContext.BaseDirectory, "Assets", "Fonts", "MaterialIconsOutlined-Regular.otf")
+            }
+        };
+
+        this.AttachShadowTree();
+        this.ShadowTree.AppendChild(this.text);
+
+        this.Layout.StyleChanged += this.OnStyleChanged;
+    }
+
+    private void SetCodepoint(string? iconName)
+    {
+        if (iconName != null && this.codepoints?.TryGetValue(iconName, out var codepoint) == true)
+        {
+            this.text.Buffer.Set([(char)codepoint]);
+        }
+        else
+        {
+            this.text.Buffer.Clear();
+        }
+    }
+
+    private void OnStyleChanged(StyleProperty property)
+    {
+        if (property.HasFlags(StyleProperty.FontFamily))
+        {
+            this.codepoints = TextStorage.Singleton.GetCodepoints(this.Layout.ComputedStyle.FontFamily ?? MATERIAL_ICONS_OUTLINED, this.StyleSheet?.FontFaces);
+
+            this.SetCodepoint(this.IconName);
         }
     }
 }

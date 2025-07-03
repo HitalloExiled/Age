@@ -101,4 +101,7 @@ public partial record struct Unit
             UnitKind.Percentage => $"{this.Data.Percentage * 100}%",
             _ => "",
         };
+
+    public static implicit operator Unit(int value)  => Px(value);
+    public static implicit operator Unit(uint value) => Px(value);
 }
