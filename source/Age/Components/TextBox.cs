@@ -42,7 +42,7 @@ public partial class TextBox : Element
 
         this.StyleSheet = Theme.Current.TextBox.Outlined;
 
-        this.AttachShadowTree();
+        this.AttachShadowTree(true);
 
         this.ShadowTree.AppendChild(this.text);
 

@@ -310,18 +310,10 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    public Element()
+    protected Element()
     {
         this.Layout = new(this);
         this.Flags  = NodeFlags.IgnoreUpdates;
-    }
-
-    protected Element(bool useShadowTree) : this()
-    {
-        if (useShadowTree)
-        {
-            this.ShadowTree = new(this);
-        }
     }
 
     IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
@@ -449,7 +441,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     }
 
     [MemberNotNull(nameof(ShadowTree))]
-    protected void AttachShadowTree() => this.ShadowTree = new(this);
+    protected void AttachShadowTree(bool? inheritsHostStyle = null) => this.ShadowTree = new(this, inheritsHostStyle == true);
 
     protected override void OnConnected(NodeTree tree)
     {

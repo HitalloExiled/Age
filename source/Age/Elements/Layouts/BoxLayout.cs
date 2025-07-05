@@ -342,7 +342,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint GetFontSize(Style style) =>
-        style.FontSize ?? 16;
+        style.FontSize ?? DEFAULT_FONT_SIZE;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool HasRelativeEdges(StyleRectEdges? edges) =>

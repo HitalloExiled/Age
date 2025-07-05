@@ -18,9 +18,9 @@ public class InstanceTest
 
             var color = messageSeverity switch
             {
-                VkDebugUtilsMessageSeverityFlagsEXT.Error => ConsoleColor.DarkRed,
+                VkDebugUtilsMessageSeverityFlagsEXT.Error   => ConsoleColor.DarkRed,
                 VkDebugUtilsMessageSeverityFlagsEXT.Warning => ConsoleColor.DarkYellow,
-                VkDebugUtilsMessageSeverityFlagsEXT.Info => ConsoleColor.DarkBlue,
+                VkDebugUtilsMessageSeverityFlagsEXT.Info    => ConsoleColor.DarkBlue,
                 _ => defaultColor
             };
 

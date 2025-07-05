@@ -2,12 +2,14 @@ using Age.Scene;
 
 namespace Age.Elements;
 
-public sealed class ShadowTree(Element host) : Node
+public sealed class ShadowTree(Element host, bool inheritsHostStyle) : Node
 {
     public override string NodeName => nameof(ShadowTree);
 
     private readonly Dictionary<string, Slot> slots   = [];
     private readonly List<Layoutable>         waiting = [];
+
+    internal bool InheritsHostStyle => inheritsHostStyle;
 
     public Element Host { get; } = host;
 

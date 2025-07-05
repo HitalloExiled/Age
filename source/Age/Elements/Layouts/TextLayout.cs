@@ -212,7 +212,7 @@ internal sealed class TextLayout : Layout
 
         if (selectionCommand.Index != default)
         {
-            ((TextCommand)this.Target.Commands[selectionCommand.Index]).Color = this.Parent?.ComputedStyle.Color ?? default;
+            ((TextCommand)this.Target.Commands[selectionCommand.Index]).Color = this.GetInheritedStyleSource()?.ComputedStyle?.Color ?? default;
         }
     }
 
@@ -283,7 +283,7 @@ internal sealed class TextLayout : Layout
 
         var textSpan = this.Target.Buffer.AsSpan();
 
-        var style = this.Target.ComposedParentElement!.Layout.ComputedStyle;
+        var style = this.GetInheritedStyleSource()?.ComputedStyle;
 
         var glyphs = this.font.Typeface.GetGlyphs(textSpan);
         var atlas  = TextStorage.Singleton.GetAtlas(this.font.Typeface.FamilyName, (uint)this.font.Size);
@@ -319,6 +319,7 @@ internal sealed class TextLayout : Layout
         var textOffset = 0;
         var charOffset = 0;
         var lineIndex  = 0;
+        var color      = style?.Color ?? new();
 
         for (var i = 0; i < textSpan.Length; i++)
         {
@@ -361,7 +362,6 @@ internal sealed class TextLayout : Layout
                     var glyph  = TextStorage.Singleton.DrawGlyph(this.font, atlas, chars, bounds);
                     var size   = new Size<float>(bounds.Width, bounds.Height);
                     var offset = new Vector2<float>(float.Round(cursor.X + bounds.Left), float.Round(cursor.Y - bounds.Top));
-                    var color  = style.Color ?? new();
 
                     var characterIndex = textSpan.Length + textOffset;
 
@@ -453,19 +453,25 @@ internal sealed class TextLayout : Layout
         }
     }
 
+    private BoxLayout? GetInheritedStyleSource() => this.Target.Parent is ShadowTree shadowTree
+        ? shadowTree.InheritsHostStyle ? shadowTree.Host.Layout : null
+        : (this.Target.AssignedSlot ?? this.Target.ParentElement)?.Layout;
+
     private void OnParentStyleChanged(StyleProperty property)
     {
-        if (property.HasAnyFlag(StyleProperty.FontFamily | StyleProperty.FontFeature | StyleProperty.FontSize | StyleProperty.FontWeight))
+        if (property.HasAnyFlag(StyleProperty.FontFamily | StyleProperty.FontSize | StyleProperty.FontWeight))
         {
-            var style = this.Parent!.ComputedStyle;
+            var inheritedStyleSource = this.GetInheritedStyleSource();
 
-            var fontFamily = string.Intern(style.FontFamily ?? "Segoi UI");
-            var fontWeight = (int)(style.FontWeight ?? FontWeight.Normal);
-            var fontSize   = this.Parent.FontSize;
+            var style = inheritedStyleSource?.ComputedStyle;
+
+            var fontFamily = style?.FontFamily ?? DEFAULT_FONT_FAMILY;
+            var fontWeight = (int)(style?.FontWeight ?? FontWeight.Normal);
+            var fontSize   = style?.FontSize ?? DEFAULT_FONT_SIZE;
 
             if (this.font?.Size != fontSize || this.font.Typeface.FamilyName != fontFamily || this.font.Typeface.FontWeight != fontWeight)
             {
-                this.font = TextStorage.Singleton.GetFont(fontFamily, fontSize, fontWeight, this.Parent.StyleSheet?.FontFaces);
+                this.font = TextStorage.Singleton.GetFont(fontFamily, fontSize, fontWeight, inheritedStyleSource?.StyleSheet?.FontFaces);
                 this.font.GetFontMetrics(out var metrics);
 
                 this.LineHeight  = (uint)float.Round(-metrics.Ascent + metrics.Descent);
@@ -699,7 +705,6 @@ internal sealed class TextLayout : Layout
         this.GetCharacterOffset(x, y, ref position);
 
         this.CaretPosition = position;
-        Console.WriteLine(position);
     }
 
     public void ShowCaret()
@@ -864,8 +869,6 @@ internal sealed class TextLayout : Layout
 
         this.Selection     = this.Selection?.WithEnd(character) ?? new(this.CaretPosition, character);
         this.CaretPosition = character;
-
-        Console.WriteLine(this.Selection); // TODO Remove
     }
 
     public override void Update()

@@ -1,5 +1,6 @@
 using Age.Core.Extensions;
 using Age.Numerics;
+using Age.Resources.Loaders.Wavefront;
 using Age.Scene;
 using Age.Storage;
 using Age.Styling;
@@ -60,7 +61,7 @@ public class Icon : Element
             }
         };
 
-        this.AttachShadowTree();
+        this.AttachShadowTree(true);
         this.ShadowTree.AppendChild(this.text);
 
         this.Layout.StyleChanged += this.OnStyleChanged;
