@@ -36,6 +36,6 @@ public class Button : Element
     public Button()
     {
         this.IsFocusable = true;
-        this.StyleSheet      = Theme.Current.Button.Flat;
+        this.StyleSheet  = Theme.Current.Button.Flat;
     }
 }
