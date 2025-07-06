@@ -1,5 +1,4 @@
-using Age.Elements;
-using Age.Numerics;
+using Age.Components;
 
 namespace Age.StoryBook.Pages;
 
@@ -11,8 +10,8 @@ public class IconPage : Page
     public IconPage() =>
         this.Children =
         [
-            new Icon("search", color: Color.White),
-            new Icon("home",   color: Color.White),
-            new Icon("close",  color: Color.White),
+            new Icon("search"),
+            new Icon("home"),
+            new Icon("close"),
         ];
 }

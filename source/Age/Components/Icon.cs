@@ -1,17 +1,16 @@
 using Age.Core.Extensions;
+using Age.Elements;
 using Age.Numerics;
-using Age.Resources.Loaders.Wavefront;
 using Age.Scene;
 using Age.Storage;
 using Age.Styling;
+using Age.Themes;
 
-namespace Age.Elements;
+namespace Age.Components;
 
 public class Icon : Element
 {
     public override string NodeName => nameof(Icon);
-
-    private const string MATERIAL_ICONS_OUTLINED = nameof(MATERIAL_ICONS_OUTLINED);
 
     private readonly Text text = new();
 
@@ -47,19 +46,7 @@ public class Icon : Element
             this.Style.Color = color;
         }
 
-        this.StyleSheet = new()
-        {
-            Base = new()
-            {
-                FontFamily    = MATERIAL_ICONS_OUTLINED,
-                FontSize      = 24,
-                TextSelection = false,
-            },
-            FontFaces =
-            {
-                [MATERIAL_ICONS_OUTLINED] = Path.Join(AppContext.BaseDirectory, "Assets", "Fonts", "MaterialIconsOutlined-Regular.otf")
-            }
-        };
+        this.StyleSheet = Theme.Current.Icon.Default;
 
         this.AttachShadowTree(true);
         this.ShadowTree.AppendChild(this.text);
@@ -83,7 +70,14 @@ public class Icon : Element
     {
         if (property.HasFlags(StyleProperty.FontFamily))
         {
-            this.codepoints = TextStorage.Singleton.GetCodepoints(this.Layout.ComputedStyle.FontFamily ?? MATERIAL_ICONS_OUTLINED, this.StyleSheet?.FontFaces);
+            if (this.Layout.ComputedStyle.FontFamily is string fontFamily)
+            {
+                this.codepoints = TextStorage.Singleton.GetCodepoints(fontFamily, this.StyleSheet?.FontFaces);
+            }
+            else
+            {
+                this.codepoints = null;
+            }
 
             this.SetCodepoint(this.IconName);
         }

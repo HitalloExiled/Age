@@ -14,23 +14,47 @@ public enum StyleProperty
     ContentJustification = 1 << 7,
     Cursor               = 1 << 8,
     FontFamily           = 1 << 9,
-    FontFeature          = 1 << 10,
-    FontSize             = 1 << 11,
-    FontWeight           = 1 << 12,
-    Hidden               = 1 << 13,
-    ItemsAlignment       = 1 << 14,
-    Margin               = 1 << 15,
-    MaxSize              = 1 << 16,
-    MinSize              = 1 << 17,
-    Overflow             = 1 << 18,
-    Padding              = 1 << 19,
-    Positioning          = 1 << 20,
-    Size                 = 1 << 21,
-    Stack                = 1 << 22,
-    TextAlignment        = 1 << 23,
-    TextSelection        = 1 << 24,
-    Transforms            = 1 << 25,
-    TransformOrigin      = 1 << 26,
+    FontSize             = 1 << 10,
+    FontWeight           = 1 << 11,
+    Hidden               = 1 << 12,
+    ItemsAlignment       = 1 << 13,
+    Margin               = 1 << 14,
+    MaxSize              = 1 << 15,
+    MinSize              = 1 << 16,
+    Overflow             = 1 << 17,
+    Padding              = 1 << 18,
+    Positioning          = 1 << 19,
+    Size                 = 1 << 20,
+    Stack                = 1 << 21,
+    TextAlignment        = 1 << 22,
+    TextSelection        = 1 << 23,
+    Transforms           = 1 << 24,
+    TransformOrigin      = 1 << 25,
 
-    All = Alignment | BackgroundColor | BackgroundImage | Baseline | Border | BoxSizing | Color | ContentJustification | Cursor | FontFamily | FontFeature | FontSize | FontWeight | Hidden | ItemsAlignment | Margin | MaxSize | MinSize | Overflow | Padding | Positioning | Size | Stack | TextAlignment | TextSelection | Transforms | TransformOrigin
+    All = Alignment
+        | BackgroundColor
+        | BackgroundImage
+        | Baseline
+        | Border
+        | BoxSizing
+        | Color
+        | ContentJustification
+        | Cursor
+        | FontFamily
+        | FontSize
+        | FontWeight
+        | Hidden
+        | ItemsAlignment
+        | Margin
+        | MaxSize
+        | MinSize
+        | Overflow
+        | Padding
+        | Positioning
+        | Size
+        | Stack
+        | TextAlignment
+        | TextSelection
+        | Transforms
+        | TransformOrigin
 }
