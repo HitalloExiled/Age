@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Age.Styling;
 
-internal struct StyleData
+internal record struct StyleData
 {
     #region 8-bytes
     /// <summary>

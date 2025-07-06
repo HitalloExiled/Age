@@ -1,4 +1,5 @@
 using Age.Core.Extensions;
+using Age.Scene;
 using Age.Styling;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -9,13 +10,7 @@ internal abstract partial class StyledLayout(Element target) : Layout
 {
     public event Action<StyleProperty>? StyleChanged;
 
-    private static readonly Style     empty     = new();
     private static readonly StylePool stylePool = new();
-
-    private Style? computedStyle;
-
-    [MemberNotNullWhen(true, nameof(computedStyle), nameof(StyleSheet))]
-    private bool NeedsCompute => this.StyleSheet != null;
 
     private ElementState States
     {
@@ -26,7 +21,7 @@ internal abstract partial class StyledLayout(Element target) : Layout
             {
                 field = value;
 
-                if (this.NeedsCompute)
+                if (this.StyleSheet != null)
                 {
                     this.ComputeStyle(this.ComputedStyle.Data);
                 }
@@ -34,7 +29,7 @@ internal abstract partial class StyledLayout(Element target) : Layout
         }
     }
 
-    public Style ComputedStyle => this.computedStyle ?? this.UserStyle ?? empty;
+    public Style ComputedStyle { get; } = stylePool.Get();
 
     public override Element Target => target;
 
@@ -47,9 +42,7 @@ internal abstract partial class StyledLayout(Element target) : Layout
             {
                 field = value;
 
-                var previous = this.ComputedStyle.Data;
-                this.HandleComputedStyleAllocation(value != null);
-                this.ComputeStyle(previous);
+                this.ComputeStyle(this.ComputedStyle.Data);
             }
         }
     }
@@ -97,58 +90,53 @@ internal abstract partial class StyledLayout(Element target) : Layout
             return;
         }
 
-        if (!this.NeedsCompute)
-        {
-            this.CompareAndInvoke(this.ComputedStyle.Data, previous);
+        var inheritedProperties = this.GetInheritedProperties();
 
-            return;
-        }
+        this.ComputedStyle.Copy(inheritedProperties);
 
-        if (this.StyleSheet.Base != null)
+        if (this.StyleSheet?.Base != null)
         {
-            this.computedStyle.Copy(this.StyleSheet.Base);
-        }
-        else
-        {
-            this.computedStyle.Clear();
+            this.ComputedStyle.Merge(this.StyleSheet.Base);
         }
 
         if (this.UserStyle != null)
         {
-            this.computedStyle.Merge(this.UserStyle);
+            this.ComputedStyle.Merge(this.UserStyle);
         }
 
-        merge(ElementState.Focus,    this.StyleSheet.Focus);
-        merge(ElementState.Hovered,  this.StyleSheet.Hovered);
-        merge(ElementState.Disabled, this.StyleSheet.Disabled);
-        merge(ElementState.Enabled,  this.StyleSheet.Enabled);
-        merge(ElementState.Checked,  this.StyleSheet.Checked);
-        merge(ElementState.Active,   this.StyleSheet.Active);
+        if (this.StyleSheet != null)
+        {
+            merge(ElementState.Focus,    this.StyleSheet.Focus);
+            merge(ElementState.Hovered,  this.StyleSheet.Hovered);
+            merge(ElementState.Disabled, this.StyleSheet.Disabled);
+            merge(ElementState.Enabled,  this.StyleSheet.Enabled);
+            merge(ElementState.Checked,  this.StyleSheet.Checked);
+            merge(ElementState.Active,   this.StyleSheet.Active);
+        }
 
-        this.CompareAndInvoke(this.computedStyle.Data, previous);
+        this.CompareAndInvoke(this.ComputedStyle.Data, previous);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void merge(ElementState states, Style? style)
         {
             if (this.States.HasFlags(states) && style != null)
             {
-                this.computedStyle.Merge(style);
+                this.ComputedStyle.Merge(style);
             }
         }
     }
 
-    private void HandleComputedStyleAllocation(bool allocating)
-    {
-        if (allocating)
-        {
-            this.computedStyle ??= stylePool.Get();
-        }
-        else
-        {
-            stylePool.Return(this.computedStyle!);
-            this.computedStyle = null;
-        }
-    }
+    private StyleData GetInheritedProperties() =>
+        GetStyleSource(this.Target.Parent)?.ComputedStyle is Style parentStyle
+            ? new StyleData
+            {
+                Color         = parentStyle.Color,
+                FontFamily    = parentStyle.FontFamily,
+                FontSize      = parentStyle.FontSize,
+                FontWeight    = parentStyle.FontWeight,
+                TextSelection = parentStyle.TextSelection
+            }
+            : default;
 
     private void InvokeStyleChanged(StyleProperty property)
     {
@@ -156,13 +144,23 @@ internal abstract partial class StyledLayout(Element target) : Layout
         StyleChanged?.Invoke(property);
     }
 
+    private void OnParentStyleChanged(StyleProperty property)
+    {
+        var inheritedProperties = this.GetInheritedProperties();
+
+        this.ComputedStyle.Merge(inheritedProperties);
+    }
+
     private void OnPropertyChanged(StyleProperty property)
     {
-        this.computedStyle?.Copy(this.UserStyle!, property);
+        this.ComputedStyle?.Copy(this.UserStyle!, property);
         this.InvokeStyleChanged(property);
     }
 
     protected abstract void OnStyleChanged(StyleProperty property);
+
+    protected override void OnDisposed() =>
+        stylePool.Return(this.ComputedStyle);
 
     public void AddState(ElementState state) =>
         this.States |= state;
@@ -172,6 +170,16 @@ internal abstract partial class StyledLayout(Element target) : Layout
 
     public void RemoveState(ElementState state) =>
         this.States &= ~state;
+
+    public override void HandleTargetConnected()
+    {
+        base.HandleTargetConnected();
+
+        GetStyleSource(this.Target.Parent)?.StyleChanged += this.OnParentStyleChanged;
+    }
+
+    public void HandleTargetRemoved(Node parent) =>
+        GetStyleSource(parent)?.StyleChanged -= this.OnParentStyleChanged;
 
     public override string ToString() =>
         $"{{ Target: {target} }}";

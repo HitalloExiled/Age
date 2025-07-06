@@ -36,6 +36,13 @@ internal abstract class Layout : Disposable
     public abstract bool       IsParentDependent { get; }
     public abstract Layoutable Target            { get; }
 
+    protected static StyledLayout? GetStyleSource(Node? node) =>
+        node is not ShadowTree shadowTree
+            ? (node as Element)?.Layout
+            : shadowTree.InheritsHostStyle
+                ? shadowTree.Host.Layout
+                : null;
+
     protected abstract void OnDisposed();
 
     protected void SetCursor(Cursor? cursor)
@@ -65,7 +72,7 @@ internal abstract class Layout : Disposable
 
             current.MakeDirty();
 
-            var stopPropagation = (!current.IsParentDependent && !affectsBoundings) || current.Parent == null;
+            var stopPropagation = !current.IsParentDependent && !affectsBoundings || current.Parent == null;
 
             if (stopPropagation)
             {

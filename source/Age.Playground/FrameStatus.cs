@@ -40,16 +40,16 @@ public class FrameStatus : Element
         this.AppendChild(this.statusText);
     }
 
-    protected override void Connected(RenderTree renderTree)
+    protected override void OnConnected(RenderTree renderTree)
     {
-        base.Connected(renderTree);
+        base.OnConnected(renderTree);
 
         renderTree.Updated += this.Update;
     }
 
-    protected override void Disconnected(RenderTree renderTree)
+    protected override void OnDisconnected(RenderTree renderTree)
     {
-        base.Disconnected(renderTree);
+        base.OnDisconnected(renderTree);
 
         renderTree.Updated -= this.Update;
     }

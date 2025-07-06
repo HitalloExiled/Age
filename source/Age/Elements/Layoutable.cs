@@ -119,7 +119,7 @@ public abstract class Layoutable : Spatial2D
     }
 
     public Element? ComposedParentElement  => this.AssignedSlot ?? this.EffectiveParentElement;
-    public Element? EffectiveParentElement => this.Parent is ShadowTree shadowTree ? shadowTree.Host : this.ParentElement;
+    public Element? EffectiveParentElement => this.Parent is ShadowTree shadowTree ? shadowTree.Host : this.Parent as Element;
     public Element? ParentElement          => this.Parent as Element;
 
     public override Transform2D Transform

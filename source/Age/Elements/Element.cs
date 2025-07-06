@@ -450,7 +450,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.ShadowTree?.Tree = tree;
     }
 
-    protected override void Connected(RenderTree renderTree)
+    protected override void OnConnected(RenderTree renderTree)
     {
         if (this.events.ContainsKey(EventProperty.Input))
         {
@@ -505,9 +505,9 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.ShadowTree?.Tree = null;
     }
 
-    protected override void Disconnected(RenderTree renderTree)
+    protected override void OnDisconnected(RenderTree renderTree)
     {
-        base.Disconnected(renderTree);
+        base.OnDisconnected(renderTree);
 
         this.Canvas = null;
 
@@ -532,6 +532,13 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     protected override void OnIndexed() =>
         this.Layout.HandleTargetIndexed();
+
+    protected override void OnRemoved(Node parent)
+    {
+        base.OnRemoved(parent);
+
+        this.Layout.HandleTargetRemoved(parent);
+    }
 
     internal ComposedTreeEnumerator GetComposedTreeEnumerator() =>
         new(this);

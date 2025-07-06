@@ -7,7 +7,7 @@ public sealed class Canvas : Element
 {
     // private const ushort PADDING = 8;
 
-    public override string NodeName => nameof(Canvas);
+    public override string NodeName => nameof(Elements.Canvas);
 
     public Canvas()
     {
@@ -27,9 +27,9 @@ public sealed class Canvas : Element
         }
     }
 
-    protected override void Connected(RenderTree renderTree)
+    protected override void OnConnected(RenderTree renderTree)
     {
-        base.Connected(renderTree);
+        base.OnConnected(renderTree);
 
         renderTree.Window.Resized += this.OnWindowResized;
 
@@ -38,9 +38,9 @@ public sealed class Canvas : Element
         renderTree.AddDeferredUpdate(this.Layout.UpdateDirtyLayout);
     }
 
-    protected override void Disconnected(RenderTree renderTree)
+    protected override void OnDisconnected(RenderTree renderTree)
     {
-        base.Disconnected(renderTree);
+        base.OnDisconnected(renderTree);
 
         renderTree.Window.Resized -= this.OnWindowResized;
     }
