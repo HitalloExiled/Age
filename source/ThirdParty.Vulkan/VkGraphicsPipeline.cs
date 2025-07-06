@@ -2,7 +2,7 @@ using static Age.Core.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
-public sealed unsafe partial class VkGraphicsPipeline : VkPipeline
+public sealed unsafe class VkGraphicsPipeline : VkPipeline
 {
     internal VkGraphicsPipeline(VkHandle<VkPipeline> handle, VkDevice device) : base(handle, device) { }
 

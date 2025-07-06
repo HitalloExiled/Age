@@ -231,7 +231,7 @@ internal static unsafe partial class User32
 
     /// <inheritdoc cref="GetClipboardData" />
     public static string? GetClipboardTextData() =>
-        Marshal.PtrToStringAnsi(GetClipboardData(STANDARD_CLIPBOARD_FORMATS.CF_TEXT));
+        Marshal.PtrToStringAuto(GetClipboardData(STANDARD_CLIPBOARD_FORMATS.CF_UNICODETEXT));
 
     /// <summary>
     /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getcursorpos"></see>
@@ -455,7 +455,7 @@ internal static unsafe partial class User32
 
     /// <inheritdoc cref="SetClipboardData" />
     public static HANDLE SetClipboardData(string value) =>
-        SetClipboardData(STANDARD_CLIPBOARD_FORMATS.CF_TEXT, Marshal.StringToHGlobalAnsi(value));
+        SetClipboardData(STANDARD_CLIPBOARD_FORMATS.CF_UNICODETEXT, Marshal.StringToHGlobalAuto(value));
 
     /// <summary>
     /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setcursor"></see>

@@ -342,7 +342,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint GetFontSize(Style style) =>
-        style.FontSize ?? 16;
+        style.FontSize ?? DEFAULT_FONT_SIZE;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool HasRelativeEdges(StyleRectEdges? edges) =>
@@ -747,7 +747,6 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             var size           = dependent.Layout.size;
             var dependentStyle = dependent.Layout.ComputedStyle;
 
-
             if (!this.contentDependencies.HasFlags(Dependency.Width) || direction == StackDirection.Vertical)
             {
                 if (!this.contentDependencies.HasFlags(Dependency.Width))
@@ -813,7 +812,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             var max = 0;
 
             var hasMin = minUnit?.TryGetPixel(out min) == true;
-            var hasMax = minUnit?.TryGetPixel(out min) == true;
+            var hasMax = maxUnit?.TryGetPixel(out max) == true;
 
             if (hasMin && hasMax)
             {
@@ -849,7 +848,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             var max = 0f;
 
             var hasMin = minUnit?.TryGetPercentage(out min) == true;
-            var hasMax = minUnit?.TryGetPercentage(out min) == true;
+            var hasMax = maxUnit?.TryGetPercentage(out max) == true;
 
             if (hasMin && hasMax)
             {
@@ -914,7 +913,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
                 && (
                     alignment.Value == Alignment.Center
                     || alignment.Value.HasAnyFlag(Alignment.Top | Alignment.Bottom)
-                    || direction == StackDirection.Vertical && alignment.Value.HasAnyFlag(Alignment.Start | Alignment.Center | Alignment.End)
+                    || (direction == StackDirection.Vertical && alignment.Value.HasAnyFlag(Alignment.Start | Alignment.Center | Alignment.End))
                 );
 
             baseline += element.Layout.padding.Top + element.Layout.border.Top + element.Layout.margin.Top;
@@ -935,15 +934,15 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         alignmentAxis = AlignmentAxis.Horizontal | AlignmentAxis.Vertical;
 
-        if (alignmentKind.HasFlags(Alignment.Left) || direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start)))
+        if (alignmentKind.HasFlags(Alignment.Left) || (direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start))))
         {
             x = -1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Right) || direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End)))
+        else if (alignmentKind.HasFlags(Alignment.Right) || (direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End))))
         {
             x = 1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Center) || direction == StackDirection.Vertical && itemsAlignment == ItemsAlignment.Center)
+        else if (alignmentKind.HasFlags(Alignment.Center) || (direction == StackDirection.Vertical && itemsAlignment == ItemsAlignment.Center))
         {
             x = 0;
         }
@@ -952,15 +951,15 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             alignmentAxis &= ~AlignmentAxis.Horizontal;
         }
 
-        if (alignmentKind.HasFlags(Alignment.Top) || direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start)))
+        if (alignmentKind.HasFlags(Alignment.Top) || (direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start))))
         {
             y = -1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Bottom) || direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End)))
+        else if (alignmentKind.HasFlags(Alignment.Bottom) || (direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End))))
         {
             y = 1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Center) || direction == StackDirection.Horizontal && itemsAlignment == ItemsAlignment.Center)
+        else if (alignmentKind.HasFlags(Alignment.Center) || (direction == StackDirection.Horizontal && itemsAlignment == ItemsAlignment.Center))
         {
             y = 0;
         }
@@ -1035,14 +1034,14 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
         {
             this.ContentOffset = this.ContentOffset with
             {
-                X = (uint)(this.ContentOffset.X + 10 * -mouseEvent.Delta)
+                X = (uint)(this.ContentOffset.X + (10 * -mouseEvent.Delta))
             };
         }
         else if (overflow.HasFlags(Overflow.ScrollY))
         {
             this.ContentOffset = this.ContentOffset with
             {
-                Y = (uint)(this.ContentOffset.Y + 10 * -mouseEvent.Delta)
+                Y = (uint)(this.ContentOffset.Y + (10 * -mouseEvent.Delta))
             };
         }
     }
@@ -1148,7 +1147,7 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
             if (texture != null)
             {
-                command.MappedTexture   = new(texture, UVRect.Normalized);
+                command.TextureMap      = new(texture, UVRect.Normalized);
                 command.PipelineVariant = PipelineVariant.Color;
                 command.StencilLayer    = new StencilLayer(this.Target);
 
@@ -1158,9 +1157,9 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             }
         }
 
-        if (!command.MappedTexture.IsDefault)
+        if (!command.TextureMap.IsDefault)
         {
-            TextureStorage.Singleton.Release(command.MappedTexture.Texture);
+            TextureStorage.Singleton.Release(command.TextureMap.Texture);
         }
 
         if (command.StencilLayer != null)
@@ -1363,11 +1362,11 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
             {
                 var layoutCommandImage  = this.GetLayoutCommandImage();
 
-                this.ResolveImageSize(style.BackgroundImage, layoutCommandImage.MappedTexture.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
+                this.ResolveImageSize(style.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
 
                 layoutCommandImage.Size          = size;
                 layoutCommandImage.Transform     = transform;
-                layoutCommandImage.MappedTexture = layoutCommandImage.MappedTexture with { UV = uv };
+                layoutCommandImage.TextureMap = layoutCommandImage.TextureMap with { UV = uv };
                 layoutCommandImage.StencilLayer!.MakeDirty();
             }
         }
@@ -1387,9 +1386,9 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         var layoutCommandImage = this.GetLayoutCommandImage();
 
-        if (!layoutCommandImage.MappedTexture.IsDefault)
+        if (!layoutCommandImage.TextureMap.IsDefault)
         {
-            TextureStorage.Singleton.Release(layoutCommandImage.MappedTexture.Texture);
+            TextureStorage.Singleton.Release(layoutCommandImage.TextureMap.Texture);
         }
 
         foreach (var item in this.Target.Commands)
@@ -1578,6 +1577,12 @@ internal sealed partial class BoxLayout(Element target) : StyledLayout(target)
 
         this.Target.Visible = !hidden;
     }
+
+    public RectCommand GetLayoutLayer(LayoutLayer layer) =>
+        this.GetLayoutCommand((LayoutCommand)layer);
+
+    public void ReleaseLayoutLayer(LayoutLayer layer) =>
+        this.ReleaseLayoutCommand((LayoutCommand)layer);
 
     public void HandleElementRemoved(Element element)
     {

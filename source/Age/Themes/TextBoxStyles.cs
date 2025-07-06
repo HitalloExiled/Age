@@ -1,16 +1,28 @@
+using Age.Numerics;
+using Age.Platforms.Display;
 using Age.Styling;
 
 namespace Age.Themes;
 
 public class TextBoxStyles
 {
-    public static Style Base { get; } = new()
+    internal static TextBoxStyles GetDarkVariant() => new()
     {
-        ContentJustification = ContentJustification.Center,
-        FontWeight           = FontWeight.Medium,
-        Overflow             = Overflow.Scroll,
-        Padding              = new(Unit.Px(4)),
-        TextSelection        = false,
+        Outlined = new()
+        {
+            Base = new()
+            {
+                Border          = new(1, 4, Color.Green),
+                Color           = Color.Green,
+                BackgroundColor = Color.Black,
+                Padding         = new(Unit.Px(4)),
+                MinSize         = new(Unit.Px(100), Unit.Em(1.5f))
+            },
+            Hovered = new()
+            {
+                Cursor = Cursor.Text,
+            }
+        }
     };
 
     public required StyleSheet Outlined { get; init; }

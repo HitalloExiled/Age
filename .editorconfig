@@ -267,6 +267,7 @@ dotnet_style_qualification_for_field                       = true:suggestion
 dotnet_style_qualification_for_method                      = true:suggestion
 dotnet_style_qualification_for_property                    = true:suggestion
 dotnet_style_require_accessibility_modifiers               = always:suggestion
+dotnet_style_parentheses_in_arithmetic_binary_operators    = always:suggestion
 
 dotnet_remove_unnecessary_suppression_exclusions = suggestion
 dotnet_separate_import_directive_groups          = suggestion
@@ -349,6 +350,12 @@ dotnet_diagnostic.IDE0078.severity = none       # Use pattern matching
 dotnet_diagnostic.IDE0080.severity = suggestion # Remove unnecessary suppression operator
 dotnet_diagnostic.IDE0082.severity = suggestion # Convert typeof to nameof
 dotnet_diagnostic.IDE1006.severity = suggestion # Remove unnecessary suppression operator
+dotnet_diagnostic.RCS1001.severity = none       # Add braces (when expression spans over multiple lines)
+dotnet_diagnostic.RCS1123.severity = none       # Add parentheses when
+dotnet_diagnostic.RCS1242.severity = none       # Do not pass non-read-only struct by read-only reference
+
+[**/*Extensions.cs]
+dotnet_diagnostic.CA1822.severity = none
 
 [**/obj/**.cs]
 dotnet_diagnostic.CS8019.severity = none
@@ -356,7 +363,7 @@ dotnet_diagnostic.CS8019.severity = none
 [**/Native/**.cs]
 dotnet_diagnostic.IDE1006.severity = none
 
-[*.{csproj,xml,yml,yaml}]
+[*.{csproj,xml,yml,yaml,props}]
 indent_style = space
 indent_size  = 2
 

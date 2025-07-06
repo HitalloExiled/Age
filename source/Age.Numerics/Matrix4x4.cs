@@ -22,7 +22,7 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
     public T this[int row, int column]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        readonly get => (row * 4 + column) switch
+        readonly get => ((row * 4) + column) switch
         {
              0 => this.M11,
              1 => this.M12,
@@ -45,7 +45,7 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set
         {
-            switch (row * 4 + column)
+            switch ((row * 4) + column)
             {
                 case  0: this.M11 = value; break;
                 case  1: this.M12 = value; break;
@@ -105,7 +105,6 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
             Unsafe.SkipInit<Quaternion<T>>(out var result);
 
             var trace = this.M11 + this.M22 + this.M33;
-
 
             if (trace > T.Zero)
             {
@@ -169,12 +168,12 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
     }
 
     public readonly T Determinant =>
-        this.M11 * this.M22 * this.M33 * this.M44 - this.M11 * this.M22 * this.M34 * this.M43 - this.M11 * this.M32 * this.M23 * this.M44 + this.M11 * this.M32 * this.M24 * this.M43 +
-        this.M11 * this.M42 * this.M23 * this.M34 - this.M11 * this.M42 * this.M24 * this.M33 - this.M21 * this.M12 * this.M33 * this.M44 + this.M21 * this.M12 * this.M34 * this.M43 +
-        this.M21 * this.M32 * this.M13 * this.M44 - this.M21 * this.M32 * this.M14 * this.M43 - this.M21 * this.M42 * this.M13 * this.M34 + this.M21 * this.M42 * this.M14 * this.M33 +
-        this.M31 * this.M12 * this.M23 * this.M44 - this.M31 * this.M12 * this.M24 * this.M43 - this.M31 * this.M22 * this.M13 * this.M44 + this.M31 * this.M22 * this.M14 * this.M43 +
-        this.M31 * this.M42 * this.M13 * this.M24 - this.M31 * this.M42 * this.M14 * this.M23 - this.M41 * this.M12 * this.M23 * this.M34 + this.M41 * this.M12 * this.M24 * this.M33 +
-        this.M41 * this.M22 * this.M13 * this.M34 - this.M41 * this.M22 * this.M14 * this.M33 - this.M41 * this.M32 * this.M13 * this.M24 + this.M41 * this.M32 * this.M14 * this.M23;
+        (this.M11 * this.M22 * this.M33 * this.M44) - this.M11 * this.M22 * this.M34 * this.M43 - (this.M11 * this.M32 * this.M23 * this.M44) + (this.M11 * this.M32 * this.M24 * this.M43) +
+        (this.M11 * this.M42 * this.M23 * this.M34) - this.M11 * this.M42 * this.M24 * this.M33 - (this.M21 * this.M12 * this.M33 * this.M44) + (this.M21 * this.M12 * this.M34 * this.M43) +
+        (this.M21 * this.M32 * this.M13 * this.M44) - this.M21 * this.M32 * this.M14 * this.M43 - (this.M21 * this.M42 * this.M13 * this.M34) + (this.M21 * this.M42 * this.M14 * this.M33) +
+        (this.M31 * this.M12 * this.M23 * this.M44) - this.M31 * this.M12 * this.M24 * this.M43 - (this.M31 * this.M22 * this.M13 * this.M44) + (this.M31 * this.M22 * this.M14 * this.M43) +
+        (this.M31 * this.M42 * this.M13 * this.M24) - this.M31 * this.M42 * this.M14 * this.M23 - (this.M41 * this.M12 * this.M23 * this.M34) + (this.M41 * this.M12 * this.M24 * this.M33) +
+        (this.M41 * this.M22 * this.M13 * this.M34) - this.M41 * this.M22 * this.M14 * this.M33 - (this.M41 * this.M32 * this.M13 * this.M24) + (this.M41 * this.M32 * this.M14 * this.M23);
 
     public readonly bool IsIdentity =>
         this.M11 == T.One  &&
@@ -278,19 +277,19 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
         var one = T.One;
         var two = T.One + T.One;
 
-        matrix.M11 = one - two * (yy + zz);
+        matrix.M11 = one - (two * (yy + zz));
         matrix.M12 = two * (xy + zw);
         matrix.M13 = two * (xz - yw);
         matrix.M14 = T.Zero;
 
         matrix.M21 = two * (xy - zw);
-        matrix.M22 = one - two * (xx + zz);
+        matrix.M22 = one - (two * (xx + zz));
         matrix.M23 = two * (yz + xw);
         matrix.M24 = T.Zero;
 
         matrix.M31 = two * (xz + yw);
         matrix.M32 = two * (yz - xw);
-        matrix.M33 = one - two * (xx + yy);
+        matrix.M33 = one - (two * (xx + yy));
         matrix.M34 = T.Zero;
     }
 
@@ -394,19 +393,19 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
         Unsafe.SkipInit(out Matrix4x4<T> result);
 
-        result.M11 = xx + cos * (T.One - xx);
-        result.M12 = xy - cos * xy + sin * axis.Z;
-        result.M13 = xz - cos * xz - sin * axis.Y;
+        result.M11 = xx + (cos * (T.One - xx));
+        result.M12 = xy - (cos * xy) + (sin * axis.Z);
+        result.M13 = xz - (cos * xz) - (sin * axis.Y);
         result.M14 = T.Zero;
 
-        result.M21 = xy - cos * xy - sin * axis.Z;
-        result.M22 = yy + cos * (T.One - yy);
-        result.M23 = yz - cos * yz + sin * axis.X;
+        result.M21 = xy - (cos * xy) - (sin * axis.Z);
+        result.M22 = yy + (cos * (T.One - yy));
+        result.M23 = yz - (cos * yz) + (sin * axis.X);
         result.M24 = T.Zero;
 
-        result.M31 = xz - cos * xz + sin * axis.Y;
-        result.M32 = yz - cos * yz - sin * axis.X;
-        result.M33 = zz + cos * (T.One - zz);
+        result.M31 = xz - (cos * xz) + (sin * axis.Y);
+        result.M32 = yz - (cos * yz) - (sin * axis.X);
+        result.M33 = zz + (cos * (T.One - zz));
         result.M34 = T.Zero;
 
         result.M14 = T.Zero;
@@ -438,25 +437,25 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
         var reciprocal = T.One / determinant;
 
-        result.M11 = (this.M22  * this.M33 * this.M44 - this.M22 * this.M34 * this.M43 - this.M32 * this.M23 * this.M44 + this.M32 * this.M24 * this.M43 + this.M42 * this.M23 * this.M34 - this.M42 * this.M24 * this.M33) * reciprocal;
-        result.M12 = (-this.M12 * this.M33 * this.M44 + this.M12 * this.M34 * this.M43 + this.M32 * this.M13 * this.M44 - this.M32 * this.M14 * this.M43 - this.M42 * this.M13 * this.M34 + this.M42 * this.M14 * this.M33) * reciprocal;
-        result.M13 = (this.M12  * this.M23 * this.M44 - this.M12 * this.M24 * this.M43 - this.M22 * this.M13 * this.M44 + this.M22 * this.M14 * this.M43 + this.M42 * this.M13 * this.M24 - this.M42 * this.M14 * this.M23) * reciprocal;
-        result.M14 = (-this.M12 * this.M23 * this.M34 + this.M12 * this.M24 * this.M33 + this.M22 * this.M13 * this.M34 - this.M22 * this.M14 * this.M33 - this.M32 * this.M13 * this.M24 + this.M32 * this.M14 * this.M23) * reciprocal;
+        result.M11 = ((this.M22  * this.M33 * this.M44) - (this.M22 * this.M34 * this.M43) - this.M32 * this.M23 * this.M44 + this.M32 * this.M24 * this.M43 + this.M42 * this.M23 * this.M34 - this.M42 * this.M24 * this.M33) * reciprocal;
+        result.M12 = ((-this.M12 * this.M33 * this.M44) + (this.M12 * this.M34 * this.M43) + this.M32 * this.M13 * this.M44 - this.M32 * this.M14 * this.M43 - this.M42 * this.M13 * this.M34 + this.M42 * this.M14 * this.M33) * reciprocal;
+        result.M13 = ((this.M12  * this.M23 * this.M44) - (this.M12 * this.M24 * this.M43) - this.M22 * this.M13 * this.M44 + this.M22 * this.M14 * this.M43 + this.M42 * this.M13 * this.M24 - this.M42 * this.M14 * this.M23) * reciprocal;
+        result.M14 = ((-this.M12 * this.M23 * this.M34) + (this.M12 * this.M24 * this.M33) + this.M22 * this.M13 * this.M34 - this.M22 * this.M14 * this.M33 - this.M32 * this.M13 * this.M24 + this.M32 * this.M14 * this.M23) * reciprocal;
 
-        result.M21 = (-this.M21 * this.M33 * this.M44 + this.M21 * this.M34 * this.M43 + this.M31 * this.M23 * this.M44 - this.M31 * this.M24 * this.M43 - this.M41 * this.M23 * this.M34 + this.M41 * this.M24 * this.M33) * reciprocal;
-        result.M22 = (this.M11  * this.M33 * this.M44 - this.M11 * this.M34 * this.M43 - this.M31 * this.M13 * this.M44 + this.M31 * this.M14 * this.M43 + this.M41 * this.M13 * this.M34 - this.M41 * this.M14 * this.M33) * reciprocal;
-        result.M23 = (-this.M11 * this.M23 * this.M44 + this.M11 * this.M24 * this.M43 + this.M21 * this.M13 * this.M44 - this.M21 * this.M14 * this.M43 - this.M41 * this.M13 * this.M24 + this.M41 * this.M14 * this.M23) * reciprocal;
-        result.M24 = (this.M11  * this.M23 * this.M34 - this.M11 * this.M24 * this.M33 - this.M21 * this.M13 * this.M34 + this.M21 * this.M14 * this.M33 + this.M31 * this.M13 * this.M24 - this.M31 * this.M14 * this.M23) * reciprocal;
+        result.M21 = ((-this.M21 * this.M33 * this.M44) + (this.M21 * this.M34 * this.M43) + this.M31 * this.M23 * this.M44 - this.M31 * this.M24 * this.M43 - this.M41 * this.M23 * this.M34 + this.M41 * this.M24 * this.M33) * reciprocal;
+        result.M22 = ((this.M11  * this.M33 * this.M44) - (this.M11 * this.M34 * this.M43) - this.M31 * this.M13 * this.M44 + this.M31 * this.M14 * this.M43 + this.M41 * this.M13 * this.M34 - this.M41 * this.M14 * this.M33) * reciprocal;
+        result.M23 = ((-this.M11 * this.M23 * this.M44) + (this.M11 * this.M24 * this.M43) + this.M21 * this.M13 * this.M44 - this.M21 * this.M14 * this.M43 - this.M41 * this.M13 * this.M24 + this.M41 * this.M14 * this.M23) * reciprocal;
+        result.M24 = ((this.M11  * this.M23 * this.M34) - (this.M11 * this.M24 * this.M33) - this.M21 * this.M13 * this.M34 + this.M21 * this.M14 * this.M33 + this.M31 * this.M13 * this.M24 - this.M31 * this.M14 * this.M23) * reciprocal;
 
-        result.M31 = (this.M21  * this.M32 * this.M44 - this.M21 * this.M34 * this.M42 - this.M31 * this.M22 * this.M44 + this.M31 * this.M24 * this.M42 + this.M41 * this.M22 * this.M34 - this.M41 * this.M24 * this.M32) * reciprocal;
-        result.M32 = (-this.M11 * this.M32 * this.M44 + this.M11 * this.M34 * this.M42 + this.M31 * this.M12 * this.M44 - this.M31 * this.M14 * this.M42 - this.M41 * this.M12 * this.M34 + this.M41 * this.M14 * this.M32) * reciprocal;
-        result.M33 = (this.M11  * this.M22 * this.M44 - this.M11 * this.M24 * this.M42 - this.M21 * this.M12 * this.M44 + this.M21 * this.M14 * this.M42 + this.M41 * this.M12 * this.M24 - this.M41 * this.M14 * this.M22) * reciprocal;
-        result.M34 = (-this.M11 * this.M22 * this.M34 + this.M11 * this.M24 * this.M32 + this.M21 * this.M12 * this.M34 - this.M21 * this.M14 * this.M32 - this.M31 * this.M12 * this.M24 + this.M31 * this.M14 * this.M22) * reciprocal;
+        result.M31 = ((this.M21  * this.M32 * this.M44) - (this.M21 * this.M34 * this.M42) - this.M31 * this.M22 * this.M44 + this.M31 * this.M24 * this.M42 + this.M41 * this.M22 * this.M34 - this.M41 * this.M24 * this.M32) * reciprocal;
+        result.M32 = ((-this.M11 * this.M32 * this.M44) + (this.M11 * this.M34 * this.M42) + this.M31 * this.M12 * this.M44 - this.M31 * this.M14 * this.M42 - this.M41 * this.M12 * this.M34 + this.M41 * this.M14 * this.M32) * reciprocal;
+        result.M33 = ((this.M11  * this.M22 * this.M44) - (this.M11 * this.M24 * this.M42) - this.M21 * this.M12 * this.M44 + this.M21 * this.M14 * this.M42 + this.M41 * this.M12 * this.M24 - this.M41 * this.M14 * this.M22) * reciprocal;
+        result.M34 = ((-this.M11 * this.M22 * this.M34) + (this.M11 * this.M24 * this.M32) + this.M21 * this.M12 * this.M34 - this.M21 * this.M14 * this.M32 - this.M31 * this.M12 * this.M24 + this.M31 * this.M14 * this.M22) * reciprocal;
 
-        result.M41 = (-this.M21 * this.M32 * this.M43 + this.M21 * this.M33 * this.M42 + this.M31 * this.M22 * this.M43 - this.M31 * this.M23 * this.M42 - this.M41 * this.M22 * this.M33 + this.M41 * this.M23 * this.M32) * reciprocal;
-        result.M42 = (this.M11  * this.M32 * this.M43 - this.M11 * this.M33 * this.M42 - this.M31 * this.M12 * this.M43 + this.M31 * this.M13 * this.M42 + this.M41 * this.M12 * this.M33 - this.M41 * this.M13 * this.M32) * reciprocal;
-        result.M43 = (-this.M11 * this.M22 * this.M43 + this.M11 * this.M23 * this.M42 + this.M21 * this.M12 * this.M43 - this.M21 * this.M13 * this.M42 - this.M41 * this.M12 * this.M23 + this.M41 * this.M13 * this.M22) * reciprocal;
-        result.M44 = (this.M11  * this.M22 * this.M33 - this.M11 * this.M23 * this.M32 - this.M21 * this.M12 * this.M33 + this.M21 * this.M13 * this.M32 + this.M31 * this.M12 * this.M23 - this.M31 * this.M13 * this.M22) * reciprocal;
+        result.M41 = ((-this.M21 * this.M32 * this.M43) + (this.M21 * this.M33 * this.M42) + this.M31 * this.M22 * this.M43 - this.M31 * this.M23 * this.M42 - this.M41 * this.M22 * this.M33 + this.M41 * this.M23 * this.M32) * reciprocal;
+        result.M42 = ((this.M11  * this.M32 * this.M43) - (this.M11 * this.M33 * this.M42) - this.M31 * this.M12 * this.M43 + this.M31 * this.M13 * this.M42 + this.M41 * this.M12 * this.M33 - this.M41 * this.M13 * this.M32) * reciprocal;
+        result.M43 = ((-this.M11 * this.M22 * this.M43) + (this.M11 * this.M23 * this.M42) + this.M21 * this.M12 * this.M43 - this.M21 * this.M13 * this.M42 - this.M41 * this.M12 * this.M23 + this.M41 * this.M13 * this.M22) * reciprocal;
+        result.M44 = ((this.M11  * this.M22 * this.M33) - (this.M11 * this.M23 * this.M32) - this.M21 * this.M12 * this.M33 + this.M21 * this.M13 * this.M32 + this.M31 * this.M12 * this.M23 - this.M31 * this.M13 * this.M22) * reciprocal;
 
         return result;
     }
@@ -476,25 +475,25 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
     {
         Unsafe.SkipInit<Matrix4x4<T>>(out var c);
 
-        c.M11 = a.M11 * b.M11 + a.M12 * b.M21 + a.M13 * b.M31 + a.M14 * b.M41;
-        c.M12 = a.M11 * b.M12 + a.M12 * b.M22 + a.M13 * b.M32 + a.M14 * b.M42;
-        c.M13 = a.M11 * b.M13 + a.M12 * b.M23 + a.M13 * b.M33 + a.M14 * b.M43;
-        c.M14 = a.M11 * b.M14 + a.M12 * b.M24 + a.M13 * b.M34 + a.M14 * b.M44;
+        c.M11 = (a.M11 * b.M11) + (a.M12 * b.M21) + (a.M13 * b.M31) + (a.M14 * b.M41);
+        c.M12 = (a.M11 * b.M12) + (a.M12 * b.M22) + (a.M13 * b.M32) + (a.M14 * b.M42);
+        c.M13 = (a.M11 * b.M13) + (a.M12 * b.M23) + (a.M13 * b.M33) + (a.M14 * b.M43);
+        c.M14 = (a.M11 * b.M14) + (a.M12 * b.M24) + (a.M13 * b.M34) + (a.M14 * b.M44);
 
-        c.M21 = a.M21 * b.M11 + a.M22 * b.M21 + a.M23 * b.M31 + a.M24 * b.M41;
-        c.M22 = a.M21 * b.M12 + a.M22 * b.M22 + a.M23 * b.M32 + a.M24 * b.M42;
-        c.M23 = a.M21 * b.M13 + a.M22 * b.M23 + a.M23 * b.M33 + a.M24 * b.M43;
-        c.M24 = a.M21 * b.M14 + a.M22 * b.M24 + a.M23 * b.M34 + a.M24 * b.M44;
+        c.M21 = (a.M21 * b.M11) + (a.M22 * b.M21) + (a.M23 * b.M31) + (a.M24 * b.M41);
+        c.M22 = (a.M21 * b.M12) + (a.M22 * b.M22) + (a.M23 * b.M32) + (a.M24 * b.M42);
+        c.M23 = (a.M21 * b.M13) + (a.M22 * b.M23) + (a.M23 * b.M33) + (a.M24 * b.M43);
+        c.M24 = (a.M21 * b.M14) + (a.M22 * b.M24) + (a.M23 * b.M34) + (a.M24 * b.M44);
 
-        c.M31 = a.M31 * b.M11 + a.M32 * b.M21 + a.M33 * b.M31 + a.M34 * b.M41;
-        c.M32 = a.M31 * b.M12 + a.M32 * b.M22 + a.M33 * b.M32 + a.M34 * b.M42;
-        c.M33 = a.M31 * b.M13 + a.M32 * b.M23 + a.M33 * b.M33 + a.M34 * b.M43;
-        c.M34 = a.M31 * b.M14 + a.M32 * b.M24 + a.M33 * b.M34 + a.M34 * b.M44;
+        c.M31 = (a.M31 * b.M11) + (a.M32 * b.M21) + (a.M33 * b.M31) + (a.M34 * b.M41);
+        c.M32 = (a.M31 * b.M12) + (a.M32 * b.M22) + (a.M33 * b.M32) + (a.M34 * b.M42);
+        c.M33 = (a.M31 * b.M13) + (a.M32 * b.M23) + (a.M33 * b.M33) + (a.M34 * b.M43);
+        c.M34 = (a.M31 * b.M14) + (a.M32 * b.M24) + (a.M33 * b.M34) + (a.M34 * b.M44);
 
-        c.M41 = a.M41 * b.M11 + a.M42 * b.M21 + a.M43 * b.M31 + a.M44 * b.M41;
-        c.M42 = a.M41 * b.M12 + a.M42 * b.M22 + a.M43 * b.M32 + a.M44 * b.M42;
-        c.M43 = a.M41 * b.M13 + a.M42 * b.M23 + a.M43 * b.M33 + a.M44 * b.M43;
-        c.M44 = a.M41 * b.M14 + a.M42 * b.M24 + a.M43 * b.M34 + a.M44 * b.M44;
+        c.M41 = (a.M41 * b.M11) + (a.M42 * b.M21) + (a.M43 * b.M31) + (a.M44 * b.M41);
+        c.M42 = (a.M41 * b.M12) + (a.M42 * b.M22) + (a.M43 * b.M32) + (a.M44 * b.M42);
+        c.M43 = (a.M41 * b.M13) + (a.M42 * b.M23) + (a.M43 * b.M33) + (a.M44 * b.M43);
+        c.M44 = (a.M41 * b.M14) + (a.M42 * b.M24) + (a.M43 * b.M34) + (a.M44 * b.M44);
 
         return c;
     }

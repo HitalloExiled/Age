@@ -5,7 +5,7 @@ using Age.Scene;
 
 namespace Age.Elements;
 
-public abstract partial class Layoutable : Spatial2D
+public abstract class Layoutable : Spatial2D
 {
     private CacheValue<Transform2D> transformCache;
 

@@ -126,11 +126,11 @@ public sealed class StoryBook : Node
             ]
         };
 
-        buttonLink.Clicked  += (in MouseEvent _) => this.SetPage(new ButtonPage());
-        iconLink.Clicked    += (in MouseEvent _) => this.SetPage(new IconPage());
-        textBoxLink.Clicked += (in MouseEvent _) => this.SetPage(new TextBoxPage());
+        buttonLink.Clicked  += (in _) => this.SetPage(new ButtonPage());
+        iconLink.Clicked    += (in _) => this.SetPage(new IconPage());
+        textBoxLink.Clicked += (in _) => this.SetPage(new TextBoxPage());
 
-        emptyLink.Clicked += (in MouseEvent _) => this.outlet.RemoveChildren();
+        emptyLink.Clicked += (in _) => this.outlet.RemoveChildren();
 
         this.AppendChild(this.canvas);
     }

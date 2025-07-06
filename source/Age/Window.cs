@@ -9,7 +9,6 @@ namespace Age;
 
 public sealed partial class Window : PlatformWindow
 {
-
     public new static IEnumerable<Window> Windows => new WindowCastEnumerator(PlatformWindow.Windows);
 
     public RenderTree Tree { get; }

@@ -1,5 +1,4 @@
 
-
 using Age.Resources.Loaders.Wavefront.Exceptions;
 
 namespace Age.Resources.Loaders.Wavefront.Parsers;
@@ -240,5 +239,4 @@ public partial class MtlParser(string filepath, StreamReader reader) : Parser(re
 
         return this.context.GetMaterials();
     }
-
 }

@@ -1,6 +1,5 @@
 using Age.Numerics;
 using Age.Scene;
-using Age.Styling;
 
 namespace Age.Elements;
 

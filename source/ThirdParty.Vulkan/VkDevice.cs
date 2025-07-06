@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
-using Age.Core;
+using Age.Core.Collections;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan.Interfaces;
 
@@ -12,7 +12,7 @@ namespace ThirdParty.Vulkan;
 /// <summary>
 /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkDevice.html">VkDevice</see>
 /// </summary>
-public sealed unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
+public sealed unsafe class VkDevice : DisposableManagedHandle<VkDevice>
 {
     private readonly HashSet<string> enabledExtensions = [];
 
@@ -136,7 +136,6 @@ public sealed unsafe partial class VkDevice : DisposableManagedHandle<VkDevice>
 
     public T GetExtension<T>() where T : IDeviceExtension<T> =>
         this.TryGetExtension<T>(out var extension) ? extension : throw new InvalidOperationException($"Can't load required extension {T.Name}");
-
 
     /// <inheritdoc cref="PInvoke.vkGetDeviceProcAddr" />
     public T GetProcAddr<T>(string name) where T : Delegate

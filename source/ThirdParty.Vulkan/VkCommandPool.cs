@@ -4,7 +4,7 @@ using static Age.Core.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
-public sealed unsafe partial class VkCommandPool : VkDeviceResource<VkCommandPool>
+public sealed unsafe class VkCommandPool : VkDeviceResource<VkCommandPool>
 {
     public VkCommandPool(VkDevice device, in VkCommandPoolCreateInfo createInfo) : base(device)
     {

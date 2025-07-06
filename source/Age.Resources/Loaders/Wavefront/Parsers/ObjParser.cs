@@ -217,7 +217,6 @@ public partial class ObjParser(string filepath, StreamReader reader, MtlLoader m
                     {
                         this.context.AddMaterials(materials);
                     }
-
                 }
                 else if (this.MatchIdentifier("usemtl"))
                 {

@@ -1,16 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
     <ProjectReference Include="..\Age.Platforms\Age.Platforms.csproj" />
     <ProjectReference Include="..\Age.Rendering\Age.Rendering.csproj" />
+    <ProjectReference Include="..\ThirdParty.Skia\ThirdParty.Skia.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SkiaSharp" Version="3.116.1" />
+    <PackageReference Include="SkiaSharp" Version="3.119.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,5 +19,13 @@
     <None Include="./Shaders/**/*.glsl"  CopyToOutputDirectory="PreserveNewest" />
     <None Include="./Shaders/**/*.slang" CopyToOutputDirectory="PreserveNewest" />
     <None Include="./Shaders/**/*.vert"  CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="./Storage/Icons/*.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="./Assets/**/*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

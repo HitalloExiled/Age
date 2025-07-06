@@ -2,7 +2,7 @@ using static Age.Core.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
-public sealed unsafe partial class VkImage : VkDeviceResource<VkImage>
+public sealed unsafe class VkImage : VkDeviceResource<VkImage>
 {
     private readonly bool reserved;
 

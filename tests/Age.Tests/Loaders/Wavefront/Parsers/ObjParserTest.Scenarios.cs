@@ -651,7 +651,6 @@ public partial class ObjParserTest
                                             new(1, 1, 0, -1),
                                             new(2, 2, 0, -1),
                                         ],
-
                                     }
                                 ],
                             },

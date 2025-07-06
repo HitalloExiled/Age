@@ -168,7 +168,7 @@ public unsafe class BvhTree
         }
 
 #if DEBUG
-        if (bvhNode.Left != null && bvhNode.Right != null && bvhNode.Elements.Length > 0 || bvhNode.Elements.Length > MAX_ELEMENTS)
+        if ((bvhNode.Left != null && bvhNode.Right != null && bvhNode.Elements.Length > 0) || bvhNode.Elements.Length > MAX_ELEMENTS)
         {
             throw new Exception();
         }

@@ -18,5 +18,3 @@ public class PointerHelperTest
         Assert.True(PointerHelper.NullIfDefault(pNonDefaultValuepValue) == pNonDefaultValuepValue);
     }
 }
-
-

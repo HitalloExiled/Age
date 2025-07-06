@@ -67,12 +67,15 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
             for (var y = 0; y < size.Height; y++)
             {
                 var sourceIndex      = (int)(size.Width * y);
-                var destinationIndex = (int)(startX + atlasWidth * (y + startY)) * sizeof(T);
+                var destinationIndex = (int)(startX + (atlasWidth * (y + startY))) * sizeof(T);
 
                 pixels.Slice(sourceIndex, (int)size.Width).CopyTo(bitmapSpan[destinationIndex..].Cast<byte, T>(), true);
             }
         }
     }
+
+    public Point<uint> Pack(scoped ReadOnlySpan<byte> pixels, in Size<uint> size) =>
+        this.Pack(pixels.Cast<byte, uint>(), size);
 
     public void Update()
     {

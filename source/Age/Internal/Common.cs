@@ -1,6 +1,5 @@
 
 using Age.Core.Extensions;
-using Age.Numerics;
 using Age.Numerics.Converters;
 using Age.Rendering.Resources;
 using SkiaSharp;
@@ -55,7 +54,6 @@ public static class Common
         }
         catch
         {
-
         }
     }
 

@@ -45,8 +45,6 @@ public class DropoutStackTest
         stack.Push(7);
 
         AssertSize(stack, [5, 6, 7]);
-
-
     }
 
     [Fact]

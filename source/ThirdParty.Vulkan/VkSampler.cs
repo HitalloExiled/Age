@@ -2,7 +2,7 @@ using static Age.Core.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
-public sealed unsafe partial class VkSampler : VkDeviceResource<VkSampler>
+public sealed unsafe class VkSampler : VkDeviceResource<VkSampler>
 {
     internal VkSampler(VkDevice device, in VkSamplerCreateInfo createInfo) : base(device)
     {

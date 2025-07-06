@@ -2,7 +2,6 @@ using Age.Commands;
 using Age.Elements;
 using Age.Numerics;
 using Age.Resources;
-using Age.Styling;
 
 namespace Age.Scene;
 
@@ -41,7 +40,7 @@ public sealed class Viewport : Element
         }
 
         command.Size          = this.RenderTarget.Size.Cast<float>();
-        command.MappedTexture = new(this.RenderTarget.Texture, UVRect.Normalized);
+        command.TextureMap = new(this.RenderTarget.Texture, UVRect.Normalized);
     }
 
     protected override void OnDisposed() =>

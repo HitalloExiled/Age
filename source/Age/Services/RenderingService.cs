@@ -3,7 +3,7 @@ using Age.Rendering.Vulkan;
 
 namespace Age.Services;
 
-internal partial class RenderingService : Disposable
+internal class RenderingService : Disposable
 {
     private static RenderingService? singleton;
 

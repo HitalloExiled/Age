@@ -5,5 +5,4 @@ namespace ThirdParty.Vulkan;
 /// </summary>
 public class VkPipelineCache : ManagedHandle<VkPipelineCache>
 {
-
 }

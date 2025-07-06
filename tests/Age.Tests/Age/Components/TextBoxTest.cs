@@ -6,19 +6,19 @@ public class TextBoxTest
 {
     private static void AssertLineInfo(in TextBox.LineInfo lineInfo, uint start, uint end, uint length, ReadOnlySpan<char> text)
     {
-        Assert.Equal(start, lineInfo.Start);
-        Assert.Equal(end, lineInfo.End);
+        Assert.Equal(start,  lineInfo.Start);
+        Assert.Equal(end,    lineInfo.End);
         Assert.Equal(length, lineInfo.Length);
         Assert.Equal(length, lineInfo.Length);
-        Assert.Equal(text, lineInfo.Text);
+        Assert.Equal(text,   lineInfo.Text);
     }
 
     [Fact]
     public void LineInfoEmptyString()
     {
-        var text = "";
+        const string TEXT = "";
 
-        var lineInfo = new TextBox.LineInfo(text, 0);
+        var lineInfo = new TextBox.LineInfo(TEXT, 0);
 
         AssertLineInfo(lineInfo, 0, 0, 0, "");
 
@@ -34,9 +34,9 @@ public class TextBoxTest
     [Fact]
     public void LineInfoSingleCharacter()
     {
-        var text = "x";
+        const string TEXT = "x";
 
-        var lineInfo = new TextBox.LineInfo(text, 0);
+        var lineInfo = new TextBox.LineInfo(TEXT, 0);
 
         AssertLineInfo(lineInfo, 0, 0, 1, "x");
 
@@ -52,9 +52,9 @@ public class TextBoxTest
     [Fact]
     public void LineInfoSingleNewLine()
     {
-        var text = "\n";
+        const string TEXT = "\n";
 
-        var lineInfo = new TextBox.LineInfo(text, 0);
+        var lineInfo = new TextBox.LineInfo(TEXT, 0);
 
         AssertLineInfo(lineInfo, 0, 0, 1, "\n");
 
@@ -70,9 +70,9 @@ public class TextBoxTest
     [Fact]
     public void LineInfoMultiplesSingleNewLine()
     {
-        var text = "\n\n\n";
+        const string TEXT = "\n\n\n";
 
-        var lineInfo = new TextBox.LineInfo(text, 1);
+        var lineInfo = new TextBox.LineInfo(TEXT, 1);
 
         AssertLineInfo(lineInfo, 1, 1, 1, "\n");
 
@@ -88,9 +88,9 @@ public class TextBoxTest
     [Fact]
     public void LineInfoWithNewLine()
     {
-        var text = "1111\n2222";
+        const string TEXT = "1111\n2222";
 
-        var lineInfo = new TextBox.LineInfo(text, 0);
+        var lineInfo = new TextBox.LineInfo(TEXT, 0);
 
         AssertLineInfo(lineInfo, 0, 4, 5, "1111\n");
 
@@ -106,9 +106,9 @@ public class TextBoxTest
     [Fact]
     public void LineInfoFromTheMidleWithNewLine()
     {
-        var text = "1111\n2222\n3333";
+        const string TEXT = "1111\n2222\n3333";
 
-        var lineInfo = new TextBox.LineInfo(text, 7);
+        var lineInfo = new TextBox.LineInfo(TEXT, 7);
 
         AssertLineInfo(lineInfo, 5, 9, 5, "2222\n");
 
@@ -124,9 +124,9 @@ public class TextBoxTest
     [Fact]
     public void NextLineWithTraillingNewLine()
     {
-        var text = "\n1111\n";
+        const string TEXT = "\n1111\n";
 
-        var lineInfo = new TextBox.LineInfo(text, 4);
+        var lineInfo = new TextBox.LineInfo(TEXT, 4);
 
         AssertLineInfo(lineInfo, 1, 5, 5, "1111\n");
 
@@ -142,9 +142,9 @@ public class TextBoxTest
     [Fact]
     public void LineInfoWithNewLineAndCarriageReturn()
     {
-        var text = "1111\n\r2222";
+        const string TEXT = "1111\n\r2222";
 
-        var lineInfo = new TextBox.LineInfo(text, 0);
+        var lineInfo = new TextBox.LineInfo(TEXT, 0);
 
         AssertLineInfo(lineInfo, 0, 4, 5, "1111\n");
 
@@ -160,9 +160,9 @@ public class TextBoxTest
     [Fact]
     public void LineInfoFromTheMidleWithNewLineAndCarriageReturn()
     {
-        var text = "1111\n\r2222\n\r3333";
+        const string TEXT = "1111\n\r2222\n\r3333";
 
-        var lineInfo = new TextBox.LineInfo(text, 8);
+        var lineInfo = new TextBox.LineInfo(TEXT, 8);
 
         AssertLineInfo(lineInfo, 5, 10, 6, "\r2222\n");
 
@@ -178,9 +178,9 @@ public class TextBoxTest
     [Fact]
     public void NextLineWithTraillingNewLineAndCarriageReturn()
     {
-        var text = "\n\r1111\n\r";
+        const string TEXT = "\n\r1111\n\r";
 
-        var lineInfo = new TextBox.LineInfo(text, 5);
+        var lineInfo = new TextBox.LineInfo(TEXT, 5);
 
         AssertLineInfo(lineInfo, 1, 6, 6, "\r1111\n");
 
@@ -196,9 +196,9 @@ public class TextBoxTest
     [Fact]
     public void LineInfoWithCursorOutsideContent()
     {
-        var text = "xyz";
+        const string TEXT = "xyz";
 
-        var lineInfo = new TextBox.LineInfo(text, 6);
+        var lineInfo = new TextBox.LineInfo(TEXT, 6);
 
         AssertLineInfo(lineInfo, 0, 2, 3, "xyz");
     }

@@ -3,7 +3,7 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Shaders;
 
-public sealed partial class CanvasIndexShader(RenderPass renderPass, uint subpass, bool watch)
+public sealed class CanvasIndexShader(RenderPass renderPass, uint subpass, bool watch)
 : CanvasShader($"{nameof(CanvasIndexShader)}.slang", renderPass, subpass, StencilKind.Content, watch)
 {
     public override string              Name              { get; } = nameof(CanvasIndexShader);

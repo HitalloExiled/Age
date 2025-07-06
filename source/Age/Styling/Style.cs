@@ -72,12 +72,6 @@ public record Style : IPoolable
         set => this.Set(ref this.data.FontFamily, value, StyleProperty.FontFamily);
     }
 
-    public FontFeature? FontFeature
-    {
-        get => this.data.FontFeature;
-        set => this.Set(ref this.data.FontFeature, value, StyleProperty.FontFeature);
-    }
-
     public ushort? FontSize
     {
         get => this.data.FontSize;

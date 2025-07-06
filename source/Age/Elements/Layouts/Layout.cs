@@ -3,11 +3,15 @@ using Age.Core;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Scene;
+using Age.Styling;
 
 namespace Age.Elements.Layouts;
 
 internal abstract class Layout : Disposable
 {
+    public const ushort DEFAULT_FONT_SIZE   = 16;
+    public const string DEFAULT_FONT_FAMILY = "Segoi UI";
+
     public static bool IsHoveringText  { get; set; }
     public static bool IsSelectingText { get; set; }
 
@@ -61,7 +65,7 @@ internal abstract class Layout : Disposable
 
             current.MakeDirty();
 
-            var stopPropagation = !current.IsParentDependent && !affectsBoundings || current.Parent == null;
+            var stopPropagation = (!current.IsParentDependent && !affectsBoundings) || current.Parent == null;
 
             if (stopPropagation)
             {

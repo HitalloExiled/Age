@@ -6,12 +6,12 @@ namespace Age.Commands;
 
 public record RectCommand : Command
 {
-    public CanvasShader.Border  Border        { get; set; }
-    public Color                Color         { get; set; }
-    public CanvasShader.Flags   Flags         { get; set; }
-    public MappedTexture        MappedTexture { get; set; } = MappedTexture.Default;
-    public Size<float>          Size          { get; set; }
-    public Transform2D          Transform     { get; set; } = Transform2D.Identity;
+    public CanvasShader.Border  Border     { get; set; }
+    public Color                Color      { get; set; }
+    public CanvasShader.Flags   Flags      { get; set; }
+    public Size<float>          Size       { get; set; }
+    public TextureMap           TextureMap { get; set; } = TextureMap.Default;
+    public Transform2D          Transform  { get; set; } = Transform2D.Identity;
 
     public Rect<float> GetAffineRect() => new(this.Size, this.Transform.Position.ToPoint());
 
@@ -19,11 +19,11 @@ public record RectCommand : Command
     {
         base.Reset();
 
-        this.Border        = default;
-        this.Color         = default;
-        this.Flags         = default;
-        this.MappedTexture = MappedTexture.Default;
-        this.Size          = default;
-        this.Transform     = Transform2D.Identity;
+        this.Border     = default;
+        this.Color      = default;
+        this.Flags      = default;
+        this.Size       = default;
+        this.TextureMap = TextureMap.Default;
+        this.Transform  = Transform2D.Identity;
     }
 }

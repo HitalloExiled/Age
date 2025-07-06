@@ -6,7 +6,6 @@ using BenchmarkDotNet.Attributes;
 
 namespace Age.Benchmarks;
 
-
 public class TestTree : NodeTree
 {
     protected override void OnDisposed(bool disposing) => throw new NotImplementedException();
@@ -86,7 +85,6 @@ public class HostElement : Element
         ];
     }
 }
-
 
 [ShortRunJob]
 [MemoryDiagnoser]

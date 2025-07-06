@@ -10,7 +10,7 @@ public sealed class Slot : Element
     public Layoutable[] AssignedNodes    => [.. this.Nodes];
     public bool         HasAssignedNodes => this.Nodes.Count > 0;
 
-    public sealed override string? Name
+    public override string? Name
     {
         get => field;
         set

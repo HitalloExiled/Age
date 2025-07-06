@@ -1,11 +1,10 @@
-using System.Numerics;
 using System.Runtime.InteropServices;
 using Age.Numerics;
 
 namespace Age.Styling;
 
 [StructLayout(LayoutKind.Explicit)]
-public partial struct TransformOp
+public struct TransformOp
 {
     [FieldOffset(0)]
     internal TransformOpKind Kind;

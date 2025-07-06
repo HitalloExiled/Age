@@ -26,8 +26,8 @@ public class LayerTest
         {
             if (radius > thickness.Width && radius > thickness.Height)
             {
-                origin.X = origin.X * (bounds.Width  - radius * 2) + radius;
-                origin.Y = origin.Y * (bounds.Height - radius * 2) + radius;
+                origin.X = (origin.X * (bounds.Width  - (radius * 2))) + radius;
+                origin.Y = (origin.Y * (bounds.Height - (radius * 2))) + radius;
 
                 var radiusX = radius - thickness.Width;
                 var radiusY = radius - thickness.Height;

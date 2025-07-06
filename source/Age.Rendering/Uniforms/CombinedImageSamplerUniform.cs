@@ -1,10 +1,9 @@
-using Age.Rendering.Resources;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 
 namespace Age.Rendering.Uniforms;
 
-public sealed partial record CombinedImageSamplerUniform : Uniform
+public sealed record CombinedImageSamplerUniform : Uniform
 {
     public override VkDescriptorType Type => VkDescriptorType.CombinedImageSampler;
 

@@ -286,8 +286,6 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         };
     }
 
-
-
     public void DeferredDispose(IDisposable disposable)
     {
         lock (this.@lock)

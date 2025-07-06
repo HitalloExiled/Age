@@ -41,5 +41,4 @@ public static partial class Extension
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void SetCount<T>(this List<T> source, int count) =>
         CollectionsMarshal.SetCount(source, count);
-
 }

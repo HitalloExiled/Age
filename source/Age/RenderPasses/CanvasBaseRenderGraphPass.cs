@@ -10,6 +10,7 @@ using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Flags;
 using System.Runtime.CompilerServices;
 using Age.Resources;
+using Age.Core.Extensions;
 
 namespace Age.RenderPasses;
 
@@ -24,6 +25,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
     protected abstract CommandBuffer           CommandBuffer           { get; }
     protected abstract Framebuffer             Framebuffer             { get; }
     protected abstract RenderPipelines[]       Pipelines               { get; }
+    protected abstract PipelineVariant         PipelineVariants        { get; }
 
     private unsafe void ClearStencilBufferAttachment(in VkExtent2D extent, uint value)
     {
@@ -59,25 +61,25 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
     {
         stencilLayer.Update();
 
-        if (!this.UniformSets.TryGetValue(stencilLayer.MappedTexture.Texture, out var uniformSet))
+        if (!this.UniformSets.TryGetValue(stencilLayer.TextureMap.Texture, out var uniformSet))
         {
             var stencil = new CombinedImageSamplerUniform
             {
                 Binding     = 0,
                 ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
-                Image       = stencilLayer.MappedTexture.Texture.Image,
-                ImageView   = stencilLayer.MappedTexture.Texture.ImageView,
-                Sampler     = stencilLayer.MappedTexture.Texture.Sampler,
+                Image       = stencilLayer.TextureMap.Texture.Image,
+                ImageView   = stencilLayer.TextureMap.Texture.ImageView,
+                Sampler     = stencilLayer.TextureMap.Texture.Sampler,
             };
 
-            this.UniformSets.Set(stencilLayer.MappedTexture.Texture, uniformSet = new UniformSet(this.CanvasStencilMaskShader, [stencil]));
+            this.UniformSets.Set(stencilLayer.TextureMap.Texture, uniformSet = new UniformSet(this.CanvasStencilMaskShader, [stencil]));
         }
 
         var constant = new CanvasShader.PushConstant
         {
             Size      = stencilLayer.Size.Cast<float>(),
             Transform = stencilLayer.Transform,
-            UV        = stencilLayer.MappedTexture.UV,
+            UV        = stencilLayer.TextureMap.UV,
             Viewport  = viewport,
         };
 
@@ -136,27 +138,28 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
                         switch (entry.Command)
                         {
                             case RectCommand rectCommand:
-                                if (!pipeline.IgnoreStencil && rectCommand.StencilLayer != previousLayer)
+                                if (this.PipelineVariants.HasAnyFlag(rectCommand.PipelineVariant))
                                 {
-                                    if (rectCommand.StencilLayer != null)
+                                    if (!pipeline.IgnoreStencil && rectCommand.StencilLayer != previousLayer)
                                     {
-                                        this.ClearStencilBuffer(extent);
-                                        this.DrawStencilBuffer(viewport, rectCommand.StencilLayer, pipeline.IndexBuffer);
+                                        if (rectCommand.StencilLayer != null)
+                                        {
+                                            this.ClearStencilBuffer(extent);
+                                            this.DrawStencilBuffer(viewport, rectCommand.StencilLayer, pipeline.IndexBuffer);
 
-                                        this.CommandBuffer.BindShader(pipeline.Shader);
+                                            this.CommandBuffer.BindShader(pipeline.Shader);
+                                        }
+                                        else
+                                        {
+                                            this.FillStencilBuffer(extent);
+                                        }
                                     }
-                                    else
-                                    {
-                                        this.FillStencilBuffer(extent);
-                                    }
+
+                                    previousLayer = rectCommand.StencilLayer;
+
+                                    this.ExecuteCommand(pipeline, rectCommand, viewport, entry.Transform);
                                 }
 
-                                previousLayer = rectCommand.StencilLayer;
-
-                                this.ExecuteCommand(pipeline, rectCommand, viewport, entry.Transform);
-
-                                break;
-                            default:
                                 break;
                         }
                     }

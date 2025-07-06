@@ -2,7 +2,7 @@ using static Age.Core.PointerHelper;
 
 namespace ThirdParty.Vulkan;
 
-public sealed unsafe partial class VkRenderPass : VkDeviceResource<VkRenderPass>
+public sealed unsafe class VkRenderPass : VkDeviceResource<VkRenderPass>
 {
     internal VkRenderPass(VkDevice device, in VkRenderPassCreateInfo createInfo) : base(device)
     {

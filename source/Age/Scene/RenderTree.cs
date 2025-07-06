@@ -155,7 +155,7 @@ public sealed partial class RenderTree : NodeTree
 
             var imageIndex = new Span<ulong>(imageIndexBuffer.ToPointer(), (int)this.buffer.Size / sizeof(ulong));
 
-            var index = x + y * image.Extent.Width;
+            var index = x + (y * image.Extent.Width);
             var pixel = imageIndex[(int)index];
 
             var id = (int)(pixel & 0x0000FFFFFF) - 1;
@@ -275,7 +275,6 @@ public sealed partial class RenderTree : NodeTree
             {
                 this.lastFocusedElement?.InvokeBlur(mouseEvent);
                 this.lastFocusedElement = element;
-
             }
 
             if (!element.IsFocused)
@@ -409,7 +408,7 @@ public sealed partial class RenderTree : NodeTree
         }
     }
 
-    public sealed override void Initialize()
+    public override void Initialize()
     {
         this.canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasIndexRenderGraphPass>();
         this.canvasIndexRenderGraphPass.Recreated += this.UpdateBuffer;
@@ -426,7 +425,7 @@ public sealed partial class RenderTree : NodeTree
         base.Initialize();
     }
 
-    public sealed override void Update()
+    public override void Update()
     {
         base.Update();
 

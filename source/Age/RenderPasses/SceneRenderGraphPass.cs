@@ -211,8 +211,6 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
                                     commandBuffer.DrawIndexed(meshCommand.IndexBuffer);
 
                                     break;
-                                default:
-                                    break;
                             }
                         }
 
@@ -226,4 +224,3 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
     public override void Recreate()
     { }
 }
-

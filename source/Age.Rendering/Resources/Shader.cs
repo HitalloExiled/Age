@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Age.Core;
+using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Vulkan;
@@ -394,8 +395,6 @@ where TVertexInput  : IVertexInput
 
                         bindings.Add(layout);
                     }
-                    break;
-                default:
                     break;
             }
         }

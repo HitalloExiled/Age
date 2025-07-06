@@ -3,9 +3,21 @@ using ThirdParty.Vulkan.Enums;
 
 namespace ThirdParty.Vulkan;
 
-public class VkException(VkResult result) : Exception($"Vulkan Error: {result}")
+public class VkException : Exception
 {
-    public VkResult Result { get; } = result;
+    public VkException()
+    { }
+
+    public VkException(string? message) : base(message)
+    { }
+
+    public VkException(string? message, Exception? innerException) : base(message, innerException)
+    { }
+
+    public VkException(VkResult result) : base($"Vulkan Error: {result}") =>
+        this.Result = result;
+
+    public VkResult Result { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Check(VkResult result)

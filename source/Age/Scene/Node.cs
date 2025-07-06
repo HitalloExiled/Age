@@ -316,7 +316,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             last.PreviousSibling = nodes[^2];
         }
 
-
         for (var i = 1; i < nodes.Length - 1; i++)
         {
             nodes[i].PreviousSibling = nodes[i - 1];
@@ -502,10 +501,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
             this.LastChild = current.PreviousSibling;
 
-            if (this.LastChild != null)
-            {
-                this.LastChild.NextSibling = null;
-            }
+            this.LastChild?.NextSibling = null;
 
             current.PreviousSibling = null;
             current.NextSibling     = null;
