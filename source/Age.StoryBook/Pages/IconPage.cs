@@ -5,7 +5,7 @@ namespace Age.StoryBook.Pages;
 public class IconPage : Page
 {
     public override string NodeName => nameof(IconPage);
-    public override string Title    => "Icon";
+    public override string Title    => nameof(Icon);
 
     public IconPage() =>
         this.Children =
