@@ -51,6 +51,20 @@ public class TextBoxPage : Page
                     Style    = containerStyle,
                     Children =
                     [
+                        new Text("Readonly"),
+                        new TextBox
+                        {
+                            Style    = textBoxStyle,
+                            Value    = "Readonly",
+                            Readonly = true
+                        },
+                    ]
+                },
+                new FlexBox
+                {
+                    Style    = containerStyle,
+                    Children =
+                    [
                         new Text("Multiline"),
                         new TextBox
                         {
