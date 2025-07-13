@@ -1,4 +1,5 @@
 using Age.Components;
+using Age.Elements;
 
 namespace Age.StoryBook.Pages;
 
@@ -10,8 +11,13 @@ public class CheckBoxPage : Page
     public CheckBoxPage() =>
         this.Children =
         [
-            new CheckBox { Checked       = true },
-            new CheckBox { Checked       = false },
-            new CheckBox { Indeterminate = true },
+            new Text("Unchecked: "),
+            new CheckBox { Checked = false, Readonly = true },
+            new Text("Checked: "),
+            new CheckBox { Checked = true, Readonly = true },
+            new Text("Indeterminate: "),
+            new CheckBox { State = CheckBoxState.Indeterminate, Readonly = true },
+            new Text("TriState: "),
+            new CheckBox { TriState = true },
         ];
 }

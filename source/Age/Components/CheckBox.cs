@@ -3,46 +3,47 @@ using Age.Themes;
 
 namespace Age.Components;
 
+public enum CheckBoxState : byte
+{
+    Unchecked,
+    Checked,
+    Indeterminate,
+}
+
 public class CheckBox : Element
 {
     private const string CHECKED       = "check_box";
-    private const string UNCHECKED     = "check_box_outline_blank";
     private const string INDETERMINATE = "indeterminate_check_box";
+    private const string UNCHECKED     = "check_box_outline_blank";
 
     public event Action? Changed;
 
-    public override string NodeName => nameof(CheckBox);
     private readonly Icon icon = new(UNCHECKED);
+
+    public override string NodeName => nameof(CheckBox);
 
     public bool Checked
     {
-        get;
-        set
-        {
-            if (field != value)
-            {
-                this.icon.IconName = value ? CHECKED : UNCHECKED;
-
-                field = value;
-
-                this.Changed?.Invoke();
-            }
-        }
+        get => this.State == CheckBoxState.Checked;
+        set => this.State = value ? CheckBoxState.Checked : CheckBoxState.Unchecked;
     }
 
-    public bool Indeterminate
+    public bool Readonly { get; set; }
+
+    public CheckBoxState State
     {
         get;
         set
         {
             if (field != value)
             {
-                this.icon.IconName =
-                    value
-                    ? INDETERMINATE
-                    : this.Checked
-                        ? CHECKED
-                        : UNCHECKED;
+                this.icon.IconName = value switch
+                {
+                    CheckBoxState.Unchecked     => UNCHECKED,
+                    CheckBoxState.Checked       => CHECKED,
+                    CheckBoxState.Indeterminate => INDETERMINATE,
+                    _ => throw new NotSupportedException(),
+                };
 
                 field = value;
 
@@ -50,6 +51,8 @@ public class CheckBox : Element
             }
         }
     }
+
+    public bool TriState { get; set; }
 
     public CheckBox()
     {
@@ -64,6 +67,26 @@ public class CheckBox : Element
         this.icon.Clicked += this.OnClick;
     }
 
-    private void OnClick(in MouseEvent mouseEvent) =>
-        this.Checked = !this.Checked;
+    private void OnClick(in MouseEvent mouseEvent)
+    {
+        if (this.Readonly)
+        {
+            return;
+        }
+
+        if (!this.TriState)
+        {
+            this.Checked = !this.Checked;
+        }
+        else
+        {
+            this.State = this.State switch
+            {
+                CheckBoxState.Unchecked     => CheckBoxState.Checked,
+                CheckBoxState.Checked       => CheckBoxState.Indeterminate,
+                CheckBoxState.Indeterminate => CheckBoxState.Unchecked,
+                _ => throw new NotSupportedException(),
+            };
+        }
+    }
 }

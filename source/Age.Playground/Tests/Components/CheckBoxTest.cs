@@ -10,6 +10,7 @@ public static class CheckBoxTest
         [
             new CheckBox { Checked = true },
             new CheckBox { Checked = false },
-            new CheckBox { Indeterminate = true },
+            new CheckBox { State = CheckBoxState.Indeterminate },
+            new CheckBox { TriState = true },
         ];
 }
