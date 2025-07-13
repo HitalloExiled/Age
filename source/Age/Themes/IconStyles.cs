@@ -14,7 +14,7 @@ public record IconStyles
             {
                 Base = new()
                 {
-                    Color         = Color.White,
+                    // Color         = Color.White,
                     FontFamily    = MATERIAL_ICONS_OUTLINED,
                     FontSize      = 24,
                     TextSelection = false,

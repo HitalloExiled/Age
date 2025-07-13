@@ -195,11 +195,17 @@ public record Style : IPoolable
     internal void Copy(Style source) =>
         this.data = source.data;
 
+    internal void Copy(in StyleData source) =>
+        this.data = source;
+
     internal void Copy(Style source, StyleProperty property) =>
         this.data.Copy(source.data, property);
 
     internal void Merge(Style source) =>
         this.data.Merge(source.data);
+
+    internal void Merge(in StyleData source) =>
+        this.data.Merge(source);
 
     public override string ToString() =>
         this.data.ToString();

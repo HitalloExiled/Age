@@ -17,9 +17,30 @@ public partial class TextBox : Element
     private readonly Text                       text = new();
     private readonly DropoutStack<HistoryEntry> undo = new(50);
 
-    private string? previousText;
+    private bool textBufferHasChanged;
 
     public override string NodeName => nameof(TextBox);
+
+    public bool Readonly
+    {
+        get;
+        set
+        {
+            if (field != value)
+            {
+                if (value)
+                {
+                    this.RemoveInputEvents();
+                }
+                else
+                {
+                    this.AddInputEvents();
+                }
+
+                field = value;
+            }
+        }
+    }
 
     public uint CursorPosition
     {
@@ -46,15 +67,21 @@ public partial class TextBox : Element
 
         this.ShadowTree.AppendChild(this.text);
 
+        this.AddInputEvents();
+
         this.Blured      += this.OnBlur;
         this.Focused     += this.OnFocused;
-        this.Input       += this.OnInput;
-        this.KeyDown     += this.OnKeyDown;
         this.MouseDown   += this.OnMouseDown;
         this.Activated   += this.text.InvokeActivate;
         this.Deactivated += this.text.InvokeDeactivate;
 
         this.text.Buffer.Changed += this.OnTextBufferChanged;
+    }
+
+    private void AddInputEvents()
+    {
+        this.Input   += this.OnInput;
+        this.KeyDown += this.OnKeyDown;
     }
 
     private void ApplyHistory(in HistoryEntry entry)
@@ -81,17 +108,19 @@ public partial class TextBox : Element
         this.text.ClearSelection();
         this.text.HideCaret();
 
-        if (!this.text.Buffer.Equals(this.previousText))
+        if (this.textBufferHasChanged)
         {
+            this.textBufferHasChanged = false;
             this.Changed?.Invoke();
         }
     }
 
     private void OnFocused(in MouseEvent mouseEvent)
     {
-        this.text.ShowCaret();
-
-        this.previousText = this.text.Buffer.ToString();
+        if (!this.Readonly)
+        {
+            this.text.ShowCaret();
+        }
     }
 
     private void OnInput(char character)
@@ -456,7 +485,13 @@ public partial class TextBox : Element
             this.text.CursorPosition = (uint)this.text.Buffer.Length;
         }
 
-        this.Changed?.Invoke();
+        this.textBufferHasChanged = true;
+    }
+
+    private void RemoveInputEvents()
+    {
+        this.Input   -= this.OnInput;
+        this.KeyDown -= this.OnKeyDown;
     }
 
     private void SaveHistory() =>

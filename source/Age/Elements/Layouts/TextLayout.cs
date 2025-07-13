@@ -453,9 +453,8 @@ internal sealed class TextLayout : Layout
         }
     }
 
-    private BoxLayout? GetInheritedStyleSource() => this.Target.Parent is ShadowTree shadowTree
-        ? shadowTree.InheritsHostStyle ? shadowTree.Host.Layout : null
-        : (this.Target.AssignedSlot ?? this.Target.ParentElement)?.Layout;
+    private StyledLayout? GetInheritedStyleSource() =>
+        GetStyleSource(this.Target.Parent);
 
     private void OnParentStyleChanged(StyleProperty property)
     {
