@@ -1,6 +1,6 @@
 using Age.Extensions;
 
-namespace Age.Elements.Layouts;
+namespace Age.Elements;
 
 public record struct TextLine(uint Start, uint Length)
 {

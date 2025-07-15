@@ -1,6 +1,5 @@
 using Age.Core.Extensions;
 using Age.Elements;
-using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Rendering.Vulkan;
@@ -325,7 +324,7 @@ public sealed partial class RenderTree : NodeTree
 
             if (this.lastHoveredText != text)
             {
-                this.lastHoveredText?.HandleTargetMouseOut();
+                this.lastHoveredText?.HandleMouseOut();
                 this.lastHoveredText = text;
 
                 text.HandleMouseOver();
@@ -333,7 +332,7 @@ public sealed partial class RenderTree : NodeTree
         }
         else
         {
-            this.lastHoveredText?.HandleTargetMouseOut();
+            this.lastHoveredText?.HandleMouseOut();
             this.lastHoveredText = null;
         }
 

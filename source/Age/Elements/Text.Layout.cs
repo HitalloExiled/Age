@@ -2,10 +2,11 @@ using System.Runtime.CompilerServices;
 using Age.Commands;
 using Age.Core.Collections;
 using Age.Core.Extensions;
-using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Platforms.Display;
+using Age.Platforms.Windows.Native.Types;
 using Age.Resources;
+using Age.Scene;
 using Age.Storage;
 using Age.Styling;
 using SkiaSharp;
@@ -33,7 +34,7 @@ public sealed partial class Text
 
     private bool CanSelect => this.ComposedParentElement?.ComputedStyle.TextSelection != false;
 
-    internal uint CursorPosition
+    public partial uint CursorPosition
     {
         get;
         set
@@ -50,7 +51,7 @@ public sealed partial class Text
         }
     }
 
-    internal TextSelection? Selection
+    public partial TextSelection? Selection
     {
         get;
         set
@@ -418,7 +419,7 @@ public sealed partial class Text
         }
     }
 
-    private Styleable? GetInheritedStyleSource() =>
+    private Element? GetInheritedStyleSource() =>
         GetStyleSource(this.Parent);
 
     private void OnParentStyleChanged(StyleProperty property)
@@ -484,7 +485,7 @@ public sealed partial class Text
         this.HideCaret();
     }
 
-    internal void HandleActivated()
+    internal void InvokeActivate()
     {
         if (!this.CanSelect)
         {
@@ -503,14 +504,28 @@ public sealed partial class Text
         this.OnParentStyleChanged(StyleProperty.All);
     }
 
-    internal void HandleDeactivated()
+    internal void InvokeDeactivate()
     {
         this.selectionTimer.Stop();
 
         IsSelectingText = false;
     }
 
-    internal void HandleIndexed()
+    protected override void OnAdopted(Node parent)
+    {
+        switch (parent)
+        {
+            case Element parentElement:
+                this.HandleAdopted(parentElement);
+                break;
+
+            case ShadowTree shadowTree:
+                this.HandleAdopted(shadowTree.Host);
+                break;
+        }
+    }
+
+    protected override void OnIndexed()
     {
         this.UpdateDirtyLayout();
 
@@ -532,7 +547,21 @@ public sealed partial class Text
         }
     }
 
-    internal void HandleTargetMouseOut()
+    protected override void OnRemoved(Node parent)
+    {
+        switch (parent)
+        {
+            case Element parentElement:
+                this.HandleRemoved(parentElement);
+                break;
+
+            case ShadowTree shadowTree:
+                this.HandleRemoved(shadowTree.Host);
+                break;
+        }
+    }
+
+    internal void HandleMouseOut()
     {
         if (!this.CanSelect)
         {
@@ -557,7 +586,7 @@ public sealed partial class Text
     internal void HandleRemoved(Element parentElement) =>
         parentElement.StyleChanged -= this.OnParentStyleChanged;
 
-    internal void HideCaret()
+    public partial void HideCaret()
     {
         this.caretIsDirty   = true;
         this.caretIsVisible = false;
@@ -652,7 +681,7 @@ public sealed partial class Text
         this.CursorPosition = position;
     }
 
-    internal void ShowCaret()
+    public partial void ShowCaret()
     {
         this.caretIsDirty   = true;
         this.caretIsVisible = true;

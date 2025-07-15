@@ -1,5 +1,4 @@
 using Age.Core;
-using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Scene;
 
@@ -171,7 +170,7 @@ public abstract partial class Layoutable : Spatial2D
         }
     }
 
-    public Rect<int> GetBoundings()
+    public Rect<int> GetUpdatedBoundings()
     {
         this.UpdateIndependentAncestorLayout();
 

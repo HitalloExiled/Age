@@ -2,7 +2,6 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Age.Commands;
 using Age.Core.Extensions;
-using Age.Elements.Layouts;
 using Age.Extensions;
 using Age.Numerics;
 using Age.Resources;
@@ -1400,9 +1399,11 @@ public abstract partial class Element
         this.Commands.Clear();
 
         this.ShadowTree?.Dispose();
+
+        stylePool.Return(this.ComputedStyle);
     }
 
-    private protected override void OnStyleChanged(StyleProperty property)
+    private void OnStyleChanged(StyleProperty property)
     {
         if (!this.IsConnected)
         {
@@ -1620,7 +1621,7 @@ public abstract partial class Element
         }
     }
 
-    internal void HandleTargetIndexed()
+    protected override void OnIndexed()
     {
         var command = this.GetLayoutCommandBox();
 

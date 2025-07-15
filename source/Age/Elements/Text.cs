@@ -1,7 +1,6 @@
 using Age.Commands;
 using Age.Core.Extensions;
 using Age.Core;
-using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Scene;
 using Age.Resources;
@@ -15,17 +14,9 @@ public sealed partial class Text : Layoutable
 
     public override string NodeName => nameof(Text);
 
-    // public uint CursorPosition
-    // {
-    //     get => this.Layout.CaretPosition;
-    //     set => this.Layout.CaretPosition = value;
-    // }
+    public partial uint CursorPosition { get; set; }
 
-    // public TextSelection? Selection
-    // {
-    //     get => this.Layout.Selection;
-    //     set => this.Layout.Selection = value;
-    // }
+    public partial TextSelection? Selection { get; set; }
 
     public string? Value
     {
@@ -68,42 +59,10 @@ public sealed partial class Text : Layoutable
     public Text(string? value) : this() =>
         this.Buffer.Set(value);
 
-    protected override void OnAdopted(Node parent)
-    {
-        switch (parent)
-        {
-            case Element parentElement:
-                this.HandleAdopted(parentElement);
-                break;
 
-            case ShadowTree shadowTree:
-                this.HandleAdopted(shadowTree.Host);
-                break;
-        }
-    }
 
-    protected override void OnRemoved(Node parent)
-    {
-        switch (parent)
-        {
-            case Element parentElement:
-                this.HandleRemoved(parentElement);
-                break;
-
-            case ShadowTree shadowTree:
-                this.HandleRemoved(shadowTree.Host);
-                break;
-        }
-    }
-
-    protected override void OnIndexed() =>
-        this.HandleIndexed();
-
-    internal void InvokeActivate() =>
-        this.HandleActivated();
-
-    internal void InvokeDeactivate() =>
-        this.HandleDeactivated();
+    public partial void HideCaret();
+    public partial void ShowCaret();
 
     public string? Copy(TextSelection selection)
     {
@@ -242,12 +201,6 @@ public sealed partial class Text : Layoutable
 
         return rect.Cast<int>();
     }
-
-    // public void HideCaret() =>
-    //     this.Layout.HideCaret();
-
-    // public void ShowCaret() =>
-    //     this.Layout.ShowCaret();
 
     public override string ToString() =>
         this.Buffer.ToString();

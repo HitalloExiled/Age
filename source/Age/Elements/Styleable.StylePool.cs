@@ -3,7 +3,7 @@ using Age.Styling;
 
 namespace Age.Elements;
 
-public abstract partial class Styleable
+public abstract partial class Element
 {
     private sealed class StylePool : ObjectPool<Style>
     {

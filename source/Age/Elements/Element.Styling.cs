@@ -1,12 +1,11 @@
 using System.Runtime.CompilerServices;
 using Age.Core.Extensions;
-using Age.Elements.Layouts;
 using Age.Scene;
 using Age.Styling;
 
 namespace Age.Elements;
 
-public abstract partial class Styleable : Layoutable
+public abstract partial class Element
 {
     internal event Action<StyleProperty>? StyleChanged;
 
@@ -159,24 +158,6 @@ public abstract partial class Styleable : Layoutable
     {
         this.ComputedStyle?.Copy(this.UserStyle!, property);
         this.InvokeStyleChanged(property);
-    }
-
-    private protected abstract void OnStyleChanged(StyleProperty property);
-
-    protected override void OnDisposed()
-    {
-        base.OnDisposed();
-
-        stylePool.Return(this.ComputedStyle);
-    }
-
-    protected override void OnConnected(RenderTree renderTree)
-    {
-        base.OnConnected(renderTree);
-
-        this.ComputeStyle(default);
-
-        GetStyleSource(this.Parent)?.StyleChanged += this.OnParentStyleChanged;
     }
 
     protected override void OnRemoved(Node parent)

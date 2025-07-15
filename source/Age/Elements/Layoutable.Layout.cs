@@ -30,9 +30,9 @@ public abstract partial class Layoutable
 
     internal abstract bool IsParentDependent { get; }
 
-    private protected static Styleable? GetStyleSource(Node? node) =>
+    private protected static Element? GetStyleSource(Node? node) =>
         node is not ShadowTree shadowTree
-            ? (node as Styleable)
+            ? (node as Element)
             : shadowTree.InheritsHostStyle
                 ? shadowTree.Host
                 : null;

@@ -6,8 +6,8 @@ public abstract partial class Element
 {
     internal struct TargetEnumerator : IEnumerator<Layoutable>
     {
-        private Element.ComposedTreeEnumerator composedTreeEnumerator;
-        private Element.SlotEnumerator         slotEnumerator;
+        private ComposedTreeEnumerator composedTreeEnumerator;
+        private SlotEnumerator         slotEnumerator;
 
         private readonly bool isSlot;
 
