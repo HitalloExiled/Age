@@ -26,7 +26,7 @@ public abstract class NodeTree : Disposable
         {
             var current = enumerator.Current;
 
-            if (current.Flags.HasFlags(NodeFlags.IgnoreUpdates))
+            if (current.NodeFlags.HasFlags(NodeFlags.IgnoreUpdates))
             {
                 enumerator.SkipToNextSibling();
             }
@@ -45,7 +45,7 @@ public abstract class NodeTree : Disposable
         {
             var current = enumerator.Current;
 
-            if (current.Flags.HasFlags(NodeFlags.IgnoreUpdates))
+            if (current.NodeFlags.HasFlags(NodeFlags.IgnoreUpdates))
             {
                 enumerator.SkipToNextSibling();
             }
@@ -72,7 +72,7 @@ public abstract class NodeTree : Disposable
         {
             var current = enumerator.Current;
 
-            if (current.Flags.HasFlags(NodeFlags.IgnoreUpdates))
+            if (current.NodeFlags.HasFlags(NodeFlags.IgnoreUpdates))
             {
                 enumerator.SkipToNextSibling();
             }
@@ -80,7 +80,7 @@ public abstract class NodeTree : Disposable
             {
                 current.Update();
 
-                if (current.Flags.HasFlags(NodeFlags.IgnoreChildrenUpdates))
+                if (current.NodeFlags.HasFlags(NodeFlags.IgnoreChildrenUpdates))
                 {
                     enumerator.SkipToNextSibling();
                 }

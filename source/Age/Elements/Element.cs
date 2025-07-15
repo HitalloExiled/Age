@@ -27,7 +27,7 @@ public delegate void MouseEventHandler(in MouseEvent mouseEvent);
 public delegate void KeyEventHandler(in KeyEvent keyEvent);
 public delegate void InputEventHandler(char keyEvent);
 
-public abstract partial class Element : Layoutable, IComparable<Element>, IEnumerable<Element>
+public abstract partial class Element : Styleable, IComparable<Element>, IEnumerable<Element>
 {
     #region events
 
@@ -240,28 +240,14 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal protected ShadowTree? ShadowTree { get; set; }
 
-    internal override BoxLayout Layout { get; }
-
     public Canvas? Canvas    { get; private set; }
     public bool    IsFocused { get; private set; }
     public bool    IsHovered { get; private set; }
 
     public Point<uint> Scroll
     {
-        get => this.Layout.ContentOffset;
-        set => this.Layout.ContentOffset = value;
-    }
-
-    public Style Style
-    {
-        get => this.Layout.UserStyle ??= new();
-        set => this.Layout.UserStyle = value;
-    }
-
-    public StyleSheet? StyleSheet
-    {
-        get => this.Layout.StyleSheet;
-        set => this.Layout.StyleSheet = value;
+        get => this.ContentOffset;
+        set => this.ContentOffset = value;
     }
 
     public string? Text
@@ -276,7 +262,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 {
                     builder.Append(text.Buffer);
 
-                    if (this.Layout.ComputedStyle.StackDirection == StackDirection.Vertical)
+                    if (this.ComputedStyle.StackDirection == StackDirection.Vertical)
                     {
                         builder.Append('\n');
                     }
@@ -306,15 +292,11 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 this.AppendChild(new Text(value));
             }
 
-            this.Layout.RequestUpdate(true);
+            this.RequestUpdate(true);
         }
     }
 
-    protected Element()
-    {
-        this.Layout = new(this);
-        this.Flags  = NodeFlags.IgnoreUpdates;
-    }
+    protected Element() => this.NodeFlags = NodeFlags.IgnoreUpdates;
 
     IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
     {
@@ -432,7 +414,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     private void OnScroll(in PlatformMouseEvent platformMouseEvent)
     {
-        if (this.Layout.IsScrollable)
+        if (this.IsScrollable)
         {
             var mouseEvent = this.CreateEvent(platformMouseEvent, false);
 
@@ -472,21 +454,26 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             renderTree.Window.MouseWheel += this.OnScroll;
         }
 
-        if (!renderTree.IsDirty && !this.Layout.Hidden)
+        if (!renderTree.IsDirty && !this.Hidden)
         {
             renderTree.MakeDirty();
         }
 
         this.Canvas = this.ComposedParentElement?.Canvas ?? this.Parent as Canvas;
 
-        this.Layout.HandleTargetConnected();
+        this.ComputeStyle();
+
+        if (this.ownStencilLayer != null)
+        {
+            this.StencilLayer?.AppendChild(this.ownStencilLayer);
+        }
     }
 
     protected override void OnChildAppended(Node child)
     {
         if (this.ShadowTree == null && child is Layoutable layoutable)
         {
-            this.Layout.HandleLayoutableAppended(layoutable);
+            this.HandleLayoutableAppended(layoutable);
         }
     }
 
@@ -494,7 +481,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         if (this.ShadowTree == null && child is Layoutable layoutable)
         {
-            this.Layout.HandleLayoutableRemoved(layoutable);
+            this.HandleLayoutableRemoved(layoutable);
         }
     }
 
@@ -516,29 +503,14 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         renderTree.Window.KeyUp      -= this.OnKeyUp;
         renderTree.Window.MouseWheel -= this.OnScroll;
 
-        if (!renderTree.IsDirty && !this.Layout.Hidden)
+        if (!renderTree.IsDirty && !this.Hidden)
         {
             renderTree.MakeDirty();
         }
-
-        this.Layout.HandleTargetDisconnected();
-    }
-
-    protected override void OnDisposed()
-    {
-        this.Layout.Dispose();
-        this.ShadowTree?.Dispose();
     }
 
     protected override void OnIndexed() =>
-        this.Layout.HandleTargetIndexed();
-
-    protected override void OnRemoved(Node parent)
-    {
-        base.OnRemoved(parent);
-
-        this.Layout.HandleTargetRemoved(parent);
-    }
+        this.HandleTargetIndexed();
 
     internal ComposedTreeEnumerator GetComposedTreeEnumerator() =>
         new(this);
@@ -548,7 +520,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal void InvokeActivate()
     {
-        this.Layout.AddState(ElementState.Active);
+        this.AddState(ElementState.Active);
         this.ActivatedEvent?.Invoke();
     }
 
@@ -556,7 +528,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         if (this.IsFocusable)
         {
-            this.Layout.RemoveState(ElementState.Focus);
+            this.RemoveState(ElementState.Focus);
             this.IsFocused = false;
             this.BluredEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
         }
@@ -570,7 +542,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal void InvokeDeactivate()
     {
-        this.Layout.RemoveState(ElementState.Active);
+        this.RemoveState(ElementState.Active);
         this.DeactivatedEvent?.Invoke();
     }
 
@@ -582,7 +554,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         if (this.IsFocusable)
         {
             this.IsFocused = true;
-            this.Layout.AddState(ElementState.Focus);
+            this.AddState(ElementState.Focus);
             this.FocusedEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
         }
     }
@@ -600,9 +572,9 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         this.IsHovered = false;
 
-        if (!Layouts.Layout.IsSelectingText)
+        if (!IsSelectingText)
         {
-            this.Layout.RemoveState(ElementState.Hovered);
+            this.RemoveState(ElementState.Hovered);
         }
 
         this.MouseOutEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
@@ -612,10 +584,10 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         this.IsHovered = true;
 
-        if (!Layouts.Layout.IsSelectingText)
+        if (!IsSelectingText)
         {
-            this.Layout.AddState(ElementState.Hovered);
-            this.Layout.HandleTargetMouseOver();
+            this.AddState(ElementState.Hovered);
+            this.HandleTargetMouseOver();
         }
 
         this.MouseOverEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
@@ -639,13 +611,13 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     public void Blur()
     {
         this.IsFocused = false;
-        this.Layout.RemoveState(ElementState.Focus);
+        this.RemoveState(ElementState.Focus);
         this.BluredEvent?.Invoke(new() { Target = this });
     }
 
     public void Click()
     {
-        this.Layout.AddState(ElementState.Active);
+        this.AddState(ElementState.Active);
         this.ClickedEvent?.Invoke(new() { Target = this });
     }
 
@@ -750,7 +722,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     public void Focus()
     {
-        this.Layout.AddState(ElementState.Focus);
+        this.AddState(ElementState.Focus);
         this.IsFocused = true;
         this.FocusedEvent?.Invoke(new() { Target = this });
     }
@@ -759,10 +731,10 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         var boundings = this.GetBoundings();
 
-        var padding = this.Layout.Padding;
-        var border  = this.Layout.Border;
-        var content = this.Layout.Content;
-        var margin  = this.Layout.Margin;
+        var padding = this.Padding;
+        var border  = this.Border;
+        var content = this.Content;
+        var margin  = this.Margin;
 
         return new()
         {
@@ -776,7 +748,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     public void ScrollTo(in Rect<int> boundings)
     {
-        if (!this.Layout.CanScrollX || !this.Layout.CanScrollY)
+        if (!this.CanScrollX || !this.CanScrollY)
         {
             return;
         }
@@ -790,7 +762,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         var scroll = this.Scroll;
 
-        if (this.Layout.CanScrollX)
+        if (this.CanScrollX)
         {
             if (boundings.Left < boundsLeft)
             {
@@ -806,7 +778,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             }
         }
 
-        if (this.Layout.CanScrollY)
+        if (this.CanScrollY)
         {
             if (boundings.Top < boundsTop)
             {

@@ -5,17 +5,15 @@ using Age.Scene;
 
 namespace Age.Elements;
 
-public abstract class Layoutable : Spatial2D
+public abstract partial class Layoutable : Spatial2D
 {
     private CacheValue<Transform2D> transformCache;
 
     private Transform2D ComposedParentTransform      => (this.ComposedParentElement as Spatial2D)?.Transform ?? Transform2D.Identity;
     private Transform2D ComposedParentTransformCache => (this.ComposedParentElement as Spatial2D)?.TransformCache ?? Transform2D.Identity;
-    private Transform2D Offset                       => Transform2D.CreateTranslated((this.ComposedParentElement?.Layout.ContentOffset ?? default).ToVector2<float>().InvertedX);
+    private Transform2D ParentContentOffset          => Transform2D.CreateTranslated((this.ComposedParentElement?.ContentOffset ?? default).ToVector2<float>().InvertedX);
 
-    internal Transform2D TransformWithOffset => this.Offset * this.Transform;
-
-    internal abstract Layout Layout { get; }
+    internal Transform2D TransformWithOffset => this.ParentContentOffset * this.Transform;
 
     internal override Transform2D TransformCache
     {
@@ -25,7 +23,7 @@ public abstract class Layoutable : Spatial2D
             {
                 this.transformCache = new()
                 {
-                    Value   = this.Offset * this.Layout.Transform * this.LocalTransform * this.ComposedParentTransformCache,
+                    Value   = this.ParentContentOffset * this.LayoutTransform * this.LocalTransform * this.ComposedParentTransformCache,
                     Version = CacheVersion
                 };
             }
@@ -124,15 +122,15 @@ public abstract class Layoutable : Spatial2D
 
     public override Transform2D Transform
     {
-        get => this.Layout.Transform * (this.LocalTransform * this.ComposedParentTransform);
+        get => this.LayoutTransform * (this.LocalTransform * this.ComposedParentTransform);
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
 
-    private protected Layout GetIndependentLayoutAncestor()
+    private protected Layoutable GetIndependentLayoutAncestor()
     {
         var current = this;
 
-        while (current.Layout.IsParentDependent)
+        while (current.IsParentDependent)
         {
             if (current.Parent is not Layoutable parent)
             {
@@ -142,12 +140,12 @@ public abstract class Layoutable : Spatial2D
             current = parent;
         }
 
-        return current.Layout;
+        return current;
     }
 
     private protected void UpdateIndependentAncestorLayout()
     {
-        if (this.Layout.IsDirty)
+        if (this.IsDirty)
         {
             this.GetIndependentLayoutAncestor().Update();
         }
@@ -179,7 +177,7 @@ public abstract class Layoutable : Spatial2D
 
         var transform = this.TransformWithOffset;
 
-        var size     = this.Layout.Boundings.Cast<int>();
+        var size     = this.Boundings.Cast<int>();
         var position = new Point<int>((int)transform.Position.X, -(int)transform.Position.Y);
 
         return new(size, position);

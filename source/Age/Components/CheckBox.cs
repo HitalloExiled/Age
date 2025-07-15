@@ -56,7 +56,7 @@ public class CheckBox : Element
 
     public CheckBox()
     {
-        this.Flags       = Scene.NodeFlags.Immutable;
+        this.NodeFlags       = Scene.NodeFlags.Immutable;
         this.IsFocusable = true;
         this.StyleSheet  = Theme.Current.CheckBox.Default;
 

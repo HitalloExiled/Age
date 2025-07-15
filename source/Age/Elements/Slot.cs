@@ -56,7 +56,7 @@ public sealed class Slot : Element
             {
                 if (child is Layoutable layoutableChild)
                 {
-                    this.Layout.HandleLayoutableRemoved(layoutableChild);
+                    this.HandleLayoutableRemoved(layoutableChild);
                 }
             }
         }
@@ -65,7 +65,7 @@ public sealed class Slot : Element
         this.Nodes.Add(layoutable);
         this.Nodes.Sort();
 
-        this.Layout.HandleLayoutableAppended(layoutable);
+        this.HandleLayoutableAppended(layoutable);
     }
 
     internal void Unassign(Layoutable layoutable)
@@ -73,7 +73,7 @@ public sealed class Slot : Element
         this.Nodes.Remove(layoutable);
         layoutable.AssignedSlot = null;
 
-        this.Layout.HandleLayoutableRemoved(layoutable);
+        this.HandleLayoutableRemoved(layoutable);
 
         if (this.Nodes.Count == 0)
         {
@@ -81,7 +81,7 @@ public sealed class Slot : Element
             {
                 if (child is Layoutable layoutableChild)
                 {
-                    this.Layout.HandleLayoutableAppended(layoutableChild);
+                    this.HandleLayoutableAppended(layoutableChild);
                 }
             }
         }

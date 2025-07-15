@@ -15,7 +15,7 @@ public sealed class Timer : Node
     public bool OneShot { get; set; }
 
     public Timer() =>
-        this.Flags = NodeFlags.IgnoreUpdates;
+        this.NodeFlags = NodeFlags.IgnoreUpdates;
 
     private void UpdateTimestamp() =>
         this.timestamp = Stopwatch.GetTimestamp();

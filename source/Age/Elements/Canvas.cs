@@ -11,7 +11,7 @@ public sealed class Canvas : Element
 
     public Canvas()
     {
-        this.Flags = NodeFlags.IgnoreUpdates;
+        this.NodeFlags = NodeFlags.IgnoreUpdates;
         this.Style = new()
         {
             // Padding = new(Unit.Px(PADDING)),
@@ -35,7 +35,7 @@ public sealed class Canvas : Element
 
         this.OnWindowResized();
 
-        renderTree.AddDeferredUpdate(this.Layout.UpdateDirtyLayout);
+        renderTree.AddDeferredUpdate(this.UpdateDirtyLayout);
     }
 
     protected override void OnDisconnected(RenderTree renderTree)

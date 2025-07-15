@@ -58,7 +58,7 @@ public partial class TextBox : Element
 
     public TextBox()
     {
-        this.Flags       = NodeFlags.Immutable;
+        this.NodeFlags       = NodeFlags.Immutable;
         this.IsFocusable = true;
 
         this.StyleSheet = Theme.Current.TextBox.Outlined;
@@ -474,7 +474,7 @@ public partial class TextBox : Element
     {
         if (this.text.Buffer != null && !mouseEvent.Indirect)
         {
-            this.text.Layout.SetCaret(mouseEvent.X, mouseEvent.Y);
+            this.text.SetCaret(mouseEvent.X, mouseEvent.Y);
         }
     }
 

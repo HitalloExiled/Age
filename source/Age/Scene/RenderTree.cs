@@ -196,7 +196,7 @@ public sealed partial class RenderTree : NodeTree
 
         if (node is Text text)
         {
-            text.Layout.PropagateSelection(characterPosition);
+            text.PropagateSelection(characterPosition);
             element = text.ComposedParentElement;
         }
         else
@@ -231,18 +231,18 @@ public sealed partial class RenderTree : NodeTree
 
                 if (mouseEvent.KeyStates.HasFlags(MouseKeyStates.Shift) && this.lastFocusedText == text)
                 {
-                    text.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y, characterPosition);
+                    text.UpdateSelection(mouseEvent.X, mouseEvent.Y, characterPosition);
                 }
                 else
                 {
-                    this.lastFocusedText?.Layout.ClearSelection();
+                    this.lastFocusedText?.ClearSelection();
 
-                    text.Layout.SetCaret(mouseEvent.X, mouseEvent.Y, characterPosition);
+                    text.SetCaret(mouseEvent.X, mouseEvent.Y, characterPosition);
                 }
 
                 if (this.lastFocusedText != text)
                 {
-                    this.lastFocusedText?.Layout.ClearCaret();
+                    this.lastFocusedText?.ClearCaret();
                     this.lastFocusedText = text;
                 }
             }
@@ -255,10 +255,10 @@ public sealed partial class RenderTree : NodeTree
             {
                 if (mouseEvent.Button == mouseEvent.PrimaryButton)
                 {
-                    this.lastFocusedText.Layout.ClearSelection();
+                    this.lastFocusedText.ClearSelection();
                 }
 
-                this.lastFocusedText.Layout.ClearCaret();
+                this.lastFocusedText.ClearCaret();
             }
 
             this.lastFocusedText = null;
@@ -320,24 +320,24 @@ public sealed partial class RenderTree : NodeTree
         {
             if (mouseEvent.IsHoldingPrimaryButton && text == this.lastFocusedText)
             {
-                text.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y, character);
+                text.UpdateSelection(mouseEvent.X, mouseEvent.Y, character);
             }
 
             if (this.lastHoveredText != text)
             {
-                this.lastHoveredText?.Layout.HandleTargetMouseOut();
+                this.lastHoveredText?.HandleTargetMouseOut();
                 this.lastHoveredText = text;
 
-                text.Layout.HandleTargetMouseOver();
+                text.HandleMouseOver();
             }
         }
         else
         {
-            this.lastHoveredText?.Layout.HandleTargetMouseOut();
+            this.lastHoveredText?.HandleTargetMouseOut();
             this.lastHoveredText = null;
         }
 
-        if (!Layout.IsSelectingText && element == null && text == null)
+        if (!Layoutable.IsSelectingText && element == null && text == null)
         {
             this.Window.Cursor = default;
         }
@@ -350,7 +350,7 @@ public sealed partial class RenderTree : NodeTree
         var text    = node as Text;
         var element = text?.ComposedParentElement ?? node as Element;
 
-        var wasSelectingText = Layout.IsSelectingText;
+        var wasSelectingText = Layoutable.IsSelectingText;
 
         if (element != null)
         {
@@ -365,7 +365,7 @@ public sealed partial class RenderTree : NodeTree
         this.lastFocusedElement?.InvokeDeactivate();
         this.lastFocusedText?.InvokeDeactivate();
 
-        if (wasSelectingText != Layout.IsSelectingText)
+        if (wasSelectingText != Layoutable.IsSelectingText)
         {
             this.lastHoveredElement = null;
             this.lastHoveredText    = null;

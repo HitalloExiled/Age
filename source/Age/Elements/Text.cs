@@ -4,28 +4,28 @@ using Age.Core;
 using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Scene;
+using Age.Resources;
+using static Age.Shaders.CanvasShader;
 
 namespace Age.Elements;
 
-public sealed class Text : Layoutable
+public sealed partial class Text : Layoutable
 {
-    internal override TextLayout Layout { get; }
-
     public StringBuffer Buffer { get; } = new();
 
     public override string NodeName => nameof(Text);
 
-    public uint CursorPosition
-    {
-        get => this.Layout.CaretPosition;
-        set => this.Layout.CaretPosition = value;
-    }
+    // public uint CursorPosition
+    // {
+    //     get => this.Layout.CaretPosition;
+    //     set => this.Layout.CaretPosition = value;
+    // }
 
-    public TextSelection? Selection
-    {
-        get => this.Layout.Selection;
-        set => this.Layout.Selection = value;
-    }
+    // public TextSelection? Selection
+    // {
+    //     get => this.Layout.Selection;
+    //     set => this.Layout.Selection = value;
+    // }
 
     public string? Value
     {
@@ -35,8 +35,34 @@ public sealed class Text : Layoutable
 
     public Text()
     {
-        this.Layout = new(this);
-        this.Flags  = NodeFlags.Immutable;
+        this.NodeFlags  = NodeFlags.Immutable;
+
+        this.caretTimer = new()
+        {
+            WaitTime = TimeSpan.FromMilliseconds(500),
+        };
+
+        this.selectionTimer = new()
+        {
+            WaitTime = TimeSpan.FromMilliseconds(16),
+        };
+
+        this.caretTimer.Timeout += this.BlinkCaret;
+        this.selectionTimer.Timeout += this.UpdateSelection;
+
+        this.AppendChild(this.caretTimer);
+        this.AppendChild(this.selectionTimer);
+
+        this.caretCommand              = CommandPool.RectCommand.Get();
+        this.caretCommand.Color        = Color.White;
+        this.caretCommand.Flags        = Flags.ColorAsBackground;
+        this.caretCommand.TextureMap   = TextureMap.Default;
+        this.caretCommand.Size         = new(this.caretWidth, this.LineHeight);
+        this.caretCommand.StencilLayer = this.StencilLayer;
+
+        this.Commands.Add(this.caretCommand);
+
+        this.Buffer.Modified += this.OnTextChange;
     }
 
     public Text(string? value) : this() =>
@@ -47,11 +73,11 @@ public sealed class Text : Layoutable
         switch (parent)
         {
             case Element parentElement:
-                this.Layout.HandleTargetAdopted(parentElement);
+                this.HandleAdopted(parentElement);
                 break;
 
             case ShadowTree shadowTree:
-                this.Layout.HandleTargetAdopted(shadowTree.Host);
+                this.HandleAdopted(shadowTree.Host);
                 break;
         }
     }
@@ -61,32 +87,23 @@ public sealed class Text : Layoutable
         switch (parent)
         {
             case Element parentElement:
-                this.Layout.HandleTargetRemoved(parentElement);
+                this.HandleRemoved(parentElement);
                 break;
 
             case ShadowTree shadowTree:
-                this.Layout.HandleTargetRemoved(shadowTree.Host);
+                this.HandleRemoved(shadowTree.Host);
                 break;
         }
     }
 
-    protected override void OnConnected(RenderTree renderTree) =>
-        this.Layout.HandleTargetConnected();
-
-    protected override void OnDisconnected(RenderTree renderTree) =>
-        this.Layout.HandleTargetDisconnected();
-
     protected override void OnIndexed() =>
-        this.Layout.HandleTargetIndexed();
+        this.HandleIndexed();
 
     internal void InvokeActivate() =>
-        this.Layout.HandleTargetActivated();
+        this.HandleActivated();
 
     internal void InvokeDeactivate() =>
-        this.Layout.HandleTargetDeactivated();
-
-    public void ClearSelection() =>
-        this.Layout.ClearSelection();
+        this.HandleDeactivated();
 
     public string? Copy(TextSelection selection)
     {
@@ -123,18 +140,18 @@ public sealed class Text : Layoutable
 
             this.Buffer.Remove((int)range.Start, range.Length);
 
-            this.Layout.ClearSelection();
+            this.ClearSelection();
             this.CursorPosition = range.Start;
 
-            this.Layout.AdjustScroll();
+            this.AdjustScroll();
         }
     }
 
     public void DeleteSelected()
     {
-        if (this.Layout.Selection.HasValue)
+        if (this.Selection.HasValue)
         {
-            this.Delete(this.Layout.Selection.Value);
+            this.Delete(this.Selection.Value);
         }
     }
 
@@ -159,20 +176,30 @@ public sealed class Text : Layoutable
         return new(rect.Size.Cast<int>(), position);
     }
 
+    public void ClearSelection() =>
+        this.Selection = default;
+
     public TextLine GetCharacterLine(uint index) =>
-        this.Layout.GetCharacterLine(index);
+        this.textLines[this.GetCharacterLineIndex(index)];
+
+    public int GetCharacterLineIndex(uint index) =>
+        ((TextCommand)this.Commands[(int)index]).Line;
 
     public TextLine? GetCharacterNextLine(uint index) =>
-        this.Layout.GetCharacterNextLine(index);
+        !this.Buffer.IsEmpty && this.GetCharacterLineIndex(index) + 1 is var lineIndex && lineIndex < this.textLines.Count
+            ? this.textLines[lineIndex]
+            : (TextLine?)default;
 
     public TextLine? GetCharacterPreviousLine(uint index) =>
-        this.Layout.GetCharacterPreviousLine(index);
+        !this.Buffer.IsEmpty && this.GetCharacterLineIndex(index) - 1 is var lineIndex && lineIndex > -1
+            ? this.textLines[lineIndex]
+            : (TextLine?)default;
 
     public Rect<int> GetCursorBoundings()
     {
-        this.Layout.Update();
+        this.UpdateLayout();
 
-        var rect = this.Layout.CursorRect;
+        var rect = this.CursorRect;
 
         var transform = this.TransformWithOffset;
 
@@ -216,11 +243,11 @@ public sealed class Text : Layoutable
         return rect.Cast<int>();
     }
 
-    public void HideCaret() =>
-        this.Layout.HideCaret();
+    // public void HideCaret() =>
+    //     this.Layout.HideCaret();
 
-    public void ShowCaret() =>
-        this.Layout.ShowCaret();
+    // public void ShowCaret() =>
+    //     this.Layout.ShowCaret();
 
     public override string ToString() =>
         this.Buffer.ToString();
