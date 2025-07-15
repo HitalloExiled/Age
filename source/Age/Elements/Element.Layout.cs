@@ -1402,7 +1402,7 @@ public abstract partial class Element
         this.ShadowTree?.Dispose();
     }
 
-    protected override void OnStyleChanged(StyleProperty property)
+    private protected override void OnStyleChanged(StyleProperty property)
     {
         if (!this.IsConnected)
         {

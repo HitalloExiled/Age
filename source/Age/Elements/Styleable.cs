@@ -161,26 +161,33 @@ public abstract partial class Styleable : Layoutable
         this.InvokeStyleChanged(property);
     }
 
-    protected abstract void OnStyleChanged(StyleProperty property);
+    private protected abstract void OnStyleChanged(StyleProperty property);
 
-    protected override void OnDisposed() =>
+    protected override void OnDisposed()
+    {
+        base.OnDisposed();
+
         stylePool.Return(this.ComputedStyle);
+    }
 
     protected override void OnConnected(RenderTree renderTree)
     {
         base.OnConnected(renderTree);
 
+        this.ComputeStyle(default);
+
         GetStyleSource(this.Parent)?.StyleChanged += this.OnParentStyleChanged;
     }
 
-    protected override void OnRemoved(Node parent) =>
+    protected override void OnRemoved(Node parent)
+    {
+        base.OnRemoved(parent);
+
         GetStyleSource(parent)?.StyleChanged -= this.OnParentStyleChanged;
+    }
 
     private protected void AddState(ElementState state) =>
         this.States |= state;
-
-    private protected void ComputeStyle() =>
-        this.ComputeStyle(default);
 
     private protected void RemoveState(ElementState state) =>
         this.States &= ~state;

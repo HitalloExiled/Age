@@ -17,19 +17,18 @@ public abstract partial class Layoutable
 
     internal bool IsDirty { get; private set; }
 
-    internal protected int        BaseLine  { get; protected set; } = -1;
-    internal protected Size<uint> Boundings { get; protected set; }
+    internal int        BaseLine  { get; private protected set; } = -1;
+    internal Size<uint> Boundings { get; private protected set; }
 
-    internal uint LineHeight { get; set; }
+    internal uint           LineHeight { get; set; }
+    internal Vector2<float> Offset     { get; set; }
 
     internal virtual bool          Hidden       { get; set; }
     internal virtual StencilLayer? StencilLayer { get; set; }
 
     private protected virtual Transform2D LayoutTransform => Transform2D.CreateTranslated(this.Offset);
 
-    internal Vector2<float> Offset { get; set; }
-
-    internal abstract bool       IsParentDependent { get; }
+    internal abstract bool IsParentDependent { get; }
 
     private protected static Styleable? GetStyleSource(Node? node) =>
         node is not ShadowTree shadowTree
@@ -37,14 +36,6 @@ public abstract partial class Layoutable
             : shadowTree.InheritsHostStyle
                 ? shadowTree.Host
                 : null;
-
-    protected void SetCursor(Cursor? cursor)
-    {
-        if (this.Tree is RenderTree renderTree)
-        {
-            renderTree.Window.Cursor = cursor ?? default;
-        }
-    }
 
     protected override void OnDisposed(bool disposing)
     {
@@ -54,7 +45,13 @@ public abstract partial class Layoutable
         }
     }
 
-    internal void RequestUpdate(bool affectsBoundings)
+    protected override void OnConnected(RenderTree renderTree) =>
+        this.StencilLayer = this.ComposedParentElement?.ContentStencilLayer;
+
+    protected override void OnDisconnected(RenderTree renderTree) =>
+        this.StencilLayer = null;
+
+    private protected void RequestUpdate(bool affectsBoundings)
     {
         for (var current = this; ; current = current.ComposedParentElement!)
         {
@@ -79,17 +76,19 @@ public abstract partial class Layoutable
         }
     }
 
-    protected override void OnConnected(RenderTree renderTree) =>
-        this.StencilLayer = this.ComposedParentElement?.ContentStencilLayer;
-
-    protected override void OnDisconnected(RenderTree renderTree) =>
-        this.StencilLayer = null;
-
-    internal void MakeDirty() =>
+    private protected void MakeDirty() =>
         this.IsDirty = true;
 
-    internal void MakePristine() =>
+    private protected void MakePristine() =>
         this.IsDirty = false;
+
+    private protected void SetCursor(Cursor? cursor)
+    {
+        if (this.Tree is RenderTree renderTree)
+        {
+            renderTree.Window.Cursor = cursor ?? default;
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UpdateDirtyLayout()

@@ -461,7 +461,7 @@ public abstract partial class Element : Styleable, IComparable<Element>, IEnumer
 
         this.Canvas = this.ComposedParentElement?.Canvas ?? this.Parent as Canvas;
 
-        this.ComputeStyle();
+        base.OnConnected(renderTree);
 
         if (this.ownStencilLayer != null)
         {
