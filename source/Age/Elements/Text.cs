@@ -35,8 +35,6 @@ public sealed partial class Text : Layoutable
 
     public Text()
     {
-        this.NodeFlags  = NodeFlags.Immutable;
-
         this.caretTimer = new()
         {
             WaitTime = TimeSpan.FromMilliseconds(500),
@@ -52,6 +50,8 @@ public sealed partial class Text : Layoutable
 
         this.AppendChild(this.caretTimer);
         this.AppendChild(this.selectionTimer);
+
+        this.NodeFlags = NodeFlags.Immutable;
 
         this.caretCommand              = CommandPool.RectCommand.Get();
         this.caretCommand.Color        = Color.White;
