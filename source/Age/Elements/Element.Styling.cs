@@ -71,7 +71,7 @@ public abstract partial class Element
 
     private void ComputeStyle(in StyleData previous)
     {
-        if (!IsConnected)
+        if (!this.IsConnected)
         {
             return;
         }

@@ -229,10 +229,10 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         var boundings = this.GetUpdatedBoundings();
 
-        var padding = this.Padding;
-        var border  = this.Border;
-        var content = this.Content;
-        var margin  = this.Margin;
+        var padding = this.padding;
+        var border  = this.border;
+        var content = this.content;
+        var margin  = this.margin;
 
         return new()
         {

@@ -50,7 +50,6 @@ public abstract partial class Element
             var size    = this.size;
             var padding = this.padding;
             var margin  = this.margin;
-            var style   = this.ComputedStyle;
 
             if (this.parentDependencies.HasFlags(Dependency.Width))
             {
@@ -62,8 +61,8 @@ public abstract partial class Element
                 size.Height = this.content.Height;
             }
 
-            checkRect(style.Margin,  ref padding);
-            checkRect(style.Padding, ref padding);
+            checkRect(this.ComputedStyle.Margin,  ref padding);
+            checkRect(this.ComputedStyle.Padding, ref padding);
 
             return new(
                 size.Width  + padding.Horizontal + this.border.Horizontal + margin.Horizontal,
@@ -104,7 +103,7 @@ public abstract partial class Element
 
     private protected override StencilLayer? ContentStencilLayer => this.ownStencilLayer ?? this.StencilLayer;
 
-    internal uint FontSize => GetFontSize(this.ComputedStyle);
+    internal uint FontSize => this.ComputedStyle.FontSize ?? DEFAULT_FONT_SIZE;
 
     internal Point<uint> ContentOffset
     {
@@ -124,12 +123,8 @@ public abstract partial class Element
         }
     }
 
-    internal RectEdges  Border     => this.border;
-    internal bool       CanScrollX => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollX) == true;
-    internal bool       CanScrollY => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollY) == true;
-    internal Size<uint> Content    => this.content;
-    internal RectEdges  Margin     => this.margin;
-    internal RectEdges  Padding    => this.padding;
+    internal bool CanScrollX => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollX) == true;
+    internal bool CanScrollY => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollY) == true;
 
     internal override StencilLayer? StencilLayer
     {
@@ -149,13 +144,11 @@ public abstract partial class Element
     {
         get
         {
-            var style = this.ComputedStyle;
-
-            if (style.Transforms?.Length > 0)
+            if (this.ComputedStyle.Transforms?.Length > 0)
             {
                 var boundings       = this.Boundings;
-                var fontSize        = GetFontSize(style);
-                var transformOrigin = style.TransformOrigin ?? new(Unit.Pc(50));
+                var fontSize        = this.FontSize;
+                var transformOrigin = this.ComputedStyle.TransformOrigin ?? new(Unit.Pc(50));
 
                 var x = Unit.Resolve(transformOrigin.X, boundings.Width, fontSize);
                 var y = Unit.Resolve(transformOrigin.Y, boundings.Height, fontSize);
@@ -164,9 +157,9 @@ public abstract partial class Element
 
                 var transform = Transform2D.Identity;
 
-                for (var i = style.Transforms.Length - 1; i >= 0; i--)
+                for (var i = this.ComputedStyle.Transforms.Length - 1; i >= 0; i--)
                 {
-                    transform *= TransformOp.Resolve(in style.Transforms[i], boundings, fontSize);
+                    transform *= TransformOp.Resolve(in this.ComputedStyle.Transforms[i], boundings, fontSize);
                 }
 
                 return origin * transform * origin.Inverse() * base.LayoutTransform;
@@ -178,9 +171,7 @@ public abstract partial class Element
 
     private static void CalculatePendingHeight(Element dependent, StackDirection direction, in uint reference, ref uint height, ref uint content, ref uint avaliableSpace)
     {
-        var style = dependent.ComputedStyle;
-
-        CalculatePendingDimension(style.Size?.Height, style.MinSize?.Height, style.MaxSize?.Height, reference, ref height, out var modified);
+        CalculatePendingDimension(dependent.ComputedStyle.Size?.Height, dependent.ComputedStyle.MinSize?.Height, dependent.ComputedStyle.MaxSize?.Height, reference, ref height, out var modified);
 
         if (modified)
         {
@@ -295,9 +286,7 @@ public abstract partial class Element
 
     private static void CalculatePendingWidth(Element dependent, StackDirection direction, in uint reference, ref uint width, ref uint content, ref uint avaliableSpace)
     {
-        var style = dependent.ComputedStyle;
-
-        CalculatePendingDimension(style.Size?.Width, style.MinSize?.Width, style.MaxSize?.Width, reference, ref width, out var modified);
+        CalculatePendingDimension(dependent.ComputedStyle.Size?.Width, dependent.ComputedStyle.MinSize?.Width, dependent.ComputedStyle.MaxSize?.Width, reference, ref width, out var modified);
 
         if (modified)
         {
@@ -337,10 +326,6 @@ public abstract partial class Element
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsAllNull(Unit? abs, Unit? min, Unit? max) =>
         abs == null && min == null && max == null;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static uint GetFontSize(Style style) =>
-        style.FontSize ?? DEFAULT_FONT_SIZE;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool HasRelativeEdges(StyleRectEdges? edges) =>
@@ -603,9 +588,9 @@ public abstract partial class Element
         }
     }
 
-    private void CalculateLayout(Style style)
+    private void CalculateLayout()
     {
-        var direction = style.StackDirection ?? StackDirection.Horizontal;
+        var direction = this.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
 
         this.content       = new Size<uint>();
         this.staticContent = new Size<uint>();
@@ -675,16 +660,16 @@ public abstract partial class Element
 
         if (this.contentDependencies.HasAnyFlag(Dependency.Width | Dependency.Height))
         {
-            this.CalculatePendingMargin(style, ref this.content);
+            this.CalculatePendingMargin(ref this.content);
         }
 
         var size = this.content;
 
-        var fontSize = GetFontSize(style);
+        var fontSize = this.FontSize;
 
-        var resolvedMargin  = this.ResolveMargin(fontSize, style.Margin);
-        var resolvedPadding = this.ResolvePadding(fontSize, style.Padding);
-        var resolvedSize    = this.ResolveSize(style, fontSize, ref size);
+        var resolvedMargin  = this.ResolveMargin(fontSize, this.ComputedStyle.Margin);
+        var resolvedPadding = this.ResolvePadding(fontSize, this.ComputedStyle.Padding);
+        var resolvedSize    = this.ResolveSize(fontSize, ref size);
 
         var sizeHasChanged = this.size != size;
 
@@ -694,18 +679,18 @@ public abstract partial class Element
         {
             if (this.dependents.Count > 0 && (sizeHasChanged || this.childsChanged || this.dependenciesHasChanged))
             {
-                this.CalculatePendingLayouts(style);
+                this.CalculatePendingLayouts();
             }
 
-            this.UpdateBoundings(style);
+            this.UpdateBoundings();
         }
     }
 
-    private void CalculatePendingMargin(Style style, ref Size<uint> size)
+    private void CalculatePendingMargin(ref Size<uint> size)
     {
         var contentSize = size;
 
-        var direction = style.StackDirection ?? StackDirection.Horizontal;
+        var direction = this.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
 
         foreach (var dependent in this.dependents)
         {
@@ -732,11 +717,11 @@ public abstract partial class Element
         size = contentSize;
     }
 
-    private void CalculatePendingLayouts(Style style)
+    private void CalculatePendingLayouts()
     {
         var content        = this.content;
         var avaliableSpace = this.size.ClampSubtract(this.staticContent);
-        var direction      = style.StackDirection ?? StackDirection.Horizontal;
+        var direction      = this.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
 
         foreach (var dependent in this.dependents)
         {
@@ -783,13 +768,13 @@ public abstract partial class Element
 
                 if (dependent.dependents.Count > 0)
                 {
-                    dependent.CalculatePendingLayouts(dependentStyle);
+                    dependent.CalculatePendingLayouts();
                 }
 
-                dependent.UpdateDisposition(dependentStyle);
+                dependent.UpdateDisposition();
             }
 
-            dependent.UpdateBoundings(dependentStyle);
+            dependent.UpdateBoundings();
             dependent.MakePristine();
 
             this.CheckHightestInlineChild(direction, dependent);
@@ -911,7 +896,7 @@ public abstract partial class Element
                 && (
                     alignment.Value == Alignment.Center
                     || alignment.Value.HasAnyFlag(Alignment.Top | Alignment.Bottom)
-                    || (direction == StackDirection.Vertical && alignment.Value.HasAnyFlag(Alignment.Start | Alignment.Center | Alignment.End))
+                    || direction == StackDirection.Vertical && alignment.Value.HasAnyFlag(Alignment.Start | Alignment.Center | Alignment.End)
                 );
 
             baseline += element.padding.Top + element.border.Top + element.margin.Top;
@@ -923,24 +908,24 @@ public abstract partial class Element
         }
     }
 
-    private Point<float> GetAlignment(Style style, StackDirection direction, Alignment alignmentKind, out AlignmentAxis alignmentAxis)
+    private Point<float> GetAlignment(StackDirection direction, Alignment alignmentKind, out AlignmentAxis alignmentAxis)
     {
         var x = -1;
         var y = -1;
 
-        var itemsAlignment = style.ItemsAlignment ?? ItemsAlignment.None;
+        var itemsAlignment = this.ComputedStyle.ItemsAlignment ?? ItemsAlignment.None;
 
         alignmentAxis = AlignmentAxis.Horizontal | AlignmentAxis.Vertical;
 
-        if (alignmentKind.HasFlags(Alignment.Left) || (direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start))))
+        if (alignmentKind.HasFlags(Alignment.Left) || direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start)))
         {
             x = -1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Right) || (direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End))))
+        else if (alignmentKind.HasFlags(Alignment.Right) || direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End)))
         {
             x = 1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Center) || (direction == StackDirection.Vertical && itemsAlignment == ItemsAlignment.Center))
+        else if (alignmentKind.HasFlags(Alignment.Center) || direction == StackDirection.Vertical && itemsAlignment == ItemsAlignment.Center)
         {
             x = 0;
         }
@@ -949,15 +934,15 @@ public abstract partial class Element
             alignmentAxis &= ~AlignmentAxis.Horizontal;
         }
 
-        if (alignmentKind.HasFlags(Alignment.Top) || (direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start))))
+        if (alignmentKind.HasFlags(Alignment.Top) || direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start)))
         {
             y = -1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Bottom) || (direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End))))
+        else if (alignmentKind.HasFlags(Alignment.Bottom) || direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End)))
         {
             y = 1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Center) || (direction == StackDirection.Horizontal && itemsAlignment == ItemsAlignment.Center))
+        else if (alignmentKind.HasFlags(Alignment.Center) || direction == StackDirection.Horizontal && itemsAlignment == ItemsAlignment.Center)
         {
             y = 0;
         }
@@ -1068,15 +1053,15 @@ public abstract partial class Element
         this.ReleaseLayoutCommand(LayoutCommand.Image);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool ResolveHeight(Style style, uint fontSize, ref uint value)
+    private bool ResolveHeight(uint fontSize, ref uint value)
     {
         var resolved = !this.parentDependencies.HasFlags(Dependency.Height);
 
         if (!this.contentDependencies.HasFlags(Dependency.Height))
         {
-            ResolveDimension(fontSize, style.Size?.Height, style.MinSize?.Height, style.MaxSize?.Height, ref value, ref resolved);
+            ResolveDimension(fontSize, this.ComputedStyle.Size?.Height, this.ComputedStyle.MinSize?.Height, this.ComputedStyle.MaxSize?.Height, ref value, ref resolved);
 
-            if (style.BoxSizing == BoxSizing.Border)
+            if (this.ComputedStyle.BoxSizing == BoxSizing.Border)
             {
                 value = value.ClampSubtract(this.border.Vertical);
             }
@@ -1086,10 +1071,10 @@ public abstract partial class Element
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool ResolveSize(Style style, uint fontSize, ref Size<uint> size)
+    private bool ResolveSize(uint fontSize, ref Size<uint> size)
     {
-        var resolvedWidth  = this.ResolveWidth(style, fontSize, ref size.Width);
-        var resolvedHeight = this.ResolveHeight(style, fontSize, ref size.Height);
+        var resolvedWidth  = this.ResolveWidth(fontSize, ref size.Width);
+        var resolvedHeight = this.ResolveHeight(fontSize, ref size.Height);
 
         return resolvedWidth && resolvedHeight;
     }
@@ -1111,15 +1096,15 @@ public abstract partial class Element
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool ResolveWidth(Style style, uint fontSize, ref uint value)
+    private bool ResolveWidth(uint fontSize, ref uint value)
     {
         var resolved = !this.parentDependencies.HasFlags(Dependency.Width);
 
         if (!this.contentDependencies.HasFlags(Dependency.Width))
         {
-            ResolveDimension(fontSize, style.Size?.Width, style.MinSize?.Width, style.MaxSize?.Width, ref value, ref resolved);
+            ResolveDimension(fontSize, this.ComputedStyle.Size?.Width, this.ComputedStyle.MinSize?.Width, this.ComputedStyle.MaxSize?.Width, ref value, ref resolved);
 
-            if (style.BoxSizing == BoxSizing.Border)
+            if (this.ComputedStyle.BoxSizing == BoxSizing.Border)
             {
                 value = value.ClampSubtract(this.border.Horizontal);
             }
@@ -1169,7 +1154,7 @@ public abstract partial class Element
         this.ReleaseLayoutCommandImage();
     }
 
-    private void UpdateDisposition(Style style)
+    private void UpdateDisposition()
     {
         if (this.renderableNodesCount == 0)
         {
@@ -1178,8 +1163,8 @@ public abstract partial class Element
 
         var cursor               = new Point<float>();
         var size                 = this.size;
-        var direction            = style.StackDirection ?? StackDirection.Horizontal;
-        var contentJustification = style.ContentJustification ?? ContentJustification.None;
+        var direction            = this.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
+        var contentJustification = this.ComputedStyle.ContentJustification ?? ContentJustification.None;
 
         var avaliableSpace = direction == StackDirection.Horizontal
             ? new Size<float>(size.Width.ClampSubtract(this.content.Width), size.Height)
@@ -1215,7 +1200,7 @@ public abstract partial class Element
                 alignmentType  = element.ComputedStyle.Alignment ?? Alignment.None;
             }
 
-            var alignment = this.GetAlignment(style, direction, alignmentType, out var alignmentAxis);
+            var alignment = this.GetAlignment(direction, alignmentType, out var alignmentAxis);
 
             var position  = new Vector2<float>();
             var usedSpace = new Size<float>();
@@ -1335,32 +1320,32 @@ public abstract partial class Element
         }
     }
 
-    private void UpdateBoundings(Style style)
+    private void UpdateBoundings()
     {
         this.Boundings = new(
             this.size.Width + this.padding.Horizontal + this.border.Horizontal,
             this.size.Height + this.padding.Vertical + this.border.Vertical
         );
 
-        this.UpdateCommands(style);
+        this.UpdateCommands();
     }
 
-    private void UpdateCommands(Style style)
+    private void UpdateCommands()
     {
         var layoutCommandBox = this.GetLayoutCommandBox();
 
-        if (style.Border != null || style.BackgroundColor != null || style.BackgroundImage != null)
+        if (this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor != null || this.ComputedStyle.BackgroundImage != null)
         {
             layoutCommandBox.Size            = this.Boundings.Cast<float>();
-            layoutCommandBox.Border          = style.Border ?? default(Shaders.CanvasShader.Border);
-            layoutCommandBox.Color           = style.BackgroundColor ?? default;
+            layoutCommandBox.Border          = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
+            layoutCommandBox.Color           = this.ComputedStyle.BackgroundColor ?? default;
             layoutCommandBox.PipelineVariant |= PipelineVariant.Color;
 
-            if (style.BackgroundImage != null)
+            if (this.ComputedStyle.BackgroundImage != null)
             {
                 var layoutCommandImage  = this.GetLayoutCommandImage();
 
-                this.ResolveImageSize(style.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
+                this.ResolveImageSize(this.ComputedStyle.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
 
                 layoutCommandImage.Size          = size;
                 layoutCommandImage.Transform     = transform;
@@ -1408,29 +1393,27 @@ public abstract partial class Element
             return;
         }
 
-        var style = this.ComputedStyle;
-
-        var hidden = style.Hidden == true;
+        var hidden = this.ComputedStyle.Hidden == true;
 
         if (property.HasFlags(StyleProperty.BackgroundImage))
         {
-            this.SetBackgroundImage(style.BackgroundImage);
+            this.SetBackgroundImage(this.ComputedStyle.BackgroundImage);
         }
 
         if (property.HasFlags(StyleProperty.Border))
         {
             this.border = new()
             {
-                Top    = style.Border?.Top.Thickness ?? 0,
-                Right  = style.Border?.Right.Thickness ?? 0,
-                Bottom = style.Border?.Bottom.Thickness ?? 0,
-                Left   = style.Border?.Left.Thickness ?? 0,
+                Top    = this.ComputedStyle.Border?.Top.Thickness ?? 0,
+                Right  = this.ComputedStyle.Border?.Right.Thickness ?? 0,
+                Bottom = this.ComputedStyle.Border?.Bottom.Thickness ?? 0,
+                Left   = this.ComputedStyle.Border?.Left.Thickness ?? 0,
             };
         }
 
         if (property.HasFlags(StyleProperty.Cursor) && this.IsHovered)
         {
-            this.SetCursor(style.Cursor);
+            this.SetCursor(this.ComputedStyle.Cursor);
         }
 
         var hasSizeChanges    = property.HasAnyFlag(StyleProperty.Size | StyleProperty.MinSize | StyleProperty.MaxSize);
@@ -1447,13 +1430,13 @@ public abstract partial class Element
                 this.contentDependencies = Dependency.None;
                 this.parentDependencies  = Dependency.None;
 
-                var absWidth = style.Size?.Width;
-                var minWidth = style.MinSize?.Width;
-                var maxWidth = style.MaxSize?.Width;
+                var absWidth = this.ComputedStyle.Size?.Width;
+                var minWidth = this.ComputedStyle.MinSize?.Width;
+                var maxWidth = this.ComputedStyle.MaxSize?.Width;
 
-                var absHeight = style.Size?.Height;
-                var minHeight = style.MinSize?.Height;
-                var maxHeight = style.MaxSize?.Height;
+                var absHeight = this.ComputedStyle.Size?.Height;
+                var minHeight = this.ComputedStyle.MinSize?.Height;
+                var maxHeight = this.ComputedStyle.MaxSize?.Height;
 
                 if (IsAllNull(absWidth, minWidth, maxWidth))
                 {
@@ -1474,12 +1457,12 @@ public abstract partial class Element
                 }
             }
 
-            if (hasMarginChanges && HasRelativeEdges(style.Margin))
+            if (hasMarginChanges && HasRelativeEdges(this.ComputedStyle.Margin))
             {
                 this.parentDependencies |= Dependency.Margin;
             }
 
-            if (hasPaddingChanges && HasRelativeEdges(style.Padding))
+            if (hasPaddingChanges && HasRelativeEdges(this.ComputedStyle.Padding))
             {
                 this.parentDependencies |= Dependency.Padding;
             }
@@ -1524,7 +1507,7 @@ public abstract partial class Element
 
         if (property.HasFlags(StyleProperty.Overflow))
         {
-            var currentIsScrollable = (style.Overflow?.HasFlags(Overflow.ScrollX) == true || style.Overflow?.HasFlags(Overflow.ScrollY) == true) && this.contentDependencies != (Dependency.Width | Dependency.Height);
+            var currentIsScrollable = (this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollX) == true || this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollY) == true) && this.contentDependencies != (Dependency.Width | Dependency.Height);
 
             if (currentIsScrollable != this.IsScrollable)
             {
@@ -1541,7 +1524,7 @@ public abstract partial class Element
                 this.IsScrollable = currentIsScrollable;
             }
 
-            if (style.Overflow?.HasFlags(Overflow.Clipping) == true && this.contentDependencies != (Dependency.Width | Dependency.Height))
+            if (this.ComputedStyle.Overflow?.HasFlags(Overflow.Clipping) == true && this.contentDependencies != (Dependency.Width | Dependency.Height))
             {
                 if (this.ownStencilLayer == null)
                 {
@@ -1573,7 +1556,7 @@ public abstract partial class Element
         {
             this.Hidden = hidden;
 
-            this.UpdateCommands(style);
+            this.UpdateCommands();
             this.RequestUpdate(affectsBoundings);
         }
 
@@ -1623,11 +1606,9 @@ public abstract partial class Element
     {
         var command = this.GetLayoutCommandBox();
 
-        var style = this.ComputedStyle;
-
         command.ObjectId = this.Index == -1
             ? default
-            : style.Border != null || style.BackgroundColor.HasValue ? (uint)(this.Index + 1) : 0;
+            : this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor.HasValue ? (uint)(this.Index + 1) : 0;
     }
 
     internal void HandleTargetMouseOver() =>
@@ -1635,13 +1616,11 @@ public abstract partial class Element
 
     internal override void UpdateLayout()
     {
-        var style = this.ComputedStyle;
-
-        this.CalculateLayout(style);
+        this.CalculateLayout();
 
         if (this.parentDependencies == Dependency.None)
         {
-            this.UpdateDisposition(style);
+            this.UpdateDisposition();
             this.childsChanged          = false;
             this.dependenciesHasChanged = false;
         }
