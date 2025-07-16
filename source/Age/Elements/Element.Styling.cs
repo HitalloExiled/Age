@@ -11,23 +11,6 @@ public abstract partial class Element
 
     private static readonly StylePool stylePool = new();
 
-    private ElementState States
-    {
-        get;
-        set
-        {
-            if (field != value)
-            {
-                field = value;
-
-                if (this.StyleSheet != null)
-                {
-                    this.ComputeStyle(this.ComputedStyle.Data);
-                }
-            }
-        }
-    }
-
     private Style? UserStyle
     {
         get;
@@ -159,17 +142,4 @@ public abstract partial class Element
         this.ComputedStyle?.Copy(this.UserStyle!, property);
         this.InvokeStyleChanged(property);
     }
-
-    protected override void OnRemoved(Node parent)
-    {
-        base.OnRemoved(parent);
-
-        GetStyleSource(parent)?.StyleChanged -= this.OnParentStyleChanged;
-    }
-
-    private protected void AddState(ElementState state) =>
-        this.States |= state;
-
-    private protected void RemoveState(ElementState state) =>
-        this.States &= ~state;
 }

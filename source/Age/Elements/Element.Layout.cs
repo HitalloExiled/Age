@@ -106,8 +106,6 @@ public abstract partial class Element
 
     internal uint FontSize => GetFontSize(this.ComputedStyle);
 
-    internal bool IsScrollable { get; set; }
-
     internal Point<uint> ContentOffset
     {
         get;
@@ -215,7 +213,7 @@ public abstract partial class Element
         }
     }
 
-    private static void CalculatePendingPaddingHorizontal(Element layout, in StyleRectEdges? stylePadding, uint reference, ref RectEdges padding)
+    private static void CalculatePendingPaddingHorizontal(Element element, in StyleRectEdges? stylePadding, uint reference, ref RectEdges padding)
     {
         if (stylePadding?.Left?.TryGetPercentage(out var left) == true)
         {
@@ -228,7 +226,7 @@ public abstract partial class Element
         }
     }
 
-    private static void CalculatePendingPaddingVertical(Element layout, in StyleRectEdges? stylePadding, uint reference, ref RectEdges padding)
+    private static void CalculatePendingPaddingVertical(Element element, in StyleRectEdges? stylePadding, uint reference, ref RectEdges padding)
     {
         if (stylePadding?.Top?.TryGetPercentage(out var top) == true)
         {
@@ -241,7 +239,7 @@ public abstract partial class Element
         }
     }
 
-    private static void CalculatePendingMarginHorizontal(Element layout, in StyleRectEdges? styleMargin, StackDirection direction, uint reference, ref RectEdges margin, ref Size<uint> contentSize)
+    private static void CalculatePendingMarginHorizontal(Element element, in StyleRectEdges? styleMargin, StackDirection direction, uint reference, ref RectEdges margin, ref Size<uint> contentSize)
     {
         var horizontal = 0u;
 
@@ -263,12 +261,12 @@ public abstract partial class Element
             }
             else
             {
-                contentSize.Width = uint.Max(layout.size.Width + layout.padding.Horizontal + layout.border.Horizontal + horizontal, contentSize.Width);
+                contentSize.Width = uint.Max(element.size.Width + element.padding.Horizontal + element.border.Horizontal + horizontal, contentSize.Width);
             }
         }
     }
 
-    private static void CalculatePendingMarginVertical(Element layout, in StyleRectEdges? styleMargin, StackDirection direction, uint reference, ref RectEdges margin, ref Size<uint> contentSize)
+    private static void CalculatePendingMarginVertical(Element element, in StyleRectEdges? styleMargin, StackDirection direction, uint reference, ref RectEdges margin, ref Size<uint> contentSize)
     {
         var vertical = 0u;
 
@@ -290,7 +288,7 @@ public abstract partial class Element
             }
             else
             {
-                contentSize.Height = uint.Max(layout.size.Height + layout.padding.Vertical + layout.border.Vertical + vertical, contentSize.Height);
+                contentSize.Height = uint.Max(element.size.Height + element.padding.Vertical + element.border.Vertical + vertical, contentSize.Height);
             }
         }
     }
@@ -613,7 +611,7 @@ public abstract partial class Element
         this.staticContent = new Size<uint>();
         this.BaseLine      = -1;
 
-        var enumerator = this.GetComposedTargetEnumerator();
+        var enumerator = this.GetComposedElementEnumerator();
 
         while (enumerator.MoveNext())
         {
@@ -979,7 +977,7 @@ public abstract partial class Element
         return new(normalize(x), normalize(y));
     }
 
-    private TargetEnumerator GetComposedTargetEnumerator() =>
+    private ComposedElementEnumerator GetComposedElementEnumerator() =>
         new(this);
 
     private RectCommand GetLayoutCommand(LayoutCommand layoutCommand)
@@ -1192,7 +1190,7 @@ public abstract partial class Element
 
         var index = 0;
 
-        var enumerator = this.GetComposedTargetEnumerator();
+        var enumerator = this.GetComposedElementEnumerator();
 
         while (enumerator.MoveNext())
         {

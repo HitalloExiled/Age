@@ -240,29 +240,6 @@ public abstract partial class Element
     private void AddEvent(EventProperty key, Delegate? handler) =>
         this.AddEvent(key, handler, out _);
 
-    private void AddEvents(RenderTree renderTree)
-    {
-        if (this.events.ContainsKey(EventProperty.Input))
-        {
-            renderTree.Window.Input += this.OnInput;
-        }
-
-        if (this.events.ContainsKey(EventProperty.KeyDown))
-        {
-            renderTree.Window.KeyDown += this.OnKeyDown;
-        }
-
-        if (this.events.ContainsKey(EventProperty.KeyUp))
-        {
-            renderTree.Window.KeyUp += this.OnKeyUp;
-        }
-
-        if (this.events.ContainsKey(EventProperty.Scrolled))
-        {
-            renderTree.Window.MouseWheel += this.OnScroll;
-        }
-    }
-
     private void RemoveEvent(EventProperty key, Delegate? handler) =>
         this.RemoveEvent(key, handler, out _);
 

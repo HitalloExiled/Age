@@ -125,7 +125,7 @@ public abstract partial class Layoutable : Spatial2D
         set => this.LocalTransform = value * this.Transform.Inverse();
     }
 
-    private protected Layoutable GetIndependentLayoutAncestor()
+    private protected Layoutable GetIndependentAncestor()
     {
         var current = this;
 
@@ -142,11 +142,11 @@ public abstract partial class Layoutable : Spatial2D
         return current;
     }
 
-    private protected void UpdateIndependentAncestorLayout()
+    private protected void UpdateLayoutIndependentAncestor()
     {
         if (this.IsDirty)
         {
-            this.GetIndependentLayoutAncestor().Update();
+            this.GetIndependentAncestor().UpdateLayout();
         }
     }
 
@@ -172,7 +172,7 @@ public abstract partial class Layoutable : Spatial2D
 
     public Rect<int> GetUpdatedBoundings()
     {
-        this.UpdateIndependentAncestorLayout();
+        this.UpdateLayoutIndependentAncestor();
 
         var transform = this.TransformWithOffset;
 

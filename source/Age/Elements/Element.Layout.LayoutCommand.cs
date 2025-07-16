@@ -5,7 +5,7 @@ namespace Age.Elements;
 public abstract partial class Element
 {
     [KeyedListKey]
-    public enum LayoutCommand : byte
+    internal enum LayoutCommand : byte
     {
         None     = 0,
         Box      = 1 << 0,

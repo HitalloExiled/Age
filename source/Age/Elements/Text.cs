@@ -121,7 +121,7 @@ public sealed partial class Text : Layoutable
             throw new IndexOutOfRangeException();
         }
 
-        this.UpdateIndependentAncestorLayout();
+        this.UpdateLayoutIndependentAncestor();
 
         var rect = ((RectCommand)this.Commands[(int)index]).GetAffineRect();
 
@@ -179,7 +179,7 @@ public sealed partial class Text : Layoutable
             throw new IndexOutOfRangeException();
         }
 
-        this.UpdateIndependentAncestorLayout();
+        this.UpdateLayoutIndependentAncestor();
 
         var slice = this.Commands.AsSpan((int)textSelection.Start + 1, (int)textSelection.End + 1);
 
