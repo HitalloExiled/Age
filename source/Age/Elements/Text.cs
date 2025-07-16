@@ -887,7 +887,6 @@ public sealed class Text : Layoutable
                 }
             }
         }
-
     }
 
     internal void UpdateSelection(ushort x, ushort y, uint character)

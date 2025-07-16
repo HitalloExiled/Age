@@ -436,8 +436,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    public Canvas? Canvas        { get; private set; }
     public Style   ComputedStyle { get; } = stylePool.Get();
+    public Canvas? Canvas        { get; private set; }
     public bool    IsFocused     { get; private set; }
     public bool    IsHovered     { get; private set; }
 
@@ -510,6 +510,38 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             }
 
             this.RequestUpdate(true);
+        }
+    }
+
+    public Element? FirstElementChild
+    {
+        get
+        {
+            for (var node = this.FirstChild; node != null; node = node?.NextSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public Element? LastElementChild
+    {
+        get
+        {
+            for (var node = this.LastChild; node != null; node = node?.PreviousSibling)
+            {
+                if (node is Element element)
+                {
+                    return element;
+                }
+            }
+
+            return null;
         }
     }
 
