@@ -5,12 +5,21 @@ namespace Age.Core.Extensions;
 
 public static partial class Extension
 {
-    public static Span<byte> AsByteSpan<T>(this ref T value) where T : unmanaged =>
-        new Span<T>(ref value).Cast<T, byte>();
+    extension<T>(ref T value) where T : unmanaged
+    {
+        public Span<byte> AsByteSpan() =>
+            new Span<T>(ref value).Cast<T, byte>();
+    }
 
-    public static ref T AsStructRef<T>(this Span<byte> source) where T : unmanaged =>
+    extension(Span<byte> source)
+    {
+        public ref T AsStructRef<T>() where T : unmanaged =>
         ref Unsafe.As<byte, T>(ref MemoryMarshal.GetReference(source));
+    }
 
-    public static T Read<T>(this ReadOnlySpan<byte> source) where T : unmanaged =>
-        MemoryMarshal.Read<T>(source);
+    extension(scoped ReadOnlySpan<byte> source)
+    {
+        public T Read<T>() where T : unmanaged =>
+            MemoryMarshal.Read<T>(source);
+    }
 }

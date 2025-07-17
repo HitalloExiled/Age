@@ -353,7 +353,7 @@ dotnet_diagnostic.RCS1001.severity = none       # Add braces (when expression sp
 dotnet_diagnostic.RCS1123.severity = none       # Add parentheses when
 dotnet_diagnostic.RCS1242.severity = none       # Do not pass non-read-only struct by read-only reference
 
-[**/*Extensions.cs]
+[**/*Extension{s,}.*.cs]
 dotnet_diagnostic.CA1822.severity = none
 
 [**/obj/**.cs]

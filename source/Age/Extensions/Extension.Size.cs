@@ -4,15 +4,21 @@ namespace Age.Extensions;
 
 public static partial class Extension
 {
-    public static Size<uint> ClampSubtract(this in Size<uint> value, in Size<uint> other) =>
-        new(
-            value.Width.ClampSubtract(other.Width),
-            value.Height.ClampSubtract(other.Height)
-        );
+    extension(in Size<uint> value)
+    {
+        public Size<uint> ClampSubtract(in Size<uint> other) =>
+            new(
+                value.Width.ClampSubtract(other.Width),
+                value.Height.ClampSubtract(other.Height)
+            );
+    }
 
-    public static Size<float> ClampSubtract(this in Size<float> value, in Size<float> other) =>
-        new(
-            value.Width.ClampSubtract(other.Width),
-            value.Height.ClampSubtract(other.Height)
-        );
+    extension(in Size<float> value)
+    {
+        public Size<float> ClampSubtract(in Size<float> other) =>
+            new(
+                value.Width.ClampSubtract(other.Width),
+                value.Height.ClampSubtract(other.Height)
+            );
+    }
 }
