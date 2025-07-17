@@ -241,7 +241,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private StencilLayer? ownStencilLayer;
     private RectEdges     padding;
     private Dependency    parentDependencies;
-    private ushort        renderableNodesCount;
+    private ushort        renderableNodes;
     private Size<uint>    size;
     private Size<uint>    staticContent;
 
@@ -310,13 +310,13 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private Size<uint> BoundingsWithMargin =>
+    internal Size<uint> BoundingsWithMargin =>
         new(
             this.size.Width  + this.padding.Horizontal + this.border.Horizontal + this.margin.Horizontal,
             this.size.Height + this.padding.Vertical   + this.border.Vertical   + this.margin.Vertical
         );
 
-    private Size<uint> SizeWithPadding =>
+    internal Size<uint> SizeWithPadding =>
         new(
             this.size.Width  + this.padding.Horizontal,
             this.size.Height + this.padding.Vertical
@@ -400,9 +400,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal protected ShadowTree? ShadowTree { get; set; }
 
-    internal bool CanScrollX => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollX) == true;
-    internal bool CanScrollY => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollY) == true;
-
     internal Point<uint> ContentOffset
     {
         get;
@@ -421,10 +418,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    internal uint FontSize     => this.ComputedStyle.FontSize ??   DEFAULT_FONT_SIZE;
     internal bool IsScrollable { get; set; }
-
-    internal override bool IsParentDependent => this.parentDependencies != Dependency.None;
 
     internal override StencilLayer? StencilLayer
     {
@@ -437,6 +431,18 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             }
         }
     }
+
+    internal RectEdges  Border          => this.border;
+    internal bool       CanScrollX      => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollX) == true;
+    internal bool       CanScrollY      => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollY) == true;
+    internal Size<uint> Content         => this.content;
+    internal uint       FontSize        => this.ComputedStyle.FontSize ?? DEFAULT_FONT_SIZE;
+    internal RectEdges  Margin          => this.margin;
+    internal RectEdges  Padding         => this.padding;
+    internal ushort     RenderableNodes => this.renderableNodes;
+    internal Size<uint> Size            => this.size;
+
+    internal override bool IsParentDependent => this.parentDependencies != Dependency.None;
 
     public Style   ComputedStyle { get; } = stylePool.Get();
     public Canvas? Canvas        { get; private set; }
@@ -1111,7 +1117,10 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                     dependent.CalculatePendingLayouts();
                 }
 
-                dependent.UpdateDisposition();
+                if (dependent.RenderableNodes > 0)
+                {
+                    dependent.UpdateDisposition();
+                }
             }
 
             dependent.UpdateBoundings();
@@ -1259,63 +1268,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             ScreenX = platformContextEvent.ScreenX,
             ScreenY = platformContextEvent.ScreenY,
         };
-
-    private Point<float> GetAlignment(StackDirection direction, Alignment alignmentKind, out AlignmentAxis alignmentAxis)
-    {
-        var x = -1;
-        var y = -1;
-
-        var itemsAlignment = this.ComputedStyle.ItemsAlignment ?? ItemsAlignment.None;
-
-        alignmentAxis = AlignmentAxis.Horizontal | AlignmentAxis.Vertical;
-
-        if (alignmentKind.HasFlags(Alignment.Left) || (direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start))))
-        {
-            x = -1;
-        }
-        else if (alignmentKind.HasFlags(Alignment.Right) || (direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End))))
-        {
-            x = 1;
-        }
-        else if (alignmentKind.HasFlags(Alignment.Center) || (direction == StackDirection.Vertical && itemsAlignment == ItemsAlignment.Center))
-        {
-            x = 0;
-        }
-        else
-        {
-            alignmentAxis &= ~AlignmentAxis.Horizontal;
-        }
-
-        if (alignmentKind.HasFlags(Alignment.Top) || (direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start))))
-        {
-            y = -1;
-        }
-        else if (alignmentKind.HasFlags(Alignment.Bottom) || (direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End))))
-        {
-            y = 1;
-        }
-        else if (alignmentKind.HasFlags(Alignment.Center) || (direction == StackDirection.Horizontal && itemsAlignment == ItemsAlignment.Center))
-        {
-            y = 0;
-        }
-        else
-        {
-            if (itemsAlignment == ItemsAlignment.Baseline || alignmentKind.HasFlags(Alignment.Baseline))
-            {
-                alignmentAxis |= AlignmentAxis.Baseline;
-            }
-
-            alignmentAxis &= ~AlignmentAxis.Vertical;
-        }
-
-        static float normalize(float value) =>
-            (1 + value) / 2;
-
-        return new(normalize(x), normalize(y));
-    }
-
-    private ComposedElementEnumerator GetComposedElementEnumerator() =>
-        new(this);
 
     private T? GetEvent<T>(EventProperty key) where T : Delegate =>
         this.events.TryGet(key, out var @delegate) ? (T)@delegate : null;
@@ -1557,7 +1509,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 {
                     if (justUnhidden)
                     {
-                        parent.renderableNodesCount++;
+                        parent.renderableNodes++;
                     }
 
                     if (this.parentDependencies != Dependency.None)
@@ -1572,7 +1524,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 {
                     if (justHidden)
                     {
-                        parent.renderableNodesCount--;
+                        parent.renderableNodes--;
                     }
 
                     var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
@@ -1951,172 +1903,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.ownStencilLayer?.MakeDirty();
     }
 
-    private void UpdateDisposition()
-    {
-        if (this.renderableNodesCount == 0)
-        {
-            return;
-        }
-
-        var cursor               = new Point<float>();
-        var size                 = this.size;
-        var direction            = this.ComputedStyle.StackDirection ?? StackDirection.Horizontal;
-        var contentJustification = this.ComputedStyle.ContentJustification ?? ContentJustification.None;
-
-        var avaliableSpace = direction == StackDirection.Horizontal
-            ? new Size<float>(size.Width.ClampSubtract(this.content.Width), size.Height)
-            : new Size<float>(size.Width, size.Height.ClampSubtract(this.content.Height));
-
-        cursor.X += this.padding.Left + this.border.Left;
-        cursor.Y -= this.padding.Top + this.border.Top;
-
-        var index = 0;
-
-        var enumerator = this.GetComposedElementEnumerator();
-
-        while (enumerator.MoveNext())
-        {
-            var node = enumerator.Current;
-
-            if (node is not Layoutable child || child.Hidden)
-            {
-                continue;
-            }
-
-            var alignmentType  = Alignment.None;
-            var childBoundings = child.Boundings;
-            var contentOffsetY = 0u;
-
-            RectEdges margin = default;
-
-            if (child is Element element)
-            {
-                margin         = element.margin;
-                contentOffsetY = (uint)(element.padding.Top + element.border.Top + element.margin.Top);
-                childBoundings = element.BoundingsWithMargin;
-                alignmentType  = element.ComputedStyle.Alignment ?? Alignment.None;
-            }
-
-            var alignment = this.GetAlignment(direction, alignmentType, out var alignmentAxis);
-
-            var position  = new Vector2<float>();
-            var usedSpace = new Size<float>();
-
-            if (direction == StackDirection.Horizontal)
-            {
-                if (contentJustification == ContentJustification.None)
-                {
-                    avaliableSpace.Width += childBoundings.Width;
-
-                    if (alignmentAxis.HasFlags(AlignmentAxis.Horizontal))
-                    {
-                        position.X = avaliableSpace.Width.ClampSubtract(childBoundings.Width) * alignment.X;
-                    }
-                }
-                else
-                {
-                    if (contentJustification == ContentJustification.End && index == 0)
-                    {
-                        position.X = avaliableSpace.Width;
-                    }
-                    else if (contentJustification == ContentJustification.Center && index == 0)
-                    {
-                        position.X = avaliableSpace.Width / 2;
-                    }
-                    else if (contentJustification == ContentJustification.SpaceAround)
-                    {
-                        position.X = (index == 0 ? 1 : 2) * avaliableSpace.Width / (this.renderableNodesCount * 2);
-                    }
-                    else if (contentJustification == ContentJustification.SpaceBetween && index > 0)
-                    {
-                        position.X = avaliableSpace.Width / (this.renderableNodesCount - 1);
-                    }
-                    else if (contentJustification == ContentJustification.SpaceEvenly)
-                    {
-                        position.X = avaliableSpace.Width / (this.renderableNodesCount + 1);
-                    }
-                }
-
-                if (alignmentAxis.HasFlags(AlignmentAxis.Vertical))
-                {
-                    position.Y = size.Height.ClampSubtract(childBoundings.Height) * alignment.Y;
-                }
-                else if (alignmentAxis.HasFlags(AlignmentAxis.Baseline) && child.BaseLine > -1)
-                {
-                    position.Y = this.BaseLine - (contentOffsetY + child.BaseLine);
-                }
-
-                usedSpace.Width = alignmentAxis.HasFlags(AlignmentAxis.Horizontal)
-                    ? float.Max(childBoundings.Width, avaliableSpace.Width - position.X)
-                    : childBoundings.Width;
-
-                if (contentJustification == ContentJustification.None)
-                {
-                    avaliableSpace.Width = avaliableSpace.Width.ClampSubtract((uint)usedSpace.Width);
-                }
-            }
-            else
-            {
-                position.X = size.Width.ClampSubtract(childBoundings.Width) * alignment.X;
-
-                if (contentJustification == ContentJustification.None)
-                {
-                    avaliableSpace.Height += childBoundings.Height;
-
-                    if (alignmentAxis.HasFlags(AlignmentAxis.Vertical))
-                    {
-                        position.Y = (uint)(avaliableSpace.Height.ClampSubtract(childBoundings.Height) * alignment.Y);
-                    }
-                }
-                else
-                {
-                    if (contentJustification == ContentJustification.End && index == 0)
-                    {
-                        position.Y = avaliableSpace.Height;
-                    }
-                    else if (contentJustification == ContentJustification.Center && index == 0)
-                    {
-                        position.Y = avaliableSpace.Height / 2;
-                    }
-                    else if (contentJustification == ContentJustification.SpaceAround)
-                    {
-                        position.Y = (index == 0 ? 1 : 2) * avaliableSpace.Height / (this.renderableNodesCount * 2);
-                    }
-                    else if (contentJustification == ContentJustification.SpaceBetween && index > 0)
-                    {
-                        position.Y = avaliableSpace.Height / (this.renderableNodesCount - 1);
-                    }
-                    else if (contentJustification == ContentJustification.SpaceEvenly)
-                    {
-                        position.Y = avaliableSpace.Height / (this.renderableNodesCount + 1);
-                    }
-                }
-
-                usedSpace.Height = alignmentAxis.HasFlags(AlignmentAxis.Vertical)
-                    ? float.Max(childBoundings.Height, avaliableSpace.Height - position.Y)
-                    : childBoundings.Height;
-
-                if (contentJustification == ContentJustification.None)
-                {
-                    avaliableSpace.Height = avaliableSpace.Height.ClampSubtract((uint)usedSpace.Height);
-                }
-            }
-
-            child.Offset = new(float.Round(cursor.X + position.X + margin.Left), -float.Round(-cursor.Y + position.Y + margin.Top));
-
-            if (direction == StackDirection.Horizontal)
-            {
-                cursor.X = child.Offset.X + usedSpace.Width - margin.Right;
-            }
-            else
-            {
-                cursor.Y = child.Offset.Y - usedSpace.Height + margin.Bottom;
-            }
-
-            index++;
-        }
-    }
-
     [MemberNotNull(nameof(ShadowTree))]
     protected void AttachShadowTree(bool? inheritsHostStyle = null) => this.ShadowTree = new(this, inheritsHostStyle == true);
 
@@ -2250,8 +2036,14 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private protected void AddState(ElementState state) =>
         this.States |= state;
 
+    private protected ComposedElementEnumerator GetComposedElementEnumerator() =>
+        new(this);
+
     private protected void RemoveState(ElementState state) =>
         this.States &= ~state;
+
+    private protected virtual void UpdateDisposition()
+    { }
 
     internal ComposedTreeEnumerator GetComposedTreeEnumerator() =>
         new(this);
@@ -2290,7 +2082,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         if (!layoutable.Hidden)
         {
             this.childsChanged = true;
-            this.renderableNodesCount++;
+            this.renderableNodes++;
             this.RequestUpdate(true);
         }
     }
@@ -2305,12 +2097,12 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         if (!layoutable.Hidden)
         {
             this.childsChanged = true;
-            this.renderableNodesCount--;
+            this.renderableNodes--;
             this.RequestUpdate(true);
         }
     }
 
-    internal void HandleTargetMouseOver() =>
+    internal void HandleMouseOver() =>
         this.SetCursor(this.ComputedStyle.Cursor);
 
     internal void InvokeActivate()
@@ -2379,7 +2171,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         if (!IsSelectingText)
         {
             this.AddState(ElementState.Hovered);
-            this.HandleTargetMouseOver();
+            this.HandleMouseOver();
         }
 
         this.MouseOverEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
@@ -2397,7 +2189,11 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         if (this.parentDependencies == Dependency.None)
         {
-            this.UpdateDisposition();
+            if (this.renderableNodes > 0)
+            {
+                this.UpdateDisposition();
+            }
+
             this.childsChanged = false;
             this.dependenciesHasChanged = false;
         }

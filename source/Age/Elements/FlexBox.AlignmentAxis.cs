@@ -2,7 +2,7 @@ using static Age.Shaders.CanvasShader;
 
 namespace Age.Elements;
 
-public abstract partial class Element
+public sealed partial class FlexBox
 {
     [Flags]
     private enum AlignmentAxis
