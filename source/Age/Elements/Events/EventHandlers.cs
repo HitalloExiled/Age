@@ -1,4 +1,4 @@
-namespace Age.Elements;
+namespace Age.Elements.Events;
 
 public delegate void ContextEventHandler(in ContextEvent mouseEvent);
 public delegate void MouseEventHandler(in MouseEvent mouseEvent);

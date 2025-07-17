@@ -1,7 +1,7 @@
 using Age.Platforms.Display;
 using Key = Age.Platforms.Display.Key;
 
-namespace Age.Elements;
+namespace Age.Elements.Events;
 
 public struct KeyEvent
 {

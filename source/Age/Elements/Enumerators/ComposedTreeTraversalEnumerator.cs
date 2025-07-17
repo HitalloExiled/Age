@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using Age.Scene;
 using StackEntry = (Age.Elements.Slot Slot, int Index);
 
-namespace Age.Elements;
+namespace Age.Elements.Enumerators;
 
 internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnumerable<Layoutable>
 {

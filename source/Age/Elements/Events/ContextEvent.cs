@@ -1,4 +1,4 @@
-namespace Age.Elements;
+namespace Age.Elements.Events;
 
 public struct ContextEvent
 {

@@ -193,7 +193,7 @@ public abstract partial class Layoutable : Spatial2D
 
             current.MakeDirty();
 
-            var stopPropagation = !current.IsParentDependent && !affectsBoundings || current.ComposedParentElement == null;
+            var stopPropagation = (!current.IsParentDependent && !affectsBoundings) || current.ComposedParentElement == null;
 
             if (stopPropagation)
             {

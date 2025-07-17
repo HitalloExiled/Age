@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace Age.Elements;
+namespace Age.Elements.Enumerators;
 
 internal struct SlotEnumerator(Slot target) : IEnumerator<Layoutable>
 {

@@ -5,6 +5,8 @@ using System.Text;
 using Age.Commands;
 using Age.Core.Collections;
 using Age.Core.Extensions;
+using Age.Elements.Enumerators;
+using Age.Elements.Events;
 using Age.Extensions;
 using Age.Numerics;
 using Age.Resources;
@@ -1170,7 +1172,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 && (
                     alignment.Value == Alignment.Center
                     || alignment.Value.HasAnyFlag(Alignment.Top | Alignment.Bottom)
-                    || direction == StackDirection.Vertical && alignment.Value.HasAnyFlag(Alignment.Start | Alignment.Center | Alignment.End)
+                    || (direction == StackDirection.Vertical && alignment.Value.HasAnyFlag(Alignment.Start | Alignment.Center | Alignment.End))
                 );
 
             baseline += element.padding.Top + element.border.Top + element.margin.Top;
@@ -1267,15 +1269,15 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         alignmentAxis = AlignmentAxis.Horizontal | AlignmentAxis.Vertical;
 
-        if (alignmentKind.HasFlags(Alignment.Left) || direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start)))
+        if (alignmentKind.HasFlags(Alignment.Left) || (direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start))))
         {
             x = -1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Right) || direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End)))
+        else if (alignmentKind.HasFlags(Alignment.Right) || (direction == StackDirection.Horizontal && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End))))
         {
             x = 1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Center) || direction == StackDirection.Vertical && itemsAlignment == ItemsAlignment.Center)
+        else if (alignmentKind.HasFlags(Alignment.Center) || (direction == StackDirection.Vertical && itemsAlignment == ItemsAlignment.Center))
         {
             x = 0;
         }
@@ -1284,15 +1286,15 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             alignmentAxis &= ~AlignmentAxis.Horizontal;
         }
 
-        if (alignmentKind.HasFlags(Alignment.Top) || direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start)))
+        if (alignmentKind.HasFlags(Alignment.Top) || (direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.Begin || alignmentKind.HasFlags(Alignment.Start))))
         {
             y = -1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Bottom) || direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End)))
+        else if (alignmentKind.HasFlags(Alignment.Bottom) || (direction == StackDirection.Vertical && (itemsAlignment == ItemsAlignment.End || alignmentKind.HasFlags(Alignment.End))))
         {
             y = 1;
         }
-        else if (alignmentKind.HasFlags(Alignment.Center) || direction == StackDirection.Horizontal && itemsAlignment == ItemsAlignment.Center)
+        else if (alignmentKind.HasFlags(Alignment.Center) || (direction == StackDirection.Horizontal && itemsAlignment == ItemsAlignment.Center))
         {
             y = 0;
         }

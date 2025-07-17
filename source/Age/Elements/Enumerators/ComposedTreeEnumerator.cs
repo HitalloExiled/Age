@@ -2,7 +2,7 @@ using System.Collections;
 using System.Runtime.CompilerServices;
 using Age.Scene;
 
-namespace Age.Elements;
+namespace Age.Elements.Enumerators;
 
 internal struct ComposedTreeEnumerator(Element target) : IEnumerator<Layoutable>
 {

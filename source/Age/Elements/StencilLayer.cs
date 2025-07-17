@@ -1,6 +1,7 @@
 using Age.Core;
 using Age.Core.Collections;
 using Age.Core.Extensions;
+using Age.Elements.Enumerators;
 using Age.Extensions;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
@@ -210,14 +211,14 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         }
     }
 
-    public Enumerator GetEnumerator() =>
+    public StencilLayerEnumerator GetEnumerator() =>
         new(this);
 
     public void MakeDirty()
     {
         this.isDirty = true;
 
-        var enumerator = new TraverseEnumerator(this);
+        var enumerator = new StencilLayerTraverseEnumerator(this);
 
         while (enumerator.MoveNext())
         {
