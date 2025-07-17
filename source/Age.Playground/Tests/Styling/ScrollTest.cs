@@ -94,9 +94,9 @@ public static class ScrollTest
 
         var loren = new FlexBox()
         {
-            Name  = "loren",
-            Text  = LOREN_TEXT,
-            Style = new()
+            Name      = "loren",
+            InnerText = LOREN_TEXT,
+            Style     = new()
             {
                 Margin   = new(Unit.Px(20)),
                 Border   = new(BORDER_SIZE, 0, Color.Red),
@@ -109,9 +109,9 @@ public static class ScrollTest
 
         var conteiner1 = new FlexBox()
         {
-            Name  = "conteiner1",
-            Text  = "0",
-            Style = new()
+            Name      = "conteiner1",
+            InnerText = "0",
+            Style     = new()
             {
                 Margin  = new(Unit.Px(20)),
                 Border  = new(BORDER_SIZE, 0, Color.Red),
@@ -122,9 +122,9 @@ public static class ScrollTest
 
         var conteiner2 = new FlexBox()
         {
-            Name  = "conteiner2",
-            Text  = "00",
-            Style = new()
+            Name      = "conteiner2",
+            InnerText = "00",
+            Style     = new()
             {
                 Margin  = new(Unit.Px(20)),
                 Border  = new(BORDER_SIZE, 0, Color.Red),
@@ -135,13 +135,13 @@ public static class ScrollTest
 
         var conteiner3 = new FlexBox()
         {
-            Name  = "conteiner3",
-            Text  =
-            """
-            0
-            0
-            """,
-            Style = new()
+            Name      = "conteiner3",
+            InnerText =
+                """
+                0
+                0
+                """,
+            Style     = new()
             {
                 Margin  = new(Unit.Px(20)),
                 Border  = new(BORDER_SIZE, 0, Color.Red),
@@ -152,13 +152,13 @@ public static class ScrollTest
 
         var conteiner4 = new FlexBox()
         {
-            Name  = "conteiner4",
-            Text  =
-            """
-            00
-            00
-            """,
-            Style = new()
+            Name      = "conteiner4",
+            InnerText =
+                """
+                00
+                00
+                """,
+            Style     = new()
             {
                 Margin  = new(Unit.Px(20)),
                 Border  = new(BORDER_SIZE, 0, Color.Red),
@@ -169,21 +169,21 @@ public static class ScrollTest
 
         var conteiner5 = new FlexBox()
         {
-            Name  = "conteiner5",
-            Text  =
-            """
-            00000_00000-x-00000_00000
-            11111_11111-x-11111_11111
-            22222_22222-x-22222_22222
-            33333_33333-x-33333_33333
-            44444_44444-x-44444_44444
-            55555_55555-x-55555_55555
-            66666_66666-x-66666_66666
-            77777_77777-x-77777_77777
-            88888_88888-x-88888_88888
-            99999_99999-x-99999_99999
-            """,
-            Style = new()
+            Name      = "conteiner5",
+            InnerText =
+                """
+                00000_00000-x-00000_00000
+                11111_11111-x-11111_11111
+                22222_22222-x-22222_22222
+                33333_33333-x-33333_33333
+                44444_44444-x-44444_44444
+                55555_55555-x-55555_55555
+                66666_66666-x-66666_66666
+                77777_77777-x-77777_77777
+                88888_88888-x-88888_88888
+                99999_99999-x-99999_99999
+                """,
+            Style     = new()
             {
                 Margin   = new(Unit.Px(20)),
                 Border   = new(BORDER_SIZE, 0, Color.Red),
@@ -196,22 +196,22 @@ public static class ScrollTest
 
         var textBox = new TextBox()
         {
-            Name  = "conteiner",
-            Value =
-            """
-            00000_00000-x-00000_00000
-            11111_11111-x-11111_11111
-            22222_22222-x-22222_22222
-            33333_33333-x-33333_33333
-            44444_44444-x-44444_44444
-            55555_55555-x-55555_55555
-            66666_66666-x-66666_66666
-            77777_77777-x-77777_77777
-            88888_88888-x-88888_88888
-            99999_99999-x-99999_99999
-            """,
+            Name      = "conteiner",
+            Value     =
+                """
+                00000_00000-x-00000_00000
+                11111_11111-x-11111_11111
+                22222_22222-x-22222_22222
+                33333_33333-x-33333_33333
+                44444_44444-x-44444_44444
+                55555_55555-x-55555_55555
+                66666_66666-x-66666_66666
+                77777_77777-x-77777_77777
+                88888_88888-x-88888_88888
+                99999_99999-x-99999_99999
+                """,
             Multiline = true,
-            Style = new()
+            Style     = new()
             {
                 Margin   = new(Unit.Px(20)),
                 Border   = new(BORDER_SIZE, 0, Color.Red),

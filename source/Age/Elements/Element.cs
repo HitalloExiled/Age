@@ -241,7 +241,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private StencilLayer? ownStencilLayer;
     private RectEdges     padding;
     private Dependency    parentDependencies;
-    private ushort        renderableNodesCount;
+    private ushort        renderableNodes;
     private Size<uint>    size;
     private Size<uint>    staticContent;
 
@@ -443,33 +443,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     public bool    IsFocused     { get; private set; }
     public bool    IsHovered     { get; private set; }
 
-    public Point<uint> Scroll
-    {
-        get => this.ContentOffset;
-        set => this.ContentOffset = value;
-    }
-
-    public Style Style
-    {
-        get => this.UserStyle ??= new();
-        set => this.UserStyle = value;
-    }
-
-    public StyleSheet? StyleSheet
-    {
-        get;
-        set
-        {
-            if (field != value)
-            {
-                field = value;
-
-                this.ComputeStyle(this.ComputedStyle.Data);
-            }
-        }
-    }
-
-    public string? Text
+    public string? InnerText
     {
         get
         {
@@ -494,12 +468,9 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             if (this.FirstChild is Text text)
             {
-                if (text != this.LastChild)
+                if (text != this.LastChild && text.NextSibling != null && this.LastChild != null)
                 {
-                    if (text.NextSibling != null && this.LastChild != null)
-                    {
-                        this.RemoveChildrenInRange(text.NextSibling, this.LastChild);
-                    }
+                    this.RemoveChildrenInRange(text.NextSibling, this.LastChild);
                 }
 
                 text.Value = value;
@@ -512,6 +483,32 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             }
 
             this.RequestUpdate(true);
+        }
+    }
+
+    public Point<uint> Scroll
+    {
+        get => this.ContentOffset;
+        set => this.ContentOffset = value;
+    }
+
+    public Style Style
+    {
+        get => this.UserStyle ??= new();
+        set => this.UserStyle = value;
+    }
+
+    public StyleSheet? StyleSheet
+    {
+        get;
+        set
+        {
+            if (field != value)
+            {
+                field = value;
+
+                this.ComputeStyle(this.ComputedStyle.Data);
+            }
         }
     }
 
@@ -1557,7 +1554,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 {
                     if (justUnhidden)
                     {
-                        parent.renderableNodesCount++;
+                        parent.renderableNodes++;
                     }
 
                     if (this.parentDependencies != Dependency.None)
@@ -1572,7 +1569,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 {
                     if (justHidden)
                     {
-                        parent.renderableNodesCount--;
+                        parent.renderableNodes--;
                     }
 
                     var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
@@ -1953,7 +1950,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     private void UpdateDisposition()
     {
-        if (this.renderableNodesCount == 0)
+        if (this.renderableNodes == 0)
         {
             return;
         }
@@ -2025,15 +2022,15 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                     }
                     else if (contentJustification == ContentJustification.SpaceAround)
                     {
-                        position.X = (index == 0 ? 1 : 2) * avaliableSpace.Width / (this.renderableNodesCount * 2);
+                        position.X = (index == 0 ? 1 : 2) * avaliableSpace.Width / (this.renderableNodes * 2);
                     }
                     else if (contentJustification == ContentJustification.SpaceBetween && index > 0)
                     {
-                        position.X = avaliableSpace.Width / (this.renderableNodesCount - 1);
+                        position.X = avaliableSpace.Width / (this.renderableNodes - 1);
                     }
                     else if (contentJustification == ContentJustification.SpaceEvenly)
                     {
-                        position.X = avaliableSpace.Width / (this.renderableNodesCount + 1);
+                        position.X = avaliableSpace.Width / (this.renderableNodes + 1);
                     }
                 }
 
@@ -2080,15 +2077,15 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                     }
                     else if (contentJustification == ContentJustification.SpaceAround)
                     {
-                        position.Y = (index == 0 ? 1 : 2) * avaliableSpace.Height / (this.renderableNodesCount * 2);
+                        position.Y = (index == 0 ? 1 : 2) * avaliableSpace.Height / (this.renderableNodes * 2);
                     }
                     else if (contentJustification == ContentJustification.SpaceBetween && index > 0)
                     {
-                        position.Y = avaliableSpace.Height / (this.renderableNodesCount - 1);
+                        position.Y = avaliableSpace.Height / (this.renderableNodes - 1);
                     }
                     else if (contentJustification == ContentJustification.SpaceEvenly)
                     {
-                        position.Y = avaliableSpace.Height / (this.renderableNodesCount + 1);
+                        position.Y = avaliableSpace.Height / (this.renderableNodes + 1);
                     }
                 }
 
@@ -2290,7 +2287,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         if (!layoutable.Hidden)
         {
             this.childsChanged = true;
-            this.renderableNodesCount++;
+            this.renderableNodes++;
             this.RequestUpdate(true);
         }
     }
@@ -2305,7 +2302,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         if (!layoutable.Hidden)
         {
             this.childsChanged = true;
-            this.renderableNodesCount--;
+            this.renderableNodes--;
             this.RequestUpdate(true);
         }
     }

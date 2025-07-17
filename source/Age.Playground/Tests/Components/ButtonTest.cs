@@ -18,9 +18,9 @@ public static class ButtonTest
                 Margin               = new(Unit.Px(10)),
             }
         };
-        var button1 = new Button() { Text = "Flat",     Variant = ButtonVariant.Flat };
-        var button2 = new Button() { Text = "Outlined", Variant = ButtonVariant.Outlined, Style = new() { Margin = new(Unit.Px(4), null) } };
-        var button3 = new Button() { Text = "Text",     Variant = ButtonVariant.Text,     Style = new() { Margin = new(Unit.Px(4), null) } };
+        var button1 = new Button() { InnerText = "Flat",     Variant = ButtonVariant.Flat };
+        var button2 = new Button() { InnerText = "Outlined", Variant = ButtonVariant.Outlined, Style = new() { Margin = new(Unit.Px(4), null) } };
+        var button3 = new Button() { InnerText = "Text",     Variant = ButtonVariant.Text,     Style = new() { Margin = new(Unit.Px(4), null) } };
 
         canvas.AppendChild(container);
             container.AppendChild(button1);

@@ -26,9 +26,9 @@ public static class AlignmentTest
 
         var horizontal_a_container = new FlexBox()
         {
-            Name  = "horizontal_a_container",
-            Text  = "Horizontal A",
-            Style = new()
+            Name      = "horizontal_a_container",
+            InnerText = "Horizontal A",
+            Style     = new()
             {
                 Border         = new(borderSize, 0, Color.Margenta),
                 Color          = Color.White,
@@ -72,9 +72,9 @@ public static class AlignmentTest
 
         var horizontal_a_left = new FlexBox()
         {
-            Name  = "horizontal_a_left",
-            Text  = "Left",
-            Style = new()
+            Name      = "horizontal_a_left",
+            InnerText = "Left",
+            Style     = new()
             {
                 Alignment = Alignment.Left,
                 Border    = new(borderSize, 0, Color.Cyan),
@@ -85,9 +85,9 @@ public static class AlignmentTest
 
         var horizontal_a_right = new FlexBox()
         {
-            Name  = "horizontal_a_right",
-            Text  = "Right",
-            Style = new()
+            Name      = "horizontal_a_right",
+            InnerText = "Right",
+            Style     = new()
             {
                 Alignment = Alignment.Right,
                 Border    = new(borderSize, 0, Color.Cyan),
@@ -134,7 +134,7 @@ public static class AlignmentTest
                         break;
 
                     case Key.C:
-                        horizontal_a_right.Text = text += "*";
+                        horizontal_a_right.InnerText = text += "*";
                         break;
 
                     case Key.Up:
@@ -181,9 +181,9 @@ public static class AlignmentTest
 
         var horizontal_b_container = new FlexBox()
         {
-            Name  = "horizontal_b_container",
-            Text  = "Horizontal B",
-            Style = new()
+            Name      = "horizontal_b_container",
+            InnerText = "Horizontal B",
+            Style     = new()
             {
                 Border   = new(borderSize, 0, Color.Margenta),
                 FontSize = 32,
@@ -193,9 +193,9 @@ public static class AlignmentTest
 
         var horizontal_b_top = new FlexBox()
         {
-            Name  = "horizontal_b_top",
-            Text  = "Top",
-            Style = new()
+            Name      = "horizontal_b_top",
+            InnerText = "Top",
+            Style     = new()
             {
                 Alignment = Alignment.Top,
                 Border    = new(borderSize, 0, Color.Cyan),
@@ -205,9 +205,9 @@ public static class AlignmentTest
 
         var horizontal_b_bottom = new FlexBox()
         {
-            Name  = "horizontal_b_bottom",
-            Text  = "Down",
-            Style = new()
+            Name      = "horizontal_b_bottom",
+            InnerText = "Down",
+            Style     = new()
             {
                 Alignment = Alignment.Bottom,
                 Border    = new(borderSize, 0, Color.Cyan),
@@ -218,9 +218,9 @@ public static class AlignmentTest
 
         var vertical_a_container = new FlexBox()
         {
-            Name  = "vertical_a_container",
-            Text  = "Vertical A",
-            Style = new()
+            Name      = "vertical_a_container",
+            InnerText = "Vertical A",
+            Style     = new()
             {
                 Border         = new(borderSize, 0, Color.Margenta),
                 Color          = Color.White,
@@ -232,9 +232,9 @@ public static class AlignmentTest
 
         var vertical_a_left = new FlexBox()
         {
-            Name  = "vertical_a_left",
-            Text  = "Left",
-            Style = new()
+            Name      = "vertical_a_left",
+            InnerText = "Left",
+            Style     = new()
             {
                 Alignment = Alignment.Left,
                 Border    = new(borderSize, 0, Color.Cyan),
@@ -244,9 +244,9 @@ public static class AlignmentTest
 
         var vertical_a_right = new FlexBox()
         {
-            Name  = "vertical_a_right",
-            Text  = "Right",
-            Style = new()
+            Name      = "vertical_a_right",
+            InnerText = "Right",
+            Style     = new()
             {
                 Alignment = Alignment.Right,
                 Border    = new(borderSize, 0, Color.Cyan),
@@ -256,9 +256,9 @@ public static class AlignmentTest
 
         var vertical_b_container = new FlexBox()
         {
-            Name  = "vertical_b_container",
-            Text  = "Vertical B",
-            Style = new()
+            Name      = "vertical_b_container",
+            InnerText = "Vertical B",
+            Style     = new()
             {
                 Border         = new(borderSize, 0, Color.Margenta),
                 FontSize       = 32,
@@ -269,9 +269,9 @@ public static class AlignmentTest
 
         var vertical_b_top = new FlexBox()
         {
-            Name  = "vertical_b_top",
-            Text  = "Top",
-            Style = new()
+            Name      = "vertical_b_top",
+            InnerText = "Top",
+            Style     = new()
             {
                 Alignment = Alignment.Top,
                 Border    = new(borderSize, 0, Color.Cyan),
@@ -281,9 +281,9 @@ public static class AlignmentTest
 
         var vertical_b_bottom = new FlexBox()
         {
-            Name  = "vertical_b_bottom",
-            Text  = "Down",
-            Style = new()
+            Name      = "vertical_b_bottom",
+            InnerText = "Down",
+            Style     = new()
             {
                 Alignment = Alignment.Bottom,
                 Border    = new(borderSize, 0, Color.Cyan),

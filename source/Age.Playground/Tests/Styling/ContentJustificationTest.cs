@@ -26,9 +26,9 @@ public static class ContentJustificationTest
 
         var horizontal_a_item_01 = new FlexBox()
         {
-            Name  = "horizontal_a_item_01",
-            Text  = "01",
-            Style = new()
+            Name      = "horizontal_a_item_01",
+            InnerText = "01",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
@@ -36,9 +36,9 @@ public static class ContentJustificationTest
         };
         var horizontal_a_item_02 = new FlexBox()
         {
-            Name  = "horizontal_a_item_02",
-            Text  = "02",
-            Style = new()
+            Name      = "horizontal_a_item_02",
+            InnerText = "02",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
@@ -47,9 +47,9 @@ public static class ContentJustificationTest
         };
         var horizontal_a_item_03 = new FlexBox()
         {
-            Name  = "horizontal_a_item_03",
-            Text  = "03",
-            Style = new()
+            Name      = "horizontal_a_item_03",
+            InnerText = "03",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
@@ -71,9 +71,9 @@ public static class ContentJustificationTest
 
         var horizontal_b_item_01 = new FlexBox()
         {
-            Name  = "horizontal_b_item_01",
-            Text  = "01",
-            Style = new()
+            Name      = "horizontal_b_item_01",
+            InnerText = "01",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
@@ -82,9 +82,9 @@ public static class ContentJustificationTest
 
         var horizontal_b_item_02 = new FlexBox()
         {
-            Name  = "horizontal_b_item_02",
-            Text  = "02",
-            Style = new()
+            Name      = "horizontal_b_item_02",
+            InnerText = "02",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
@@ -94,9 +94,9 @@ public static class ContentJustificationTest
 
         var horizontal_b_item_03 = new FlexBox()
         {
-            Name  = "horizontal_b_item_03",
-            Text  = "03",
-            Style = new()
+            Name      = "horizontal_b_item_03",
+            InnerText = "03",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
@@ -118,9 +118,9 @@ public static class ContentJustificationTest
 
         var horizontal_c_item_01 = new FlexBox()
         {
-            Name  = "horizontal_c_item_01",
-            Text  = "01",
-            Style = new()
+            Name      = "horizontal_c_item_01",
+            InnerText = "01",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
@@ -129,9 +129,9 @@ public static class ContentJustificationTest
 
         var horizontal_c_item_02 = new FlexBox()
         {
-            Name  = "horizontal_c_item_02",
-            Text  = "02",
-            Style = new()
+            Name      = "horizontal_c_item_02",
+            InnerText = "02",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
@@ -141,9 +141,9 @@ public static class ContentJustificationTest
 
         var horizontal_c_item_03 = new FlexBox()
         {
-            Name  = "horizontal_c_item_03",
-            Text  = "03",
-            Style = new()
+            Name      = "horizontal_c_item_03",
+            InnerText = "03",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
@@ -165,9 +165,9 @@ public static class ContentJustificationTest
 
         var horizontal_d_item_01 = new FlexBox()
         {
-            Name  = "horizontal_d_item_01",
-            Text  = "01",
-            Style = new()
+            Name      = "horizontal_d_item_01",
+            InnerText = "01",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
@@ -176,9 +176,9 @@ public static class ContentJustificationTest
 
         var horizontal_d_item_02 = new FlexBox()
         {
-            Name  = "horizontal_d_item_02",
-            Text  = "02",
-            Style = new()
+            Name      = "horizontal_d_item_02",
+            InnerText = "02",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
@@ -188,9 +188,9 @@ public static class ContentJustificationTest
 
         var horizontal_d_item_03 = new FlexBox()
         {
-            Name  = "horizontal_d_item_03",
-            Text  = "03",
-            Style = new()
+            Name      = "horizontal_d_item_03",
+            InnerText = "03",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
@@ -212,9 +212,9 @@ public static class ContentJustificationTest
 
         var horizontal_e_item_01 = new FlexBox()
         {
-            Name  = "horizontal_e_item_01",
-            Text  = "01",
-            Style = new()
+            Name      = "horizontal_e_item_01",
+            InnerText = "01",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
@@ -223,9 +223,9 @@ public static class ContentJustificationTest
 
         var horizontal_e_item_02 = new FlexBox()
         {
-            Name  = "horizontal_e_item_02",
-            Text  = "02",
-            Style = new()
+            Name      = "horizontal_e_item_02",
+            InnerText = "02",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
@@ -235,9 +235,9 @@ public static class ContentJustificationTest
 
         var horizontal_e_item_03 = new FlexBox()
         {
-            Name  = "horizontal_e_item_03",
-            Text  = "03",
-            Style = new()
+            Name      = "horizontal_e_item_03",
+            InnerText = "03",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
@@ -259,9 +259,9 @@ public static class ContentJustificationTest
 
         var horizontal_f_item_01 = new FlexBox()
         {
-            Name  = "horizontal_f_item_01",
-            Text  = "01",
-            Style = new()
+            Name      = "horizontal_f_item_01",
+            InnerText = "01",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
@@ -270,9 +270,9 @@ public static class ContentJustificationTest
 
         var horizontal_f_item_02 = new FlexBox()
         {
-            Name  = "horizontal_f_item_02",
-            Text  = "02",
-            Style = new()
+            Name      = "horizontal_f_item_02",
+            InnerText = "02",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
@@ -282,9 +282,9 @@ public static class ContentJustificationTest
 
         var horizontal_f_item_03 = new FlexBox()
         {
-            Name  = "horizontal_f_item_03",
-            Text  = "03",
-            Style = new()
+            Name      = "horizontal_f_item_03",
+            InnerText = "03",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
@@ -307,9 +307,9 @@ public static class ContentJustificationTest
 
         var vertical_a_item_01 = new FlexBox()
         {
-            Name  = "vertical_a_item_01",
-            Text  = "01",
-            Style = new()
+            Name      = "vertical_a_item_01",
+            InnerText = "01",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
@@ -317,9 +317,9 @@ public static class ContentJustificationTest
         };
         var vertical_a_item_02 = new FlexBox()
         {
-            Name  = "vertical_a_item_02",
-            Text  = "02",
-            Style = new()
+            Name      = "vertical_a_item_02",
+            InnerText = "02",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
@@ -328,9 +328,9 @@ public static class ContentJustificationTest
         };
         var vertical_a_item_03 = new FlexBox()
         {
-            Name  = "vertical_a_item_03",
-            Text  = "03",
-            Style = new()
+            Name      = "vertical_a_item_03",
+            InnerText = "03",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
@@ -353,9 +353,9 @@ public static class ContentJustificationTest
 
         var vertical_b_item_01 = new FlexBox()
         {
-            Name  = "vertical_b_item_01",
-            Text  = "01",
-            Style = new()
+            Name      = "vertical_b_item_01",
+            InnerText = "01",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
@@ -364,9 +364,9 @@ public static class ContentJustificationTest
 
         var vertical_b_item_02 = new FlexBox()
         {
-            Name  = "vertical_b_item_02",
-            Text  = "02",
-            Style = new()
+            Name      = "vertical_b_item_02",
+            InnerText = "02",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
@@ -376,9 +376,9 @@ public static class ContentJustificationTest
 
         var vertical_b_item_03 = new FlexBox()
         {
-            Name  = "vertical_b_item_03",
-            Text  = "03",
-            Style = new()
+            Name      = "vertical_b_item_03",
+            InnerText = "03",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
@@ -401,9 +401,9 @@ public static class ContentJustificationTest
 
         var vertical_c_item_01 = new FlexBox()
         {
-            Name  = "vertical_c_item_01",
-            Text  = "01",
-            Style = new()
+            Name      = "vertical_c_item_01",
+            InnerText = "01",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
@@ -412,9 +412,9 @@ public static class ContentJustificationTest
 
         var vertical_c_item_02 = new FlexBox()
         {
-            Name  = "vertical_c_item_02",
-            Text  = "02",
-            Style = new()
+            Name      = "vertical_c_item_02",
+            InnerText = "02",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
@@ -424,9 +424,9 @@ public static class ContentJustificationTest
 
         var vertical_c_item_03 = new FlexBox()
         {
-            Name  = "vertical_c_item_03",
-            Text  = "03",
-            Style = new()
+            Name      = "vertical_c_item_03",
+            InnerText = "03",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
@@ -449,9 +449,9 @@ public static class ContentJustificationTest
 
         var vertical_d_item_01 = new FlexBox()
         {
-            Name  = "vertical_d_item_01",
-            Text  = "01",
-            Style = new()
+            Name      = "vertical_d_item_01",
+            InnerText = "01",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
@@ -460,9 +460,9 @@ public static class ContentJustificationTest
 
         var vertical_d_item_02 = new FlexBox()
         {
-            Name  = "vertical_d_item_02",
-            Text  = "02",
-            Style = new()
+            Name      = "vertical_d_item_02",
+            InnerText = "02",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
@@ -471,9 +471,9 @@ public static class ContentJustificationTest
 
         var vertical_d_item_03 = new FlexBox()
         {
-            Name  = "vertical_d_item_03",
-            Text  = "03",
-            Style = new()
+            Name      = "vertical_d_item_03",
+            InnerText = "03",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
@@ -496,9 +496,9 @@ public static class ContentJustificationTest
 
         var vertical_e_item_01 = new FlexBox()
         {
-            Name  = "vertical_e_item_01",
-            Text  = "01",
-            Style = new()
+            Name      = "vertical_e_item_01",
+            InnerText = "01",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
@@ -507,9 +507,9 @@ public static class ContentJustificationTest
 
         var vertical_e_item_02 = new FlexBox()
         {
-            Name  = "vertical_e_item_02",
-            Text  = "02",
-            Style = new()
+            Name      = "vertical_e_item_02",
+            InnerText = "02",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
@@ -519,9 +519,9 @@ public static class ContentJustificationTest
 
         var vertical_e_item_03 = new FlexBox()
         {
-            Name  = "vertical_e_item_03",
-            Text  = "03",
-            Style = new()
+            Name      = "vertical_e_item_03",
+            InnerText = "03",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,
@@ -544,9 +544,9 @@ public static class ContentJustificationTest
 
         var vertical_f_item_01 = new FlexBox()
         {
-            Name  = "vertical_f_item_01",
-            Text  = "01",
-            Style = new()
+            Name      = "vertical_f_item_01",
+            InnerText = "01",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Red),
                 Color  = Color.White,
@@ -555,9 +555,9 @@ public static class ContentJustificationTest
 
         var vertical_f_item_02 = new FlexBox()
         {
-            Name  = "vertical_f_item_02",
-            Text  = "02",
-            Style = new()
+            Name      = "vertical_f_item_02",
+            InnerText = "02",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Green),
                 Color  = Color.White,
@@ -567,9 +567,9 @@ public static class ContentJustificationTest
 
         var vertical_f_item_03 = new FlexBox()
         {
-            Name  = "vertical_f_item_03",
-            Text  = "03",
-            Style = new()
+            Name      = "vertical_f_item_03",
+            InnerText = "03",
+            Style     = new()
             {
                 Border = new(BORDER_SIZE, 0, Color.Blue),
                 Color  = Color.White,

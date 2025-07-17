@@ -36,9 +36,9 @@ public static class BoxModelTest
                         [
                             new FlexBox
                             {
-                                Text  = "This elements should be stacked vertically...",
-                                Name  = "StackText",
-                                Style = new()
+                                InnerText = "This elements should be stacked vertically...",
+                                Name      = "StackText",
+                                Style     = new()
                                 {
                                     Alignment = Alignment.Center,
                                     Color     = Color.White,
@@ -80,7 +80,7 @@ public static class BoxModelTest
                     },
                     new FlexBox
                     {
-                        Name = "StackR",
+                        Name  = "StackR",
                         Style = new()
                         {
                             StackDirection = StackDirection.Vertical,

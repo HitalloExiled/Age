@@ -24,9 +24,9 @@ public class FrameStatus : Element
     {
         this.statusText = new FlexBox()
         {
-            Name  = "Status",
-            Text  = "Frame",
-            Style = new()
+            Name      = "Status",
+            InnerText = "Frame",
+            Style     = new()
             {
                 Color    = Color.Green,
                 FontSize = 16,
@@ -84,7 +84,7 @@ public class FrameStatus : Element
 
         if (this.Enabled)
         {
-            this.statusText.Text =
+            this.statusText.InnerText =
                $"""
                Frames:    {Time.Frames}
                Delta Time: {Math.Round(Time.DeltaTime, 4)}
