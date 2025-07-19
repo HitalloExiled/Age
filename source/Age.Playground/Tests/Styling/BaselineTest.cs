@@ -24,9 +24,9 @@ public static class BaselineTest
             },
             new FlexBox()
             {
-                Name  = "vertical_text",
-                Text  = "Vertical\nText",
-                Style = new()
+                Name      = "vertical_text",
+                InnerText = "Vertical\nText",
+                Style     = new()
                 {
                     Alignment  = Alignment.Baseline,
                     Border     = new(BORDER_SIZE, 0, Color.Margenta),
@@ -52,9 +52,9 @@ public static class BaselineTest
                     new Text("Horizontal"),
                     new FlexBox
                     {
-                        Name = "X",
-                        Text = "X",
-                        Style = new()
+                        Name      = "X",
+                        InnerText = "X",
+                        Style     = new()
                         {
                             Border     = new(BORDER_SIZE * 2, 0, Color.Red),
                             Color      = Color.Red,
@@ -66,9 +66,9 @@ public static class BaselineTest
                     },
                     new FlexBox
                     {
-                        Name = "Y",
-                        Text = "Y",
-                        Style = new()
+                        Name      = "Y",
+                        InnerText = "Y",
+                        Style     = new()
                         {
                             Border     = new(BORDER_SIZE / 2, 0, Color.Green),
                             Color      = Color.Green,
@@ -78,9 +78,9 @@ public static class BaselineTest
                     },
                     new FlexBox
                     {
-                        Name = "Z",
-                        Text = "Z",
-                        Style = new()
+                        Name      = "Z",
+                        InnerText = "Z",
+                        Style     = new()
                         {
                             Border     = new(BORDER_SIZE, 0,     Color.Blue),
                             Color      = Color.Blue,
@@ -90,9 +90,9 @@ public static class BaselineTest
                     },
                     new FlexBox
                     {
-                        Name = "Hello",
-                        Text = "Hello",
-                        Style = new()
+                        Name      = "Hello",
+                        InnerText = "Hello",
+                        Style     = new()
                         {
                             Alignment = Alignment.Bottom,
                             Border    = new(BORDER_SIZE, 0, Color.Margenta),
@@ -102,9 +102,9 @@ public static class BaselineTest
                     },
                     new FlexBox
                     {
-                        Name  = "World",
-                        Text  = "World!!!",
-                        Style = new()
+                        Name      = "World",
+                        InnerText = "World!!!",
+                        Style     = new()
                         {
                             Alignment = Alignment.Top,
                             Border    = new(BORDER_SIZE, 0, Color.Margenta),
@@ -116,9 +116,9 @@ public static class BaselineTest
             },
             new FlexBox()
             {
-                Name  = "horizontal_container",
-                Text  = "Horizontal",
-                Style = new()
+                Name      = "horizontal_container",
+                InnerText = "Horizontal",
+                Style     = new()
                 {
                     Alignment      = Alignment.Baseline,
                     ItemsAlignment = ItemsAlignment.Baseline,
@@ -132,9 +132,9 @@ public static class BaselineTest
                     new Text("Horizontal"),
                     new FlexBox
                     {
-                        Name = "X",
-                        Text = "X",
-                        Style = new()
+                        Name      = "X",
+                        InnerText = "X",
+                        Style     = new()
                         {
                             Border     = new(BORDER_SIZE, 0, Color.Red),
                             Color      = Color.Red,
@@ -144,9 +144,9 @@ public static class BaselineTest
                     },
                     new FlexBox
                     {
-                        Name = "Y",
-                        Text = "Y",
-                        Style = new()
+                        Name      = "Y",
+                        InnerText = "Y",
+                        Style     = new()
                         {
                             Border     = new(BORDER_SIZE, 0, Color.Green),
                             Color      = Color.Green,
@@ -156,9 +156,9 @@ public static class BaselineTest
                     },
                     new FlexBox
                     {
-                        Name = "Z",
-                        Text = "Z",
-                        Style = new()
+                        Name      = "Z",
+                        InnerText = "Z",
+                        Style     = new()
                         {
                             Border     = new(BORDER_SIZE, 0, Color.Blue),
                             Color      = Color.Blue,
@@ -222,9 +222,9 @@ public static class BaselineTest
                 [
                     new FlexBox
                     {
-                        Name = "X",
-                        Text = "X",
-                        Style = new()
+                        Name      = "X",
+                        InnerText = "X",
+                        Style     = new()
                         {
                             Border     = new(BORDER_SIZE, 0, Color.Red),
                             Color      = Color.Red,
@@ -234,9 +234,9 @@ public static class BaselineTest
                     },
                     new FlexBox
                     {
-                        Name = "Y",
-                        Text = "Y",
-                        Style = new()
+                        Name      = "Y",
+                        InnerText = "Y",
+                        Style     = new()
                         {
                             Border     = new(BORDER_SIZE, 0, Color.Green),
                             Color      = Color.Green,
@@ -246,9 +246,9 @@ public static class BaselineTest
                     },
                     new FlexBox
                     {
-                        Name = "Z",
-                        Text = "Z",
-                        Style = new()
+                        Name      = "Z",
+                        InnerText = "Z",
+                        Style     = new()
                         {
                             Border     = new(BORDER_SIZE, 0, Color.Blue),
                             Color      = Color.Blue,
@@ -258,8 +258,8 @@ public static class BaselineTest
                     },
                     new FlexBox
                     {
-                        Text = "Hello",
-                        Style = new()
+                        InnerText = "Hello",
+                        Style     = new()
                         {
                             Alignment = Alignment.Center,
                             Border    = new(BORDER_SIZE, 0, Color.Margenta),
@@ -269,8 +269,8 @@ public static class BaselineTest
                     },
                     new FlexBox
                     {
-                        Text = "World!!!",
-                        Style = new()
+                        InnerText = "World!!!",
+                        Style     = new()
                         {
                             Alignment = Alignment.Left,
                             Border    = new(BORDER_SIZE, 0, Color.Margenta),
@@ -295,7 +295,7 @@ public static class BaselineTest
                 [
                     new FlexBox
                     {
-                        Name = "vertical_b_child1",
+                        Name  = "vertical_b_child1",
                         Style = new()
                         {
                             Size   = new(Unit.Px(10), Unit.Px(200)),
@@ -336,12 +336,12 @@ public static class BaselineTest
                 },
                 Children =
                 [
-                    new FlexBox { Name = "Vertical", Text = "Vertical", Style = new() { Border = new(BORDER_SIZE, 0, Color.Red), Margin = new(null, Unit.Px(0)), FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } },
-                    new FlexBox { Name = "X", Text = "X", Style = new() { Border = new(BORDER_SIZE, 0, Color.Red),   FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } },
-                    new FlexBox { Name = "Y", Text = "Y", Style = new() { Border = new(BORDER_SIZE, 0, Color.Green), FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } },
-                    new FlexBox { Name = "Z", Text = "Z", Style = new() { Border = new(BORDER_SIZE, 0, Color.Blue),  FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } },
-                    new FlexBox { Text = "Hello",         Style = new() { Border = new(BORDER_SIZE, 0, Color.Margenta), Color = Color.White, Alignment = Alignment.Left,  Margin = new(Unit.Px(5)) } },
-                    new FlexBox { Text = "World!!!",      Style = new() { Border = new(BORDER_SIZE, 0, Color.Margenta), Color = Color.White, Alignment = Alignment.Right, Margin = new(Unit.Px(5)) } },
+                    new FlexBox { Name = "Vertical", InnerText = "Vertical", Style = new() { Border = new(BORDER_SIZE, 0, Color.Red), Margin = new(null, Unit.Px(0)), FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } },
+                    new FlexBox { Name = "X", InnerText = "X", Style = new() { Border = new(BORDER_SIZE, 0, Color.Red),   FontSize = 48, FontFamily = "Helvetica Neue", Color = Color.Red } },
+                    new FlexBox { Name = "Y", InnerText = "Y", Style = new() { Border = new(BORDER_SIZE, 0, Color.Green), FontSize = 24, FontFamily = "Lucida Console", Color = Color.Green } },
+                    new FlexBox { Name = "Z", InnerText = "Z", Style = new() { Border = new(BORDER_SIZE, 0, Color.Blue),  FontSize = 48, FontFamily = "Verdana",        Color = Color.Blue } },
+                    new FlexBox { InnerText = "Hello",         Style = new() { Border = new(BORDER_SIZE, 0, Color.Margenta), Color = Color.White, Alignment = Alignment.Left,  Margin = new(Unit.Px(5)) } },
+                    new FlexBox { InnerText = "World!!!",      Style = new() { Border = new(BORDER_SIZE, 0, Color.Margenta), Color = Color.White, Alignment = Alignment.Right, Margin = new(Unit.Px(5)) } },
                 ],
             },
             new FlexBox
@@ -349,11 +349,11 @@ public static class BaselineTest
                 Name  = "vertical_c_container",
                 Style = new()
                 {
-                    Border     = new(BORDER_SIZE, 0, Color.Margenta),
-                    Color      = Color.White,
-                    FontFamily = "Impact",
-                    FontSize   = 24,
-                    StackDirection      = StackDirection.Vertical,
+                    Border         = new(BORDER_SIZE, 0, Color.Margenta),
+                    Color          = Color.White,
+                    FontFamily     = "Impact",
+                    FontSize       = 24,
+                    StackDirection = StackDirection.Vertical,
                     Alignment      = Alignment.Baseline,
                     ItemsAlignment = ItemsAlignment.Baseline,
                 },

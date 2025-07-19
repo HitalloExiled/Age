@@ -17,7 +17,7 @@ public sealed class ShadowTree(Element host, bool inheritsHostStyle) : Node
     {
         if (child is Layoutable layoutable)
         {
-            this.Host.Layout.HandleLayoutableAppended(layoutable);
+            this.Host.HandleLayoutableAppended(layoutable);
         }
     }
 
@@ -25,7 +25,7 @@ public sealed class ShadowTree(Element host, bool inheritsHostStyle) : Node
     {
         if (child is Layoutable layoutable)
         {
-            this.Host.Layout.HandleLayoutableRemoved(layoutable);
+            this.Host.HandleLayoutableRemoved(layoutable);
         }
     }
 

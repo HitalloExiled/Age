@@ -12,14 +12,14 @@ namespace Age.Resources;
 
 public sealed class Texture2D : Resource
 {
-    public static Texture2D Default { get; } = CreateAndStore(nameof(Default), Color.Margenta);
-    public static Texture2D Empty   { get; } = CreateAndStore(nameof(Empty), default);
-
     private readonly bool imageOwner;
 
     internal Image       Image     { get; }
     internal VkImageView ImageView { get; }
     internal Sampler     Sampler   { get; } = new();
+
+    public static Texture2D Default { get; } = CreateAndStore(nameof(Default), Color.Margenta);
+    public static Texture2D Empty   { get; } = CreateAndStore(nameof(Empty), default);
 
     public TextureFormat Format { get; }
 
@@ -53,6 +53,21 @@ public sealed class Texture2D : Resource
         this.Format     = format;
     }
 
+    public Texture2D(in Size<uint> size, in Color clearColor, TextureFormat format = TextureFormat.B8G8R8A8Unorm, TextureSamples samples = TextureSamples.N1, uint mipmap = 1)
+    : this(size, format, samples, mipmap) => this.Image.ClearColor(clearColor, VkImageLayout.ShaderReadOnlyOptimal);
+
+    public Texture2D(in Size<uint> size, scoped ReadOnlySpan<byte> buffer, TextureFormat format = TextureFormat.B8G8R8A8Unorm, TextureSamples samples = TextureSamples.N1, uint mipmap = 1)
+    : this(size, format, samples, mipmap) => this.Image.Update(buffer);
+
+    private static Texture2D CreateAndStore(string name, in Color color)
+    {
+        var texture = new Texture2D(new(1), color);
+
+        TextureStorage.Singleton.Add(name, texture);
+
+        return texture;
+    }
+
     private static VkImageView CreateImageView(Image image)
     {
         var imageViewCreateInfo = new VkImageViewCreateInfo
@@ -70,20 +85,15 @@ public sealed class Texture2D : Resource
 
         return VulkanRenderer.Singleton.Context.Device.CreateImageView(imageViewCreateInfo);
     }
-
-    public Texture2D(in Size<uint> size, in Color clearColor, TextureFormat format = TextureFormat.B8G8R8A8Unorm, TextureSamples samples = TextureSamples.N1, uint mipmap = 1)
-    : this(size, format, samples, mipmap) => this.Image.ClearColor(clearColor, VkImageLayout.ShaderReadOnlyOptimal);
-
-    public Texture2D(in Size<uint> size, scoped ReadOnlySpan<byte> buffer, TextureFormat format = TextureFormat.B8G8R8A8Unorm, TextureSamples samples = TextureSamples.N1, uint mipmap = 1)
-    : this(size, format, samples, mipmap) => this.Image.Update(buffer);
-
-    private static Texture2D CreateAndStore(string name, in Color color)
+    protected override void OnDisposed()
     {
-        var texture = new Texture2D(new(1), color);
+        if (this.imageOwner)
+        {
+            VulkanRenderer.Singleton.DeferredDispose(this.Image);
+        }
 
-        TextureStorage.Singleton.Add(name, texture);
-
-        return texture;
+        VulkanRenderer.Singleton.DeferredDispose(this.ImageView);
+        VulkanRenderer.Singleton.DeferredDispose(this.Sampler);
     }
 
     public static Texture2D Load(string path)
@@ -95,17 +105,6 @@ public sealed class Texture2D : Resource
         var buffer = bitmap.GetPixelSpan();
 
         return new(new((uint)bitmap.Width, (uint)bitmap.Height), buffer);
-    }
-
-    protected override void OnDisposed()
-    {
-        if (this.imageOwner)
-        {
-            VulkanRenderer.Singleton.DeferredDispose(this.Image);
-        }
-
-        VulkanRenderer.Singleton.DeferredDispose(this.ImageView);
-        VulkanRenderer.Singleton.DeferredDispose(this.Sampler);
     }
 
     public void Update(scoped ReadOnlySpan<byte> buffer) =>

@@ -9,13 +9,13 @@ public sealed class Timer : Node
 
     public override string NodeName => nameof(Time);
 
+    public bool Running { get; private set; }
+
+    public bool     OneShot  { get; set; }
     public TimeSpan WaitTime { get; set; }
 
-    public bool Running { get; private set; }
-    public bool OneShot { get; set; }
-
     public Timer() =>
-        this.Flags = NodeFlags.IgnoreUpdates;
+        this.NodeFlags = NodeFlags.IgnoreUpdates;
 
     private void UpdateTimestamp() =>
         this.timestamp = Stopwatch.GetTimestamp();

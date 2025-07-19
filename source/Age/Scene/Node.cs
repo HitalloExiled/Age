@@ -31,7 +31,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public Node? Parent          { get; private set; }
     public Node? PreviousSibling { get; private set; }
 
-    public NodeFlags Flags { get; protected set; }
+    public NodeFlags NodeFlags { get; protected set; }
 
     public NodeTree? Tree
     {
@@ -208,7 +208,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void AppendOrPrepend(Node node, bool append)
     {
-        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
         {
             return;
         }
@@ -258,7 +258,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void AppendOrPrepend(scoped ReadOnlySpan<Node> nodes, bool append)
     {
-        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
         {
             return;
         }
@@ -334,7 +334,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void InsertAfterOrBefore(Node reference, Node node, bool after)
     {
-        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
         {
             return;
         }
@@ -398,7 +398,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void InsertAfterOrBefore(Node reference, scoped ReadOnlySpan<Node> nodes, bool after)
     {
-        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
         {
             return;
         }
@@ -490,7 +490,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void RemoveChildren(bool dispose = false)
     {
-        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
         {
             return;
         }
@@ -522,7 +522,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void RemoveChildrenInRange(Node start, Node end, bool dispose)
     {
-        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
         {
             return;
         }
@@ -760,7 +760,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void RemoveChild(Node node)
     {
-        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
         {
             return;
         }
@@ -805,7 +805,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void Replace(Node target, Node node)
     {
-        if (this.Flags.HasFlags(NodeFlags.Immutable))
+        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
         {
             return;
         }

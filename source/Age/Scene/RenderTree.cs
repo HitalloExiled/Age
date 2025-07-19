@@ -1,6 +1,5 @@
 using Age.Core.Extensions;
 using Age.Elements;
-using Age.Elements.Layouts;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Rendering.Vulkan;
@@ -136,7 +135,7 @@ public sealed partial class RenderTree : NodeTree
         {
             Element element => element,
             Text    text    => text.ComposedParentElement,
-            _ => null,
+            _               => null,
         };
 
     private unsafe Node? GetNode(ushort x, ushort y, out uint characterPosition)
@@ -175,20 +174,14 @@ public sealed partial class RenderTree : NodeTree
         return null;
     }
 
-    private void ResetCache()
-    {
-        this.command2DEntries.Clear();
-        this.command3DEntries.Clear();
-    }
-
-    private void OnContext(in Platforms.Display.ContextEvent contextEvent)
+    private void OnContext(in ContextEvent contextEvent)
     {
         var element = this.GetElement(contextEvent.X, contextEvent.Y);
 
         element?.InvokeContext(contextEvent);
     }
 
-    private void OnDoubleClick(in Platforms.Display.MouseEvent mouseEvent)
+    private void OnDoubleClick(in MouseEvent mouseEvent)
     {
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var characterPosition);
 
@@ -196,7 +189,7 @@ public sealed partial class RenderTree : NodeTree
 
         if (node is Text text)
         {
-            text.Layout.PropagateSelection(characterPosition);
+            text.PropagateSelection(characterPosition);
             element = text.ComposedParentElement;
         }
         else
@@ -215,7 +208,7 @@ public sealed partial class RenderTree : NodeTree
         }
     }
 
-    private void OnMouseDown(in Platforms.Display.MouseEvent mouseEvent)
+    private void OnMouseDown(in MouseEvent mouseEvent)
     {
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var characterPosition);
 
@@ -231,18 +224,18 @@ public sealed partial class RenderTree : NodeTree
 
                 if (mouseEvent.KeyStates.HasFlags(MouseKeyStates.Shift) && this.lastFocusedText == text)
                 {
-                    text.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y, characterPosition);
+                    text.UpdateSelection(mouseEvent.X, mouseEvent.Y, characterPosition);
                 }
                 else
                 {
-                    this.lastFocusedText?.Layout.ClearSelection();
+                    this.lastFocusedText?.ClearSelection();
 
-                    text.Layout.SetCaret(mouseEvent.X, mouseEvent.Y, characterPosition);
+                    text.SetCaret(mouseEvent.X, mouseEvent.Y, characterPosition);
                 }
 
                 if (this.lastFocusedText != text)
                 {
-                    this.lastFocusedText?.Layout.ClearCaret();
+                    this.lastFocusedText?.ClearCaret();
                     this.lastFocusedText = text;
                 }
             }
@@ -255,10 +248,10 @@ public sealed partial class RenderTree : NodeTree
             {
                 if (mouseEvent.Button == mouseEvent.PrimaryButton)
                 {
-                    this.lastFocusedText.Layout.ClearSelection();
+                    this.lastFocusedText.ClearSelection();
                 }
 
-                this.lastFocusedText.Layout.ClearCaret();
+                this.lastFocusedText.ClearCaret();
             }
 
             this.lastFocusedText = null;
@@ -287,11 +280,11 @@ public sealed partial class RenderTree : NodeTree
         else
         {
             this.lastFocusedElement?.InvokeBlur(mouseEvent);
-            this.lastFocusedElement  = null;
+            this.lastFocusedElement = null;
         }
     }
 
-    private unsafe void OnMouseMove(in Platforms.Display.MouseEvent mouseEvent)
+    private unsafe void OnMouseMove(in MouseEvent mouseEvent)
     {
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var character);
 
@@ -313,44 +306,44 @@ public sealed partial class RenderTree : NodeTree
         else
         {
             this.lastHoveredElement?.InvokeMouseOut(mouseEvent);
-            this.lastHoveredElement  = null;
+            this.lastHoveredElement = null;
         }
 
         if (text != null)
         {
             if (mouseEvent.IsHoldingPrimaryButton && text == this.lastFocusedText)
             {
-                text.Layout.UpdateSelection(mouseEvent.X, mouseEvent.Y, character);
+                text.UpdateSelection(mouseEvent.X, mouseEvent.Y, character);
             }
 
             if (this.lastHoveredText != text)
             {
-                this.lastHoveredText?.Layout.HandleTargetMouseOut();
+                this.lastHoveredText?.HandleMouseOut();
                 this.lastHoveredText = text;
 
-                text.Layout.HandleTargetMouseOver();
+                text.HandleMouseOver();
             }
         }
         else
         {
-            this.lastHoveredText?.Layout.HandleTargetMouseOut();
+            this.lastHoveredText?.HandleMouseOut();
             this.lastHoveredText = null;
         }
 
-        if (!Layout.IsSelectingText && element == null && text == null)
+        if (!Layoutable.IsSelectingText && element == null && text == null)
         {
             this.Window.Cursor = default;
         }
     }
 
-    private void OnMouseUp(in Platforms.Display.MouseEvent mouseEvent)
+    private void OnMouseUp(in MouseEvent mouseEvent)
     {
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out _);
 
         var text    = node as Text;
         var element = text?.ComposedParentElement ?? node as Element;
 
-        var wasSelectingText = Layout.IsSelectingText;
+        var wasSelectingText = Layoutable.IsSelectingText;
 
         if (element != null)
         {
@@ -365,13 +358,19 @@ public sealed partial class RenderTree : NodeTree
         this.lastFocusedElement?.InvokeDeactivate();
         this.lastFocusedText?.InvokeDeactivate();
 
-        if (wasSelectingText != Layout.IsSelectingText)
+        if (wasSelectingText != Layoutable.IsSelectingText)
         {
             this.lastHoveredElement = null;
-            this.lastHoveredText    = null;
+            this.lastHoveredText = null;
 
             this.OnMouseMove(mouseEvent);
         }
+    }
+
+    private void ResetCache()
+    {
+        this.command2DEntries.Clear();
+        this.command3DEntries.Clear();
     }
 
     [MemberNotNull(nameof(buffer))]
@@ -385,12 +384,6 @@ public sealed partial class RenderTree : NodeTree
 
         this.buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
     }
-
-    internal IEnumerable<Command2DEntry> Get2DCommands() =>
-        this.command2DEntries;
-
-    internal IEnumerable<Command3DEntry> Get3DCommands() =>
-        this.command3DEntries;
 
     protected override void OnDisposed(bool disposing)
     {
@@ -407,6 +400,12 @@ public sealed partial class RenderTree : NodeTree
             this.buffer.Dispose();
         }
     }
+
+    internal IEnumerable<Command2DEntry> Get2DCommands() =>
+        this.command2DEntries;
+
+    internal IEnumerable<Command3DEntry> Get3DCommands() =>
+        this.command3DEntries;
 
     public override void Initialize()
     {

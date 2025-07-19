@@ -11,9 +11,9 @@ public abstract class NodeTree : Disposable
 
     internal List<Timer> Timers { get; } = [];
 
-    public Root Root { get; }
-
     public bool IsDirty { get; private set; }
+
+    public Root Root { get; }
 
     protected NodeTree() =>
         this.Root = new() { Tree = this };
@@ -26,7 +26,7 @@ public abstract class NodeTree : Disposable
         {
             var current = enumerator.Current;
 
-            if (current.Flags.HasFlags(NodeFlags.IgnoreUpdates))
+            if (current.NodeFlags.HasFlags(NodeFlags.IgnoreUpdates))
             {
                 enumerator.SkipToNextSibling();
             }
@@ -45,7 +45,7 @@ public abstract class NodeTree : Disposable
         {
             var current = enumerator.Current;
 
-            if (current.Flags.HasFlags(NodeFlags.IgnoreUpdates))
+            if (current.NodeFlags.HasFlags(NodeFlags.IgnoreUpdates))
             {
                 enumerator.SkipToNextSibling();
             }
@@ -72,7 +72,7 @@ public abstract class NodeTree : Disposable
         {
             var current = enumerator.Current;
 
-            if (current.Flags.HasFlags(NodeFlags.IgnoreUpdates))
+            if (current.NodeFlags.HasFlags(NodeFlags.IgnoreUpdates))
             {
                 enumerator.SkipToNextSibling();
             }
@@ -80,7 +80,7 @@ public abstract class NodeTree : Disposable
             {
                 current.Update();
 
-                if (current.Flags.HasFlags(NodeFlags.IgnoreChildrenUpdates))
+                if (current.NodeFlags.HasFlags(NodeFlags.IgnoreChildrenUpdates))
                 {
                     enumerator.SkipToNextSibling();
                 }
@@ -94,9 +94,6 @@ public abstract class NodeTree : Disposable
         this.MakeDirty();
     }
 
-    public void MakeDirty() =>
-        this.IsDirty = true;
-
     internal void MakePristine() =>
         this.IsDirty = false;
 
@@ -105,6 +102,9 @@ public abstract class NodeTree : Disposable
         this.InitializeTree();
         this.LateUpdateTree();
     }
+
+    public void MakeDirty() =>
+        this.IsDirty = true;
 
     public virtual void Update()
     {

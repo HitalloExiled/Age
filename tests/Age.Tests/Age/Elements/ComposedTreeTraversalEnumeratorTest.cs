@@ -1,4 +1,5 @@
 using Age.Elements;
+using Age.Elements.Enumerators;
 using Age.Scene;
 
 namespace Age.Tests.Age.Elements;
@@ -139,7 +140,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
 
         var actual = new List<string>(expected.Length);
 
-        var enumerator = new Element.ComposedTreeTraversalEnumerator(this.root);
+        var enumerator = new ComposedTreeTraversalEnumerator(this.root);
 
         while (enumerator.MoveNext())
         {
@@ -168,7 +169,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
 
         var actual = new List<string>(expected.Length);
 
-        var enumerator = new Element.ComposedTreeTraversalEnumerator(this.host);
+        var enumerator = new ComposedTreeTraversalEnumerator(this.host);
 
         while (enumerator.MoveNext())
         {

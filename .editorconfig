@@ -250,8 +250,8 @@ dotnet_style_collection_initializer                        = true:suggestion
 dotnet_style_explicit_tuple_names                          = true:suggestion
 dotnet_style_namespace_match_folder                        = true:suggestion
 dotnet_style_object_initializer                            = true:suggestion
-dotnet_style_parentheses_in_arithmetic_binary_operators    = never_if_unnecessary:suggestion
-dotnet_style_parentheses_in_other_binary_operators         = never_if_unnecessary:suggestion
+dotnet_style_parentheses_in_arithmetic_binary_operators    = always_for_clarity:suggestion
+dotnet_style_parentheses_in_other_binary_operators         = always_for_clarity:suggestion
 dotnet_style_parentheses_in_other_operators                = never_if_unnecessary:suggestion
 dotnet_style_parentheses_in_relational_binary_operators    = never_if_unnecessary:suggestion
 dotnet_style_prefer_auto_properties                        = true:silent
@@ -267,7 +267,6 @@ dotnet_style_qualification_for_field                       = true:suggestion
 dotnet_style_qualification_for_method                      = true:suggestion
 dotnet_style_qualification_for_property                    = true:suggestion
 dotnet_style_require_accessibility_modifiers               = always:suggestion
-dotnet_style_parentheses_in_arithmetic_binary_operators    = always:suggestion
 
 dotnet_remove_unnecessary_suppression_exclusions = suggestion
 dotnet_separate_import_directive_groups          = suggestion
@@ -354,7 +353,7 @@ dotnet_diagnostic.RCS1001.severity = none       # Add braces (when expression sp
 dotnet_diagnostic.RCS1123.severity = none       # Add parentheses when
 dotnet_diagnostic.RCS1242.severity = none       # Do not pass non-read-only struct by read-only reference
 
-[**/*Extensions.cs]
+[**/*Extension{s,}.*.cs]
 dotnet_diagnostic.CA1822.severity = none
 
 [**/obj/**.cs]

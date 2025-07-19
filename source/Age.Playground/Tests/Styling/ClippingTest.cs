@@ -25,9 +25,9 @@ public static class ClippingTest
 
         var n2_a_layer = new FlexBox()
         {
-            Name  = "n2_a_layer",
-            Text  = "Clipped\nContent",
-            Style = new()
+            Name      = "n2_a_layer",
+            InnerText = "Clipped\nContent",
+            Style     = new()
             {
                 Border    = new(BORDER_SIZE, 60, Color.Green),
                 Color     = Color.White,
@@ -48,18 +48,18 @@ public static class ClippingTest
 
         var n3_no_layer = new FlexBox()
         {
-            Name  = "n3_no_layer",
-            Text  = "X\nY\nZ",
-            Style = new()
+            Name      = "n3_no_layer",
+            InnerText = "X\nY\nZ",
+            Style     = new()
             {
-                Color  = Color.White,
-                FontSize = 36,
+                Color                = Color.White,
+                FontSize             = 36,
                 ContentJustification = ContentJustification.SpaceAround,
-                Border = new(BORDER_SIZE, 60, Color.Blue),
-                //Overflow  = OverflowKind.Clipping,
-                //BackgroundColor = Color.Margenta,
-                Transforms = [TransformOp.Translate(new(Unit.Px(25), Unit.Px(60)))],
-                Size   = new(Unit.Px(100), Unit.Px(100)),
+                Border               = new(BORDER_SIZE, 60, Color.Blue),
+                //Overflow           = OverflowKind.Clipping,
+                //BackgroundColor    = Color.Margenta,
+                Transforms           = [TransformOp.Translate(new(Unit.Px(25), Unit.Px(60)))],
+                Size                 = new(Unit.Px(100), Unit.Px(100)),
             }
         };
 
@@ -68,10 +68,10 @@ public static class ClippingTest
             Name  = "n4_layer",
             Style = new()
             {
-                Border   = new(1, 0, Color.Blue),
+                Border      = new(1, 0, Color.Blue),
                 // Overflow = OverflowKind.Clipping,
-                Transforms = [TransformOp.Translate(Unit.Px(-20), Unit.Px(20))],
-                Size      = new(Unit.Px(200), Unit.Px(100)),
+                Transforms  = [TransformOp.Translate(Unit.Px(-20), Unit.Px(20))],
+                Size        = new(Unit.Px(200), Unit.Px(100)),
             }
         };
 

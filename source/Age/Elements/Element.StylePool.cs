@@ -1,9 +1,9 @@
 using Age.Core;
 using Age.Styling;
 
-namespace Age.Elements.Layouts;
+namespace Age.Elements;
 
-internal abstract partial class StyledLayout
+public abstract partial class Element
 {
     private sealed class StylePool : ObjectPool<Style>
     {

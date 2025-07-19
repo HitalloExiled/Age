@@ -37,9 +37,9 @@ public class Boxes : Element
 
         var ah = new FlexBox()
         {
-            Text  = "ah",
-            Name  = "ah",
-            Style = new()
+            InnerText = "ah",
+            Name      = "ah",
+            Style     = new()
             {
                 // Alignment   = AlignmentType.Center | AlignmentType.Bottom,
                 // BorderColor = Color.Red,
@@ -50,9 +50,9 @@ public class Boxes : Element
 
         var bh = new FlexBox()
         {
-            Text  = "bh",
-            Name  = "bh",
-            Style = new()
+            InnerText = "bh",
+            Name      = "bh",
+            Style     = new()
             {
                 Alignment   = Alignment.Top,
                 // BorderColor = Color.Green,
@@ -63,9 +63,9 @@ public class Boxes : Element
 
         var ch = new FlexBox()
         {
-            Text  = "ch",
-            Name  = "ch",
-            Style = new()
+            InnerText = "ch",
+            Name      = "ch",
+            Style     = new()
             {
                 // Alignment   = AlignmentType.Center | AlignmentType.Top,
                 // BorderColor = Color.Blue,
@@ -76,9 +76,9 @@ public class Boxes : Element
 
         var av = new FlexBox()
         {
-            Text  = "av",
-            Name  = "av",
-            Style = new()
+            InnerText = "av",
+            Name      = "av",
+            Style     = new()
             {
                 // Alignment   = AlignmentType.Center,
                 // BorderColor = Color.Red,
@@ -89,9 +89,9 @@ public class Boxes : Element
 
         var bv = new FlexBox()
         {
-            Text  = "bv",
-            Name  = "bv",
-            Style = new()
+            InnerText = "bv",
+            Name      = "bv",
+            Style     = new()
             {
                 Alignment   = Alignment.Center/*  | AlignmentType.Top */,
                 // BorderColor = Color.Green,
@@ -102,9 +102,9 @@ public class Boxes : Element
 
         var cv = new FlexBox()
         {
-            Text  = "cv",
-            Name  = "cv",
-            Style = new()
+            InnerText = "cv",
+            Name      = "cv",
+            Style     = new()
             {
                 // Alignment   = AlignmentType.Center,
                 // BorderColor = Color.Blue,

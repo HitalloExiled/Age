@@ -31,21 +31,21 @@ public class ButtonPage : Page
                 [
                     new Button
                     {
-                        Text    = "Flat",
-                        Variant = ButtonVariant.Flat,
-                        Style   = buttonStyle,
+                        InnerText = "Flat",
+                        Variant   = ButtonVariant.Flat,
+                        Style     = buttonStyle,
                     },
                     new Button
                     {
-                        Text    = "Outlined",
-                        Variant = ButtonVariant.Outlined,
-                        Style   = buttonStyle,
+                        InnerText = "Outlined",
+                        Variant   = ButtonVariant.Outlined,
+                        Style     = buttonStyle,
                     },
                     new Button
                     {
-                        Text    = "Text",
-                        Variant = ButtonVariant.Text,
-                        Style   = buttonStyle,
+                        InnerText = "Text",
+                        Variant   = ButtonVariant.Text,
+                        Style     = buttonStyle,
                     }
                 ]
             }

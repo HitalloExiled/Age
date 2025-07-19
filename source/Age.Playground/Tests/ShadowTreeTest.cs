@@ -31,8 +31,8 @@ public class Host : Element
         [
             new FlexBox
             {
-                Text  = "### Shadow Element ###",
-                Style = new()
+                InnerText = "### Shadow Element ###",
+                Style     = new()
                 {
                     Border = new(1, 0, Color.Red),
                     Color  = Color.White,
@@ -48,16 +48,16 @@ public class Host : Element
                 },
                 Children =
                 [
-                    toggleSlotDefaultButton = new Button { Text = "Toggle Slot default", Variant = ButtonVariant.Text, Style = buttonStyle },
-                    toggleSlotS1Button      = new Button { Text = "Toggle Slot s-1",     Variant = ButtonVariant.Text, Style = buttonStyle },
-                    toggleSlotS2Button      = new Button { Text = "Toggle Slot s-2",     Variant = ButtonVariant.Text, Style = buttonStyle },
+                    toggleSlotDefaultButton = new Button { InnerText = "Toggle Slot default", Variant = ButtonVariant.Text, Style = buttonStyle },
+                    toggleSlotS1Button      = new Button { InnerText = "Toggle Slot s-1",     Variant = ButtonVariant.Text, Style = buttonStyle },
+                    toggleSlotS2Button      = new Button { InnerText = "Toggle Slot s-2",     Variant = ButtonVariant.Text, Style = buttonStyle },
                 ],
             },
             slotDefault = new Slot
             {
-                //Name  = "1",
-                Text  = "Default",
-                Style = new()
+                //Name    = "1",
+                InnerText = "Default",
+                Style     = new()
                 {
                     Border = new(1, 0, Color.Red),
                     Color  = Color.White,
@@ -65,9 +65,9 @@ public class Host : Element
             },
             slotS1 = new Slot
             {
-                Text  = "Default S-1 Content",
-                Name  = "s-1",
-                Style = new()
+                InnerText = "Default S-1 Content",
+                Name      = "s-1",
+                Style     = new()
                 {
                     Border = new(1, 0, Color.Red),
                     Color  = Color.White,
@@ -76,9 +76,9 @@ public class Host : Element
             },
             slotS2 = new Slot
             {
-                Text  = "Default S-2 Content",
-                Name  = "s-2",
-                Style = new()
+                InnerText = "Default S-2 Content",
+                Name      = "s-2",
+                Style     = new()
                 {
                     Border = new(1, 0, Color.Red),
                     Color  = Color.White,
@@ -136,12 +136,12 @@ public static class ShadowTreeTest
                 },
                 Children =
                 [
-                    moveL1toSlotDefaultButton = new Button { Text = "Move L1 to Slot default", Style = buttonStyle },
-                    moveL1toSlotS1Button      = new Button { Text = "Move L1 to Slot s-1",     Style = buttonStyle },
-                    moveL1toSlotS2Button      = new Button { Text = "Move L1 to Slot s-2",     Style = buttonStyle },
-                    moveL2toSlotDefaultButton = new Button { Text = "Move L2 to Slot default", Style = buttonStyle },
-                    moveL2toSlotS1Button      = new Button { Text = "Move L2 to Slot s-1",     Style = buttonStyle },
-                    moveL2toSlotS2Button      = new Button { Text = "Move L2 to Slot s-2",     Style = buttonStyle },
+                    moveL1toSlotDefaultButton = new Button { InnerText = "Move L1 to Slot default", Style = buttonStyle },
+                    moveL1toSlotS1Button      = new Button { InnerText = "Move L1 to Slot s-1",     Style = buttonStyle },
+                    moveL1toSlotS2Button      = new Button { InnerText = "Move L1 to Slot s-2",     Style = buttonStyle },
+                    moveL2toSlotDefaultButton = new Button { InnerText = "Move L2 to Slot default", Style = buttonStyle },
+                    moveL2toSlotS1Button      = new Button { InnerText = "Move L2 to Slot s-1",     Style = buttonStyle },
+                    moveL2toSlotS2Button      = new Button { InnerText = "Move L2 to Slot s-2",     Style = buttonStyle },
                 ],
             },
             new Host
@@ -157,7 +157,7 @@ public static class ShadowTreeTest
                 [
                     l1 = new FlexBox
                     {
-                        Text  = "L1",
+                        InnerText  = "L1",
                         Name  = "light-1",
                         Slot  = "s-1",
                         Style = new()
@@ -170,7 +170,7 @@ public static class ShadowTreeTest
                     },
                     l2 = new FlexBox
                     {
-                        Text  = "L2",
+                        InnerText  = "L2",
                         Name  = "light-2",
                         Slot  = "s-2",
                         Style = new()

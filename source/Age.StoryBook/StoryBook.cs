@@ -50,33 +50,33 @@ public sealed class StoryBook : Node
                     [
                         buttonLink = new Button
                         {
-                            Name  = "ButtonLink",
-                            Text  = "Button",
-                            Style = buttonLinkStyle,
+                            Name      = "ButtonLink",
+                            InnerText = "Button",
+                            Style     = buttonLinkStyle,
                         },
                         checkBoxLink = new Button
                         {
-                            Name  = "CheckBoxLink",
-                            Text  = "CheckBox",
-                            Style = buttonLinkStyle,
+                            Name      = "CheckBoxLink",
+                            InnerText = "CheckBox",
+                            Style     = buttonLinkStyle,
                         },
                         iconLink = new Button
                         {
-                            Name  = "IconLink",
-                            Text  = "Icon",
-                            Style = buttonLinkStyle,
+                            Name      = "IconLink",
+                            InnerText = "Icon",
+                            Style     = buttonLinkStyle,
                         },
                         textBoxLink = new Button
                         {
-                            Name  = "TextBoxLink",
-                            Text  = "TextBox",
-                            Style = buttonLinkStyle,
+                            Name      = "TextBoxLink",
+                            InnerText = "TextBox",
+                            Style     = buttonLinkStyle,
                         },
                         emptyLink = new Button
                         {
-                            Name  = "EmptyLink",
-                            Text  = "Empty",
-                            Style = buttonLinkStyle,
+                            Name      = "EmptyLink",
+                            InnerText = "Empty",
+                            Style     = buttonLinkStyle,
                         }
                     ]
                 },
@@ -94,7 +94,7 @@ public sealed class StoryBook : Node
                     [
                         this.header = new FlexBox
                         {
-                            Name = "Header",
+                            Name  = "Header",
                             Style = new()
                             {
                                 Size            = new(Unit.Pc(100), null),
@@ -107,9 +107,9 @@ public sealed class StoryBook : Node
                             [
                                 new FlexBox
                                 {
-                                    Name = "Title",
-                                    Text = "Title",
-                                    Style = new()
+                                    Name      = "Title",
+                                    InnerText = "Title",
+                                    Style     = new()
                                     {
                                         Alignment  = Alignment.Center,
                                         Color      = Color.White,
@@ -145,7 +145,7 @@ public sealed class StoryBook : Node
 
     public void SetPage<T>(T page) where T : Page
     {
-        this.header.FirstElementChild!.Text = page.Title;
+        this.header.FirstElementChild!.InnerText = page.Title;
         this.outlet.ReplaceChildren(page);
     }
 }

@@ -1,11 +1,12 @@
 using Age.Core.Extensions;
 using Age.Platforms.Display;
 
-namespace Age.Elements;
+namespace Age.Elements.Events;
 
 public struct MouseEvent
 {
     public required Element Target;
+
     public MouseButton    Button;
     public float          Delta;
     public MouseKeyStates KeyStates;

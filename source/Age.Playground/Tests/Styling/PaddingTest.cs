@@ -131,8 +131,8 @@ public static class PaddingTest
 
         var text_with_padding = new FlexBox
         {
-            Text = "Text With Padding",
-            Style = new()
+            InnerText = "Text With Padding",
+            Style     = new()
             {
                 Color   = Color.White,
                 Border  = new(BORDER_SIZE, 0, Color.White * 0.8f),

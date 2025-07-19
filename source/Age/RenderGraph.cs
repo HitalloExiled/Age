@@ -5,21 +5,17 @@ namespace Age;
 
 public sealed class RenderGraph : Disposable
 {
-    private static RenderGraph? active;
-
     public static RenderGraph Active
     {
-        get => active ?? throw new InvalidOperationException("There no active RenderGraph");
-        set => active = value;
+        get => field ?? throw new InvalidOperationException("There no active RenderGraph");
+        set;
     }
 
-    public required string Name { get; init; }
-
-    public required RenderGraphPass[] Passes { get; init; }
-
+    public bool Disabled { get; set; }
     public bool HasStarted { get; private set; }
 
-    public bool Disabled { get; set; }
+    public required string            Name   { get; init; }
+    public required RenderGraphPass[] Passes { get; init; }
 
     protected override void OnDisposed(bool disposing)
     {
@@ -30,28 +26,6 @@ public sealed class RenderGraph : Disposable
                 pass.Dispose();
             }
         }
-    }
-
-    public T GetRenderGraphPass<T>() where T : RenderGraphPass =>
-        this.TryGetRenderGraphPass<T>(out var renderPass)
-            ? renderPass
-            : throw new InvalidOperationException($"Can't find any {nameof(T)} on {this.Name} RenderGraph");
-
-    public bool TryGetRenderGraphPass<T>([NotNullWhen(true)] out T? renderPass) where T : RenderGraphPass
-    {
-        foreach (var pass in this.Passes)
-        {
-            if (pass is T requestedPass)
-            {
-                renderPass = requestedPass;
-
-                return true;
-            }
-        }
-
-        renderPass = null;
-
-        return false;
     }
 
     public void Execute()
@@ -70,6 +44,11 @@ public sealed class RenderGraph : Disposable
         }
     }
 
+    public T GetRenderGraphPass<T>() where T : RenderGraphPass =>
+            this.TryGetRenderGraphPass<T>(out var renderPass)
+            ? renderPass
+            : throw new InvalidOperationException($"Can't find any {nameof(T)} on {this.Name} RenderGraph");
+
     public void Recreate()
     {
         foreach (var pass in this.Passes)
@@ -77,5 +56,22 @@ public sealed class RenderGraph : Disposable
             pass.Recreate();
             pass.NotifyRecreated();
         }
+    }
+
+    public bool TryGetRenderGraphPass<T>([NotNullWhen(true)] out T? renderPass) where T : RenderGraphPass
+    {
+        foreach (var pass in this.Passes)
+        {
+            if (pass is T requestedPass)
+            {
+                renderPass = requestedPass;
+
+                return true;
+            }
+        }
+
+        renderPass = null;
+
+        return false;
     }
 }

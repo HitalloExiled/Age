@@ -1,6 +1,7 @@
 using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Elements;
+using Age.Elements.Events;
 using Age.Scene;
 using Age.Themes;
 
@@ -18,6 +19,14 @@ public partial class TextBox : Element
     private readonly DropoutStack<HistoryEntry> undo = new(50);
 
     private bool textBufferHasChanged;
+
+    public uint CursorPosition
+    {
+        get => this.text.CursorPosition;
+        set => this.text.CursorPosition = value;
+    }
+
+    public bool Multiline { get; set; }
 
     public override string NodeName => nameof(TextBox);
 
@@ -42,23 +51,15 @@ public partial class TextBox : Element
         }
     }
 
-    public uint CursorPosition
-    {
-        get => this.text.CursorPosition;
-        set => this.text.CursorPosition = value;
-    }
-
     public string? Value
     {
         get => this.text.Value;
         set => this.text.Value = value;
     }
 
-    public bool Multiline { get; set; }
-
     public TextBox()
     {
-        this.Flags       = NodeFlags.Immutable;
+        this.NodeFlags   = NodeFlags.Immutable;
         this.IsFocusable = true;
 
         this.StyleSheet = Theme.Current.TextBox.Outlined;
@@ -474,7 +475,7 @@ public partial class TextBox : Element
     {
         if (this.text.Buffer != null && !mouseEvent.Indirect)
         {
-            this.text.Layout.SetCaret(mouseEvent.X, mouseEvent.Y);
+            this.text.SetCaret(mouseEvent.X, mouseEvent.Y);
         }
     }
 

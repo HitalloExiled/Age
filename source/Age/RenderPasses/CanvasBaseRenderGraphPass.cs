@@ -16,9 +16,9 @@ namespace Age.RenderPasses;
 
 public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer, Window window) : RenderGraphPass(renderer, window)
 {
-    protected ResourceCache<Texture2D, UniformSet> UniformSets { get; } = new();
-
     private Size<float>? previousViewport;
+
+    protected ResourceCache<Texture2D, UniformSet> UniformSets { get; } = new();
 
     protected abstract CanvasStencilMaskShader CanvasStencilMaskShader { get; }
     protected abstract Color                   ClearColor              { get; }
@@ -26,6 +26,9 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
     protected abstract Framebuffer             Framebuffer             { get; }
     protected abstract RenderPipelines[]       Pipelines               { get; }
     protected abstract PipelineVariant         PipelineVariants        { get; }
+
+    private void ClearStencilBuffer(in VkExtent2D extent) =>
+        this.ClearStencilBufferAttachment(extent, 0);
 
     private unsafe void ClearStencilBufferAttachment(in VkExtent2D extent, uint value)
     {
@@ -50,13 +53,6 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
         this.CommandBuffer.ClearAttachments([attachment], [rect]);
     }
-
-    private void ClearStencilBuffer(in VkExtent2D extent) =>
-        this.ClearStencilBufferAttachment(extent, 0);
-
-    private void FillStencilBuffer(in VkExtent2D extent) =>
-        this.ClearStencilBufferAttachment(extent, 1);
-
     private void DrawStencilBuffer(in Size<float> viewport, StencilLayer stencilLayer, IndexBuffer indexBuffer)
     {
         stencilLayer.Update();
@@ -89,6 +85,13 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         this.CommandBuffer.DrawIndexed(indexBuffer);
     }
 
+    private void FillStencilBuffer(in VkExtent2D extent) =>
+        this.ClearStencilBufferAttachment(extent, 1);
+
+    protected virtual void AfterExecute() { }
+
+    protected virtual void BeforeExecute() { }
+
     protected override void OnDisposed(bool disposing)
     {
         if (disposing)
@@ -97,8 +100,8 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         }
     }
 
-    protected virtual void AfterExecute() { }
-    protected virtual void BeforeExecute() { }
+    protected abstract void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform);
+    protected abstract void Disposed();
 
     public unsafe override void Execute()
     {
@@ -173,7 +176,4 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
         this.previousViewport = viewport;
     }
-
-    protected abstract void Disposed();
-    protected abstract void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform);
 }

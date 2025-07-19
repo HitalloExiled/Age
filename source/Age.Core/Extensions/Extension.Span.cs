@@ -42,50 +42,53 @@ public static partial class Extension
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Span<U> Cast<T, U>(this Span<T> span)
-    where T : unmanaged
-    where U : unmanaged =>
-        MemoryMarshal.Cast<T, U>(span);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe static void CopyTo<TSource, TDestination>(this scoped ReadOnlySpan<TSource> source, scoped Span<TDestination> destination, bool alignToEnd = false)
-    where TSource : unmanaged
-    where TDestination : unmanaged
+    extension<T>(Span<T> span) where T : unmanaged
     {
-        if (source.Length > destination.Length)
-        {
-            throw new InvalidOperationException($"{nameof(destination)} length must be greater or equal than {nameof(source)} length");
-        }
-
-        CopyTo(source.Cast<TSource, byte>(), sizeof(TSource), destination.Cast<TDestination, byte>(), sizeof(TDestination), source.Length, alignToEnd);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<U> Cast<U>() where U : unmanaged =>
+            MemoryMarshal.Cast<T, U>(span);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe static void CopyTo<TSource>(this scoped ReadOnlySpan<TSource> source, scoped Span<byte> destination, int sizeOfDestination, bool alignToEnd = false)
-    where TSource : unmanaged
+    extension<TSource>(scoped ReadOnlySpan<TSource> source) where TSource : unmanaged
     {
-        var destinationLength = destination.Length / sizeOfDestination;
-
-        if (destinationLength < source.Length)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void CopyTo<TDestination>(scoped Span<TDestination> destination, bool alignToEnd = false) where TDestination : unmanaged
         {
-            throw new InvalidOperationException($"{nameof(destination)}.Length / {sizeOfDestination} must be greater or equal than {nameof(source)}.Length");
+            if (source.Length > destination.Length)
+            {
+                throw new InvalidOperationException($"{nameof(destination)} length must be greater or equal than {nameof(source)} length");
+            }
+
+            CopyTo(source.Cast<TSource, byte>(), sizeof(TSource), destination.Cast<TDestination, byte>(), sizeof(TDestination), source.Length, alignToEnd);
         }
 
-        CopyTo(source.Cast<TSource, byte>(), sizeof(TSource), destination, sizeOfDestination, source.Length, alignToEnd);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void CopyTo(scoped Span<byte> destination, int sizeOfDestination, bool alignToEnd = false)
+        {
+            var destinationLength = destination.Length / sizeOfDestination;
+
+            if (destinationLength < source.Length)
+            {
+                throw new InvalidOperationException($"{nameof(destination)}.Length / {sizeOfDestination} must be greater or equal than {nameof(source)}.Length");
+            }
+
+            CopyTo(source.Cast<TSource, byte>(), sizeof(TSource), destination, sizeOfDestination, source.Length, alignToEnd);
+        }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe static void CopyTo<TDestination>(this scoped ReadOnlySpan<byte> source, int sizeOfSource, scoped Span<TDestination> destination, bool alignToEnd = false)
-    where TDestination : unmanaged
+    extension(scoped ReadOnlySpan<byte> source)
     {
-        var sourceLength = source.Length / sizeOfSource;
-
-        if (destination.Length < sourceLength)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void CopyTo<TDestination>(int sizeOfSource, scoped Span<TDestination> destination, bool alignToEnd = false) where TDestination : unmanaged
         {
-            throw new InvalidOperationException($"{nameof(destination)}.Length must be greater or equal than {nameof(source)}.Length / {sizeOfSource}");
-        }
+            var sourceLength = source.Length / sizeOfSource;
 
-        CopyTo(source, sizeOfSource, destination.Cast<TDestination, byte>(), sizeof(TDestination), sourceLength, alignToEnd);
+            if (destination.Length < sourceLength)
+            {
+                throw new InvalidOperationException($"{nameof(destination)}.Length must be greater or equal than {nameof(source)}.Length / {sizeOfSource}");
+            }
+
+            CopyTo(source, sizeOfSource, destination.Cast<TDestination, byte>(), sizeof(TDestination), sourceLength, alignToEnd);
+        }
     }
 }

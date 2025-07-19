@@ -11,8 +11,8 @@ public static class TextSelectionTest
     {
         var hello = new FlexBox
         {
-            Text = "Hello",
-            Style = new()
+            InnerText = "Hello",
+            Style     = new()
             {
                 Color      = Color.White,
                 FontSize   = 100,
@@ -39,8 +39,8 @@ public static class TextSelectionTest
 
         var world = new FlexBox
         {
-            Text = "World",
-            Style = new()
+            InnerText = "World",
+            Style     = new()
             {
                 Color      = Color.White,
                 FontSize   = 100,

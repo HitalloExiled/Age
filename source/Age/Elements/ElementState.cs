@@ -1,4 +1,4 @@
-namespace Age.Elements.Layouts;
+namespace Age.Elements;
 
 [Flags]
 public enum ElementState

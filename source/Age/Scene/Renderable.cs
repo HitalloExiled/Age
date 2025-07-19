@@ -41,6 +41,8 @@ public abstract class Renderable : Node
         }
     }
 
+    protected virtual void OnConnected(RenderTree renderTree) { }
+
     protected override void OnDisconnected(NodeTree tree)
     {
         base.OnDisconnected(tree);
@@ -50,7 +52,5 @@ public abstract class Renderable : Node
             this.OnDisconnected(renderTree);
         }
     }
-
-    protected virtual void OnConnected(RenderTree renderTree) { }
     protected virtual void OnDisconnected(RenderTree renderTree) { }
 }

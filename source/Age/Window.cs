@@ -9,22 +9,23 @@ namespace Age;
 
 public sealed partial class Window : PlatformWindow
 {
+    private static VulkanRenderer renderer = null!;
+
     public new static IEnumerable<Window> Windows => new WindowCastEnumerator(PlatformWindow.Windows);
 
+    public Surface Surface { get; private set; } = null!;
     public RenderTree Tree { get; }
-
-    private static VulkanRenderer renderer = null!;
 
     public Window(string title, Size<uint> size, Point<int> position, PlatformWindow? parent = null) : base(title, size, position, parent) =>
         this.Tree = new(this);
 
-    public Surface Surface { get; private set; } = null!;
-
-    public static void Register(VulkanRenderer renderer)
+    protected override void PlatformClose()
     {
-        PlatformRegister("Age.Window");
+        base.PlatformClose();
 
-        Window.renderer = renderer;
+        renderer.WaitIdle();
+
+        this.Surface.Dispose();
     }
 
     protected override void PlatformCreate(string title, Size<uint> size, Point<int> position, PlatformWindow? parent)
@@ -35,17 +36,15 @@ public sealed partial class Window : PlatformWindow
 
         this.Resized += () =>
         {
-            this.Surface.Size   = this.ClientSize;
+            this.Surface.Size = this.ClientSize;
             this.Surface.Hidden = this.IsMinimized || !this.IsVisible;
         };
     }
 
-    protected override void PlatformClose()
+    public static void Register(VulkanRenderer renderer)
     {
-        base.PlatformClose();
+        PlatformRegister("Age.Window");
 
-        renderer.WaitIdle();
-
-        this.Surface.Dispose();
+        Window.renderer = renderer;
     }
 }

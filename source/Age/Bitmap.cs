@@ -10,7 +10,7 @@ public unsafe sealed class Bitmap : Disposable
     private readonly byte* buffer;
     private readonly int length;
 
-    public int       BytesPerPixel { get; }
+    public int        BytesPerPixel { get; }
     public Size<uint> Size          { get; }
 
     public Bitmap(Size<uint> size, int bytesPerPixel)

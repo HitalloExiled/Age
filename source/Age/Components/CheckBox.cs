@@ -1,4 +1,5 @@
 using Age.Elements;
+using Age.Elements.Events;
 using Age.Themes;
 
 namespace Age.Components;
@@ -12,21 +13,21 @@ public enum CheckBoxState : byte
 
 public class CheckBox : Element
 {
+    public event Action? Changed;
+
     private const string CHECKED       = "check_box";
     private const string INDETERMINATE = "indeterminate_check_box";
     private const string UNCHECKED     = "check_box_outline_blank";
 
-    public event Action? Changed;
-
     private readonly Icon icon = new(UNCHECKED);
-
-    public override string NodeName => nameof(CheckBox);
 
     public bool Checked
     {
         get => this.State == CheckBoxState.Checked;
         set => this.State = value ? CheckBoxState.Checked : CheckBoxState.Unchecked;
     }
+
+    public override string NodeName => nameof(CheckBox);
 
     public bool Readonly { get; set; }
 
@@ -42,7 +43,7 @@ public class CheckBox : Element
                     CheckBoxState.Unchecked     => UNCHECKED,
                     CheckBoxState.Checked       => CHECKED,
                     CheckBoxState.Indeterminate => INDETERMINATE,
-                    _ => throw new NotSupportedException(),
+                    _                           => throw new NotSupportedException(),
                 };
 
                 field = value;
@@ -56,7 +57,7 @@ public class CheckBox : Element
 
     public CheckBox()
     {
-        this.Flags       = Scene.NodeFlags.Immutable;
+        this.NodeFlags   = Scene.NodeFlags.Immutable;
         this.IsFocusable = true;
         this.StyleSheet  = Theme.Current.CheckBox.Default;
 

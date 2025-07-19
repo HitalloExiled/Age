@@ -1,11 +1,11 @@
 using Age.Core.Collections;
 
-namespace Age.Elements.Layouts;
+namespace Age.Elements;
 
-internal partial class BoxLayout
+public abstract partial class Element
 {
     [KeyedListKey]
-    public enum LayoutCommand : byte
+    internal enum LayoutCommand : byte
     {
         None     = 0,
         Box      = 1 << 0,

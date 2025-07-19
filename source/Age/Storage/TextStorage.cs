@@ -7,18 +7,18 @@ using SkiaSharp;
 
 namespace Age.Storage;
 
-internal partial class TextStorage : Disposable
+internal class TextStorage : Disposable
 {
     private static TextStorage? singleton;
 
-    public static TextStorage Singleton => singleton ?? throw new NullReferenceException();
-
-    private readonly Dictionary<int, TextureAtlas>               atlases    = [];
+    private readonly Dictionary<int, TextureAtlas>               atlases = [];
     private readonly Dictionary<string, Dictionary<string, int>> codepoints = [];
-    private readonly Dictionary<int, SKFont>                     fonts      = [];
-    private readonly Dictionary<int, TextureMap>                 glyphs     = [];
+    private readonly Dictionary<int, SKFont>                     fonts = [];
+    private readonly Dictionary<int, TextureMap>                 glyphs = [];
     private readonly SKPaint                                     paint;
     private readonly VulkanRenderer                              renderer;
+
+    public static TextStorage Singleton => singleton ?? throw new NullReferenceException();
 
     public TextStorage(VulkanRenderer renderer)
     {

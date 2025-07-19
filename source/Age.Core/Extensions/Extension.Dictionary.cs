@@ -4,9 +4,12 @@ namespace Age.Core.Extensions;
 
 public static partial class Extension
 {
-    public static ref T? GetValueRefOrAddDefault<T, K>(this Dictionary<K, T> source, K key, out bool exists) where K : notnull =>
-        ref CollectionsMarshal.GetValueRefOrAddDefault(source, key, out exists);
+    extension<T, K>(Dictionary<K, T> source) where K : notnull
+    {
+        public ref T? GetValueRefOrAddDefault(K key, out bool exists) =>
+            ref CollectionsMarshal.GetValueRefOrAddDefault(source, key, out exists);
 
-    public static ref T GetValueRefOrNullRef<T, K>(this Dictionary<K, T> source, K key) where K : notnull =>
-        ref CollectionsMarshal.GetValueRefOrNullRef(source, key);
+        public ref T GetValueRefOrNullRef(K key) =>
+            ref CollectionsMarshal.GetValueRefOrNullRef(source, key);
+    }
 }

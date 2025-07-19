@@ -5,40 +5,43 @@ namespace Age.Core.Extensions;
 
 public static partial class Extension
 {
-    public static Span<T> AsSpan<T>(this List<T> source) =>
-        CollectionsMarshal.AsSpan(source);
-
-    public static Span<T> AsSpan<T>(this List<T> source, int start) =>
-        CollectionsMarshal.AsSpan(source)[start..];
-
-    public static Span<T> AsSpan<T>(this List<T> source, int start, int end) =>
-        CollectionsMarshal.AsSpan(source)[start..end];
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Resize<T>(this List<T> source, int size, T defaultValue)
+    extension<T>(List<T> source)
     {
-        source.EnsureCapacity(size);
+        public Span<T> AsSpan() =>
+            CollectionsMarshal.AsSpan(source);
 
-        if (size > source.Count)
+        public Span<T> AsSpan(int start) =>
+            CollectionsMarshal.AsSpan(source)[start..];
+
+        public Span<T> AsSpan(int start, int end) =>
+            CollectionsMarshal.AsSpan(source)[start..end];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Resize(int size, T defaultValue)
         {
-            var previous = source.Count;
+            source.EnsureCapacity(size);
 
-            source.SetCount(size);
-
-            var span = source.AsSpan();
-
-            for (var i = previous; i < span.Length; i++)
+            if (size > source.Count)
             {
-                span[i] = defaultValue;
+                var previous = source.Count;
+
+                source.SetCount(size);
+
+                var span = source.AsSpan();
+
+                for (var i = previous; i < span.Length; i++)
+                {
+                    span[i] = defaultValue;
+                }
+            }
+            else
+            {
+                source.RemoveRange(0, source.Count - size);
             }
         }
-        else
-        {
-            source.RemoveRange(0, source.Count - size);
-        }
-    }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void SetCount<T>(this List<T> source, int count) =>
-        CollectionsMarshal.SetCount(source, count);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetCount(int count) =>
+            CollectionsMarshal.SetCount(source, count);
+    }
 }

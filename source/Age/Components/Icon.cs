@@ -10,8 +10,6 @@ namespace Age.Components;
 
 public class Icon : Element
 {
-    public override string NodeName => nameof(Icon);
-
     private readonly Text text = new();
 
     private Dictionary<string, int>? codepoints;
@@ -30,9 +28,11 @@ public class Icon : Element
         }
     }
 
+    public override string NodeName => nameof(Icon);
+
     public Icon(string? iconName = null, ushort? fontSize = null, Color? color = null)
     {
-        this.Flags = NodeFlags.Immutable;
+        this.NodeFlags = NodeFlags.Immutable;
 
         this.IconName = iconName;
 
@@ -51,7 +51,7 @@ public class Icon : Element
         this.AttachShadowTree(true);
         this.ShadowTree.AppendChild(this.text);
 
-        this.Layout.StyleChanged += this.OnStyleChanged;
+        this.StyleChanged += this.OnHostStyleChanged;
     }
 
     private void SetCodepoint(string? iconName)
@@ -66,18 +66,13 @@ public class Icon : Element
         }
     }
 
-    private void OnStyleChanged(StyleProperty property)
+    protected void OnHostStyleChanged(StyleProperty property)
     {
         if (property.HasFlags(StyleProperty.FontFamily))
         {
-            if (this.Layout.ComputedStyle.FontFamily is string fontFamily)
-            {
-                this.codepoints = TextStorage.Singleton.GetCodepoints(fontFamily, this.StyleSheet?.FontFaces);
-            }
-            else
-            {
-                this.codepoints = null;
-            }
+            this.codepoints = this.ComputedStyle.FontFamily is string fontFamily
+                ? TextStorage.Singleton.GetCodepoints(fontFamily, this.StyleSheet?.FontFaces)
+                : null;
 
             this.SetCodepoint(this.IconName);
         }
