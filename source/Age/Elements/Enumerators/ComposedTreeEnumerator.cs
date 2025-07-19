@@ -50,7 +50,7 @@ internal struct ComposedTreeEnumerator(Element target) : IEnumerator<Layoutable>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static Layoutable? getLayoutableOrSkip(Node? node)
         {
-            do
+            while (true)
             {
                 if (node is Layoutable layoutable && layoutable.AssignedSlot == null)
                 {
@@ -64,7 +64,6 @@ internal struct ComposedTreeEnumerator(Element target) : IEnumerator<Layoutable>
 
                 node = node.NextSibling;
             }
-            while (true);
         }
     }
 

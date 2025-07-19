@@ -470,7 +470,7 @@ public sealed class Text : Layoutable
 
     private void OnParentStyleChanged(StyleProperty property)
     {
-        if (property.HasAnyFlag(StyleProperty.FontFamily | StyleProperty.FontSize | StyleProperty.FontWeight))
+        if (property.HasAnyFlag(StyleProperty.Color | StyleProperty.FontFamily | StyleProperty.FontSize | StyleProperty.FontWeight))
         {
             var inheritedStyleSource = this.GetInheritedStyleSource();
 

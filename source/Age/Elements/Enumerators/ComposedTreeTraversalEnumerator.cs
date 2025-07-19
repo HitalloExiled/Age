@@ -35,10 +35,6 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
         this.stack.Count > 0 && node is Layoutable layoutable && this.stack.Peek().Slot == layoutable.AssignedSlot;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly bool IsAssignedToCurrentSlot(Layoutable layoutable) =>
-        this.stack.Count > 0 && this.stack.Peek().Slot == layoutable.AssignedSlot;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly Layoutable? GetFirstChild(Node node)
     {
         if (node is Slot slot)
@@ -51,15 +47,15 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
             }
             else
             {
-                return this.GetLayoutableOrSkip(slot.FirstChild);
+                return GetLayoutableOrSkip(slot.FirstChild);
             }
         }
         else if (node is Element element && element.ShadowTree != null)
         {
-            return this.GetLayoutableOrSkip(element.ShadowTree.FirstChild);
+            return GetLayoutableOrSkip(element.ShadowTree.FirstChild);
         }
 
-        return this.GetLayoutableOrSkip(node.FirstChild);
+        return GetLayoutableOrSkip(node.FirstChild);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -83,7 +79,7 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
 
         parent = node.Parent!;
 
-        if (this.GetLayoutableOrSkip(node.NextSibling) is Layoutable nextSibling)
+        if (GetLayoutableOrSkip(node.NextSibling) is Layoutable nextSibling)
         {
             return nextSibling;
         }
@@ -91,19 +87,17 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
         if (parent is ShadowTree shadowTree)
         {
             parent = shadowTree.Host;
-
-            // return this.GetLayoutableOrSkip(shadowTree.Host.FirstChild);
         }
 
         return null;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly Layoutable? GetLayoutableOrSkip(Node? node)
+    private static Layoutable? GetLayoutableOrSkip(Node? node)
     {
-        do
+        while (true)
         {
-            if (node is Layoutable layoutable/*  && (layoutable.AssignedSlot == null || this.IsAssignedToCurrentSlot(layoutable)) */)
+            if (node is Layoutable layoutable)
             {
                 return layoutable;
             }
@@ -115,7 +109,6 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
 
             node = node.NextSibling;
         }
-        while (true);
     }
 
     readonly IEnumerator IEnumerable.GetEnumerator() =>
@@ -151,14 +144,9 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
                 return true;
             }
 
-            if (parent == this.root)
-            {
-                return false;
-            }
-
             node = parent;
         }
-        while (node != null);
+        while (node != null && node != this.root);
 
         return false;
     }

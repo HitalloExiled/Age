@@ -38,7 +38,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         get => this.tree;
         internal set
         {
-            if (value != this.tree)
+            if (this.tree != value)
             {
                 static void setTree(Node node, NodeTree? tree)
                 {
@@ -325,7 +325,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         foreach (var node in nodes)
         {
             node.Parent = this;
-            node.Tree = this.Tree;
+            node.Tree   = this.Tree;
 
             node.OnAdopted(this);
             this.OnChildAppended(node);

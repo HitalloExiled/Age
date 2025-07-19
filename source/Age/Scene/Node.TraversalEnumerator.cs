@@ -54,9 +54,9 @@ public abstract partial class Node
                     return true;
                 }
 
-                this.current = this.current == this.root ? null : this.current.Parent;
+                this.current = this.current.Parent;
             }
-            while (this.current != null);
+            while (this.current != null && this.current != this.root);
 
             return false;
         }

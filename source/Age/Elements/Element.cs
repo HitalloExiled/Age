@@ -356,11 +356,9 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                     value.PropertyChanged += this.OnPropertyChanged;
                 }
 
-                var previous = this.ComputedStyle.Data;
-
                 field = value;
 
-                this.ComputeStyle(previous);
+                this.ComputeStyle(this.ComputedStyle.Data);
             }
         }
     }
