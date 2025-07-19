@@ -102,7 +102,7 @@ public static class ScrollTest
                 Border   = new(BORDER_SIZE, 0, Color.Red),
                 Padding  = new(Unit.Px(10)),
                 Overflow = Overflow.Scroll,
-                Size     = new(Unit.Pc(100)),
+                Size     = new(400, 400),
                 Color    = Color.White,
             },
         };
@@ -222,12 +222,12 @@ public static class ScrollTest
             },
         };
 
-        //canvas.AppendChild(loren);
+        canvas.AppendChild(loren);
         //canvas.AppendChild(conteiner1);
         //canvas.AppendChild(conteiner2);
         //canvas.AppendChild(conteiner3);
         //canvas.AppendChild(conteiner4);
         // canvas.AppendChild(conteiner5);
-         canvas.AppendChild(textBox);
+        //canvas.AppendChild(textBox);
     }
 }

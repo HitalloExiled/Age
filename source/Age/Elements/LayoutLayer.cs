@@ -3,7 +3,7 @@ using Age.Core.Collections;
 namespace Age.Elements;
 
 [KeyedListKey]
-public enum LayoutLayer : byte
+public enum LayoutLayer : ushort
 {
     None   = 0,
     Layer1 = Element.LayoutCommand.Layer1,

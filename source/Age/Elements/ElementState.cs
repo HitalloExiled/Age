@@ -8,6 +8,6 @@ public enum ElementState
     Checked  = 1 << 1,
     Disabled = 1 << 2,
     Enabled  = 1 << 3,
-    Focus    = 1 << 4,
+    Focused  = 1 << 4,
     Hovered  = 1 << 5,
 }

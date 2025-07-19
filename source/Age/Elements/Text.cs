@@ -156,9 +156,6 @@ public sealed class Text : Layoutable
         }
     }
 
-    private static ulong CombineIds(int characterIndex, int elementIndex) =>
-        ((ulong)characterIndex << 24) | ((uint)elementIndex);
-
     private static void ReleaseCommands(List<Command> commands, int count)
     {
         if (count > 0)
@@ -351,7 +348,7 @@ public sealed class Text : Layoutable
 
             if (!char.IsLowSurrogate(character))
             {
-                selectionCommand.ObjectId  = CombineIds(i + 1, elementIndex);
+                // selectionCommand.ObjectId  = CombineIds(elementIndex, i + 1);
                 selectionCommand.Size      = new(glyphsWidths[charIndex], this.LineHeight);
                 selectionCommand.Transform = Transform2D.CreateTranslated(new(cursor.X, cursor.Y - baseLine));
 
@@ -557,7 +554,7 @@ public sealed class Text : Layoutable
 
             if (command.Surrogate != TextCommand.SurrogateKind.Low)
             {
-                commands[i].ObjectId = CombineIds(i + 1, elementIndex);
+                commands[i].ObjectId = CombineIds(elementIndex, i + 1);
             }
             else
             {

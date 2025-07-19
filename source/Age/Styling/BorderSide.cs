@@ -4,8 +4,8 @@ namespace Age.Styling;
 
 public record struct BorderSide
 {
-    public Color Color;
-    public ushort  Thickness;
+    public Color  Color;
+    public ushort Thickness;
 
     public BorderSide(ushort thickness, Color color)
     {

@@ -17,7 +17,7 @@ public record CheckBoxStyles
                     Color           = Color.Green,
                     BackgroundColor = Color.Green.WithAlpha(0),
                 },
-                Focus = new()
+                Focused = new()
                 {
                     BackgroundColor = Color.Green.WithAlpha(0.15f),
                 },

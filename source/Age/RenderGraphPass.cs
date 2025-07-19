@@ -20,5 +20,4 @@ public abstract class RenderGraphPass(VulkanRenderer renderer, Window window) : 
 
     public abstract void Execute();
     public abstract void Recreate();
-
 }

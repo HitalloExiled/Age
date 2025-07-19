@@ -2,7 +2,12 @@ namespace Age.Commands;
 
 public sealed partial record TextCommand : RectCommand
 {
-    public int           Index     { get; set; }
+    public int Index
+    {
+        get => (int)this.Metadata;
+        set => this.Metadata = value;
+    }
+
     public int           Line      { get; set; }
     public SurrogateKind Surrogate { get; set; }
 

@@ -86,6 +86,9 @@ public sealed partial class RenderTree : NodeTree
             this.Nodes.RemoveRange(index, this.Nodes.Count - index);
         }
 
+        this.command2DEntries.AsSpan().TimSort(static (left, right) => left.Command.ZIndex.CompareTo(right.Command.ZIndex));
+        this.command3DEntries.AsSpan().TimSort(static (left, right) => left.Command.ZIndex.CompareTo(right.Command.ZIndex));
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void collect2D(Spatial2D spatial2D)
         {
@@ -138,7 +141,7 @@ public sealed partial class RenderTree : NodeTree
             _               => null,
         };
 
-    private unsafe Node? GetNode(ushort x, ushort y, out uint characterPosition)
+    private unsafe Node? GetNode(ushort x, ushort y, out uint childIndex)
     {
         var image = this.canvasIndexRenderGraphPass.ColorImage;
 
@@ -163,13 +166,13 @@ public sealed partial class RenderTree : NodeTree
 
             if (id > -1 && id < this.Nodes.Count)
             {
-                characterPosition = (uint)((pixel >> 24) & 0xFFFFFF) - 1;
+                childIndex = (uint)((pixel >> 24) & 0xFFFFFF);
 
                 return this.Nodes[id];
             }
         }
 
-        characterPosition = 0;
+        childIndex = 0;
 
         return null;
     }
@@ -183,13 +186,13 @@ public sealed partial class RenderTree : NodeTree
 
     private void OnDoubleClick(in MouseEvent mouseEvent)
     {
-        var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var characterPosition);
+        var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var childIndex);
 
         Element? element;
 
         if (node is Text text)
         {
-            text.PropagateSelection(characterPosition);
+            text.PropagateSelection(childIndex - 1);
             element = text.ComposedParentElement;
         }
         else
@@ -197,7 +200,15 @@ public sealed partial class RenderTree : NodeTree
             element = node as Element;
         }
 
-        element?.InvokeDoubleClick(mouseEvent, element != node);
+        if (element != null)
+        {
+            if (element != node)
+            {
+                childIndex = 0;
+            }
+
+            element.InvokeDoubleClick(mouseEvent, childIndex, element != node);
+        }
     }
 
     private void OnKeyDown(Key key)
@@ -210,7 +221,7 @@ public sealed partial class RenderTree : NodeTree
 
     private void OnMouseDown(in MouseEvent mouseEvent)
     {
-        var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var characterPosition);
+        var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var childIndex);
 
         Element? element;
 
@@ -224,13 +235,13 @@ public sealed partial class RenderTree : NodeTree
 
                 if (mouseEvent.KeyStates.HasFlags(MouseKeyStates.Shift) && this.lastFocusedText == text)
                 {
-                    text.UpdateSelection(mouseEvent.X, mouseEvent.Y, characterPosition);
+                    text.UpdateSelection(mouseEvent.X, mouseEvent.Y, childIndex - 1);
                 }
                 else
                 {
                     this.lastFocusedText?.ClearSelection();
 
-                    text.SetCaret(mouseEvent.X, mouseEvent.Y, characterPosition);
+                    text.SetCaret(mouseEvent.X, mouseEvent.Y, childIndex - 1);
                 }
 
                 if (this.lastFocusedText != text)
@@ -259,6 +270,11 @@ public sealed partial class RenderTree : NodeTree
 
         if (element != null)
         {
+            if (element != node)
+            {
+                childIndex = 0;
+            }
+
             if (mouseEvent.Button == mouseEvent.PrimaryButton)
             {
                 element.InvokeActivate();
@@ -275,7 +291,7 @@ public sealed partial class RenderTree : NodeTree
                 element.InvokeFocus(mouseEvent);
             }
 
-            element.InvokeMouseDown(mouseEvent, element != node);
+            element.InvokeMouseDown(mouseEvent, childIndex, element != node);
         }
         else
         {
@@ -286,13 +302,18 @@ public sealed partial class RenderTree : NodeTree
 
     private unsafe void OnMouseMove(in MouseEvent mouseEvent)
     {
-        var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var character);
+        var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var childIndex);
 
         var text    = node as Text;
         var element = text?.ComposedParentElement ?? node as Element;
 
         if (element != null)
         {
+            if (element != node)
+            {
+                childIndex = 0;
+            }
+
             if (this.lastHoveredElement != element)
             {
                 this.lastHoveredElement?.InvokeMouseOut(mouseEvent);
@@ -301,7 +322,7 @@ public sealed partial class RenderTree : NodeTree
                 element.InvokeMouseOver(mouseEvent);
             }
 
-            element.InvokeMouseMoved(mouseEvent, element != node);
+            element.InvokeMouseMoved(mouseEvent, childIndex, element != node);
         }
         else
         {
@@ -313,7 +334,7 @@ public sealed partial class RenderTree : NodeTree
         {
             if (mouseEvent.IsHoldingPrimaryButton && text == this.lastFocusedText)
             {
-                text.UpdateSelection(mouseEvent.X, mouseEvent.Y, character);
+                text.UpdateSelection(mouseEvent.X, mouseEvent.Y, childIndex - 1);
             }
 
             if (this.lastHoveredText != text)
@@ -338,7 +359,7 @@ public sealed partial class RenderTree : NodeTree
 
     private void OnMouseUp(in MouseEvent mouseEvent)
     {
-        var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out _);
+        var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var childIndex);
 
         var text    = node as Text;
         var element = text?.ComposedParentElement ?? node as Element;
@@ -347,12 +368,17 @@ public sealed partial class RenderTree : NodeTree
 
         if (element != null)
         {
-            if (this.lastFocusedElement == element)
+            if (element != node)
             {
-                element.InvokeClick(mouseEvent, element != node);
+                childIndex = 0;
             }
 
-            element.InvokeMouseUp(mouseEvent, element != node);
+            if (this.lastFocusedElement == element)
+            {
+                element.InvokeClick(mouseEvent, childIndex, element != node);
+            }
+
+            element.InvokeMouseUp(mouseEvent, childIndex, element != node);
         }
 
         this.lastFocusedElement?.InvokeDeactivate();

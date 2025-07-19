@@ -118,6 +118,9 @@ public abstract partial class Layoutable : Spatial2D
 
     internal Transform2D TransformWithOffset => this.ParentContentOffset * this.Transform;
 
+    private protected static ulong CombineIds(int elementIndex, int childIndex) =>
+        ((ulong)childIndex << 24) | ((uint)elementIndex);
+
     private protected static Element? GetStyleSource(Node? node) =>
         node is not ShadowTree shadowTree
             ? (node as Element)

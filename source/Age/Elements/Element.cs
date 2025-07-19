@@ -13,7 +13,6 @@ using Age.Resources;
 using Age.Scene;
 using Age.Storage;
 using Age.Styling;
-
 using static Age.Shaders.CanvasShader;
 
 using AgeInput             = Age.Input;
@@ -225,6 +224,10 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         | StyleProperty.Size
         | StyleProperty.Stack;
 
+    private const uint SCROLL_BORDER_RADIUS = 5;
+    private const uint SCROLL_MARGIN        = 5;
+    private const uint SCROLL_SIZE          = 10;
+
     private static readonly StylePool stylePool = new();
 
     private readonly List<Element>                      dependents  = [];
@@ -413,13 +416,23 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             {
                 field = value;
 
+                if (this.CanScrollX)
+                {
+                    this.UpdateScrollXHandler();
+                }
+
+                if (this.CanScrollY)
+                {
+                    this.UpdateScrollYHandler();
+                }
+
                 this.ownStencilLayer?.MakeChildrenDirty();
                 this.RequestUpdate(false);
             }
         }
     }
 
-    internal uint FontSize     => this.ComputedStyle.FontSize ??   DEFAULT_FONT_SIZE;
+    internal uint FontSize     => this.ComputedStyle.FontSize ?? DEFAULT_FONT_SIZE;
     internal bool IsScrollable { get; set; }
 
     internal override bool IsParentDependent => this.parentDependencies != Dependency.None;
@@ -438,8 +451,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     public Style   ComputedStyle { get; } = stylePool.Get();
     public Canvas? Canvas        { get; private set; }
-    public bool    IsFocused     { get; private set; }
-    public bool    IsHovered     { get; private set; }
+    public bool    IsFocused     => this.States.HasFlags(ElementState.Focused);
+    public bool    IsHovered     => this.States.HasFlags(ElementState.Hovered);
 
     public string? InnerText
     {
@@ -728,7 +741,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private static void CalculatePendingPaddingHorizontal(Element element, in StyleRectEdges? stylePadding, uint reference, ref RectEdges padding)
+    private static void CalculatePendingPaddingHorizontal(in StyleRectEdges? stylePadding, uint reference, ref RectEdges padding)
     {
         if (stylePadding?.Left?.TryGetPercentage(out var left) == true)
         {
@@ -741,7 +754,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private static void CalculatePendingPaddingVertical(Element element, in StyleRectEdges? stylePadding, uint reference, ref RectEdges padding)
+    private static void CalculatePendingPaddingVertical(in StyleRectEdges? stylePadding, uint reference, ref RectEdges padding)
     {
         if (stylePadding?.Top?.TryGetPercentage(out var top) == true)
         {
@@ -1069,7 +1082,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             {
                 if (!this.contentDependencies.HasFlags(Dependency.Width))
                 {
-                    CalculatePendingPaddingHorizontal(dependent, dependentStyle.Padding, this.size.Width, ref padding);
+                    CalculatePendingPaddingHorizontal(dependentStyle.Padding, this.size.Width, ref padding);
                     CalculatePendingMarginHorizontal(dependent, dependentStyle.Margin, direction, this.size.Height, ref margin, ref content);
                 }
 
@@ -1083,7 +1096,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             {
                 if (!this.contentDependencies.HasFlags(Dependency.Height))
                 {
-                    CalculatePendingPaddingVertical(dependent, dependentStyle.Padding, this.size.Height, ref padding);
+                    CalculatePendingPaddingVertical(dependentStyle.Padding, this.size.Height, ref padding);
                     CalculatePendingMarginVertical(dependent, dependentStyle.Margin, direction, this.size.Height, ref margin, ref content);
                 }
 
@@ -1212,7 +1225,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         if (this.StyleSheet != null)
         {
-            merge(ElementState.Focus,    this.StyleSheet.Focus);
+            merge(ElementState.Focused,  this.StyleSheet.Focused);
             merge(ElementState.Hovered,  this.StyleSheet.Hovered);
             merge(ElementState.Disabled, this.StyleSheet.Disabled);
             merge(ElementState.Enabled,  this.StyleSheet.Enabled);
@@ -1347,8 +1360,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
                 break;
 
-            case LayoutCommand.Image:
-                command.PipelineVariant = PipelineVariant.Color;
+            default:
+                command.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
 
                 break;
         }
@@ -1370,6 +1383,67 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         this.OnStyleChanged(property);
         StyleChanged?.Invoke(property);
+    }
+
+    private void OnMouseOut()
+    {
+        if (this.layoutCommands.HasAnyFlag(LayoutCommand.ScrollX | LayoutCommand.ScrollY))
+        {
+            this.ReleaseLayoutCommand(LayoutCommand.ScrollX);
+            this.ReleaseLayoutCommand(LayoutCommand.ScrollY);
+            this.RequestUpdate(false);
+        }
+    }
+
+    private void OnMouseOver()
+    {
+        var handlerColor = Color.Green;
+
+        var canScrollX = this.CanScrollX;
+        var canScrollY = this.CanScrollY;
+
+        if (canScrollX && this.size.Width < this.content.Width)
+        {
+            var offset         = this.CanScrollY ? SCROLL_SIZE: 0;
+            var scale          = 1 - ((float)this.Boundings.Width / this.content.Width);
+            var scrollBarWidth = this.Boundings.Width - this.border.Horizontal - offset - (SCROLL_MARGIN * 2);
+
+            var handler = this.GetLayoutCommand(LayoutCommand.ScrollX);
+
+            handler.Border    = new(0, SCROLL_BORDER_RADIUS, default);
+            handler.Color     = handlerColor;
+            handler.Flags     = Flags.ColorAsBackground;
+            handler.Metadata  = scrollBarWidth;
+            handler.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollX);
+            handler.Size      = new(float.Max(scrollBarWidth * scale, SCROLL_SIZE * 2), SCROLL_SIZE);
+            handler.Transform = Transform2D.CreateTranslated(this.border.Left + SCROLL_MARGIN, -(this.Boundings.Height - this.border.Top - SCROLL_SIZE - SCROLL_MARGIN));
+
+            this.UpdateScrollXHandler(handler);
+        }
+
+        if (canScrollY)
+        {
+            var offset          = this.CanScrollX ? SCROLL_SIZE: 0;
+            var scrollBarHeight = this.Boundings.Height - this.border.Vertical - offset - (SCROLL_MARGIN * 2);
+            var scale           = 1 - ((float)this.Boundings.Height / this.content.Height);
+
+            var handler = this.GetLayoutCommand(LayoutCommand.ScrollY);
+
+            handler.Border    = new(0, SCROLL_BORDER_RADIUS, default);
+            handler.Color     = handlerColor;
+            handler.Flags     = Flags.ColorAsBackground;
+            handler.Metadata  = scrollBarHeight;
+            handler.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollY);
+            handler.Size      = new(SCROLL_SIZE, float.Max(scrollBarHeight * scale, SCROLL_SIZE * 2));
+            handler.Transform = Transform2D.CreateTranslated(this.Boundings.Width - this.border.Left - SCROLL_SIZE - SCROLL_MARGIN, -(this.border.Top + SCROLL_MARGIN));
+
+            this.UpdateScrollYHandler(handler);
+        }
+
+        if (canScrollX || canScrollY)
+        {
+            this.RequestUpdate(false);
+        }
     }
 
     private void OnInput(char character)
@@ -1579,7 +1653,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         if (property.HasFlags(StyleProperty.Overflow))
         {
-            var currentIsScrollable = (this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollX) == true || this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollY) == true) && this.contentDependencies != (Dependency.Width | Dependency.Height);
+            var currentIsScrollable = this.ComputedStyle.Overflow?.HasAnyFlag(Overflow.Scroll) == true && this.contentDependencies != (Dependency.Width | Dependency.Height);
 
             if (currentIsScrollable != this.IsScrollable)
             {
@@ -1930,9 +2004,10 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
                 this.ResolveImageSize(this.ComputedStyle.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
 
-                layoutCommandImage.Size = size;
-                layoutCommandImage.Transform = transform;
+                layoutCommandImage.Size       = size;
+                layoutCommandImage.Transform  = transform;
                 layoutCommandImage.TextureMap = layoutCommandImage.TextureMap with { UV = uv };
+
                 layoutCommandImage.StencilLayer!.MakeDirty();
             }
         }
@@ -2112,6 +2187,28 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
+    private void UpdateScrollXHandler(RectCommand handler)
+    {
+        var scale  = (float)this.ContentOffset.X / this.content.Width.ClampSubtract(this.size.Width);
+        var offset = handler.Metadata - handler.Size.Width;
+
+        handler.Transform = Transform2D.CreateTranslated(this.border.Left + SCROLL_MARGIN + (offset * scale), handler.Transform.Position.Y);
+    }
+
+    private void UpdateScrollXHandler() =>
+        this.UpdateScrollXHandler(this.GetLayoutCommand(LayoutCommand.ScrollX));
+
+    private void UpdateScrollYHandler(RectCommand handler)
+    {
+        var scale  = (float)this.ContentOffset.Y / this.content.Height.ClampSubtract(this.size.Height);
+        var offset = handler.Metadata - handler.Size.Height;
+
+        handler.Transform = Transform2D.CreateTranslated(handler.Transform.Position.X, -(this.border.Top + SCROLL_MARGIN + (offset * scale)));
+    }
+
+    private void UpdateScrollYHandler() =>
+        this.UpdateScrollYHandler(this.GetLayoutCommand(LayoutCommand.ScrollY));
+
     [MemberNotNull(nameof(ShadowTree))]
     protected void AttachShadowTree(bool? inheritsHostStyle = null) => this.ShadowTree = new(this, inheritsHostStyle == true);
 
@@ -2192,9 +2289,9 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         this.Canvas = null;
 
-        renderTree.Window.Input -= this.OnInput;
-        renderTree.Window.KeyDown -= this.OnKeyDown;
-        renderTree.Window.KeyUp -= this.OnKeyUp;
+        renderTree.Window.Input      -= this.OnInput;
+        renderTree.Window.KeyDown    -= this.OnKeyDown;
+        renderTree.Window.KeyUp      -= this.OnKeyUp;
         renderTree.Window.MouseWheel -= this.OnScroll;
 
         if (!renderTree.IsDirty && !this.Hidden)
@@ -2228,11 +2325,28 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     protected override void OnIndexed()
     {
-        var command = this.GetLayoutCommandBox();
+        if (this.layoutCommands.HasFlags(LayoutCommand.Box))
+        {
+            var command = this.GetLayoutCommandBox();
 
-        command.ObjectId = this.Index == -1
-            ? default
-            : this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor.HasValue ? (uint)(this.Index + 1) : 0;
+            command.ObjectId = this.Index == -1
+                ? default
+                : this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor.HasValue ? (uint)(this.Index + 1) : 0;
+        }
+
+        if (this.layoutCommands.HasFlags(LayoutCommand.ScrollX))
+        {
+            var command = this.GetLayoutCommand(LayoutCommand.ScrollX);
+
+            command.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollX);
+        }
+
+        if (this.layoutCommands.HasFlags(LayoutCommand.ScrollY))
+        {
+            var command = this.GetLayoutCommand(LayoutCommand.ScrollY);
+
+            command.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollY);
+        }
     }
 
     protected override void OnRemoved(Node parent)
@@ -2318,14 +2432,19 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         if (this.IsFocusable)
         {
-            this.RemoveState(ElementState.Focus);
-            this.IsFocused = false;
+            this.RemoveState(ElementState.Focused);
+
             this.BluredEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
         }
     }
 
-    internal void InvokeClick(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
-        this.ClickedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+    internal void InvokeClick(in PlatformMouseEvent platformMouseEvent, uint childIndex, bool indirect)
+    {
+        if (childIndex != default)
+        {
+            this.ClickedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        }
+    }
 
     internal void InvokeContext(in PlatformContextEvent platformContextEvent) =>
         this.ContextEvent?.Invoke(this.CreateEvent(platformContextEvent));
@@ -2336,41 +2455,55 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.DeactivatedEvent?.Invoke();
     }
 
-    internal void InvokeDoubleClick(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
-        this.DoubleClickedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+    internal void InvokeDoubleClick(in PlatformMouseEvent platformMouseEvent, uint childIndex, bool indirect)
+    {
+        if (childIndex != default)
+        {
+            this.DoubleClickedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        }
+    }
 
     internal void InvokeFocus(in PlatformMouseEvent platformMouseEvent)
     {
         if (this.IsFocusable)
         {
-            this.IsFocused = true;
-            this.AddState(ElementState.Focus);
+            this.AddState(ElementState.Focused);
+
             this.FocusedEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
+        }
+
+        this.OnMouseOver();
+    }
+
+    internal void InvokeMouseDown(in PlatformMouseEvent platformMouseEvent, uint childIndex, bool indirect)
+    {
+        if (childIndex != default)
+        {
+            this.MouseDownEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
         }
     }
 
-    internal void InvokeMouseDown(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
-        this.MouseDownEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
-
-    internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
-        this.MouseMovedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+    internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent, uint childIndex, bool indirect)
+    {
+        if (childIndex != default)
+        {
+            this.MouseMovedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        }
+    }
 
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
     {
-        this.IsHovered = false;
-
         if (!IsSelectingText)
         {
             this.RemoveState(ElementState.Hovered);
         }
 
         this.MouseOutEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
+        this.OnMouseOut();
     }
 
     internal void InvokeMouseOver(in PlatformMouseEvent platformMouseEvent)
     {
-        this.IsHovered = true;
-
         if (!IsSelectingText)
         {
             this.AddState(ElementState.Hovered);
@@ -2378,10 +2511,16 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
 
         this.MouseOverEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
+        this.OnMouseOver();
     }
 
-    internal void InvokeMouseUp(in PlatformMouseEvent platformMouseEvent, bool indirect) =>
-        this.MouseUpEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+    internal void InvokeMouseUp(in PlatformMouseEvent platformMouseEvent, uint childIndex, bool indirect)
+    {
+        if (childIndex != default)
+        {
+            this.MouseUpEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        }
+    }
 
     internal void ReleaseLayoutLayer(LayoutLayer layer) =>
         this.ReleaseLayoutCommand((LayoutCommand)layer);
@@ -2400,8 +2539,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     public void Blur()
     {
-        this.IsFocused = false;
-        this.RemoveState(ElementState.Focus);
+        this.RemoveState(ElementState.Focused);
         this.BluredEvent?.Invoke(new() { Target = this });
     }
 
@@ -2512,8 +2650,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     public void Focus()
     {
-        this.AddState(ElementState.Focus);
-        this.IsFocused = true;
+        this.AddState(ElementState.Focused);
         this.FocusedEvent?.Invoke(new() { Target = this });
     }
 

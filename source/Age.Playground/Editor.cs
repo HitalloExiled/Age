@@ -27,7 +27,7 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = ContentJustificationTest.Setup;
+        this.setup = ScrollTest.Setup;
 
         this.Reload();
         // this.CreateDemoScene();

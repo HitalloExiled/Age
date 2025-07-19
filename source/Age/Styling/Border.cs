@@ -41,28 +41,28 @@ public record Border
     public static implicit operator CanvasShader.Border(in Border value) =>
         new()
         {
-            Top = new()
+            Top =
             {
                 Color     = value.Top.Color,
                 Thickness = value.Top.Thickness,
             },
-            Right = new()
+            Right =
             {
                 Color     = value.Right.Color,
                 Thickness = value.Right.Thickness,
             },
-            Bottom = new()
+            Bottom =
             {
                 Color     = value.Bottom.Color,
                 Thickness = value.Bottom.Thickness,
             },
-            Left = new()
+            Left =
             {
                 Color     = value.Left.Color,
                 Thickness = value.Left.Thickness,
             },
 
-            Radius = new()
+            Radius =
             {
                 LeftTop     = value.Radius.LeftTop,
                 TopRight    = value.Radius.TopRight,

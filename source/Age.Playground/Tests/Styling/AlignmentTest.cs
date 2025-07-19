@@ -41,7 +41,7 @@ public static class AlignmentTest
                 {
                     Border = new(borderSize, 0, Color.White),
                 },
-                Focus = new()
+                Focused = new()
                 {
                     Border = new(borderSize, 0, Color.Cyan),
                 },
