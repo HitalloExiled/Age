@@ -14,25 +14,22 @@ namespace Age.RenderPasses;
 
 public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 {
-    private readonly CanvasStencilMaskShader canvasStencilMaskShader;
     private readonly Image[]                 colorImages = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
     private readonly Framebuffer[]           framebuffers  = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
     private readonly IndexBuffer             indexBuffer;
-    private readonly RenderPass              renderPass;
     private readonly Image[]                 stencilImages = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
     private readonly VertexBuffer            vertexBuffer;
     private readonly IndexBuffer             wireframeIndexBuffer;
 
     private UniformSet? lastUniformSet;
 
-    protected override CanvasStencilMaskShader CanvasStencilMaskShader => this.canvasStencilMaskShader;
+    protected override CanvasStencilMaskShader CanvasStencilMaskShader { get; }
     protected override Color                   ClearColor              { get; } = Color.Black;
     protected override CommandBuffer           CommandBuffer           => this.Renderer.CurrentCommandBuffer;
     protected override Framebuffer             Framebuffer             => this.framebuffers[this.Window.Surface.CurrentBuffer];
     protected override RenderPipelines[]       Pipelines               { get; } = [];
     protected override PipelineVariant         PipelineVariants        { get; } = PipelineVariant.Color | PipelineVariant.Wireframe;
-
-    public override RenderPass RenderPass => this.renderPass;
+    public override RenderPass                 RenderPass              { get; }
 
     public CanvasRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)
     {
@@ -48,12 +45,12 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         this.indexBuffer          = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
         this.wireframeIndexBuffer = renderer.CreateIndexBuffer([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
 
-        this.renderPass = this.CreateRenderPass();
+        this.RenderPass = this.CreateRenderPass();
 
-        this.canvasStencilMaskShader = new CanvasStencilMaskShader(this.renderPass, true);
+        this.CanvasStencilMaskShader = new CanvasStencilMaskShader(this.RenderPass, true);
 
-        var canvasShader          = new CanvasShader(this.renderPass, true);
-        var canvasWireframeShader = new CanvasWireframeShader(this.renderPass, true);
+        var canvasShader          = new CanvasShader(this.RenderPass, true);
+        var canvasWireframeShader = new CanvasWireframeShader(this.RenderPass, true);
 
         this.Pipelines =
         [
@@ -61,7 +58,7 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             new(canvasWireframeShader, this.vertexBuffer, this.wireframeIndexBuffer, false, true),
         ];
 
-        this.canvasStencilMaskShader.Changed += RenderingService.Singleton.RequestDraw;
+        this.CanvasStencilMaskShader.Changed += RenderingService.Singleton.RequestDraw;
         canvasShader.Changed                 += RenderingService.Singleton.RequestDraw;
         canvasWireframeShader.Changed        += RenderingService.Singleton.RequestDraw;
 
@@ -74,9 +71,6 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.CreateFrameBuffers();
     }
-
-    protected override void BeforeExecute() =>
-        this.lastUniformSet = null;
 
     private void CreateFrameBuffers()
     {
@@ -117,7 +111,7 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
             var createInfo = new FramebufferCreateInfo
             {
-                RenderPass  = this.renderPass,
+                RenderPass  = this.RenderPass,
                 Attachments =
                 [
                     new FramebufferCreateInfo.Attachment
@@ -176,18 +170,6 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
                     },
                 }
             ],
-            // SubpassDependencies =
-            // [
-            //     new()
-            //     {
-            //         SrcSubpass    = VkConstants.VK_SUBPASS_EXTERNAL,
-            //         DstSubpass    = 0,
-            //         SrcStageMask  = VkPipelineStageFlags.FragmentShader,
-            //         DstStageMask  = VkPipelineStageFlags.EarlyFragmentTests | VkPipelineStageFlags.LateFragmentTests,
-            //         SrcAccessMask = VkAccessFlags.ShaderRead,
-            //         DstAccessMask = VkAccessFlags.DepthStencilAttachmentWrite,
-            //     }
-            // ]
         };
 
         return new(createInfo);
@@ -200,6 +182,22 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             VulkanRenderer.Singleton.DeferredDispose(this.stencilImages[i]);
             VulkanRenderer.Singleton.DeferredDispose(this.framebuffers[i]);
         }
+    }
+
+    protected override void BeforeExecute() =>
+        this.lastUniformSet = null;
+
+    protected override void Disposed()
+    {
+        this.DisposeFrameBuffers();
+        for (var i = 0; i < this.Pipelines.Length; i++)
+        {
+            this.Pipelines[i].Dispose();
+            this.Pipelines[i].Shader.Changed -= RenderingService.Singleton.RequestDraw;
+        }
+
+        this.CanvasStencilMaskShader.Dispose();
+        this.RenderPass.Dispose();
     }
 
     protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
@@ -238,19 +236,6 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.CommandBuffer.PushConstant(resource.Shader, constant);
         this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
-    }
-
-    protected override void Disposed()
-    {
-        this.DisposeFrameBuffers();
-        for (var i = 0; i < this.Pipelines.Length; i++)
-        {
-            this.Pipelines[i].Dispose();
-            this.Pipelines[i].Shader.Changed -= RenderingService.Singleton.RequestDraw;
-        }
-
-        this.canvasStencilMaskShader.Dispose();
-        this.renderPass.Dispose();
     }
 
     public override void Recreate()

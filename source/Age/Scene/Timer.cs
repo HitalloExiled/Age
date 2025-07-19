@@ -9,10 +9,10 @@ public sealed class Timer : Node
 
     public override string NodeName => nameof(Time);
 
-    public TimeSpan WaitTime { get; set; }
-
     public bool Running { get; private set; }
-    public bool OneShot { get; set; }
+
+    public bool     OneShot  { get; set; }
+    public TimeSpan WaitTime { get; set; }
 
     public Timer() =>
         this.NodeFlags = NodeFlags.IgnoreUpdates;

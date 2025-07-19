@@ -11,13 +11,14 @@ public abstract class RenderGraphPass(VulkanRenderer renderer, Window window) : 
     protected VulkanRenderer Renderer { get; } = renderer;
     protected Window         Window   { get; } = window;
 
+    public bool Disabled { get; set; }
+
     public abstract RenderPass RenderPass { get; }
 
-    public bool Disabled { get; set; }
+    public void NotifyRecreated() =>
+        this.Recreated?.Invoke();
 
     public abstract void Execute();
     public abstract void Recreate();
 
-    public void NotifyRecreated() =>
-        this.Recreated?.Invoke();
 }

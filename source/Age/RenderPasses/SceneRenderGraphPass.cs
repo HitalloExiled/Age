@@ -92,6 +92,35 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
         return new(createInfo);
     }
 
+    private unsafe UniformSet GetUniformSet(Camera3D camera, BufferHandlePair cameraBuffer, Material material)
+    {
+        ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
+
+        var hashcode = camera.GetHashCode() ^ material.GetHashCode();
+
+        if (!frameResource.UniformSets.TryGetValue(hashcode, out var uniformSet))
+        {
+            var combinedImageSampler = new CombinedImageSamplerUniform
+            {
+                Binding     = 1,
+                ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
+                Image       = material.Diffuse.Image,
+                ImageView   = material.Diffuse.ImageView,
+                Sampler     = material.Diffuse.Sampler,
+            };
+
+            var uniformBuffer = new UniformBufferUniform
+            {
+                Binding = 0,
+                Buffer  = cameraBuffer.Buffer,
+            };
+
+            frameResource.UniformSets[hashcode] = uniformSet = new UniformSet(material.Shader, [uniformBuffer, combinedImageSampler]);
+        }
+
+        return uniformSet;
+    }
+
     private unsafe BufferHandlePair UpdateUbo(Camera3D camera, Mesh mesh, in Matrix4x4<float> transform, in VkExtent2D viewport)
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
@@ -122,36 +151,6 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
 
         return cameraBuffer;
     }
-
-    private unsafe UniformSet GetUniformSet(Camera3D camera, BufferHandlePair cameraBuffer, Material material)
-    {
-        ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
-
-        var hashcode = camera.GetHashCode() ^ material.GetHashCode();
-
-        if (!frameResource.UniformSets.TryGetValue(hashcode, out var uniformSet))
-        {
-            var combinedImageSampler = new CombinedImageSamplerUniform
-            {
-                Binding     = 1,
-                ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
-                Image       = material.Diffuse.Image,
-                ImageView   = material.Diffuse.ImageView,
-                Sampler     = material.Diffuse.Sampler,
-            };
-
-            var uniformBuffer = new UniformBufferUniform
-            {
-                Binding = 0,
-                Buffer  = cameraBuffer.Buffer,
-            };
-
-            frameResource.UniformSets[hashcode] = uniformSet = new UniformSet(material.Shader, [uniformBuffer, combinedImageSampler]);
-        }
-
-        return uniformSet;
-    }
-
     protected unsafe override void OnDisposed(bool disposing)
     {
         if (disposing)

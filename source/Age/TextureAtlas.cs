@@ -15,9 +15,16 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
     private uint        maxHeight;
 
     public Bitmap    Bitmap  { get; } = new(size, format.BytesPerPixel());
-    public Texture2D Texture { get; } = new(size, format);
-
     public Size<uint> Size => this.Bitmap.Size;
+    public Texture2D Texture { get; } = new(size, format);
+    protected override void OnDisposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.Texture.Dispose();
+            this.Bitmap.Dispose();
+        }
+    }
 
     public Point<uint> Pack(scoped ReadOnlySpan<uint> pixels, in Size<uint> size)
     {
@@ -88,15 +95,6 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
             #endif
 
             this.isDirty = false;
-        }
-    }
-
-    protected override void OnDisposed(bool disposing)
-    {
-        if (disposing)
-        {
-            this.Texture.Dispose();
-            this.Bitmap.Dispose();
         }
     }
 }

@@ -10,16 +10,24 @@ public class ShaderStorage : Disposable
 {
     private static ShaderStorage? singleton;
 
-    public static ShaderStorage Singleton => singleton ?? throw new NullReferenceException();
-
+    private readonly VulkanRenderer             renderer;
     private readonly Dictionary<string, Shader> shaders = [];
-    private readonly VulkanRenderer renderer;
+
+    public static ShaderStorage Singleton => singleton ?? throw new NullReferenceException();
 
     public ShaderStorage(VulkanRenderer renderer)
     {
         singleton = this;
 
         this.renderer = renderer;
+    }
+
+    protected override void OnDisposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.renderer.DeferredDispose(this.shaders.Values);
+        }
     }
 
     public Shader GetShader(string name)
@@ -40,13 +48,5 @@ public class ShaderStorage : Disposable
         }
 
         return shader ?? throw new InvalidOperationException($"Shader {name} not found");
-    }
-
-    protected override void OnDisposed(bool disposing)
-    {
-        if (disposing)
-        {
-            this.renderer.DeferredDispose(this.shaders.Values);
-        }
     }
 }

@@ -7,12 +7,12 @@ internal class RenderingService : Disposable
 {
     private static RenderingService? singleton;
 
-    public static RenderingService Singleton => singleton ?? throw new NullReferenceException();
-
     private readonly VulkanRenderer                  renderer;
     private readonly Dictionary<Window, RenderGraph> renderGraphs = [];
 
     private int changes;
+
+    public static RenderingService Singleton => singleton ?? throw new NullReferenceException();
 
     public RenderingService(VulkanRenderer renderer)
     {
@@ -27,9 +27,6 @@ internal class RenderingService : Disposable
         this.renderer.SwapchainRecreated += this.OnSwapchainRecreated;
     }
 
-    private void RequestDrawIncremental() =>
-        this.changes++;
-
     private void OnSwapchainRecreated()
     {
         this.RequestDrawIncremental();
@@ -39,6 +36,9 @@ internal class RenderingService : Disposable
             renderGraph.Recreate();
         }
     }
+
+    private void RequestDrawIncremental() =>
+        this.changes++;
 
     protected override void OnDisposed(bool disposing)
     {
@@ -50,14 +50,6 @@ internal class RenderingService : Disposable
 
     public void RegisterRenderGraph(Window window, RenderGraph renderGraph) =>
         this.renderGraphs[window] = renderGraph;
-
-    public void RequestDraw()
-    {
-        if (this.changes == 0)
-        {
-            this.changes++;
-        }
-    }
 
     public void Render(IEnumerable<Window> windows)
     {
@@ -78,6 +70,14 @@ internal class RenderingService : Disposable
             Time.Redraws++;
 
             this.changes--;
+        }
+    }
+
+    public void RequestDraw()
+    {
+        if (this.changes == 0)
+        {
+            this.changes++;
         }
     }
 }

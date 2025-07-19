@@ -10,8 +10,6 @@ namespace Age.Components;
 
 public class Icon : Element
 {
-    public override string NodeName => nameof(Icon);
-
     private readonly Text text = new();
 
     private Dictionary<string, int>? codepoints;
@@ -29,6 +27,8 @@ public class Icon : Element
             }
         }
     }
+
+    public override string NodeName => nameof(Icon);
 
     public Icon(string? iconName = null, ushort? fontSize = null, Color? color = null)
     {

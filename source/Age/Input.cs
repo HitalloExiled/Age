@@ -5,13 +5,13 @@ namespace Age;
 
 file struct KeyState(Key key, ulong iteration)
 {
-    public Key   Key       = key;
     public ulong Iteration = iteration;
+    public Key   Key       = key;
 }
 
 public static class Input
 {
-    private static readonly Dictionary<Key, ulong> keys = [];
+    private static readonly Dictionary<Key, ulong>         keys         = [];
     private static readonly Dictionary<MouseButton, ulong> mouseButtons = [];
 
     private static uint          currentIteration;
@@ -84,8 +84,14 @@ public static class Input
         return modifiers;
     }
 
+    public static Point<ushort> GetMousePosition() =>
+        mousePosition;
+
+    public static float GetMouseWheel() =>
+        mouseWheel;
+
     public static bool IsKeyJustPressed(Key key) =>
-        keys.TryGetValue(key, out var iteration) && currentIteration - iteration == 0;
+        keys.TryGetValue(key, out var iteration) && currentIteration == iteration;
 
     public static bool IsKeyPressed(Key key) =>
         keys.TryGetValue(key, out var iteration) && iteration > 0;
@@ -94,17 +100,11 @@ public static class Input
         keys.TryGetValue(key, out var iteration) && iteration == 0;
 
     public static bool IsMouseButtonJustPressed(MouseButton mouseButton) =>
-        mouseButtons.TryGetValue(mouseButton, out var iteration) && currentIteration - iteration == 0;
+        mouseButtons.TryGetValue(mouseButton, out var iteration) && currentIteration == iteration;
 
     public static bool IsMouseButtonPressed(MouseButton mouseButton) =>
         mouseButtons.TryGetValue(mouseButton, out var iteration) && iteration > 0;
 
     public static bool IsMouseButtonReleased(MouseButton mouseButton) =>
         mouseButtons.TryGetValue(mouseButton, out var iteration) && iteration == 0;
-
-    public static Point<ushort> GetMousePosition() =>
-        mousePosition;
-
-    public static float GetMouseWheel() =>
-        mouseWheel;
 }

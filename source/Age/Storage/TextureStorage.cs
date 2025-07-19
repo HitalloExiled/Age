@@ -17,11 +17,11 @@ public class TextureStorage : Disposable
 {
     private static TextureStorage? singleton;
 
-    public static TextureStorage Singleton => singleton ?? throw new NullReferenceException();
-
     private readonly VulkanRenderer                            renderer;
     private readonly Dictionary<string, int>                   stringMap = [];
-    private readonly Dictionary<int, ResourceEntry<Texture2D>> textures  = [];
+    private readonly Dictionary<int, ResourceEntry<Texture2D>> textures = [];
+
+    public static TextureStorage Singleton => singleton ?? throw new NullReferenceException();
 
     public TextureStorage(VulkanRenderer renderer)
     {
@@ -80,6 +80,17 @@ public class TextureStorage : Disposable
             ? texture
             : throw new InvalidOperationException($"texture {name} not found");
 
+    public void Release(string name)
+    {
+        if (this.stringMap.TryGetValue(name, out var hash))
+        {
+            this.Release(hash);
+        }
+    }
+
+    public void Release(Texture2D texture) =>
+        this.Release(texture.GetHashCode());
+
     public bool TryGet(string name, [NotNullWhen(true)] out Texture2D? texture)
     {
         if (this.stringMap.TryGetValue(name, out var hash))
@@ -95,15 +106,4 @@ public class TextureStorage : Disposable
         texture = null;
         return false;
     }
-
-    public void Release(string name)
-    {
-        if (this.stringMap.TryGetValue(name, out var hash))
-        {
-            this.Release(hash);
-        }
-    }
-
-    public void Release(Texture2D texture) =>
-        this.Release(texture.GetHashCode());
 }

@@ -20,6 +20,14 @@ public partial class TextBox : Element
 
     private bool textBufferHasChanged;
 
+    public uint CursorPosition
+    {
+        get => this.text.CursorPosition;
+        set => this.text.CursorPosition = value;
+    }
+
+    public bool Multiline { get; set; }
+
     public override string NodeName => nameof(TextBox);
 
     public bool Readonly
@@ -43,23 +51,15 @@ public partial class TextBox : Element
         }
     }
 
-    public uint CursorPosition
-    {
-        get => this.text.CursorPosition;
-        set => this.text.CursorPosition = value;
-    }
-
     public string? Value
     {
         get => this.text.Value;
         set => this.text.Value = value;
     }
 
-    public bool Multiline { get; set; }
-
     public TextBox()
     {
-        this.NodeFlags       = NodeFlags.Immutable;
+        this.NodeFlags   = NodeFlags.Immutable;
         this.IsFocusable = true;
 
         this.StyleSheet = Theme.Current.TextBox.Outlined;
