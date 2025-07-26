@@ -6,7 +6,7 @@ using Age.Scene;
 
 namespace Age.Elements;
 
-public abstract partial class Layoutable : Spatial2D
+public abstract class Layoutable : Spatial2D
 {
     private CacheValue<Transform2D> transformCache;
 
@@ -20,8 +20,10 @@ public abstract partial class Layoutable : Spatial2D
     private protected virtual StencilLayer? ContentStencilLayer { get; }
     private protected virtual Transform2D   LayoutTransform => Transform2D.CreateTranslated(this.Offset);
 
-    internal static bool IsHoveringText  { get; set; }
-    internal static bool IsSelectingText { get; set; }
+    internal static bool IsHoveringText   { get; set; }
+    internal static bool IsHoveringScroll { get; set; }
+    internal static bool IsScrolling      { get; set; }
+    internal static bool IsSelectingText  { get; set; }
 
     internal bool IsDirty { get; private set; }
 
@@ -212,6 +214,8 @@ public abstract partial class Layoutable : Spatial2D
 
     private protected void SetCursor(Cursor? cursor)
     {
+        Console.WriteLine($"Cursor: {cursor}");
+
         if (this.Tree is RenderTree renderTree)
         {
             renderTree.Window.Cursor = cursor ?? default;

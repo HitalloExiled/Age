@@ -167,6 +167,11 @@ public record Style : IPoolable
         get => this.data.TransformOrigin;
         set => this.Set(ref this.data.TransformOrigin, value, StyleProperty.TransformOrigin);
     }
+    public int? ZIndex
+    {
+        get => this.data.ZIndex;
+        set => this.Set(ref this.data.ZIndex, value, StyleProperty.ZIndex);
+    }
 
     private Style(StyleData data) =>
         this.data = data;

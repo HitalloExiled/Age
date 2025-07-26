@@ -1016,7 +1016,7 @@ public sealed class Text : Layoutable
 
         this.UpdateLayoutIndependentAncestor();
 
-        var slice = this.Commands.AsSpan((int)textSelection.Start + 1, (int)textSelection.End + 1);
+        var slice = this.Commands.AsSpan((int)textSelection.Start + 1, textSelection.Length);
 
         var rect = new Rect<float>();
 

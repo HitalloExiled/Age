@@ -13,6 +13,7 @@ using Age.Resources;
 using Age.Scene;
 using Age.Storage;
 using Age.Styling;
+using static Age.Elements.Element;
 using static Age.Shaders.CanvasShader;
 
 using AgeInput             = Age.Input;
@@ -236,6 +237,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     private RectEdges     border;
     private bool          childsChanged;
+    private byte          commandsSeparator;
     private Size<uint>    content;
     private Dependency    contentDependencies = Dependency.Size;
     private bool          dependenciesHasChanged;
@@ -436,6 +438,9 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     internal bool IsScrollable { get; set; }
 
     internal override bool IsParentDependent => this.parentDependencies != Dependency.None;
+
+    internal Span<Command> PreCommands  => this.Commands.AsSpan(0, this.commandsSeparator);
+    internal Span<Command> PostCommands => this.Commands.AsSpan(this.commandsSeparator..);
 
     internal override StencilLayer? StencilLayer
     {
@@ -1328,6 +1333,13 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private T? GetEvent<T>(EventProperty key) where T : Delegate =>
         this.events.TryGet(key, out var @delegate) ? (T)@delegate : null;
 
+    private int GetIndex(LayoutCommand layoutCommand)
+    {
+        var mask = layoutCommand - 1;
+
+        return BitOperations.PopCount((uint)(this.layoutCommands & mask));
+    }
+
     private StyleData GetInheritedProperties() =>
         GetStyleSource(this.Parent)?.ComputedStyle is Style parentStyle
             ? new StyleData
@@ -1342,8 +1354,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     private RectCommand GetLayoutCommand(LayoutCommand layoutCommand)
     {
-        var mask  = layoutCommand - 1;
-        var index = BitOperations.PopCount((uint)(this.layoutCommands & mask));
+        var index = this.GetIndex(layoutCommand);
 
         if (this.layoutCommands.HasFlags(layoutCommand))
         {
@@ -1370,6 +1381,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         this.layoutCommands |= layoutCommand;
 
+        this.UpdateCommandsSeparator();
+
         return command;
     }
 
@@ -1379,11 +1392,20 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private RectCommand GetLayoutCommandImage() =>
         this.GetLayoutCommand(LayoutCommand.Image);
 
+    private RectCommand GetLayoutCommandScrollX() =>
+        this.GetLayoutCommand(LayoutCommand.ScrollX);
+
+    private RectCommand GetLayoutCommandScrollY() =>
+        this.GetLayoutCommand(LayoutCommand.ScrollY);
+
     private void InvokeStyleChanged(StyleProperty property)
     {
         this.OnStyleChanged(property);
         StyleChanged?.Invoke(property);
     }
+
+    private bool HasLayoutCommand(LayoutCommand layoutCommand) =>
+        this.layoutCommands.HasFlags(layoutCommand);
 
     private void OnMouseOut()
     {
@@ -1408,7 +1430,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             var scale          = 1 - ((float)this.Boundings.Width / this.content.Width);
             var scrollBarWidth = this.Boundings.Width - this.border.Horizontal - offset - (SCROLL_MARGIN * 2);
 
-            var handler = this.GetLayoutCommand(LayoutCommand.ScrollX);
+            var handler = this.GetLayoutCommandScrollX();
 
             handler.Border    = new(0, SCROLL_BORDER_RADIUS, default);
             handler.Color     = handlerColor;
@@ -1427,7 +1449,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             var scrollBarHeight = this.Boundings.Height - this.border.Vertical - offset - (SCROLL_MARGIN * 2);
             var scale           = 1 - ((float)this.Boundings.Height / this.content.Height);
 
-            var handler = this.GetLayoutCommand(LayoutCommand.ScrollY);
+            var handler = this.GetLayoutCommandScrollY();
 
             handler.Border    = new(0, SCROLL_BORDER_RADIUS, default);
             handler.Color     = handlerColor;
@@ -1481,6 +1503,120 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             };
 
             this.KeyUpEvent?.Invoke(keyEvent);
+        }
+    }
+
+    private void OnMouseDown(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex)
+    {
+        var layoutCommand = (LayoutCommand)virtualChildIndex;
+
+        if (platformMouseEvent.IsHoldingPrimaryButton && layoutCommand is LayoutCommand.ScrollX or LayoutCommand.ScrollY)
+        {
+            IsScrolling = true;
+
+            if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollX)
+            {
+                var commandScrollX = this.GetLayoutCommandScrollX();
+
+                commandScrollX.Color = Color.Green + (Color.White * 0.9f);
+
+                this.RequestUpdate(false);
+            }
+
+            if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollY)
+            {
+                var commandScrollY = this.GetLayoutCommandScrollY();
+
+                commandScrollY.Color = Color.Green + (Color.White * 0.9f);
+
+                this.RequestUpdate(false);
+            }
+        }
+    }
+
+    private void OnMouseMoved(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex)
+    {
+        var layoutCommand = (LayoutCommand)virtualChildIndex;
+
+        if (IsScrolling)
+        {
+            this.Scroll = this.Scroll with { Y = (uint)((int)this.Scroll.Y + AgeInput.GetMouseDeltaPosition().Y) };
+        }
+        else
+        {
+            if (layoutCommand is LayoutCommand.ScrollX or LayoutCommand.ScrollY)
+            {
+                this.SetCursor(Platforms.Display.Cursor.Arrow);
+
+                if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollX)
+                {
+                    var commandScrollX = this.GetLayoutCommandScrollX();
+
+                    commandScrollX.Color = Color.Green + (Color.White * 0.6f);
+
+                    this.RequestUpdate(false);
+                }
+
+                if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollY)
+                {
+                    var commandScrollY = this.GetLayoutCommandScrollY();
+
+                    commandScrollY.Color = Color.Green + (Color.White * 0.6f);
+
+                    this.RequestUpdate(false);
+                }
+            }
+            else
+            {
+                this.SetCursor(this.ComputedStyle.Cursor);
+
+                if (this.HasLayoutCommand(LayoutCommand.ScrollX))
+                {
+                    var commandScrollX = this.GetLayoutCommandScrollX();
+
+                    commandScrollX.Color = Color.Green;
+
+                    this.RequestUpdate(false);
+                }
+
+                if (this.HasLayoutCommand(LayoutCommand.ScrollY))
+                {
+                    var commandScrollY = this.GetLayoutCommandScrollY();
+
+                    commandScrollY.Color = Color.Green;
+
+                    this.RequestUpdate(false);
+                }            
+            }
+        }
+
+    }
+
+    private void OnMouseUp()
+    {
+        if (IsScrolling)
+        {
+            IsScrolling = false;
+
+            if (this.HasLayoutCommand(LayoutCommand.ScrollY))
+            {
+                var commandScrollX = this.GetLayoutCommandScrollX();
+
+                commandScrollX.Color = Color.Green;
+
+                this.RequestUpdate(false);
+            }
+
+            if (this.HasLayoutCommand(LayoutCommand.ScrollX))
+            {
+                var commandScrollY = this.GetLayoutCommandScrollY();
+
+                commandScrollY.Color = Color.Green;
+
+                this.RequestUpdate(false);
+            }
+
+            this.SetCursor(this.ComputedStyle.Cursor);
         }
     }
 
@@ -1711,7 +1847,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     private void ReleaseLayoutCommand(LayoutCommand layoutCommand)
     {
-        if (this.layoutCommands.HasFlags(layoutCommand))
+        if (this.HasLayoutCommand(layoutCommand))
         {
             var mask = layoutCommand - 1;
             var index = BitOperations.PopCount((uint)(this.layoutCommands & mask));
@@ -1723,6 +1859,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             this.Commands.RemoveAt(index);
 
             this.layoutCommands &= ~layoutCommand;
+
+            this.UpdateCommandsSeparator();
         }
     }
 
@@ -2021,6 +2159,9 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.ownStencilLayer?.MakeDirty();
     }
 
+    private void UpdateCommandsSeparator() =>
+        this.commandsSeparator = (byte)int.Max(this.GetIndex(LayoutCommand.Box), this.GetIndex(LayoutCommand.Image));
+
     private void UpdateDisposition()
     {
         if (this.renderableNodes == 0)
@@ -2196,7 +2337,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     }
 
     private void UpdateScrollXHandler() =>
-        this.UpdateScrollXHandler(this.GetLayoutCommand(LayoutCommand.ScrollX));
+        this.UpdateScrollXHandler(this.GetLayoutCommandScrollX());
 
     private void UpdateScrollYHandler(RectCommand handler)
     {
@@ -2207,7 +2348,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     }
 
     private void UpdateScrollYHandler() =>
-        this.UpdateScrollYHandler(this.GetLayoutCommand(LayoutCommand.ScrollY));
+        this.UpdateScrollYHandler(this.GetLayoutCommandScrollY());
 
     [MemberNotNull(nameof(ShadowTree))]
     protected void AttachShadowTree(bool? inheritsHostStyle = null) => this.ShadowTree = new(this, inheritsHostStyle == true);
@@ -2325,27 +2466,33 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     protected override void OnIndexed()
     {
-        if (this.layoutCommands.HasFlags(LayoutCommand.Box))
+        var zIndex = this.ComputedStyle.ZIndex ?? this.ComposedParentElement?.ComputedStyle.ZIndex ?? 0;
+
+        if (this.HasLayoutCommand(LayoutCommand.Box))
         {
             var command = this.GetLayoutCommandBox();
 
             command.ObjectId = this.Index == -1
                 ? default
                 : this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor.HasValue ? (uint)(this.Index + 1) : 0;
+
+            command.ZIndex = zIndex;
         }
 
-        if (this.layoutCommands.HasFlags(LayoutCommand.ScrollX))
+        if (this.HasLayoutCommand(LayoutCommand.ScrollX))
         {
-            var command = this.GetLayoutCommand(LayoutCommand.ScrollX);
+            var command = this.GetLayoutCommandScrollX();
 
             command.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollX);
+            command.ZIndex   = zIndex;
         }
 
-        if (this.layoutCommands.HasFlags(LayoutCommand.ScrollY))
+        if (this.HasLayoutCommand(LayoutCommand.ScrollY))
         {
-            var command = this.GetLayoutCommand(LayoutCommand.ScrollY);
+            var command = this.GetLayoutCommandScrollY();
 
             command.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollY);
+            command.ZIndex   = zIndex;
         }
     }
 
@@ -2365,8 +2512,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     internal ComposedTreeEnumerator GetComposedTreeEnumerator() =>
         new(this);
 
-    internal ComposedTreeTraversalEnumerator GetComposedTreeTraversalEnumerator(Stack<(Slot, int)>? stack = null) =>
-        new(this, stack);
+    internal ComposedTreeTraversalEnumerator GetComposedTreeTraversalEnumerator(Stack<(Slot, int)>? stack = null, Action<Element>? parentCallback = null) =>
+        new(this, stack, parentCallback);
 
     internal int GetEffectiveDepth()
     {
@@ -2438,9 +2585,9 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    internal void InvokeClick(in PlatformMouseEvent platformMouseEvent, uint childIndex, bool indirect)
+    internal void InvokeClick(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
-        if (childIndex != default)
+        if (virtualChildIndex != default)
         {
             this.ClickedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
         }
@@ -2455,9 +2602,9 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.DeactivatedEvent?.Invoke();
     }
 
-    internal void InvokeDoubleClick(in PlatformMouseEvent platformMouseEvent, uint childIndex, bool indirect)
+    internal void InvokeDoubleClick(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
-        if (childIndex != default)
+        if (virtualChildIndex != default)
         {
             this.DoubleClickedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
         }
@@ -2475,20 +2622,18 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.OnMouseOver();
     }
 
-    internal void InvokeMouseDown(in PlatformMouseEvent platformMouseEvent, uint childIndex, bool indirect)
+    internal void InvokeMouseDown(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
-        if (childIndex != default)
-        {
-            this.MouseDownEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
-        }
+        this.MouseDownEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        this.OnMouseDown(platformMouseEvent, virtualChildIndex);
     }
 
-    internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent, uint childIndex, bool indirect)
+
+
+    internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
-        if (childIndex != default)
-        {
-            this.MouseMovedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
-        }
+        this.MouseMovedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        this.OnMouseMoved(platformMouseEvent, virtualChildIndex);
     }
 
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
@@ -2514,12 +2659,10 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.OnMouseOver();
     }
 
-    internal void InvokeMouseUp(in PlatformMouseEvent platformMouseEvent, uint childIndex, bool indirect)
+    internal void InvokeMouseUp(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
-        if (childIndex != default)
-        {
-            this.MouseUpEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
-        }
+        this.MouseUpEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        this.OnMouseUp();
     }
 
     internal void ReleaseLayoutLayer(LayoutLayer layer) =>

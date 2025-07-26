@@ -10,6 +10,7 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
     #region 8-bytes
     private readonly Element           root;
     private readonly Stack<StackEntry> stack;
+    private readonly Action<Element>?  parentCallback;
 
     private Layoutable? current;
     #endregion
@@ -18,10 +19,11 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
     private bool skipToNextSibling;
     #endregion
 
-    public ComposedTreeTraversalEnumerator(Element root, Stack<StackEntry>? stack = null)
+    public ComposedTreeTraversalEnumerator(Element root, Stack<StackEntry>? stack = null, Action<Element>? parentCallback = null)
     {
-        this.root  = root;
-        this.stack = stack ?? [];
+        this.root           = root;
+        this.stack          = stack ?? [];
+        this.parentCallback = parentCallback;
 
         this.Reset();
     }
@@ -59,7 +61,7 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly Layoutable? GetNextSibling(Node node, out Node parent)
+    private readonly Layoutable? GetNextSibling(Node node, out Element parent)
     {
         if (this.IsAssignedToCurrentSlot(node))
         {
@@ -77,19 +79,9 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
             return null;
         }
 
-        parent = node.Parent!;
+        parent = node.Parent is ShadowTree shadowTree ? shadowTree.Host : (Element)node.Parent!;
 
-        if (GetLayoutableOrSkip(node.NextSibling) is Layoutable nextSibling)
-        {
-            return nextSibling;
-        }
-
-        if (parent is ShadowTree shadowTree)
-        {
-            parent = shadowTree.Host;
-        }
-
-        return null;
+        return GetLayoutableOrSkip(node.NextSibling) is Layoutable nextSibling ? nextSibling : null;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -143,6 +135,8 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
 
                 return true;
             }
+
+            this.parentCallback?.Invoke(parent);
 
             node = parent;
         }

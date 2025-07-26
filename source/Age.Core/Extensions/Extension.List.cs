@@ -13,8 +13,11 @@ public static partial class Extension
         public Span<T> AsSpan(int start) =>
             CollectionsMarshal.AsSpan(source)[start..];
 
-        public Span<T> AsSpan(int start, int end) =>
-            CollectionsMarshal.AsSpan(source)[start..end];
+        public Span<T> AsSpan(int start, int length) =>
+            CollectionsMarshal.AsSpan(source).Slice(start, length);
+
+        public Span<T> AsSpan(Range range) =>
+            CollectionsMarshal.AsSpan(source)[range];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(int size, T defaultValue)

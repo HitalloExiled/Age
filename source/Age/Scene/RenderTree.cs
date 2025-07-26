@@ -54,7 +54,7 @@ public sealed partial class RenderTree : NodeTree
                 {
                     traversalEnumerator.SkipToNextSibling();
 
-                    var composedTreeTraversalEnumerator = canvas.GetComposedTreeTraversalEnumerator(this.composedTreeStack);
+                    var composedTreeTraversalEnumerator = canvas.GetComposedTreeTraversalEnumerator(this.composedTreeStack, gatherElementPostCommands);
 
                     while (composedTreeTraversalEnumerator.MoveNext())
                     {
@@ -62,7 +62,14 @@ public sealed partial class RenderTree : NodeTree
                         {
                             updateIndex(composedTreeTraversalEnumerator.Current);
 
-                            collect2D(composedTreeTraversalEnumerator.Current);
+                            if (composedTreeTraversalEnumerator.Current is Element element)
+                            {
+                                collectElementPreCommands(element);
+                            }
+                            else
+                            {
+                                collect2D(composedTreeTraversalEnumerator.Current);
+                            }
                         }
                         else
                         {
@@ -88,6 +95,32 @@ public sealed partial class RenderTree : NodeTree
 
         this.command2DEntries.AsSpan().TimSort(static (left, right) => left.Command.ZIndex.CompareTo(right.Command.ZIndex));
         this.command3DEntries.AsSpan().TimSort(static (left, right) => left.Command.ZIndex.CompareTo(right.Command.ZIndex));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void collectElementPreCommands(Element element)
+        {
+            var transform = element.TransformCache;
+
+            foreach (var command in element.PreCommands)
+            {
+                var entry = new Command2DEntry(command, transform);
+
+                this.command2DEntries.Add(entry);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void gatherElementPostCommands(Element element)
+        {
+            var transform = element.TransformCache;
+
+            foreach (var command in element.PostCommands)
+            {
+                var entry = new Command2DEntry(command, transform);
+
+                this.command2DEntries.Add(entry);
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void collect2D(Spatial2D spatial2D)
