@@ -1,45 +1,67 @@
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Age.Core.Collections;
 
 namespace Age.Core.Extensions;
 
 public static partial class Extension
 {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private unsafe static void CopyTo(scoped ReadOnlySpan<byte> source, int sizeOfSource, scoped Span<byte> destination, int sizeOfDestination, int length, bool alignToEnd)
+    private const int RUN = 32;
+
+    private static void InsertionSort<T>(Func<T, T, int> comparer, scoped Span<T> span, int leftIndex, int rightIndex)
     {
-        if (sizeOfSource == sizeOfDestination)
+        for (var currentIndex = leftIndex + 1; currentIndex <= rightIndex; currentIndex++)
         {
-            source.CopyTo(destination);
-            return;
-        }
+            var currentValue = span[currentIndex];
+            var sortedIndex = currentIndex - 1;
 
-        ref var sourceRef = ref MemoryMarshal.GetReference(source);
-
-        if (sizeOfSource < sizeOfDestination)
-        {
-            var offset = alignToEnd ? sizeOfDestination - sizeOfSource : 0;
-
-            for (var i = 0; i < length; i++)
+            while (sortedIndex >= leftIndex && comparer.Invoke(span[sortedIndex], currentValue) == 1)
             {
-                var sourceSlice      = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref sourceRef, i * sizeOfSource), sizeOfSource);
-                var destinationSlice = MemoryMarshal.CreateSpan(ref destination[(i * sizeOfDestination) + offset], sizeOfDestination);
-
-                sourceSlice.CopyTo(destinationSlice);
+                span[sortedIndex + 1] = span[sortedIndex];
+                sortedIndex--;
             }
+
+            span[sortedIndex + 1] = currentValue;
         }
-        else
+    }
+
+    private static void Merge<T>(Func<T, T, int> comparer, scoped Span<T> span, int leftIndex, int middleIndex, int rightIndex)
+    {
+        var leftLength  = middleIndex - leftIndex + 1;
+        var rightLength = rightIndex - middleIndex;
+
+        var rentedLeft  = ArrayPool<T>.Shared.Rent(leftLength);
+        var rentedRight = ArrayPool<T>.Shared.Rent(rightLength);
+
+        var left  = rentedLeft.AsSpan(0, leftLength);
+        var right = rentedRight.AsSpan(0, rightLength);
+
+        span.Slice(leftIndex, leftLength).CopyTo(left);
+        span.Slice(middleIndex + 1, rightLength).CopyTo(right);
+
+        var leftPointer  = 0;
+        var rightPointer = 0;
+        var mergedIndex  = leftIndex;
+
+        while (leftPointer < left.Length && rightPointer < right.Length)
         {
-            var offset = alignToEnd ? sizeOfSource - sizeOfDestination : 0;
-
-            for (var i = 0; i < length; i++)
-            {
-                var sourceSlice      = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref sourceRef, (i * sizeOfSource) + offset), sizeOfDestination);
-                var destinationSlice = MemoryMarshal.CreateSpan(ref destination[i * sizeOfDestination], sizeOfDestination);
-
-                sourceSlice.CopyTo(destinationSlice);
-            }
+            span[mergedIndex++] = comparer.Invoke(left[leftPointer], right[rightPointer]) <= 0 ? left[leftPointer++] : right[rightPointer++];
         }
+
+        if (leftPointer < left.Length)
+        {
+            left[leftPointer..].CopyTo(span[mergedIndex..]);
+            mergedIndex += left.Length - leftPointer;
+        }
+
+        if (rightPointer < right.Length)
+        {
+            right[rightPointer..].CopyTo(span[mergedIndex..]);
+        }
+
+        ArrayPool<T>.Shared.Return(rentedLeft, RuntimeHelpers.IsReferenceOrContainsReferences<T>());
+        ArrayPool<T>.Shared.Return(rentedRight, RuntimeHelpers.IsReferenceOrContainsReferences<T>());
     }
 
     extension<T>(Span<T> span) where T : unmanaged
@@ -49,46 +71,30 @@ public static partial class Extension
             MemoryMarshal.Cast<T, U>(span);
     }
 
-    extension<TSource>(scoped ReadOnlySpan<TSource> source) where TSource : unmanaged
+    extension<T>(scoped Span<T> span)
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void CopyTo<TDestination>(scoped Span<TDestination> destination, bool alignToEnd = false) where TDestination : unmanaged
+        public void TimSort(Func<T, T, int>? comparer = null)
         {
-            if (source.Length > destination.Length)
+            comparer ??= Comparer<T>.Default.Compare;
+
+            for (var i = 0; i < span.Length; i += RUN)
             {
-                throw new InvalidOperationException($"{nameof(destination)} length must be greater or equal than {nameof(source)} length");
+                InsertionSort(comparer, span, i, int.Min(i + RUN - 1, span.Length - 1));
             }
 
-            CopyTo(source.Cast<TSource, byte>(), sizeof(TSource), destination.Cast<TDestination, byte>(), sizeof(TDestination), source.Length, alignToEnd);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void CopyTo(scoped Span<byte> destination, int sizeOfDestination, bool alignToEnd = false)
-        {
-            var destinationLength = destination.Length / sizeOfDestination;
-
-            if (destinationLength < source.Length)
+            for (var subarraySize = RUN; subarraySize < span.Length; subarraySize *= 2)
             {
-                throw new InvalidOperationException($"{nameof(destination)}.Length / {sizeOfDestination} must be greater or equal than {nameof(source)}.Length");
+                for (var leftStart = 0; leftStart < span.Length; leftStart += 2 * subarraySize)
+                {
+                    var middleIndex = int.Min(leftStart + subarraySize - 1, span.Length - 1);
+                    var rightEnd    = int.Min(leftStart + (2 * subarraySize) - 1, span.Length - 1);
+
+                    if (middleIndex < rightEnd)
+                    {
+                        Merge(comparer, span, leftStart, middleIndex, rightEnd);
+                    }
+                }
             }
-
-            CopyTo(source.Cast<TSource, byte>(), sizeof(TSource), destination, sizeOfDestination, source.Length, alignToEnd);
-        }
-    }
-
-    extension(scoped ReadOnlySpan<byte> source)
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void CopyTo<TDestination>(int sizeOfSource, scoped Span<TDestination> destination, bool alignToEnd = false) where TDestination : unmanaged
-        {
-            var sourceLength = source.Length / sizeOfSource;
-
-            if (destination.Length < sourceLength)
-            {
-                throw new InvalidOperationException($"{nameof(destination)}.Length must be greater or equal than {nameof(source)}.Length / {sizeOfSource}");
-            }
-
-            CopyTo(source, sizeOfSource, destination.Cast<TDestination, byte>(), sizeof(TDestination), sourceLength, alignToEnd);
         }
     }
 }

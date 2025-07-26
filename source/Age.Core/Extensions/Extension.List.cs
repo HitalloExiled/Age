@@ -43,5 +43,9 @@ public static partial class Extension
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetCount(int count) =>
             CollectionsMarshal.SetCount(source, count);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void TimSort(Func<T, T, int>? comparer = null) =>
+            source.AsSpan().TimSort(comparer);
     }
 }
