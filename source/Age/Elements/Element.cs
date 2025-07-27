@@ -13,7 +13,6 @@ using Age.Resources;
 using Age.Scene;
 using Age.Storage;
 using Age.Styling;
-using static Age.Elements.Element;
 using static Age.Shaders.CanvasShader;
 
 using AgeInput             = Age.Input;
@@ -240,6 +239,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private byte          commandsSeparator;
     private Size<uint>    content;
     private Dependency    contentDependencies = Dependency.Size;
+    private Point<uint>   contentOffset;
     private bool          dependenciesHasChanged;
     private LayoutCommand layoutCommands;
     private RectEdges     margin;
@@ -403,36 +403,9 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal protected ShadowTree? ShadowTree { get; set; }
 
-    internal bool CanScrollX => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollX) == true;
-    internal bool CanScrollY => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollY) == true;
-
-    internal Point<uint> ContentOffset
-    {
-        get;
-        set
-        {
-            value.X = Math<uint>.MinMax(0, this.content.Width.ClampSubtract(this.size.Width),   value.X);
-            value.Y = Math<uint>.MinMax(0, this.content.Height.ClampSubtract(this.size.Height), value.Y);
-
-            if (field != value)
-            {
-                field = value;
-
-                if (this.CanScrollX)
-                {
-                    this.UpdateScrollXHandler();
-                }
-
-                if (this.CanScrollY)
-                {
-                    this.UpdateScrollYHandler();
-                }
-
-                this.ownStencilLayer?.MakeChildrenDirty();
-                this.RequestUpdate(false);
-            }
-        }
-    }
+    internal bool        CanScrollX    => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollX) == true;
+    internal bool        CanScrollY    => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollY) == true;
+    internal Point<uint> ContentOffset => this.contentOffset;
 
     internal uint FontSize     => this.ComputedStyle.FontSize ?? DEFAULT_FONT_SIZE;
     internal bool IsScrollable { get; set; }
@@ -504,8 +477,30 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     public Point<uint> Scroll
     {
-        get => this.ContentOffset;
-        set => this.ContentOffset = value;
+        get => this.contentOffset;
+        set
+        {
+            value.X = uint.Clamp(value.X, 0, this.content.Width.ClampSubtract(this.size.Width));
+            value.Y = uint.Clamp(value.Y, 0, this.content.Height.ClampSubtract(this.size.Height));
+
+            if (this.contentOffset != value)
+            {
+                this.contentOffset = value;
+
+                if (this.CanScrollX)
+                {
+                    this.UpdateScrollXControl();
+                }
+
+                if (this.CanScrollY)
+                {
+                    this.UpdateScrollYControl();
+                }
+
+                this.ownStencilLayer?.MakeChildrenDirty();
+                this.RequestUpdate(false);
+            }
+        }
     }
 
     public Style Style
@@ -1407,63 +1402,12 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private bool HasLayoutCommand(LayoutCommand layoutCommand) =>
         this.layoutCommands.HasFlags(layoutCommand);
 
-    private void OnMouseOut()
+    private void HideScrollControls()
     {
         if (this.layoutCommands.HasAnyFlag(LayoutCommand.ScrollX | LayoutCommand.ScrollY))
         {
             this.ReleaseLayoutCommand(LayoutCommand.ScrollX);
             this.ReleaseLayoutCommand(LayoutCommand.ScrollY);
-            this.RequestUpdate(false);
-        }
-    }
-
-    private void OnMouseOver()
-    {
-        var handlerColor = Color.Green;
-
-        var canScrollX = this.CanScrollX;
-        var canScrollY = this.CanScrollY;
-
-        if (canScrollX && this.size.Width < this.content.Width)
-        {
-            var offset         = this.CanScrollY ? SCROLL_SIZE: 0;
-            var scale          = 1 - ((float)this.Boundings.Width / this.content.Width);
-            var scrollBarWidth = this.Boundings.Width - this.border.Horizontal - offset - (SCROLL_MARGIN * 2);
-
-            var handler = this.GetLayoutCommandScrollX();
-
-            handler.Border    = new(0, SCROLL_BORDER_RADIUS, default);
-            handler.Color     = handlerColor;
-            handler.Flags     = Flags.ColorAsBackground;
-            handler.Metadata  = scrollBarWidth;
-            handler.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollX);
-            handler.Size      = new(float.Max(scrollBarWidth * scale, SCROLL_SIZE * 2), SCROLL_SIZE);
-            handler.Transform = Transform2D.CreateTranslated(this.border.Left + SCROLL_MARGIN, -(this.Boundings.Height - this.border.Top - SCROLL_SIZE - SCROLL_MARGIN));
-
-            this.UpdateScrollXHandler(handler);
-        }
-
-        if (canScrollY)
-        {
-            var offset          = this.CanScrollX ? SCROLL_SIZE: 0;
-            var scrollBarHeight = this.Boundings.Height - this.border.Vertical - offset - (SCROLL_MARGIN * 2);
-            var scale           = 1 - ((float)this.Boundings.Height / this.content.Height);
-
-            var handler = this.GetLayoutCommandScrollY();
-
-            handler.Border    = new(0, SCROLL_BORDER_RADIUS, default);
-            handler.Color     = handlerColor;
-            handler.Flags     = Flags.ColorAsBackground;
-            handler.Metadata  = scrollBarHeight;
-            handler.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollY);
-            handler.Size      = new(SCROLL_SIZE, float.Max(scrollBarHeight * scale, SCROLL_SIZE * 2));
-            handler.Transform = Transform2D.CreateTranslated(this.Boundings.Width - this.border.Left - SCROLL_SIZE - SCROLL_MARGIN, -(this.border.Top + SCROLL_MARGIN));
-
-            this.UpdateScrollYHandler(handler);
-        }
-
-        if (canScrollX || canScrollY)
-        {
             this.RequestUpdate(false);
         }
     }
@@ -1512,10 +1456,10 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         if (platformMouseEvent.IsHoldingPrimaryButton && layoutCommand is LayoutCommand.ScrollX or LayoutCommand.ScrollY)
         {
-            IsScrolling = true;
-
             if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollX)
             {
+                IsScrollingX = true;
+
                 var commandScrollX = this.GetLayoutCommandScrollX();
 
                 commandScrollX.Color = Color.Green + (Color.White * 0.9f);
@@ -1525,6 +1469,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
             if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollY)
             {
+                IsScrollingY = true;
+
                 var commandScrollY = this.GetLayoutCommandScrollY();
 
                 commandScrollY.Color = Color.Green + (Color.White * 0.9f);
@@ -1534,71 +1480,67 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void OnMouseMoved(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex)
+    private void OnMouseMoved(in PlatformMouseEvent mouseEvent)
+    {
+        if (mouseEvent.IsHoldingPrimaryButton)
+        {
+            this.OnMouseMoved(default);
+        }
+        else
+        {
+            IsScrollingX = IsScrollingY = false;
+
+            this.HideScrollControls();
+
+            this.RenderTree!.Window.MouseMove -= this.OnMouseMoved;
+        }
+    }
+
+    private void OnMouseMoved(uint virtualChildIndex)
     {
         var layoutCommand = (LayoutCommand)virtualChildIndex;
 
         if (IsScrolling)
         {
-            this.Scroll = this.Scroll with { Y = (uint)((int)this.Scroll.Y + AgeInput.GetMouseDeltaPosition().Y) };
+            var globalDelta = AgeInput.GetMouseDeltaPosition();
+            var delta       = (this.Transform.Matrix.GetOnlyRotation() * new Vector2<float>(globalDelta.X, globalDelta.Y)).ToPoint();
+
+            Console.WriteLine($"GlobalDelta: {globalDelta}, Delta: {delta}");
+
+            if (IsScrollingX)
+            {
+                this.UpdateScrollXOffset(delta);
+            }
+            else if (IsScrollingY)
+            {
+                this.UpdateScrollYOffset(delta);
+            }
+        }
+        else if (layoutCommand is LayoutCommand.ScrollX or LayoutCommand.ScrollY)
+        {
+            this.SetCursor(Platforms.Display.Cursor.Arrow);
+
+            if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollX)
+            {
+                var commandScrollX = this.GetLayoutCommandScrollX();
+
+                commandScrollX.Color = Color.Green + (Color.White * 0.6f);
+
+                this.RequestUpdate(false);
+            }
+
+            if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollY)
+            {
+                var commandScrollY = this.GetLayoutCommandScrollY();
+
+                commandScrollY.Color = Color.Green + (Color.White * 0.6f);
+
+                this.RequestUpdate(false);
+            }
         }
         else
         {
-            if (layoutCommand is LayoutCommand.ScrollX or LayoutCommand.ScrollY)
-            {
-                this.SetCursor(Platforms.Display.Cursor.Arrow);
-
-                if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollX)
-                {
-                    var commandScrollX = this.GetLayoutCommandScrollX();
-
-                    commandScrollX.Color = Color.Green + (Color.White * 0.6f);
-
-                    this.RequestUpdate(false);
-                }
-
-                if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollY)
-                {
-                    var commandScrollY = this.GetLayoutCommandScrollY();
-
-                    commandScrollY.Color = Color.Green + (Color.White * 0.6f);
-
-                    this.RequestUpdate(false);
-                }
-            }
-            else
-            {
-                this.SetCursor(this.ComputedStyle.Cursor);
-
-                if (this.HasLayoutCommand(LayoutCommand.ScrollX))
-                {
-                    var commandScrollX = this.GetLayoutCommandScrollX();
-
-                    commandScrollX.Color = Color.Green;
-
-                    this.RequestUpdate(false);
-                }
-
-                if (this.HasLayoutCommand(LayoutCommand.ScrollY))
-                {
-                    var commandScrollY = this.GetLayoutCommandScrollY();
-
-                    commandScrollY.Color = Color.Green;
-
-                    this.RequestUpdate(false);
-                }            
-            }
-        }
-
-    }
-
-    private void OnMouseUp()
-    {
-        if (IsScrolling)
-        {
-            IsScrolling = false;
-
-            if (this.HasLayoutCommand(LayoutCommand.ScrollY))
+            if (this.HasLayoutCommand(LayoutCommand.ScrollX))
             {
                 var commandScrollX = this.GetLayoutCommandScrollX();
 
@@ -1607,7 +1549,103 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 this.RequestUpdate(false);
             }
 
-            if (this.HasLayoutCommand(LayoutCommand.ScrollX))
+            if (this.HasLayoutCommand(LayoutCommand.ScrollY))
+            {
+                var commandScrollY = this.GetLayoutCommandScrollY();
+
+                commandScrollY.Color = Color.Green;
+
+                this.RequestUpdate(false);
+            }
+        }
+    }
+
+    private void OnMouseOut()
+    {
+        if (IsScrolling)
+        {
+            this.RenderTree!.Window.MouseMove += this.OnMouseMoved;
+            this.OnMouseMoved(default);
+        }
+        else
+        {
+            this.HideScrollControls();
+        }
+    }
+
+    private void OnMouseOver()
+    {
+        if (IsScrolling)
+        {
+            this.RenderTree!.Window.MouseMove -= this.OnMouseMoved;
+            this.OnMouseMoved(default);
+        }
+        else
+        {
+            var handlerColor = Color.Green;
+
+            var canScrollX = this.CanScrollX;
+            var canScrollY = this.CanScrollY;
+
+            if (canScrollX && this.size.Width < this.content.Width)
+            {
+                var offset         = this.CanScrollY ? SCROLL_SIZE: 0;
+                var scale          = 1 - ((float)this.Boundings.Width / this.content.Width);
+                var scrollBarWidth = this.Boundings.Width - this.border.Horizontal - offset - (SCROLL_MARGIN * 2);
+
+                var scrollCommand = this.GetLayoutCommandScrollX();
+
+                scrollCommand.Border    = new(0, SCROLL_BORDER_RADIUS, default);
+                scrollCommand.Color     = handlerColor;
+                scrollCommand.Flags     = Flags.ColorAsBackground;
+                scrollCommand.Metadata  = scrollBarWidth;
+                scrollCommand.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollX);
+                scrollCommand.Size      = new(float.Max(scrollBarWidth * scale, SCROLL_SIZE * 2), SCROLL_SIZE);
+                scrollCommand.Transform = Transform2D.CreateTranslated(this.border.Left + SCROLL_MARGIN, -(this.Boundings.Height - this.border.Top - SCROLL_SIZE - SCROLL_MARGIN));
+
+                this.UpdateScrollXControl(scrollCommand);
+            }
+
+            if (canScrollY)
+            {
+                var offset          = this.CanScrollX ? SCROLL_SIZE: 0;
+                var scrollBarHeight = this.Boundings.Height - this.border.Vertical - offset - (SCROLL_MARGIN * 2);
+                var scale           = 1 - ((float)this.Boundings.Height / this.content.Height);
+
+                var scrollCommand = this.GetLayoutCommandScrollY();
+
+                scrollCommand.Border    = new(0, SCROLL_BORDER_RADIUS, default);
+                scrollCommand.Color     = handlerColor;
+                scrollCommand.Flags     = Flags.ColorAsBackground;
+                scrollCommand.Metadata  = scrollBarHeight;
+                scrollCommand.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollY);
+                scrollCommand.Size      = new(SCROLL_SIZE, float.Max(scrollBarHeight * scale, SCROLL_SIZE * 2));
+                scrollCommand.Transform = Transform2D.CreateTranslated(this.Boundings.Width - this.border.Left - SCROLL_SIZE - SCROLL_MARGIN, -(this.border.Top + SCROLL_MARGIN));
+
+                this.UpdateScrollYControl(scrollCommand);
+            }
+
+            if (canScrollX || canScrollY)
+            {
+                this.RequestUpdate(false);
+            }
+        }
+    }
+
+    private void OnMouseUp()
+    {
+        if (IsScrolling)
+        {
+            if (IsScrollingX)
+            {
+                var commandScrollX = this.GetLayoutCommandScrollX();
+
+                commandScrollX.Color = Color.Green;
+
+                this.RequestUpdate(false);
+            }
+
+            if (IsScrollingY)
             {
                 var commandScrollY = this.GetLayoutCommandScrollY();
 
@@ -1617,6 +1655,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             }
 
             this.SetCursor(this.ComputedStyle.Cursor);
+
+            IsScrollingX = IsScrollingY = false;
         }
     }
 
@@ -1654,16 +1694,16 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         if (overflow.HasFlags(Overflow.ScrollX) && mouseEvent.KeyStates.HasFlags(Platforms.Display.MouseKeyStates.Shift))
         {
-            this.ContentOffset = this.ContentOffset with
+            this.Scroll = this.Scroll with
             {
-                X = (uint)(this.ContentOffset.X + (10 * -mouseEvent.Delta))
+                X = (uint)(this.contentOffset.X + (10 * -mouseEvent.Delta))
             };
         }
         else if (overflow.HasFlags(Overflow.ScrollY))
         {
-            this.ContentOffset = this.ContentOffset with
+            this.Scroll = this.Scroll with
             {
-                Y = (uint)(this.ContentOffset.Y + (10 * -mouseEvent.Delta))
+                Y = (uint)(this.Scroll.Y + (10 * -mouseEvent.Delta))
             };
         }
     }
@@ -1800,7 +1840,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 else
                 {
                     this.Scrolled -= this.OnScroll;
-                    this.ContentOffset = default;
+                    this.Scroll    = default;
                 }
 
                 this.IsScrollable = currentIsScrollable;
@@ -2328,27 +2368,59 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void UpdateScrollXHandler(RectCommand handler)
+    private void UpdateScrollXOffset(in Point<float> delta)
     {
-        var scale  = (float)this.ContentOffset.X / this.content.Width.ClampSubtract(this.size.Width);
-        var offset = handler.Metadata - handler.Size.Width;
+        var scrollCommand = this.GetLayoutCommandScrollX();
+        var controlOffset = this.border.Left + SCROLL_MARGIN;
+        var localPosition = scrollCommand.Transform.Position.X - controlOffset;
+        var position      = float.Clamp(localPosition + delta.X, 0, scrollCommand.Metadata - scrollCommand.Size.Width);
+        var ratio         = position / (scrollCommand.Metadata - scrollCommand.Size.Width);
+        var offset        = this.content.Width.ClampSubtract(this.size.Width);
 
-        handler.Transform = Transform2D.CreateTranslated(this.border.Left + SCROLL_MARGIN + (offset * scale), handler.Transform.Position.Y);
+        scrollCommand.Transform = Transform2D.CreateTranslated(position + controlOffset, scrollCommand.Transform.Position.Y);
+
+        this.contentOffset.X = (uint)float.Round(offset * ratio);
+
+        this.RequestUpdate(false);
     }
 
-    private void UpdateScrollXHandler() =>
-        this.UpdateScrollXHandler(this.GetLayoutCommandScrollX());
-
-    private void UpdateScrollYHandler(RectCommand handler)
+    private void UpdateScrollXControl(RectCommand scrollCommand)
     {
-        var scale  = (float)this.ContentOffset.Y / this.content.Height.ClampSubtract(this.size.Height);
-        var offset = handler.Metadata - handler.Size.Height;
+        var ratio  = (float)this.contentOffset.X / this.content.Width.ClampSubtract(this.size.Width);
+        var offset = scrollCommand.Metadata - scrollCommand.Size.Width;
 
-        handler.Transform = Transform2D.CreateTranslated(handler.Transform.Position.X, -(this.border.Top + SCROLL_MARGIN + (offset * scale)));
+        scrollCommand.Transform = Transform2D.CreateTranslated(this.border.Left + SCROLL_MARGIN + (offset * ratio), scrollCommand.Transform.Position.Y);
     }
 
-    private void UpdateScrollYHandler() =>
-        this.UpdateScrollYHandler(this.GetLayoutCommandScrollY());
+    private void UpdateScrollXControl() =>
+        this.UpdateScrollXControl(this.GetLayoutCommandScrollX());
+
+    private void UpdateScrollYOffset(in Point<float> delta)
+    {
+        var scrollCommand = this.GetLayoutCommandScrollY();
+        var controlOffset = this.border.Top                     + SCROLL_MARGIN;
+        var localPosition = -scrollCommand.Transform.Position.Y - controlOffset;
+        var position      = float.Clamp(localPosition           + delta.Y, 0, scrollCommand.Metadata - scrollCommand.Size.Height);
+        var ratio         = position                            / (scrollCommand.Metadata             -  scrollCommand.Size.Height);
+        var offset        = this.content.Height.ClampSubtract(this.size.Height);
+
+        scrollCommand.Transform = Transform2D.CreateTranslated(scrollCommand.Transform.Position.X, -(position + controlOffset));
+
+        this.contentOffset.Y = (uint)float.Round(offset * ratio);
+
+        this.RequestUpdate(false);
+    }
+
+    private void UpdateScrollYControl(RectCommand scrollCommand)
+    {
+        var ratio  = (float)this.contentOffset.Y / this.content.Height.ClampSubtract(this.size.Height);
+        var offset = scrollCommand.Metadata - scrollCommand.Size.Height;
+
+        scrollCommand.Transform = Transform2D.CreateTranslated(scrollCommand.Transform.Position.X, -(this.border.Top + SCROLL_MARGIN + (offset * ratio)));
+    }
+
+    private void UpdateScrollYControl() =>
+        this.UpdateScrollYControl(this.GetLayoutCommandScrollY());
 
     [MemberNotNull(nameof(ShadowTree))]
     protected void AttachShadowTree(bool? inheritsHostStyle = null) => this.ShadowTree = new(this, inheritsHostStyle == true);
@@ -2628,12 +2700,10 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.OnMouseDown(platformMouseEvent, virtualChildIndex);
     }
 
-
-
     internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
         this.MouseMovedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
-        this.OnMouseMoved(platformMouseEvent, virtualChildIndex);
+        this.OnMouseMoved(virtualChildIndex);
     }
 
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)

@@ -599,7 +599,7 @@ public sealed class Text : Layoutable
 
     internal void HandleMouseOut()
     {
-        if (!this.CanSelect)
+        if (!this.CanSelect || IsScrolling)
         {
             return;
         }
@@ -609,7 +609,7 @@ public sealed class Text : Layoutable
 
     internal void HandleMouseOver()
     {
-        if (!this.CanSelect)
+        if (!this.CanSelect || IsScrolling)
         {
             return;
         }
@@ -913,6 +913,9 @@ public sealed class Text : Layoutable
 
         return new(this.Buffer.Substring((int)range.Start, (int)(range.End - range.Start)));
     }
+
+
+
 
     public string? CopySelected() =>
         !this.Selection.HasValue ? null : this.Copy(this.Selection.Value);

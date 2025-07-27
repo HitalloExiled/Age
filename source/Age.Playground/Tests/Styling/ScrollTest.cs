@@ -104,6 +104,7 @@ public static class ScrollTest
                 Overflow = Overflow.Scroll,
                 Size     = new(400, 400),
                 Color    = Color.White,
+                Transforms = [TransformOp.Rotate(Angle.DegreesToRadians(45f))]
             },
         };
 

@@ -22,8 +22,11 @@ public abstract class Layoutable : Spatial2D
 
     internal static bool IsHoveringText   { get; set; }
     internal static bool IsHoveringScroll { get; set; }
-    internal static bool IsScrolling      { get; set; }
+    internal static bool IsScrollingX     { get; set; }
+    internal static bool IsScrollingY     { get; set; }
     internal static bool IsSelectingText  { get; set; }
+
+    internal static bool IsScrolling => IsScrollingX || IsScrollingY;
 
     internal bool IsDirty { get; private set; }
 
@@ -214,8 +217,6 @@ public abstract class Layoutable : Spatial2D
 
     private protected void SetCursor(Cursor? cursor)
     {
-        Console.WriteLine($"Cursor: {cursor}");
-
         if (this.Tree is RenderTree renderTree)
         {
             renderTree.Window.Cursor = cursor ?? default;
@@ -229,6 +230,7 @@ public abstract class Layoutable : Spatial2D
             this.GetIndependentAncestor().UpdateLayout();
         }
     }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UpdateDirtyLayout()
     {

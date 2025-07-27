@@ -234,6 +234,29 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         return matrix;
     }
 
+    public readonly Matrix3x2<T> GetOnlyRotation()
+    {
+        var x = this.X;
+        var y = this.Y;
+
+        var sx = x.Length;
+        var sy = y.Length;
+
+        x /= sx;
+        y /= sy;
+
+        if (Vector2<T>.Dot(x, new Vector2<T>(y.Y, -y.X)) < T.Zero)
+        {
+            x = -x;
+        }
+
+        return new Matrix3x2<T>(
+            x.X,    x.Y,
+            -x.Y,   x.X,
+            T.Zero, T.Zero
+        );
+    }
+
     public readonly Matrix3x2<T> Inverse()
     {
         var determinant = this.Determinant;
