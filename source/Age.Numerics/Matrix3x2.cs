@@ -234,7 +234,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         return matrix;
     }
 
-    public readonly Matrix3x2<T> GetOnlyRotation()
+    public readonly Matrix3x2<T> ExtractRotation()
     {
         var x = this.X;
         var y = this.Y;

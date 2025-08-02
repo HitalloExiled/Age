@@ -20,13 +20,15 @@ public abstract class Layoutable : Spatial2D
     private protected virtual StencilLayer? ContentStencilLayer { get; }
     private protected virtual Transform2D   LayoutTransform => Transform2D.CreateTranslated(this.Offset);
 
-    internal static bool IsHoveringText   { get; set; }
-    internal static bool IsHoveringScroll { get; set; }
-    internal static bool IsScrollingX     { get; set; }
-    internal static bool IsScrollingY     { get; set; }
-    internal static bool IsSelectingText  { get; set; }
+    internal static bool IsHoveringText    { get; set; }
+    internal static bool IsHoveringScrollX { get; set; }
+    internal static bool IsHoveringScrollY { get; set; }
+    internal static bool IsScrollingX      { get; set; }
+    internal static bool IsScrollingY      { get; set; }
+    internal static bool IsSelectingText   { get; set; }
 
-    internal static bool IsScrolling => IsScrollingX || IsScrollingY;
+    internal static bool IsHoveringScroll => IsHoveringScrollX || IsHoveringScrollY;
+    internal static bool IsScrolling      => IsScrollingX      || IsScrollingY;
 
     internal bool IsDirty { get; private set; }
 
