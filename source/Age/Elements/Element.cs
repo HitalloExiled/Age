@@ -430,6 +430,16 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             if (base.StencilLayer != value)
             {
                 base.StencilLayer = this.GetLayoutCommandBox().StencilLayer = value;
+
+                if (this.HasLayoutCommand(LayoutCommand.ScrollX))
+                {
+                    this.GetLayoutCommandScrollX().StencilLayer = value;
+                }
+
+                if (this.HasLayoutCommand(LayoutCommand.ScrollY))
+                {
+                    this.GetLayoutCommandScrollY().StencilLayer = value;
+                }
             }
         }
     }
@@ -830,7 +840,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         while (enumerator.MoveNext())
         {
-            var current = enumerator.Current!;
+            var current = enumerator.Current;
 
             if (current.StencilLayer == stencilLayer)
             {
@@ -3046,5 +3056,5 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal static bool IsScrollControl(uint virtualChildIndex) =>
         (LayoutCommand)virtualChildIndex is LayoutCommand.ScrollX or LayoutCommand.ScrollY;
-        
+
 }

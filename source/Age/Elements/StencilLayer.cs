@@ -9,12 +9,11 @@ using Age.Resources;
 using Age.Styling;
 using SkiaSharp;
 using System.Collections;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Elements;
 
-internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<StencilLayer>
+internal class StencilLayer(Element owner) : Disposable, IEnumerable<StencilLayer>
 {
     private readonly SKPath path = new();
 
