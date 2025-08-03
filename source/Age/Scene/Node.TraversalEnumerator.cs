@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Scene;
 
@@ -8,12 +9,16 @@ public abstract partial class Node
     {
         #region 8-bytes
         private readonly Node root;
-        private Node? current;
+        private Node current;
         #endregion
 
         #region 1-byte
-        private bool  skipToNextSibling;
+        private bool skipToNextSibling;
         #endregion
+
+        public readonly Node Current => this.current;
+
+        readonly object IEnumerator.Current => this.Current;
 
         public TraversalEnumerator(Node root)
         {
@@ -21,10 +26,6 @@ public abstract partial class Node
 
             this.Reset();
         }
-
-        public readonly Node Current => this.current!;
-
-        readonly object IEnumerator.Current => this.Current;
 
         readonly IEnumerator IEnumerable.GetEnumerator() =>
             this.GetEnumerator();
@@ -36,34 +37,31 @@ public abstract partial class Node
 
         public bool MoveNext()
         {
-            if (!this.skipToNextSibling && this.current!.FirstChild != null)
+            if (!this.skipToNextSibling && this.current.FirstChild is Node firstChild)
             {
-                this.current = this.current.FirstChild;
+                this.current = firstChild;
 
                 return true;
             }
 
             this.skipToNextSibling = false;
 
-            if (this.current != this.root)
+            while (this.current != this.root)
             {
-                do
+                if (this.current.NextSibling is Node nextSibling)
                 {
-                    if (this.current!.NextSibling != null)
-                    {
-                        this.current = this.current.NextSibling;
+                    this.current = nextSibling;
 
-                        return true;
-                    }
-
-                    this.current = this.current.Parent;
+                    return true;
                 }
-                while (this.current != null && this.current != this.root);
+
+                this.current = this.current.Parent!;
             }
 
             return false;
         }
 
+        [MemberNotNull(nameof(current))]
         public void Reset()
         {
             this.current           = this.root;

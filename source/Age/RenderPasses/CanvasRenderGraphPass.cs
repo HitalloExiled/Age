@@ -227,11 +227,9 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             this.UniformSets.Set(command.TextureMap.Texture, uniformSet = new UniformSet(resource.Shader, [diffuse]));
         }
 
-        if (uniformSet != null && uniformSet != this.lastUniformSet)
+        if (uniformSet != null && this.LastUniformSet != uniformSet)
         {
-            this.CommandBuffer.BindUniformSet(uniformSet);
-
-            this.lastUniformSet = uniformSet;
+            this.CommandBuffer.BindUniformSet(this.LastUniformSet = uniformSet);
         }
 
         this.CommandBuffer.PushConstant(resource.Shader, constant);

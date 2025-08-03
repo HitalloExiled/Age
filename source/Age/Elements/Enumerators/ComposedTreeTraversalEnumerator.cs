@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Age.Scene;
 using StackEntry = (Age.Elements.Slot Slot, int Index);
@@ -12,7 +13,7 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
     private readonly Stack<StackEntry> stack;
     private readonly Action<Element>?  parentCallback;
 
-    private Layoutable? current;
+    private Layoutable current;
     #endregion
 
     #region 1-byte
@@ -81,7 +82,7 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
 
         parent = node.Parent is ShadowTree shadowTree ? shadowTree.Host : (Element)node.Parent!;
 
-        return GetLayoutableOrSkip(node.NextSibling) is Layoutable nextSibling ? nextSibling : null;
+        return GetLayoutableOrSkip(node.NextSibling);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -116,7 +117,7 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
 
     public bool MoveNext()
     {
-        if (!this.skipToNextSibling && this.GetFirstChild(this.current!) is Layoutable firstChild)
+        if (!this.skipToNextSibling && this.GetFirstChild(this.current) is Layoutable firstChild)
         {
             this.current = firstChild;
 
@@ -125,11 +126,9 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
 
         this.skipToNextSibling = false;
 
-        Node node = this.current!;
-
-        do
+        while (this.current != this.root)
         {
-            if (this.GetNextSibling(node, out var parent) is Layoutable nextSibling)
+            if (this.GetNextSibling(this.current, out var parent) is Layoutable nextSibling)
             {
                 this.current = nextSibling;
 
@@ -138,13 +137,13 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
 
             this.parentCallback?.Invoke(parent);
 
-            node = parent;
+            this.current = parent;
         }
-        while (node != null && node != this.root);
 
         return false;
     }
 
+    [MemberNotNull(nameof(current))]
     public void Reset()
     {
         this.skipToNextSibling = false;

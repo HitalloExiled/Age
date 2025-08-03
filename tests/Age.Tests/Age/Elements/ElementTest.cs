@@ -40,13 +40,13 @@ public class ElementTest
     {
         var parent = new FlexBox();
 
-        var text1 = new EmptyNode();
+        var text1  = new EmptyNode();
         var child1 = new FlexBox { Name = "child1" };
-        var text2 = new EmptyNode();
+        var text2  = new EmptyNode();
         var child2 = new FlexBox { Name = "child2" };
-        var text3 = new EmptyNode();
+        var text3  = new EmptyNode();
         var child3 = new FlexBox { Name = "child3" };
-        var text4 = new EmptyNode();
+        var text4  = new EmptyNode();
 
         parent.AppendChild(text1);
         parent.AppendChild(child1);

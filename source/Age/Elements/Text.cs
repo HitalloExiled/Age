@@ -117,6 +117,7 @@ public sealed class Text : Layoutable
         this.NodeFlags = NodeFlags.Immutable;
 
         this.caretCommand              = CommandPool.RectCommand.Get();
+        this.caretCommand.Metadata     = 1337; // TODO: Remove
         this.caretCommand.Color        = Color.White;
         this.caretCommand.Flags        = Flags.ColorAsBackground;
         this.caretCommand.TextureMap   = TextureMap.Default;
@@ -376,13 +377,15 @@ public sealed class Text : Layoutable
 
                     var characterCommand = (TextCommand)this.Commands[characterIndex];
 
-                    characterCommand.Border          = default;
+                    characterCommand.Metadata = default;
+                    characterCommand.Border   = default;
+                    characterCommand.ObjectId = default;
+
                     characterCommand.Color           = color;
                     characterCommand.Flags           = Flags.GrayscaleTexture | Flags.MultiplyColor;
                     characterCommand.Index           = selectionCommand.Index;
                     characterCommand.Line            = selectionCommand.Line;
                     characterCommand.TextureMap      = glyph;
-                    characterCommand.ObjectId        = default;
                     characterCommand.PipelineVariant = PipelineVariant.Color;
                     characterCommand.Size            = size;
                     characterCommand.Transform       = Transform2D.CreateTranslated(offset);

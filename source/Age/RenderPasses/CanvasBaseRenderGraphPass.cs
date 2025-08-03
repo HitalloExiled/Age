@@ -20,6 +20,8 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
     protected ResourceCache<Texture2D, UniformSet> UniformSets { get; } = new();
 
+    protected UniformSet? LastUniformSet { get; set; }
+
     protected abstract CanvasStencilMaskShader CanvasStencilMaskShader { get; }
     protected abstract Color                   ClearColor              { get; }
     protected abstract CommandBuffer           CommandBuffer           { get; }
@@ -80,7 +82,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         };
 
         this.CommandBuffer.BindShader(this.CanvasStencilMaskShader);
-        this.CommandBuffer.BindUniformSet(uniformSet);
+        this.CommandBuffer.BindUniformSet(this.LastUniformSet = uniformSet);
         this.CommandBuffer.PushConstant(this.CanvasStencilMaskShader, constant);
         this.CommandBuffer.DrawIndexed(indexBuffer);
     }
@@ -124,10 +126,10 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
         if (this.previousViewport == viewport || !this.previousViewport.HasValue)
         {
-            StencilLayer? previousLayer = null;
-
             foreach (var pipeline in this.Pipelines)
             {
+                StencilLayer? previousLayer = null;
+
                 if (pipeline.Enabled)
                 {
                     this.FillStencilBuffer(extent);
@@ -145,23 +147,24 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
                                 {
                                     if (!pipeline.IgnoreStencil && rectCommand.StencilLayer != previousLayer)
                                     {
-                                        if (rectCommand.StencilLayer != null)
+                                        if (rectCommand.StencilLayer == null)
+                                        {
+                                            this.FillStencilBuffer(extent);
+                                        }
+                                        else
                                         {
                                             this.ClearStencilBuffer(extent);
                                             this.DrawStencilBuffer(viewport, rectCommand.StencilLayer, pipeline.IndexBuffer);
 
                                             this.CommandBuffer.BindShader(pipeline.Shader);
                                         }
-                                        else
-                                        {
-                                            this.FillStencilBuffer(extent);
-                                        }
-                                    }
 
-                                    previousLayer = rectCommand.StencilLayer;
+                                    }
 
                                     this.ExecuteCommand(pipeline, rectCommand, viewport, entry.Transform);
                                 }
+
+                                previousLayer = rectCommand.StencilLayer;
 
                                 break;
                         }
