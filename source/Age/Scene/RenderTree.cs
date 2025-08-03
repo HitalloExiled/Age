@@ -93,8 +93,8 @@ public sealed partial class RenderTree : NodeTree
             this.Nodes.RemoveRange(index, this.Nodes.Count - index);
         }
 
-        this.command2DEntries.AsSpan().TimSort(static (left, right) => left.Command.ZIndex.CompareTo(right.Command.ZIndex));
-        this.command3DEntries.AsSpan().TimSort(static (left, right) => left.Command.ZIndex.CompareTo(right.Command.ZIndex));
+        // this.command2DEntries.AsSpan().TimSort(static (left, right) => left.Command.ZIndex.CompareTo(right.Command.ZIndex));
+        // this.command3DEntries.AsSpan().TimSort(static (left, right) => left.Command.ZIndex.CompareTo(right.Command.ZIndex));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void collectElementPreCommands(Element element)
@@ -166,14 +166,6 @@ public sealed partial class RenderTree : NodeTree
         }
     }
 
-    private Element? GetElement(ushort x, ushort y) =>
-        this.GetNode(x, y, out _) switch
-        {
-            Element element => element,
-            Text    text    => text.ComposedParentElement,
-            _               => null,
-        };
-
     private unsafe Node? GetNode(ushort x, ushort y, out uint virtualChildIndex)
     {
         var image = this.canvasIndexRenderGraphPass.ColorImage;
@@ -212,9 +204,12 @@ public sealed partial class RenderTree : NodeTree
 
     private void OnContext(in ContextEvent contextEvent)
     {
-        var element = this.GetElement(contextEvent.X, contextEvent.Y);
+        var node = this.GetNode(contextEvent.X, contextEvent.Y, out var virtualChildIndex);
 
-        element?.InvokeContext(contextEvent);
+        if (node is Element element)
+        {
+            element.InvokeContext(contextEvent, virtualChildIndex);
+        }
     }
 
     private void OnDoubleClick(in MouseEvent mouseEvent)
@@ -256,17 +251,19 @@ public sealed partial class RenderTree : NodeTree
 
             if (mouseEvent.IsPrimaryButtonPressed)
             {
-                text.InvokeActivate();
+                text.HandleActivate();
+
+                var textVirtualChildIndex = text == node ? virtualChildIndex : 0;
 
                 if (mouseEvent.KeyStates.HasFlags(MouseKeyStates.Shift) && this.lastFocusedText == text)
                 {
-                    text.UpdateSelection(mouseEvent.X, mouseEvent.Y, virtualChildIndex - 1);
+                    text.HandleMouseDown(mouseEvent, textVirtualChildIndex, false);
                 }
                 else
                 {
                     this.lastFocusedText?.ClearSelection();
 
-                    text.SetCaret(mouseEvent.X, mouseEvent.Y, virtualChildIndex - 1);
+                    text.HandleMouseDown(mouseEvent, textVirtualChildIndex, true);
                 }
 
                 if (this.lastFocusedText != text)
@@ -280,22 +277,25 @@ public sealed partial class RenderTree : NodeTree
         {
             element = node as Element;
 
-            if (this.lastFocusedText != null)
+            if (element == null || (element != this.lastFocusedElement && !Element.IsScrollControl(virtualChildIndex)))
             {
-                if (mouseEvent.Button == mouseEvent.PrimaryButton)
+                if (this.lastFocusedText != null)
                 {
-                    this.lastFocusedText.ClearSelection();
+                    if (mouseEvent.IsPrimaryButtonPressed)
+                    {
+                        this.lastFocusedText.ClearSelection();
+                    }
+
+                    this.lastFocusedText.ClearCaret();
                 }
 
-                this.lastFocusedText.ClearCaret();
+                this.lastFocusedText = null;
             }
-
-            this.lastFocusedText = null;
         }
 
         if (element != null)
         {
-            if (mouseEvent.Button == mouseEvent.PrimaryButton)
+            if (mouseEvent.IsPrimaryButtonPressed)
             {
                 element.InvokeActivate();
             }
@@ -347,9 +347,9 @@ public sealed partial class RenderTree : NodeTree
 
         if (text != null)
         {
-            if (mouseEvent.IsHoldingPrimaryButton && text == this.lastFocusedText)
+            if (text == this.lastFocusedText)
             {
-                text.UpdateSelection(mouseEvent.X, mouseEvent.Y, virtualChildIndex - 1);
+                text.HandleMouseMove(mouseEvent, text == node ? virtualChildIndex : 0);
             }
 
             if (this.lastHoveredText != text)
@@ -383,18 +383,18 @@ public sealed partial class RenderTree : NodeTree
 
         if (element != null)
         {
-            var elementVirtualChild = element == node ? virtualChildIndex : 0;
+            var elementVirtualChildIndex = element == node ? virtualChildIndex : 0;
 
             if (this.lastFocusedElement == element)
             {
-                element.InvokeClick(mouseEvent, elementVirtualChild, element != node);
+                element.InvokeClick(mouseEvent, elementVirtualChildIndex, element != node);
             }
 
-            element.InvokeMouseUp(mouseEvent, elementVirtualChild, element != node);
+            element.InvokeMouseUp(mouseEvent, elementVirtualChildIndex, element != node);
         }
 
         this.lastFocusedElement?.InvokeDeactivate();
-        this.lastFocusedText?.InvokeDeactivate();
+        this.lastFocusedText?.HandleDeactivate();
 
         if (wasSelectingText != Layoutable.IsSelectingText)
         {

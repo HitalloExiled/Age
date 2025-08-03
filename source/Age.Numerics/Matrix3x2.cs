@@ -39,64 +39,23 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         }
     }
 
-    public Vector2<T> X
-    {
-        readonly get => new(this.M11, this.M12);
-        set => Unsafe.As<T, Vector2<T>>(ref this.M11) = value;
-    }
+    public readonly Vector2<T> X => new(this.M11, this.M12);
+    public readonly Vector2<T> Y => new(this.M21, this.M22);
+    public readonly Vector2<T> Z => new(this.M31, this.M32);
 
-    public Vector2<T> Y
+    public readonly T Rotation
     {
-        readonly get => new(this.M21, this.M22);
-        set => Unsafe.As<T, Vector2<T>>(ref this.M21) = value;
-    }
-
-    public Vector2<T> Z
-    {
-        readonly get => new(this.M31, this.M32);
-        set => Unsafe.As<T, Vector2<T>>(ref this.M31) = value;
-    }
-
-    public T Rotation
-    {
-        readonly get
+        get
         {
             var scale = this.Scale;
 
             return T.Atan2(this.M21 / scale.Y, this.M11 / scale.X);
         }
-        set
-        {
-            var scale = this.Scale;
-
-            var cos = T.Cos(value);
-            var sin = T.Sin(value);
-
-            this.M11 = cos  * scale.X;
-            this.M12 = -sin * scale.X;
-            this.M21 = sin  * scale.Y;
-            this.M22 = cos  * scale.Y;
-        }
     }
 
-    public Vector2<T> Scale
-    {
-        readonly get => new(this.X.Length, this.Y.Length);
-        set
-        {
-            ref var x = ref Unsafe.As<T, Vector2<T>>(ref this.M11);
-            ref var y = ref Unsafe.As<T, Vector2<T>>(ref this.M21);
+    public readonly Vector2<T> Scale => new(this.X.Length, this.Y.Length);
 
-            x = x.Normalized() * value;
-            y = y.Normalized() * value;
-        }
-    }
-
-    public Vector2<T> Translation
-    {
-        readonly get => this.Z;
-        set => Unsafe.As<T, Vector2<T>>(ref this.M31) = value;
-    }
+    public readonly Vector2<T> Translation => this.Z;
 
     public readonly T Determinant => (this.M11 * this.M22) - (this.M12 * this.M21);
 
@@ -110,6 +69,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
 
     public readonly bool IsOrthonormalized => (this.M11 * this.M21) + (this.M12 * this.M22) == T.Zero;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Matrix3x2(T m11, T m12, T m21, T m22, T m31, T m32)
     {
         this.M11 = m11;
@@ -120,6 +80,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         this.M32 = m32;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Matrix3x2(in Vector2<T> column1, in Vector2<T> column2, in Vector2<T> column3)
     {
         this.M11 = column1.X;
@@ -130,6 +91,7 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         this.M32 = column3.Y;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Matrix3x2(in Vector2<T> translation, T rotation, in Vector2<T> scale)
     {
         Unsafe.SkipInit(out this);
@@ -145,9 +107,11 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         this.M32 = translation.Y;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix3x2<T> CreateRotated(T radians) =>
         CreateRotated(radians, default);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix3x2<T> CreateRotated(T radians, in Vector2<T> origin)
     {
         Unsafe.SkipInit(out Matrix3x2<T> matrix);
@@ -168,12 +132,15 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         return matrix;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix3x2<T> CreateScaled(T scale) =>
         CreateScaled(new Vector2<T>(scale));
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix3x2<T> CreateScaled(T scaleX, T scaleY) =>
         CreateScaled(new Vector2<T>(scaleX, scaleY));
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix3x2<T> CreateScaled(in Vector2<T> scale)
     {
         Unsafe.SkipInit(out Matrix3x2<T> matrix);
@@ -188,15 +155,19 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         return matrix;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix3x2<T> CreateSkewed(T radiansX, T radiansY) =>
         CreateSkewed(radiansX, radiansY, default);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix3x2<T> CreateSkewed(in Vector2<T> radians) =>
         CreateSkewed(radians, default);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix3x2<T> CreateSkewed(T radiansX, T radiansY, Vector2<T> origin) =>
         CreateSkewed(new(radiansX, radiansY), origin);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix3x2<T> CreateSkewed(in Vector2<T> radians, Vector2<T> origin)
     {
         Unsafe.SkipInit(out Matrix3x2<T> matrix);
@@ -217,9 +188,11 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         return matrix;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix3x2<T> CreateTranslated(in Vector2<T> translation) =>
         CreateTranslated(translation.X, translation.Y);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix3x2<T> CreateTranslated(T x, T y)
     {
         Unsafe.SkipInit(out Matrix3x2<T> matrix);
@@ -280,34 +253,13 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
         return result;
     }
 
-    public readonly bool IsAprox(Matrix3x2<T> other) =>
+    public readonly bool IsAprox(in Matrix3x2<T> other) =>
         Math<T>.IsApprox(this.M11, other.M11)
         && Math<T>.IsApprox(this.M12, other.M12)
         && Math<T>.IsApprox(this.M21, other.M21)
         && Math<T>.IsApprox(this.M22, other.M22)
         && Math<T>.IsApprox(this.M31, other.M31)
         && Math<T>.IsApprox(this.M32, other.M32);
-
-    public void Rotate(T radians) =>
-        this.Rotate(radians, default);
-
-    public void Rotate(T radians, in Vector2<T> origin)
-    {
-        var cos = T.Cos(radians);
-        var sin = T.Sin(radians);
-
-        var translationX = (origin.X * (T.One - cos)) + (origin.Y * sin);
-        var translationY = (origin.Y * (T.One - cos)) - (origin.X * sin);
-
-        var scale = this.Scale;
-
-        this.M11 = cos  * scale.X;
-        this.M12 = -sin * scale.Y;
-        this.M21 = sin  * scale.X;
-        this.M22 = cos  * scale.Y;
-        this.M31 += translationX;
-        this.M32 += translationY;
-    }
 
     public override readonly string ToString() =>
         string.Create(CultureInfo.InvariantCulture, $"[{this.M11}, {this.M12}], [{this.M21}, {this.M22}], [{this.M31}, {this.M32}]");

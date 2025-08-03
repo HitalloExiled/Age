@@ -1295,8 +1295,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.UpdateScrollXControl(scrollCommand);
     }
 
-
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void DrawScrollYControl()
     {
@@ -1505,20 +1503,18 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void OnMouseDown(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex)
+    private void HandleScrollMouseDown(in PlatformMouseEvent platformMouseEvent, LayoutCommand layoutCommand)
     {
-        var layoutCommand = (LayoutCommand)virtualChildIndex;
-
         if (platformMouseEvent.IsHoldingPrimaryButton && layoutCommand is LayoutCommand.ScrollX or LayoutCommand.ScrollY)
         {
-            if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollX)
+            if (layoutCommand == LayoutCommand.ScrollX)
             {
                 IsScrollingX = true;
 
                 this.SetScrollXActiveStyle();
             }
 
-            if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollY)
+            if (layoutCommand == LayoutCommand.ScrollY)
             {
                 IsScrollingY = true;
 
@@ -1531,7 +1527,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         if (mouseEvent.IsHoldingPrimaryButton)
         {
-            this.OnMouseMoved(default);
+            this.HandleScrollMouseMoved(default);
         }
         else
         {
@@ -1543,7 +1539,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void OnMouseMoved(uint virtualChildIndex)
+    private void HandleScrollMouseMoved(uint virtualChildIndex)
     {
         var layoutCommand = (LayoutCommand)virtualChildIndex;
 
@@ -1597,12 +1593,12 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void OnMouseOut()
+    private void HandleScrollMouseOut()
     {
         if (IsScrolling)
         {
             this.RenderTree!.Window.MouseMove += this.OnMouseMoved;
-            this.OnMouseMoved(default);
+            this.HandleScrollMouseMoved(default);
         }
         else
         {
@@ -1610,14 +1606,12 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void OnMouseOver()
+    private void DrawScrollControls()
     {
-        Console.WriteLine("OnMouseOver");
-
         if (IsScrolling)
         {
             this.RenderTree!.Window.MouseMove -= this.OnMouseMoved;
-            this.OnMouseMoved(default);
+            this.HandleScrollMouseMoved(default);
         }
         else
         {
@@ -1641,7 +1635,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void OnMouseUp(uint virtualChildIndex)
+    private void HandleScrollMouseUp(uint virtualChildIndex)
     {
         if (IsScrolling)
         {
@@ -2728,7 +2722,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    internal void HandleTargetMouseOver() =>
+    internal void ApplyCursor() =>
         this.SetCursor(this.ComputedStyle.Cursor);
 
     internal void InvokeActivate()
@@ -2749,14 +2743,19 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal void InvokeClick(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
-        if (virtualChildIndex != default)
+        if ((LayoutCommand)virtualChildIndex is not LayoutCommand.ScrollX and not LayoutCommand.ScrollY)
         {
             this.ClickedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
         }
     }
 
-    internal void InvokeContext(in PlatformContextEvent platformContextEvent) =>
-        this.ContextEvent?.Invoke(this.CreateEvent(platformContextEvent));
+    internal void InvokeContext(in PlatformContextEvent platformContextEvent, uint virtualChildIndex)
+    {
+        if ((LayoutCommand)virtualChildIndex is not LayoutCommand.ScrollX and not LayoutCommand.ScrollY)
+        {
+            this.ContextEvent?.Invoke(this.CreateEvent(platformContextEvent));
+        }
+    }
 
     internal void InvokeDeactivate()
     {
@@ -2766,7 +2765,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal void InvokeDoubleClick(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
-        if (virtualChildIndex != default)
+        if ((LayoutCommand)virtualChildIndex is not LayoutCommand.ScrollX and not LayoutCommand.ScrollY)
         {
             this.DoubleClickedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
         }
@@ -2784,14 +2783,20 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal void InvokeMouseDown(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
-        this.MouseDownEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
-        this.OnMouseDown(platformMouseEvent, virtualChildIndex);
+        if ((LayoutCommand)virtualChildIndex is LayoutCommand.ScrollX or LayoutCommand.ScrollY)
+        {
+            this.HandleScrollMouseDown(platformMouseEvent, (LayoutCommand)virtualChildIndex);
+        }
+        else
+        {
+            this.MouseDownEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
+        }
     }
 
     internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
         this.MouseMovedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
-        this.OnMouseMoved(virtualChildIndex);
+        this.HandleScrollMouseMoved(virtualChildIndex);
     }
 
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
@@ -2802,7 +2807,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
 
         this.MouseOutEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
-        this.OnMouseOut();
+        this.HandleScrollMouseOut();
     }
 
     internal void InvokeMouseOver(in PlatformMouseEvent platformMouseEvent)
@@ -2810,17 +2815,17 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         if (!IsSelectingText)
         {
             this.AddState(ElementState.Hovered);
-            this.HandleTargetMouseOver();
+            this.ApplyCursor();
         }
 
+        this.DrawScrollControls();
         this.MouseOverEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
-        this.OnMouseOver();
     }
 
     internal void InvokeMouseUp(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
+        this.HandleScrollMouseUp(virtualChildIndex);
         this.MouseUpEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
-        this.OnMouseUp(virtualChildIndex);
     }
 
     internal void ReleaseLayoutLayer(LayoutLayer layer) =>
@@ -2861,15 +2866,15 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             return 0;
         }
 
-        var left = this;
+        var left  = this;
         var right = other;
 
-        var leftParent = left.EffectiveParentElement;
+        var leftParent  = left.EffectiveParentElement;
         var rightParent = right.EffectiveParentElement;
 
         if (leftParent != rightParent)
         {
-            var leftDepth = getDepth(leftParent);
+            var leftDepth  = getDepth(leftParent);
             var rightDepth = getDepth(rightParent);
 
             while (leftDepth > rightDepth)
@@ -2898,15 +2903,15 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 rightDepth--;
             }
 
-            leftParent = left.EffectiveParentElement;
+            leftParent  = left.EffectiveParentElement;
             rightParent = right.EffectiveParentElement;
 
             while (leftParent != rightParent)
             {
-                left = leftParent!;
+                left  = leftParent!;
                 right = rightParent!;
 
-                leftParent = left.EffectiveParentElement;
+                leftParent  = left.EffectiveParentElement;
                 rightParent = right.EffectiveParentElement;
             }
         }
@@ -3038,4 +3043,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             }
         }
     }
+
+    internal static bool IsScrollControl(uint virtualChildIndex) =>
+        (LayoutCommand)virtualChildIndex is LayoutCommand.ScrollX or LayoutCommand.ScrollY;
+        
 }

@@ -45,18 +45,21 @@ public abstract partial class Node
 
             this.skipToNextSibling = false;
 
-            do
+            if (this.current != this.root)
             {
-                if (this.current!.NextSibling != null)
+                do
                 {
-                    this.current = this.current.NextSibling;
+                    if (this.current!.NextSibling != null)
+                    {
+                        this.current = this.current.NextSibling;
 
-                    return true;
+                        return true;
+                    }
+
+                    this.current = this.current.Parent;
                 }
-
-                this.current = this.current.Parent;
+                while (this.current != null && this.current != this.root);
             }
-            while (this.current != null && this.current != this.root);
 
             return false;
         }

@@ -27,7 +27,7 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = ScrollTest.Setup;
+        this.setup = TextBoxTest.Setup;
 
         this.Reload();
         // this.CreateDemoScene();

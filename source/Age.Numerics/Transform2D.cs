@@ -6,25 +6,10 @@ public record struct Transform2D
 
     private Matrix3x2<float> matrix;
 
-    public readonly Matrix3x2<float> Matrix => this.matrix;
-
-    public Vector2<float> Position
-    {
-        readonly get => this.matrix.Translation;
-        set          => this.matrix.Translation = value;
-    }
-
-    public float Rotation
-    {
-        readonly get => this.matrix.Rotation;
-        set          => this.matrix.Rotation = value;
-    }
-
-    public Vector2<float> Scale
-    {
-        readonly get => this.matrix.Scale;
-        set          => this.matrix.Scale = value;
-    }
+    public readonly Matrix3x2<float> Matrix   => this.matrix;
+    public readonly Vector2<float>   Position => this.matrix.Translation;
+    public readonly float            Rotation => this.matrix.Rotation;
+    public readonly Vector2<float>   Scale    => this.matrix.Scale;
 
     public Transform2D() =>
         this.matrix = Matrix3x2<float>.Identity;
