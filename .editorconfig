@@ -363,6 +363,9 @@ dotnet_diagnostic.CS8019.severity = none
 [**/Native/**.cs]
 dotnet_diagnostic.IDE1006.severity = none
 
+[ThirdParty*/**.cs]
+dotnet_diagnostic.RCS1135.severity = none # Declare enum member with zero value (when enum has FlagsAttribute)
+
 [*.{csproj,xml,yml,yaml,props}]
 indent_style = space
 indent_size  = 2

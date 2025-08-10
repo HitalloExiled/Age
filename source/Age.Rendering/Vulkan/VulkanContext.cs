@@ -80,7 +80,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
         {
             var applicationInfo = new VkApplicationInfo
             {
-                ApiVersion         = VkVersion.V1_0,
+                ApiVersion         = VkVersion.V1_2,
                 ApplicationVersion = new VkVersion(0, 0, 1, 0),
                 EngineVersion      = new VkVersion(0, 0, 1, 0),
                 PApplicationName   = pName,

@@ -8,6 +8,8 @@ public readonly record struct VkVersion
     private readonly uint value;
 
     public static VkVersion V1_0 => new(0, 1, 0);
+    public static VkVersion V1_1 => new(0, 1, 1);
+    public static VkVersion V1_2 => new(0, 1, 2);
 
     public uint Variant => (this.value >> 29) & 0b111;
     public uint Major   => (this.value >> 22) & 0b1111111;

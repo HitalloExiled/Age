@@ -9,5 +9,11 @@ public sealed partial class RenderTree
     {
         public Command     Command   = command;
         public Transform2D Transform = transform;
+
+        public readonly void Deconstruct(out Command command, out Transform2D transform)
+        {
+            command   = this.Command;
+            transform = this.Transform;
+        }
     }
 }

@@ -439,11 +439,11 @@ public sealed partial class RenderTree : NodeTree
         }
     }
 
-    internal IEnumerable<Command2DEntry> Get2DCommands() =>
-        this.command2DEntries;
+    internal ReadOnlySpan<Command2DEntry> Get2DCommands() =>
+        this.command2DEntries.AsSpan();
 
-    internal IEnumerable<Command3DEntry> Get3DCommands() =>
-        this.command3DEntries;
+    internal ReadOnlySpan<Command3DEntry> Get3DCommands() =>
+        this.command3DEntries.AsSpan();
 
     public override void Initialize()
     {

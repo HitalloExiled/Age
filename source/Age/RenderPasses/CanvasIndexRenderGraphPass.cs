@@ -43,7 +43,7 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         this.vertexBuffer  = renderer.CreateVertexBuffer(vertices.AsSpan());
         this.indexBuffer   = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
         this.CommandBuffer = renderer.AllocateCommand(VkCommandBufferLevel.Primary);
-        this.RenderPass    = this.CreateRenderPass();
+        this.RenderPass    = CreateRenderPass(VkFormat.R16G16B16A16Unorm, VkImageLayout.General);
 
         this.CreateFramebuffer(out this.colorImage, out this.stencilImage, out this.framebuffer);
 
@@ -114,62 +114,6 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         framebuffer = new(framebufferCreateInfo);
     }
 
-    private RenderPass CreateRenderPass()
-    {
-        var createInfo = new RenderPassCreateInfo
-        {
-            SubPasses =
-            [
-                new()
-                {
-                    PipelineBindPoint = VkPipelineBindPoint.Graphics,
-                    ColorAttachments  =
-                    [
-                        new()
-                        {
-                            Color  = new VkAttachmentDescription
-                            {
-                                Format         = VkFormat.R16G16B16A16Unorm,
-                                Samples        = VkSampleCountFlags.N1,
-                                InitialLayout  = VkImageLayout.Undefined,
-                                FinalLayout    = VkImageLayout.General,
-                                LoadOp         = VkAttachmentLoadOp.Clear,
-                                StoreOp        = VkAttachmentStoreOp.Store,
-                                StencilLoadOp  = VkAttachmentLoadOp.DontCare,
-                                StencilStoreOp = VkAttachmentStoreOp.DontCare
-                            },
-                        }
-                    ],
-                    DepthStencilAttachment = new()
-                    {
-                        Format         = VulkanRenderer.Singleton.StencilBufferFormat,
-                        Samples        = VkSampleCountFlags.N1,
-                        InitialLayout  = VkImageLayout.Undefined,
-                        FinalLayout    = VkImageLayout.DepthStencilAttachmentOptimal,
-                        LoadOp         = VkAttachmentLoadOp.Clear,
-                        StoreOp        = VkAttachmentStoreOp.DontCare,
-                        StencilLoadOp  = VkAttachmentLoadOp.Clear,
-                        StencilStoreOp = VkAttachmentStoreOp.Store
-                    },
-                },
-            ],
-            SubpassDependencies =
-            [
-                new()
-                {
-                    SrcSubpass    = VkConstants.VK_SUBPASS_EXTERNAL,
-                    DstSubpass    = 0,
-                    SrcStageMask  = VkPipelineStageFlags.FragmentShader,
-                    DstStageMask  = VkPipelineStageFlags.EarlyFragmentTests | VkPipelineStageFlags.LateFragmentTests,
-                    SrcAccessMask = VkAccessFlags.ShaderRead,
-                    DstAccessMask = VkAccessFlags.DepthStencilAttachmentWrite,
-                }
-            ]
-        };
-
-        return new(createInfo);
-    }
-
     private void DisposeFramebuffer()
     {
         this.colorImage.Dispose();
@@ -224,6 +168,7 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         this.CommandBuffer.PushConstant(resource.Shader, constant);
         this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
     }
+
     public override void Recreate()
     {
         this.DisposeFramebuffer();

@@ -7,7 +7,13 @@ public sealed partial class RenderTree
 {
     public struct Command3DEntry(Command command, Matrix4x4<float> transform)
     {
-        public Command Command = command;
+        public Command          Command   = command;
         public Matrix4x4<float> Transform = transform;
+
+        public readonly void Deconstruct(out Command command, out Matrix4x4<float> transform)
+        {
+            command   = this.Command;
+            transform = this.Transform;
+        }
     }
 }

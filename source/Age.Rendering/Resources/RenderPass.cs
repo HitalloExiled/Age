@@ -89,9 +89,7 @@ public sealed partial class RenderPass : Resource<VkRenderPass>
                 PSubpasses      = subpassDescriptions.AsPointer(),
             };
 
-            var renderPass = VulkanRenderer.Singleton.Context.Device.CreateRenderPass(renderPassCreateInfo);
-
-            this.Instance  = renderPass;
+            this.Instance = VulkanRenderer.Singleton.Context.Device.CreateRenderPass(renderPassCreateInfo);
         }
     }
 
