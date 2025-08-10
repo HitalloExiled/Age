@@ -123,6 +123,11 @@ internal class StencilLayer(Element owner) : Disposable, IEnumerable<StencilLaye
         {
             imageSize = (bounds.Cast<float>() * 1.5f).Cast<uint>();
 
+            if (texture != Texture2D.Empty)
+            {
+                texture.Dispose();
+            }
+
             texture = new(imageSize, format: TextureFormat.R8Unorm);
         }
 
