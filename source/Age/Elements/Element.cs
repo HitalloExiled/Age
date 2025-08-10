@@ -429,16 +429,21 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             if (base.StencilLayer != value)
             {
-                base.StencilLayer = this.GetLayoutCommandBox().StencilLayer = value;
+                base.StencilLayer = value;
 
-                if (this.HasLayoutCommand(LayoutCommand.ScrollX))
+                if (this.TryGetLayoutCommandBox(out var boxCommand))
                 {
-                    this.GetLayoutCommandScrollX().StencilLayer = value;
+                    boxCommand.StencilLayer = value;
                 }
 
-                if (this.HasLayoutCommand(LayoutCommand.ScrollY))
+                if (this.TryGetLayoutCommandScrollX(out var scrollXCommand))
                 {
-                    this.GetLayoutCommandScrollY().StencilLayer = value;
+                    scrollXCommand.StencilLayer = value;
+                }
+
+                if (this.TryGetLayoutCommandScrollY(out var scrollYCommand))
+                {
+                    scrollYCommand.StencilLayer = value;
                 }
             }
         }
@@ -1292,7 +1297,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         var scale          = 1 - ((float)this.Boundings.Width / this.content.Width);
         var scrollBarWidth = this.Boundings.Width - this.border.Horizontal - offset - (SCROLL_MARGIN * 2);
 
-        var scrollCommand = this.GetLayoutCommandScrollX();
+        var scrollCommand = this.AllocateLayoutCommandScrollX();
 
         scrollCommand.Border    = new(0, SCROLL_DEFAULT_BORDER_RADIUS, default);
         scrollCommand.Color     = scrollDefaultColor;
@@ -1312,7 +1317,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         var scrollBarHeight = this.Boundings.Height - this.border.Vertical - offset - (SCROLL_MARGIN * 2);
         var scale           = 1 - ((float)this.Boundings.Height / this.content.Height);
 
-        var scrollCommand = this.GetLayoutCommandScrollY();
+        var scrollCommand = this.AllocateLayoutCommandScrollY();
 
         scrollCommand.Border    = new(0, SCROLL_DEFAULT_BORDER_RADIUS, default);
         scrollCommand.Color     = scrollDefaultColor;
@@ -1404,7 +1409,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             }
             : default;
 
-    private RectCommand GetLayoutCommand(LayoutCommand layoutCommand)
+    private RectCommand AllocateLayoutCommand(LayoutCommand layoutCommand)
     {
         var index = this.GetIndex(layoutCommand);
 
@@ -1438,6 +1443,23 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         return command;
     }
 
+    private RectCommand AllocateLayoutCommandBox() =>
+        this.AllocateLayoutCommand(LayoutCommand.Box);
+
+    private RectCommand AllocateLayoutCommandImage() =>
+        this.AllocateLayoutCommand(LayoutCommand.Image);
+
+    private RectCommand AllocateLayoutCommandScrollX() =>
+        this.AllocateLayoutCommand(LayoutCommand.ScrollX);
+
+    private RectCommand AllocateLayoutCommandScrollY() =>
+        this.AllocateLayoutCommand(LayoutCommand.ScrollY);
+
+    private RectCommand GetLayoutCommand(LayoutCommand layoutCommand) =>
+        this.TryGetLayoutCommand(layoutCommand, out var rectCommand)
+            ? rectCommand
+            : throw new InvalidOperationException($"{layoutCommand} not allocated");
+
     private RectCommand GetLayoutCommandBox() =>
         this.GetLayoutCommand(LayoutCommand.Box);
 
@@ -1469,8 +1491,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         if (this.layoutCommands.HasAnyFlag(LayoutCommand.ScrollX | LayoutCommand.ScrollY))
         {
-            this.ReleaseLayoutCommand(LayoutCommand.ScrollX);
-            this.ReleaseLayoutCommand(LayoutCommand.ScrollY);
+            this.ReleaseLayoutCommandScrollX();
+            this.ReleaseLayoutCommandScrollY();
             this.RequestUpdate(false);
         }
     }
@@ -1906,7 +1928,11 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             this.Hidden = hidden;
 
-            this.UpdateCommands();
+            if (property.HasFlags(StyleProperty.Color) && TryGetLayoutCommandBox(out var command))
+            {
+                command.Color = ComputedStyle.BackgroundColor ?? default;
+            }
+
             this.RequestUpdate(affectsBoundings);
         }
 
@@ -1932,11 +1958,17 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void ReleaseLayoutCommand() =>
+    private void ReleaseLayoutCommandBox() =>
         this.ReleaseLayoutCommand(LayoutCommand.Box);
 
     private void ReleaseLayoutCommandImage() =>
         this.ReleaseLayoutCommand(LayoutCommand.Image);
+
+    private void ReleaseLayoutCommandScrollX() =>
+        this.ReleaseLayoutCommand(LayoutCommand.ScrollX);
+
+    private void ReleaseLayoutCommandScrollY() =>
+        this.ReleaseLayoutCommand(LayoutCommand.ScrollY);
 
     private void RemoveEvent(EventProperty key, Delegate? handler) =>
         this.RemoveEvent(key, handler, out _);
@@ -2144,17 +2176,14 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     private void SetBackgroundImage(Image? image)
     {
-        var command = this.GetLayoutCommandImage();
+        var command = this.AllocateLayoutCommandImage();
 
         if (image != null)
         {
-            if (!TextureStorage.Singleton.TryGet(image.Uri, out var texture))
+            if (!TextureStorage.Singleton.TryGet(image.Uri, out var texture) && File.Exists(image.Uri))
             {
-                if (File.Exists(image.Uri))
-                {
-                    texture = Texture2D.Load(image.Uri);
-                    TextureStorage.Singleton.Add(image.Uri, texture);
-                }
+                texture = Texture2D.Load(image.Uri);
+                TextureStorage.Singleton.Add(image.Uri, texture);
             }
 
             if (texture != null)
@@ -2249,6 +2278,32 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.RequestUpdate(false);
     }
 
+    private bool TryGetLayoutCommand(LayoutCommand layoutCommand, [NotNullWhen(true)] out RectCommand? rectCommand)
+    {
+        var index = this.GetIndex(layoutCommand);
+
+        if (this.layoutCommands.HasFlags(layoutCommand))
+        {
+            rectCommand = (RectCommand)this.Commands[index];
+            return true;
+        }
+
+        rectCommand = null;
+        return false;
+    }
+
+    private bool TryGetLayoutCommandBox([NotNullWhen(true)] out RectCommand? rectCommand) =>
+        this.TryGetLayoutCommand(LayoutCommand.Box, out rectCommand);
+
+    private bool TryGetLayoutCommandImage([NotNullWhen(true)] out RectCommand? rectCommand) =>
+        this.TryGetLayoutCommand(LayoutCommand.Image, out rectCommand);
+
+    private bool TryGetLayoutCommandScrollX([NotNullWhen(true)] out RectCommand? rectCommand) =>
+        this.TryGetLayoutCommand(LayoutCommand.ScrollX, out rectCommand);
+
+    private bool TryGetLayoutCommandScrollY([NotNullWhen(true)] out RectCommand? rectCommand) =>
+        this.TryGetLayoutCommand(LayoutCommand.ScrollY, out rectCommand);
+
     private void UpdateBoundings()
     {
         this.Boundings = new(
@@ -2261,7 +2316,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     private void UpdateCommands()
     {
-        var layoutCommandBox = this.GetLayoutCommandBox();
+        var layoutCommandBox = this.AllocateLayoutCommandBox();
 
         if (this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor != null || this.ComputedStyle.BackgroundImage != null)
         {
@@ -2575,11 +2630,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         this.ComputeStyle(default);
 
-        if (this.ownStencilLayer != null)
-        {
-            this.StencilLayer?.AppendChild(this.ownStencilLayer);
-        }
-
         GetStyleSource(this.Parent)?.StyleChanged += this.OnParentStyleChanged;
     }
 
@@ -2611,9 +2661,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         this.ownStencilLayer?.Dispose();
 
-        var layoutCommandImage = this.GetLayoutCommandImage();
-
-        if (!layoutCommandImage.TextureMap.IsDefault)
+        if (this.TryGetLayoutCommandImage(out var layoutCommandImage) && !layoutCommandImage.TextureMap.IsDefault)
         {
             TextureStorage.Singleton.Release(layoutCommandImage.TextureMap.Texture);
         }
@@ -2634,31 +2682,22 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         var zIndex = this.ComputedStyle.ZIndex ?? this.ComposedParentElement?.ComputedStyle.ZIndex ?? 0;
 
-        if (this.HasLayoutCommand(LayoutCommand.Box))
+        if (this.TryGetLayoutCommandBox(out var boxCommand))
         {
-            var command = this.GetLayoutCommandBox();
-
-            command.ObjectId = this.Index == -1
-                ? default
-                : this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor.HasValue ? (uint)(this.Index + 1) : 0;
-
-            command.ZIndex = zIndex;
+            boxCommand.ObjectId = this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor.HasValue ? (uint)(this.Index + 1) : 0;
+            boxCommand.ZIndex   = zIndex;
         }
 
-        if (this.HasLayoutCommand(LayoutCommand.ScrollX))
+        if (this.TryGetLayoutCommandScrollX(out var scrollXCommand))
         {
-            var command = this.GetLayoutCommandScrollX();
-
-            command.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollX);
-            command.ZIndex   = zIndex;
+            scrollXCommand.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollX);
+            scrollXCommand.ZIndex   = zIndex;
         }
 
-        if (this.HasLayoutCommand(LayoutCommand.ScrollY))
+        if (this.TryGetLayoutCommandScrollY(out var scrollYCommand))
         {
-            var command = this.GetLayoutCommandScrollY();
-
-            command.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollY);
-            command.ZIndex   = zIndex;
+            scrollYCommand.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollY);
+            scrollYCommand.ZIndex   = zIndex;
         }
     }
 
@@ -2695,9 +2734,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         return depth;
     }
-
-    internal RectCommand GetLayoutLayer(LayoutLayer layer) =>
-        this.GetLayoutCommand((LayoutCommand)layer);
 
     internal void HandleElementRemoved(Element element)
     {
@@ -2837,9 +2873,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.HandleScrollMouseUp(virtualChildIndex);
         this.MouseUpEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
     }
-
-    internal void ReleaseLayoutLayer(LayoutLayer layer) =>
-        this.ReleaseLayoutCommand((LayoutCommand)layer);
 
     internal override void UpdateLayout()
     {
