@@ -27,7 +27,7 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = TextBoxTest.Setup;
+        this.setup = BackgroundImageTest.Setup;
 
         this.Reload();
         // this.CreateDemoScene();

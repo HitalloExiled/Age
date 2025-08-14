@@ -419,7 +419,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal override bool IsParentDependent => this.parentDependencies != Dependency.None;
 
-    internal Span<Command> PreCommands  => this.Commands.AsSpan(0, this.commandsSeparator);
+    internal Span<Command> PreCommands  => this.Commands.AsSpan(..this.commandsSeparator);
     internal Span<Command> PostCommands => this.Commands.AsSpan(this.commandsSeparator..);
 
     internal override StencilLayer? StencilLayer
@@ -2348,8 +2348,21 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.ownStencilLayer?.MakeDirty();
     }
 
-    private void UpdateCommandsSeparator() =>
-        this.commandsSeparator = (byte)int.Max(this.GetIndex(LayoutCommand.Box), this.GetIndex(LayoutCommand.Image));
+    private void UpdateCommandsSeparator()
+    {
+        LayoutCommand? layoutCommand = null;
+
+        if (this.layoutCommands.HasFlags(LayoutCommand.Image))
+        {
+            layoutCommand = LayoutCommand.Image;
+        }
+        else if (this.layoutCommands.HasFlags(LayoutCommand.Box))
+        {
+            layoutCommand = LayoutCommand.Box;
+        }
+
+        this.commandsSeparator = (byte)(layoutCommand.HasValue ? this.GetIndex(layoutCommand.Value) + 1 : 0);
+    }
 
     private void UpdateDisposition()
     {
