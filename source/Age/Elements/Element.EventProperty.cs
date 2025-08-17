@@ -20,6 +20,6 @@ public abstract partial class Element
         MouseOut      = 1 << 12,
         MouseOver     = 1 << 13,
         MouseUp       = 1 << 14,
-        Scrolled      = 1 << 15,
+        MouseWheel      = 1 << 15,
     }
 }

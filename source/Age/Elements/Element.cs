@@ -182,13 +182,13 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         remove => this.RemoveEvent(EventProperty.MouseUp, value);
     }
 
-    public event MouseEventHandler? Scrolled
+    public event MouseEventHandler? MouseWheel
     {
         add
         {
             lock (this.elementLock)
             {
-                this.AddEvent(EventProperty.Scrolled, value, out var added);
+                this.AddEvent(EventProperty.MouseWheel, value, out var added);
 
                 if (this.Tree is RenderTree renderTree && added)
                 {
@@ -200,7 +200,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         {
             lock (this.elementLock)
             {
-                this.RemoveEvent(EventProperty.Scrolled, value, out var removed);
+                this.RemoveEvent(EventProperty.MouseWheel, value, out var removed);
 
                 if (this.Tree is RenderTree renderTree && removed)
                 {
@@ -273,7 +273,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private MouseEventHandler?   MouseOutEvent      => this.GetEvent<MouseEventHandler>(EventProperty.MouseOut);
     private MouseEventHandler?   MouseOverEvent     => this.GetEvent<MouseEventHandler>(EventProperty.MouseOver);
     private MouseEventHandler?   MouseUpEvent       => this.GetEvent<MouseEventHandler>(EventProperty.MouseUp);
-    private MouseEventHandler?   ScrolledEvent      => this.GetEvent<MouseEventHandler>(EventProperty.Scrolled);
+    private MouseEventHandler?   ScrolledEvent      => this.GetEvent<MouseEventHandler>(EventProperty.MouseWheel);
     #endregion Events
 
     private Size<uint> AbsoluteBoundings
@@ -1733,10 +1733,27 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void OnScroll(in MouseEvent mouseEvent)
+    private void HandleMouseWheel(in PlatformMouseEvent mouseEvent)
     {
         if (!this.IsHovered)
         {
+            return;
+        }
+
+        if (!this.IsScrollable)
+        {
+            var parent = this.ComposedParentElement;
+
+            while (parent != null)
+            {
+                if (parent.IsScrollable)
+                {
+                    parent.HandleMouseWheel(mouseEvent);
+
+                    break;
+                }
+            }
+
             return;
         }
 
@@ -1879,21 +1896,11 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         if (property.HasFlags(StyleProperty.Overflow))
         {
-            var currentIsScrollable = this.ComputedStyle.Overflow?.HasAnyFlag(Overflow.Scroll) == true && this.contentDependencies != (Dependency.Width | Dependency.Height);
+            this.IsScrollable = this.ComputedStyle.Overflow?.HasAnyFlag(Overflow.Scroll) == true && this.contentDependencies != (Dependency.Width | Dependency.Height);
 
-            if (currentIsScrollable != this.IsScrollable)
+            if (!this.IsScrollable)
             {
-                if (currentIsScrollable)
-                {
-                    this.Scrolled += this.OnScroll;
-                }
-                else
-                {
-                    this.Scrolled -= this.OnScroll;
-                    this.Scroll    = default;
-                }
-
-                this.IsScrollable = currentIsScrollable;
+                this.Scroll = default;
             }
 
             if (this.ComputedStyle.Overflow?.HasFlags(Overflow.Clipping) == true && this.contentDependencies != (Dependency.Width | Dependency.Height))
@@ -2629,7 +2636,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             renderTree.Window.KeyUp += this.OnKeyUp;
         }
 
-        if (this.events.ContainsKey(EventProperty.Scrolled))
+        if (this.events.ContainsKey(EventProperty.MouseWheel))
         {
             renderTree.Window.MouseWheel += this.OnScroll;
         }
@@ -2887,6 +2894,12 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         this.MouseUpEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
     }
 
+    internal void InvokeMouseWheel(in PlatformMouseEvent mouseEvent)
+    {
+        this.ScrolledEvent?.Invoke(this.CreateEvent(mouseEvent, false));
+        this.HandleMouseWheel(mouseEvent);
+    }
+
     internal override void UpdateLayout()
     {
         this.CalculateLayout();
@@ -3102,5 +3115,4 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal static bool IsScrollControl(uint virtualChildIndex) =>
         (LayoutCommand)virtualChildIndex is LayoutCommand.ScrollX or LayoutCommand.ScrollY;
-
 }

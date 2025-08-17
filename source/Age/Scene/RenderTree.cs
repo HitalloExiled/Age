@@ -405,6 +405,16 @@ public sealed partial class RenderTree : NodeTree
         }
     }
 
+    private void OnMouseWheel(in MouseEvent mouseEvent)
+    {
+        var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var _);
+
+        var text    = node as Text;
+        var element = text?.ComposedParentElement ?? node as Element;
+
+        element?.InvokeMouseWheel(mouseEvent);
+    }
+
     private void ResetCache()
     {
         this.command2DEntries.Clear();
@@ -433,6 +443,7 @@ public sealed partial class RenderTree : NodeTree
             this.Window.MouseDown   -= this.OnMouseDown;
             this.Window.MouseMove   -= this.OnMouseMove;
             this.Window.MouseUp     -= this.OnMouseUp;
+            this.Window.MouseWheel  -= this.OnMouseWheel;
 
             this.Root.Dispose();
             this.buffer.Dispose();
@@ -458,6 +469,7 @@ public sealed partial class RenderTree : NodeTree
         this.Window.MouseDown   += this.OnMouseDown;
         this.Window.MouseMove   += this.OnMouseMove;
         this.Window.MouseUp     += this.OnMouseUp;
+        this.Window.MouseWheel  += this.OnMouseWheel;
 
         base.Initialize();
     }
