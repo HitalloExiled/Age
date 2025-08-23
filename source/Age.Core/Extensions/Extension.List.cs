@@ -19,6 +19,18 @@ public static partial class Extension
         public Span<T> AsSpan(Range range) =>
             CollectionsMarshal.AsSpan(source)[range];
 
+        public ReadOnlySpan<T> AsReadOnlySpan() =>
+            source.AsSpan();
+
+        public ReadOnlySpan<T> AsReadOnlySpan(int start) =>
+            source.AsSpan(start);
+
+        public ReadOnlySpan<T> AsReadOnlySpan(int start, int length) =>
+            source.AsSpan(start, length);
+
+        public ReadOnlySpan<T> AsReadOnlySpan(Range range) =>
+            source.AsSpan(range);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(int size, T defaultValue)
         {

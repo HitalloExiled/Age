@@ -223,7 +223,40 @@ public static class ScrollTest
             },
         };
 
-        canvas.AppendChild(loren);
+        var scrollParent = new FlexBox
+        {
+            Name  = "parent",
+            Style =
+            {
+                Border   = new(2, 0, Color.Red),
+                //Overflow = Overflow.Scroll,
+                Size     = new(400),
+            },
+            Children =
+            [
+                new FlexBox
+                {
+                    Name  = "child-1",
+                    Style =
+                    {
+                        Border = new(2, 0, Color.Green),
+                        Size   = new(300),
+                    }
+                },
+                new FlexBox
+                {
+                    Name  = "child-2",
+                    Style =
+                    {
+                        Border = new(2, 0, Color.Blue),
+                        Size   = new(200),
+                    }
+                }
+            ]
+        };
+
+        canvas.AppendChild(scrollParent);
+        // canvas.AppendChild(loren);
         //canvas.AppendChild(conteiner1);
         //canvas.AppendChild(conteiner2);
         //canvas.AppendChild(conteiner3);

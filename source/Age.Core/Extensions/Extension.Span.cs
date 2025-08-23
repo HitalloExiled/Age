@@ -1,12 +1,11 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Age.Core.Collections;
 
 namespace Age.Core.Extensions;
-
 public static partial class Extension
 {
+
     private const int RUN = 32;
 
     private static void InsertionSort<T>(Func<T, T, int> comparer, scoped Span<T> span, int leftIndex, int rightIndex)
@@ -71,7 +70,7 @@ public static partial class Extension
             MemoryMarshal.Cast<T, U>(span);
     }
 
-    extension<T>(scoped Span<T> span)
+    extension<T>(Span<T> span)
     {
         public void TimSort(Func<T, T, int>? comparer = null)
         {

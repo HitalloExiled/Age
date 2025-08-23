@@ -158,6 +158,18 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         remove => this.RemoveEvent(EventProperty.MouseDown, value);
     }
 
+    public event MouseEventHandler? MouseEnter
+    {
+        add => this.AddEvent(EventProperty.MouseEnter, value);
+        remove => this.RemoveEvent(EventProperty.MouseEnter, value);
+    }
+
+    public event MouseEventHandler? MouseLeave
+    {
+        add => this.AddEvent(EventProperty.MouseLeave, value);
+        remove => this.RemoveEvent(EventProperty.MouseLeave, value);
+    }
+
     public event MouseEventHandler? MouseMoved
     {
         add => this.AddEvent(EventProperty.MouseMoved, value);
@@ -269,6 +281,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private KeyEventHandler?     KeyDownEvent       => this.GetEvent<KeyEventHandler>(EventProperty.KeyDown);
     private KeyEventHandler?     KeyUpEvent         => this.GetEvent<KeyEventHandler>(EventProperty.KeyUp);
     private MouseEventHandler?   MouseDownEvent     => this.GetEvent<MouseEventHandler>(EventProperty.MouseDown);
+    private MouseEventHandler?   MouseEnterEvent    => this.GetEvent<MouseEventHandler>(EventProperty.MouseEnter);
+    private MouseEventHandler?   MouseLeaveEvent    => this.GetEvent<MouseEventHandler>(EventProperty.MouseLeave);
     private MouseEventHandler?   MouseMovedEvent    => this.GetEvent<MouseEventHandler>(EventProperty.MouseMoved);
     private MouseEventHandler?   MouseOutEvent      => this.GetEvent<MouseEventHandler>(EventProperty.MouseOut);
     private MouseEventHandler?   MouseOverEvent     => this.GetEvent<MouseEventHandler>(EventProperty.MouseOver);
@@ -410,6 +424,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal protected ShadowTree? ShadowTree { get; set; }
 
+    internal bool        CanScroll     => this.CanScrollX || this.CanScrollY;
     internal bool        CanScrollX    => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollX) == true;
     internal bool        CanScrollY    => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollY) == true;
     internal Point<uint> ContentOffset => this.contentOffset;
@@ -1290,6 +1305,27 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             ScreenY = platformContextEvent.ScreenY,
         };
 
+    private void DrawScrollControls()
+    {
+        var canDrawScrollX = this.CanScrollX && this.size.Width < this.content.Width;
+        var canDrawScrollY = this.CanScrollY && this.size.Height < this.content.Height;
+
+        if (canDrawScrollX)
+        {
+            this.DrawScrollXControl();
+        }
+
+        if (canDrawScrollY)
+        {
+            this.DrawScrollYControl();
+        }
+
+        if (canDrawScrollX || canDrawScrollY)
+        {
+            this.RequestUpdate(false);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void DrawScrollXControl()
     {
@@ -1555,6 +1591,44 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
+    private void HandleMouseEnter()
+    {
+        if (IsScrolling)
+        {
+            this.RenderTree!.Window.MouseMove -= this.OnMouseMoved;
+            this.HandleScrollMouseMoved(default);
+        }
+        else if (this.CanScroll)
+        {
+            this.DrawScrollControls();
+        }
+        else
+        {
+            for (var element = this; element != null; element = element.ComposedParentElement)
+            {
+                if (element.CanScroll)
+                {
+                    element.DrawScrollXControl();
+
+                    break;
+                }
+            }
+        }
+    }
+
+    private void HandleMouseLeave()
+    {
+        if (IsScrolling)
+        {
+            this.RenderTree!.Window.MouseMove += this.OnMouseMoved;
+            this.HandleScrollMouseMoved(default);
+        }
+        else
+        {
+            this.HideScrollControls();
+        }
+    }
+
     private void OnMouseMoved(in PlatformMouseEvent mouseEvent)
     {
         if (mouseEvent.IsHoldingPrimaryButton)
@@ -1621,48 +1695,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
                 IsHoveringScrollY = false;
 
                 this.SetScrollYDefaultStyle();
-            }
-        }
-    }
-
-    private void HandleScrollMouseOut()
-    {
-        if (IsScrolling)
-        {
-            this.RenderTree!.Window.MouseMove += this.OnMouseMoved;
-            this.HandleScrollMouseMoved(default);
-        }
-        else
-        {
-            this.HideScrollControls();
-        }
-    }
-
-    private void DrawScrollControls()
-    {
-        if (IsScrolling)
-        {
-            this.RenderTree!.Window.MouseMove -= this.OnMouseMoved;
-            this.HandleScrollMouseMoved(default);
-        }
-        else
-        {
-            var canDrawScrollX = this.CanScrollX && this.size.Width  < this.content.Width;
-            var canDrawScrollY = this.CanScrollY && this.size.Height < this.content.Height;
-
-            if (canDrawScrollX)
-            {
-                this.DrawScrollXControl();
-            }
-
-            if (canDrawScrollY)
-            {
-                this.DrawScrollYControl();
-            }
-
-            if (canDrawScrollX || canDrawScrollY)
-            {
-                this.RequestUpdate(false);
             }
         }
     }
@@ -1742,13 +1774,11 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         if (!this.IsScrollable)
         {
-            var parent = this.ComposedParentElement;
-
-            while (parent != null)
+            for (var element = this; element != null; element = element.ComposedParentElement)
             {
-                if (parent.IsScrollable)
+                if (element.IsScrollable)
                 {
-                    parent.HandleMouseWheel(mouseEvent);
+                    element.HandleMouseWheel(mouseEvent);
 
                     break;
                 }
@@ -2325,12 +2355,13 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         var layoutCommandBox = this.AllocateLayoutCommandBox();
 
-        if (this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor != null || this.ComputedStyle.BackgroundImage != null)
+        if (this.Boundings.Area > 0)
         {
-            layoutCommandBox.Size             = this.Boundings.Cast<float>();
-            layoutCommandBox.Border           = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
-            layoutCommandBox.Color            = this.ComputedStyle.BackgroundColor ?? default;
-            layoutCommandBox.PipelineVariant |= PipelineVariant.Color;
+            layoutCommandBox.Size            = this.Boundings.Cast<float>();
+            layoutCommandBox.Border          = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
+            layoutCommandBox.Color           = this.ComputedStyle.BackgroundColor ?? default;
+            layoutCommandBox.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
+            layoutCommandBox.ObjectId        = (uint)(this.Index + 1);
 
             if (this.ComputedStyle.BackgroundImage != null)
             {
@@ -2347,7 +2378,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
         else
         {
-            layoutCommandBox.PipelineVariant &= ~PipelineVariant.Color;
+            layoutCommandBox.PipelineVariant = PipelineVariant.None;
         }
 
         layoutCommandBox.StencilLayer = this.StencilLayer;
@@ -2704,7 +2735,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
         if (this.TryGetLayoutCommandBox(out var boxCommand))
         {
-            boxCommand.ObjectId = this.ComputedStyle.Border != null || this.ComputedStyle.BackgroundColor.HasValue ? (uint)(this.Index + 1) : 0;
+            boxCommand.ObjectId = this.Boundings.Area > 0 ? (uint)(this.Index + 1) : 0;
             boxCommand.ZIndex   = zIndex;
         }
 
@@ -2733,6 +2764,172 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     private protected void RemoveState(ElementState state) =>
         this.States &= ~state;
+
+    internal static Element? GetCommonComposedAncestor(Element left, Element right)
+    {
+        var leftComposedParentElement  = left.ComposedParentElement;
+        var rightComposedParentElement = right.ComposedParentElement;
+
+        if (leftComposedParentElement == rightComposedParentElement)
+        {
+            return leftComposedParentElement;
+        }
+        else if (left == rightComposedParentElement)
+        {
+            return left;
+        }
+        else if (leftComposedParentElement == right)
+        {
+            return right;
+        }
+        else
+        {
+            var leftDepth  = 0;
+            var rightDepth = 0;
+
+            var currentLeft  = leftComposedParentElement;
+            var currentRight = rightComposedParentElement;
+
+            while (currentLeft != null)
+            {
+                leftDepth++;
+                currentLeft  = currentLeft.ComposedParentElement;
+            }
+
+            while (currentRight != null)
+            {
+                rightDepth++;
+                currentRight  = currentRight.ComposedParentElement;
+            }
+
+            currentLeft  = left;
+            currentRight = right;
+
+            while (leftDepth > rightDepth)
+            {
+                currentLeft = currentLeft.ComposedParentElement!;
+                leftDepth--;
+            }
+
+            while (leftDepth < rightDepth)
+            {
+                currentRight = currentRight.ComposedParentElement!;
+                rightDepth--;
+            }
+
+            while (currentLeft != currentRight)
+            {
+                currentLeft  = currentLeft.ComposedParentElement;
+                currentRight = currentRight.ComposedParentElement;
+
+                if (currentLeft == null || currentRight == null)
+                {
+                    return null;
+                }
+            }
+
+            return currentLeft;
+        }
+    }
+
+    internal static ComposedPath GetComposedPathBetween(Element left, Element right)
+    {
+        var leftToAncestor  = new List<Element>();
+        var rightToAncestor = new List<Element>();
+
+        GetComposedPathBetween(leftToAncestor, rightToAncestor, left, right);
+
+        return new(leftToAncestor, rightToAncestor);
+    }
+
+    internal static void GetComposedPathBetween(List<Element> leftToAncestor, List<Element> rightToAncestor, Element left, Element right)
+    {
+        const string ERROR_MESSAGE = "The specified elements do not share a common ancestor in the composed tree.";
+
+        leftToAncestor.Clear();
+        rightToAncestor.Clear();
+
+        leftToAncestor.Add(left);
+        rightToAncestor.Add(right);
+
+        var leftComposedParentElement  = left.ComposedParentElement;
+        var rightComposedParentElement = right.ComposedParentElement;
+
+        if (leftComposedParentElement == rightComposedParentElement)
+        {
+            if (leftComposedParentElement == null)
+            {
+                throw new InvalidOperationException(ERROR_MESSAGE);
+            }
+
+            leftToAncestor.Add(leftComposedParentElement);
+            rightToAncestor.Add(leftComposedParentElement);
+        }
+        else if (left == rightComposedParentElement)
+        {
+            rightToAncestor.Add(left);
+        }
+        else if (leftComposedParentElement == right)
+        {
+            leftToAncestor.Add(right);
+        }
+        else
+        {
+            var leftDepth  = 0;
+            var rightDepth = 0;
+
+            var currentLeft  = leftComposedParentElement;
+            var currentRight = rightComposedParentElement;
+
+            while (currentLeft != null)
+            {
+                leftDepth++;
+                currentLeft = currentLeft.ComposedParentElement;
+            }
+
+            while (currentRight != null)
+            {
+                rightDepth++;
+                currentRight  = currentRight.ComposedParentElement;
+            }
+
+            currentLeft  = left;
+            currentRight = right;
+
+            while (leftDepth > rightDepth)
+            {
+                currentLeft = currentLeft.ComposedParentElement!;
+                leftDepth--;
+
+                leftToAncestor.Add(currentLeft);
+            }
+
+            while (leftDepth < rightDepth)
+            {
+                currentRight = currentRight.ComposedParentElement!;
+                rightDepth--;
+
+                rightToAncestor.Add(currentRight);
+            }
+
+            while (currentLeft != currentRight)
+            {
+                currentLeft  = currentLeft.ComposedParentElement;
+                currentRight = currentRight.ComposedParentElement;
+
+                if (currentLeft == null || currentRight == null)
+                {
+                    leftToAncestor.Clear();
+                    rightToAncestor.Clear();
+
+                    throw new InvalidOperationException(ERROR_MESSAGE);
+                }
+
+                leftToAncestor.Add(currentLeft);
+                rightToAncestor.Add(currentRight);
+            }
+        }
+    }
 
     internal ComposedTreeEnumerator GetComposedTreeEnumerator() =>
         new(this);
@@ -2859,6 +3056,22 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
+    internal void InvokeMouseEnter(in PlatformMouseEvent platformMouseEvent)
+    {
+        Console.WriteLine($"[{this}] - Enter");
+        //this.MouseEnterEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
+
+        //this.HandleMouseEnter();
+    }
+
+    internal void InvokeMouseLeave(in PlatformMouseEvent platformMouseEvent)
+    {
+        Console.WriteLine($"[{this}] - Exit");
+        //this.MouseLeaveEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
+
+        //this.HandleMouseLeave();
+    }
+
     internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
         this.MouseMovedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
@@ -2873,7 +3086,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
 
         this.MouseOutEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
-        this.HandleScrollMouseOut();
     }
 
     internal void InvokeMouseOver(in PlatformMouseEvent platformMouseEvent)
@@ -2884,7 +3096,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             this.ApplyCursor();
         }
 
-        this.DrawScrollControls();
         this.MouseOverEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
     }
 

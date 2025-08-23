@@ -94,6 +94,26 @@
                 scale(0.5, 1)
                 matrix(1.2, 0.5, 0.5, 1.2, 10, 20);
         }
+
+        #parent {
+            border: solid 2px red;
+            height: 400px;
+            width: 400px;
+            pointer-events: none;
+        }
+        #child-1 {
+            border: solid 2px green;
+            height: 300px;
+            width: 300px;
+            pointer-events:auto
+        }
+        #child-2 {
+            border: solid 2px blue;
+            height: 200px;
+            width: 200px;
+            position: relative;
+            /* transform: translateY(150px); */
+        }
     </style>
 </head>
 <body>
@@ -117,13 +137,13 @@
         <div class="cat"></div>
     </div> -->
 
-    <svg height="200" width="350" xmlns="http://www.w3.org/2000/svg">
+    <!-- <svg height="200" width="350" xmlns="http://www.w3.org/2000/svg">
         <path id="lineAC" d="M 30 180 q 150 -250 300 0" stroke="blue" stroke-width="2" fill="none"/>
         <text style="fill:red;font-size:25px;">
             <textPath href="#lineAC" startOffset="50%">I love SVG! I love SVG!</textPath>
         </text>
         Sorry, your browser does not support inline SVG.
-    </svg>
+    </svg> -->
 
     <!-- <span class="stack">
         <span class="red">01</span>
@@ -136,16 +156,27 @@
         <span class="blue">Z</span>
         <span class="blue"></span>
     </span> -->
+    <div id="parent">
+        <div id="child-1">
+        </div>
+        <div id="child-2"></div>
+    </div>
 </body>
 <script>
-    const clicker = document.querySelector('#clicker');
+    const parent = document.querySelector('#parent');
+    const child1 = document.querySelector('#child-1');
+    const child2 = document.querySelector('#child-2');
 
-    let clicks = 0;
-    let doubleClicks = 0;
+    const addEvent = (element) => {
+        element.addEventListener('mouseenter', event => console.log(`#${event.target.id} [enter]`));
+        element.addEventListener('mouseleave', event => console.log(`#${event.target.id} [leave]`));
+        // element.addEventListener('mouseover', event => console.log(`#${event.target.id} [over]`));
+        // element.addEventListener('mouseout', event => console.log(`#${event.target.id} [out]`));
+    }
 
-    clicker.addEventListener('click', () => console.log(`Clickes: ${++clicks}`))
-    clicker.addEventListener('blur', () => console.log(`Blured`))
-    clicker.addEventListener('focus', () => console.log(`Focused`))
-    clicker.addEventListener('dblclick', () => console.log(`Double clickes: ${++doubleClicks}`))
+    addEvent(parent);
+    addEvent(child1);
+    addEvent(child2);
+
 </script>
 </html>

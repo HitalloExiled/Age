@@ -17,6 +17,8 @@ public sealed partial class RenderTree : NodeTree
     private readonly List<Command2DEntry> command2DEntries  = [];
     private readonly List<Command3DEntry> command3DEntries  = [];
     private readonly Stack<(Slot, int)>   composedTreeStack = [];
+    private readonly List<Element>        leftToAncestor    = [];
+    private readonly List<Element>        rightToAncestor   = [];
 
     private Buffer                     buffer = null!;
     private ulong                      bufferVersion;
@@ -53,6 +55,8 @@ public sealed partial class RenderTree : NodeTree
                 if (renderable is Canvas canvas)
                 {
                     traversalEnumerator.SkipToNextSibling();
+
+                    collect2D(canvas);
 
                     var composedTreeTraversalEnumerator = canvas.GetComposedTreeTraversalEnumerator(this.composedTreeStack, gatherElementPostCommands);
 
@@ -331,17 +335,51 @@ public sealed partial class RenderTree : NodeTree
         {
             if (this.lastHoveredElement != element)
             {
-                this.lastHoveredElement?.InvokeMouseOut(mouseEvent);
-                this.lastHoveredElement = element;
+                if (this.lastHoveredElement != null)
+                {
+                    this.lastHoveredElement.InvokeMouseOut(mouseEvent);
+
+                    Element.GetComposedPathBetween(this.leftToAncestor, this.rightToAncestor, element, this.lastHoveredElement);
+
+                    var limit = this.rightToAncestor.Count - 1;
+
+                    for (var i = 0; i < limit; i++)
+                    {
+                        this.rightToAncestor[i].InvokeMouseLeave(mouseEvent);
+                    }
+                }
+                else
+                {
+                    for (var current = element; current != null; current = current.ComposedParentElement)
+                    {
+                        this.leftToAncestor.Add(current);
+                    }
+                }
+
+                for (var i = this.leftToAncestor.Count - 2; i > -1; i--)
+                {
+                    this.leftToAncestor[i].InvokeMouseEnter(mouseEvent);
+                }
 
                 element.InvokeMouseOver(mouseEvent);
+
+                this.lastHoveredElement = element;
             }
 
             element.InvokeMouseMoved(mouseEvent, element == node ? virtualChildIndex : 0, element != node);
         }
         else
         {
-            this.lastHoveredElement?.InvokeMouseOut(mouseEvent);
+            if (this.lastHoveredElement != null)
+            {
+                this.lastHoveredElement.InvokeMouseOut(mouseEvent);
+
+                for (var current = this.lastHoveredElement; current != null; current = current.ComposedParentElement)
+                {
+                    current.InvokeMouseLeave(mouseEvent);
+                }
+            }
+
             this.lastHoveredElement = null;
         }
 
@@ -399,7 +437,7 @@ public sealed partial class RenderTree : NodeTree
         if (wasSelectingText != Layoutable.IsSelectingText)
         {
             this.lastHoveredElement = null;
-            this.lastHoveredText = null;
+            this.lastHoveredText    = null;
 
             this.OnMouseMove(mouseEvent);
         }
@@ -407,7 +445,9 @@ public sealed partial class RenderTree : NodeTree
 
     private void OnMouseWheel(in MouseEvent mouseEvent)
     {
-        var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var _);
+        var mouseLocalPosition = Input.GetMousePosition();
+
+        var node = this.GetNode(mouseLocalPosition.X, mouseLocalPosition.Y, out var _);
 
         var text    = node as Text;
         var element = text?.ComposedParentElement ?? node as Element;

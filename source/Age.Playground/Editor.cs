@@ -13,12 +13,16 @@ using Age.Playground.Tests.Components;
 
 namespace Age.Playground;
 
+internal record struct Page(string Title, Setup Setup);
+
 internal delegate void Setup(Canvas canvas);
 
 public class Editor : Node
 {
     private const uint BORDER_SIZE = 10;
     private readonly Canvas canvas = new();
+    private readonly Page[] pages;
+    private int index;
 
     private Setup setup;
 
@@ -27,7 +31,29 @@ public class Editor : Node
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = BackgroundImageTest.Setup;
+        this.setup = ScrollTest.Setup;
+
+        this.pages =
+        [
+            new(nameof(ButtonTest),   ButtonTest.Setup),
+            new(nameof(CheckBoxTest), CheckBoxTest.Setup),
+            new(nameof(IconTest),     IconTest.Setup),
+            new(nameof(TextBoxTest),  TextBoxTest.Setup),
+
+            new(nameof(AlignmentTest),            AlignmentTest.Setup),
+            new(nameof(BackgroundImageTest),      BackgroundImageTest.Setup),
+            new(nameof(BaselineTest),             BaselineTest.Setup),
+            new(nameof(BoxModelTest),             BoxModelTest.Setup),
+            new(nameof(BoxSizingTest),            BoxSizingTest.Setup),
+            new(nameof(ClippingTest),             ClippingTest.Setup),
+            new(nameof(ContentJustificationTest), ContentJustificationTest.Setup),
+            new(nameof(MarginTest),               MarginTest.Setup),
+            new(nameof(PaddingTest),              PaddingTest.Setup),
+            new(nameof(ScrollTest),               ScrollTest.Setup),
+
+            new(nameof(ShadowTreeTest),    ShadowTreeTest.Setup),
+            new(nameof(TextSelectionTest), TextSelectionTest.Setup),
+        ];
 
         this.Reload();
         // this.CreateDemoScene();
@@ -132,59 +158,29 @@ public class Editor : Node
 
         var window = ((RenderTree)this.canvas.Tree!).Window;
 
-        if (Input.IsKeyJustPressed(Key.Num1))
-        {
-            this.setup = ShadowTreeTest.Setup;
+        var currentIndex = this.index;
 
-            window.Title = $"1 - {nameof(ShadowTreeTest)}";
+        if (Input.IsKeyJustPressed(Key.Up))
+        {
+            currentIndex = 0;
         }
-        else if (Input.IsKeyJustPressed(Key.Num2))
+        else if (Input.IsKeyJustPressed(Key.Down))
         {
-            this.setup = BaselineTest.Setup;
-
-            window.Title = $"2 - {nameof(BaselineTest)}";
+            currentIndex = this.pages.Length - 1;
         }
-        else if (Input.IsKeyJustPressed(Key.Num3))
+        else if (Input.IsKeyJustPressed(Key.Left))
         {
-            this.setup = BoxModelTest.Setup;
-
-            window.Title = $"3 - {nameof(BoxModelTest)}";
+            if (--currentIndex < 0)
+            {
+                currentIndex = this.pages.Length - 1;
+            }
         }
-        else if (Input.IsKeyJustPressed(Key.Num4))
+        else if (Input.IsKeyJustPressed(Key.Right))
         {
-            this.setup = BoxSizingTest.Setup;
-
-            window.Title = $"4 - {nameof(BoxSizingTest)}";
-        }
-        else if (Input.IsKeyJustPressed(Key.Num5))
-        {
-            this.setup = ContentJustificationTest.Setup;
-
-            window.Title = $"5 - {nameof(ContentJustificationTest)}";
-        }
-        else if (Input.IsKeyJustPressed(Key.Num6))
-        {
-            this.setup = ClippingTest.Setup;
-
-            window.Title = $"6 - {nameof(ClippingTest)}";
-        }
-        else if (Input.IsKeyJustPressed(Key.Num7))
-        {
-            this.setup = MarginTest.Setup;
-
-            window.Title = $"7 - {nameof(MarginTest)}";
-        }
-        else if (Input.IsKeyJustPressed(Key.Num8))
-        {
-            this.setup = PaddingTest.Setup;
-
-            window.Title = $"8 - {nameof(PaddingTest)}";
-        }
-        else if (Input.IsKeyJustPressed(Key.Num9))
-        {
-            this.setup = BackgroundImageTest.Setup;
-
-            window.Title = $"9 - {nameof(BackgroundImageTest)}";
+            if (++currentIndex == this.pages.Length)
+            {
+                currentIndex = 0;
+            }
         }
         else if (Input.IsKeyPressed(Key.Control) && Input.IsKeyJustPressed(Key.P))
         {
@@ -194,6 +190,19 @@ public class Editor : Node
         else
         {
             reload = Input.IsKeyJustPressed(Key.R);
+        }
+
+        if (this.index != currentIndex)
+        {
+            var page = this.pages[currentIndex];
+
+            window.Title = page.Title;
+
+            this.setup = page.Setup;
+
+            this.index = currentIndex;
+
+            reload = true;
         }
 
         if (reload)
