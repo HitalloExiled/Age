@@ -27,6 +27,7 @@ public sealed partial class RenderTree : NodeTree
     private Text?                      lastFocusedText;
     private Element?                   lastHoveredElement;
     private Text?                      lastHoveredText;
+    private VirtualRelation?           lastVirtualRelation;
 
     internal List<Node>    Nodes    { get; } = new(256);
     internal List<Scene3D> Scenes3D { get; } = [];
@@ -366,7 +367,20 @@ public sealed partial class RenderTree : NodeTree
                 this.lastHoveredElement = element;
             }
 
-            element.InvokeMouseMoved(mouseEvent, element == node ? virtualChildIndex : 0, element != node);
+            var currentVirtualChildIndex = element == node ? virtualChildIndex : 0;
+
+            if (currentVirtualChildIndex == default && this.lastVirtualRelation.HasValue)
+            {
+                var (lastVirtualParent, lastVirtualChildIndex) = this.lastVirtualRelation.Value;
+
+                lastVirtualParent.InvokeMouseMoved(mouseEvent, lastVirtualChildIndex, true);
+            }
+            else if (currentVirtualChildIndex != default)
+            {
+                this.lastVirtualRelation = new(element, currentVirtualChildIndex);
+            }
+
+            element.InvokeMouseMoved(mouseEvent, currentVirtualChildIndex, element != node);
         }
         else
         {
@@ -426,6 +440,13 @@ public sealed partial class RenderTree : NodeTree
             if (this.lastFocusedElement == element)
             {
                 element.InvokeClick(mouseEvent, elementVirtualChildIndex, element != node);
+            }
+
+            if (this.lastVirtualRelation != null)
+            {
+                var (lastVirtualParent, lastVirtualChildIndex) = this.lastVirtualRelation.Value;
+
+                lastVirtualParent.InvokeMouseUp(mouseEvent, lastVirtualChildIndex, true);
             }
 
             element.InvokeMouseUp(mouseEvent, elementVirtualChildIndex, element != node);

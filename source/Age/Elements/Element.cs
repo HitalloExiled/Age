@@ -1494,7 +1494,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     private RectCommand GetLayoutCommand(LayoutCommand layoutCommand) =>
         this.TryGetLayoutCommand(layoutCommand, out var rectCommand)
             ? rectCommand
-            : throw new InvalidOperationException($"{layoutCommand} not allocated");
+            : throw new InvalidOperationException($"{this} - {layoutCommand} not allocated.");
 
     private RectCommand GetLayoutCommandBox() =>
         this.GetLayoutCommand(LayoutCommand.Box);
@@ -1525,6 +1525,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     private void HideScrollControls()
     {
+        Console.WriteLine($"{this}.HideScrollControls");
         if (this.layoutCommands.HasAnyFlag(LayoutCommand.ScrollX | LayoutCommand.ScrollY))
         {
             this.ReleaseLayoutCommandScrollX();
@@ -1591,12 +1592,12 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void HandleMouseEnter()
+    private void HandleScrollMouseEnter()
     {
         if (IsScrolling)
         {
             this.RenderTree!.Window.MouseMove -= this.OnMouseMoved;
-            this.HandleScrollMouseMoved(default);
+            this.HandleScrollMouseMoved(default, false);
         }
         else if (this.CanScroll)
         {
@@ -1616,15 +1617,16 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void HandleMouseLeave()
+    private void HandleScrollMouseLeave()
     {
         if (IsScrolling)
         {
             this.RenderTree!.Window.MouseMove += this.OnMouseMoved;
-            this.HandleScrollMouseMoved(default);
+            this.HandleScrollMouseMoved(default, false);
         }
         else
         {
+
             this.HideScrollControls();
         }
     }
@@ -1633,7 +1635,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     {
         if (mouseEvent.IsHoldingPrimaryButton)
         {
-            this.HandleScrollMouseMoved(default);
+            this.HandleScrollMouseMoved(default, false);
         }
         else
         {
@@ -1645,12 +1647,17 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void HandleScrollMouseMoved(uint virtualChildIndex)
+    private void HandleScrollMouseMoved(uint virtualChildIndex, bool indirect)
     {
         var layoutCommand = (LayoutCommand)virtualChildIndex;
 
         if (IsScrolling)
         {
+            if (indirect)
+            {
+                return;
+            }
+
             var globalDelta = AgeInput.GetMouseDeltaPosition();
             var delta       = (this.Transform.Matrix.ExtractRotation() * new Vector2<float>(globalDelta.X, globalDelta.Y)).ToPoint();
 
@@ -1699,7 +1706,7 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    private void HandleScrollMouseUp(uint virtualChildIndex)
+    private void HandleScrollMouseUp(uint virtualChildIndex, bool indirect)
     {
         if (IsScrolling)
         {
@@ -3058,24 +3065,32 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal void InvokeMouseEnter(in PlatformMouseEvent platformMouseEvent)
     {
-        Console.WriteLine($"[{this}] - Enter");
-        //this.MouseEnterEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
+        this.MouseEnterEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
 
-        //this.HandleMouseEnter();
+        if (this.CanScroll)
+        {
+            this.HandleScrollMouseEnter();
+        }
     }
 
     internal void InvokeMouseLeave(in PlatformMouseEvent platformMouseEvent)
     {
-        Console.WriteLine($"[{this}] - Exit");
-        //this.MouseLeaveEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
+        this.MouseLeaveEvent?.Invoke(this.CreateEvent(platformMouseEvent, false));
 
-        //this.HandleMouseLeave();
+        if (this.CanScroll)
+        {
+            this.HandleScrollMouseLeave();
+        }
     }
 
     internal void InvokeMouseMoved(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
         this.MouseMovedEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
-        this.HandleScrollMouseMoved(virtualChildIndex);
+
+        if (this.CanScroll)
+        {
+            this.HandleScrollMouseMoved(virtualChildIndex, indirect);
+        }
     }
 
     internal void InvokeMouseOut(in PlatformMouseEvent platformMouseEvent)
@@ -3101,7 +3116,11 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     internal void InvokeMouseUp(in PlatformMouseEvent platformMouseEvent, uint virtualChildIndex, bool indirect)
     {
-        this.HandleScrollMouseUp(virtualChildIndex);
+        if (this.CanScroll)
+        {
+            this.HandleScrollMouseUp(virtualChildIndex, indirect);
+        }
+
         this.MouseUpEvent?.Invoke(this.CreateEvent(platformMouseEvent, indirect));
     }
 

@@ -229,8 +229,8 @@ public static class ScrollTest
             Style =
             {
                 Border   = new(2, 0, Color.Red),
-                //Overflow = Overflow.Scroll,
-                Size     = new(400),
+                Overflow = Overflow.Scroll,
+                Size     = new(200),
             },
             Children =
             [
@@ -240,7 +240,7 @@ public static class ScrollTest
                     Style =
                     {
                         Border = new(2, 0, Color.Green),
-                        Size   = new(300),
+                        Size   = new(400),
                     }
                 },
                 new FlexBox
