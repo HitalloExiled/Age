@@ -3,26 +3,26 @@ using Age.Numerics;
 
 namespace Age.Platforms.Display;
 
-public delegate void MouseEventHandler(in WindowMouseEvent mouseEvent);
-public delegate void ContextEventHandler(in ContextEvent mouseEvent);
-public delegate void KeyEventHandler(Key key);
-public delegate void InputEventHandler(char character);
+public delegate void WindowMouseEventHandler(in WindowMouseEvent mouseEvent);
+public delegate void WindowContextEventHandler(in WindowContextEvent mouseEvent);
+public delegate void WindowKeyEventHandler(Key key);
+public delegate void WindowInputEventHandler(char character);
 
 public partial class Window : Disposable
 {
     #region events
-    public event MouseEventHandler?   Click;
-    public event Action?              Closed;
-    public event ContextEventHandler? Context;
-    public event MouseEventHandler?   DoubleClick;
-    public event InputEventHandler?   Input;
-    public event KeyEventHandler?     KeyDown;
-    public event KeyEventHandler?     KeyPress;
-    public event KeyEventHandler?     KeyUp;
-    public event MouseEventHandler?   MouseDown;
-    public event MouseEventHandler?   MouseMove;
-    public event MouseEventHandler?   MouseUp;
-    public event MouseEventHandler?   MouseWheel;
+    public event WindowMouseEventHandler?   Click;
+    public event Action?                    Closed;
+    public event WindowContextEventHandler? Context;
+    public event WindowMouseEventHandler?   DoubleClick;
+    public event WindowInputEventHandler?   Input;
+    public event WindowKeyEventHandler?     KeyDown;
+    public event WindowKeyEventHandler?     KeyPress;
+    public event WindowKeyEventHandler?     KeyUp;
+    public event WindowMouseEventHandler?   MouseDown;
+    public event WindowMouseEventHandler?   MouseMove;
+    public event WindowMouseEventHandler?   MouseUp;
+    public event WindowMouseEventHandler?   MouseWheel;
     public event Action?              Resized;
     #endregion events
 

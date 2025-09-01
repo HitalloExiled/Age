@@ -177,7 +177,7 @@ public partial class Window
 
                         User32.ScreenToClient(hwnd, point);
 
-                        var contextEvent = new ContextEvent
+                        var contextEvent = new WindowContextEvent
                         {
                             X       = (ushort)point.x,
                             Y       = (ushort)point.y,

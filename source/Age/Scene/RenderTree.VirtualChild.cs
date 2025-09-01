@@ -37,6 +37,5 @@ public sealed partial class RenderTree
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void HandleMouseUp(in WindowMouseEvent mouseEvent) =>
             this.VirtualParent.HandleVirtualChildMouseUp(mouseEvent, this.VirtualChildIndex);
-
     }
 }

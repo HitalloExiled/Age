@@ -1,4 +1,3 @@
-using Age.Numerics;
 using Age.Styling;
 
 namespace Age.Themes;

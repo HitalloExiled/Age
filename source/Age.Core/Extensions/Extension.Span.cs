@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 namespace Age.Core.Extensions;
 public static partial class Extension
 {
-
     private const int RUN = 32;
 
     private static void InsertionSort<T>(Func<T, T, int> comparer, scoped Span<T> span, int leftIndex, int rightIndex)

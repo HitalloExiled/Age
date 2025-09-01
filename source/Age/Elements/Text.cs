@@ -588,8 +588,6 @@ public sealed class Text : Layoutable
 
     internal void HandleMouseOut()
     {
-        Console.WriteLine($"{this} - HandleMouseOut");
-
         IsHoveringText = false;
 
         if (!this.CanSelect || ActiveText != this)
@@ -605,8 +603,6 @@ public sealed class Text : Layoutable
 
     internal void HandleMouseOver()
     {
-        Console.WriteLine($"{this} - HandleMouseOver");
-
         IsHoveringText = true;
 
         if (!this.CanSelect || IsSelectingText)
@@ -622,7 +618,6 @@ public sealed class Text : Layoutable
 
     internal void HandleActivate()
     {
-        Console.WriteLine($"{this} - HandleActivate");
         if (!this.CanSelect)
         {
             return;
@@ -644,11 +639,7 @@ public sealed class Text : Layoutable
         }
     }
 
-    internal void HandleDeactivate()
-    {
-        Console.WriteLine($"{this} - HandleDeactivate");
-        ActiveText = null;
-    }
+    internal void HandleDeactivate() => ActiveText = null;
 
     internal void PropagateSelection(uint characterPosition)
     {

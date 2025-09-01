@@ -1,4 +1,4 @@
-namespace Age.Extensions;
+namespace Age.Core.Extensions;
 
 public static partial class Extension
 {

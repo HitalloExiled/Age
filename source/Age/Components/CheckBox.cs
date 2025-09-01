@@ -31,7 +31,7 @@ public class CheckBox : Element
 
     public bool Readonly { get; set; }
 
-    public CheckBoxState State
+    public new CheckBoxState State
     {
         get;
         set

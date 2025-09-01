@@ -1,5 +1,3 @@
-using Age.Core.Extensions;
-
 namespace Age.Elements;
 
 internal partial record struct ComposedPath
