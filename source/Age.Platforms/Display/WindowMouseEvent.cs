@@ -2,7 +2,7 @@ using Age.Core.Extensions;
 
 namespace Age.Platforms.Display;
 
-public struct MouseEvent
+public struct WindowMouseEvent
 {
     public ushort         X;
     public ushort         Y;

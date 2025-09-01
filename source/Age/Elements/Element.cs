@@ -18,7 +18,7 @@ using static Age.Shaders.CanvasShader;
 using AgeInput             = Age.Input;
 using Key                  = Age.Platforms.Display.Key;
 using PlatformContextEvent = Age.Platforms.Display.ContextEvent;
-using WindowMouseEvent     = Age.Platforms.Display.MouseEvent;
+using WindowMouseEvent     = Age.Platforms.Display.WindowMouseEvent;
 
 namespace Age.Elements;
 
@@ -1768,11 +1768,6 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
 
     private void HandleMouseWheel(in WindowMouseEvent mouseEvent)
     {
-        if (!this.IsHovered)
-        {
-            return;
-        }
-
         if (!this.IsScrollable)
         {
             for (var element = this; element != null; element = element.ComposedParentElement)

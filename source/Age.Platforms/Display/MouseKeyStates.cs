@@ -3,6 +3,7 @@ namespace Age.Platforms.Display;
 [Flags]
 public enum MouseKeyStates
 {
+    None         = 0,
     LeftButton   = 0x0001,
     RightButton  = 0x0002,
     Shift        = 0x0004,

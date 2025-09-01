@@ -23,12 +23,13 @@ public sealed partial class RenderTree : NodeTree
     private Buffer                     buffer = null!;
     private ulong                      bufferVersion;
     private CanvasIndexRenderGraphPass canvasIndexRenderGraphPass = null!;
-    private VirtualChild?              lastFocusedVirtualChild;
-    private Element?                   lastFocusedElement;
-    private Text?                      lastFocusedText;
-    private Element?                   lastHoveredElement;
-    private Text?                      lastHoveredText;
-    private VirtualChild?              lastHoveredVirtualChild;
+    private Element?                   focusedElement;
+    private Text?                      focusedText;
+    private Element?                   hoveredElement;
+    private Text?                      hoveredText;
+    private VirtualChild?              hoveredVirtualChild;
+    private Element?                   pressedElement;
+    private VirtualChild?              pressedVirtualChild;
 
     internal List<Node>    Nodes    { get; } = new(256);
     internal List<Scene3D> Scenes3D { get; } = [];
@@ -175,38 +176,38 @@ public sealed partial class RenderTree : NodeTree
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void DiscardDanglingHoveredNodes()
     {
-        if (this.lastHoveredElement?.IsConnected == false)
+        if (this.hoveredElement?.IsConnected == false)
         {
-            this.lastHoveredElement = null;
+            this.hoveredElement = null;
         }
 
-        if (this.lastHoveredText?.IsConnected == false)
+        if (this.hoveredText?.IsConnected == false)
         {
-            this.lastHoveredText = null;
+            this.hoveredText = null;
         }
 
-        if (this.lastHoveredVirtualChild?.IsConnected == false)
+        if (this.hoveredVirtualChild?.IsConnected == false)
         {
-            this.lastHoveredText = null;
+            this.hoveredText = null;
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void DiscardDanglingFocusedNodes()
     {
-        if (this.lastFocusedElement?.IsConnected == false)
+        if (this.focusedElement?.IsConnected == false)
         {
-            this.lastFocusedElement = null;
+            this.focusedElement = null;
         }
 
-        if (this.lastFocusedText?.IsConnected == false)
+        if (this.focusedText?.IsConnected == false)
         {
-            this.lastFocusedText = null;
+            this.focusedText = null;
         }
 
-        if (this.lastFocusedVirtualChild?.IsConnected == false)
+        if (this.pressedVirtualChild?.IsConnected == false)
         {
-            this.lastFocusedText = null;
+            this.focusedText = null;
         }
     }
 
@@ -256,7 +257,7 @@ public sealed partial class RenderTree : NodeTree
         }
     }
 
-    private void OnDoubleClick(in MouseEvent mouseEvent)
+    private void OnDoubleClick(in WindowMouseEvent mouseEvent)
     {
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var virtualChildIndex);
 
@@ -277,13 +278,13 @@ public sealed partial class RenderTree : NodeTree
 
     private void OnKeyDown(Key key)
     {
-        if (key == Key.C && Input.IsKeyPressed(Key.Control) && this.lastFocusedText?.CopySelected() is string selectedText)
+        if (key == Key.C && Input.IsKeyPressed(Key.Control) && this.focusedText?.CopySelected() is string selectedText)
         {
             this.Window.SetClipboardData(selectedText);
         }
     }
 
-    private void OnMouseDown(in MouseEvent mouseEvent)
+    private void OnMouseDown(in WindowMouseEvent mouseEvent)
     {
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var virtualChildIndex);
 
@@ -299,23 +300,21 @@ public sealed partial class RenderTree : NodeTree
             {
                 text.HandleActivate();
 
-                var textVirtualChildIndex = text == node ? virtualChildIndex : 0;
-
-                if (mouseEvent.KeyStates.HasFlags(MouseKeyStates.Shift) && this.lastFocusedText == text)
+                if (mouseEvent.KeyStates.HasFlags(MouseKeyStates.Shift) && this.focusedText == text)
                 {
-                    text.HandleMouseDown(mouseEvent, textVirtualChildIndex, false);
+                    text.HandleVirtualChildMouseDown(mouseEvent, virtualChildIndex, false);
                 }
                 else
                 {
-                    this.lastFocusedText?.ClearSelection();
+                    this.focusedText?.ClearSelection();
 
-                    text.HandleMouseDown(mouseEvent, textVirtualChildIndex, true);
+                    text.HandleVirtualChildMouseDown(mouseEvent, virtualChildIndex, true);
                 }
 
-                if (this.lastFocusedText != text)
+                if (this.focusedText != text)
                 {
-                    this.lastFocusedText?.ClearCaret();
-                    this.lastFocusedText = text;
+                    this.focusedText?.ClearCaret();
+                    this.focusedText = text;
                 }
             }
         }
@@ -323,19 +322,19 @@ public sealed partial class RenderTree : NodeTree
         {
             element = node as Element;
 
-            if (element == null || (element != this.lastFocusedElement && !Element.IsScrollControl(virtualChildIndex)))
+            if (element == null || (element != this.focusedElement && !Element.IsScrollControl(virtualChildIndex)))
             {
-                if (this.lastFocusedText != null)
+                if (this.focusedText != null)
                 {
                     if (mouseEvent.IsPrimaryButtonPressed)
                     {
-                        this.lastFocusedText.ClearSelection();
+                        this.focusedText.ClearSelection();
                     }
 
-                    this.lastFocusedText.ClearCaret();
+                    this.focusedText.ClearCaret();
                 }
 
-                this.lastFocusedText = null;
+                this.focusedText = null;
             }
         }
 
@@ -345,23 +344,25 @@ public sealed partial class RenderTree : NodeTree
             {
                 var virtualChild = new VirtualChild(element, virtualChildIndex);
 
-                this.lastFocusedVirtualChild = virtualChild;
+                this.pressedVirtualChild = virtualChild;
 
                 virtualChild.HandleMouseDown(mouseEvent);
             }
             else
             {
-                this.lastFocusedVirtualChild = null;
+                this.pressedVirtualChild = null;
+
+                this.pressedElement = element;
 
                 if (mouseEvent.IsPrimaryButtonPressed)
                 {
                     element.InvokeActivate();
                 }
 
-                if (this.lastFocusedElement != element)
+                if (this.focusedElement != element)
                 {
-                    this.lastFocusedElement?.InvokeBlur(mouseEvent);
-                    this.lastFocusedElement = element;
+                    this.focusedElement?.InvokeBlur(mouseEvent);
+                    this.focusedElement = element;
                 }
 
                 if (!element.IsFocused)
@@ -374,14 +375,14 @@ public sealed partial class RenderTree : NodeTree
         }
         else
         {
-            this.lastFocusedVirtualChild = null;
+            this.pressedVirtualChild = null;
 
-            this.lastFocusedElement?.InvokeBlur(mouseEvent);
-            this.lastFocusedElement = null;
+            this.focusedElement?.InvokeBlur(mouseEvent);
+            this.focusedElement = null;
         }
     }
 
-    private unsafe void OnMouseMove(in MouseEvent mouseEvent)
+    private unsafe void OnMouseMove(in WindowMouseEvent mouseEvent)
     {
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var virtualChildIndex);
 
@@ -396,10 +397,10 @@ public sealed partial class RenderTree : NodeTree
             {
                 var virtualChild = new VirtualChild(element, virtualChildIndex);
 
-                if (virtualChild != this.lastHoveredVirtualChild)
+                if (virtualChild != this.hoveredVirtualChild)
                 {
-                    this.lastHoveredVirtualChild?.HandleMouseOut(mouseEvent);
-                    this.lastHoveredVirtualChild = virtualChild;
+                    this.hoveredVirtualChild?.HandleMouseOut(mouseEvent);
+                    this.hoveredVirtualChild = virtualChild;
 
                     virtualChild.HandleMouseOver(mouseEvent);
                 }
@@ -408,16 +409,16 @@ public sealed partial class RenderTree : NodeTree
             }
             else
             {
-                this.lastHoveredVirtualChild?.HandleMouseOut(mouseEvent);
-                this.lastHoveredVirtualChild = null;
+                this.hoveredVirtualChild?.HandleMouseOut(mouseEvent);
+                this.hoveredVirtualChild = null;
 
-                if (this.lastHoveredElement != element)
+                if (this.hoveredElement != element)
                 {
-                    if (this.lastHoveredElement != null)
+                    if (this.hoveredElement != null)
                     {
-                        this.lastHoveredElement.InvokeMouseOut(mouseEvent);
+                        this.hoveredElement.InvokeMouseOut(mouseEvent);
 
-                        Element.GetComposedPathBetween(this.leftToAncestor, this.rightToAncestor, element, this.lastHoveredElement);
+                        Element.GetComposedPathBetween(this.leftToAncestor, this.rightToAncestor, element, this.hoveredElement);
 
                         var limit = this.rightToAncestor.Count - 1;
 
@@ -441,7 +442,7 @@ public sealed partial class RenderTree : NodeTree
 
                     element.InvokeMouseOver(mouseEvent);
 
-                    this.lastHoveredElement = element;
+                    this.hoveredElement = element;
                 }
 
                 element.InvokeMouseMoved(mouseEvent, element != node);
@@ -449,40 +450,37 @@ public sealed partial class RenderTree : NodeTree
         }
         else
         {
-            this.lastHoveredVirtualChild?.HandleMouseOut(mouseEvent);
+            this.hoveredVirtualChild?.HandleMouseOut(mouseEvent);
 
-            if (this.lastHoveredElement != null)
+            if (this.hoveredElement != null)
             {
-                this.lastHoveredElement.InvokeMouseOut(mouseEvent);
+                this.hoveredElement.InvokeMouseOut(mouseEvent);
 
-                for (var current = this.lastHoveredElement; current != null; current = current.ComposedParentElement)
+                for (var current = this.hoveredElement; current != null; current = current.ComposedParentElement)
                 {
                     current.InvokeMouseLeave(mouseEvent);
                 }
             }
 
-            this.lastHoveredElement = null;
+            this.hoveredElement = null;
         }
 
         if (text != null)
         {
-            if (text == this.lastFocusedText)
+            if (this.hoveredText != text)
             {
-                text.HandleMouseMove(mouseEvent, text == node ? virtualChildIndex : 0);
-            }
-
-            if (this.lastHoveredText != text)
-            {
-                this.lastHoveredText?.HandleMouseOut();
-                this.lastHoveredText = text;
+                this.hoveredText?.HandleMouseOut();
+                this.hoveredText = text;
 
                 text.HandleMouseOver();
             }
+
+            text.HandleVirtualChildMouseMove(mouseEvent, virtualChildIndex);
         }
         else
         {
-            this.lastHoveredText?.HandleMouseOut();
-            this.lastHoveredText = null;
+            this.hoveredText?.HandleMouseOut();
+            this.hoveredText = null;
         }
 
         if (!Layoutable.IsSelectingText && element == null && text == null)
@@ -491,7 +489,7 @@ public sealed partial class RenderTree : NodeTree
         }
     }
 
-    private void OnMouseUp(in MouseEvent mouseEvent)
+    private void OnMouseUp(in WindowMouseEvent mouseEvent)
     {
         var node = this.GetNode(mouseEvent.X, mouseEvent.Y, out var virtualChildIndex);
 
@@ -514,36 +512,35 @@ public sealed partial class RenderTree : NodeTree
             }
             else
             {
-                if (this.lastFocusedElement == element)
+                if (this.pressedElement == element)
                 {
                     element.InvokeClick(mouseEvent, indirect);
                 }
 
                 element.InvokeMouseUp(mouseEvent, indirect);
             }
-
-            this.lastFocusedElement?.InvokeMouseRelease(mouseEvent, indirect);
-            this.lastFocusedVirtualChild?.HandleMouseRelease(mouseEvent);
         }
 
-        this.lastFocusedElement?.InvokeDeactivate();
-        this.lastFocusedText?.HandleDeactivate();
+        this.pressedElement?.InvokeMouseRelease(mouseEvent, node != this.pressedElement);
+        this.pressedElement = null;
+
+        this.pressedVirtualChild?.HandleMouseRelease(mouseEvent);
+        this.pressedVirtualChild = null;
+
+        this.focusedElement?.InvokeDeactivate();
+        this.focusedText?.HandleDeactivate();
 
         if (wasSelectingText != Layoutable.IsSelectingText)
         {
-            this.lastHoveredElement      = null;
-            this.lastHoveredText         = null;
-            this.lastHoveredVirtualChild = null;
+            this.hoveredElement      = null;
+            this.hoveredText         = null;
+            this.hoveredVirtualChild = null;
 
             this.OnMouseMove(mouseEvent);
         }
-
-        this.lastFocusedElement      = null;
-        this.lastFocusedText         = null;
-        this.lastFocusedVirtualChild = null;
     }
 
-    private void OnMouseWheel(in MouseEvent mouseEvent)
+    private void OnMouseWheel(in WindowMouseEvent mouseEvent)
     {
         var mouseLocalPosition = Input.GetMousePosition();
 

@@ -25,19 +25,19 @@ public static class Input
     private static void OnKeyUp(Key key) =>
         keys.Remove(key);
 
-    private static void OnMouseDown(in MouseEvent mouseEvent) =>
+    private static void OnMouseDown(in WindowMouseEvent mouseEvent) =>
         mouseButtons.TryAdd(mouseEvent.Button, currentIteration);
 
-    private static void OnMouseMove(in MouseEvent mouseEvent)
+    private static void OnMouseMove(in WindowMouseEvent mouseEvent)
     {
         previousMousePosition = mousePosition;
         mousePosition = new(mouseEvent.X, mouseEvent.Y);
     }
 
-    private static void OnMouseUp(in MouseEvent mouseEvent) =>
+    private static void OnMouseUp(in WindowMouseEvent mouseEvent) =>
         mouseButtons.Remove(mouseEvent.Button);
 
-    private static void OnMouseWheel(in MouseEvent mouseEvent) =>
+    private static void OnMouseWheel(in WindowMouseEvent mouseEvent) =>
         mouseWheel = mouseEvent.Delta;
 
     internal static void ListenInputEvents(Window window)

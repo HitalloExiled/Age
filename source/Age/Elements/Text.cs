@@ -588,12 +588,14 @@ public sealed class Text : Layoutable
 
     internal void HandleMouseOut()
     {
-        if (!this.CanSelect || IsScrolling)
+        Console.WriteLine($"{this} - HandleMouseOut");
+
+        IsHoveringText = false;
+
+        if (!this.CanSelect || ActiveText != this)
         {
             return;
         }
-
-        IsHoveringText = false;
 
         if (IsSelectingText)
         {
@@ -603,12 +605,14 @@ public sealed class Text : Layoutable
 
     internal void HandleMouseOver()
     {
-        if (!this.CanSelect || IsScrolling)
+        Console.WriteLine($"{this} - HandleMouseOver");
+
+        IsHoveringText = true;
+
+        if (!this.CanSelect || IsSelectingText)
         {
             return;
         }
-
-        IsHoveringText = true;
 
         this.SetCursor(Cursor.Text);
     }
@@ -618,15 +622,16 @@ public sealed class Text : Layoutable
 
     internal void HandleActivate()
     {
+        Console.WriteLine($"{this} - HandleActivate");
         if (!this.CanSelect)
         {
             return;
         }
 
-        IsSelectingText = true;
+        ActiveText = this;
     }
 
-    private void WindowOnMouseMove(in MouseEvent mouseEvent)
+    private void WindowOnMouseMove(in WindowMouseEvent mouseEvent)
     {
         if (mouseEvent.IsHoldingPrimaryButton)
         {
@@ -639,8 +644,11 @@ public sealed class Text : Layoutable
         }
     }
 
-    internal void HandleDeactivate() =>
-        IsSelectingText = false;
+    internal void HandleDeactivate()
+    {
+        Console.WriteLine($"{this} - HandleDeactivate");
+        ActiveText = null;
+    }
 
     internal void PropagateSelection(uint characterPosition)
     {
@@ -887,9 +895,9 @@ public sealed class Text : Layoutable
         }
     }
 
-    internal void HandleMouseDown(in MouseEvent mouseEvent, uint virtualChildIndex, bool focus)
+    internal void HandleVirtualChildMouseDown(in WindowMouseEvent mouseEvent, uint virtualChildIndex, bool focus)
     {
-        if (!this.CanSelect || virtualChildIndex == default)
+        if (ActiveText != this)
         {
             return;
         }
@@ -904,9 +912,9 @@ public sealed class Text : Layoutable
         }
     }
 
-    internal void HandleMouseMove(in MouseEvent mouseEvent, uint virtualChildIndex)
+    internal void HandleVirtualChildMouseMove(in WindowMouseEvent mouseEvent, uint virtualChildIndex)
     {
-        if (!this.CanSelect || IsScrolling || virtualChildIndex == default)
+        if (ActiveText != this)
         {
             return;
         }
@@ -919,7 +927,7 @@ public sealed class Text : Layoutable
 
     private void UpdateSelection(ushort x, ushort y, uint character)
     {
-        if (!this.CanSelect)
+        if (ActiveText != this)
         {
             return;
         }

@@ -3,7 +3,7 @@ using Age.Numerics;
 
 namespace Age.Platforms.Display;
 
-public delegate void MouseEventHandler(in MouseEvent mouseEvent);
+public delegate void MouseEventHandler(in WindowMouseEvent mouseEvent);
 public delegate void ContextEventHandler(in ContextEvent mouseEvent);
 public delegate void KeyEventHandler(Key key);
 public delegate void InputEventHandler(char character);

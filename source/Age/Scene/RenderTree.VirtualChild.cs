@@ -15,27 +15,27 @@ public sealed partial class RenderTree
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void HandleMouseDown(in MouseEvent mouseEvent) =>
+        public readonly void HandleMouseDown(in WindowMouseEvent mouseEvent) =>
             this.VirtualParent.HandleVirtualChildMouseDown(mouseEvent, this.VirtualChildIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void HandleMouseMoved(in MouseEvent mouseEvent) =>
+        public readonly void HandleMouseMoved(in WindowMouseEvent mouseEvent) =>
             this.VirtualParent.HandleVirtualChildMouseMoved(mouseEvent, this.VirtualChildIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void HandleMouseOut(in MouseEvent mouseEvent) =>
+        public readonly void HandleMouseOut(in WindowMouseEvent mouseEvent) =>
             this.VirtualParent.HandleVirtualChildMouseOut(mouseEvent, this.VirtualChildIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void HandleMouseOver(in MouseEvent mouseEvent) =>
+        public readonly void HandleMouseOver(in WindowMouseEvent mouseEvent) =>
             this.VirtualParent.HandleVirtualChildMouseOver(mouseEvent, this.VirtualChildIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void HandleMouseRelease(in MouseEvent mouseEvent) =>
+        public readonly void HandleMouseRelease(in WindowMouseEvent mouseEvent) =>
             this.VirtualParent.HandleVirtualChildMouseRelease(mouseEvent, this.VirtualChildIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void HandleMouseUp(in MouseEvent mouseEvent) =>
+        public readonly void HandleMouseUp(in WindowMouseEvent mouseEvent) =>
             this.VirtualParent.HandleVirtualChildMouseUp(mouseEvent, this.VirtualChildIndex);
 
     }
