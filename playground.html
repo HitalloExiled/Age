@@ -97,9 +97,10 @@
 
         #parent {
             border: solid 2px red;
+            overflow: scroll;
             height: 400px;
             width: 400px;
-            pointer-events: none;
+            /* pointer-events: none; */
         }
         #child-1 {
             border: solid 2px green;
@@ -174,9 +175,12 @@
         // element.addEventListener('mouseout', event => console.log(`#${event.target.id} [out]`));
     }
 
-    addEvent(parent);
-    addEvent(child1);
-    addEvent(child2);
+    parent.addEventListener("mouseup", event => console.log(`#${event.target.id} [mouseup]`))
+    parent.addEventListener("pointerup", event => console.log(`#${event.target.id} [pointerup]`))
+
+    // addEvent(parent);
+    // addEvent(child1);
+    // addEvent(child2);
 
 </script>
 </html>

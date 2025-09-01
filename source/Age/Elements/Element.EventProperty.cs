@@ -21,7 +21,8 @@ public abstract partial class Element
         MouseMoved    = 1 << 13,
         MouseOut      = 1 << 14,
         MouseOver     = 1 << 15,
-        MouseUp       = 1 << 16,
-        MouseWheel    = 1 << 17,
+        MouseRelease  = 1 << 16,
+        MouseUp       = 1 << 17,
+        MouseWheel    = 1 << 18,
     }
 }
