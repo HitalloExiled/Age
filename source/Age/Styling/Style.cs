@@ -1,3 +1,6 @@
+using System.Runtime.CompilerServices;
+using Age.Core;
+using Age.Core.Extensions;
 using Age.Core.Interfaces;
 using Age.Numerics;
 using Age.Platforms.Display;
@@ -184,13 +187,34 @@ public record Style : IPoolable
     void IPoolable.Reset() =>
         this.Clear();
 
-    private void Set<T>(ref T? field, T? value, StyleProperty property)
+    private void SetAndInvoke<T>(ref T? field, in T? value, StyleProperty property)
     {
-        if (!EqualityComparer<T>.Default.Equals(field, value))
-        {
-            field = value;
+        field = value;
 
-            PropertyChanged?.Invoke(property);
+        PropertyChanged?.Invoke(property);
+    }
+
+    private void Set<T>(ref T? field, in T? value, StyleProperty property) where T : unmanaged
+    {
+        if (!Unsafe.Equal(field, value))
+        {
+            this.SetAndInvoke(ref field, value, property);
+        }
+    }
+
+    private void Set<T>(ref T? field, T? value, StyleProperty property) where T : IEquatable<T>
+    {
+        if (!(field is null ? value is null : field.Equals(value)))
+        {
+            this.SetAndInvoke(ref field, value, property);
+        }
+    }
+
+    private void Set<T>(ref T[]? field, T[]? value, StyleProperty property)
+    {
+        if (field != value)
+        {
+            this.SetAndInvoke(ref field, value, property);
         }
     }
 
