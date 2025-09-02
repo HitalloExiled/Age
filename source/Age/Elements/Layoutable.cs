@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Age.Core;
+using Age.Elements.Enumerators;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Scene;
@@ -20,16 +21,18 @@ public abstract class Layoutable : Spatial2D
     private protected virtual StencilLayer? ContentStencilLayer { get; }
     private protected virtual Transform2D   LayoutTransform => Transform2D.CreateTranslated(this.Offset);
 
-    internal static Text? ActiveText        { get; set; }
-    internal static bool  IsHoveringText    { get; set; }
-    internal static bool  IsHoveringScrollX { get; set; }
-    internal static bool  IsHoveringScrollY { get; set; }
-    internal static bool  IsScrollingX      { get; set; }
-    internal static bool  IsScrollingY      { get; set; }
+    protected static Element? ActiveScrollTarget { get; set; }
+    protected static Text?    ActiveText         { get; set; }
+    protected static bool     IsHoveringText     { get; set; }
+    protected static bool     IsHoveringScrollX  { get; set; }
+    protected static bool     IsHoveringScrollY  { get; set; }
+    protected static bool     IsScrollingX       { get; set; }
+    protected static bool     IsScrollingY       { get; set; }
+
+    protected static bool IsHoveringScroll => IsHoveringScrollX || IsHoveringScrollY;
+    protected static bool IsScrolling      => IsScrollingX      || IsScrollingY;
 
     internal static bool IsSelectingText  => ActiveText != null;
-    internal static bool IsHoveringScroll => IsHoveringScrollX || IsHoveringScrollY;
-    internal static bool IsScrolling      => IsScrollingX      || IsScrollingY;
 
     internal bool IsDirty { get; private set; }
 
@@ -234,6 +237,187 @@ public abstract class Layoutable : Spatial2D
         }
     }
 
+    internal static Layoutable? GetCommonComposedAncestor(Layoutable left, Layoutable right)
+    {
+        var leftComposedParentElement  = left.ComposedParentElement;
+        var rightComposedParentElement = right.ComposedParentElement;
+
+        if (leftComposedParentElement == rightComposedParentElement)
+        {
+            return leftComposedParentElement;
+        }
+        else if (left == rightComposedParentElement)
+        {
+            return left;
+        }
+        else if (leftComposedParentElement == right)
+        {
+            return right;
+        }
+        else
+        {
+            var leftDepth  = 0;
+            var rightDepth = 0;
+
+            Layoutable? currentLeft  = leftComposedParentElement;
+            Layoutable? currentRight = rightComposedParentElement;
+
+            while (currentLeft != null)
+            {
+                leftDepth++;
+                currentLeft  = currentLeft.ComposedParentElement;
+            }
+
+            while (currentRight != null)
+            {
+                rightDepth++;
+                currentRight  = currentRight.ComposedParentElement;
+            }
+
+            currentLeft  = left;
+            currentRight = right;
+
+            while (leftDepth > rightDepth)
+            {
+                currentLeft = currentLeft.ComposedParentElement!;
+                leftDepth--;
+            }
+
+            while (leftDepth < rightDepth)
+            {
+                currentRight = currentRight.ComposedParentElement!;
+                rightDepth--;
+            }
+
+            while (currentLeft != currentRight)
+            {
+                currentLeft  = currentLeft.ComposedParentElement;
+                currentRight = currentRight.ComposedParentElement;
+
+                if (currentLeft == null || currentRight == null)
+                {
+                    return null;
+                }
+            }
+
+            return currentLeft;
+        }
+    }
+
+    internal static ComposedPath GetComposedPathBetween(Layoutable left, Layoutable right)
+    {
+        var leftToAncestor  = new List<Layoutable>();
+        var rightToAncestor = new List<Layoutable>();
+
+        GetComposedPathBetween(leftToAncestor, rightToAncestor, left, right);
+
+        return new(leftToAncestor, rightToAncestor);
+    }
+
+    internal static void GetComposedPathBetween(List<Layoutable> leftToAncestor, List<Layoutable> rightToAncestor, Layoutable left, Layoutable right)
+    {
+        const string ERROR_MESSAGE = "The specified elements do not share a common ancestor in the composed tree.";
+
+        leftToAncestor.Clear();
+        rightToAncestor.Clear();
+
+        leftToAncestor.Add(left);
+        rightToAncestor.Add(right);
+
+        var leftComposedParentElement  = left.ComposedParentElement;
+        var rightComposedParentElement = right.ComposedParentElement;
+
+        if (leftComposedParentElement == rightComposedParentElement)
+        {
+            if (leftComposedParentElement == null)
+            {
+                throw new InvalidOperationException(ERROR_MESSAGE);
+            }
+
+            leftToAncestor.Add(leftComposedParentElement);
+            rightToAncestor.Add(leftComposedParentElement);
+        }
+        else if (left == rightComposedParentElement)
+        {
+            rightToAncestor.Add(left);
+        }
+        else if (leftComposedParentElement == right)
+        {
+            leftToAncestor.Add(right);
+        }
+        else
+        {
+            var leftDepth  = 0;
+            var rightDepth = 0;
+
+            Layoutable? currentLeft  = leftComposedParentElement;
+            Layoutable? currentRight = rightComposedParentElement;
+
+            while (currentLeft != null)
+            {
+                leftDepth++;
+                currentLeft = currentLeft.ComposedParentElement;
+            }
+
+            while (currentRight != null)
+            {
+                rightDepth++;
+                currentRight  = currentRight.ComposedParentElement;
+            }
+
+            currentLeft  = left;
+            currentRight = right;
+
+            while (leftDepth > rightDepth)
+            {
+                currentLeft = currentLeft.ComposedParentElement!;
+                leftDepth--;
+
+                leftToAncestor.Add(currentLeft);
+            }
+
+            while (leftDepth < rightDepth)
+            {
+                currentRight = currentRight.ComposedParentElement!;
+                rightDepth--;
+
+                rightToAncestor.Add(currentRight);
+            }
+
+            while (currentLeft != currentRight)
+            {
+                currentLeft  = currentLeft.ComposedParentElement;
+                currentRight = currentRight.ComposedParentElement;
+
+                if (currentLeft == null || currentRight == null)
+                {
+                    leftToAncestor.Clear();
+                    rightToAncestor.Clear();
+
+                    throw new InvalidOperationException(ERROR_MESSAGE);
+                }
+
+                leftToAncestor.Add(currentLeft);
+                rightToAncestor.Add(currentRight);
+            }
+        }
+    }
+
+    internal int GetEffectiveDepth()
+    {
+        var depth = 0;
+
+        var node = this.EffectiveParentElement;
+
+        while (node != null)
+        {
+            depth++;
+            node = node.EffectiveParentElement;
+        }
+
+        return depth;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UpdateDirtyLayout()
     {
@@ -257,4 +441,29 @@ public abstract class Layoutable : Spatial2D
 
         return new(size, position);
     }
+
+    public bool IsComposedAncestor(Layoutable other)
+    {
+        if (this == other)
+        {
+            return false;
+        }
+
+        var parent = other.ComposedParentElement;
+
+        while (parent != this)
+        {
+            if (parent == null)
+            {
+                return false;
+            }
+
+            parent = parent.ComposedParentElement;
+        }
+
+        return true;
+    }
+
+    public bool IsComposedDescendent(Layoutable other) =>
+        other.IsComposedAncestor(this);
 }

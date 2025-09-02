@@ -2,11 +2,11 @@ using Age.Core.Extensions;
 
 namespace Age.Elements;
 
-internal partial record struct ComposedPath(List<Element> LeftToAncestor, List<Element> RightToAncestor)
+internal partial record struct ComposedPath(List<Layoutable> LeftToAncestor, List<Layoutable> RightToAncestor)
 {
-    public readonly ReadOnlySpan<Element> GetElements()
+    public readonly ReadOnlySpan<Layoutable> GetElements()
     {
-        var elements = new List<Element>();
+        var elements = new List<Layoutable>();
 
         var enumerator = this.GetEnumerator();
 

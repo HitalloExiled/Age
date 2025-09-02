@@ -4,19 +4,19 @@ internal partial record struct ComposedPath
 {
     internal ref struct Enumerator
     {
-        private readonly ReadOnlySpan<Element> leftToAncestor;
-        private readonly ReadOnlySpan<Element> rightToAncestor;
+        private readonly ReadOnlySpan<Layoutable> leftToAncestor;
+        private readonly ReadOnlySpan<Layoutable> rightToAncestor;
 
         private int  index = -1;
         private bool left  = true;
 
-        public Enumerator(ReadOnlySpan<Element> leftToAncestor, ReadOnlySpan<Element> rightToAncestor)
+        public Enumerator(ReadOnlySpan<Layoutable> leftToAncestor, ReadOnlySpan<Layoutable> rightToAncestor)
         {
-            this.leftToAncestor = leftToAncestor;
+            this.leftToAncestor  = leftToAncestor;
             this.rightToAncestor = rightToAncestor;
         }
 
-        public readonly Element Current => this.left ? this.leftToAncestor[this.index] : this.rightToAncestor[this.index];
+        public readonly Layoutable Current => this.left ? this.leftToAncestor[this.index] : this.rightToAncestor[this.index];
 
         public bool MoveNext()
         {

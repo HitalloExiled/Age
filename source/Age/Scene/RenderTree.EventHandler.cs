@@ -9,8 +9,8 @@ internal delegate void WindowMouseEventHandler(in WindowMouseEvent windowMouseEv
 
 public sealed partial class RenderTree
 {
-    private readonly List<Element> leftToAncestor  = [];
-    private readonly List<Element> rightToAncestor = [];
+    private readonly List<Layoutable> leftToAncestor  = [];
+    private readonly List<Layoutable> rightToAncestor = [];
 
     internal event WindowMouseEventHandler? MouseDown;
     internal event WindowMouseEventHandler? MouseUp;
@@ -273,13 +273,13 @@ public sealed partial class RenderTree
                     {
                         this.hoveredElement.InvokeMouseOut(mouseEvent);
 
-                        Element.GetComposedPathBetween(this.leftToAncestor, this.rightToAncestor, element, this.hoveredElement);
+                        Layoutable.GetComposedPathBetween(this.leftToAncestor, this.rightToAncestor, element, this.hoveredElement);
 
                         var limit = this.rightToAncestor.Count - 1;
 
                         for (var i = 0; i < limit; i++)
                         {
-                            this.rightToAncestor[i].InvokeMouseLeave(mouseEvent);
+                            (this.rightToAncestor[i] as Element)?.InvokeMouseLeave(mouseEvent);
                         }
                     }
                     else
@@ -292,7 +292,7 @@ public sealed partial class RenderTree
 
                     for (var i = this.leftToAncestor.Count - 2; i > -1; i--)
                     {
-                        this.leftToAncestor[i].InvokeMouseEnter(mouseEvent);
+                        (this.leftToAncestor[i] as Element)?.InvokeMouseEnter(mouseEvent);
                     }
 
                     element.InvokeMouseOver(mouseEvent);

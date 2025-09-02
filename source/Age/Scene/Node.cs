@@ -759,29 +759,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         return true;
     }
 
-    public bool IsDescendent(Node other)
-    {
-        //if (this == other)
-        //{
-        //    return false;
-        //}
-
-        //var parent = other;
-
-        //while (parent != this.Parent)
-        //{
-        //    parent = parent.Parent;
-
-        //    if (parent == null)
-        //    {
-        //        return false;
-        //    }
-        //}
-
-        //return this.Parent == parent;
-
-        return other.IsAncestor(this);
-    }
+    public bool IsDescendent(Node other) =>
+        other.IsAncestor(this);
 
     public void PrependChild(Node node) =>
         this.AppendOrPrepend(node, false);
