@@ -334,13 +334,20 @@ public sealed partial class RenderTree
         }
         else
         {
+            if (!Layoutable.IsSelectingText)
+            {
+                if (element == null)
+                {
+                    this.Window.Cursor = default;
+                }
+                else if (this.hoveredText?.ComposedParentElement == element)
+                {
+                    element.ApplyCursor();
+                }
+            }
+
             this.hoveredText?.HandleMouseOut();
             this.hoveredText = null;
-        }
-
-        if (!Layoutable.IsSelectingText && element == null && text == null)
-        {
-            this.Window.Cursor = default;
         }
     }
 
