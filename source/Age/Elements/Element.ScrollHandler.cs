@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using Age.Commands;
 using Age.Core.Extensions;
@@ -25,6 +26,8 @@ public abstract partial class Element
     private static readonly Color scrollHoverColor   = (Color.White * 0.6f).WithAlpha(1);
     private static readonly Color scrollDefaultColor = (Color.White * 0.4f).WithAlpha(0.75f);
 
+    private bool IsScrollVisible => this.HasAnyLayoutCommand(LayoutCommand.ScrollX | LayoutCommand.ScrollY);
+
     internal bool CanScroll  => this.CanScrollX || this.CanScrollY;
     internal bool CanScrollX => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollX) == true;
     internal bool CanScrollY => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollY) == true;
@@ -41,14 +44,17 @@ public abstract partial class Element
             {
                 this.contentOffset = value;
 
-                if (this.CanScrollX)
+                if (this.IsScrollVisible)
                 {
-                    this.UpdateScrollXControl();
-                }
+                    if (this.CanScrollX)
+                    {
+                        this.UpdateScrollXControl();
+                    }
 
-                if (this.CanScrollY)
-                {
-                    this.UpdateScrollYControl();
+                    if (this.CanScrollY)
+                    {
+                        this.UpdateScrollYControl();
+                    }
                 }
 
                 this.ownStencilLayer?.MakeChildrenDirty();
@@ -118,6 +124,16 @@ public abstract partial class Element
         this.UpdateScrollYControl(scrollCommand);
     }
 
+    private void DestroyScrollControls()
+    {
+        if (this.layoutCommands.HasAnyFlag(LayoutCommand.ScrollX | LayoutCommand.ScrollY))
+        {
+            this.ReleaseLayoutCommandScrollX();
+            this.ReleaseLayoutCommandScrollY();
+            this.RequestUpdate(false);
+        }
+    }
+
     private float GetScrollXPositionY() =>
         -(this.Boundings.Height - this.border.Top  - SCROLL_DEFAULT_SIZE - SCROLL_DEFAULT_MARGIN);
 
@@ -174,15 +190,17 @@ public abstract partial class Element
 
                 this.SetScrollYActiveStyle();
             }
+
+            ActiveScrollTarget = this;
         }
     }
 
     private void HandleScrollMouseEnter()
     {
-        if (IsScrolling)
+        if (ActiveScrollTarget == this)
         {
             this.RenderTree!.MouseMoved -= this.OnMouseMoved;
-            this.HandleScrollMouseMoved(default);
+            this.HandleScrollMouseMoved();
         }
         else if (this.CanScroll)
         {
@@ -204,9 +222,9 @@ public abstract partial class Element
 
     private void HandleScrollMouseLeave()
     {
-        if (!IsScrolling)
+        if (!IsScrolling || ActiveScrollTarget != this)
         {
-            this.HideScrollControls();
+            this.DestroyScrollControls();
         }
     }
 
@@ -214,15 +232,26 @@ public abstract partial class Element
     {
         if (mouseEvent.IsHoldingPrimaryButton)
         {
-            this.HandleScrollMouseMoved(default);
+            this.HandleScrollMouseMoved();
         }
         else
         {
             IsScrollingX = IsScrollingY = false;
 
-            if (node?.IsDescendent(this) == false)
+            if (node is Element element)
             {
-                this.HideScrollControls();
+                for (var current = this; current != null; current = current.ComposedParentElement)
+                {
+                    if (element == current || element.IsComposedDescendent(current))
+                    {
+                        break;
+                    }
+
+                    if (current.IsScrollable)
+                    {
+                        current.DestroyScrollControls();
+                    }
+                }
             }
 
             this.RenderTree!.MouseMoved -= this.OnMouseMoved;
@@ -260,7 +289,7 @@ public abstract partial class Element
             IsHoveringScrollY = false;
 
             this.RenderTree!.MouseMoved += this.OnMouseMoved;
-            this.HandleScrollMouseMoved(default);
+            this.HandleScrollMouseMoved();
 
             return;
         }
@@ -281,8 +310,13 @@ public abstract partial class Element
         }
     }
 
-    private void HandleScrollMouseMoved(LayoutCommand _)
+    private void HandleScrollMouseMoved()
     {
+        if (ActiveScrollTarget != this || !this.IsScrollVisible)
+        {
+            return;
+        }
+
         var globalDelta = AgeInput.GetMouseDeltaPosition();
         var delta       = (this.Transform.Matrix.ExtractRotation() * new Vector2<float>(globalDelta.X, globalDelta.Y)).ToPoint();
 
@@ -332,16 +366,7 @@ public abstract partial class Element
         }
 
         IsScrollingX = IsScrollingY = false;
-    }
-
-    private void HideScrollControls()
-    {
-        if (this.layoutCommands.HasAnyFlag(LayoutCommand.ScrollX | LayoutCommand.ScrollY))
-        {
-            this.ReleaseLayoutCommandScrollX();
-            this.ReleaseLayoutCommandScrollY();
-            this.RequestUpdate(false);
-        }
+        ActiveScrollTarget = null;
     }
 
     private void SetScrollXActiveStyle()

@@ -50,6 +50,8 @@ public abstract partial class Element
                 break;
         }
 
+        command.StencilLayer = this.StencilLayer;
+
         this.Commands.Insert(index, command);
 
         this.layoutCommands |= layoutCommand;
@@ -95,8 +97,11 @@ public abstract partial class Element
         return BitOperations.PopCount((uint)(this.layoutCommands & mask));
     }
 
+    private bool HasAnyLayoutCommand(LayoutCommand layoutCommands) =>
+        this.layoutCommands.HasAnyFlag(layoutCommands);
+
     private bool HasLayoutCommand(LayoutCommand layoutCommand) =>
-        this.layoutCommands.HasFlags(layoutCommand);
+        this.layoutCommands.HasFlags(layoutCommand); 
 
     private void ReleaseLayoutCommand(LayoutCommand layoutCommand)
     {

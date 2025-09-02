@@ -12,11 +12,11 @@ public abstract partial class Element
         }
     }
 
-    internal void HandleVirtualChildMouseMoved(in WindowMouseEvent _, uint virtualChildIndex)
+    internal void HandleVirtualChildMouseMoved(in WindowMouseEvent _1, uint _2)
     {
         if (this.CanScroll)
         {
-            this.HandleScrollMouseMoved((LayoutCommand)virtualChildIndex);
+            this.HandleScrollMouseMoved();
         }
     }
 
@@ -44,11 +44,8 @@ public abstract partial class Element
         }
     }
 
-    internal void HandleVirtualChildMouseUp(in WindowMouseEvent _, uint virtualChildIndex)
+    internal void HandleVirtualChildMouseUp(in WindowMouseEvent _1, uint _2)
     {
-        // if (this.CanScroll)
-        // {
-        //     this.HandleScrollMouseUp(virtualChildIndex);
-        // }
+        // Just for symmetry
     }
 }

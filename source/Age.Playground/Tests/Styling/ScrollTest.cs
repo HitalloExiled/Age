@@ -1,7 +1,8 @@
-using Age.Numerics;
-using Age.Elements;
-using Age.Styling;
+using System;
 using Age.Components;
+using Age.Elements;
+using Age.Numerics;
+using Age.Styling;
 
 namespace Age.Playground.Tests.Styling;
 
@@ -223,6 +224,8 @@ public static class ScrollTest
             },
         };
 
+        var cat = Path.Join(AppContext.BaseDirectory, "Assets", "Textures", "Cat.jpg");
+
         var scrollParent = new FlexBox
         {
             Name  = "parent",
@@ -239,8 +242,8 @@ public static class ScrollTest
                     Name  = "child-1",
                     Style =
                     {
-                        Border = new(2, 0, Color.Green),
-                        Size   = new(400),
+                        BackgroundColor = Color.Cyan,
+                        Size            = new(100),
                     }
                 },
                 new FlexBox
@@ -248,10 +251,36 @@ public static class ScrollTest
                     Name  = "child-2",
                     Style =
                     {
-                        Border = new(2, 0, Color.Blue),
-                        Size   = new(200),
-                    }
-                }
+                        BackgroundColor = Color.Green,
+                        Overflow        = Overflow.Scroll,
+                        Size            = new(400),
+                    },
+                    Children =
+                    [
+                        new FlexBox
+                        {
+                            Name  = "child-2-1",
+                            Style =
+                            {
+                                BackgroundImage = new()
+                                {
+                                    Uri  = cat,
+                                    Size = ImageSize.Fit(),
+                                },
+                                Size = new(600),
+                            }
+                        },
+                        new FlexBox
+                        {
+                            Name  = "child-2-2",
+                            Style =
+                            {
+                                BackgroundColor = Color.Margenta,
+                                Size            = new(100),
+                            }
+                        }
+                    ]
+                },      
             ]
         };
 

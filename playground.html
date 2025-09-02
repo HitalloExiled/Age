@@ -97,23 +97,58 @@
 
         #parent {
             border: solid 2px red;
-            overflow: scroll;
-            height: 400px;
-            width: 400px;
+            overflow: auto;
+            height: 200px;
+            width: 200px;
             /* pointer-events: none; */
         }
         #child-1 {
-            border: solid 2px green;
-            height: 300px;
-            width: 300px;
-            pointer-events:auto
+            background-color: cyan;
+            height: 100px;
+            width: 100px;
         }
         #child-2 {
-            border: solid 2px blue;
+            background-color: green;
+            overflow: auto;
+            height: 400px;
+            width: 400px;
+        }
+        #child-2-1 {
+            background-color: blue;
+            height: 600px;
+            width: 600px;
+        }
+        #child-2-2 {
+            background-color: magenta;
+            height: 600px;
+            width: 600px;
+        }
+
+        .scroll-container {
+            width: 300px;
             height: 200px;
-            width: 200px;
-            position: relative;
-            /* transform: translateY(150px); */
+            overflow: auto; /* enable scrolling */
+            scrollbar-width: none; /* hide scrollbar in Firefox */
+        }
+
+        .scroll-container::-webkit-scrollbar {
+            width: 8px; /* scrollbar size */
+            height: 8px;
+            background: transparent; /* fully transparent by default */
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: transparent; /* hide thumb initially */
+            border-radius: 4px;
+        }
+
+            /* Show scrollbar on hover */
+        .scroll-container:hover::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.4); /* visible thumb */
+        }
+
+        .scroll-container:hover::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1); /* optional track */
         }
     </style>
 </head>
@@ -160,7 +195,10 @@
     <div id="parent">
         <div id="child-1">
         </div>
-        <div id="child-2"></div>
+        <div id="child-2">
+            <div id="child-2-1"></div>
+            <div id="child-2-2"></div>
+        </div>
     </div>
 </body>
 <script>
