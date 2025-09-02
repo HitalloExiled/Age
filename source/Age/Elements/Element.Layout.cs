@@ -1159,16 +1159,7 @@ public abstract partial class Element
             }
         }
 
-        if (!command.TextureMap.IsDefault)
-        {
-            TextureStorage.Singleton.Release(command.TextureMap.Texture);
-        }
-
-        if (command.StencilLayer != null)
-        {
-            command.StencilLayer.Dispose();
-            command.StencilLayer.Detach();
-        }
+        DisposeLayoutCommandImage(command);
 
         this.ReleaseLayoutCommandImage();
     }

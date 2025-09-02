@@ -6,6 +6,20 @@ namespace Age.Elements;
 
 public abstract partial class Element
 {
+    private static void DisposeLayoutCommandImage(RectCommand command)
+    {
+        if (!command.TextureMap.IsDefault)
+        {
+            TextureStorage.Singleton.Release(command.TextureMap.Texture);
+        }
+
+        if (command.StencilLayer != null)
+        {
+            command.StencilLayer.Dispose();
+            command.StencilLayer.Detach();
+        }
+    }
+
     protected override void OnChildAppended(Node child)
     {
         if (this.ShadowTree == null && child is Layoutable layoutable)
@@ -93,9 +107,9 @@ public abstract partial class Element
     {
         this.ownStencilLayer?.Dispose();
 
-        if (this.TryGetLayoutCommandImage(out var layoutCommandImage) && !layoutCommandImage.TextureMap.IsDefault)
+        if (this.TryGetLayoutCommandImage(out var layoutCommandImage))
         {
-            TextureStorage.Singleton.Release(layoutCommandImage.TextureMap.Texture);
+            DisposeLayoutCommandImage(layoutCommandImage);
         }
 
         foreach (var item in this.Commands)
