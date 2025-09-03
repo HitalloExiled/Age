@@ -6,14 +6,14 @@ namespace Age.Elements;
 
 public abstract partial class Element
 {
-    private static void DisposeLayoutCommandImage(RectCommand command)
+    private void DisposeLayoutCommandImage(RectCommand command)
     {
         if (!command.TextureMap.IsDefault)
         {
             TextureStorage.Singleton.Release(command.TextureMap.Texture);
         }
 
-        if (command.StencilLayer != null)
+        if (command.StencilLayer?.Owner == this)
         {
             command.StencilLayer.Dispose();
             command.StencilLayer.Detach();
@@ -109,7 +109,7 @@ public abstract partial class Element
 
         if (this.TryGetLayoutCommandImage(out var layoutCommandImage))
         {
-            DisposeLayoutCommandImage(layoutCommandImage);
+            this.DisposeLayoutCommandImage(layoutCommandImage);
         }
 
         foreach (var item in this.Commands)

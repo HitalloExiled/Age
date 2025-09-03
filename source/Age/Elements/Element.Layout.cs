@@ -1159,8 +1159,7 @@ public abstract partial class Element
             }
         }
 
-        DisposeLayoutCommandImage(command);
-
+        this.DisposeLayoutCommandImage(command);
         this.ReleaseLayoutCommandImage();
     }
 
