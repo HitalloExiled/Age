@@ -590,7 +590,7 @@ public sealed class Text : Layoutable
     {
         IsHoveringText = false;
 
-        if (!this.CanSelect || ActiveText != this)
+        if (ActiveText != this || !this.CanSelect)
         {
             return;
         }
@@ -605,7 +605,7 @@ public sealed class Text : Layoutable
     {
         IsHoveringText = true;
 
-        if (!this.CanSelect || IsSelectingText)
+        if (IsScrolling || IsSelectingText || !this.CanSelect)
         {
             return;
         }

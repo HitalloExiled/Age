@@ -440,6 +440,7 @@ public abstract partial class Element
     internal void InvokeMouseWheel(in WindowMouseEvent mouseEvent)
     {
         this.MouseWheelEvent?.Invoke(this.CreateEvent(mouseEvent, false));
+
         this.HandleMouseWheel(mouseEvent);
     }
 

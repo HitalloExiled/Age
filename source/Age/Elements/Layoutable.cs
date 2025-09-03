@@ -30,8 +30,8 @@ public abstract class Layoutable : Spatial2D
     protected static bool     IsScrollingY       { get; set; }
 
     protected static bool IsHoveringScroll => IsHoveringScrollX || IsHoveringScrollY;
-    protected static bool IsScrolling      => IsScrollingX      || IsScrollingY;
 
+    internal static bool IsScrolling      => IsScrollingX || IsScrollingY;
     internal static bool IsSelectingText  => ActiveText != null;
 
     internal bool IsDirty { get; private set; }

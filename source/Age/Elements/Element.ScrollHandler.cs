@@ -63,6 +63,24 @@ public abstract partial class Element
         }
     }
 
+    private void ApplyScroll(in WindowMouseEvent mouseEvent)
+    {
+        if (this.CanScrollX && mouseEvent.KeyStates.HasFlags(MouseKeyStates.Shift))
+        {
+            this.Scroll = this.Scroll with
+            {
+                X = (uint)(this.contentOffset.X + (10 * -mouseEvent.Delta))
+            };
+        }
+        else if (this.CanScrollY)
+        {
+            this.Scroll = this.Scroll with
+            {
+                Y = (uint)(this.Scroll.Y + (10 * -mouseEvent.Delta))
+            };
+        }
+    }
+
     private void DrawScrollControls()
     {
         var canDrawScrollX = this.CanScrollX && this.size.Width < this.content.Width;
@@ -142,34 +160,19 @@ public abstract partial class Element
 
     private void HandleMouseWheel(in WindowMouseEvent mouseEvent)
     {
-        if (!this.IsScrollable)
+        if (IsScrolling)
         {
-            for (var element = this; element != null; element = element.ComposedParentElement)
-            {
-                if (element.IsScrollable)
-                {
-                    element.HandleMouseWheel(mouseEvent);
-
-                    break;
-                }
-            }
-
             return;
         }
 
-        if (this.CanScrollX && mouseEvent.KeyStates.HasFlags(MouseKeyStates.Shift))
+        for (var element = this; element != null; element = element.ComposedParentElement)
         {
-            this.Scroll = this.Scroll with
+            if (element.IsScrollable)
             {
-                X = (uint)(this.contentOffset.X + (10 * -mouseEvent.Delta))
-            };
-        }
-        else if (this.CanScrollY)
-        {
-            this.Scroll = this.Scroll with
-            {
-                Y = (uint)(this.Scroll.Y + (10 * -mouseEvent.Delta))
-            };
+                element.ApplyScroll(mouseEvent);
+
+                break;
+            }
         }
     }
 

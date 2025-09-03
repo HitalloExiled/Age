@@ -280,12 +280,12 @@ public static class ScrollTest
                             }
                         }
                     ]
-                },      
+                },
             ]
         };
 
         canvas.AppendChild(scrollParent);
-        // canvas.AppendChild(loren);
+        canvas.AppendChild(loren);
         //canvas.AppendChild(conteiner1);
         //canvas.AppendChild(conteiner2);
         //canvas.AppendChild(conteiner3);

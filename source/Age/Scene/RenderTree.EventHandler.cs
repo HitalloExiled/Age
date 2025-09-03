@@ -363,6 +363,7 @@ public sealed partial class RenderTree
         var element = text?.ComposedParentElement ?? node as Element;
 
         var wasSelectingText = Layoutable.IsSelectingText;
+        var wasScrolling     = Layoutable.IsScrolling;
 
         if (element != null)
         {
@@ -394,7 +395,7 @@ public sealed partial class RenderTree
         this.focusedElement?.InvokeDeactivate();
         this.focusedText?.HandleDeactivate();
 
-        if (wasSelectingText != Layoutable.IsSelectingText)
+        if (wasSelectingText != Layoutable.IsSelectingText || wasScrolling != Layoutable.IsScrolling)
         {
             this.hoveredElement      = null;
             this.hoveredText         = null;
