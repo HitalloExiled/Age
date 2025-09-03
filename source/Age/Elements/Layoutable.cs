@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using Age.Core;
-using Age.Elements.Enumerators;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Scene;
@@ -21,17 +20,17 @@ public abstract class Layoutable : Spatial2D
     private protected virtual StencilLayer? ContentStencilLayer { get; }
     private protected virtual Transform2D   LayoutTransform => Transform2D.CreateTranslated(this.Offset);
 
-    protected static Element? ActiveScrollTarget { get; set; }
-    protected static Text?    ActiveText         { get; set; }
-    protected static bool     IsHoveringText     { get; set; }
-    protected static bool     IsHoveringScrollX  { get; set; }
-    protected static bool     IsHoveringScrollY  { get; set; }
-    protected static bool     IsScrollingX       { get; set; }
-    protected static bool     IsScrollingY       { get; set; }
+    protected static Element? ActiveScrollBarTarget { get; set; }
+    protected static Text?    ActiveText            { get; set; }
+    protected static bool     IsDraggingScrollBarX  { get; set; }
+    protected static bool     IsDraggingScrollBarY  { get; set; }
+    protected static bool     IsHoveringScrollBarX  { get; set; }
+    protected static bool     IsHoveringScrollBarY  { get; set; }
+    protected static bool     IsHoveringText        { get; set; }
 
-    protected static bool IsHoveringScroll => IsHoveringScrollX || IsHoveringScrollY;
+    protected static bool IsHoveringScrollBar => IsHoveringScrollBarX || IsHoveringScrollBarY;
 
-    internal static bool IsScrolling      => IsScrollingX || IsScrollingY;
+    internal static bool IsDraggingScrollBar => IsDraggingScrollBarX || IsDraggingScrollBarY;
     internal static bool IsSelectingText  => ActiveText != null;
 
     internal bool IsDirty { get; private set; }

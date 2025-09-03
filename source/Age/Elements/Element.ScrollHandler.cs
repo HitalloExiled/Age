@@ -14,19 +14,19 @@ namespace Age.Elements;
 
 public abstract partial class Element
 {
-    private const uint SCROLL_DEFAULT_BORDER_RADIUS = 3;
-    private const uint SCROLL_DEFAULT_MARGIN        = 9;
-    private const uint SCROLL_DEFAULT_SIZE          = 6;
-    private const uint SCROLL_HOVER_BORDER_RADIUS   = 6;
-    private const uint SCROLL_HOVER_MARGIN          = 6;
-    private const uint SCROLL_HOVER_SIZE            = 12;
-    private const uint SCROLL_MARGIN                = 6;
+    private const uint SCROLL_BAR_DEFAULT_BORDER_RADIUS = 3;
+    private const uint SCROLL_BAR_DEFAULT_MARGIN        = 9;
+    private const uint SCROLL_BAR_DEFAULT_SIZE          = 6;
+    private const uint SCROLL_BAR_HOVER_BORDER_RADIUS   = 6;
+    private const uint SCROLL_BAR_HOVER_MARGIN          = 6;
+    private const uint SCROLL_BAR_HOVER_SIZE            = 12;
+    private const uint SCROLL_BAR_MARGIN                = 6;
 
-    private static readonly Color scrollActiveColor  = (Color.White * 0.8f).WithAlpha(1);
-    private static readonly Color scrollHoverColor   = (Color.White * 0.6f).WithAlpha(1);
-    private static readonly Color scrollDefaultColor = (Color.White * 0.4f).WithAlpha(0.75f);
+    private static readonly Color scrollBarActiveColor  = (Color.White * 0.8f).WithAlpha(1);
+    private static readonly Color scrollBarHoverColor   = (Color.White * 0.6f).WithAlpha(1);
+    private static readonly Color scrollBarDefaultColor = (Color.White * 0.4f).WithAlpha(0.75f);
 
-    private bool IsScrollVisible => this.HasAnyLayoutCommand(LayoutCommand.ScrollX | LayoutCommand.ScrollY);
+    private bool IsScrollBarVisible => this.HasAnyLayoutCommand(LayoutCommand.ScrollBarX | LayoutCommand.ScrollBarY);
 
     internal bool CanScroll  => this.CanScrollX || this.CanScrollY;
     internal bool CanScrollX => this.ComputedStyle.Overflow?.HasFlags(Overflow.ScrollX) == true;
@@ -44,16 +44,16 @@ public abstract partial class Element
             {
                 this.contentOffset = value;
 
-                if (this.IsScrollVisible)
+                if (this.IsScrollBarVisible)
                 {
                     if (this.CanScrollX)
                     {
-                        this.UpdateScrollXControl();
+                        this.UpdateScrollBarXControl();
                     }
 
                     if (this.CanScrollY)
                     {
-                        this.UpdateScrollYControl();
+                        this.UpdateScrollBarYControl();
                     }
                 }
 
@@ -81,86 +81,86 @@ public abstract partial class Element
         }
     }
 
-    private void DrawScrollControls()
+    private void DrawScrollBarControls()
     {
-        var canDrawScrollX = this.CanScrollX && this.size.Width < this.content.Width;
-        var canDrawScrollY = this.CanScrollY && this.size.Height < this.content.Height;
+        var canDrawScrollBarX = this.CanScrollX && this.size.Width < this.content.Width;
+        var canDrawScrollBarY = this.CanScrollY && this.size.Height < this.content.Height;
 
-        if (canDrawScrollX)
+        if (canDrawScrollBarX)
         {
-            this.DrawScrollXControl();
+            this.DrawScrollBarXControl();
         }
 
-        if (canDrawScrollY)
+        if (canDrawScrollBarY)
         {
-            this.DrawScrollYControl();
+            this.DrawScrollBarYControl();
         }
 
-        if (canDrawScrollX || canDrawScrollY)
+        if (canDrawScrollBarX || canDrawScrollBarY)
         {
             this.RequestUpdate(false);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DrawScrollXControl()
+    private void DrawScrollBarXControl()
     {
-        var offset         = this.CanScrollY ? SCROLL_HOVER_SIZE : 0;
+        var offset         = this.CanScrollY ? SCROLL_BAR_HOVER_SIZE : 0;
         var scale          = 1 - ((float)this.Boundings.Width / this.content.Width);
-        var scrollBarWidth = this.Boundings.Width - this.border.Horizontal - offset - (SCROLL_MARGIN * 2);
+        var scrollBarWidth = this.Boundings.Width - this.border.Horizontal - offset - (SCROLL_BAR_MARGIN * 2);
 
-        var scrollCommand = this.AllocateLayoutCommandScrollX();
+        var scrollBarCommand = this.AllocateLayoutCommandScrollBarX();
 
-        scrollCommand.Border    = new(0, SCROLL_DEFAULT_BORDER_RADIUS, default);
-        scrollCommand.Color     = scrollDefaultColor;
-        scrollCommand.Flags     = Flags.ColorAsBackground;
-        scrollCommand.Metadata  = scrollBarWidth;
-        scrollCommand.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollX);
-        scrollCommand.Size      = new(float.Max(scrollBarWidth * scale, SCROLL_DEFAULT_SIZE * 2), SCROLL_DEFAULT_SIZE);
-        scrollCommand.Transform = Transform2D.CreateTranslated(this.border.Left + SCROLL_MARGIN, this.GetScrollXPositionY());
+        scrollBarCommand.Border    = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
+        scrollBarCommand.Color     = scrollBarDefaultColor;
+        scrollBarCommand.Flags     = Flags.ColorAsBackground;
+        scrollBarCommand.Metadata  = scrollBarWidth;
+        scrollBarCommand.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarX);
+        scrollBarCommand.Size      = new(float.Max(scrollBarWidth * scale, SCROLL_BAR_DEFAULT_SIZE * 2), SCROLL_BAR_DEFAULT_SIZE);
+        scrollBarCommand.Transform = Transform2D.CreateTranslated(this.border.Left + SCROLL_BAR_MARGIN, this.GetScrollBarXPositionY());
 
-        this.UpdateScrollXControl(scrollCommand);
+        this.UpdateScrollBarXControl(scrollBarCommand);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DrawScrollYControl()
+    private void DrawScrollBarYControl()
     {
-        var offset          = this.CanScrollX ? SCROLL_HOVER_SIZE : 0;
-        var scrollBarHeight = this.Boundings.Height - this.border.Vertical - offset - (SCROLL_MARGIN * 2);
+        var offset          = this.CanScrollX ? SCROLL_BAR_HOVER_SIZE : 0;
+        var scrollBarHeight = this.Boundings.Height - this.border.Vertical - offset - (SCROLL_BAR_MARGIN * 2);
         var scale           = 1 - ((float)this.Boundings.Height / this.content.Height);
 
-        var scrollCommand = this.AllocateLayoutCommandScrollY();
+        var scrollBarCommand = this.AllocateLayoutCommandScrollBarY();
 
-        scrollCommand.Border    = new(0, SCROLL_DEFAULT_BORDER_RADIUS, default);
-        scrollCommand.Color     = scrollDefaultColor;
-        scrollCommand.Flags     = Flags.ColorAsBackground;
-        scrollCommand.Metadata  = scrollBarHeight;
-        scrollCommand.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollY);
-        scrollCommand.Size      = new(SCROLL_DEFAULT_SIZE, float.Max(scrollBarHeight * scale, SCROLL_DEFAULT_SIZE * 2));
-        scrollCommand.Transform = Transform2D.CreateTranslated(this.GetScrollYPositionX(), -(this.border.Top + SCROLL_MARGIN));
+        scrollBarCommand.Border    = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
+        scrollBarCommand.Color     = scrollBarDefaultColor;
+        scrollBarCommand.Flags     = Flags.ColorAsBackground;
+        scrollBarCommand.Metadata  = scrollBarHeight;
+        scrollBarCommand.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarY);
+        scrollBarCommand.Size      = new(SCROLL_BAR_DEFAULT_SIZE, float.Max(scrollBarHeight * scale, SCROLL_BAR_DEFAULT_SIZE * 2));
+        scrollBarCommand.Transform = Transform2D.CreateTranslated(this.GetScrollBarYPositionX(), -(this.border.Top + SCROLL_BAR_MARGIN));
 
-        this.UpdateScrollYControl(scrollCommand);
+        this.UpdateScrollBarYControl(scrollBarCommand);
     }
 
-    private void DestroyScrollControls()
+    private void DestroyScrollBarControls()
     {
-        if (this.layoutCommands.HasAnyFlag(LayoutCommand.ScrollX | LayoutCommand.ScrollY))
+        if (this.layoutCommands.HasAnyFlag(LayoutCommand.ScrollBarX | LayoutCommand.ScrollBarY))
         {
-            this.ReleaseLayoutCommandScrollX();
-            this.ReleaseLayoutCommandScrollY();
+            this.ReleaseLayoutCommandScrollBarX();
+            this.ReleaseLayoutCommandScrollBarY();
             this.RequestUpdate(false);
         }
     }
 
-    private float GetScrollXPositionY() =>
-        -(this.Boundings.Height - this.border.Top  - SCROLL_DEFAULT_SIZE - SCROLL_DEFAULT_MARGIN);
+    private float GetScrollBarXPositionY() =>
+        -(this.Boundings.Height - this.border.Top  - SCROLL_BAR_DEFAULT_SIZE - SCROLL_BAR_DEFAULT_MARGIN);
 
-    private float GetScrollYPositionX() =>
-        this.Boundings.Width - this.border.Left - SCROLL_DEFAULT_SIZE - SCROLL_DEFAULT_MARGIN;
+    private float GetScrollBarYPositionX() =>
+        this.Boundings.Width - this.border.Left - SCROLL_BAR_DEFAULT_SIZE - SCROLL_BAR_DEFAULT_MARGIN;
 
     private void HandleMouseWheel(in WindowMouseEvent mouseEvent)
     {
-        if (IsScrolling)
+        if (IsDraggingScrollBar)
         {
             return;
         }
@@ -176,38 +176,38 @@ public abstract partial class Element
         }
     }
 
-    private void HandleScrollMouseDown(in WindowMouseEvent windowMouseEvent, LayoutCommand layoutCommand)
+    private void HandleScrollBarMouseDown(in WindowMouseEvent windowMouseEvent, LayoutCommand layoutCommand)
     {
-        if (windowMouseEvent.IsHoldingPrimaryButton && layoutCommand is LayoutCommand.ScrollX or LayoutCommand.ScrollY)
+        if (windowMouseEvent.IsHoldingPrimaryButton && layoutCommand is LayoutCommand.ScrollBarX or LayoutCommand.ScrollBarY)
         {
-            if (layoutCommand == LayoutCommand.ScrollX)
+            if (layoutCommand == LayoutCommand.ScrollBarX)
             {
-                IsScrollingX = true;
+                IsDraggingScrollBarX = true;
 
-                this.SetScrollXActiveStyle();
+                this.SetScrollBarXActiveStyle();
             }
 
-            if (layoutCommand == LayoutCommand.ScrollY)
+            if (layoutCommand == LayoutCommand.ScrollBarY)
             {
-                IsScrollingY = true;
+                IsDraggingScrollBarY = true;
 
-                this.SetScrollYActiveStyle();
+                this.SetScrollBarYActiveStyle();
             }
 
-            ActiveScrollTarget = this;
+            ActiveScrollBarTarget = this;
         }
     }
 
-    private void HandleScrollMouseEnter()
+    private void HandleScrollBarMouseEnter()
     {
-        if (ActiveScrollTarget == this)
+        if (ActiveScrollBarTarget == this)
         {
             this.RenderTree!.MouseMoved -= this.OnMouseMoved;
-            this.HandleScrollMouseMoved();
+            this.HandleScrollBarMouseMoved();
         }
         else if (this.CanScroll)
         {
-            this.DrawScrollControls();
+            this.DrawScrollBarControls();
         }
         else
         {
@@ -215,7 +215,7 @@ public abstract partial class Element
             {
                 if (element.CanScroll)
                 {
-                    element.DrawScrollXControl();
+                    element.DrawScrollBarXControl();
 
                     break;
                 }
@@ -223,11 +223,11 @@ public abstract partial class Element
         }
     }
 
-    private void HandleScrollMouseLeave()
+    private void HandleScrollBarMouseLeave()
     {
-        if (!IsScrolling || ActiveScrollTarget != this)
+        if (!IsDraggingScrollBar || ActiveScrollBarTarget != this)
         {
-            this.DestroyScrollControls();
+            this.DestroyScrollBarControls();
         }
     }
 
@@ -235,11 +235,11 @@ public abstract partial class Element
     {
         if (mouseEvent.IsHoldingPrimaryButton)
         {
-            this.HandleScrollMouseMoved();
+            this.HandleScrollBarMouseMoved();
         }
         else
         {
-            IsScrollingX = IsScrollingY = false;
+            IsDraggingScrollBarX = IsDraggingScrollBarY = false;
 
             if (node is Element element)
             {
@@ -252,7 +252,7 @@ public abstract partial class Element
 
                     if (current.IsScrollable)
                     {
-                        current.DestroyScrollControls();
+                        current.DestroyScrollBarControls();
                     }
                 }
             }
@@ -261,61 +261,61 @@ public abstract partial class Element
         }
     }
 
-    private void HandleScrollMouseOver(LayoutCommand layoutCommand)
+    private void HandleScrollBarMouseOver(LayoutCommand layoutCommand)
     {
-        if (IsScrolling)
+        if (IsDraggingScrollBar)
         {
             return;
         }
 
         this.SetCursor(Cursor.Arrow);
 
-        if (!IsHoveringScrollX && layoutCommand == LayoutCommand.ScrollX)
+        if (!IsHoveringScrollBarX && layoutCommand == LayoutCommand.ScrollBarX)
         {
-            IsHoveringScrollX = true;
+            IsHoveringScrollBarX = true;
 
-            this.SetScrollXHoverStyle();
+            this.SetScrollBarXHoverStyle();
         }
-        else if (!IsHoveringScrollY && layoutCommand == LayoutCommand.ScrollY)
+        else if (!IsHoveringScrollBarY && layoutCommand == LayoutCommand.ScrollBarY)
         {
-            IsHoveringScrollY = true;
+            IsHoveringScrollBarY = true;
 
-            this.SetScrollYHoverStyle();
+            this.SetScrollBarYHoverStyle();
         }
     }
 
-    private void HandleScrollMouseOut(LayoutCommand _)
+    private void HandleScrollBarMouseOut(LayoutCommand _)
     {
-        if (IsScrolling)
+        if (IsDraggingScrollBar)
         {
-            IsHoveringScrollX = false;
-            IsHoveringScrollY = false;
+            IsHoveringScrollBarX = false;
+            IsHoveringScrollBarY = false;
 
             this.RenderTree!.MouseMoved += this.OnMouseMoved;
-            this.HandleScrollMouseMoved();
+            this.HandleScrollBarMouseMoved();
 
             return;
         }
 
         this.SetCursor(Cursor.Arrow);
 
-        if (IsHoveringScrollX)
+        if (IsHoveringScrollBarX)
         {
-            IsHoveringScrollX = false;
+            IsHoveringScrollBarX = false;
 
-            this.SetScrollXDefaultStyle();
+            this.SetScrollBarXDefaultStyle();
         }
-        else if (IsHoveringScrollY)
+        else if (IsHoveringScrollBarY)
         {
-            IsHoveringScrollY = false;
+            IsHoveringScrollBarY = false;
 
-            this.SetScrollYDefaultStyle();
+            this.SetScrollBarYDefaultStyle();
         }
     }
 
-    private void HandleScrollMouseMoved()
+    private void HandleScrollBarMouseMoved()
     {
-        if (ActiveScrollTarget != this || !this.IsScrollVisible)
+        if (ActiveScrollBarTarget != this || !this.IsScrollBarVisible)
         {
             return;
         }
@@ -323,177 +323,177 @@ public abstract partial class Element
         var globalDelta = AgeInput.GetMouseDeltaPosition();
         var delta       = (this.Transform.Matrix.ExtractRotation() * new Vector2<float>(globalDelta.X, globalDelta.Y)).ToPoint();
 
-        if (IsScrollingX)
+        if (IsDraggingScrollBarX)
         {
-            this.UpdateScrollXOffset(delta);
+            this.UpdateScrollBarXOffset(delta);
         }
-        else if (IsScrollingY)
+        else if (IsDraggingScrollBarY)
         {
-            this.UpdateScrollYOffset(delta);
+            this.UpdateScrollBarYOffset(delta);
         }
     }
 
-    private void HandleScrollMouseRelease(in WindowMouseEvent windowMouseEvent, LayoutCommand layoutCommand)
+    private void HandleScrollBarMouseRelease(LayoutCommand layoutCommand)
     {
-        if (!IsHoveringScroll)
+        if (!IsHoveringScrollBar)
         {
-            this.SetCursor(this.ComputedStyle.Cursor);
-            this.SetScrollXDefaultStyle();
-            this.SetScrollYDefaultStyle();
+            this.ApplyCursor();
+            this.SetScrollBarXDefaultStyle();
+            this.SetScrollBarYDefaultStyle();
         }
-        else if (IsHoveringScrollX)
+        else if (IsHoveringScrollBarX)
         {
-            if (layoutCommand == LayoutCommand.ScrollX)
+            if (layoutCommand == LayoutCommand.ScrollBarX)
             {
-                IsHoveringScrollX = true;
+                IsHoveringScrollBarX = true;
 
-                this.SetScrollXHoverStyle();
+                this.SetScrollBarXHoverStyle();
             }
             else
             {
-                this.SetScrollXDefaultStyle();
+                this.SetScrollBarXDefaultStyle();
             }
         }
-        else if (IsHoveringScrollY)
+        else if (IsHoveringScrollBarY)
         {
-            if (layoutCommand == LayoutCommand.ScrollY)
+            if (layoutCommand == LayoutCommand.ScrollBarY)
             {
-                IsHoveringScrollY = true;
+                IsHoveringScrollBarY = true;
 
-                this.SetScrollYHoverStyle();
+                this.SetScrollBarYHoverStyle();
             }
             else
             {
-                this.SetScrollYDefaultStyle();
+                this.SetScrollBarYDefaultStyle();
             }
         }
 
-        IsScrollingX = IsScrollingY = false;
-        ActiveScrollTarget = null;
+        IsDraggingScrollBarX  = IsDraggingScrollBarY = false;
+        ActiveScrollBarTarget = null;
     }
 
-    private void SetScrollXActiveStyle()
+    private void SetScrollBarXActiveStyle()
     {
-        var commandScrollX = this.GetLayoutCommandScrollX();
+        var commandScrollBar = this.GetLayoutCommandScrollBarX();
 
-        commandScrollX.Color = scrollActiveColor;
+        commandScrollBar.Color = scrollBarActiveColor;
 
         this.RequestUpdate(false);
     }
 
-    private void SetScrollXDefaultStyle()
+    private void SetScrollBarXDefaultStyle()
     {
-        var commandScrollX = this.GetLayoutCommandScrollX();
+        var commandScrollBar = this.GetLayoutCommandScrollBarX();
 
-        commandScrollX.Color     = scrollDefaultColor;
-        commandScrollX.Size      = commandScrollX.Size with { Height = SCROLL_DEFAULT_SIZE };
-        commandScrollX.Transform = Transform2D.CreateTranslated(commandScrollX.Transform.Position.X, this.GetScrollXPositionY());
-        commandScrollX.Border    = new(0, SCROLL_DEFAULT_BORDER_RADIUS, default);
+        commandScrollBar.Color     = scrollBarDefaultColor;
+        commandScrollBar.Size      = commandScrollBar.Size with { Height = SCROLL_BAR_DEFAULT_SIZE };
+        commandScrollBar.Transform = Transform2D.CreateTranslated(commandScrollBar.Transform.Position.X, this.GetScrollBarXPositionY());
+        commandScrollBar.Border    = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
 
         this.RequestUpdate(false);
     }
 
-    private void SetScrollXHoverStyle()
+    private void SetScrollBarXHoverStyle()
     {
-        var commandScrollX = this.GetLayoutCommandScrollX();
+        var commandScrollBar = this.GetLayoutCommandScrollBarX();
 
-        commandScrollX.Color     = scrollHoverColor;
-        commandScrollX.Size      = commandScrollX.Size with { Height = SCROLL_HOVER_SIZE };
-        commandScrollX.Transform = Transform2D.CreateTranslated(commandScrollX.Transform.Position.X, -(this.Boundings.Height - this.border.Top - SCROLL_HOVER_SIZE - SCROLL_HOVER_MARGIN));
-        commandScrollX.Border    = new(0, SCROLL_HOVER_BORDER_RADIUS, default);
+        commandScrollBar.Color     = scrollBarHoverColor;
+        commandScrollBar.Size      = commandScrollBar.Size with { Height = SCROLL_BAR_HOVER_SIZE };
+        commandScrollBar.Transform = Transform2D.CreateTranslated(commandScrollBar.Transform.Position.X, -(this.Boundings.Height - this.border.Top - SCROLL_BAR_HOVER_SIZE - SCROLL_BAR_HOVER_MARGIN));
+        commandScrollBar.Border    = new(0, SCROLL_BAR_HOVER_BORDER_RADIUS, default);
 
         this.RequestUpdate(false);
     }
 
-    private void SetScrollYActiveStyle()
+    private void SetScrollBarYActiveStyle()
     {
-        var commandScrollY = this.GetLayoutCommandScrollY();
+        var commandScrollBar = this.GetLayoutCommandScrollBarY();
 
-        commandScrollY.Color = scrollActiveColor;
+        commandScrollBar.Color = scrollBarActiveColor;
 
         this.RequestUpdate(false);
     }
 
-    private void SetScrollYDefaultStyle()
+    private void SetScrollBarYDefaultStyle()
     {
-        var commandScrollY = this.GetLayoutCommandScrollY();
+        var commandScrollBar = this.GetLayoutCommandScrollBarY();
 
-        commandScrollY.Color     = scrollDefaultColor;
-        commandScrollY.Size      = commandScrollY.Size with { Width = SCROLL_DEFAULT_SIZE };
-        commandScrollY.Transform = Transform2D.CreateTranslated(this.GetScrollYPositionX(), commandScrollY.Transform.Position.Y);
-        commandScrollY.Border    = new(0, SCROLL_DEFAULT_BORDER_RADIUS, default);
+        commandScrollBar.Color     = scrollBarDefaultColor;
+        commandScrollBar.Size      = commandScrollBar.Size with { Width = SCROLL_BAR_DEFAULT_SIZE };
+        commandScrollBar.Transform = Transform2D.CreateTranslated(this.GetScrollBarYPositionX(), commandScrollBar.Transform.Position.Y);
+        commandScrollBar.Border    = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
 
         this.RequestUpdate(false);
     }
 
-    private void SetScrollYHoverStyle()
+    private void SetScrollBarYHoverStyle()
     {
-        var commandScrollY = this.GetLayoutCommandScrollY();
+        var commandScrollBar = this.GetLayoutCommandScrollBarY();
 
-        commandScrollY.Color     = scrollHoverColor;
-        commandScrollY.Size      = commandScrollY.Size with { Width = SCROLL_HOVER_SIZE };
-        commandScrollY.Transform = Transform2D.CreateTranslated(this.Boundings.Width - this.border.Left - SCROLL_HOVER_SIZE - SCROLL_HOVER_MARGIN, commandScrollY.Transform.Position.Y);
-        commandScrollY.Border    = new(0, SCROLL_HOVER_BORDER_RADIUS, default);
+        commandScrollBar.Color     = scrollBarHoverColor;
+        commandScrollBar.Size      = commandScrollBar.Size with { Width = SCROLL_BAR_HOVER_SIZE };
+        commandScrollBar.Transform = Transform2D.CreateTranslated(this.Boundings.Width - this.border.Left - SCROLL_BAR_HOVER_SIZE - SCROLL_BAR_HOVER_MARGIN, commandScrollBar.Transform.Position.Y);
+        commandScrollBar.Border    = new(0, SCROLL_BAR_HOVER_BORDER_RADIUS, default);
 
         this.RequestUpdate(false);
     }
 
-    private void UpdateScrollXOffset(in Point<float> delta)
+    private void UpdateScrollBarXOffset(in Point<float> delta)
     {
-        var scrollCommand = this.GetLayoutCommandScrollX();
-        var controlOffset = this.border.Left + SCROLL_MARGIN;
-        var localPosition = scrollCommand.Transform.Position.X - controlOffset;
-        var position      = float.Clamp(localPosition + delta.X, 0, scrollCommand.Metadata - scrollCommand.Size.Width);
-        var ratio         = position / (scrollCommand.Metadata - scrollCommand.Size.Width);
-        var offset        = this.content.Width.ClampSubtract(this.size.Width);
+        var scrollBarCommand = this.GetLayoutCommandScrollBarX();
+        var controlOffset    = this.border.Left + SCROLL_BAR_MARGIN;
+        var localPosition    = scrollBarCommand.Transform.Position.X - controlOffset;
+        var position         = float.Clamp(localPosition + delta.X, 0, scrollBarCommand.Metadata - scrollBarCommand.Size.Width);
+        var ratio            = position / (scrollBarCommand.Metadata - scrollBarCommand.Size.Width);
+        var offset           = this.content.Width.ClampSubtract(this.size.Width);
 
-        scrollCommand.Transform = Transform2D.CreateTranslated(position + controlOffset, scrollCommand.Transform.Position.Y);
+        scrollBarCommand.Transform = Transform2D.CreateTranslated(position + controlOffset, scrollBarCommand.Transform.Position.Y);
 
         this.contentOffset.X = (uint)float.Round(offset * ratio);
 
         this.RequestUpdate(false);
     }
 
-    private void UpdateScrollXControl(RectCommand scrollCommand)
+    private void UpdateScrollBarXControl(RectCommand scrollBarCommand)
     {
         var ratio  = (float)this.contentOffset.X / this.content.Width.ClampSubtract(this.size.Width);
-        var offset = scrollCommand.Metadata - scrollCommand.Size.Width;
+        var offset = scrollBarCommand.Metadata - scrollBarCommand.Size.Width;
 
-        scrollCommand.Transform = Transform2D.CreateTranslated(this.border.Left + SCROLL_MARGIN + (offset * ratio), scrollCommand.Transform.Position.Y);
+        scrollBarCommand.Transform = Transform2D.CreateTranslated(this.border.Left + SCROLL_BAR_MARGIN + (offset * ratio), scrollBarCommand.Transform.Position.Y);
     }
 
-    private void UpdateScrollXControl() =>
-        this.UpdateScrollXControl(this.GetLayoutCommandScrollX());
+    private void UpdateScrollBarXControl() =>
+        this.UpdateScrollBarXControl(this.GetLayoutCommandScrollBarX());
 
-    private void UpdateScrollYOffset(in Point<float> delta)
+    private void UpdateScrollBarYOffset(in Point<float> delta)
     {
-        var scrollCommand = this.GetLayoutCommandScrollY();
-        var controlOffset = this.border.Top                     + SCROLL_MARGIN;
-        var localPosition = -scrollCommand.Transform.Position.Y - controlOffset;
-        var position      = float.Clamp(localPosition           + delta.Y, 0, scrollCommand.Metadata - scrollCommand.Size.Height);
-        var ratio         = position                            / (scrollCommand.Metadata            - scrollCommand.Size.Height);
-        var offset        = this.content.Height.ClampSubtract(this.size.Height);
+        var scrollBarCommand = this.GetLayoutCommandScrollBarY();
+        var controlOffset    = this.border.Top                     + SCROLL_BAR_MARGIN;
+        var localPosition    = -scrollBarCommand.Transform.Position.Y - controlOffset;
+        var position         = float.Clamp(localPosition           + delta.Y, 0, scrollBarCommand.Metadata - scrollBarCommand.Size.Height);
+        var ratio            = position                            / (scrollBarCommand.Metadata            - scrollBarCommand.Size.Height);
+        var offset           = this.content.Height.ClampSubtract(this.size.Height);
 
-        scrollCommand.Transform = Transform2D.CreateTranslated(scrollCommand.Transform.Position.X, -(position + controlOffset));
+        scrollBarCommand.Transform = Transform2D.CreateTranslated(scrollBarCommand.Transform.Position.X, -(position + controlOffset));
 
         this.contentOffset.Y = (uint)float.Round(offset * ratio);
 
         this.RequestUpdate(false);
     }
 
-    private void UpdateScrollYControl(RectCommand scrollCommand)
+    private void UpdateScrollBarYControl(RectCommand scrollBarCommand)
     {
         var ratio  = (float)this.contentOffset.Y / this.content.Height.ClampSubtract(this.size.Height);
-        var offset = scrollCommand.Metadata - scrollCommand.Size.Height;
+        var offset = scrollBarCommand.Metadata - scrollBarCommand.Size.Height;
 
-        scrollCommand.Transform = Transform2D.CreateTranslated(scrollCommand.Transform.Position.X, -(this.border.Top + SCROLL_MARGIN + (offset * ratio)));
+        scrollBarCommand.Transform = Transform2D.CreateTranslated(scrollBarCommand.Transform.Position.X, -(this.border.Top + SCROLL_BAR_MARGIN + (offset * ratio)));
     }
 
-    private void UpdateScrollYControl() =>
-        this.UpdateScrollYControl(this.GetLayoutCommandScrollY());
+    private void UpdateScrollBarYControl() =>
+        this.UpdateScrollBarYControl(this.GetLayoutCommandScrollBarY());
 
-    internal static bool IsScrollControl(uint virtualChildIndex) =>
-        (LayoutCommand)virtualChildIndex is LayoutCommand.ScrollX or LayoutCommand.ScrollY;
+    internal static bool IsScrollBarControl(uint virtualChildIndex) =>
+        (LayoutCommand)virtualChildIndex is LayoutCommand.ScrollBarX or LayoutCommand.ScrollBarY;
 
     public void ScrollTo(in Rect<int> boundings)
     {

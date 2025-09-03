@@ -605,7 +605,7 @@ public sealed class Text : Layoutable
     {
         IsHoveringText = true;
 
-        if (IsScrolling || IsSelectingText || !this.CanSelect)
+        if (IsDraggingScrollBar || IsSelectingText || !this.CanSelect)
         {
             return;
         }

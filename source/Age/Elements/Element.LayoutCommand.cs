@@ -12,11 +12,11 @@ public abstract partial class Element
     [KeyedListKey]
     internal enum LayoutCommand : ushort
     {
-        None    = 0,
-        Box     = 1 << 0,
-        Image   = 1 << 1,
-        ScrollX = 1 << 2,
-        ScrollY = 1 << 3,
+        None       = 0,
+        Box        = 1 << 0,
+        Image      = 1 << 1,
+        ScrollBarX = 1 << 2,
+        ScrollBarY = 1 << 3,
     }
 
     private byte          commandsSeparator;
@@ -67,11 +67,11 @@ public abstract partial class Element
     private RectCommand AllocateLayoutCommandImage() =>
         this.AllocateLayoutCommand(LayoutCommand.Image);
 
-    private RectCommand AllocateLayoutCommandScrollX() =>
-        this.AllocateLayoutCommand(LayoutCommand.ScrollX);
+    private RectCommand AllocateLayoutCommandScrollBarX() =>
+        this.AllocateLayoutCommand(LayoutCommand.ScrollBarX);
 
-    private RectCommand AllocateLayoutCommandScrollY() =>
-        this.AllocateLayoutCommand(LayoutCommand.ScrollY);
+    private RectCommand AllocateLayoutCommandScrollBarY() =>
+        this.AllocateLayoutCommand(LayoutCommand.ScrollBarY);
 
     private RectCommand GetLayoutCommand(LayoutCommand layoutCommand) =>
         this.TryGetLayoutCommand(layoutCommand, out var rectCommand)
@@ -84,11 +84,11 @@ public abstract partial class Element
     private RectCommand GetLayoutCommandImage() =>
         this.GetLayoutCommand(LayoutCommand.Image);
 
-    private RectCommand GetLayoutCommandScrollX() =>
-        this.GetLayoutCommand(LayoutCommand.ScrollX);
+    private RectCommand GetLayoutCommandScrollBarX() =>
+        this.GetLayoutCommand(LayoutCommand.ScrollBarX);
 
-    private RectCommand GetLayoutCommandScrollY() =>
-        this.GetLayoutCommand(LayoutCommand.ScrollY);
+    private RectCommand GetLayoutCommandScrollBarY() =>
+        this.GetLayoutCommand(LayoutCommand.ScrollBarY);
 
     private int GetIndex(LayoutCommand layoutCommand)
     {
@@ -101,7 +101,7 @@ public abstract partial class Element
         this.layoutCommands.HasAnyFlag(layoutCommands);
 
     private bool HasLayoutCommand(LayoutCommand layoutCommand) =>
-        this.layoutCommands.HasFlags(layoutCommand); 
+        this.layoutCommands.HasFlags(layoutCommand);
 
     private void ReleaseLayoutCommand(LayoutCommand layoutCommand)
     {
@@ -128,11 +128,11 @@ public abstract partial class Element
     private void ReleaseLayoutCommandImage() =>
         this.ReleaseLayoutCommand(LayoutCommand.Image);
 
-    private void ReleaseLayoutCommandScrollX() =>
-        this.ReleaseLayoutCommand(LayoutCommand.ScrollX);
+    private void ReleaseLayoutCommandScrollBarX() =>
+        this.ReleaseLayoutCommand(LayoutCommand.ScrollBarX);
 
-    private void ReleaseLayoutCommandScrollY() =>
-        this.ReleaseLayoutCommand(LayoutCommand.ScrollY);
+    private void ReleaseLayoutCommandScrollBarY() =>
+        this.ReleaseLayoutCommand(LayoutCommand.ScrollBarY);
 
     private bool TryGetLayoutCommand(LayoutCommand layoutCommand, [NotNullWhen(true)] out RectCommand? rectCommand)
     {
@@ -154,11 +154,11 @@ public abstract partial class Element
     private bool TryGetLayoutCommandImage([NotNullWhen(true)] out RectCommand? rectCommand) =>
         this.TryGetLayoutCommand(LayoutCommand.Image, out rectCommand);
 
-    private bool TryGetLayoutCommandScrollX([NotNullWhen(true)] out RectCommand? rectCommand) =>
-        this.TryGetLayoutCommand(LayoutCommand.ScrollX, out rectCommand);
+    private bool TryGetLayoutCommandScrollBarX([NotNullWhen(true)] out RectCommand? rectCommand) =>
+        this.TryGetLayoutCommand(LayoutCommand.ScrollBarX, out rectCommand);
 
-    private bool TryGetLayoutCommandScrollY([NotNullWhen(true)] out RectCommand? rectCommand) =>
-        this.TryGetLayoutCommand(LayoutCommand.ScrollY, out rectCommand);
+    private bool TryGetLayoutCommandScrollBarY([NotNullWhen(true)] out RectCommand? rectCommand) =>
+        this.TryGetLayoutCommand(LayoutCommand.ScrollBarY, out rectCommand);
 
     private void UpdateCommands()
     {

@@ -8,7 +8,7 @@ public abstract partial class Element
     {
         if (this.CanScroll)
         {
-            this.HandleScrollMouseDown(windowMouseEvent, (LayoutCommand)virtualChildIndex);
+            this.HandleScrollBarMouseDown(windowMouseEvent, (LayoutCommand)virtualChildIndex);
         }
     }
 
@@ -16,7 +16,7 @@ public abstract partial class Element
     {
         if (this.CanScroll)
         {
-            this.HandleScrollMouseMoved();
+            this.HandleScrollBarMouseMoved();
         }
     }
 
@@ -24,7 +24,7 @@ public abstract partial class Element
     {
         if (this.CanScroll)
         {
-            this.HandleScrollMouseOut((LayoutCommand)virtualChildIndex);
+            this.HandleScrollBarMouseOut((LayoutCommand)virtualChildIndex);
         }
     }
 
@@ -32,15 +32,15 @@ public abstract partial class Element
     {
         if (this.CanScroll)
         {
-            this.HandleScrollMouseOver((LayoutCommand)virtualChildIndex);
+            this.HandleScrollBarMouseOver((LayoutCommand)virtualChildIndex);
         }
     }
 
-    internal void HandleVirtualChildMouseRelease(in WindowMouseEvent windowMouseEvent, uint virtualChildIndex)
+    internal void HandleVirtualChildMouseRelease(in WindowMouseEvent _, uint virtualChildIndex)
     {
         if (this.CanScroll)
         {
-            this.HandleScrollMouseRelease(windowMouseEvent, (LayoutCommand)virtualChildIndex);
+            this.HandleScrollBarMouseRelease((LayoutCommand)virtualChildIndex);
         }
     }
 

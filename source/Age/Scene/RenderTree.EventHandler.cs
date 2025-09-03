@@ -175,7 +175,7 @@ public sealed partial class RenderTree
         {
             element = node as Element;
 
-            if (element == null || (element != this.focusedElement && !Element.IsScrollControl(virtualChildIndex)))
+            if (element == null || (element != this.focusedElement && !Element.IsScrollBarControl(virtualChildIndex)))
             {
                 if (this.focusedText != null)
                 {
@@ -363,7 +363,7 @@ public sealed partial class RenderTree
         var element = text?.ComposedParentElement ?? node as Element;
 
         var wasSelectingText = Layoutable.IsSelectingText;
-        var wasScrolling     = Layoutable.IsScrolling;
+        var wasScrolling     = Layoutable.IsDraggingScrollBar;
 
         if (element != null)
         {
@@ -395,7 +395,7 @@ public sealed partial class RenderTree
         this.focusedElement?.InvokeDeactivate();
         this.focusedText?.HandleDeactivate();
 
-        if (wasSelectingText != Layoutable.IsSelectingText || wasScrolling != Layoutable.IsScrolling)
+        if (wasSelectingText != Layoutable.IsSelectingText || wasScrolling != Layoutable.IsDraggingScrollBar)
         {
             this.hoveredElement      = null;
             this.hoveredText         = null;

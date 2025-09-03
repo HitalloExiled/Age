@@ -134,15 +134,15 @@ public abstract partial class Element
             boxCommand.ZIndex   = zIndex;
         }
 
-        if (this.TryGetLayoutCommandScrollX(out var scrollXCommand))
+        if (this.TryGetLayoutCommandScrollBarX(out var scrollXCommand))
         {
-            scrollXCommand.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollX);
+            scrollXCommand.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarX);
             scrollXCommand.ZIndex   = zIndex;
         }
 
-        if (this.TryGetLayoutCommandScrollY(out var scrollYCommand))
+        if (this.TryGetLayoutCommandScrollBarY(out var scrollYCommand))
         {
-            scrollYCommand.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollY);
+            scrollYCommand.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarY);
             scrollYCommand.ZIndex   = zIndex;
         }
     }

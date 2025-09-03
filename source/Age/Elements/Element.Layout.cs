@@ -149,12 +149,12 @@ public abstract partial class Element
                     boxCommand.StencilLayer = value;
                 }
 
-                if (this.TryGetLayoutCommandScrollX(out var scrollXCommand))
+                if (this.TryGetLayoutCommandScrollBarX(out var scrollXCommand))
                 {
                     scrollXCommand.StencilLayer = value;
                 }
 
-                if (this.TryGetLayoutCommandScrollY(out var scrollYCommand))
+                if (this.TryGetLayoutCommandScrollBarY(out var scrollYCommand))
                 {
                     scrollYCommand.StencilLayer = value;
                 }
