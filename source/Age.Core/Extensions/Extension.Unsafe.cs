@@ -16,6 +16,11 @@ public static partial class Extension
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Equal<T>(in T? left, in T? right) where T : unmanaged
         {
+            if (left.HasValue != right.HasValue)
+            {
+                return false;
+            }
+
             var leftSpan  = new ReadOnlySpan<T>(in Nullable.GetValueRefOrDefaultRef(in left));
             var rightSpan = new ReadOnlySpan<T>(in Nullable.GetValueRefOrDefaultRef(in right));
 
