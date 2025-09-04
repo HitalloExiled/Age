@@ -5,57 +5,35 @@ namespace Age.Scene;
 
 public abstract class Spatial2D : Renderable
 {
-    private CacheValue<Transform2D> transformCache;
+    private protected CacheValue<Transform2D> TransformCache { get; set; }
 
-    private Transform2D ParentTransform      => (this.Parent as Spatial2D)?.Transform ?? Transform2D.Identity;
-    private Transform2D ParentTransformCache => (this.Parent as Spatial2D)?.TransformCache ?? Transform2D.Identity;
+    private Transform2D CachedParentTransform => (this.Parent as Spatial2D)?.CachedTransform ?? Transform2D.Identity;
+    private Transform2D ParentTransform       => (this.Parent as Spatial2D)?.Transform ?? Transform2D.Identity;
 
     internal static int CacheVersion { get; set; } = 1;
 
-    internal virtual Transform2D TransformCache
+    internal virtual Transform2D CachedTransform
     {
         get
         {
-            if (this.transformCache.Version != CacheVersion)
+            if (this.TransformCache.Version != CacheVersion)
             {
-                this.transformCache = new()
+                this.TransformCache = new()
                 {
-                    Value   = this.ParentTransformCache * this.LocalTransform,
+                    Value   = this.LocalTransform * this.CachedParentTransform,
                     Version = CacheVersion
                 };
             }
 
-            return this.transformCache.Value;
+            return this.TransformCache.Value;
         }
     }
 
-    public virtual Transform2D LocalTransform
-    {
-        get;
-        set => this.Set(ref field, value, this.TransformChanged);
-    } = Transform2D.Identity;
+    public virtual Transform2D LocalTransform { get; set; } = Transform2D.Identity;
 
     public virtual Transform2D Transform
     {
-        get => this.ParentTransform * this.LocalTransform;
-        set => this.LocalTransform = this.ParentTransform.Inverse() * value * this.LocalTransform.Inverse();
+        get => this.LocalTransform * this.ParentTransform;
+        set => this.LocalTransform = value * this.ParentTransform.Inverse();
     }
-
-    protected void Set<T>(ref T field, in T value, Action callback) where T : IEquatable<T>
-    {
-        if (!field.Equals(value))
-        {
-            field = value;
-
-            callback.Invoke();
-
-            if (this.Tree is RenderTree renderTree)
-            {
-                renderTree.MakeDirty();
-            }
-        }
-    }
-
-    protected virtual void TransformChanged()
-    { }
 }

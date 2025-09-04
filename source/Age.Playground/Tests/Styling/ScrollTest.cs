@@ -235,7 +235,11 @@ public static class ScrollTest
                 Border     = new(2, 0, Color.Red),
                 Overflow   = Overflow.Scroll,
                 Size       = new(200),
-                Transforms = [TransformOp.Rotate(Angle.DegreesToRadians(2f)), TransformOp.Translate(10, 10)]
+                Transforms =
+                [
+                    TransformOp.Rotate(Angle.DegreesToRadians(45f)),
+                    TransformOp.Translate(10, 10)
+                ],
             },
             Children =
             [
@@ -244,8 +248,8 @@ public static class ScrollTest
                     Name  = "child-1",
                     Style =
                     {
-                        BackgroundColor = Color.Cyan,
-                        Size            = new(100),
+                        Border = new(2, 0, Color.Yellow),
+                        Size   = new(100),
                     }
                 },
                 new FlexBox
@@ -254,7 +258,7 @@ public static class ScrollTest
                     Style =
                     {
                         BackgroundColor = Color.Green,
-                        //Overflow        = Overflow.Scroll,
+                        Overflow        = Overflow.Scroll,
                         Size            = new(400),
                     },
                     Children =

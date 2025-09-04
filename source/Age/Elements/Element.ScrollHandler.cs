@@ -157,7 +157,7 @@ public abstract partial class Element
     {
         var position = new Vector2<float>(windowMouseEvent.X, -windowMouseEvent.Y);
 
-        return this.Transform.Matrix.ExtractRotation() * position;
+        return this.Transform.Matrix.Inverse() * position;
     }
 
     private float GetScrollBarXPositionY() =>

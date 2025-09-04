@@ -931,6 +931,11 @@ public abstract partial class Element
 
         var affectsBoundings = property.HasAnyFlag(LAYOUT_AFFECTED_PROPERTIES);
 
+        if (affectsBoundings)
+        {
+            this.ownStencilLayer?.MakeDirty();
+        }
+
         if (hidden)
         {
             this.RequestUpdate(affectsBoundings);
@@ -1332,19 +1337,38 @@ public abstract partial class Element
     private void UpdateBoundings()
     {
         var previous = this.Boundings;
+
         this.Boundings = new(
             this.size.Width  + this.padding.Horizontal + this.border.Horizontal,
             this.size.Height + this.padding.Vertical   + this.border.Vertical
         );
 
-        if (previous != this.Boundings && this.IsScrollBarVisible)
+        if (previous != this.Boundings)
         {
-            this.RefreshScrollBarControls();
+            this.UpdateBackgroundImage();
+
+            if (this.IsScrollBarVisible)
+            {
+                this.RefreshScrollBarControls();
+            }
         }
 
-        this.UpdateCommands();
+        var layoutCommandBox = this.AllocateLayoutCommandBox();
+
+        if (this.Boundings.Area > 0)
+        {
+            layoutCommandBox.Size            = this.Boundings.Cast<float>();
+            layoutCommandBox.Border          = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
+            layoutCommandBox.Color           = this.ComputedStyle.BackgroundColor ?? default;
+            layoutCommandBox.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
+            layoutCommandBox.ObjectId        = (uint)(this.Index + 1);
+        }
+        else
+        {
+            layoutCommandBox.PipelineVariant = PipelineVariant.None;
+        }
     }
-    
+
     internal void HandleElementRemoved(Element element)
     {
         if (!element.Hidden && element.parentDependencies != Dependency.None)

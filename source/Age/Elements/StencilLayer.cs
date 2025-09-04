@@ -1,15 +1,16 @@
+using System.Collections;
+using System.Runtime.CompilerServices;
 using Age.Core;
 using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Elements.Enumerators;
 using Age.Extensions;
+using Age.Internal;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
 using Age.Resources;
 using Age.Styling;
 using SkiaSharp;
-using System.Collections;
-using System.Runtime.CompilerServices;
 
 namespace Age.Elements;
 
@@ -17,7 +18,7 @@ internal class StencilLayer(Element owner) : Disposable, IEnumerable<StencilLaye
 {
     private readonly SKPath path = new();
 
-    private bool        isDirty;
+    private bool        isDirty = true;
     private Transform2D transform;
 
     internal Transform2D Transform
@@ -220,6 +221,11 @@ internal class StencilLayer(Element owner) : Disposable, IEnumerable<StencilLaye
 
     public void MakeDirty()
     {
+        if (this.isDirty)
+        {
+            return;
+        }
+
         this.isDirty = true;
 
         var enumerator = new StencilLayerTraverseEnumerator(this);
@@ -282,8 +288,10 @@ internal class StencilLayer(Element owner) : Disposable, IEnumerable<StencilLaye
 
     public void Update()
     {
-        if (this.isDirty || this.transform != this.Owner.TransformCache)
+        if (this.isDirty || this.transform != this.Owner.CachedTransformWithOffset)
         {
+            this.transform = this.Owner.CachedTransformWithOffset;
+
             var bounds = this.Owner.Boundings;
             var border = this.Owner.ComputedStyle.Border ?? new();
 
@@ -301,7 +309,7 @@ internal class StencilLayer(Element owner) : Disposable, IEnumerable<StencilLaye
             {
                 using var parentClipping = new SKPath(this.Parent.path);
 
-                var offset = (this.Owner.TransformCache.Inverse() * this.Parent.Owner.TransformCache).Matrix;
+                var offset = (this.Parent.Transform * this.Transform.Inverse()).Matrix;
 
                 offset.M32 = -offset.M32;
 
@@ -317,7 +325,6 @@ internal class StencilLayer(Element owner) : Disposable, IEnumerable<StencilLaye
             this.Size = bounds;
 
             this.isDirty = false;
-            this.transform = this.Owner.TransformCache;
         }
     }
 }

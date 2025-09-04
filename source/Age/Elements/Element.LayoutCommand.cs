@@ -160,39 +160,20 @@ public abstract partial class Element
     private bool TryGetLayoutCommandScrollBarY([NotNullWhen(true)] out RectCommand? rectCommand) =>
         this.TryGetLayoutCommand(LayoutCommand.ScrollBarY, out rectCommand);
 
-    private void UpdateCommands()
+    private void UpdateBackgroundImage()
     {
-        var layoutCommandBox = this.AllocateLayoutCommandBox();
-
-        if (this.Boundings.Area > 0)
+        if (this.ComputedStyle.BackgroundImage != null)
         {
-            layoutCommandBox.Size            = this.Boundings.Cast<float>();
-            layoutCommandBox.Border          = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
-            layoutCommandBox.Color           = this.ComputedStyle.BackgroundColor ?? default;
-            layoutCommandBox.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
-            layoutCommandBox.ObjectId        = (uint)(this.Index + 1);
+            var layoutCommandImage = this.GetLayoutCommandImage();
 
-            if (this.ComputedStyle.BackgroundImage != null)
-            {
-                var layoutCommandImage = this.GetLayoutCommandImage();
+            this.ResolveImageSize(this.ComputedStyle.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
 
-                this.ResolveImageSize(this.ComputedStyle.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
+            layoutCommandImage.Size = size;
+            layoutCommandImage.Transform = transform;
+            layoutCommandImage.TextureMap = layoutCommandImage.TextureMap with { UV = uv };
 
-                layoutCommandImage.Size       = size;
-                layoutCommandImage.Transform  = transform;
-                layoutCommandImage.TextureMap = layoutCommandImage.TextureMap with { UV = uv };
-
-                layoutCommandImage.StencilLayer!.MakeDirty();
-            }
+            layoutCommandImage.StencilLayer!.MakeDirty();
         }
-        else
-        {
-            layoutCommandBox.PipelineVariant = PipelineVariant.None;
-        }
-
-        layoutCommandBox.StencilLayer = this.StencilLayer;
-
-        this.ownStencilLayer?.MakeDirty();
     }
 
     private void UpdateCommandsSeparator()

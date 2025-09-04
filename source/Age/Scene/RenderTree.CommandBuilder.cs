@@ -73,7 +73,7 @@ public sealed partial class RenderTree
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void collectElementPreCommands(Element element)
         {
-            var transform = element.TransformCache;
+            var transform = element.CachedTransformWithOffset;
 
             foreach (var command in element.PreCommands)
             {
@@ -86,7 +86,7 @@ public sealed partial class RenderTree
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void gatherElementPostCommands(Element element)
         {
-            var transform = element.TransformCache;
+            var transform = element.CachedTransformWithOffset;
 
             foreach (var command in element.PostCommands)
             {
@@ -99,7 +99,7 @@ public sealed partial class RenderTree
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void collect2D(Spatial2D spatial2D)
         {
-            var transform = spatial2D.TransformCache;
+            var transform = spatial2D.CachedTransform;
 
             foreach (var command in spatial2D.Commands)
             {
@@ -112,7 +112,7 @@ public sealed partial class RenderTree
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void collect3D(Spatial3D spatial3D)
         {
-            var transform = (Matrix4x4<float>)spatial3D.TransformCache;
+            var transform = (Matrix4x4<float>)spatial3D.CachedTransform;
 
             foreach (var command in spatial3D.Commands)
             {

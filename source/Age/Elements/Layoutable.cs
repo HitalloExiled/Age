@@ -8,14 +8,14 @@ namespace Age.Elements;
 
 public abstract class Layoutable : Spatial2D
 {
-    private CacheValue<Transform2D> transformCache;
-
     internal const string DEFAULT_FONT_FAMILY = "Segoi UI";
     internal const ushort DEFAULT_FONT_SIZE = 16;
 
-    private Transform2D ComposedParentTransform      => (this.ComposedParentElement as Spatial2D)?.Transform ?? Transform2D.Identity;
-    private Transform2D ComposedParentTransformCache => (this.ComposedParentElement as Spatial2D)?.TransformCache ?? Transform2D.Identity;
-    private Transform2D ParentContentOffset          => Transform2D.CreateTranslated((this.ComposedParentElement?.ContentOffset ?? default).ToVector2<float>().InvertedX);
+    private Transform2D CachedComposedParentTransformWithOffset => (this.ComposedParentElement as Layoutable)?.CachedTransformWithOffset ?? Transform2D.Identity;
+    private Transform2D CombinedTransform                       => this.ParentContentOffset * this.LayoutTransform * this.LocalTransform;
+    private Transform2D ComposedParentTransform                 => (this.ComposedParentElement as Layoutable)?.Transform ?? Transform2D.Identity;
+    private Transform2D ComposedParentTransformWithOffset       => (this.ComposedParentElement as Layoutable)?.TransformWithOffset ?? Transform2D.Identity;
+    private Transform2D ParentContentOffset                     => Transform2D.CreateTranslated((this.ComposedParentElement?.ContentOffset ?? default).ToVector2<float>().InvertedX);
 
     private protected virtual StencilLayer? ContentStencilLayer { get; }
     private protected virtual Transform2D   LayoutTransform => Transform2D.CreateTranslated(this.Offset);
@@ -45,6 +45,25 @@ public abstract class Layoutable : Spatial2D
     internal virtual bool          Hidden       { get; set; }
     internal virtual StencilLayer? StencilLayer { get; set; }
 
+    internal Transform2D CachedTransformWithOffset
+    {
+        get
+        {
+            if (this.TransformCache.Version != CacheVersion)
+            {
+                this.TransformCache = new()
+                {
+                    Value   = this.CombinedTransform * this.CachedComposedParentTransformWithOffset,
+                    Version = CacheVersion
+                };
+            }
+
+            return this.TransformCache.Value;
+        }
+    }
+
+    internal Transform2D TransformWithOffset => this.CombinedTransform * this.ComposedParentTransformWithOffset;
+
     internal abstract bool IsParentDependent { get; }
 
     public Slot? AssignedSlot { get; internal set; }
@@ -69,8 +88,8 @@ public abstract class Layoutable : Spatial2D
 
     public override Transform2D Transform
     {
-        get => this.LayoutTransform * (this.LocalTransform * this.ComposedParentTransform);
-        set => this.LocalTransform = value * this.Transform.Inverse();
+        get => this.LayoutTransform * this.LocalTransform * this.ComposedParentTransform;
+        set => this.LocalTransform = this.LayoutTransform.Inverse() * value * this.ComposedParentTransform.Inverse();
     }
 
     public Element? ComposedParentElement  => this.AssignedSlot ?? this.EffectiveParentElement;
@@ -109,25 +128,6 @@ public abstract class Layoutable : Spatial2D
             return null;
         }
     }
-
-    internal override Transform2D TransformCache
-    {
-        get
-        {
-            if (this.transformCache.Version != CacheVersion)
-            {
-                this.transformCache = new()
-                {
-                    Value = this.ParentContentOffset * this.LayoutTransform * this.LocalTransform * this.ComposedParentTransformCache,
-                    Version = CacheVersion
-                };
-            }
-
-            return this.transformCache.Value;
-        }
-    }
-
-    internal Transform2D TransformWithOffset => this.ParentContentOffset * this.Transform;
 
     private protected static ulong CombineIds(int elementIndex, int childIndex) =>
         ((ulong)childIndex << 24) | ((uint)elementIndex);
