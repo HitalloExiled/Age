@@ -284,6 +284,8 @@ public sealed partial class RenderTree
                     }
                     else
                     {
+                        this.leftToAncestor.Clear();
+
                         for (var current = element; current != null; current = current.ComposedParentElement)
                         {
                             this.leftToAncestor.Add(current);

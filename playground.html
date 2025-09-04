@@ -202,8 +202,13 @@
     </div>
 </body>
 <script>
+    /** @type {HTMLElement} */
     const parent = document.querySelector('#parent');
+
+    /** @type {HTMLElement} */
     const child1 = document.querySelector('#child-1');
+
+    /** @type {HTMLElement} */
     const child2 = document.querySelector('#child-2');
 
     const addEvent = (element) => {
@@ -213,8 +218,25 @@
         // element.addEventListener('mouseout', event => console.log(`#${event.target.id} [out]`));
     }
 
+    var maximized = false;
+
+    /** @param {KeyboardEvent} event */
+    const keydownHandler = (event) =>
+    {
+        console.log(event);
+        if (event.code == 'Space')
+        {
+            var size = `${(maximized = !maximized) ? 400 : 200}px`;
+
+            parent.style.height = size;
+            parent.style.width  = size;
+        }
+    };
+
     parent.addEventListener("mouseup", event => console.log(`#${event.target.id} [mouseup]`))
     parent.addEventListener("pointerup", event => console.log(`#${event.target.id} [pointerup]`))
+    document.addEventListener("keydown", keydownHandler)
+
 
     // addEvent(parent);
     // addEvent(child1);

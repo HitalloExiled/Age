@@ -12,19 +12,19 @@ public abstract partial class Element
         }
     }
 
-    internal void HandleVirtualChildMouseMoved(in WindowMouseEvent _1, uint _2)
+    internal void HandleVirtualChildMouseMoved(in WindowMouseEvent windowMouseEvent, uint _2)
     {
         if (this.CanScroll)
         {
-            this.HandleScrollBarMouseMoved();
+            this.HandleScrollBarMouseMoved(windowMouseEvent);
         }
     }
 
-    internal void HandleVirtualChildMouseOut(in WindowMouseEvent _, uint virtualChildIndex)
+    internal void HandleVirtualChildMouseOut(in WindowMouseEvent windowMouseEvent, uint virtualChildIndex)
     {
         if (this.CanScroll)
         {
-            this.HandleScrollBarMouseOut((LayoutCommand)virtualChildIndex);
+            this.HandleScrollBarMouseOut(windowMouseEvent, (LayoutCommand)virtualChildIndex);
         }
     }
 

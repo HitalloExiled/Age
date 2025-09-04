@@ -2,6 +2,7 @@ using System;
 using Age.Components;
 using Age.Elements;
 using Age.Numerics;
+using Age.Platforms.Display;
 using Age.Styling;
 
 namespace Age.Playground.Tests.Styling;
@@ -284,8 +285,18 @@ public static class ScrollTest
             ]
         };
 
+        var isExpanded = false;
+
+        canvas.RenderTree?.Window.KeyDown += (key) =>
+        {
+            if (key == Key.Space)
+            {
+                scrollParent.Style.Size = (isExpanded = !isExpanded) ? new(400) : new(200);
+            }
+        };
+
         canvas.AppendChild(scrollParent);
-        canvas.AppendChild(loren);
+        //canvas.AppendChild(loren);
         //canvas.AppendChild(conteiner1);
         //canvas.AppendChild(conteiner2);
         //canvas.AppendChild(conteiner3);

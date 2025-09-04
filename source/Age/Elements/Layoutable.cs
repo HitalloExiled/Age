@@ -20,13 +20,14 @@ public abstract class Layoutable : Spatial2D
     private protected virtual StencilLayer? ContentStencilLayer { get; }
     private protected virtual Transform2D   LayoutTransform => Transform2D.CreateTranslated(this.Offset);
 
-    protected static Element? ActiveScrollBarTarget { get; set; }
-    protected static Text?    ActiveText            { get; set; }
-    protected static bool     IsDraggingScrollBarX  { get; set; }
-    protected static bool     IsDraggingScrollBarY  { get; set; }
-    protected static bool     IsHoveringScrollBarX  { get; set; }
-    protected static bool     IsHoveringScrollBarY  { get; set; }
-    protected static bool     IsHoveringText        { get; set; }
+    protected static Element?     ActiveScrollBarTarget  { get; set; }
+    protected static Text?        ActiveText             { get; set; }
+    protected static bool         IsDraggingScrollBarX   { get; set; }
+    protected static bool         IsDraggingScrollBarY   { get; set; }
+    protected static bool         IsHoveringScrollBarX   { get; set; }
+    protected static bool         IsHoveringScrollBarY   { get; set; }
+    protected static bool         IsHoveringText         { get; set; }
+    protected static Point<float> ScrollBarClickPosition { get; set; }
 
     protected static bool IsHoveringScrollBar => IsHoveringScrollBarX || IsHoveringScrollBarY;
 

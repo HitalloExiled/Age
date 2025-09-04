@@ -1331,14 +1331,20 @@ public abstract partial class Element
 
     private void UpdateBoundings()
     {
+        var previous = this.Boundings;
         this.Boundings = new(
             this.size.Width  + this.padding.Horizontal + this.border.Horizontal,
             this.size.Height + this.padding.Vertical   + this.border.Vertical
         );
 
+        if (previous != this.Boundings && this.IsScrollBarVisible)
+        {
+            this.RefreshScrollBarControls();
+        }
+
         this.UpdateCommands();
     }
-
+    
     internal void HandleElementRemoved(Element element)
     {
         if (!element.Hidden && element.parentDependencies != Dependency.None)

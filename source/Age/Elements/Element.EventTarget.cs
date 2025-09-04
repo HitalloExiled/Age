@@ -393,7 +393,7 @@ public abstract partial class Element
 
         if (this.CanScroll)
         {
-            this.HandleScrollBarMouseEnter();
+            this.HandleScrollBarMouseEnter(windowMouseEvent);
         }
     }
 
