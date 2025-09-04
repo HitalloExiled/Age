@@ -232,9 +232,10 @@ public static class ScrollTest
             Name  = "parent",
             Style =
             {
-                Border   = new(2, 0, Color.Red),
-                Overflow = Overflow.Scroll,
-                Size     = new(200),
+                Border     = new(2, 0, Color.Red),
+                Overflow   = Overflow.Scroll,
+                Size       = new(200),
+                Transforms = [TransformOp.Rotate(Angle.DegreesToRadians(2f)), TransformOp.Translate(10, 10)]
             },
             Children =
             [
@@ -253,7 +254,7 @@ public static class ScrollTest
                     Style =
                     {
                         BackgroundColor = Color.Green,
-                        Overflow        = Overflow.Scroll,
+                        //Overflow        = Overflow.Scroll,
                         Size            = new(400),
                     },
                     Children =
@@ -263,6 +264,7 @@ public static class ScrollTest
                             Name  = "child-2-1",
                             Style =
                             {
+                                Border          = new(2, 0, Color.Blue),
                                 BackgroundImage = new()
                                 {
                                     Uri  = cat,
