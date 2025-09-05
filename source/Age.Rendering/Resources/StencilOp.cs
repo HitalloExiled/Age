@@ -1,8 +1,8 @@
 namespace Age.Rendering.Resources;
 
-public enum StencilKind
+public enum StencilOp
 {
     None,
-    Mask,
-    Content,
+    Erase,
+    Write,
 }

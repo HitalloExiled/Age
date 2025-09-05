@@ -21,13 +21,14 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
     private readonly VertexBuffer            vertexBuffer;
     private readonly IndexBuffer             wireframeIndexBuffer;
 
-    protected override CanvasStencilMaskShader CanvasStencilMaskShader { get; }
-    protected override Color                   ClearColor              { get; } = Color.Black;
-    protected override CommandBuffer           CommandBuffer           => this.Renderer.CurrentCommandBuffer;
-    protected override Framebuffer             Framebuffer             => this.framebuffers[this.Window.Surface.CurrentBuffer];
-    protected override RenderPipelines[]       Pipelines               { get; } = [];
-    protected override PipelineVariant         PipelineVariants        { get; } = PipelineVariant.Color | PipelineVariant.Wireframe;
-    public override RenderPass                 RenderPass              { get; }
+    protected override CanvasStencilMaskShader CanvasStencilWriterShader { get; }
+    protected override CanvasStencilMaskShader CanvasStencilEraserShader { get; }
+    protected override Color                   ClearColor                { get; } = Color.Black;
+    protected override CommandBuffer           CommandBuffer             => this.Renderer.CurrentCommandBuffer;
+    protected override Framebuffer             Framebuffer               => this.framebuffers[this.Window.Surface.CurrentBuffer];
+    protected override RenderPipelines[]       Pipelines                 { get; } = [];
+    protected override PipelineVariant         PipelineVariants          { get; } = PipelineVariant.Color | PipelineVariant.Wireframe;
+    public override RenderPass                 RenderPass                { get; }
 
     public CanvasRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)
     {
@@ -45,7 +46,8 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.RenderPass = CreateRenderPass(this.Window.Surface.Swapchain.Format, VkImageLayout.PresentSrcKHR);
 
-        this.CanvasStencilMaskShader = new CanvasStencilMaskShader(this.RenderPass, true);
+        this.CanvasStencilWriterShader = new CanvasStencilMaskShader(this.RenderPass, StencilOp.Write, true);
+        this.CanvasStencilEraserShader = new CanvasStencilMaskShader(this.RenderPass, StencilOp.Erase, true);
 
         var canvasShader          = new CanvasShader(this.RenderPass, true);
         var canvasWireframeShader = new CanvasWireframeShader(this.RenderPass, true);
@@ -56,9 +58,11 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             new(canvasWireframeShader, this.vertexBuffer, this.wireframeIndexBuffer, false, true),
         ];
 
-        this.CanvasStencilMaskShader.Changed += RenderingService.Singleton.RequestDraw;
-        canvasShader.Changed                 += RenderingService.Singleton.RequestDraw;
-        canvasWireframeShader.Changed        += RenderingService.Singleton.RequestDraw;
+        this.CanvasStencilWriterShader.Changed += RenderingService.Singleton.RequestDraw;
+        this.CanvasStencilEraserShader.Changed += RenderingService.Singleton.RequestDraw;
+
+        canvasShader.Changed          += RenderingService.Singleton.RequestDraw;
+        canvasWireframeShader.Changed += RenderingService.Singleton.RequestDraw;
 
         var extent = new VkExtent3D
         {
@@ -144,13 +148,15 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
     protected override void Disposed()
     {
         this.DisposeFrameBuffers();
+
         for (var i = 0; i < this.Pipelines.Length; i++)
         {
             this.Pipelines[i].Dispose();
             this.Pipelines[i].Shader.Changed -= RenderingService.Singleton.RequestDraw;
         }
 
-        this.CanvasStencilMaskShader.Dispose();
+        this.CanvasStencilWriterShader.Dispose();
+        this.CanvasStencilEraserShader.Dispose();
         this.RenderPass.Dispose();
     }
 

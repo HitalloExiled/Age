@@ -226,66 +226,77 @@ public static class ScrollTest
         };
 
         var cat = Path.Join(AppContext.BaseDirectory, "Assets", "Textures", "Cat.jpg");
+        var dog = Path.Join(AppContext.BaseDirectory, "Assets", "Textures", "Dog.jpg");
 
         var scrollParent = new FlexBox
         {
             Name  = "parent",
             Style =
             {
-                Border     = new(2, 0, Color.Red),
+                Border     = new(2, 10, Color.Red),
                 Overflow   = Overflow.Scroll,
-                Size       = new(200),
-                Transforms =
-                [
-                    TransformOp.Rotate(Angle.DegreesToRadians(45f)),
-                    TransformOp.Translate(10, 10)
-                ],
+                Size       = new(400),
+                //Transforms =
+                //[
+                //    TransformOp.Rotate(Angle.DegreesToRadians(45f)),
+                //    TransformOp.Translate(10, 10)
+                //],
             },
             Children =
             [
+                //new Text("Click me..."),
                 new FlexBox
                 {
-                    Name  = "child-1",
+                    Name  = "cat-parent",
                     Style =
                     {
-                        Border = new(2, 0, Color.Yellow),
-                        Size   = new(100),
-                    }
-                },
-                new FlexBox
-                {
-                    Name  = "child-2",
-                    Style =
-                    {
-                        BackgroundColor = Color.Green,
-                        Overflow        = Overflow.Scroll,
-                        Size            = new(400),
+                        Border   = new(2, 20, Color.Green),
+                        Overflow = Overflow.Scroll,
+                        Size     = new(200),
                     },
                     Children =
                     [
                         new FlexBox
                         {
-                            Name  = "child-2-1",
+                            Name  = "cat",
                             Style =
                             {
-                                Border          = new(2, 0, Color.Blue),
+                                Border          = new(2, 20, Color.Blue),
                                 BackgroundImage = new()
                                 {
                                     Uri  = cat,
                                     Size = ImageSize.Fit(),
                                 },
                                 Size = new(600),
-                            }
+                            },
                         },
+                    ]
+                },
+                new FlexBox
+                {
+                    Name  = "dog-parent",
+                    Style =
+                    {
+                        Border   = new(2, 20, Color.Green),
+                        Overflow = Overflow.Scroll,
+                        Size     = new(200),
+                    },
+                    Children =
+                    [
                         new FlexBox
                         {
-                            Name  = "child-2-2",
+                            Name  = "dog",
                             Style =
                             {
-                                BackgroundColor = Color.Margenta,
-                                Size            = new(100),
-                            }
-                        }
+                                Border          = new(2, 20, Color.Blue),
+                                BackgroundImage = new()
+                                {
+                                    Uri  = dog,
+                                    Size = ImageSize.Fit(),
+                                },
+                                Size = new(600),
+                            },
+                        },
                     ]
                 },
             ]
@@ -297,7 +308,8 @@ public static class ScrollTest
         {
             if (key == Key.Space)
             {
-                scrollParent.Style.Size = (isExpanded = !isExpanded) ? new(400) : new(200);
+                // scrollParent.Style.Size = (isExpanded = !isExpanded) ? new(400) : new(200);
+                scrollParent.Style.Overflow = (isExpanded = !isExpanded) ? default : Overflow.Scroll;
             }
         };
 

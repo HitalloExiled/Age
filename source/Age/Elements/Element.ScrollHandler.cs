@@ -46,17 +46,16 @@ public abstract partial class Element
             {
                 this.contentOffset = value;
 
-                if (this.CanScrollX && IsScrollBarXVisible)
+                if (this.CanScrollX && this.IsScrollBarXVisible)
                 {
                     this.UpdateScrollBarXControl();
                 }
 
-                if (this.CanScrollY && IsScrollBarYVisible)
+                if (this.CanScrollY && this.IsScrollBarYVisible)
                 {
                     this.UpdateScrollBarYControl();
                 }
 
-                this.ownStencilLayer?.MakeChildrenDirty();
                 this.RequestUpdate(false);
             }
         }
@@ -109,8 +108,8 @@ public abstract partial class Element
     private void DrawScrollBarXControl()
     {
         var offset         = this.CanScrollY ? SCROLL_BAR_HOVER_SIZE : 0;
-        var scale          = 1 - ((float)this.Boundings.Width / this.content.Width);
         var scrollBarWidth = this.Boundings.Width - this.border.Horizontal - offset - (SCROLL_BAR_MARGIN * 2);
+        var scale          = (float)this.size.Width / this.content.Width;
 
         var command = this.AllocateLayoutCommandScrollBarX();
 
@@ -130,7 +129,7 @@ public abstract partial class Element
     {
         var offset          = this.CanScrollX ? SCROLL_BAR_HOVER_SIZE : 0;
         var scrollBarHeight = this.Boundings.Height - this.border.Vertical - offset - (SCROLL_BAR_MARGIN * 2);
-        var scale           = 1 - ((float)this.Boundings.Height / this.content.Height);
+        var scale           = (float)this.size.Height / this.content.Height;
 
         var command = this.AllocateLayoutCommandScrollBarY();
 

@@ -3,7 +3,6 @@ using Age.Elements;
 using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Shaders;
-using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan;
@@ -11,23 +10,27 @@ using ThirdParty.Vulkan.Flags;
 using System.Runtime.CompilerServices;
 using Age.Resources;
 using Age.Core.Extensions;
+using System.Diagnostics;
 
 namespace Age.RenderPasses;
 
 public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer, Window window) : RenderGraphPass(renderer, window)
 {
+    private readonly Stack<StencilLayer> stencilStack = [];
+
     private Size<float>? previousViewport;
 
     protected ResourceCache<Texture2D, UniformSet> UniformSets { get; } = new();
 
     protected UniformSet? LastUniformSet { get; set; }
 
-    protected abstract CanvasStencilMaskShader CanvasStencilMaskShader { get; }
-    protected abstract Color                   ClearColor              { get; }
-    protected abstract CommandBuffer           CommandBuffer           { get; }
-    protected abstract Framebuffer             Framebuffer             { get; }
-    protected abstract RenderPipelines[]       Pipelines               { get; }
-    protected abstract PipelineVariant         PipelineVariants        { get; }
+    protected abstract CanvasStencilMaskShader CanvasStencilWriterShader { get; }
+    protected abstract CanvasStencilMaskShader CanvasStencilEraserShader { get; }
+    protected abstract Color                   ClearColor                { get; }
+    protected abstract CommandBuffer           CommandBuffer             { get; }
+    protected abstract Framebuffer             Framebuffer               { get; }
+    protected abstract RenderPipelines[]       Pipelines                 { get; }
+    protected abstract PipelineVariant         PipelineVariants          { get; }
 
     private void ClearStencilBuffer(in VkExtent2D extent) =>
         this.ClearStencilBufferAttachment(extent, 0);
@@ -58,40 +61,31 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         this.CommandBuffer.ClearAttachments([attachment], [rect]);
     }
 
-    private void DrawStencilBuffer(in Size<float> viewport, StencilLayer stencilLayer, IndexBuffer indexBuffer)
+    private unsafe void EraseStencil(RenderPipelines pipeline, StencilLayer stencilLayer, in Size<float> viewport) =>
+        this.SetStencil(this.CanvasStencilEraserShader, pipeline, stencilLayer, viewport);
+
+    private void FillStencilBuffer(in VkExtent2D extent) =>
+        this.ClearStencilBufferAttachment(extent, 1);
+
+    private unsafe void WriteStencil(RenderPipelines pipeline, StencilLayer stencilLayer, in Size<float> viewport) =>
+        this.SetStencil(this.CanvasStencilWriterShader, pipeline, stencilLayer, viewport);
+
+    private unsafe void SetStencil(CanvasStencilMaskShader canvasStencilWriterShader, RenderPipelines pipeline, StencilLayer stencilLayer, in Size<float> viewport)
     {
-        stencilLayer.Update();
-
-        if (!this.UniformSets.TryGetValue(stencilLayer.TextureMap.Texture, out var uniformSet))
-        {
-            var stencil = new CombinedImageSamplerUniform
-            {
-                Binding     = 0,
-                ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
-                Image       = stencilLayer.TextureMap.Texture.Image,
-                ImageView   = stencilLayer.TextureMap.Texture.ImageView,
-                Sampler     = stencilLayer.TextureMap.Texture.Sampler,
-            };
-
-            this.UniformSets.Set(stencilLayer.TextureMap.Texture, uniformSet = new UniformSet(this.CanvasStencilMaskShader, [stencil]));
-        }
+        this.CommandBuffer.BindShader(canvasStencilWriterShader);
 
         var constant = new CanvasShader.PushConstant
         {
             Size      = stencilLayer.Size.Cast<float>(),
             Transform = stencilLayer.Transform,
-            UV        = stencilLayer.TextureMap.UV,
+            Border    = stencilLayer.Border,
             Viewport  = viewport,
+            UV        = UVRect.Normalized,
         };
 
-        this.CommandBuffer.BindShader(this.CanvasStencilMaskShader);
-        this.CommandBuffer.BindUniformSet(this.LastUniformSet = uniformSet);
-        this.CommandBuffer.PushConstant(this.CanvasStencilMaskShader, constant);
-        this.CommandBuffer.DrawIndexed(indexBuffer);
+        this.CommandBuffer.PushConstant(canvasStencilWriterShader, constant);
+        this.CommandBuffer.DrawIndexed(pipeline.IndexBuffer);
     }
-
-    private void FillStencilBuffer(in VkExtent2D extent) =>
-        this.ClearStencilBufferAttachment(extent, 1);
 
     protected static RenderPass CreateRenderPass(VkFormat colorAttachmentFormat, VkImageLayout colorAttachmentFinalLayout)
     {
@@ -183,22 +177,20 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
         this.BeforeExecute();
 
-        Span<VkClearValue> clearValues  = stackalloc VkClearValue[2];
+        Span<VkClearValue> clearValues = stackalloc VkClearValue[2];
 
         clearValues[0].Color.Float32[0] = this.ClearColor.R;
         clearValues[0].Color.Float32[1] = this.ClearColor.G;
         clearValues[0].Color.Float32[2] = this.ClearColor.B;
         clearValues[0].Color.Float32[3] = this.ClearColor.A;
-        clearValues[1].DepthStencil.Depth   = 1;
-        clearValues[1].DepthStencil.Stencil = 1;
+        clearValues[1].DepthStencil.Depth = 1;
 
         this.CommandBuffer.SetViewport(extent);
         this.CommandBuffer.BeginRenderPass(this.RenderPass, this.Framebuffer, clearValues);
+        this.CommandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, 0u);
 
         if (this.previousViewport == viewport || !this.previousViewport.HasValue)
         {
-            StencilLayer? previousLayer = null;
-
             foreach (var pipeline in this.Pipelines)
             {
                 if (pipeline.Enabled)
@@ -207,25 +199,52 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
                     this.CommandBuffer.BindVertexBuffer(pipeline.VertexBuffer);
                     this.CommandBuffer.BindIndexBuffer(pipeline.IndexBuffer);
 
-                    foreach (var (command, transform) in this.Window.Tree.Get2DCommands())
+                    var previousDepth = 0u;
+
+                    var commands = this.Window.Tree.Get2DCommands();
+
+                    for (var i = 0; i < commands.Length; i++)
                     {
+                        var (command, transform) = commands[i];
+
                         if (this.PipelineVariants.HasAnyFlag(command.PipelineVariant))
                         {
-                            if (!pipeline.IgnoreStencil && command.StencilLayer != previousLayer)
+                            if (!pipeline.IgnoreStencil && (!this.stencilStack.TryPeek(out var previousLayer) || command.StencilLayer != previousLayer))
                             {
-                                if (command.StencilLayer == null)
+                                if (command.StencilLayer is StencilLayer currentLayer)
                                 {
-                                    this.FillStencilBuffer(extent);
-                                }
-                                else
-                                {
-                                    this.ClearStencilBuffer(extent);
-                                    this.DrawStencilBuffer(viewport, command.StencilLayer, pipeline.IndexBuffer);
+                                    var currentDepth = currentLayer.Depth + 1;
+
+                                    while (this.stencilStack.Count > currentDepth)
+                                    {
+                                        var layer = this.stencilStack.Pop();
+
+                                        this.EraseStencil(pipeline, layer, viewport);
+                                    }
+
+                                    if (currentDepth >= previousDepth)
+                                    {
+                                        this.WriteStencil(pipeline, currentLayer, viewport);
+
+                                        if (currentDepth > previousDepth)
+                                        {
+                                            this.stencilStack.Push(currentLayer);
+                                        }
+                                    }
+
+                                    this.CommandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, currentDepth);
+
+                                    previousDepth = currentDepth;
 
                                     this.CommandBuffer.BindShader(pipeline.Shader);
                                 }
-
-                                previousLayer = command.StencilLayer;
+                                else if (previousDepth > 0)
+                                {
+                                    this.stencilStack.Clear();
+                                    this.ClearStencilBuffer(extent);
+                                    this.CommandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, previousDepth = 0u);
+                                    this.CommandBuffer.BindShader(pipeline.Shader);
+                                }
                             }
 
                             switch (command)
@@ -239,6 +258,8 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
                             }
                         }
                     }
+
+                    this.stencilStack.Clear();
                 }
             }
         }

@@ -12,7 +12,7 @@ public abstract class Layoutable : Spatial2D
     internal const ushort DEFAULT_FONT_SIZE = 16;
 
     private Transform2D CachedComposedParentTransformWithOffset => (this.ComposedParentElement as Layoutable)?.CachedTransformWithOffset ?? Transform2D.Identity;
-    private Transform2D CombinedTransform                       => this.ParentContentOffset * this.LayoutTransform * this.LocalTransform;
+    private Transform2D CombinedTransform                       => this.LayoutTransform * this.LocalTransform * this.ParentContentOffset;
     private Transform2D ComposedParentTransform                 => (this.ComposedParentElement as Layoutable)?.Transform ?? Transform2D.Identity;
     private Transform2D ComposedParentTransformWithOffset       => (this.ComposedParentElement as Layoutable)?.TransformWithOffset ?? Transform2D.Identity;
     private Transform2D ParentContentOffset                     => Transform2D.CreateTranslated((this.ComposedParentElement?.ContentOffset ?? default).ToVector2<float>().InvertedX);

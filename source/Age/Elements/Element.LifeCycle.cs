@@ -15,7 +15,6 @@ public abstract partial class Element
 
         if (command.StencilLayer?.Owner == this)
         {
-            command.StencilLayer.Dispose();
             command.StencilLayer.Detach();
         }
     }
@@ -105,8 +104,6 @@ public abstract partial class Element
 
     protected override void OnDisposed()
     {
-        this.ownStencilLayer?.Dispose();
-
         if (this.TryGetLayoutCommandImage(out var layoutCommandImage))
         {
             this.DisposeLayoutCommandImage(layoutCommandImage);

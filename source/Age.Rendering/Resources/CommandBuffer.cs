@@ -155,4 +155,7 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
 
         this.Instance.SetScissor(0, scissor);
     }
+
+    public void SetStencilReference(VkStencilFaceFlags faceMask, uint reference) =>
+        this.Instance.SetStencilReference(faceMask, reference);
 }

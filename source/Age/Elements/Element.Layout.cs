@@ -149,6 +149,18 @@ public abstract partial class Element
                     boxCommand.StencilLayer = value;
                 }
 
+                if (this.TryGetLayoutCommandImage(out var imageCommand))
+                {
+                    if (value == null)
+                    {
+                        imageCommand.StencilLayer!.Detach();
+                    }
+                    else
+                    {
+                        value.AppendChild(imageCommand.StencilLayer!);
+                    }
+                }
+
                 if (this.TryGetLayoutCommandScrollBarX(out var scrollXCommand))
                 {
                     scrollXCommand.StencilLayer = value;
@@ -436,13 +448,13 @@ public abstract partial class Element
             }
             else if (current is Element element && element.ownStencilLayer != null)
             {
-                if (stencilLayer != null)
+                if (stencilLayer == null)
                 {
-                    stencilLayer.AppendChild(element.ownStencilLayer);
+                    element.ownStencilLayer.Detach();
                 }
                 else
                 {
-                    element.ownStencilLayer.Detach();
+                    stencilLayer.AppendChild(element.ownStencilLayer);
                 }
 
                 element.StencilLayer = stencilLayer;
@@ -598,6 +610,10 @@ public abstract partial class Element
                 if (!dependencies.HasFlags(Dependency.Width))
                 {
                     this.staticContent.Width += childSize.Width;
+                }
+
+                if (!dependencies.HasFlags(Dependency.Height))
+                {
                     this.staticContent.Height = uint.Max(this.staticContent.Height, childSize.Height);
                 }
 
@@ -608,9 +624,13 @@ public abstract partial class Element
             }
             else
             {
-                if (!dependencies.HasFlags(Dependency.Height))
+                if (!dependencies.HasFlags(Dependency.Width))
                 {
                     this.staticContent.Width = uint.Max(this.staticContent.Width, childSize.Width);
+                }
+
+                if (!dependencies.HasFlags(Dependency.Height))
+                {
                     this.staticContent.Height += childSize.Height;
                 }
 
@@ -643,7 +663,7 @@ public abstract partial class Element
 
         if (resolvedSize && resolvedMargin && resolvedPadding)
         {
-            if (this.dependents.Count > 0 && (sizeHasChanged || this.childsChanged || this.dependenciesHasChanged))
+            if (this.dependents.Count > 0 && (sizeHasChanged || this.childsChanged || this.dependenciesHasChanged || this.content != this.staticContent))
             {
                 this.CalculatePendingLayouts();
             }
@@ -915,13 +935,12 @@ public abstract partial class Element
                 {
                     this.ownStencilLayer = new StencilLayer(this);
 
-                    this.StencilLayer?.AppendChild(this.ownStencilLayer);
+                     this.StencilLayer?.AppendChild(this.ownStencilLayer);
                 }
             }
             else if (this.ownStencilLayer != null)
             {
                 this.ownStencilLayer.Detach();
-                this.ownStencilLayer.Dispose();
 
                 this.ownStencilLayer = null;
             }
@@ -930,11 +949,6 @@ public abstract partial class Element
         }
 
         var affectsBoundings = property.HasAnyFlag(LAYOUT_AFFECTED_PROPERTIES);
-
-        if (affectsBoundings)
-        {
-            this.ownStencilLayer?.MakeDirty();
-        }
 
         if (hidden)
         {

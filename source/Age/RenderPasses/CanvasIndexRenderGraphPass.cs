@@ -20,13 +20,14 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
     private Framebuffer framebuffer;
     private Image       stencilImage;
 
-    protected override CanvasStencilMaskShader CanvasStencilMaskShader { get; }
-    protected override Color                   ClearColor              { get; } = Color.Black;
-    protected override CommandBuffer           CommandBuffer           { get; }
-    protected override Framebuffer             Framebuffer             => this.framebuffer;
-    protected override RenderPipelines[]       Pipelines               { get; } = [];
-    protected override PipelineVariant         PipelineVariants        { get; } = PipelineVariant.Index;
-    public override RenderPass                 RenderPass              { get; }
+    protected override CanvasStencilMaskShader CanvasStencilWriterShader { get; }
+    protected override CanvasStencilMaskShader CanvasStencilEraserShader { get; }
+    protected override Color                   ClearColor                { get; } = Color.Black;
+    protected override CommandBuffer           CommandBuffer             { get; }
+    protected override Framebuffer             Framebuffer               => this.framebuffer;
+    protected override RenderPipelines[]       Pipelines                 { get; } = [];
+    protected override PipelineVariant         PipelineVariants          { get; } = PipelineVariant.Index;
+    public override RenderPass                 RenderPass                { get; }
 
     public Image ColorImage => this.colorImage;
 
@@ -47,7 +48,8 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
         this.CreateFramebuffer(out this.colorImage, out this.stencilImage, out this.framebuffer);
 
-        this.CanvasStencilMaskShader = new CanvasStencilMaskShader(this.RenderPass, true);
+        this.CanvasStencilWriterShader = new CanvasStencilMaskShader(this.RenderPass, StencilOp.Write, true);
+        this.CanvasStencilEraserShader = new CanvasStencilMaskShader(this.RenderPass, StencilOp.Erase, true);
 
         var shader = new CanvasIndexShader(this.RenderPass, true);
 
@@ -56,7 +58,8 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             new RenderPipelines(shader, this.vertexBuffer, this.indexBuffer, true, false)
         ];
 
-        this.CanvasStencilMaskShader.Changed += RenderingService.Singleton.RequestDraw;
+        this.CanvasStencilWriterShader.Changed += RenderingService.Singleton.RequestDraw;
+        this.CanvasStencilEraserShader.Changed += RenderingService.Singleton.RequestDraw;
         shader.Changed += RenderingService.Singleton.RequestDraw;
     }
 
@@ -146,7 +149,8 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
     protected override void Disposed()
     {
         this.DisposeFramebuffer();
-        this.CanvasStencilMaskShader.Dispose();
+        this.CanvasStencilWriterShader.Dispose();
+        this.CanvasStencilEraserShader.Dispose();
         this.RenderPass.Dispose();
         this.CommandBuffer.Dispose();
         this.Pipelines[0].Dispose();
@@ -161,7 +165,7 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             Flags     = command.Flags,
             Size      = command.Size,
             Transform = command.Transform * transform,
-            UV        = command.TextureMap.UV,
+            UV        = UVRect.Normalized,
             Viewport  = viewport,
         };
 
