@@ -26,7 +26,7 @@ public sealed partial class RenderTree
                 {
                     traversalEnumerator.SkipToNextSibling();
 
-                    collect2D(canvas);
+                    collectSpatial2D(canvas);
 
                     var composedTreeTraversalEnumerator = canvas.GetComposedTreeTraversalEnumerator(this.composedTreeStack, gatherElementPostCommands);
 
@@ -40,9 +40,9 @@ public sealed partial class RenderTree
                             {
                                 collectElementPreCommands(element);
                             }
-                            else
+                            else if (composedTreeTraversalEnumerator.Current is Layoutable layoutable)
                             {
-                                collect2D(composedTreeTraversalEnumerator.Current);
+                                collectLayoutable(composedTreeTraversalEnumerator.Current);
                             }
                         }
                         else
@@ -53,11 +53,11 @@ public sealed partial class RenderTree
                 }
                 else if (renderable is Spatial2D spatial2D)
                 {
-                    collect2D(spatial2D);
+                    collectSpatial2D(spatial2D);
                 }
                 else if (renderable is Spatial3D spatial3D)
                 {
-                    collect3D(spatial3D);
+                    collectSpatial3D(spatial3D);
                 }
             }
         }
@@ -97,7 +97,20 @@ public sealed partial class RenderTree
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void collect2D(Spatial2D spatial2D)
+        void collectLayoutable(Layoutable layoutable)
+        {
+            var transform = layoutable.CachedTransformWithOffset;
+
+            foreach (var command in layoutable.Commands)
+            {
+                var entry = new Command2DEntry(command, transform);
+
+                this.command2DEntries.Add(entry);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void collectSpatial2D(Spatial2D spatial2D)
         {
             var transform = spatial2D.CachedTransform;
 
@@ -110,7 +123,7 @@ public sealed partial class RenderTree
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void collect3D(Spatial3D spatial3D)
+        void collectSpatial3D(Spatial3D spatial3D)
         {
             var transform = (Matrix4x4<float>)spatial3D.CachedTransform;
 
