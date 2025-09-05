@@ -8,11 +8,11 @@ public static partial class Extension
 {
     extension(byte[] source)
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string ConvertToString() =>
             Encoding.Default.GetString(source);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string ConvertToString(Encoding encoding) =>
             encoding.GetString(source);
     }

@@ -94,6 +94,62 @@
                 scale(0.5, 1)
                 matrix(1.2, 0.5, 0.5, 1.2, 10, 20);
         }
+
+        #parent {
+            border: solid 2px red;
+            overflow: auto;
+            height: 200px;
+            width: 200px;
+            /* pointer-events: none; */
+        }
+        #child-1 {
+            background-color: cyan;
+            height: 100px;
+            width: 100px;
+        }
+        #child-2 {
+            background-color: green;
+            overflow: auto;
+            height: 400px;
+            width: 400px;
+        }
+        #child-2-1 {
+            background-color: blue;
+            height: 600px;
+            width: 600px;
+        }
+        #child-2-2 {
+            background-color: magenta;
+            height: 600px;
+            width: 600px;
+        }
+
+        .scroll-container {
+            width: 300px;
+            height: 200px;
+            overflow: auto; /* enable scrolling */
+            scrollbar-width: none; /* hide scrollbar in Firefox */
+        }
+
+        .scroll-container::-webkit-scrollbar {
+            width: 8px; /* scrollbar size */
+            height: 8px;
+            background: transparent; /* fully transparent by default */
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: transparent; /* hide thumb initially */
+            border-radius: 4px;
+        }
+
+            /* Show scrollbar on hover */
+        .scroll-container:hover::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.4); /* visible thumb */
+        }
+
+        .scroll-container:hover::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1); /* optional track */
+        }
     </style>
 </head>
 <body>
@@ -117,13 +173,13 @@
         <div class="cat"></div>
     </div> -->
 
-    <svg height="200" width="350" xmlns="http://www.w3.org/2000/svg">
+    <!-- <svg height="200" width="350" xmlns="http://www.w3.org/2000/svg">
         <path id="lineAC" d="M 30 180 q 150 -250 300 0" stroke="blue" stroke-width="2" fill="none"/>
         <text style="fill:red;font-size:25px;">
             <textPath href="#lineAC" startOffset="50%">I love SVG! I love SVG!</textPath>
         </text>
         Sorry, your browser does not support inline SVG.
-    </svg>
+    </svg> -->
 
     <!-- <span class="stack">
         <span class="red">01</span>
@@ -136,16 +192,55 @@
         <span class="blue">Z</span>
         <span class="blue"></span>
     </span> -->
+    <div id="parent">
+        <div id="child-1">
+        </div>
+        <div id="child-2">
+            <div id="child-2-1"></div>
+            <div id="child-2-2"></div>
+        </div>
+    </div>
 </body>
 <script>
-    const clicker = document.querySelector('#clicker');
+    /** @type {HTMLElement} */
+    const parent = document.querySelector('#parent');
 
-    let clicks = 0;
-    let doubleClicks = 0;
+    /** @type {HTMLElement} */
+    const child1 = document.querySelector('#child-1');
 
-    clicker.addEventListener('click', () => console.log(`Clickes: ${++clicks}`))
-    clicker.addEventListener('blur', () => console.log(`Blured`))
-    clicker.addEventListener('focus', () => console.log(`Focused`))
-    clicker.addEventListener('dblclick', () => console.log(`Double clickes: ${++doubleClicks}`))
+    /** @type {HTMLElement} */
+    const child2 = document.querySelector('#child-2');
+
+    const addEvent = (element) => {
+        element.addEventListener('mouseenter', event => console.log(`#${event.target.id} [enter]`));
+        element.addEventListener('mouseleave', event => console.log(`#${event.target.id} [leave]`));
+        // element.addEventListener('mouseover', event => console.log(`#${event.target.id} [over]`));
+        // element.addEventListener('mouseout', event => console.log(`#${event.target.id} [out]`));
+    }
+
+    var maximized = false;
+
+    /** @param {KeyboardEvent} event */
+    const keydownHandler = (event) =>
+    {
+        console.log(event);
+        if (event.code == 'Space')
+        {
+            var size = `${(maximized = !maximized) ? 400 : 200}px`;
+
+            parent.style.height = size;
+            parent.style.width  = size;
+        }
+    };
+
+    parent.addEventListener("mouseup", event => console.log(`#${event.target.id} [mouseup]`))
+    parent.addEventListener("pointerup", event => console.log(`#${event.target.id} [pointerup]`))
+    document.addEventListener("keydown", keydownHandler)
+
+
+    // addEvent(parent);
+    // addEvent(child1);
+    // addEvent(child2);
+
 </script>
 </html>

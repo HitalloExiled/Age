@@ -104,7 +104,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             return [];
         }
 
-        var ancestor = GetLowestCommonAncestor(start, end);
+        var ancestor = GetCommonAncestor(start, end);
 
         var (left, right) = start < end
             ? (start, end)
@@ -138,7 +138,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         return [..leftNodes, ..rightNodes];
     }
 
-    public static Node? GetLowestCommonAncestor(Node left, Node right)
+    public static Node? GetCommonAncestor(Node left, Node right)
     {
         if (left.Parent == right.Parent)
         {
@@ -160,19 +160,16 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             var currentLeft  = left.Parent;
             var currentRight = right.Parent;
 
-            while (currentLeft != null || currentRight != null)
+            while (currentLeft != null)
             {
-                if (currentLeft != null)
-                {
-                    leftDepth++;
-                    currentLeft  = currentLeft.Parent;
-                }
+                leftDepth++;
+                currentLeft  = currentLeft.Parent;
+            }
 
-                if (currentRight != null)
-                {
-                    rightDepth++;
-                    currentRight  = currentRight.Parent;
-                }
+            while (currentRight != null)
+            {
+                rightDepth++;
+                currentRight  = currentRight.Parent;
             }
 
             currentLeft  = left;
@@ -740,17 +737,30 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public void InsertNodesBeforeSelf(scoped ReadOnlySpan<Node> nodes) =>
         this.Parent?.InsertNodesBefore(nodes, this);
 
-    public bool IsDescendent(Node other)
+    public bool IsAncestor(Node other)
     {
-        var parent = other;
-
-        while (parent != this.Parent)
+        if (this == other)
         {
-            parent = parent?.Parent;
+            return false;
         }
 
-        return this.Parent == parent;
+        var parent = other.Parent;
+
+        while (parent != this)
+        {
+            if (parent == null)
+            {
+                return false;
+            }
+
+            parent = parent.Parent;
+        }
+
+        return true;
     }
+
+    public bool IsDescendent(Node other) =>
+        other.IsAncestor(this);
 
     public void PrependChild(Node node) =>
         this.AppendOrPrepend(node, false);

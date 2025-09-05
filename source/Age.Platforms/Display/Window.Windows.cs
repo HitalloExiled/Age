@@ -38,7 +38,7 @@ public partial class Window
     private static int GetWheelDeltaWParam(WPARAM wParam) => HiWord(wParam);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static MouseEvent GetMouseEventArgs(MouseButton button, User32.WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam) =>
+    private static WindowMouseEvent GetMouseEventArgs(MouseButton button, User32.WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam) =>
         new()
         {
             X             = GetXLParam(lParam),
@@ -177,7 +177,7 @@ public partial class Window
 
                         User32.ScreenToClient(hwnd, point);
 
-                        var contextEvent = new ContextEvent
+                        var contextEvent = new WindowContextEvent
                         {
                             X       = (ushort)point.x,
                             Y       = (ushort)point.y,

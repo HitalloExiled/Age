@@ -11,6 +11,6 @@ public ref struct FramebufferCreateInfo
         public VkImageAspectFlags ImageAspect = imageAspect;
     }
 
-    public required RenderPass       RenderPass;
-    public required Span<Attachment> Attachments;
+    public required RenderPass               RenderPass;
+    public required ReadOnlySpan<Attachment> Attachments;
 }

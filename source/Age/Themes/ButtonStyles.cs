@@ -24,7 +24,7 @@ public class ButtonStyles
                     BackgroundColor = Color.Green,
                     Color           = Color.Black,
                 },
-                Focus = new()
+                Focused = new()
                 {
                     BackgroundColor = Color.Green + (Color.White * 0.5f),
                 },
@@ -44,7 +44,7 @@ public class ButtonStyles
                     Border = new(1, 4, Color.Green),
                     Color  = Color.Green,
                 },
-                Focus = new()
+                Focused = new()
                 {
                     BackgroundColor = Color.Green.WithAlpha(0.15f),
                 },
@@ -66,7 +66,7 @@ public class ButtonStyles
                     Color           = Color.Green,
                     BackgroundColor = Color.Green.WithAlpha(0),
                 },
-                Focus = new()
+                Focused = new()
                 {
                     BackgroundColor = Color.Green.WithAlpha(0.15f),
                 },

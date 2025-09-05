@@ -1,5 +1,7 @@
+using Age.Core.Extensions;
 using Age.Elements;
 using Age.Scene;
+using Xunit.Internal;
 
 namespace Age.Tests.Age.Elements;
 
@@ -40,13 +42,13 @@ public class ElementTest
     {
         var parent = new FlexBox();
 
-        var text1 = new EmptyNode();
+        var text1  = new EmptyNode();
         var child1 = new FlexBox { Name = "child1" };
-        var text2 = new EmptyNode();
+        var text2  = new EmptyNode();
         var child2 = new FlexBox { Name = "child2" };
-        var text3 = new EmptyNode();
+        var text3  = new EmptyNode();
         var child3 = new FlexBox { Name = "child3" };
-        var text4 = new EmptyNode();
+        var text4  = new EmptyNode();
 
         parent.AppendChild(text1);
         parent.AppendChild(child1);
@@ -159,5 +161,114 @@ public class ElementTest
         Assert.Equal(-1, node3.CompareTo(node3_1));
         Assert.Equal(-1, node3_2.CompareTo(node31));
         Assert.Equal(1,  node31.CompareTo(node3_11));
+    }
+
+    [Fact]
+    public void GetPathToCommonComposedAncestor()
+    {
+        TestElement a1;
+        TestElement a2;
+        TestElement a2_1;
+        TestElement a2_1_1;
+        TestElement a2_2;
+        TestElement a2_2_1;
+        TestElement a2_2_1_1;
+
+        TestElement b2_2_1_1;
+
+        var a = new TestElement("$")
+        {
+            Children =
+            [
+                a1 = new TestElement("$.1"),
+                a2 = new TestElement("$.2")
+                {
+                    Children =
+                    [
+                        a2_1 = new TestElement("$a.2.1")
+                        {
+                            Children =
+                            [
+                                a2_1_1 = new TestElement("$a.2.1.1"),
+                            ]
+                        },
+                        a2_2 = new TestElement("$a.2.2")
+                        {
+                            Children =
+                            [
+                                a2_2_1 = new TestElement("$a.2.2.1")
+                                {
+                                    Children =
+                                    [
+                                        a2_2_1_1 = new TestElement("$a.2.2.1.1")
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+            ]
+        };
+
+        var b = new TestElement("$b")
+        {
+            Children =
+            [
+                new TestElement("$b.1"),
+                new TestElement("$b.2")
+                {
+                    Children =
+                    [
+                        new TestElement("$b.2.1")
+                        {
+                            Children =
+                            [
+                                new TestElement("$b.2.1.1"),
+                            ]
+                        },
+                        new TestElement("$b.2.2")
+                        {
+                            Children =
+                            [
+                                new TestElement("$b.2.2.1")
+                                {
+                                    Children =
+                                    [
+                                        b2_2_1_1 = new TestElement("$b.2.2.1.1")
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+            ]
+        };
+
+        var actual = Element.GetComposedPathBetween(a, a1);
+
+        assert([a, a1], [a], [a1, a], actual);
+
+        actual = Element.GetComposedPathBetween(a1, a2);
+
+        assert([a1, a, a2], [a1, a], [a2, a], actual);
+
+        actual = Element.GetComposedPathBetween(a1, a2_1_1);
+
+        assert([a1, a, a2, a2_1, a2_1_1], [a1, a], [a2_1_1, a2_1, a2, a], actual);
+
+        actual = Element.GetComposedPathBetween(a2_2_1_1, a2_1_1);
+
+        assert([a2_2_1_1, a2_2_1, a2_2, a2, a2_1, a2_1_1], [a2_2_1_1, a2_2_1, a2_2, a2], [a2_1_1, a2_1, a2], actual);
+
+        Assert.Throws<InvalidOperationException>(() => Element.GetComposedPathBetween(a2_2_1_1, b2_2_1_1));
+
+        static void assert(Element[] expectedPath, Element[] leftToAncestor, Element[] ancestorToRight, in ComposedPath actual)
+        {
+            var actualPath = actual.GetElements();
+
+            Assert.Equal(expectedPath, actualPath.ToArray());
+            Assert.Equal(leftToAncestor, actual.LeftToAncestor);
+            Assert.Equal(ancestorToRight, actual.RightToAncestor);
+        }
     }
 }

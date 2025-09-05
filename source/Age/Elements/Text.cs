@@ -29,7 +29,6 @@ public sealed class Text : Layoutable
     private bool           caretIsVisible;
     private SKFont?        font;
     private float          fontLeading;
-    private bool           isMouseOverText;
     private Vector2<float> previouCursor;
     private bool           selectionIsDirty;
     private bool           textIsDirty;
@@ -111,7 +110,6 @@ public sealed class Text : Layoutable
         };
 
         this.caretTimer.Timeout += this.BlinkCaret;
-        this.selectionTimer.Timeout += this.UpdateSelection;
 
         this.AppendChild(this.caretTimer);
         this.AppendChild(this.selectionTimer);
@@ -119,6 +117,7 @@ public sealed class Text : Layoutable
         this.NodeFlags = NodeFlags.Immutable;
 
         this.caretCommand              = CommandPool.RectCommand.Get();
+        this.caretCommand.Metadata     = 1337; // TODO: Remove
         this.caretCommand.Color        = Color.White;
         this.caretCommand.Flags        = Flags.ColorAsBackground;
         this.caretCommand.TextureMap   = TextureMap.Default;
@@ -155,9 +154,6 @@ public sealed class Text : Layoutable
             }
         }
     }
-
-    private static ulong CombineIds(int characterIndex, int elementIndex) =>
-        ((ulong)characterIndex << 24) | ((uint)elementIndex);
 
     private static void ReleaseCommands(List<Command> commands, int count)
     {
@@ -351,7 +347,7 @@ public sealed class Text : Layoutable
 
             if (!char.IsLowSurrogate(character))
             {
-                selectionCommand.ObjectId  = CombineIds(i + 1, elementIndex);
+                selectionCommand.ObjectId  = CombineIds(elementIndex, i + 1);
                 selectionCommand.Size      = new(glyphsWidths[charIndex], this.LineHeight);
                 selectionCommand.Transform = Transform2D.CreateTranslated(new(cursor.X, cursor.Y - baseLine));
 
@@ -381,13 +377,15 @@ public sealed class Text : Layoutable
 
                     var characterCommand = (TextCommand)this.Commands[characterIndex];
 
-                    characterCommand.Border          = default;
+                    characterCommand.Metadata = default;
+                    characterCommand.Border   = default;
+                    characterCommand.ObjectId = default;
+
                     characterCommand.Color           = color;
                     characterCommand.Flags           = Flags.GrayscaleTexture | Flags.MultiplyColor;
                     characterCommand.Index           = selectionCommand.Index;
                     characterCommand.Line            = selectionCommand.Line;
                     characterCommand.TextureMap      = glyph;
-                    characterCommand.ObjectId        = default;
                     characterCommand.PipelineVariant = PipelineVariant.Color;
                     characterCommand.Size            = size;
                     characterCommand.Transform       = Transform2D.CreateTranslated(offset);
@@ -507,18 +505,6 @@ public sealed class Text : Layoutable
         this.RequestUpdate(true);
     }
 
-    private void UpdateSelection()
-    {
-        if (this.isMouseOverText)
-        {
-            return;
-        }
-
-        var position = Input.GetMousePosition();
-
-        this.UpdateSelection(position.X, position.Y);
-    }
-
     protected override void OnAdopted(Node parent)
     {
         switch (parent)
@@ -557,7 +543,7 @@ public sealed class Text : Layoutable
 
             if (command.Surrogate != TextCommand.SurrogateKind.Low)
             {
-                commands[i].ObjectId = CombineIds(i + 1, elementIndex);
+                commands[i].ObjectId = CombineIds(elementIndex, i + 1);
             }
             else
             {
@@ -602,22 +588,27 @@ public sealed class Text : Layoutable
 
     internal void HandleMouseOut()
     {
-        if (!this.CanSelect)
+        IsHoveringText = false;
+
+        if (ActiveText != this || !this.CanSelect)
         {
             return;
         }
 
-        this.isMouseOverText = IsHoveringText = false;
+        if (IsSelectingText)
+        {
+            this.RenderTree!.Window.MouseMove += this.WindowOnMouseMove;
+        }
     }
 
     internal void HandleMouseOver()
     {
-        if (!this.CanSelect)
+        IsHoveringText = true;
+
+        if (IsDraggingScrollBar || IsSelectingText || !this.CanSelect)
         {
             return;
         }
-
-        this.isMouseOverText = IsHoveringText = true;
 
         this.SetCursor(Cursor.Text);
     }
@@ -625,24 +616,30 @@ public sealed class Text : Layoutable
     internal void HandleRemoved(Element parentElement) =>
         parentElement.StyleChanged -= this.OnParentStyleChanged;
 
-    internal void InvokeActivate()
+    internal void HandleActivate()
     {
         if (!this.CanSelect)
         {
             return;
         }
 
-        this.selectionTimer.Start();
-
-        IsSelectingText = true;
+        ActiveText = this;
     }
 
-    internal void InvokeDeactivate()
+    private void WindowOnMouseMove(in WindowMouseEvent mouseEvent)
     {
-        this.selectionTimer.Stop();
-
-        IsSelectingText = false;
+        if (mouseEvent.IsHoldingPrimaryButton)
+        {
+            this.UpdateSelection(mouseEvent.X, mouseEvent.Y);
+        }
+        else
+        {
+            this.RenderTree!.Window.MouseMove -= this.WindowOnMouseMove;
+            this.HandleDeactivate();
+        }
     }
+
+    internal void HandleDeactivate() => ActiveText = null;
 
     internal void PropagateSelection(uint characterPosition)
     {
@@ -715,7 +712,7 @@ public sealed class Text : Layoutable
         this.CursorPosition = position;
     }
 
-    internal void SetCaret(ushort x, ushort y, uint position)
+    private void SetCaret(ushort x, ushort y, uint position)
     {
         if (!this.CanSelect)
         {
@@ -889,9 +886,39 @@ public sealed class Text : Layoutable
         }
     }
 
-    internal void UpdateSelection(ushort x, ushort y, uint character)
+    internal void HandleVirtualChildMouseDown(in WindowMouseEvent mouseEvent, uint virtualChildIndex, bool focus)
     {
-        if (!this.CanSelect)
+        if (ActiveText != this)
+        {
+            return;
+        }
+
+        if (focus)
+        {
+            this.SetCaret(mouseEvent.X, mouseEvent.Y, virtualChildIndex - 1);
+        }
+        else
+        {
+            this.UpdateSelection(mouseEvent.X, mouseEvent.Y, virtualChildIndex - 1);
+        }
+    }
+
+    internal void HandleVirtualChildMouseMove(in WindowMouseEvent mouseEvent, uint virtualChildIndex)
+    {
+        if (ActiveText != this)
+        {
+            return;
+        }
+
+        if (mouseEvent.IsHoldingPrimaryButton)
+        {
+            this.UpdateSelection(mouseEvent.X, mouseEvent.Y, virtualChildIndex - 1);
+        }
+    }
+
+    private void UpdateSelection(ushort x, ushort y, uint character)
+    {
+        if (ActiveText != this)
         {
             return;
         }
@@ -1019,7 +1046,7 @@ public sealed class Text : Layoutable
 
         this.UpdateLayoutIndependentAncestor();
 
-        var slice = this.Commands.AsSpan((int)textSelection.Start + 1, (int)textSelection.End + 1);
+        var slice = this.Commands.AsSpan((int)textSelection.Start + 1, textSelection.Length);
 
         var rect = new Rect<float>();
 

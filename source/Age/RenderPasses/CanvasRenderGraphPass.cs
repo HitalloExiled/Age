@@ -21,8 +21,6 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
     private readonly VertexBuffer            vertexBuffer;
     private readonly IndexBuffer             wireframeIndexBuffer;
 
-    private UniformSet? lastUniformSet;
-
     protected override CanvasStencilMaskShader CanvasStencilMaskShader { get; }
     protected override Color                   ClearColor              { get; } = Color.Black;
     protected override CommandBuffer           CommandBuffer           => this.Renderer.CurrentCommandBuffer;
@@ -45,7 +43,7 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         this.indexBuffer          = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
         this.wireframeIndexBuffer = renderer.CreateIndexBuffer([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
 
-        this.RenderPass = this.CreateRenderPass();
+        this.RenderPass = CreateRenderPass(this.Window.Surface.Swapchain.Format, VkImageLayout.PresentSrcKHR);
 
         this.CanvasStencilMaskShader = new CanvasStencilMaskShader(this.RenderPass, true);
 
@@ -131,50 +129,6 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         }
     }
 
-    private RenderPass CreateRenderPass()
-    {
-        var createInfo = new RenderPassCreateInfo
-        {
-            SubPasses =
-            [
-                new()
-                {
-                    PipelineBindPoint = VkPipelineBindPoint.Graphics,
-                    ColorAttachments  =
-                    [
-                        new()
-                        {
-                            Color  = new VkAttachmentDescription
-                            {
-                                Format         = this.Window.Surface.Swapchain.Format,
-                                Samples        = VkSampleCountFlags.N1,
-                                InitialLayout  = VkImageLayout.Undefined,
-                                FinalLayout    = VkImageLayout.PresentSrcKHR,
-                                LoadOp         = VkAttachmentLoadOp.Clear,
-                                StoreOp        = VkAttachmentStoreOp.Store,
-                                StencilLoadOp  = VkAttachmentLoadOp.DontCare,
-                                StencilStoreOp = VkAttachmentStoreOp.DontCare,
-                            },
-                        }
-                    ],
-                    DepthStencilAttachment = new()
-                    {
-                        Format         = VulkanRenderer.Singleton.StencilBufferFormat,
-                        Samples        = VkSampleCountFlags.N1,
-                        InitialLayout  = VkImageLayout.Undefined,
-                        FinalLayout    = VkImageLayout.DepthStencilAttachmentOptimal,
-                        LoadOp         = VkAttachmentLoadOp.Clear,
-                        StoreOp        = VkAttachmentStoreOp.DontCare,
-                        StencilLoadOp  = VkAttachmentLoadOp.Clear,
-                        StencilStoreOp = VkAttachmentStoreOp.Store
-                    },
-                }
-            ],
-        };
-
-        return new(createInfo);
-    }
-
     private void DisposeFrameBuffers()
     {
         for (var i = 0; i < VulkanContext.MAX_FRAMES_IN_FLIGHT; i++)
@@ -185,7 +139,7 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
     }
 
     protected override void BeforeExecute() =>
-        this.lastUniformSet = null;
+        this.LastUniformSet = null;
 
     protected override void Disposed()
     {
@@ -202,17 +156,6 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 
     protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
     {
-        var constant = new CanvasShader.PushConstant
-        {
-            Border    = command.Border,
-            Color     = command.Color,
-            Flags     = command.Flags,
-            Size      = command.Size,
-            Transform = command.Transform * transform,
-            UV        = command.TextureMap.UV,
-            Viewport  = viewport,
-        };
-
         if (!this.UniformSets.TryGetValue(command.TextureMap.Texture, out var uniformSet))
         {
             var diffuse = new CombinedImageSamplerUniform
@@ -227,12 +170,21 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             this.UniformSets.Set(command.TextureMap.Texture, uniformSet = new UniformSet(resource.Shader, [diffuse]));
         }
 
-        if (uniformSet != null && uniformSet != this.lastUniformSet)
+        if (uniformSet != null && this.LastUniformSet != uniformSet)
         {
-            this.CommandBuffer.BindUniformSet(uniformSet);
-
-            this.lastUniformSet = uniformSet;
+            this.CommandBuffer.BindUniformSet(this.LastUniformSet = uniformSet);
         }
+
+        var constant = new CanvasShader.PushConstant
+        {
+            Border    = command.Border,
+            Color     = command.Color,
+            Flags     = command.Flags,
+            Size      = command.Size,
+            Transform = command.Transform * transform,
+            UV        = command.TextureMap.UV,
+            Viewport  = viewport,
+        };
 
         this.CommandBuffer.PushConstant(resource.Shader, constant);
         this.CommandBuffer.DrawIndexed(resource.IndexBuffer);

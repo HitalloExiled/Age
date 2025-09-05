@@ -1,7 +1,9 @@
-using Age.Numerics;
-using Age.Elements;
-using Age.Styling;
+using System;
 using Age.Components;
+using Age.Elements;
+using Age.Numerics;
+using Age.Platforms.Display;
+using Age.Styling;
 
 namespace Age.Playground.Tests.Styling;
 
@@ -102,8 +104,9 @@ public static class ScrollTest
                 Border   = new(BORDER_SIZE, 0, Color.Red),
                 Padding  = new(Unit.Px(10)),
                 Overflow = Overflow.Scroll,
-                Size     = new(Unit.Pc(100)),
+                Size     = new(400, 400),
                 Color    = Color.White,
+                //Transforms = [TransformOp.Rotate(Angle.DegreesToRadians(45f))]
             },
         };
 
@@ -222,12 +225,89 @@ public static class ScrollTest
             },
         };
 
+        var cat = Path.Join(AppContext.BaseDirectory, "Assets", "Textures", "Cat.jpg");
+
+        var scrollParent = new FlexBox
+        {
+            Name  = "parent",
+            Style =
+            {
+                Border     = new(2, 0, Color.Red),
+                Overflow   = Overflow.Scroll,
+                Size       = new(200),
+                Transforms =
+                [
+                    TransformOp.Rotate(Angle.DegreesToRadians(45f)),
+                    TransformOp.Translate(10, 10)
+                ],
+            },
+            Children =
+            [
+                new FlexBox
+                {
+                    Name  = "child-1",
+                    Style =
+                    {
+                        Border = new(2, 0, Color.Yellow),
+                        Size   = new(100),
+                    }
+                },
+                new FlexBox
+                {
+                    Name  = "child-2",
+                    Style =
+                    {
+                        BackgroundColor = Color.Green,
+                        Overflow        = Overflow.Scroll,
+                        Size            = new(400),
+                    },
+                    Children =
+                    [
+                        new FlexBox
+                        {
+                            Name  = "child-2-1",
+                            Style =
+                            {
+                                Border          = new(2, 0, Color.Blue),
+                                BackgroundImage = new()
+                                {
+                                    Uri  = cat,
+                                    Size = ImageSize.Fit(),
+                                },
+                                Size = new(600),
+                            }
+                        },
+                        new FlexBox
+                        {
+                            Name  = "child-2-2",
+                            Style =
+                            {
+                                BackgroundColor = Color.Margenta,
+                                Size            = new(100),
+                            }
+                        }
+                    ]
+                },
+            ]
+        };
+
+        var isExpanded = false;
+
+        canvas.RenderTree?.Window.KeyDown += (key) =>
+        {
+            if (key == Key.Space)
+            {
+                scrollParent.Style.Size = (isExpanded = !isExpanded) ? new(400) : new(200);
+            }
+        };
+
+        canvas.AppendChild(scrollParent);
         //canvas.AppendChild(loren);
         //canvas.AppendChild(conteiner1);
         //canvas.AppendChild(conteiner2);
         //canvas.AppendChild(conteiner3);
         //canvas.AppendChild(conteiner4);
         // canvas.AppendChild(conteiner5);
-         canvas.AppendChild(textBox);
+        //canvas.AppendChild(textBox);
     }
 }

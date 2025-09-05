@@ -12,10 +12,11 @@ public sealed class Canvas : Element
     public Canvas()
     {
         this.NodeFlags = NodeFlags.IgnoreUpdates;
-        this.Style = new()
+        this.Style     = new()
         {
             // Padding = new(Unit.Px(PADDING)),
-            Color = Color.White,
+            Color           = Color.White,
+            //BackgroundColor = Color.Green.WithAlpha(0.5f),
         };
     }
 
@@ -23,7 +24,7 @@ public sealed class Canvas : Element
     {
         if (this.Tree is RenderTree renderTree)
         {
-            this.Style.Size = new(Unit.Px(renderTree.Window.ClientSize.Width), Unit.Px(renderTree.Window.ClientSize.Height));
+            this.Style.Size = new(renderTree.Window.ClientSize.Width, renderTree.Window.ClientSize.Height);
         }
     }
 

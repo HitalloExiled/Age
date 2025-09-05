@@ -30,6 +30,7 @@ public enum StyleProperty
     TextSelection        = 1 << 23,
     Transforms           = 1 << 24,
     TransformOrigin      = 1 << 25,
+    ZIndex               = 1 << 26,
 
     All = Alignment
         | BackgroundColor
@@ -57,4 +58,5 @@ public enum StyleProperty
         | TextSelection
         | Transforms
         | TransformOrigin
+        | ZIndex
 }

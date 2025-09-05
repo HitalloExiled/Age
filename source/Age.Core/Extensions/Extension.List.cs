@@ -13,8 +13,23 @@ public static partial class Extension
         public Span<T> AsSpan(int start) =>
             CollectionsMarshal.AsSpan(source)[start..];
 
-        public Span<T> AsSpan(int start, int end) =>
-            CollectionsMarshal.AsSpan(source)[start..end];
+        public Span<T> AsSpan(int start, int length) =>
+            CollectionsMarshal.AsSpan(source).Slice(start, length);
+
+        public Span<T> AsSpan(Range range) =>
+            CollectionsMarshal.AsSpan(source)[range];
+
+        public ReadOnlySpan<T> AsReadOnlySpan() =>
+            source.AsSpan();
+
+        public ReadOnlySpan<T> AsReadOnlySpan(int start) =>
+            source.AsSpan(start);
+
+        public ReadOnlySpan<T> AsReadOnlySpan(int start, int length) =>
+            source.AsSpan(start, length);
+
+        public ReadOnlySpan<T> AsReadOnlySpan(Range range) =>
+            source.AsSpan(range);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(int size, T defaultValue)
@@ -43,5 +58,9 @@ public static partial class Extension
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetCount(int count) =>
             CollectionsMarshal.SetCount(source, count);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void TimSort(Func<T, T, int>? comparer = null) =>
+            source.AsSpan().TimSort(comparer);
     }
 }

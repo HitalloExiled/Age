@@ -73,8 +73,8 @@ public partial class TextBox : Element
         this.Blured      += this.OnBlur;
         this.Focused     += this.OnFocused;
         this.MouseDown   += this.OnMouseDown;
-        this.Activated   += this.text.InvokeActivate;
-        this.Deactivated += this.text.InvokeDeactivate;
+        this.Activated   += this.text.HandleActivate;
+        this.Deactivated += this.text.HandleDeactivate;
 
         this.text.Buffer.Changed += this.OnTextBufferChanged;
     }

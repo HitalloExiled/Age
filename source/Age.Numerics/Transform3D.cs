@@ -4,6 +4,8 @@ public record struct Transform3D
 {
     private Matrix4x4<float> matrix;
 
+    public static Transform3D Identity => Matrix4x4<float>.Identity;
+
     public Vector3<float> Position
     {
         readonly get => this.matrix.Translation;

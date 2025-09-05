@@ -1,24 +1,24 @@
+using System.Collections;
+using System.Runtime.CompilerServices;
 using Age.Core;
 using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Elements.Enumerators;
 using Age.Extensions;
+using Age.Internal;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
 using Age.Resources;
 using Age.Styling;
 using SkiaSharp;
-using System.Collections;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace Age.Elements;
 
-internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<StencilLayer>
+internal class StencilLayer(Element owner) : Disposable, IEnumerable<StencilLayer>
 {
     private readonly SKPath path = new();
 
-    private bool        isDirty;
+    private bool        isDirty = true;
     private Transform2D transform;
 
     internal Transform2D Transform
@@ -124,6 +124,11 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
         {
             imageSize = (bounds.Cast<float>() * 1.5f).Cast<uint>();
 
+            if (texture != Texture2D.Empty)
+            {
+                texture.Dispose();
+            }
+
             texture = new(imageSize, format: TextureFormat.R8Unorm);
         }
 
@@ -216,6 +221,11 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
 
     public void MakeDirty()
     {
+        if (this.isDirty)
+        {
+            return;
+        }
+
         this.isDirty = true;
 
         var enumerator = new StencilLayerTraverseEnumerator(this);
@@ -278,8 +288,10 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
 
     public void Update()
     {
-        if (this.isDirty || this.transform != this.Owner.TransformCache)
+        if (this.isDirty || this.transform != this.Owner.CachedTransformWithOffset)
         {
+            this.transform = this.Owner.CachedTransformWithOffset;
+
             var bounds = this.Owner.Boundings;
             var border = this.Owner.ComputedStyle.Border ?? new();
 
@@ -297,7 +309,7 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
             {
                 using var parentClipping = new SKPath(this.Parent.path);
 
-                var offset = (this.Owner.TransformCache.Inverse() * this.Parent.Owner.TransformCache).Matrix;
+                var offset = (this.Parent.Transform * this.Transform.Inverse()).Matrix;
 
                 offset.M32 = -offset.M32;
 
@@ -313,7 +325,6 @@ internal partial class StencilLayer(Element owner) : Disposable, IEnumerable<Ste
             this.Size = bounds;
 
             this.isDirty = false;
-            this.transform = this.Owner.TransformCache;
         }
     }
 }

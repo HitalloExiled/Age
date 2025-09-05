@@ -74,6 +74,11 @@ internal record struct StyleData
     /// <see cref="StyleProperty.TransformOrigin">
     /// </summary>
     public PointUnit? TransformOrigin;
+
+    /// <summary>
+    /// <see cref="StyleProperty.ZIndex">
+    /// </summary>
+    public int? ZIndex;
     #endregion
 
     #region 2-bytes
@@ -174,6 +179,7 @@ internal record struct StyleData
         target.TextSelection        = left.TextSelection        ?? right.TextSelection;
         target.Transforms           = left.Transforms           ?? right.Transforms;
         target.TransformOrigin      = left.TransformOrigin      ?? right.TransformOrigin;
+        target.ZIndex               = left.ZIndex               ?? right.ZIndex;
     }
 
     public static StyleProperty Diff(in StyleData left, in StyleData right)
@@ -206,6 +212,7 @@ internal record struct StyleData
         check(left.TextSelection        == right.TextSelection,        StyleProperty.TextSelection);
         check(left.Transforms           == right.Transforms,           StyleProperty.Transforms);
         check(left.TransformOrigin      == right.TransformOrigin,      StyleProperty.TransformOrigin);
+        check(left.ZIndex               == right.ZIndex,               StyleProperty.ZIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void check(bool isEqual, StyleProperty property)
@@ -270,6 +277,7 @@ internal record struct StyleData
         appendProperty(nameof(StyleProperty.TextSelection),        in this.TextSelection);
         appendProperty(nameof(StyleProperty.Transforms),           in this.Transforms);
         appendProperty(nameof(StyleProperty.TransformOrigin),      in this.TransformOrigin);
+        appendProperty(nameof(StyleProperty.ZIndex),               in this.ZIndex);
 
         if (builder.Length > 0)
         {
@@ -309,6 +317,7 @@ internal record struct StyleData
             case StyleProperty.TextSelection:        this.TextSelection        = data.TextSelection;        break;
             case StyleProperty.Transforms:           this.Transforms           = data.Transforms;           break;
             case StyleProperty.TransformOrigin:      this.TransformOrigin      = data.TransformOrigin;      break;
+            case StyleProperty.ZIndex:               this.ZIndex               = data.ZIndex;               break;
         }
     }
 }

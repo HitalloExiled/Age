@@ -455,14 +455,13 @@ where TVertexInput  : IVertexInput
                 PDynamicStates    = pDynamicStates,
             };
 
+            var isStencilMask = this.options.Stencil == StencilKind.Mask;
+
             var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
             {
-                AlphaBlendOp   = VkBlendOp.Add,
-                BlendEnable    = true,
-                ColorWriteMask = VkColorComponentFlags.R
-                    | VkColorComponentFlags.G
-                    | VkColorComponentFlags.B
-                    | VkColorComponentFlags.A,
+                AlphaBlendOp        = VkBlendOp.Add,
+                BlendEnable         = !isStencilMask,
+                ColorWriteMask      = !isStencilMask ? VkColorComponentFlags.All : default,
                 DstColorBlendFactor = VkBlendFactor.OneMinusSrcAlpha,
                 SrcAlphaBlendFactor = VkBlendFactor.One,
                 SrcColorBlendFactor = VkBlendFactor.SrcAlpha,
@@ -470,6 +469,7 @@ where TVertexInput  : IVertexInput
 
             var pipelineColorBlendStateCreateInfo = new VkPipelineColorBlendStateCreateInfo
             {
+                LogicOpEnable   = false,
                 AttachmentCount = 1,
                 LogicOp         = VkLogicOp.Copy,
                 PAttachments    = &pipelineColorBlendAttachmentState,
@@ -477,14 +477,14 @@ where TVertexInput  : IVertexInput
 
             var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
             {
-                SampleShadingEnable  = true,
+                SampleShadingEnable  = !isStencilMask,
                 RasterizationSamples = this.options.RasterizationSamples,
                 MinSampleShading     = 1,
             };
 
             var pipelineRasterizationStateCreateInfo = new VkPipelineRasterizationStateCreateInfo
             {
-                CullMode    = VkCullModeFlags.Back,
+                CullMode    = !isStencilMask ? VkCullModeFlags.Back : default,
                 FrontFace   = this.options.FrontFace,
                 LineWidth   = 1,
                 PolygonMode = VkPolygonMode.Fill,
@@ -516,20 +516,19 @@ where TVertexInput  : IVertexInput
                     FailOp      = VkStencilOp.Keep,
                     PassOp      = VkStencilOp.Replace,
                     Reference   = 1,
-                    WriteMask   = 0xFF,
+                    WriteMask   = 0x00,
                 },
                 _ => default
             };
 
             var depthStencilState = new VkPipelineDepthStencilStateCreateInfo
             {
-                DepthTestEnable       = this.options.Stencil == StencilKind.None,
-                DepthWriteEnable      = true,
-                DepthCompareOp        = VkCompareOp.Less,
-                DepthBoundsTestEnable = false,
-                StencilTestEnable     = this.options.Stencil != StencilKind.None,
-                Front                 = stencilOp,
-                Back                  = stencilOp,
+                DepthTestEnable   = !isStencilMask,
+                DepthWriteEnable  = !isStencilMask,
+                DepthCompareOp    = isStencilMask ? VkCompareOp.Always : VkCompareOp.LessOrEqual,
+                StencilTestEnable = this.options.Stencil != default,
+                Front             = stencilOp,
+                Back              = stencilOp,
             };
 
             var graphicsPipelineCreateInfo = new VkGraphicsPipelineCreateInfo

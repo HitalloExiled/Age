@@ -12,7 +12,6 @@ namespace Age.Rendering.Resources;
 public sealed class Image : Resource<VkImage>
 {
     private readonly Allocation? allocation;
-    private readonly VkImage     instance;
 
     public VkExtent3D        Extent        { get; }
     public VkFormat          Format        { get; }
@@ -169,11 +168,11 @@ public sealed class Image : Resource<VkImage>
             _ => 0,
         };
 
-    public override VkImage Instance => this.instance;
+    public override VkImage Instance { get; }
 
     internal Image(VkImage instance, in VkImageCreateInfo description)
     {
-        this.instance      = instance;
+        this.Instance      = instance;
         this.Extent        = description.Extent;
         this.Format        = description.Format;
         this.Type          = description.ImageType;
@@ -183,8 +182,8 @@ public sealed class Image : Resource<VkImage>
 
     public Image(in VkImageCreateInfo createInfo, VkImageLayout finalLayout = default)
     {
-        this.instance = VulkanRenderer.Singleton.Context.Device.CreateImage(createInfo);
-        this.instance.GetMemoryRequirements(out var memRequirements);
+        this.Instance = VulkanRenderer.Singleton.Context.Device.CreateImage(createInfo);
+        this.Instance.GetMemoryRequirements(out var memRequirements);
 
         var memoryType = VulkanRenderer.Singleton.Context.FindMemoryType(memRequirements.MemoryTypeBits, VkMemoryPropertyFlags.DeviceLocal);
 
@@ -196,7 +195,7 @@ public sealed class Image : Resource<VkImage>
 
         var deviceMemory = VulkanRenderer.Singleton.Context.Device.AllocateMemory(memoryAllocateInfo);
 
-        this.instance.BindMemory(deviceMemory, 0);
+        this.Instance.BindMemory(deviceMemory, 0);
 
         this.Extent        = createInfo.Extent;
         this.Format        = createInfo.Format;
@@ -272,7 +271,7 @@ public sealed class Image : Resource<VkImage>
         if (this.allocation != null)
         {
             this.allocation.Dispose();
-            this.instance.Dispose();
+            this.Instance.Dispose();
         }
     }
 
@@ -324,7 +323,7 @@ public sealed class Image : Resource<VkImage>
             }
         };
 
-        commandBuffer.Instance.CopyBufferToImage(buffer, this.instance, VkImageLayout.TransferDstOptimal, [bufferImageCopy]);
+        commandBuffer.Instance.CopyBufferToImage(buffer, this.Instance, VkImageLayout.TransferDstOptimal, [bufferImageCopy]);
     }
 
     public void CopyToBuffer(Buffer buffer, VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
@@ -352,7 +351,7 @@ public sealed class Image : Resource<VkImage>
             }
         };
 
-        commandBuffer.Instance.CopyImageToBuffer(this.instance, VkImageLayout.TransferSrcOptimal, buffer.Instance, [bufferImageCopy]);
+        commandBuffer.Instance.CopyImageToBuffer(this.Instance, VkImageLayout.TransferSrcOptimal, buffer.Instance, [bufferImageCopy]);
     }
 
     public unsafe NativeArray<uint> ReadBuffer(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color) =>
@@ -426,7 +425,7 @@ public sealed class Image : Resource<VkImage>
         {
             DstAccessMask       = dstAccessMask,
             DstQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
-            Image               = this.instance.Handle,
+            Image               = this.Instance.Handle,
             NewLayout           = newLayout,
             OldLayout           = oldLayout,
             SrcAccessMask       = srcAccessMask,

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Age.Scene;
 using StackEntry = (Age.Elements.Slot Slot, int Index);
@@ -10,18 +11,20 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
     #region 8-bytes
     private readonly Element           root;
     private readonly Stack<StackEntry> stack;
+    private readonly Action<Element>?  parentCallback;
 
-    private Layoutable? current;
+    private Layoutable current;
     #endregion
 
     #region 1-byte
     private bool skipToNextSibling;
     #endregion
 
-    public ComposedTreeTraversalEnumerator(Element root, Stack<StackEntry>? stack = null)
+    public ComposedTreeTraversalEnumerator(Element root, Stack<StackEntry>? stack = null, Action<Element>? parentCallback = null)
     {
-        this.root  = root;
-        this.stack = stack ?? [];
+        this.root           = root;
+        this.stack          = stack ?? [];
+        this.parentCallback = parentCallback;
 
         this.Reset();
     }
@@ -59,7 +62,7 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly Layoutable? GetNextSibling(Node node, out Node parent)
+    private readonly Layoutable? GetNextSibling(Node node, out Element parent)
     {
         if (this.IsAssignedToCurrentSlot(node))
         {
@@ -77,19 +80,9 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
             return null;
         }
 
-        parent = node.Parent!;
+        parent = node.Parent is ShadowTree shadowTree ? shadowTree.Host : (Element)node.Parent!;
 
-        if (GetLayoutableOrSkip(node.NextSibling) is Layoutable nextSibling)
-        {
-            return nextSibling;
-        }
-
-        if (parent is ShadowTree shadowTree)
-        {
-            parent = shadowTree.Host;
-        }
-
-        return null;
+        return GetLayoutableOrSkip(node.NextSibling);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -124,7 +117,7 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
 
     public bool MoveNext()
     {
-        if (!this.skipToNextSibling && this.GetFirstChild(this.current!) is Layoutable firstChild)
+        if (!this.skipToNextSibling && this.GetFirstChild(this.current) is Layoutable firstChild)
         {
             this.current = firstChild;
 
@@ -133,24 +126,24 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
 
         this.skipToNextSibling = false;
 
-        Node node = this.current!;
-
-        do
+        while (this.current != this.root)
         {
-            if (this.GetNextSibling(node, out var parent) is Layoutable nextSibling)
+            if (this.GetNextSibling(this.current, out var parent) is Layoutable nextSibling)
             {
                 this.current = nextSibling;
 
                 return true;
             }
 
-            node = parent;
+            this.parentCallback?.Invoke(parent);
+
+            this.current = parent;
         }
-        while (node != null && node != this.root);
 
         return false;
     }
 
+    [MemberNotNull(nameof(current))]
     public void Reset()
     {
         this.skipToNextSibling = false;

@@ -351,6 +351,7 @@ dotnet_diagnostic.IDE0082.severity = suggestion # Convert typeof to nameof
 dotnet_diagnostic.IDE1006.severity = suggestion # Remove unnecessary suppression operator
 dotnet_diagnostic.RCS1001.severity = none       # Add braces (when expression spans over multiple lines)
 dotnet_diagnostic.RCS1123.severity = none       # Add parentheses when
+dotnet_diagnostic.RCS1130.severity = none       # Bitwise operation on enum without Flags attribute
 dotnet_diagnostic.RCS1242.severity = none       # Do not pass non-read-only struct by read-only reference
 
 [**/*Extension{s,}.*.cs]
@@ -361,6 +362,9 @@ dotnet_diagnostic.CS8019.severity = none
 
 [**/Native/**.cs]
 dotnet_diagnostic.IDE1006.severity = none
+
+[ThirdParty*/**.cs]
+dotnet_diagnostic.RCS1135.severity = none # Declare enum member with zero value (when enum has FlagsAttribute)
 
 [*.{csproj,xml,yml,yaml,props}]
 indent_style = space

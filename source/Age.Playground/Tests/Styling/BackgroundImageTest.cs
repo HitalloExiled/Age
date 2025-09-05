@@ -16,6 +16,7 @@ public class BackgroundImageTest : Element
 
         canvas.Children =
         [
+            new Text("Click me..."),
             new FlexBox
             {
                Style = new Style

@@ -4,7 +4,7 @@ public abstract partial class Element
 {
     private enum EventProperty
     {
-        None = 0,
+        None          = 0,
         Activated     = 1 << 0,
         Blured        = 1 << 1,
         Clicked       = 1 << 2,
@@ -16,10 +16,13 @@ public abstract partial class Element
         KeyDown       = 1 << 8,
         KeyUp         = 1 << 9,
         MouseDown     = 1 << 10,
-        MouseMoved    = 1 << 11,
-        MouseOut      = 1 << 12,
-        MouseOver     = 1 << 13,
-        MouseUp       = 1 << 14,
-        Scrolled      = 1 << 15,
+        MouseEnter    = 1 << 11,
+        MouseLeave    = 1 << 12,
+        MouseMoved    = 1 << 13,
+        MouseOut      = 1 << 14,
+        MouseOver     = 1 << 15,
+        MouseRelease  = 1 << 16,
+        MouseUp       = 1 << 17,
+        MouseWheel    = 1 << 18,
     }
 }

@@ -20,6 +20,8 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
     protected ResourceCache<Texture2D, UniformSet> UniformSets { get; } = new();
 
+    protected UniformSet? LastUniformSet { get; set; }
+
     protected abstract CanvasStencilMaskShader CanvasStencilMaskShader { get; }
     protected abstract Color                   ClearColor              { get; }
     protected abstract CommandBuffer           CommandBuffer           { get; }
@@ -32,15 +34,17 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
     private unsafe void ClearStencilBufferAttachment(in VkExtent2D extent, uint value)
     {
-        var clearValue = new VkClearValue();
-
-        clearValue.DepthStencil.Depth   = 1;
-        clearValue.DepthStencil.Stencil = value;
-
         var attachment = new VkClearAttachment
         {
-            AspectMask      = VkImageAspectFlags.Stencil,
-            ClearValue      = clearValue,
+            AspectMask = VkImageAspectFlags.Stencil,
+            ClearValue =
+            {
+                DepthStencil =
+                {
+                    Depth   = 1,
+                    Stencil = value,
+                }
+            },
             ColorAttachment = 0,
         };
 
@@ -53,6 +57,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
         this.CommandBuffer.ClearAttachments([attachment], [rect]);
     }
+
     private void DrawStencilBuffer(in Size<float> viewport, StencilLayer stencilLayer, IndexBuffer indexBuffer)
     {
         stencilLayer.Update();
@@ -80,13 +85,80 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         };
 
         this.CommandBuffer.BindShader(this.CanvasStencilMaskShader);
-        this.CommandBuffer.BindUniformSet(uniformSet);
+        this.CommandBuffer.BindUniformSet(this.LastUniformSet = uniformSet);
         this.CommandBuffer.PushConstant(this.CanvasStencilMaskShader, constant);
         this.CommandBuffer.DrawIndexed(indexBuffer);
     }
 
     private void FillStencilBuffer(in VkExtent2D extent) =>
         this.ClearStencilBufferAttachment(extent, 1);
+
+    protected static RenderPass CreateRenderPass(VkFormat colorAttachmentFormat, VkImageLayout colorAttachmentFinalLayout)
+    {
+        var createInfo = new RenderPassCreateInfo
+        {
+            SubPasses =
+            [
+                new()
+                {
+                    PipelineBindPoint = VkPipelineBindPoint.Graphics,
+                    ColorAttachments  =
+                    [
+                        new()
+                        {
+                            Color = new()
+                            {
+                                Format         = colorAttachmentFormat,
+                                Samples        = VkSampleCountFlags.N1,
+                                InitialLayout  = VkImageLayout.Undefined,
+                                FinalLayout    = colorAttachmentFinalLayout,
+                                LoadOp         = VkAttachmentLoadOp.Clear,
+                                StoreOp        = VkAttachmentStoreOp.Store,
+                                StencilLoadOp  = VkAttachmentLoadOp.DontCare,
+                                StencilStoreOp = VkAttachmentStoreOp.DontCare
+                            },
+                        }
+                    ],
+                    DepthStencilAttachment = new()
+                    {
+                        Format         = VulkanRenderer.Singleton.StencilBufferFormat,
+                        Samples        = VkSampleCountFlags.N1,
+                        InitialLayout  = VkImageLayout.Undefined,
+                        FinalLayout    = VkImageLayout.DepthStencilAttachmentOptimal,
+                        LoadOp         = VkAttachmentLoadOp.Clear,
+                        StoreOp        = VkAttachmentStoreOp.Store,
+                        StencilLoadOp  = VkAttachmentLoadOp.Clear,
+                        StencilStoreOp = VkAttachmentStoreOp.DontCare
+                    },
+                },
+            ],
+            SubpassDependencies =
+            [
+                new()
+                {
+                    SrcSubpass      = VkConstants.VK_SUBPASS_EXTERNAL,
+                    DstSubpass      = 0,
+                    SrcStageMask    = VkPipelineStageFlags.EarlyFragmentTests | VkPipelineStageFlags.LateFragmentTests,
+                    DstStageMask    = VkPipelineStageFlags.EarlyFragmentTests | VkPipelineStageFlags.LateFragmentTests,
+                    SrcAccessMask   = VkAccessFlags.DepthStencilAttachmentWrite,
+                    DstAccessMask   = VkAccessFlags.DepthStencilAttachmentWrite | VkAccessFlags.DepthStencilAttachmentRead,
+                    DependencyFlags = default,
+                },
+                new()
+                {
+                    SrcSubpass      = VkConstants.VK_SUBPASS_EXTERNAL,
+                    DstSubpass      = 0,
+                    SrcStageMask    = VkPipelineStageFlags.ColorAttachmentOutput,
+                    DstStageMask    = VkPipelineStageFlags.ColorAttachmentOutput,
+                    SrcAccessMask   = default,
+                    DstAccessMask   = VkAccessFlags.ColorAttachmentWrite | VkAccessFlags.ColorAttachmentRead,
+                    DependencyFlags = default,
+                }
+            ]
+        };
+
+        return new(createInfo);
+    }
 
     protected virtual void AfterExecute() { }
 
@@ -117,7 +189,8 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         clearValues[0].Color.Float32[1] = this.ClearColor.G;
         clearValues[0].Color.Float32[2] = this.ClearColor.B;
         clearValues[0].Color.Float32[3] = this.ClearColor.A;
-        clearValues[1].DepthStencil.Depth = 1;
+        clearValues[1].DepthStencil.Depth   = 1;
+        clearValues[1].DepthStencil.Stencil = 1;
 
         this.CommandBuffer.SetViewport(extent);
         this.CommandBuffer.BeginRenderPass(this.RenderPass, this.Framebuffer, clearValues);
@@ -130,40 +203,40 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
             {
                 if (pipeline.Enabled)
                 {
-                    this.FillStencilBuffer(extent);
-
                     this.CommandBuffer.BindShader(pipeline.Shader);
                     this.CommandBuffer.BindVertexBuffer(pipeline.VertexBuffer);
                     this.CommandBuffer.BindIndexBuffer(pipeline.IndexBuffer);
 
-                    foreach (var entry in this.Window.Tree.Get2DCommands())
+                    foreach (var (command, transform) in this.Window.Tree.Get2DCommands())
                     {
-                        switch (entry.Command)
+                        if (this.PipelineVariants.HasAnyFlag(command.PipelineVariant))
                         {
-                            case RectCommand rectCommand:
-                                if (this.PipelineVariants.HasAnyFlag(rectCommand.PipelineVariant))
+                            if (!pipeline.IgnoreStencil && command.StencilLayer != previousLayer)
+                            {
+                                if (command.StencilLayer == null)
                                 {
-                                    if (!pipeline.IgnoreStencil && rectCommand.StencilLayer != previousLayer)
-                                    {
-                                        if (rectCommand.StencilLayer != null)
-                                        {
-                                            this.ClearStencilBuffer(extent);
-                                            this.DrawStencilBuffer(viewport, rectCommand.StencilLayer, pipeline.IndexBuffer);
+                                    this.FillStencilBuffer(extent);
+                                }
+                                else
+                                {
+                                    this.ClearStencilBuffer(extent);
+                                    this.DrawStencilBuffer(viewport, command.StencilLayer, pipeline.IndexBuffer);
 
-                                            this.CommandBuffer.BindShader(pipeline.Shader);
-                                        }
-                                        else
-                                        {
-                                            this.FillStencilBuffer(extent);
-                                        }
-                                    }
-
-                                    previousLayer = rectCommand.StencilLayer;
-
-                                    this.ExecuteCommand(pipeline, rectCommand, viewport, entry.Transform);
+                                    this.CommandBuffer.BindShader(pipeline.Shader);
                                 }
 
-                                break;
+                                previousLayer = command.StencilLayer;
+                            }
+
+                            switch (command)
+                            {
+                                case RectCommand rectCommand:
+                                    this.ExecuteCommand(pipeline, rectCommand, viewport, transform);
+
+                                    break;
+                                default:
+                                    throw new InvalidOperationException($"Unsupported command type '{command.GetType().FullName}'.");
+                            }
                         }
                     }
                 }

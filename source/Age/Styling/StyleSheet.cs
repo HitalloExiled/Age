@@ -9,6 +9,6 @@ public record StyleSheet
     public Style? Checked  { get; init; }
     public Style? Disabled { get; init; }
     public Style? Enabled  { get; init; }
-    public Style? Focus    { get; init; }
+    public Style? Focused  { get; init; }
     public Style? Hovered  { get; init; }
 }
