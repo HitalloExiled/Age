@@ -1,13 +1,35 @@
+import "./CanvasShader.Helpers";
+
 #include "./CanvasShader.Base.slang"
 
 [shader("fragment")]
-public FragmentOutput main(in FragmentInput input)
+FragmentOutput main(in FragmentInput input)
 {
-    var color = texture.Sample(input.uv);
-
-    if (color.r < 0.5)
+    if (hasBorder(data))
     {
-        discard;
+        var position = data.size * input.uv;
+
+        BorderSide side;
+        CornerKind corner;
+
+        if (isCorner(data, position, corner))
+        {
+            float4 cornerColor;
+            bool   isOutside;
+
+            if (isInsideRadius(data, position, corner, cornerColor, isOutside))
+            {
+                discard;
+            }
+            else if (isOutside)
+            {
+                discard;
+            }
+        }
+        else if (isBorder(data, position, side))
+        {
+            discard;
+        }
     }
 
     return { };

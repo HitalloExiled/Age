@@ -406,8 +406,9 @@ where TVertexInput  : IVertexInput
 
         Span<VkDynamicState> dynamicStates =
         [
-            VkDynamicState.Viewport,
             VkDynamicState.Scissor,
+            VkDynamicState.StencilReference,
+            VkDynamicState.Viewport,
         ];
 
         fixed (VkDescriptorSetLayoutBinding*      pBindings                       = bindings.AsSpan())
@@ -455,7 +456,7 @@ where TVertexInput  : IVertexInput
                 PDynamicStates    = pDynamicStates,
             };
 
-            var isStencilMask = this.options.Stencil == StencilKind.Mask;
+            var isStencilMask = this.options.StencilOp != StencilOp.None;
 
             var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
             {
@@ -496,29 +497,35 @@ where TVertexInput  : IVertexInput
                 ScissorCount  = 1,
             };
 
-            var stencilOp = this.options.Stencil switch
+            var stencilOp = this.options.StencilOp switch
             {
-                StencilKind.Mask => new VkStencilOpState
+                StencilOp.Write => new VkStencilOpState
                 {
                     CompareMask = 0xFF,
                     CompareOp   = VkCompareOp.Always,
                     DepthFailOp = VkStencilOp.Replace,
-                    FailOp      = VkStencilOp.Replace,
-                    PassOp      = VkStencilOp.Replace,
-                    Reference   = 1,
+                    FailOp      = VkStencilOp.Keep,
+                    PassOp      = VkStencilOp.IncrementAndClamp,
                     WriteMask   = 0xFF,
                 },
-                StencilKind.Content => new VkStencilOpState
+                StencilOp.Erase => new VkStencilOpState
+                {
+                    CompareMask = 0xFF,
+                    CompareOp   = VkCompareOp.Always,
+                    DepthFailOp = VkStencilOp.Replace,
+                    FailOp      = VkStencilOp.Keep,
+                    PassOp      = VkStencilOp.DecrementAndClamp,
+                    WriteMask   = 0xFF,
+                },
+                _ => new VkStencilOpState
                 {
                     CompareMask = 0xFF,
                     CompareOp   = VkCompareOp.Equal,
                     DepthFailOp = VkStencilOp.Keep,
                     FailOp      = VkStencilOp.Keep,
                     PassOp      = VkStencilOp.Replace,
-                    Reference   = 1,
                     WriteMask   = 0x00,
                 },
-                _ => default
             };
 
             var depthStencilState = new VkPipelineDepthStencilStateCreateInfo
@@ -526,7 +533,7 @@ where TVertexInput  : IVertexInput
                 DepthTestEnable   = !isStencilMask,
                 DepthWriteEnable  = !isStencilMask,
                 DepthCompareOp    = isStencilMask ? VkCompareOp.Always : VkCompareOp.LessOrEqual,
-                StencilTestEnable = this.options.Stencil != default,
+                StencilTestEnable = true,
                 Front             = stencilOp,
                 Back              = stencilOp,
             };

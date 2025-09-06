@@ -168,11 +168,9 @@ public abstract partial class Element
 
             this.ResolveImageSize(this.ComputedStyle.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
 
-            layoutCommandImage.Size = size;
-            layoutCommandImage.Transform = transform;
+            layoutCommandImage.Size       = size;
+            layoutCommandImage.Transform  = transform;
             layoutCommandImage.TextureMap = layoutCommandImage.TextureMap with { UV = uv };
-
-            layoutCommandImage.StencilLayer!.MakeDirty();
         }
     }
 

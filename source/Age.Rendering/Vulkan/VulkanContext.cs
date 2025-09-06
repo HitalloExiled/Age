@@ -69,7 +69,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
     public VkQueue  GraphicsQueue => this.graphicsQueue;
     public VkFormat ScreenFormat  => this.surfaceFormat.Format;
 
-    public unsafe VulkanContext()
+    public VulkanContext()
     {
         if (this.enableValidationLayers && !CheckValidationLayerSupport())
         {
@@ -90,8 +90,8 @@ internal sealed unsafe partial class VulkanContext : Disposable
             var debugUtilsMessengerCreateInfo = this.enableValidationLayers
                 ?  new VkDebugUtilsMessengerCreateInfoEXT
                 {
-                    MessageType = VkDebugUtilsMessageTypeFlagsEXT.DeviceAddressBinding
-                        | VkDebugUtilsMessageTypeFlagsEXT.General
+                    MessageType =
+                        VkDebugUtilsMessageTypeFlagsEXT.General
                         | VkDebugUtilsMessageTypeFlagsEXT.Performance
                         | VkDebugUtilsMessageTypeFlagsEXT.Validation,
                     MessageSeverity = VkDebugUtilsMessageSeverityFlagsEXT.Error

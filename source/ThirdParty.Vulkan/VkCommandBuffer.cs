@@ -221,6 +221,10 @@ public sealed unsafe class VkCommandBuffer : DisposableManagedHandle<VkCommandBu
         }
     }
 
+    /// <inheritdoc cref="PInvoke.vkCmdSetStencilReference" />
+    public void SetStencilReference(VkStencilFaceFlags faceMask, uint reference) =>
+        PInvoke.vkCmdSetStencilReference(this.handle, faceMask, reference);
+
     /// <inheritdoc cref="PInvoke.vkCmdSetViewport" />
     public void SetViewport(uint firstViewport, params VkViewport[] viewports)
     {

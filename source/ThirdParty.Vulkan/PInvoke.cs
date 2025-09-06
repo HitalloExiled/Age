@@ -145,6 +145,12 @@ internal unsafe static partial class PInvoke
     public static partial void vkCmdSetScissor(VkHandle<VkCommandBuffer> commandBuffer, uint firstScissor, uint scissorCount, VkRect2D* pScissors);
 
     /// <summary>
+    /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdSetStencilReference.html">vkCmdSetStencilReference</see>
+    /// </summary>
+    [LibraryImport(PLATFORM_PATH)]
+    public static partial void vkCmdSetStencilReference(VkHandle<VkCommandBuffer> commandBuffer, VkStencilFaceFlags faceMask, uint reference);
+
+    /// <summary>
     /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdSetViewport.html">vkCmdSetViewport</see>
     /// </summary>
     [LibraryImport(PLATFORM_PATH)]

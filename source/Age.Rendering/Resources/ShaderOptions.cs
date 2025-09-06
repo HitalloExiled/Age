@@ -9,7 +9,7 @@ public struct ShaderOptions
     public required VkSampleCountFlags RasterizationSamples;
 
     public VkFrontFace FrontFace;
-    public StencilKind Stencil;
+    public StencilOp   StencilOp;
     public uint        Subpass;
     #endregion
 
