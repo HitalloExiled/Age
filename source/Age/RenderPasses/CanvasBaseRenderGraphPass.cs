@@ -10,7 +10,6 @@ using ThirdParty.Vulkan.Flags;
 using System.Runtime.CompilerServices;
 using Age.Resources;
 using Age.Core.Extensions;
-using System.Diagnostics;
 
 namespace Age.RenderPasses;
 

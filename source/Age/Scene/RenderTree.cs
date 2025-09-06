@@ -1,5 +1,6 @@
 using Age.Core.Extensions;
 using Age.Elements;
+using Age.Platforms.Display;
 using Age.Rendering.Vulkan;
 using Age.RenderPasses;
 using System.Diagnostics.CodeAnalysis;
@@ -84,6 +85,11 @@ public sealed partial class RenderTree : NodeTree
 
     public override void Update()
     {
+        if (this.framesUntilRequest > 0 && --this.framesUntilRequest == 0)
+        {
+            this.InvokeMouseRequestedEvent();
+        }
+         
         base.Update();
 
         if (this.IsDirty)

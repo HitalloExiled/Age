@@ -18,6 +18,7 @@ public static class Input
     private static Point<ushort> mousePosition;
     private static float         mouseWheel;
     private static Point<ushort> previousMousePosition;
+    public static MouseButton PrimaryButton { get; private set; }
 
     private static void OnKeyDown(Key key) =>
         keys.TryAdd(key, currentIteration);
@@ -25,8 +26,12 @@ public static class Input
     private static void OnKeyUp(Key key) =>
         keys.Remove(key);
 
-    private static void OnMouseDown(in WindowMouseEvent mouseEvent) =>
+    private static void OnMouseDown(in WindowMouseEvent mouseEvent)
+    {
+        PrimaryButton = mouseEvent.PrimaryButton;
+
         mouseButtons.TryAdd(mouseEvent.Button, currentIteration);
+    }
 
     private static void OnMouseMove(in WindowMouseEvent mouseEvent)
     {

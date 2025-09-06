@@ -12,6 +12,8 @@ public sealed partial class RenderTree
     private readonly List<Layoutable> leftToAncestor  = [];
     private readonly List<Layoutable> rightToAncestor = [];
 
+    private int framesUntilRequest;
+
     internal event WindowMouseEventHandler? MouseDown;
     internal event WindowMouseEventHandler? MouseUp;
     internal event WindowMouseEventHandler? MouseMoved;
@@ -96,6 +98,74 @@ public sealed partial class RenderTree
         {
             this.focusedText = null;
         }
+    }
+
+    private void InvokeMouseRequestedEvent()
+    {
+        Console.WriteLine("InvokeMouseRequestedEvent");
+        var position = Input.GetMousePosition();
+
+        var button    = MouseButton.None;
+        var keyStates = MouseKeyStates.None;
+        var modifiers = Input.GetModifiers();
+
+        if (Input.IsMouseButtonPressed(MouseButton.Left))
+        {
+            button = MouseButton.Left;
+            keyStates |= MouseKeyStates.LeftButton;
+        }
+
+        if (Input.IsMouseButtonPressed(MouseButton.Middle))
+        {
+            button = MouseButton.Middle;
+            keyStates |= MouseKeyStates.MiddleButton;
+        }
+
+        if (Input.IsMouseButtonPressed(MouseButton.Right))
+        {
+            button = MouseButton.Right;
+            keyStates |= MouseKeyStates.RightButton;
+        }
+
+        if (modifiers.HasFlags(KeyStates.Shift))
+        {
+            keyStates |= MouseKeyStates.Shift;
+        }
+
+        if (modifiers.HasFlags(KeyStates.Control))
+        {
+            keyStates |= MouseKeyStates.Control;
+        }
+
+        var windowMouseEvent = new WindowMouseEvent
+        {
+            X             = position.X,
+            Y             = position.Y,
+            Button        = button,
+            PrimaryButton = Input.PrimaryButton,
+            KeyStates     = keyStates,
+            Delta         = Input.GetMouseWheel(),
+        };
+
+        this.hoveredVirtualChild?.HandleMouseOut(windowMouseEvent);
+        this.hoveredVirtualChild = null;
+
+        if (this.hoveredElement != null)
+        {
+            this.hoveredElement.InvokeMouseOut(windowMouseEvent);
+
+            for (var current = this.hoveredElement; current != null; current = current.ComposedParentElement)
+            {
+                current.InvokeMouseLeave(windowMouseEvent);
+            }
+
+            this.hoveredElement = null;
+        }
+
+        this.hoveredText?.HandleMouseOut();
+        this.hoveredText = null;
+
+        this.OnMouseMove(windowMouseEvent);
     }
 
     private void OnContext(in WindowContextEvent contextEvent)
@@ -418,4 +488,7 @@ public sealed partial class RenderTree
 
         element?.InvokeMouseWheel(mouseEvent);
     }
+
+    internal void RequestMouseEvent() =>
+        this.framesUntilRequest = 2;
 }

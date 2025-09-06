@@ -252,7 +252,7 @@ public static class ScrollTest
                     {
                         Border   = new(2, 20, Color.Green),
                         Overflow = Overflow.Scroll,
-                        Size     = new(200),
+                        Size     = new(300),
                     },
                     Children =
                     [
@@ -279,7 +279,7 @@ public static class ScrollTest
                     {
                         Border   = new(2, 20, Color.Green),
                         Overflow = Overflow.Scroll,
-                        Size     = new(200),
+                        Size     = new(300),
                     },
                     Children =
                     [
@@ -308,8 +308,8 @@ public static class ScrollTest
         {
             if (key == Key.Space)
             {
-                // scrollParent.Style.Size = (isExpanded = !isExpanded) ? new(400) : new(200);
-                scrollParent.Style.Overflow = (isExpanded = !isExpanded) ? default : Overflow.Scroll;
+                 scrollParent.Style.Size = (isExpanded = !isExpanded) ? new(400) : new(200);
+                //scrollParent.Style.Overflow = (isExpanded = !isExpanded) ? default : Overflow.Scroll;
             }
         };
 

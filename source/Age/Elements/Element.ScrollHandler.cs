@@ -39,8 +39,7 @@ public abstract partial class Element
         get => this.contentOffset;
         set
         {
-            value.X = uint.Clamp(value.X, 0, this.content.Width.ClampSubtract(this.size.Width));
-            value.Y = uint.Clamp(value.Y, 0, this.content.Height.ClampSubtract(this.size.Height));
+            this.ClampContentOffset(ref value);
 
             if (this.contentOffset != value)
             {
@@ -81,6 +80,12 @@ public abstract partial class Element
                 Y = (uint)(this.Scroll.Y + (10 * -mouseEvent.Delta))
             };
         }
+    }
+
+    private void ClampContentOffset(ref Point<uint> value)
+    {
+        value.X = uint.Clamp(value.X, 0, this.content.Width.ClampSubtract(this.size.Width));
+        value.Y = uint.Clamp(value.Y, 0, this.content.Height.ClampSubtract(this.size.Height));
     }
 
     private void DrawScrollBarControls()
@@ -144,8 +149,14 @@ public abstract partial class Element
         this.UpdateScrollBarYControl(command);
     }
 
-    private void DestroyScrollBarControls()
+    private void DestroyScrollBarControls(bool keepState)
     {
+        if (!keepState && ActiveScrollBarTarget == this)
+        {
+            IsHoveringScrollBarX = IsHoveringScrollBarY = IsDraggingScrollBarX = IsDraggingScrollBarY = false;
+            ActiveScrollBarTarget = null;
+        }
+
         this.ReleaseLayoutCommandScrollBarX();
         this.ReleaseLayoutCommandScrollBarY();
         this.RequestUpdate(false);
@@ -228,7 +239,7 @@ public abstract partial class Element
     {
         if (!IsDraggingScrollBar || ActiveScrollBarTarget != this)
         {
-            this.DestroyScrollBarControls();
+            this.DestroyScrollBarControls(false);
         }
     }
 
@@ -371,7 +382,7 @@ public abstract partial class Element
 
                     if (current.IsScrollable)
                     {
-                        current.DestroyScrollBarControls();
+                        current.DestroyScrollBarControls(false);
                     }
                 }
             }
@@ -382,40 +393,55 @@ public abstract partial class Element
 
     private void RefreshScrollBarControls()
     {
-        this.DestroyScrollBarControls();
+        this.DestroyScrollBarControls(true);
+
         this.DrawScrollBarControls();
 
         if (ActiveScrollBarTarget == this)
         {
             if (IsDraggingScrollBarX = IsDraggingScrollBarX && this.IsScrollBarXVisible)
             {
-                this.SetScrollBarXHoverStyle();
-                this.SetScrollBarXActiveStyle();
+                var command = this.GetLayoutCommandScrollBarX();
+
+                ScrollBarClickPosition = ScrollBarClickPosition with { X = float.Clamp(ScrollBarClickPosition.X, 0, command.Size.Width) };
+
+                this.SetScrollBarXHoverStyle(command);
+                this.SetScrollBarXActiveStyle(command);
             }
 
             if (IsDraggingScrollBarY = IsDraggingScrollBarY && this.IsScrollBarYVisible)
             {
+                var command = this.GetLayoutCommandScrollBarY();
+
+                ScrollBarClickPosition = ScrollBarClickPosition with { Y = float.Clamp(ScrollBarClickPosition.Y, -command.Size.Height, 0) };
+
                 this.SetScrollBarYHoverStyle();
                 this.SetScrollBarYActiveStyle();
             }
         }
     }
 
-    private void SetScrollBarXActiveStyle()
+    private void ReleaseScrollBar()
     {
-        var command = this.GetLayoutCommandScrollBarX();
+        this.DestroyScrollBarControls(false);
+        this.Scroll = default;
+    }
 
+    private void SetScrollBarXActiveStyle() =>
+        this.SetScrollBarXActiveStyle(this.GetLayoutCommandScrollBarX());
+
+    private void SetScrollBarXActiveStyle(RectCommand command)
+    {
         command.Color = scrollBarActiveColor;
 
         this.RequestUpdate(false);
     }
 
-    private void SetScrollBarXDefaultStyle()
+    private void SetScrollBarXDefaultStyle() =>
+        this.SetScrollBarXDefaultStyle(this.GetLayoutCommandScrollBarX());
+
+    private void SetScrollBarXDefaultStyle(RectCommand command)
     {
-        Debug.Assert(this.IsScrollBarXVisible);
-
-        var command = this.GetLayoutCommandScrollBarX();
-
         command.Color     = scrollBarDefaultColor;
         command.Size      = command.Size with { Height = SCROLL_BAR_DEFAULT_SIZE };
         command.Transform = Transform2D.CreateTranslated(command.Transform.Position.X, this.GetScrollBarXPositionY());
@@ -424,12 +450,11 @@ public abstract partial class Element
         this.RequestUpdate(false);
     }
 
-    private void SetScrollBarXHoverStyle()
+    private void SetScrollBarXHoverStyle() =>
+        this.SetScrollBarXHoverStyle(this.GetLayoutCommandScrollBarX());
+
+    private void SetScrollBarXHoverStyle(RectCommand command)
     {
-        Debug.Assert(this.IsScrollBarXVisible);
-
-        var command = this.GetLayoutCommandScrollBarX();
-
         command.Color     = scrollBarHoverColor;
         command.Size      = command.Size with { Height = SCROLL_BAR_HOVER_SIZE };
         command.Transform = Transform2D.CreateTranslated(command.Transform.Position.X, -(this.Boundings.Height - this.border.Top - SCROLL_BAR_HOVER_SIZE - SCROLL_BAR_HOVER_MARGIN));
@@ -438,23 +463,21 @@ public abstract partial class Element
         this.RequestUpdate(false);
     }
 
-    private void SetScrollBarYActiveStyle()
+    private void SetScrollBarYActiveStyle() =>
+        this.SetScrollBarYActiveStyle(this.GetLayoutCommandScrollBarY());
+
+    private void SetScrollBarYActiveStyle(RectCommand command)
     {
-        Debug.Assert(this.IsScrollBarYVisible);
-
-        var command = this.GetLayoutCommandScrollBarY();
-
         command.Color = scrollBarActiveColor;
 
         this.RequestUpdate(false);
     }
 
-    private void SetScrollBarYDefaultStyle()
+    private void SetScrollBarYDefaultStyle() =>
+        this.SetScrollBarYDefaultStyle(this.GetLayoutCommandScrollBarY());
+
+    private void SetScrollBarYDefaultStyle(RectCommand command)
     {
-        Debug.Assert(this.IsScrollBarYVisible);
-
-        var command = this.GetLayoutCommandScrollBarY();
-
         command.Color     = scrollBarDefaultColor;
         command.Size      = command.Size with { Width = SCROLL_BAR_DEFAULT_SIZE };
         command.Transform = Transform2D.CreateTranslated(this.GetScrollBarYPositionX(), command.Transform.Position.Y);
@@ -463,12 +486,11 @@ public abstract partial class Element
         this.RequestUpdate(false);
     }
 
-    private void SetScrollBarYHoverStyle()
+    private void SetScrollBarYHoverStyle() =>
+        this.SetScrollBarYHoverStyle(this.GetLayoutCommandScrollBarY());
+
+    private void SetScrollBarYHoverStyle(RectCommand command)
     {
-        Debug.Assert(this.IsScrollBarYVisible);
-
-        var command = this.GetLayoutCommandScrollBarY();
-
         command.Color     = scrollBarHoverColor;
         command.Size      = command.Size with { Width = SCROLL_BAR_HOVER_SIZE };
         command.Transform = Transform2D.CreateTranslated(this.Boundings.Width - this.border.Left - SCROLL_BAR_HOVER_SIZE - SCROLL_BAR_HOVER_MARGIN, command.Transform.Position.Y);

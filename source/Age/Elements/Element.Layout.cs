@@ -25,6 +25,11 @@ public abstract partial class Element
         | StyleProperty.Size
         | StyleProperty.Stack;
 
+    private const StyleProperty TRANSFORM_AFFECTED_PROPERTIES =
+        StyleProperty.Overflow
+        | StyleProperty.TransformOrigin
+        | StyleProperty.Transforms;
+
     private readonly List<Element> dependents  = [];
 
     private RectEdges     border;
@@ -926,7 +931,7 @@ public abstract partial class Element
 
             if (!this.IsScrollable)
             {
-                this.Scroll = default;
+                this.ReleaseScrollBar();
             }
 
             if (this.ComputedStyle.Overflow?.HasFlags(Overflow.Clipping) == true && this.contentDependencies != (Dependency.Width | Dependency.Height))
@@ -938,10 +943,9 @@ public abstract partial class Element
                      this.StencilLayer?.AppendChild(this.ownStencilLayer);
                 }
             }
-            else if (this.ownStencilLayer != null)
+            else
             {
-                this.ownStencilLayer.Detach();
-
+                this.ownStencilLayer?.Detach();
                 this.ownStencilLayer = null;
             }
 
@@ -949,6 +953,11 @@ public abstract partial class Element
         }
 
         var affectsBoundings = property.HasAnyFlag(LAYOUT_AFFECTED_PROPERTIES);
+
+        if (property.HasAnyFlag(TRANSFORM_AFFECTED_PROPERTIES | LAYOUT_AFFECTED_PROPERTIES))
+        {
+            this.RenderTree!.RequestMouseEvent();
+        }
 
         if (hidden)
         {
@@ -1360,6 +1369,8 @@ public abstract partial class Element
         if (previous != this.Boundings)
         {
             this.UpdateBackgroundImage();
+
+            this.ClampContentOffset(ref this.contentOffset);
 
             if (this.IsScrollBarVisible)
             {
