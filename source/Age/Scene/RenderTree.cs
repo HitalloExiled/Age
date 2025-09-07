@@ -89,7 +89,7 @@ public sealed partial class RenderTree : NodeTree
         {
             this.InvokeMouseRequestedEvent();
         }
-         
+
         base.Update();
 
         if (this.IsDirty)

@@ -124,8 +124,7 @@ public sealed class Engine : Disposable
 
                 Time.Frames++;
 
-                Spatial2D.CacheVersion++;
-                Spatial3D.CacheVersion++;
+                CacheTracker.Invalidate();
 
                 this.Running = false;
 

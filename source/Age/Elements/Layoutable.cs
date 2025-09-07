@@ -11,6 +11,8 @@ public abstract class Layoutable : Spatial2D
     internal const string DEFAULT_FONT_FAMILY = "Segoi UI";
     internal const ushort DEFAULT_FONT_SIZE = 16;
 
+    private CacheValue<Transform2D> transformWithOffsetCache;
+
     private Transform2D CachedComposedParentTransformWithOffset => (this.ComposedParentElement as Layoutable)?.CachedTransformWithOffset ?? Transform2D.Identity;
     private Transform2D CombinedTransform                       => this.LayoutTransform * this.LocalTransform * this.ParentContentOffset;
     private Transform2D ComposedParentTransform                 => (this.ComposedParentElement as Layoutable)?.Transform ?? Transform2D.Identity;
@@ -49,16 +51,12 @@ public abstract class Layoutable : Spatial2D
     {
         get
         {
-            if (this.TransformCache.Version != CacheVersion)
+            if (this.transformWithOffsetCache.IsInvalid)
             {
-                this.TransformCache = new()
-                {
-                    Value   = this.CombinedTransform * this.CachedComposedParentTransformWithOffset,
-                    Version = CacheVersion
-                };
+                this.transformWithOffsetCache = new(this.CombinedTransform * this.CachedComposedParentTransformWithOffset);
             }
 
-            return this.TransformCache.Value;
+            return this.transformWithOffsetCache.Value;
         }
     }
 

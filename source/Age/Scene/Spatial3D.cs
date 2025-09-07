@@ -5,28 +5,22 @@ namespace Age.Scene;
 
 public abstract class Spatial3D : Renderable
 {
-    private protected CacheValue<Transform3D> TransformCache { get; set; }
+    private CacheValue<Transform3D> transformCache { get; set; }
 
     private Transform3D CachedParentTransform => (this.Parent as Spatial3D)?.CachedTransform ?? Transform3D.Identity;
     private Transform3D ParentTransform       => (this.Parent as Spatial3D)?.Transform ?? Transform3D.Identity;
     private Transform3D PivotedTransform      => Transform3D.Translated(this.Pivot) * this.LocalTransform * Transform3D.Translated(-this.Pivot);
 
-    internal static int CacheVersion { get; set; } = 1;
-
     internal virtual Transform3D CachedTransform
     {
         get
         {
-            if (this.TransformCache.Version != CacheVersion)
+            if (this.transformCache.IsInvalid)
             {
-                this.TransformCache = new()
-                {
-                    Value   = this.PivotedTransform * this.CachedParentTransform,
-                    Version = CacheVersion
-                };
+                this.transformCache = new(this.PivotedTransform * this.CachedParentTransform);
             }
 
-            return this.TransformCache.Value;
+            return this.transformCache.Value;
         }
     }
 

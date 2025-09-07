@@ -102,7 +102,6 @@ public sealed partial class RenderTree
 
     private void InvokeMouseRequestedEvent()
     {
-        Console.WriteLine("InvokeMouseRequestedEvent");
         var position = Input.GetMousePosition();
 
         var button    = MouseButton.None;

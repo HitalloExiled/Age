@@ -1,7 +1,13 @@
+using System.Runtime.InteropServices;
+
 namespace Age.Core;
 
-public struct CacheValue<T>
+[StructLayout(LayoutKind.Auto)]
+public readonly struct CacheValue<T>(T value)
 {
-    public T   Value;
-    public int Version;
+    private readonly uint version = CacheTracker.Version;
+
+    public readonly T Value = value;
+
+    public readonly bool IsInvalid => this.version != CacheTracker.Version;
 }

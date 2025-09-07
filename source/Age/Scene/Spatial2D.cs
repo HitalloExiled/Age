@@ -5,27 +5,21 @@ namespace Age.Scene;
 
 public abstract class Spatial2D : Renderable
 {
-    private protected CacheValue<Transform2D> TransformCache { get; set; }
+    private CacheValue<Transform2D> transformCache { get; set; }
 
     private Transform2D CachedParentTransform => (this.Parent as Spatial2D)?.CachedTransform ?? Transform2D.Identity;
     private Transform2D ParentTransform       => (this.Parent as Spatial2D)?.Transform ?? Transform2D.Identity;
-
-    internal static int CacheVersion { get; set; } = 1;
 
     internal virtual Transform2D CachedTransform
     {
         get
         {
-            if (this.TransformCache.Version != CacheVersion)
+            if (this.transformCache.IsInvalid)
             {
-                this.TransformCache = new()
-                {
-                    Value   = this.LocalTransform * this.CachedParentTransform,
-                    Version = CacheVersion
-                };
+                this.transformCache = new(this.LocalTransform * this.CachedParentTransform);
             }
 
-            return this.TransformCache.Value;
+            return this.transformCache.Value;
         }
     }
 

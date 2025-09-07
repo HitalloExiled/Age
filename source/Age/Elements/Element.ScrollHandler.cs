@@ -8,8 +8,6 @@ using Age.Scene;
 using Age.Styling;
 using static Age.Shaders.CanvasShader;
 
-using AgeInput = Age.Input;
-
 namespace Age.Elements;
 
 public abstract partial class Element
