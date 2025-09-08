@@ -74,7 +74,7 @@ public sealed class Texture2D : Resource
         {
             Format = image.Format,
             Image  = image.Instance.Handle,
-            SubresourceRange = new()
+            SubresourceRange =
             {
                 AspectMask = VkImageAspectFlags.Color,
                 LayerCount = 1,

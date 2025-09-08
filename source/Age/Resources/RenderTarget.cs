@@ -8,14 +8,14 @@ using Age.Rendering.Resources;
 using Age.RenderPasses;
 using Age.Rendering.Vulkan;
 
-using ImageResource   = Age.Rendering.Resources.Image;
+using ImageResource = Age.Rendering.Resources.Image;
 
 namespace Age.Resources;
 
 public sealed class RenderTarget : Resource
 {
     internal Framebuffer     Framebuffer { get; private set; }
-    internal ImageResource[] Attachments { get; private set; } = new ImageResource[3];
+    internal ImageResource[] Attachments { get; } = new ImageResource[3];
 
     public Texture2D Texture { get; private set; }
     public Size<uint> Size   => this.Texture.Size;
