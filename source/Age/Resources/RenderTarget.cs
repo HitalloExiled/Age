@@ -1,117 +1,387 @@
+using Age.Core.Collections;
+using Age.Core.Extensions;
+using Age.Core;
+using Age.Extensions;
 using Age.Numerics;
 using Age.Rendering.Extensions;
+using Age.Rendering.Resources;
+using Age.Rendering.Vulkan;
 using System.Diagnostics.CodeAnalysis;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
-using Age.Rendering.Resources;
-using Age.RenderPasses;
-using Age.Rendering.Vulkan;
-
-using ImageResource   = Age.Rendering.Resources.Image;
 
 namespace Age.Resources;
 
-public sealed class RenderTarget : Resource
+public sealed partial class RenderTarget : Resource
 {
-    internal Framebuffer     Framebuffer { get; private set; }
-    internal ImageResource[] Attachments { get; private set; } = new ImageResource[3];
+    private static readonly Dictionary<int, SharedResource<VkRenderPass>> renderPasses = [];
 
-    public Texture2D Texture { get; private set; }
-    public Size<uint> Size   => this.Texture.Size;
+    private readonly List<ColorAttachment> colorAttachments = [];
+    private Size<uint> size;
 
-    public RenderTarget(in Size<uint> size, VkFormat format = VkFormat.B8G8R8A8Unorm) =>
-        this.Update(size, format);
+    private readonly SharedResource<VkRenderPass> renderPass;
 
-    [MemberNotNull(nameof(Framebuffer), nameof(Texture))]
-    private void CreateResources(in Size<uint> size, VkFormat format)
+    internal VkFramebuffer Framebuffer { get; private set; }
+
+    internal VkRenderPass  RenderPass => this.renderPass.Resource;
+
+    public DepthStencilAttachment? DepthStencilAttachment { get; private set; }
+
+    public IReadOnlyList<ColorAttachment> ColorAttachments => this.colorAttachments;
+
+    public Size<uint> Size
     {
-        var pass = RenderGraph.Active.GetRenderGraphPass<SceneRenderGraphPass>();
-
-        var colorImageCreateInfo = new VkImageCreateInfo
+        get => this.size;
+        set
         {
-            ArrayLayers   = 1,
-            Extent        = size.ToExtent3D(),
-            Format        = format,
-            ImageType     = VkImageType.N2D,
-            InitialLayout = VkImageLayout.Undefined,
-            MipLevels     = 1,
-            Samples       = VulkanRenderer.Singleton.MaxUsableSampleCount,
-            Tiling        = VkImageTiling.Optimal,
-            Usage         = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled,
-        };
+            if (this.size != value)
+            {
+                this.size = value;
 
-        var colorImage = new ImageResource(colorImageCreateInfo);
-        colorImage.ClearColor(Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
+                this.RecreateResources();
+            }
+        }
+    }
 
-        var resolveImageCreateInfo = colorImageCreateInfo;
+    public RenderTarget(in CreateInfo createInfo)
+    {
+        var attachments = new MultiPassCreateInfo.AttachmentInfo[createInfo.ColorAttachments.Length + (createInfo.DepthStencilAttachment.HasValue ? 1 : 0)];
 
-        resolveImageCreateInfo.Usage   = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
-        resolveImageCreateInfo.Samples = VkSampleCountFlags.N1;
+        var colorAttachments = new int[createInfo.ColorAttachments.Length];
 
-        var resolveImage = new ImageResource(resolveImageCreateInfo);
-        resolveImage.ClearColor(Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
-
-        var depthImageCreateInfo = colorImageCreateInfo;
-
-        depthImageCreateInfo.Usage  = VkImageUsageFlags.DepthStencilAttachment;
-        depthImageCreateInfo.Format = VulkanRenderer.Singleton.DepthBufferFormat;
-
-        var depthImage = new ImageResource(depthImageCreateInfo);
-
-        var framebufferCreateInfo = new FramebufferCreateInfo
+        for (var i = 0; i < createInfo.ColorAttachments.Length; i++)
         {
-            RenderPass  = pass.RenderPass,
-            Attachments =
+            attachments[i]      = createInfo.ColorAttachments[i];
+            colorAttachments[i] = i;
+        }
+
+        int? depthStencilAttachment = null;
+
+        if (createInfo.DepthStencilAttachment.HasValue)
+        {
+            attachments[^1] = createInfo.DepthStencilAttachment.Value;
+
+            depthStencilAttachment = attachments.Length - 1;
+        }
+
+        var multiPassCreateInfo = new MultiPassCreateInfo
+        {
+            Size        = createInfo.Size,
+            Attachments = attachments,
+            Passes      =
             [
-                new FramebufferCreateInfo.Attachment
+                new()
                 {
-                    Image       = colorImage,
-                    ImageAspect = VkImageAspectFlags.Color,
-                },
-                new FramebufferCreateInfo.Attachment
-                {
-                    Image       = resolveImage,
-                    ImageAspect = VkImageAspectFlags.Color,
-                },
-                new FramebufferCreateInfo.Attachment
-                {
-                    Image       = depthImage,
-                    ImageAspect = VkImageAspectFlags.Depth,
-                },
+                    ColorAttachments       = colorAttachments,
+                    DepthStencilAttachment = depthStencilAttachment,
+                }
             ]
         };
 
-        this.Texture     = new(resolveImage, (TextureFormat)format);
-        this.Framebuffer = new(framebufferCreateInfo);
+        this.size = multiPassCreateInfo.Size;
 
-        this.Attachments[0] = colorImage;
-        this.Attachments[1] = resolveImage;
-        this.Attachments[2] = depthImage;
+        this.renderPass = CreateRenderPass(multiPassCreateInfo);
+
+        this.CreateResources(this.RenderPass, multiPassCreateInfo);
+    }
+
+    public RenderTarget(in MultiPassCreateInfo multiPassCreateInfo)
+    {
+        this.size = multiPassCreateInfo.Size;
+
+        this.renderPass = CreateRenderPass(multiPassCreateInfo);
+
+        this.CreateResources(this.RenderPass, multiPassCreateInfo);
+    }
+
+    [MemberNotNull(nameof(Framebuffer))]
+    private void CreateResources(VkRenderPass renderPass, in MultiPassCreateInfo multiPassCreateInfo)
+    {
+        this.colorAttachments.EnsureCapacity(multiPassCreateInfo.Attachments.Length);
+
+        var imageViews = new List<VkImageView>(this.colorAttachments.Count);
+
+        for (var i = 0; i < multiPassCreateInfo.Attachments.Length; i++)
+        {
+            ref readonly var attachment = ref multiPassCreateInfo.Attachments[i];
+
+            if (attachment.TryGetColorAttachment(out var colorAttachment))
+            {
+                Texture2D? colorTexture;
+                Texture2D? resolveTexture = null;
+
+                if (colorAttachment.Image != null)
+                {
+                    colorTexture = new Texture2D(colorAttachment.Image, false, TextureAspect.Color);
+
+                    imageViews.Add(colorTexture.ImageView);
+                }
+                else
+                {
+                    var imageCreateInfo = new VkImageCreateInfo
+                    {
+                        ArrayLayers   = 1,
+                        Extent        = multiPassCreateInfo.Size.ToExtent3D(),
+                        Format        = (VkFormat)colorAttachment.Format,
+                        ImageType     = VkImageType.N2D,
+                        InitialLayout = VkImageLayout.Undefined,
+                        MipLevels     = 1,
+                        Samples       = (VkSampleCountFlags)colorAttachment.SampleCount,
+                        Tiling        = VkImageTiling.Optimal,
+                        Usage         = (VkImageUsageFlags)colorAttachment.Usage,
+                    };
+
+                    var colorImage = new Image(imageCreateInfo);
+                    colorImage.ClearColor(Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
+
+                    colorTexture = new Texture2D(colorImage, true, TextureAspect.Color);
+
+                    imageViews.Add(colorTexture.ImageView);
+
+                    if (colorAttachment.EnableResolve)
+                    {
+                        imageCreateInfo.Samples = VkSampleCountFlags.N1;
+
+                        resolveTexture = new(new Image(imageCreateInfo), true, colorTexture.Aspect);
+
+                        imageViews.Add(resolveTexture.ImageView);
+                    }
+                }
+
+                this.colorAttachments.Add(new(colorTexture, resolveTexture));
+            }
+            else if (attachment.TryGetDepthStencilAttachment(out var depthStencilAttachment))
+            {
+                if (this.DepthStencilAttachment.HasValue)
+                {
+                    foreach (var item in this.colorAttachments)
+                    {
+                        item.Dispose();
+                    }
+
+                    this.colorAttachments.Clear();
+
+                    throw new InvalidOperationException("RenderTarget may only have one depth/stencil attachment.");
+                }
+
+                if (depthStencilAttachment.Image != null)
+                {
+                    this.DepthStencilAttachment = new(new(depthStencilAttachment.Image, false, depthStencilAttachment.Aspect));
+                }
+                else
+                {
+                    var imageCreateInfo = new VkImageCreateInfo
+                    {
+                        ArrayLayers   = 1,
+                        Extent        = multiPassCreateInfo.Size.ToExtent3D(),
+                        Format        = (VkFormat)depthStencilAttachment.Format,
+                        ImageType     = VkImageType.N2D,
+                        InitialLayout = VkImageLayout.Undefined,
+                        MipLevels     = 1,
+                        Samples       = VkSampleCountFlags.N1,
+                        Tiling        = VkImageTiling.Optimal,
+                        Usage         = VkImageUsageFlags.DepthStencilAttachment | (VkImageUsageFlags)depthStencilAttachment.Usage,
+                    };
+
+                    var image = new Image(imageCreateInfo);
+
+                    this.DepthStencilAttachment = new(new(image, true, depthStencilAttachment.Aspect));
+                }
+
+                imageViews.Add(this.DepthStencilAttachment.Value.Texture.ImageView);
+            }
+        }
+
+        this.Framebuffer = VulkanRenderer.Singleton.Context.CreateFrameBuffer(renderPass, imageViews.AsSpan(), multiPassCreateInfo.Size.ToExtent2D());
+    }
+
+    private unsafe static SharedResource<VkRenderPass> CreateRenderPass(MultiPassCreateInfo createInfo)
+    {
+        var hashcode = createInfo.GetHashCode();
+
+        ref var renderPass = ref renderPasses.GetValueRefOrAddDefault(hashcode, out var exists);
+
+        if (!exists)
+        {
+            using var disposables = new Disposables();
+
+            using var subpassDescriptions     = new RefList<VkSubpassDescription>();
+            using var attachmentDescriptions  = new RefList<VkAttachmentDescription>();
+            using var depthStencilAttachments = new RefList<VkAttachmentDescription>();
+
+            for (var i = 0; i < createInfo.Passes.Length; i++)
+            {
+                ref readonly var pass = ref createInfo.Passes[i];
+
+                var colorAttachmentReferences        = new NativeList<VkAttachmentReference>(pass.ColorAttachments.Length);
+                var resolveAttachmentReferences      = new NativeList<VkAttachmentReference>();
+                var depthStencilAttachmentReferences = new NativeList<VkAttachmentReference>();
+
+                disposables.Add(colorAttachmentReferences);
+                disposables.Add(resolveAttachmentReferences);
+                disposables.Add(depthStencilAttachmentReferences);
+
+                for (var j = 0; j < pass.ColorAttachments.Length; j++)
+                {
+                    var index = pass.ColorAttachments[j];
+
+                    if (!createInfo.Attachments[index].TryGetColorAttachment(out var colorAttachment))
+                    {
+                        throw new InvalidOperationException($"Passes[{i}].ColorAttachments[{j}] must reference a valid {nameof(CreateInfo.ColorAttachmentInfo)} at {index}, but got {createInfo.Attachments[index]}");
+                    }
+
+                    colorAttachmentReferences.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = VkImageLayout.ColorAttachmentOptimal });
+
+                    var colorAttachmentDescription = new VkAttachmentDescription
+                    {
+                        Format         = (VkFormat)colorAttachment.Format,
+                        Samples        = (VkSampleCountFlags)colorAttachment.SampleCount,
+                        FinalLayout    = VkImageLayout.ColorAttachmentOptimal,
+                        LoadOp         = VkAttachmentLoadOp.Clear,
+                        StoreOp        = VkAttachmentStoreOp.Store,
+                        StencilLoadOp  = VkAttachmentLoadOp.DontCare,
+                        StencilStoreOp = VkAttachmentStoreOp.DontCare,
+                    };
+
+                    attachmentDescriptions.Add(colorAttachmentDescription);
+
+                    if (!colorAttachment.EnableResolve)
+                    {
+                        resolveAttachmentReferences.Add(new() { Attachment = VkConstants.VK_ATTACHMENT_UNUSED, Layout = VkImageLayout.Undefined });
+                    }
+                    else
+                    {
+                        var resolveAttachmentDescription = colorAttachmentDescription;
+
+                        resolveAttachmentDescription.Samples = VkSampleCountFlags.N1;
+                        resolveAttachmentDescription.LoadOp  = VkAttachmentLoadOp.DontCare;
+
+                        resolveAttachmentReferences.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = VkImageLayout.ColorAttachmentOptimal });
+                        attachmentDescriptions.Add(resolveAttachmentDescription);
+                    }
+                }
+
+                if (pass.DepthStencilAttachment is int depthStencilAttachmentIndex)
+                {
+                    if (!createInfo.Attachments[depthStencilAttachmentIndex].TryGetDepthStencilAttachment(out var depthStencilAttachmentInfo))
+                    {
+                        throw new InvalidOperationException($"Passes[{i}].DepthStencilAttachment must reference a valid {nameof(CreateInfo.DepthStencilAttachmentInfo)} at {depthStencilAttachmentIndex}, but got {createInfo.Attachments[depthStencilAttachmentIndex]}");
+                    }
+
+                    depthStencilAttachmentReferences.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = VkImageLayout.DepthStencilAttachmentOptimal });
+
+                    var depthStencilAttachmentDescription = new VkAttachmentDescription
+                    {
+                        Format         = (VkFormat)depthStencilAttachmentInfo.Format,
+                        FinalLayout    = VkImageLayout.DepthStencilAttachmentOptimal,
+                        LoadOp         = VkAttachmentLoadOp.Clear,
+                        Samples        = VkSampleCountFlags.N1,
+                        StencilLoadOp  = VkAttachmentLoadOp.Clear,
+                        StencilStoreOp = VkAttachmentStoreOp.DontCare,
+                        StoreOp        = VkAttachmentStoreOp.Store,
+                    };
+
+                    attachmentDescriptions.Add(depthStencilAttachmentDescription);
+                }
+
+                var subpassDescription = new VkSubpassDescription
+                {
+                    PipelineBindPoint       = VkPipelineBindPoint.Graphics,
+                    PColorAttachments       = colorAttachmentReferences.AsPointer(),
+                    PResolveAttachments     = resolveAttachmentReferences.AsPointer(),
+                    ColorAttachmentCount    = (uint)colorAttachmentReferences.Count,
+                    PDepthStencilAttachment = depthStencilAttachmentReferences.AsPointer(),
+                };
+
+                subpassDescriptions.Add(subpassDescription);
+            }
+
+            var renderPassCreateInfo = new VkRenderPassCreateInfo
+            {
+                AttachmentCount = (uint)attachmentDescriptions.Count,
+                PAttachments    = attachmentDescriptions.AsPointer(),
+                SubpassCount    = (uint)subpassDescriptions.Count,
+                PSubpasses      = subpassDescriptions.AsPointer(),
+            };
+
+            renderPass = new(VulkanRenderer.Singleton.Context.Device.CreateRenderPass(renderPassCreateInfo));
+        }
+
+        return renderPass!.Share();
+    }
+
+    private void DisposeResources()
+    {
+        VulkanRenderer.Singleton.DeferredDispose(this.Framebuffer);
+
+        foreach (var attachment in this.colorAttachments)
+        {
+            attachment.Dispose();
+        }
+
+        this.colorAttachments.Clear();
+
+        this.DepthStencilAttachment?.Dispose();
+        this.DepthStencilAttachment = null;
+    }
+
+    private void RecreateResources()
+    {
+        this.DisposeResources();
+
+        Span<MultiPassCreateInfo.AttachmentInfo> attachments = new MultiPassCreateInfo.AttachmentInfo[this.ColorAttachments.Count + (this.DepthStencilAttachment != null ? 1 : 0)];
+
+        var colorAttachments = new int[this.ColorAttachments.Count];
+
+        for (var i = 0; i < this.ColorAttachments.Count; i++)
+        {
+            var color = this.ColorAttachments[i].Texture;
+
+            attachments[i] = new CreateInfo.ColorAttachmentInfo()
+            {
+                Format        = color.Format,
+                SampleCount   = color.Samples,
+                Usage         = color.Usage,
+                EnableResolve = this.colorAttachments[i].HasResolve,
+            };
+            colorAttachments[i] = i;
+        }
+
+        int? depthStencilAttachment = null;
+
+        if (this.DepthStencilAttachment is { Texture: var depthStencil })
+        {
+            attachments[^1] = new CreateInfo.DepthStencilAttachmentInfo()
+            {
+                Format = depthStencil.Format,
+                Usage  = depthStencil.Usage,
+                Aspect = depthStencil.Aspect,
+            };
+
+            depthStencilAttachment = attachments.Length - 1;
+        }
+
+        var multiPassCreateInfo = new MultiPassCreateInfo
+        {
+            Size        = this.Size,
+            Attachments = attachments,
+            Passes      =
+            [
+                new()
+                {
+                    ColorAttachments       = colorAttachments,
+                    DepthStencilAttachment = depthStencilAttachment,
+                }
+            ]
+        };
+
+        this.CreateResources(this.RenderPass, multiPassCreateInfo);
     }
 
     protected override void OnDisposed()
     {
-        this.Texture.Dispose();
-        this.Framebuffer.Dispose();
-
-        foreach (var attachments in this.Attachments)
-        {
-            attachments.Dispose();
-        }
-    }
-
-    [MemberNotNull(nameof(Framebuffer), nameof(Texture))]
-    public void Update(in Size<uint> size, VkFormat format = VkFormat.B8G8R8A8Unorm)
-    {
-        this.Framebuffer?.Dispose();
-        this.Texture?.Dispose();
-
-        foreach (var attachment in this.Attachments)
-        {
-            attachment?.Dispose();
-        }
-
-        this.CreateResources(size, format);
+        this.renderPass.Dispose();
+        this.DisposeResources();
     }
 }

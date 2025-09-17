@@ -185,7 +185,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         clearValues[1].DepthStencil.Depth = 1;
 
         this.CommandBuffer.SetViewport(extent);
-        this.CommandBuffer.BeginRenderPass(this.RenderPass, this.Framebuffer, clearValues);
+        this.CommandBuffer.BeginRenderPass(extent, this.RenderPass, this.Framebuffer, clearValues);
         this.CommandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, 0u);
 
         if (this.previousViewport == viewport || !this.previousViewport.HasValue)

@@ -1,6 +1,7 @@
 using Age.Commands;
 using Age.Elements;
 using Age.Numerics;
+using Age.Rendering.Vulkan;
 using Age.Resources;
 
 namespace Age.Scene;
@@ -14,21 +15,31 @@ public sealed class Viewport : Element
     public Size<uint> ViewSize
     {
         get => this.RenderTarget.Size;
-        set
-        {
-            if (this.RenderTarget.Size != value)
-            {
-                this.Style.MinSize = new(Unit.Px(value.Width), Unit.Px(value.Height));
-                this.RenderTarget.Update(value);
-                this.UpdateCommand();
-            }
-        }
+        set => this.RenderTarget.Size = value;
     }
 
     public Viewport(in Size<uint> size)
     {
         this.Style.MinSize = new(Unit.Px(size.Width), Unit.Px(size.Height));
-        this.RenderTarget  = new(size);
+
+        var createInfo = new RenderTarget.CreateInfo
+        {
+            Size             = size,
+            ColorAttachments =
+            [
+                new()
+                {
+                    Format = TextureFormat.B8G8R8A8Unorm,
+                    Usage  = TextureUsage.ColorAttachment | TextureUsage.Sampled,
+                }
+            ],
+            DepthStencilAttachment = new()
+            {
+                Format = (TextureFormat)VulkanRenderer.Singleton.DepthBufferFormat,
+            }
+        };
+
+        this.RenderTarget  = new(createInfo);
         this.UpdateCommand();
     }
 
@@ -39,8 +50,8 @@ public sealed class Viewport : Element
             this.SingleCommand = command = new();
         }
 
-        command.Size          = this.RenderTarget.Size.Cast<float>();
-        command.TextureMap = new(this.RenderTarget.Texture, UVRect.Normalized);
+        command.Size       = this.RenderTarget.Size.Cast<float>();
+        command.TextureMap = new(this.RenderTarget.ColorAttachments[0].Texture, UVRect.Normalized);
     }
 
     protected override void OnDisposed() =>

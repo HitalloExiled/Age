@@ -39,10 +39,10 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
         clearValue.Color.Float32[3] = clearColor.A;
         clearValue.DepthStencil = new() { Depth = 1, Stencil = 0 };
 
-        this.BeginRenderPass(renderPass, framebuffer, [clearValue]);
+        this.BeginRenderPass(framebuffer.Extent, renderPass, framebuffer, [clearValue]);
     }
 
-    public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, scoped ReadOnlySpan<Color> clearColors)
+    public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, ReadOnlySpan<Color> clearColors)
     {
         Span<VkClearValue> clearValues = stackalloc VkClearValue[clearColors.Length];
 
@@ -54,24 +54,24 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
             clearValues[i].Color.Float32[3] = clearColors[i].A;
         }
 
-        this.BeginRenderPass(renderPass, framebuffer, clearValues);
+        this.BeginRenderPass(framebuffer.Extent, renderPass, framebuffer, clearValues);
     }
 
-    public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, scoped ReadOnlySpan<VkClearValue> clearValues)
+    public unsafe void BeginRenderPass(VkExtent2D extent, VkRenderPass renderPass, VkFramebuffer framebuffer, ReadOnlySpan<VkClearValue> clearValues)
     {
         fixed (VkClearValue* pClearValues = clearValues)
         {
             var renderPassBeginInfo = new VkRenderPassBeginInfo
             {
                 ClearValueCount = (uint)clearValues.Length,
-                Framebuffer     = framebuffer.Instance.Handle,
+                Framebuffer     = framebuffer.Handle,
                 PClearValues    = pClearValues,
                 RenderArea      = new()
                 {
                     Offset = default,
-                    Extent = framebuffer.Extent,
+                    Extent = extent,
                 },
-                RenderPass = renderPass.Instance.Handle,
+                RenderPass = renderPass.Handle,
             };
 
             this.Instance.BeginRenderPass(renderPassBeginInfo, VkSubpassContents.Inline);

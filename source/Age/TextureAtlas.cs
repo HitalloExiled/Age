@@ -15,8 +15,10 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
     private uint        maxHeight;
 
     public Bitmap    Bitmap  { get; } = new(size, format.BytesPerPixel());
+    public Texture2D Texture { get; } = new(new Texture2D.CreateInfo { Size = size, Format = format });
+
     public Size<uint> Size => this.Bitmap.Size;
-    public Texture2D Texture { get; } = new(size, format);
+
     protected override void OnDisposed(bool disposing)
     {
         if (disposing)

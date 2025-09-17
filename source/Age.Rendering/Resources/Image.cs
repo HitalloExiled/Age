@@ -13,11 +13,12 @@ public sealed class Image : Resource<VkImage>
 {
     private readonly Allocation? allocation;
 
-    public VkExtent3D        Extent        { get; }
-    public VkFormat          Format        { get; }
-    public VkImageLayout     InitialLayout { get; }
-    public VkImageType       Type          { get; }
-    public VkImageUsageFlags Usage         { get; }
+    public VkExtent3D         Extent        { get; }
+    public VkFormat           Format        { get; }
+    public VkImageLayout      InitialLayout { get; }
+    public VkSampleCountFlags Samples       { get; }
+    public VkImageType        Type          { get; }
+    public VkImageUsageFlags  Usage         { get; }
 
     public VkImageLayout FinalLayout { get; private set; }
 
@@ -176,8 +177,9 @@ public sealed class Image : Resource<VkImage>
         this.Extent        = description.Extent;
         this.Format        = description.Format;
         this.Type          = description.ImageType;
-        this.Usage         = description.Usage;
         this.InitialLayout = description.InitialLayout;
+        this.Samples       = description.Samples;
+        this.Usage         = description.Usage;
     }
 
     public Image(in VkImageCreateInfo createInfo, VkImageLayout finalLayout = default)
@@ -202,6 +204,7 @@ public sealed class Image : Resource<VkImage>
         this.Type          = createInfo.ImageType;
         this.Usage         = createInfo.Usage;
         this.InitialLayout = createInfo.InitialLayout;
+        this.Samples       = createInfo.Samples;
         this.FinalLayout   = finalLayout;
 
         this.allocation = new()

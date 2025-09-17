@@ -3,6 +3,11 @@ namespace ThirdParty.Vulkan;
 public static class VkConstants
 {
     /// <summary>
+    /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_ATTACHMENT_UNUSED.html">VK_ATTACHMENT_UNUSED</see>
+    /// </summary>
+    public const uint VK_ATTACHMENT_UNUSED = uint.MaxValue;
+
+    /// <summary>
     /// See <see href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_MAX_DESCRIPTION_SIZE.html">VK_MAX_DESCRIPTION_SIZE</see>
     /// </summary>
     public const uint VK_MAX_DESCRIPTION_SIZE = 256;
