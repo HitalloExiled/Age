@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Age.Core;
 using Age.Core.Extensions;
@@ -8,10 +9,6 @@ namespace Age.Scene;
 
 public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<Node>
 {
-    #pragma warning disable IDE0032 // Use auto property
-    private NodeTree? tree;
-    #pragma warning restore IDE0032 // Use auto property
-
     internal int Index
     {
         get;
@@ -33,47 +30,13 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public NodeFlags NodeFlags { get; protected set; }
 
-    public NodeTree? Tree
-    {
-        get => this.tree;
-        internal set
-        {
-            if (this.tree != value)
-            {
-                static void setTree(Node node, NodeTree? tree)
-                {
-                    var oldTree = node.tree;
-
-                    node.tree = tree;
-
-                    if (tree != null)
-                    {
-                        node.OnConnected(tree);
-                    }
-                    else if (oldTree != null)
-                    {
-                        node.OnDisconnected(oldTree);
-                    }
-                }
-
-                setTree(this, value);
-
-                foreach (var node in this.GetTraversalEnumerator())
-                {
-                    setTree(node, value);
-                }
-            }
-        }
-    }
-
     public Node[] Children
     {
         get => [.. this];
         set => this.ReplaceChildren(value);
     }
 
-    [MemberNotNullWhen(true, nameof(Tree))]
-    public bool IsConnected => this.Tree != null;
+    public bool IsConnected { get; private set; }
 
     [MemberNotNullWhen(false, nameof(FirstChild), nameof(LastChild))]
     public bool IsLeaf => this.FirstChild == null;
@@ -231,26 +194,19 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
                 this.FirstChild = this.LastChild = node;
             }
         }
+        else if (this.FirstChild != null)
+        {
+            this.FirstChild.PreviousSibling = node;
+            node.NextSibling = this.FirstChild;
+
+            this.FirstChild = node;
+        }
         else
         {
-            if (this.FirstChild != null)
-            {
-                this.FirstChild.PreviousSibling = node;
-                node.NextSibling = this.FirstChild;
-
-                this.FirstChild = node;
-            }
-            else
-            {
-                this.FirstChild = this.LastChild = node;
-            }
+            this.FirstChild = this.LastChild = node;
         }
 
-        node.Parent = this;
-        node.Tree   = this.Tree;
-        node.OnAdopted(this);
-
-        this.OnChildAppended(node);
+        this.AddParenting(node);
     }
 
     private void AppendOrPrepend(scoped ReadOnlySpan<Node> nodes, bool append)
@@ -321,11 +277,22 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         foreach (var node in nodes)
         {
-            node.Parent = this;
-            node.Tree   = this.Tree;
+            this.AddParenting(node);
+        }
+    }
 
-            node.OnAdopted(this);
-            this.OnChildAppended(node);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void AddParenting(Node node)
+    {
+        node.Parent = this;
+
+        this.OnChildAppended(node);
+
+        node.OnAdopted(this);
+
+        if (this.IsConnected)
+        {
+            node.PropagateOnConnected();
         }
     }
 
@@ -365,7 +332,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             }
 
             node.PreviousSibling = reference;
-            node.NextSibling     = reference.NextSibling;
+            node.NextSibling = reference.NextSibling;
 
             reference.NextSibling = node;
         }
@@ -381,16 +348,12 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             }
 
             node.PreviousSibling = reference.PreviousSibling;
-            node.NextSibling     = reference;
+            node.NextSibling = reference;
 
             reference.PreviousSibling = node;
         }
 
-        node.Parent = this;
-        node.Tree   = this.Tree;
-
-        node.OnAdopted(this);
-        this.OnChildAppended(node);
+        this.AddParenting(node);
     }
 
     private void InsertAfterOrBefore(Node reference, scoped ReadOnlySpan<Node> nodes, bool after)
@@ -477,11 +440,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         foreach (var node in nodes)
         {
-            node.Parent = this;
-            node.Tree   = this.Tree;
-            node.OnAdopted(this);
-
-            this.OnChildAppended(node);
+            this.AddParenting(node);
         }
     }
 
@@ -500,18 +459,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
             this.LastChild?.NextSibling = null;
 
-            current.PreviousSibling = null;
-            current.NextSibling     = null;
-            current.Parent          = null;
-            current.Tree            = null;
-
-            current.OnRemoved(this);
-            this.OnChildRemoved(current);
-
-            if (dispose)
-            {
-                current.Dispose();
-            }
+            this.RemoveParenting(current, dispose);
         }
 
         this.FirstChild = null;
@@ -560,23 +508,33 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
             next = current.NextSibling;
 
-            current.PreviousSibling = null;
-            current.NextSibling     = null;
-            current.Parent          = null;
-            current.Tree            = null;
-
-            current.OnRemoved(this);
-            this.OnChildRemoved(current);
-
-            if (dispose)
-            {
-                current.Dispose();
-            }
+            this.RemoveParenting(current, dispose);
 
             if (current == end)
             {
                 break;
             }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void RemoveParenting(Node node, bool dispose)
+    {
+        node.Parent          = null;
+        node.PreviousSibling = null;
+        node.NextSibling     = null;
+
+        node.OnRemoved(this);
+        this.OnChildRemoved(node);
+
+        if (this.IsConnected)
+        {
+            node.PropagateOnDisconnected();
+        }
+
+        if (dispose)
+        {
+            node.Dispose();
         }
     }
 
@@ -596,11 +554,65 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     protected virtual void OnAdopted(Node parent) { }
     protected virtual void OnChildAppended(Node child) { }
     protected virtual void OnChildRemoved(Node child) { }
-    protected virtual void OnConnected(NodeTree tree) { }
-    protected virtual void OnDisconnected(NodeTree tree) { }
+    protected virtual void OnConnected() { }
+    protected virtual void OnDisconnected() { }
     protected virtual void OnDisposed() { }
     protected virtual void OnIndexed() { }
     protected virtual void OnRemoved(Node parent) { }
+
+    private void PropagateOnConnected()
+    {
+        this.IsConnected = true;
+        this.OnConnected();
+
+        var enumerator = this.GetTraversalEnumerator();
+
+        while (enumerator.MoveNext())
+        {
+            enumerator.Current.IsConnected = true;
+            enumerator.Current.OnConnected();
+        }
+    }
+
+    private void PropagateOnDisconnected()
+    {
+        this.IsConnected = false;
+        this.OnDisconnected();
+
+        var enumerator = this.GetTraversalEnumerator();
+
+        while (enumerator.MoveNext())
+        {
+            enumerator.Current.IsConnected = false;
+            enumerator.Current.OnDisconnected();
+        }
+    }
+
+    internal void Connect()
+    {
+        if (!this.IsConnected)
+        {
+            if (this.Parent != null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            this.PropagateOnConnected();
+        }
+    }
+
+    internal void Disconnect()
+    {
+        if (this.IsConnected)
+        {
+            if (this.Parent != null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            this.PropagateOnDisconnected();
+        }
+    }
 
     public void AppendChild(Node node) =>
         this.AppendOrPrepend(node, true);
@@ -798,13 +810,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             node.NextSibling.PreviousSibling = node.PreviousSibling;
         }
 
-        node.PreviousSibling = null;
-        node.NextSibling     = null;
-        node.Parent          = null;
-        node.Tree            = null;
-
-        node.OnRemoved(this);
-        this.OnChildRemoved(node);
+        this.RemoveParenting(node, false);
     }
 
     public void RemoveChildren() =>
@@ -858,18 +864,9 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         node.Parent          = this;
         node.PreviousSibling = target.PreviousSibling;
         node.NextSibling     = target.NextSibling;
-        node.Tree            = this.Tree;
 
-        target.Parent          = null;
-        target.PreviousSibling = null;
-        target.NextSibling     = null;
-        target.Tree            = null;
-
-        target.OnRemoved(this);
-        this.OnChildRemoved(target);
-
-        node.OnAdopted(this);
-        this.OnChildAppended(node);
+        this.RemoveParenting(target, false);
+        this.AddParenting(node);
     }
 
     public void ReplaceSelf(Node node) =>
@@ -955,21 +952,13 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             nodes[i].NextSibling     = nodes[i + 1];
         }
 
-        target.Parent          = null;
-        target.PreviousSibling = null;
-        target.NextSibling     = null;
-        target.Tree            = null;
 
-        target.OnRemoved(this);
-        this.OnChildRemoved(target);
+
+        this.RemoveParenting(target, false);
 
         foreach (var node in nodes)
         {
-            node.Parent = this;
-            node.Tree   = this.Tree;
-            node.OnAdopted(this);
-
-            this.OnChildAppended(node);
+            this.AddParenting(node);
         }
     }
 

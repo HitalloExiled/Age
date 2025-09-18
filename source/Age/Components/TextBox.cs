@@ -163,9 +163,9 @@ public partial class TextBox : Element
                     {
                         var currentLine = this.text.GetCharacterLine(this.GetTrimmedCursorPosition());
 
-                        if (this.Tree is RenderTree tree && this.text.Cut(new(currentLine.Start, currentLine.End + 1)) is string text)
+                        if (this.text.Cut(new(currentLine.Start, currentLine.End + 1)) is string text)
                         {
-                            tree.Window.SetClipboardData(text);
+                            this.Window!.SetClipboardData(text);
                         }
                     }
                     else if (this.text.Selection != null)
@@ -415,13 +415,13 @@ public partial class TextBox : Element
 
             case Key.V:
                 {
-                    if (keyEvent.Modifiers.HasFlags(KeyStates.Control) && this.Tree is RenderTree renderTree)
+                    if (keyEvent.Modifiers.HasFlags(KeyStates.Control))
                     {
                         this.SaveHistory();
 
                         this.text.DeleteSelected();
 
-                        if (renderTree.Window.GetClipboardData() is string text)
+                        if (this.Window!.GetClipboardData() is string text)
                         {
                             if (this.text.Buffer.IsEmpty || this.text.CursorPosition == this.text.Buffer.Length)
                             {
@@ -441,13 +441,13 @@ public partial class TextBox : Element
 
             case Key.X:
                 {
-                    if (keyEvent.Modifiers.HasFlags(KeyStates.Control) && this.Tree is RenderTree renderTree)
+                    if (keyEvent.Modifiers.HasFlags(KeyStates.Control))
                     {
                         this.SaveHistory();
 
                         if (this.text.CutSelected() is string text)
                         {
-                            renderTree.Window.SetClipboardData(text);
+                            this.Window!.SetClipboardData(text);
                         }
                     }
                 }

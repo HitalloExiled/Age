@@ -152,7 +152,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
         }
     }
 
-    private unsafe static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+    private static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
         var logLevel = messageSeverity switch
         {
@@ -458,15 +458,13 @@ internal sealed unsafe partial class VulkanContext : Disposable
             semaphores[i] = this.device.CreateSemaphore();
         }
 
-        var surfaceContext = new Surface
+        return new Surface
         {
             Semaphores  = semaphores,
             Size        = size,
             Value       = surface,
             Swapchain   = swapchain,
         };
-
-        return surfaceContext;
     }
 
     public VkCommandBuffer AllocateCommand(VkCommandBufferLevel commandBufferLevel) =>

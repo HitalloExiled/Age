@@ -8,8 +8,6 @@ namespace Age.Tests.Age.Elements;
 
 public partial class ComposedTreeTraversalEnumeratorTest
 {
-    private readonly TestTree tree = new();
-
     private readonly TestElement root = new("$");
     private readonly HostElement host;
     private readonly Node[]      lightNodes;
@@ -92,7 +90,7 @@ public partial class ComposedTreeTraversalEnumeratorTest
         ];
 
         this.root.AppendChild(this.host);
-        this.tree.Root.AppendChild(this.root);
+        this.root.Connect();
     }
 
     private static void AddChilds(Node parent, ref int parentDepth)

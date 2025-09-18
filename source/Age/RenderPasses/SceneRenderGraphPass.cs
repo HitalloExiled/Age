@@ -191,30 +191,29 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
             {
                 foreach (var camera in scene.Cameras)
                 {
-                    foreach (var renderTarget in camera.RenderTargets)
+                    var renderTarget = camera.Viewport!.RenderTarget;
+
+                    commandBuffer.BeginRenderPass(renderTarget.Size.ToExtent2D(), renderTarget.RenderPass, renderTarget.Framebuffer, [colorClearValue, default, depthClearValue]);
+                    commandBuffer.SetViewport(renderTarget.Size.ToExtent2D());
+
+                    foreach (var (command, transform) in this.Window.Tree.Get3DCommands())
                     {
-                        commandBuffer.BeginRenderPass(renderTarget.Size.ToExtent2D(), renderTarget.RenderPass, renderTarget.Framebuffer, [colorClearValue, default, depthClearValue]);
-                        commandBuffer.SetViewport(renderTarget.Size.ToExtent2D());
-
-                        foreach (var (command, transform) in this.Window.Tree.Get3DCommands())
+                        switch (command)
                         {
-                            switch (command)
-                            {
-                                case MeshCommand meshCommand:
-                                    var ubo = this.UpdateUbo(camera, meshCommand.Mesh, transform, renderTarget.Size.ToExtent2D());
+                            case MeshCommand meshCommand:
+                                var ubo = this.UpdateUbo(camera, meshCommand.Mesh, transform, renderTarget.Size.ToExtent2D());
 
-                                    commandBuffer.BindShader(meshCommand.Mesh.Material.Shader);
-                                    commandBuffer.BindUniformSet(this.GetUniformSet(camera, ubo, meshCommand.Mesh.Material));
-                                    commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
-                                    commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);
-                                    commandBuffer.DrawIndexed(meshCommand.IndexBuffer);
+                                commandBuffer.BindShader(meshCommand.Mesh.Material.Shader);
+                                commandBuffer.BindUniformSet(this.GetUniformSet(camera, ubo, meshCommand.Mesh.Material));
+                                commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
+                                commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);
+                                commandBuffer.DrawIndexed(meshCommand.IndexBuffer);
 
-                                    break;
-                            }
+                                break;
                         }
-
-                        commandBuffer.EndRenderPass();
                     }
+
+                    commandBuffer.EndRenderPass();
                 }
             }
         }

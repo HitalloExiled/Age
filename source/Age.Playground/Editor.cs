@@ -17,7 +17,7 @@ internal record struct Page(string Title, Setup Setup);
 
 internal delegate void Setup(Canvas canvas);
 
-public class Editor : Node
+public class Editor : Renderable
 {
     private const uint BORDER_SIZE = 10;
     private readonly Canvas canvas = new();
@@ -114,22 +114,22 @@ public class Editor : Node
 
         var scene = new DemoScene();
 
-        var freeViewport  = new Viewport(new(600)) { Name = "Red" };
-        var redViewport   = new Viewport(new(200)) { Name = "Red" };
-        var greenViewport = new Viewport(new(200)) { Name = "Green" };
-        var blueViewport  = new Viewport(new(200)) { Name = "Blue" };
+        var freeViewport  = new SubViewport(new(600)) { Name = "Red" };
+        var redViewport   = new SubViewport(new(200)) { Name = "Red" };
+        var greenViewport = new SubViewport(new(200)) { Name = "Green" };
+        var blueViewport  = new SubViewport(new(200)) { Name = "Blue" };
 
-        freeViewport.Style.Border  = new(1, 0, Color.White);
-        redViewport.Style.Border   = new(1, 0, Color.Red);
-        greenViewport.Style.Border = new(1, 0, Color.Green);
-        blueViewport.Style.Border  = new(1, 0, Color.Blue);
+        // freeViewport.Style.Border  = new(1, 0, Color.White);
+        // redViewport.Style.Border   = new(1, 0, Color.Red);
+        // greenViewport.Style.Border = new(1, 0, Color.Green);
+        // blueViewport.Style.Border  = new(1, 0, Color.Blue);
 
-        freeViewport.Style.BoxSizing = redViewport.Style.BoxSizing = greenViewport.Style.BoxSizing = blueViewport.Style.BoxSizing = BoxSizing.Border;
+        // freeViewport.Style.BoxSizing = redViewport.Style.BoxSizing = greenViewport.Style.BoxSizing = blueViewport.Style.BoxSizing = BoxSizing.Border;
 
-        scene.FreeCamera.RenderTargets.Add(freeViewport.RenderTarget);
-        scene.RedCamera.RenderTargets.Add(redViewport.RenderTarget);
-        scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
-        scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
+        freeViewport.Camera3D  = scene.FreeCamera;
+        redViewport.Camera3D   = scene.RedCamera;
+        greenViewport.Camera3D = scene.GreenCamera;
+        blueViewport.Camera3D  = scene.BlueCamera;
 
         var sideViews = new FlexBox() { Style = new() { StackDirection = StackDirection.Vertical } };
 
@@ -156,7 +156,7 @@ public class Editor : Node
     {
         var reload = true;
 
-        var window = ((RenderTree)this.canvas.Tree!).Window;
+        var window = (Window)this.canvas.Viewport!;
 
         var currentIndex = this.index;
 
@@ -228,11 +228,17 @@ public class Editor : Node
     }
 
 #if DEBUG
-    protected override void OnConnected(NodeTree tree) =>
+    protected override void OnConnected()
+    {
+        base.OnConnected();
         HotReloadService.ApplicationUpdated += this.Reload;
+    }
 
-    protected override void OnDisconnected(NodeTree tree) =>
+    protected override void OnDisconnected()
+    {
+        base.OnDisconnected();
         HotReloadService.ApplicationUpdated -= this.Reload;
+    }
 #endif
 
     public override void Update() =>

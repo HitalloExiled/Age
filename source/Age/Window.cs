@@ -1,50 +1,229 @@
+using Age.Rendering.Extensions;
 using Age.Numerics;
+using Age.Platforms.Display;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
+using Age.Resources;
 using Age.Scene;
+using ThirdParty.Vulkan.Enums;
+using ThirdParty.Vulkan.Flags;
 
-using PlatformWindow = Age.Platforms.Display.Window;
+using DisplayWindow           = Age.Platforms.Display.Window;
+using WindowMouseEventHandler = Age.Platforms.Display.WindowMouseEventHandler;
 
 namespace Age;
 
-public sealed partial class Window : PlatformWindow
+public sealed class Window : Viewport
 {
-    private static VulkanRenderer renderer = null!;
+    public event WindowMouseEventHandler? Click
+    {
+        add    => this.window.Click += value;
+        remove => this.window.Click -= value;
+    }
 
-    public new static IEnumerable<Window> Windows => new WindowCastEnumerator(PlatformWindow.Windows);
+    public event Action? Closed
+    {
+        add    => this.window.Closed += value;
+        remove => this.window.Closed -= value;
+    }
 
-    public Surface Surface { get; private set; } = null!;
+    public event WindowContextEventHandler? Context
+    {
+        add    => this.window.Context += value;
+        remove => this.window.Context -= value;
+    }
+
+    public event WindowMouseEventHandler? DoubleClick
+    {
+        add    => this.window.DoubleClick += value;
+        remove => this.window.DoubleClick -= value;
+    }
+
+    public event WindowInputEventHandler? Input
+    {
+        add    => this.window.Input += value;
+        remove => this.window.Input -= value;
+    }
+
+    public event WindowKeyEventHandler? KeyDown
+    {
+        add    => this.window.KeyDown += value;
+        remove => this.window.KeyDown -= value;
+    }
+
+    public event WindowKeyEventHandler? KeyPress
+    {
+        add    => this.window.KeyPress += value;
+        remove => this.window.KeyPress -= value;
+    }
+
+    public event WindowKeyEventHandler? KeyUp
+    {
+        add    => this.window.KeyUp += value;
+        remove => this.window.KeyUp -= value;
+    }
+
+    public event WindowMouseEventHandler? MouseDown
+    {
+        add    => this.window.MouseDown += value;
+        remove => this.window.MouseDown -= value;
+    }
+
+    public event WindowMouseEventHandler? MouseMove
+    {
+        add    => this.window.MouseMove += value;
+        remove => this.window.MouseMove -= value;
+    }
+
+    public event WindowMouseEventHandler? MouseUp
+    {
+        add    => this.window.MouseUp += value;
+        remove => this.window.MouseUp -= value;
+    }
+
+    public event WindowMouseEventHandler? MouseWheel
+    {
+        add    => this.window.MouseWheel += value;
+        remove => this.window.MouseWheel -= value;
+    }
+
+    public override event Action? Resized
+    {
+        add    => this.window.Resized += value;
+        remove => this.window.Resized -= value;
+    }
+
+    private static readonly List<Window> windows = [];
+
+    private readonly RenderTarget[] renderTargets;
+    private readonly DisplayWindow  window;
+
+    public static IReadOnlyList<Window> Windows => windows;
+
+    public Surface Surface { get; }
+
+    public Cursor Cursor
+    {
+        get => this.window.Cursor;
+        set => this.window.Cursor = value;
+    }
+
+    public override Size<uint> Size
+    {
+        get => this.window.Size;
+        set => this.window.Size = value;
+    }
+
+    public string Title
+    {
+        get => this.window.Title;
+        set => this.window.Title = value;
+    }
+
     public RenderTree Tree { get; }
 
-    public Window(string title, Size<uint> size, Point<int> position, PlatformWindow? parent = null) : base(title, size, position, parent) =>
-        this.Tree = new(this);
+    public Size<uint> ClientSize  => this.window.ClientSize;
+    public bool       IsClosed    => this.window.IsClosed;
+    public bool       IsMaximized => this.window.IsMaximized;
+    public bool       IsMinimized => this.window.IsMinimized;
+    public bool       IsVisible   => this.window.IsVisible;
 
-    protected override void PlatformClose()
+    public override RenderTarget RenderTarget => this.renderTargets[this.Surface.CurrentBuffer];
+
+    public override string NodeName => nameof(Age.Window);
+
+    public Window(string title, in Size<uint> size, in Point<int> position, Window? parent = null)
     {
-        base.PlatformClose();
+        this.window        = new DisplayWindow(title, size, position, parent?.window);
+        this.Surface       = VulkanRenderer.Singleton.CreateSurface(this.window.Handle, this.window.ClientSize);
+        this.renderTargets = new RenderTarget[this.Surface.Swapchain.Images.Length];
 
-        renderer.WaitIdle();
-
-        this.Surface.Dispose();
-    }
-
-    protected override void PlatformCreate(string title, Size<uint> size, Point<int> position, PlatformWindow? parent)
-    {
-        base.PlatformCreate(title, size, position, parent);
-
-        this.Surface = renderer.CreateSurface(this.Handle, this.ClientSize);
-
-        this.Resized += () =>
+        for (var i = 0; i < this.Surface.Swapchain.Images.Length; i++)
         {
-            this.Surface.Size = this.ClientSize;
-            this.Surface.Hidden = this.IsMinimized || !this.IsVisible;
+            var image = new Image(
+                this.Surface.Swapchain.Images[i],
+                new()
+                {
+                    Extent        = this.window.ClientSize.ToExtent3D(),
+                    Format        = this.Surface.Swapchain.Format,
+                    ImageType     = VkImageType.N2D,
+                    Samples       = VkSampleCountFlags.N1,
+                    Usage         = this.Surface.Swapchain.ImageUsage,
+                    InitialLayout = VkImageLayout.ColorAttachmentOptimal,
+                }
+            );
+
+            var createInfo = new RenderTarget.CreateInfo
+            {
+                Size             = this.window.ClientSize,
+                ColorAttachments =
+                [
+                    RenderTarget.CreateInfo.ColorAttachmentInfo.From(image),
+                ],
+                DepthStencilAttachment = new()
+                {
+                    Format = (TextureFormat)VulkanRenderer.Singleton.StencilBufferFormat,
+                    Aspect = TextureAspect.Stencil,
+                }
+            };
+
+            this.renderTargets[i] = new RenderTarget(createInfo);
+        }
+
+        this.window.Resized += () =>
+        {
+            this.Surface.Size   = this.window.ClientSize;
+            this.Surface.Hidden = this.window.IsMinimized || !this.window.IsVisible;
         };
+
+        this.window.Closed += this.Dispose;
+
+        windows.Add(this);
+
+        this.Tree = new RenderTree(this);
     }
 
-    public static void Register(VulkanRenderer renderer)
+    protected override void OnDisposed()
     {
-        PlatformRegister("Age.Window");
+        base.OnDisposed();
 
-        Window.renderer = renderer;
+        windows.Remove(this);
+
+        foreach (var renderTarget in this.renderTargets)
+        {
+            renderTarget.Dispose();
+        }
+
+        VulkanRenderer.Singleton.DeferredDispose(this.Surface);
+
+        this.Tree.Dispose();
+        this.window.Close();
     }
+
+    public void Close() =>
+        this.Dispose();
+
+    public void DoEvents() =>
+        this.window.DoEvents();
+
+    public string? GetClipboardData() =>
+        this.window.GetClipboardData();
+
+    public void Hide() =>
+        this.window.Hide();
+
+    public void Minimize() =>
+        this.window.Minimize();
+
+    public void Maximize() =>
+        this.window.Maximize();
+
+    public void Restore() =>
+        this.window.Restore();
+
+    public void SetClipboardData(string value) =>
+        this.window.SetClipboardData(value);
+
+    public void Show() =>
+        this.window.Show();
 }

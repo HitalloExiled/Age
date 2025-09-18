@@ -956,7 +956,7 @@ public abstract partial class Element
 
         if (property.HasAnyFlag(TRANSFORM_AFFECTED_PROPERTIES | LAYOUT_AFFECTED_PROPERTIES))
         {
-            this.RenderTree!.RequestMouseEvent();
+            this.Window.Tree.RequestMouseEvent();
         }
 
         if (hidden)

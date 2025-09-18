@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Age.Numerics;
 using Age.Scene;
 
@@ -20,29 +21,31 @@ public sealed class Canvas : Element
         };
     }
 
-    private void OnWindowResized()
+    private void OnViewportResized()
     {
-        if (this.Tree is RenderTree renderTree)
-        {
-            this.Style.Size = new(renderTree.Window.ClientSize.Width, renderTree.Window.ClientSize.Height);
-        }
+        this.Style.Size = new(this.Viewport!.Size.Width, this.Viewport!.Size.Height);
     }
 
-    protected override void OnConnected(RenderTree renderTree)
+    protected override void OnConnected()
     {
-        base.OnConnected(renderTree);
+        base.OnConnected();
 
-        renderTree.Window.Resized += this.OnWindowResized;
+        Debug.Assert(this.Window != null);
+        Debug.Assert(this.Viewport != null);
 
-        this.OnWindowResized();
+        this.Viewport.Resized += this.OnViewportResized;
 
-        renderTree.AddDeferredUpdate(this.UpdateDirtyLayout);
+        this.OnViewportResized();
+
+        this.Window.Tree.AddDeferredUpdate(this.UpdateDirtyLayout);
     }
 
-    protected override void OnDisconnected(RenderTree renderTree)
+    protected override void OnDisconnected()
     {
-        base.OnDisconnected(renderTree);
+        base.OnDisconnected();
 
-        renderTree.Window.Resized -= this.OnWindowResized;
+        Debug.Assert(this.Viewport != null);
+
+        this.Viewport.Resized -= this.OnViewportResized;
     }
 }

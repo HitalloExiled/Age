@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace Age.Scene;
 
-public sealed class Timer : Node
+public sealed class Timer : Renderable
 {
     public event Action? Timeout;
     private long timestamp;
@@ -20,20 +20,20 @@ public sealed class Timer : Node
     private void UpdateTimestamp() =>
         this.timestamp = Stopwatch.GetTimestamp();
 
-    protected override void OnConnected(NodeTree tree)
+    protected override void OnConnected()
     {
-        base.OnConnected(tree);
+        base.OnConnected();
 
-        tree.Timers.Add(this);
+        this.Window!.Tree.Timers.Add(this);
 
         this.UpdateTimestamp();
     }
 
-    protected override void OnDisconnected(NodeTree tree)
+    protected override void OnDisconnected()
     {
-        base.OnDisconnected(tree);
+        base.OnDisconnected();
 
-        tree.Timers.Remove(this);
+        this.Window!.Tree.Timers.Remove(this);
     }
 
     public void Start()

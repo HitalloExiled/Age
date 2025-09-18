@@ -2,7 +2,6 @@ using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
 using Age.RenderPasses;
-using Age.Scene;
 using Age.Services;
 using Age.Storage;
 using System.Diagnostics;
@@ -29,8 +28,6 @@ public sealed class Engine : Disposable
 
     public Engine(string name, Size<uint> windowSize, Point<int> windowPosition)
     {
-        Window.Register(this.renderer);
-
         this.Window           = new Window(name, windowSize, windowPosition);
         this.renderingService = new RenderingService(this.renderer);
         this.iconStorage      = new IconStorage(this.renderer);
@@ -103,7 +100,7 @@ public sealed class Engine : Disposable
             {
                 Time.DeltaTime = frameTime / 1000 * Time.Scale;
 
-                foreach (var window in Window.Windows)
+                foreach (var window in Window.Windows.ToArray())
                 {
                     window.DoEvents();
 

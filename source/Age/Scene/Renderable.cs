@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Age.Commands;
 
 namespace Age.Scene;
@@ -5,6 +6,12 @@ namespace Age.Scene;
 public abstract class Renderable : Node
 {
     internal List<Command> Commands { get; init; } = [];
+
+    public Viewport? Viewport { get; set; }
+    public Window?   Window   { get; set; }
+
+    [MemberNotNullWhen(true, nameof(Viewport), nameof(Window))]
+    public new bool IsConnected => base.IsConnected;
 
     internal Command? SingleCommand
     {
@@ -29,28 +36,32 @@ public abstract class Renderable : Node
 
     public bool Visible { get; set; } = true;
 
-    public RenderTree? RenderTree => this.Tree as RenderTree;
-
-    protected override void OnConnected(NodeTree tree)
+    protected override void OnConnected()
     {
-        base.OnConnected(tree);
+        base.OnConnected();
 
-        if (tree is RenderTree renderTree)
+        if (this.Parent is Window window)
         {
-            this.OnConnected(renderTree);
+            this.Viewport = window;
+            this.Window   = window;
+        }
+        else if (this.Parent is Viewport viewport)
+        {
+            this.Viewport = viewport;
+            this.Window   = viewport.Window;
+        }
+        else if (this.Parent is Renderable renderable)
+        {
+            this.Viewport = renderable.Viewport;
+            this.Window   = renderable.Window;
         }
     }
 
-    protected virtual void OnConnected(RenderTree renderTree) { }
-
-    protected override void OnDisconnected(NodeTree tree)
+    protected override void OnDisconnected()
     {
-        base.OnDisconnected(tree);
+        base.OnDisconnected();
 
-        if (tree is RenderTree renderTree)
-        {
-            this.OnDisconnected(renderTree);
-        }
+        this.Viewport = null;
+        this.Window   = null;
     }
-    protected virtual void OnDisconnected(RenderTree renderTree) { }
 }

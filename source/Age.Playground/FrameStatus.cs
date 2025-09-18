@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Age.Elements;
 using Age.Numerics;
 using Age.Scene;
@@ -40,18 +41,22 @@ public class FrameStatus : Element
         this.AppendChild(this.statusText);
     }
 
-    protected override void OnConnected(RenderTree renderTree)
+    protected override void OnConnected()
     {
-        base.OnConnected(renderTree);
+        base.OnConnected();
 
-        renderTree.Updated += this.Update;
+        Debug.Assert(this.Window != null);
+
+        this.Window.Tree.Updated += this.Update;
     }
 
-    protected override void OnDisconnected(RenderTree renderTree)
+    protected override void OnDisconnected()
     {
-        base.OnDisconnected(renderTree);
+        base.OnDisconnected();
 
-        renderTree.Updated -= this.Update;
+        Debug.Assert(this.Window != null);
+
+        this.Window.Tree.Updated -= this.Update;
     }
 
     public override void Update()

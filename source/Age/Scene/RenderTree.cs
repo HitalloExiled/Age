@@ -1,6 +1,5 @@
 using Age.Core.Extensions;
 using Age.Elements;
-using Age.Platforms.Display;
 using Age.Rendering.Vulkan;
 using Age.RenderPasses;
 using System.Diagnostics.CodeAnalysis;
@@ -23,11 +22,13 @@ public sealed partial class RenderTree : NodeTree
 
     public Window Window { get; }
 
-    public RenderTree(Window window)
+    public RenderTree(Window window) : base(window)
     {
         this.Window = window;
 
         this.Window.Closed += this.Dispose;
+
+        this.Window.Connect();
     }
 
     [MemberNotNull(nameof(buffer))]

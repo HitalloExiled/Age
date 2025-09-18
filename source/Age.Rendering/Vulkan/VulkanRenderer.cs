@@ -61,7 +61,7 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         this.Context.DeviceInitialized  += this.OnContextDeviceInitialized;
     }
 
-    private unsafe static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+    private static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT _1, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* _2)
     {
         var loglevel = messageSeverity switch
         {
@@ -78,26 +78,6 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
     private void AddPendingDisposes(IDisposable disposable) =>
         this.pendingDisposes.Add(new(disposable, FRAMES_BETWEEN_PENDING_DISPOSES));
-
-    private VkDescriptorSet[] CreateDescriptorSets(VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout)
-    {
-        var descriptorSetLayouts = new VkHandle<VkDescriptorSetLayout>[VulkanContext.MAX_FRAMES_IN_FLIGHT]
-        {
-            descriptorSetLayout.Handle,
-            descriptorSetLayout.Handle,
-        };
-
-        fixed (VkHandle<VkDescriptorSetLayout>* pSetLayouts = descriptorSetLayouts)
-        {
-            var descriptorSetAllocateInfo = new VkDescriptorSetAllocateInfo
-            {
-                DescriptorSetCount = VulkanContext.MAX_FRAMES_IN_FLIGHT,
-                PSetLayouts        = pSetLayouts,
-            };
-
-            return descriptorPool.AllocateDescriptorSets(descriptorSetAllocateInfo);
-        }
-    }
 
     private void DisposePendingResources(bool immediate = false)
     {
@@ -268,6 +248,7 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
     public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
         this.Context.CreateSurface(handle, clientSize);
+
     public VertexBuffer CreateVertexBuffer<T>(scoped ReadOnlySpan<T> data) where T : unmanaged
     {
         var size = (ulong)(data.Length * sizeof(T));
