@@ -19,7 +19,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
     private Size<float>? previousViewport;
 
-    protected ResourceCache<Texture2D, UniformSet> UniformSets { get; } = new();
+    protected ResourceCache<Resources.Texture, UniformSet> UniformSets { get; } = new();
 
     protected UniformSet? LastUniformSet { get; set; }
 

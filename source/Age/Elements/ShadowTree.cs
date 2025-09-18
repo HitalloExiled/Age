@@ -15,17 +15,29 @@ public sealed class ShadowTree(Element host, bool inheritsHostStyle) : Node
 
     protected override void OnChildAppended(Node child)
     {
-        if (child is Layoutable layoutable)
+        if (child is Renderable renderable)
         {
-            this.Host.HandleLayoutableAppended(layoutable);
+            renderable.Viewport = this.Host.Viewport;
+            renderable.Window   = this.Host.Window;
+
+            if (renderable is Layoutable layoutable)
+            {
+                this.Host.HandleLayoutableAppended(layoutable);
+            }
         }
     }
 
     protected override void OnChildRemoved(Node child)
     {
-        if (child is Layoutable layoutable)
+        if (child is Renderable renderable)
         {
-            this.Host.HandleLayoutableRemoved(layoutable);
+            renderable.Viewport = null;
+            renderable.Window   = null;
+
+            if (renderable is Layoutable layoutable)
+            {
+                this.Host.HandleLayoutableRemoved(layoutable);
+            }
         }
     }
 

@@ -5,7 +5,7 @@ namespace Age.Scene;
 
 public abstract class Spatial3D : Renderable
 {
-    private CacheValue<Transform3D> transformCache { get; set; }
+    private CacheValue<Transform3D> transformCache;
 
     private Transform3D CachedParentTransform => (this.Parent as Spatial3D)?.CachedTransform ?? Transform3D.Identity;
     private Transform3D ParentTransform       => (this.Parent as Spatial3D)?.Transform ?? Transform3D.Identity;

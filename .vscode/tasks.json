@@ -28,7 +28,7 @@
             "args": [
                 "run",
                 "-c=Release",
-                "--project=./benchmarks/Age.Benchmarks/Age.Benchmarks.csproj",
+                "--project=./benchmarks/Age.Benchmarks/Age.Benchmarks.csproj"
             ],
             "problemMatcher": "$msCompile"
         },

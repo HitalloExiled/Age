@@ -304,7 +304,7 @@ public static class ScrollTest
 
         var isExpanded = false;
 
-        canvas.RenderTree?.Window.KeyDown += (key) =>
+        canvas.Window?.KeyDown += (key) =>
         {
             if (key == Key.Space)
             {

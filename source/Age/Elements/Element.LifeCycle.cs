@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Age.Commands;
 using Age.Scene;
 using Age.Storage;
@@ -35,40 +36,38 @@ public abstract partial class Element
         }
     }
 
-    protected override void OnConnected(NodeTree tree)
+    protected override void OnConnected()
     {
-        base.OnConnected(tree);
+        base.OnConnected();
 
-        this.ShadowTree?.Tree = tree;
-    }
+        this.ShadowTree?.Connect();
 
-    protected override void OnConnected(RenderTree renderTree)
-    {
-        base.OnConnected(renderTree);
-
-        if (this.events.ContainsKey(EventProperty.Input))
+        if (this.Window != null)
         {
-            renderTree.Window.Input += this.OnInput;
-        }
+            if (this.events.ContainsKey(EventProperty.Input))
+            {
+                this.Window.Input += this.OnInput;
+            }
 
-        if (this.events.ContainsKey(EventProperty.KeyDown))
-        {
-            renderTree.Window.KeyDown += this.OnKeyDown;
-        }
+            if (this.events.ContainsKey(EventProperty.KeyDown))
+            {
+                this.Window.KeyDown += this.OnKeyDown;
+            }
 
-        if (this.events.ContainsKey(EventProperty.KeyUp))
-        {
-            renderTree.Window.KeyUp += this.OnKeyUp;
-        }
+            if (this.events.ContainsKey(EventProperty.KeyUp))
+            {
+                this.Window.KeyUp += this.OnKeyUp;
+            }
 
-        if (this.events.ContainsKey(EventProperty.MouseWheel))
-        {
-            renderTree.Window.MouseWheel += this.OnMouseWheel;
-        }
+            if (this.events.ContainsKey(EventProperty.MouseWheel))
+            {
+                this.Window.MouseWheel += this.OnMouseWheel;
+            }
 
-        if (!renderTree.IsDirty && !this.Hidden)
-        {
-            renderTree.MakeDirty();
+            if (!this.Window.Tree.IsDirty && !this.Hidden)
+            {
+                this.Window.Tree.MakeDirty();
+            }
         }
 
         this.Canvas = this.ComposedParentElement?.Canvas ?? this.Parent as Canvas;
@@ -78,27 +77,25 @@ public abstract partial class Element
         GetStyleSource(this.Parent)?.StyleChanged += this.OnParentStyleChanged;
     }
 
-    protected override void OnDisconnected(NodeTree tree)
+    protected override void OnDisconnected()
     {
-        base.OnDisconnected(tree);
+        base.OnDisconnected();
 
-        this.ShadowTree?.Tree = null;
-    }
-
-    protected override void OnDisconnected(RenderTree renderTree)
-    {
-        base.OnDisconnected(renderTree);
+        this.ShadowTree?.Disconnect();
 
         this.Canvas = null;
 
-        renderTree.Window.Input      -= this.OnInput;
-        renderTree.Window.KeyDown    -= this.OnKeyDown;
-        renderTree.Window.KeyUp      -= this.OnKeyUp;
-        renderTree.Window.MouseWheel -= this.OnMouseWheel;
-
-        if (!renderTree.IsDirty && !this.Hidden)
+        if (this.Window != null)
         {
-            renderTree.MakeDirty();
+            this.Window.Input      -= this.OnInput;
+            this.Window.KeyDown    -= this.OnKeyDown;
+            this.Window.KeyUp      -= this.OnKeyUp;
+            this.Window.MouseWheel -= this.OnMouseWheel;
+
+            if (!this.Window.Tree.IsDirty && !this.Hidden)
+            {
+                this.Window.Tree.MakeDirty();
+            }
         }
     }
 

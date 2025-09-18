@@ -88,7 +88,7 @@ public class TextureStorage : Disposable
         }
     }
 
-    public void Release(Texture2D texture) =>
+    public void Release(Texture texture) =>
         this.Release(texture.GetHashCode());
 
     public bool TryGet(string name, [NotNullWhen(true)] out Texture2D? texture)

@@ -28,9 +28,9 @@ public sealed class Slot : Element
         }
     }
 
-    protected override void OnConnected(NodeTree tree)
+    protected override void OnConnected()
     {
-        base.OnConnected(tree);
+        base.OnConnected();
 
         if (this.Root is ShadowTree shadowTree)
         {

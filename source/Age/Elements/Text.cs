@@ -14,6 +14,7 @@ using SkiaSharp;
 using Timer = Age.Scene.Timer;
 
 using static Age.Shaders.CanvasShader;
+using System.Diagnostics;
 
 namespace Age.Elements;
 
@@ -597,7 +598,9 @@ public sealed class Text : Layoutable
 
         if (IsSelectingText)
         {
-            this.RenderTree!.Window.MouseMove += this.WindowOnMouseMove;
+            Debug.Assert(this.Window != null);
+
+            this.Window.MouseMove += this.WindowOnMouseMove;
         }
     }
 
@@ -634,7 +637,9 @@ public sealed class Text : Layoutable
         }
         else
         {
-            this.RenderTree!.Window.MouseMove -= this.WindowOnMouseMove;
+            Debug.Assert(this.Window != null);
+
+            this.Window.MouseMove -= this.WindowOnMouseMove;
             this.HandleDeactivate();
         }
     }

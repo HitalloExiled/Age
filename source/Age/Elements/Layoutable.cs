@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Age.Core;
 using Age.Numerics;
@@ -170,11 +171,17 @@ public abstract class Layoutable : Spatial2D
         }
     }
 
-    protected override void OnConnected(RenderTree renderTree) =>
+    protected override void OnConnected()
+    {
+        base.OnConnected();
         this.StencilLayer = this.ComposedParentElement?.ContentStencilLayer;
+    }
 
-    protected override void OnDisconnected(RenderTree renderTree) =>
+    protected override void OnDisconnected()
+    {
+        base.OnConnected();
         this.StencilLayer = null;
+    }
 
     protected override void OnDisposed(bool disposing)
     {
@@ -209,10 +216,7 @@ public abstract class Layoutable : Spatial2D
 
             if (stopPropagation)
             {
-                if (current.Tree is RenderTree renderTree)
-                {
-                    renderTree.AddDeferredUpdate(current.UpdateDirtyLayout);
-                }
+                this.Window?.Tree.AddDeferredUpdate(current.UpdateDirtyLayout);
 
                 return;
             }
@@ -221,10 +225,9 @@ public abstract class Layoutable : Spatial2D
 
     private protected void SetCursor(Cursor? cursor)
     {
-        if (this.Tree is RenderTree renderTree)
-        {
-            renderTree.Window.Cursor = cursor ?? default;
-        }
+        Debug.Assert(this.Window != null);
+
+        this.Window.Cursor = cursor ?? default;
     }
 
     private protected void UpdateLayoutIndependentAncestor()

@@ -6,8 +6,8 @@ public abstract class Scene3D : Scene
 
     public IEnumerable<Camera3D> Cameras => this.cameras;
 
-    protected override void OnConnected(RenderTree renderTree) =>
-        renderTree.Scenes3D.Add(this);
+    protected override void OnConnected() =>
+        this.Window!.Tree.Scenes3D.Add(this);
 
     protected override void OnChildAppended(Node child)
     {
@@ -25,6 +25,15 @@ public abstract class Scene3D : Scene
         }
     }
 
-    protected override void OnDisconnected(RenderTree renderTree) =>
-        renderTree.Scenes3D.Remove(this);
+    protected override void OnDisconnected() =>
+        this.Window!.Tree.Scenes3D.Remove(this);
+}
+
+public abstract class Scene2D : Scene
+{
+    public Camera2D Camera
+    {
+        get;
+        set =>field = value ?? Camera2D.Default;
+    } = Camera2D.Default;
 }

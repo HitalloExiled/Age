@@ -3,7 +3,7 @@ using Age.Core.Extensions;
 
 namespace Age.Scene;
 
-public abstract class NodeTree : Disposable
+public abstract class NodeTree(Node root) : Disposable
 {
     public event Action? Updated;
 
@@ -13,10 +13,7 @@ public abstract class NodeTree : Disposable
 
     public bool IsDirty { get; private set; }
 
-    public Root Root { get; }
-
-    protected NodeTree() =>
-        this.Root = new() { Tree = this };
+    public Node Root { get; } = root;
 
     private void InitializeTree()
     {

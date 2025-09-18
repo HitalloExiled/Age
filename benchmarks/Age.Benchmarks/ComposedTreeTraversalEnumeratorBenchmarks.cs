@@ -7,8 +7,16 @@ using BenchmarkDotNet.Attributes;
 
 namespace Age.Benchmarks;
 
+public class Root : Node
+{
+    public override string NodeName => nameof(Benchmarks.Root);
+}
+
 public class TestTree : NodeTree
 {
+    public TestTree() : base(new Root())
+    { }
+
     protected override void OnDisposed(bool disposing) => throw new NotImplementedException();
 }
 
