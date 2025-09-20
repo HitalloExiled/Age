@@ -55,7 +55,6 @@ public sealed partial class RenderTree : NodeTree
             this.Window.MouseUp     -= this.OnMouseUp;
             this.Window.MouseWheel  -= this.OnMouseWheel;
 
-            this.Root.Dispose();
             this.buffer.Dispose();
         }
     }

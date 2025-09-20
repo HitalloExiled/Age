@@ -26,9 +26,9 @@ public sealed class Canvas : Element
         this.Style.Size = new(this.Viewport!.Size.Width, this.Viewport!.Size.Height);
     }
 
-    protected override void OnConnected()
+    private protected override void OnConnectedInternal()
     {
-        base.OnConnected();
+        base.OnConnectedInternal();
 
         Debug.Assert(this.Window != null);
         Debug.Assert(this.Viewport != null);
@@ -40,9 +40,9 @@ public sealed class Canvas : Element
         this.Window.Tree.AddDeferredUpdate(this.UpdateDirtyLayout);
     }
 
-    protected override void OnDisconnected()
+    private protected override void OnDisconnectedInternal()
     {
-        base.OnDisconnected();
+        base.OnDisconnectedInternal();
 
         Debug.Assert(this.Viewport != null);
 

@@ -142,10 +142,10 @@ public abstract partial class Element
         this.InvokeStyleChanged(property);
     }
 
-    protected override void OnRemoved(Node parent)
+    private protected override void OnDetachingInternal()
     {
-        base.OnRemoved(parent);
+        base.OnDetachingInternal();
 
-        GetStyleSource(parent)?.StyleChanged -= this.OnParentStyleChanged;
+        GetStyleSource(this.Parent)?.StyleChanged -= this.OnParentStyleChanged;
     }
 }

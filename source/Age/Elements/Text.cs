@@ -506,9 +506,11 @@ public sealed class Text : Layoutable
         this.RequestUpdate(true);
     }
 
-    protected override void OnAdopted(Node parent)
+    private protected override void OnAttachedInternal()
     {
-        switch (parent)
+        base.OnAttachedInternal();
+
+        switch (this.Parent)
         {
             case Element parentElement:
                 this.HandleAdopted(parentElement);
@@ -520,7 +522,7 @@ public sealed class Text : Layoutable
         }
     }
 
-    protected override void OnDisposed()
+    private protected override void OnDisposedInternal()
     {
         foreach (var command in this.Commands[..^1])
         {
@@ -531,7 +533,7 @@ public sealed class Text : Layoutable
         this.Commands.Clear();
     }
 
-    protected override void OnIndexed()
+    private protected override void OnIndexed()
     {
         this.UpdateDirtyLayout();
 
@@ -553,9 +555,9 @@ public sealed class Text : Layoutable
         }
     }
 
-    protected override void OnRemoved(Node parent)
+    private protected override void OnDetachingInternal()
     {
-        switch (parent)
+        switch (this.Parent)
         {
             case Element parentElement:
                 this.HandleRemoved(parentElement);

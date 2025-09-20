@@ -20,18 +20,18 @@ public sealed class Timer : Renderable
     private void UpdateTimestamp() =>
         this.timestamp = Stopwatch.GetTimestamp();
 
-    protected override void OnConnected()
+    private protected override void OnConnectedInternal()
     {
-        base.OnConnected();
+        base.OnConnectedInternal();
 
         this.Window!.Tree.Timers.Add(this);
 
         this.UpdateTimestamp();
     }
 
-    protected override void OnDisconnected()
+    private protected override void OnDisconnectingInternal()
     {
-        base.OnDisconnected();
+        base.OnDisconnectingInternal();
 
         this.Window!.Tree.Timers.Remove(this);
     }
