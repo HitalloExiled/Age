@@ -12,14 +12,6 @@ public class Root : Node
     public override string NodeName => nameof(Benchmarks.Root);
 }
 
-public class TestTree : NodeTree
-{
-    public TestTree() : base(new Root())
-    { }
-
-    protected override void OnDisposed(bool disposing) => throw new NotImplementedException();
-}
-
 public class TestElement : Element
 {
     public override string NodeName => nameof(TestElement);
@@ -100,17 +92,15 @@ public class HostElement : Element
 public class ComposedTreeTraversalEnumeratorBenchmarks
 {
     private readonly RootElement root;
-    private readonly TestTree    tree;
 
     [Params(1, 3, 5)]
     public int Depth;
 
     public ComposedTreeTraversalEnumeratorBenchmarks()
     {
-        this.tree = new();
         this.root = new();
 
-        this.tree.Root.AppendChild(this.root);
+        this.root.Connect();
     }
 
     public static IEnumerable<Layoutable> TraverseRecursive(Node root)

@@ -14,7 +14,7 @@ public sealed partial class RenderTree
     {
         var index = 0;
 
-        var traversalEnumerator = this.Root.GetTraversalEnumerator();
+        var traversalEnumerator = this.Window.GetTraversalEnumerator();
 
         while (traversalEnumerator.MoveNext())
         {

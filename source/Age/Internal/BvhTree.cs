@@ -220,14 +220,14 @@ public unsafe class BvhTree
     internal BvhDebugNode Draw() =>
         Draw(this.root, Color.Green);
 
-    public void Build(NodeTree tree)
+    public void Build(RenderTree tree)
     {
         var depths = new Dictionary<Layoutable, int>();
 
         var aabb  = new AABB<float>();
         var nodes = new List<Layoutable>();
 
-        foreach (var (node, depth) in Traverse(tree.Root))
+        foreach (var (node, depth) in Traverse(tree.Window))
         {
             if (node is not Element element || element.Style.Border != null)
             {
