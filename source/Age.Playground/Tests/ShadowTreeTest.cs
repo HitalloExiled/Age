@@ -94,7 +94,7 @@ public class Host : Element
             }
             else
             {
-                this.ShadowTree!.RemoveChild(node);
+                this.ShadowTree!.DetachChild(node);
             }
         }
 

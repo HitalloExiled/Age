@@ -28,6 +28,12 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public Node? Parent          { get; private set; }
     public Node? PreviousSibling { get; private set; }
 
+    public Viewport? Viewport { get; protected set; }
+    public Window?   Window   { get; protected set; }
+
+    [MemberNotNullWhen(true, nameof(Viewport), nameof(Window))]
+    public bool IsConnected { get; private set; }
+
     public NodeFlags NodeFlags { get; protected set; }
 
     public Node[] Children
@@ -35,8 +41,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         get => [.. this];
         set => this.ReplaceChildren(value);
     }
-
-    public bool IsConnected { get; private set; }
 
     [MemberNotNullWhen(false, nameof(FirstChild), nameof(LastChild))]
     public bool IsLeaf => this.FirstChild == null;
@@ -59,6 +63,101 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public virtual string? Name { get; set; }
 
     public abstract string NodeName { get; }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ClearParenting(Node parent, Node node, bool dispose)
+    {
+        node.Parent = null;
+        node.PreviousSibling = null;
+        node.NextSibling = null;
+
+        InvokeDetachedCallbacks(parent, node);
+
+        if (parent.IsConnected)
+        {
+            node.PropagateOnDisconnected();
+        }
+
+        if (dispose)
+        {
+            node.Dispose();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void InvokeAttachedCallbacks(Node parent, Node node)
+    {
+        parent.OnChildAttachedInternal(node);
+        parent.OnChildAttached(node);
+
+        node.OnAttachedInternal();
+        node.OnAttached();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void InvokeAttachingCallbacks(Node parent, Node node)
+    {
+        parent.OnChildAttachingInternal(node);
+        parent.OnChildAttaching(node);
+
+        node.OnAttachingInternal();
+        node.OnAttaching();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void InvokeConnectedCallbacks(Node node)
+    {
+        node.OnConnectedInternal();
+        node.OnConnected();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void InvokeConnectingCallbacks(Node node)
+    {
+        node.OnConnectingInternal();
+        node.OnConnecting();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void InvokeDetachedCallbacks(Node parent, Node node)
+    {
+        node.OnDetachedInternal();
+        node.OnDetached();
+
+        parent.OnChildDetachedInternal(node);
+        parent.OnChildDetached(node);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void InvokeDetachingCallbacks(Node parent, Node node)
+    {
+        parent.OnChildDetachingInternal(node);
+        parent.OnChildDetaching(node);
+
+        node.OnDetachingInternal();
+        node.OnDetaching();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void InvokeDisconnectedCallbacks(Node node)
+    {
+        node.OnDisconnectedInternal();
+        node.OnDisconnected();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void InvokeDisconnectingCallbacks(Node node)
+    {
+        node.OnDisconnectingInternal();
+        node.OnDisconnecting();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void InvokeDisposedCallbacks(Node node)
+    {
+        node.OnDisposedInternal();
+        node.OnDisposed();
+    }
 
     internal static Node[] SelectBetween(Node start, Node end)
     {
@@ -99,6 +198,19 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         rightNodes.Reverse();
 
         return [..leftNodes, ..rightNodes];
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void SetParenting(Node parent, Node node)
+    {
+        node.Parent = parent;
+
+        InvokeAttachedCallbacks(parent, node);
+
+        if (parent.IsConnected)
+        {
+            node.PropagateOnConnected();
+        }
     }
 
     public static Node? GetCommonAncestor(Node left, Node right)
@@ -180,6 +292,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         node.Detach();
 
+        InvokeAttachingCallbacks(this, node);
+
         if (append)
         {
             if (this.LastChild != null)
@@ -206,7 +320,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             this.FirstChild = this.LastChild = node;
         }
 
-        this.AddParenting(node);
+        SetParenting(this, node);
     }
 
     private void AppendOrPrepend(scoped ReadOnlySpan<Node> nodes, bool append)
@@ -229,6 +343,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             }
 
             node.Detach();
+
+            InvokeAttachingCallbacks(this, node);
         }
 
         var first = nodes[0];
@@ -277,22 +393,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         foreach (var node in nodes)
         {
-            this.AddParenting(node);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void AddParenting(Node node)
-    {
-        node.Parent = this;
-
-        this.OnChildAppended(node);
-
-        node.OnAdopted(this);
-
-        if (this.IsConnected)
-        {
-            node.PropagateOnConnected();
+            SetParenting(this, node);
         }
     }
 
@@ -319,6 +420,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
 
         node.Detach();
+
+        InvokeAttachingCallbacks(this, node);
 
         if (after)
         {
@@ -353,7 +456,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             reference.PreviousSibling = node;
         }
 
-        this.AddParenting(node);
+        SetParenting(this, node);
     }
 
     private void InsertAfterOrBefore(Node reference, scoped ReadOnlySpan<Node> nodes, bool after)
@@ -386,6 +489,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             }
 
             node.Detach();
+
+            InvokeAttachingCallbacks(this, node);
         }
 
         var first = nodes[0];
@@ -440,32 +545,31 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         foreach (var node in nodes)
         {
-            this.AddParenting(node);
+            SetParenting(this, node);
         }
     }
 
-    private void RemoveChildren(bool dispose = false)
+    private void DetachChildren(bool dispose = false)
     {
         if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
         {
             return;
         }
 
-        while (this.LastChild != null)
+        for (var current = this.LastChild; current != null; current = this.LastChild)
         {
-            var current = this.LastChild;
+            InvokeDetachingCallbacks(this, current);
 
             this.LastChild = current.PreviousSibling;
-
             this.LastChild?.NextSibling = null;
 
-            this.RemoveParenting(current, dispose);
+            ClearParenting(this, current, dispose);
         }
 
         this.FirstChild = null;
     }
 
-    private void RemoveChildrenInRange(Node start, Node end, bool dispose)
+    private void DetachChildrenInRange(Node start, Node end, bool dispose)
     {
         if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
         {
@@ -480,6 +584,16 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         if (start > end)
         {
             (start, end) = (end, start);
+        }
+
+        for (var current = end; ; current = current.PreviousSibling!)
+        {
+            InvokeDetachingCallbacks(this, current);
+
+            if (current == start)
+            {
+                break;
+            }
         }
 
         if (start.PreviousSibling == null)
@@ -500,93 +614,125 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             end.NextSibling.PreviousSibling = start.PreviousSibling;
         }
 
-        var next = start;
-
-        while (next != null)
+        for (Node? current = end, previous; ; current = previous)
         {
-            var current = next;
+            previous = current.PreviousSibling!;
 
-            next = current.NextSibling;
+            ClearParenting(this, current, dispose);
 
-            this.RemoveParenting(current, dispose);
-
-            if (current == end)
+            if (current == start)
             {
                 break;
             }
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void RemoveParenting(Node node, bool dispose)
-    {
-        node.Parent          = null;
-        node.PreviousSibling = null;
-        node.NextSibling     = null;
-
-        node.OnRemoved(this);
-        this.OnChildRemoved(node);
-
-        if (this.IsConnected)
-        {
-            node.PropagateOnDisconnected();
-        }
-
-        if (dispose)
-        {
-            node.Dispose();
-        }
-    }
-
-    protected override void OnDisposed(bool disposing)
+    protected sealed override void OnDisposed(bool disposing)
     {
         if (disposing)
         {
-            this.OnDisposed();
+            InvokeDisposedCallbacks(this);
 
             foreach (var child in this.GetTraversalEnumerator())
             {
-                child.OnDisposed();
+                child.Dispose();
             }
         }
     }
 
-    protected virtual void OnAdopted(Node parent) { }
-    protected virtual void OnChildAppended(Node child) { }
-    protected virtual void OnChildRemoved(Node child) { }
-    protected virtual void OnConnected() { }
-    protected virtual void OnDisconnected() { }
-    protected virtual void OnDisposed() { }
-    protected virtual void OnIndexed() { }
-    protected virtual void OnRemoved(Node parent) { }
-
     private void PropagateOnConnected()
     {
-        this.IsConnected = true;
-        this.OnConnected();
+        apply(this);
 
         var enumerator = this.GetTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
-            enumerator.Current.IsConnected = true;
-            enumerator.Current.OnConnected();
+            apply(enumerator.Current);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void apply(Node node)
+        {
+            InvokeConnectingCallbacks(node);
+
+            if (node.Parent != null)
+            {
+                if (node.Parent is Window window)
+                {
+                    node.Viewport = window;
+                    node.Window   = window;
+                }
+                else if (node.Parent is Viewport viewport)
+                {
+                    node.Viewport = viewport;
+                    node.Window   = viewport.Window;
+                }
+                else
+                {
+                    node.Viewport = node.Parent.Viewport;
+                    node.Window   = node.Parent.Window;
+                }
+            }
+
+            node.IsConnected = true;
+
+            InvokeConnectedCallbacks(node);
         }
     }
 
     private void PropagateOnDisconnected()
     {
-        this.IsConnected = false;
-        this.OnDisconnected();
+        apply(this);
 
         var enumerator = this.GetTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
-            enumerator.Current.IsConnected = false;
-            enumerator.Current.OnDisconnected();
+            apply(enumerator.Current);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void apply(Node node)
+        {
+            InvokeDisconnectingCallbacks(node);
+
+            node.IsConnected = false;
+            node.Window      = null;
+            node.Viewport    = null;
+
+            InvokeDisconnectedCallbacks(node);
         }
     }
+
+    private protected virtual void OnAttachingInternal() { }
+    private protected virtual void OnAttachedInternal() { }
+    private protected virtual void OnChildAttachingInternal(Node node) { }
+    private protected virtual void OnChildAttachedInternal(Node node) { }
+    private protected virtual void OnChildDetachingInternal(Node node) { }
+    private protected virtual void OnChildDetachedInternal(Node node) { }
+    private protected virtual void OnConnectingInternal() { }
+    private protected virtual void OnConnectedInternal() { }
+    private protected virtual void OnDisconnectingInternal() { }
+    private protected virtual void OnDisconnectedInternal() { }
+    private protected virtual void OnDisposedInternal() { }
+    private protected virtual void OnIndexed() { }
+    private protected virtual void OnDetachingInternal() { }
+    private protected virtual void OnDetachedInternal() { }
+
+    protected virtual void OnAttaching() { }
+    protected virtual void OnAttached() { }
+    protected virtual void OnChildAttaching(Node node) { }
+    protected virtual void OnChildAttached(Node node) { }
+    protected virtual void OnChildDetaching(Node node) { }
+    protected virtual void OnChildDetached(Node node) { }
+    protected virtual void OnConnecting() { }
+    protected virtual void OnConnected() { }
+    protected virtual void OnDisconnecting() { }
+    protected virtual void OnDisconnected() { }
+    protected virtual void OnDisposed() { }
+    protected virtual void OnDetaching() { }
+    protected virtual void OnDetached() { }
 
     internal void Connect()
     {
@@ -696,13 +842,54 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     }
 
     public void Detach() =>
-        this.Parent?.RemoveChild(this);
+        this.Parent?.DetachChild(this);
+
+    public void DetachChild(Node node)
+    {
+        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
+        {
+            return;
+        }
+
+        if (node.Parent != this)
+        {
+            throw new InvalidOperationException("Node is not child of this node");
+        }
+
+        InvokeDetachingCallbacks(this, node);
+
+        if (node.PreviousSibling == null)
+        {
+            this.FirstChild = node.NextSibling;
+        }
+        else
+        {
+            node.PreviousSibling.NextSibling = node.NextSibling;
+        }
+
+        if (node.NextSibling == null)
+        {
+            this.LastChild = node.PreviousSibling;
+        }
+        else
+        {
+            node.NextSibling.PreviousSibling = node.PreviousSibling;
+        }
+
+        ClearParenting(this, node, false);
+    }
+
+    public void DetachChildren() =>
+        this.DetachChildren(false);
+
+    public void DetachChildrenInRange(Node start, Node end) =>
+        this.DetachChildrenInRange(start, end, false);
 
     public void DisposeChildren() =>
-        this.RemoveChildren(true);
+        this.DetachChildren(true);
 
     public void DisposeChildrenInRange(Node start, Node end) =>
-        this.RemoveChildrenInRange(start, end, true);
+        this.DetachChildrenInRange(start, end, true);
 
     public int GetDepth()
     {
@@ -780,45 +967,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public void PrependChildren(scoped ReadOnlySpan<Node> nodes) =>
         this.AppendOrPrepend(nodes, false);
 
-    public void RemoveChild(Node node)
-    {
-        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
-        {
-            return;
-        }
-
-        if (node.Parent != this)
-        {
-            throw new InvalidOperationException("Node is not child of this node");
-        }
-
-        if (node.PreviousSibling == null)
-        {
-            this.FirstChild = node.NextSibling;
-        }
-        else
-        {
-            node.PreviousSibling.NextSibling = node.NextSibling;
-        }
-
-        if (node.NextSibling == null)
-        {
-            this.LastChild = node.PreviousSibling;
-        }
-        else
-        {
-            node.NextSibling.PreviousSibling = node.PreviousSibling;
-        }
-
-        this.RemoveParenting(node, false);
-    }
-
-    public void RemoveChildren() =>
-        this.RemoveChildren(false);
-
-    public void RemoveChildrenInRange(Node start, Node end) =>
-        this.RemoveChildrenInRange(start, end, false);
-
     public void Replace(Node target, Node node)
     {
         if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
@@ -841,7 +989,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             throw new InvalidOperationException("Cant replace node by itself");
         }
 
+        InvokeDetachingCallbacks(this, target);
+
         node.Detach();
+
+        InvokeAttachingCallbacks(this, node);
 
         if (target.PreviousSibling == null)
         {
@@ -861,12 +1013,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             target.NextSibling.PreviousSibling = node;
         }
 
-        node.Parent          = this;
         node.PreviousSibling = target.PreviousSibling;
         node.NextSibling     = target.NextSibling;
 
-        this.RemoveParenting(target, false);
-        this.AddParenting(node);
+        ClearParenting(this, target, false);
+        SetParenting(this, node);
     }
 
     public void ReplaceSelf(Node node) =>
@@ -874,7 +1025,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void ReplaceChildren(Node node)
     {
-        this.RemoveChildren();
+        this.DetachChildren();
         this.AppendChild(node);
     }
 
@@ -882,7 +1033,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     {
         if (this.FirstChild != null)
         {
-            this.RemoveChildren();
+            this.DetachChildren();
         }
 
         this.AppendChildren(nodes);
@@ -900,6 +1051,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             return;
         }
 
+        InvokeDetachingCallbacks(this, target);
+
         foreach (var node in nodes)
         {
             if (node == this)
@@ -913,6 +1066,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             }
 
             node.Detach();
+
+            InvokeAttachingCallbacks(this, node);
         }
 
         var first = nodes[0];
@@ -952,13 +1107,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             nodes[i].NextSibling     = nodes[i + 1];
         }
 
-
-
-        this.RemoveParenting(target, false);
+        ClearParenting(this, target, false);
 
         foreach (var node in nodes)
         {
-            this.AddParenting(node);
+            SetParenting(this, node);
         }
     }
 

@@ -183,9 +183,9 @@ public sealed class Window : Viewport
         this.Tree = new RenderTree(this);
     }
 
-    protected override void OnDisposed()
+    private protected override void OnDisposedInternal()
     {
-        base.OnDisposed();
+        base.OnDisposedInternal();
 
         windows.Remove(this);
 

@@ -138,7 +138,7 @@ public sealed class StoryBook : Node
         iconLink.Clicked     += (in _) => this.SetPage(new IconPage());
         textBoxLink.Clicked  += (in _) => this.SetPage(new TextBoxPage());
 
-        emptyLink.Clicked += (in _) => this.outlet.RemoveChildren();
+        emptyLink.Clicked += (in _) => this.outlet.DetachChildren();
 
         this.AppendChild(this.canvas);
     }

@@ -161,7 +161,7 @@ public class NodeTest
 
         AssertParentHasNodes(parent, [child1]);
 
-        parent.RemoveChild(child1);
+        parent.DetachChild(child1);
 
         AssertParentHasNodes(parent, []);
 
@@ -171,7 +171,7 @@ public class NodeTest
 
         AssertParentHasNodes(parent, [child1, child2, child3]);
 
-        parent.RemoveChild(child1);
+        parent.DetachChild(child1);
 
         AssertParentHasNodes(parent, [child2, child3]);
 
@@ -179,7 +179,7 @@ public class NodeTest
 
         AssertParentHasNodes(parent, [child1, child2, child3]);
 
-        parent.RemoveChild(child2);
+        parent.DetachChild(child2);
 
         AssertParentHasNodes(parent, [child1, child3]);
 
@@ -187,15 +187,15 @@ public class NodeTest
 
         AssertParentHasNodes(parent, [child1, child2, child3]);
 
-        parent.RemoveChild(child3);
+        parent.DetachChild(child3);
 
         AssertParentHasNodes(parent, [child1, child2]);
 
-        parent.RemoveChild(child1);
+        parent.DetachChild(child1);
 
         AssertParentHasNodes(parent, [child2]);
 
-        parent.RemoveChild(child2);
+        parent.DetachChild(child2);
 
         AssertParentHasNodes(parent, []);
     }
@@ -214,7 +214,7 @@ public class NodeTest
 
         AssertParentHasNodes(parent, [child1, child2, child3]);
 
-        parent.RemoveChildren();
+        parent.DetachChildren();
 
         AssertParentHasNodes(parent, []);
     }
@@ -237,49 +237,49 @@ public class NodeTest
 
         appendAll();
 
-        parent.RemoveChildrenInRange(child1, child1);
+        parent.DetachChildrenInRange(child1, child1);
 
         AssertParentHasNodes(parent, [child2, child3, child4, child5, child6, child7, child8, child9]);
 
-        parent.RemoveChildrenInRange(child2, child3);
+        parent.DetachChildrenInRange(child2, child3);
 
         AssertParentHasNodes(parent, [child4, child5, child6, child7, child8, child9]);
 
-        parent.RemoveChildrenInRange(child4, child6);
+        parent.DetachChildrenInRange(child4, child6);
 
         AssertParentHasNodes(parent, [child7, child8, child9]);
 
-        parent.RemoveChildrenInRange(child7, child9);
+        parent.DetachChildrenInRange(child7, child9);
 
         AssertParentHasNodes(parent, []);
 
         appendAll();
 
-        parent.RemoveChildrenInRange(child9, child9);
+        parent.DetachChildrenInRange(child9, child9);
 
         AssertParentHasNodes(parent, [child1, child2, child3, child4, child5, child6, child7, child8]);
 
-        parent.RemoveChildrenInRange(child8, child7);
+        parent.DetachChildrenInRange(child8, child7);
 
         AssertParentHasNodes(parent, [child1, child2, child3, child4, child5, child6]);
 
-        parent.RemoveChildrenInRange(child6, child4);
+        parent.DetachChildrenInRange(child6, child4);
 
         AssertParentHasNodes(parent, [child1, child2, child3]);
 
-        parent.RemoveChildrenInRange(child3, child1);
+        parent.DetachChildrenInRange(child3, child1);
 
         AssertParentHasNodes(parent, []);
 
         appendAll();
 
-        parent.RemoveChildrenInRange(child3, child7);
+        parent.DetachChildrenInRange(child3, child7);
 
         AssertParentHasNodes(parent, [child1, child2, child8, child9]);
 
         appendAll();
 
-        parent.RemoveChildrenInRange(child1, child9);
+        parent.DetachChildrenInRange(child1, child9);
 
         AssertParentHasNodes(parent, []);
     }
@@ -464,7 +464,7 @@ public class NodeTest
 
         AssertParentHasNodes(parent, [child1, child2, child3, child4, child5, child6, child7, child8, child9, child10, child11, child12]);
 
-        parent.RemoveChildren();
+        parent.DetachChildren();
 
         AssertParentHasNodes(parent, []);
 

@@ -6,10 +6,10 @@ public abstract class Scene3D : Scene
 
     public IEnumerable<Camera3D> Cameras => this.cameras;
 
-    protected override void OnConnected() =>
+    private protected override void OnConnectedInternal() =>
         this.Window!.Tree.Scenes3D.Add(this);
 
-    protected override void OnChildAppended(Node child)
+    private protected override void OnChildAttachedInternal(Node child)
     {
         if (child is Camera3D camera)
         {
@@ -17,7 +17,7 @@ public abstract class Scene3D : Scene
         }
     }
 
-    protected override void OnChildRemoved(Node child)
+    private protected override void OnChildDetachedInternal(Node child)
     {
         if (child is Camera3D camera)
         {
@@ -25,7 +25,7 @@ public abstract class Scene3D : Scene
         }
     }
 
-    protected override void OnDisconnected() =>
+    private protected override void OnDisconnectedInternal() =>
         this.Window!.Tree.Scenes3D.Remove(this);
 }
 

@@ -47,31 +47,8 @@ public class SubViewport : Viewport
         }
     }
 
-    public Camera2D? Camera2D
-    {
-        get;
-        set
-        {
-            if (field != value)
-            {
-                field = value;
-                field?.Viewport = this;
-            }
-        }
-    }
-
-    public Camera3D? Camera3D
-    {
-        get;
-        set
-        {
-            if (field != value)
-            {
-                field = value;
-                field?.Viewport = this;
-            }
-        }
-    }
+    public Camera2D? Camera2D { get; set; }
+    public Camera3D? Camera3D { get; set; }
 
     public SubViewport(in Size<uint> size)
     {
@@ -109,6 +86,10 @@ public class SubViewport : Viewport
         command.TextureMap = new(this.RenderTarget.ColorAttachments[0].Texture, UVRect.Normalized);
     }
 
-    protected override void OnDisposed() =>
+    private protected override void OnDisposedInternal()
+    {
+        base.OnDisposedInternal();
+
         this.RenderTarget.Dispose();
+    }
 }

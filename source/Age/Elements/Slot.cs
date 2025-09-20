@@ -28,9 +28,9 @@ public sealed class Slot : Element
         }
     }
 
-    protected override void OnConnected()
+    private protected override void OnConnectedInternal()
     {
-        base.OnConnected();
+        base.OnConnectedInternal();
 
         if (this.Root is ShadowTree shadowTree)
         {
@@ -38,11 +38,11 @@ public sealed class Slot : Element
         }
     }
 
-    protected override void OnRemoved(Node parent)
+    private protected override void OnDetachingInternal()
     {
-        base.OnRemoved(parent);
+        base.OnDetachingInternal();
 
-        if (parent.Root is ShadowTree shadowTree)
+        if (this.Parent!.Root is ShadowTree shadowTree)
         {
             shadowTree.RemoveSlot(this, this.Name ?? "");
         }

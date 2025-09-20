@@ -161,41 +161,33 @@ public abstract class Layoutable : Spatial2D
     private protected void MakePristine() =>
         this.IsDirty = false;
 
-    protected override void OnAdopted(Node parent)
+    private protected override void OnAttachedInternal()
     {
-        base.OnAdopted(parent);
+        base.OnAttachedInternal();
 
-        if (parent is Element parentElement && parentElement.ShadowTree != null)
+        if (this.Parent is Element parentElement && parentElement.ShadowTree != null)
         {
             parentElement.ShadowTree.AssignSlot(this.Slot ?? "", this);
         }
     }
 
-    protected override void OnConnected()
+    private protected override void OnConnectedInternal()
     {
-        base.OnConnected();
+        base.OnConnectedInternal();
         this.StencilLayer = this.ComposedParentElement?.ContentStencilLayer;
     }
 
-    protected override void OnDisconnected()
+    private protected override void OnDisconnectedInternal()
     {
-        base.OnConnected();
+        base.OnConnectedInternal();
         this.StencilLayer = null;
     }
 
-    protected override void OnDisposed(bool disposing)
+    private protected override void OnDetachingInternal()
     {
-        if (disposing)
-        {
-            this.OnDisposed();
-        }
-    }
+        base.OnDetachingInternal();
 
-    protected override void OnRemoved(Node parent)
-    {
-        base.OnRemoved(parent);
-
-        if (parent is Element parentElement && parentElement.ShadowTree != null)
+        if (this.Parent is Element parentElement && parentElement.ShadowTree != null)
         {
             parentElement.ShadowTree.UnassignSlot(this.Slot ?? "", this);
         }

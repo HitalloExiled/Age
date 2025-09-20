@@ -40,14 +40,14 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
             {
                 if (text != this.LastChild && text.NextSibling != null && this.LastChild != null)
                 {
-                    this.RemoveChildrenInRange(text.NextSibling, this.LastChild);
+                    this.DetachChildrenInRange(text.NextSibling, this.LastChild);
                 }
 
                 text.Value = value;
             }
             else
             {
-                this.RemoveChildren();
+                this.DetachChildren();
 
                 this.AppendChild(new Text(value));
             }

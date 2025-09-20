@@ -23,7 +23,7 @@ public sealed class Mesh : Spatial3D
         this.SingleCommand = command;
     }
 
-    protected override void OnDisposed()
+    private protected override void OnDisposedInternal()
     {
         if (this.SingleCommand is MeshCommand command)
         {

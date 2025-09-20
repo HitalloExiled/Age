@@ -50,9 +50,9 @@ public class FrameStatus : Element
         this.Window.Tree.Updated += this.Update;
     }
 
-    protected override void OnDisconnected()
+    protected override void OnDisconnecting()
     {
-        base.OnDisconnected();
+        base.OnDisconnecting();
 
         Debug.Assert(this.Window != null);
 

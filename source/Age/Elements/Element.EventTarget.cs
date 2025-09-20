@@ -120,11 +120,9 @@ public abstract partial class Element
         {
             lock (this.elementLock)
             {
-                Debug.Assert(this.Window != null);
-
                 this.RemoveEvent(EventProperty.KeyDown, value, out var removed);
 
-                if (removed)
+                if (this.IsConnected && removed)
                 {
                     this.Window.KeyDown -= this.OnKeyDown;
                 }

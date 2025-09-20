@@ -20,25 +20,25 @@ public abstract partial class Element
         }
     }
 
-    protected override void OnChildAppended(Node child)
+    private protected override void OnChildAttachedInternal(Node node)
     {
-        if (this.ShadowTree == null && child is Layoutable layoutable)
+        if (this.ShadowTree == null && node is Layoutable layoutable)
         {
             this.HandleLayoutableAppended(layoutable);
         }
     }
 
-    protected override void OnChildRemoved(Node child)
+    private protected override void OnChildDetachedInternal(Node node)
     {
-        if (this.ShadowTree == null && child is Layoutable layoutable)
+        if (this.ShadowTree == null && node is Layoutable layoutable)
         {
             this.HandleLayoutableRemoved(layoutable);
         }
     }
 
-    protected override void OnConnected()
+    private protected override void OnConnectedInternal()
     {
-        base.OnConnected();
+        base.OnConnectedInternal();
 
         this.ShadowTree?.Connect();
 
@@ -77,9 +77,9 @@ public abstract partial class Element
         GetStyleSource(this.Parent)?.StyleChanged += this.OnParentStyleChanged;
     }
 
-    protected override void OnDisconnected()
+    private protected override void OnDisconnectedInternal()
     {
-        base.OnDisconnected();
+        base.OnDisconnectedInternal();
 
         this.ShadowTree?.Disconnect();
 
@@ -99,7 +99,7 @@ public abstract partial class Element
         }
     }
 
-    protected override void OnDisposed()
+    private protected override void OnDisposedInternal()
     {
         if (this.TryGetLayoutCommandImage(out var layoutCommandImage))
         {
@@ -118,7 +118,7 @@ public abstract partial class Element
         stylePool.Return(this.ComputedStyle);
     }
 
-    protected override void OnIndexed()
+    private protected override void OnIndexed()
     {
         var zIndex = this.ComputedStyle.ZIndex ?? this.ComposedParentElement?.ComputedStyle.ZIndex ?? 0;
 
