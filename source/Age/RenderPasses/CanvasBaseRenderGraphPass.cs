@@ -8,7 +8,6 @@ using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Flags;
 using System.Runtime.CompilerServices;
-using Age.Resources;
 using Age.Core.Extensions;
 
 namespace Age.RenderPasses;
@@ -170,8 +169,8 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
     public unsafe override void Execute()
     {
-        var clientSize = this.Window.ClientSize;
-        var viewport   = this.Window.ClientSize.Cast<float>();
+        var clientSize = this.Window.Size;
+        var viewport   = this.Window.Size.Cast<float>();
         ref var extent = ref Unsafe.As<Size<uint>, VkExtent2D>(ref clientSize);
 
         this.BeforeExecute();

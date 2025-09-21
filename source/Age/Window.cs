@@ -10,6 +10,7 @@ using ThirdParty.Vulkan.Flags;
 
 using DisplayWindow           = Age.Platforms.Display.Window;
 using WindowMouseEventHandler = Age.Platforms.Display.WindowMouseEventHandler;
+using Age.Core;
 
 namespace Age;
 
@@ -110,8 +111,8 @@ public sealed class Window : Viewport
 
     public override Size<uint> Size
     {
-        get => this.window.Size;
-        set => this.window.Size = value;
+        get => this.window.ClientSize;
+        set => Logger.Warn("Window size cant be modified");
     }
 
     public string Title
@@ -122,11 +123,10 @@ public sealed class Window : Viewport
 
     public RenderTree Tree { get; }
 
-    public Size<uint> ClientSize  => this.window.ClientSize;
-    public bool       IsClosed    => this.window.IsClosed;
-    public bool       IsMaximized => this.window.IsMaximized;
-    public bool       IsMinimized => this.window.IsMinimized;
-    public bool       IsVisible   => this.window.IsVisible;
+    public bool IsClosed    => this.window.IsClosed;
+    public bool IsMaximized => this.window.IsMaximized;
+    public bool IsMinimized => this.window.IsMinimized;
+    public bool IsVisible   => this.window.IsVisible;
 
     public override RenderTarget RenderTarget => this.renderTargets[this.Surface.CurrentBuffer];
 
@@ -170,17 +170,23 @@ public sealed class Window : Viewport
             this.renderTargets[i] = new RenderTarget(createInfo);
         }
 
-        this.window.Resized += () =>
-        {
-            this.Surface.Size   = this.window.ClientSize;
-            this.Surface.Hidden = this.window.IsMinimized || !this.window.IsVisible;
-        };
-
-        this.window.Closed += this.Dispose;
+        this.window.Resized += this.OnWindowResized;
+        this.window.Closed  += this.Dispose;
 
         windows.Add(this);
 
         this.Tree = new RenderTree(this);
+    }
+
+    private void OnWindowResized()
+    {
+        this.Surface.Size   = this.window.ClientSize;
+        this.Surface.Hidden = this.window.IsMinimized || !this.window.IsVisible;
+
+        foreach (var renderTarget in this.renderTargets)
+        {
+            renderTarget.Size = this.window.ClientSize;
+        }
     }
 
     private protected override void OnDisposedInternal()
