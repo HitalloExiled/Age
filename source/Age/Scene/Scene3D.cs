@@ -11,22 +11,30 @@ public abstract class Scene3D : Scene
 
     private protected override void OnChildAttachedInternal(Node child)
     {
+        base.OnChildAttachedInternal(child);
+
         if (child is Camera3D camera)
         {
             this.cameras.Add(camera);
         }
     }
 
-    private protected override void OnChildDetachedInternal(Node child)
+    private protected override void OnChildDetachingInternal(Node child)
     {
+        base.OnChildDetachingInternal(child);
+
         if (child is Camera3D camera)
         {
             this.cameras.Remove(camera);
         }
     }
 
-    private protected override void OnDisconnectedInternal() =>
+    private protected override void OnDisconnectingInternal()
+    {
+        base.OnDisconnecting();
+
         this.Window!.Tree.Scenes3D.Remove(this);
+    }
 }
 
 public abstract class Scene2D : Scene

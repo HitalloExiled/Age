@@ -15,14 +15,18 @@ public sealed class ShadowTree(Element host, bool inheritsHostStyle) : Node
 
     private protected override void OnChildAttachedInternal(Node child)
     {
+        base.OnChildAttachedInternal(child);
+
         if (child is Layoutable layoutable)
         {
             this.Host.HandleLayoutableAppended(layoutable);
         }
     }
 
-    private protected override void OnChildDetachedInternal(Node child)
+    private protected override void OnChildDetachingInternal(Node child)
     {
+        base.OnChildDetachingInternal(child);
+
         if (child is Layoutable layoutable)
         {
             this.Host.HandleLayoutableRemoved(layoutable);

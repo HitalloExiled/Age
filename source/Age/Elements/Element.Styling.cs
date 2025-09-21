@@ -141,11 +141,4 @@ public abstract partial class Element
         this.ComputedStyle?.Copy(this.UserStyle!, property);
         this.InvokeStyleChanged(property);
     }
-
-    private protected override void OnDetachingInternal()
-    {
-        base.OnDetachingInternal();
-
-        GetStyleSource(this.Parent)?.StyleChanged -= this.OnParentStyleChanged;
-    }
 }

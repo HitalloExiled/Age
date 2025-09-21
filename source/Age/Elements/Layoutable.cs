@@ -174,12 +174,14 @@ public abstract class Layoutable : Spatial2D
     private protected override void OnConnectedInternal()
     {
         base.OnConnectedInternal();
+
         this.StencilLayer = this.ComposedParentElement?.ContentStencilLayer;
     }
 
-    private protected override void OnDisconnectedInternal()
+    private protected override void OnDisconnectingInternal()
     {
-        base.OnConnectedInternal();
+        base.OnDisconnectingInternal();
+
         this.StencilLayer = null;
     }
 

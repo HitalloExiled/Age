@@ -40,9 +40,9 @@ public sealed class Canvas : Element
         this.Window.Tree.AddDeferredUpdate(this.UpdateDirtyLayout);
     }
 
-    private protected override void OnDisconnectedInternal()
+    private protected override void OnDisconnectingInternal()
     {
-        base.OnDisconnectedInternal();
+        base.OnDisconnectingInternal();
 
         Debug.Assert(this.Viewport != null);
 

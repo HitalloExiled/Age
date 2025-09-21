@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Age.Commands;
 using Age.Scene;
 using Age.Storage;
@@ -20,16 +19,27 @@ public abstract partial class Element
         }
     }
 
+    private protected override void OnAttachedInternal()
+    {
+        base.OnAttachedInternal();
+
+        GetStyleSource(this.Parent)?.StyleChanged += this.OnParentStyleChanged;
+    }
+
     private protected override void OnChildAttachedInternal(Node node)
     {
+        base.OnChildAttachedInternal(node);
+
         if (this.ShadowTree == null && node is Layoutable layoutable)
         {
             this.HandleLayoutableAppended(layoutable);
         }
     }
 
-    private protected override void OnChildDetachedInternal(Node node)
+    private protected override void OnChildDetachingInternal(Node node)
     {
+        base.OnChildDetachingInternal(node);
+
         if (this.ShadowTree == null && node is Layoutable layoutable)
         {
             this.HandleLayoutableRemoved(layoutable);
@@ -73,13 +83,18 @@ public abstract partial class Element
         this.Canvas = this.ComposedParentElement?.Canvas ?? this.Parent as Canvas;
 
         this.ComputeStyle(default);
-
-        GetStyleSource(this.Parent)?.StyleChanged += this.OnParentStyleChanged;
     }
 
-    private protected override void OnDisconnectedInternal()
+    private protected override void OnDetachingInternal()
     {
-        base.OnDisconnectedInternal();
+        base.OnDetachingInternal();
+
+        GetStyleSource(this.Parent)?.StyleChanged -= this.OnParentStyleChanged;
+    }
+
+    private protected override void OnDisconnectingInternal()
+    {
+        base.OnDisconnectingInternal();
 
         this.ShadowTree?.Disconnect();
 

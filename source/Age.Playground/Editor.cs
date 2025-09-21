@@ -234,9 +234,9 @@ public class Editor : Renderable
         HotReloadService.ApplicationUpdated += this.Reload;
     }
 
-    protected override void OnDisconnected()
+    protected override void OnDisconnecting()
     {
-        base.OnDisconnected();
+        base.OnDisconnecting();
         HotReloadService.ApplicationUpdated -= this.Reload;
     }
 #endif
