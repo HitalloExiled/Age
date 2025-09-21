@@ -11,7 +11,9 @@ public class SubViewport : Viewport
 
     public override string NodeName => nameof(SubViewport);
 
-    public override RenderTarget RenderTarget { get; }
+    private RenderTarget renderTarget;
+
+    public override RenderTarget RenderTarget => renderTarget;
 
     public override Size<uint> Size
     {
@@ -20,7 +22,9 @@ public class SubViewport : Viewport
         {
             if (this.RenderTarget.Size != value)
             {
-                this.RenderTarget.Size = value;
+                this.renderTarget.Dispose();
+                this.renderTarget = this.CreateRenderTarget(value);
+
                 this.UpdateCommand();
 
                 this.Resized?.Invoke();
@@ -52,18 +56,24 @@ public class SubViewport : Viewport
 
     public SubViewport(in Size<uint> size)
     {
+        this.renderTarget = this.CreateRenderTarget(size);
+        this.UpdateCommand();
+    }
+
+    private RenderTarget CreateRenderTarget(Size<uint> size)
+    {
         var createInfo = new RenderTarget.CreateInfo
         {
-            Size             = size,
+            Size = size,
             ColorAttachments =
-            [
-                new()
+                    [
+                        new()
                 {
                     Format      = TextureFormat.B8G8R8A8Unorm,
                     SampleCount = SampleCount.N1,
                     Usage       = TextureUsage.ColorAttachment | TextureUsage.Sampled,
                 }
-            ],
+                    ],
             DepthStencilAttachment = new()
             {
                 Format = (TextureFormat)VulkanRenderer.Singleton.DepthBufferFormat,
@@ -71,8 +81,7 @@ public class SubViewport : Viewport
             }
         };
 
-        this.RenderTarget  = new(createInfo);
-        this.UpdateCommand();
+        return new(createInfo);
     }
 
     private void UpdateCommand()

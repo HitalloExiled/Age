@@ -29,7 +29,7 @@ public sealed class Engine : Disposable
     public Engine(string name, Size<uint> windowSize, Point<int> windowPosition)
     {
         this.Window           = new Window(name, windowSize, windowPosition);
-        this.renderingService = new RenderingService(this.renderer);
+        this.renderingService = new RenderingService(this.Window, this.renderer);
         this.iconStorage      = new IconStorage(this.renderer);
         this.shaderStorage    = new ShaderStorage(this.renderer);
         this.textStorage      = new TextStorage(this.renderer);
@@ -41,7 +41,7 @@ public sealed class Engine : Disposable
             Passes =
             [
                 new CanvasIndexRenderGraphPass(this.renderer, this.Window),
-                new SceneRenderGraphPass(this.renderer, this.Window),
+                // new SceneRenderGraphPass(this.renderer, this.Window),
                 new CanvasRenderGraphPass(this.renderer, this.Window),
             ]
         };

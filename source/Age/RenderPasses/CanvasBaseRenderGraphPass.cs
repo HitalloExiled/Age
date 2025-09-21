@@ -16,8 +16,6 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 {
     private readonly Stack<StencilLayer> stencilStack = [];
 
-    private Size<float>? previousViewport;
-
     protected ResourceCache<Resources.Texture, UniformSet> UniformSets { get; } = new();
 
     protected UniformSet? LastUniformSet { get; set; }
@@ -184,11 +182,12 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         clearValues[1].DepthStencil.Depth = 1;
 
         this.CommandBuffer.SetViewport(extent);
-        this.CommandBuffer.BeginRenderPass(extent, this.RenderPass, this.Framebuffer, clearValues);
-        this.CommandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, 0u);
+        this.CommandBuffer.BeginRenderPass(this.Framebuffer.Extent, this.RenderPass, this.Framebuffer, clearValues);
 
-        if (this.previousViewport == viewport || !this.previousViewport.HasValue)
+        if (!this.Window.Surface.IsDirty)
         {
+            this.CommandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, 0u);
+
             foreach (var pipeline in this.Pipelines)
             {
                 if (pipeline.Enabled)
@@ -265,7 +264,5 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         this.CommandBuffer.EndRenderPass();
 
         this.AfterExecute();
-
-        this.previousViewport = viewport;
     }
 }

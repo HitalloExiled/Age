@@ -14,7 +14,7 @@ internal class RenderingService : Disposable
 
     public static RenderingService Singleton => singleton ?? throw new NullReferenceException();
 
-    public RenderingService(VulkanRenderer renderer)
+    public RenderingService(Window window, VulkanRenderer renderer)
     {
         if (singleton != null)
         {
@@ -24,7 +24,7 @@ internal class RenderingService : Disposable
         singleton = this;
 
         this.renderer = renderer;
-        this.renderer.SwapchainRecreated += this.OnSwapchainRecreated;
+        window.Surface.SwapchainRecreated += this.OnSwapchainRecreated;
     }
 
     private void OnSwapchainRecreated()
@@ -59,7 +59,7 @@ internal class RenderingService : Disposable
 
             foreach (var window in windows)
             {
-                if (window.IsVisible && !window.IsMinimized && !window.IsClosed)
+                if (window.Surface.Visible)
                 {
                     this.renderGraphs[window].Execute();
                 }

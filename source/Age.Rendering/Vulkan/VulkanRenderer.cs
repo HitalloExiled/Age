@@ -1,12 +1,12 @@
-using System.Numerics;
-using System.Runtime.InteropServices;
-using Age.Core;
 using Age.Core.Extensions;
+using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Resources;
-using ThirdParty.Vulkan;
+using System.Numerics;
+using System.Runtime.InteropServices;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
+using ThirdParty.Vulkan;
 
 using Buffer = Age.Rendering.Resources.Buffer;
 
@@ -14,13 +14,10 @@ namespace Age.Rendering.Vulkan;
 
 public sealed unsafe partial class VulkanRenderer : Disposable
 {
-    public event Action? SwapchainRecreated;
     private const ushort MAX_DESCRIPTORS_PER_POOL        = 64;
     private const ushort FRAMES_BETWEEN_PENDING_DISPOSES = 2;
 
-    private static VulkanRenderer? singleton;
-
-    public static VulkanRenderer Singleton => singleton ?? throw new NullReferenceException();
+    public static VulkanRenderer Singleton { get; private set; } = null!;
 
     private readonly Lock                                       @lock           = new();
     private readonly Dictionary<VkCommandBuffer, CommandBuffer> commandBuffers  = [];
@@ -55,10 +52,9 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
     public VulkanRenderer()
     {
-        singleton = this;
+        Singleton = this;
 
-        this.Context.SwapchainRecreated += () => this.SwapchainRecreated?.Invoke();
-        this.Context.DeviceInitialized  += this.OnContextDeviceInitialized;
+        this.Context.DeviceInitialized += this.OnContextDeviceInitialized;
     }
 
     private static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT _1, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* _2)

@@ -99,17 +99,7 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         for (var i = 0; i < this.Window.Surface.Swapchain.Images.Length; i++)
         {
             this.stencilImages[i] = new Image(stencilImageCreateInfo);
-            this.colorImages[i]   = new Image(
-                this.Window.Surface.Swapchain.Images[i],
-                new()
-                {
-                    Extent        = extent,
-                    Format        = this.Window.Surface.Swapchain.Format,
-                    ImageType     = VkImageType.N2D,
-                    Usage         = this.Window.Surface.Swapchain.ImageUsage,
-                    InitialLayout = VkImageLayout.ColorAttachmentOptimal,
-                }
-            );
+            this.colorImages[i]   = this.Window.Surface.Swapchain.Images[i];
 
             var createInfo = new FramebufferCreateInfo
             {

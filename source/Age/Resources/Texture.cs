@@ -3,7 +3,6 @@ using Age.Rendering.Extensions;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.Storage;
-using SkiaSharp;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
@@ -12,7 +11,7 @@ namespace Age.Resources;
 
 public partial class Texture : Resource
 {
-    private readonly bool imageOwner;
+    internal bool IsImageOwner { get; }
 
     internal Image       Image     { get; }
     internal VkImageView ImageView { get; }
@@ -29,10 +28,10 @@ public partial class Texture : Resource
 
     internal Texture(Image image, bool owner, TextureAspect aspect)
     {
-        this.Image      = image;
-        this.ImageView  = CreateImageView(image, aspect);
-        this.imageOwner = owner;
-        this.Aspect     = aspect;
+        this.Image        = image;
+        this.ImageView    = CreateImageView(image, aspect);
+        this.IsImageOwner = owner;
+        this.Aspect       = aspect;
     }
 
     public Texture(in CreateInfo createInfo)
@@ -50,7 +49,7 @@ public partial class Texture : Resource
             Usage         = (VkImageUsageFlags)createInfo.Usage,
         };
 
-        this.imageOwner = true;
+        this.IsImageOwner = true;
         this.Image      = new(imageCreateInfo);
         this.ImageView  = CreateImageView(this.Image, createInfo.Aspect);
         this.Aspect     = createInfo.Aspect;
@@ -82,7 +81,7 @@ public partial class Texture : Resource
 
     protected override void OnDisposed()
     {
-        if (this.imageOwner)
+        if (this.IsImageOwner)
         {
             VulkanRenderer.Singleton.DeferredDispose(this.Image);
         }

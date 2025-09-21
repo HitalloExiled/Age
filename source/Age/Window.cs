@@ -11,6 +11,7 @@ using ThirdParty.Vulkan.Flags;
 using DisplayWindow           = Age.Platforms.Display.Window;
 using WindowMouseEventHandler = Age.Platforms.Display.WindowMouseEventHandler;
 using Age.Core;
+using ThirdParty.Vulkan;
 
 namespace Age;
 
@@ -138,37 +139,8 @@ public sealed class Window : Viewport
         this.Surface       = VulkanRenderer.Singleton.CreateSurface(this.window.Handle, this.window.ClientSize);
         this.renderTargets = new RenderTarget[this.Surface.Swapchain.Images.Length];
 
-        for (var i = 0; i < this.Surface.Swapchain.Images.Length; i++)
-        {
-            var image = new Image(
-                this.Surface.Swapchain.Images[i],
-                new()
-                {
-                    Extent        = this.window.ClientSize.ToExtent3D(),
-                    Format        = this.Surface.Swapchain.Format,
-                    ImageType     = VkImageType.N2D,
-                    Samples       = VkSampleCountFlags.N1,
-                    Usage         = this.Surface.Swapchain.ImageUsage,
-                    InitialLayout = VkImageLayout.ColorAttachmentOptimal,
-                }
-            );
-
-            var createInfo = new RenderTarget.CreateInfo
-            {
-                Size             = this.window.ClientSize,
-                ColorAttachments =
-                [
-                    RenderTarget.CreateInfo.ColorAttachmentInfo.From(image),
-                ],
-                DepthStencilAttachment = new()
-                {
-                    Format = (TextureFormat)VulkanRenderer.Singleton.StencilBufferFormat,
-                    Aspect = TextureAspect.Stencil,
-                }
-            };
-
-            this.renderTargets[i] = new RenderTarget(createInfo);
-        }
+        this.Surface.SwapchainRecreated += this.CreateRenderTargets;
+        this.CreateRenderTargets();
 
         this.window.Resized += this.OnWindowResized;
         this.window.Closed  += this.Dispose;
@@ -178,15 +150,38 @@ public sealed class Window : Viewport
         this.Tree = new RenderTree(this);
     }
 
+    private void CreateRenderTargets()
+    {
+        for (var i = 0; i < this.Surface.Swapchain.Images.Length; i++)
+        {
+            this.renderTargets[i]?.Dispose();
+            this.renderTargets[i] = this.CreateRenderTarget(this.Surface.Swapchain.Images[i]);
+        }
+    }
+
+    private RenderTarget CreateRenderTarget(Image image)
+    {
+        var createInfo = new RenderTarget.CreateInfo
+        {
+            Size             = this.window.ClientSize,
+            ColorAttachments =
+            [
+                RenderTarget.CreateInfo.ColorAttachmentInfo.From(image),
+            ],
+            DepthStencilAttachment = new()
+            {
+                Format = (TextureFormat)VulkanRenderer.Singleton.StencilBufferFormat,
+                Aspect = TextureAspect.Stencil,
+            }
+        };
+
+        return new RenderTarget(createInfo);
+    }
+
     private void OnWindowResized()
     {
-        this.Surface.Size   = this.window.ClientSize;
-        this.Surface.Hidden = this.window.IsMinimized || !this.window.IsVisible;
-
-        foreach (var renderTarget in this.renderTargets)
-        {
-            renderTarget.Size = this.window.ClientSize;
-        }
+        this.Surface.Size    = this.window.ClientSize;
+        this.Surface.Visible = this.window.IsVisible && !this.window.IsMinimized;
     }
 
     private protected override void OnDisposedInternal()

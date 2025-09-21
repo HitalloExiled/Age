@@ -30,19 +30,7 @@ public sealed partial class RenderTarget : Resource
 
     public IReadOnlyList<ColorAttachment> ColorAttachments => this.colorAttachments;
 
-    public Size<uint> Size
-    {
-        get => this.size;
-        set
-        {
-            if (this.size != value)
-            {
-                this.size = value;
-
-                this.RecreateResources();
-            }
-        }
-    }
+    public Size<uint> Size { get; }
 
     public RenderTarget(in CreateInfo createInfo)
     {
@@ -311,8 +299,10 @@ public sealed partial class RenderTarget : Resource
         return renderPass!.Share();
     }
 
-    private void DisposeResources()
+    protected override void OnDisposed()
     {
+        this.renderPass.Dispose();
+
         VulkanRenderer.Singleton.DeferredDispose(this.Framebuffer);
 
         foreach (var attachment in this.colorAttachments)
@@ -324,64 +314,5 @@ public sealed partial class RenderTarget : Resource
 
         this.DepthStencilAttachment?.Dispose();
         this.DepthStencilAttachment = null;
-    }
-
-    private void RecreateResources()
-    {
-        this.DisposeResources();
-
-        Span<MultiPassCreateInfo.AttachmentInfo> attachments = new MultiPassCreateInfo.AttachmentInfo[this.ColorAttachments.Count + (this.DepthStencilAttachment != null ? 1 : 0)];
-
-        var colorAttachments = new int[this.ColorAttachments.Count];
-
-        for (var i = 0; i < this.ColorAttachments.Count; i++)
-        {
-            var color = this.ColorAttachments[i].Texture;
-
-            attachments[i] = new CreateInfo.ColorAttachmentInfo()
-            {
-                Format        = color.Format,
-                SampleCount   = color.Samples,
-                Usage         = color.Usage,
-                EnableResolve = this.colorAttachments[i].HasResolve,
-            };
-            colorAttachments[i] = i;
-        }
-
-        int? depthStencilAttachment = null;
-
-        if (this.DepthStencilAttachment is { Texture: var depthStencil })
-        {
-            attachments[^1] = new CreateInfo.DepthStencilAttachmentInfo()
-            {
-                Format = depthStencil.Format,
-                Usage  = depthStencil.Usage,
-                Aspect = depthStencil.Aspect,
-            };
-
-            depthStencilAttachment = attachments.Length - 1;
-        }
-
-        var multiPassCreateInfo = new MultiPassCreateInfo
-        {
-            Size        = this.Size,
-            Attachments = attachments,
-            Passes      =
-            [
-                new()
-                {
-                    ColorAttachments       = colorAttachments,
-                    DepthStencilAttachment = depthStencilAttachment,
-                }
-            ]
-        };
-
-        this.CreateResources(this.RenderPass, multiPassCreateInfo);
-    }
-
-    protected override void OnDisposed()
-    {
-        this.renderPass.Dispose();
-        this.DisposeResources();
     }
 }
