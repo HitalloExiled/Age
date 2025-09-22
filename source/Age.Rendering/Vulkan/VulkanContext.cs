@@ -6,7 +6,6 @@ using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Resources;
-using Microsoft.VisualBasic;
 using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Extensions;
@@ -18,7 +17,6 @@ namespace Age.Rendering.Vulkan;
 internal sealed unsafe partial class VulkanContext : Disposable
 {
     public event Action? DeviceInitialized;
-    public event Action? SwapchainRecreated;
 
     public const ushort MAX_FRAMES_IN_FLIGHT = 2;
 
