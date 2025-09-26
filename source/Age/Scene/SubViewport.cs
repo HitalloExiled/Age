@@ -91,7 +91,7 @@ public class SubViewport : Viewport
             this.SingleCommand = command = CommandPool.RectCommand.Get();
         }
 
-        command.Size       = this.RenderTarget.Size.Cast<float>();
+        command.Size       = this.RenderTarget.Size;
         command.TextureMap = new(this.RenderTarget.ColorAttachments[0].Texture, UVRect.Normalized);
     }
 

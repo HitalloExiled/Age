@@ -121,7 +121,7 @@ public abstract partial class Element
         command.Flags     = Flags.ColorAsBackground;
         command.Metadata  = scrollBarWidth;
         command.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarX);
-        command.Size      = new(float.Max(scrollBarWidth * scale, SCROLL_BAR_DEFAULT_SIZE * 2), SCROLL_BAR_DEFAULT_SIZE);
+        command.Size      = new(uint.Max((uint)(scrollBarWidth * scale), SCROLL_BAR_DEFAULT_SIZE * 2), SCROLL_BAR_DEFAULT_SIZE);
         command.LocalTransform = Transform2D.CreateTranslated(this.border.Left + SCROLL_BAR_MARGIN, this.GetScrollBarXPositionY());
 
         this.UpdateScrollBarXControl(command);
@@ -141,7 +141,7 @@ public abstract partial class Element
         command.Flags     = Flags.ColorAsBackground;
         command.Metadata  = scrollBarHeight;
         command.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarY);
-        command.Size      = new(SCROLL_BAR_DEFAULT_SIZE, float.Max(scrollBarHeight * scale, SCROLL_BAR_DEFAULT_SIZE * 2));
+        command.Size      = new(SCROLL_BAR_DEFAULT_SIZE, uint.Max((uint)(scrollBarHeight * scale), SCROLL_BAR_DEFAULT_SIZE * 2));
         command.LocalTransform = Transform2D.CreateTranslated(this.GetScrollBarYPositionX(), -(this.border.Top + SCROLL_BAR_MARGIN));
 
         this.UpdateScrollBarYControl(command);

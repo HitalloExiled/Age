@@ -999,7 +999,7 @@ public abstract partial class Element
         return resolved;
     }
 
-    private void ResolveImageSize(Image image, in Size<float> textureSize, out Size<float> size, out Transform2D transform, out UVRect uv)
+    private void ResolveImageSize(Image image, in Size<uint> textureSize, out Size<uint> size, out Transform2D transform, out UVRect uv)
     {
         var fontSize      = this.FontSize;
         var imageSize     = image.Size;
@@ -1010,10 +1010,10 @@ public abstract partial class Element
         {
             case ImageSizeKind.Fit:
                 {
-                    var boundings = this.SizeWithPadding.Cast<float>();
+                    var boundings = this.SizeWithPadding;
 
-                    var x = Unit.Resolve(imagePosition.X, (uint)boundings.Width, fontSize);
-                    var y = Unit.Resolve(imagePosition.Y, (uint)boundings.Height, fontSize);
+                    var x = Unit.Resolve(imagePosition.X, boundings.Width, fontSize);
+                    var y = Unit.Resolve(imagePosition.Y, boundings.Height, fontSize);
 
                     var offset = new Vector2<float>(x + this.border.Left, -y + -this.border.Top);
 
@@ -1040,10 +1040,10 @@ public abstract partial class Element
 
                     var scale = float.Min(boundings.Width, boundings.Height) / float.Max(textureSize.Width, textureSize.Height);
 
-                    size = textureSize * scale;
+                    size = new((uint)(textureSize.Width * scale), (uint)(textureSize.Height * scale));
 
-                    var x = Unit.Resolve(imagePosition.X, (uint)size.Width, fontSize);
-                    var y = Unit.Resolve(imagePosition.Y, (uint)size.Height, fontSize);
+                    var x = Unit.Resolve(imagePosition.X, size.Width, fontSize);
+                    var y = Unit.Resolve(imagePosition.Y, size.Height, fontSize);
 
                     var offset = new Vector2<float>(x + this.border.Left, y + this.border.Top);
 
@@ -1106,7 +1106,7 @@ public abstract partial class Element
                         offset.Y = this.border.Top + y;
                     }
 
-                    size      = new(width, height);
+                    size      = new((uint)width, (uint)height);
                     transform = Transform2D.CreateTranslated(offset.InvertedY);
                     uv        = new()
                     {
@@ -1383,7 +1383,7 @@ public abstract partial class Element
 
         if (this.Boundings.Area > 0)
         {
-            layoutCommandBox.Size            = this.Boundings.Cast<float>();
+            layoutCommandBox.Size            = this.Boundings;
             layoutCommandBox.Border          = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
             layoutCommandBox.Color           = this.ComputedStyle.BackgroundColor ?? default;
             layoutCommandBox.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;

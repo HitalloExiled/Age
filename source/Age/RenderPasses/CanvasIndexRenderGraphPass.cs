@@ -156,7 +156,7 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         this.Pipelines[0].Dispose();
     }
 
-    protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport)
+    protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<uint> viewport)
     {
         var constant = new CanvasShader.PushConstant
         {

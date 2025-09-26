@@ -57,22 +57,22 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         this.CommandBuffer.ClearAttachments([attachment], [rect]);
     }
 
-    private unsafe void EraseStencil(RenderPipelines pipeline, StencilLayer stencilLayer, in Size<float> viewport) =>
+    private unsafe void EraseStencil(RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport) =>
         this.SetStencil(this.CanvasStencilEraserShader, pipeline, stencilLayer, viewport);
 
     private void FillStencilBuffer(in VkExtent2D extent) =>
         this.ClearStencilBufferAttachment(extent, 1);
 
-    private unsafe void WriteStencil(RenderPipelines pipeline, StencilLayer stencilLayer, in Size<float> viewport) =>
+    private unsafe void WriteStencil(RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport) =>
         this.SetStencil(this.CanvasStencilWriterShader, pipeline, stencilLayer, viewport);
 
-    private unsafe void SetStencil(CanvasStencilMaskShader canvasStencilWriterShader, RenderPipelines pipeline, StencilLayer stencilLayer, in Size<float> viewport)
+    private unsafe void SetStencil(CanvasStencilMaskShader canvasStencilWriterShader, RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport)
     {
         this.CommandBuffer.BindShader(canvasStencilWriterShader);
 
         var constant = new CanvasShader.PushConstant
         {
-            Size      = stencilLayer.Size.Cast<float>(),
+            Size      = stencilLayer.Size,
             Transform = stencilLayer.Transform,
             Border    = stencilLayer.Border,
             Viewport  = viewport,
@@ -162,14 +162,13 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         }
     }
 
-    protected abstract void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport);
+    protected abstract void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<uint> viewport);
     protected abstract void Disposed();
 
     public unsafe override void Execute()
     {
-        var clientSize = this.Window.Size;
-        var viewport   = this.Window.Size.Cast<float>();
-        ref var extent = ref Unsafe.As<Size<uint>, VkExtent2D>(ref clientSize);
+        var viewport   = this.Window.Size;
+        ref var extent = ref Unsafe.As<Size<uint>, VkExtent2D>(ref viewport);
 
         this.BeforeExecute();
 

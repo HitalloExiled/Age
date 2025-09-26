@@ -22,7 +22,7 @@ public sealed class Text : Layoutable
 {
     private readonly RectCommand    caretCommand;
     private readonly Timer          caretTimer;
-    private readonly int            caretWidth = 2;
+    private readonly uint           caretWidth = 2;
     private readonly Timer          selectionTimer;
     private readonly List<TextLine> textLines = new(1);
 
@@ -348,8 +348,8 @@ public sealed class Text : Layoutable
 
             if (!char.IsLowSurrogate(character))
             {
-                selectionCommand.ObjectId  = CombineIds(elementIndex, i + 1);
-                selectionCommand.Size      = new(glyphsWidths[charIndex], this.LineHeight);
+                selectionCommand.ObjectId       = CombineIds(elementIndex, i + 1);
+                selectionCommand.Size           = new((uint)glyphsWidths[charIndex], this.LineHeight);
                 selectionCommand.LocalTransform = Transform2D.CreateTranslated(new(cursor.X, cursor.Y - baseLine));
 
                 if (!char.IsWhiteSpace(character))
@@ -369,7 +369,7 @@ public sealed class Text : Layoutable
                     var chars = textSpan.Slice(i, len);
 
                     var glyph  = TextStorage.Singleton.DrawGlyph(this.font, atlas, chars, bounds);
-                    var size   = new Size<float>(bounds.Width, bounds.Height);
+                    var size   = new Size<uint>((uint)bounds.Width, (uint)bounds.Height);
                     var offset = new Vector2<float>(float.Round(cursor.X + bounds.Left), float.Round(cursor.Y - bounds.Top));
 
                     var characterIndex = textSpan.Length + textOffset;
@@ -389,7 +389,7 @@ public sealed class Text : Layoutable
                     characterCommand.TextureMap      = glyph;
                     characterCommand.PipelineVariant = PipelineVariant.Color;
                     characterCommand.Size            = size;
-                    characterCommand.LocalTransform       = Transform2D.CreateTranslated(offset);
+                    characterCommand.LocalTransform  = Transform2D.CreateTranslated(offset);
                     characterCommand.StencilLayer    = this.StencilLayer;
 
                     cursor.X += (int)float.Round(glyphsWidths[charIndex]);

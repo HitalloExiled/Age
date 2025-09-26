@@ -10,8 +10,8 @@ public partial class CanvasShader
         public Color Color;
 
         // [8-bytes boundary]
-        public Size<float>      Viewport;
-        public Size<float>      Size;
+        public Size<uint>       Viewport;
+        public Size<uint>       Size;
         public Matrix3x2<float> Transform;
         public UVRect           UV;
         public Border           Border;
