@@ -9,4 +9,5 @@ public abstract class Viewport : Spatial2D
 
     public abstract Size<uint>   Size         { get; set; }
     public abstract RenderTarget RenderTarget { get; }
+    public abstract Texture2D    Texture      { get; }
 }

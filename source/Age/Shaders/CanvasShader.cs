@@ -29,6 +29,10 @@ public partial class CanvasShader : Shader<CanvasShader.Vertex>
     : this(renderPass, 0, watch)
     { }
 
+    public CanvasShader(RenderTarget renderTarget, bool watch)
+    : this(renderTarget.RenderPass, 0, watch)
+    { }
+
     public CanvasShader(VkRenderPass renderPass, uint subpass, bool watch)
     : this($"{nameof(CanvasShader)}.slang", renderPass, subpass, StencilOp.None, watch)
     { }

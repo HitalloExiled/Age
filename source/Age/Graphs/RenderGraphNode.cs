@@ -8,7 +8,26 @@ public abstract class RenderGraphNode : Disposable
     private readonly List<RenderGraphEdge> inputEdges  = [];
     private readonly List<RenderGraphEdge> outputEdges = [];
 
-    internal RenderGraph? RenderGraph { get; set; }
+    internal RenderGraph? RenderGraph
+    {
+        get;
+        set
+        {
+            if (field != value)
+            {
+                field = value;
+
+                if (value != null)
+                {
+                    this.OnConnected();
+                }
+                else
+                {
+                    this.OnDisconnected();
+                }
+            }
+        }
+    }
     internal SortState    SortState   { get; set; }
 
     public ReadOnlySpan<RenderGraphEdge> InputEdges  => this.inputEdges.AsSpan();
@@ -16,6 +35,8 @@ public abstract class RenderGraphNode : Disposable
 
     protected virtual void AfterExecute() { }
     protected virtual void BeforeExecute() { }
+    protected virtual void OnConnected() { }
+    protected virtual void OnDisconnected() { }
 
     protected abstract void Execute(RenderContext context);
 
@@ -29,7 +50,7 @@ public abstract class RenderGraphNode : Disposable
         this.outputEdges.Clear();
     }
 
-    internal void ExecuteInternal(RenderContext context)
+    internal void CallExecute(RenderContext context)
     {
         this.BeforeExecute();
         this.Execute(context);
@@ -59,14 +80,7 @@ public abstract class RenderGraphNode : Disposable
 
 public abstract class RenderGraphNode<TOutput> : RenderGraphNode, IOutputable<TOutput>
 {
-    public abstract TOutput? Output { get; set; }
-
-    internal override void ClearOutputs()
-    {
-        base.ClearOutputs();
-
-        this.Output = default;
-    }
+    public abstract TOutput? Output { get; }
 }
 
 public abstract class RenderGraphNode<TInput, TOutput> : RenderGraphNode<TOutput>, IInputable<TInput>

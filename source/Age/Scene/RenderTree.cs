@@ -22,7 +22,6 @@ public sealed partial class RenderTree : Disposable
 
     public bool IsDirty { get; private set; }
 
-
     private Buffer                     buffer = null!;
     private ulong                      bufferVersion;
     private CanvasIndexRenderGraphPass canvasIndexRenderGraphPass = null!;

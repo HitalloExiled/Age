@@ -354,6 +354,9 @@ dotnet_diagnostic.RCS1123.severity = none       # Add parentheses when
 dotnet_diagnostic.RCS1130.severity = none       # Bitwise operation on enum without Flags attribute
 dotnet_diagnostic.RCS1242.severity = none       # Do not pass non-read-only struct by read-only reference
 
+dotnet_diagnostic.RCS0063.severity = none       # Remove unnecessary blank line [deprecated]
+dotnet_diagnostic.RCS1036.severity = suggestion # Remove unnecessary blank line
+
 [**/*Extension{s,}.*.cs]
 dotnet_diagnostic.CA1822.severity = none
 

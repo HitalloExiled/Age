@@ -7,6 +7,6 @@ public partial class RenderGraphTest
     private sealed class PostFXPass(List<Entry> results) : TestPass<PostFXPass, float, float>(results)
     {
         protected override void Execute(RenderContext context) =>
-            this.Output = this.Input * 100;
+            this.SetOutput(this.Input * 100);
     }
 }

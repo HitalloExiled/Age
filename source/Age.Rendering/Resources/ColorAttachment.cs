@@ -20,5 +20,4 @@ public readonly record struct ColorAttachment
         this.color.Dispose();
         this.resolve?.Dispose();
     }
-
 }

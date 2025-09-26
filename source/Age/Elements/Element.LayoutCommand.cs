@@ -40,12 +40,12 @@ public abstract partial class Element
         {
             case LayoutCommand.Box:
                 command.Flags           = Flags.ColorAsBackground;
-                command.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
+                command.CommandFilter = CommandFilter.Color | CommandFilter.Index;
 
                 break;
 
             default:
-                command.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
+                command.CommandFilter = CommandFilter.Color | CommandFilter.Index;
 
                 break;
         }
@@ -77,9 +77,6 @@ public abstract partial class Element
         this.TryGetLayoutCommand(layoutCommand, out var rectCommand)
             ? rectCommand
             : throw new InvalidOperationException($"{this} - {layoutCommand} not allocated.");
-
-    private RectCommand GetLayoutCommandBox() =>
-        this.GetLayoutCommand(LayoutCommand.Box);
 
     private RectCommand GetLayoutCommandImage() =>
         this.GetLayoutCommand(LayoutCommand.Image);
@@ -121,9 +118,6 @@ public abstract partial class Element
             this.UpdateCommandsSeparator();
         }
     }
-
-    private void ReleaseLayoutCommandBox() =>
-        this.ReleaseLayoutCommand(LayoutCommand.Box);
 
     private void ReleaseLayoutCommandImage() =>
         this.ReleaseLayoutCommand(LayoutCommand.Image);

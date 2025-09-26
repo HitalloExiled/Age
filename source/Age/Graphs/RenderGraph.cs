@@ -152,7 +152,7 @@ public sealed class RenderGraph(Viewport viewport, string name)
         this.edgeStack.Clear();
     }
 
-    internal void Execute()
+    public void Execute()
     {
         if (this.isDirty)
         {
@@ -163,7 +163,7 @@ public sealed class RenderGraph(Viewport viewport, string name)
 
         foreach (var node in this.nodes)
         {
-            node.ExecuteInternal(this.renderContext);
+            node.CallExecute(this.renderContext);
         }
     }
 

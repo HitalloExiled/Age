@@ -174,17 +174,12 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
     {
         var commandBuffer = this.Renderer.CurrentCommandBuffer;
 
-        var color = Color.Black;
-
-        var colorClearValue = new VkClearValue();
-
-        colorClearValue.Color.Float32[0] = color.R;
-        colorClearValue.Color.Float32[1] = color.G;
-        colorClearValue.Color.Float32[2] = color.B;
-        colorClearValue.Color.Float32[3] = color.A;
-
-        var depthClearValue = new VkClearValue();
-        depthClearValue.DepthStencil.Depth = 1;
+        Span<ClearValue> clearValues =
+        [
+            new(Color.Black),
+            default,
+            new(1, 0)
+        ];
 
         foreach (var scene in this.Window.Tree.Scenes3D.AsSpan())
         {
@@ -194,8 +189,8 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
                 {
                     var renderTarget = camera.Viewport!.RenderTarget;
 
-                    commandBuffer.BeginRenderPass(renderTarget.Size.ToExtent2D(), renderTarget.RenderPass, renderTarget.Framebuffer, [colorClearValue, default, depthClearValue]);
-                    commandBuffer.SetViewport(renderTarget.Size.ToExtent2D());
+                    commandBuffer.BeginRenderPass(renderTarget, clearValues);
+                    commandBuffer.SetViewport(renderTarget.Size);
 
                     foreach (var command in this.Window.Tree.Get3DCommands())
                     {

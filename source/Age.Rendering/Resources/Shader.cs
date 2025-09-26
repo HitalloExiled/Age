@@ -1,21 +1,23 @@
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using Age.Core;
 using Age.Core.Collections;
 using Age.Core.Extensions;
+using Age.Core;
 using Age.Rendering.Interfaces;
 using Age.Rendering.Vulkan;
+using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using ThirdParty.Slang;
-using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
+using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public abstract class Shader(VkRenderPass renderPass) : Resource
+public abstract class Shader(VkRenderPass renderPass, ShaderOptions options) : Resource
 {
     public event Action? Changed;
+
+    protected ShaderOptions Options { get; } = options;
 
     public VkRenderPass RenderPass { get; } = renderPass;
 
@@ -26,6 +28,8 @@ public abstract class Shader(VkRenderPass renderPass) : Resource
     public abstract VkPipeline                    Pipeline            { get; }
     public abstract VkPipelineLayout              PipelineLayout      { get; }
     public abstract NativeArray<VkDescriptorType> UniformBindings     { get; }
+
+    public bool Watching => this.Options.Watch;
 
     protected void InvokeChanged() =>
         this.Changed?.Invoke();
@@ -54,7 +58,6 @@ where TVertexInput  : IVertexInput
     private VkPipeline              pipeline;
     private VkPipelineLayout        pipelineLayout;
 
-    private ShaderOptions      options;
     private VkShaderStageFlags pushConstantStages;
 
     public abstract string              Name              { get; }
@@ -66,10 +69,9 @@ where TVertexInput  : IVertexInput
     public sealed override VkShaderStageFlags            PushConstantStages  => this.pushConstantStages;
     public sealed override NativeArray<VkDescriptorType> UniformBindings     => this.uniformBindings;
 
-    protected Shader(string file, VkRenderPass renderPass, in ShaderOptions options) : base(renderPass)
+    protected Shader(string file, VkRenderPass renderPass, in ShaderOptions options) : base(renderPass, options)
     {
         this.filepath = string.Intern(Path.IsPathRooted(file) ? file : Path.GetFullPath(Path.Join(shadersPath, file)));
-        this.options  = options;
 
         using var source = FileReader.ReadAllBytesAsRef(this.filepath);
 
@@ -305,6 +307,8 @@ where TVertexInput  : IVertexInput
     [MemberNotNull(nameof(pipeline), nameof(pipelineLayout), nameof(descriptorSetLayout))]
     private void UpdatePipeline(SlangCompileRequest compileRequest)
     {
+        var options = this.Options;
+
         var reflection = compileRequest.GetReflection();
 
         using var bindings                       = new RefList<VkDescriptorSetLayoutBinding>((int)reflection.ParameterCount);
@@ -458,7 +462,7 @@ where TVertexInput  : IVertexInput
                 PDynamicStates    = pDynamicStates,
             };
 
-            var isStencilMask = this.options.StencilOp != StencilOp.None;
+            var isStencilMask = options.StencilOp != StencilOp.None;
 
             var pipelineColorBlendAttachmentState = new VkPipelineColorBlendAttachmentState
             {
@@ -481,14 +485,14 @@ where TVertexInput  : IVertexInput
             var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
             {
                 SampleShadingEnable  = !isStencilMask,
-                RasterizationSamples = this.options.RasterizationSamples,
+                RasterizationSamples = options.RasterizationSamples,
                 MinSampleShading     = 1,
             };
 
             var pipelineRasterizationStateCreateInfo = new VkPipelineRasterizationStateCreateInfo
             {
                 CullMode    = !isStencilMask ? VkCullModeFlags.Back : default,
-                FrontFace   = this.options.FrontFace,
+                FrontFace   = options.FrontFace,
                 LineWidth   = 1,
                 PolygonMode = VkPolygonMode.Fill,
             };
@@ -499,7 +503,7 @@ where TVertexInput  : IVertexInput
                 ScissorCount  = 1,
             };
 
-            var stencilOp = this.options.StencilOp switch
+            var stencilOp = options.StencilOp switch
             {
                 StencilOp.Write => new VkStencilOpState
                 {
@@ -554,7 +558,7 @@ where TVertexInput  : IVertexInput
                 StageCount          = (uint)pipelineShaderStageCreateInfos.Count,
                 RenderPass          = this.RenderPass.Handle,
                 PDepthStencilState  = &depthStencilState,
-                Subpass             = this.options.Subpass,
+                Subpass             = options.Subpass,
             };
 
             this.pipeline = VulkanRenderer.Singleton.Context.Device.CreateGraphicsPipelines(graphicsPipelineCreateInfo);

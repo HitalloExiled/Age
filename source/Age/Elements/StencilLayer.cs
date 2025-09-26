@@ -20,7 +20,6 @@ internal class StencilLayer(Element owner) : IEnumerable<StencilLayer>
     public Size<uint>          Size      => this.Owner.Boundings;
     public Transform2D         Transform => this.Owner.CachedTransformWithOffset;
 
-
     private void InvokeConnected()
     {
         this.OnConnected();

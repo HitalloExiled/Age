@@ -184,9 +184,9 @@ public sealed class Text : Layoutable
 
         if (index >= selection.Start && index < selection.End)
         {
-            selectionCommand.Color           = new(0, 0, 1, 0.5f);
-            selectionCommand.Flags           = Flags.ColorAsBackground;
-            selectionCommand.PipelineVariant = PipelineVariant.Index | PipelineVariant.Color;
+            selectionCommand.Color         = new(0, 0, 1, 0.5f);
+            selectionCommand.CommandFilter = CommandFilter.Index | CommandFilter.Color;
+            selectionCommand.Flags         = Flags.ColorAsBackground;
 
             if (selectionCommand.Index != default)
             {
@@ -203,7 +203,7 @@ public sealed class Text : Layoutable
     {
         this.caretIsVisible = !this.caretIsVisible;
 
-        this.caretCommand.PipelineVariant = this.caretIsVisible ? PipelineVariant.Color : default;
+        this.caretCommand.CommandFilter = this.caretIsVisible ? CommandFilter.Color : default;
 
         this.RequestUpdate(false);
     }
@@ -215,9 +215,9 @@ public sealed class Text : Layoutable
             return;
         }
 
-        selectionCommand.Color           = default;
-        selectionCommand.Flags           = default;
-        selectionCommand.PipelineVariant = PipelineVariant.Index;
+        selectionCommand.Color         = default;
+        selectionCommand.CommandFilter = CommandFilter.Index;
+        selectionCommand.Flags         = default;
 
         if (selectionCommand.Index != default)
         {
@@ -362,8 +362,8 @@ public sealed class Text : Layoutable
                     {
                         len++;
                         charOffset++;
-                        selectionCommand.Surrogate       = TextCommand.SurrogateKind.High;
-                        selectionCommand.PipelineVariant = PipelineVariant.None;
+                        selectionCommand.CommandFilter = CommandFilter.None;
+                        selectionCommand.Surrogate     = TextCommand.SurrogateKind.High;
                     }
 
                     var chars = textSpan.Slice(i, len);
@@ -382,15 +382,15 @@ public sealed class Text : Layoutable
                     characterCommand.Border   = default;
                     characterCommand.ObjectId = default;
 
-                    characterCommand.Color           = color;
-                    characterCommand.Flags           = Flags.GrayscaleTexture | Flags.MultiplyColor;
-                    characterCommand.Index           = selectionCommand.Index;
-                    characterCommand.Line            = selectionCommand.Line;
-                    characterCommand.TextureMap      = glyph;
-                    characterCommand.PipelineVariant = PipelineVariant.Color;
-                    characterCommand.Size            = size;
-                    characterCommand.LocalTransform  = Transform2D.CreateTranslated(offset);
-                    characterCommand.StencilLayer    = this.StencilLayer;
+                    characterCommand.Color          = color;
+                    characterCommand.CommandFilter  = CommandFilter.Color;
+                    characterCommand.Flags          = Flags.GrayscaleTexture | Flags.MultiplyColor;
+                    characterCommand.Index          = selectionCommand.Index;
+                    characterCommand.Line           = selectionCommand.Line;
+                    characterCommand.LocalTransform = Transform2D.CreateTranslated(offset);
+                    characterCommand.Size           = size;
+                    characterCommand.StencilLayer   = this.StencilLayer;
+                    characterCommand.TextureMap     = glyph;
 
                     cursor.X += (int)float.Round(glyphsWidths[charIndex]);
 
@@ -1079,7 +1079,7 @@ public sealed class Text : Layoutable
         this.caretIsDirty   = true;
         this.caretIsVisible = false;
 
-        this.caretCommand.PipelineVariant = default;
+        this.caretCommand.CommandFilter = default;
 
         this.caretTimer.Stop();
 
@@ -1091,7 +1091,7 @@ public sealed class Text : Layoutable
         this.caretIsDirty   = true;
         this.caretIsVisible = true;
 
-        this.caretCommand.PipelineVariant = PipelineVariant.Color;
+        this.caretCommand.CommandFilter = CommandFilter.Color;
 
         this.caretTimer.Start();
 

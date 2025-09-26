@@ -1,7 +1,7 @@
 namespace Age.Commands;
 
 [Flags]
-public enum PipelineVariant : uint
+public enum CommandFilter : uint
 {
     None      = 0,
     Color     = 1 << 0,

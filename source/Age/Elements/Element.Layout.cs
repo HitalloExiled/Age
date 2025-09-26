@@ -805,8 +805,6 @@ public abstract partial class Element
         }
     }
 
-
-
     private void OnStyleChanged(StyleProperty property)
     {
         if (!this.IsConnected)
@@ -1178,9 +1176,9 @@ public abstract partial class Element
 
             if (texture != null)
             {
-                command.TextureMap      = new(texture, UVRect.Normalized);
-                command.PipelineVariant = PipelineVariant.Color;
-                command.StencilLayer    = new StencilLayer(this);
+                command.CommandFilter = CommandFilter.Color;
+                command.StencilLayer  = new StencilLayer(this);
+                command.TextureMap    = new(texture, UVRect.Normalized);
 
                 this.StencilLayer?.AppendChild(command.StencilLayer);
 
@@ -1383,15 +1381,15 @@ public abstract partial class Element
 
         if (this.Boundings.Area > 0)
         {
-            layoutCommandBox.Size            = this.Boundings;
-            layoutCommandBox.Border          = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
-            layoutCommandBox.Color           = this.ComputedStyle.BackgroundColor ?? default;
-            layoutCommandBox.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
-            layoutCommandBox.ObjectId        = (uint)(this.Index + 1);
+            layoutCommandBox.Border        = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
+            layoutCommandBox.Color         = this.ComputedStyle.BackgroundColor ?? default;
+            layoutCommandBox.CommandFilter = CommandFilter.Color | CommandFilter.Index;
+            layoutCommandBox.ObjectId      = (uint)(this.Index + 1);
+            layoutCommandBox.Size          = this.Boundings;
         }
         else
         {
-            layoutCommandBox.PipelineVariant = PipelineVariant.None;
+            layoutCommandBox.CommandFilter = CommandFilter.None;
         }
     }
 

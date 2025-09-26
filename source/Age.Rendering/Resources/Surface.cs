@@ -54,7 +54,6 @@ public sealed class Surface : Disposable
 
     public VkSemaphore[] Semaphores { get; }
 
-
     public bool IsDirty { get; private set; }
 
     public Swapchain Swapchain

@@ -11,6 +11,6 @@ public partial class RenderGraphTest
         public override ColorPassInput Input { get; set => field = value ?? new(); } = new();
 
         protected override void Execute(RenderContext context) =>
-            this.Output = (this.Input.Normal + this.Input.Depth + this.Input.Shadow + this.Input.Sky) * 10;
+            this.SetOutput((this.Input.Normal + this.Input.Depth + this.Input.Shadow + this.Input.Sky) * 10);
     }
 }

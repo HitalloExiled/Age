@@ -21,13 +21,13 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
     private readonly VertexBuffer<CanvasShader.Vertex> vertexBuffer;
     private readonly IndexBuffer32                     wireframeIndexBuffer;
 
-    protected override CanvasStencilMaskShader CanvasStencilWriterShader { get; }
     protected override CanvasStencilMaskShader CanvasStencilEraserShader { get; }
+    protected override CanvasStencilMaskShader CanvasStencilWriterShader { get; }
     protected override Color                   ClearColor                { get; } = Color.Black;
     protected override CommandBuffer           CommandBuffer             => this.Renderer.CurrentCommandBuffer;
+    protected override CommandFilter           CommandFilters            { get; } = CommandFilter.Color | CommandFilter.Wireframe;
     protected override Framebuffer             Framebuffer               => this.framebuffers[this.Window.Surface.CurrentBuffer];
     protected override RenderPipelines[]       Pipelines                 { get; } = [];
-    protected override PipelineVariant         PipelineVariants          { get; } = PipelineVariant.Color | PipelineVariant.Wireframe;
     public override RenderPass                 RenderPass                { get; }
 
     public CanvasRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)

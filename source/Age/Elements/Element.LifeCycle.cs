@@ -155,5 +155,4 @@ public abstract partial class Element
             scrollYCommand.ZIndex   = zIndex;
         }
     }
-
 }

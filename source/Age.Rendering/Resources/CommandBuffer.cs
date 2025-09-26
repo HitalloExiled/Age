@@ -1,4 +1,6 @@
+using Age.Core.Extensions;
 using Age.Numerics;
+using Age.Rendering.Extensions;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
@@ -28,7 +30,7 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
     public void Begin(VkCommandBufferUsageFlags oneTimeSubmit) =>
         this.Instance.Begin(oneTimeSubmit);
 
-    public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, Color clearColor)
+    public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, in Color clearColor)
     {
         var clearValue = new VkClearValue();
 
@@ -54,6 +56,16 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
         }
 
         this.BeginRenderPass(framebuffer.Extent, renderPass, framebuffer, clearValues);
+    }
+
+    public unsafe void BeginRenderPass(RenderTarget renderTarget, in ClearValue clearColor) =>
+        this.BeginRenderPass(renderTarget, [clearColor]);
+
+    public unsafe void BeginRenderPass(RenderTarget renderTarget, ReadOnlySpan<ClearValue> clearValues)
+    {
+        var vkClearValues = clearValues.Cast<ClearValue, VkClearValue>();
+
+        this.BeginRenderPass(renderTarget.Size.ToExtent2D(), renderTarget.RenderPass, renderTarget.Framebuffer, vkClearValues);
     }
 
     public unsafe void BeginRenderPass(VkExtent2D extent, VkRenderPass renderPass, VkFramebuffer framebuffer, ReadOnlySpan<VkClearValue> clearValues)
@@ -128,14 +140,14 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
     public void PushConstant<T>(Shader shader, in T constant) where T : unmanaged =>
         this.Instance.PushConstants(shader.PipelineLayout, shader.PushConstantStages, constant);
 
-    public void SetViewport(in VkExtent2D extent)
+    public void SetViewport(in Size<uint> size)
     {
         var viewport = new VkViewport
         {
             X        = 0,
             Y        = 0,
-            Width    = extent.Width,
-            Height   = extent.Height,
+            Width    = size.Width,
+            Height   = size.Height,
             MinDepth = 0,
             MaxDepth = 1
         };
@@ -149,7 +161,7 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
                 X = 0,
                 Y = 0
             },
-            Extent = extent,
+            Extent = size.ToExtent2D(),
         };
 
         this.Instance.SetScissor(0, scissor);
@@ -157,4 +169,5 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
 
     public void SetStencilReference(VkStencilFaceFlags faceMask, uint reference) =>
         this.Instance.SetStencilReference(faceMask, reference);
+    internal void BindUniformSet(object value) => throw new NotImplementedException();
 }

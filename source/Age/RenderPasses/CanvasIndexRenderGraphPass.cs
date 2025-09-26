@@ -20,14 +20,15 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
     private Framebuffer framebuffer;
     private Image       stencilImage;
 
-    protected override CanvasStencilMaskShader CanvasStencilWriterShader { get; }
     protected override CanvasStencilMaskShader CanvasStencilEraserShader { get; }
+    protected override CanvasStencilMaskShader CanvasStencilWriterShader { get; }
     protected override Color                   ClearColor                { get; } = Color.Black;
     protected override CommandBuffer           CommandBuffer             { get; }
+    protected override CommandFilter           CommandFilters            { get; } = CommandFilter.Index;
     protected override Framebuffer             Framebuffer               => this.framebuffer;
     protected override RenderPipelines[]       Pipelines                 { get; } = [];
-    protected override PipelineVariant         PipelineVariants          { get; } = PipelineVariant.Index;
-    public override RenderPass                 RenderPass                { get; }
+
+    public override RenderPass RenderPass { get; }
 
     public Image ColorImage => this.colorImage;
 

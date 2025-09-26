@@ -26,7 +26,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
     protected abstract CommandBuffer           CommandBuffer             { get; }
     protected abstract Framebuffer             Framebuffer               { get; }
     protected abstract RenderPipelines[]       Pipelines                 { get; }
-    protected abstract PipelineVariant         PipelineVariants          { get; }
+    protected abstract CommandFilter         CommandFilters          { get; }
 
     private void ClearStencilBuffer(in VkExtent2D extent) =>
         this.ClearStencilBufferAttachment(extent, 0);
@@ -180,7 +180,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         clearValues[0].Color.Float32[3] = this.ClearColor.A;
         clearValues[1].DepthStencil.Depth = 1;
 
-        this.CommandBuffer.SetViewport(extent);
+        this.CommandBuffer.SetViewport(viewport);
         this.CommandBuffer.BeginRenderPass(this.Framebuffer.Extent, this.RenderPass, this.Framebuffer, clearValues);
 
         if (!this.Window.Surface.IsDirty)
@@ -203,7 +203,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
                     {
                         var command = commands[i];
 
-                        if (this.PipelineVariants.HasAnyFlag(command.PipelineVariant))
+                        if (this.CommandFilters.HasAnyFlag(command.CommandFilter))
                         {
                             if (!pipeline.IgnoreStencil && (!this.stencilStack.TryPeek(out var previousLayer) || command.StencilLayer != previousLayer))
                             {
