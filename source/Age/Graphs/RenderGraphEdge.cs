@@ -19,7 +19,7 @@ where TTo    : RenderGraphNode
     public override TFrom From => from;
     public override TTo   To   => to;
 
-    public override void Pipe()  => setter.Invoke(this.To, getter.Invoke(this.From));
+    public override void Pipe() => setter.Invoke(this.To, getter.Invoke(this.From));
     public override void Disconnect()
     {
         this.From.RemoveOutput(this);

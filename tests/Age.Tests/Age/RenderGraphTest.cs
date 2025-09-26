@@ -1,105 +1,14 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Age.Graphs;
 
 namespace Age.Tests.Age;
 
-public record ColorPassInput
-{
-    public float Depth  { get; set; }
-    public float Normal { get; set; }
-    public float Shadow { get; set; }
-    public float Sky    { get; set; }
-
-    public ColorPassInput() { }
-
-    public ColorPassInput(float normal, float depth, float shadow, float sky)
-    {
-        this.Normal = normal;
-        this.Depth  = depth;
-        this.Shadow = shadow;
-        this.Sky    = sky;
-    }
-
-    public override string ToString() =>
-        $"{{ Normal: {this.Normal}, Depth: {this.Depth}, Shadow: {this.Shadow}, Sky: {this.Sky} }}";
-}
-
-public abstract class TestPass<TThis, TOutput>(List<Entry> results) : RenderGraphNode<TOutput>
-where TOutput : new()
-{
-    public override TOutput? Output { get; set; }
-
-    protected override void AfterExecute() =>
-        results.Add(new(typeof(TThis).Name, null, this.Output?.ToString()));
-}
-
-public abstract class TestPass<TThis, TInput, TOutput>(List<Entry> results) : RenderGraphNode<TInput, TOutput>
-{
-    public override TInput?  Input  { get; set; }
-    public override TOutput? Output { get; set; }
-
-    protected override void AfterExecute() =>
-        results.Add(new(typeof(TThis).Name, this.Input?.ToString(), this.Output?.ToString()));
-}
-
-public sealed class GeometryPass(List<Entry> results) : TestPass<GeometryPass, float>(results)
-{
-    protected override void Execute(RenderContext context) =>
-        this.Output = 2;
-}
-
-public sealed class EnvironmentPass(List<Entry> results) : TestPass<EnvironmentPass, float>(results)
-{
-    protected override void Execute(RenderContext context) =>
-        this.Output = 4;
-}
-
-public sealed class NormalPass(List<Entry> results) : TestPass<NormalPass, float, float>(results)
-{
-    protected override void Execute(RenderContext context) =>
-        this.Output = this.Input * 2;
-}
-
-public sealed class DepthPass(List<Entry> results) : TestPass<DepthPass, float, float>(results)
-{
-    protected override void Execute(RenderContext context) =>
-        this.Output = this.Input * 3;
-}
-
-public sealed class ShadowPass(List<Entry> results) : TestPass<ShadowPass, float, float>(results)
-{
-    protected override void Execute(RenderContext context) =>
-        this.Output = this.Input * 4;
-}
-
-public sealed class ColorPass(List<Entry> results) : TestPass<ColorPass, ColorPassInput, float>(results)
-{
-    [AllowNull]
-    public override ColorPassInput Input { get; set => field = value ?? new(); } = new();
-
-    protected override void Execute(RenderContext context) =>
-        this.Output = (this.Input.Normal + this.Input.Depth + this.Input.Shadow + this.Input.Sky) * 10;
-}
-
-public sealed class PostFXPass(List<Entry> results) : TestPass<PostFXPass, float, float>(results)
-{
-    protected override void Execute(RenderContext context) =>
-        this.Output = this.Input * 100;
-}
-
-public record struct Entry(string Pass, string? Input, string? Output)
-{
-    public readonly override string ToString() =>
-        $"{this.Pass} - in: {this.Input}, out: {this.Output}";
-}
-
-public class RenderGraphTest
+public partial class RenderGraphTest
 {
     [Fact]
     public void Execute()
     {
-        var pipeline = new RenderGraphPipeline("Rasterization");
+        var pipeline = new Graphs.RenderGraph(null!, "Rasterization");
 
         var expected = new List<Entry>
         {
@@ -201,7 +110,7 @@ public class RenderGraphTest
     [Fact]
     public void ThrowIfCiclic()
     {
-        var pipeline = new RenderGraphPipeline("Rasterization");
+        var pipeline = new Graphs.RenderGraph(null!, "Rasterization");
 
         var normalPass = new NormalPass([]);
         var depthPass  = new DepthPass([]);

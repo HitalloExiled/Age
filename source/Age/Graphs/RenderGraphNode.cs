@@ -1,14 +1,15 @@
+using Age.Core;
 using Age.Core.Extensions;
 
 namespace Age.Graphs;
 
-public abstract class RenderGraphNode
+public abstract class RenderGraphNode : Disposable
 {
     private readonly List<RenderGraphEdge> inputEdges  = [];
     private readonly List<RenderGraphEdge> outputEdges = [];
 
-    internal SortState SortState { get; set; }
-    internal RenderGraphPipeline?     Pipeline  { get; set; }
+    internal RenderGraph? RenderGraph { get; set; }
+    internal SortState    SortState   { get; set; }
 
     public ReadOnlySpan<RenderGraphEdge> InputEdges  => this.inputEdges.AsSpan();
     public ReadOnlySpan<RenderGraphEdge> OutputEdges => this.outputEdges.AsSpan();
@@ -51,6 +52,9 @@ public abstract class RenderGraphNode
 
     internal void SetOutput(RenderGraphEdge edge) =>
         this.outputEdges.Add(edge);
+
+    public override string ToString() =>
+        this.GetType().Name;
 }
 
 public abstract class RenderGraphNode<TOutput> : RenderGraphNode, IOutputable<TOutput>

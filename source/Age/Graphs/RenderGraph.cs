@@ -1,32 +1,31 @@
 using System.Diagnostics;
+using Age.Scene;
 
 namespace Age.Graphs;
 
-public sealed class RenderGraphPipeline(string name)
+public sealed class RenderGraph(Viewport viewport, string name)
 {
     private bool isDirty;
 
-    private readonly Stack<RenderGraphEdge>   edgeStack     = [];
-    private readonly List<RenderGraphNode>    nodes         = [];
-    private readonly List<RenderGraphNode>    nodeStack     = [];
-    private readonly List<RenderGraphNode>    roots         = [];
-    private readonly RenderContext            renderContext = new();
+    private readonly Stack<RenderGraphEdge> edgeStack     = [];
+    private readonly List<RenderGraphNode>  nodes         = [];
+    private readonly List<RenderGraphNode>  nodeStack     = [];
+    private readonly List<RenderGraphNode>  roots         = [];
+    private readonly RenderContext          renderContext = new();
 
-    public string Name { get; } = name;
+    public string   Name     => name;
+    public Viewport Viewport => viewport;
 
     public IReadOnlyList<RenderGraphNode> Nodes => this.nodes;
 
-    public List<RenderGraphPipeline> Dependencies { get; } = [];
-    public List<RenderGraphNode> ExecutionPlan    { get; } = [];
-
     private void AddNode(RenderGraphNode node)
     {
-        if (node.Pipeline == null)
+        if (node.RenderGraph == null)
         {
             this.nodes.Add(node);
-            node.Pipeline = this;
+            node.RenderGraph = this;
         }
-        else if (node.Pipeline != this)
+        else if (node.RenderGraph != this)
         {
             throw new InvalidOperationException("Node already connected to another pipeline.");
         }
@@ -219,7 +218,7 @@ public sealed class RenderGraphPipeline(string name)
 
         node.ClearInputs();
         node.ClearOutputs();
-        node.Pipeline = null;
+        node.RenderGraph = null;
 
         this.isDirty = true;
     }

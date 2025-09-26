@@ -2,10 +2,10 @@ namespace Age.Graphs;
 
 public readonly struct Connection<TFrom> where TFrom : RenderGraphNode
 {
-    private readonly RenderGraphPipeline pipeline;
+    private readonly RenderGraph pipeline;
     public TFrom From { get; }
 
-    internal Connection(RenderGraphPipeline pipeline, TFrom from)
+    internal Connection(RenderGraph pipeline, TFrom from)
     {
         this.pipeline = pipeline;
         this.From     = from;
