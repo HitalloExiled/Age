@@ -122,7 +122,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
         return uniformSet;
     }
 
-    private unsafe BufferHandlePair UpdateUbo(Camera3D camera, Mesh mesh, Matrix4x4<float> transform, in VkExtent2D viewport)
+    private unsafe BufferHandlePair UpdateUbo(Camera3D camera, Mesh mesh, in VkExtent2D viewport)
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
 
@@ -141,7 +141,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
 
         var ubo = new UniformBufferObject
         {
-            Model = transform,
+            Model = mesh.Transform,
             View  = camera.CachedTransform.Inverse(),
             Proj  = Matrix4x4<float>.PerspectiveFov(camera.FoV, viewport.Width / (float)viewport.Height, camera.Near, camera.Far)
         };
@@ -197,12 +197,12 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
                     commandBuffer.BeginRenderPass(renderTarget.Size.ToExtent2D(), renderTarget.RenderPass, renderTarget.Framebuffer, [colorClearValue, default, depthClearValue]);
                     commandBuffer.SetViewport(renderTarget.Size.ToExtent2D());
 
-                    foreach (var (command, transform) in this.Window.Tree.Get3DCommands())
+                    foreach (var command in this.Window.Tree.Get3DCommands())
                     {
                         switch (command)
                         {
                             case MeshCommand meshCommand:
-                                var ubo = this.UpdateUbo(camera, meshCommand.Mesh, transform, renderTarget.Size.ToExtent2D());
+                                var ubo = this.UpdateUbo(camera, meshCommand.Mesh, renderTarget.Size.ToExtent2D());
 
                                 commandBuffer.BindShader(meshCommand.Mesh.Material.Shader);
                                 commandBuffer.BindUniformSet(this.GetUniformSet(camera, ubo, meshCommand.Mesh.Material));

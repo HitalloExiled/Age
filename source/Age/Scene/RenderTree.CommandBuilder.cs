@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Age.Commands;
 using Age.Core.Extensions;
 using Age.Elements;
 using Age.Numerics;
@@ -7,8 +8,8 @@ namespace Age.Scene;
 
 public sealed partial class RenderTree
 {
-    private readonly List<Command2DEntry> command2DEntries = [];
-    private readonly List<Command3DEntry> command3DEntries = [];
+    private readonly List<Command2D> commands2D = [];
+    private readonly List<Command3D> commands3D = [];
 
     private void BuildIndexAndCollectCommands()
     {
@@ -68,71 +69,40 @@ public sealed partial class RenderTree
         }
 
         // this.command2DEntries.AsSpan().TimSort(static (left, right) => left.Command.ZIndex.CompareTo(right.Command.ZIndex));
-        // this.command3DEntries.AsSpan().TimSort(static (left, right) => left.Command.ZIndex.CompareTo(right.Command.ZIndex));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void collectElementPreCommands(Element element)
+        void collect2DCommands(ReadOnlySpan<Command2D> commands, Transform2D transform)
         {
-            var transform = element.CachedTransformWithOffset;
-
-            foreach (var command in element.PreCommands)
+            foreach (var command in commands)
             {
-                var entry = new Command2DEntry(command, transform);
+                command.Transform = command.LocalTransform * transform;
 
-                this.command2DEntries.Add(entry);
+                this.commands2D.Add(command);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void gatherElementPostCommands(Element element)
-        {
-            var transform = element.CachedTransformWithOffset;
-
-            foreach (var command in element.PostCommands)
-            {
-                var entry = new Command2DEntry(command, transform);
-
-                this.command2DEntries.Add(entry);
-            }
-        }
+        void collectElementPreCommands(Element element) =>
+            collect2DCommands(element.PreCommands, element.CachedTransformWithOffset);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void collectLayoutable(Layoutable layoutable)
-        {
-            var transform = layoutable.CachedTransformWithOffset;
-
-            foreach (var command in layoutable.Commands)
-            {
-                var entry = new Command2DEntry(command, transform);
-
-                this.command2DEntries.Add(entry);
-            }
-        }
+        void gatherElementPostCommands(Element element) =>
+            collect2DCommands(element.PostCommands, element.CachedTransformWithOffset);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void collectSpatial2D(Spatial2D spatial2D)
-        {
-            var transform = spatial2D.CachedTransform;
+        void collectLayoutable(Layoutable layoutable) =>
+            collect2DCommands(layoutable.Commands.AsSpan(), layoutable.CachedTransformWithOffset);
 
-            foreach (var command in spatial2D.Commands)
-            {
-                var entry = new Command2DEntry(command, transform);
-
-                this.command2DEntries.Add(entry);
-            }
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void collectSpatial2D(Spatial2D spatial2D) =>
+            collect2DCommands(spatial2D.Commands.AsSpan(), spatial2D.CachedTransform);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void collectSpatial3D(Spatial3D spatial3D)
         {
             var transform = (Matrix4x4<float>)spatial3D.CachedTransform;
 
-            foreach (var command in spatial3D.Commands)
-            {
-                var entry = new Command3DEntry(command, transform);
-
-                this.command3DEntries.Add(entry);
-            }
+            this.commands3D.AddRange(spatial3D.Commands);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -155,7 +125,7 @@ public sealed partial class RenderTree
 
     private void ResetCache()
     {
-        this.command2DEntries.Clear();
-        this.command3DEntries.Clear();
+        this.commands2D.Clear();
+        this.commands3D.Clear();
     }
 }

@@ -5,7 +5,7 @@ using Age.Shaders;
 
 namespace Age.Commands;
 
-public sealed record MeshCommand : Command
+public sealed record MeshCommand : Command3D
 {
     [AllowNull]
     public IndexBuffer32 IndexBuffer { get; set; }

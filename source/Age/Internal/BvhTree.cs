@@ -197,10 +197,10 @@ public unsafe class BvhTree
         {
             SingleCommand = new RectCommand
             {
-                Border    = new Border(2, 0, color * new Color(1, 1, 1, 1)),
-                Flags     = Shaders.CanvasShader.Flags.ColorAsBackground,
-                Size      = new(bvhNode.AABB.Size.X, bvhNode.AABB.Size.Y),
-                Transform = Transform2D.CreateTranslated(bvhNode.AABB.Position.X, -bvhNode.AABB.Position.Y)
+                Border         = new Border(2, 0, color * new Color(1, 1, 1, 1)),
+                Flags          = Shaders.CanvasShader.Flags.ColorAsBackground,
+                Size           = new(bvhNode.AABB.Size.X, bvhNode.AABB.Size.Y),
+                LocalTransform = Transform2D.CreateTranslated(bvhNode.AABB.Position.X, -bvhNode.AABB.Position.Y)
             }
         };
 

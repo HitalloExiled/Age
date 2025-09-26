@@ -4,8 +4,14 @@ namespace Age.Scene;
 
 public abstract class Renderable : Node
 {
-    internal List<Command> Commands { get; init; } = [];
-    internal Command? SingleCommand
+    public bool Visible { get; set; } = true;
+}
+
+public abstract class Renderable<T> : Renderable where T : Command
+{
+    internal List<T> Commands { get; set; } = [];
+
+    internal T? SingleCommand
     {
         get => this.Commands.Count == 1 ? this.Commands[0] : null;
         set
@@ -25,6 +31,4 @@ public abstract class Renderable : Node
             }
         }
     }
-
-    public bool Visible { get; set; } = true;
 }

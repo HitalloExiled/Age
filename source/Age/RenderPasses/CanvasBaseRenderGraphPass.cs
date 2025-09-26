@@ -162,7 +162,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
         }
     }
 
-    protected abstract void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform);
+    protected abstract void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport);
     protected abstract void Disposed();
 
     public unsafe override void Execute()
@@ -202,7 +202,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
 
                     for (var i = 0; i < commands.Length; i++)
                     {
-                        var (command, transform) = commands[i];
+                        var command = commands[i];
 
                         if (this.PipelineVariants.HasAnyFlag(command.PipelineVariant))
                         {
@@ -247,7 +247,7 @@ public abstract partial class CanvasBaseRenderGraphPass(VulkanRenderer renderer,
                             switch (command)
                             {
                                 case RectCommand rectCommand:
-                                    this.ExecuteCommand(pipeline, rectCommand, viewport, transform);
+                                    this.ExecuteCommand(pipeline, rectCommand, viewport);
 
                                     break;
                                 default:

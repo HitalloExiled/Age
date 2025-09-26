@@ -151,11 +151,11 @@ public sealed partial class RenderTree : Disposable
     internal void MakeDirty() =>
         this.IsDirty = true;
 
-    internal ReadOnlySpan<Command2DEntry> Get2DCommands() =>
-        this.command2DEntries.AsSpan();
+    internal ReadOnlySpan<Command> Get2DCommands() =>
+        this.commands2D.AsSpan();
 
-    internal ReadOnlySpan<Command3DEntry> Get3DCommands() =>
-        this.command3DEntries.AsSpan();
+    internal ReadOnlySpan<Command> Get3DCommands() =>
+        this.commands3D.AsSpan();
 
     public void Initialize()
     {

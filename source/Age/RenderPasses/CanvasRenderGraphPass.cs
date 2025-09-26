@@ -151,7 +151,7 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
         this.RenderPass.Dispose();
     }
 
-    protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
+    protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport)
     {
         if (!this.UniformSets.TryGetValue(command.TextureMap.Texture, out var uniformSet))
         {
@@ -178,7 +178,7 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             Color     = command.Color,
             Flags     = command.Flags,
             Size      = command.Size,
-            Transform = command.Transform * transform,
+            Transform = command.Transform,
             UV        = command.TextureMap.UV,
             Viewport  = viewport,
         };

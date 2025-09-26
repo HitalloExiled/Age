@@ -1,9 +1,10 @@
+using Age.Commands;
 using Age.Core;
 using Age.Numerics;
 
 namespace Age.Scene;
 
-public abstract class Spatial2D : Renderable
+public abstract class Spatial2D : Renderable<Command2D>
 {
     private CacheValue<Transform2D> transformCache;
 

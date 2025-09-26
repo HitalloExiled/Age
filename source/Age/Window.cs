@@ -4,7 +4,7 @@ using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.Scene;
 
-using DisplayWindow = Age.Platforms.Display.Window;
+using DisplayWindow           = Age.Platforms.Display.Window;
 using WindowMouseEventHandler = Age.Platforms.Display.WindowMouseEventHandler;
 using Age.Core;
 

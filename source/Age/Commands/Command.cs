@@ -10,7 +10,6 @@ public abstract record Command : IPoolable
     public long            Metadata        { get; set; }
     public ulong           ObjectId        { get; set; }
     public PipelineVariant PipelineVariant { get; set; }
-    public int             ZIndex          { get; set; }
 
     public virtual void Reset()
     {
@@ -18,6 +17,5 @@ public abstract record Command : IPoolable
         this.StencilLayer    = default;
         this.ObjectId        = default;
         this.PipelineVariant = default;
-        this.ZIndex          = default;
     }
 }

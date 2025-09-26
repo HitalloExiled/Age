@@ -133,7 +133,7 @@ public sealed class Text : Layoutable
     public Text(string? value) : this() =>
         this.Buffer.Set(value);
 
-    private static void AllocateCommands(List<Command> commands, int count)
+    private static void AllocateCommands(List<Command2D> commands, int count)
     {
         commands.EnsureCapacity(count);
 
@@ -156,7 +156,7 @@ public sealed class Text : Layoutable
         }
     }
 
-    private static void ReleaseCommands(List<Command> commands, int count)
+    private static void ReleaseCommands(List<Command2D> commands, int count)
     {
         if (count > 0)
         {
@@ -240,24 +240,24 @@ public sealed class Text : Layoutable
                 if (this.Buffer[^1] == '\n')
                 {
                     position.X = 0;
-                    position.Y = command.Transform.Position.Y - this.LineHeight;
+                    position.Y = command.LocalTransform.Position.Y - this.LineHeight;
                 }
                 else
                 {
-                    position = command.Transform.Position;
+                    position = command.LocalTransform.Position;
                     position.X += command.Size.Width;
                 }
             }
             else
             {
-                position = ((RectCommand)this.Commands[(int)this.CursorPosition]).Transform.Position;
+                position = ((RectCommand)this.Commands[(int)this.CursorPosition]).LocalTransform.Position;
             }
 
-            this.caretCommand.Transform = Transform2D.CreateTranslated(position);
+            this.caretCommand.LocalTransform = Transform2D.CreateTranslated(position);
         }
         else
         {
-            this.caretCommand.Transform = Transform2D.Identity;
+            this.caretCommand.LocalTransform = Transform2D.Identity;
         }
     }
 
@@ -350,7 +350,7 @@ public sealed class Text : Layoutable
             {
                 selectionCommand.ObjectId  = CombineIds(elementIndex, i + 1);
                 selectionCommand.Size      = new(glyphsWidths[charIndex], this.LineHeight);
-                selectionCommand.Transform = Transform2D.CreateTranslated(new(cursor.X, cursor.Y - baseLine));
+                selectionCommand.LocalTransform = Transform2D.CreateTranslated(new(cursor.X, cursor.Y - baseLine));
 
                 if (!char.IsWhiteSpace(character))
                 {
@@ -389,7 +389,7 @@ public sealed class Text : Layoutable
                     characterCommand.TextureMap      = glyph;
                     characterCommand.PipelineVariant = PipelineVariant.Color;
                     characterCommand.Size            = size;
-                    characterCommand.Transform       = Transform2D.CreateTranslated(offset);
+                    characterCommand.LocalTransform       = Transform2D.CreateTranslated(offset);
                     characterCommand.StencilLayer    = this.StencilLayer;
 
                     cursor.X += (int)float.Round(glyphsWidths[charIndex]);
@@ -426,7 +426,7 @@ public sealed class Text : Layoutable
                 selectionCommand.Index     = previous.Index;
                 selectionCommand.ObjectId  = previous.ObjectId;
                 selectionCommand.Size      = previous.Size;
-                selectionCommand.Transform = previous.Transform;
+                selectionCommand.LocalTransform = previous.LocalTransform;
                 selectionCommand.Surrogate = TextCommand.SurrogateKind.Low;
             }
 
@@ -458,7 +458,7 @@ public sealed class Text : Layoutable
 
         var cursor = this.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
-        if (cursor.X > command.Transform.Position.X + (command.Size.Width / 2))
+        if (cursor.X > command.LocalTransform.Position.X + (command.Size.Width / 2))
         {
             character += command.Surrogate == TextCommand.SurrogateKind.High ? 2u : 1;
         }

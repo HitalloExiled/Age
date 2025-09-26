@@ -22,8 +22,8 @@ public abstract partial class Element
     private byte          commandsSeparator;
     private LayoutCommand layoutCommands;
 
-    internal ReadOnlySpan<Command> PreCommands  => this.Commands.AsSpan(..this.commandsSeparator);
-    internal ReadOnlySpan<Command> PostCommands => this.Commands.AsSpan(this.commandsSeparator..);
+    internal ReadOnlySpan<Command2D> PreCommands  => this.Commands.AsSpan(..this.commandsSeparator);
+    internal ReadOnlySpan<Command2D> PostCommands => this.Commands.AsSpan(this.commandsSeparator..);
 
     private RectCommand AllocateLayoutCommand(LayoutCommand layoutCommand)
     {
@@ -169,7 +169,7 @@ public abstract partial class Element
             this.ResolveImageSize(this.ComputedStyle.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
 
             layoutCommandImage.Size       = size;
-            layoutCommandImage.Transform  = transform;
+            layoutCommandImage.LocalTransform  = transform;
             layoutCommandImage.TextureMap = layoutCommandImage.TextureMap with { UV = uv };
         }
     }

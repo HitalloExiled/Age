@@ -156,7 +156,7 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         this.Pipelines[0].Dispose();
     }
 
-    protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport, in Transform2D transform)
+    protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<float> viewport)
     {
         var constant = new CanvasShader.PushConstant
         {
@@ -164,7 +164,7 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             Color     = 0xFFFF_0000_0000_0000 | command.ObjectId,
             Flags     = command.Flags,
             Size      = command.Size,
-            Transform = command.Transform * transform,
+            Transform = command.Transform,
             UV        = UVRect.Normalized,
             Viewport  = viewport,
         };
