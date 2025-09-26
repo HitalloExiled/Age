@@ -27,7 +27,7 @@ public sealed class RenderGraph(Viewport viewport, string name)
         }
         else if (node.RenderGraph != this)
         {
-            throw new InvalidOperationException("Node already connected to another pipeline.");
+            throw new InvalidOperationException("Node already connected to another RenderGraph.");
         }
 
         this.isDirty = true;
