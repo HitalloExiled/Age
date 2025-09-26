@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Age.Elements;
 using Age.Numerics;
-using Age.Scene;
 
 namespace Age.Playground;
 

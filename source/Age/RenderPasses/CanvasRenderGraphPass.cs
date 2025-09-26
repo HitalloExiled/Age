@@ -14,12 +14,12 @@ namespace Age.RenderPasses;
 
 public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
 {
-    private readonly Image[]                 colorImages = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
-    private readonly Framebuffer[]           framebuffers  = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
-    private readonly IndexBuffer             indexBuffer;
-    private readonly Image[]                 stencilImages = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
-    private readonly VertexBuffer            vertexBuffer;
-    private readonly IndexBuffer             wireframeIndexBuffer;
+    private readonly Image[]                           colorImages = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly Framebuffer[]                     framebuffers  = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly IndexBuffer32                     indexBuffer;
+    private readonly Image[]                           stencilImages = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly VertexBuffer<CanvasShader.Vertex> vertexBuffer;
+    private readonly IndexBuffer32                     wireframeIndexBuffer;
 
     protected override CanvasStencilMaskShader CanvasStencilWriterShader { get; }
     protected override CanvasStencilMaskShader CanvasStencilEraserShader { get; }
@@ -40,9 +40,9 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             new(-1,  1),
         };
 
-        this.vertexBuffer         = renderer.CreateVertexBuffer(vertices.AsSpan());
-        this.indexBuffer          = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
-        this.wireframeIndexBuffer = renderer.CreateIndexBuffer([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
+        this.vertexBuffer         = new(vertices.AsSpan());
+        this.indexBuffer          = new([0u, 1, 2, 0, 2, 3]);
+        this.wireframeIndexBuffer = new([0u, 1, 1, 2, 2, 3, 3, 0, 0, 2]);
 
         this.RenderPass = CreateRenderPass(this.Window.Surface.Swapchain.Format, VkImageLayout.PresentSrcKHR);
 
@@ -145,6 +145,7 @@ public sealed class CanvasRenderGraphPass : CanvasBaseRenderGraphPass
             this.Pipelines[i].Shader.Changed -= RenderingService.Singleton.RequestDraw;
         }
 
+        this.RenderPass.Dispose();
         this.CanvasStencilWriterShader.Dispose();
         this.CanvasStencilEraserShader.Dispose();
         this.RenderPass.Dispose();

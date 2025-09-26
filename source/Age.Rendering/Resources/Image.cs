@@ -13,6 +13,8 @@ public sealed class Image : Resource<VkImage>
 {
     private readonly Allocation? allocation;
 
+    internal override VkImage Instance { get; }
+
     public VkExtent3D         Extent        { get; }
     public VkFormat           Format        { get; }
     public VkImageLayout      InitialLayout { get; }
@@ -169,8 +171,6 @@ public sealed class Image : Resource<VkImage>
             _ => 0,
         };
 
-    public override VkImage Instance { get; }
-
     internal Image(VkImage instance, in VkImageCreateInfo description)
     {
         this.Instance      = instance;
@@ -238,7 +238,7 @@ public sealed class Image : Resource<VkImage>
     {
         var size = (ulong)(this.Extent.Width * this.Extent.Height * this.BytesPerPixel);
 
-        using var buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+        using var buffer = new Buffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
         this.CopyToBuffer(buffer, aspectMask);
 
@@ -448,7 +448,7 @@ public sealed class Image : Resource<VkImage>
 
     public void Update(scoped ReadOnlySpan<byte> data)
     {
-        using var buffer = VulkanRenderer.Singleton.CreateBuffer((ulong)data.Length, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+        using var buffer = new Buffer((ulong)data.Length, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
         buffer.Allocation.Memory.Write(0, 0, data);
 

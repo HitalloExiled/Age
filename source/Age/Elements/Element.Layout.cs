@@ -4,8 +4,9 @@ using Age.Numerics;
 using Age.Styling;
 using System.Runtime.CompilerServices;
 using Age.Storage;
-using Age.Resources;
 using Age.Commands;
+using Age.Rendering.Resources;
+using Image = Age.Styling.Image;
 
 namespace Age.Elements;
 

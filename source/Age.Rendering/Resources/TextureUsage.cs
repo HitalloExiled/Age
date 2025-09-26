@@ -1,6 +1,6 @@
 using ThirdParty.Vulkan.Flags;
 
-namespace Age.Resources;
+namespace Age.Rendering.Resources;
 
 /// <inheritdoc cref="VkImageUsageFlags" />
 [Flags]

@@ -1,8 +1,6 @@
-using System.Diagnostics;
 using Age.Core.Collections;
 using Age.Elements.Events;
 using Age.Platforms.Display;
-using Age.Scene;
 using AgeInput = Age.Input;
 
 namespace Age.Elements;

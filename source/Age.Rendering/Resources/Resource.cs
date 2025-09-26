@@ -26,7 +26,7 @@ public abstract class Resource : Disposable
 
 public abstract class Resource<T> : Resource
 {
-    public abstract T Instance { get; }
+    internal abstract T Instance { get; }
 
     public static implicit operator T(Resource<T> value) => value.Instance;
 }

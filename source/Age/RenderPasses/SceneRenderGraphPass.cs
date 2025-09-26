@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
+using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.RenderPasses;
 
@@ -121,7 +122,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
         return uniformSet;
     }
 
-    private unsafe BufferHandlePair UpdateUbo(Camera3D camera, Mesh mesh, in Matrix4x4<float> transform, in VkExtent2D viewport)
+    private unsafe BufferHandlePair UpdateUbo(Camera3D camera, Mesh mesh, Matrix4x4<float> transform, in VkExtent2D viewport)
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
 
@@ -131,7 +132,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
 
         if (!frameResource.Ubo.TryGetValue(hashcode, out var cameraBuffer))
         {
-            var buffer = this.Renderer.CreateBuffer(size, VkBufferUsageFlags.UniformBuffer, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+            var buffer = new Buffer(size, VkBufferUsageFlags.UniformBuffer, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
             buffer.Allocation.Memory.Map(0, size, 0, out var handle);
 

@@ -1,9 +1,9 @@
 using ThirdParty.Vulkan.Flags;
 
-namespace Age.Resources;
+namespace Age.Rendering.Resources;
 
 [Flags]
-public enum SampleCount
+public enum TextureSamples
 {
     None = 0,
     N1   = VkSampleCountFlags.N1,

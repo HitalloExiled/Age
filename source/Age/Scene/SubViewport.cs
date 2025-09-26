@@ -1,7 +1,7 @@
 using Age.Commands;
 using Age.Numerics;
+using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
-using Age.Resources;
 
 namespace Age.Scene;
 
@@ -13,7 +13,7 @@ public class SubViewport : Viewport
 
     private RenderTarget renderTarget;
 
-    public override RenderTarget RenderTarget => renderTarget;
+    public override RenderTarget RenderTarget => this.renderTarget;
 
     public override Size<uint> Size
     {

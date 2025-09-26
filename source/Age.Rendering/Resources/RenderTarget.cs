@@ -1,17 +1,15 @@
 using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Core;
-using Age.Extensions;
 using Age.Numerics;
 using Age.Rendering.Extensions;
-using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using System.Diagnostics.CodeAnalysis;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
 
-namespace Age.Resources;
+namespace Age.Rendering.Resources;
 
 public sealed partial class RenderTarget : Resource
 {
@@ -301,8 +299,7 @@ public sealed partial class RenderTarget : Resource
 
     protected override void OnDisposed()
     {
-        this.renderPass.Dispose();
-
+        VulkanRenderer.Singleton.DeferredDispose(this.renderPass);
         VulkanRenderer.Singleton.DeferredDispose(this.Framebuffer);
 
         foreach (var attachment in this.colorAttachments)

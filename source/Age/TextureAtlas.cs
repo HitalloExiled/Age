@@ -4,7 +4,7 @@ using Age.Core.Extensions;
 using Age.Extensions;
 using Age.Internal;
 using Age.Numerics;
-using Age.Resources;
+using Age.Rendering.Resources;
 
 namespace Age;
 

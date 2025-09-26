@@ -13,8 +13,8 @@ namespace Age.RenderPasses;
 
 public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 {
-    private readonly IndexBuffer             indexBuffer;
-    private readonly VertexBuffer            vertexBuffer;
+    private readonly IndexBuffer32                     indexBuffer;
+    private readonly VertexBuffer<CanvasShader.Vertex> vertexBuffer;
 
     private Image       colorImage;
     private Framebuffer framebuffer;
@@ -41,8 +41,8 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
             new(-1,  1),
         };
 
-        this.vertexBuffer  = renderer.CreateVertexBuffer(vertices.AsSpan());
-        this.indexBuffer   = renderer.CreateIndexBuffer([0u, 1, 2, 0, 2, 3]);
+        this.vertexBuffer  = new(vertices.AsSpan());
+        this.indexBuffer   = new([0, 1, 2, 0, 2, 3]);
         this.CommandBuffer = renderer.AllocateCommand(VkCommandBufferLevel.Primary);
         this.RenderPass    = CreateRenderPass(VkFormat.R16G16B16A16Unorm, VkImageLayout.General);
 

@@ -1,4 +1,4 @@
-namespace Age.Resources;
+namespace Age.Rendering.Resources;
 
 public sealed class SharedResource<T>(T resource) : IDisposable where T : IDisposable
 {

@@ -13,11 +13,11 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public abstract class Shader(RenderPass renderPass) : Resource
+public abstract class Shader(VkRenderPass renderPass) : Resource
 {
     public event Action? Changed;
 
-    public RenderPass RenderPass { get; } = renderPass;
+    public VkRenderPass RenderPass { get; } = renderPass;
 
     public abstract VkShaderStageFlags PushConstantStages { get; }
 
@@ -66,7 +66,7 @@ where TVertexInput  : IVertexInput
     public sealed override VkShaderStageFlags            PushConstantStages  => this.pushConstantStages;
     public sealed override NativeArray<VkDescriptorType> UniformBindings     => this.uniformBindings;
 
-    public Shader(string file, RenderPass renderPass, in ShaderOptions options) : base(renderPass)
+    protected Shader(string file, VkRenderPass renderPass, in ShaderOptions options) : base(renderPass)
     {
         this.filepath = string.Intern(Path.IsPathRooted(file) ? file : Path.GetFullPath(Path.Join(shadersPath, file)));
         this.options  = options;
@@ -89,6 +89,8 @@ where TVertexInput  : IVertexInput
             watcher.Changed += this.OnFileChanged;
         }
     }
+
+    protected Shader(string file, RenderTarget renderTarget, in ShaderOptions options) : this(file, renderTarget.RenderPass, options) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static VkShaderStageFlags SlangStageToVkShaderStageFlags(SlangStage stage) =>
@@ -550,7 +552,7 @@ where TVertexInput  : IVertexInput
                 PVertexInputState   = &pipelineVertexInputStateCreateInfo,
                 PViewportState      = &pipelineViewportStateCreateInfo,
                 StageCount          = (uint)pipelineShaderStageCreateInfos.Count,
-                RenderPass          = this.RenderPass.Instance.Handle,
+                RenderPass          = this.RenderPass.Handle,
                 PDepthStencilState  = &depthStencilState,
                 Subpass             = this.options.Subpass,
             };

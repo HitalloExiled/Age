@@ -1,15 +1,16 @@
 using Age.Rendering.Resources;
+using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 
 namespace Age.Shaders;
 
 public partial class CanvasShader : Shader<CanvasShader.Vertex>
 {
-    public override string              Name               { get; } = nameof(CanvasShader);
-    public override VkPipelineBindPoint BindPoint          { get; } = VkPipelineBindPoint.Graphics;
-    public override VkPrimitiveTopology PrimitiveTopology  { get; } = VkPrimitiveTopology.TriangleList;
+    public override string              Name              { get; } = nameof(CanvasShader);
+    public override VkPipelineBindPoint BindPoint         { get; } = VkPipelineBindPoint.Graphics;
+    public override VkPrimitiveTopology PrimitiveTopology { get; } = VkPrimitiveTopology.TriangleList;
 
-    protected CanvasShader(string file, RenderPass renderPass, uint subpass, StencilOp stencilOp, bool watch)
+    protected CanvasShader(string file, VkRenderPass renderPass, uint subpass, StencilOp stencilOp, bool watch)
     : base(
         file,
         renderPass,
@@ -24,11 +25,11 @@ public partial class CanvasShader : Shader<CanvasShader.Vertex>
     )
     { }
 
-    public CanvasShader(RenderPass renderPass, bool watch)
+    public CanvasShader(VkRenderPass renderPass, bool watch)
     : this(renderPass, 0, watch)
     { }
 
-    public CanvasShader(RenderPass renderPass, uint subpass, bool watch)
+    public CanvasShader(VkRenderPass renderPass, uint subpass, bool watch)
     : this($"{nameof(CanvasShader)}.slang", renderPass, subpass, StencilOp.None, watch)
     { }
 }

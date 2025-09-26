@@ -7,14 +7,13 @@ namespace Age.Rendering.Resources;
 
 public sealed class CommandBuffer : Resource<VkCommandBuffer>
 {
-    private readonly VkCommandBuffer instance;
-    private readonly bool            owner;
+    private readonly bool owner;
 
-    public override VkCommandBuffer Instance => this.instance;
+    internal override VkCommandBuffer Instance { get; }
 
     internal CommandBuffer(VkCommandBuffer instance, bool owner)
     {
-        this.instance = instance;
+        this.Instance = instance;
         this.owner    = owner;
     }
 

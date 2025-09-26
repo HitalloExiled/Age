@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
-using static Age.Resources.RenderTarget.CreateInfo;
+using static Age.Rendering.Resources.RenderTarget.CreateInfo;
 
-namespace Age.Resources;
+namespace Age.Rendering.Resources;
 
 public sealed partial class RenderTarget
 {

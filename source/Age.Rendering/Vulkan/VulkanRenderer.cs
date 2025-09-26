@@ -8,8 +8,6 @@ using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
 
-using Buffer = Age.Rendering.Resources.Buffer;
-
 namespace Age.Rendering.Vulkan;
 
 public sealed unsafe partial class VulkanRenderer : Disposable
@@ -176,92 +174,8 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         return new(commandBuffer, true);
     }
 
-    public Buffer CreateBuffer(ulong size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
-    {
-        var bufferCreateInfo = new VkBufferCreateInfo
-        {
-            Size  = size,
-            Usage = usage,
-        };
-
-        var device = this.Context.Device;
-
-        var buffer = device.CreateBuffer(bufferCreateInfo);
-
-        buffer.GetMemoryRequirements(out var memRequirements);
-
-        var memoryType = this.Context.FindMemoryType(memRequirements.MemoryTypeBits, properties);
-
-        var memoryAllocateInfo = new VkMemoryAllocateInfo
-        {
-            AllocationSize  = memRequirements.Size,
-            MemoryTypeIndex = memoryType
-        };
-
-        var memory = device.AllocateMemory(memoryAllocateInfo);
-
-        buffer.BindMemory(memory, 0);
-
-        return new(buffer)
-        {
-            Allocation = new()
-            {
-                Alignment  = memRequirements.Alignment,
-                Memory     = memory,
-                Memorytype = memoryType,
-                Offset     = 0,
-                Size       = size,
-            },
-            Usage = usage,
-        };
-    }
-
-    public IndexBuffer CreateIndexBuffer(scoped ReadOnlySpan<ushort> indices) =>
-        this.CreateIndexBuffer(indices, VkIndexType.Uint16);
-
-    public IndexBuffer CreateIndexBuffer(scoped ReadOnlySpan<uint> indices) =>
-        this.CreateIndexBuffer(indices, VkIndexType.Uint32);
-
-    public IndexBuffer CreateIndexBuffer<T>(scoped ReadOnlySpan<T> indices, VkIndexType indexType) where T : unmanaged, INumber<T>
-    {
-        var bufferSize = (ulong)(sizeof(T) * indices.Length);
-
-        var buffer = this.CreateBuffer(
-            bufferSize,
-            VkBufferUsageFlags.TransferDst | VkBufferUsageFlags.IndexBuffer,
-            VkMemoryPropertyFlags.DeviceLocal
-        );
-
-        buffer.Update([..indices]);
-
-        return new()
-        {
-            Buffer = buffer,
-            Type   = indexType,
-            Size   = (uint)indices.Length,
-        };
-    }
-
     public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
         this.Context.CreateSurface(handle, clientSize);
-
-    public VertexBuffer CreateVertexBuffer<T>(scoped ReadOnlySpan<T> data) where T : unmanaged
-    {
-        var size = (ulong)(data.Length * sizeof(T));
-        var buffer = this.CreateBuffer(
-            size,
-            VkBufferUsageFlags.TransferDst | VkBufferUsageFlags.VertexBuffer,
-            VkMemoryPropertyFlags.DeviceLocal
-        );
-
-        buffer.Update(data);
-
-        return new()
-        {
-            Buffer = buffer,
-            Size   = (uint)data.Length,
-        };
-    }
 
     public void DeferredDispose(IDisposable disposable)
     {

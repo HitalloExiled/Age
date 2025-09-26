@@ -1,6 +1,6 @@
 using Age.Numerics;
 
-namespace Age.Resources;
+namespace Age.Rendering.Resources;
 
 public partial class Texture
 {

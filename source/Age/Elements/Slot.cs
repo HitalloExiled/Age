@@ -1,5 +1,3 @@
-using Age.Scene;
-
 namespace Age.Elements;
 
 public sealed class Slot : Element

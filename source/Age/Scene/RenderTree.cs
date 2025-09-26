@@ -1,7 +1,7 @@
+using Age.Commands;
 using Age.Core;
 using Age.Core.Extensions;
 using Age.Elements;
-using Age.Rendering.Vulkan;
 using Age.RenderPasses;
 using System.Diagnostics.CodeAnalysis;
 using ThirdParty.Vulkan.Flags;
@@ -88,7 +88,7 @@ public sealed partial class RenderTree : Disposable
 
         var size = image.Extent.Width * image.Extent.Height * sizeof(ulong);
 
-        this.buffer = VulkanRenderer.Singleton.CreateBuffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+        this.buffer = new Buffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
     }
 
     private void UpdateTimers()

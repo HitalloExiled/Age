@@ -1,5 +1,4 @@
 using Age.Core.Extensions;
-using Age.Scene;
 using Age.Styling;
 using System.Runtime.CompilerServices;
 

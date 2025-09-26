@@ -8,7 +8,7 @@ namespace Age.Rendering.Resources;
 
 public sealed partial class RenderPass : Resource<VkRenderPass>
 {
-    public override VkRenderPass Instance { get; }
+    internal override VkRenderPass Instance { get; }
 
     public unsafe RenderPass(in RenderPassCreateInfo createInfo)
     {

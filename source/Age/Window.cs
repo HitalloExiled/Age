@@ -1,17 +1,12 @@
-using Age.Rendering.Extensions;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
-using Age.Resources;
 using Age.Scene;
-using ThirdParty.Vulkan.Enums;
-using ThirdParty.Vulkan.Flags;
 
-using DisplayWindow           = Age.Platforms.Display.Window;
+using DisplayWindow = Age.Platforms.Display.Window;
 using WindowMouseEventHandler = Age.Platforms.Display.WindowMouseEventHandler;
 using Age.Core;
-using ThirdParty.Vulkan;
 
 namespace Age;
 

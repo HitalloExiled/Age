@@ -7,6 +7,7 @@ using Age.Platforms.Display;
 using WavefrontLoader = Age.Resources.Loaders.Wavefront.Loader;
 
 using static Age.Shaders.GeometryShader;
+using Age.Rendering.Resources;
 
 namespace Age.Playground;
 

@@ -15,7 +15,7 @@ internal partial record struct ComposedPath(List<Layoutable> LeftToAncestor, Lis
             elements.Add(enumerator.Current);
         }
 
-        return elements.AsReadOnlySpan();
+        return elements.AsSpan();
     }
 
     public readonly Enumerator GetEnumerator() => new(this.LeftToAncestor.AsSpan(), this.RightToAncestor.AsSpan(0, int.Max(1, this.RightToAncestor.Count - 1)));

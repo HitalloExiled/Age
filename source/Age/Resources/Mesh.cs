@@ -1,8 +1,6 @@
 using Age.Commands;
-using Age.Rendering.Vulkan;
 using Age.Scene;
-
-using static Age.Shaders.GeometryShader;
+using Age.Shaders;
 
 namespace Age.Resources;
 
@@ -12,12 +10,12 @@ public sealed class Mesh : Spatial3D
 
     public Material Material { get; set; } = new();
 
-    public Mesh(scoped ReadOnlySpan<Vertex> vertices, scoped ReadOnlySpan<uint> indices)
+    public Mesh(ReadOnlySpan<GeometryShader.Vertex> vertices, scoped ReadOnlySpan<uint> indices)
     {
         var command = CommandPool.MeshCommand.Get();
 
-        command.VertexBuffer = VulkanRenderer.Singleton.CreateVertexBuffer(vertices);
-        command.IndexBuffer  = VulkanRenderer.Singleton.CreateIndexBuffer(indices);
+        command.VertexBuffer = new(vertices);
+        command.IndexBuffer  = new(indices);
         command.Mesh         = this;
 
         this.SingleCommand = command;

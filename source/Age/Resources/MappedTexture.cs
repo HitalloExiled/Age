@@ -1,4 +1,5 @@
 using Age.Numerics;
+using Age.Rendering.Resources;
 
 namespace Age.Resources;
 

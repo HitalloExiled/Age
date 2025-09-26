@@ -1,57 +1,73 @@
+using Age.Numerics;
+using Age.Rendering.Extensions;
 using Age.Rendering.Vulkan;
-using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
+using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public sealed class Texture : Resource
+public partial class Texture : Resource
 {
-    private readonly bool imageOwner;
+    internal bool IsImageOwner { get; }
 
-    public Image       Image     { get; }
-    public VkImageView ImageView { get; }
+    internal Image       Image     { get; }
+    internal VkImageView ImageView { get; }
+    internal Sampler     Sampler   { get; } = new();
 
-    public Sampler Sampler { get; } = new();
+    public TextureFormat Format  => (TextureFormat)this.Image.Format;
+    public SampleCount   Samples => (SampleCount)this.Image.Samples;
+    public TextureType   Type    => (TextureType)this.Image.Type;
+    public TextureUsage  Usage   => (TextureUsage)this.Image.Usage;
 
-    public Texture(in TextureCreateInfo textureCreateInfo)
+    public TextureAspect Aspect { get; }
+
+    public Extent<uint> Extent => this.Image.Extent.ToExtent();
+
+    internal Texture(Image image, bool owner, TextureAspect aspect)
     {
-        const VkSampleCountFlags SAMPLES = VkSampleCountFlags.N1;
-        const VkImageTiling      TILING  = VkImageTiling.Optimal;
-        const VkImageUsageFlags  USAGE   = VkImageUsageFlags.TransferSrc | VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
-
-        var imageCreateInfo = new VkImageCreateInfo
-        {
-            ArrayLayers = 1,
-            Extent = new()
-            {
-                Width  = textureCreateInfo.Width,
-                Height = textureCreateInfo.Height,
-                Depth  = textureCreateInfo.Depth
-            },
-            Format        = textureCreateInfo.Format,
-            ImageType     = textureCreateInfo.ImageType,
-            InitialLayout = VkImageLayout.Undefined,
-            MipLevels     = 1,
-            Samples       = SAMPLES,
-            Tiling        = TILING,
-            Usage         = USAGE,
-        };
-
-        this.Image      = new Image(imageCreateInfo, VkImageLayout.TransferDstOptimal);
-        this.ImageView  = CreateImageView(this.Image);
-        this.imageOwner = true;
+        this.Image        = image;
+        this.ImageView    = CreateImageView(image, aspect);
+        this.IsImageOwner = owner;
+        this.Aspect       = aspect;
     }
 
-    private static VkImageView CreateImageView(Image image)
+    public Texture(in CreateInfo createInfo)
+    {
+        var imageCreateInfo = new VkImageCreateInfo
+        {
+            ArrayLayers   = 1,
+            Extent        = createInfo.Extent.ToExtent3D(),
+            Format        = (VkFormat)createInfo.Format,
+            ImageType     = (VkImageType)createInfo.Type,
+            InitialLayout = VkImageLayout.Undefined,
+            MipLevels     = createInfo.Mipmap,
+            Samples       = (VkSampleCountFlags)createInfo.Samples,
+            Tiling        = VkImageTiling.Optimal,
+            Usage         = (VkImageUsageFlags)createInfo.Usage,
+        };
+
+        this.IsImageOwner = true;
+        this.Image      = new(imageCreateInfo);
+        this.ImageView  = CreateImageView(this.Image, createInfo.Aspect);
+        this.Aspect     = createInfo.Aspect;
+    }
+
+    public Texture(in CreateInfo createInfo, in Color clearColor) : this(createInfo) =>
+        this.Image.ClearColor(clearColor, VkImageLayout.ShaderReadOnlyOptimal);
+
+    public Texture(in CreateInfo createInfo, ReadOnlySpan<byte> buffer) : this(createInfo) =>
+        this.Image.Update(buffer);
+
+    private static VkImageView CreateImageView(Image image, TextureAspect aspect)
     {
         var imageViewCreateInfo = new VkImageViewCreateInfo
         {
             Format           = image.Format,
             Image            = image.Instance.Handle,
-            SubresourceRange = new()
+            SubresourceRange =
             {
-                AspectMask = VkImageAspectFlags.Color,
+                AspectMask = (VkImageAspectFlags)aspect,
                 LayerCount = 1,
                 LevelCount = 1,
             },
@@ -61,26 +77,17 @@ public sealed class Texture : Resource
         return VulkanRenderer.Singleton.Context.Device.CreateImageView(imageViewCreateInfo);
     }
 
-    public Texture(Image image)
-    {
-        this.Image     = image;
-        this.ImageView = CreateImageView(image);
-    }
-
-    public Texture(in TextureCreateInfo textureCreate, scoped ReadOnlySpan<byte> data) : this(textureCreate) =>
-        this.Image!.Update(data);
-
     protected override void OnDisposed()
     {
-        if (this.imageOwner)
+        if (this.IsImageOwner)
         {
-            this.Image.Dispose();
+            VulkanRenderer.Singleton.DeferredDispose(this.Image);
         }
 
-        this.ImageView.Dispose();
-        this.Sampler.Dispose();
+        VulkanRenderer.Singleton.DeferredDispose(this.ImageView);
+        VulkanRenderer.Singleton.DeferredDispose(this.Sampler);
     }
 
-    public void Update(scoped ReadOnlySpan<byte> data) =>
-        this.Image.Update(data);
+    public void Update(scoped ReadOnlySpan<byte> buffer) =>
+        this.Image.Update(buffer);
 }

@@ -1,4 +1,4 @@
-namespace Age.Resources;
+namespace Age.Rendering.Resources;
 
 public readonly record struct ColorAttachment
 {

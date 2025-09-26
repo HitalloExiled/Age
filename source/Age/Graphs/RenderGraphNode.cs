@@ -10,8 +10,8 @@ public abstract class RenderGraphNode
     internal SortState SortState { get; set; }
     internal RenderGraphPipeline?     Pipeline  { get; set; }
 
-    public ReadOnlySpan<RenderGraphEdge> InputEdges  => this.inputEdges.AsReadOnlySpan();
-    public ReadOnlySpan<RenderGraphEdge> OutputEdges => this.outputEdges.AsReadOnlySpan();
+    public ReadOnlySpan<RenderGraphEdge> InputEdges  => this.inputEdges.AsSpan();
+    public ReadOnlySpan<RenderGraphEdge> OutputEdges => this.outputEdges.AsSpan();
 
     protected virtual void AfterExecute() { }
     protected virtual void BeforeExecute() { }

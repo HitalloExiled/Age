@@ -1,6 +1,7 @@
 using Age.Core;
 using Age.Core.Extensions;
 using Age.Numerics;
+using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.Resources;
 using SkiaSharp;

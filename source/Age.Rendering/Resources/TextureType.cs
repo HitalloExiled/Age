@@ -1,6 +1,6 @@
 using ThirdParty.Vulkan.Enums;
 
-namespace Age.Resources;
+namespace Age.Rendering.Resources;
 
 /// <inheritdoc cref="VkImageType" />
 public enum TextureType
