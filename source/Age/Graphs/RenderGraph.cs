@@ -1,9 +1,8 @@
 using System.Diagnostics;
-using Age.Scene;
 
 namespace Age.Graphs;
 
-public sealed class RenderGraph(Viewport viewport, string name)
+public sealed class RenderGraph
 {
     private bool isDirty;
 
@@ -11,12 +10,8 @@ public sealed class RenderGraph(Viewport viewport, string name)
     private readonly List<RenderGraphNode>  nodes         = [];
     private readonly List<RenderGraphNode>  nodeStack     = [];
     private readonly List<RenderGraphNode>  roots         = [];
-    private readonly RenderContext          renderContext = new();
 
-    public string   Name     => name;
-    public Viewport Viewport => viewport;
-
-    public IReadOnlyList<RenderGraphNode> Nodes => this.nodes;
+    public IReadOnlyList<RenderGraphNode> Nodes         => this.nodes;
 
     private void AddNode(RenderGraphNode node)
     {
@@ -152,7 +147,7 @@ public sealed class RenderGraph(Viewport viewport, string name)
         this.edgeStack.Clear();
     }
 
-    public void Execute()
+    public void Execute(RenderContext context)
     {
         if (this.isDirty)
         {
@@ -163,7 +158,7 @@ public sealed class RenderGraph(Viewport viewport, string name)
 
         foreach (var node in this.nodes)
         {
-            node.CallExecute(this.renderContext);
+            node.CallExecute(context);
         }
     }
 

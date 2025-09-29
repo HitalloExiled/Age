@@ -8,7 +8,8 @@ public partial class RenderGraphTest
     [Fact]
     public void Execute()
     {
-        var pipeline = new Graphs.RenderGraph(null!, "Rasterization");
+        var context  = new RenderContext();
+        var pipeline = new Graphs.RenderGraph();
 
         var expected = new List<Entry>
         {
@@ -101,7 +102,7 @@ public partial class RenderGraphTest
         {
             actual.Clear();
 
-            pipeline.Execute();
+            pipeline.Execute(context);
 
             Assert.Equal(expected, actual);
         }
@@ -110,7 +111,7 @@ public partial class RenderGraphTest
     [Fact]
     public void ThrowIfCiclic()
     {
-        var pipeline = new Graphs.RenderGraph(null!, "Rasterization");
+        var pipeline = new Graphs.RenderGraph();
 
         var normalPass = new NormalPass([]);
         var depthPass  = new DepthPass([]);
