@@ -115,10 +115,7 @@ public sealed class Text : Layoutable
         this.AppendChild(this.caretTimer);
         this.AppendChild(this.selectionTimer);
 
-        this.NodeFlags = NodeFlags.Immutable;
-
         this.caretCommand              = CommandPool.RectCommand.Get();
-        this.caretCommand.Metadata     = 1337; // TODO: Remove
         this.caretCommand.Color        = Color.White;
         this.caretCommand.Flags        = Flags.ColorAsBackground;
         this.caretCommand.TextureMap   = TextureMap.Default;
@@ -128,6 +125,8 @@ public sealed class Text : Layoutable
         this.Commands.Add(this.caretCommand);
 
         this.Buffer.Modified += this.OnTextChange;
+
+        this.Seal();
     }
 
     public Text(string? value) : this() =>

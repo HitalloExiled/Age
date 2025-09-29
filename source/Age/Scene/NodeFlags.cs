@@ -4,7 +4,7 @@ namespace Age.Scene;
 public enum NodeFlags
 {
     None,
-    IgnoreChildrenUpdates = 1 << 0,
-    IgnoreUpdates         = 1 << 1,
-    Immutable             = 1 << 2,
+    ChildrenUpdatesSuspended = 1 << 0,
+    Sealed                   = 1 << 2,
+    UpdatesSuspended         = 1 << 1,
 }

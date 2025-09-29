@@ -48,7 +48,7 @@ public sealed partial class RenderTree : Disposable
         {
             var current = enumerator.Current;
 
-            if (current.NodeFlags.HasFlags(NodeFlags.IgnoreUpdates))
+            if (current.IsUpdatesSuspended)
             {
                 enumerator.SkipToNextSibling();
             }
@@ -67,7 +67,7 @@ public sealed partial class RenderTree : Disposable
         {
             var current = enumerator.Current;
 
-            if (current.NodeFlags.HasFlags(NodeFlags.IgnoreUpdates))
+            if (current.IsUpdatesSuspended)
             {
                 enumerator.SkipToNextSibling();
             }
@@ -106,7 +106,7 @@ public sealed partial class RenderTree : Disposable
         {
             var current = enumerator.Current;
 
-            if (current.NodeFlags.HasFlags(NodeFlags.IgnoreUpdates))
+            if (current.IsUpdatesSuspended)
             {
                 enumerator.SkipToNextSibling();
             }
@@ -114,7 +114,7 @@ public sealed partial class RenderTree : Disposable
             {
                 current.Update();
 
-                if (current.NodeFlags.HasFlags(NodeFlags.IgnoreChildrenUpdates))
+                if (current.IsChildrenUpdatesSuspended)
                 {
                     enumerator.SkipToNextSibling();
                 }

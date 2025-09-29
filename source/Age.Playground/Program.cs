@@ -6,6 +6,9 @@ Logger.Level = LogLevel.Info;
 
 using var engine = new Engine("Age", new(800 + 16, 800 + 39), new(800, 100));
 
-engine.Window.AppendChild(new Editor());
+engine.Window.Scene2D = new()
+{
+    Children = [new Editor()]
+};
 
 engine.Run();

@@ -59,7 +59,6 @@ public partial class TextBox : Element
 
     public TextBox()
     {
-        this.NodeFlags   = NodeFlags.Immutable;
         this.IsFocusable = true;
 
         this.StyleSheet = Theme.Current.TextBox.Outlined;
@@ -77,6 +76,8 @@ public partial class TextBox : Element
         this.Deactivated += this.text.HandleDeactivate;
 
         this.text.Buffer.Changed += this.OnTextBufferChanged;
+
+        this.Seal();
     }
 
     private void AddInputEvents()

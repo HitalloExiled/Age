@@ -12,8 +12,7 @@ public sealed class Canvas : Element
 
     public Canvas()
     {
-        this.NodeFlags = NodeFlags.IgnoreUpdates;
-        this.Style     = new()
+        this.Style = new()
         {
             // Padding = new(Unit.Px(PADDING)),
             Color           = Color.White,

@@ -9,6 +9,8 @@ namespace Age.Scene;
 
 public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<Node>
 {
+    private NodeFlags nodeFlags;
+
     internal int Index
     {
         get;
@@ -34,8 +36,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     [MemberNotNullWhen(true, nameof(Viewport), nameof(Window))]
     public bool IsConnected { get; private set; }
 
-    public NodeFlags NodeFlags { get; protected set; }
-
     public Node[] Children
     {
         get => [.. this];
@@ -59,6 +59,10 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             return current;
         }
     }
+
+    public bool IsChildrenUpdatesSuspended => this.nodeFlags.HasFlags(NodeFlags.ChildrenUpdatesSuspended);
+    public bool IsSealed                   => this.nodeFlags.HasFlags(NodeFlags.Sealed);
+    public bool IsUpdatesSuspended         => this.nodeFlags.HasFlags(NodeFlags.UpdatesSuspended);
 
     public virtual string? Name { get; set; }
 
@@ -253,10 +257,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void AppendOrPrepend(Node node, bool append)
     {
-        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
-        {
-            return;
-        }
+        this.ThowIfSealed();
 
         if (node == this)
         {
@@ -296,10 +297,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void AppendOrPrepend(scoped ReadOnlySpan<Node> nodes, bool append)
     {
-        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
-        {
-            return;
-        }
+        this.ThowIfSealed();
 
         if (nodes.Length == 0)
         {
@@ -366,12 +364,85 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ThowIfSealed()
+    {
+        if (this.IsSealed)
+        {
+            throw new InvalidOperationException("Cannot modify a sealed node.");
+        }
+    }
+
+    private void DetachChildren(bool dispose = false)
+    {
+        this.ThowIfSealed();
+
+        for (var current = this.LastChild; current != null; current = this.LastChild)
+        {
+            var previousSibling = current.PreviousSibling;
+
+            ClearParenting(this, current, dispose);
+
+            this.LastChild = previousSibling;
+            previousSibling?.NextSibling = null;
+        }
+
+        this.FirstChild = null;
+    }
+
+    private void DetachChildrenInRange(Node start, Node end, bool dispose)
+    {
+        this.ThowIfSealed();
+
+        if (start.Parent != this || end.Parent != this)
+        {
+            throw new InvalidOperationException("Start and end must be child of this node");
+        }
+
+        if (start > end)
+        {
+            (start, end) = (end, start);
+        }
+
+        var startPrevious = start.PreviousSibling;
+        var endNext       = end.NextSibling;
+
+        for (Node? current = end, previous; ; current = previous)
+        {
+            previous = current!.PreviousSibling;
+
+            ClearParenting(this, current, dispose);
+
+            previous?.NextSibling = endNext;
+
+            if (current == start)
+            {
+                break;
+            }
+        }
+
+        if (startPrevious == null)
+        {
+            this.FirstChild = endNext;
+        }
+        else
+        {
+            startPrevious.NextSibling = endNext;
+        }
+
+        if (endNext == null)
+        {
+            this.LastChild = startPrevious;
+        }
+        else
+        {
+            endNext.PreviousSibling = startPrevious;
+        }
+    }
+
     private void InsertAfterOrBefore(Node reference, Node node, bool after)
     {
-        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
-        {
-            return;
-        }
+        this.ThowIfSealed();
 
         if (reference.Parent != this)
         {
@@ -428,10 +499,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     private void InsertAfterOrBefore(Node reference, scoped ReadOnlySpan<Node> nodes, bool after)
     {
-        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
-        {
-            return;
-        }
+        this.ThowIfSealed();
 
         if (reference.Parent != this)
         {
@@ -514,92 +582,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
-    private void DetachChildren(bool dispose = false)
-    {
-        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
-        {
-            return;
-        }
-
-        for (var current = this.LastChild; current != null; current = this.LastChild)
-        {
-            var previousSibling = current.PreviousSibling;
-
-            ClearParenting(this, current, dispose);
-
-            this.LastChild = previousSibling;
-            previousSibling?.NextSibling = null;
-        }
-
-        this.FirstChild = null;
-    }
-
-    private void DetachChildrenInRange(Node start, Node end, bool dispose)
-    {
-        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
-        {
-            return;
-        }
-
-        if (start.Parent != this || end.Parent != this)
-        {
-            throw new InvalidOperationException("Start and end must be child of this node");
-        }
-
-        if (start > end)
-        {
-            (start, end) = (end, start);
-        }
-
-        var startPrevious = start.PreviousSibling;
-        var endNext       = end.NextSibling;
-
-        for (Node? current = end, previous; ; current = previous)
-        {
-            previous = current!.PreviousSibling;
-
-            ClearParenting(this, current, dispose);
-
-            previous?.NextSibling = endNext;
-
-            if (current == start)
-            {
-                break;
-            }
-        }
-
-        if (startPrevious == null)
-        {
-            this.FirstChild = endNext;
-        }
-        else
-        {
-            startPrevious.NextSibling = endNext;
-        }
-
-        if (endNext == null)
-        {
-            this.LastChild = startPrevious;
-        }
-        else
-        {
-            endNext.PreviousSibling = startPrevious;
-        }
-    }
-
-    protected sealed override void OnDisposed(bool disposing)
-    {
-        if (disposing)
-        {
-            InvokeDisposedCallbacks(this);
-
-            foreach (var child in this.GetTraversalEnumerator())
-            {
-                child.Dispose();
-            }
-        }
-    }
-
     private void PropagateOnConnected()
     {
         apply(this);
@@ -674,6 +656,37 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     private protected virtual void OnIndexed() { }
     private protected virtual void OnDetachingInternal() { }
     private protected virtual void OnDetachedInternal() { }
+
+    protected sealed override void OnDisposed(bool disposing)
+    {
+        if (disposing)
+        {
+            InvokeDisposedCallbacks(this);
+
+            foreach (var child in this.GetTraversalEnumerator())
+            {
+                child.Dispose();
+            }
+        }
+    }
+
+    protected void Seal() =>
+        this.nodeFlags |= NodeFlags.Sealed;
+
+    protected void Unseal() =>
+        this.nodeFlags &= ~NodeFlags.Sealed;
+
+    protected void SuspendUpdates() =>
+        this.nodeFlags |= NodeFlags.UpdatesSuspended;
+
+    protected void ResumeUpdates() =>
+        this.nodeFlags &= ~NodeFlags.UpdatesSuspended;
+
+    protected void SuspendChildrenUpdates() =>
+        this.nodeFlags |= NodeFlags.ChildrenUpdatesSuspended;
+
+    protected void ResumeChildrenUpdates() =>
+        this.nodeFlags &= ~NodeFlags.ChildrenUpdatesSuspended;
 
     protected virtual void OnAttached() { }
     protected virtual void OnChildAttached(Node node) { }
@@ -798,10 +811,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void DetachChild(Node node)
     {
-        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
-        {
-            return;
-        }
+        this.ThowIfSealed();
 
         if (node.Parent != this)
         {
@@ -919,10 +929,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void Replace(Node target, Node node)
     {
-        if (this.NodeFlags.HasFlags(NodeFlags.Immutable))
-        {
-            return;
-        }
+        this.ThowIfSealed();
 
         if (target.Parent != this)
         {
@@ -940,7 +947,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
 
         var previous = target.PreviousSibling;
-        var next     = target.NextSibling;
+        var next = target.NextSibling;
 
         ClearParenting(this, target, false);
 
@@ -965,7 +972,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
 
         node.PreviousSibling = previous;
-        node.NextSibling     = next;
+        node.NextSibling = next;
 
         SetParenting(this, node);
     }
@@ -991,6 +998,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void ReplaceWith(Node target, scoped ReadOnlySpan<Node> nodes)
     {
+        this.ThowIfSealed();
+
         if (target.Parent != this)
         {
             throw new InvalidOperationException("Target is not child of this node");

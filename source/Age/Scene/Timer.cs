@@ -15,7 +15,7 @@ public sealed class Timer : Renderable
     public TimeSpan WaitTime { get; set; }
 
     public Timer() =>
-        this.NodeFlags = NodeFlags.IgnoreUpdates;
+        this.SuspendUpdates();
 
     private void UpdateTimestamp() =>
         this.timestamp = Stopwatch.GetTimestamp();

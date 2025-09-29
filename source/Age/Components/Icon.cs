@@ -32,8 +32,6 @@ public class Icon : Element
 
     public Icon(string? iconName = null, ushort? fontSize = null, Color? color = null)
     {
-        this.NodeFlags = NodeFlags.Immutable;
-
         this.IconName = iconName;
 
         if (fontSize.HasValue)
@@ -52,6 +50,8 @@ public class Icon : Element
         this.ShadowTree.AppendChild(this.text);
 
         this.StyleChanged += this.OnHostStyleChanged;
+
+        this.Seal();
     }
 
     private void SetCodepoint(string? iconName)

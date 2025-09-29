@@ -88,7 +88,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
         }
     }
 
-    protected Element() => this.NodeFlags = NodeFlags.IgnoreUpdates;
+    protected Element() =>
+        this.SuspendUpdates();
 
     private ComposedElementEnumerator GetComposedElementEnumerator() =>
         new(this);

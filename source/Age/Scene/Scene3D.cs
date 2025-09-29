@@ -1,10 +1,12 @@
 namespace Age.Scene;
 
-public abstract class Scene3D : Scene
+public class Scene3D : Scene
 {
     private readonly List<Camera3D> cameras = [];
 
-    public IEnumerable<Camera3D> Cameras => this.cameras;
+    public IReadOnlyList<Camera3D> Cameras => this.cameras;
+
+    public override string NodeName => nameof(Scene3D);
 
     private protected override void OnConnectedInternal() =>
         this.Window!.Tree.Scenes3D.Add(this);
@@ -35,13 +37,4 @@ public abstract class Scene3D : Scene
 
         this.Window!.Tree.Scenes3D.Remove(this);
     }
-}
-
-public abstract class Scene2D : Scene
-{
-    public Camera2D Camera
-    {
-        get;
-        set =>field = value ?? Camera2D.Default;
-    } = Camera2D.Default;
 }

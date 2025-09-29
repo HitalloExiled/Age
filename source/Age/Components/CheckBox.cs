@@ -57,7 +57,6 @@ public class CheckBox : Element
 
     public CheckBox()
     {
-        this.NodeFlags   = Scene.NodeFlags.Immutable;
         this.IsFocusable = true;
         this.StyleSheet  = Theme.Current.CheckBox.Default;
 
@@ -66,6 +65,8 @@ public class CheckBox : Element
         this.ShadowTree.AppendChild(this.icon);
 
         this.icon.Clicked += this.OnClick;
+
+        this.Seal();
     }
 
     private void OnClick(in MouseEvent mouseEvent)
