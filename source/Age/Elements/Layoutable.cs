@@ -197,6 +197,8 @@ public abstract class Layoutable : Spatial2D
 
     private protected void RequestUpdate(bool affectsBoundings)
     {
+        var tree = this.Scene?.Viewport?.Window?.Tree;
+
         for (var current = this; ; current = current.ComposedParentElement!)
         {
             if (current.IsDirty || current.Hidden)
@@ -210,7 +212,7 @@ public abstract class Layoutable : Spatial2D
 
             if (stopPropagation)
             {
-                this.Window?.Tree.AddDeferredUpdate(current.UpdateDirtyLayout);
+                tree?.AddDeferredUpdate(current.UpdateDirtyLayout);
 
                 return;
             }
@@ -219,9 +221,9 @@ public abstract class Layoutable : Spatial2D
 
     private protected void SetCursor(Cursor? cursor)
     {
-        Debug.Assert(this.Window != null);
+        Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-        this.Window.Cursor = cursor ?? default;
+        this.Scene.Viewport.Window.Cursor = cursor ?? default;
     }
 
     private protected void UpdateLayoutIndependentAncestor()

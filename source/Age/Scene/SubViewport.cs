@@ -11,27 +11,7 @@ public class SubViewport : Viewport
 
     private RenderTarget renderTarget;
 
-    public Camera2D? Camera2D { get; set; }
-    public Camera3D? Camera3D { get; set; }
 
-    public Viewport? ParentViewport
-    {
-        get
-        {
-            for (var parent = this.Parent; parent != null; parent = parent.Parent)
-            {
-                if (parent is Viewport viewport)
-                {
-                    return viewport;
-                }
-            }
-
-            return null;
-        }
-    }
-
-    public Scene3D? Scene3D { get; set; }
-    public Scene2D? Scene2D { get; set; }
 
     public override Size<uint> Size
     {

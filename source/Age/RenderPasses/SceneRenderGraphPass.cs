@@ -181,38 +181,38 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
             new(1, 0)
         ];
 
-        foreach (var scene in this.Window.Tree.Scenes3D.AsSpan())
-        {
-            if (scene is Scene3D scene3D)
-            {
-                foreach (var camera in scene.Cameras)
-                {
-                    var renderTarget = camera.Viewport!.RenderTarget;
+        // foreach (var scene in this.Window.Tree.Scenes3D.AsSpan())
+        // {
+        //     if (scene is Scene3D scene3D)
+        //     {
+        //         foreach (var camera in scene.Cameras)
+        //         {
+        //             var renderTarget = camera.Viewport!.RenderTarget;
 
-                    commandBuffer.BeginRenderPass(renderTarget, clearValues);
-                    commandBuffer.SetViewport(renderTarget.Size);
+        //             commandBuffer.BeginRenderPass(renderTarget, clearValues);
+        //             commandBuffer.SetViewport(renderTarget.Size);
 
-                    foreach (var command in this.Window.Tree.Get3DCommands())
-                    {
-                        switch (command)
-                        {
-                            case MeshCommand meshCommand:
-                                var ubo = this.UpdateUbo(camera, meshCommand.Mesh, renderTarget.Size.ToExtent2D());
+        //             foreach (var command in this.Window.Tree.Get3DCommands())
+        //             {
+        //                 switch (command)
+        //                 {
+        //                     case MeshCommand meshCommand:
+        //                         var ubo = this.UpdateUbo(camera, meshCommand.Mesh, renderTarget.Size.ToExtent2D());
 
-                                commandBuffer.BindShader(meshCommand.Mesh.Material.Shader);
-                                commandBuffer.BindUniformSet(this.GetUniformSet(camera, ubo, meshCommand.Mesh.Material));
-                                commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
-                                commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);
-                                commandBuffer.DrawIndexed(meshCommand.IndexBuffer);
+        //                         commandBuffer.BindShader(meshCommand.Mesh.Material.Shader);
+        //                         commandBuffer.BindUniformSet(this.GetUniformSet(camera, ubo, meshCommand.Mesh.Material));
+        //                         commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
+        //                         commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);
+        //                         commandBuffer.DrawIndexed(meshCommand.IndexBuffer);
 
-                                break;
-                        }
-                    }
+        //                         break;
+        //                 }
+        //             }
 
-                    commandBuffer.EndRenderPass();
-                }
-            }
-        }
+        //             commandBuffer.EndRenderPass();
+        //         }
+        //     }
+        // }
     }
 
     public override void Recreate()

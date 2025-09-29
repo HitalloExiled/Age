@@ -303,7 +303,7 @@ public static class ScrollTest
 
         var isExpanded = false;
 
-        canvas.Window?.KeyDown += (key) =>
+        canvas.Scene?.Viewport?.Window?.KeyDown += (key) =>
         {
             if (key == Key.Space)
             {

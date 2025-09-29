@@ -2,10 +2,9 @@ using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Elements;
 using Age.Elements.Events;
-using Age.Scene;
 using Age.Themes;
 
-using Key       = Age.Platforms.Display.Key;
+using Key = Age.Platforms.Display.Key;
 using KeyStates = Age.Platforms.Display.KeyStates;
 
 namespace Age.Components;
@@ -153,6 +152,8 @@ public partial class TextBox : Element
 
     private void OnKeyDown(in KeyEvent keyEvent)
     {
+        var window = this.Scene!.Viewport!.Window!;
+
         switch (keyEvent.Key)
         {
             case Key.Delete:
@@ -166,7 +167,7 @@ public partial class TextBox : Element
 
                         if (this.text.Cut(new(currentLine.Start, currentLine.End + 1)) is string text)
                         {
-                            this.Window!.SetClipboardData(text);
+                            window.SetClipboardData(text);
                         }
                     }
                     else if (this.text.Selection != null)
@@ -422,7 +423,7 @@ public partial class TextBox : Element
 
                         this.text.DeleteSelected();
 
-                        if (this.Window!.GetClipboardData() is string text)
+                        if (window.GetClipboardData() is string text)
                         {
                             if (this.text.Buffer.IsEmpty || this.text.CursorPosition == this.text.Buffer.Length)
                             {
@@ -448,7 +449,7 @@ public partial class TextBox : Element
 
                         if (this.text.CutSelected() is string text)
                         {
-                            this.Window!.SetClipboardData(text);
+                            window.SetClipboardData(text);
                         }
                     }
                 }

@@ -26,8 +26,7 @@ public sealed partial class RenderTree : Disposable
     private ulong                      bufferVersion;
     private CanvasIndexRenderGraphPass canvasIndexRenderGraphPass = null!;
 
-    internal List<Node>    Nodes    { get; } = new(256);
-    internal List<Scene3D> Scenes3D { get; } = [];
+    internal List<Node> Nodes { get; } = new(256);
 
     public Window Window { get; }
 

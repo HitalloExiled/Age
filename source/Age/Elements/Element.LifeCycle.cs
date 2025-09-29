@@ -52,31 +52,31 @@ public abstract partial class Element
 
         this.ShadowTree?.Connect();
 
-        if (this.Window != null)
+        if (this.Scene?.Viewport?.Window is Window window)
         {
             if (this.events.ContainsKey(EventProperty.Input))
             {
-                this.Window.Input += this.OnInput;
+                window.Input += this.OnInput;
             }
 
             if (this.events.ContainsKey(EventProperty.KeyDown))
             {
-                this.Window.KeyDown += this.OnKeyDown;
+                window.KeyDown += this.OnKeyDown;
             }
 
             if (this.events.ContainsKey(EventProperty.KeyUp))
             {
-                this.Window.KeyUp += this.OnKeyUp;
+                window.KeyUp += this.OnKeyUp;
             }
 
             if (this.events.ContainsKey(EventProperty.MouseWheel))
             {
-                this.Window.MouseWheel += this.OnMouseWheel;
+                window.MouseWheel += this.OnMouseWheel;
             }
 
-            if (!this.Window.Tree.IsDirty && !this.Hidden)
+            if (!window.Tree.IsDirty && !this.Hidden)
             {
-                this.Window.Tree.MakeDirty();
+                window.Tree.MakeDirty();
             }
         }
 
@@ -100,16 +100,16 @@ public abstract partial class Element
 
         this.Canvas = null;
 
-        if (this.Window != null)
+        if (this.Scene?.Viewport?.Window is Window window)
         {
-            this.Window.Input      -= this.OnInput;
-            this.Window.KeyDown    -= this.OnKeyDown;
-            this.Window.KeyUp      -= this.OnKeyUp;
-            this.Window.MouseWheel -= this.OnMouseWheel;
+            window.Input      -= this.OnInput;
+            window.KeyDown    -= this.OnKeyDown;
+            window.KeyUp      -= this.OnKeyUp;
+            window.MouseWheel -= this.OnMouseWheel;
 
-            if (!this.Window.Tree.IsDirty && !this.Hidden)
+            if (!window.Tree.IsDirty && !this.Hidden)
             {
-                this.Window.Tree.MakeDirty();
+                window.Tree.MakeDirty();
             }
         }
     }

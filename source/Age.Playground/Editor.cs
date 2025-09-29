@@ -156,7 +156,7 @@ public class Editor : Renderable
     {
         var reload = true;
 
-        var window = (Window)this.canvas.Viewport!;
+        var window = this.canvas.Scene!.Viewport!.Window!;
 
         var currentIndex = this.index;
 

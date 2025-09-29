@@ -599,9 +599,9 @@ public sealed class Text : Layoutable
 
         if (IsSelectingText)
         {
-            Debug.Assert(this.Window != null);
+            Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-            this.Window.MouseMove += this.WindowOnMouseMove;
+            this.Scene.Viewport.Window.MouseMove += this.WindowOnMouseMove;
         }
     }
 
@@ -638,9 +638,9 @@ public sealed class Text : Layoutable
         }
         else
         {
-            Debug.Assert(this.Window != null);
+            Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-            this.Window.MouseMove -= this.WindowOnMouseMove;
+            this.Scene.Viewport.Window.MouseMove -= this.WindowOnMouseMove;
             this.HandleDeactivate();
         }
     }

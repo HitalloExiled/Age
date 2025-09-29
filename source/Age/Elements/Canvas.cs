@@ -22,29 +22,38 @@ public sealed class Canvas : Element
 
     private void OnViewportResized()
     {
-        this.Style.Size = new(this.Viewport!.Size.Width, this.Viewport!.Size.Height);
+        this.Style.Size = this.Scene!.Viewport!.Size;
+    }
+
+    private void OnViewportChanged(Viewport? @new, Viewport? old)
+    {
+        old?.Resized  -= this.OnViewportResized;
+        @new?.Resized += this.OnViewportResized;
+
+        this.OnViewportResized();
     }
 
     private protected override void OnConnectedInternal()
     {
         base.OnConnectedInternal();
 
-        Debug.Assert(this.Window != null);
-        Debug.Assert(this.Viewport != null);
+        Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-        this.Viewport.Resized += this.OnViewportResized;
+        this.Scene.Viewport.Window.Tree.AddDeferredUpdate(this.UpdateDirtyLayout);
+        this.Scene.ViewportChanged += this.OnViewportChanged;
+
+        this.Scene.Viewport.Resized += this.OnViewportResized;
 
         this.OnViewportResized();
-
-        this.Window.Tree.AddDeferredUpdate(this.UpdateDirtyLayout);
     }
 
     private protected override void OnDisconnectingInternal()
     {
         base.OnDisconnectingInternal();
 
-        Debug.Assert(this.Viewport != null);
+        Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-        this.Viewport.Resized -= this.OnViewportResized;
+        this.Scene.ViewportChanged  -= this.OnViewportChanged;
+        this.Scene.Viewport.Resized -= this.OnViewportResized;
     }
 }

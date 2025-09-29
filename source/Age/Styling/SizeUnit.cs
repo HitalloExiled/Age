@@ -18,4 +18,7 @@ public record struct SizeUnit
 
     public override readonly string ToString() =>
         $"Width: {this.Width}, Height: {this.Height}";
+
+    public static implicit operator SizeUnit(in Size<uint> size) =>
+        new(size.Height, size.Width);
 }

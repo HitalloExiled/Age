@@ -37,8 +37,14 @@ public sealed class ShadowTree(Element host, bool inheritsHostStyle) : Node
     {
         base.OnConnectedInternal();
 
-        this.Window   = this.Host.Window;
-        this.Viewport = this.Host.Viewport;
+        this.Scene = this.Host.Scene;
+    }
+
+    private protected override void OnDisconnectingInternal()
+    {
+        base.OnDisconnectingInternal();
+
+        this.Scene = null;
     }
 
     internal void AddSlot(Slot slot, string name)

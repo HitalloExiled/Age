@@ -224,9 +224,9 @@ public abstract partial class Element
     {
         if (ActiveScrollBarTarget == this)
         {
-            Debug.Assert(this.Window != null);
+            Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-            this.Window.Tree.MouseMoved -= this.OnRenderTreeMouseMoved;
+            this.Scene.Viewport.Window.Tree.MouseMoved -= this.OnRenderTreeMouseMoved;
             this.HandleScrollBarMouseMoved(windowMouseEvent);
         }
         else if (this.CanScroll && !this.IsScrollBarVisible)
@@ -273,9 +273,9 @@ public abstract partial class Element
             IsHoveringScrollBarX = false;
             IsHoveringScrollBarY = false;
 
-            Debug.Assert(this.Window != null);
+            Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-            this.Window.Tree!.MouseMoved += this.OnRenderTreeMouseMoved;
+            this.Scene.Viewport.Window.Tree!.MouseMoved += this.OnRenderTreeMouseMoved;
             this.HandleScrollBarMouseMoved(windowMouseEvent);
 
             return;
@@ -389,9 +389,9 @@ public abstract partial class Element
                 }
             }
 
-            Debug.Assert(this.Window != null);
+            Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-            this.Window.Tree.MouseMoved -= this.OnRenderTreeMouseMoved;
+            this.Scene.Viewport.Window.Tree.MouseMoved -= this.OnRenderTreeMouseMoved;
         }
     }
 
@@ -446,10 +446,10 @@ public abstract partial class Element
 
     private void SetScrollBarXDefaultStyle(RectCommand command)
     {
-        command.Color     = scrollBarDefaultColor;
-        command.Size      = command.Size with { Height = SCROLL_BAR_DEFAULT_SIZE };
+        command.Color          = scrollBarDefaultColor;
+        command.Size           = command.Size with { Height = SCROLL_BAR_DEFAULT_SIZE };
         command.LocalTransform = Transform2D.CreateTranslated(command.LocalTransform.Position.X, this.GetScrollBarXPositionY());
-        command.Border    = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
+        command.Border         = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
 
         this.RequestUpdate(false);
     }
@@ -459,10 +459,10 @@ public abstract partial class Element
 
     private void SetScrollBarXHoverStyle(RectCommand command)
     {
-        command.Color     = scrollBarHoverColor;
-        command.Size      = command.Size with { Height = SCROLL_BAR_HOVER_SIZE };
+        command.Color          = scrollBarHoverColor;
+        command.Size           = command.Size with { Height = SCROLL_BAR_HOVER_SIZE };
         command.LocalTransform = Transform2D.CreateTranslated(command.LocalTransform.Position.X, -(this.Boundings.Height - this.border.Top - SCROLL_BAR_HOVER_SIZE - SCROLL_BAR_HOVER_MARGIN));
-        command.Border    = new(0, SCROLL_BAR_HOVER_BORDER_RADIUS, default);
+        command.Border         = new(0, SCROLL_BAR_HOVER_BORDER_RADIUS, default);
 
         this.RequestUpdate(false);
     }
@@ -482,10 +482,10 @@ public abstract partial class Element
 
     private void SetScrollBarYDefaultStyle(RectCommand command)
     {
-        command.Color     = scrollBarDefaultColor;
-        command.Size      = command.Size with { Width = SCROLL_BAR_DEFAULT_SIZE };
+        command.Color          = scrollBarDefaultColor;
+        command.Size           = command.Size with { Width = SCROLL_BAR_DEFAULT_SIZE };
         command.LocalTransform = Transform2D.CreateTranslated(this.GetScrollBarYPositionX(), command.LocalTransform.Position.Y);
-        command.Border    = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
+        command.Border         = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
 
         this.RequestUpdate(false);
     }
@@ -495,10 +495,10 @@ public abstract partial class Element
 
     private void SetScrollBarYHoverStyle(RectCommand command)
     {
-        command.Color     = scrollBarHoverColor;
-        command.Size      = command.Size with { Width = SCROLL_BAR_HOVER_SIZE };
+        command.Color          = scrollBarHoverColor;
+        command.Size           = command.Size with { Width = SCROLL_BAR_HOVER_SIZE };
         command.LocalTransform = Transform2D.CreateTranslated(this.Boundings.Width - this.border.Left - SCROLL_BAR_HOVER_SIZE - SCROLL_BAR_HOVER_MARGIN, command.LocalTransform.Position.Y);
-        command.Border    = new(0, SCROLL_BAR_HOVER_BORDER_RADIUS, default);
+        command.Border         = new(0, SCROLL_BAR_HOVER_BORDER_RADIUS, default);
 
         this.RequestUpdate(false);
     }

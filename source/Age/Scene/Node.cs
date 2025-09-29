@@ -30,10 +30,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public Node? Parent          { get; private set; }
     public Node? PreviousSibling { get; private set; }
 
-    public Viewport? Viewport { get; protected set; }
-    public Window?   Window   { get; protected set; }
-
-    [MemberNotNullWhen(true, nameof(Viewport), nameof(Window))]
     public bool IsConnected { get; private set; }
 
     public Node[] Children
@@ -67,6 +63,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public virtual string? Name { get; set; }
 
     public abstract string NodeName { get; }
+
+    public Scene? Scene { get; internal set; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ClearParenting(Node parent, Node node, bool dispose)
@@ -103,13 +101,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     {
         node.OnConnectedInternal();
         node.OnConnected();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void InvokeConnectingCallbacks(Node node)
-    {
-        node.OnConnectingInternal();
-        node.OnConnecting();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -596,28 +587,9 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void apply(Node node)
         {
-            InvokeConnectingCallbacks(node);
-
-            if (node.Parent != null)
-            {
-                if (node.Parent is Window window)
-                {
-                    node.Viewport = window;
-                    node.Window   = window;
-                }
-                else if (node.Parent is Viewport viewport)
-                {
-                    node.Viewport = viewport;
-                    node.Window   = viewport.Window;
-                }
-                else
-                {
-                    node.Viewport = node.Parent.Viewport;
-                    node.Window   = node.Parent.Window;
-                }
-            }
-
             node.IsConnected = true;
+
+            node.Scene = node.Parent is Scene scene ? scene : node.Parent?.Scene;
 
             InvokeConnectedCallbacks(node);
         }
@@ -640,8 +612,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
             InvokeDisconnectingCallbacks(node);
 
             node.IsConnected = false;
-            node.Window      = null;
-            node.Viewport    = null;
+            node.Scene       = null;
         }
     }
 
@@ -649,7 +620,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     private protected virtual void OnChildAttachedInternal(Node node) { }
     private protected virtual void OnChildDetachingInternal(Node node) { }
     private protected virtual void OnChildDetachedInternal(Node node) { }
-    private protected virtual void OnConnectingInternal() { }
     private protected virtual void OnConnectedInternal() { }
     private protected virtual void OnDisconnectingInternal() { }
     private protected virtual void OnDisposedInternal() { }
@@ -692,7 +662,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     protected virtual void OnChildAttached(Node node) { }
     protected virtual void OnChildDetaching(Node node) { }
     protected virtual void OnChildDetached(Node node) { }
-    protected virtual void OnConnecting() { }
     protected virtual void OnConnected() { }
     protected virtual void OnDisconnecting() { }
     protected virtual void OnDisposed() { }

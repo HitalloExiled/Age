@@ -24,7 +24,7 @@ public sealed class Timer : Renderable
     {
         base.OnConnectedInternal();
 
-        this.Window!.Tree.Timers.Add(this);
+        this.Scene!.Viewport!.Window!.Tree.Timers.Add(this);
 
         this.UpdateTimestamp();
     }
@@ -33,7 +33,7 @@ public sealed class Timer : Renderable
     {
         base.OnDisconnectingInternal();
 
-        this.Window!.Tree.Timers.Remove(this);
+        this.Scene!.Viewport!.Window!.Tree.Timers.Remove(this);
     }
 
     public void Start()

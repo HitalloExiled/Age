@@ -80,9 +80,9 @@ public abstract partial class Element
             {
                 this.AddEvent(EventProperty.Input, value, out var added);
 
-                if (this.IsConnected && added)
+                if (this.Scene?.Viewport?.Window is Window window && added)
                 {
-                    this.Window.Input += this.OnInput;
+                    window.Input += this.OnInput;
                 }
             }
         }
@@ -92,9 +92,9 @@ public abstract partial class Element
             {
                 this.RemoveEvent(EventProperty.Input, value, out var removed);
 
-                if (this.IsConnected && removed)
+                if (this.Scene?.Viewport?.Window is Window window && removed)
                 {
-                    this.Window.Input -= this.OnInput;
+                    window.Input -= this.OnInput;
                 }
             }
         }
@@ -108,9 +108,9 @@ public abstract partial class Element
             {
                 this.AddEvent(EventProperty.KeyDown, value, out var added);
 
-                if (this.IsConnected && added)
+                if (this.Scene?.Viewport?.Window is Window window && added)
                 {
-                    this.Window.KeyDown += this.OnKeyDown;
+                    window.KeyDown += this.OnKeyDown;
                 }
             }
         }
@@ -120,9 +120,9 @@ public abstract partial class Element
             {
                 this.RemoveEvent(EventProperty.KeyDown, value, out var removed);
 
-                if (this.IsConnected && removed)
+                if (this.Scene?.Viewport?.Window is Window window && removed)
                 {
-                    this.Window.KeyDown -= this.OnKeyDown;
+                    window.KeyDown -= this.OnKeyDown;
                 }
             }
         }
@@ -136,9 +136,9 @@ public abstract partial class Element
             {
                 this.AddEvent(EventProperty.KeyUp, value, out var added);
 
-                if (this.IsConnected && added)
+                if (this.Scene?.Viewport?.Window is Window window  && added)
                 {
-                    this.Window.KeyUp += this.OnKeyUp;
+                    window.KeyUp += this.OnKeyUp;
                 }
             }
         }
@@ -148,9 +148,9 @@ public abstract partial class Element
             {
                 this.RemoveEvent(EventProperty.KeyUp, value, out var removed);
 
-                if (this.IsConnected && removed)
+                if (this.Scene?.Viewport?.Window is Window window && removed)
                 {
-                    this.Window.KeyUp -= this.OnKeyUp;
+                    window.KeyUp -= this.OnKeyUp;
                 }
             }
         }
@@ -206,9 +206,9 @@ public abstract partial class Element
             {
                 this.AddEvent(EventProperty.MouseWheel, value, out var added);
 
-                if (this.IsConnected && added)
+                if (this.Scene?.Viewport?.Window is Window window  && added)
                 {
-                    this.Window.MouseWheel += this.OnMouseWheel;
+                    window.MouseWheel += this.OnMouseWheel;
                 }
             }
         }
@@ -218,9 +218,9 @@ public abstract partial class Element
             {
                 this.RemoveEvent(EventProperty.MouseWheel, value, out var removed);
 
-                if (this.IsConnected && removed)
+                if (this.Scene?.Viewport?.Window is Window window && removed)
                 {
-                    this.Window.MouseWheel -= this.OnMouseWheel;
+                    window.MouseWheel -= this.OnMouseWheel;
                 }
             }
         }
