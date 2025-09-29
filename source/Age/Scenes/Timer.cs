@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public sealed class Timer : Renderable
 {

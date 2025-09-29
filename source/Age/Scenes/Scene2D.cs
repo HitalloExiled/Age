@@ -1,4 +1,4 @@
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public class Scene2D : Scene
 {

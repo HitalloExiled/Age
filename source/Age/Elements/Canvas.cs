@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using Age.Numerics;
-using Age.Scene;
+using Age.Scenes;
 
 namespace Age.Elements;
 

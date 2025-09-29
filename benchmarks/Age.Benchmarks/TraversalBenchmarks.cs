@@ -1,4 +1,4 @@
-﻿using Age.Scene;
+﻿using Age.Scenes;
 using BenchmarkDotNet.Attributes;
 
 #pragma warning disable CA1001

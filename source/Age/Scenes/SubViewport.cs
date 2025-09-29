@@ -3,7 +3,7 @@ using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public class SubViewport : Viewport
 {

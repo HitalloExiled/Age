@@ -1,6 +1,6 @@
 using Age.Commands;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public abstract class Renderable : Node
 {

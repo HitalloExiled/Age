@@ -4,7 +4,7 @@ using Age.Core.Extensions;
 using Age.Elements;
 using Age.Numerics;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public sealed partial class RenderTree
 {

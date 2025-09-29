@@ -1,4 +1,4 @@
-namespace Age.Scene;
+namespace Age.Scenes;
 
 [Flags]
 public enum NodeFlags

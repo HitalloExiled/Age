@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Age.Elements.Enumerators;
-using Age.Scene;
+using Age.Scenes;
 using Age.Styling;
 
 namespace Age.Elements;

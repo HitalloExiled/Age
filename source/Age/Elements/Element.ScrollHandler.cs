@@ -4,7 +4,7 @@ using Age.Commands;
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Platforms.Display;
-using Age.Scene;
+using Age.Scenes;
 using Age.Styling;
 using static Age.Shaders.CanvasShader;
 

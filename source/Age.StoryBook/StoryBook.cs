@@ -1,7 +1,7 @@
 using Age.Components;
 using Age.Elements;
 using Age.Numerics;
-using Age.Scene;
+using Age.Scenes;
 using Age.StoryBook.Pages;
 using Age.Styling;
 

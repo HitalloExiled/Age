@@ -1,7 +1,7 @@
 using Age.Core.Extensions;
 using Age.Elements;
 using Age.Numerics;
-using Age.Scene;
+using Age.Scenes;
 using Age.Storage;
 using Age.Styling;
 using Age.Themes;

@@ -1,6 +1,6 @@
 using Age.Core.Extensions;
 using Age.Elements;
-using Age.Scene;
+using Age.Scenes;
 using Xunit.Internal;
 
 namespace Age.Tests.Age.Elements;

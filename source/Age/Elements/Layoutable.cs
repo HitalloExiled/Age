@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using Age.Core;
 using Age.Numerics;
 using Age.Platforms.Display;
-using Age.Scene;
+using Age.Scenes;
 
 namespace Age.Elements;
 

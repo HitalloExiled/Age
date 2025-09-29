@@ -3,7 +3,7 @@ using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
-using Age.Scene;
+using Age.Scenes;
 using Age.Shaders;
 using ThirdParty.Vulkan.Enums;
 

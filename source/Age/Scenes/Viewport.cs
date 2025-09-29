@@ -2,7 +2,7 @@ using Age.Graphs;
 using Age.Numerics;
 using Age.Rendering.Resources;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public abstract class Viewport : Spatial2D
 {

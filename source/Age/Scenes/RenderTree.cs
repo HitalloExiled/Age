@@ -8,7 +8,7 @@ using ThirdParty.Vulkan.Flags;
 
 using Buffer = Age.Rendering.Resources.Buffer;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public sealed partial class RenderTree : Disposable
 {

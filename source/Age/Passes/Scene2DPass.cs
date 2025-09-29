@@ -3,7 +3,7 @@ using Age.Elements;
 using Age.Graphs;
 using Age.Numerics;
 using Age.Rendering.Resources;
-using Age.Scene;
+using Age.Scenes;
 using Age.Shaders;
 using System.Diagnostics.CodeAnalysis;
 using ThirdParty.Vulkan.Flags;

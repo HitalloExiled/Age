@@ -3,7 +3,7 @@ using Age.Core.Extensions;
 using Age.Elements;
 using Age.Platforms.Display;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 internal delegate void WindowMouseEventHandler(in WindowMouseEvent windowMouseEvent, Node? node);
 

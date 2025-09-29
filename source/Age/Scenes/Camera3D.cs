@@ -1,6 +1,6 @@
 using Age.Numerics;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public sealed class Camera3D : Spatial3D
 {

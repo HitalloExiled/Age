@@ -5,7 +5,7 @@ using System.Text;
 using Age.Core;
 using Age.Core.Extensions;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<Node>
 {

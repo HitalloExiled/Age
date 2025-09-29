@@ -1,13 +1,13 @@
 using System.Collections;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public abstract partial class Node
 {
-    public struct Enumerator(Node node) : IEnumerator<Node>
+    public struct ReversalEnumerator(Node node) : IEnumerator<Node>, IEnumerable<Node>
     {
         private Node? current;
-        private bool  first = true;
+        private bool  last = true;
 
         public readonly Node Current => this.current!;
         public readonly Node Node    => node;
@@ -17,16 +17,20 @@ public abstract partial class Node
         public readonly void Dispose()
         { }
 
+        readonly IEnumerator IEnumerable.GetEnumerator() => this;
+
+        public readonly IEnumerator<Node> GetEnumerator() => this;
+
         public bool MoveNext()
         {
-            if (this.first)
+            if (this.last)
             {
-                this.current = node.FirstChild;
-                this.first   = false;
+                this.current = node.LastChild;
+                this.last    = false;
             }
             else
             {
-                this.current = this.current?.NextSibling;
+                this.current = this.current?.PreviousSibling;
             }
 
             return this.current != null;
@@ -34,7 +38,7 @@ public abstract partial class Node
 
         public void Reset()
         {
-            this.first   = true;
+            this.last    = true;
             this.current = null;
         }
     }

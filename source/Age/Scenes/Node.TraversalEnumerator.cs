@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public abstract partial class Node
 {

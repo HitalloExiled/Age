@@ -6,12 +6,12 @@ using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Resources;
-using Age.Scene;
+using Age.Scenes;
 using Age.Storage;
 using Age.Styling;
 using SkiaSharp;
 
-using Timer = Age.Scene.Timer;
+using Timer = Age.Scenes.Timer;
 
 using static Age.Shaders.CanvasShader;
 using System.Diagnostics;

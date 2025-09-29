@@ -2,7 +2,7 @@ using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
-using Age.Scene;
+using Age.Scenes;
 
 using DisplayWindow           = Age.Platforms.Display.Window;
 using WindowMouseEventHandler = Age.Platforms.Display.WindowMouseEventHandler;

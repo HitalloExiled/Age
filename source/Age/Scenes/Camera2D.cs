@@ -1,4 +1,4 @@
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public sealed class Camera2D : Spatial2D
 {

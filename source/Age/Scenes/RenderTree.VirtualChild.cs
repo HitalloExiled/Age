@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using Age.Elements;
 using Age.Platforms.Display;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public sealed partial class RenderTree
 {

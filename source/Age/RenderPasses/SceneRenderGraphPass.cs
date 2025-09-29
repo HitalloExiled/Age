@@ -7,7 +7,7 @@ using Age.Rendering.Resources;
 using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
 using Age.Resources;
-using Age.Scene;
+using Age.Scenes;
 using System.Runtime.InteropServices;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;

@@ -1,5 +1,5 @@
 using Age.Commands;
-using Age.Scene;
+using Age.Scenes;
 using Age.Shaders;
 
 namespace Age.Resources;

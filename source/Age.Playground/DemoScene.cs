@@ -1,6 +1,6 @@
 using Age.Core.Extensions;
 using Age.Numerics;
-using Age.Scene;
+using Age.Scenes;
 using Age.Resources;
 using Age.Platforms.Display;
 

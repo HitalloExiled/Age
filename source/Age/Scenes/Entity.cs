@@ -1,3 +1,3 @@
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public abstract class Entity : Node;

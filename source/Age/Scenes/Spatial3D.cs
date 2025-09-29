@@ -2,7 +2,7 @@ using Age.Commands;
 using Age.Core;
 using Age.Numerics;
 
-namespace Age.Scene;
+namespace Age.Scenes;
 
 public abstract class Spatial3D : Renderable<Command3D>
 {
