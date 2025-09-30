@@ -54,7 +54,7 @@ public sealed class Scene2DIndexPass : Scene2DPass
     }
 
     protected override void Record(RenderContext context) =>
-        this.Record(context.Indices);
+        this.Record(context.Buffer2D.Indices);
 
     protected override void Record(RectCommand command)
     {

@@ -143,7 +143,7 @@ public abstract class Scene2DPass : RenderPass<Texture2D>
 
     protected override void Record(RenderContext context)
     {
-        this.Record(context.Commands2D);
+        this.Record(context.Buffer2D.Commands);
     }
 
     protected void Record<T>(ReadOnlySpan<T> commands) where T : Command

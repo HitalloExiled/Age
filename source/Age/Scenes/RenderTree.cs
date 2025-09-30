@@ -12,8 +12,6 @@ namespace Age.Scenes;
 
 public sealed partial class RenderTree : Disposable
 {
-    private readonly Stack<(Slot, int)> composedTreeStack = [];
-
     public event Action? Updated;
 
     private readonly Queue<Action> updatesQueue = [];
@@ -150,10 +148,10 @@ public sealed partial class RenderTree : Disposable
         this.IsDirty = true;
 
     internal ReadOnlySpan<Command> Get2DCommands() =>
-        this.commands2D.AsSpan();
+        this.Window.RenderContext.Buffer2D.Commands;
 
     internal ReadOnlySpan<Command> Get3DCommands() =>
-        this.commands3D.AsSpan();
+        this.Window.RenderContext.Buffer3D.Commands;
 
     public void Initialize()
     {
@@ -194,7 +192,6 @@ public sealed partial class RenderTree : Disposable
 
         if (this.IsDirty)
         {
-            this.ResetCache();
             this.BuildIndexAndCollectCommands();
         }
     }

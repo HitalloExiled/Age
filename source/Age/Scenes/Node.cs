@@ -589,7 +589,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         {
             node.IsConnected = true;
 
-            node.Scene = node.Parent is Scene scene ? scene : node.Parent?.Scene;
+            node.Scene = node as Scene ?? node.Parent as Scene ?? node.Parent?.Scene;
 
             InvokeConnectedCallbacks(node);
         }

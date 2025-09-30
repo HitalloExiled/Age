@@ -1,14 +1,17 @@
 using Age.Graphs;
 using Age.Numerics;
 using Age.Rendering.Resources;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Scenes;
 
 public abstract class Viewport : Spatial2D
 {
+
     public abstract event Action? Resized;
 
-    protected RenderContext RenderContext { get; } = new();
+    [AllowNull]
+    internal RenderContext RenderContext { get; } = new();
 
     public Camera2D? Camera2D { get; set; }
     public Camera3D? Camera3D { get; set; }
@@ -27,11 +30,10 @@ public abstract class Viewport : Spatial2D
                 return;
             }
 
-            field?.ViewportOverride = null;
-            value?.ViewportOverride = this;
-
             if (value?.Parent == null)
             {
+                this.RenderContext.ClearOverride2D();
+
                 this.Unseal();
 
                 field?.Detach();
@@ -42,6 +44,10 @@ public abstract class Viewport : Spatial2D
                 }
 
                 this.Seal();
+            }
+            else if (this.IsConnected)
+            {
+                this.RenderContext.Override2D(value.Viewport!.RenderContext);
             }
 
             field = value;
@@ -58,11 +64,10 @@ public abstract class Viewport : Spatial2D
                 return;
             }
 
-            field?.ViewportOverride = null;
-            value?.ViewportOverride = this;
-
             if (value?.Parent == null)
             {
+                this.RenderContext.ClearOverride3D();
+
                 this.Unseal();
 
                 field?.Detach();
@@ -81,28 +86,16 @@ public abstract class Viewport : Spatial2D
 
                 this.Seal();
             }
+            else if (this.IsConnected)
+            {
+                this.RenderContext.Override3D(value.Viewport!.RenderContext);
+            }
 
             field = value;
         }
     }
 
     public Window? Window { get; internal protected set; }
-
-    public Viewport? ParentViewport
-    {
-        get
-        {
-            for (var parent = this.Parent; parent != null; parent = parent.Parent)
-            {
-                if (parent is Viewport viewport)
-                {
-                    return viewport;
-                }
-            }
-
-            return null;
-        }
-    }
 
     protected Viewport() =>
         this.Seal();
@@ -111,12 +104,25 @@ public abstract class Viewport : Spatial2D
     {
         base.OnConnectedInternal();
 
-        this.Window = this is Window window ? window : this.ParentViewport?.Window;
+        if (this.Scene2D != null && this.Scene2D.Parent != this)
+        {
+            this.RenderContext.Override2D(this.Scene2D!.Viewport!.RenderContext);
+        }
+
+        if (this.Scene3D != null && this.Scene3D.Parent != this)
+        {
+            this.RenderContext.Override3D(this.Scene3D!.Viewport!.RenderContext);
+        }
+
+        this.Window = this is Window window ? window : this.Scene!.Viewport!.Window;
     }
 
     private protected override void OnDisconnectingInternal()
     {
         base.OnDisconnectingInternal();
+
+        this.RenderContext.ClearOverride2D();
+        this.RenderContext.ClearOverride3D();
 
         this.Window = null;
     }

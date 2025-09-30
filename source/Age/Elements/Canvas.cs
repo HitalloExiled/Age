@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using Age.Numerics;
-using Age.Scenes;
 
 namespace Age.Elements;
 
@@ -20,18 +19,8 @@ public sealed class Canvas : Element
         };
     }
 
-    private void OnViewportResized()
-    {
+    private void OnViewportResized() =>
         this.Style.Size = this.Scene!.Viewport!.Size;
-    }
-
-    private void OnViewportChanged(Viewport? @new, Viewport? old)
-    {
-        old?.Resized  -= this.OnViewportResized;
-        @new?.Resized += this.OnViewportResized;
-
-        this.OnViewportResized();
-    }
 
     private protected override void OnConnectedInternal()
     {
@@ -39,10 +28,11 @@ public sealed class Canvas : Element
 
         Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-        this.Scene.Viewport.Window.Tree.AddDeferredUpdate(this.UpdateDirtyLayout);
-        this.Scene.ViewportChanged += this.OnViewportChanged;
+        var viewport = this.Scene?.Viewport;
 
-        this.Scene.Viewport.Resized += this.OnViewportResized;
+        viewport!.Window!.Tree.AddDeferredUpdate(this.UpdateDirtyLayout);
+
+        viewport.Resized += this.OnViewportResized;
 
         this.OnViewportResized();
     }
@@ -51,9 +41,8 @@ public sealed class Canvas : Element
     {
         base.OnDisconnectingInternal();
 
-        Debug.Assert(this.Scene?.Viewport?.Window != null);
+        Debug.Assert(this.Scene?.Viewport != null);
 
-        this.Scene.ViewportChanged  -= this.OnViewportChanged;
         this.Scene.Viewport.Resized -= this.OnViewportResized;
     }
 }
