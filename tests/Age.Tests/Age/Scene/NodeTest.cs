@@ -298,11 +298,11 @@ public class NodeTest
         parent.AppendChild(child2);
         parent.AppendChild(child4);
 
-        parent.InsertBefore(child3, child4);
+        parent.InsertBefore(child4, child3);
 
         AssertParentHasNodes(parent, [child1, child2, child3, child4]);
 
-        parent.InsertBefore(child0, child1);
+        parent.InsertBefore(child1, child0);
 
         AssertParentHasNodes(parent, [child0, child1, child2, child3, child4]);
     }
@@ -452,7 +452,7 @@ public class NodeTest
 
         AssertParentHasNodes(parent, [child5, child6, child7, child8, child9]);
 
-        parent.InsertBefore(child0, child5);
+        parent.InsertBefore(child5, child0);
 
         parent.ReplaceWith(child0, [child1, child2, child3, child4]);
 
