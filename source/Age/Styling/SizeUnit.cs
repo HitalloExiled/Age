@@ -20,5 +20,5 @@ public record struct SizeUnit
         $"Width: {this.Width}, Height: {this.Height}";
 
     public static implicit operator SizeUnit(in Size<uint> size) =>
-        new(size.Height, size.Width);
+        new(size.Width, size.Height);
 }
