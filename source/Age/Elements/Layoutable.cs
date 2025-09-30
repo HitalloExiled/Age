@@ -63,6 +63,8 @@ public abstract class Layoutable : Spatial2D
 
     internal Transform2D TransformWithOffset => this.CombinedTransform * this.ComposedParentTransformWithOffset;
 
+    internal override Transform2D CachedTransform => this.CombinedTransform * this.CachedParentTransform;
+
     internal abstract bool IsParentDependent { get; }
 
     public Slot? AssignedSlot { get; internal set; }

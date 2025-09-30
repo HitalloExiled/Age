@@ -31,7 +31,7 @@ public abstract class Spatial3D : Renderable<Command3D>
 
     public virtual Transform3D Transform
     {
-        get => this.PivotedTransform * this.LocalTransform * this.ParentTransform;
-        set => this.LocalTransform = this.PivotedTransform.Inverse() * value * this.Transform.Inverse();
+        get => this.PivotedTransform * this.ParentTransform;
+        set => this.LocalTransform = Transform3D.Translated(-this.Pivot) * value * this.ParentTransform.Inverse() * Transform3D.Translated(this.Pivot);
     }
 }
