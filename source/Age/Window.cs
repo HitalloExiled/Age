@@ -165,8 +165,9 @@ public sealed class Window : Viewport
             ],
             DepthStencilAttachment = new()
             {
-                Format = (TextureFormat)VulkanRenderer.Singleton.StencilBufferFormat,
-                Aspect = TextureAspect.Stencil,
+                FinalLayout = ThirdParty.Vulkan.Enums.VkImageLayout.DepthStencilAttachmentOptimal,
+                Format      = (TextureFormat)VulkanRenderer.Singleton.StencilBufferFormat,
+                Aspect      = TextureAspect.Stencil,
             }
         };
 

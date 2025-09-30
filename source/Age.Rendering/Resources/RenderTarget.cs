@@ -16,7 +16,6 @@ public sealed partial class RenderTarget : Resource
     private static readonly Dictionary<int, SharedResource<VkRenderPass>> renderPasses = [];
 
     private readonly List<ColorAttachment> colorAttachments = [];
-    private Size<uint> size;
 
     private readonly SharedResource<VkRenderPass> renderPass;
 
@@ -65,7 +64,7 @@ public sealed partial class RenderTarget : Resource
             ]
         };
 
-        this.size = multiPassCreateInfo.Size;
+        this.Size = multiPassCreateInfo.Size;
 
         this.renderPass = CreateRenderPass(multiPassCreateInfo);
 
@@ -74,7 +73,7 @@ public sealed partial class RenderTarget : Resource
 
     public RenderTarget(in MultiPassCreateInfo multiPassCreateInfo)
     {
-        this.size = multiPassCreateInfo.Size;
+        this.Size = multiPassCreateInfo.Size;
 
         this.renderPass = CreateRenderPass(multiPassCreateInfo);
 
@@ -115,7 +114,7 @@ public sealed partial class RenderTarget : Resource
                         MipLevels     = 1,
                         Samples       = (VkSampleCountFlags)colorAttachment.SampleCount,
                         Tiling        = VkImageTiling.Optimal,
-                        Usage         = (VkImageUsageFlags)colorAttachment.Usage,
+                        Usage         = (VkImageUsageFlags)colorAttachment.Usage | VkImageUsageFlags.TransferDst,
                     };
 
                     var colorImage = new Image(imageCreateInfo);
@@ -223,7 +222,7 @@ public sealed partial class RenderTarget : Resource
                     {
                         Format         = (VkFormat)colorAttachment.Format,
                         Samples        = (VkSampleCountFlags)colorAttachment.SampleCount,
-                        FinalLayout    = VkImageLayout.ColorAttachmentOptimal,
+                        FinalLayout    = colorAttachment.FinalLayout,
                         LoadOp         = VkAttachmentLoadOp.Clear,
                         StoreOp        = VkAttachmentStoreOp.Store,
                         StencilLoadOp  = VkAttachmentLoadOp.DontCare,
@@ -260,7 +259,7 @@ public sealed partial class RenderTarget : Resource
                     var depthStencilAttachmentDescription = new VkAttachmentDescription
                     {
                         Format         = (VkFormat)depthStencilAttachmentInfo.Format,
-                        FinalLayout    = VkImageLayout.DepthStencilAttachmentOptimal,
+                        FinalLayout    = depthStencilAttachmentInfo.FinalLayout,
                         LoadOp         = VkAttachmentLoadOp.Clear,
                         Samples        = VkSampleCountFlags.N1,
                         StencilLoadOp  = VkAttachmentLoadOp.Clear,

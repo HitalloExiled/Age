@@ -21,7 +21,6 @@ public sealed class Scene2DIndexPass : Scene2DPass
     protected override RenderTarget  RenderTarget  => this.renderTarget;
     public override Texture2D        Output        => this.renderTarget.ColorAttachments[0].Texture;
 
-
     public Scene2DIndexPass(Window window) : base(window)
     {
         this.window = window;
@@ -43,6 +42,7 @@ public sealed class Scene2DIndexPass : Scene2DPass
             [
                 new()
                 {
+                    FinalLayout = ThirdParty.Vulkan.Enums.VkImageLayout.ShaderReadOnlyOptimal,
                     SampleCount = SampleCount.N1,
                     Format      = TextureFormat.R16G16B16A16Unorm,
                     Usage       = TextureUsage.TransferDst | TextureUsage.TransferSrc | TextureUsage.Sampled | TextureUsage.ColorAttachment

@@ -60,6 +60,14 @@ public sealed partial class RenderTarget
                 return false;
             }
 
+            public readonly override int GetHashCode() =>
+                this.kind switch
+                {
+                    AttachmentInfoKind.Color        => this.union.ColorAttachmentInfo.GetHashCode(),
+                    AttachmentInfoKind.DepthStencil => this.union.ColorAttachmentInfo.GetHashCode(),
+                    _ => 0,
+                };
+
             public override string ToString() =>
                 this.kind switch
                 {

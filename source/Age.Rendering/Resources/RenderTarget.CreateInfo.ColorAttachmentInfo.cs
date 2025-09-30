@@ -1,3 +1,5 @@
+using ThirdParty.Vulkan.Enums;
+
 namespace Age.Rendering.Resources;
 
 public sealed partial class RenderTarget
@@ -8,6 +10,7 @@ public sealed partial class RenderTarget
         {
             internal Image? Image;
 
+            public required VkImageLayout FinalLayout;
             public required TextureFormat Format;
             public required SampleCount   SampleCount;
 
@@ -21,7 +24,20 @@ public sealed partial class RenderTarget
                     Format      = (TextureFormat)image.Format,
                     SampleCount = (SampleCount)image.Samples,
                     Usage       = (TextureUsage)image.Usage,
+                    FinalLayout = image.FinalLayout,
                 };
+
+            public override readonly int GetHashCode()
+            {
+                var hashcode = new HashCode();
+
+                hashcode.Add(this.Format);
+                hashcode.Add(this.SampleCount);
+                hashcode.Add(this.Usage);
+                hashcode.Add(this.EnableResolve);
+
+                return hashcode.ToHashCode();
+            }
         }
     }
 }

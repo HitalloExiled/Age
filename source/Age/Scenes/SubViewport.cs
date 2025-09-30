@@ -11,8 +11,6 @@ public class SubViewport : Viewport
 
     private RenderTarget renderTarget;
 
-
-
     public override Size<uint> Size
     {
         get => this.RenderTarget.Size;
@@ -44,11 +42,12 @@ public class SubViewport : Viewport
     {
         var createInfo = new RenderTarget.CreateInfo
         {
-            Size = size,
+            Size             = size,
             ColorAttachments =
             [
                 new()
                 {
+                    FinalLayout = ThirdParty.Vulkan.Enums.VkImageLayout.ShaderReadOnlyOptimal,
                     Format      = TextureFormat.B8G8R8A8Unorm,
                     SampleCount = SampleCount.N1,
                     Usage       = TextureUsage.ColorAttachment | TextureUsage.Sampled,
@@ -56,8 +55,9 @@ public class SubViewport : Viewport
             ],
             DepthStencilAttachment = new()
             {
-                Format = (TextureFormat)VulkanRenderer.Singleton.DepthBufferFormat,
-                Aspect = TextureAspect.Stencil,
+                FinalLayout = ThirdParty.Vulkan.Enums.VkImageLayout.DepthStencilAttachmentOptimal,
+                Format      = (TextureFormat)VulkanRenderer.Singleton.DepthBufferFormat,
+                Aspect      = TextureAspect.Depth,
             }
         };
 
@@ -69,6 +69,8 @@ public class SubViewport : Viewport
         if (this.SingleCommand is not RectCommand command)
         {
             this.SingleCommand = command = CommandPool.RectCommand.Get();
+
+            command.CommandFilter = CommandFilter.Color;
         }
 
         command.Size       = this.RenderTarget.Size;
