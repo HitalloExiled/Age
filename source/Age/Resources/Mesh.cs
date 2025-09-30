@@ -30,5 +30,7 @@ public sealed class Mesh : Spatial3D
 
             CommandPool.MeshCommand.Return(command);
         }
+
+        this.Material.Dispose();
     }
 }

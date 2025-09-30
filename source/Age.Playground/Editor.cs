@@ -1,15 +1,14 @@
 using Age.Playground.Tests;
 using Age.Elements;
-using Age.Numerics;
 using Age.Platforms.Display;
 using Age.RenderPasses;
-using Age.Scene;
-using Age.Styling;
+using Age.Scenes;
 using ThirdParty.Vulkan.Flags;
 
 using Common = Age.Internal.Common;
 using Age.Playground.Tests.Styling;
 using Age.Playground.Tests.Components;
+using Age.Playground.Tests.Scene;
 
 namespace Age.Playground;
 
@@ -17,7 +16,7 @@ internal record struct Page(string Title, Setup Setup);
 
 internal delegate void Setup(Canvas canvas);
 
-public class Editor : Renderable
+public class Editor : Scene2D
 {
     private const uint BORDER_SIZE = 10;
     private readonly Canvas canvas = new();
@@ -31,7 +30,7 @@ public class Editor : Renderable
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = ScrollTest.Setup;
+        this.setup = SubViewportTest.Setup;
 
         this.pages =
         [
@@ -51,105 +50,11 @@ public class Editor : Renderable
             new(nameof(PaddingTest),              PaddingTest.Setup),
             new(nameof(ScrollTest),               ScrollTest.Setup),
 
+            new(nameof(SubViewportTest), SubViewportTest.Setup),
+
             new(nameof(ShadowTreeTest),    ShadowTreeTest.Setup),
             new(nameof(TextSelectionTest), TextSelectionTest.Setup),
         ];
-
-        this.Reload();
-        // this.CreateDemoScene();
-    }
-
-    private void CreateDemoScene()
-    {
-        var root = new FlexBox
-        {
-            Name  = "Root",
-            Style = new()
-            {
-                Size   = new(Unit.Pc(100)),
-                Border = new(BORDER_SIZE, default, Color.Margenta),
-            }
-        };
-
-        var verticalStack = new FlexBox()
-        {
-            Name  = "VStack",
-            Style = new()
-            {
-                StackDirection = StackDirection.Vertical,
-                Size           = new(Unit.Pc(100)),
-                Border         = new(BORDER_SIZE, default, Color.Yellow),
-            }
-        };
-
-        var header = new FlexBox
-        {
-            Name  = "Header",
-            Style = new()
-            {
-                Size   = new(Unit.Pc(100), null),
-                Border = new(BORDER_SIZE, default, Color.Red),
-            }
-        };
-
-        var content = new FlexBox
-        {
-            Name  = "Content",
-            Style = new()
-            {
-                Size   = new(Unit.Pc(100)),
-                Border = new(BORDER_SIZE, default, Color.Green),
-            }
-        };
-
-        var viewports = new FlexBox
-        {
-            Name  = "Viewports",
-            Style = new()
-            {
-                Alignment = Alignment.Center,
-                Border    = new(BORDER_SIZE, default, Color.Blue),
-            }
-        };
-
-        var scene = new DemoScene();
-
-        var freeViewport  = new SubViewport(new(600)) { Name = "Red" };
-        var redViewport   = new SubViewport(new(200)) { Name = "Red" };
-        var greenViewport = new SubViewport(new(200)) { Name = "Green" };
-        var blueViewport  = new SubViewport(new(200)) { Name = "Blue" };
-
-        // freeViewport.Style.Border  = new(1, 0, Color.White);
-        // redViewport.Style.Border   = new(1, 0, Color.Red);
-        // greenViewport.Style.Border = new(1, 0, Color.Green);
-        // blueViewport.Style.Border  = new(1, 0, Color.Blue);
-
-        // freeViewport.Style.BoxSizing = redViewport.Style.BoxSizing = greenViewport.Style.BoxSizing = blueViewport.Style.BoxSizing = BoxSizing.Border;
-
-        freeViewport.Camera3D  = scene.FreeCamera;
-        redViewport.Camera3D   = scene.RedCamera;
-        greenViewport.Camera3D = scene.GreenCamera;
-        blueViewport.Camera3D  = scene.BlueCamera;
-
-        var sideViews = new FlexBox() { Style = new() { StackDirection = StackDirection.Vertical } };
-
-        this.canvas.AppendChild(root);
-        this.AppendChild(scene);
-
-            root.AppendChild(verticalStack);
-
-                verticalStack.AppendChild(header);
-                    header.AppendChild(new FrameStatus());
-
-                verticalStack.AppendChild(content);
-                    content.AppendChild(viewports);
-
-                        viewports.AppendChild(freeViewport);
-                        viewports.AppendChild(sideViews);
-
-                            sideViews.AppendChild(redViewport);
-                            sideViews.AppendChild(greenViewport);
-                            sideViews.AppendChild(blueViewport);
     }
 
     private void HandleInputs()
@@ -225,6 +130,12 @@ public class Editor : Renderable
         this.canvas.DisposeChildren();
 
         this.setup.Invoke(this.canvas);
+    }
+
+    public override void Initialize()
+    {
+        base.Initialize();
+        this.Reload();
     }
 
 #if DEBUG

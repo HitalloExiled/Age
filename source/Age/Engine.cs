@@ -39,7 +39,7 @@ public sealed class Engine : Disposable
             Passes =
             [
                 new CanvasIndexRenderGraphPass(this.renderer, this.Window),
-                // new SceneRenderGraphPass(this.renderer, this.Window),
+                new SceneRenderGraphPass(this.renderer, this.Window),
                 new CanvasRenderGraphPass(this.renderer, this.Window),
             ]
         };

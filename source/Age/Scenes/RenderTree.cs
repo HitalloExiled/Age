@@ -1,7 +1,6 @@
 using Age.Commands;
 using Age.Core;
 using Age.Core.Extensions;
-using Age.Elements;
 using Age.RenderPasses;
 using System.Diagnostics.CodeAnalysis;
 using ThirdParty.Vulkan.Flags;
@@ -23,8 +22,6 @@ public sealed partial class RenderTree : Disposable
     private Buffer                     buffer = null!;
     private ulong                      bufferVersion;
     private CanvasIndexRenderGraphPass canvasIndexRenderGraphPass = null!;
-
-    internal List<Node> Nodes { get; } = new(256);
 
     public Window Window { get; }
 
@@ -152,6 +149,9 @@ public sealed partial class RenderTree : Disposable
 
     internal ReadOnlySpan<Command> Get3DCommands() =>
         this.Window.RenderContext.Buffer3D.Commands;
+
+    internal ReadOnlySpan<Viewport> GetViewports() =>
+        this.viewports.AsSpan();
 
     public void Initialize()
     {

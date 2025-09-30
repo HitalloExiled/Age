@@ -262,7 +262,8 @@ internal sealed unsafe partial class VulkanContext : Disposable
                         Samples       = VkSampleCountFlags.N1,
                         Usage         = swapchainCreateInfo.ImageUsage,
                         InitialLayout = VkImageLayout.ColorAttachmentOptimal,
-                    }
+                    },
+                    VkImageLayout.PresentSrcKHR
                 );
             }
 

@@ -187,7 +187,7 @@ public sealed partial class RenderTarget : Resource
 
         ref var renderPass = ref renderPasses.GetValueRefOrAddDefault(hashcode, out var exists);
 
-        if (!exists)
+        if (!exists || renderPass!.IsDisposed)
         {
             using var disposables = new Disposables();
 

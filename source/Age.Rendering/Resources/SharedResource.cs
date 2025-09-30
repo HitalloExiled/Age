@@ -8,6 +8,8 @@ public sealed class SharedResource<T>(T resource) : IDisposable where T : IDispo
 
     public int Users { get; private set; }
 
+    public bool IsDisposed => this.disposed;
+
     public SharedResource<T> Share()
     {
         this.Users++;

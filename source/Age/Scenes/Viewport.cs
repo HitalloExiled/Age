@@ -1,16 +1,13 @@
 using Age.Graphs;
 using Age.Numerics;
 using Age.Rendering.Resources;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Scenes;
 
 public abstract class Viewport : Spatial2D
 {
-
     public abstract event Action? Resized;
 
-    [AllowNull]
     internal RenderContext RenderContext { get; } = new();
 
     public Camera2D? Camera2D { get; set; }

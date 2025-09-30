@@ -30,7 +30,7 @@ public sealed class Sampler : Resource
     }
 
     protected override void OnDisposed() =>
-        this.Value.Dispose();
+        VulkanRenderer.Singleton.DeferredDispose(this.Value);
 
     public static implicit operator VkSampler(Sampler value) => value.Value;
 }

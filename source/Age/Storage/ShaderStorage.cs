@@ -3,6 +3,7 @@ using Age.Rendering.Resources;
 using Age.Shaders;
 using Age.Rendering.Vulkan;
 using Age.RenderPasses;
+using ThirdParty.Vulkan;
 
 namespace Age.Storage;
 
@@ -44,6 +45,22 @@ public class ShaderStorage : Disposable
 
                         break;
                     }
+            }
+        }
+
+        return shader ?? throw new InvalidOperationException($"Shader {name} not found");
+    }
+
+    public Shader GetShader(string name, VkRenderPass renderPass)
+    {
+        if (!this.shaders.TryGetValue(name, out var shader))
+        {
+            switch (name)
+            {
+                case nameof(GeometryShader):
+                    this.shaders[name] = shader = new GeometryShader(renderPass, ThirdParty.Vulkan.Flags.VkSampleCountFlags.N1, true);
+
+                    break;
             }
         }
 

@@ -71,8 +71,8 @@ public sealed class Buffer : Resource<VkBuffer>
 
     protected override void OnDisposed()
     {
-        this.Allocation.Dispose();
-        this.Instance.Dispose();
+        VulkanRenderer.Singleton.DeferredDispose(this.Allocation);
+        VulkanRenderer.Singleton.DeferredDispose(this.Instance);
     }
 
     public void CopyFrom(Buffer source) =>

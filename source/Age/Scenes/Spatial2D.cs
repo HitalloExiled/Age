@@ -26,6 +26,12 @@ public abstract class Spatial2D : Renderable<Command2D>
 
     public virtual Transform2D LocalTransform { get; set; } = Transform2D.Identity;
 
+    public new Scene2D? Scene
+    {
+        get => base.Scene as Scene2D;
+        set => base.Scene = value;
+    }
+
     public virtual Transform2D Transform
     {
         get => this.LocalTransform * this.ParentTransform;

@@ -9,9 +9,11 @@ namespace Age.Elements.Enumerators;
 internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnumerable<Layoutable>
 {
     #region 8-bytes
+    public event Action<Node>?    Advanced;
+    public event Action<Element>? SubtreeTraversed;
+
     private readonly Element           root;
     private readonly Stack<StackEntry> stack;
-    private readonly Action<Element>?  parentCallback;
 
     private Layoutable current;
     #endregion
@@ -20,11 +22,10 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
     private bool skipToNextSibling;
     #endregion
 
-    public ComposedTreeTraversalEnumerator(Element root, Stack<StackEntry>? stack = null, Action<Element>? parentCallback = null)
+    public ComposedTreeTraversalEnumerator(Element root, Stack<StackEntry>? stack = null)
     {
-        this.root           = root;
-        this.stack          = stack ?? [];
-        this.parentCallback = parentCallback;
+        this.root  = root;
+        this.stack = stack ?? [];
 
         this.Reset();
     }
@@ -86,16 +87,23 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Layoutable? GetLayoutableOrSkip(Node? node)
+    private readonly Layoutable? GetLayoutableOrSkip(Node? node)
     {
         while (true)
         {
+            if (node == null)
+            {
+                return null;
+            }
+
+            this.Advanced?.Invoke(node);
+
             if (node is Layoutable layoutable)
             {
                 return layoutable;
             }
 
-            if (node?.NextSibling == null)
+            if (node.NextSibling == null)
             {
                 return null;
             }
@@ -135,7 +143,7 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
                 return true;
             }
 
-            this.parentCallback?.Invoke(parent);
+            this.SubtreeTraversed?.Invoke(parent);
 
             this.current = parent;
         }

@@ -22,7 +22,6 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
     private readonly FrameResource[]    frameResources = new FrameResource[VulkanContext.MAX_FRAMES_IN_FLIGHT];
     private readonly RenderPass         renderPass;
     private readonly VkSampleCountFlags sampleCount;
-    private readonly DateTime           startTime = DateTime.UtcNow;
 
     public override RenderPass RenderPass => this.renderPass;
 
@@ -62,17 +61,17 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
                                 InitialLayout  = VkImageLayout.ShaderReadOnlyOptimal,
                                 FinalLayout    = VkImageLayout.ShaderReadOnlyOptimal,
                             },
-                            Resolve = new VkAttachmentDescription
-                            {
-                                Format         = this.Window.Surface.Swapchain.Format,
-                                Samples        = VkSampleCountFlags.N1,
-                                LoadOp         = VkAttachmentLoadOp.DontCare,
-                                StoreOp        = VkAttachmentStoreOp.Store,
-                                StencilLoadOp  = VkAttachmentLoadOp.DontCare,
-                                StencilStoreOp = VkAttachmentStoreOp.DontCare,
-                                InitialLayout  = VkImageLayout.ShaderReadOnlyOptimal,
-                                FinalLayout    = VkImageLayout.ShaderReadOnlyOptimal,
-                            }
+                            // Resolve = new VkAttachmentDescription
+                            // {
+                            //     Format         = this.Window.Surface.Swapchain.Format,
+                            //     Samples        = VkSampleCountFlags.N1,
+                            //     LoadOp         = VkAttachmentLoadOp.DontCare,
+                            //     StoreOp        = VkAttachmentStoreOp.Store,
+                            //     StencilLoadOp  = VkAttachmentLoadOp.DontCare,
+                            //     StencilStoreOp = VkAttachmentStoreOp.DontCare,
+                            //     InitialLayout  = VkImageLayout.ShaderReadOnlyOptimal,
+                            //     FinalLayout    = VkImageLayout.ShaderReadOnlyOptimal,
+                            // }
                         }
                     ],
                     DepthStencilAttachment = new VkAttachmentDescription
@@ -93,7 +92,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
         return new(createInfo);
     }
 
-    private unsafe UniformSet GetUniformSet(Camera3D camera, BufferHandlePair cameraBuffer, Material material)
+    private unsafe UniformSet GetUniformSet(RenderTarget renderTarget, Camera3D camera, BufferHandlePair cameraBuffer, Material material)
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
 
@@ -116,7 +115,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
                 Buffer  = cameraBuffer.Buffer,
             };
 
-            frameResource.UniformSets[hashcode] = uniformSet = new UniformSet(material.Shader, [uniformBuffer, combinedImageSampler]);
+            frameResource.UniformSets[hashcode] = uniformSet = new UniformSet(material.GetShader(renderTarget), [uniformBuffer, combinedImageSampler]);
         }
 
         return uniformSet;
@@ -177,42 +176,42 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
         Span<ClearValue> clearValues =
         [
             new(Color.Black),
-            default,
             new(1, 0)
         ];
 
-        // foreach (var scene in this.Window.Tree.Scenes3D.AsSpan())
-        // {
-        //     if (scene is Scene3D scene3D)
-        //     {
-        //         foreach (var camera in scene.Cameras)
-        //         {
-        //             var renderTarget = camera.Viewport!.RenderTarget;
+        var viewports = this.Window.Tree.GetViewports();
 
-        //             commandBuffer.BeginRenderPass(renderTarget, clearValues);
-        //             commandBuffer.SetViewport(renderTarget.Size);
+        for (var i = viewports.Length - 1; i > -1; i--)
+        {
+            var viewport = viewports[i];
 
-        //             foreach (var command in this.Window.Tree.Get3DCommands())
-        //             {
-        //                 switch (command)
-        //                 {
-        //                     case MeshCommand meshCommand:
-        //                         var ubo = this.UpdateUbo(camera, meshCommand.Mesh, renderTarget.Size.ToExtent2D());
+            commandBuffer.BeginRenderPass(viewport.RenderTarget, clearValues);
+            commandBuffer.SetViewport(viewport.RenderTarget.Size);
+            commandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, 0);
 
-        //                         commandBuffer.BindShader(meshCommand.Mesh.Material.Shader);
-        //                         commandBuffer.BindUniformSet(this.GetUniformSet(camera, ubo, meshCommand.Mesh.Material));
-        //                         commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
-        //                         commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);
-        //                         commandBuffer.DrawIndexed(meshCommand.IndexBuffer);
+            if (viewport.Camera3D != null)
+            {
+                foreach (var command in viewport.RenderContext.Buffer3D.Commands)
+                {
+                    switch (command)
+                    {
+                        case MeshCommand meshCommand:
 
-        //                         break;
-        //                 }
-        //             }
+                            var ubo = this.UpdateUbo(viewport.Camera3D, meshCommand.Mesh, viewport.RenderTarget.Size.ToExtent2D());
 
-        //             commandBuffer.EndRenderPass();
-        //         }
-        //     }
-        // }
+                            commandBuffer.BindShader(meshCommand.Mesh.Material.GetShader(viewport.RenderTarget));
+                            commandBuffer.BindUniformSet(this.GetUniformSet(viewport.RenderTarget, viewport.Camera3D, ubo, meshCommand.Mesh.Material));
+                            commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
+                            commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);
+                            commandBuffer.DrawIndexed(meshCommand.IndexBuffer);
+
+                            break;
+                    }
+                }
+            }
+
+            commandBuffer.EndRenderPass();
+        }
     }
 
     public override void Recreate()

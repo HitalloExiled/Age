@@ -29,7 +29,7 @@ internal struct ComposedTreeEnumerator(Element target) : IEnumerator<Layoutable>
                 }
                 else
                 {
-                    this.current = this.target.FirstChild;
+                    this.current = getLayoutableOrSkip(this.target.FirstChild);
                     this.state   = 2;
                 }
 

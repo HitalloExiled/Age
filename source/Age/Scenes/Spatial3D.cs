@@ -27,6 +27,12 @@ public abstract class Spatial3D : Renderable<Command3D>
 
     public virtual Transform3D LocalTransform { get; set; } = Transform3D.Identity;
 
+    public new Scene3D? Scene
+    {
+        get => base.Scene as Scene3D;
+        set => base.Scene = value;
+    }
+
     public virtual Vector3<float> Pivot { get; set; }
 
     public virtual Transform3D Transform

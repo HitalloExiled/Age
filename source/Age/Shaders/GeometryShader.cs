@@ -1,10 +1,11 @@
 using Age.Rendering.Resources;
+using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 
 namespace Age.Shaders;
 
-public sealed partial class GeometryShader(RenderPass renderPass, VkSampleCountFlags rasterizationSamples, bool watch)
+public sealed partial class GeometryShader(VkRenderPass renderPass, VkSampleCountFlags rasterizationSamples, bool watch)
 : Shader<GeometryShader.Vertex>(
     $"{nameof(GeometryShader)}.slang",
     renderPass,

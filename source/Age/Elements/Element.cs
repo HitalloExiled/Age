@@ -101,8 +101,8 @@ public abstract partial class Element : Layoutable, IComparable<Element>, IEnume
     internal ComposedTreeEnumerator GetComposedTreeEnumerator() =>
         new(this);
 
-    internal ComposedTreeTraversalEnumerator GetComposedTreeTraversalEnumerator(Stack<(Slot, int)>? stack = null, Action<Element>? parentCallback = null) =>
-        new(this, stack, parentCallback);
+    internal ComposedTreeTraversalEnumerator GetComposedTreeTraversalEnumerator(Stack<(Slot, int)>? stack = null) =>
+        new(this, stack);
 
     public int CompareTo(Element? other)
     {

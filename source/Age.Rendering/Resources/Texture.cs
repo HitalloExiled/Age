@@ -79,13 +79,13 @@ public partial class Texture : Resource
 
     protected override void OnDisposed()
     {
+        VulkanRenderer.Singleton.DeferredDispose(this.ImageView);
+        this.Sampler.Dispose();
+
         if (this.IsImageOwner)
         {
-            VulkanRenderer.Singleton.DeferredDispose(this.Image);
+            this.Image.Dispose();
         }
-
-        VulkanRenderer.Singleton.DeferredDispose(this.ImageView);
-        VulkanRenderer.Singleton.DeferredDispose(this.Sampler);
     }
 
     public void Update(scoped ReadOnlySpan<byte> buffer) =>

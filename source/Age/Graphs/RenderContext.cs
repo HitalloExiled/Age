@@ -48,10 +48,10 @@ public class RenderContext
         this.buffer3DOverride = null;
 
     public void Override2D(RenderContext renderContext) =>
-        this.buffer2DOverride = renderContext?.Buffer2D;
+        this.buffer2DOverride = renderContext.Buffer2D;
 
     public void Override3D(RenderContext renderContext) =>
-        this.buffer3DOverride = renderContext?.Buffer3D;
+        this.buffer3DOverride = renderContext.Buffer3D;
 
     public void Reset()
     {

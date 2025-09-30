@@ -171,7 +171,7 @@ public sealed class Image : Resource<VkImage>
             _ => 0,
         };
 
-    internal Image(VkImage instance, in VkImageCreateInfo description)
+    internal Image(VkImage instance, in VkImageCreateInfo description, VkImageLayout finalLayout)
     {
         this.Instance      = instance;
         this.Extent        = description.Extent;
@@ -180,6 +180,7 @@ public sealed class Image : Resource<VkImage>
         this.InitialLayout = description.InitialLayout;
         this.Samples       = description.Samples;
         this.Usage         = description.Usage;
+        this.FinalLayout   = finalLayout;
     }
 
     public Image(in VkImageCreateInfo createInfo, VkImageLayout finalLayout = default)
@@ -273,8 +274,8 @@ public sealed class Image : Resource<VkImage>
     {
         if (this.allocation != null)
         {
-            this.allocation.Dispose();
-            this.Instance.Dispose();
+            VulkanRenderer.Singleton.DeferredDispose(this.allocation);
+            VulkanRenderer.Singleton.DeferredDispose(this.Instance);
         }
     }
 
