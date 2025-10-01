@@ -261,9 +261,8 @@ public static class ScrollTest
                             Style =
                             {
                                 Border          = new(2, 20, Color.Blue),
-                                BackgroundImage = new()
+                                BackgroundImage = new(cat)
                                 {
-                                    Uri  = cat,
                                     Size = ImageSize.Fit(),
                                 },
                                 Size = new(600),
@@ -288,9 +287,8 @@ public static class ScrollTest
                             Style =
                             {
                                 Border          = new(2, 20, Color.Blue),
-                                BackgroundImage = new()
+                                BackgroundImage = new(dog)
                                 {
-                                    Uri  = dog,
                                     Size = ImageSize.Fit(),
                                 },
                                 Size = new(600),

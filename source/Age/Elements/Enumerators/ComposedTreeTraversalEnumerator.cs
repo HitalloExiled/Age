@@ -9,7 +9,6 @@ namespace Age.Elements.Enumerators;
 internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnumerable<Layoutable>
 {
     #region 8-bytes
-    public event Action<Node>?    Advanced;
     public event Action<Element>? SubtreeTraversed;
 
     private readonly Element           root;
@@ -91,19 +90,12 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
     {
         while (true)
         {
-            if (node == null)
-            {
-                return null;
-            }
-
-            this.Advanced?.Invoke(node);
-
             if (node is Layoutable layoutable)
             {
                 return layoutable;
             }
 
-            if (node.NextSibling == null)
+            if (node?.NextSibling == null)
             {
                 return null;
             }

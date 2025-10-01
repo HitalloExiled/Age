@@ -4,7 +4,7 @@ using Age.Rendering.Resources;
 
 namespace Age.Scenes;
 
-public abstract class Viewport : Spatial2D
+public abstract class Viewport : Node
 {
     public abstract event Action? Resized;
 
@@ -31,7 +31,7 @@ public abstract class Viewport : Spatial2D
             {
                 this.RenderContext.ClearOverride2D();
 
-                this.Unseal();
+                using var scope = this.CreateUnsealedScope();
 
                 field?.Detach();
 
@@ -39,8 +39,6 @@ public abstract class Viewport : Spatial2D
                 {
                     this.AppendChild(value);
                 }
-
-                this.Seal();
             }
             else if (this.IsConnected)
             {
@@ -65,7 +63,7 @@ public abstract class Viewport : Spatial2D
             {
                 this.RenderContext.ClearOverride3D();
 
-                this.Unseal();
+                using var scope = this.CreateUnsealedScope();
 
                 field?.Detach();
 
@@ -80,8 +78,6 @@ public abstract class Viewport : Spatial2D
                         this.AppendChild(value);
                     }
                 }
-
-                this.Seal();
             }
             else if (this.IsConnected)
             {

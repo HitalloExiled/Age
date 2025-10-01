@@ -9,6 +9,20 @@ namespace Age.Scenes;
 
 public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<Node>
 {
+    public readonly ref struct UnsealedScope
+    {
+        private readonly Node node;
+
+        public UnsealedScope(Node node)
+        {
+            node.Unseal();
+
+            this.node = node;
+        }
+
+        public readonly void Dispose() => this.node.Seal();
+    }
+
     private NodeFlags nodeFlags;
 
     internal int Index
@@ -699,6 +713,9 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void AppendChildren(ReadOnlySpan<Node> nodes) =>
         this.AppendOrPrepend(nodes, true);
+
+    public UnsealedScope CreateUnsealedScope() =>
+        new(this);
 
     public int CompareTo(Node? other)
     {

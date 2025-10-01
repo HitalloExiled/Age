@@ -26,14 +26,15 @@ public sealed partial class RenderTree
 
         while (traversalEnumerator.MoveNext())
         {
-            if (traversalEnumerator.Current is Renderable renderable && renderable.Visible)
+            if (traversalEnumerator.Current is Viewport viewport)
+            {
+                this.viewports.Add(viewport);
+
+                viewport.RenderContext.Reset();
+            }
+            else if (traversalEnumerator.Current is Renderable renderable && renderable.Visible)
             {
                 var context = renderable.Scene!.Viewport!.RenderContext;
-
-                if (renderable is Viewport viewport)
-                {
-                    collectViewport(context, viewport);
-                }
 
                 updateIndex(renderable);
 
@@ -45,20 +46,11 @@ public sealed partial class RenderTree
 
                     Debug.Assert(this.composedTreeStack.Count == 0);
 
-                    void onAdvanced(Node node)
-                    {
-                        if (node is Viewport viewport)
-                        {
-                            collectViewport(context, viewport);
-                        }
-                    }
-
                     void onSubtreeTraversed(Element element) =>
                         collect2DCommands(context, element.PostCommands, element.CachedTransformWithOffset);
 
                     var composedTreeTraversalEnumerator = canvas.GetComposedTreeTraversalEnumerator(this.composedTreeStack);
 
-                    composedTreeTraversalEnumerator.Advanced         += onAdvanced;
                     composedTreeTraversalEnumerator.SubtreeTraversed += onSubtreeTraversed;
 
                     while (composedTreeTraversalEnumerator.MoveNext())
@@ -129,16 +121,6 @@ public sealed partial class RenderTree
             var transform = (Matrix4x4<float>)spatial3D.CachedTransform;
 
             context.Buffer3D.AddCommandRange(spatial3D.Commands.AsSpan());
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void collectViewport(RenderContext context, Viewport viewport)
-        {
-            this.viewports.Add(viewport);
-
-            viewport.RenderContext.Reset();
-
-            collectSpatial2D(context, viewport);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1168,10 +1168,19 @@ public abstract partial class Element
 
         if (image != null)
         {
-            if (!TextureStorage.Singleton.TryGet(image.Uri, out var texture) && File.Exists(image.Uri))
+            Texture2D? texture;
+
+            if (image.Uri != null)
             {
-                texture = Texture2D.Load(image.Uri);
-                TextureStorage.Singleton.Add(image.Uri, texture);
+                if (!TextureStorage.Singleton.TryGet(image.Uri, out texture) && File.Exists(image.Uri))
+                {
+                    texture = Texture2D.Load(image.Uri);
+                    TextureStorage.Singleton.Add(image.Uri, texture);
+                }
+            }
+            else
+            {
+                texture = image.Texture;
             }
 
             if (texture != null)

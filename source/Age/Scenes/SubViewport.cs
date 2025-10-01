@@ -1,15 +1,14 @@
-using Age.Commands;
 using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 
 namespace Age.Scenes;
 
-public class SubViewport : Viewport
+public sealed class SubViewport(in Size<uint> size) : Viewport
 {
     public override event Action? Resized;
 
-    private RenderTarget renderTarget;
+    private RenderTarget renderTarget = CreateRenderTarget(size);
 
     public override Size<uint> Size
     {
@@ -21,8 +20,6 @@ public class SubViewport : Viewport
                 this.renderTarget.Dispose();
                 this.renderTarget = CreateRenderTarget(value);
 
-                this.UpdateCommand();
-
                 this.Resized?.Invoke();
             }
         }
@@ -31,12 +28,6 @@ public class SubViewport : Viewport
     public override string       NodeName     => nameof(SubViewport);
     public override RenderTarget RenderTarget => this.renderTarget;
     public override Texture2D    Texture      => this.RenderTarget.ColorAttachments[0].Texture;
-
-    public SubViewport(in Size<uint> size)
-    {
-        this.renderTarget = CreateRenderTarget(size);
-        this.UpdateCommand();
-    }
 
     private static RenderTarget CreateRenderTarget(Size<uint> size)
     {
@@ -64,23 +55,20 @@ public class SubViewport : Viewport
         return new(createInfo);
     }
 
-    private void UpdateCommand()
-    {
-        if (this.SingleCommand is not RectCommand command)
-        {
-            this.SingleCommand = command = CommandPool.RectCommand.Get();
-
-            command.CommandFilter = CommandFilter.Color;
-        }
-
-        command.Size       = this.RenderTarget.Size;
-        command.TextureMap = new(this.RenderTarget.ColorAttachments[0].Texture, UVRect.Normalized);
-    }
-
     private protected override void OnDisposedInternal()
     {
         base.OnDisposedInternal();
 
         this.RenderTarget.Dispose();
+    }
+
+    protected override void OnAttached()
+    {
+        base.OnAttached();
+
+        if (this.Parent is not Scenes.Scene)
+        {
+            throw new InvalidOperationException("SubViewport must be attached directly to an Scene.");
+        }
     }
 }

@@ -2,6 +2,7 @@ using Age.Elements;
 using Age.Numerics;
 using Age.Scenes;
 using Age.Styling;
+using System.Diagnostics;
 
 namespace Age.Playground.Tests.Scene;
 
@@ -11,11 +12,19 @@ public static class SubViewportTest
     {
         const uint BORDER_SIZE = 2;
 
-        canvas.Scene!.Viewport!.Scene3D?.Dispose();
-
         var scene = new DemoScene();
 
-        canvas.Scene!.Viewport!.Scene3D = scene;
+        Debug.Assert(canvas.Scene?.Viewport != null);
+
+        canvas.Scene.Viewport.Scene3D?.Dispose();
+        canvas.Scene.Viewport.Scene3D = scene;
+
+        var subViewportFree = new SubViewport(new(608)) { Name = "Free", Camera3D = scene.FreeCamera,  Scene3D = scene };
+        var subViewportX    = new SubViewport(new(200)) { Name = "X",    Camera3D = scene.RedCamera,   Scene3D = scene };
+        var subViewportY    = new SubViewport(new(200)) { Name = "Y",    Camera3D = scene.GreenCamera, Scene3D = scene };
+        var subViewportZ    = new SubViewport(new(200)) { Name = "Z",    Camera3D = scene.BlueCamera,  Scene3D = scene };
+
+        canvas.Scene.AppendChildren([subViewportFree, subViewportX, subViewportY, subViewportZ]);
 
         var root = new FlexBox
         {
@@ -54,54 +63,48 @@ public static class SubViewportTest
                             Style =
                             {
                                 Alignment = Alignment.Center,
-                                Border    = new(BORDER_SIZE, default, Color.Cyan),
                             },
                             Children =
                             [
-                                new FlexBox
+                                new EmbeddedViewport
                                 {
                                     Style =
                                     {
-                                        Size   = new(600),
                                         Border = new(BORDER_SIZE, default, Color.Margenta),
                                     },
-                                    Children = [new SubViewport(new(600)) { Name = "Free", Camera3D = scene.FreeCamera, Scene3D = scene }]
+                                    Viewport = subViewportFree
                                 },
                                 new FlexBox
                                 {
                                     Style =
                                     {
                                         StackDirection = StackDirection.Vertical,
-                                        Border         = new(BORDER_SIZE, default, Color.Cyan),
                                     },
                                     Children =
                                     [
-                                        new FlexBox
+                                        new EmbeddedViewport
                                         {
                                             Style =
                                             {
-                                                Size   = new(200),
                                                 Border = new(BORDER_SIZE, default, Color.Red)
                                             },
-                                            Children = [new SubViewport(new(200)) { Name = "X", Camera3D = scene.RedCamera, Scene3D = scene }]
+                                            Viewport = subViewportX
                                         },
-                                        new FlexBox
+                                        new EmbeddedViewport
                                         {
                                             Style =
                                             {
-                                                Size   = new(200),
                                                 Border = new(BORDER_SIZE, default, Color.Green)
                                             },
-                                            Children = [new SubViewport(new(200)) { Name = "Y", Camera3D = scene.GreenCamera, Scene3D = scene }]
+                                            Viewport = subViewportY
                                         },
-                                        new FlexBox
+                                        new EmbeddedViewport
                                         {
                                             Style =
                                             {
-                                                Size   = new(200),
                                                 Border = new(BORDER_SIZE, default, Color.Blue)
                                             },
-                                            Children = [new SubViewport(new(200)) { Name = "Z", Camera3D = scene.BlueCamera, Scene3D = scene }]
+                                            Viewport = subViewportZ
                                         }
                                     ]
                                 }
