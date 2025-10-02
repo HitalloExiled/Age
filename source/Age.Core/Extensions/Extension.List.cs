@@ -5,6 +5,12 @@ namespace Age.Core.Extensions;
 
 public static partial class Extension
 {
+    private static void Resize<T>(List<T> source, int size)
+    {
+        source.EnsureCapacity(size);
+        source.SetCount(size);
+    }
+
     extension<T>(List<T> source)
     {
         public Span<T> AsSpan() =>
@@ -19,23 +25,46 @@ public static partial class Extension
         public Span<T> AsSpan(Range range) =>
             CollectionsMarshal.AsSpan(source)[range];
 
+        public void Replace(Range range, ReadOnlySpan<T> values)
+        {
+            var (offset, length) = range.GetOffsetAndLength(source.Count);
+
+            if (length == values.Length)
+            {
+                values.CopyTo(source.AsSpan(offset));
+            }
+            else if (length > values.Length)
+            {
+                values.CopyTo(source.AsSpan(offset));
+
+                source.RemoveRange(offset + values.Length, length - values.Length);
+            }
+            else
+            {
+                var size      = source.Count + (values.Length - length);
+                var remaining = source.Count - (offset + length);
+
+                Resize(source, size);
+
+                var from = source.AsSpan(offset + length, remaining);
+                var to   = source.AsSpan(size - remaining);
+
+                from.CopyTo(to);
+
+                values.CopyTo(source.AsSpan(offset));
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(int size, T defaultValue)
         {
-            source.EnsureCapacity(size);
-
             if (size > source.Count)
             {
-                var previous = source.Count;
+                var start = source.Count;
 
-                source.SetCount(size);
+                Resize(source, size);
 
-                var span = source.AsSpan();
-
-                for (var i = previous; i < span.Length; i++)
-                {
-                    span[i] = defaultValue;
-                }
+                source.AsSpan(start).Fill(defaultValue);
             }
             else
             {

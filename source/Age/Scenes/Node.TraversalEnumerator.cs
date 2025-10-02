@@ -7,7 +7,9 @@ public abstract partial class Node
 {
 	public struct TraversalEnumerator : IEnumerator<Node>, IEnumerable<Node>
     {
+
         #region 8-bytes
+        public event Action<Node>? SubtreeTraversed;
         private readonly Node root;
         private Node current;
         #endregion
@@ -43,10 +45,14 @@ public abstract partial class Node
 
                 return true;
             }
+            else if (this.current == this.root)
+            {
+                return false;
+            }
 
             this.skipToNextSibling = false;
 
-            while (this.current != this.root)
+            while (true)
             {
                 if (this.current.NextSibling is Node nextSibling)
                 {
@@ -56,9 +62,14 @@ public abstract partial class Node
                 }
 
                 this.current = this.current.Parent!;
-            }
 
-            return false;
+                if (this.current == this.root)
+                {
+                    return false;
+                }
+
+                SubtreeTraversed?.Invoke(this.current);
+            }
         }
 
         [MemberNotNull(nameof(current))]

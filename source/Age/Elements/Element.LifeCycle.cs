@@ -121,12 +121,12 @@ public abstract partial class Element
             this.DisposeLayoutCommandImage(layoutCommandImage);
         }
 
-        foreach (var item in this.Commands)
+        foreach (var item in this.GetCommands())
         {
             CommandPool.RectCommand.Return((RectCommand)item);
         }
 
-        this.Commands.Clear();
+        this.ClearCommands();
 
         this.ShadowTree?.Dispose();
 

@@ -48,7 +48,7 @@ public sealed class Text : Layoutable
             {
                 base.StencilLayer = value;
 
-                foreach (var command in this.Commands)
+                foreach (var command in this.GetCommands())
                 {
                     command.StencilLayer = value;
                 }
@@ -122,7 +122,7 @@ public sealed class Text : Layoutable
         this.caretCommand.Size         = new(this.caretWidth, this.LineHeight);
         this.caretCommand.StencilLayer = this.StencilLayer;
 
-        this.Commands.Add(this.caretCommand);
+        this.AddCommand(this.caretCommand);
 
         this.Buffer.Modified += this.OnTextChange;
 
@@ -131,47 +131,6 @@ public sealed class Text : Layoutable
 
     public Text(string? value) : this() =>
         this.Buffer.Set(value);
-
-    private static void AllocateCommands(List<Command2D> commands, int count)
-    {
-        commands.EnsureCapacity(count);
-
-        if (count < commands.Count)
-        {
-            ReleaseCommands(commands, commands.Count - count);
-        }
-        else
-        {
-            var previousCount = commands.Count;
-
-            commands.SetCount(count);
-
-            var span = commands.AsSpan();
-
-            for (var i = previousCount; i < span.Length; i++)
-            {
-                span[i] = CommandPool.TextCommand.Get();
-            }
-        }
-    }
-
-    private static void ReleaseCommands(List<Command2D> commands, int count)
-    {
-        if (count > 0)
-        {
-            var span  = commands.AsSpan();
-            var start = span.Length - count;
-
-            for (var i = start; i < span.Length; i++)
-            {
-                CommandPool.TextCommand.Return((TextCommand)span[i]);
-
-                span[i] = default!;
-            }
-
-            commands.SetCount(start);
-        }
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ApplySelection(int index, in TextSelection selection, TextCommand selectionCommand)
@@ -189,7 +148,7 @@ public sealed class Text : Layoutable
 
             if (selectionCommand.Index != default)
             {
-                ((TextCommand)this.Commands[selectionCommand.Index]).Color = Color.White;
+                ((TextCommand)this.GetCommands()[selectionCommand.Index]).Color = Color.White;
             }
         }
         else
@@ -220,7 +179,7 @@ public sealed class Text : Layoutable
 
         if (selectionCommand.Index != default)
         {
-            ((TextCommand)this.Commands[selectionCommand.Index]).Color = this.GetInheritedStyleSource()?.ComputedStyle?.Color ?? default;
+            ((TextCommand)this.GetCommands()[selectionCommand.Index]).Color = this.GetInheritedStyleSource()?.ComputedStyle?.Color ?? default;
         }
     }
 
@@ -234,7 +193,7 @@ public sealed class Text : Layoutable
 
             if (this.CursorPosition == textLength)
             {
-                var command = (RectCommand)this.Commands[textLength - 1];
+                var command = (RectCommand)this.GetCommands()[textLength - 1];
 
                 if (this.Buffer[^1] == '\n')
                 {
@@ -249,7 +208,7 @@ public sealed class Text : Layoutable
             }
             else
             {
-                position = ((RectCommand)this.Commands[(int)this.CursorPosition]).LocalTransform.Position;
+                position = ((RectCommand)this.GetCommands()[(int)this.CursorPosition]).LocalTransform.Position;
             }
 
             this.caretCommand.LocalTransform = Transform2D.CreateTranslated(position);
@@ -270,14 +229,14 @@ public sealed class Text : Layoutable
 
             for (var i = 0; i < text.Length; i++)
             {
-                this.ApplySelection(i, range, (TextCommand)this.Commands[i]);
+                this.ApplySelection(i, range, (TextCommand)this.GetCommands()[i]);
             }
         }
         else
         {
             for (var i = 0; i < text.Length; i++)
             {
-                this.ClearSelection((TextCommand)this.Commands[i]);
+                this.ClearSelection((TextCommand)this.GetCommands()[i]);
             }
         }
     }
@@ -315,11 +274,11 @@ public sealed class Text : Layoutable
 
         lines[0].Start = 0;
 
-        this.Commands.RemoveAt(this.Commands.Count - 1);
+        this.RemoveCommandAt(^1);
 
-        AllocateCommands(this.Commands, textSpan.Length + visibleCharacterCount);
+        this.AllocateCommands(textSpan.Length + visibleCharacterCount, CommandPool.TextCommand);
 
-        this.Commands.Add(this.caretCommand);
+        this.AddCommand(this.caretCommand);
 
         var elementIndex = this.Index + 1;
         var range = this.Selection?.Ordered();
@@ -332,7 +291,7 @@ public sealed class Text : Layoutable
         for (var i = 0; i < textSpan.Length; i++)
         {
             var charIndex = i - charOffset;
-            var selectionCommand = (TextCommand)this.Commands[i];
+            var selectionCommand = (TextCommand)this.GetCommands()[i];
 
             selectionCommand.Border       = default;
             selectionCommand.Color        = default;
@@ -375,7 +334,7 @@ public sealed class Text : Layoutable
 
                     selectionCommand.Index = characterIndex;
 
-                    var characterCommand = (TextCommand)this.Commands[characterIndex];
+                    var characterCommand = (TextCommand)this.GetCommands()[characterIndex];
 
                     characterCommand.Metadata = default;
                     characterCommand.Border   = default;
@@ -420,7 +379,7 @@ public sealed class Text : Layoutable
             }
             else
             {
-                var previous = (TextCommand)this.Commands[i - 1];
+                var previous = (TextCommand)this.GetCommands()[i - 1];
 
                 selectionCommand.Index     = previous.Index;
                 selectionCommand.ObjectId  = previous.ObjectId;
@@ -453,7 +412,7 @@ public sealed class Text : Layoutable
             return;
         }
 
-        var command = (TextCommand)this.Commands[(int)character];
+        var command = (TextCommand)this.GetCommands()[(int)character];
 
         var cursor = this.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
@@ -523,13 +482,13 @@ public sealed class Text : Layoutable
 
     private protected override void OnDisposedInternal()
     {
-        foreach (var command in this.Commands[..^1])
+        foreach (var command in this.GetCommands()[..^1])
         {
             CommandPool.TextCommand.Return((TextCommand)command);
         }
 
         CommandPool.RectCommand.Return(this.caretCommand);
-        this.Commands.Clear();
+        this.ClearCommands();
     }
 
     private protected override void OnIndexed()
@@ -537,7 +496,7 @@ public sealed class Text : Layoutable
         this.UpdateDirtyLayout();
 
         var elementIndex = this.Index + 1;
-        var commands     = this.Commands.AsSpan(0, this.Buffer.Length);
+        var commands     = this.GetCommands()[..this.Buffer.Length];
 
         for (var i = 0; i < commands.Length; i++)
         {
@@ -703,7 +662,7 @@ public sealed class Text : Layoutable
 
         for (var i = 0; i < lineSpan.Length; i++)
         {
-            var rect = ((TextCommand)this.Commands[(int)lineSpan[i].Start]).GetAffineRect();
+            var rect = ((TextCommand)this.GetCommands()[(int)lineSpan[i].Start]).GetAffineRect();
 
             if (isOnCursorLine(rect))
             {
@@ -736,11 +695,11 @@ public sealed class Text : Layoutable
         {
             if (this.textIsDirty)
             {
-                this.Commands.RemoveAt(this.Commands.Count - 1);
+                this.RemoveCommandAt(^1);
 
-                ReleaseCommands(this.Commands, this.Commands.Count);
+                this.ReleaseCommands(this.GetCommands().Length, CommandPool.TextCommand);
 
-                this.Commands.Add(this.caretCommand);
+                this.AddCommand(this.caretCommand);
 
                 this.Selection = default;
                 this.Boundings = default;
@@ -790,11 +749,11 @@ public sealed class Text : Layoutable
         var startIndex = int.Min((int)selection.Start, textLength - 1);
         var endIndex   = int.Min((int)selection.End, textLength - 1);
 
-        var lineSpan     = this.textLines.AsSpan();
-        var commandsSpan = this.Commands.AsSpan();
+        var lineSpan = this.textLines.AsSpan();
+        var commands = this.GetCommands();
 
-        var startAnchor = (TextCommand)commandsSpan[startIndex];
-        var endAnchor   = (TextCommand)commandsSpan[endIndex];
+        var startAnchor = (TextCommand)commands[startIndex];
+        var endAnchor   = (TextCommand)commands[endIndex];
 
         var startAnchorRect = startAnchor.GetAffineRect();
         var endAnchorRect   = endAnchor.GetAffineRect();
@@ -811,11 +770,11 @@ public sealed class Text : Layoutable
             {
                 position = (uint)textLength;
 
-                scanBelow(commandsSpan, endAnchor.Line, lineSpan.Length, lineSpan, ref position);
+                scanBelow(commands, endAnchor.Line, lineSpan.Length, lineSpan, ref position);
             }
             else
             {
-                scanAbove(commandsSpan, endAnchor.Line, startAnchor.Line, lineSpan, ref position);
+                scanAbove(commands, endAnchor.Line, startAnchor.Line, lineSpan, ref position);
             }
         }
         else
@@ -824,11 +783,11 @@ public sealed class Text : Layoutable
             {
                 position = 0;
 
-                scanAbove(commandsSpan, endAnchor.Line, -1, lineSpan, ref position);
+                scanAbove(commands, endAnchor.Line, -1, lineSpan, ref position);
             }
             else
             {
-                scanBelow(commandsSpan, endAnchor.Line, startAnchor.Line + 1, lineSpan, ref position);
+                scanBelow(commands, endAnchor.Line, startAnchor.Line + 1, lineSpan, ref position);
             }
         }
 
@@ -997,7 +956,7 @@ public sealed class Text : Layoutable
 
         this.UpdateLayoutIndependentAncestor();
 
-        var rect = ((RectCommand)this.Commands[(int)index]).GetAffineRect();
+        var rect = ((RectCommand)this.GetCommands()[(int)index]).GetAffineRect();
 
         var transform = this.TransformWithOffset;
 
@@ -1013,7 +972,7 @@ public sealed class Text : Layoutable
         this.textLines[this.GetCharacterLineIndex(index)];
 
     public int GetCharacterLineIndex(uint index) =>
-        ((TextCommand)this.Commands[(int)index]).Line;
+        ((TextCommand)this.GetCommands()[(int)index]).Line;
 
     public TextLine? GetCharacterNextLine(uint index) =>
         !this.Buffer.IsEmpty && this.GetCharacterLineIndex(index) + 1 is var lineIndex && lineIndex < this.textLines.Count
@@ -1052,7 +1011,7 @@ public sealed class Text : Layoutable
 
         this.UpdateLayoutIndependentAncestor();
 
-        var slice = this.Commands.AsSpan((int)textSelection.Start + 1, textSelection.Length);
+        var slice = this.GetCommands().Slice((int)textSelection.Start + 1, textSelection.Length);
 
         var rect = new Rect<float>();
 

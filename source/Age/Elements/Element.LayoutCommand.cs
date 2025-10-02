@@ -22,8 +22,8 @@ public abstract partial class Element
     private byte          commandsSeparator;
     private LayoutCommand layoutCommands;
 
-    internal ReadOnlySpan<Command2D> PreCommands  => this.Commands.AsSpan(..this.commandsSeparator);
-    internal ReadOnlySpan<Command2D> PostCommands => this.Commands.AsSpan(this.commandsSeparator..);
+    internal ReadOnlySpan<Command2D> PreCommands  => this.GetCommands()[..this.commandsSeparator];
+    internal ReadOnlySpan<Command2D> PostCommands => this.GetCommands()[this.commandsSeparator..];
 
     private RectCommand AllocateLayoutCommand(LayoutCommand layoutCommand)
     {
@@ -31,7 +31,7 @@ public abstract partial class Element
 
         if (this.layoutCommands.HasFlags(layoutCommand))
         {
-            return (RectCommand)this.Commands[index];
+            return (RectCommand)this.GetCommands()[index];
         }
 
         var command = CommandPool.RectCommand.Get();
@@ -52,7 +52,7 @@ public abstract partial class Element
 
         command.StencilLayer = this.StencilLayer;
 
-        this.Commands.Insert(index, command);
+        this.InsertCommand(index, command);
 
         this.layoutCommands |= layoutCommand;
 
@@ -107,11 +107,11 @@ public abstract partial class Element
             var mask = layoutCommand - 1;
             var index = BitOperations.PopCount((uint)(this.layoutCommands & mask));
 
-            var command = (RectCommand)this.Commands[index];
+            var command = (RectCommand)this.GetCommands()[index];
 
             CommandPool.RectCommand.Return(command);
 
-            this.Commands.RemoveAt(index);
+            this.RemoveCommandAt(index);
 
             this.layoutCommands &= ~layoutCommand;
 
@@ -134,7 +134,7 @@ public abstract partial class Element
 
         if (this.layoutCommands.HasFlags(layoutCommand))
         {
-            rectCommand = (RectCommand)this.Commands[index];
+            rectCommand = (RectCommand)this.GetCommands()[index];
             return true;
         }
 

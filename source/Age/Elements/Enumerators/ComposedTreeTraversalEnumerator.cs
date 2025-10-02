@@ -123,10 +123,14 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
 
             return true;
         }
+        else if (this.current == this.root)
+        {
+            return false;
+        }
 
         this.skipToNextSibling = false;
 
-        while (this.current != this.root)
+        while (true)
         {
             if (this.GetNextSibling(this.current, out var parent) is Layoutable nextSibling)
             {
@@ -135,12 +139,15 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
                 return true;
             }
 
-            this.SubtreeTraversed?.Invoke(parent);
+            if (parent == this.root)
+            {
+                return false;
+            }
 
             this.current = parent;
-        }
 
-        return false;
+            this.SubtreeTraversed?.Invoke(parent);
+        }
     }
 
     [MemberNotNull(nameof(current))]

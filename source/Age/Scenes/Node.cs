@@ -9,34 +9,23 @@ namespace Age.Scenes;
 
 public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<Node>
 {
-    public readonly ref struct UnsealedScope
-    {
-        private readonly Node node;
-
-        public UnsealedScope(Node node)
-        {
-            node.Unseal();
-
-            this.node = node;
-        }
-
-        public readonly void Dispose() => this.node.Seal();
-    }
-
     private NodeFlags nodeFlags;
 
-    internal int Index
+    internal Range<ushort> SubTreeRange
     {
         get;
         set
         {
-            if (field != value)
+            if (field.Start != value.Start)
             {
-                field = value;
                 this.OnIndexed();
             }
+
+            field = value;
         }
     }
+
+    internal int Index => this.SubTreeRange.Start;
 
     public Node? FirstChild      { get; private set; }
     public Node? LastChild       { get; private set; }
