@@ -1,6 +1,6 @@
 using Age.Scenes;
 
-namespace Age.Tests.Age.Scene;
+namespace Age.Tests.Age.Scenes;
 
 #pragma warning disable CA1001, IDE0052
 

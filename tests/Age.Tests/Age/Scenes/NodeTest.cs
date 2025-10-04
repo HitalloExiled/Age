@@ -1,6 +1,6 @@
 using Age.Scenes;
 
-namespace Age.Tests.Age.Scene;
+namespace Age.Tests.Age.Scenes;
 
 public class TestNode : Node
 {

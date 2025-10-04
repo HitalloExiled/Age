@@ -6,14 +6,66 @@ namespace Age.Scenes;
 
 public abstract class Renderable : Node
 {
+    internal DirtState DirtState { get; private set; }
+
+    internal SubtreeRange SubtreeRange
+    {
+        get;
+        set
+        {
+            var indexHasChanged = field.Start != value.Start;
+
+            field = value;
+
+            if (indexHasChanged)
+            {
+                this.OnIndexChanged();
+            }
+        }
+    }
+
+    internal int Index => this.SubtreeRange.Start;
+
     public bool Visible { get; set; } = true;
 
-    public Range<ushort> SubtreeCommandRenge { get; set; }
+    private protected virtual void OnIndexChanged() { }
+
+    private protected override void OnChildAttachedInternal(Node node)
+    {
+        base.OnChildAttachedInternal(node);
+
+        this.MakeSubtreeDirty(DirtState.Subtree);
+    }
+
+    private protected override void OnChildDetachedInternal(Node node)
+    {
+        base.OnChildDetachedInternal(node);
+
+        this.MakeSubtreeDirty(DirtState.Subtree);
+    }
+
+    private protected void MarkDirtCommand() =>
+        this.MakeSubtreeDirty(DirtState.Commands);
+
+    internal void MakeSubtreeDirty(DirtState dirtState)
+    {
+        if (this.DirtState == default && this.IsConnected)
+        {
+            (this as Window ?? this.Scene?.Viewport?.Window)?.Tree.InvalidatedSubTree(this);
+        }
+
+        this.DirtState |= dirtState;
+    }
+
+    internal void MakeSubtreePristine() =>
+        this.DirtState = default;
 }
 
 public abstract class Renderable<T> : Renderable where T : Command
 {
     private readonly List<T> commands = [];
+
+    internal CommandRange CommandRange { get; set; }
 
     internal T? SingleCommand
     {
@@ -34,7 +86,7 @@ public abstract class Renderable<T> : Renderable where T : Command
                 this.commands.Add(value);
             }
 
-            this.NotifyCommandChanges();
+            this.MarkDirtCommand();
         }
     }
 
@@ -42,7 +94,7 @@ public abstract class Renderable<T> : Renderable where T : Command
     {
         this.commands.Add(command);
 
-        this.NotifyCommandChanges();
+        this.MarkDirtCommand();
     }
 
     private protected void AllocateCommands<U>(int count, ObjectPool<U> pool) where U : Command2D
@@ -66,7 +118,7 @@ public abstract class Renderable<T> : Renderable where T : Command
                 span[i] = (T)(Command)pool.Get();
             }
 
-            this.NotifyCommandChanges();
+            this.MarkDirtCommand();
         }
     }
 
@@ -76,7 +128,7 @@ public abstract class Renderable<T> : Renderable where T : Command
         {
             this.commands.Clear();
 
-            this.NotifyCommandChanges();
+            this.MarkDirtCommand();
         }
     }
 
@@ -84,17 +136,7 @@ public abstract class Renderable<T> : Renderable where T : Command
     {
         this.commands.Insert(index, command);
 
-        this.NotifyCommandChanges();
-    }
-
-    private protected void NotifyCommandChanges()
-    {
-        if (!this.IsConnected)
-        {
-            return;
-        }
-
-        this.Scene!.Viewport!.Window!.Tree.InvalidateNodeSubTree(this, DirtState.Commands);
+        this.MarkDirtCommand();
     }
 
     private protected void ReleaseCommands<U>(int count, ObjectPool<U> pool) where U : Command2D
@@ -113,7 +155,7 @@ public abstract class Renderable<T> : Renderable where T : Command
 
             this.commands.SetCount(start);
 
-            this.NotifyCommandChanges();
+            this.MarkDirtCommand();
         }
     }
 
@@ -121,7 +163,7 @@ public abstract class Renderable<T> : Renderable where T : Command
     {
         if (this.commands.Remove(command))
         {
-            this.NotifyCommandChanges();
+            this.MarkDirtCommand();
         }
     }
 
@@ -132,7 +174,7 @@ public abstract class Renderable<T> : Renderable where T : Command
     {
         this.commands.RemoveAt(index);
 
-        this.NotifyCommandChanges();
+        this.MarkDirtCommand();
     }
 
     internal ReadOnlySpan<T> GetCommands() =>

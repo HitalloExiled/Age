@@ -4,7 +4,7 @@ using Age.Rendering.Resources;
 
 namespace Age.Scenes;
 
-public abstract class Viewport : Node
+public abstract class Viewport : Renderable
 {
     public abstract event Action? Resized;
 
@@ -107,7 +107,7 @@ public abstract class Viewport : Node
             this.RenderContext.Override3D(this.Scene3D!.Viewport!.RenderContext);
         }
 
-        this.Window = this is Window window ? window : this.Scene!.Viewport!.Window;
+        this.Window = this as Window ?? this.Scene!.Viewport!.Window;
     }
 
     private protected override void OnDisconnectingInternal()

@@ -11,22 +11,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 {
     private NodeFlags nodeFlags;
 
-    internal Range<ushort> SubTreeRange
-    {
-        get;
-        set
-        {
-            if (field.Start != value.Start)
-            {
-                this.OnIndexed();
-            }
-
-            field = value;
-        }
-    }
-
-    internal int Index => this.SubTreeRange.Start;
-
     public Node? FirstChild      { get; private set; }
     public Node? LastChild       { get; private set; }
     public Node? NextSibling     { get; private set; }
@@ -626,7 +610,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     private protected virtual void OnConnectedInternal() { }
     private protected virtual void OnDisconnectingInternal() { }
     private protected virtual void OnDisposedInternal() { }
-    private protected virtual void OnIndexed() { }
     private protected virtual void OnDetachingInternal() { }
     private protected virtual void OnDetachedInternal() { }
 

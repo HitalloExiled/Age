@@ -16,16 +16,28 @@ public static partial class Extension
         public Span<T> AsSpan() =>
             CollectionsMarshal.AsSpan(source);
 
+        public Span<U> AsSpan<U>() where U : T =>
+            CollectionsMarshal.AsSpan(Unsafe.As<List<U>>(source));
+
         public Span<T> AsSpan(int start) =>
-            CollectionsMarshal.AsSpan(source)[start..];
+            source.AsSpan()[start..];
+
+        public Span<U> AsSpan<U>(int start) where U : T =>
+            source.AsSpan<T, U>()[start..];
 
         public Span<T> AsSpan(int start, int length) =>
-            CollectionsMarshal.AsSpan(source).Slice(start, length);
+            source.AsSpan().Slice(start, length);
+
+        public Span<U> AsSpan<U>(int start, int length) where U : T =>
+            source.AsSpan<T, U>().Slice(start, length);
 
         public Span<T> AsSpan(Range range) =>
-            CollectionsMarshal.AsSpan(source)[range];
+            source.AsSpan()[range];
 
-        public void Replace(Range range, ReadOnlySpan<T> values)
+        public Span<U> AsSpan<U>(Range range) where U : T =>
+            source.AsSpan<T, U>()[range];
+
+        public void ReplaceRange(Range range, ReadOnlySpan<T> values)
         {
             var (offset, length) = range.GetOffsetAndLength(source.Count);
 

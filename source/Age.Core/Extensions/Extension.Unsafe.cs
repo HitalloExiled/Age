@@ -21,8 +21,8 @@ public static partial class Extension
                 return false;
             }
 
-            var leftSpan  = new ReadOnlySpan<T>(in Nullable.GetValueRefOrDefaultRef(in left));
-            var rightSpan = new ReadOnlySpan<T>(in Nullable.GetValueRefOrDefaultRef(in right));
+            var leftSpan  = new ReadOnlySpan<T>(in Nullable.GetValueRefOrDefaultRef(in left)).Cast<T, byte>();
+            var rightSpan = new ReadOnlySpan<T>(in Nullable.GetValueRefOrDefaultRef(in right)).Cast<T, byte>();
 
             return leftSpan.SequenceEqual(rightSpan);
         }

@@ -27,11 +27,11 @@ public sealed partial class RenderTree : Disposable
 
     public RenderTree(Window window)
     {
+        window.Closed += this.Dispose;
+
+        window.Connect();
+
         this.Window = window;
-
-        this.Window.Closed += this.Dispose;
-
-        this.Window.Connect();
     }
 
     private void InitializeTree()
@@ -145,10 +145,10 @@ public sealed partial class RenderTree : Disposable
         this.IsDirty = true;
 
     internal ReadOnlySpan<Command> Get2DCommands() =>
-        this.Window.RenderContext.Buffer2D.Commands;
+        this.Window.RenderContext.Buffer2D.Colors;
 
     internal ReadOnlySpan<Command> Get3DCommands() =>
-        this.Window.RenderContext.Buffer3D.Commands;
+        this.Window.RenderContext.Buffer3D.Colors;
 
     internal ReadOnlySpan<Viewport> GetViewports() =>
         this.viewports.AsSpan();

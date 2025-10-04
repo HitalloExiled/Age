@@ -4,6 +4,7 @@ using Age.Core.Collections;
 using System.Numerics;
 using static Age.Shaders.CanvasShader;
 using System.Diagnostics.CodeAnalysis;
+using Age.Scenes;
 
 namespace Age.Elements;
 
@@ -24,6 +25,14 @@ public abstract partial class Element
 
     internal ReadOnlySpan<Command2D> PreCommands  => this.GetCommands()[..this.commandsSeparator];
     internal ReadOnlySpan<Command2D> PostCommands => this.GetCommands()[this.commandsSeparator..];
+
+    internal CommandRange PreCommandRange
+    {
+        get => this.CommandRange;
+        set => this.CommandRange = value;
+    }
+
+    internal CommandRange PostCommandRange { get; set; }
 
     private RectCommand AllocateLayoutCommand(LayoutCommand layoutCommand)
     {

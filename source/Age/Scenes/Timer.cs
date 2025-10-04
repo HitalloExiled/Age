@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace Age.Scenes;
 
-public sealed class Timer : Renderable
+public sealed class Timer : Node
 {
     public event Action? Timeout;
     private long timestamp;

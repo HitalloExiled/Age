@@ -133,7 +133,7 @@ public abstract partial class Element
         stylePool.Return(this.ComputedStyle);
     }
 
-    private protected override void OnIndexed()
+    private protected override void OnIndexChanged()
     {
         var zIndex = this.ComputedStyle.ZIndex ?? this.ComposedParentElement?.ComputedStyle.ZIndex ?? 0;
 

@@ -2,7 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Age.Elements.Enumerators;
-using Age.Scenes;
 using Age.Styling;
 
 namespace Age.Elements;
@@ -10,6 +9,8 @@ namespace Age.Elements;
 public abstract partial class Element : Layoutable, IComparable<Element>, IEnumerable<Element>
 {
     internal protected ShadowTree? ShadowTree { get; set; }
+
+    internal bool IsComposedLeaf => this.ShadowTree == null ? this.FirstChild == null : this.ShadowTree.FirstChild == null;
 
     public Canvas? Canvas { get; private set; }
 

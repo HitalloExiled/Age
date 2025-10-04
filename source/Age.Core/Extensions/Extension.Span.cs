@@ -62,10 +62,10 @@ public static partial class Extension
         ArrayPool<T>.Shared.Return(rentedRight, RuntimeHelpers.IsReferenceOrContainsReferences<T>());
     }
 
-    extension<T>(Span<T> span) where T : unmanaged
+    extension<T>(Span<T> span) where T : struct
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<U> Cast<U>() where U : unmanaged =>
+        public Span<U> Cast<U>() where U : struct =>
             MemoryMarshal.Cast<T, U>(span);
     }
 

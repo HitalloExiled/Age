@@ -491,7 +491,7 @@ public sealed class Text : Layoutable
         this.ClearCommands();
     }
 
-    private protected override void OnIndexed()
+    private protected override void OnIndexChanged()
     {
         this.UpdateDirtyLayout();
 

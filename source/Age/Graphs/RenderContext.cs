@@ -5,27 +5,33 @@ namespace Age.Graphs;
 
 public class CommandBuffer<T> where T : Command
 {
-    private readonly List<T>       commands = [];
-    private readonly List<Command> indices    = [];
+    private readonly List<T> colors  = [];
+    private readonly List<T> indices = [];
 
-    public ReadOnlySpan<T> Commands => this.commands.AsSpan();
-    public ReadOnlySpan<Command>   Indices  => this.indices.AsSpan();
+    public ReadOnlySpan<T> Colors => this.colors.AsSpan();
+    public ReadOnlySpan<T> Indices  => this.indices.AsSpan();
 
-    public void AddCommand(T command) =>
-        this.commands.Add(command);
+    public void AddColorCommand(T command) =>
+        this.colors.Add(command);
 
-    public void AddCommandRange(ReadOnlySpan<T> command) =>
-        this.commands.AddRange(command);
+    public void AddColorCommandRange(ReadOnlySpan<T> command) =>
+        this.colors.AddRange(command);
 
-    public void AddIndexCommand(Command command) =>
+    public void AddIndexCommand(T command) =>
         this.indices.Add(command);
 
-    public void AddIndexCommandRange(ReadOnlySpan<Command> command) =>
+    public void AddIndexCommandRange(ReadOnlySpan<T> command) =>
         this.indices.AddRange(command);
+
+    public void ReplaceColorCommandRange(Range range, ReadOnlySpan<T> command) =>
+        this.colors.ReplaceRange(range, command);
+
+    public void ReplaceIndexCommandRange(Range range, ReadOnlySpan<T> command) =>
+        this.indices.ReplaceRange(range, command);
 
      public void Reset()
     {
-        this.commands.Clear();
+        this.colors.Clear();
         this.indices.Clear();
     }
 }
@@ -40,6 +46,7 @@ public class RenderContext
 
     public CommandBuffer<Command2D> Buffer2D => this.buffer2DOverride ?? this.buffer2D;
     public CommandBuffer<Command3D> Buffer3D => this.buffer3DOverride ?? this.buffer3D;
+
 
     public void ClearOverride2D() =>
         this.buffer2DOverride = null;

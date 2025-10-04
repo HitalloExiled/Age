@@ -5,9 +5,8 @@ namespace Age.Scenes;
 
 public abstract partial class Node
 {
-	public struct TraversalEnumerator : IEnumerator<Node>, IEnumerable<Node>
+	public struct TraversalEnumerator : IEnumerator<Node>
     {
-
         #region 8-bytes
         public event Action<Node>? SubtreeTraversed;
         private readonly Node root;
@@ -28,9 +27,6 @@ public abstract partial class Node
 
             this.Reset();
         }
-
-        readonly IEnumerator IEnumerable.GetEnumerator() =>
-            this.GetEnumerator();
 
         public readonly void Dispose()
         { }
