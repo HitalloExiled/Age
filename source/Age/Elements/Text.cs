@@ -6,7 +6,6 @@ using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Resources;
-using Age.Scenes;
 using Age.Storage;
 using Age.Styling;
 using SkiaSharp;
@@ -48,7 +47,7 @@ public sealed class Text : Layoutable
             {
                 base.StencilLayer = value;
 
-                foreach (var command in this.GetCommands())
+                foreach (var command in this.Commands)
                 {
                     command.StencilLayer = value;
                 }
@@ -118,9 +117,10 @@ public sealed class Text : Layoutable
         this.caretCommand              = CommandPool.RectCommand.Get();
         this.caretCommand.Color        = Color.White;
         this.caretCommand.Flags        = Flags.ColorAsBackground;
-        this.caretCommand.TextureMap   = TextureMap.Default;
+        this.caretCommand.Owner        = this;
         this.caretCommand.Size         = new(this.caretWidth, this.LineHeight);
         this.caretCommand.StencilLayer = this.StencilLayer;
+        this.caretCommand.TextureMap   = TextureMap.Default;
 
         this.AddCommand(this.caretCommand);
 
@@ -143,13 +143,15 @@ public sealed class Text : Layoutable
         if (index >= selection.Start && index < selection.End)
         {
             selectionCommand.Color         = new(0, 0, 1, 0.5f);
-            selectionCommand.CommandFilter = CommandFilter.Index | CommandFilter.Color;
+            selectionCommand.CommandFilter = CommandFilter.Color | CommandFilter.Encode;
             selectionCommand.Flags         = Flags.ColorAsBackground;
 
             if (selectionCommand.Index != default)
             {
-                ((TextCommand)this.GetCommands()[selectionCommand.Index]).Color = Color.White;
+                ((TextCommand)this.Commands[selectionCommand.Index]).Color = Color.White;
             }
+
+            this.MarkCommandsDirty();
         }
         else
         {
@@ -164,6 +166,8 @@ public sealed class Text : Layoutable
         this.caretCommand.CommandFilter = this.caretIsVisible ? CommandFilter.Color : default;
 
         this.RequestUpdate(false);
+
+        this.MarkCommandsDirty();
     }
 
     private void ClearSelection(TextCommand selectionCommand)
@@ -174,13 +178,15 @@ public sealed class Text : Layoutable
         }
 
         selectionCommand.Color         = default;
-        selectionCommand.CommandFilter = CommandFilter.Index;
+        selectionCommand.CommandFilter = CommandFilter.Encode;
         selectionCommand.Flags         = default;
 
         if (selectionCommand.Index != default)
         {
-            ((TextCommand)this.GetCommands()[selectionCommand.Index]).Color = this.GetInheritedStyleSource()?.ComputedStyle?.Color ?? default;
+            ((TextCommand)this.Commands[selectionCommand.Index]).Color = this.GetInheritedStyleSource()?.ComputedStyle?.Color ?? default;
         }
+
+        this.MarkCommandsDirty();
     }
 
     private void DrawCaret()
@@ -193,7 +199,7 @@ public sealed class Text : Layoutable
 
             if (this.CursorPosition == textLength)
             {
-                var command = (RectCommand)this.GetCommands()[textLength - 1];
+                var command = (RectCommand)this.Commands[textLength - 1];
 
                 if (this.Buffer[^1] == '\n')
                 {
@@ -208,7 +214,7 @@ public sealed class Text : Layoutable
             }
             else
             {
-                position = ((RectCommand)this.GetCommands()[(int)this.CursorPosition]).LocalTransform.Position;
+                position = this.Commands[(int)this.CursorPosition].LocalTransform.Position;
             }
 
             this.caretCommand.LocalTransform = Transform2D.CreateTranslated(position);
@@ -229,14 +235,14 @@ public sealed class Text : Layoutable
 
             for (var i = 0; i < text.Length; i++)
             {
-                this.ApplySelection(i, range, (TextCommand)this.GetCommands()[i]);
+                this.ApplySelection(i, range, (TextCommand)this.Commands[i]);
             }
         }
         else
         {
             for (var i = 0; i < text.Length; i++)
             {
-                this.ClearSelection((TextCommand)this.GetCommands()[i]);
+                this.ClearSelection((TextCommand)this.Commands[i]);
             }
         }
     }
@@ -287,11 +293,12 @@ public sealed class Text : Layoutable
         var charOffset = 0;
         var lineIndex  = 0;
         var color      = style?.Color ?? new();
+        var commands   = this.Commands;
 
         for (var i = 0; i < textSpan.Length; i++)
         {
             var charIndex = i - charOffset;
-            var selectionCommand = (TextCommand)this.GetCommands()[i];
+            var selectionCommand = (TextCommand)commands[i];
 
             selectionCommand.Border       = default;
             selectionCommand.Color        = default;
@@ -299,16 +306,17 @@ public sealed class Text : Layoutable
             selectionCommand.Index        = default;
             selectionCommand.Surrogate    = default;
             selectionCommand.Line         = lineIndex;
-            selectionCommand.TextureMap   = TextureMap.Default;
+            selectionCommand.Owner        = this;
             selectionCommand.StencilLayer = this.StencilLayer;
+            selectionCommand.TextureMap   = TextureMap.Default;
 
             var character = textSpan[i];
 
             if (!char.IsLowSurrogate(character))
             {
-                selectionCommand.ObjectId       = CombineIds(elementIndex, i + 1);
-                selectionCommand.Size           = new((uint)glyphsWidths[charIndex], this.LineHeight);
                 selectionCommand.LocalTransform = Transform2D.CreateTranslated(new(cursor.X, cursor.Y - baseLine));
+                selectionCommand.Metadata       = CombineIds(elementIndex, i + 1);
+                selectionCommand.Size           = new((uint)glyphsWidths[charIndex], this.LineHeight);
 
                 if (!char.IsWhiteSpace(character))
                 {
@@ -334,11 +342,11 @@ public sealed class Text : Layoutable
 
                     selectionCommand.Index = characterIndex;
 
-                    var characterCommand = (TextCommand)this.GetCommands()[characterIndex];
+                    var characterCommand = (TextCommand)commands[characterIndex];
 
-                    characterCommand.Metadata = default;
                     characterCommand.Border   = default;
-                    characterCommand.ObjectId = default;
+                    characterCommand.Metadata = default;
+                    characterCommand.UserData = default;
 
                     characterCommand.Color          = color;
                     characterCommand.CommandFilter  = CommandFilter.Color;
@@ -346,6 +354,7 @@ public sealed class Text : Layoutable
                     characterCommand.Index          = selectionCommand.Index;
                     characterCommand.Line           = selectionCommand.Line;
                     characterCommand.LocalTransform = Transform2D.CreateTranslated(offset);
+                    characterCommand.Owner          = this;
                     characterCommand.Size           = size;
                     characterCommand.StencilLayer   = this.StencilLayer;
                     characterCommand.TextureMap     = glyph;
@@ -379,13 +388,13 @@ public sealed class Text : Layoutable
             }
             else
             {
-                var previous = (TextCommand)this.GetCommands()[i - 1];
+                var previous = (TextCommand)commands[i - 1];
 
-                selectionCommand.Index     = previous.Index;
-                selectionCommand.ObjectId  = previous.ObjectId;
-                selectionCommand.Size      = previous.Size;
+                selectionCommand.Index          = previous.Index;
                 selectionCommand.LocalTransform = previous.LocalTransform;
-                selectionCommand.Surrogate = TextCommand.SurrogateKind.Low;
+                selectionCommand.Metadata       = previous.Metadata;
+                selectionCommand.Size           = previous.Size;
+                selectionCommand.Surrogate      = TextCommand.SurrogateKind.Low;
             }
 
             if (range.HasValue)
@@ -412,7 +421,7 @@ public sealed class Text : Layoutable
             return;
         }
 
-        var command = (TextCommand)this.GetCommands()[(int)character];
+        var command = (TextCommand)this.Commands[(int)character];
 
         var cursor = this.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
@@ -482,7 +491,7 @@ public sealed class Text : Layoutable
 
     private protected override void OnDisposedInternal()
     {
-        foreach (var command in this.GetCommands()[..^1])
+        foreach (var command in this.Commands[..^1])
         {
             CommandPool.TextCommand.Return((TextCommand)command);
         }
@@ -496,7 +505,7 @@ public sealed class Text : Layoutable
         this.UpdateDirtyLayout();
 
         var elementIndex = this.Index + 1;
-        var commands     = this.GetCommands()[..this.Buffer.Length];
+        var commands     = this.Commands[..this.Buffer.Length];
 
         for (var i = 0; i < commands.Length; i++)
         {
@@ -504,11 +513,11 @@ public sealed class Text : Layoutable
 
             if (command.Surrogate != TextCommand.SurrogateKind.Low)
             {
-                commands[i].ObjectId = CombineIds(elementIndex, i + 1);
+                commands[i].Metadata = CombineIds(elementIndex, i + 1);
             }
             else
             {
-                command.ObjectId = commands[i - 1].ObjectId;
+                command.Metadata = commands[i - 1].Metadata;
             }
         }
     }
@@ -662,7 +671,7 @@ public sealed class Text : Layoutable
 
         for (var i = 0; i < lineSpan.Length; i++)
         {
-            var rect = ((TextCommand)this.GetCommands()[(int)lineSpan[i].Start]).GetAffineRect();
+            var rect = this.Commands[(int)lineSpan[i].Start].GetAffineRect();
 
             if (isOnCursorLine(rect))
             {
@@ -697,7 +706,7 @@ public sealed class Text : Layoutable
             {
                 this.RemoveCommandAt(^1);
 
-                this.ReleaseCommands(this.GetCommands().Length, CommandPool.TextCommand);
+                this.ReleaseCommands(this.Commands.Length, CommandPool.TextCommand);
 
                 this.AddCommand(this.caretCommand);
 
@@ -750,7 +759,7 @@ public sealed class Text : Layoutable
         var endIndex   = int.Min((int)selection.End, textLength - 1);
 
         var lineSpan = this.textLines.AsSpan();
-        var commands = this.GetCommands();
+        var commands = this.Commands;
 
         var startAnchor = (TextCommand)commands[startIndex];
         var endAnchor   = (TextCommand)commands[endIndex];
@@ -956,7 +965,7 @@ public sealed class Text : Layoutable
 
         this.UpdateLayoutIndependentAncestor();
 
-        var rect = ((RectCommand)this.GetCommands()[(int)index]).GetAffineRect();
+        var rect = this.Commands[(int)index].GetAffineRect();
 
         var transform = this.TransformWithOffset;
 
@@ -972,7 +981,7 @@ public sealed class Text : Layoutable
         this.textLines[this.GetCharacterLineIndex(index)];
 
     public int GetCharacterLineIndex(uint index) =>
-        ((TextCommand)this.GetCommands()[(int)index]).Line;
+        ((TextCommand)this.Commands[(int)index]).Line;
 
     public TextLine? GetCharacterNextLine(uint index) =>
         !this.Buffer.IsEmpty && this.GetCharacterLineIndex(index) + 1 is var lineIndex && lineIndex < this.textLines.Count
@@ -1011,7 +1020,7 @@ public sealed class Text : Layoutable
 
         this.UpdateLayoutIndependentAncestor();
 
-        var slice = this.GetCommands().Slice((int)textSelection.Start + 1, textSelection.Length);
+        var slice = this.Commands.Slice((int)textSelection.Start + 1, textSelection.Length);
 
         var rect = new Rect<float>();
 
@@ -1042,6 +1051,8 @@ public sealed class Text : Layoutable
         this.caretTimer.Stop();
 
         this.RequestUpdate(false);
+
+        this.MarkCommandsDirty();
     }
 
     public void ShowCaret()
@@ -1054,6 +1065,8 @@ public sealed class Text : Layoutable
         this.caretTimer.Start();
 
         this.RequestUpdate(false);
+
+        this.MarkCommandsDirty();
     }
 
     public override string ToString() =>

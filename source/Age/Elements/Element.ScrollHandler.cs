@@ -116,13 +116,13 @@ public abstract partial class Element
 
         var command = this.AllocateLayoutCommandScrollBarX();
 
-        command.Border    = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
-        command.Color     = scrollBarDefaultColor;
-        command.Flags     = Flags.ColorAsBackground;
-        command.Metadata  = scrollBarWidth;
-        command.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarX);
-        command.Size      = new(uint.Max((uint)(scrollBarWidth * scale), SCROLL_BAR_DEFAULT_SIZE * 2), SCROLL_BAR_DEFAULT_SIZE);
+        command.Border         = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
+        command.Color          = scrollBarDefaultColor;
+        command.Flags          = Flags.ColorAsBackground;
         command.LocalTransform = Transform2D.CreateTranslated(this.border.Left + SCROLL_BAR_MARGIN, this.GetScrollBarXPositionY());
+        command.Metadata       = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarX);
+        command.Size           = new(uint.Max((uint)(scrollBarWidth * scale), SCROLL_BAR_DEFAULT_SIZE * 2), SCROLL_BAR_DEFAULT_SIZE);
+        command.UserData       = scrollBarWidth;
 
         this.UpdateScrollBarXControl(command);
     }
@@ -136,13 +136,13 @@ public abstract partial class Element
 
         var command = this.AllocateLayoutCommandScrollBarY();
 
-        command.Border    = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
-        command.Color     = scrollBarDefaultColor;
-        command.Flags     = Flags.ColorAsBackground;
-        command.Metadata  = scrollBarHeight;
-        command.ObjectId  = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarY);
-        command.Size      = new(SCROLL_BAR_DEFAULT_SIZE, uint.Max((uint)(scrollBarHeight * scale), SCROLL_BAR_DEFAULT_SIZE * 2));
+        command.Border         = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
+        command.Color          = scrollBarDefaultColor;
+        command.Flags          = Flags.ColorAsBackground;
         command.LocalTransform = Transform2D.CreateTranslated(this.GetScrollBarYPositionX(), -(this.border.Top + SCROLL_BAR_MARGIN));
+        command.Metadata       = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarY);
+        command.Size           = new(SCROLL_BAR_DEFAULT_SIZE, uint.Max((uint)(scrollBarHeight * scale), SCROLL_BAR_DEFAULT_SIZE * 2));
+        command.UserData       = scrollBarHeight;
 
         this.UpdateScrollBarYControl(command);
     }
@@ -510,7 +510,7 @@ public abstract partial class Element
         var command = this.GetLayoutCommandScrollBarX();
 
         var start = this.border.Left + SCROLL_BAR_MARGIN;
-        var end   = command.Metadata - command.Size.Width;
+        var end   = command.UserData - command.Size.Width;
 
         var position = float.Round(float.Clamp(localPosition - ScrollBarClickPosition.X, start, start + end));
 
@@ -529,7 +529,7 @@ public abstract partial class Element
         Debug.Assert(this.IsScrollBarXVisible);
 
         var ratio  = (float)this.contentOffset.X / this.content.Width.ClampSubtract(this.size.Width);
-        var offset = command.Metadata - command.Size.Width;
+        var offset = command.UserData - command.Size.Width;
 
         command.LocalTransform = Transform2D.CreateTranslated(this.border.Left + SCROLL_BAR_MARGIN + (offset * ratio), command.LocalTransform.Position.Y);
     }
@@ -544,7 +544,7 @@ public abstract partial class Element
         var command = this.GetLayoutCommandScrollBarY();
 
         var start = this.border.Top + SCROLL_BAR_MARGIN;
-        var end   = command.Metadata - command.Size.Height;
+        var end   = command.UserData - command.Size.Height;
 
         var position = float.Clamp(-(localPosition - ScrollBarClickPosition.Y), start, start + end);
 
@@ -563,7 +563,7 @@ public abstract partial class Element
         Debug.Assert(this.IsScrollBarYVisible);
 
         var ratio  = (float)this.contentOffset.Y / this.content.Height.ClampSubtract(this.size.Height);
-        var offset = command.Metadata - command.Size.Height;
+        var offset = command.UserData - command.Size.Height;
 
         command.LocalTransform = Transform2D.CreateTranslated(command.LocalTransform.Position.X, -(this.border.Top + SCROLL_BAR_MARGIN + (offset * ratio)));
     }

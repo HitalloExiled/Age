@@ -108,6 +108,17 @@ public abstract class Viewport : Renderable
         }
 
         this.Window = this as Window ?? this.Scene!.Viewport!.Window;
+
+        if (this is Window window)
+        {
+            this.Window = window;
+        }
+        else
+        {
+            this.Window = this.Scene!.Viewport!.Window;
+
+            this.Window?.Tree.AddViewport(this);
+        }
     }
 
     private protected override void OnDisconnectingInternal()
@@ -116,6 +127,11 @@ public abstract class Viewport : Renderable
 
         this.RenderContext.ClearOverride2D();
         this.RenderContext.ClearOverride3D();
+
+        if (this.Window != this)
+        {
+            this.Window!.Tree.RemoveViewport(this);
+        }
 
         this.Window = null;
     }

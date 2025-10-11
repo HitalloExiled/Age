@@ -16,7 +16,7 @@ public partial class SceneGraphCacheTest
 
             this.ShadowTree.Children =
             [
-                TreeFactory<Component, Command2D, ComponentCommand>.Linear(1, 3, 6, 3, CommandFilter.Color | CommandFilter.Index, $"{name}#.01"),
+                TreeFactory<Component, Command2D, ComponentCommand>.Linear(1, 3, 6, 3, CommandFilter.Color | CommandFilter.Encode, $"{name}#.01"),
                 TreeFactory<Component, Command2D, ComponentCommand>.Linear(1, 2, 6, 2, CommandFilter.Color, $"{name}#.02"),
                 new Slot(),
             ];

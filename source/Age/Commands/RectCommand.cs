@@ -6,10 +6,10 @@ namespace Age.Commands;
 
 public record RectCommand : Command2D
 {
-    public CanvasShader.Border  Border         { get; set; }
-    public Color                Color          { get; set; }
-    public CanvasShader.Flags   Flags          { get; set; }
-    public TextureMap           TextureMap     { get; set; } = TextureMap.Default;
+    public CanvasShader.Border  Border     { get; set; }
+    public Color                Color      { get; set; }
+    public CanvasShader.Flags   Flags      { get; set; }
+    public TextureMap           TextureMap { get; set; } = TextureMap.Default;
 
     public override void Reset()
     {

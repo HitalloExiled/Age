@@ -1,44 +1,38 @@
-using System.Data.Common;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using Age.Commands;
-using Age.Core;
-using Age.Core.Extensions;
-using Age.Elements;
-using Age.Graphs;
-using Age.Numerics;
-
 namespace Age.Scenes;
 
 public sealed partial class RenderTree
 {
-    private readonly List<Renderable> dirtyTrees = [];
-    private readonly List<Viewport>   viewports  = [];
+    private readonly List<Viewport>  viewports       = [];
+    private readonly SceneGraphCache sceneGraphCache = new();
 
-    internal List<Renderable> Nodes { get; } = [];
+    private bool viewportDirty;
+
+    internal List<Renderable> Nodes => this.sceneGraphCache.Nodes;
 
     private void BuildIndexAndCollectCommands()
     {
-        this.dirtyTrees.Sort(static (left, right) => left.SubtreeRange.Start.CompareTo(right.SubtreeRange.Start));
-
-        foreach (var subtree in this.dirtyTrees)
+        if (this.viewportDirty)
         {
-            Collector.Collect(subtree, this.Nodes);
+            this.viewports.Sort();
         }
 
-        this.dirtyTrees.Clear();
+        this.sceneGraphCache.Build();
     }
 
-    public void InvalidatedSubTree(Renderable renderable)
-    {
-        foreach (var dirty in this.dirtyTrees)
-        {
-            if (dirty.SubtreeRange.Contains(renderable.SubtreeRange))
-            {
-                return;
-            }
-        }
+    public void InvalidatedSubTree(Renderable renderable) =>
+        this.sceneGraphCache.InvalidatedSubTree(renderable);
 
-        this.dirtyTrees.Add(renderable);
+    public void AddViewport(Viewport viewport)
+    {
+        this.viewports.Add(viewport);
+
+        this.viewportDirty = true;
+    }
+
+    public void RemoveViewport(Viewport viewport)
+    {
+        this.viewports.Remove(viewport);
+
+        this.viewportDirty = true;
     }
 }

@@ -1,24 +1,20 @@
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using Age.Core;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Scenes;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Age.Elements;
 
 public abstract class Layoutable : Spatial2D
 {
     internal const string DEFAULT_FONT_FAMILY = "Segoi UI";
-    internal const ushort DEFAULT_FONT_SIZE = 16;
+    internal const ushort DEFAULT_FONT_SIZE   = 16;
 
-    private CacheValue<Transform2D> transformWithOffsetCache;
-
-    private Transform2D CachedComposedParentTransformWithOffset => (this.ComposedParentElement as Layoutable)?.CachedTransformWithOffset ?? Transform2D.Identity;
-    private Transform2D CombinedTransform                       => this.LayoutTransform * this.LocalTransform * this.ParentContentOffset;
-    private Transform2D ComposedParentTransform                 => (this.ComposedParentElement as Layoutable)?.Transform ?? Transform2D.Identity;
-    private Transform2D ComposedParentTransformWithOffset       => (this.ComposedParentElement as Layoutable)?.TransformWithOffset ?? Transform2D.Identity;
-    private Transform2D ParentContentOffset                     => Transform2D.CreateTranslated((this.ComposedParentElement?.ContentOffset ?? default).ToVector2<float>().InvertedX);
+    private Transform2D CombinedTransform                 => this.LayoutTransform * this.LocalTransform * this.ParentContentOffset;
+    private Transform2D ComposedParentTransform           => (this.ComposedParentElement as Layoutable)?.Transform ?? Transform2D.Identity;
+    private Transform2D ComposedParentTransformWithOffset => (this.ComposedParentElement as Layoutable)?.TransformWithOffset ?? Transform2D.Identity;
+    private Transform2D ParentContentOffset               => Transform2D.CreateTranslated((this.ComposedParentElement?.ContentOffset ?? default).ToVector2<float>().InvertedX);
 
     private protected virtual StencilLayer? ContentStencilLayer { get; }
     private protected virtual Transform2D   LayoutTransform => Transform2D.CreateTranslated(this.Offset);
@@ -35,7 +31,7 @@ public abstract class Layoutable : Spatial2D
     protected static bool IsHoveringScrollBar => IsHoveringScrollBarX || IsHoveringScrollBarY;
 
     internal static bool IsDraggingScrollBar => IsDraggingScrollBarX || IsDraggingScrollBarY;
-    internal static bool IsSelectingText  => ActiveText != null;
+    internal static bool IsSelectingText     => ActiveText != null;
 
     internal bool IsDirty { get; private set; }
 
@@ -48,22 +44,20 @@ public abstract class Layoutable : Spatial2D
     internal virtual bool          Hidden       { get; set; }
     internal virtual StencilLayer? StencilLayer { get; set; }
 
-    internal Transform2D CachedTransformWithOffset
+    internal sealed override Transform2D CachedTransform
     {
         get
         {
-            if (this.transformWithOffsetCache.IsInvalid)
+            if (this.TransformCache.IsInvalid)
             {
-                this.transformWithOffsetCache = new(this.CombinedTransform * this.CachedComposedParentTransformWithOffset);
+                this.TransformCache = new(this.CombinedTransform * this.CachedParentTransform);
             }
 
-            return this.transformWithOffsetCache.Value;
+            return this.TransformCache.Value;
         }
     }
 
     internal Transform2D TransformWithOffset => this.CombinedTransform * this.ComposedParentTransformWithOffset;
-
-    internal override Transform2D CachedTransform => this.CombinedTransform * this.CachedParentTransform;
 
     internal abstract bool IsParentDependent { get; }
 
@@ -87,14 +81,17 @@ public abstract class Layoutable : Spatial2D
         }
     }
 
-    public override Transform2D Transform
+    public sealed override Transform2D Transform
     {
         get => this.LayoutTransform * this.LocalTransform * this.ComposedParentTransform;
         set => this.LocalTransform = this.LayoutTransform.Inverse() * value * this.ComposedParentTransform.Inverse();
     }
 
+    public Node? ComposedParent  => this.AssignedSlot ?? this.EffectiveParent;
+    public Node? EffectiveParent => this.Parent is ShadowTree shadowTree ? shadowTree.Host : this.Parent;
+
     public Element? ComposedParentElement  => this.AssignedSlot ?? this.EffectiveParentElement;
-    public Element? EffectiveParentElement => this.Parent is ShadowTree shadowTree ? shadowTree.Host: this.Parent as Element;
+    public Element? EffectiveParentElement => this.Parent is ShadowTree shadowTree ? shadowTree.Host : this.Parent as Element;
 
     public Element? NextElementSibling
     {

@@ -14,13 +14,13 @@ public readonly struct Collector2D : IDisposable
     private readonly BoundaryContext<Command2D> context;
     private readonly Renderable                 target;
 
-    public Collector2D(Renderable target, int startIndex, CommandBuffer<Command2D> commandBuffer, List<Renderable> stage, IReadOnlyList<Renderable> nodes)
+    public Collector2D(Renderable target, int startIndex, CommandBuffer<Command2D> commandBuffer, List<Renderable> stage, List<Renderable> nodes)
     {
         var commandRange = target is Renderable<Command2D> renderable2D
             ? renderable2D.CommandRange
             : new(
-                new(0, 0, (ushort)commandBuffer.Colors.Length),
-                new(0, 0, (ushort)commandBuffer.Indices.Length)
+                new(0, (ushort)commandBuffer.Colors.Length),
+                new(0, (ushort)commandBuffer.Encodes.Length)
             );
 
         this.context = new(startIndex, commandRange, commandBuffer, stage, nodes);
@@ -28,23 +28,45 @@ public readonly struct Collector2D : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private readonly void AccumulateElementPreCommands(Element element)
+    {
+        this.context.CollectCommands(element.PreCommands);
+
+        element.CommandRange = this.context.WithPreEnd(element.CommandRange);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private readonly void AccumulateElementPostCommands(Element element)
+    {
+        var colorIndex  = this.context.Colors.Count;
+        var encodeIndex = this.context.Encodes.Count;
+
+        this.context.CollectCommands(element.PostCommands);
+
+        var colorDiff  = (short)(element.CommandRange.Color.Post.Length - (this.context.Colors.Count - colorIndex));
+        var encodeDiff = (short)(element.CommandRange.Encode.Post.Length - (this.context.Encodes.Count - encodeIndex));
+
+        element.CommandRange = element.CommandRange.WithPostResize(colorDiff, encodeDiff);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void CollectElementPreCommands(Element element)
     {
-        element.PreCommandRange = this.context.CreateCommandRange();
+        element.CommandRange = this.context.CreateCommandRange();
 
         this.context.CollectCommands(element.PreCommands);
 
-        element.PreCommandRange = this.context.WithEnd(element.PreCommandRange);
+        element.CommandRange = this.context.WithPreEnd(element.CommandRange);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void CollectElementPostCommands(Element element)
     {
-        element.PostCommandRange = this.context.CreateCommandRange();
+        element.CommandRange = this.context.WithPostStart(element.CommandRange);
 
         this.context.CollectCommands(element.PostCommands);
 
-        element.PostCommandRange = this.context.WithEnd(element.PostCommandRange);
+        element.CommandRange = this.context.WithPostEnd(element.CommandRange);
     }
 
     private readonly void OnComposedSubtreeTraversed(Element element)
@@ -71,11 +93,45 @@ public readonly struct Collector2D : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void Collect(Element subtree)
     {
-        var boundaryRange = subtree.SubtreeRange.End..subtree.Scene!.SubtreeRange.End;
+        var subtreeRange = subtree.SubtreeRange;
 
-        this.CollectElement(subtree);
+        var boundaryRange = new ShortRange(subtreeRange.End, subtree.Scene!.SubtreeRange.End);
 
-        this.UpdateBuffer(subtree, boundaryRange);
+        if (subtree.DirtState == DirtState.Commands)
+        {
+            this.AccumulateElementPreCommands(subtree);
+
+            var preColorOffset  = (short)(subtree.CommandRange.Color.Pre.End  - this.context.CommandRange.Color.Pre.End);
+            var preEncodeOffset = (short)(subtree.CommandRange.Encode.Pre.End - this.context.CommandRange.Encode.Pre.End);
+
+            this.ApplyOffset(subtree, new((ushort)(subtreeRange.Start + 1), subtreeRange.End), preColorOffset, preEncodeOffset);
+
+            this.context.CommandBuffer.ReplaceColorCommandRange(this.context.CommandRange.Color.Pre, this.context.Colors.AsSpan());
+            this.context.CommandBuffer.ReplaceEncodeCommandRange(this.context.CommandRange.Encode.Pre, this.context.Encodes.AsSpan());
+
+            var postColorIndex  = this.context.Colors.Count;
+            var postEncodeIndex = this.context.Encodes.Count;
+
+            this.AccumulateElementPostCommands(subtree);
+
+            var postColorOffset  = (short)(subtree.CommandRange.Color.Post.End  - this.context.CommandRange.Color.Post.End);
+            var postEncodeOffset = (short)(subtree.CommandRange.Encode.Post.End - this.context.CommandRange.Encode.Post.End);
+
+            this.ApplyOffset(subtree, boundaryRange, postColorOffset, postEncodeOffset);
+
+            var postColorCount  = this.context.Colors.Count - postColorIndex;
+            var postEncodeCount = this.context.Encodes.Count - postEncodeIndex;
+
+            this.context.CommandBuffer.ReplaceColorCommandRange(this.context.CommandRange.Color.Post, this.context.Colors.AsSpan(postColorIndex, postColorCount));
+            this.context.CommandBuffer.ReplaceEncodeCommandRange(this.context.CommandRange.Encode.Post, this.context.Encodes.AsSpan(postEncodeIndex, postEncodeCount));
+
+            subtree.MakeSubtreePristine();
+        }
+        else
+        {
+            this.CollectElement(subtree);
+            this.ApplyOffsetAndUpdateBuffer(subtree, boundaryRange);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -184,58 +240,65 @@ public readonly struct Collector2D : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void Collect(Renderable<Command2D> subtree)
     {
-        var boundaryRange = subtree.SubtreeRange.End..subtree.Scene!.SubtreeRange.End;
+        var boundaryRange = new ShortRange(subtree.SubtreeRange.End, subtree.Scene!.SubtreeRange.End);
 
-        this.context.StartSubtreeRange(subtree, true);
+        if (subtree.DirtState == DirtState.Commands)
+        {
+            this.context.AccumulateCommands(subtree);
 
-        this.CollectSubtree(subtree);
+            subtree.MakeSubtreePristine();
+        }
+        else
+        {
+            this.context.StartSubtreeRange(subtree, true);
 
-        this.context.EndSubtreeRange(subtree, true);
-        this.UpdateBuffer(subtree, boundaryRange);
+            this.CollectSubtree(subtree);
+
+            this.context.EndSubtreeRange(subtree, true);
+        }
+
+        this.ApplyOffsetAndUpdateBuffer(subtree, boundaryRange);
     }
 
-    private void UpdateBuffer(Renderable<Command2D> subtree, Range boundaryRange)
+    private void ApplyOffset(Renderable<Command2D> subtree, ShortRange boundaryRange, short colorOffset, short encodeOffset)
     {
-        var colorOffset = (short)(subtree.CommandRange.Color.Extend - this.context.CommandRange.Color.Extend);
-        var indexOffset = (short)(subtree.CommandRange.Index.Extend - this.context.CommandRange.Index.Extend);
-
-        if (colorOffset > 0 || indexOffset > 0)
+        if (colorOffset != 0 || encodeOffset != 0)
         {
+            boundaryRange = boundaryRange.WithClamp((ushort)this.context.Nodes.Count);
+
             Node? parent = subtree;
 
             while (true)
             {
-                parent = parent is Element element ? element.ComposedParentElement : parent.Parent;
+                parent = parent is Element element ? element.ComposedParent : parent.Parent;
 
                 if (parent == null || parent is Scene)
                 {
                     break;
                 }
 
-                switch (parent)
+                if (parent is Renderable<Command2D> parentRenderable)
                 {
-                    case Element parentElement:
-                        parentElement.PostCommandRange = parentElement.PostCommandRange.WithExtendOffset(colorOffset, indexOffset);
-                        break;
-                    case Renderable<Command2D> parentRenderable:
-                        parentRenderable.CommandRange = parentRenderable.CommandRange.WithExtendOffset(colorOffset, indexOffset);
-                        break;
+                    parentRenderable.CommandRange = parentRenderable.CommandRange.WithPostOffset(colorOffset, encodeOffset);
                 }
             }
 
-            foreach (var node in Unsafe.As<List<Renderable>>(this.context.Nodes).AsSpan(boundaryRange))
+            foreach (var node in this.context.Nodes.AsSpan(boundaryRange))
             {
-                if (node is Element element)
+                if (node is Renderable<Command2D> renderable)
                 {
-                    element.PreCommandRange = element.PreCommandRange.WithOffset(colorOffset, indexOffset);
-                    element.PostCommandRange = element.PostCommandRange.WithOffset(colorOffset, indexOffset);
-                }
-                else if (node is Renderable<Command2D> renderable)
-                {
-                    renderable.CommandRange = renderable.CommandRange.WithOffset(colorOffset, indexOffset);
+                    renderable.CommandRange = renderable.CommandRange.WithOffset(colorOffset, encodeOffset);
                 }
             }
         }
+    }
+
+    private void ApplyOffsetAndUpdateBuffer(Renderable<Command2D> subtree, ShortRange boundaryRange)
+    {
+        var colorOffset  = (short)(subtree.CommandRange.Color.Post.End  - this.context.CommandRange.Color.Post.End);
+        var encodeOffset = (short)(subtree.CommandRange.Encode.Post.End - this.context.CommandRange.Encode.Post.End);
+
+        this.ApplyOffset(subtree, boundaryRange, colorOffset, encodeOffset);
 
         this.context.UpdateBuffer(false);
     }
@@ -260,6 +323,22 @@ public readonly struct Collector2D : IDisposable
 
                 break;
         }
+
+        #if DEBUG
+        asset(this.context.CommandBuffer.Colors);
+        asset(this.context.CommandBuffer.Encodes);
+
+        static void asset(ReadOnlySpan<Command2D> commands)
+        {
+            for (var i = 0; i < commands.Length; i++)
+            {
+                if (commands[i].Owner == null)
+                {
+                    throw new InvalidOperationException();
+                }
+            }
+        }
+        #endif
     }
 
     public readonly void Dispose() =>

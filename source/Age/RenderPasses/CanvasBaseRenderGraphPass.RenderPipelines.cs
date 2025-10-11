@@ -3,7 +3,7 @@ using Age.Shaders;
 
 namespace Age.RenderPasses;
 
-public abstract partial class CanvasBaseRenderGraphPass
+public abstract partial class CanvasRenderGraphPass
 {
     protected struct RenderPipelines(CanvasShader shader, VertexBuffer vertexBuffer, IndexBuffer indexBuffer, bool enabled, bool ignoreStencil)
     {

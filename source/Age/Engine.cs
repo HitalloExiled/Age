@@ -38,9 +38,9 @@ public sealed class Engine : Disposable
             Name   = "Default",
             Passes =
             [
-                new CanvasIndexRenderGraphPass(this.renderer, this.Window),
+                new CanvasEncodeRenderGraphPass(this.renderer, this.Window),
                 new SceneRenderGraphPass(this.renderer, this.Window),
-                new CanvasRenderGraphPass(this.renderer, this.Window),
+                new CanvasColorRenderGraphPass(this.renderer, this.Window),
             ]
         };
 

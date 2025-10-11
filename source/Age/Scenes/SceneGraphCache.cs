@@ -1,3 +1,5 @@
+using Age.Core.Extensions;
+
 namespace Age.Scenes;
 
 public class SceneGraphCache
@@ -9,15 +11,15 @@ public class SceneGraphCache
 
     public void InvalidatedSubTree(Renderable renderable)
     {
-        foreach (var dirty in this.dirtyTrees.ToArray())
+        foreach (var dirtyTree in this.dirtyTrees.ToArray())
         {
-            if (dirty.SubtreeRange.Contains(renderable.SubtreeRange))
+            if (dirtyTree == renderable || (dirtyTree.DirtState.HasFlags(DirtState.Subtree) && (dirtyTree.SubtreeRange.Contains(renderable.SubtreeRange) || dirtyTree.IsAncestor(renderable))))
             {
                 return;
             }
-            else if (renderable.SubtreeRange.Contains(dirty.SubtreeRange))
+            else if (renderable.DirtState.HasFlags(DirtState.Subtree) && (renderable.SubtreeRange.Contains(dirtyTree.SubtreeRange) || renderable.IsAncestor(dirtyTree)))
             {
-                this.dirtyTrees.Remove(dirty);
+                this.dirtyTrees.Remove(dirtyTree);
             }
         }
 

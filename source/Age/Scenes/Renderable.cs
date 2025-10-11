@@ -8,7 +8,7 @@ public abstract class Renderable : Node
 {
     internal DirtState DirtState { get; private set; }
 
-    internal SubtreeRange SubtreeRange
+    internal ShortRange SubtreeRange
     {
         get;
         set
@@ -44,17 +44,19 @@ public abstract class Renderable : Node
         this.MakeSubtreeDirty(DirtState.Subtree);
     }
 
-    private protected void MarkDirtCommand() =>
+    private protected void MarkCommandsDirty() =>
         this.MakeSubtreeDirty(DirtState.Commands);
 
     internal void MakeSubtreeDirty(DirtState dirtState)
     {
-        if (this.DirtState == default && this.IsConnected)
+        var isPristine = this.DirtState == default;
+
+        this.DirtState |= dirtState;
+
+        if (isPristine && this.IsConnected)
         {
             (this as Window ?? this.Scene?.Viewport?.Window)?.Tree.InvalidatedSubTree(this);
         }
-
-        this.DirtState |= dirtState;
     }
 
     internal void MakeSubtreePristine() =>
@@ -66,6 +68,8 @@ public abstract class Renderable<T> : Renderable where T : Command
     private readonly List<T> commands = [];
 
     internal CommandRange CommandRange { get; set; }
+
+    internal ReadOnlySpan<T> Commands => this.commands.AsSpan();
 
     internal T? SingleCommand
     {
@@ -86,7 +90,7 @@ public abstract class Renderable<T> : Renderable where T : Command
                 this.commands.Add(value);
             }
 
-            this.MarkDirtCommand();
+            this.MarkCommandsDirty();
         }
     }
 
@@ -94,7 +98,7 @@ public abstract class Renderable<T> : Renderable where T : Command
     {
         this.commands.Add(command);
 
-        this.MarkDirtCommand();
+        this.MarkCommandsDirty();
     }
 
     private protected void AllocateCommands<U>(int count, ObjectPool<U> pool) where U : Command2D
@@ -118,7 +122,7 @@ public abstract class Renderable<T> : Renderable where T : Command
                 span[i] = (T)(Command)pool.Get();
             }
 
-            this.MarkDirtCommand();
+            this.MarkCommandsDirty();
         }
     }
 
@@ -128,7 +132,7 @@ public abstract class Renderable<T> : Renderable where T : Command
         {
             this.commands.Clear();
 
-            this.MarkDirtCommand();
+            this.MarkCommandsDirty();
         }
     }
 
@@ -136,7 +140,7 @@ public abstract class Renderable<T> : Renderable where T : Command
     {
         this.commands.Insert(index, command);
 
-        this.MarkDirtCommand();
+        this.MarkCommandsDirty();
     }
 
     private protected void ReleaseCommands<U>(int count, ObjectPool<U> pool) where U : Command2D
@@ -155,7 +159,7 @@ public abstract class Renderable<T> : Renderable where T : Command
 
             this.commands.SetCount(start);
 
-            this.MarkDirtCommand();
+            this.MarkCommandsDirty();
         }
     }
 
@@ -163,7 +167,7 @@ public abstract class Renderable<T> : Renderable where T : Command
     {
         if (this.commands.Remove(command))
         {
-            this.MarkDirtCommand();
+            this.MarkCommandsDirty();
         }
     }
 
@@ -174,9 +178,6 @@ public abstract class Renderable<T> : Renderable where T : Command
     {
         this.commands.RemoveAt(index);
 
-        this.MarkDirtCommand();
+        this.MarkCommandsDirty();
     }
-
-    internal ReadOnlySpan<T> GetCommands() =>
-        this.commands.AsSpan();
 }

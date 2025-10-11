@@ -8,7 +8,7 @@ using Age.Shaders;
 
 namespace Age.Passes;
 
-public sealed class Scene2DIndexPass : Scene2DPass
+public sealed class Scene2DEncodePass : Scene2DPass
 {
     private readonly Window window;
 
@@ -21,7 +21,7 @@ public sealed class Scene2DIndexPass : Scene2DPass
     protected override RenderTarget  RenderTarget  => this.renderTarget;
     public override Texture2D        Output        => this.renderTarget.ColorAttachments[0].Texture;
 
-    public Scene2DIndexPass(Window window) : base(window)
+    public Scene2DEncodePass(Window window) : base(window)
     {
         this.window = window;
 
@@ -54,14 +54,14 @@ public sealed class Scene2DIndexPass : Scene2DPass
     }
 
     protected override void Record(RenderContext context) =>
-        this.Record(context.Buffer2D.Indices);
+        this.Record(context.Buffer2D.Encodes);
 
     protected override void Record(RectCommand command)
     {
         var constant = new CanvasShader.PushConstant
         {
             Border    = command.Border,
-            Color     = 0xFFFF_0000_0000_0000 | command.ObjectId,
+            Color     = 0xFFFF_0000_0000_0000 | command.Metadata,
             Flags     = command.Flags,
             Size      = command.Size,
             Transform = command.Transform,

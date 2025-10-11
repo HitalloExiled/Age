@@ -8,10 +8,11 @@ using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
 using Age.Core.Extensions;
+using Age.Graphs;
 
 namespace Age.RenderPasses;
 
-public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
+public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
 {
     private readonly IndexBuffer32                     indexBuffer;
     private readonly VertexBuffer<CanvasShader.Vertex> vertexBuffer;
@@ -24,7 +25,6 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
     protected override CanvasStencilMaskShader CanvasStencilWriterShader { get; }
     protected override Color                   ClearColor                { get; } = Color.Black;
     protected override CommandBuffer           CommandBuffer             { get; }
-    protected override CommandFilter           CommandFilters            { get; } = CommandFilter.Index;
     protected override Framebuffer             Framebuffer               => this.framebuffer;
     protected override RenderPipelines[]       Pipelines                 { get; } = [];
 
@@ -32,7 +32,7 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
 
     public Image ColorImage => this.colorImage;
 
-    public CanvasIndexRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)
+    public CanvasEncodeRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)
     {
         var vertices = new CanvasShader.Vertex[4]
         {
@@ -162,7 +162,7 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         var constant = new CanvasShader.PushConstant
         {
             Border    = command.Border,
-            Color     = 0xFFFF_0000_0000_0000 | command.ObjectId,
+            Color     = 0xFFFF_0000_0000_0000 | command.Metadata,
             Flags     = command.Flags,
             Size      = command.Size,
             Transform = command.Transform,
@@ -173,6 +173,9 @@ public sealed class CanvasIndexRenderGraphPass : CanvasBaseRenderGraphPass
         this.CommandBuffer.PushConstant(resource.Shader, constant);
         this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
     }
+
+    protected override ReadOnlySpan<Command2D> GetCommand(RenderContext renderContext) =>
+        renderContext.Buffer2D.Encodes;
 
     public override void Recreate()
     {

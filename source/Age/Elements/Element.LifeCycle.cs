@@ -121,7 +121,7 @@ public abstract partial class Element
             this.DisposeLayoutCommandImage(layoutCommandImage);
         }
 
-        foreach (var item in this.GetCommands())
+        foreach (var item in this.Commands)
         {
             CommandPool.RectCommand.Return((RectCommand)item);
         }
@@ -139,19 +139,19 @@ public abstract partial class Element
 
         if (this.TryGetLayoutCommandBox(out var boxCommand))
         {
-            boxCommand.ObjectId = this.Boundings.Area > 0 ? (uint)(this.Index + 1) : 0;
+            boxCommand.Metadata = this.Boundings.Area > 0 ? (uint)(this.Index + 1) : 0;
             boxCommand.ZIndex   = zIndex;
         }
 
         if (this.TryGetLayoutCommandScrollBarX(out var scrollXCommand))
         {
-            scrollXCommand.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarX);
+            scrollXCommand.Metadata = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarX);
             scrollXCommand.ZIndex   = zIndex;
         }
 
         if (this.TryGetLayoutCommandScrollBarY(out var scrollYCommand))
         {
-            scrollYCommand.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarY);
+            scrollYCommand.Metadata = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarY);
             scrollYCommand.ZIndex   = zIndex;
         }
     }

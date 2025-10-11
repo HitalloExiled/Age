@@ -11,7 +11,7 @@ public sealed record MeshCommand : Command3D
     public IndexBuffer32 IndexBuffer { get; set; }
 
     [AllowNull]
-    public Mesh Mesh { get; set; }
+    public Mesh Onwer { get; set; }
 
     [AllowNull]
     public VertexBuffer<GeometryShader.Vertex> VertexBuffer { get; set; }
@@ -21,7 +21,7 @@ public sealed record MeshCommand : Command3D
         base.Reset();
 
         this.IndexBuffer  = default;
-        this.Mesh         = default;
+        this.Onwer        = default;
         this.VertexBuffer = default;
     }
 }

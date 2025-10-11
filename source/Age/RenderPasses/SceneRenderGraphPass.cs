@@ -197,10 +197,10 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
                     {
                         case MeshCommand meshCommand:
 
-                            var ubo = this.UpdateUbo(viewport.Camera3D, meshCommand.Mesh, viewport.RenderTarget.Size.ToExtent2D());
+                            var ubo = this.UpdateUbo(viewport.Camera3D, meshCommand.Onwer, viewport.RenderTarget.Size.ToExtent2D());
 
-                            commandBuffer.BindShader(meshCommand.Mesh.Material.GetShader(viewport.RenderTarget));
-                            commandBuffer.BindUniformSet(this.GetUniformSet(viewport.RenderTarget, viewport.Camera3D, ubo, meshCommand.Mesh.Material));
+                            commandBuffer.BindShader(meshCommand.Onwer.Material.GetShader(viewport.RenderTarget));
+                            commandBuffer.BindUniformSet(this.GetUniformSet(viewport.RenderTarget, viewport.Camera3D, ubo, meshCommand.Onwer.Material));
                             commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
                             commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);
                             commandBuffer.DrawIndexed(meshCommand.IndexBuffer);

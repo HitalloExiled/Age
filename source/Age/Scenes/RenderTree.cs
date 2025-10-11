@@ -21,7 +21,7 @@ public sealed partial class RenderTree : Disposable
 
     private Buffer                     buffer = null!;
     private ulong                      bufferVersion;
-    private CanvasIndexRenderGraphPass canvasIndexRenderGraphPass = null!;
+    private CanvasEncodeRenderGraphPass canvasIndexRenderGraphPass = null!;
 
     public Window Window { get; }
 
@@ -32,6 +32,7 @@ public sealed partial class RenderTree : Disposable
         window.Connect();
 
         this.Window = window;
+        this.viewports.Add(window);
     }
 
     private void InitializeTree()
@@ -155,7 +156,7 @@ public sealed partial class RenderTree : Disposable
 
     public void Initialize()
     {
-        this.canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasIndexRenderGraphPass>();
+        this.canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasEncodeRenderGraphPass>();
         this.canvasIndexRenderGraphPass.Recreated += this.UpdateBuffer;
 
         this.UpdateBuffer();

@@ -9,80 +9,92 @@ internal readonly struct Collector
 {
     private static readonly List<Renderable> stage = [];
 
-    public static void Collect(Renderable root, List<Renderable> nodes)
+    public static void Collect(Renderable subtree, List<Renderable> nodes)
     {
-        var subtreeRange = root.SubtreeRange;
+        var subtreeRange = subtree.SubtreeRange.WithClamp((ushort)nodes.Count);
 
-        if (root is Viewport viewport)
+        var state = subtree.DirtState;
+
+        if (subtree is Viewport viewport)
         {
             CollectViewport(viewport, subtreeRange.Start, stage, nodes);
         }
-        else if ((root as Scene ?? root.Scene) is Scene scene)
+        else if ((subtree as Scene ?? subtree.Scene) is Scene scene)
         {
             var renderContext = scene.Viewport!.RenderContext;
 
             switch (scene)
             {
                 case Scene2D:
-                    Collect(root, subtreeRange.Start, renderContext.Buffer2D, stage, nodes);
+                    Collect(subtree, subtreeRange.Start, renderContext.Buffer2D, stage, nodes);
 
                     break;
 
                 case Scene3D:
-                    Collect(root, subtreeRange.Start, renderContext.Buffer3D, stage, nodes);
+                    Collect(subtree, subtreeRange.Start, renderContext.Buffer3D, stage, nodes);
                     break;
             }
         }
 
-        var offset = (short)(root.SubtreeRange.End - subtreeRange.End);
-
-        if (offset > 0)
+        if (state.HasFlags(DirtState.Subtree))
         {
-            Node? parent = root;
+            var offset = (short)(subtree.SubtreeRange.End - subtreeRange.End);
 
-            do
+            if (offset != 0)
             {
-                parent = parent switch
-                {
-                    Element element => element.ComposedParentElement,
-                    _ => parent.Parent,
-                };
+                Node? parent = subtree;
 
-                if (parent is Renderable renderable)
+                do
                 {
-                    renderable.SubtreeRange = renderable.SubtreeRange.WithEndOffset(offset);
+                    parent = parent switch
+                    {
+                        Element element => element.ComposedParent,
+                        _ => parent.Parent,
+                    };
+
+                    if (parent is Renderable renderable)
+                    {
+                        renderable.SubtreeRange = renderable.SubtreeRange.WithEndOffset(offset);
+                    }
+                }
+                while (parent != null);
+
+                foreach (var node in nodes.AsSpan(subtreeRange.End))
+                {
+                    if (node.IsConnected)
+                    {
+                        node.SubtreeRange = node.SubtreeRange.WithOffset(offset);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Updating {subtree}(connected: {subtree.IsConnected})[{subtreeRange}], {node} is disconnected");
+                    }
                 }
             }
-            while (parent != null);
 
-            foreach (var node in nodes.AsSpan(subtreeRange.End))
-            {
-                node.SubtreeRange = node.SubtreeRange.WithOffset(offset);
-            }
+            nodes.ReplaceRange(subtreeRange, stage.AsSpan());
+
+            stage.Clear();
         }
-
-        nodes.ReplaceRange(subtreeRange, stage.AsSpan());
-
-        stage.Clear();
     }
 
-    public static void Collect(Renderable target, int startIndex, CommandBuffer<Command2D> commandBuffer, List<Renderable> stage, IReadOnlyList<Renderable> nodes)
+    public static void Collect(Renderable target, int startIndex, CommandBuffer<Command2D> commandBuffer, List<Renderable> stage, List<Renderable> nodes)
     {
         using var collector = new Collector2D(target, startIndex, commandBuffer, stage, nodes);
 
         collector.Collect();
     }
 
-    public static void Collect(Renderable target, int startIndex, CommandBuffer<Command3D> commandBuffer, List<Renderable> stage, IReadOnlyList<Renderable> nodes)
+    public static void Collect(Renderable target, int startIndex, CommandBuffer<Command3D> commandBuffer, List<Renderable> stage, List<Renderable> nodes)
     {
         using var collector = new Collector3D(target, startIndex, commandBuffer, stage, nodes);
 
         collector.Collect();
     }
 
-    public static void CollectViewport(Viewport viewport, int index, List<Renderable> stage, IReadOnlyList<Renderable> nodes)
+    public static void CollectViewport(Viewport viewport, int index, List<Renderable> stage, List<Renderable> nodes)
     {
-        viewport.SubtreeRange = SubtreeRange.CreateWithLength((ushort)(index + stage.Count), 1);
+        viewport.SubtreeRange = ShortRange.CreateWithLength((ushort)(index + stage.Count), 1);
 
         stage.Add(viewport);
 

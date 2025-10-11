@@ -2,9 +2,9 @@ using Age.Core.Extensions;
 using Age.Commands;
 using Age.Core.Collections;
 using System.Numerics;
-using static Age.Shaders.CanvasShader;
 using System.Diagnostics.CodeAnalysis;
-using Age.Scenes;
+
+using static Age.Shaders.CanvasShader;
 
 namespace Age.Elements;
 
@@ -23,16 +23,8 @@ public abstract partial class Element
     private byte          commandsSeparator;
     private LayoutCommand layoutCommands;
 
-    internal ReadOnlySpan<Command2D> PreCommands  => this.GetCommands()[..this.commandsSeparator];
-    internal ReadOnlySpan<Command2D> PostCommands => this.GetCommands()[this.commandsSeparator..];
-
-    internal CommandRange PreCommandRange
-    {
-        get => this.CommandRange;
-        set => this.CommandRange = value;
-    }
-
-    internal CommandRange PostCommandRange { get; set; }
+    internal ReadOnlySpan<Command2D> PreCommands  => this.Commands[..this.commandsSeparator];
+    internal ReadOnlySpan<Command2D> PostCommands => this.Commands[this.commandsSeparator..];
 
     private RectCommand AllocateLayoutCommand(LayoutCommand layoutCommand)
     {
@@ -40,7 +32,7 @@ public abstract partial class Element
 
         if (this.layoutCommands.HasFlags(layoutCommand))
         {
-            return (RectCommand)this.GetCommands()[index];
+            return (RectCommand)this.Commands[index];
         }
 
         var command = CommandPool.RectCommand.Get();
@@ -48,17 +40,18 @@ public abstract partial class Element
         switch (layoutCommand)
         {
             case LayoutCommand.Box:
-                command.Flags           = Flags.ColorAsBackground;
-                command.CommandFilter = CommandFilter.Color | CommandFilter.Index;
+                command.Flags         = Flags.ColorAsBackground;
+                command.CommandFilter = CommandFilter.Color | CommandFilter.Encode;
 
                 break;
 
             default:
-                command.CommandFilter = CommandFilter.Color | CommandFilter.Index;
+                command.CommandFilter = CommandFilter.Color | CommandFilter.Encode;
 
                 break;
         }
 
+        command.Owner        = this;
         command.StencilLayer = this.StencilLayer;
 
         this.InsertCommand(index, command);
@@ -116,7 +109,7 @@ public abstract partial class Element
             var mask = layoutCommand - 1;
             var index = BitOperations.PopCount((uint)(this.layoutCommands & mask));
 
-            var command = (RectCommand)this.GetCommands()[index];
+            var command = (RectCommand)this.Commands[index];
 
             CommandPool.RectCommand.Return(command);
 
@@ -143,7 +136,7 @@ public abstract partial class Element
 
         if (this.layoutCommands.HasFlags(layoutCommand))
         {
-            rectCommand = (RectCommand)this.GetCommands()[index];
+            rectCommand = (RectCommand)this.Commands[index];
             return true;
         }
 

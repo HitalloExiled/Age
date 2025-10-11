@@ -6,10 +6,10 @@ namespace Age.Graphs;
 public class CommandBuffer<T> where T : Command
 {
     private readonly List<T> colors  = [];
-    private readonly List<T> indices = [];
+    private readonly List<T> encodes = [];
 
     public ReadOnlySpan<T> Colors => this.colors.AsSpan();
-    public ReadOnlySpan<T> Indices  => this.indices.AsSpan();
+    public ReadOnlySpan<T> Encodes  => this.encodes.AsSpan();
 
     public void AddColorCommand(T command) =>
         this.colors.Add(command);
@@ -18,21 +18,21 @@ public class CommandBuffer<T> where T : Command
         this.colors.AddRange(command);
 
     public void AddIndexCommand(T command) =>
-        this.indices.Add(command);
+        this.encodes.Add(command);
 
-    public void AddIndexCommandRange(ReadOnlySpan<T> command) =>
-        this.indices.AddRange(command);
+    public void AddEncodeCommandRange(ReadOnlySpan<T> command) =>
+        this.encodes.AddRange(command);
 
     public void ReplaceColorCommandRange(Range range, ReadOnlySpan<T> command) =>
         this.colors.ReplaceRange(range, command);
 
-    public void ReplaceIndexCommandRange(Range range, ReadOnlySpan<T> command) =>
-        this.indices.ReplaceRange(range, command);
+    public void ReplaceEncodeCommandRange(Range range, ReadOnlySpan<T> command) =>
+        this.encodes.ReplaceRange(range, command);
 
      public void Reset()
     {
         this.colors.Clear();
-        this.indices.Clear();
+        this.encodes.Clear();
     }
 }
 

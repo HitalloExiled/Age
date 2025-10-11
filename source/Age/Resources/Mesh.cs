@@ -16,7 +16,7 @@ public sealed class Mesh : Spatial3D
 
         command.VertexBuffer = new(vertices);
         command.IndexBuffer  = new(indices);
-        command.Mesh         = this;
+        command.Onwer         = this;
 
         this.SingleCommand = command;
     }

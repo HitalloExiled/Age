@@ -1,19 +1,31 @@
 namespace Age.Scenes;
 
-public readonly partial record struct CommandRange(CommandRange.Segment Color, CommandRange.Segment Index)
+public readonly partial record struct CommandRange(CommandRange.Variant Color, CommandRange.Variant Encode)
 {
-    public CommandRange WithExtend(ushort color, ushort index) =>
-        new(this.Color.WithExtend(color), this.Index.WithExtend(index));
+    public CommandRange WithClamp(ushort color, ushort encode) =>
+        new(this.Color.WithClamp(color), this.Encode.WithClamp(encode));
 
-    public CommandRange WithEnd(ushort color, ushort index) =>
-        new(this.Color.WithEnd(color), this.Index.WithEnd(index));
+    public CommandRange WithOffset(short color, short encode) =>
+        new(this.Color.WithOffset(color), this.Encode.WithOffset(encode));
 
-    public CommandRange WithExtendOffset(short color, short index) =>
-        new(this.Color.WithExtendOffset(color), this.Index.WithExtendOffset(index));
+    public CommandRange WithPreEnd(ushort color, ushort encode) =>
+        new(this.Color.WithPreEnd(color), this.Encode.WithPreEnd(encode));
 
-    public CommandRange WithOffset(short colorOffset, short indexOffset) =>
-        new(this.Color.WithOffset(colorOffset), this.Index.WithOffset(indexOffset));
+    public CommandRange WithPost(ushort color, ushort encode) =>
+        new(this.Color.WithPost(color), this.Encode.WithPost(encode));
+
+    public CommandRange WithPostEnd(ushort color, ushort encode) =>
+        new(this.Color.WithPostEnd(color), this.Encode.WithPostEnd(encode));
+
+    public CommandRange WithPostOffset(short color, short encode) =>
+        new(this.Color.WithPostOffset(color), this.Encode.WithPostOffset(encode));
+
+    public CommandRange WithPostResize(short color, short encode) =>
+        new(this.Color.WithPostResize(color), this.Encode.WithPostResize(encode));
+
+    public CommandRange WithPostStart(ushort color, ushort encode) =>
+        new(this.Color.WithPostStart(color), this.Encode.WithPostStart(encode));
 
     public override string ToString() =>
-        $"Color: {this.Color}, Index: {this.Index}";
+        $"Color: {this.Color}, Encode: {this.Encode}";
 }

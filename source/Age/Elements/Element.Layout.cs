@@ -1384,21 +1384,23 @@ public abstract partial class Element
             {
                 this.RefreshScrollBarControls();
             }
-        }
 
-        var layoutCommandBox = this.AllocateLayoutCommandBox();
+            var layoutCommandBox = this.AllocateLayoutCommandBox();
 
-        if (this.Boundings.Area > 0)
-        {
-            layoutCommandBox.Border        = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
-            layoutCommandBox.Color         = this.ComputedStyle.BackgroundColor ?? default;
-            layoutCommandBox.CommandFilter = CommandFilter.Color | CommandFilter.Index;
-            layoutCommandBox.ObjectId      = (uint)(this.Index + 1);
-            layoutCommandBox.Size          = this.Boundings;
-        }
-        else
-        {
-            layoutCommandBox.CommandFilter = CommandFilter.None;
+            if (this.Boundings.Area > 0)
+            {
+                layoutCommandBox.Border        = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
+                layoutCommandBox.Color         = this.ComputedStyle.BackgroundColor ?? default;
+                layoutCommandBox.CommandFilter = CommandFilter.Color | CommandFilter.Encode;
+                layoutCommandBox.Metadata      = (uint)(this.Index + 1);
+                layoutCommandBox.Size          = this.Boundings;
+            }
+            else
+            {
+                layoutCommandBox.CommandFilter = CommandFilter.None;
+            }
+
+            this.MarkCommandsDirty();
         }
     }
 

@@ -18,7 +18,7 @@ internal class StencilLayer(Element owner) : IEnumerable<StencilLayer>
 
     public CanvasShader.Border Border    => this.Owner.ComputedStyle.Border ?? default(CanvasShader.Border);
     public Size<uint>          Size      => this.Owner.Boundings;
-    public Transform2D         Transform => this.Owner.CachedTransformWithOffset;
+    public Transform2D         Transform => this.Owner.CachedTransform;
 
     private void InvokeConnected()
     {

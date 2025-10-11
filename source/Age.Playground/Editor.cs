@@ -118,7 +118,7 @@ public class Editor : Scene2D
 
     private static void PrintCanvasIndex()
     {
-        var canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasIndexRenderGraphPass>();
+        var canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasEncodeRenderGraphPass>();
 
         var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
 

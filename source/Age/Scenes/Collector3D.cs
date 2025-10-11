@@ -1,6 +1,5 @@
 using Age.Commands;
 using Age.Core.Extensions;
-using Age.Elements;
 using Age.Graphs;
 using System.Runtime.CompilerServices;
 
@@ -11,13 +10,13 @@ public readonly struct Collector3D : IDisposable
     private readonly BoundaryContext<Command3D> context;
     private readonly Renderable                 target;
 
-    public Collector3D(Renderable target, int startIndex, CommandBuffer<Command3D> commandBuffer, List<Renderable> stage, IReadOnlyList<Renderable> nodes)
+    public Collector3D(Renderable target, int startIndex, CommandBuffer<Command3D> commandBuffer, List<Renderable> stage, List<Renderable> nodes)
     {
         var commandRange = target is Renderable<Command3D> renderable3D
             ? renderable3D.CommandRange
             : new(
-                new(0, 0, (ushort)commandBuffer.Colors.Length),
-                new(0, 0, (ushort)commandBuffer.Indices.Length)
+                new(0, (ushort)commandBuffer.Colors.Length),
+                new(0, (ushort)commandBuffer.Encodes.Length)
             );
 
         this.context = new(startIndex, commandRange, commandBuffer, stage, nodes);
@@ -87,21 +86,22 @@ public readonly struct Collector3D : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void Collect(Renderable<Command3D> subtree)
     {
-        var boundaryRange = subtree.SubtreeRange.Start..subtree.Scene!.SubtreeRange.End;
-        var commandRange  = subtree.CommandRange;
+        var boundaryRange = new ShortRange(subtree.SubtreeRange.Start, subtree.Scene!.SubtreeRange.End);
 
         this.context.StartSubtreeRange(subtree, true);
 
         this.CollectSubtree(subtree);
 
         this.context.EndSubtreeRange(subtree, true);
-        this.UpdateBuffer(subtree, boundaryRange, commandRange);
+        this.UpdateBuffer(subtree, boundaryRange);
     }
 
-    public void UpdateBuffer(Renderable<Command3D> subtree, Range boundaryRange, in CommandRange commandRange)
+    public void UpdateBuffer(Renderable<Command3D> subtree, ShortRange boundaryRange)
     {
-        var colorOffset = (short)(subtree.CommandRange.Color.Extend - commandRange.Color.Extend);
-        var indexOffset = (short)(subtree.CommandRange.Index.Extend - commandRange.Index.Extend);
+        var colorOffset = (short)(subtree.CommandRange.Color.Post.End - this.context.CommandRange.Color.Post.End);
+        var indexOffset = (short)(subtree.CommandRange.Encode.Post.End - this.context.CommandRange.Encode.Post.End);
+
+        boundaryRange = boundaryRange.WithClamp((ushort)this.context.Nodes.Count);
 
         if (colorOffset > 0 || indexOffset > 0)
         {
@@ -119,19 +119,14 @@ public readonly struct Collector3D : IDisposable
                 switch (parent)
                 {
                     case Renderable<Command3D> parentRenderable:
-                        parentRenderable.CommandRange = parentRenderable.CommandRange.WithExtendOffset(colorOffset, indexOffset);
+                        parentRenderable.CommandRange = parentRenderable.CommandRange.WithPostOffset(colorOffset, indexOffset);
                         break;
                 }
             }
 
-            foreach (var node in Unsafe.As<List<Renderable>>(this.context.Nodes).AsSpan(boundaryRange))
+            foreach (var node in this.context.Nodes.AsSpan(boundaryRange))
             {
-                if (node is Element element)
-                {
-                    element.PreCommandRange  = element.PreCommandRange.WithOffset(colorOffset, indexOffset);
-                    element.PostCommandRange = element.PostCommandRange.WithOffset(colorOffset, indexOffset);
-                }
-                else if (node is Renderable<Command3D> renderable)
+                if (node is Renderable<Command3D> renderable)
                 {
                     renderable.CommandRange = renderable.CommandRange.WithOffset(colorOffset, indexOffset);
                 }
