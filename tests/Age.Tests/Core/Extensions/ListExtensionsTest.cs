@@ -41,7 +41,7 @@ public class ListExtensionsTest
 
         source.ReplaceRange(9..22, [-1, -2, -3, -4, -5]);
 
-        Assert.Equal([1, 2, 3, 4, 5, 6, 7, 8, -1, -2, -3, -4, -5, 23, 24, 25, 26, 27], source);
+        Assert.Equal([1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -2, -3, -4, -5, 23, 24, 25, 26, 27], source);
         // 9..22
                 // [0..5] > [0..26]
     }

@@ -400,7 +400,7 @@ public partial class SceneGraphCacheTest
         actual = [..cache.Nodes.Select(ToNodeRange)];
 
         // Uncomment if you is lost
-        // Emit(expected, actual);
+        Emit(expected, actual);
 
         Assert.Equal(expected, actual);
     }
