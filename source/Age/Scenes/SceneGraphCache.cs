@@ -1,40 +1,49 @@
-using Age.Core.Extensions;
+using Age.Elements;
 
 namespace Age.Scenes;
 
-public class SceneGraphCache
+internal partial class SceneGraphCache
 {
-    private readonly List<Renderable> dirtyTrees = [];
+    private readonly List<Renderable> dirtySubtrees = [];
 
     internal List<Renderable> Nodes     { get; } = [];
     internal List<Viewport>   Viewports { get; } = [];
 
     public void InvalidatedSubTree(Renderable renderable)
     {
-        foreach (var dirtyTree in this.dirtyTrees.ToArray())
+        foreach (var dirtyTree in this.dirtySubtrees.ToArray())
         {
-            if (dirtyTree == renderable || (dirtyTree.DirtState.HasFlags(DirtState.Subtree) && (dirtyTree.SubtreeRange.Contains(renderable.SubtreeRange) || dirtyTree.IsAncestor(renderable))))
+            if (dirtyTree == renderable)
             {
                 return;
             }
-            else if (renderable.DirtState.HasFlags(DirtState.Subtree) && (renderable.SubtreeRange.Contains(dirtyTree.SubtreeRange) || renderable.IsAncestor(dirtyTree)))
+
+            if ((renderable is Layoutable layoutable && Layoutable.IsComposedAncestor(dirtyTree, layoutable)) || dirtyTree.IsAncestor(renderable))
             {
-                this.dirtyTrees.Remove(dirtyTree);
+                dirtyTree.DirtState |= DirtState.Subtree;
+
+                return;
+            }
+            else if ((dirtyTree is Layoutable layoutableDirtyTree && Layoutable.IsComposedAncestor(renderable, layoutableDirtyTree)) || renderable.IsAncestor(dirtyTree))
+            {
+                renderable.DirtState |= DirtState.Subtree;
+
+                this.dirtySubtrees.Remove(dirtyTree);
             }
         }
 
-        this.dirtyTrees.Add(renderable);
+        this.dirtySubtrees.Add(renderable);
     }
 
     internal void Build()
     {
-        this.dirtyTrees.Sort(static (left, right) => left.SubtreeRange.Start.CompareTo(right.SubtreeRange.Start));
+        this.dirtySubtrees.Sort(static (left, right) => left.SubtreeRange.Start.CompareTo(right.SubtreeRange.Start));
 
-        foreach (var subtree in this.dirtyTrees)
+        foreach (var subtree in this.dirtySubtrees)
         {
             Collector.Collect(subtree, this.Nodes);
         }
 
-        this.dirtyTrees.Clear();
+        this.dirtySubtrees.Clear();
     }
 }

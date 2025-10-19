@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Age.Commands;
 using Age.Core;
 using Age.Core.Collections;
@@ -9,11 +8,12 @@ using Age.Resources;
 using Age.Storage;
 using Age.Styling;
 using SkiaSharp;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 using Timer = Age.Scenes.Timer;
 
 using static Age.Shaders.CanvasShader;
-using System.Diagnostics;
 
 namespace Age.Elements;
 
@@ -475,6 +475,33 @@ public sealed class Text : Layoutable
         this.RequestUpdate(true);
     }
 
+    private void SetCaret(ushort x, ushort y, uint position)
+    {
+        if (!this.CanSelect)
+        {
+            return;
+        }
+
+        this.GetCharacterOffset(x, y, ref position);
+
+        this.CursorPosition = position;
+    }
+
+    private void WindowOnMouseMove(in WindowMouseEvent mouseEvent)
+    {
+        if (mouseEvent.IsHoldingPrimaryButton)
+        {
+            this.UpdateSelection(mouseEvent.X, mouseEvent.Y);
+        }
+        else
+        {
+            Debug.Assert(this.Scene?.Viewport?.Window != null);
+
+            this.Scene.Viewport.Window.MouseMove -= this.WindowOnMouseMove;
+            this.HandleDeactivate();
+        }
+    }
+
     private protected override void OnAttachedInternal()
     {
         base.OnAttachedInternal();
@@ -600,21 +627,6 @@ public sealed class Text : Layoutable
         ActiveText = this;
     }
 
-    private void WindowOnMouseMove(in WindowMouseEvent mouseEvent)
-    {
-        if (mouseEvent.IsHoldingPrimaryButton)
-        {
-            this.UpdateSelection(mouseEvent.X, mouseEvent.Y);
-        }
-        else
-        {
-            Debug.Assert(this.Scene?.Viewport?.Window != null);
-
-            this.Scene.Viewport.Window.MouseMove -= this.WindowOnMouseMove;
-            this.HandleDeactivate();
-        }
-    }
-
     internal void HandleDeactivate() => ActiveText = null;
 
     internal void PropagateSelection(uint characterPosition)
@@ -653,7 +665,7 @@ public sealed class Text : Layoutable
             return;
         }
 
-        var cursor = this.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
+        var cursor = this.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
         if (cursor == this.previouCursor)
         {
@@ -684,18 +696,6 @@ public sealed class Text : Layoutable
                 break;
             }
         }
-
-        this.CursorPosition = position;
-    }
-
-    private void SetCaret(ushort x, ushort y, uint position)
-    {
-        if (!this.CanSelect)
-        {
-            return;
-        }
-
-        this.GetCharacterOffset(x, y, ref position);
 
         this.CursorPosition = position;
     }
@@ -745,7 +745,9 @@ public sealed class Text : Layoutable
             return;
         }
 
-        var cursor = this.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
+        Console.WriteLine($"UpdateSelection: [{x}, {y}]");
+
+        var cursor = this.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
         if (cursor == this.previouCursor)
         {
@@ -972,7 +974,7 @@ public sealed class Text : Layoutable
 
         var rect = this.Commands[(int)index].GetAffineRect();
 
-        var transform = this.TransformWithOffset;
+        var transform = this.Transform;
 
         var position = new Point<int>(
             (int)(transform.Position.X  + rect.Position.X),
@@ -1004,7 +1006,7 @@ public sealed class Text : Layoutable
 
         var rect = this.CursorRect;
 
-        var transform = this.TransformWithOffset;
+        var transform = this.Transform;
 
         var position = new Point<int>(
             (int)(transform.Position.X  + rect.Position.X),
@@ -1036,7 +1038,7 @@ public sealed class Text : Layoutable
             rect.Grow(command.GetAffineRect());
         }
 
-        var transform = this.TransformWithOffset;
+        var transform = this.Transform;
 
         rect.Position = new Point<float>(
             (float)(transform.Position.X + rect.Position.X),

@@ -149,7 +149,7 @@ public partial class SceneGraphCacheTest
 
         flat[19].Detach();
 
-        RenderableAcessor.SetDirtState(parent, DirtState.Subtree);
+        parent.DirtState = DirtState.Subtree;
 
         cache.InvalidatedSubTree(parent);
         cache.Build();
@@ -338,7 +338,7 @@ public partial class SceneGraphCacheTest
             RenderableAcessor<Command2D>.AddCommand(renderable, new SpriteCommand() { CommandFilter = CommandFilter.Color });
         }
 
-        RenderableAcessor.SetDirtState(renderable, DirtState.Commands);
+        renderable.DirtState = DirtState.Commands;
 
         cache.InvalidatedSubTree(renderable);
         cache.Build();
@@ -403,5 +403,71 @@ public partial class SceneGraphCacheTest
         // Emit(expected, actual);
 
         Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void InvalidatedSubTree()
+    {
+        var cache = new SceneGraphCache();
+
+        var window = new Window
+        {
+            Name    = "$",
+            Scene2D = new()
+            {
+                Name     = "$2D",
+                Children =
+                [
+                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(5, 1, 3, null, CommandFilter.Color, "$2D.1"),
+                ]
+            }
+        };
+
+        var flat = TreeFactory.Flatten(window);
+
+        var flat2 = (Renderable)flat[2];
+        var flat4 = (Renderable)flat[4];
+        var flat7 = (Renderable)flat[7];
+
+        flat2.DirtState = DirtState.Commands;
+        flat7.DirtState = DirtState.Commands;
+        flat4.DirtState = DirtState.Commands;
+
+        cache.InvalidatedSubTree(flat4);
+        cache.InvalidatedSubTree(flat7);
+        cache.InvalidatedSubTree(flat2);
+
+        var dirtTrees = SceneGraphCacheAccessor.GetDirtTrees(cache);
+
+        Assert.Equal(DirtState.Commands | DirtState.Subtree, flat2.DirtState);
+        Assert.Equal([flat[2]], dirtTrees);
+
+        dirtTrees.Clear();
+
+        var component = new SealedComponent();
+
+        flat7.AppendChild(component);
+
+        var composedChild = (Renderable)component.ShadowTree!.FirstChild!;
+
+        component.DirtState     = DirtState.Commands;
+        composedChild.DirtState = DirtState.Commands;
+
+        cache.InvalidatedSubTree(component);
+        cache.InvalidatedSubTree(composedChild);
+
+        Assert.Equal(DirtState.Commands | DirtState.Subtree, flat2.DirtState);
+        Assert.Equal([component], dirtTrees);
+
+        dirtTrees.Clear();
+
+        component.DirtState     = DirtState.Commands;
+        composedChild.DirtState = DirtState.Commands;
+
+        cache.InvalidatedSubTree(composedChild);
+        cache.InvalidatedSubTree(component);
+
+        Assert.Equal(DirtState.Commands | DirtState.Subtree, flat2.DirtState);
+        Assert.Equal([component], dirtTrees);
     }
 }

@@ -6,7 +6,7 @@ namespace Age.Scenes;
 
 public abstract class Renderable : Node
 {
-    internal DirtState DirtState { get; private set; }
+    internal DirtState DirtState { get; set; }
 
     internal ShortRange SubtreeRange
     {

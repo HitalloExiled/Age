@@ -15,8 +15,8 @@ namespace Age.RenderPasses;
 
 public sealed class CanvasColorRenderGraphPass : CanvasRenderGraphPass
 {
-    private readonly Image[]                           colorImages = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
-    private readonly Framebuffer[]                     framebuffers  = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly Image[]                           colorImages  = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
+    private readonly Framebuffer[]                     framebuffers = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
     private readonly IndexBuffer32                     indexBuffer;
     private readonly Image[]                           stencilImages = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
     private readonly VertexBuffer<CanvasShader.Vertex> vertexBuffer;

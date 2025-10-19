@@ -11,10 +11,10 @@ public abstract class Layoutable : Spatial2D
     internal const string DEFAULT_FONT_FAMILY = "Segoi UI";
     internal const ushort DEFAULT_FONT_SIZE   = 16;
 
-    private Transform2D CombinedTransform                 => this.LayoutTransform * this.LocalTransform * this.ParentContentOffset;
-    private Transform2D ComposedParentTransform           => (this.ComposedParentElement as Layoutable)?.Transform ?? Transform2D.Identity;
-    private Transform2D ComposedParentTransformWithOffset => (this.ComposedParentElement as Layoutable)?.TransformWithOffset ?? Transform2D.Identity;
-    private Transform2D ParentContentOffset               => Transform2D.CreateTranslated((this.ComposedParentElement?.ContentOffset ?? default).ToVector2<float>().InvertedX);
+    private Transform2D CachedComposedParentTransform => (this.ComposedParentElement as Layoutable)?.CachedTransform ?? Transform2D.Identity;
+    private Transform2D CombinedTransform             => this.LayoutTransform * this.LocalTransform * this.ParentContentOffset;
+    private Transform2D ComposedParentTransform       => (this.ComposedParentElement as Layoutable)?.Transform ?? Transform2D.Identity;
+    private Transform2D ParentContentOffset           => Transform2D.CreateTranslated((this.ComposedParentElement?.ContentOffset ?? default).ToVector2<float>().InvertedX);
 
     private protected virtual StencilLayer? ContentStencilLayer { get; }
     private protected virtual Transform2D   LayoutTransform => Transform2D.CreateTranslated(this.Offset);
@@ -50,14 +50,12 @@ public abstract class Layoutable : Spatial2D
         {
             if (this.TransformCache.IsInvalid)
             {
-                this.TransformCache = new(this.CombinedTransform * this.CachedParentTransform);
+                this.TransformCache = new(this.CombinedTransform * this.CachedComposedParentTransform);
             }
 
             return this.TransformCache.Value;
         }
     }
-
-    internal Transform2D TransformWithOffset => this.CombinedTransform * this.ComposedParentTransformWithOffset;
 
     internal abstract bool IsParentDependent { get; }
 
@@ -83,8 +81,8 @@ public abstract class Layoutable : Spatial2D
 
     public sealed override Transform2D Transform
     {
-        get => this.LayoutTransform * this.LocalTransform * this.ComposedParentTransform;
-        set => this.LocalTransform = this.LayoutTransform.Inverse() * value * this.ComposedParentTransform.Inverse();
+        get => this.CombinedTransform * this.ComposedParentTransform;
+        set => this.LocalTransform = this.LayoutTransform.Inverse() * value * this.ComposedParentTransform.Inverse() * this.ParentContentOffset.Inverse();
     }
 
     public Node? ComposedParent  => this.AssignedSlot ?? this.EffectiveParent;
@@ -426,28 +424,16 @@ public abstract class Layoutable : Spatial2D
 
     internal abstract void UpdateLayout();
 
-    public Rect<int> GetUpdatedBoundings()
+    public static bool IsComposedAncestor(Node ancestor, Layoutable node)
     {
-        this.UpdateLayoutIndependentAncestor();
-
-        var transform = this.TransformWithOffset;
-
-        var size     = this.Boundings.Cast<int>();
-        var position = new Point<int>((int)transform.Position.X, -(int)transform.Position.Y);
-
-        return new(size, position);
-    }
-
-    public bool IsComposedAncestor(Layoutable other)
-    {
-        if (this == other)
+        if (ancestor == node)
         {
             return false;
         }
 
-        var parent = other.ComposedParentElement;
+        var parent = node.ComposedParentElement;
 
-        while (parent != this)
+        while (parent != ancestor)
         {
             if (parent == null)
             {
@@ -459,6 +445,21 @@ public abstract class Layoutable : Spatial2D
 
         return true;
     }
+
+    public Rect<int> GetUpdatedBoundings()
+    {
+        this.UpdateLayoutIndependentAncestor();
+
+        var transform = this.Transform;
+
+        var size     = this.Boundings.Cast<int>();
+        var position = new Point<int>((int)transform.Position.X, -(int)transform.Position.Y);
+
+        return new(size, position);
+    }
+
+    public bool IsComposedAncestor(Layoutable other) =>
+        IsComposedAncestor(this, other);
 
     public bool IsComposedDescendent(Layoutable other) =>
         other.IsComposedAncestor(this);

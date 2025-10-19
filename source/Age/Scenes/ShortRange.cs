@@ -4,55 +4,58 @@ namespace Age.Scenes;
 
 public readonly record struct ShortRange
 {
-    public readonly ushort Start { get; }
-    public readonly ushort End   { get; }
+    private readonly ushort start;
+    private readonly ushort end;
 
-    public readonly int Length => this.End - this.Start;
+    public readonly int Start => this.start;
+    public readonly int End   => this.end;
 
-    public ShortRange(ushort index)
+    public readonly int Length => this.end - this.start;
+
+    public ShortRange(int index)
     {
-        this.Start = index;
-        this.End   = index;
+        this.start = (ushort)index;
+        this.end   = (ushort)index;
     }
 
-    public ShortRange(ushort start, ushort end)
+    public ShortRange(int start, int end)
     {
         Debug.Assert(start <= end);
 
-        this.Start = start;
-        this.End   = end;
+        this.start = (ushort)start;
+        this.end   = (ushort)end;
     }
 
-    public static ShortRange CreateWithLength(ushort start, ushort length) =>
-        new(start, (ushort)(start + length));
+    public static ShortRange CreateWithLength(int start, int length) =>
+        new(start, start + length);
 
     public readonly bool Contains(ShortRange range) =>
-        this.Start <= range.Start && this.End >= range.End;
+        this.start <= range.start && this.end >= range.end;
 
-    public readonly ShortRange WithClamp(ushort value) =>
-        new(ushort.Min(this.Start, value), ushort.Min(this.End, value));
+    public readonly ShortRange WithClamp(int value) =>
+        new(int.Min(this.start, value), int.Min(this.end, value));
 
-    public readonly ShortRange WithEnd(ushort end) =>
-        new(ushort.Min(this.Start, end), end);
+    public readonly ShortRange WithEnd(int end) =>
+        new(int.Min(this.start, end), end);
 
-    public ShortRange WithEndOffset(short offset) =>
-        new(this.Start, (ushort)(this.End + offset));
+    public ShortRange WithEndOffset(int offset) =>
+        new(this.start, this.end + offset);
 
-    public readonly ShortRange WithLength(ushort length) =>
-        new(this.Start, (ushort)(this.Start + length));
+    public readonly ShortRange WithLength(int length) =>
+        new(this.start, this.start + length);
 
-    public readonly ShortRange WithResize(short length) =>
-        new(this.Start, (ushort)(this.End + length));
+    public readonly ShortRange WithResize(int length) =>
+        new(this.start, this.end + length);
 
-    public readonly ShortRange WithOffset(short offset) =>
-        new((ushort)(this.Start + offset), (ushort)(this.End + offset));
+    public readonly ShortRange WithOffset(int offset) =>
+        new(this.start + offset, this.end + offset);
 
-    public readonly ShortRange WithStart(ushort start) =>
-        new(start, this.End);
+    public readonly ShortRange WithStart(int start) =>
+        new(start, this.end);
 
     public override readonly string ToString() =>
-        this.Start == this.End ? $"{this.Start}" : $"[{this.Start}..{this.End}]";
+        this.start == this.end ? $"{this.start}" : $"[{this.start}..{this.end}]";
 
     public static implicit operator Range(ShortRange range) =>
-        new(range.Start, range.End);
+        new(range.start, range.end);
 }

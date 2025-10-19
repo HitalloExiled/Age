@@ -118,17 +118,9 @@ where TCommand : Command
         commandListPool.Return(this.Encodes);
     }
 
-    public void UpdateBuffer(bool all)
+    public void UpdateBuffer(Range color, Range encode)
     {
-        if (all)
-        {
-            this.CommandBuffer.ReplaceColorCommandRange(0.., this.Colors.AsSpan());
-            this.CommandBuffer.ReplaceEncodeCommandRange(0.., this.Encodes.AsSpan());
-        }
-        else
-        {
-            this.CommandBuffer.ReplaceColorCommandRange(this.CommandRange.Color, this.Colors.AsSpan());
-            this.CommandBuffer.ReplaceEncodeCommandRange(this.CommandRange.Encode, this.Encodes.AsSpan());
-        }
+        this.CommandBuffer.ReplaceColorCommandRange(color, this.Colors.AsSpan());
+        this.CommandBuffer.ReplaceEncodeCommandRange(encode, this.Encodes.AsSpan());
     }
 }
