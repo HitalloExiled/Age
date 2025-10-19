@@ -606,7 +606,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     private protected virtual void OnAttachedInternal() { }
     private protected virtual void OnChildAttachedInternal(Node node) { }
     private protected virtual void OnChildDetachingInternal(Node node) { }
-    private protected virtual void OnChildDetachedInternal(Node node) { }
     private protected virtual void OnConnectedInternal() { }
     private protected virtual void OnDisconnectingInternal() { }
     private protected virtual void OnDisposedInternal() { }

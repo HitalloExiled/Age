@@ -352,7 +352,9 @@ dotnet_diagnostic.IDE1006.severity = suggestion # Remove unnecessary suppression
 dotnet_diagnostic.RCS1001.severity = none       # Add braces (when expression spans over multiple lines)
 dotnet_diagnostic.RCS1123.severity = none       # Add parentheses when
 dotnet_diagnostic.RCS1130.severity = none       # Bitwise operation on enum without Flags attribute
+dotnet_diagnostic.RCS1158.severity = none       # Static member in generic type should use a type parameter
 dotnet_diagnostic.RCS1242.severity = none       # Do not pass non-read-only struct by read-only reference
+
 
 dotnet_diagnostic.RCS0063.severity = none       # Remove unnecessary blank line [deprecated]
 dotnet_diagnostic.RCS1036.severity = suggestion # Remove unnecessary blank line

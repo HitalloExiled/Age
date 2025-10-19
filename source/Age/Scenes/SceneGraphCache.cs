@@ -37,7 +37,7 @@ internal partial class SceneGraphCache
 
     internal void Build()
     {
-        this.dirtySubtrees.Sort(static (left, right) => left.SubtreeRange.Start.CompareTo(right.SubtreeRange.Start));
+        this.dirtySubtrees.Sort();
 
         foreach (var subtree in this.dirtySubtrees)
         {

@@ -12,13 +12,17 @@ public sealed class Mesh : Spatial3D
 
     public Mesh(ReadOnlySpan<GeometryShader.Vertex> vertices, scoped ReadOnlySpan<uint> indices)
     {
-        var command = CommandPool.MeshCommand.Get();
+        var command = CommandPool.MeshCommand.Get(this, CommandFilter.Color);
 
-        command.VertexBuffer = new(vertices);
-        command.IndexBuffer  = new(indices);
-        command.Onwer         = this;
+        command.IndexBuffer   = new(indices);
+        command.VertexBuffer  = new(vertices);
 
         this.SingleCommand = command;
+    }
+
+    private protected override void OnDisconnectingInternal()
+    {
+        base.OnDisconnectingInternal();
     }
 
     private protected override void OnDisposedInternal()

@@ -1,5 +1,5 @@
+using System.Runtime.CompilerServices;
 using Age.Commands;
-using Age.Core;
 using Age.Core.Extensions;
 
 namespace Age.Scenes;
@@ -37,9 +37,9 @@ public abstract class Renderable : Node
         this.MakeSubtreeDirty(DirtState.Subtree);
     }
 
-    private protected override void OnChildDetachedInternal(Node node)
+    private protected override void OnChildDetachingInternal(Node node)
     {
-        base.OnChildDetachedInternal(node);
+        base.OnChildDetachingInternal(node);
 
         this.MakeSubtreeDirty(DirtState.Subtree);
     }
@@ -101,7 +101,9 @@ public abstract class Renderable<T> : Renderable where T : Command
         this.MarkCommandsDirty();
     }
 
-    private protected void AllocateCommands<U>(int count, ObjectPool<U> pool) where U : Command2D
+    private protected void AllocateCommands<TCommand, TNode>(int count, CommandPool<TCommand, TNode> pool)
+    where TCommand : Command<TNode>, new()
+    where TNode    : Node
     {
         this.commands.EnsureCapacity(count);
 
@@ -119,7 +121,7 @@ public abstract class Renderable<T> : Renderable where T : Command
 
             for (var i = previousCount; i < span.Length; i++)
             {
-                span[i] = (T)(Command)pool.Get();
+                span[i] = (T)(Command)pool.Get(Unsafe.As<TNode>(this));
             }
 
             this.MarkCommandsDirty();
@@ -143,7 +145,9 @@ public abstract class Renderable<T> : Renderable where T : Command
         this.MarkCommandsDirty();
     }
 
-    private protected void ReleaseCommands<U>(int count, ObjectPool<U> pool) where U : Command2D
+    private protected void ReleaseCommands<TCommand, TNode>(int count, CommandPool<TCommand, TNode> pool)
+    where TCommand : Command<TNode>, new()
+    where TNode    : Node
     {
         if (count > 0)
         {
@@ -152,7 +156,7 @@ public abstract class Renderable<T> : Renderable where T : Command
 
             for (var i = start; i < span.Length; i++)
             {
-                pool.Return((U)(Command)span[i]);
+                pool.Return(Unsafe.As<TCommand>(span[i]));
 
                 span[i] = default!;
             }

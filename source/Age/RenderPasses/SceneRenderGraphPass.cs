@@ -13,6 +13,7 @@ using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
 using Buffer = Age.Rendering.Resources.Buffer;
+using System.Runtime.CompilerServices;
 
 namespace Age.RenderPasses;
 
@@ -196,16 +197,19 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
                     switch (command)
                     {
                         case MeshCommand meshCommand:
+                        {
+                            var mesh = Unsafe.As<Mesh>(meshCommand.Owner);
 
-                            var ubo = this.UpdateUbo(viewport.Camera3D, meshCommand.Onwer, viewport.RenderTarget.Size.ToExtent2D());
+                            var ubo = this.UpdateUbo(viewport.Camera3D, mesh, viewport.RenderTarget.Size.ToExtent2D());
 
-                            commandBuffer.BindShader(meshCommand.Onwer.Material.GetShader(viewport.RenderTarget));
-                            commandBuffer.BindUniformSet(this.GetUniformSet(viewport.RenderTarget, viewport.Camera3D, ubo, meshCommand.Onwer.Material));
+                            commandBuffer.BindShader(mesh.Material.GetShader(viewport.RenderTarget));
+                            commandBuffer.BindUniformSet(this.GetUniformSet(viewport.RenderTarget, viewport.Camera3D, ubo, mesh.Material));
                             commandBuffer.BindVertexBuffer([meshCommand.VertexBuffer]);
                             commandBuffer.BindIndexBuffer(meshCommand.IndexBuffer);
                             commandBuffer.DrawIndexed(meshCommand.IndexBuffer);
 
                             break;
+                        }
                     }
                 }
             }

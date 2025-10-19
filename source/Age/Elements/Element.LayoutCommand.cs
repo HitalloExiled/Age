@@ -35,23 +35,13 @@ public abstract partial class Element
             return (RectCommand)this.Commands[index];
         }
 
-        var command = CommandPool.RectCommand.Get();
+        var command = CommandPool.RectCommand.Get(this, CommandFilter.Color | CommandFilter.Encode);
 
-        switch (layoutCommand)
+        if (layoutCommand == LayoutCommand.Box)
         {
-            case LayoutCommand.Box:
-                command.Flags         = Flags.ColorAsBackground;
-                command.CommandFilter = CommandFilter.Color | CommandFilter.Encode;
-
-                break;
-
-            default:
-                command.CommandFilter = CommandFilter.Color | CommandFilter.Encode;
-
-                break;
+            command.Flags = Flags.ColorAsBackground;
         }
 
-        command.Owner        = this;
         command.StencilLayer = this.StencilLayer;
 
         this.InsertCommand(index, command);

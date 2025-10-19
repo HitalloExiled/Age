@@ -114,10 +114,9 @@ public sealed class Text : Layoutable
         this.AppendChild(this.caretTimer);
         this.AppendChild(this.selectionTimer);
 
-        this.caretCommand              = CommandPool.RectCommand.Get();
+        this.caretCommand              = CommandPool.RectCommand.Get(this);
         this.caretCommand.Color        = Color.White;
         this.caretCommand.Flags        = Flags.ColorAsBackground;
-        this.caretCommand.Owner        = this;
         this.caretCommand.Size         = new(this.caretWidth, this.LineHeight);
         this.caretCommand.StencilLayer = this.StencilLayer;
         this.caretCommand.TextureMap   = TextureMap.Default;
@@ -306,7 +305,6 @@ public sealed class Text : Layoutable
             selectionCommand.Index        = default;
             selectionCommand.Surrogate    = default;
             selectionCommand.Line         = lineIndex;
-            selectionCommand.Owner        = this;
             selectionCommand.StencilLayer = this.StencilLayer;
             selectionCommand.TextureMap   = TextureMap.Default;
 
@@ -356,7 +354,6 @@ public sealed class Text : Layoutable
                     characterCommand.Index          = selectionCommand.Index;
                     characterCommand.Line           = selectionCommand.Line;
                     characterCommand.LocalTransform = Transform2D.CreateTranslated(offset);
-                    characterCommand.Owner          = this;
                     characterCommand.Size           = size;
                     characterCommand.StencilLayer   = this.StencilLayer;
                     characterCommand.TextureMap     = glyph;
@@ -744,8 +741,6 @@ public sealed class Text : Layoutable
         {
             return;
         }
-
-        Console.WriteLine($"UpdateSelection: [{x}, {y}]");
 
         var cursor = this.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
 
