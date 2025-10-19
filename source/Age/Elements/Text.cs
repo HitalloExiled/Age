@@ -888,6 +888,9 @@ public sealed class Text : Layoutable
 
         if (mouseEvent.IsHoldingPrimaryButton)
         {
+            Debug.Assert(this.Scene?.Viewport?.Window != null);
+
+            this.Scene.Viewport.Window.MouseMove -= this.WindowOnMouseMove;
             this.UpdateSelection(mouseEvent.X, mouseEvent.Y, virtualChildIndex - 1);
         }
     }
