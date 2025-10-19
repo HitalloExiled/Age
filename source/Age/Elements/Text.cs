@@ -297,7 +297,7 @@ public sealed class Text : Layoutable
 
         for (var i = 0; i < textSpan.Length; i++)
         {
-            var charIndex = i - charOffset;
+            var charIndex        = i - charOffset;
             var selectionCommand = (TextCommand)commands[i];
 
             selectionCommand.Border       = default;
@@ -314,9 +314,11 @@ public sealed class Text : Layoutable
 
             if (!char.IsLowSurrogate(character))
             {
+                var width = (uint)float.Round(glyphsWidths[charIndex]);
+
                 selectionCommand.LocalTransform = Transform2D.CreateTranslated(new(cursor.X, cursor.Y - baseLine));
                 selectionCommand.Metadata       = CombineIds(elementIndex, i + 1);
-                selectionCommand.Size           = new((uint)glyphsWidths[charIndex], this.LineHeight);
+                selectionCommand.Size           = new(width, this.LineHeight);
 
                 if (!char.IsWhiteSpace(character))
                 {
@@ -359,7 +361,7 @@ public sealed class Text : Layoutable
                     characterCommand.StencilLayer   = this.StencilLayer;
                     characterCommand.TextureMap     = glyph;
 
-                    cursor.X += (int)float.Round(glyphsWidths[charIndex]);
+                    cursor.X += (int)width;
 
                     textOffset++;
                 }
@@ -381,7 +383,7 @@ public sealed class Text : Layoutable
                 }
                 else
                 {
-                    cursor.X += (int)float.Round(glyphsWidths[charIndex]);
+                    cursor.X += (int)width;
                 }
 
                 boundings.Width = uint.Max(boundings.Width, (uint)cursor.X);
