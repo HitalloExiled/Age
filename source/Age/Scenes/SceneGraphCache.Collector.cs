@@ -117,6 +117,8 @@ internal partial class SceneGraphCache
             }
 
             viewport.SubtreeRange = viewport.SubtreeRange.WithEnd(index + stage.Count);
+
+            viewport.MakeSubtreePristine();
         }
 
         public static void CollectViewport<T>(Viewport viewport, in BoundaryContext<T> context)
