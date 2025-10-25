@@ -101,7 +101,7 @@ public abstract class Renderable<T> : Renderable where T : Command
         this.MarkCommandsDirty();
     }
 
-    private protected void AllocateCommands<TCommand, TNode>(int count, CommandPool<TCommand, TNode> pool)
+    private protected void AllocateCommands<TCommand, TNode>(int count, CommandPool<TCommand, TNode> pool, bool reset = false)
     where TCommand : Command<TNode>, new()
     where TNode    : Node
     {
@@ -111,20 +111,38 @@ public abstract class Renderable<T> : Renderable where T : Command
         {
             this.ReleaseCommands(this.commands.Count - count, pool);
         }
-        else
+        else if (count > this.commands.Count)
         {
-            var previousCount = this.commands.Count;
+            if (reset)
+            {
+                resetAll(this.commands);
+            }
+
+            var tail = this.commands.Count;
 
             this.commands.SetCount(count);
 
             var span = this.commands.AsSpan();
 
-            for (var i = previousCount; i < span.Length; i++)
+            for (var i = tail; i < span.Length; i++)
             {
-                span[i] = (T)(Command)pool.Get(Unsafe.As<TNode>(this));
+                span[i] = Unsafe.As<T>(pool.Get(Unsafe.As<TNode>(this)));
             }
 
             this.MarkCommandsDirty();
+        }
+        else if (reset)
+        {
+            resetAll(this.commands);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void resetAll(List<T> commands)
+        {
+            foreach (var command in commands)
+            {
+                command.Reset();
+            }
         }
     }
 

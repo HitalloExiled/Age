@@ -25,6 +25,7 @@ public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
     protected override CanvasStencilMaskShader CanvasStencilWriterShader { get; }
     protected override Color                   ClearColor                { get; } = Color.Black;
     protected override CommandBuffer           CommandBuffer             { get; }
+    protected override CommandFilter           CommandFilter             { get; } = CommandFilter.Encode;
     protected override Framebuffer             Framebuffer               => this.framebuffer;
     protected override RenderPipelines[]       Pipelines                 { get; } = [];
 
@@ -175,7 +176,7 @@ public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
     }
 
     protected override ReadOnlySpan<Command2D> GetCommand(RenderContext renderContext) =>
-        renderContext.Buffer2D.Encodes;
+        renderContext.Buffer2D.Commands;
 
     public override void Recreate()
     {

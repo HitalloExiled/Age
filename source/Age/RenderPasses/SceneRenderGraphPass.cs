@@ -192,7 +192,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
 
             if (viewport.Camera3D != null)
             {
-                foreach (var command in viewport.RenderContext.Buffer3D.Colors)
+                foreach (var command in viewport.RenderContext.Buffer3D.Commands)
                 {
                     switch (command)
                     {

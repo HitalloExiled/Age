@@ -54,7 +54,7 @@ public sealed class Scene2DEncodePass : Scene2DPass
     }
 
     protected override void Record(RenderContext context) =>
-        this.Record(context.Buffer2D.Encodes);
+        this.Record(context.Buffer2D.Commands);
 
     protected override void Record(RectCommand command)
     {

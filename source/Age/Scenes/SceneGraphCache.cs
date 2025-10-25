@@ -37,6 +37,11 @@ internal partial class SceneGraphCache
 
     internal void Build()
     {
+        if (this.dirtySubtrees.Count == 0)
+        {
+            return;
+        }
+
         this.dirtySubtrees.Sort();
 
         foreach (var subtree in this.dirtySubtrees)

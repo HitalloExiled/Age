@@ -146,10 +146,10 @@ public sealed partial class RenderTree : Disposable
         this.IsDirty = true;
 
     internal ReadOnlySpan<Command> Get2DCommands() =>
-        this.Window.RenderContext.Buffer2D.Colors;
+        this.Window.RenderContext.Buffer2D.Commands;
 
     internal ReadOnlySpan<Command> Get3DCommands() =>
-        this.Window.RenderContext.Buffer3D.Colors;
+        this.Window.RenderContext.Buffer3D.Commands;
 
     internal ReadOnlySpan<Viewport> GetViewports() =>
         this.viewports.AsSpan();

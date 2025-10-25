@@ -5,35 +5,21 @@ namespace Age.Graphs;
 
 public class CommandBuffer<T> where T : Command
 {
-    private readonly List<T> colors  = [];
-    private readonly List<T> encodes = [];
+    private readonly List<T> commands  = [];
 
-    public ReadOnlySpan<T> Colors => this.colors.AsSpan();
-    public ReadOnlySpan<T> Encodes  => this.encodes.AsSpan();
+    public ReadOnlySpan<T> Commands => this.commands.AsSpan();
 
-    public void AddColorCommand(T command) =>
-        this.colors.Add(command);
+    public void AddCommand(T command) =>
+        this.commands.Add(command);
 
-    public void AddColorCommandRange(ReadOnlySpan<T> command) =>
-        this.colors.AddRange(command);
+    public void AddCommandRange(ReadOnlySpan<T> command) =>
+        this.commands.AddRange(command);
 
-    public void AddIndexCommand(T command) =>
-        this.encodes.Add(command);
+    public void ReplaceCommandRange(Range range, ReadOnlySpan<T> command) =>
+        this.commands.ReplaceRange(range, command);
 
-    public void AddEncodeCommandRange(ReadOnlySpan<T> command) =>
-        this.encodes.AddRange(command);
-
-    public void ReplaceColorCommandRange(Range range, ReadOnlySpan<T> command) =>
-        this.colors.ReplaceRange(range, command);
-
-    public void ReplaceEncodeCommandRange(Range range, ReadOnlySpan<T> command) =>
-        this.encodes.ReplaceRange(range, command);
-
-     public void Reset()
-    {
-        this.colors.Clear();
-        this.encodes.Clear();
-    }
+    public void Reset() =>
+        this.commands.Clear();
 }
 
 public class RenderContext

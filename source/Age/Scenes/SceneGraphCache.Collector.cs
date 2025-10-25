@@ -123,6 +123,6 @@ internal partial class SceneGraphCache
 
         public static void CollectViewport<T>(Viewport viewport, in BoundaryContext<T> context)
         where T : Command =>
-            CollectViewport(viewport, context.StartIndex, context.Stage, context.Nodes);
+            CollectViewport(viewport, context.Index, context.Stage, context.Nodes);
     }
 }

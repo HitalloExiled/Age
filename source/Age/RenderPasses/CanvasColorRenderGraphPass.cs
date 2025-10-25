@@ -26,9 +26,11 @@ public sealed class CanvasColorRenderGraphPass : CanvasRenderGraphPass
     protected override CanvasStencilMaskShader CanvasStencilWriterShader { get; }
     protected override Color                   ClearColor                { get; } = Color.Black;
     protected override CommandBuffer           CommandBuffer             => this.Renderer.CurrentCommandBuffer;
+    protected override CommandFilter           CommandFilter             { get; } = CommandFilter.Color;
     protected override Framebuffer             Framebuffer               => this.framebuffers[this.Window.Surface.CurrentBuffer];
     protected override RenderPipelines[]       Pipelines                 { get; } = [];
-    public override RenderPass                 RenderPass                { get; }
+
+    public override RenderPass RenderPass { get; }
 
     public CanvasColorRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)
     {
@@ -136,7 +138,7 @@ public sealed class CanvasColorRenderGraphPass : CanvasRenderGraphPass
         this.LastUniformSet = null;
 
     protected override ReadOnlySpan<Command2D> GetCommand(RenderContext renderContext) =>
-        renderContext.Buffer2D.Colors;
+        renderContext.Buffer2D.Commands;
 
     protected override void Disposed()
     {

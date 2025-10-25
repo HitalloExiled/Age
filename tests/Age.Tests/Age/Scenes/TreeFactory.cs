@@ -78,13 +78,13 @@ where TCommand : TBoundCommand, new()
         return node;
     }
 
-    public static TNode Linear(int depth, int childrenCount = 0, int commandsCount = 0, byte? commandSeparator = null, CommandFilter commandFilter = CommandFilter.Color, string? name = "$")
+    public static TNode Linear(int depth, int childrenCount = 0, int commandsCount = 0, byte? commandSeparator = null, string? name = "$")
     {
         var node = new TNode() { Name = name };
 
         for (var j = 0; j < commandsCount; j++)
         {
-            AddCommand(node, new TCommand() { CommandFilter = commandFilter, });
+            AddCommand(node, new TCommand());
         }
 
         if (node is Element element)
@@ -100,7 +100,7 @@ where TCommand : TBoundCommand, new()
 
             for (var i = 0; i < childrenCount; i++)
             {
-                node.AppendChild(Linear(depth, childrenCount, commandsCount, commandSeparator, commandFilter, $"{name}.{i + 1}"));
+                node.AppendChild(Linear(depth, childrenCount, commandsCount, commandSeparator, $"{name}.{i + 1}"));
             }
         }
 

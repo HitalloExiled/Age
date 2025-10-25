@@ -1,3 +1,4 @@
+using Age.Core.Extensions;
 using Age.Commands;
 using Age.Elements;
 using Age.Numerics;
@@ -20,10 +21,11 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
 
     protected UniformSet? LastUniformSet { get; set; }
 
-    protected abstract CanvasStencilMaskShader CanvasStencilWriterShader { get; }
     protected abstract CanvasStencilMaskShader CanvasStencilEraserShader { get; }
+    protected abstract CanvasStencilMaskShader CanvasStencilWriterShader { get; }
     protected abstract Color                   ClearColor                { get; }
     protected abstract CommandBuffer           CommandBuffer             { get; }
+    protected abstract CommandFilter           CommandFilter             { get; }
     protected abstract Framebuffer             Framebuffer               { get; }
     protected abstract RenderPipelines[]       Pipelines                 { get; }
 
@@ -204,52 +206,55 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
                     {
                         var command = commands[i];
 
-                        if (!pipeline.IgnoreStencil && (!this.stencilStack.TryPeek(out var previousLayer) || command.StencilLayer != previousLayer))
+                        if (this.CommandFilter.HasAnyFlag(command.CommandFilter))
                         {
-                            if (command.StencilLayer is StencilLayer currentLayer)
+                            if (!pipeline.IgnoreStencil && (!this.stencilStack.TryPeek(out var previousLayer) || command.StencilLayer != previousLayer))
                             {
-                                var currentDepth = currentLayer.Depth + 1;
-
-                                while (this.stencilStack.Count > currentDepth)
+                                if (command.StencilLayer is StencilLayer currentLayer)
                                 {
-                                    var layer = this.stencilStack.Pop();
+                                    var currentDepth = currentLayer.Depth + 1;
 
-                                    this.EraseStencil(pipeline, layer, viewport);
-                                }
-
-                                if (currentDepth >= previousDepth)
-                                {
-                                    this.WriteStencil(pipeline, currentLayer, viewport);
-
-                                    if (currentDepth > previousDepth)
+                                    while (this.stencilStack.Count > currentDepth)
                                     {
-                                        this.stencilStack.Push(currentLayer);
+                                        var layer = this.stencilStack.Pop();
+
+                                        this.EraseStencil(pipeline, layer, viewport);
                                     }
+
+                                    if (currentDepth >= previousDepth)
+                                    {
+                                        this.WriteStencil(pipeline, currentLayer, viewport);
+
+                                        if (currentDepth > previousDepth)
+                                        {
+                                            this.stencilStack.Push(currentLayer);
+                                        }
+                                    }
+
+                                    this.CommandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, currentDepth);
+
+                                    previousDepth = currentDepth;
+
+                                    this.CommandBuffer.BindShader(pipeline.Shader);
                                 }
-
-                                this.CommandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, currentDepth);
-
-                                previousDepth = currentDepth;
-
-                                this.CommandBuffer.BindShader(pipeline.Shader);
+                                else if (previousDepth > 0)
+                                {
+                                    this.stencilStack.Clear();
+                                    this.ClearStencilBuffer(extent);
+                                    this.CommandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, previousDepth = 0u);
+                                    this.CommandBuffer.BindShader(pipeline.Shader);
+                                }
                             }
-                            else if (previousDepth > 0)
+
+                            switch (command)
                             {
-                                this.stencilStack.Clear();
-                                this.ClearStencilBuffer(extent);
-                                this.CommandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, previousDepth = 0u);
-                                this.CommandBuffer.BindShader(pipeline.Shader);
+                                case RectCommand rectCommand:
+                                    this.ExecuteCommand(pipeline, rectCommand, viewport);
+
+                                    break;
+                                default:
+                                    throw new InvalidOperationException($"Unsupported command type '{command.GetType().FullName}'.");
                             }
-                        }
-
-                        switch (command)
-                        {
-                            case RectCommand rectCommand:
-                                this.ExecuteCommand(pipeline, rectCommand, viewport);
-
-                                break;
-                            default:
-                                throw new InvalidOperationException($"Unsupported command type '{command.GetType().FullName}'.");
                         }
                     }
 

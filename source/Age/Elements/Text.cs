@@ -149,8 +149,6 @@ public sealed class Text : Layoutable
             {
                 ((TextCommand)this.Commands[selectionCommand.Index]).Color = Color.White;
             }
-
-            this.MarkCommandsDirty();
         }
         else
         {
@@ -165,8 +163,6 @@ public sealed class Text : Layoutable
         this.caretCommand.CommandFilter = this.caretIsVisible ? CommandFilter.Color : default;
 
         this.RequestUpdate(false);
-
-        this.MarkCommandsDirty();
     }
 
     private void ClearSelection(TextCommand selectionCommand)
@@ -184,8 +180,6 @@ public sealed class Text : Layoutable
         {
             ((TextCommand)this.Commands[selectionCommand.Index]).Color = this.GetInheritedStyleSource()?.ComputedStyle?.Color ?? default;
         }
-
-        this.MarkCommandsDirty();
     }
 
     private void DrawCaret()
@@ -1053,8 +1047,6 @@ public sealed class Text : Layoutable
         this.caretTimer.Stop();
 
         this.RequestUpdate(false);
-
-        this.MarkCommandsDirty();
     }
 
     public void ShowCaret()
@@ -1067,8 +1059,6 @@ public sealed class Text : Layoutable
         this.caretTimer.Start();
 
         this.RequestUpdate(false);
-
-        this.MarkCommandsDirty();
     }
 
     public override string ToString() =>

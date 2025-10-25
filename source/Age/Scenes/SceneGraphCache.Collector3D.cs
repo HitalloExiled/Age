@@ -16,10 +16,7 @@ internal partial class SceneGraphCache
         {
             var commandRange = target is Renderable<Command3D> renderable3D
                 ? renderable3D.CommandRange
-                : new(
-                    new(0, commandBuffer.Colors.Length),
-                    new(0, commandBuffer.Encodes.Length)
-                );
+                : new(0, commandBuffer.Commands.Length);
 
             this.context = new(startIndex, commandRange, commandBuffer, stage, nodes);
             this.target  = target;
@@ -82,7 +79,7 @@ internal partial class SceneGraphCache
             this.CollectSubtree(scene);
 
             this.context.EndSubtreeRange(scene);
-            this.context.UpdateBuffer(0.., 0..);
+            this.context.UpdateBuffer(0..);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -100,12 +97,11 @@ internal partial class SceneGraphCache
 
         public void UpdateBuffer(Renderable<Command3D> subtree, ShortRange boundaryRange)
         {
-            var colorOffset = subtree.CommandRange.Color.Post.End - this.context.CommandRange.Color.Post.End;
-            var indexOffset = subtree.CommandRange.Encode.Post.End - this.context.CommandRange.Encode.Post.End;
+            var offset = subtree.CommandRange.Post.End - this.context.CommandRange.Post.End;
 
             boundaryRange = boundaryRange.WithClamp(this.context.Nodes.Count);
 
-            if (colorOffset > 0 || indexOffset > 0)
+            if (offset > 0)
             {
                 Node? parent = subtree;
 
@@ -121,7 +117,7 @@ internal partial class SceneGraphCache
                     switch (parent)
                     {
                         case Renderable<Command3D> parentRenderable:
-                            parentRenderable.CommandRange = parentRenderable.CommandRange.WithPostOffset(colorOffset, indexOffset);
+                            parentRenderable.CommandRange = parentRenderable.CommandRange.WithPostOffset(offset);
                             break;
                     }
                 }
@@ -130,12 +126,12 @@ internal partial class SceneGraphCache
                 {
                     if (node is Renderable<Command3D> renderable)
                     {
-                        renderable.CommandRange = renderable.CommandRange.WithOffset(colorOffset, indexOffset);
+                        renderable.CommandRange = renderable.CommandRange.WithOffset(offset);
                     }
                 }
             }
 
-            this.context.UpdateBuffer(this.context.CommandRange.Color.Pre, this.context.CommandRange.Color.Post);
+            this.context.UpdateBuffer(this.context.CommandRange.Pre);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

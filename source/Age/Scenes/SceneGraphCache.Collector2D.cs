@@ -20,10 +20,7 @@ internal partial class SceneGraphCache
         {
             var commandRange = target is Renderable<Command2D> renderable2D
                 ? renderable2D.CommandRange
-                : new(
-                    new(0, commandBuffer.Colors.Length),
-                    new(0, commandBuffer.Encodes.Length)
-                );
+                : new(0, commandBuffer.Commands.Length);
 
             this.context = new(startIndex, commandRange, commandBuffer, stage, nodes);
             this.target  = target;
@@ -40,15 +37,13 @@ internal partial class SceneGraphCache
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private readonly void AccumulateElementPostCommands(Element element)
         {
-            var colorIndex  = this.context.Colors.Count;
-            var encodeIndex = this.context.Encodes.Count;
+            var colorIndex  = this.context.Commands.Count;
 
             this.context.CollectCommands(element.PostCommands);
 
-            var colorDiff  = this.context.Colors.Count - colorIndex - element.CommandRange.Color.Post.Length;
-            var encodeDiff = this.context.Encodes.Count - encodeIndex - element.CommandRange.Encode.Post.Length;
+            var difference = this.context.Commands.Count - colorIndex - element.CommandRange.Post.Length;
 
-            element.CommandRange = element.CommandRange.WithPostResize(colorDiff, encodeDiff);
+            element.CommandRange = element.CommandRange.WithPostResize(difference);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,29 +98,23 @@ internal partial class SceneGraphCache
             {
                 this.AccumulateElementPreCommands(subtree);
 
-                var preColorOffset  = subtree.CommandRange.Color.Pre.End  - this.context.CommandRange.Color.Pre.End;
-                var preEncodeOffset = subtree.CommandRange.Encode.Pre.End - this.context.CommandRange.Encode.Pre.End;
+                var preOffset  = subtree.CommandRange.Pre.End  - this.context.CommandRange.Pre.End;
 
-                this.ApplyOffset(subtree, new(subtreeRange.Start + 1, subtreeRange.End), preColorOffset, preEncodeOffset);
+                this.ApplyOffset(subtree, new(subtreeRange.Start + 1, subtreeRange.End), preOffset);
 
-                this.context.CommandBuffer.ReplaceColorCommandRange(this.context.CommandRange.Color.Pre, this.context.Colors.AsSpan());
-                this.context.CommandBuffer.ReplaceEncodeCommandRange(this.context.CommandRange.Encode.Pre, this.context.Encodes.AsSpan());
+                this.context.CommandBuffer.ReplaceCommandRange(this.context.CommandRange.Pre, this.context.Commands.AsSpan());
 
-                var postColorIndex  = this.context.Colors.Count;
-                var postEncodeIndex = this.context.Encodes.Count;
+                var postColorIndex  = this.context.Commands.Count;
 
                 this.AccumulateElementPostCommands(subtree);
 
-                var postColorOffset  = subtree.CommandRange.Color.Post.End  - this.context.CommandRange.Color.Post.End;
-                var postEncodeOffset = subtree.CommandRange.Encode.Post.End - this.context.CommandRange.Encode.Post.End;
+                var postColorOffset  = subtree.CommandRange.Post.End  - this.context.CommandRange.Post.End;
 
-                this.ApplyOffset(subtree, boundaryRange, postColorOffset, postEncodeOffset);
+                this.ApplyOffset(subtree, boundaryRange, postColorOffset);
 
-                var postColorCount  = this.context.Colors.Count - postColorIndex;
-                var postEncodeCount = this.context.Encodes.Count - postEncodeIndex;
+                var postColorCount  = this.context.Commands.Count - postColorIndex;
 
-                this.context.CommandBuffer.ReplaceColorCommandRange(this.context.CommandRange.Color.Post, this.context.Colors.AsSpan(postColorIndex, postColorCount));
-                this.context.CommandBuffer.ReplaceEncodeCommandRange(this.context.CommandRange.Encode.Post, this.context.Encodes.AsSpan(postEncodeIndex, postEncodeCount));
+                this.context.CommandBuffer.ReplaceCommandRange(this.context.CommandRange.Post, this.context.Commands.AsSpan(postColorIndex, postColorCount));
 
                 subtree.MakeSubtreePristine();
             }
@@ -133,12 +122,11 @@ internal partial class SceneGraphCache
             {
                 this.CollectElement(subtree);
 
-                var colorOffset  = subtree.CommandRange.Color.Post.End  - this.context.CommandRange.Color.Post.End;
-                var encodeOffset = subtree.CommandRange.Encode.Post.End - this.context.CommandRange.Encode.Post.End;
+                var colorOffset  = subtree.CommandRange.Post.End  - this.context.CommandRange.Post.End;
 
-                this.ApplyOffset(subtree, boundaryRange, colorOffset, encodeOffset);
+                this.ApplyOffset(subtree, boundaryRange, colorOffset);
 
-                this.context.UpdateBuffer(this.context.CommandRange.Color.FullRange, this.context.CommandRange.Encode.FullRange);
+                this.context.UpdateBuffer(this.context.CommandRange.FullRange);
             }
         }
 
@@ -242,7 +230,7 @@ internal partial class SceneGraphCache
             this.CollectSubtree(scene);
 
             this.context.EndSubtreeRange(scene);
-            this.context.UpdateBuffer(0.., 0..);
+            this.context.UpdateBuffer(0..);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -268,9 +256,9 @@ internal partial class SceneGraphCache
             this.ApplyOffsetAndUpdateBuffer(subtree, boundaryRange);
         }
 
-        private void ApplyOffset(Renderable<Command2D> subtree, ShortRange boundaryRange, int colorOffset, int encodeOffset)
+        private void ApplyOffset(Renderable<Command2D> subtree, ShortRange boundaryRange, int offset)
         {
-            if (colorOffset != 0 || encodeOffset != 0)
+            if (offset != 0)
             {
                 boundaryRange = boundaryRange.WithClamp(this.context.Nodes.Count);
 
@@ -287,7 +275,7 @@ internal partial class SceneGraphCache
 
                     if (parent is Renderable<Command2D> parentRenderable)
                     {
-                        parentRenderable.CommandRange = parentRenderable.CommandRange.WithPostOffset(colorOffset, encodeOffset);
+                        parentRenderable.CommandRange = parentRenderable.CommandRange.WithPostOffset(offset);
                     }
                 }
 
@@ -295,7 +283,7 @@ internal partial class SceneGraphCache
                 {
                     if (node is Renderable<Command2D> renderable)
                     {
-                        renderable.CommandRange = renderable.CommandRange.WithOffset(colorOffset, encodeOffset);
+                        renderable.CommandRange = renderable.CommandRange.WithOffset(offset);
                     }
                 }
             }
@@ -303,12 +291,11 @@ internal partial class SceneGraphCache
 
         private void ApplyOffsetAndUpdateBuffer(Renderable<Command2D> subtree, ShortRange boundaryRange)
         {
-            var colorOffset  = subtree.CommandRange.Color.Pre.End - this.context.CommandRange.Color.Pre.End;
-            var encodeOffset = subtree.CommandRange.Encode.Pre.End - this.context.CommandRange.Encode.Pre.End;
+            var offset = subtree.CommandRange.Post.End - this.context.CommandRange.Post.End;
 
-            this.ApplyOffset(subtree, boundaryRange, colorOffset, encodeOffset);
+            this.ApplyOffset(subtree, boundaryRange, offset);
 
-            this.context.UpdateBuffer(this.context.CommandRange.Color.Pre, this.context.CommandRange.Encode.Pre);
+            this.context.UpdateBuffer(this.context.CommandRange.Pre);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
