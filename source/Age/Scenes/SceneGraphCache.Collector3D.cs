@@ -45,28 +45,25 @@ internal partial class SceneGraphCache
 
             while (traversal.MoveNext())
             {
-                if (traversal.Current is Renderable renderable && renderable.Visible)
+                switch (traversal.Current)
                 {
-                    switch (traversal.Current)
-                    {
-                        case Viewport viewport:
-                            Collector.CollectViewport(viewport, this.context);
+                    case Viewport viewport:
+                        Collector.CollectViewport(viewport, this.context);
 
-                            traversal.SkipToNextSibling();
-                            break;
+                        traversal.SkipToNextSibling();
+                        break;
 
-                        case Renderable<Command3D> renderable3D:
-                            this.context.StartSubtreeRange(renderable3D, true);
-                            break;
+                    case Renderable<Command3D> renderable3D:
+                        this.context.StartSubtreeRange(renderable3D, true);
+                        break;
 
-                        default:
-                            this.context.StartSubtreeRange(renderable);
-                            break;
-                    }
-                }
-                else
-                {
-                    traversal.SkipToNextSibling();
+                    case Renderable renderable:
+                        this.context.StartSubtreeRange(renderable);
+                        break;
+
+                    default:
+                        traversal.SkipToNextSibling();
+                        break;
                 }
             }
         }

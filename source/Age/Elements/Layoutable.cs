@@ -41,7 +41,6 @@ public abstract class Layoutable : Spatial2D
     internal uint           LineHeight { get; set; }
     internal Vector2<float> Offset     { get; set; }
 
-    internal virtual bool          Hidden       { get; set; }
     internal virtual StencilLayer? StencilLayer { get; set; }
 
     internal sealed override Transform2D CachedTransform
@@ -198,7 +197,7 @@ public abstract class Layoutable : Spatial2D
 
         for (var current = this; ; current = current.ComposedParentElement!)
         {
-            if (current.IsDirty || current.Hidden)
+            if (current.IsDirty || !current.Visible)
             {
                 return;
             }

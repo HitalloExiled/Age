@@ -74,7 +74,7 @@ public abstract partial class Element
                 window.MouseWheel += this.OnMouseWheel;
             }
 
-            if (!window.Tree.IsDirty && !this.Hidden)
+            if (!window.Tree.IsDirty && this.Visible)
             {
                 window.Tree.MakeDirty();
             }
@@ -107,7 +107,7 @@ public abstract partial class Element
             window.KeyUp      -= this.OnKeyUp;
             window.MouseWheel -= this.OnMouseWheel;
 
-            if (!window.Tree.IsDirty && !this.Hidden)
+            if (!window.Tree.IsDirty && this.Visible)
             {
                 window.Tree.MakeDirty();
             }
@@ -133,7 +133,7 @@ public abstract partial class Element
         stylePool.Return(this.ComputedStyle);
     }
 
-    private protected override void OnIndexChanged()
+    private protected override void OnIndexChangedInternal()
     {
         var zIndex = this.ComputedStyle.ZIndex ?? this.ComposedParentElement?.ComputedStyle.ZIndex ?? 0;
 

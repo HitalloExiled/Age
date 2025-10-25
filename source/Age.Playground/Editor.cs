@@ -30,7 +30,7 @@ public class Editor : Scene2D
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = SubViewportTest.Setup;
+        this.setup = AlignmentTest.Setup;
 
         this.pages =
         [

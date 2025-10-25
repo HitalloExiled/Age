@@ -63,7 +63,7 @@ public static class AlignmentTest
             switch (keyEvent.Key)
             {
                 case Key.Space:
-                    horizontal_a_container.Style.Hidden = !(horizontal_a_container.Style.Hidden ?? false);
+                    horizontal_a_container.Visible = !horizontal_a_container.Visible;
                     break;
             }
         };
@@ -130,7 +130,7 @@ public static class AlignmentTest
                 switch (keyEvent.Key)
                 {
                     case Key.Space:
-                        horizontal_a_right.Style.Hidden = !(horizontal_a_right.Style.Hidden ?? false);
+                        horizontal_a_right.Visible = !horizontal_a_right.Visible;
                         break;
 
                     case Key.C:

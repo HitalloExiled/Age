@@ -35,6 +35,11 @@ public abstract partial class Node
 
         public bool MoveNext()
         {
+            if (this.current != this.root && this.current.IsLeaf)
+            {
+                SubtreeTraversed?.Invoke(this.current);
+            }
+
             if (!this.skipToNextSibling && this.current.FirstChild is Node firstChild)
             {
                 this.current = firstChild;

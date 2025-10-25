@@ -520,7 +520,7 @@ public sealed class Text : Layoutable
         this.ClearCommands();
     }
 
-    private protected override void OnIndexChanged()
+    private protected override void OnIndexChangedInternal()
     {
         this.UpdateDirtyLayout();
 

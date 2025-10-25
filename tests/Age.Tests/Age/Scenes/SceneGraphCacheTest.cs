@@ -198,6 +198,59 @@ public partial class SceneGraphCacheTest
         // Emit(expected, actual);
 
         Assert.Equal(expected, actual);
+
+        var flat20 = (Renderable)flat[20];
+
+        flat20.Visible   = false;
+        flat20.DirtState = DirtState.Subtree;
+
+        cache.InvalidatedSubTree(flat20);
+        cache.Build();
+
+        flat = TreeFactory.Flatten(window);
+
+        expected =
+        [
+            new(flat[0], new(0, 26)), // Window
+                new(flat[1], new(1, 2)), // Scene3D
+
+                new(flat[2], new(2, 26)), // Scene2D
+                    new(flat[3], new(3, 10), new(0, 2, 14)), // Sprite
+                        new(flat[4], new(4, 7), new(2, 4, 8, 8)), // Sprite
+                            new(flat[5], new(5, 6), new(4, 6)), // Sprite
+                            new(flat[6], new(6, 7), new(6, 8)), // Sprite
+
+                        new(flat[7], new(7, 10), new(8, 10, 14)), // Sprite
+                            new(flat[8], new(8, 9), new(10, 12)), // Sprite
+                            new(flat[9], new(9, 10), new(12, 14)), // Sprite
+
+                    new(flat[10], new(10, 19)), // SubViewport
+                        new(flat[11], new(11, 19)), // Scene3D
+                            new(flat[12], new(12, 19), new(0, 2, 14)), // Model
+                                new(flat[13], new(13, 16), new(2, 4, 8)), // Model
+                                    new(flat[14], new(14, 15), new(4, 6)), // Model
+                                    new(flat[15], new(15, 16), new(6, 8)), // Model
+
+                                new(flat[16], new(16, 19), new(8, 10, 14)), // Model
+                                    new(flat[17], new(17, 18), new(10, 12)), // Model
+                                    new(flat[18], new(18, 19), new(12, 14)), // Model
+
+                    new(flat[19], new(19, 26), new(14, 16, 22)), // Component
+                        new(flat[20], new(20, 23), new(16)), // Component
+                            new(flat[21], new(21, 22), new(16)), // Component
+                            new(flat[22], new(22, 23), new(16)), // Component
+
+                        new(flat[23], new(23, 26), new(16, 18, 22)), // Component
+                            new(flat[24], new(24, 25), new(18, 20)), // Component
+                            new(flat[25], new(25, 26), new(20, 22)), // Component
+        ];
+
+        actual = [.. cache.Nodes.Select(ToNodeRange)];
+
+        // Uncomment if you is lost
+        Emit(expected, actual);
+
+        Assert.Equal(expected, actual);
     }
 
     [Fact]

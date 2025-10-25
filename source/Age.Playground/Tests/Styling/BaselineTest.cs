@@ -60,7 +60,6 @@ public static class BaselineTest
                             Color      = Color.Red,
                             FontFamily = "Helvetica Neue",
                             FontSize   = 48,
-                            Hidden     = false,
                             Margin     = new(null, Unit.Px(10)),
                         }
                     },

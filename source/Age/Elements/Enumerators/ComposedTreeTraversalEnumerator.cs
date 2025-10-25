@@ -117,6 +117,11 @@ internal struct ComposedTreeTraversalEnumerator : IEnumerator<Layoutable>, IEnum
 
     public bool MoveNext()
     {
+        if (this.SubtreeTraversed != null && this.current != this.root && this.current is Element element && element.IsComposedLeaf)
+        {
+            this.SubtreeTraversed.Invoke(element);
+        }
+
         if (!this.skipToNextSibling && this.GetFirstChild(this.current) is Layoutable firstChild)
         {
             this.current = firstChild;

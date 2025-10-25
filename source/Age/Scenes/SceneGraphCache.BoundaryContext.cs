@@ -17,7 +17,10 @@ internal partial class SceneGraphCache
     ) : IDisposable
     where TCommand : Command
     {
-        private static readonly ListPool<TCommand> commandListPool = new();
+        private static readonly ListPool<TCommand>          commandListPool = new();
+        private static readonly ObjectPool<Ref<Renderable>> refPool         = new();
+
+        private readonly Ref<Renderable> hiddenSubtree = refPool.Get();
 
         public CommandBuffer<TCommand> CommandBuffer { get; } = commandBuffer;
         public List<TCommand>          Commands      { get; } = commandListPool.Get();
@@ -27,8 +30,15 @@ internal partial class SceneGraphCache
         public CommandRange CommandRange { get; } = commandRange.WithClamp((ushort)commandBuffer.Commands.Length);
         public int          Index        { get; } = index;
 
-        public readonly ushort SubtreeOffset => (ushort)(this.Index + this.Stage.Count);
-        public readonly ushort CommandOffset => (ushort)(this.CommandRange.Pre.Start + this.Commands.Count);
+        public readonly int  CommandOffset => this.CommandRange.Pre.Start + this.Commands.Count;
+        public readonly int  SubtreeOffset => this.Index + this.Stage.Count;
+        public readonly bool ScopeIsVisible       => this.hiddenSubtree.Value == null;
+
+        private void EndHiddenScope() =>
+            this.hiddenSubtree.Value = null;
+
+        private void StartHiddenScope(Renderable renderable) =>
+            this.hiddenSubtree.Value = renderable;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void AccumulateCommands(Renderable<TCommand> renderable)
@@ -47,13 +57,13 @@ internal partial class SceneGraphCache
         {
             renderable.CommandRange = new CommandRange(this.CommandOffset);
 
-            this.CollectCommands(renderable.Commands);
+            if (this.ScopeIsVisible)
+            {
+                this.CollectCommands(renderable.Commands);
 
-            renderable.CommandRange = renderable.CommandRange.WithPreEnd(this.CommandOffset);
+                renderable.CommandRange = renderable.CommandRange.WithPreEnd(this.CommandOffset);
+            }
         }
-
-        public readonly CommandRange CreateCommandRange() =>
-            new(this.CommandOffset);
 
         public readonly CommandRange WithPreEnd(in CommandRange commandRange) =>
             commandRange.WithPreEnd(this.CommandOffset);
@@ -72,6 +82,11 @@ internal partial class SceneGraphCache
             renderable.SubtreeRange = ShortRange.CreateWithLength(this.SubtreeOffset, 1);
 
             this.Stage.Add(renderable);
+
+            if (this.ScopeIsVisible && !renderable.Visible)
+            {
+                this.StartHiddenScope(renderable);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -86,8 +101,15 @@ internal partial class SceneGraphCache
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void EndSubtreeRange(Renderable renderable) =>
+        public readonly void EndSubtreeRange(Renderable renderable)
+        {
             renderable.SubtreeRange = renderable.SubtreeRange.WithEnd(this.SubtreeOffset);
+
+            if (this.hiddenSubtree.Value == renderable)
+            {
+                this.EndHiddenScope();
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void EndSubtreeRange(Renderable<TCommand> renderable, bool extendCommandRange)

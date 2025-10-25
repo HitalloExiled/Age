@@ -1,11 +1,15 @@
-using System.Runtime.CompilerServices;
 using Age.Commands;
 using Age.Core.Extensions;
+using System.Runtime.CompilerServices;
 
 namespace Age.Scenes;
 
 public abstract class Renderable : Node
 {
+#pragma warning disable IDE0032 // Use auto property
+    private bool visible = true;
+#pragma warning restore IDE0032 // Use auto property
+
     internal DirtState DirtState { get; set; }
 
     internal ShortRange SubtreeRange
@@ -19,16 +23,31 @@ public abstract class Renderable : Node
 
             if (indexHasChanged)
             {
-                this.OnIndexChanged();
+                this.OnIndexChangedInternal();
             }
         }
     }
 
     internal int Index => this.SubtreeRange.Start;
 
-    public bool Visible { get; set; } = true;
+    public bool Visible
+    {
+        get => this.visible;
+        set
+        {
+            if (this.visible != value)
+            {
+                this.visible = value;
 
-    private protected virtual void OnIndexChanged() { }
+                this.OnVisibilityChangedInternal();
+                this.OnVisibilityChanged();
+                this.MakeSubtreeDirty(DirtState.Subtree);
+            }
+        }
+    }
+
+    private protected virtual void OnIndexChangedInternal() { }
+    private protected virtual void OnVisibilityChangedInternal() { }
 
     private protected override void OnChildAttachedInternal(Node node)
     {
@@ -46,6 +65,8 @@ public abstract class Renderable : Node
 
     private protected void MarkCommandsDirty() =>
         this.MakeSubtreeDirty(DirtState.Commands);
+
+    protected virtual void OnVisibilityChanged() { }
 
     internal void MakeSubtreeDirty(DirtState dirtState)
     {

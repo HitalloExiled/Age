@@ -18,7 +18,6 @@ public abstract partial class Element
         | StyleProperty.FontFamily
         | StyleProperty.FontSize
         | StyleProperty.FontWeight
-        | StyleProperty.Hidden
         | StyleProperty.Margin
         | StyleProperty.MaxSize
         | StyleProperty.MinSize
@@ -586,7 +585,7 @@ public abstract partial class Element
         {
             var child = enumerator.Current;
 
-            if (child.Hidden)
+            if (!child.Visible)
             {
                 continue;
             }
@@ -814,8 +813,6 @@ public abstract partial class Element
 
         var computedStyle = this.ComputedStyle;
 
-        var hidden = computedStyle.Hidden == true;
-
         var command = this.AllocateLayoutCommandBox();
 
         if (property.HasFlags(StyleProperty.BackgroundColor))
@@ -848,6 +845,11 @@ public abstract partial class Element
 
                 command.Border = default;
             }
+        }
+
+        if (property.HasFlags(StyleProperty.Color))
+        {
+            command.Color = computedStyle.BackgroundColor ?? default;
         }
 
         if (property.HasFlags(StyleProperty.Cursor) && this.IsHovered)
@@ -906,8 +908,6 @@ public abstract partial class Element
                 this.parentDependencies |= Dependency.Padding;
             }
 
-            var justHidden      = hidden && !this.Hidden;
-            var justUnhidden    = !hidden && this.Hidden;
             var justUndependent = oldParentDependencies != Dependency.None && this.parentDependencies == Dependency.None;
             var justDependent   = oldParentDependencies == Dependency.None && this.parentDependencies != Dependency.None;
 
@@ -915,31 +915,24 @@ public abstract partial class Element
             {
                 parent.dependenciesHasChanged = oldContentDependencies != this.contentDependencies || oldParentDependencies != this.parentDependencies;
 
-                if (justUnhidden || justDependent)
+                if (parent.dependenciesHasChanged)
                 {
-                    if (justUnhidden)
+                    if (justDependent)
                     {
-                        parent.renderableNodes++;
-                    }
+                        if (this.parentDependencies != Dependency.None)
+                        {
+                            var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
 
-                    if (this.parentDependencies != Dependency.None)
+                            dependents.Add(this);
+                            dependents.Sort();
+                        }
+                    }
+                    else if (justUndependent)
                     {
                         var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
 
-                        dependents.Add(this);
-                        dependents.Sort();
+                        dependents.Remove(this);
                     }
-                }
-                else if (justHidden || justUndependent)
-                {
-                    if (justHidden)
-                    {
-                        parent.renderableNodes--;
-                    }
-
-                    var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
-
-                    dependents.Remove(this);
                 }
             }
         }
@@ -978,25 +971,7 @@ public abstract partial class Element
             this.Scene!.Viewport!.Window!.Tree.RequestMouseEvent();
         }
 
-        if (hidden)
-        {
-            this.RequestUpdate(affectsBoundings);
-
-            this.Hidden = hidden;
-        }
-        else
-        {
-            this.Hidden = hidden;
-
-            if (property.HasFlags(StyleProperty.Color))
-            {
-                command.Color = computedStyle.BackgroundColor ?? default;
-            }
-
-            this.RequestUpdate(affectsBoundings);
-        }
-
-        this.Visible = !hidden;
+        this.RequestUpdate(affectsBoundings);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1246,7 +1221,7 @@ public abstract partial class Element
         {
             var node = enumerator.Current;
 
-            if (node is not Layoutable child || child.Hidden)
+            if (node is not Layoutable child || !child.Visible)
             {
                 continue;
             }
@@ -1422,9 +1397,39 @@ public abstract partial class Element
         }
     }
 
+    private protected override void OnVisibilityChangedInternal()
+    {
+        base.OnVisibilityChangedInternal();
+
+        var parent = this.ComposedParentElement!;
+
+        if (this.Visible)
+        {
+            parent.renderableNodes++;
+
+            if (this.parentDependencies != Dependency.None)
+            {
+                var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
+
+                dependents.Add(this);
+                dependents.Sort();
+            }
+        }
+        else
+        {
+            parent.renderableNodes--;
+
+            var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
+
+            dependents.Remove(this);
+        }
+
+        parent.RequestUpdate(true);
+    }
+
     internal void HandleElementRemoved(Element element)
     {
-        if (!element.Hidden && element.parentDependencies != Dependency.None)
+        if (element.Visible && element.parentDependencies != Dependency.None)
         {
             this.dependents.Remove(element);
         }
@@ -1432,7 +1437,7 @@ public abstract partial class Element
 
     internal void HandleLayoutableAppended(Layoutable layoutable)
     {
-        if (!layoutable.Hidden)
+        if (layoutable.Visible)
         {
             this.childsChanged = true;
             this.renderableNodes++;
@@ -1447,7 +1452,7 @@ public abstract partial class Element
             this.HandleElementRemoved(element);
         }
 
-        if (!layoutable.Hidden)
+        if (layoutable.Visible)
         {
             this.childsChanged = true;
             this.renderableNodes--;

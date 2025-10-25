@@ -49,11 +49,14 @@ internal partial class SceneGraphCache
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private readonly void CollectElementPreCommands(Element element)
         {
-            element.CommandRange = this.context.CreateCommandRange();
+            element.CommandRange = new(this.context.CommandOffset);
 
-            this.context.CollectCommands(element.PreCommands);
+            if (this.context.ScopeIsVisible)
+            {
+                this.context.CollectCommands(element.PreCommands);
 
-            element.CommandRange = this.context.WithPreEnd(element.CommandRange);
+                element.CommandRange = this.context.WithPreEnd(element.CommandRange);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -61,9 +64,12 @@ internal partial class SceneGraphCache
         {
             element.CommandRange = this.context.WithPostStart(element.CommandRange);
 
-            this.context.CollectCommands(element.PostCommands);
+            if (this.context.ScopeIsVisible)
+            {
+                this.context.CollectCommands(element.PostCommands);
 
-            element.CommandRange = this.context.WithPostEnd(element.CommandRange);
+                element.CommandRange = this.context.WithPostEnd(element.CommandRange);
+            }
         }
 
         private readonly void OnComposedSubtreeTraversed(Element element)
@@ -122,9 +128,9 @@ internal partial class SceneGraphCache
             {
                 this.CollectElement(subtree);
 
-                var colorOffset  = subtree.CommandRange.Post.End  - this.context.CommandRange.Post.End;
+                var offset = subtree.CommandRange.Post.End - this.context.CommandRange.Post.End;
 
-                this.ApplyOffset(subtree, boundaryRange, colorOffset);
+                this.ApplyOffset(subtree, boundaryRange, offset);
 
                 this.context.UpdateBuffer(this.context.CommandRange.FullRange);
             }
@@ -139,34 +145,31 @@ internal partial class SceneGraphCache
 
             while (traversal.MoveNext())
             {
-                if (traversal.Current is Renderable renderable && renderable.Visible)
+                switch (traversal.Current)
                 {
-                    switch (traversal.Current)
-                    {
-                        case Viewport viewport:
-                            Collector.CollectViewport(viewport, this.context);
+                    case Viewport viewport:
+                        Collector.CollectViewport(viewport, this.context);
 
-                            traversal.SkipToNextSibling();
-                            break;
+                        traversal.SkipToNextSibling();
+                        break;
 
-                        case Element element:
-                            this.CollectElement(element);
+                    case Element element:
+                        this.CollectElement(element);
 
-                            traversal.SkipToNextSibling();
-                            break;
+                        traversal.SkipToNextSibling();
+                        break;
 
-                        case Renderable<Command2D> renderable2D:
-                            this.context.StartSubtreeRange(renderable2D, true);
-                            break;
+                    case Renderable<Command2D> renderable2D:
+                        this.context.StartSubtreeRange(renderable2D, true);
+                        break;
 
-                        default:
-                            this.context.StartSubtreeRange(renderable);
-                            break;
-                    }
-                }
-                else
-                {
-                    traversal.SkipToNextSibling();
+                    case Renderable renderable:
+                        this.context.StartSubtreeRange(renderable);
+                        break;
+
+                    default:
+                        traversal.SkipToNextSibling();
+                        break;
                 }
             }
         }
@@ -194,30 +197,18 @@ internal partial class SceneGraphCache
 
             while (composedTreeTraversal.MoveNext())
             {
-                if (composedTreeTraversal.Current.Visible)
-                {
-                    this.context.StartSubtreeRange(composedTreeTraversal.Current);
+                this.context.StartSubtreeRange(composedTreeTraversal.Current);
 
-                    if (composedTreeTraversal.Current is Layoutable layoutable)
+                if (composedTreeTraversal.Current is Layoutable layoutable)
+                {
+                    if (layoutable is Element element)
                     {
-                        if (layoutable is Element element)
-                        {
-                            this.CollectElementPreCommands(element);
-
-                            if (element.IsComposedLeaf)
-                            {
-                                this.OnComposedSubtreeTraversed(element);
-                            }
-                        }
-                        else
-                        {
-                            this.context.CollectCommands(layoutable);
-                        }
+                        this.CollectElementPreCommands(element);
                     }
-                }
-                else
-                {
-                    composedTreeTraversal.SkipToNextSibling();
+                    else
+                    {
+                        this.context.CollectCommands(layoutable);
+                    }
                 }
             }
         }

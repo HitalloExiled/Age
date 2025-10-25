@@ -1,3 +1,4 @@
+using Age.Core;
 using Age.Core.Extensions;
 using Age.Styling;
 using System.Runtime.CompilerServices;
@@ -6,7 +7,7 @@ namespace Age.Elements;
 
 public abstract partial class Element
 {
-    private static readonly StylePool stylePool = new();
+    private static readonly ObjectPool<Style> stylePool = new();
 
     internal event Action<StyleProperty>? StyleChanged;
 

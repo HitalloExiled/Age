@@ -198,7 +198,6 @@ internal record struct StyleData
         check(left.FontFamily           == right.FontFamily,           StyleProperty.FontFamily);
         check(left.FontSize             == right.FontSize,             StyleProperty.FontSize);
         check(left.FontWeight           == right.FontWeight,           StyleProperty.FontWeight);
-        check(left.Hidden               == right.Hidden,               StyleProperty.Hidden);
         check(left.ItemsAlignment       == right.ItemsAlignment,       StyleProperty.ItemsAlignment);
         check(left.Margin               == right.Margin,               StyleProperty.Margin);
         check(left.MaxSize              == right.MaxSize,              StyleProperty.MaxSize);
@@ -263,7 +262,6 @@ internal record struct StyleData
         appendProperty(nameof(StyleProperty.FontFamily),           in this.FontFamily);
         appendProperty(nameof(StyleProperty.FontSize),             in this.FontSize);
         appendProperty(nameof(StyleProperty.FontWeight),           in this.FontWeight);
-        appendProperty(nameof(StyleProperty.Hidden),               in this.Hidden);
         appendProperty(nameof(StyleProperty.ItemsAlignment),       in this.ItemsAlignment);
         appendProperty(nameof(StyleProperty.Margin),               in this.Margin);
         appendProperty(nameof(StyleProperty.MaxSize),              in this.MaxSize);
@@ -303,7 +301,6 @@ internal record struct StyleData
             case StyleProperty.FontFamily:           this.FontFamily           = data.FontFamily;           break;
             case StyleProperty.FontSize:             this.FontSize             = data.FontSize;             break;
             case StyleProperty.FontWeight:           this.FontWeight           = data.FontWeight;           break;
-            case StyleProperty.Hidden:               this.Hidden               = data.Hidden;               break;
             case StyleProperty.ItemsAlignment:       this.ItemsAlignment       = data.ItemsAlignment;       break;
             case StyleProperty.Margin:               this.Margin               = data.Margin;               break;
             case StyleProperty.MaxSize:              this.MaxSize              = data.MaxSize;              break;

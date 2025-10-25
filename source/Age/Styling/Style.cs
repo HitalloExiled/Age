@@ -86,12 +86,6 @@ public record Style : IPoolable
         set => this.Set(ref this.data.FontWeight, value, StyleProperty.FontWeight);
     }
 
-    public bool? Hidden
-    {
-        get => this.data.Hidden;
-        set => this.Set(ref this.data.Hidden, value, StyleProperty.Hidden);
-    }
-
     public ItemsAlignment? ItemsAlignment
     {
         get => this.data.ItemsAlignment;
