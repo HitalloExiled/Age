@@ -812,27 +812,47 @@ public abstract partial class Element
             return;
         }
 
-        var hidden = this.ComputedStyle.Hidden == true;
+        var computedStyle = this.ComputedStyle;
+
+        var hidden = computedStyle.Hidden == true;
+
+        var command = this.AllocateLayoutCommandBox();
+
+        if (property.HasFlags(StyleProperty.BackgroundColor))
+        {
+            command.Color = computedStyle.BackgroundColor.GetValueOrDefault();
+        }
 
         if (property.HasFlags(StyleProperty.BackgroundImage))
         {
-            this.SetBackgroundImage(this.ComputedStyle.BackgroundImage);
+            this.SetBackgroundImage(computedStyle.BackgroundImage);
         }
 
         if (property.HasFlags(StyleProperty.Border))
         {
-            this.border = new()
+            if (computedStyle.Border != null)
             {
-                Top    = this.ComputedStyle.Border?.Top.Thickness ?? 0,
-                Right  = this.ComputedStyle.Border?.Right.Thickness ?? 0,
-                Bottom = this.ComputedStyle.Border?.Bottom.Thickness ?? 0,
-                Left   = this.ComputedStyle.Border?.Left.Thickness ?? 0,
-            };
+                this.border = new()
+                {
+                    Top    = computedStyle.Border.Top.Thickness,
+                    Right  = computedStyle.Border.Right.Thickness,
+                    Bottom = computedStyle.Border.Bottom.Thickness,
+                    Left   = computedStyle.Border.Left.Thickness,
+                };
+
+                command.Border = computedStyle.Border;
+            }
+            else
+            {
+                this.border = default;
+
+                command.Border = default;
+            }
         }
 
         if (property.HasFlags(StyleProperty.Cursor) && this.IsHovered)
         {
-            this.SetCursor(this.ComputedStyle.Cursor);
+            this.SetCursor(computedStyle.Cursor);
         }
 
         var hasSizeChanges    = property.HasAnyFlag(StyleProperty.Size | StyleProperty.MinSize | StyleProperty.MaxSize);
@@ -849,13 +869,13 @@ public abstract partial class Element
                 this.contentDependencies = Dependency.None;
                 this.parentDependencies = Dependency.None;
 
-                var absWidth = this.ComputedStyle.Size?.Width;
-                var minWidth = this.ComputedStyle.MinSize?.Width;
-                var maxWidth = this.ComputedStyle.MaxSize?.Width;
+                var absWidth = computedStyle.Size?.Width;
+                var minWidth = computedStyle.MinSize?.Width;
+                var maxWidth = computedStyle.MaxSize?.Width;
 
-                var absHeight = this.ComputedStyle.Size?.Height;
-                var minHeight = this.ComputedStyle.MinSize?.Height;
-                var maxHeight = this.ComputedStyle.MaxSize?.Height;
+                var absHeight = computedStyle.Size?.Height;
+                var minHeight = computedStyle.MinSize?.Height;
+                var maxHeight = computedStyle.MaxSize?.Height;
 
                 if (IsAllNull(absWidth, minWidth, maxWidth))
                 {
@@ -876,12 +896,12 @@ public abstract partial class Element
                 }
             }
 
-            if (hasMarginChanges && HasRelativeEdges(this.ComputedStyle.Margin))
+            if (hasMarginChanges && HasRelativeEdges(computedStyle.Margin))
             {
                 this.parentDependencies |= Dependency.Margin;
             }
 
-            if (hasPaddingChanges && HasRelativeEdges(this.ComputedStyle.Padding))
+            if (hasPaddingChanges && HasRelativeEdges(computedStyle.Padding))
             {
                 this.parentDependencies |= Dependency.Padding;
             }
@@ -926,14 +946,14 @@ public abstract partial class Element
 
         if (property.HasFlags(StyleProperty.Overflow))
         {
-            this.IsScrollable = this.ComputedStyle.Overflow?.HasAnyFlag(Overflow.Scroll) == true && this.contentDependencies != (Dependency.Width | Dependency.Height);
+            this.IsScrollable = computedStyle.Overflow?.HasAnyFlag(Overflow.Scroll) == true && this.contentDependencies != (Dependency.Width | Dependency.Height);
 
             if (!this.IsScrollable)
             {
                 this.ReleaseScrollBar();
             }
 
-            if (this.ComputedStyle.Overflow?.HasFlags(Overflow.Clipping) == true && this.contentDependencies != (Dependency.Width | Dependency.Height))
+            if (computedStyle.Overflow?.HasFlags(Overflow.Clipping) == true && this.contentDependencies != (Dependency.Width | Dependency.Height))
             {
                 if (this.ownStencilLayer == null)
                 {
@@ -968,9 +988,9 @@ public abstract partial class Element
         {
             this.Hidden = hidden;
 
-            if (property.HasFlags(StyleProperty.Color) && this.TryGetLayoutCommandBox(out var command))
+            if (property.HasFlags(StyleProperty.Color))
             {
-                command.Color = this.ComputedStyle.BackgroundColor ?? default;
+                command.Color = computedStyle.BackgroundColor ?? default;
             }
 
             this.RequestUpdate(affectsBoundings);
@@ -1376,7 +1396,7 @@ public abstract partial class Element
 
         if (previous != this.Boundings)
         {
-            this.UpdateBackgroundImage();
+            this.UpdateBackgroundImageSize();
 
             this.ClampContentOffset(ref this.contentOffset);
 
@@ -1389,8 +1409,6 @@ public abstract partial class Element
 
             if (this.Boundings.Area > 0)
             {
-                layoutCommandBox.Border        = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
-                layoutCommandBox.Color         = this.ComputedStyle.BackgroundColor ?? default;
                 layoutCommandBox.CommandFilter = CommandFilter.Color | CommandFilter.Encode;
                 layoutCommandBox.Metadata      = (uint)(this.Index + 1);
                 layoutCommandBox.Size          = this.Boundings;

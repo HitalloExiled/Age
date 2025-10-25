@@ -146,7 +146,7 @@ public abstract partial class Element
     private bool TryGetLayoutCommandScrollBarY([NotNullWhen(true)] out RectCommand? rectCommand) =>
         this.TryGetLayoutCommand(LayoutCommand.ScrollBarY, out rectCommand);
 
-    private void UpdateBackgroundImage()
+    private void UpdateBackgroundImageSize()
     {
         if (this.ComputedStyle.BackgroundImage != null)
         {
