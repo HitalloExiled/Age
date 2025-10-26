@@ -94,7 +94,7 @@ internal partial class SceneGraphCache
 
                 this.CommandBuffer.ReplaceCommandRange(this.CommandRange.Post, this.Commands.AsSpan(postColorIndex, postColorCount));
 
-                subtree.MakeSubtreePristine();
+                subtree.MakeSubtreeStatePristine();
             }
             else
             {

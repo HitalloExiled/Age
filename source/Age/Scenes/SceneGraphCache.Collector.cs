@@ -128,7 +128,7 @@ internal partial class SceneGraphCache
 
             viewport.SubtreeRange = viewport.SubtreeRange.WithEnd(index + stage.Count);
 
-            viewport.MakeSubtreePristine();
+            viewport.MakeSubtreeStatePristine();
         }
 
         public static void CollectViewport<T>(Viewport viewport, Collector<T> context)
@@ -219,8 +219,8 @@ internal partial class SceneGraphCache
         {
             switch (subtree)
             {
-                case Renderable<TCommand> renderable3D:
-                    this.Collect(renderable3D);
+                case Renderable<TCommand> renderable:
+                    this.Collect(renderable);
 
                     break;
 
@@ -251,7 +251,7 @@ internal partial class SceneGraphCache
             {
                 this.AccumulateCommands(subtree);
 
-                subtree.MakeSubtreePristine();
+                subtree.MakeSubtreeStatePristine();
             }
             else
             {
@@ -359,7 +359,7 @@ internal partial class SceneGraphCache
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void StartSubtreeRange(Renderable renderable)
         {
-            renderable.MakeSubtreePristine();
+            renderable.MakeSubtreeStatePristine();
 
             renderable.SubtreeRange = ShortRange.CreateWithLength(this.SubtreeOffset, 1);
 

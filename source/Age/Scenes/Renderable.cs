@@ -41,7 +41,7 @@ public abstract class Renderable : Node
 
                 this.OnVisibilityChangedInternal();
                 this.OnVisibilityChanged();
-                this.MakeSubtreeDirty(DirtState.Subtree);
+                this.UpdateDirtyState(DirtState.Subtree);
             }
         }
     }
@@ -53,22 +53,19 @@ public abstract class Renderable : Node
     {
         base.OnChildAttachedInternal(node);
 
-        this.MakeSubtreeDirty(DirtState.Subtree);
+        this.UpdateDirtyState(DirtState.Subtree);
     }
 
     private protected override void OnChildDetachingInternal(Node node)
     {
         base.OnChildDetachingInternal(node);
 
-        this.MakeSubtreeDirty(DirtState.Subtree);
+        this.UpdateDirtyState(DirtState.Subtree);
     }
-
-    private protected void MarkCommandsDirty() =>
-        this.MakeSubtreeDirty(DirtState.Commands);
 
     protected virtual void OnVisibilityChanged() { }
 
-    internal void MakeSubtreeDirty(DirtState dirtState)
+    internal void UpdateDirtyState(DirtState dirtState)
     {
         var isPristine = this.DirtState == default;
 
@@ -80,7 +77,13 @@ public abstract class Renderable : Node
         }
     }
 
-    internal void MakeSubtreePristine() =>
+    internal void MarkCommandsDirty() =>
+        this.UpdateDirtyState(DirtState.Commands);
+
+    internal void MarkSubtreeDirty() =>
+        this.UpdateDirtyState(DirtState.Subtree);
+
+    internal void MakeSubtreeStatePristine() =>
         this.DirtState = default;
 }
 

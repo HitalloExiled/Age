@@ -30,7 +30,7 @@ public class Editor : Scene2D
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = AlignmentTest.Setup;
+        this.setup = ShadowTreeTest.Setup;
 
         this.pages =
         [

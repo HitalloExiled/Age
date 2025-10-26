@@ -1392,8 +1392,6 @@ public abstract partial class Element
             {
                 layoutCommandBox.CommandFilter = CommandFilter.None;
             }
-
-            this.MarkCommandsDirty();
         }
     }
 

@@ -64,6 +64,8 @@ public sealed class Slot : Element
         this.Nodes.Sort();
 
         this.HandleLayoutableAppended(layoutable);
+
+        this.MarkSubtreeDirty();
     }
 
     internal void Unassign(Layoutable layoutable)
@@ -83,5 +85,7 @@ public sealed class Slot : Element
                 }
             }
         }
+
+        this.MarkSubtreeDirty();
     }
 }
