@@ -1,7 +1,6 @@
 using Age.Commands;
 using Age.Core.Extensions;
 using Age.Elements;
-using Age.Graphs;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -9,92 +8,65 @@ namespace Age.Scenes;
 
 internal partial class SceneGraphCache
 {
-    public readonly struct Collector2D : IDisposable
+    public sealed class Collector2D : Collector<Command2D>
     {
         private static readonly Stack<(Slot, int)> composedTreeStack = [];
 
-        private readonly BoundaryContext<Command2D> context;
-        private readonly Renderable                 target;
-
-        public Collector2D(Renderable target, int startIndex, CommandBuffer<Command2D> commandBuffer, List<Renderable> stage, List<Renderable> nodes)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AccumulateElementPreCommands(Element element)
         {
-            var commandRange = target is Renderable<Command2D> renderable2D
-                ? renderable2D.CommandRange
-                : new(0, commandBuffer.Commands.Length);
+            this.CollectCommands(element.PreCommands);
 
-            this.context = new(startIndex, commandRange, commandBuffer, stage, nodes);
-            this.target  = target;
+            element.CommandRange = element.CommandRange.WithPreEnd(this.CommandOffset);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly void AccumulateElementPreCommands(Element element)
+        private void AccumulateElementPostCommands(Element element)
         {
-            this.context.CollectCommands(element.PreCommands);
+            var colorIndex  = this.Commands.Count;
 
-            element.CommandRange = this.context.WithPreEnd(element.CommandRange);
-        }
+            this.CollectCommands(element.PostCommands);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly void AccumulateElementPostCommands(Element element)
-        {
-            var colorIndex  = this.context.Commands.Count;
-
-            this.context.CollectCommands(element.PostCommands);
-
-            var difference = this.context.Commands.Count - colorIndex - element.CommandRange.Post.Length;
+            var difference = this.Commands.Count - colorIndex - element.CommandRange.Post.Length;
 
             element.CommandRange = element.CommandRange.WithPostResize(difference);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly void CollectElementPreCommands(Element element)
+        private void CollectElementPreCommands(Element element)
         {
-            element.CommandRange = new(this.context.CommandOffset);
+            element.CommandRange = new(this.CommandOffset);
 
-            if (this.context.ScopeIsVisible)
+            if (this.ScopeIsVisible)
             {
-                this.context.CollectCommands(element.PreCommands);
+                this.CollectCommands(element.PreCommands);
 
-                element.CommandRange = this.context.WithPreEnd(element.CommandRange);
+                element.CommandRange = element.CommandRange.WithPreEnd(this.CommandOffset);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly void CollectElementPostCommands(Element element)
+        private void CollectElementPostCommands(Element element)
         {
-            element.CommandRange = this.context.WithPostStart(element.CommandRange);
+            element.CommandRange = element.CommandRange.WithPostStart(this.CommandOffset);
 
-            if (this.context.ScopeIsVisible)
+            if (this.ScopeIsVisible)
             {
-                this.context.CollectCommands(element.PostCommands);
+                this.CollectCommands(element.PostCommands);
 
-                element.CommandRange = this.context.WithPostEnd(element.CommandRange);
+                element.CommandRange = element.CommandRange.WithPostEnd(this.CommandOffset);
             }
         }
 
-        private readonly void OnComposedSubtreeTraversed(Element element)
+        private void OnComposedSubtreeTraversed(Element element)
         {
             this.CollectElementPostCommands(element);
 
-            this.context.EndSubtreeRange(element, false);
-        }
-
-        private readonly void OnSubtreeTraversed(Node node)
-        {
-            switch (node)
-            {
-                case Renderable<Command2D> renderable2D:
-                    this.context.EndSubtreeRange(renderable2D, true);
-                    break;
-
-                case Renderable renderable:
-                    this.context.EndSubtreeRange(renderable);
-                    break;
-            }
+            this.EndSubtreeRange(element, false);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly void Collect(Element subtree)
+        private void Collect(Element subtree)
         {
             var subtreeRange = subtree.SubtreeRange;
 
@@ -104,23 +76,23 @@ internal partial class SceneGraphCache
             {
                 this.AccumulateElementPreCommands(subtree);
 
-                var preOffset  = subtree.CommandRange.Pre.End  - this.context.CommandRange.Pre.End;
+                var preOffset  = subtree.CommandRange.Pre.End  - this.CommandRange.Pre.End;
 
                 this.ApplyOffset(subtree, new(subtreeRange.Start + 1, subtreeRange.End), preOffset);
 
-                this.context.CommandBuffer.ReplaceCommandRange(this.context.CommandRange.Pre, this.context.Commands.AsSpan());
+                this.CommandBuffer.ReplaceCommandRange(this.CommandRange.Pre, this.Commands.AsSpan());
 
-                var postColorIndex  = this.context.Commands.Count;
+                var postColorIndex  = this.Commands.Count;
 
                 this.AccumulateElementPostCommands(subtree);
 
-                var postColorOffset  = subtree.CommandRange.Post.End  - this.context.CommandRange.Post.End;
+                var postColorOffset  = subtree.CommandRange.Post.End  - this.CommandRange.Post.End;
 
                 this.ApplyOffset(subtree, boundaryRange, postColorOffset);
 
-                var postColorCount  = this.context.Commands.Count - postColorIndex;
+                var postColorCount  = this.Commands.Count - postColorIndex;
 
-                this.context.CommandBuffer.ReplaceCommandRange(this.context.CommandRange.Post, this.context.Commands.AsSpan(postColorIndex, postColorCount));
+                this.CommandBuffer.ReplaceCommandRange(this.CommandRange.Post, this.Commands.AsSpan(postColorIndex, postColorCount));
 
                 subtree.MakeSubtreePristine();
             }
@@ -128,66 +100,44 @@ internal partial class SceneGraphCache
             {
                 this.CollectElement(subtree);
 
-                var offset = subtree.CommandRange.Post.End - this.context.CommandRange.Post.End;
+                var offset = subtree.CommandRange.Post.End - this.CommandRange.Post.End;
 
                 this.ApplyOffset(subtree, boundaryRange, offset);
 
-                this.context.UpdateBuffer(this.context.CommandRange.FullRange);
+                this.UpdateBuffer(this.CommandRange.FullRange);
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly void CollectSubtree(Renderable subtree)
+        protected override void Collect(ref Node.TraversalEnumerator traversal)
         {
-            var traversal = subtree.GetTraversalEnumerator();
-
-            traversal.SubtreeTraversed += this.OnSubtreeTraversed;
-
-            while (traversal.MoveNext())
+            switch (traversal.Current)
             {
-                switch (traversal.Current)
-                {
-                    case Viewport viewport:
-                        Collector.CollectViewport(viewport, this.context);
+                case Element element:
+                    this.CollectElement(element);
 
-                        traversal.SkipToNextSibling();
-                        break;
+                    traversal.SkipToNextSibling();
+                    break;
 
-                    case Element element:
-                        this.CollectElement(element);
-
-                        traversal.SkipToNextSibling();
-                        break;
-
-                    case Renderable<Command2D> renderable2D:
-                        this.context.StartSubtreeRange(renderable2D, true);
-                        break;
-
-                    case Renderable renderable:
-                        this.context.StartSubtreeRange(renderable);
-                        break;
-
-                    default:
-                        traversal.SkipToNextSibling();
-                        break;
-                }
+                default:
+                    base.Collect(ref traversal);
+                    break;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CollectElement(Element subtree)
         {
-            this.context.StartSubtreeRange(subtree);
+            this.StartSubtreeRange(subtree);
             this.CollectElementPreCommands(subtree);
 
             this.CollectElementSubtree(subtree);
 
             this.CollectElementPostCommands(subtree);
-            this.context.EndSubtreeRange(subtree);
+            this.EndSubtreeRange(subtree);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly void CollectElementSubtree(Element subtree)
+        private void CollectElementSubtree(Element subtree)
         {
             Debug.Assert(composedTreeStack.Count == 0);
 
@@ -197,7 +147,7 @@ internal partial class SceneGraphCache
 
             while (composedTreeTraversal.MoveNext())
             {
-                this.context.StartSubtreeRange(composedTreeTraversal.Current);
+                this.StartSubtreeRange(composedTreeTraversal.Current);
 
                 if (composedTreeTraversal.Current is Layoutable layoutable)
                 {
@@ -207,51 +157,17 @@ internal partial class SceneGraphCache
                     }
                     else
                     {
-                        this.context.CollectCommands(layoutable);
+                        this.CollectCommands(layoutable);
                     }
                 }
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly void Collect(Scene2D scene)
-        {
-            this.context.StartSubtreeRange(scene);
-
-            this.CollectSubtree(scene);
-
-            this.context.EndSubtreeRange(scene);
-            this.context.UpdateBuffer(0..);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly void Collect(Renderable<Command2D> subtree)
-        {
-            var boundaryRange = new ShortRange(subtree.SubtreeRange.End, subtree.Scene!.SubtreeRange.End);
-
-            if (subtree.DirtState == DirtState.Commands)
-            {
-                this.context.AccumulateCommands(subtree);
-
-                subtree.MakeSubtreePristine();
-            }
-            else
-            {
-                this.context.StartSubtreeRange(subtree, true);
-
-                this.CollectSubtree(subtree);
-
-                this.context.EndSubtreeRange(subtree, true);
-            }
-
-            this.ApplyOffsetAndUpdateBuffer(subtree, boundaryRange);
-        }
-
-        private void ApplyOffset(Renderable<Command2D> subtree, ShortRange boundaryRange, int offset)
+        protected override void ApplyOffset(Renderable<Command2D> subtree, ShortRange boundaryRange, int offset)
         {
             if (offset != 0)
             {
-                boundaryRange = boundaryRange.WithClamp(this.context.Nodes.Count);
+                boundaryRange = boundaryRange.WithClamp(this.Nodes.Count);
 
                 Node? parent = subtree;
 
@@ -270,7 +186,7 @@ internal partial class SceneGraphCache
                     }
                 }
 
-                foreach (var node in this.context.Nodes.AsSpan(boundaryRange))
+                foreach (var node in this.Nodes.AsSpan(boundaryRange))
                 {
                     if (node is Renderable<Command2D> renderable)
                     {
@@ -280,38 +196,21 @@ internal partial class SceneGraphCache
             }
         }
 
-        private void ApplyOffsetAndUpdateBuffer(Renderable<Command2D> subtree, ShortRange boundaryRange)
-        {
-            var offset = subtree.CommandRange.Post.End - this.context.CommandRange.Post.End;
-
-            this.ApplyOffset(subtree, boundaryRange, offset);
-
-            this.context.UpdateBuffer(this.context.CommandRange.Pre);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void Collect()
+        protected override void Collect(Renderable target)
         {
-            switch (this.target)
+            switch (target)
             {
                 case Element element:
                     this.Collect(element);
 
                     break;
 
-                case Renderable<Command2D> renderable2D:
-                    this.Collect(renderable2D);
-
-                    break;
-
                 default:
-                    this.Collect((Scene2D)this.target);
+                    base.Collect(target);
 
                     break;
             }
         }
-
-        public readonly void Dispose() =>
-            this.context.Dispose();
     }
 }
