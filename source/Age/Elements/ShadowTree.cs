@@ -21,6 +21,8 @@ public sealed class ShadowTree(Element host, bool inheritsHostStyle) : Node
         {
             this.Host.HandleLayoutableAppended(layoutable);
         }
+
+        this.Host.MarkSubtreeDirty();
     }
 
     private protected override void OnChildDetachingInternal(Node child)
@@ -31,6 +33,8 @@ public sealed class ShadowTree(Element host, bool inheritsHostStyle) : Node
         {
             this.Host.HandleLayoutableRemoved(layoutable);
         }
+
+        this.Host.MarkSubtreeDirty();
     }
 
     private protected override void OnConnectedInternal()

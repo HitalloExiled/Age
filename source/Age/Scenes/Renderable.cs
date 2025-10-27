@@ -41,7 +41,7 @@ public abstract class Renderable : Node
 
                 this.OnVisibilityChangedInternal();
                 this.OnVisibilityChanged();
-                this.UpdateDirtyState(DirtState.Subtree);
+                this.MarkSubtreeDirty();
             }
         }
     }
@@ -53,14 +53,14 @@ public abstract class Renderable : Node
     {
         base.OnChildAttachedInternal(node);
 
-        this.UpdateDirtyState(DirtState.Subtree);
+        this.MarkSubtreeDirty();
     }
 
     private protected override void OnChildDetachingInternal(Node node)
     {
         base.OnChildDetachingInternal(node);
 
-        this.UpdateDirtyState(DirtState.Subtree);
+        this.MarkSubtreeDirty();
     }
 
     protected virtual void OnVisibilityChanged() { }
