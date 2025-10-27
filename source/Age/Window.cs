@@ -176,8 +176,10 @@ public sealed class Window : Viewport
 
     private void OnWindowResized()
     {
-        this.Surface.Size    = this.window.ClientSize;
-        this.Surface.Visible = this.window.IsVisible && !this.window.IsMinimized;
+        if (this.Surface.Visible = this.window.IsVisible && !this.window.IsMinimized)
+        {
+            this.Surface.Size = this.window.ClientSize;
+        }
     }
 
     private protected override void OnDisposedInternal()
