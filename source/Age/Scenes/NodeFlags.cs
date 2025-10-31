@@ -1,10 +1,11 @@
 namespace Age.Scenes;
 
 [Flags]
-public enum NodeFlags
+public enum NodeFlags : byte
 {
     None,
     ChildrenUpdatesSuspended = 1 << 0,
-    Sealed                   = 1 << 2,
     UpdatesSuspended         = 1 << 1,
+    Sealed                   = 1 << 2,
+    Slotted                  = 1 << 3,
 }

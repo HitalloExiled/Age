@@ -173,26 +173,75 @@ internal partial class SceneGraphCache
             renderable.CommandRange = renderable.CommandRange.WithPreEnd(this.CommandOffset);
         }
 
-        protected virtual void ApplyOffset(Renderable<TCommand> subtree, ShortRange boundaryRange, int offset)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected void AccumulatePreCommands(Renderable<TCommand> renderable)
+        {
+            this.CollectCommands(renderable.PreCommands);
+
+            renderable.CommandRange = renderable.CommandRange.WithPreEnd(this.CommandOffset);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected void AccumulatePostCommands(Renderable<TCommand> renderable)
+        {
+            var tail = this.Commands.Count;
+
+            this.CollectCommands(renderable.PostCommands);
+
+            var difference = this.Commands.Count - tail - renderable.CommandRange.Post.Length;
+
+            renderable.CommandRange = renderable.CommandRange.WithPostResize(difference);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected void CollectPreCommands(Renderable<TCommand> renderable)
+        {
+            renderable.CommandRange = new(this.CommandOffset);
+
+            if (this.ScopeIsVisible)
+            {
+                this.CollectCommands(renderable.PreCommands);
+
+                renderable.CommandRange = renderable.CommandRange.WithPreEnd(this.CommandOffset);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected void CollectPostCommands(Renderable<TCommand> renderable)
+        {
+            renderable.CommandRange = renderable.CommandRange.WithPostStart(this.CommandOffset);
+
+            if (this.ScopeIsVisible)
+            {
+                this.CollectCommands(renderable.PostCommands);
+
+                renderable.CommandRange = renderable.CommandRange.WithPostEnd(this.CommandOffset);
+            }
+        }
+
+        protected virtual void ApplyOffset(Renderable<TCommand> subtree, ShortRange boundaryRange, int offset, bool offsetAncestors)
         {
             if (offset != 0)
             {
-                Node? parent = subtree;
-
-                while (true)
+                if (offsetAncestors)
                 {
-                    parent = parent.Parent;
+                    Node? parent = subtree;
 
-                    if (parent == null || parent is Scene)
+                    while (true)
                     {
-                        break;
-                    }
+                        parent = parent.Parent;
 
-                    switch (parent)
-                    {
-                        case Renderable<TCommand> parentRenderable:
-                            parentRenderable.CommandRange = parentRenderable.CommandRange.WithPostOffset(offset);
+                        if (parent == null || parent is Scene)
+                        {
                             break;
+                        }
+
+                        switch (parent)
+                        {
+                            case Renderable<TCommand> parentRenderable:
+                                parentRenderable.CommandRange = parentRenderable.CommandRange.WithPostOffset(offset);
+                                break;
+                        }
                     }
                 }
 
@@ -210,9 +259,8 @@ internal partial class SceneGraphCache
         {
             var offset = subtree.CommandRange.Post.End - this.CommandRange.Post.End;
 
-            this.ApplyOffset(subtree, boundaryRange, offset);
-
-            this.UpdateBuffer(this.CommandRange.Pre);
+            this.ApplyOffset(subtree, boundaryRange, offset, true);
+            this.UpdateBuffer(this.CommandRange);
         }
 
         protected virtual void Collect(Renderable subtree)
@@ -245,42 +293,58 @@ internal partial class SceneGraphCache
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void Collect(Renderable<TCommand> subtree)
         {
-            var boundaryRange = new ShortRange(subtree.SubtreeRange.End, subtree.Scene!.SubtreeRange.End);
+            var subtreeRange = subtree.SubtreeRange;
+
+            var boundaryRange = new ShortRange(subtreeRange.End, subtree.Scene!.SubtreeRange.End);
 
             if (subtree.DirtState == DirtState.Commands)
             {
-                this.AccumulateCommands(subtree);
-
-                subtree.MakeSubtreeStatePristine();
+                this.CollectNodeCommands(subtree, subtreeRange, boundaryRange);
             }
             else
             {
-                this.StartSubtreeRange(subtree, true);
-
+                this.StartSubtreeRange(subtree);
                 this.CollectSubtree(subtree);
+                this.EndSubtreeRange(subtree);
 
-                this.EndSubtreeRange(subtree, true);
+                this.ApplyOffsetAndUpdateBuffer(subtree, boundaryRange);
             }
+        }
 
-            this.ApplyOffsetAndUpdateBuffer(subtree, boundaryRange);
+        protected void CollectNodeCommands(Renderable<TCommand> node, ShortRange subtreeRange, ShortRange boundaryRange)
+        {
+            // if (subtree.PostCommands.Length == 0)
+            // {
+            //     this.AccumulateCommands(subtree);
+            // }
+            // else
+
+            this.AccumulatePreCommands(node);
+
+            var preOffset = node.CommandRange.Pre.End - this.CommandRange.Pre.End;
+
+            this.ApplyOffset(node, new(subtreeRange.Start + 1, subtreeRange.End), preOffset, false);
+
+            this.CommandBuffer.ReplaceCommandRange(this.CommandRange.Pre, this.Commands.AsSpan());
+
+            var postStart = this.Commands.Count;
+
+            this.AccumulatePostCommands(node);
+
+            var postOffset = node.CommandRange.Post.End - this.CommandRange.Post.End;
+
+            this.ApplyOffset(node, boundaryRange, postOffset, true);
+
+            var postCount = this.Commands.Count - postStart;
+
+            this.CommandBuffer.ReplaceCommandRange(this.CommandRange.Post, this.Commands.AsSpan(postStart, postCount));
+
+            node.MakeSubtreeStatePristine();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void CollectCommands(ReadOnlySpan<TCommand> source) =>
             this.Commands.AddRange(source);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void CollectCommands(Renderable<TCommand> renderable)
-        {
-            renderable.CommandRange = new CommandRange(this.CommandOffset);
-
-            if (this.ScopeIsVisible)
-            {
-                this.CollectCommands(renderable.Commands);
-
-                renderable.CommandRange = renderable.CommandRange.WithPreEnd(this.CommandOffset);
-            }
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CollectSubtree(Renderable subtree)
@@ -306,7 +370,7 @@ internal partial class SceneGraphCache
                     break;
 
                 case Renderable<TCommand> renderableT:
-                    this.StartSubtreeRange(renderableT, true);
+                    this.StartSubtreeRange(renderableT);
                     break;
 
                 case Renderable renderable:
@@ -332,14 +396,10 @@ internal partial class SceneGraphCache
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void EndSubtreeRange(Renderable<TCommand> renderable, bool extendCommandRange)
+        protected void EndSubtreeRange(Renderable<TCommand> renderable)
         {
-            this.EndSubtreeRange(renderable);
-
-            if (extendCommandRange)
-            {
-                renderable.CommandRange = renderable.CommandRange.WithPost(this.CommandOffset);
-            }
+            this.CollectPostCommands(renderable);
+            this.EndSubtreeRange(Unsafe.As<Renderable>(renderable));
         }
 
         protected void OnSubtreeTraversed(Node node)
@@ -347,7 +407,7 @@ internal partial class SceneGraphCache
             switch (node)
             {
                 case Renderable<TCommand> renderableT:
-                    this.EndSubtreeRange(renderableT, true);
+                    this.EndSubtreeRange(renderableT);
                     break;
 
                 case Renderable renderable:
@@ -372,14 +432,10 @@ internal partial class SceneGraphCache
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void StartSubtreeRange(Renderable<TCommand> renderable, bool collectCommands)
+        protected void StartSubtreeRange(Renderable<TCommand> renderable)
         {
-            this.StartSubtreeRange(renderable);
-
-            if (collectCommands)
-            {
-                this.CollectCommands(renderable);
-            }
+            this.StartSubtreeRange(Unsafe.As<Renderable>(renderable));
+            this.CollectPreCommands(renderable);
         }
 
         protected void UpdateBuffer(Range range) =>

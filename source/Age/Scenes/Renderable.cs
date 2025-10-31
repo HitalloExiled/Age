@@ -1,5 +1,6 @@
 using Age.Commands;
 using Age.Core.Extensions;
+using System.Buffers;
 using System.Runtime.CompilerServices;
 
 namespace Age.Scenes;
@@ -87,13 +88,15 @@ public abstract class Renderable : Node
         this.DirtState = default;
 }
 
-public abstract class Renderable<T> : Renderable where T : Command
+public abstract partial class Renderable<T> : Renderable where T : Command
 {
-    private readonly List<T> commands = [];
+    private SplitList commands = new();
 
     internal CommandRange CommandRange { get; set; }
 
-    internal ReadOnlySpan<T> Commands => this.commands.AsSpan();
+    internal ReadOnlySpan<T> Commands     => this.commands.AsSpan();
+    internal ReadOnlySpan<T> PreCommands  => this.commands.Pre;
+    internal ReadOnlySpan<T> PostCommands => this.commands.Post;
 
     internal T? SingleCommand
     {
@@ -125,6 +128,20 @@ public abstract class Renderable<T> : Renderable where T : Command
         this.MarkCommandsDirty();
     }
 
+    private protected void AddPreCommand(T command)
+    {
+        this.commands.AddPre(command);
+
+        this.MarkCommandsDirty();
+    }
+
+    private protected void AddPostCommand(T command)
+    {
+        this.commands.AddPost(command);
+
+        this.MarkCommandsDirty();
+    }
+
     private protected void AllocateCommands<TCommand, TNode>(int count, CommandPool<TCommand, TNode> pool, bool reset = false)
     where TCommand : Command<TNode>, new()
     where TNode    : Node
@@ -144,7 +161,7 @@ public abstract class Renderable<T> : Renderable where T : Command
 
             var tail = this.commands.Count;
 
-            this.commands.SetCount(count);
+            this.commands.ForceCount(count);
 
             var span = this.commands.AsSpan();
 
@@ -161,9 +178,9 @@ public abstract class Renderable<T> : Renderable where T : Command
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void resetAll(List<T> commands)
+        static void resetAll(SplitList commands)
         {
-            foreach (var command in commands)
+            foreach (var command in commands.AsSpan())
             {
                 command.Reset();
             }
@@ -203,7 +220,7 @@ public abstract class Renderable<T> : Renderable where T : Command
                 span[i] = default!;
             }
 
-            this.commands.SetCount(start);
+            this.commands.ForceCount(start);
 
             this.MarkCommandsDirty();
         }
@@ -226,4 +243,7 @@ public abstract class Renderable<T> : Renderable where T : Command
 
         this.MarkCommandsDirty();
     }
+
+    private protected void SetCommandsSeparator(int index) =>
+        this.commands.Separator = index;
 }

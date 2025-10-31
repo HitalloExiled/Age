@@ -45,6 +45,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public bool IsChildrenUpdatesSuspended => this.nodeFlags.HasFlags(NodeFlags.ChildrenUpdatesSuspended);
     public bool IsSealed                   => this.nodeFlags.HasFlags(NodeFlags.Sealed);
+    public bool IsSlotted                  => this.nodeFlags.HasFlags(NodeFlags.Slotted);
     public bool IsUpdatesSuspended         => this.nodeFlags.HasFlags(NodeFlags.UpdatesSuspended);
 
     public virtual string? Name { get; set; }
@@ -112,6 +113,60 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     {
         node.OnDisposedInternal();
         node.OnDisposed();
+    }
+
+    protected static void ReplaceSlot<T>(T slot, ref T? field, T? value) where T : Node
+    {
+        if (field != value)
+        {
+            ReplaceSlot(slot, field, value);
+
+            field = value;
+        }
+    }
+
+    protected static void ReplaceSlot(Node slot, Node? previous, Node? next)
+    {
+        if (next?.IsSlotted == true)
+        {
+            throw new InvalidOperationException($"Node {next} already slloted");
+        }
+
+        var current = previous ?? slot;
+
+        if (current.Parent is not Node parent)
+        {
+            return;
+        }
+
+        var parentIsSealed = parent.IsSealed;
+
+        if (parentIsSealed)
+        {
+            parent.Unseal();
+        }
+
+        if (next == null)
+        {
+            if (previous != null)
+            {
+                previous.ReplaceSelf(slot);
+                previous.ClearSlotted();
+            }
+        }
+        else
+        {
+            next.SetSlotted();
+
+            current.ReplaceSelf(next);
+
+            previous?.ClearSlotted();
+        }
+
+        if (parentIsSealed)
+        {
+            parent.Seal();
+        }
     }
 
     internal static Node[] SelectBetween(Node start, Node end)
@@ -625,6 +680,12 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
+    protected void SetSlotted() =>
+        this.nodeFlags |= NodeFlags.Slotted;
+
+    protected void ClearSlotted() =>
+        this.nodeFlags &= ~NodeFlags.Slotted;
+
     protected void Seal() =>
         this.nodeFlags |= NodeFlags.Sealed;
 
@@ -681,6 +742,9 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void AppendChild(Node node) =>
         this.AppendOrPrepend(node, true);
+
+    public void AppendChildAsGuest(Node node) =>
+        this.AppendChild(node);
 
     public void AppendChildren(ReadOnlySpan<Node> nodes) =>
         this.AppendOrPrepend(nodes, true);
@@ -904,7 +968,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
 
         var previous = target.PreviousSibling;
-        var next = target.NextSibling;
+        var next     = target.NextSibling;
 
         ClearParenting(this, target, false);
 
@@ -929,7 +993,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
 
         node.PreviousSibling = previous;
-        node.NextSibling = next;
+        node.NextSibling     = next;
 
         SetParenting(this, node);
     }

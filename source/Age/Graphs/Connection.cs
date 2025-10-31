@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Age.Graphs;
 
 public readonly struct Connection<TFrom> where TFrom : RenderGraphNode
@@ -15,7 +17,7 @@ public readonly struct Connection<TFrom> where TFrom : RenderGraphNode
     where TTo    : RenderGraphNode, IInputable<TValue>
     where TValue : new()
     {
-        this.pipeline.Connect<RenderGraphNode<TValue>, TTo, TValue>((RenderGraphNode<TValue>)(RenderGraphNode)this.From, to);
+        this.pipeline.Connect<RenderGraphNode<TValue>, TTo, TValue>(Unsafe.As<RenderGraphNode<TValue>>(this.From), to);
 
         return new(this.pipeline, to);
     }
@@ -24,7 +26,7 @@ public readonly struct Connection<TFrom> where TFrom : RenderGraphNode
     where TTo    : RenderGraphNode
     where TValue : new()
     {
-        this.pipeline.Connect((RenderGraphNode<TValue>)(RenderGraphNode)this.From, to, setter);
+        this.pipeline.Connect(Unsafe.As<RenderGraphNode<TValue>>(this.From), to, setter);
 
         return new(this.pipeline, to);
     }

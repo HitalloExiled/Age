@@ -8,7 +8,7 @@ using ThirdParty.Vulkan.Flags;
 using Common = Age.Internal.Common;
 using Age.Playground.Tests.Styling;
 using Age.Playground.Tests.Components;
-using Age.Playground.Tests.Scene;
+using System.Diagnostics;
 
 namespace Age.Playground;
 
@@ -30,7 +30,7 @@ public class Editor : Scene2D
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = ShadowTreeTest.Setup;
+        this.setup = SealedTreeTest.Setup;
 
         this.pages =
         [
@@ -50,7 +50,7 @@ public class Editor : Scene2D
             new(nameof(PaddingTest),              PaddingTest.Setup),
             new(nameof(ScrollTest),               ScrollTest.Setup),
 
-            new(nameof(SubViewportTest), SubViewportTest.Setup),
+            // new(nameof(SubViewportTest), SubViewportTest.Setup),
 
             new(nameof(ShadowTreeTest),    ShadowTreeTest.Setup),
             new(nameof(TextSelectionTest), TextSelectionTest.Setup),
@@ -127,9 +127,13 @@ public class Editor : Scene2D
 
     private void Reload()
     {
+        var start = Stopwatch.GetTimestamp();
+
         this.canvas.DisposeChildren();
 
         this.setup.Invoke(this.canvas);
+
+        Console.WriteLine($"Reload time: {Stopwatch.GetElapsedTime(start).TotalMilliseconds}ms");
     }
 
     public override void Initialize()

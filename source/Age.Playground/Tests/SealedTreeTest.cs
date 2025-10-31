@@ -6,31 +6,32 @@ using Age.Styling;
 
 namespace Age.Playground.Tests;
 
-
-public static class ShadowTreeTest
+public static class SealedTreeTest
 {
     public class Host : Element
     {
         public override string NodeName => nameof(Host);
 
+        private readonly Element slotDefault;
+        private readonly Element slotS1;
+        private readonly Element slotS2;
+
+        public Element? SlotDefault { get; set => ReplaceSlot(this.slotDefault, ref field, value); }
+        public Element? SlotS1      { get; set => ReplaceSlot(this.slotS1,      ref field, value); }
+        public Element? SlotS2      { get; set => ReplaceSlot(this.slotS2,      ref field, value); }
+
         public Host()
         {
-            this.AttachShadowTree();
-
-            Button toggleSlotDefaultButton;
-            Button toggleSlotS1Button;
-            Button toggleSlotS2Button;
-
-            Slot slotDefault;
-            Slot slotS1;
-            Slot slotS2;
-
             var buttonStyle = new Style
             {
                 Size = new(Unit.Pc(100), null),
             };
 
-            this.ShadowTree.Children =
+            Button toggleSlotDefaultButton;
+            Button toggleSlotS1Button;
+            Button toggleSlotS2Button;
+
+            this.Children =
             [
                 new FlexBox
                 {
@@ -56,7 +57,7 @@ public static class ShadowTreeTest
                         toggleSlotS2Button      = new Button { InnerText = "Toggle Slot s-2",     Variant = ButtonVariant.Text, Style = buttonStyle },
                     ],
                 },
-                slotDefault = new Slot
+                this.slotDefault = new FlexBox
                 {
                     //Name    = "1",
                     InnerText = "Default",
@@ -66,7 +67,7 @@ public static class ShadowTreeTest
                         Color  = Color.White,
                     }
                 },
-                slotS1 = new Slot
+                this.slotS1 = new FlexBox
                 {
                     InnerText = "Default S-1 Content",
                     Name      = "s-1",
@@ -77,7 +78,7 @@ public static class ShadowTreeTest
                         //Size   = new((Pixel)200, null),
                     }
                 },
-                slotS2 = new Slot
+                this.slotS2 = new FlexBox
                 {
                     InnerText = "Default S-2 Content",
                     Name      = "s-2",
@@ -91,26 +92,29 @@ public static class ShadowTreeTest
 
             void toogle(Node node)
             {
+                using var scope = this.CreateUnsealedScope();
+
                 if (node.Parent == null)
                 {
-                    this.ShadowTree!.AppendChild(node);
+                    this.AppendChild(node);
                 }
                 else
                 {
-                    this.ShadowTree!.DetachChild(node);
+                    this.DetachChild(node);
                 }
             }
 
-            slotDefault.Detach();
-            slotS1.Detach();
-            slotS2.Detach();
+            this.slotDefault.Detach();
+            this.slotS1.Detach();
+            this.slotS2.Detach();
 
-            toggleSlotDefaultButton.Clicked += (in _) => toogle(slotDefault);
-            toggleSlotS1Button.Clicked += (in _) => toogle(slotS1);
-            toggleSlotS2Button.Clicked += (in _) => toogle(slotS2);
+            toggleSlotDefaultButton.Clicked += (in _) => toogle(this.slotDefault);
+            toggleSlotS1Button.Clicked += (in _) => toogle(this.slotS1);
+            toggleSlotS2Button.Clicked += (in _) => toogle(this.slotS2);
+
+            this.Seal();
         }
     }
-
     public static void Setup(Canvas canvas)
     {
         Button moveL1toSlotDefaultButton;
@@ -119,19 +123,46 @@ public static class ShadowTreeTest
         Button moveL2toSlotDefaultButton;
         Button moveL2toSlotS1Button;
         Button moveL2toSlotS2Button;
-        FlexBox l1;
-        FlexBox l2;
 
         var buttonStyle = new Style
         {
             Size = new(Unit.Pc(100), null),
         };
 
+        Host host;
+
+        var l1 = new FlexBox
+        {
+            InnerText = "L1",
+            Name      = "light-1",
+            Style     =
+            {
+                Border   = new(1, 0, Color.Green),
+                Color    = Color.White,
+                //Size     = new(Unit.Pc(10), null),
+                Overflow = Overflow.Clipping,
+            }
+        };
+
+        var l2 = new FlexBox
+        {
+            InnerText = "L2",
+            Name      = "light-2",
+            Style     =
+            {
+                Border    = new(1, 0, Color.Blue),
+                Color     = Color.White,
+                //Size      = new(Unit.Pc(10), null),
+                //Alignment = AlignmentKind.End,
+                Overflow  = Overflow.Clipping,
+            }
+        };
+
         canvas.Children =
         [
             new FlexBox
             {
-                Style    = new()
+                Style = new()
                 {
                     StackDirection = StackDirection.Vertical,
                 },
@@ -145,7 +176,7 @@ public static class ShadowTreeTest
                     moveL2toSlotS2Button      = new Button { InnerText = "Move L2 to Slot s-2",     Style = buttonStyle },
                 ],
             },
-            new Host
+            host = new Host
             {
                 Name  = "host",
                 Style = new()
@@ -153,46 +184,36 @@ public static class ShadowTreeTest
                     StackDirection  = StackDirection.Vertical,
                     //Size   = new((Pixel)100),
                     Border = new(1, 0, Color.Red),
-                },
-                Children =
-                [
-                    l1 = new FlexBox
-                    {
-                        InnerText  = "L1",
-                        Name  = "light-1",
-                        Slot  = "s-1",
-                        Style = new()
-                        {
-                            Border   = new(1, 0, Color.Green),
-                            Color    = Color.White,
-                            //Size     = new(Unit.Pc(10), null),
-                            Overflow = Overflow.Clipping,
-                        }
-                    },
-                    l2 = new FlexBox
-                    {
-                        InnerText  = "L2",
-                        Name  = "light-2",
-                        Slot  = "s-2",
-                        Style = new()
-                        {
-                            Border    = new(1, 0, Color.Blue),
-                            Color     = Color.White,
-                            //Size      = new(Unit.Pc(10), null),
-                            //Alignment = AlignmentKind.End,
-                            Overflow  = Overflow.Clipping,
-                        }
-                    }
-                ]
+                }
             }
         ];
 
-        moveL1toSlotDefaultButton.Clicked += (in _) => l1.Slot = null;
-        moveL1toSlotS1Button.Clicked += (in _) => l1.Slot = "s-1";
-        moveL1toSlotS2Button.Clicked += (in _) => l1.Slot = "s-2";
+        void swap<T>(Action<Host> setter, T value) where T : Node
+        {
+            if (host.SlotDefault == value)
+            {
+                host.SlotDefault = null;
+            }
 
-        moveL2toSlotDefaultButton.Clicked += (in _) => l2.Slot = null;
-        moveL2toSlotS1Button.Clicked += (in _) => l2.Slot = "s-1";
-        moveL2toSlotS2Button.Clicked += (in _) => l2.Slot = "s-2";
+            if (host.SlotS1 == value)
+            {
+                host.SlotS1 = null;
+            }
+
+            if (host.SlotS2 == value)
+            {
+                host.SlotS2 = null;
+            }
+
+            setter.Invoke(host);
+        }
+
+        moveL1toSlotDefaultButton.Clicked += (in _) => swap(x => x.SlotDefault = l1, l1);
+        moveL1toSlotS1Button.Clicked += (in _)      => swap(x => x.SlotS1      = l1, l1);
+        moveL1toSlotS2Button.Clicked += (in _)      => swap(x => x.SlotS2      = l1, l1);
+
+        moveL2toSlotDefaultButton.Clicked += (in _) => swap(x => x.SlotDefault = l2, l2);
+        moveL2toSlotS1Button.Clicked += (in _)      => swap(x => x.SlotS1      = l2, l2);
+        moveL2toSlotS2Button.Clicked += (in _)      => swap(x => x.SlotS2      = l2, l2);
     }
 }

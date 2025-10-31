@@ -78,7 +78,7 @@ where TCommand : TBoundCommand, new()
         return node;
     }
 
-    public static TNode Linear(int depth, int childrenCount = 0, int commandsCount = 0, byte? commandSeparator = null, string? name = "$")
+    public static TNode Linear(int depth, int childrenCount = 0, int commandsCount = 0, int commandSeparator = -1, string? name = "$")
     {
         var node = new TNode() { Name = name };
 
@@ -87,11 +87,9 @@ where TCommand : TBoundCommand, new()
             AddCommand(node, new TCommand());
         }
 
-        if (node is Element element)
+        if (commandSeparator > -1)
         {
-            commandSeparator ??= (byte)commandsCount;
-
-            ElementAcessor.GetCommandsSeparator(element) = commandSeparator.Value;
+            RenderableAcessor<TBoundCommand>.SetCommandsSeparator(node, commandSeparator);
         }
 
         if (depth > 0)

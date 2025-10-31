@@ -55,7 +55,7 @@ public partial class SceneGraphCacheTest
                 Name = "$2D",
                 Children =
                 [
-                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(2, 2, 2, null, "$2D.1"),
+                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(2, 2, 2, -1, "$2D.1"),
                     new SubViewport("$2D.2")
                     {
                         Scene3D = new()
@@ -63,12 +63,12 @@ public partial class SceneGraphCacheTest
                             Name     = "$2D.2.#3D",
                             Children =
                             [
-                                TreeFactory<Model, Command3D, MeshCommand>.Linear(2, 2, 2, null, "$2D.2.#3D.01"),
+                                TreeFactory<Model, Command3D, MeshCommand>.Linear(2, 2, 2, -1, "$2D.2.#3D.01"),
                             ],
                         }
                     },
                     TreeFactory<SealedComponent, Command2D, ComponentCommand>.Linear(1, 1, 3, 1, "$2D.3"),
-                    TreeFactory<Component, Command2D, ComponentCommand>.Linear(2, 2, 2, null, "$2D.4"),
+                    TreeFactory<Component, Command2D, ComponentCommand>.Linear(2, 2, 2, -1, "$2D.4"),
                 ]
             },
         };
@@ -266,7 +266,7 @@ public partial class SceneGraphCacheTest
                 Name     = "$2D",
                 Children =
                 [
-                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(2, 2, 3, null, "$2D.1"),
+                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(2, 2, 3, -1, "$2D.1"),
                 ]
             }
         };
@@ -294,7 +294,7 @@ public partial class SceneGraphCacheTest
 
         var actual = cache.Nodes.Select(ToNodeRange).ToArray();
 
-        var component = TreeFactory<Component, Command2D, ComponentCommand>.Linear(2, 2, 2, null, "$2D.1.1.1.1");
+        var component = TreeFactory<Component, Command2D, ComponentCommand>.Linear(2, 2, 2, -1, "$2D.1.1.1.1");
 
         flat[4].AppendChild(component);
 
@@ -352,7 +352,7 @@ public partial class SceneGraphCacheTest
                 Name     = "$2D",
                 Children =
                 [
-                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(2, 2, 3, null, "$2D.1"),
+                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(2, 2, 3, -1, "$2D.1"),
                 ]
             }
         };
@@ -425,7 +425,7 @@ public partial class SceneGraphCacheTest
             RenderableAcessor<Command2D>.AddCommand(component, new SpriteCommand() { CommandFilter = CommandFilter.Color });
         }
 
-        ElementAcessor.GetCommandsSeparator(component) = 3;
+        RenderableAcessor<Command2D>.SetCommandsSeparator(component, 3);
 
         renderable.AppendChild(component);
 
@@ -471,7 +471,7 @@ public partial class SceneGraphCacheTest
                 Name     = "$2D",
                 Children =
                 [
-                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(5, 1, 3, null, "$2D.1"),
+                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(5, 1, 3, -1, "$2D.1"),
                 ]
             }
         };

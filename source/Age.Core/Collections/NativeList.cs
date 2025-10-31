@@ -17,29 +17,14 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
         get => field;
         set
         {
-            if (value == 0)
-            {
-                NativeMemory.Free(this.buffer);
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, this.Count);
 
-                this.Count = 0;
-            }
-            else
-            {
-                this.buffer = (T*)NativeMemory.Realloc(this.buffer, (uint)(sizeof(T) * value));
+            if (field == value)
+			{
+				return;
+			}
 
-                if (value > field)
-                {
-                    for (var i = field; i < value; i++)
-                    {
-                        this.buffer[i] = default;
-                    }
-                }
-
-                if (value < this.Count)
-                {
-                    this.Count = value;
-                }
-            }
+			this.buffer = (T*)NativeMemory.Realloc(this.buffer, (uint)(sizeof(T) * value));
 
             field = value;
         }

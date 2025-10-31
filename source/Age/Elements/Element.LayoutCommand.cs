@@ -20,11 +20,7 @@ public abstract partial class Element
         ScrollBarY = 1 << 3,
     }
 
-    private byte          commandsSeparator;
     private LayoutCommand layoutCommands;
-
-    internal ReadOnlySpan<Command2D> PreCommands  => this.Commands[..this.commandsSeparator];
-    internal ReadOnlySpan<Command2D> PostCommands => this.Commands[this.commandsSeparator..];
 
     private RectCommand AllocateLayoutCommand(LayoutCommand layoutCommand)
     {
@@ -173,6 +169,6 @@ public abstract partial class Element
             layoutCommand = LayoutCommand.Box;
         }
 
-        this.commandsSeparator = (byte)(layoutCommand.HasValue ? this.GetIndex(layoutCommand.Value) + 1 : 0);
+        this.SetCommandsSeparator((layoutCommand.HasValue ? this.GetIndex(layoutCommand.Value) + 1 : 0));
     }
 }
