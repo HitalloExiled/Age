@@ -1,6 +1,5 @@
 using Age.Commands;
 using Age.Core.Extensions;
-using System.Buffers;
 using System.Runtime.CompilerServices;
 
 namespace Age.Scenes;
@@ -50,16 +49,16 @@ public abstract class Renderable : Node
     private protected virtual void OnIndexChangedInternal() { }
     private protected virtual void OnVisibilityChangedInternal() { }
 
-    private protected override void OnChildAttachedInternal(Node node)
+    private protected override void OnChildAttachedInternal(Node child)
     {
-        base.OnChildAttachedInternal(node);
+        base.OnChildAttachedInternal(child);
 
         this.MarkSubtreeDirty();
     }
 
-    private protected override void OnChildDetachingInternal(Node node)
+    private protected override void OnChildDetachingInternal(Node child)
     {
-        base.OnChildDetachingInternal(node);
+        base.OnChildDetachingInternal(child);
 
         this.MarkSubtreeDirty();
     }

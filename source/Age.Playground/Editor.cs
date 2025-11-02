@@ -9,6 +9,7 @@ using Common = Age.Internal.Common;
 using Age.Playground.Tests.Styling;
 using Age.Playground.Tests.Components;
 using System.Diagnostics;
+using Age.Playground.Tests.Scene;
 
 namespace Age.Playground;
 
@@ -30,7 +31,7 @@ public class Editor : Scene2D
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = SealedTreeTest.Setup;
+        this.setup = ShadowRootTest.Setup;
 
         this.pages =
         [
@@ -49,11 +50,11 @@ public class Editor : Scene2D
             new(nameof(MarginTest),               MarginTest.Setup),
             new(nameof(PaddingTest),              PaddingTest.Setup),
             new(nameof(ScrollTest),               ScrollTest.Setup),
+            new(nameof(ShadowRootTest),           ShadowRootTest.Setup),
+            new(nameof(TextSelectionTest),        TextSelectionTest.Setup),
 
-            // new(nameof(SubViewportTest), SubViewportTest.Setup),
+            new(nameof(SubViewportTest), SubViewportTest.Setup),
 
-            new(nameof(ShadowTreeTest),    ShadowTreeTest.Setup),
-            new(nameof(TextSelectionTest), TextSelectionTest.Setup),
         ];
     }
 

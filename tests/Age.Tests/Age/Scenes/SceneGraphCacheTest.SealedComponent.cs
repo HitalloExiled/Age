@@ -9,17 +9,20 @@ public partial class SceneGraphCacheTest
     {
         public override string NodeName => nameof(SealedComponent);
 
-        public SealedComponent() : this(null) { }
-        public SealedComponent(string? name = null)
+        public SealedComponent(string name)
         {
-            this.AttachShadowTree();
+            this.Name      = name;
+            var shadowRoot = new Component()
+            {
+                Name = $"{name}#",
+                Children =
+                [
+                    TreeFactory.Linear<Component, Command2D, ComponentCommand>(1, 3, 6, 3, $"{name}#.01"),
+                    TreeFactory.Linear<Component, Command2D, ComponentCommand>(1, 2, 6, 2, $"{name}#.02"),
+                ]
+            };
 
-            this.ShadowTree.Children =
-            [
-                TreeFactory<Component, Command2D, ComponentCommand>.Linear(1, 3, 6, 3, $"{name}#.01"),
-                TreeFactory<Component, Command2D, ComponentCommand>.Linear(1, 2, 6, 2, $"{name}#.02"),
-                new Slot(),
-            ];
+            this.AttachShadowRoot(shadowRoot);
         }
     }
 }

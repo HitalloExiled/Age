@@ -19,21 +19,23 @@ public class ElementTest
         public HostTestElement(string name)
         {
             this.Name = name;
-            this.AttachShadowTree();
 
-            this.ShadowTree.Name = $"{name}.#";
+            var shadowRoot = new TestElement($"{name}.#")
+            {
+                Children =
+                [
+                    new TestElement($"{name}.#.1")
+                    {
+                        Children =
+                        [
+                            new TestElement($"{name}.#.1.1"),
+                        ]
+                    },
+                    new TestElement($"{name}.#.2"),
+                ]
+            };
 
-            this.ShadowTree.Children =
-            [
-                new TestElement($"{name}.#.1")
-                {
-                    Children =
-                    [
-                        new TestElement($"{name}.#.1.1"),
-                    ]
-                },
-                new TestElement($"{name}.#.2"),
-            ];
+            this.AttachShadowRoot(shadowRoot);
         }
     }
 
@@ -141,7 +143,7 @@ public class ElementTest
             ]
         };
 
-        node3_1  = (TestElement)node3.ShadowTree!.FirstChild!;
+        node3_1  = (TestElement)node3.ShadowRoot!.FirstChild!;
         node3_11 = (TestElement)node3_1.FirstChild!;
         node3_2  = (TestElement)node3_1.NextSibling!;
 

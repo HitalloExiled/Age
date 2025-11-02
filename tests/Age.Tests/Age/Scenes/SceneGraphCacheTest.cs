@@ -55,7 +55,7 @@ public partial class SceneGraphCacheTest
                 Name = "$2D",
                 Children =
                 [
-                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(2, 2, 2, -1, "$2D.1"),
+                    TreeFactory.Linear<Sprite, Command2D, SpriteCommand>(2, 2, 2, -1, "$2D.1"),
                     new SubViewport("$2D.2")
                     {
                         Scene3D = new()
@@ -63,12 +63,12 @@ public partial class SceneGraphCacheTest
                             Name     = "$2D.2.#3D",
                             Children =
                             [
-                                TreeFactory<Model, Command3D, MeshCommand>.Linear(2, 2, 2, -1, "$2D.2.#3D.01"),
+                                TreeFactory.Linear<Model, Command3D, MeshCommand>(2, 2, 2, -1, "$2D.2.#3D.01"),
                             ],
                         }
                     },
-                    TreeFactory<SealedComponent, Command2D, ComponentCommand>.Linear(1, 1, 3, 1, "$2D.3"),
-                    TreeFactory<Component, Command2D, ComponentCommand>.Linear(2, 2, 2, -1, "$2D.4"),
+                    TreeFactory.Linear<SealedComponent, Command2D, ComponentCommand>(static name => new(name), 1, 1, 3, 1, "$2D.3"),
+                    TreeFactory.Linear<Component, Command2D, ComponentCommand>(2, 2, 2, -1, "$2D.4"),
                 ]
             },
         };
@@ -106,27 +106,26 @@ public partial class SceneGraphCacheTest
                                     new(flat[18], new(18, 19), new(12, 14)), // Model
 
                     new(flat[19], new(19, 37), new(14, 15, 102, 104)), // SealedComponent
-                        new(flat[20], new(20, 24), new(15, 18, 36, 39)), // Component
-                            new(flat[21], new(21, 22), new(18, 21, 21, 24)), // Component
-                            new(flat[22], new(22, 23), new(24, 27, 27, 30)), // Component
-                            new(flat[23], new(23, 24), new(30, 33, 33, 36)), // Component
+                        new(flat[20], new(20, 28), new(15, 15, 57, 57)), // #ShadowRoot
+                            new(flat[21], new(21, 25), new(15, 18, 36, 39)), // Component
+                                new(flat[22], new(22, 23), new(18, 21, 21, 24)), // Component
+                                new(flat[23], new(23, 24), new(24, 27, 27, 30)), // Component
+                                new(flat[24], new(24, 25), new(30, 33, 33, 36)), // Component
 
-                        new(flat[24], new(24, 27), new(39, 41, 53, 57)), // Component
-                            new(flat[25], new(25, 26), new(41, 43, 43, 47)), // Component
-                            new(flat[26], new(26, 27), new(47, 49, 49, 53)), // Component
+                            new(flat[25], new(25, 28), new(39, 41, 53, 57)), // Component
+                                new(flat[26], new(26, 27), new(41, 43, 43, 47)), // Component
+                                new(flat[27], new(27, 28), new(47, 49, 49, 53)), // Component
 
-                        new(flat[27], new(27, 37), new(57, 57, 102, 102)), // Slot
-                            new(flat[28], new(28, 37), new(57, 58, 100, 102)), // SealedComponent
-                                new(flat[29], new(29, 33), new(58, 61, 79, 82)), // Component
-                                    new(flat[30], new(30, 31), new(61, 64, 64, 67)), // Component
-                                    new(flat[31], new(31, 32), new(67, 70, 70, 73)), // Component
-                                    new(flat[32], new(32, 33), new(73, 76, 76, 79)), // Component
+                        new(flat[28], new(28, 37), new(57, 58, 100, 102)), // SealedComponent
+                            new(flat[29], new(29, 37), new(58, 58, 100, 100)), // #ShadowRoot
+                                new(flat[30], new(30, 34), new(58, 61, 79, 82)), // Component
+                                    new(flat[31], new(31, 32), new(61, 64, 64, 67)), // Component
+                                    new(flat[32], new(32, 33), new(67, 70, 70, 73)), // Component
+                                    new(flat[33], new(33, 34), new(73, 76, 76, 79)), // Component
 
-                                new(flat[33], new(33, 36), new(82, 84, 96, 100)), // Component
-                                    new(flat[34], new(34, 35), new(84, 86, 86, 90)), // Component
-                                    new(flat[35], new(35, 36), new(90, 92, 92, 96)), // Component
-
-                                new(flat[36], new(36, 37), new(100)), // Slot
+                                new(flat[34], new(34, 37), new(82, 84, 96, 100)), // Component
+                                    new(flat[35], new(35, 36), new(84, 86, 86, 90)), // Component
+                                    new(flat[36], new(36, 37), new(90, 92, 92, 96)), // Component
 
                     new(flat[37], new(37, 44), new(104, 106, 118)), // Component
                         new(flat[38], new(38, 41), new(106, 108, 112)), // Component
@@ -266,7 +265,7 @@ public partial class SceneGraphCacheTest
                 Name     = "$2D",
                 Children =
                 [
-                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(2, 2, 3, -1, "$2D.1"),
+                    TreeFactory.Linear<Sprite, Command2D, SpriteCommand>(2, 2, 3, -1, "$2D.1"),
                 ]
             }
         };
@@ -294,7 +293,7 @@ public partial class SceneGraphCacheTest
 
         var actual = cache.Nodes.Select(ToNodeRange).ToArray();
 
-        var component = TreeFactory<Component, Command2D, ComponentCommand>.Linear(2, 2, 2, -1, "$2D.1.1.1.1");
+        var component = TreeFactory.Linear<Component, Command2D, ComponentCommand>(2, 2, 2, -1, "$2D.1.1.1.1");
 
         flat[4].AppendChild(component);
 
@@ -337,6 +336,55 @@ public partial class SceneGraphCacheTest
         // Emit(expected, actual);
 
         Assert.Equal(expected, actual);
+
+        var flat9  = (Component)flat[9];
+        var flat12 = (Sprite)flat[12];
+
+        for (var i = 0; i < 4; i++)
+        {
+            RenderableAcessor<Command2D>.AddCommand(flat9, new SpriteCommand());
+            RenderableAcessor<Command2D>.AddCommand(flat12, new SpriteCommand());
+        }
+
+        flat9.DirtState  = DirtState.Commands;
+        flat12.DirtState = DirtState.Commands;
+
+        RenderableAcessor<Command2D>.SetCommandsSeparator(flat9, 3);
+        RenderableAcessor<Command2D>.SetCommandsSeparator(flat12, 3);
+
+        cache.InvalidatedSubTree(flat12);
+        cache.InvalidatedSubTree(flat9);
+        cache.Build();
+
+        expected =
+        [
+            new(flat[0], new(0, 16)), // Window
+                new(flat[1], new(1, 16)), // Scene2D
+                    new(flat[2], new(2, 16), new(0, 3, 43)), // Sprite
+                        new(flat[3], new(3, 13), new(3, 6, 34)), // Sprite
+                            new(flat[4], new(4, 12), new(6, 9, 27)), // Sprite
+                                new(flat[5], new(5, 12), new(9, 11, 27)), // Component
+                                    new(flat[6], new(6, 9), new(11, 13, 17)), // Component
+                                        new(flat[7], new(7, 8), new(13, 15)), // Component
+                                        new(flat[8], new(8, 9), new(15, 17)), // Component
+
+                                    new(flat[9], new(9, 12), new(17, 20, 24, 27)), // Component
+                                        new(flat[10], new(10, 11), new(20, 22)), // Component
+                                        new(flat[11], new(11, 12), new(22, 24)), // Component
+
+                            new(flat[12], new(12, 13), new(27, 30, 30, 34)), // Sprite
+
+                        new(flat[13], new(13, 16), new(34, 37, 43)), // Sprite
+                            new(flat[14], new(14, 15), new(37, 40)), // Sprite
+                            new(flat[15], new(15, 16), new(40, 43)), // Sprite
+        ];
+
+        actual = [..cache.Nodes.Select(ToNodeRange)];
+
+        // Uncomment if you is lost
+        Emit(expected, actual);
+
+        Assert.Equal(expected, actual);
     }
 
     [Fact]
@@ -352,7 +400,7 @@ public partial class SceneGraphCacheTest
                 Name     = "$2D",
                 Children =
                 [
-                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(2, 2, 3, -1, "$2D.1"),
+                    TreeFactory.Linear<Sprite, Command2D, SpriteCommand>(2, 2, 3, -1, "$2D.1"),
                 ]
             }
         };
@@ -471,7 +519,7 @@ public partial class SceneGraphCacheTest
                 Name     = "$2D",
                 Children =
                 [
-                    TreeFactory<Sprite, Command2D, SpriteCommand>.Linear(5, 1, 3, -1, "$2D.1"),
+                    TreeFactory.Linear<Sprite, Command2D, SpriteCommand>(5, 1, 3, -1, "$2D.1"),
                 ]
             }
         };
@@ -497,11 +545,11 @@ public partial class SceneGraphCacheTest
 
         dirtTrees.Clear();
 
-        var component = new SealedComponent();
+        var component = new SealedComponent("");
 
         flat7.AppendChild(component);
 
-        var composedChild = (Renderable)component.ShadowTree!.FirstChild!;
+        var composedChild = (Renderable)component.ShadowRoot!.FirstChild!;
 
         component.DirtState     = DirtState.Commands;
         composedChild.DirtState = DirtState.Commands;

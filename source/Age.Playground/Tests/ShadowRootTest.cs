@@ -6,7 +6,7 @@ using Age.Styling;
 
 namespace Age.Playground.Tests;
 
-public static class SealedTreeTest
+public static class ShadowRootTest
 {
     public class Host : Element
     {
@@ -31,64 +31,75 @@ public static class SealedTreeTest
             Button toggleSlotS1Button;
             Button toggleSlotS2Button;
 
-            this.Children =
-            [
-                new FlexBox
+            var shadowRoot = new FlexBox
+            {
+                Style =
                 {
-                    InnerText = "### Shadow Element ###",
-                    Style     = new()
-                    {
-                        Border = new(1, 0, Color.Red),
-                        Color  = Color.White,
-                        Size   = new(Unit.Pc(100), null),
-                    }
+                    StackDirection  = StackDirection.Vertical,
+                    //Size   = new((Pixel)100),
+                    Border = new(1, 0, Color.Red),
                 },
-                new FlexBox
-                {
-                    Style = new()
+                Children =
+                [
+                    new FlexBox
                     {
-                        StackDirection = StackDirection.Vertical,
-                        Size           = new(Unit.Pc(100), null),
+                        InnerText = "### Shadow Element ###",
+                        Style     = new()
+                        {
+                            Border = new(1, 0, Color.Red),
+                            Color  = Color.White,
+                            Size   = new(Unit.Pc(100), null),
+                        }
                     },
-                    Children =
-                    [
-                        toggleSlotDefaultButton = new Button { InnerText = "Toggle Slot default", Variant = ButtonVariant.Text, Style = buttonStyle },
-                        toggleSlotS1Button      = new Button { InnerText = "Toggle Slot s-1",     Variant = ButtonVariant.Text, Style = buttonStyle },
-                        toggleSlotS2Button      = new Button { InnerText = "Toggle Slot s-2",     Variant = ButtonVariant.Text, Style = buttonStyle },
-                    ],
-                },
-                this.slotDefault = new FlexBox
-                {
-                    //Name    = "1",
-                    InnerText = "Default",
-                    Style     = new()
+                    new FlexBox
                     {
-                        Border = new(1, 0, Color.Red),
-                        Color  = Color.White,
-                    }
-                },
-                this.slotS1 = new FlexBox
-                {
-                    InnerText = "Default S-1 Content",
-                    Name      = "s-1",
-                    Style     = new()
+                        Style = new()
+                        {
+                            StackDirection = StackDirection.Vertical,
+                            Size           = new(Unit.Pc(100), null),
+                        },
+                        Children =
+                        [
+                            toggleSlotDefaultButton = new Button { InnerText = "Toggle Slot default", Variant = ButtonVariant.Text, Style = buttonStyle },
+                            toggleSlotS1Button      = new Button { InnerText = "Toggle Slot s-1",     Variant = ButtonVariant.Text, Style = buttonStyle },
+                            toggleSlotS2Button      = new Button { InnerText = "Toggle Slot s-2",     Variant = ButtonVariant.Text, Style = buttonStyle },
+                        ],
+                    },
+                    this.slotDefault = new FlexBox
                     {
-                        Border = new(1, 0, Color.Red),
-                        Color  = Color.White,
-                        //Size   = new((Pixel)200, null),
-                    }
-                },
-                this.slotS2 = new FlexBox
-                {
-                    InnerText = "Default S-2 Content",
-                    Name      = "s-2",
-                    Style     = new()
+                        //Name    = "1",
+                        InnerText = "Default",
+                        Style     = new()
+                        {
+                            Border = new(1, 0, Color.Red),
+                            Color  = Color.White,
+                        }
+                    },
+                    this.slotS1 = new FlexBox
                     {
-                        Border = new(1, 0, Color.Red),
-                        Color  = Color.White,
-                    }
-                },
-            ];
+                        InnerText = "Default S-1 Content",
+                        Name      = "s-1",
+                        Style     = new()
+                        {
+                            Border = new(1, 0, Color.Red),
+                            Color  = Color.White,
+                            //Size   = new((Pixel)200, null),
+                        }
+                    },
+                    this.slotS2 = new FlexBox
+                    {
+                        InnerText = "Default S-2 Content",
+                        Name      = "s-2",
+                        Style     = new()
+                        {
+                            Border = new(1, 0, Color.Red),
+                            Color  = Color.White,
+                        }
+                    },
+                ]
+            };
+
+            this.AttachShadowRoot(shadowRoot);
 
             void toogle(Node node)
             {
@@ -96,11 +107,11 @@ public static class SealedTreeTest
 
                 if (node.Parent == null)
                 {
-                    this.AppendChild(node);
+                    shadowRoot.AppendChild(node);
                 }
                 else
                 {
-                    this.DetachChild(node);
+                    shadowRoot.DetachChild(node);
                 }
             }
 
@@ -178,13 +189,7 @@ public static class SealedTreeTest
             },
             host = new Host
             {
-                Name  = "host",
-                Style = new()
-                {
-                    StackDirection  = StackDirection.Vertical,
-                    //Size   = new((Pixel)100),
-                    Border = new(1, 0, Color.Red),
-                }
+                Name = "host"
             }
         ];
 

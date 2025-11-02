@@ -153,7 +153,7 @@ public sealed partial class RenderTree
         {
             this.hoveredElement.InvokeMouseOut(windowMouseEvent);
 
-            for (var current = this.hoveredElement; current != null; current = current.ComposedParentElement)
+            for (var current = this.hoveredElement; current != null; current = current.CompositeParentElement)
             {
                 current.InvokeMouseLeave(windowMouseEvent);
             }
@@ -186,7 +186,7 @@ public sealed partial class RenderTree
         if (node is Text text)
         {
             text.PropagateSelection(virtualChildIndex - 1);
-            element = text.ComposedParentElement;
+            element = text.CompositeParentElement;
         }
         else
         {
@@ -216,7 +216,7 @@ public sealed partial class RenderTree
 
         if (node is Text text)
         {
-            element = text.ComposedParentElement;
+            element = text.CompositeParentElement;
 
             if (mouseEvent.IsPrimaryButtonPressed)
             {
@@ -313,7 +313,7 @@ public sealed partial class RenderTree
         this.DiscardDanglingHoveredNodes();
 
         var text    = node as Text;
-        var element = text?.ComposedParentElement ?? node as Element;
+        var element = text?.CompositeParentElement ?? node as Element;
 
         if (element != null)
         {
@@ -355,7 +355,7 @@ public sealed partial class RenderTree
                     {
                         this.leftToAncestor.Clear();
 
-                        for (var current = element; current != null; current = current.ComposedParentElement)
+                        for (var current = element; current != null; current = current.CompositeParentElement)
                         {
                             this.leftToAncestor.Add(current);
                         }
@@ -382,7 +382,7 @@ public sealed partial class RenderTree
             {
                 this.hoveredElement.InvokeMouseOut(mouseEvent);
 
-                for (var current = this.hoveredElement; current != null; current = current.ComposedParentElement)
+                for (var current = this.hoveredElement; current != null; current = current.CompositeParentElement)
                 {
                     current.InvokeMouseLeave(mouseEvent);
                 }
@@ -411,7 +411,7 @@ public sealed partial class RenderTree
                 {
                     this.Window.Cursor = default;
                 }
-                else if (this.hoveredText?.ComposedParentElement == element)
+                else if (this.hoveredText?.CompositeParentElement == element)
                 {
                     element.ApplyCursor();
                 }
@@ -431,7 +431,7 @@ public sealed partial class RenderTree
         this.DiscardDanglingFocusedNodes();
 
         var text    = node as Text;
-        var element = text?.ComposedParentElement ?? node as Element;
+        var element = text?.CompositeParentElement ?? node as Element;
 
         var wasSelectingText = Layoutable.IsSelectingText;
         var wasScrolling     = Layoutable.IsDraggingScrollBar;
@@ -483,7 +483,7 @@ public sealed partial class RenderTree
         var node = this.GetNode(mouseLocalPosition.X, mouseLocalPosition.Y, out var _);
 
         var text    = node as Text;
-        var element = text?.ComposedParentElement ?? node as Element;
+        var element = text?.CompositeParentElement ?? node as Element;
 
         element?.InvokeMouseWheel(mouseEvent);
     }

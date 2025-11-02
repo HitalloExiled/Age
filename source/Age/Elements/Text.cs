@@ -14,6 +14,7 @@ using System.Runtime.CompilerServices;
 using Timer = Age.Scenes.Timer;
 
 using static Age.Shaders.CanvasShader;
+using Age.Scenes;
 
 namespace Age.Elements;
 
@@ -33,7 +34,7 @@ public sealed class Text : Layoutable
     private bool           selectionIsDirty;
     private bool           textIsDirty;
 
-    private  bool        CanSelect  => this.ComposedParentElement?.ComputedStyle.TextSelection != false;
+    private  bool        CanSelect  => this.CompositeParentElement?.ComputedStyle.TextSelection != false;
     internal Rect<float> CursorRect => this.caretCommand.GetAffineRect();
 
     internal override bool IsParentDependent { get; }
@@ -425,7 +426,7 @@ public sealed class Text : Layoutable
     }
 
     private Element? GetInheritedStyleSource() =>
-        GetStyleSource(this.Parent);
+        this.CompositeParentElement;
 
     private void OnParentStyleChanged(StyleProperty property)
     {
@@ -493,20 +494,16 @@ public sealed class Text : Layoutable
         }
     }
 
-    private protected override void OnAttachedInternal()
+    private protected override void OnConnectedInternal()
     {
-        base.OnAttachedInternal();
+        base.OnConnectedInternal();
 
-        switch (this.Parent)
+        if (this.CompositeParent is Element parentElement)
         {
-            case Element parentElement:
-                this.HandleAdopted(parentElement);
-                break;
-
-            case ShadowTree shadowTree:
-                this.HandleAdopted(shadowTree.Host);
-                break;
+            this.HandleAdopted(parentElement);
         }
+
+        this.UpdateDirtyLayout();
     }
 
     private protected override void OnDisposedInternal()
@@ -522,8 +519,6 @@ public sealed class Text : Layoutable
 
     private protected override void OnIndexChangedInternal()
     {
-        this.UpdateDirtyLayout();
-
         var elementIndex = this.Index + 1;
         var commands     = this.Commands[..this.Buffer.Length];
 
@@ -542,22 +537,18 @@ public sealed class Text : Layoutable
         }
     }
 
-    private protected override void OnDetachingInternal()
+    private protected override void OnDisconnectingInternal()
     {
-        switch (this.Parent)
-        {
-            case Element parentElement:
-                this.HandleRemoved(parentElement);
-                break;
+        base.OnDisconnectingInternal();
 
-            case ShadowTree shadowTree:
-                this.HandleRemoved(shadowTree.Host);
-                break;
+        if (this.CompositeParent is Element parentElement)
+        {
+            this.HandleRemoved(parentElement);
         }
     }
 
     internal void AdjustScroll() =>
-        this.ComposedParentElement?.ScrollTo(this.GetCursorBoundings());
+        this.CompositeParentElement?.ScrollTo(this.GetCursorBoundings());
 
     internal void ClearCaret()
     {

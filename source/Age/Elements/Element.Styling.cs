@@ -118,7 +118,7 @@ public abstract partial class Element
     }
 
     private StyleData GetInheritedProperties() =>
-        GetStyleSource(this.Parent)?.ComputedStyle is Style parentStyle
+        this.CompositeParentElement?.ComputedStyle is Style parentStyle
             ? new StyleData
             {
                 Color         = parentStyle.Color,

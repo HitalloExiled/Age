@@ -7,7 +7,7 @@ using Age.Styling;
 
 namespace Age.StoryBook;
 
-public sealed class StoryBook : Node
+public sealed class StoryBook : Scene2D
 {
     public override string NodeName => nameof(StoryBook);
 

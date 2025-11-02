@@ -181,7 +181,7 @@ public abstract partial class Element
             return;
         }
 
-        for (var element = this; element != null; element = element.ComposedParentElement)
+        for (var element = this; element != null; element = element.CompositeParentElement)
         {
             if (element.IsScrollable)
             {
@@ -375,9 +375,9 @@ public abstract partial class Element
 
             if (node is Element element)
             {
-                for (var current = this; current != null; current = current.ComposedParentElement)
+                for (var current = this; current != null; current = current.CompositeParentElement)
                 {
-                    if (element == current || element.IsComposedDescendent(current))
+                    if (element == current || element.IsCompositeDescendent(current))
                     {
                         break;
                     }

@@ -46,6 +46,12 @@ public readonly partial record struct CommandRange
     public readonly CommandRange WithPreEnd(int index) =>
         new(this.Pre.Start, index, int.Max(index, this.Post.Start), int.Max(index, this.Post.End));
 
+    public readonly CommandRange WithPreEndAndPostOffset(int index, int offset) =>
+        new(this.Pre.Start, index, this.Post.Start + offset, this.Post.End + offset);
+
+    public readonly CommandRange WithPreAndPostAnd(int index) =>
+        new(this.Pre.Start, index, index, index);
+
     public readonly CommandRange WithPost(int index) =>
         new(this.Pre, new(index));
 

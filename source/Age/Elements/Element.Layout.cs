@@ -441,11 +441,16 @@ public abstract partial class Element
 
     private static void PropagateStencilLayer(Element target, StencilLayer? stencilLayer)
     {
-        var enumerator = target.GetComposedTreeTraversalEnumerator();
+        var enumerator = target.GetCompositeTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
-            var current = enumerator.Current;
+            if (enumerator.Current is not Layoutable current)
+            {
+                enumerator.SkipToNextSibling();
+
+                continue;
+            }
 
             if (current.StencilLayer == stencilLayer)
             {
@@ -579,11 +584,14 @@ public abstract partial class Element
         this.staticContent = new Size<uint>();
         this.BaseLine      = -1;
 
-        var enumerator = this.GetComposedElementEnumerator();
+        var enumerator = this.GetCompositeEnumerator();
 
         while (enumerator.MoveNext())
         {
-            var child = enumerator.Current;
+            if (enumerator.Current is not Layoutable child)
+            {
+                continue;
+            }
 
             if (!child.Visible)
             {
@@ -911,7 +919,7 @@ public abstract partial class Element
             var justUndependent = oldParentDependencies != Dependency.None && this.parentDependencies == Dependency.None;
             var justDependent   = oldParentDependencies == Dependency.None && this.parentDependencies != Dependency.None;
 
-            if (this.ComposedParentElement is Element parent)
+            if (this.CompositeParentElement is Element parent)
             {
                 parent.dependenciesHasChanged = oldContentDependencies != this.contentDependencies || oldParentDependencies != this.parentDependencies;
 
@@ -921,7 +929,7 @@ public abstract partial class Element
                     {
                         if (this.parentDependencies != Dependency.None)
                         {
-                            var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
+                            var dependents = parent.dependents;
 
                             dependents.Add(this);
                             dependents.Sort();
@@ -929,7 +937,7 @@ public abstract partial class Element
                     }
                     else if (justUndependent)
                     {
-                        var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
+                        var dependents = parent.dependents;
 
                         dependents.Remove(this);
                     }
@@ -1215,7 +1223,7 @@ public abstract partial class Element
 
         var index = 0;
 
-        var enumerator = this.GetComposedElementEnumerator();
+        var enumerator = this.GetCompositeEnumerator();
 
         while (enumerator.MoveNext())
         {
@@ -1399,7 +1407,7 @@ public abstract partial class Element
     {
         base.OnVisibilityChangedInternal();
 
-        var parent = this.ComposedParentElement!;
+        var parent = this.CompositeParentElement!;
 
         if (this.Visible)
         {
@@ -1407,7 +1415,7 @@ public abstract partial class Element
 
             if (this.parentDependencies != Dependency.None)
             {
-                var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
+                var dependents = parent.dependents;
 
                 dependents.Add(this);
                 dependents.Sort();
@@ -1417,7 +1425,7 @@ public abstract partial class Element
         {
             parent.renderableNodes--;
 
-            var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
+            var dependents = parent.dependents;
 
             dependents.Remove(this);
         }

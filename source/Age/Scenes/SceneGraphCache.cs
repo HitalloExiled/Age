@@ -1,5 +1,3 @@
-using Age.Elements;
-
 namespace Age.Scenes;
 
 internal partial class SceneGraphCache
@@ -18,13 +16,13 @@ internal partial class SceneGraphCache
                 return;
             }
 
-            if ((renderable is Layoutable layoutable && Layoutable.IsComposedAncestor(dirtyTree, layoutable)) || dirtyTree.IsAncestor(renderable))
+            if (dirtyTree.IsCompositeAncestor(renderable))
             {
                 dirtyTree.DirtState |= DirtState.Subtree;
 
                 return;
             }
-            else if ((dirtyTree is Layoutable layoutableDirtyTree && Layoutable.IsComposedAncestor(renderable, layoutableDirtyTree)) || renderable.IsAncestor(dirtyTree))
+            else if (renderable.IsCompositeAncestor(dirtyTree))
             {
                 renderable.DirtState |= DirtState.Subtree;
 

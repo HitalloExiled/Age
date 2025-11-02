@@ -19,6 +19,11 @@ public record Ref<T> where T : struct
 
 public static class TreeFactory
 {
+    private static void AddCommand<TNode, TCommand>(TNode node, TCommand command)
+    where TNode : Renderable<TCommand>
+    where TCommand : Command =>
+        RenderableAcessor<TCommand>.AddCommand(node, command);
+
     public static Node[] Flatten(Node root)
     {
         var nodes = new List<Node>
@@ -26,65 +31,53 @@ public static class TreeFactory
             root
         };
 
-        var traversal = root.GetTraversalEnumerator();
+        var traversal = root.GetCompositeTraversalEnumerator();
 
         while (traversal.MoveNext())
         {
-            if (traversal.Current is Element element)
-            {
-                traversal.SkipToNextSibling();
-
-                nodes.Add(element);
-
-                var composedTraversal = element.GetComposedTreeTraversalEnumerator();
-
-                while (composedTraversal.MoveNext())
-                {
-                    nodes.Add(composedTraversal.Current);
-                }
-            }
-            else
-            {
-                nodes.Add(traversal.Current);
-            }
+            nodes.Add(traversal.Current);
         }
 
         return [..nodes];
     }
-}
 
-public static class TreeFactory<TNode, TBoundCommand, TCommand>
-where TNode : Renderable<TBoundCommand>, new()
-where TBoundCommand : Command
-where TCommand : TBoundCommand, new()
-{
-    private static void AddCommand(TNode node, TCommand command) =>
-        RenderableAcessor<TBoundCommand>.AddCommand((Renderable<TBoundCommand>)(Renderable)node, (TBoundCommand)(Command)command);
+    public static TNode Linear<TNode>(int depth, int childrenCount = 0, string? name = "$") where TNode : Node, new() =>
+        Linear(static name => new TNode() { Name = name }, depth, childrenCount, name);
 
-    public static TNode Wide(int childrenCount, int commandsCount, CommandFilter commandFilter = CommandFilter.Color)
+    public static TNode Linear<TNode>(Func<string, TNode> factory, int depth, int childrenCount = 0, string? name = "$") where TNode : Node
     {
-        var node = new TNode();
+        var node = factory.Invoke(name!);
 
-        for (var i = 0; i < childrenCount; i++)
+        if (depth > 0)
         {
-            node.AppendChild(new TNode());
+            --depth;
 
-            for (var j = 0; j < commandsCount; j++)
+            for (var i = 0; i < childrenCount; i++)
             {
-                AddCommand(node, new TCommand() { CommandFilter = commandFilter });
+                node.AppendChild(Linear(factory, depth, childrenCount, $"{name}.{i + 1}"));
             }
         }
 
         return node;
     }
 
-    public static TNode Linear(int depth, int childrenCount = 0, int commandsCount = 0, int commandSeparator = -1, string? name = "$")
+    public static TNode Linear<TNode, TBoundCommand, TCommand>(int depth, int childrenCount = 0, int commandsCount = 0, int commandSeparator = -1, string? name = "$")
+    where TNode : Renderable<TBoundCommand>, new()
+    where TBoundCommand : Command
+    where TCommand : TBoundCommand, new() =>
+        Linear<TNode, TBoundCommand, TCommand>(static name => new TNode { Name = name }, depth, childrenCount, commandsCount, commandSeparator, name);
+
+
+    public static TNode Linear<TNode, TBoundCommand, TCommand>(Func<string, TNode> factory, int depth, int childrenCount = 0, int commandsCount = 0, int commandSeparator = -1, string? name = "$")
+    where TNode : Renderable<TBoundCommand>
+    where TBoundCommand : Command
+    where TCommand : TBoundCommand, new()
     {
-        var node = new TNode() { Name = name };
+        var node = factory.Invoke(name!);
 
         for (var j = 0; j < commandsCount; j++)
         {
-            AddCommand(node, new TCommand());
+            AddCommand(node, Unsafe.As<TBoundCommand>(new TCommand()));
         }
 
         if (commandSeparator > -1)
@@ -98,7 +91,7 @@ where TCommand : TBoundCommand, new()
 
             for (var i = 0; i < childrenCount; i++)
             {
-                node.AppendChild(Linear(depth, childrenCount, commandsCount, commandSeparator, $"{name}.{i + 1}"));
+                node.AppendChild(Linear<TNode, TBoundCommand, TCommand>(factory, depth, childrenCount, commandsCount, commandSeparator, $"{name}.{i + 1}"));
             }
         }
 

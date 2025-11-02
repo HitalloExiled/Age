@@ -11,6 +11,9 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 {
     private NodeFlags nodeFlags;
 
+    internal protected Node? ShadowHost { get; private set; }
+    internal protected Node? ShadowRoot { get; private set; }
+
     public Node? FirstChild      { get; private set; }
     public Node? LastChild       { get; private set; }
     public Node? NextSibling     { get; private set; }
@@ -18,15 +21,17 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public Node? PreviousSibling { get; private set; }
 
     public bool IsConnected { get; private set; }
-
     public Node[] Children
     {
         get => [.. this];
         set => this.ReplaceChildren(value);
     }
+    internal protected Node? CompositeParent => this.ShadowHost ?? this.Parent;
 
     [MemberNotNullWhen(false, nameof(FirstChild), nameof(LastChild))]
     public bool IsLeaf => this.FirstChild == null;
+
+    public bool IsCompositeLeaf => (this.ShadowRoot ?? this.FirstChild) == null;
 
     public Node Root
     {
@@ -619,7 +624,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     {
         apply(this);
 
-        var enumerator = this.GetTraversalEnumerator();
+        var enumerator = this.GetCompositeTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
@@ -631,7 +636,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         {
             node.IsConnected = true;
 
-            node.Scene = node as Scene ?? node.Parent as Scene ?? node.Parent?.Scene;
+            node.Scene = node as Scene ?? node.CompositeParent?.Scene;
 
             InvokeConnectedCallbacks(node);
         }
@@ -641,7 +646,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     {
         apply(this);
 
-        var enumerator = this.GetTraversalEnumerator();
+        var enumerator = this.GetCompositeTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
@@ -659,13 +664,12 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     }
 
     private protected virtual void OnAttachedInternal() { }
-    private protected virtual void OnChildAttachedInternal(Node node) { }
-    private protected virtual void OnChildDetachingInternal(Node node) { }
+    private protected virtual void OnChildAttachedInternal(Node child) { }
+    private protected virtual void OnChildDetachingInternal(Node child) { }
     private protected virtual void OnConnectedInternal() { }
+    private protected virtual void OnDetachingInternal() { }
     private protected virtual void OnDisconnectingInternal() { }
     private protected virtual void OnDisposedInternal() { }
-    private protected virtual void OnDetachingInternal() { }
-    private protected virtual void OnDetachedInternal() { }
 
     protected sealed override void OnDisposed(bool disposing)
     {
@@ -673,11 +677,60 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         {
             InvokeDisposedCallbacks(this);
 
-            foreach (var child in this.GetTraversalEnumerator())
+            foreach (var child in this.GetCompositeTraversalEnumerator())
             {
                 child.Dispose();
             }
         }
+    }
+
+    [MemberNotNull(nameof(ShadowRoot))]
+    protected void AttachShadowRoot(Node shadowRoot)
+    {
+        if (this.ShadowRoot != null)
+        {
+            throw new InvalidOperationException("A shadow root is already attached to this node.");
+        }
+
+        if (shadowRoot.ShadowHost != null)
+        {
+            throw new InvalidOperationException($"The specified shadow root is already attached to another host ('{shadowRoot.ShadowHost}').");
+        }
+
+        this.ShadowRoot = shadowRoot;
+        shadowRoot.ShadowHost = this;
+
+        this.OnChildAttachedInternal(shadowRoot);
+        this.OnChildAttached(shadowRoot);
+
+        shadowRoot.OnAttachedInternal();
+        shadowRoot.OnAttached();
+
+        if (this.IsConnected)
+        {
+            shadowRoot.Connect();
+        }
+    }
+
+    protected void DetachShadowRoot()
+    {
+        if (this.ShadowRoot == null)
+        {
+            throw new InvalidOperationException();
+        }
+
+        this.OnChildDetachingInternal(this.ShadowRoot);
+        this.OnChildDetaching(this.ShadowRoot);
+
+        this.ShadowRoot.OnDetachingInternal();
+        this.ShadowRoot.OnDetaching();
+
+        if (this.IsConnected)
+        {
+            this.ShadowRoot.Disconnect();
+        }
+
+        this.ShadowHost = null;
     }
 
     protected void SetSlotted() =>
@@ -705,14 +758,12 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         this.nodeFlags &= ~NodeFlags.ChildrenUpdatesSuspended;
 
     protected virtual void OnAttached() { }
-    protected virtual void OnChildAttached(Node node) { }
-    protected virtual void OnChildDetaching(Node node) { }
-    protected virtual void OnChildDetached(Node node) { }
+    protected virtual void OnChildAttached(Node child) { }
+    protected virtual void OnChildDetaching(Node child) { }
     protected virtual void OnConnected() { }
+    protected virtual void OnDetaching() { }
     protected virtual void OnDisconnecting() { }
     protected virtual void OnDisposed() { }
-    protected virtual void OnDetaching() { }
-    protected virtual void OnDetached() { }
 
     internal void Connect()
     {
@@ -740,6 +791,12 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
     }
 
+    internal CompositeEnumerator GetCompositeEnumerator() =>
+        new(this);
+
+    internal CompositeTraversalEnumerator GetCompositeTraversalEnumerator() =>
+        new(this);
+
     public void AppendChild(Node node) =>
         this.AppendOrPrepend(node, true);
 
@@ -766,48 +823,55 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         var left  = this;
         var right = other;
 
-        if (left.Parent != right.Parent)
+        var leftParent  = left.CompositeParent!;
+        var rightParent = right.CompositeParent!;
+
+        if (leftParent != rightParent)
         {
-            var leftDepth  = left.GetDepth();
-            var rightDepth = right.GetDepth();
+            var leftDepth  = left.GetCompositeDepth();
+            var rightDepth = right.GetCompositeDepth();
 
             while (leftDepth > rightDepth)
             {
-                if (left.Parent == right)
+                leftParent = left.CompositeParent!;
+
+                if (leftParent == right)
                 {
                     return 1;
                 }
 
-                left = left.Parent!;
+                left = leftParent;
                 leftDepth--;
             }
 
             while (leftDepth < rightDepth)
             {
-                if (right.Parent == left)
+                rightParent = right.CompositeParent!;
+
+                if (rightParent == left)
                 {
                     return -1;
                 }
 
-                right = right.Parent!;
+                right = rightParent;
                 rightDepth--;
             }
 
-            while (left.Parent != right.Parent)
+            while ((leftParent = left.CompositeParent!) != (rightParent = right.CompositeParent!))
             {
-                left  = left.Parent!;
-                right = right.Parent!;
+                left  = leftParent;
+                right = rightParent;
             }
         }
 
-        if (left.Parent == right.Parent)
+        if (leftParent == rightParent)
         {
-            if (left.Parent == null)
+            if (leftParent == null)
             {
                 throw new InvalidOperationException("Can't compare an root node to another");
             }
 
-            if (left == right.NextSibling)
+            if (left == right.NextSibling || right.ShadowHost != null)
             {
                 return 1;
             }
@@ -871,6 +935,21 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void DisposeChildrenInRange(Node start, Node end) =>
         this.DetachChildrenInRange(start, end, true);
+
+    public int GetCompositeDepth()
+    {
+        var depth = 0;
+
+        var node = this.CompositeParent;
+
+        while (node != null)
+        {
+            depth++;
+            node = node.CompositeParent;
+        }
+
+        return depth;
+    }
 
     public int GetDepth()
     {
@@ -938,6 +1017,31 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         return true;
     }
+
+    public bool IsCompositeAncestor(Node other)
+    {
+        if (this == other)
+        {
+            return false;
+        }
+
+        var parent = other.CompositeParent;
+
+        while (parent != this)
+        {
+            if (parent == null)
+            {
+                return false;
+            }
+
+            parent = parent.CompositeParent;
+        }
+
+        return true;
+    }
+
+    public bool IsCompositeDescendent(Node other) =>
+        other.IsCompositeAncestor(this);
 
     public bool IsDescendent(Node other) =>
         other.IsAncestor(this);

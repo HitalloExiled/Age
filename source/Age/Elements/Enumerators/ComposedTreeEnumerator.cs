@@ -22,9 +22,9 @@ internal struct ComposedTreeEnumerator(Element target) : IEnumerator<Layoutable>
         switch (this.state)
         {
             case 0:
-                if (this.target.ShadowTree != null)
+                if (this.target.ShadowRoot != null)
                 {
-                    this.current = getLayoutableOrSkip(this.target.ShadowTree.FirstChild);
+                    this.current = getLayoutableOrSkip(this.target.ShadowRoot.FirstChild);
                     this.state   = 1;
                 }
                 else
@@ -52,11 +52,6 @@ internal struct ComposedTreeEnumerator(Element target) : IEnumerator<Layoutable>
         {
             while (true)
             {
-                if (node is Layoutable layoutable && layoutable.AssignedSlot == null)
-                {
-                    return layoutable;
-                }
-
                 if (node?.NextSibling == null)
                 {
                     return null;

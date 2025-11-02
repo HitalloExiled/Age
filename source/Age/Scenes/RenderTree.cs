@@ -37,7 +37,7 @@ public sealed partial class RenderTree : Disposable
 
     private void InitializeTree()
     {
-        var enumerator = this.Window.GetTraversalEnumerator();
+        var enumerator = this.Window.GetCompositeTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
@@ -56,7 +56,7 @@ public sealed partial class RenderTree : Disposable
 
     private void LateUpdateTree()
     {
-        var enumerator = this.Window.GetTraversalEnumerator();
+        var enumerator = this.Window.GetCompositeTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
@@ -95,7 +95,7 @@ public sealed partial class RenderTree : Disposable
 
     private void UpdateTree()
     {
-        var enumerator = this.Window.GetTraversalEnumerator();
+        var enumerator = this.Window.GetCompositeTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {

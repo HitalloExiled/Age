@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Age.Elements;
 using Age.Elements.Events;
 using Age.Themes;
@@ -19,7 +20,7 @@ public class CheckBox : Element
     private const string INDETERMINATE = "indeterminate_check_box";
     private const string UNCHECKED     = "check_box_outline_blank";
 
-    private readonly Icon icon = new(UNCHECKED);
+    private Icon Icon => Unsafe.As<Icon>(this.ShadowRoot)!;
 
     public bool Checked
     {
@@ -38,7 +39,7 @@ public class CheckBox : Element
         {
             if (field != value)
             {
-                this.icon.IconName = value switch
+                this.Icon.IconName = value switch
                 {
                     CheckBoxState.Unchecked     => UNCHECKED,
                     CheckBoxState.Checked       => CHECKED,
@@ -60,11 +61,9 @@ public class CheckBox : Element
         this.IsFocusable = true;
         this.StyleSheet  = Theme.Current.CheckBox.Default;
 
-        this.AttachShadowTree(true);
+        this.AttachShadowRoot(new Icon(UNCHECKED));
 
-        this.ShadowTree.AppendChild(this.icon);
-
-        this.icon.Clicked += this.OnClick;
+        this.Icon.Clicked += this.OnClick;
 
         this.Seal();
     }

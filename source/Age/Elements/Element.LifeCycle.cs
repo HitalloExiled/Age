@@ -23,24 +23,24 @@ public abstract partial class Element
     {
         base.OnAttachedInternal();
 
-        GetStyleSource(this.Parent)?.StyleChanged += this.OnParentStyleChanged;
+        this.CompositeParentElement?.StyleChanged += this.OnParentStyleChanged;
     }
 
-    private protected override void OnChildAttachedInternal(Node node)
+    private protected override void OnChildAttachedInternal(Node child)
     {
-        base.OnChildAttachedInternal(node);
+        base.OnChildAttachedInternal(child);
 
-        if (this.ShadowTree == null && node is Layoutable layoutable)
+        if (child is Layoutable layoutable)
         {
             this.HandleLayoutableAppended(layoutable);
         }
     }
 
-    private protected override void OnChildDetachingInternal(Node node)
+    private protected override void OnChildDetachingInternal(Node child)
     {
-        base.OnChildDetachingInternal(node);
+        base.OnChildDetachingInternal(child);
 
-        if (this.ShadowTree == null && node is Layoutable layoutable)
+        if (child is Layoutable layoutable)
         {
             this.HandleLayoutableRemoved(layoutable);
         }
@@ -49,8 +49,6 @@ public abstract partial class Element
     private protected override void OnConnectedInternal()
     {
         base.OnConnectedInternal();
-
-        this.ShadowTree?.Connect();
 
         if (this.Scene?.Viewport?.Window is Window window)
         {
@@ -80,7 +78,7 @@ public abstract partial class Element
             }
         }
 
-        this.Canvas = this.ComposedParentElement?.Canvas ?? this.Parent as Canvas;
+        this.Canvas = this.CompositeParentElement?.Canvas ?? this.Parent as Canvas;
 
         this.ComputeStyle(default);
     }
@@ -89,14 +87,12 @@ public abstract partial class Element
     {
         base.OnDetachingInternal();
 
-        GetStyleSource(this.Parent)?.StyleChanged -= this.OnParentStyleChanged;
+        this.CompositeParentElement?.StyleChanged -= this.OnParentStyleChanged;
     }
 
     private protected override void OnDisconnectingInternal()
     {
         base.OnDisconnectingInternal();
-
-        this.ShadowTree?.Disconnect();
 
         this.Canvas = null;
 
@@ -128,14 +124,12 @@ public abstract partial class Element
 
         this.ClearCommands();
 
-        this.ShadowTree?.Dispose();
-
         stylePool.Return(this.ComputedStyle);
     }
 
     private protected override void OnIndexChangedInternal()
     {
-        var zIndex = this.ComputedStyle.ZIndex ?? this.ComposedParentElement?.ComputedStyle.ZIndex ?? 0;
+        var zIndex = this.ComputedStyle.ZIndex ?? this.CompositeParentElement?.ComputedStyle.ZIndex ?? 0;
 
         if (this.TryGetLayoutCommandBox(out var boxCommand))
         {
