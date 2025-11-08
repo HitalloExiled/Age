@@ -137,9 +137,9 @@ public class Editor : Scene2D
         Console.WriteLine($"Reload time: {Stopwatch.GetElapsedTime(start).TotalMilliseconds}ms");
     }
 
-    public override void Initialize()
+    protected override void OnStart()
     {
-        base.Initialize();
+        base.OnStart();
         this.Reload();
     }
 

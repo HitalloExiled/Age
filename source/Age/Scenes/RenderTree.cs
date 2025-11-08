@@ -35,41 +35,48 @@ public sealed partial class RenderTree : Disposable
         this.viewports.Add(window);
     }
 
-    private void InitializeTree()
+    private void ExecuteLateUpdates()
     {
-        var enumerator = this.Window.GetCompositeTraversalEnumerator();
-
-        while (enumerator.MoveNext())
+        for (var i = 0; i < this.Nodes.Count; i++)
         {
-            var current = enumerator.Current;
+            var node = this.Nodes[i];
 
-            if (current.IsUpdatesSuspended)
+            if (!node.IsUpdatesSuspended)
             {
-                enumerator.SkipToNextSibling();
+                node.LateUpdate();
             }
-            else
+
+            if (node.IsChildrenUpdatesSuspended)
             {
-                current.Initialize();
+                i = node.SubtreeRange.End - 1;
             }
         }
     }
 
-    private void LateUpdateTree()
+    private void ExecuteUpdates()
     {
-        var enumerator = this.Window.GetCompositeTraversalEnumerator();
-
-        while (enumerator.MoveNext())
+        for (var i = 0; i < this.Nodes.Count; i++)
         {
-            var current = enumerator.Current;
+            var node = this.Nodes[i];
 
-            if (current.IsUpdatesSuspended)
+            if (!node.IsUpdatesSuspended)
             {
-                enumerator.SkipToNextSibling();
+                node.Start();
+                node.Update();
             }
-            else
+
+            if (node.IsChildrenUpdatesSuspended)
             {
-                current.LateUpdate();
+                i = node.SubtreeRange.End - 1;
             }
+        }
+    }
+
+    private void ExecuteTimersUpdate()
+    {
+        foreach (var timer in this.Timers)
+        {
+            timer.Update();
         }
     }
 
@@ -83,38 +90,6 @@ public sealed partial class RenderTree : Disposable
         var size = image.Extent.Width * image.Extent.Height * sizeof(ulong);
 
         this.buffer = new Buffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
-    }
-
-    private void UpdateTimers()
-    {
-        foreach (var timer in this.Timers)
-        {
-            timer.Update();
-        }
-    }
-
-    private void UpdateTree()
-    {
-        var enumerator = this.Window.GetCompositeTraversalEnumerator();
-
-        while (enumerator.MoveNext())
-        {
-            var current = enumerator.Current;
-
-            if (current.IsUpdatesSuspended)
-            {
-                enumerator.SkipToNextSibling();
-            }
-            else
-            {
-                current.Update();
-
-                if (current.IsChildrenUpdatesSuspended)
-                {
-                    enumerator.SkipToNextSibling();
-                }
-            }
-        }
     }
 
     protected override void OnDisposed(bool disposing)
@@ -169,8 +144,7 @@ public sealed partial class RenderTree : Disposable
         this.Window.MouseUp     += this.OnMouseUp;
         this.Window.MouseWheel  += this.OnMouseWheel;
 
-        this.InitializeTree();
-        this.LateUpdateTree();
+        this.BuildSceneGraphCache();
     }
 
     public void Update()
@@ -180,9 +154,9 @@ public sealed partial class RenderTree : Disposable
             this.InvokeMouseRequestedEvent();
         }
 
-        this.UpdateTimers();
-        this.UpdateTree();
-        this.LateUpdateTree();
+        this.ExecuteTimersUpdate();
+        this.ExecuteUpdates();
+        this.ExecuteLateUpdates();
 
         this.Updated?.Invoke();
 
@@ -191,9 +165,6 @@ public sealed partial class RenderTree : Disposable
             this.updatesQueue.Dequeue().Invoke();
         }
 
-        if (this.IsDirty)
-        {
-            this.BuildIndexAndCollectCommands();
-        }
+        this.BuildSceneGraphCache();
     }
 }

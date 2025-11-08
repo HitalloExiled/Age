@@ -9,7 +9,7 @@ public sealed partial class RenderTree
 
     internal List<Renderable> Nodes => this.sceneGraphCache.Nodes;
 
-    private void BuildIndexAndCollectCommands()
+    private void BuildSceneGraphCache()
     {
         if (this.viewportDirty)
         {

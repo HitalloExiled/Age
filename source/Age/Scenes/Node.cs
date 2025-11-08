@@ -10,6 +10,7 @@ namespace Age.Scenes;
 public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<Node>
 {
     private NodeFlags nodeFlags;
+    private bool hasStarted;
 
     internal protected Node? ShadowHost { get; private set; }
     internal protected Node? ShadowRoot { get; private set; }
@@ -658,6 +659,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         {
             InvokeDisconnectingCallbacks(node);
 
+            node.hasStarted  = false;
             node.IsConnected = false;
             node.Scene       = null;
         }
@@ -764,6 +766,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     protected virtual void OnDetaching() { }
     protected virtual void OnDisconnecting() { }
     protected virtual void OnDisposed() { }
+    protected virtual void OnStart() { }
 
     internal void Connect()
     {
@@ -796,6 +799,16 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     internal CompositeTraversalEnumerator GetCompositeTraversalEnumerator() =>
         new(this);
+
+    internal void Start()
+    {
+        if (!this.hasStarted)
+        {
+            this.OnStart();
+
+            this.hasStarted = true;
+        }
+    }
 
     public void AppendChild(Node node) =>
         this.AppendOrPrepend(node, true);
@@ -1200,9 +1213,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void ReplaceSelfWith(ReadOnlySpan<Node> nodes) =>
         this.Parent?.ReplaceWith(this, nodes);
-
-    public virtual void Initialize()
-    { }
 
     public virtual void LateUpdate()
     { }

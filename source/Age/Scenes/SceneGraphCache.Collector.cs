@@ -299,7 +299,10 @@ internal partial class SceneGraphCache
 
                 this.ApplyOffset(subtree, new(subtreeRange.Start + 1, subtreeRange.End), preOffset, false);
 
-                this.CommandBuffer.ReplaceCommandRange(this.CommandRange.Pre, this.Commands.AsSpan());
+                if (this.CommandRange.Pre.Length > 0)
+                {
+                    this.CommandBuffer.ReplaceCommandRange(this.CommandRange.Pre, this.Commands.AsSpan());
+                }
 
                 var postStart = this.Commands.Count;
 
@@ -309,7 +312,7 @@ internal partial class SceneGraphCache
 
                 this.ApplyOffset(subtree, boundaryRange, postOffset, true);
 
-                if (postCount > 0)
+                if (this.CommandRange.Post.Length > 0)
                 {
                     this.CommandBuffer.ReplaceCommandRange(this.CommandRange.Post, this.Commands.AsSpan(postStart, postCount));
                 }
