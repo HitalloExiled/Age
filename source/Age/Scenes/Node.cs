@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -7,7 +6,7 @@ using Age.Core.Extensions;
 
 namespace Age.Scenes;
 
-public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<Node>
+public abstract partial class Node : Disposable, IComparable<Node>
 {
     private NodeFlags nodeFlags;
     private bool hasStarted;
@@ -15,11 +14,17 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     internal protected Node? ShadowHost { get; private set; }
     internal protected Node? ShadowRoot { get; private set; }
 
+    internal protected Node? CompositeParent => this.ShadowHost ?? this.Parent;
+
+    internal ushort CompositeDepth { get; private set; }
+
     public Node? FirstChild      { get; private set; }
     public Node? LastChild       { get; private set; }
     public Node? NextSibling     { get; private set; }
     public Node? Parent          { get; private set; }
     public Node? PreviousSibling { get; private set; }
+
+    public ushort Depth { get; private set; }
 
     public bool IsConnected { get; private set; }
     public Node[] Children
@@ -27,7 +32,10 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         get => [.. this];
         set => this.ReplaceChildren(value);
     }
-    internal protected Node? CompositeParent => this.ShadowHost ?? this.Parent;
+
+    public virtual string? Name { get; set; }
+
+    public Scene? Scene { get; internal set; }
 
     [MemberNotNullWhen(false, nameof(FirstChild), nameof(LastChild))]
     public bool IsLeaf => this.FirstChild == null;
@@ -54,11 +62,7 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public bool IsSlotted                  => this.nodeFlags.HasFlags(NodeFlags.Slotted);
     public bool IsUpdatesSuspended         => this.nodeFlags.HasFlags(NodeFlags.UpdatesSuspended);
 
-    public virtual string? Name { get; set; }
-
     public abstract string NodeName { get; }
-
-    public Scene? Scene { get; internal set; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ClearParenting(Node parent, Node node, bool dispose)
@@ -231,11 +235,14 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public static Node? GetCommonAncestor(Node left, Node right)
     {
-        if (left.Parent == right.Parent)
+        var leftParent  = left.CompositeParent;
+        var rightParent = right.CompositeParent;
+
+        if (leftParent == rightParent)
         {
             return left.Parent;
         }
-        else if (left == right.Parent)
+        else if (left == rightParent)
         {
             return left;
         }
@@ -245,54 +252,33 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         }
         else
         {
-            var leftDepth  = 0;
-            var rightDepth = 0;
+            var leftDepth  = left?.CompositeDepth;
+            var rightDepth = right?.CompositeDepth;
 
-            var currentLeft  = left.Parent;
-            var currentRight = right.Parent;
-
-            while (currentLeft != null)
-            {
-                leftDepth++;
-                currentLeft  = currentLeft.Parent;
-            }
-
-            while (currentRight != null)
-            {
-                rightDepth++;
-                currentRight  = currentRight.Parent;
-            }
-
-            currentLeft  = left;
-            currentRight = right;
+            var currentLeft  = left;
+            var currentRight = right;
 
             while (leftDepth > rightDepth)
             {
-                currentLeft = currentLeft?.Parent;
+                currentLeft = currentLeft?.CompositeParent;
                 leftDepth--;
             }
 
             while (leftDepth < rightDepth)
             {
-                currentRight = currentRight?.Parent;
+                currentRight = currentRight?.CompositeParent;
                 rightDepth--;
             }
 
             while (currentLeft != currentRight)
             {
-                currentLeft  = currentLeft?.Parent;
-                currentRight = currentRight?.Parent;
+                currentLeft  = currentLeft?.CompositeParent;
+                currentRight = currentRight?.CompositeParent;
             }
 
             return currentLeft;
         }
     }
-
-    IEnumerator IEnumerable.GetEnumerator() =>
-        this.GetEnumerator();
-
-    IEnumerator<Node> IEnumerable<Node>.GetEnumerator() =>
-        this.GetEnumerator();
 
     private void AppendOrPrepend(Node node, bool append)
     {
@@ -635,9 +621,13 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void apply(Node node)
         {
-            node.IsConnected = true;
+            var compositeParent = node.CompositeParent;
+            var parent          = node.Parent;
 
-            node.Scene = node as Scene ?? node.CompositeParent?.Scene;
+            node.CompositeDepth = (ushort)((compositeParent?.CompositeDepth ?? -1) + 1);
+            node.Depth          = (ushort)((parent?.Depth ?? -1) + 1);
+            node.IsConnected    = true;
+            node.Scene          = node as Scene ?? compositeParent?.Scene;
 
             InvokeConnectedCallbacks(node);
         }
@@ -659,9 +649,11 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
         {
             InvokeDisconnectingCallbacks(node);
 
-            node.hasStarted  = false;
-            node.IsConnected = false;
-            node.Scene       = null;
+            node.CompositeDepth = default;
+            node.Depth          = default;
+            node.hasStarted     = default;
+            node.IsConnected    = default;
+            node.Scene          = default;
         }
     }
 
@@ -768,6 +760,90 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     protected virtual void OnDisposed() { }
     protected virtual void OnStart() { }
 
+    internal static ComposedPath GetCompositePathBetween(Node left, Node right)
+    {
+        var leftToAncestor  = new List<Node>();
+        var rightToAncestor = new List<Node>();
+
+        GetCompositePathBetween(leftToAncestor, rightToAncestor, left, right);
+
+        return new(leftToAncestor, rightToAncestor);
+    }
+
+    internal static void GetCompositePathBetween(List<Node> leftToAncestor, List<Node> rightToAncestor, Node left, Node right)
+    {
+        const string ERROR_MESSAGE = "The specified elements do not share a common ancestor in the composed tree.";
+
+        leftToAncestor.Clear();
+        rightToAncestor.Clear();
+
+        leftToAncestor.Add(left);
+        rightToAncestor.Add(right);
+
+        var leftCompositeParent  = left.CompositeParent;
+        var rightCompositeParent = right.CompositeParent;
+
+        if (leftCompositeParent == rightCompositeParent)
+        {
+            if (leftCompositeParent == null)
+            {
+                throw new InvalidOperationException(ERROR_MESSAGE);
+            }
+
+            leftToAncestor.Add(leftCompositeParent);
+            rightToAncestor.Add(leftCompositeParent);
+        }
+        else if (left == rightCompositeParent)
+        {
+            rightToAncestor.Add(left);
+        }
+        else if (leftCompositeParent == right)
+        {
+            leftToAncestor.Add(right);
+        }
+        else
+        {
+            var currentLeft  = left;
+            var currentRight = right;
+
+            var leftDepth  = left.CompositeDepth;
+            var rightDepth = right.CompositeDepth;
+
+            while (leftDepth > rightDepth)
+            {
+                currentLeft = currentLeft.CompositeParent!;
+                leftDepth--;
+
+                leftToAncestor.Add(currentLeft);
+            }
+
+            while (leftDepth < rightDepth)
+            {
+                currentRight = currentRight.CompositeParent!;
+                rightDepth--;
+
+                rightToAncestor.Add(currentRight);
+            }
+
+            while (currentLeft != currentRight)
+            {
+                currentLeft  = currentLeft.CompositeParent;
+                currentRight = currentRight.CompositeParent;
+
+                if (currentLeft == null || currentRight == null)
+                {
+                    leftToAncestor.Clear();
+                    rightToAncestor.Clear();
+
+                    throw new InvalidOperationException(ERROR_MESSAGE);
+                }
+
+                leftToAncestor.Add(currentLeft);
+                rightToAncestor.Add(currentRight);
+            }
+        }
+    }
+
     internal void Connect()
     {
         if (!this.IsConnected)
@@ -813,9 +889,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
     public void AppendChild(Node node) =>
         this.AppendOrPrepend(node, true);
 
-    public void AppendChildAsGuest(Node node) =>
-        this.AppendChild(node);
-
     public void AppendChildren(ReadOnlySpan<Node> nodes) =>
         this.AppendOrPrepend(nodes, true);
 
@@ -841,8 +914,8 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
         if (leftParent != rightParent)
         {
-            var leftDepth  = left.GetCompositeDepth();
-            var rightDepth = right.GetCompositeDepth();
+            var leftDepth  = left.CompositeDepth;
+            var rightDepth = right.CompositeDepth;
 
             while (leftDepth > rightDepth)
             {
@@ -948,36 +1021,6 @@ public abstract partial class Node : Disposable, IEnumerable<Node>, IComparable<
 
     public void DisposeChildrenInRange(Node start, Node end) =>
         this.DetachChildrenInRange(start, end, true);
-
-    public int GetCompositeDepth()
-    {
-        var depth = 0;
-
-        var node = this.CompositeParent;
-
-        while (node != null)
-        {
-            depth++;
-            node = node.CompositeParent;
-        }
-
-        return depth;
-    }
-
-    public int GetDepth()
-    {
-        var depth = 0;
-
-        var node = this.Parent;
-
-        while (node != null)
-        {
-            depth++;
-            node = node.Parent;
-        }
-
-        return depth;
-    }
 
     public Enumerator GetEnumerator() =>
         new(this);

@@ -41,10 +41,10 @@ public static class TreeFactory
         return [..nodes];
     }
 
-    public static TNode Linear<TNode>(int depth, int childrenCount = 0, string? name = "$") where TNode : Node, new() =>
-        Linear(static name => new TNode() { Name = name }, depth, childrenCount, name);
+    public static TNode Linear<TNode>(int depth, int children = 0, string? name = "$") where TNode : Node, new() =>
+        Linear(static name => new TNode() { Name = name }, depth, children, name);
 
-    public static TNode Linear<TNode>(Func<string, TNode> factory, int depth, int childrenCount = 0, string? name = "$") where TNode : Node
+    public static TNode Linear<TNode>(Func<string, TNode> factory, int depth, int children = 0, string? name = "$") where TNode : Node
     {
         var node = factory.Invoke(name!);
 
@@ -52,9 +52,27 @@ public static class TreeFactory
         {
             --depth;
 
-            for (var i = 0; i < childrenCount; i++)
+            for (var i = 0; i < children; i++)
             {
-                node.AppendChild(Linear(factory, depth, childrenCount, $"{name}.{i + 1}"));
+                node.AppendChild(Linear(factory, depth, children, $"{name}.{i + 1}"));
+            }
+        }
+
+        return node;
+    }
+
+    public static TNode Linear<TNode>(ReadOnlySpan<int> childrensPerDepth, string? name = "$") where TNode : Node, new() =>
+        Linear(static name => new TNode() { Name = name }, childrensPerDepth, name);
+
+    public static TNode Linear<TNode>(Func<string, TNode> factory, ReadOnlySpan<int> childrensPerDepth, string? name = "$") where TNode : Node
+    {
+        var node = factory.Invoke(name!);
+
+        if (childrensPerDepth.Length > 0)
+        {
+            for (var i = 0; i < childrensPerDepth[0]; i++)
+            {
+                node.AppendChild(Linear(factory, childrensPerDepth[1..], $"{name}.{i + 1}"));
             }
         }
 

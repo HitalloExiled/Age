@@ -1,22 +1,22 @@
-namespace Age.Elements;
+namespace Age.Scenes;
 
 internal partial record struct ComposedPath
 {
     internal ref struct Enumerator
     {
-        private readonly ReadOnlySpan<Layoutable> leftToAncestor;
-        private readonly ReadOnlySpan<Layoutable> rightToAncestor;
+        private readonly ReadOnlySpan<Node> leftToAncestor;
+        private readonly ReadOnlySpan<Node> rightToAncestor;
 
         private int  index = -1;
         private bool left  = true;
 
-        public Enumerator(ReadOnlySpan<Layoutable> leftToAncestor, ReadOnlySpan<Layoutable> rightToAncestor)
+        public Enumerator(ReadOnlySpan<Node> leftToAncestor, ReadOnlySpan<Node> rightToAncestor)
         {
             this.leftToAncestor  = leftToAncestor;
             this.rightToAncestor = rightToAncestor;
         }
 
-        public readonly Layoutable Current => this.left ? this.leftToAncestor[this.index] : this.rightToAncestor[this.index];
+        public readonly Node Current => this.left ? this.leftToAncestor[this.index] : this.rightToAncestor[this.index];
 
         public bool MoveNext()
         {

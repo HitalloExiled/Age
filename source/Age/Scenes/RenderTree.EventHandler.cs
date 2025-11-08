@@ -9,8 +9,8 @@ internal delegate void WindowMouseEventHandler(in WindowMouseEvent windowMouseEv
 
 public sealed partial class RenderTree
 {
-    private readonly List<Layoutable> leftToAncestor  = [];
-    private readonly List<Layoutable> rightToAncestor = [];
+    private readonly List<Node> leftToAncestor  = [];
+    private readonly List<Node> rightToAncestor = [];
 
     private int framesUntilRequest;
 
@@ -342,7 +342,7 @@ public sealed partial class RenderTree
                     {
                         this.hoveredElement.InvokeMouseOut(mouseEvent);
 
-                        Layoutable.GetComposedPathBetween(this.leftToAncestor, this.rightToAncestor, element, this.hoveredElement);
+                        Node.GetCompositePathBetween(this.leftToAncestor, this.rightToAncestor, element, this.hoveredElement);
 
                         var limit = this.rightToAncestor.Count - 1;
 

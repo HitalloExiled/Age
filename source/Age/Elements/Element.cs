@@ -3,7 +3,7 @@ using Age.Styling;
 
 namespace Age.Elements;
 
-public abstract partial class Element : Layoutable, IEnumerable<Element>
+public abstract partial class Element : Layoutable
 {
     public Canvas? Canvas { get; private set; }
 
@@ -102,16 +102,5 @@ public abstract partial class Element : Layoutable, IEnumerable<Element>
             Padding   = padding,
             Content   = content,
         };
-    }
-
-    IEnumerator<Element> IEnumerable<Element>.GetEnumerator()
-    {
-        foreach (var node in this)
-        {
-            if (node is Element element)
-            {
-                yield return element;
-            }
-        }
     }
 }

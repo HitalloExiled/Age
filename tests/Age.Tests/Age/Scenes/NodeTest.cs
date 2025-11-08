@@ -5,6 +5,46 @@ namespace Age.Tests.Age.Scenes;
 public class TestNode : Node
 {
     public override string NodeName => nameof(TestNode);
+
+    public TestNode(string name) =>
+        this.Name = name;
+}
+
+public class HostTestNode : Node
+{
+    public override string NodeName => nameof(HostTestNode);
+
+    public HostTestNode(string name, int depth = 2, int children = 2)
+    {
+        this.Name = name;
+
+        var shadowRoot = TreeFactory.Linear<TestNode>(static name => new(name), depth, children, $"{name}.#");
+
+        this.AttachShadowRoot(shadowRoot);
+    }
+}
+
+public class NestedHostTestNode : Node
+{
+    public override string NodeName => nameof(HostTestNode);
+
+    public NestedHostTestNode(string name, int depth = 1)
+    {
+        this.Name = name;
+
+        var shadowRoot = TreeFactory.Linear<TestNode>(name => new(name), 2, 1, $"{name}.#");
+
+        if (depth > 0)
+        {
+            var tail = shadowRoot.FirstChild!.FirstChild!;
+
+            var nested = new NestedHostTestNode($"{tail.Name}.1", --depth);
+
+            tail.AppendChild(nested);
+        }
+
+        this.AttachShadowRoot(shadowRoot);
+    }
 }
 
 public class NodeTest
@@ -59,10 +99,10 @@ public class NodeTest
     [Fact]
     public void AppendChild()
     {
-        var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child1" };
-        var child2 = new TestNode { Name = "child2" };
-        var child3 = new TestNode { Name = "child3" };
+        var parent = new TestNode("parent");
+        var child1 = new TestNode("child1");
+        var child2 = new TestNode("child2");
+        var child3 = new TestNode("child3");
 
         Assert.Null(parent.FirstChild);
         Assert.Null(parent.LastChild);
@@ -83,12 +123,12 @@ public class NodeTest
     [Fact]
     public void AppendChildren()
     {
-        var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child1" };
-        var child2 = new TestNode { Name = "child2" };
-        var child3 = new TestNode { Name = "child3" };
-        var child4 = new TestNode { Name = "child4" };
-        var child5 = new TestNode { Name = "child5" };
+        var parent = new TestNode("parent");
+        var child1 = new TestNode("child1");
+        var child2 = new TestNode("child2");
+        var child3 = new TestNode("child3");
+        var child4 = new TestNode("child4");
+        var child5 = new TestNode("child5");
 
         parent.AppendChildren([child1, child2]);
 
@@ -106,10 +146,10 @@ public class NodeTest
     [Fact]
     public void PrependChild()
     {
-        var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child1" };
-        var child2 = new TestNode { Name = "child2" };
-        var child3 = new TestNode { Name = "child3" };
+        var parent = new TestNode("parent");
+        var child1 = new TestNode("child1");
+        var child2 = new TestNode("child2");
+        var child3 = new TestNode("child3");
 
         parent.PrependChild(child3);
 
@@ -127,12 +167,12 @@ public class NodeTest
     [Fact]
     public void PrependChildren()
     {
-        var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child1" };
-        var child2 = new TestNode { Name = "child2" };
-        var child3 = new TestNode { Name = "child3" };
-        var child4 = new TestNode { Name = "child4" };
-        var child5 = new TestNode { Name = "child5" };
+        var parent = new TestNode("parent");
+        var child1 = new TestNode("child1");
+        var child2 = new TestNode("child2");
+        var child3 = new TestNode("child3");
+        var child4 = new TestNode("child4");
+        var child5 = new TestNode("child5");
 
         parent.PrependChildren([child4, child5]);
 
@@ -150,10 +190,10 @@ public class NodeTest
     [Fact]
     public void RemoveChild()
     {
-        var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child1" };
-        var child2 = new TestNode { Name = "child2" };
-        var child3 = new TestNode { Name = "child3" };
+        var parent = new TestNode("parent");
+        var child1 = new TestNode("child1");
+        var child2 = new TestNode("child2");
+        var child3 = new TestNode("child3");
 
         AssertParentHasNodes(parent, []);
 
@@ -203,10 +243,10 @@ public class NodeTest
     [Fact]
     public void RemoveChildren()
     {
-        var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child1" };
-        var child2 = new TestNode { Name = "child2" };
-        var child3 = new TestNode { Name = "child3" };
+        var parent = new TestNode("parent");
+        var child1 = new TestNode("child1");
+        var child2 = new TestNode("child2");
+        var child3 = new TestNode("child3");
 
         parent.AppendChild(child1);
         parent.AppendChild(child2);
@@ -222,16 +262,16 @@ public class NodeTest
     [Fact]
     public void RemoveChildrenInRange()
     {
-        var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child1" };
-        var child2 = new TestNode { Name = "child2" };
-        var child3 = new TestNode { Name = "child3" };
-        var child4 = new TestNode { Name = "child4" };
-        var child5 = new TestNode { Name = "child5" };
-        var child6 = new TestNode { Name = "child6" };
-        var child7 = new TestNode { Name = "child7" };
-        var child8 = new TestNode { Name = "child8" };
-        var child9 = new TestNode { Name = "child9" };
+        var parent = new TestNode("parent");
+        var child1 = new TestNode("child1");
+        var child2 = new TestNode("child2");
+        var child3 = new TestNode("child3");
+        var child4 = new TestNode("child4");
+        var child5 = new TestNode("child5");
+        var child6 = new TestNode("child6");
+        var child7 = new TestNode("child7");
+        var child8 = new TestNode("child8");
+        var child9 = new TestNode("child9");
 
         void appendAll() => parent.AppendChildren([child1, child2, child3, child4, child5, child6, child7, child8, child9]);
 
@@ -287,12 +327,12 @@ public class NodeTest
     [Fact]
     public void InsertBefore()
     {
-        var parent = new TestNode { Name = "parent" };
-        var child0 = new TestNode { Name = "child.0" };
-        var child1 = new TestNode { Name = "child.1" };
-        var child2 = new TestNode { Name = "child.2" };
-        var child3 = new TestNode { Name = "child.3" };
-        var child4 = new TestNode { Name = "child.4" };
+        var parent = new TestNode("parent");
+        var child0 = new TestNode("child.0");
+        var child1 = new TestNode("child.1");
+        var child2 = new TestNode("child.2");
+        var child3 = new TestNode("child.3");
+        var child4 = new TestNode("child.4");
 
         parent.AppendChild(child1);
         parent.AppendChild(child2);
@@ -310,12 +350,12 @@ public class NodeTest
     [Fact]
     public void InsertAfter()
     {
-        var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child.1" };
-        var child2 = new TestNode { Name = "child.2" };
-        var child3 = new TestNode { Name = "child.3" };
-        var child4 = new TestNode { Name = "child.4" };
-        var child5 = new TestNode { Name = "child.5" };
+        var parent = new TestNode("parent");
+        var child1 = new TestNode("child.1");
+        var child2 = new TestNode("child.2");
+        var child3 = new TestNode("child.3");
+        var child4 = new TestNode("child.4");
+        var child5 = new TestNode("child.5");
 
         parent.AppendChildren([child1, child3, child4]);
 
@@ -331,16 +371,16 @@ public class NodeTest
     [Fact]
     public void InsertNodesBefore()
     {
-        var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child.1" };
-        var child2 = new TestNode { Name = "child.2" };
-        var child3 = new TestNode { Name = "child.3" };
-        var child4 = new TestNode { Name = "child.4" };
-        var child5 = new TestNode { Name = "child.5" };
-        var child6 = new TestNode { Name = "child.6" };
-        var child7 = new TestNode { Name = "child.7" };
-        var child8 = new TestNode { Name = "child.8" };
-        var child9 = new TestNode { Name = "child.9" };
+        var parent = new TestNode("parent");
+        var child1 = new TestNode("child.1");
+        var child2 = new TestNode("child.2");
+        var child3 = new TestNode("child.3");
+        var child4 = new TestNode("child.4");
+        var child5 = new TestNode("child.5");
+        var child6 = new TestNode("child.6");
+        var child7 = new TestNode("child.7");
+        var child8 = new TestNode("child.8");
+        var child9 = new TestNode("child.9");
 
         parent.AppendChild(child1);
         parent.AppendChild(child2);
@@ -366,16 +406,16 @@ public class NodeTest
     [Fact]
     public void InsertNodesAfter()
     {
-        var parent = new TestNode { Name = "parent" };
-        var child1 = new TestNode { Name = "child.1" };
-        var child2 = new TestNode { Name = "child.2" };
-        var child3 = new TestNode { Name = "child.3" };
-        var child4 = new TestNode { Name = "child.4" };
-        var child5 = new TestNode { Name = "child.5" };
-        var child6 = new TestNode { Name = "child.6" };
-        var child7 = new TestNode { Name = "child.7" };
-        var child8 = new TestNode { Name = "child.8" };
-        var child9 = new TestNode { Name = "child.9" };
+        var parent = new TestNode("parent");
+        var child1 = new TestNode("child.1");
+        var child2 = new TestNode("child.2");
+        var child3 = new TestNode("child.3");
+        var child4 = new TestNode("child.4");
+        var child5 = new TestNode("child.5");
+        var child6 = new TestNode("child.6");
+        var child7 = new TestNode("child.7");
+        var child8 = new TestNode("child.8");
+        var child9 = new TestNode("child.9");
 
         parent.AppendChild(child1);
         parent.AppendChild(child2);
@@ -401,11 +441,11 @@ public class NodeTest
     [Fact]
     public void ReplaceNode()
     {
-        var parent = new TestNode { Name = "parent" };
-        var child0 = new TestNode { Name = "child.0" };
-        var child1 = new TestNode { Name = "child.1" };
-        var child2 = new TestNode { Name = "child.2" };
-        var child3 = new TestNode { Name = "child.3" };
+        var parent = new TestNode("parent");
+        var child0 = new TestNode("child.0");
+        var child1 = new TestNode("child.1");
+        var child2 = new TestNode("child.2");
+        var child3 = new TestNode("child.3");
 
         parent.AppendChildren([child1, child0, child3]);
 
@@ -429,20 +469,20 @@ public class NodeTest
     [Fact]
     public void ReplaceNodeWith()
     {
-        var parent  = new TestNode { Name = "parent" };
-        var child0  = new TestNode { Name = "child.0" };
-        var child1  = new TestNode { Name = "child.1" };
-        var child2  = new TestNode { Name = "child.2" };
-        var child3  = new TestNode { Name = "child.3" };
-        var child4  = new TestNode { Name = "child.4" };
-        var child5  = new TestNode { Name = "child.5" };
-        var child6  = new TestNode { Name = "child.6" };
-        var child7  = new TestNode { Name = "child.7" };
-        var child8  = new TestNode { Name = "child.8" };
-        var child9  = new TestNode { Name = "child.9" };
-        var child10 = new TestNode { Name = "child.10" };
-        var child11 = new TestNode { Name = "child.11" };
-        var child12 = new TestNode { Name = "child.12" };
+        var parent  = new TestNode("parent");
+        var child0  = new TestNode("child.0");
+        var child1  = new TestNode("child.1");
+        var child2  = new TestNode("child.2");
+        var child3  = new TestNode("child.3");
+        var child4  = new TestNode("child.4");
+        var child5  = new TestNode("child.5");
+        var child6  = new TestNode("child.6");
+        var child7  = new TestNode("child.7");
+        var child8  = new TestNode("child.8");
+        var child9  = new TestNode("child.9");
+        var child10 = new TestNode("child.10");
+        var child11 = new TestNode("child.11");
+        var child12 = new TestNode("child.12");
 
         parent.AppendChild(child5);
         parent.AppendChild(child0);
@@ -478,11 +518,11 @@ public class NodeTest
     [Fact]
     public void Enumerate()
     {
-        var child1 = new TestNode();
-        var child2 = new TestNode();
-        var child3 = new TestNode();
+        var child1 = new TestNode("$.1");
+        var child2 = new TestNode("$.2");
+        var child3 = new TestNode("$.3");
 
-        var parent = new TestNode();
+        var parent = new TestNode("$");
 
         parent.AppendChildren([child1, child2, child3]);
 
@@ -496,6 +536,20 @@ public class NodeTest
         }
 
         Assert.True(nodes.SequenceEqual([child1, child2, child3]));
+    }
+
+    [Fact]
+    public void GetCommonAncestor()
+    {
+        var tree  = TreeFactory.Linear<TestNode>(static name => new(name), 3, 3);
+        var nodes = TreeFactory.Flatten(tree).ToDictionary(static x => x.Name!, static x => x);
+
+        tree.Connect();
+
+        Assert.Equal(nodes["$.1"],   Node.GetCommonAncestor(nodes["$.1"],     nodes["$.1.1.1"]));
+        Assert.Equal(nodes["$.1.2"], Node.GetCommonAncestor(nodes["$.1.2.1"], nodes["$.1.2.2"]));
+        Assert.Equal(nodes["$"],     Node.GetCommonAncestor(nodes["$.2.2.1"], nodes["$.1.2"]));
+        Assert.Equal(nodes["$"],     Node.GetCommonAncestor(nodes["$.2.1.3"], nodes["$.3.2.1"]));
     }
 
     [Fact]
@@ -523,34 +577,34 @@ public class NodeTest
                                    End -> [B.B.A.C.B.A] [B.B.A.C.B.B]
         */
 
-        var root   = new TestNode { Name = "root" };
-        var a      = new TestNode { Name = "a" };
-        var aa     = new TestNode { Name = "a.a" };
-        var b      = new TestNode { Name = "b" };
-        var ba     = new TestNode { Name = "b.a" };
-        var baa    = new TestNode { Name = "b.a.a" };
-        var baaa   = new TestNode { Name = "b.a.a.a" };
-        var baab   = new TestNode { Name = "b.a.a.b" };
-        var baac   = new TestNode { Name = "b.a.a.c" };
-        var baaba  = new TestNode { Name = "b.a.a.b.a" };
-        var baabb  = new TestNode { Name = "b.a.a.b.b" };
-        var bab    = new TestNode { Name = "b.a.b" };
-        var bac    = new TestNode { Name = "b.a.c" };
-        var bb     = new TestNode { Name = "b.b" };
-        var bba    = new TestNode { Name = "b.b.a" };
-        var bbaa   = new TestNode { Name = "b.b.a.a" };
-        var bbab   = new TestNode { Name = "b.b.a.b" };
-        var bbac   = new TestNode { Name = "b.b.a.c" };
-        var bbaca  = new TestNode { Name = "b.b.a.c.a" };
-        var bbacb  = new TestNode { Name = "b.b.a.c.b" };
-        var bbacba = new TestNode { Name = "b.b.a.c.b.a" };
-        var bbacbb = new TestNode { Name = "b.b.a.c.b.b" };
-        var bbacc  = new TestNode { Name = "b.b.a.c.c" };
-        var bbb    = new TestNode { Name = "b.b.b" };
-        var bc     = new TestNode { Name = "b.c" };
-        var bca    = new TestNode { Name = "b.c.a" };
-        var bcb    = new TestNode { Name = "b.c.b" };
-        var c      = new TestNode { Name = "c" };
+        var root   = new TestNode("root");
+        var a      = new TestNode("a");
+        var aa     = new TestNode("a.a");
+        var b      = new TestNode("b");
+        var ba     = new TestNode("b.a");
+        var baa    = new TestNode("b.a.a");
+        var baaa   = new TestNode("b.a.a.a");
+        var baab   = new TestNode("b.a.a.b");
+        var baac   = new TestNode("b.a.a.c");
+        var baaba  = new TestNode("b.a.a.b.a");
+        var baabb  = new TestNode("b.a.a.b.b");
+        var bab    = new TestNode("b.a.b");
+        var bac    = new TestNode("b.a.c");
+        var bb     = new TestNode("b.b");
+        var bba    = new TestNode("b.b.a");
+        var bbaa   = new TestNode("b.b.a.a");
+        var bbab   = new TestNode("b.b.a.b");
+        var bbac   = new TestNode("b.b.a.c");
+        var bbaca  = new TestNode("b.b.a.c.a");
+        var bbacb  = new TestNode("b.b.a.c.b");
+        var bbacba = new TestNode("b.b.a.c.b.a");
+        var bbacbb = new TestNode("b.b.a.c.b.b");
+        var bbacc  = new TestNode("b.b.a.c.c");
+        var bbb    = new TestNode("b.b.b");
+        var bc     = new TestNode("b.c");
+        var bca    = new TestNode("b.c.a");
+        var bcb    = new TestNode("b.c.b");
+        var c      = new TestNode("c");
 
         var start = baabb;
         var end   = bbacba;
@@ -583,6 +637,8 @@ public class NodeTest
                 bc.AppendChild(bca);
                 bc.AppendChild(bcb);
         root.AppendChild(c);
+
+        root.Connect();
         #endregion
 
         var expected = new Node[]
@@ -600,67 +656,164 @@ public class NodeTest
     }
 
     [Fact]
+    public void Depth()
+    {
+        var root = TreeFactory.Linear<TestNode>(static name => new(name), 5, 1);
+        var flat = TreeFactory.Flatten(root);
+
+        for (var i = 0; i < flat.Length; i++)
+        {
+            Assert.Equal(0, flat[i].Depth);
+            Assert.Equal(0, flat[i].CompositeDepth);
+        }
+
+        root.Connect();
+
+        for (var i = 0; i < flat.Length; i++)
+        {
+            Assert.Equal(i, flat[i].Depth);
+            Assert.Equal(i, flat[i].CompositeDepth);
+        }
+
+        root.Disconnect();
+
+        for (var i = 0; i < flat.Length; i++)
+        {
+            Assert.Equal(0, flat[i].Depth);
+            Assert.Equal(0, flat[i].CompositeDepth);
+        }
+    }
+
+    [Fact]
+    public void CompositeDepth()
+    {
+        var root  = new NestedHostTestNode("$", 2);
+        var flat  = TreeFactory.Flatten(root);
+        var nodes = flat.ToDictionary(static x => x.Name!, static x => x);
+
+        for (var i = 0; i < flat.Length; i++)
+        {
+            Assert.Equal(0, flat[i].Depth);
+            Assert.Equal(0, flat[i].CompositeDepth);
+        }
+
+        root.Connect();
+
+        Assert.Equal(0, nodes["$"].Depth);
+        Assert.Equal(0, nodes["$.#"].Depth);
+        Assert.Equal(1, nodes["$.#.1"].Depth);
+        Assert.Equal(2, nodes["$.#.1.1"].Depth);
+        Assert.Equal(3, nodes["$.#.1.1.1"].Depth);
+        Assert.Equal(0, nodes["$.#.1.1.1.#"].Depth);
+        Assert.Equal(1, nodes["$.#.1.1.1.#.1"].Depth);
+        Assert.Equal(2, nodes["$.#.1.1.1.#.1.1"].Depth);
+        Assert.Equal(3, nodes["$.#.1.1.1.#.1.1.1"].Depth);
+        Assert.Equal(0, nodes["$.#.1.1.1.#.1.1.1.#"].Depth);
+        Assert.Equal(1, nodes["$.#.1.1.1.#.1.1.1.#.1"].Depth);
+        Assert.Equal(2, nodes["$.#.1.1.1.#.1.1.1.#.1.1"].Depth);
+
+        Assert.Equal(0,  nodes["$"].CompositeDepth);
+        Assert.Equal(1,  nodes["$.#"].CompositeDepth);
+        Assert.Equal(2,  nodes["$.#.1"].CompositeDepth);
+        Assert.Equal(3,  nodes["$.#.1.1"].CompositeDepth);
+        Assert.Equal(4,  nodes["$.#.1.1.1"].CompositeDepth);
+        Assert.Equal(5,  nodes["$.#.1.1.1.#"].CompositeDepth);
+        Assert.Equal(6,  nodes["$.#.1.1.1.#.1"].CompositeDepth);
+        Assert.Equal(7,  nodes["$.#.1.1.1.#.1.1"].CompositeDepth);
+        Assert.Equal(8,  nodes["$.#.1.1.1.#.1.1.1"].CompositeDepth);
+        Assert.Equal(9,  nodes["$.#.1.1.1.#.1.1.1.#"].CompositeDepth);
+        Assert.Equal(10, nodes["$.#.1.1.1.#.1.1.1.#.1"].CompositeDepth);
+        Assert.Equal(11, nodes["$.#.1.1.1.#.1.1.1.#.1.1"].CompositeDepth);
+
+        root.Disconnect();
+
+        for (var i = 0; i < flat.Length; i++)
+        {
+            Assert.Equal(0, flat[i].Depth);
+            Assert.Equal(0, flat[i].CompositeDepth);
+        }
+    }
+
+    [Fact]
     public void Compare()
     {
-        TestNode node1;
-        TestNode node11;
-        TestNode node111;
-        TestNode node112;
-        TestNode node113;
-        TestNode node114;
-        TestNode node115;
-        TestNode node2;
-        TestNode node21;
-        TestNode node22;
+        var tree = TreeFactory.Linear<TestNode>(static name => new(name), [2, 2, 5]);
 
-        var root = new TestNode
+        var node3  = new HostTestNode("$.3");
+        var node31 = TreeFactory.Linear<TestNode>(static name => new(name), 2, 1, "$.3.1");
+
+        tree.AppendChild(node3);
+        node3.AppendChild(node31);
+
+        var nodes = TreeFactory.Flatten(tree).ToDictionary(static x => x.Name!, static x => x);
+
+        tree.Connect();
+
+        Assert.Equal(-1, nodes["$"].CompareTo(nodes["$.1"]));
+        Assert.Equal(1,  nodes["$.1.1"].CompareTo(nodes["$"]));
+
+        Assert.Equal(1,  nodes["$.1.1.3"].CompareTo(nodes["$.1.1.1"]));
+        Assert.Equal(1,  nodes["$.1.1.3"].CompareTo(nodes["$.1.1.2"]));
+        Assert.Equal(0,  nodes["$.1.1.3"].CompareTo(nodes["$.1.1.3"]));
+        Assert.Equal(-1, nodes["$.1.1.3"].CompareTo(nodes["$.1.1.4"]));
+        Assert.Equal(-1, nodes["$.1.1.3"].CompareTo(nodes["$.1.1.5"]));
+
+        Assert.Equal(-1, nodes["$.1"].CompareTo(nodes["$.2.1"]));
+        Assert.Equal(1,  nodes["$.2.2"].CompareTo(nodes["$.1.1"]));
+        Assert.Equal(-1, nodes["$.1.1"].CompareTo(nodes["$.2"]));
+
+        Assert.Equal(-1, nodes["$.3"].CompareTo(nodes["$.3.#.1"]));
+        Assert.Equal(-1, nodes["$.3.#.2"].CompareTo(nodes["$.3.1"]));
+        Assert.Equal(1,  nodes["$.3.1"].CompareTo(nodes["$.3.#.1.1"]));
+    }
+
+    [Fact]
+    public void GetPathToCommonComposedAncestor()
+    {
+        var treeA  = TreeFactory.Linear<TestNode>(static name => new(name), [2, 2, 1, 1]);
+        var nodesA = TreeFactory.Flatten(treeA).ToDictionary(x => x.Name!, x => x);
+
+        var treeB  = TreeFactory.Linear<TestNode>(static name => new(name), [2, 2, 1, 1]);
+        var nodesB = TreeFactory.Flatten(treeB).ToDictionary(x => x.Name!, x => x);
+
+        treeA.Connect();
+        treeB.Connect();
+
+        var actual = Node.GetCompositePathBetween(nodesA["$"], nodesA["$.1"]);
+
+        assert([nodesA["$"], nodesA["$.1"]], [nodesA["$"]], [nodesA["$.1"], nodesA["$"]], actual);
+
+        actual = Node.GetCompositePathBetween(nodesA["$.1"], nodesA["$.2"]);
+
+        assert([nodesA["$.1"], nodesA["$"], nodesA["$.2"]], [nodesA["$.1"], nodesA["$"]], [nodesA["$.2"], nodesA["$"]], actual);
+
+        actual = Node.GetCompositePathBetween(nodesA["$.1"], nodesA["$.2.1.1"]);
+
+        assert(
+            [nodesA["$.1"], nodesA["$"], nodesA["$.2"], nodesA["$.2.1"], nodesA["$.2.1.1"]],
+            [nodesA["$.1"], nodesA["$"]],
+            [nodesA["$.2.1.1"], nodesA["$.2.1"], nodesA["$.2"], nodesA["$"]],
+            actual
+        );
+
+        actual = Node.GetCompositePathBetween(nodesA["$.2.2.1.1"], nodesA["$.2.1.1"]);
+
+        assert(
+            [nodesA["$.2.2.1.1"], nodesA["$.2.2.1"], nodesA["$.2.2"], nodesA["$.2"], nodesA["$.2.1"], nodesA["$.2.1.1"]],
+            [nodesA["$.2.2.1.1"], nodesA["$.2.2.1"], nodesA["$.2.2"], nodesA["$.2"]],
+            [nodesA["$.2.1.1"], nodesA["$.2.1"], nodesA["$.2"]],
+            actual
+        );
+
+        Assert.Throws<InvalidOperationException>(() => Node.GetCompositePathBetween(nodesA["$.2.2.1.1"], nodesB["$.2.2.1.1"]));
+
+        static void assert(Node[] expectedPath, Node[] leftToAncestor, Node[] ancestorToRight, in ComposedPath actual)
         {
-            Name     = "Root",
-            Children =
-            [
-                node1 = new TestNode
-                {
-                    Name     = "$.1",
-                    Children =
-                    [
-                        node11 = new TestNode
-                        {
-                            Name     = "$.1.1",
-                            Children =
-                            [
-                                node111 = new TestNode { Name = "$.1.1.1" },
-                                node112 = new TestNode { Name = "$.1.1.2" },
-                                node113 = new TestNode { Name = "$.1.1.3" },
-                                node114 = new TestNode { Name = "$.1.1.4" },
-                                node115 = new TestNode { Name = "$.1.1.5" },
-                            ]
-                        },
+            var actualPath = actual.GetElements();
 
-                    ]
-                },
-                node2 = new TestNode
-                {
-                    Name     = "$.2",
-                    Children =
-                    [
-                        node21 = new TestNode { Name = "$.2.1" },
-                        node22 = new TestNode { Name = "$.2.2" },
-                    ]
-                }
-            ]
-        };
-
-        Assert.Equal(-1, root.CompareTo(node1));
-        Assert.Equal(1,  node11.CompareTo(root));
-
-        Assert.Equal(1,  node113.CompareTo(node111));
-        Assert.Equal(1,  node113.CompareTo(node112));
-        Assert.Equal(0,  node113.CompareTo(node113));
-        Assert.Equal(-1, node113.CompareTo(node114));
-        Assert.Equal(-1, node113.CompareTo(node115));
-
-        Assert.Equal(-1, node1.CompareTo(node21));
-        Assert.Equal(1,  node22.CompareTo(node11));
-        Assert.Equal(-1, node11.CompareTo(node2));
+            Assert.Equal(expectedPath, actualPath.ToArray());
+            Assert.Equal(leftToAncestor, actual.LeftToAncestor);
+            Assert.Equal(ancestorToRight, actual.RightToAncestor);
+        }
     }
 }
