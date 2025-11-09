@@ -31,7 +31,7 @@ public class Editor : Scene2D
     public Editor()
     {
         this.AppendChild(this.canvas);
-        this.setup = ShadowRootTest.Setup;
+        this.setup = SubViewportTest.Setup;
 
         this.pages =
         [
@@ -54,7 +54,6 @@ public class Editor : Scene2D
             new(nameof(TextSelectionTest),        TextSelectionTest.Setup),
 
             new(nameof(SubViewportTest), SubViewportTest.Setup),
-
         ];
     }
 
