@@ -23,23 +23,23 @@ public record struct Transform2D
     public Transform2D(float positionX, float positionY, float rotation, float scaleX, float scaleY) : this(new(positionX, positionY), rotation, new(scaleX, scaleY))
     { }
 
-    public static Transform2D CreateRotated(float radians) =>
-        new(Matrix3x2<float>.CreateRotated(radians));
+    public static Transform2D Rotated(float radians) =>
+        new(Matrix3x2<float>.Rotated(radians));
 
-    public static Transform2D CreateScaled(float scale) =>
-        new(Matrix3x2<float>.CreateScaled(scale));
+    public static Transform2D Scaled(float scale) =>
+        new(Matrix3x2<float>.Scaled(scale));
 
-    public static Transform2D CreateScaled(float scaleX, float scaleY) =>
-        new(Matrix3x2<float>.CreateScaled(scaleX, scaleY));
+    public static Transform2D Scaled(float scaleX, float scaleY) =>
+        new(Matrix3x2<float>.Scaled(scaleX, scaleY));
 
-    public static Transform2D CreateScaled(in Vector2<float> scale) =>
-        new(Matrix3x2<float>.CreateScaled(scale));
+    public static Transform2D Scaled(in Vector2<float> scale) =>
+        new(Matrix3x2<float>.Scaled(scale));
 
-    public static Transform2D CreateTranslated(float translationX, float translationY) =>
-        new(Matrix3x2<float>.CreateTranslated(new(translationX, translationY)));
+    public static Transform2D Translated(float translationX, float translationY) =>
+        new(Matrix3x2<float>.Translated(new(translationX, translationY)));
 
-    public static Transform2D CreateTranslated(in Vector2<float> translation) =>
-        new(Matrix3x2<float>.CreateTranslated(translation));
+    public static Transform2D Translated(in Vector2<float> translation) =>
+        new(Matrix3x2<float>.Translated(translation));
 
     public readonly Transform2D Inverse() =>
         new(this.matrix.Inverse());
@@ -58,4 +58,7 @@ public record struct Transform2D
 
     public static implicit operator Matrix3x2<float>(in Transform2D transform) =>
         transform.matrix;
+
+    public static implicit operator Transform2D(in Matrix3x2<float> matrix) =>
+        new(matrix);
 }

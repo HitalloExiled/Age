@@ -148,11 +148,11 @@ public abstract partial class Element
         {
             var layoutCommandImage = this.GetLayoutCommandImage();
 
-            this.ResolveImageSize(this.ComputedStyle.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size, out var size, out var transform, out var uv);
+            this.ResolveImageSize(this.ComputedStyle.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size, out var size, out var matrix, out var uv);
 
-            layoutCommandImage.Size           = size;
-            layoutCommandImage.LocalTransform = transform;
-            layoutCommandImage.TextureMap     = layoutCommandImage.TextureMap with { UV = uv };
+            layoutCommandImage.Size        = size;
+            layoutCommandImage.LocalMatrix = matrix;
+            layoutCommandImage.TextureMap  = layoutCommandImage.TextureMap with { UV = uv };
         }
     }
 

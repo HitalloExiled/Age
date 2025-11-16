@@ -166,7 +166,7 @@ public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
             Color     = 0xFFFF_0000_0000_0000 | command.Metadata,
             Flags     = command.Flags,
             Size      = command.Size,
-            Transform = command.Transform,
+            Transform = command.Matrix,
             UV        = UVRect.Normalized,
             Viewport  = viewport,
         };

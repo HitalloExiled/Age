@@ -15,7 +15,7 @@ public class Matrix3x2Test
     [MemberData(nameof(TranslateData), MemberType = typeof(Matrix3x2Test))]
     public void CreateTranslated(Vector2<float> position)
     {
-        var matrix = Matrix3x2<float>.CreateTranslated(position);
+        var matrix = Matrix3x2<float>.Translated(position);
 
         Assert.Equal(position, matrix.Translation);
         Assert.Equal(0, matrix.Rotation);
@@ -30,7 +30,7 @@ public class Matrix3x2Test
     {
         var rotation = Angle.DegreesToRadians(angle);
 
-        var matrix = Matrix3x2<float>.CreateRotated(rotation);
+        var matrix = Matrix3x2<float>.Rotated(rotation);
 
         Assert.True(Math<float>.IsApprox(matrix.Rotation, rotation));
         Assert.True(matrix.Scale.IsApprox(Vector2<float>.One));
@@ -42,7 +42,7 @@ public class Matrix3x2Test
     [MemberData(nameof(ScaleData), MemberType = typeof(Matrix3x2Test))]
     public void CreateScaled(Vector2<float> scale)
     {
-        var matrix = Matrix3x2<float>.CreateScaled(scale);
+        var matrix = Matrix3x2<float>.Scaled(scale);
 
         Assert.True(matrix.Scale.IsApprox(scale));
     }
@@ -61,8 +61,8 @@ public class Matrix3x2Test
     {
         var rotation = Angle.DegreesToRadians(data.Rotation);
 
-        var matrix = Matrix3x2<float>.CreateRotated(rotation)
-            * Matrix3x2<float>.CreateTranslated(data.Translation);
+        var matrix = Matrix3x2<float>.Rotated(rotation)
+            * Matrix3x2<float>.Translated(data.Translation);
 
         Assert.Equal(data.Translation, matrix.Translation);
         Assert.True(Math<float>.IsApprox(matrix.Rotation, rotation));
@@ -84,8 +84,8 @@ public class Matrix3x2Test
         var rotation = Angle.DegreesToRadians(data.Rotation);
 
         var matrix =
-            Matrix3x2<float>.CreateScaled(data.Scale)
-            * Matrix3x2<float>.CreateRotated(rotation);
+            Matrix3x2<float>.Scaled(data.Scale)
+            * Matrix3x2<float>.Rotated(rotation);
 
         Assert.True(Math<float>.IsApprox(matrix.Rotation, rotation));
         Assert.True(matrix.Scale.IsApprox(data.Scale));
@@ -106,9 +106,9 @@ public class Matrix3x2Test
         var rotation = Angle.DegreesToRadians(data.Rotation);
 
         var matrix =
-            Matrix3x2<float>.CreateScaled(data.Scale)
-            * Matrix3x2<float>.CreateRotated(rotation)
-            * Matrix3x2<float>.CreateTranslated(data.Translation);
+            Matrix3x2<float>.Scaled(data.Scale)
+            * Matrix3x2<float>.Rotated(rotation)
+            * Matrix3x2<float>.Translated(data.Translation);
 
         Assert.Equal(data.Translation, matrix.Translation);
         Assert.True(Math<float>.IsApprox(matrix.Rotation, rotation));
@@ -118,13 +118,13 @@ public class Matrix3x2Test
     [Fact]
     public void Inverse()
     {
-        var parent = Matrix3x2<float>.CreateTranslated(1, 0)
-            * Matrix3x2<float>.CreateRotated(Angle.DegreesToRadians(45f))
-            * Matrix3x2<float>.CreateScaled(0.25f, 0.75f);
+        var parent = Matrix3x2<float>.Translated(1, 0)
+            * Matrix3x2<float>.Rotated(Angle.DegreesToRadians(45f))
+            * Matrix3x2<float>.Scaled(0.25f, 0.75f);
 
-        var child = Matrix3x2<float>.CreateTranslated(1, 0)
-            * Matrix3x2<float>.CreateRotated(Angle.DegreesToRadians(90f))
-            * Matrix3x2<float>.CreateScaled(3, 2);
+        var child = Matrix3x2<float>.Translated(1, 0)
+            * Matrix3x2<float>.Rotated(Angle.DegreesToRadians(90f))
+            * Matrix3x2<float>.Scaled(3, 2);
 
         var childGlobal = child * parent;
         var inverse     = parent.Inverse();

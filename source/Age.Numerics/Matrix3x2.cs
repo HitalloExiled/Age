@@ -108,11 +108,11 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Matrix3x2<T> CreateRotated(T radians) =>
-        CreateRotated(radians, default);
+    public static Matrix3x2<T> Rotated(T radians) =>
+        Rotated(radians, default);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Matrix3x2<T> CreateRotated(T radians, in Vector2<T> origin)
+    public static Matrix3x2<T> Rotated(T radians, in Vector2<T> origin)
     {
         Unsafe.SkipInit(out Matrix3x2<T> matrix);
 
@@ -133,15 +133,15 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Matrix3x2<T> CreateScaled(T scale) =>
-        CreateScaled(new Vector2<T>(scale));
+    public static Matrix3x2<T> Scaled(T scale) =>
+        Scaled(new Vector2<T>(scale));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Matrix3x2<T> CreateScaled(T scaleX, T scaleY) =>
-        CreateScaled(new Vector2<T>(scaleX, scaleY));
+    public static Matrix3x2<T> Scaled(T scaleX, T scaleY) =>
+        Scaled(new Vector2<T>(scaleX, scaleY));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Matrix3x2<T> CreateScaled(in Vector2<T> scale)
+    public static Matrix3x2<T> Scaled(in Vector2<T> scale)
     {
         Unsafe.SkipInit(out Matrix3x2<T> matrix);
 
@@ -156,19 +156,19 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Matrix3x2<T> CreateSkewed(T radiansX, T radiansY) =>
-        CreateSkewed(radiansX, radiansY, default);
+    public static Matrix3x2<T> Skewed(T radiansX, T radiansY) =>
+        Skewed(radiansX, radiansY, default);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Matrix3x2<T> CreateSkewed(in Vector2<T> radians) =>
-        CreateSkewed(radians, default);
+    public static Matrix3x2<T> Skewed(in Vector2<T> radians) =>
+        Skewed(radians, default);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Matrix3x2<T> CreateSkewed(T radiansX, T radiansY, Vector2<T> origin) =>
-        CreateSkewed(new(radiansX, radiansY), origin);
+    public static Matrix3x2<T> Skewed(T radiansX, T radiansY, Vector2<T> origin) =>
+        Skewed(new(radiansX, radiansY), origin);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Matrix3x2<T> CreateSkewed(in Vector2<T> radians, Vector2<T> origin)
+    public static Matrix3x2<T> Skewed(in Vector2<T> radians, Vector2<T> origin)
     {
         Unsafe.SkipInit(out Matrix3x2<T> matrix);
 
@@ -189,11 +189,11 @@ public record struct Matrix3x2<T> where T : IFloatingPoint<T>, IFloatingPointIee
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Matrix3x2<T> CreateTranslated(in Vector2<T> translation) =>
-        CreateTranslated(translation.X, translation.Y);
+    public static Matrix3x2<T> Translated(in Vector2<T> translation) =>
+        Translated(translation.X, translation.Y);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Matrix3x2<T> CreateTranslated(T x, T y)
+    public static Matrix3x2<T> Translated(T x, T y)
     {
         Unsafe.SkipInit(out Matrix3x2<T> matrix);
 

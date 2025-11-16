@@ -1,3 +1,5 @@
+using Age.Commands;
+using Age.Core;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Scenes;
@@ -6,18 +8,20 @@ using System.Runtime.CompilerServices;
 
 namespace Age.Elements;
 
-public abstract class Layoutable : Spatial2D
+public abstract class Layoutable : Spatial<Command2D, Matrix3x2<float>>
 {
     internal const string DEFAULT_FONT_FAMILY = "Segoi UI";
     internal const ushort DEFAULT_FONT_SIZE   = 16;
 
-    private Transform2D CachedComposedParentTransform => (this.CompositeParentElement as Layoutable)?.CachedTransform ?? Transform2D.Identity;
-    private Transform2D CombinedTransform             => this.LayoutTransform * this.LocalTransform * this.ParentContentOffset;
-    private Transform2D CompositeParentTransform      => (this.CompositeParentElement as Layoutable)?.Transform ?? Transform2D.Identity;
-    private Transform2D ParentContentOffset           => Transform2D.CreateTranslated((this.CompositeParentElement?.ContentOffset ?? default).ToVector2<float>().InvertedX);
+    private CacheValue<Matrix3x2<float>> matrixCache;
 
-    private protected virtual StencilLayer? ContentStencilLayer { get; }
-    private protected virtual Transform2D   LayoutTransform => Transform2D.CreateTranslated(this.Offset);
+    private Matrix3x2<float> CachedCompositeParentMatrix => (this.CompositeParentElement as Layoutable)?.CachedMatrix ?? Matrix3x2<float>.Identity;
+    private Matrix3x2<float> CombinedMatrix              => this.LayoutMatrix * this.ParentContentOffset;
+    private Matrix3x2<float> CompositeParentMatrix       => (this.CompositeParentElement as Layoutable)?.Matrix ?? Matrix3x2<float>.Identity;
+    private Matrix3x2<float> ParentContentOffset         => Matrix3x2<float>.Translated((this.CompositeParentElement?.ContentOffset ?? default).ToVector2<float>().InvertedX);
+
+    private protected virtual StencilLayer?    ContentStencilLayer { get; }
+    private protected virtual Matrix3x2<float> LayoutMatrix => Matrix3x2<float>.Translated(this.Offset);
 
     protected static Element?     ActiveScrollBarTarget  { get; set; }
     protected static Text?        ActiveText             { get; set; }
@@ -43,25 +47,19 @@ public abstract class Layoutable : Spatial2D
 
     internal virtual StencilLayer? StencilLayer { get; set; }
 
-    internal sealed override Transform2D CachedTransform
+    internal abstract bool IsParentDependent { get; }
+
+    public sealed override Matrix3x2<float> CachedMatrix
     {
         get
         {
-            if (this.TransformCache.IsInvalid)
+            if (this.matrixCache.IsInvalid)
             {
-                this.TransformCache = new(this.CombinedTransform * this.CachedComposedParentTransform);
+                this.matrixCache = new(this.CombinedMatrix * this.CachedCompositeParentMatrix);
             }
 
-            return this.TransformCache.Value;
+            return this.matrixCache.Value;
         }
-    }
-
-    internal abstract bool IsParentDependent { get; }
-
-    public sealed override Transform2D Transform
-    {
-        get => this.CombinedTransform * this.CompositeParentTransform;
-        set => this.LocalTransform = this.LayoutTransform.Inverse() * value * this.CompositeParentTransform.Inverse() * this.ParentContentOffset.Inverse();
     }
 
     public Element? CompositeParentElement => this.CompositeParent as Element;
@@ -99,6 +97,8 @@ public abstract class Layoutable : Spatial2D
             return null;
         }
     }
+
+    public override Matrix3x2<float> Matrix => this.CombinedMatrix * this.CompositeParentMatrix;
 
     private protected static ulong CombineIds(int elementIndex, int childIndex) =>
         ((ulong)childIndex << 24) | ((uint)elementIndex);
@@ -278,10 +278,10 @@ public abstract class Layoutable : Spatial2D
     {
         this.UpdateLayoutIndependentAncestor();
 
-        var transform = this.Transform;
+        var matrix = this.Matrix;
 
         var size     = this.Boundings.Cast<int>();
-        var position = new Point<int>((int)transform.Position.X, -(int)transform.Position.Y);
+        var position = new Point<int>((int)matrix.Translation.X, -(int)matrix.Translation.Y);
 
         return new(size, position);
     }

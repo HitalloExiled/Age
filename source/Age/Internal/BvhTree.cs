@@ -17,7 +17,7 @@ public unsafe class BvhTree
 
         foreach (var node in nodes)
         {
-            aabb.Extends(new(node.Boundings.ToVector(), 1), new(node.Transform.Position.InvertedY, depths[node]));
+            aabb.Extends(new(node.Boundings.ToVector(), 1), new(node.Matrix.Translation.InvertedY, depths[node]));
         }
 
         return aabb;
@@ -50,7 +50,7 @@ public unsafe class BvhTree
 
         foreach (var node in nodes)
         {
-            var aabb = new AABB<float>(new(node.Boundings.ToVector(), 1), new(node.Transform.Position.InvertedY, depths[node]));
+            var aabb = new AABB<float>(new(node.Boundings.ToVector(), 1), new(node.Matrix.Translation.InvertedY, depths[node]));
 
             var intersection = particion.Intersection(aabb);
 
@@ -81,7 +81,7 @@ public unsafe class BvhTree
         {
             var sortedElements = leftNodes
                 .OrderByDescending(static x => x.Boundings.Area)
-                .ThenBy(static x => x.Transform.Position.X)
+                .ThenBy(static x => x.Matrix.Translation.X)
                 .ToArray()
                 .AsSpan();
 
@@ -130,7 +130,7 @@ public unsafe class BvhTree
         {
             var sortedElements = rightNodes
                 .OrderByDescending(static x => x.Boundings.Area)
-                .ThenByDescending(static x => x.Transform.Position.X)
+                .ThenByDescending(static x => x.Matrix.Translation.X)
                 .ToArray()
                 .AsSpan();
 
@@ -197,10 +197,10 @@ public unsafe class BvhTree
         {
             SingleCommand = new RectCommand
             {
-                Border         = new Border(2, 0, color * new Color(1, 1, 1, 1)),
-                Flags          = Shaders.CanvasShader.Flags.ColorAsBackground,
-                Size           = new((uint)bvhNode.AABB.Size.X, (uint)bvhNode.AABB.Size.Y),
-                LocalTransform = Transform2D.CreateTranslated(bvhNode.AABB.Position.X, -bvhNode.AABB.Position.Y)
+                Border      = new Border(2, 0, color * new Color(1, 1, 1, 1)),
+                Flags       = Shaders.CanvasShader.Flags.ColorAsBackground,
+                Size        = new((uint)bvhNode.AABB.Size.X, (uint)bvhNode.AABB.Size.Y),
+                LocalMatrix = Matrix3x2<float>.Translated(bvhNode.AABB.Position.X, -bvhNode.AABB.Position.Y)
             }
         };
 
@@ -234,7 +234,7 @@ public unsafe class BvhTree
                 depths[node] = depth;
                 nodes.Add(node);
 
-                aabb.Extends(new(node.Boundings.ToVector(), 1), new(node.Transform.Position.InvertedY, depth));
+                aabb.Extends(new(node.Boundings.ToVector(), 1), new(node.Matrix.Translation.InvertedY, depth));
             }
         }
 

@@ -47,7 +47,7 @@ public class Scene2DColorPass(Viewport viewport) : Scene2DPass(viewport)
             Color     = command.Color,
             Flags     = command.Flags,
             Size      = command.Size,
-            Transform = command.Transform,
+            Transform = command.Matrix,
             UV        = command.TextureMap.UV,
             Viewport  = this.Viewport.Size,
         };

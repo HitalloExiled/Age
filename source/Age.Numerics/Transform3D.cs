@@ -28,6 +28,8 @@ public record struct Transform3D
     public readonly Vector3<float> Up      => this.matrix.Y;
     public readonly Vector3<float> Forward => this.matrix.Z;
 
+    public readonly Matrix4x4<float> Matrix => this.matrix;
+
     public Transform3D() =>
         this.matrix = Matrix4x4<float>.Identity;
 

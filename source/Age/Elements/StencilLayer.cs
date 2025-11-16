@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Numerics;
 using Age.Elements.Enumerators;
 using Age.Numerics;
 using Age.Shaders;
@@ -18,7 +19,7 @@ internal class StencilLayer(Element owner) : IEnumerable<StencilLayer>
 
     public CanvasShader.Border Border    => this.Owner.ComputedStyle.Border ?? default(CanvasShader.Border);
     public Size<uint>          Size      => this.Owner.Boundings;
-    public Transform2D         Transform => this.Owner.CachedTransform;
+    public Matrix3x2<float>    Transform => this.Owner.CachedMatrix;
 
     private void InvokeConnected()
     {

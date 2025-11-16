@@ -1,4 +1,4 @@
-using Age.Resources;
+using Age.Numerics;
 using Age.Scenes;
 
 namespace Age.Commands;
@@ -35,9 +35,9 @@ where TNode    : Node
 
 public static class CommandPool
 {
-    public sealed class MeshCommandPool : CommandPool<MeshCommand, Spatial3D>;
-    public sealed class RectCommandPool : CommandPool<RectCommand, Spatial2D>;
-    public sealed class TextCommandPool : CommandPool<TextCommand, Spatial2D>;
+    public sealed class MeshCommandPool : CommandPool<MeshCommand, Spatial<Command3D, Matrix4x4<float>>>;
+    public sealed class RectCommandPool : CommandPool<RectCommand, Spatial<Command2D, Matrix3x2<float>>>;
+    public sealed class TextCommandPool : CommandPool<TextCommand, Spatial<Command2D, Matrix3x2<float>>>;
 
     public static MeshCommandPool MeshCommand { get; } = new();
     public static RectCommandPool RectCommand { get; } = new();

@@ -4,27 +4,27 @@ using Age.Numerics;
 
 namespace Age.Scenes;
 
-public abstract class Spatial2D : Renderable<Command2D>
+public abstract class Spatial2D : Spatial<Command2D, Matrix3x2<float>>
 {
-    private protected CacheValue<Transform2D> TransformCache { get; set; }
+    private CacheValue<Matrix3x2<float>> transformCache;
 
-    private protected Transform2D CachedParentTransform => (this.Parent as Spatial2D)?.CachedTransform ?? Transform2D.Identity;
-    private protected Transform2D ParentTransform       => (this.Parent as Spatial2D)?.Transform ?? Transform2D.Identity;
+    private protected Matrix3x2<float> CachedCompositeParentMatrix => (this.CompositeParent as Spatial2D)?.CachedMatrix ?? Matrix3x2<float>.Identity;
+    private protected Matrix3x2<float> CompositeParentMatrix       => (this.CompositeParent as Spatial2D)?.Transform ?? Matrix3x2<float>.Identity;
 
-    internal virtual Transform2D CachedTransform
+    public sealed override Matrix3x2<float> CachedMatrix
     {
         get
         {
-            if (this.TransformCache.IsInvalid)
+            if (this.transformCache.IsInvalid)
             {
-                this.TransformCache = new(this.LocalTransform * this.CachedParentTransform);
+                this.transformCache = new(this.LocalTransform.Matrix * this.CachedCompositeParentMatrix);
             }
 
-            return this.TransformCache.Value;
+            return this.transformCache.Value;
         }
     }
 
-    public virtual Transform2D LocalTransform { get; set; } = Transform2D.Identity;
+    public Transform2D LocalTransform { get; set; } = Transform2D.Identity;
 
     public new Scene2D? Scene
     {
@@ -32,9 +32,11 @@ public abstract class Spatial2D : Renderable<Command2D>
         set => base.Scene = value;
     }
 
-    public virtual Transform2D Transform
+    public Transform2D Transform
     {
-        get => this.LocalTransform * this.ParentTransform;
-        set => this.LocalTransform = value * this.ParentTransform.Inverse();
+        get => this.LocalTransform.Matrix * this.CompositeParentMatrix;
+        set => this.LocalTransform = value.Matrix * this.CompositeParentMatrix.Inverse();
     }
+
+    public sealed override Matrix3x2<float> Matrix => this.Transform.Matrix;
 }

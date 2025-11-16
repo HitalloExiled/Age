@@ -7,6 +7,7 @@ using Age.Storage;
 using Age.Commands;
 using Age.Rendering.Resources;
 using Image = Age.Styling.Image;
+using System.Numerics;
 
 namespace Age.Elements;
 
@@ -106,7 +107,7 @@ public abstract partial class Element
 
     private protected override StencilLayer? ContentStencilLayer => this.ownStencilLayer ?? this.StencilLayer;
 
-    private protected override Transform2D LayoutTransform
+    private protected override Matrix3x2<float> LayoutMatrix
     {
         get
         {
@@ -119,19 +120,19 @@ public abstract partial class Element
                 var x = Unit.Resolve(transformOrigin.X, boundings.Width,  fontSize);
                 var y = Unit.Resolve(transformOrigin.Y, boundings.Height, fontSize);
 
-                var origin = Transform2D.CreateTranslated(-x, y);
+                var origin = Matrix3x2<float>.Translated(-x, y);
 
-                var transform = Transform2D.Identity;
+                var transform = Matrix3x2<float>.Identity;
 
                 for (var i = this.ComputedStyle.Transforms.Length - 1; i >= 0; i--)
                 {
                     transform *= TransformOp.Resolve(in this.ComputedStyle.Transforms[i], boundings, fontSize);
                 }
 
-                return origin * transform * origin.Inverse() * base.LayoutTransform;
+                return origin * transform * origin.Inverse() * base.LayoutMatrix;
             }
 
-            return base.LayoutTransform;
+            return base.LayoutMatrix;
         }
     }
 
@@ -1000,7 +1001,7 @@ public abstract partial class Element
         return resolved;
     }
 
-    private void ResolveImageSize(Image image, in Size<uint> textureSize, out Size<uint> size, out Transform2D transform, out UVRect uv)
+    private void ResolveImageSize(Image image, in Size<uint> textureSize, out Size<uint> size, out Matrix3x2<float> matrix, out UVRect uv)
     {
         var fontSize      = this.FontSize;
         var imageSize     = image.Size;
@@ -1018,9 +1019,9 @@ public abstract partial class Element
 
                     var offset = new Vector2<float>(x + this.border.Left, -y + -this.border.Top);
 
-                    size      = boundings;
-                    transform = Transform2D.CreateTranslated(offset);
-                    uv        = UVRect.Normalized;
+                    size   = boundings;
+                    matrix = Matrix3x2<float>.Translated(offset);
+                    uv     = UVRect.Normalized;
 
                     break;
                 }
@@ -1033,8 +1034,8 @@ public abstract partial class Element
 
                     if (boundings == default)
                     {
-                        size      = default;
-                        transform = Transform2D.Identity;
+                        size   = default;
+                        matrix = Matrix3x2<float>.Identity;
 
                         break;
                     }
@@ -1048,7 +1049,7 @@ public abstract partial class Element
 
                     var offset = new Vector2<float>(x + this.border.Left, y + this.border.Top);
 
-                    transform = Transform2D.CreateTranslated(offset.InvertedY);
+                    matrix = Matrix3x2<float>.Translated(offset.InvertedY);
 
                     break;
                 }
@@ -1058,14 +1059,14 @@ public abstract partial class Element
 
                     if (boundings == default)
                     {
-                        size      = default;
-                        transform = Transform2D.Identity;
-                        uv        = default;
+                        size   = default;
+                        matrix = Matrix3x2<float>.Identity;
+                        uv     = default;
 
                         break;
                     }
 
-                    var width = Unit.Resolve(imageSize.Value.Width, (uint)boundings.Width, fontSize);
+                    var width  = Unit.Resolve(imageSize.Value.Width, (uint)boundings.Width, fontSize);
                     var height = Unit.Resolve(imageSize.Value.Height, (uint)boundings.Height, fontSize);
 
                     var x = Unit.Resolve(imagePosition.X, (uint)(boundings.Width - width), fontSize);
@@ -1107,9 +1108,9 @@ public abstract partial class Element
                         offset.Y = this.border.Top + y;
                     }
 
-                    size      = new((uint)width, (uint)height);
-                    transform = Transform2D.CreateTranslated(offset.InvertedY);
-                    uv        = new()
+                    size   = new((uint)width, (uint)height);
+                    matrix = Matrix3x2<float>.Translated(offset.InvertedY);
+                    uv     = new()
                     {
                         P1 = new(offsetX, offsetY),
                         P2 = new(offsetX + repeatX, offsetY),

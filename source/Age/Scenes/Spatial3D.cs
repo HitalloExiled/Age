@@ -4,28 +4,32 @@ using Age.Numerics;
 
 namespace Age.Scenes;
 
-public abstract class Spatial3D : Renderable<Command3D>
+public abstract class Spatial3D : Spatial<Command3D, Matrix4x4<float>>
 {
-    private CacheValue<Transform3D> transformCache;
+    private CacheValue<Matrix4x4<float>> transformCache;
 
-    private Transform3D CachedParentTransform => (this.Parent as Spatial3D)?.CachedTransform ?? Transform3D.Identity;
-    private Transform3D ParentTransform       => (this.Parent as Spatial3D)?.Transform ?? Transform3D.Identity;
-    private Transform3D PivotedTransform      => Transform3D.Translated(this.Pivot) * this.LocalTransform * Transform3D.Translated(-this.Pivot);
+    private Matrix4x4<float> CachedCompositeParentMatrix => (this.CompositeParent as Spatial3D)?.CachedMatrix ?? Matrix4x4<float>.Identity;
+    private Matrix4x4<float> CompositeParentMatrix       => (this.CompositeParent as Spatial3D)?.Matrix ?? Matrix4x4<float>.Identity;
+    private Matrix4x4<float> PivotedMatrix               => Matrix4x4<float>.Translated(this.Pivot) * this.LocalTransform.Matrix * Matrix4x4<float>.Translated(-this.Pivot);
 
-    internal virtual Transform3D CachedTransform
+    public sealed override Matrix4x4<float> CachedMatrix
     {
         get
         {
             if (this.transformCache.IsInvalid)
             {
-                this.transformCache = new(this.PivotedTransform * this.CachedParentTransform);
+                this.transformCache = new(this.PivotedMatrix * this.CachedCompositeParentMatrix);
             }
 
             return this.transformCache.Value;
         }
     }
 
-    public virtual Transform3D LocalTransform { get; set; } = Transform3D.Identity;
+    public Transform3D LocalTransform { get; set; } = Transform3D.Identity;
+
+    public sealed override Matrix4x4<float> Matrix => this.Transform;
+
+    public Vector3<float> Pivot { get; set; }
 
     public new Scene3D? Scene
     {
@@ -33,11 +37,9 @@ public abstract class Spatial3D : Renderable<Command3D>
         set => base.Scene = value;
     }
 
-    public virtual Vector3<float> Pivot { get; set; }
-
-    public virtual Transform3D Transform
+    public Transform3D Transform
     {
-        get => this.PivotedTransform * this.ParentTransform;
-        set => this.LocalTransform = Transform3D.Translated(-this.Pivot) * value * this.ParentTransform.Inverse() * Transform3D.Translated(this.Pivot);
+        get => this.PivotedMatrix * this.CompositeParentMatrix;
+        set => this.LocalTransform = Matrix4x4<float>.Translated(-this.Pivot) * value.Matrix * this.CompositeParentMatrix.Inverse() * Matrix4x4<float>.Translated(this.Pivot);
     }
 }

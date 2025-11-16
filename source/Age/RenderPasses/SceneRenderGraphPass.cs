@@ -142,7 +142,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
         var ubo = new UniformBufferObject
         {
             Model = mesh.Transform,
-            View  = camera.CachedTransform.Inverse(),
+            View  = camera.CachedMatrix.Inverse(),
             Proj  = Matrix4x4<float>.PerspectiveFov(camera.FoV, viewport.Width / (float)viewport.Height, camera.Near, camera.Far)
         };
 

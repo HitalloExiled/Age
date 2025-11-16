@@ -32,7 +32,7 @@ public static class ClippingTest
                 Border    = new(BORDER_SIZE, 60, Color.Green),
                 Color     = Color.White,
                 FontSize  = 24,
-                // Transform = Transform2D.CreateTranslated(25, -40),
+                // Transform = Matrix3x2<float>.CreateTranslated(25, -40),
                 // Overflow  = OverflowKind.Clipping,
                 // Size      = new(Unit.Px(100), Unit.Px(100)),
             }

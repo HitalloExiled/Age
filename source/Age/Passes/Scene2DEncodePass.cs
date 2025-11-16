@@ -64,7 +64,7 @@ public sealed class Scene2DEncodePass : Scene2DPass
             Color     = 0xFFFF_0000_0000_0000 | command.Metadata,
             Flags     = command.Flags,
             Size      = command.Size,
-            Transform = command.Transform,
+            Transform = command.Matrix,
             UV        = UVRect.Normalized,
             Viewport  = this.Viewport.Size,
         };

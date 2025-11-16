@@ -198,24 +198,24 @@ public sealed class Text : Layoutable
                 if (this.Buffer[^1] == '\n')
                 {
                     position.X = 0;
-                    position.Y = command.LocalTransform.Position.Y - this.LineHeight;
+                    position.Y = command.LocalMatrix.Translation.Y - this.LineHeight;
                 }
                 else
                 {
-                    position = command.LocalTransform.Position;
+                    position = command.LocalMatrix.Translation;
                     position.X += command.Size.Width;
                 }
             }
             else
             {
-                position = this.Commands[(int)this.CursorPosition].LocalTransform.Position;
+                position = this.Commands[(int)this.CursorPosition].LocalMatrix.Translation;
             }
 
-            this.caretCommand.LocalTransform = Transform2D.CreateTranslated(position);
+            this.caretCommand.LocalMatrix = Matrix3x2<float>.Translated(position);
         }
         else
         {
-            this.caretCommand.LocalTransform = Transform2D.Identity;
+            this.caretCommand.LocalMatrix = Matrix3x2<float>.Identity;
         }
     }
 
@@ -309,9 +309,9 @@ public sealed class Text : Layoutable
             {
                 var width = (uint)float.Round(glyphsWidths[charIndex]);
 
-                selectionCommand.LocalTransform = Transform2D.CreateTranslated(new(cursor.X, cursor.Y - baseLine));
-                selectionCommand.Metadata       = CombineIds(elementIndex, i + 1);
-                selectionCommand.Size           = new(width, this.LineHeight);
+                selectionCommand.LocalMatrix = Matrix3x2<float>.Translated(new(cursor.X, cursor.Y - baseLine));
+                selectionCommand.Metadata    = CombineIds(elementIndex, i + 1);
+                selectionCommand.Size        = new(width, this.LineHeight);
 
                 if (!char.IsWhiteSpace(character))
                 {
@@ -343,15 +343,15 @@ public sealed class Text : Layoutable
                     characterCommand.Metadata = default;
                     characterCommand.UserData = default;
 
-                    characterCommand.Color          = color;
-                    characterCommand.CommandFilter  = CommandFilter.Color;
-                    characterCommand.Flags          = Flags.GrayscaleTexture | Flags.MultiplyColor;
-                    characterCommand.Index          = selectionCommand.Index;
-                    characterCommand.Line           = selectionCommand.Line;
-                    characterCommand.LocalTransform = Transform2D.CreateTranslated(offset);
-                    characterCommand.Size           = size;
-                    characterCommand.StencilLayer   = this.StencilLayer;
-                    characterCommand.TextureMap     = glyph;
+                    characterCommand.Color         = color;
+                    characterCommand.CommandFilter = CommandFilter.Color;
+                    characterCommand.Flags         = Flags.GrayscaleTexture | Flags.MultiplyColor;
+                    characterCommand.Index         = selectionCommand.Index;
+                    characterCommand.Line          = selectionCommand.Line;
+                    characterCommand.LocalMatrix   = Matrix3x2<float>.Translated(offset);
+                    characterCommand.Size          = size;
+                    characterCommand.StencilLayer  = this.StencilLayer;
+                    characterCommand.TextureMap    = glyph;
 
                     cursor.X += (int)width;
 
@@ -385,7 +385,7 @@ public sealed class Text : Layoutable
                 var previous = (TextCommand)commands[i - 1];
 
                 selectionCommand.Index          = previous.Index;
-                selectionCommand.LocalTransform = previous.LocalTransform;
+                selectionCommand.LocalMatrix = previous.LocalMatrix;
                 selectionCommand.Metadata       = previous.Metadata;
                 selectionCommand.Size           = previous.Size;
                 selectionCommand.Surrogate      = TextCommand.SurrogateKind.Low;
@@ -417,9 +417,9 @@ public sealed class Text : Layoutable
 
         var command = (TextCommand)this.Commands[(int)character];
 
-        var cursor = this.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
+        var cursor = this.Matrix.Inverse() * new Vector2<float>(x, -y);
 
-        if (cursor.X > command.LocalTransform.Position.X + (command.Size.Width / 2))
+        if (cursor.X > command.LocalMatrix.Translation.X + (command.Size.Width / 2))
         {
             character += command.Surrogate == TextCommand.SurrogateKind.High ? 2u : 1;
         }
@@ -647,7 +647,7 @@ public sealed class Text : Layoutable
             return;
         }
 
-        var cursor = this.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
+        var cursor = this.Matrix.Inverse() * new Vector2<float>(x, -y);
 
         if (cursor == this.previouCursor)
         {
@@ -727,7 +727,7 @@ public sealed class Text : Layoutable
             return;
         }
 
-        var cursor = this.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
+        var cursor = this.Matrix.Inverse() * new Vector2<float>(x, -y);
 
         if (cursor == this.previouCursor)
         {
@@ -954,11 +954,11 @@ public sealed class Text : Layoutable
 
         var rect = this.Commands[(int)index].GetAffineRect();
 
-        var transform = this.Transform;
+        var matrix = this.Matrix;
 
         var position = new Point<int>(
-            (int)(transform.Position.X  + rect.Position.X),
-            -(int)(transform.Position.Y + rect.Position.Y)
+            (int)(matrix.Translation.X  + rect.Position.X),
+            -(int)(matrix.Translation.Y + rect.Position.Y)
         );
 
         return new(rect.Size.Cast<int>(), position);
@@ -986,11 +986,11 @@ public sealed class Text : Layoutable
 
         var rect = this.CursorRect;
 
-        var transform = this.Transform;
+        var matrix = this.Matrix;
 
         var position = new Point<int>(
-            (int)(transform.Position.X  + rect.Position.X),
-            -(int)(transform.Position.Y + rect.Position.Y)
+            (int)(matrix.Translation.X  + rect.Position.X),
+            -(int)(matrix.Translation.Y + rect.Position.Y)
         );
 
         return new(rect.Size.Cast<int>(), position);
@@ -1018,11 +1018,11 @@ public sealed class Text : Layoutable
             rect.Grow(command.GetAffineRect());
         }
 
-        var transform = this.Transform;
+        var matrix = this.Matrix;
 
         rect.Position = new Point<float>(
-            (float)(transform.Position.X + rect.Position.X),
-            -(float)(transform.Position.Y + rect.Position.Y)
+            (float)(matrix.Translation.X + rect.Position.X),
+            -(float)(matrix.Translation.Y + rect.Position.Y)
         );
 
         return rect.Cast<int>();

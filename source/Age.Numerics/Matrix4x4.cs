@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using Microsoft.VisualBasic;
 
 namespace Age.Numerics;
 
@@ -379,6 +380,7 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
         return result;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix4x4<T> Rotated(in Vector3<T> axis, T angle)
     {
         var sin = T.Sin(angle);
@@ -458,6 +460,35 @@ public record struct Matrix4x4<T> where T : IFloatingPoint<T>, IFloatingPointIee
         result.M44 = ((this.M11  * this.M22 * this.M33) - (this.M11 * this.M23 * this.M32) - this.M21 * this.M12 * this.M33 + this.M21 * this.M13 * this.M32 + this.M31 * this.M12 * this.M23 - this.M31 * this.M13 * this.M22) * reciprocal;
 
         return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Matrix4x4<T> Translated(in Vector3<T> offset) =>
+        Translated(offset.X, offset.Y, offset.Z);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Matrix4x4<T> Translated(T x, T y, T z)
+    {
+        Unsafe.SkipInit(out Matrix4x4<T> matrix);
+
+        matrix.M11 = T.One;
+        matrix.M12 = T.Zero;
+        matrix.M13 = T.Zero;
+        matrix.M14 = T.Zero;
+        matrix.M21 = T.Zero;
+        matrix.M22 = T.One;
+        matrix.M23 = T.Zero;
+        matrix.M24 = T.Zero;
+        matrix.M31 = T.Zero;
+        matrix.M32 = T.Zero;
+        matrix.M33 = T.One;
+        matrix.M34 = T.Zero;
+        matrix.M41 = x;
+        matrix.M42 = y;
+        matrix.M43 = z;
+        matrix.M44 = T.One;
+
+        return matrix;
     }
 
     public readonly Matrix4x4<T> Transposed() =>
