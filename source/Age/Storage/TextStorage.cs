@@ -140,7 +140,7 @@ internal class TextStorage : Disposable
             }
         }
 
-        return entries!;
+        return entries;
     }
 
     public SKFont GetFont(string fontFamily, float fontSize, int fontWeight, Dictionary<string, string>? externalSource)

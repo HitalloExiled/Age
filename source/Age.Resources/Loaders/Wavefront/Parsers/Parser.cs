@@ -143,7 +143,7 @@ public abstract class Parser
         {
             var sign = isNegative ? "-" : "";
 
-            value = T.Parse(sign + this.NextToken().Value!, CultureInfo.InvariantCulture);
+            value = T.Parse(sign + this.NextToken().Value, CultureInfo.InvariantCulture);
 
             return true;
         }

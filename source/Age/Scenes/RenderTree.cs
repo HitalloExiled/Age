@@ -19,9 +19,13 @@ public sealed partial class RenderTree : Disposable
 
     public bool IsDirty { get; private set; }
 
-    private Buffer                     buffer = null!;
-    private ulong                      bufferVersion;
-    private CanvasEncodeRenderGraphPass canvasIndexRenderGraphPass = null!;
+    [AllowNull]
+    private Buffer buffer;
+
+    private ulong bufferVersion;
+
+    [AllowNull]
+    private CanvasEncodeRenderGraphPass canvasIndexRenderGraphPass;
 
     public Window Window { get; }
 
@@ -59,9 +63,10 @@ public sealed partial class RenderTree : Disposable
         {
             var node = this.Nodes[i];
 
+            node.InvokeStart();
+
             if (!node.IsUpdatesSuspended)
             {
-                node.Start();
                 node.Update();
             }
 
@@ -81,7 +86,7 @@ public sealed partial class RenderTree : Disposable
     }
 
     [MemberNotNull(nameof(buffer))]
-    private unsafe void UpdateBuffer()
+    private void UpdateBuffer()
     {
         this.buffer?.Dispose();
 

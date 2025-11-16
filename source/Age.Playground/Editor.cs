@@ -1,15 +1,16 @@
-using Age.Playground.Tests;
+using Age.Core.Extensions;
+using Age.Elements.Events;
 using Age.Elements;
 using Age.Platforms.Display;
+using Age.Playground.Tests.Components;
+using Age.Playground.Tests.Scene;
+using Age.Playground.Tests.Styling;
+using Age.Playground.Tests;
 using Age.RenderPasses;
 using Age.Scenes;
-using ThirdParty.Vulkan.Flags;
-
-using Common = Age.Internal.Common;
-using Age.Playground.Tests.Styling;
-using Age.Playground.Tests.Components;
 using System.Diagnostics;
-using Age.Playground.Tests.Scene;
+using ThirdParty.Vulkan.Flags;
+using Age.Internal;
 
 namespace Age.Playground;
 
@@ -17,10 +18,8 @@ internal record struct Page(string Title, Setup Setup);
 
 internal delegate void Setup(Canvas canvas);
 
-public class Editor : Scene2D
+public sealed class Editor : UIScene
 {
-    private const uint BORDER_SIZE = 10;
-    private readonly Canvas canvas = new();
     private readonly Page[] pages;
     private int index;
 
@@ -30,7 +29,6 @@ public class Editor : Scene2D
 
     public Editor()
     {
-        this.AppendChild(this.canvas);
         this.setup = SubViewportTest.Setup;
 
         this.pages =
@@ -55,46 +53,48 @@ public class Editor : Scene2D
 
             new(nameof(SubViewportTest), SubViewportTest.Setup),
         ];
+
+        this.Canvas.KeyDown += this.OnCanvasKeyDown;
     }
 
-    private void HandleInputs()
+    private void OnCanvasKeyDown(in KeyEvent keyEvent)
     {
         var reload = true;
 
-        var window = this.canvas.Scene!.Viewport!.Window!;
+        var window = this.Scene!.Viewport!.Window!;
 
         var currentIndex = this.index;
 
-        if (Input.IsKeyJustPressed(Key.Up))
+        if (keyEvent.Key == Key.Up)
         {
             currentIndex = 0;
         }
-        else if (Input.IsKeyJustPressed(Key.Down))
+        else if (keyEvent.Key == Key.Down)
         {
             currentIndex = this.pages.Length - 1;
         }
-        else if (Input.IsKeyJustPressed(Key.Left))
+        else if (keyEvent.Key == Key.Left)
         {
             if (--currentIndex < 0)
             {
                 currentIndex = this.pages.Length - 1;
             }
         }
-        else if (Input.IsKeyJustPressed(Key.Right))
+        else if (keyEvent.Key == Key.Right)
         {
             if (++currentIndex == this.pages.Length)
             {
                 currentIndex = 0;
             }
         }
-        else if (Input.IsKeyPressed(Key.Control) && Input.IsKeyJustPressed(Key.P))
+        else if (keyEvent.Modifiers.HasFlags(KeyStates.Control) && keyEvent.Key == Key.P)
         {
             PrintCanvasIndex();
             reload = false;
         }
         else
         {
-            reload = Input.IsKeyJustPressed(Key.R);
+            reload = keyEvent.Key == Key.R;
         }
 
         if (this.index != currentIndex)
@@ -129,9 +129,9 @@ public class Editor : Scene2D
     {
         var start = Stopwatch.GetTimestamp();
 
-        this.canvas.DisposeChildren();
+        this.Canvas.DisposeChildren();
 
-        this.setup.Invoke(this.canvas);
+        this.setup.Invoke(this.Canvas);
 
         Console.WriteLine($"Reload time: {Stopwatch.GetElapsedTime(start).TotalMilliseconds}ms");
     }
@@ -155,7 +155,4 @@ public class Editor : Scene2D
         HotReloadService.ApplicationUpdated -= this.Reload;
     }
 #endif
-
-    public override void Update() =>
-        this.HandleInputs();
 }

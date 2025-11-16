@@ -26,11 +26,7 @@ public abstract class Spatial2D : Spatial<Command2D, Matrix3x2<float>>
 
     public Transform2D LocalTransform { get; set; } = Transform2D.Identity;
 
-    public new Scene2D? Scene
-    {
-        get => base.Scene as Scene2D;
-        set => base.Scene = value;
-    }
+    public new Scene2D? Scene => base.Scene as Scene2D;
 
     public Transform2D Transform
     {

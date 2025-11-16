@@ -5,8 +5,6 @@ namespace Age.Elements;
 
 public abstract partial class Element : Layoutable
 {
-    public Canvas? Canvas { get; private set; }
-
     public string? InnerText
     {
         get

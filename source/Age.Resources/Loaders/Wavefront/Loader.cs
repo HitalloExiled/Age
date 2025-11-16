@@ -6,7 +6,7 @@ public static class Loader
 {
     public static Data Load(string filepath, ObjParser.Options? options = null)
     {
-        using var reader = new StreamReader(File.OpenRead(filepath))!;
+        using var reader = new StreamReader(File.OpenRead(filepath));
 
         var mtlLoader = new MtlLoader();
 

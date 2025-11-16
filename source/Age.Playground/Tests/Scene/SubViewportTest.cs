@@ -24,7 +24,8 @@ public static class SubViewportTest
         var subViewportY    = new SubViewport(new(200)) { Name = "Y",    Camera3D = scene.GreenCamera, Scene3D = scene };
         var subViewportZ    = new SubViewport(new(200)) { Name = "Z",    Camera3D = scene.BlueCamera,  Scene3D = scene };
 
-        canvas.Scene.AppendChildren([subViewportFree, subViewportX, subViewportY, subViewportZ]);
+        canvas.Scene.Viewport.Scene2D?.Dispose();
+        canvas.Scene.Viewport.Scene2D = new Scene2D { Children = [subViewportFree, subViewportX, subViewportY, subViewportZ] };
 
         var root = new FlexBox
         {
@@ -66,13 +67,14 @@ public static class SubViewportTest
                             },
                             Children =
                             [
-                                new EmbeddedViewport
+                                new FlexBox
                                 {
                                     Style =
                                     {
-                                        Border = new(BORDER_SIZE, default, Color.Margenta),
+                                        Border          = new(BORDER_SIZE, default, Color.Margenta),
+                                        BackgroundImage = new(subViewportFree.Texture),
+                                        Size            = subViewportFree.Size,
                                     },
-                                    Viewport = subViewportFree
                                 },
                                 new FlexBox
                                 {
@@ -82,29 +84,32 @@ public static class SubViewportTest
                                     },
                                     Children =
                                     [
-                                        new EmbeddedViewport
+                                        new FlexBox
                                         {
                                             Style =
                                             {
-                                                Border = new(BORDER_SIZE, default, Color.Red)
+                                                Border          = new(BORDER_SIZE, default, Color.Red),
+                                                BackgroundImage = new(subViewportX.Texture),
+                                                Size            = subViewportX.Size,
                                             },
-                                            Viewport = subViewportX
                                         },
-                                        new EmbeddedViewport
+                                        new FlexBox
                                         {
                                             Style =
                                             {
-                                                Border = new(BORDER_SIZE, default, Color.Green)
+                                                Border          = new(BORDER_SIZE, default, Color.Green),
+                                                BackgroundImage = new(subViewportY.Texture),
+                                                Size            = subViewportY.Size,
                                             },
-                                            Viewport = subViewportY
                                         },
-                                        new EmbeddedViewport
+                                        new FlexBox
                                         {
                                             Style =
                                             {
-                                                Border = new(BORDER_SIZE, default, Color.Blue)
+                                                Border           = new(BORDER_SIZE, default, Color.Blue),
+                                                BackgroundImage = new(subViewportZ.Texture),
+                                                Size            = subViewportZ.Size,
                                             },
-                                            Viewport = subViewportZ
                                         }
                                     ]
                                 }

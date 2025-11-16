@@ -24,7 +24,7 @@ public partial class GeometryShader
                 Binding  = 0,
                 Location = 0,
                 Format   = VkFormat.R32G32B32Sfloat,
-                Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Position))!,
+                Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Position)),
             };
 
             attributes[1] = new()
@@ -32,7 +32,7 @@ public partial class GeometryShader
                 Binding  = 0,
                 Location = 1,
                 Format   = VkFormat.R32G32B32A32Sfloat,
-                Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Color))!,
+                Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(Color)),
             };
 
             attributes[2] = new()
@@ -40,7 +40,7 @@ public partial class GeometryShader
                 Binding  = 0,
                 Location = 2,
                 Format   = VkFormat.R32G32Sfloat,
-                Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(UV))!,
+                Offset   = (uint)Marshal.OffsetOf<Vertex>(nameof(UV)),
             };
 
             return attributes;

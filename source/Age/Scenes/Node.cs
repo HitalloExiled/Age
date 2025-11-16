@@ -35,7 +35,7 @@ public abstract partial class Node : Disposable, IComparable<Node>
 
     public virtual string? Name { get; set; }
 
-    public Scene? Scene { get; internal set; }
+    public Scene? Scene { get; private set; }
 
     [MemberNotNullWhen(false, nameof(FirstChild), nameof(LastChild))]
     public bool IsLeaf => this.FirstChild == null;
@@ -876,7 +876,7 @@ public abstract partial class Node : Disposable, IComparable<Node>
     internal CompositeTraversalEnumerator GetCompositeTraversalEnumerator() =>
         new(this);
 
-    internal void Start()
+    internal void InvokeStart()
     {
         if (!this.hasStarted)
         {

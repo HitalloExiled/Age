@@ -105,7 +105,7 @@ public partial class ObjParser(string filepath, StreamReader reader, MtlLoader m
     {
         this.NextToken();
 
-        return this.NextToken().Value!;
+        return this.NextToken().Value;
     }
 
     private Vector3<float> ParseNormal()

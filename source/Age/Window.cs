@@ -130,6 +130,8 @@ public sealed class Window : Viewport
 
     public Window(string title, in Size<uint> size, in Point<int> position, Window? parent = null)
     {
+        this.MakeSubtreeStatePristine();
+
         this.window        = new DisplayWindow(title, size, position, parent?.window);
         this.Surface       = VulkanRenderer.Singleton.CreateSurface(this.window.Handle, this.window.ClientSize);
         this.renderTargets = new RenderTarget[this.Surface.Swapchain.Images.Length];

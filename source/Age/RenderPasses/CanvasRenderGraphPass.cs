@@ -32,7 +32,7 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
     private void ClearStencilBuffer(in VkExtent2D extent) =>
         this.ClearStencilBufferAttachment(extent, 0);
 
-    private unsafe void ClearStencilBufferAttachment(in VkExtent2D extent, uint value)
+    private void ClearStencilBufferAttachment(in VkExtent2D extent, uint value)
     {
         var attachment = new VkClearAttachment
         {
@@ -58,16 +58,16 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
         this.CommandBuffer.ClearAttachments([attachment], [rect]);
     }
 
-    private unsafe void EraseStencil(RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport) =>
+    private void EraseStencil(RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport) =>
         this.SetStencil(this.CanvasStencilEraserShader, pipeline, stencilLayer, viewport);
 
     private void FillStencilBuffer(in VkExtent2D extent) =>
         this.ClearStencilBufferAttachment(extent, 1);
 
-    private unsafe void WriteStencil(RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport) =>
+    private void WriteStencil(RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport) =>
         this.SetStencil(this.CanvasStencilWriterShader, pipeline, stencilLayer, viewport);
 
-    private unsafe void SetStencil(CanvasStencilMaskShader canvasStencilWriterShader, RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport)
+    private void SetStencil(CanvasStencilMaskShader canvasStencilWriterShader, RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport)
     {
         this.CommandBuffer.BindShader(canvasStencilWriterShader);
 
@@ -166,8 +166,6 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
     protected abstract void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<uint> viewport);
     protected abstract void Disposed();
 
-    protected abstract ReadOnlySpan<Command2D> GetCommand(RenderContext renderContext);
-
     public unsafe override void Execute()
     {
         var viewport   = this.Window.Size;
@@ -200,7 +198,7 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
 
                     var previousDepth = 0u;
 
-                    var commands = GetCommand(this.Window.RenderContext);
+                    var commands = this.Window.RenderContext.UIBuffer.Commands;
 
                     for (var i = 0; i < commands.Length; i++)
                     {

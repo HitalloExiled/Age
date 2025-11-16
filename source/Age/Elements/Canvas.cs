@@ -9,15 +9,13 @@ public sealed class Canvas : Element
 
     public override string NodeName => nameof(Elements.Canvas);
 
-    public Canvas()
-    {
+    public Canvas() =>
         this.Style = new()
         {
             // Padding = new(Unit.Px(PADDING)),
-            Color           = Color.White,
+            Color = Color.White,
             //BackgroundColor = Color.Green.WithAlpha(0.5f),
         };
-    }
 
     private void OnViewportResized() =>
         this.Style.Size = this.Scene!.Viewport!.Size;

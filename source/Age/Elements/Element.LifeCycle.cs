@@ -78,8 +78,6 @@ public abstract partial class Element
             }
         }
 
-        this.Canvas = this.CompositeParentElement?.Canvas ?? this.Parent as Canvas;
-
         this.ComputeStyle(default);
     }
 
@@ -93,8 +91,6 @@ public abstract partial class Element
     private protected override void OnDisconnectingInternal()
     {
         base.OnDisconnectingInternal();
-
-        this.Canvas = null;
 
         if (this.Scene?.Viewport?.Window is Window window)
         {

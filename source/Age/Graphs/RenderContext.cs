@@ -1,38 +1,24 @@
-using Age.Commands;
 using Age.Core.Extensions;
+using Age.Commands;
 
 namespace Age.Graphs;
 
-public class CommandBuffer<T> where T : Command
+public sealed class CommandBuffer<T> : List<T> where T : Command
 {
-    private readonly List<T> commands  = [];
-
-    public ReadOnlySpan<T> Commands => this.commands.AsSpan();
-
-    public void AddCommand(T command) =>
-        this.commands.Add(command);
-
-    public void AddCommandRange(ReadOnlySpan<T> command) =>
-        this.commands.AddRange(command);
-
-    public void ReplaceCommandRange(Range range, ReadOnlySpan<T> command) =>
-        this.commands.ReplaceRange(range, command);
-
-    public void Reset() =>
-        this.commands.Clear();
+    public Span<T> Commands => this.AsSpan();
 }
 
 public class RenderContext
 {
-    private readonly CommandBuffer<Command2D> buffer2D = new();
-    private readonly CommandBuffer<Command3D> buffer3D = new();
+    private readonly CommandBuffer<Command2D> buffer2D = [];
+    private readonly CommandBuffer<Command3D> buffer3D = [];
 
     private CommandBuffer<Command2D>? buffer2DOverride;
     private CommandBuffer<Command3D>? buffer3DOverride;
 
     public CommandBuffer<Command2D> Buffer2D => this.buffer2DOverride ?? this.buffer2D;
     public CommandBuffer<Command3D> Buffer3D => this.buffer3DOverride ?? this.buffer3D;
-
+    public CommandBuffer<Command2D> UIBuffer { get; } = [];
 
     public void ClearOverride2D() =>
         this.buffer2DOverride = null;
@@ -46,9 +32,9 @@ public class RenderContext
     public void Override3D(RenderContext renderContext) =>
         this.buffer3DOverride = renderContext.Buffer3D;
 
-    public void Reset()
+    public void Clear()
     {
-        this.buffer2D.Reset();
-        this.buffer3D.Reset();
+        this.buffer2D.Clear();
+        this.buffer3D.Clear();
     }
 }

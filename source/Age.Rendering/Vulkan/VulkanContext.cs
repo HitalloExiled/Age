@@ -11,6 +11,7 @@ using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Extensions;
 using ThirdParty.Vulkan.Flags;
 using static Age.Core.PointerHelper;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Rendering.Vulkan;
 
@@ -31,17 +32,28 @@ internal sealed unsafe partial class VulkanContext : Disposable
     private readonly VkSemaphore[]             renderingFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
     private readonly VkSurfaceExtensionKHR     surfaceExtension;
 
-    private VkCommandPool           commandPool = null!;
-    private ushort                  currentFrame;
-    private VkDevice                device = null!;
-    private bool                    deviceInitialized;
-    private VkQueue                 graphicsQueue = null!;
-    private uint                    graphicsQueueIndex;
-    private VkPhysicalDevice        physicalDevice = null!;
-    private VkQueue                 presentationQueue = null!;
-    private uint                    presentationQueueIndex;
-    private VkSurfaceFormatKHR      surfaceFormat;
-    private VkSwapchainExtensionKHR swapchainExtension = null!;
+    [AllowNull]
+    private VkCommandPool commandPool;
+    private ushort        currentFrame;
+
+    [AllowNull]
+    private VkDevice device;
+    private bool     deviceInitialized;
+
+    [AllowNull]
+    private VkQueue graphicsQueue;
+    private uint    graphicsQueueIndex;
+
+    [AllowNull]
+    private VkPhysicalDevice physicalDevice;
+
+    [AllowNull]
+    private VkQueue            presentationQueue;
+    private uint               presentationQueueIndex;
+    private VkSurfaceFormatKHR surfaceFormat;
+
+    [AllowNull]
+    private VkSwapchainExtensionKHR swapchainExtension;
 
     private Span<string> RequiredExtensions
     {

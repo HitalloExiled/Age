@@ -26,7 +26,7 @@ public abstract partial class Node
             this.Reset();
         }
 
-        public readonly Node Current => this.current!;
+        public readonly Node Current => this.current;
 
         readonly object IEnumerator.Current => this.Current;
 

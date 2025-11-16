@@ -31,11 +31,7 @@ public abstract class Spatial3D : Spatial<Command3D, Matrix4x4<float>>
 
     public Vector3<float> Pivot { get; set; }
 
-    public new Scene3D? Scene
-    {
-        get => base.Scene as Scene3D;
-        set => base.Scene = value;
-    }
+    public new Scene3D? Scene => base.Scene as Scene3D;
 
     public Transform3D Transform
     {

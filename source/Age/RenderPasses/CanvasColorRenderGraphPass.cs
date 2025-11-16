@@ -137,9 +137,6 @@ public sealed class CanvasColorRenderGraphPass : CanvasRenderGraphPass
     protected override void BeforeExecute() =>
         this.LastUniformSet = null;
 
-    protected override ReadOnlySpan<Command2D> GetCommand(RenderContext renderContext) =>
-        renderContext.Buffer2D.Commands;
-
     protected override void Disposed()
     {
         this.DisposeFrameBuffers();

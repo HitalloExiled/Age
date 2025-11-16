@@ -175,9 +175,6 @@ public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
         this.CommandBuffer.DrawIndexed(resource.IndexBuffer);
     }
 
-    protected override ReadOnlySpan<Command2D> GetCommand(RenderContext renderContext) =>
-        renderContext.Buffer2D.Commands;
-
     public override void Recreate()
     {
         this.DisposeFramebuffer();

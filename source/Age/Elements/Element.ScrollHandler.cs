@@ -275,7 +275,7 @@ public abstract partial class Element
 
             Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-            this.Scene.Viewport.Window.Tree!.MouseMoved += this.OnRenderTreeMouseMoved;
+            this.Scene.Viewport.Window.Tree.MouseMoved += this.OnRenderTreeMouseMoved;
             this.HandleScrollBarMouseMoved(windowMouseEvent);
 
             return;

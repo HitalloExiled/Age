@@ -6,7 +6,7 @@ public class MtlLoader
 {
     public virtual IList<Material> Load(string filepath)
     {
-        using var reader = new StreamReader(File.OpenRead(filepath))!;
+        using var reader = new StreamReader(File.OpenRead(filepath));
 
         return new MtlParser(filepath, reader).Parse();
     }

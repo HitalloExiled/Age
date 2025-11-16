@@ -58,10 +58,10 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
         this.BeginRenderPass(framebuffer.Extent, renderPass, framebuffer, clearValues);
     }
 
-    public unsafe void BeginRenderPass(RenderTarget renderTarget, in ClearValue clearColor) =>
+    public void BeginRenderPass(RenderTarget renderTarget, in ClearValue clearColor) =>
         this.BeginRenderPass(renderTarget, [clearColor]);
 
-    public unsafe void BeginRenderPass(RenderTarget renderTarget, ReadOnlySpan<ClearValue> clearValues)
+    public void BeginRenderPass(RenderTarget renderTarget, ReadOnlySpan<ClearValue> clearValues)
     {
         var vkClearValues = clearValues.Cast<ClearValue, VkClearValue>();
 

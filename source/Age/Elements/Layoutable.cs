@@ -62,6 +62,8 @@ public abstract class Layoutable : Spatial<Command2D, Matrix3x2<float>>
         }
     }
 
+    public Canvas? Canvas => this.Scene?.Canvas;
+
     public Element? CompositeParentElement => this.CompositeParent as Element;
 
     public Element? NextElementSibling
@@ -97,6 +99,8 @@ public abstract class Layoutable : Spatial<Command2D, Matrix3x2<float>>
             return null;
         }
     }
+
+    public new UIScene? Scene => base.Scene as UIScene;
 
     public override Matrix3x2<float> Matrix => this.CombinedMatrix * this.CompositeParentMatrix;
 
