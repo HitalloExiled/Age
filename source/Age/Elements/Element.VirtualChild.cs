@@ -44,8 +44,10 @@ public abstract partial class Element
         }
     }
 
+#pragma warning disable CA1822, RCS1259, IDE0079
     internal void HandleVirtualChildMouseUp(in WindowMouseEvent _1, uint _2)
     {
         // Just for symmetry
     }
+#pragma warning restore CA1822, RCS1259, IDE0079
 }

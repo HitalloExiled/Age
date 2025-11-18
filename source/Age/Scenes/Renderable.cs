@@ -1,5 +1,4 @@
 using Age.Commands;
-using Age.Core.Extensions;
 using System.Runtime.CompilerServices;
 
 namespace Age.Scenes;

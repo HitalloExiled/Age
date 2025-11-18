@@ -23,11 +23,11 @@ public abstract class Shader(VkRenderPass renderPass, ShaderOptions options) : R
 
     public abstract VkShaderStageFlags PushConstantStages { get; }
 
-    public abstract VkPipelineBindPoint           BindPoint           { get; }
-    public abstract VkDescriptorSetLayout         DescriptorSetLayout { get; }
-    public abstract VkPipeline                    Pipeline            { get; }
-    public abstract VkPipelineLayout              PipelineLayout      { get; }
-    public abstract NativeArray<VkDescriptorType> UniformBindings     { get; }
+    public abstract VkPipelineBindPoint            BindPoint           { get; }
+    public abstract VkDescriptorSetLayout          DescriptorSetLayout { get; }
+    public abstract VkPipeline                     Pipeline            { get; }
+    public abstract VkPipelineLayout               PipelineLayout      { get; }
+    public abstract ReadOnlySpan<VkDescriptorType> UniformBindings     { get; }
 
     public bool Watching => this.Options.Watch;
 
@@ -42,7 +42,7 @@ where TVertexInput  : IVertexInput
     private const int    DEBOUNCE_DELAY = 50;
 
     private static readonly Dictionary<string, int> dependenciesUsers = [];
-    private static readonly string                  shadersPath       = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age/Shaders") : Path.Join(AppContext.BaseDirectory, $"Shaders"));
+    private static readonly string                  shadersPath       = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age/Shaders") : Path.Join(AppContext.BaseDirectory, "Shaders"));
     private static readonly FileSystemWatcher       watcher           = new(shadersPath) { EnableRaisingEvents = true, IncludeSubdirectories = true };
 
     private static SpinLock spinLock;
@@ -63,11 +63,11 @@ where TVertexInput  : IVertexInput
     public abstract string              Name              { get; }
     public abstract VkPrimitiveTopology PrimitiveTopology { get; }
 
-    public sealed override VkDescriptorSetLayout         DescriptorSetLayout => this.descriptorSetLayout;
-    public sealed override VkPipeline                    Pipeline            => this.pipeline;
-    public sealed override VkPipelineLayout              PipelineLayout      => this.pipelineLayout;
-    public sealed override VkShaderStageFlags            PushConstantStages  => this.pushConstantStages;
-    public sealed override NativeArray<VkDescriptorType> UniformBindings     => this.uniformBindings;
+    public sealed override VkDescriptorSetLayout          DescriptorSetLayout => this.descriptorSetLayout;
+    public sealed override VkPipeline                     Pipeline            => this.pipeline;
+    public sealed override VkPipelineLayout               PipelineLayout      => this.pipelineLayout;
+    public sealed override VkShaderStageFlags             PushConstantStages  => this.pushConstantStages;
+    public sealed override ReadOnlySpan<VkDescriptorType> UniformBindings     => this.uniformBindings.AsSpan();
 
     protected Shader(string file, VkRenderPass renderPass, in ShaderOptions options) : base(renderPass, options)
     {

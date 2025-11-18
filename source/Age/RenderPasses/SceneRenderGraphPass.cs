@@ -1,5 +1,4 @@
 using Age.Commands;
-using Age.Core.Extensions;
 using Age.Internal;
 using Age.Numerics;
 using Age.Rendering.Extensions;
@@ -93,7 +92,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
         return new(createInfo);
     }
 
-    private unsafe UniformSet GetUniformSet(RenderTarget renderTarget, Camera3D camera, BufferHandlePair cameraBuffer, Material material)
+    private UniformSet GetUniformSet(RenderTarget renderTarget, Camera3D camera, BufferHandlePair cameraBuffer, Material material)
     {
         ref var frameResource = ref this.frameResources[this.Renderer.CurrentFrame];
 
@@ -152,7 +151,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
 
         return cameraBuffer;
     }
-    protected unsafe override void OnDisposed(bool disposing)
+    protected override void OnDisposed(bool disposing)
     {
         if (disposing)
         {
@@ -170,7 +169,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
         }
     }
 
-    public unsafe override void Execute()
+    public override void Execute()
     {
         var commandBuffer = this.Renderer.CurrentCommandBuffer;
 

@@ -1,4 +1,3 @@
-using Age.Core.Extensions;
 using Age.Elements;
 using Age.Scenes;
 using Xunit.Internal;

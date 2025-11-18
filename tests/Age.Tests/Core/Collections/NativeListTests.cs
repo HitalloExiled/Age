@@ -2,7 +2,7 @@ using Age.Core.Collections;
 
 namespace Age.Tests.Core.Collections;
 
-public unsafe class NativeListTests
+public class NativeListTests
 {
     private static void AssertIt(NativeList<int> list, ReadOnlySpan<int> values, int capacity)
     {

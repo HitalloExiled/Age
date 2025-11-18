@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Numerics;
 using Age.Elements.Enumerators;
 using Age.Numerics;
 using Age.Shaders;

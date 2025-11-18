@@ -7,7 +7,6 @@ using Age.Storage;
 using Age.Commands;
 using Age.Rendering.Resources;
 using Image = Age.Styling.Image;
-using System.Numerics;
 
 namespace Age.Elements;
 

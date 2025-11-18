@@ -6,7 +6,7 @@ namespace Age.Core.Extensions;
 public static partial class Extension
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private unsafe static void CopyTo(scoped ReadOnlySpan<byte> source, int sizeOfSource, scoped Span<byte> destination, int sizeOfDestination, int length, bool alignToEnd)
+    private static void CopyTo(scoped ReadOnlySpan<byte> source, int sizeOfSource, scoped Span<byte> destination, int sizeOfDestination, int length, bool alignToEnd)
     {
         if (sizeOfSource == sizeOfDestination)
         {

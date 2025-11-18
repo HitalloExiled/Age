@@ -2,7 +2,6 @@ using Age.Core.Extensions;
 using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Resources;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;

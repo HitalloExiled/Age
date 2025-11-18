@@ -2,9 +2,9 @@ using Age.Core.Collections;
 
 namespace Age.Tests.Core.Collections;
 
-public unsafe class RefListTests
+public class RefListTests
 {
-    private static void AssertIt(scoped in RefList<int> list, ReadOnlySpan<int> values, int capacity)
+    private static void AssertIt(in RefList<int> list, ReadOnlySpan<int> values, int capacity)
     {
         Assert.Equal(capacity, list.Capacity);
         Assert.Equal(values.Length, list.Count);
@@ -12,7 +12,7 @@ public unsafe class RefListTests
         Assert.True(list.AsSpan().SequenceEqual(values));
     }
 
-    private static void AssertIt(scoped in Span<int> list, ReadOnlySpan<int> values, int capacity)
+    private static void AssertIt(Span<int> list, ReadOnlySpan<int> values)
     {
         Assert.Equal(values.Length, list.Length);
 
@@ -67,7 +67,7 @@ public unsafe class RefListTests
 
         var slice = list[3..6];
 
-        AssertIt(slice, [4, 5, 6], 3);
+        AssertIt(slice, [4, 5, 6]);
     }
 
     [Fact]

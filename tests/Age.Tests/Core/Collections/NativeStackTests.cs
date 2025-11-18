@@ -2,7 +2,7 @@ using Age.Core.Collections;
 
 namespace Age.Tests.Core.Collections;
 
-public unsafe class NativeStackTests
+public class NativeStackTests
 {
     private static void AssertIt(NativeStack<int> stack, ReadOnlySpan<int> values, int capacity)
     {
@@ -140,10 +140,7 @@ public unsafe class NativeStackTests
         var expected = new int[] { 6, 5, 4, 3, 2, 1 };
         var actual   = new List<int>(6);
 
-        foreach (var item in stack)
-        {
-            actual.Add(item);
-        }
+        actual.AddRange(stack);
 
         Assert.Equal(expected, actual);
     }

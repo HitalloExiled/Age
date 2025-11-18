@@ -2,7 +2,7 @@ namespace Age.Tests.Age;
 
 public partial class RenderGraphTest
 {
-    private record ColorPassInput
+    private sealed record ColorPassInput
     {
         public float Depth  { get; set; }
         public float Normal { get; set; }

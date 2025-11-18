@@ -5,7 +5,7 @@ namespace Age.Tests.Age.Scenes;
 
 public partial class SceneGraphCacheTest
 {
-    private class Model : Spatial3D
+    private sealed class Model : Spatial3D
     {
         public override string NodeName => nameof(Model);
 

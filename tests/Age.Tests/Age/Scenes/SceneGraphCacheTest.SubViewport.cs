@@ -8,7 +8,7 @@ namespace Age.Tests.Age.Scenes;
 
 public partial class SceneGraphCacheTest
 {
-    private class SubViewport : Viewport
+    private sealed class SubViewport : Viewport
     {
         public override RenderTarget RenderTarget => throw new NotImplementedException();
 

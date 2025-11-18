@@ -20,11 +20,6 @@ public sealed class Mesh : Spatial3D
         this.SingleCommand = command;
     }
 
-    private protected override void OnDisconnectingInternal()
-    {
-        base.OnDisconnectingInternal();
-    }
-
     private protected override void OnDisposedInternal()
     {
         if (this.SingleCommand is MeshCommand command)

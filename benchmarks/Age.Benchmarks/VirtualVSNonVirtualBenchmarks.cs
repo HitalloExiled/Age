@@ -6,7 +6,9 @@ namespace Age.Benchmarks;
 public class Base
 {
     [MethodImpl(MethodImplOptions.NoInlining)]
+#pragma warning disable CA1822 // Mark members as static
     public int NonVirtualSum(int i) => i * 2;
+#pragma warning restore CA1822 // Mark members as static
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     public virtual int VirtualSum(int i) => i * 2;

@@ -6,9 +6,9 @@ namespace Age.Tests.Age.Scenes;
 
 public partial class SceneGraphCacheTest
 {
-    private record ComponentCommand : Command2D;
-    private record SpriteCommand : Command2D;
-    private record ModelCommand : Command3D;
+    private sealed record ComponentCommand : Command2D;
+    private sealed record SpriteCommand : Command2D;
+    private sealed record ModelCommand : Command3D;
 
     private static void Emit(NodeRange[] expected, NodeRange[] actual, [CallerFilePath] string? callerFilePath = null)
     {

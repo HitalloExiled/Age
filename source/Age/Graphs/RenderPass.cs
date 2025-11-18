@@ -10,7 +10,7 @@ public abstract class RenderPass<TOutput> : RenderGraphNode<TOutput>
     protected abstract CommandBuffer            CommandBuffer { get; }
     protected abstract RenderTarget             RenderTarget  { get; }
 
-    protected unsafe sealed override void Execute(RenderContext context)
+    protected sealed override void Execute(RenderContext context)
     {
         this.CommandBuffer.SetViewport(this.RenderTarget.Size);
         this.CommandBuffer.BeginRenderPass(this.RenderTarget, this.ClearValues);

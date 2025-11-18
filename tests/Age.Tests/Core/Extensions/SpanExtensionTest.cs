@@ -4,7 +4,7 @@ namespace Age.Tests.Core.Extensions;
 
 public class SpanExtensionTest
 {
-    private record Dummy(string Name, int Index);
+    private sealed record Dummy(string Name, int Index);
 
     [Fact]
     public void TimSort()

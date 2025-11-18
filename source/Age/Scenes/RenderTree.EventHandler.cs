@@ -26,7 +26,7 @@ public sealed partial class RenderTree
     private Element?      pressedElement;
     private VirtualChild? pressedVirtualChild;
 
-    private unsafe Node? GetNode(ushort x, ushort y, out uint virtualChildIndex)
+    private unsafe Renderable? GetNode(ushort x, ushort y, out uint virtualChildIndex)
     {
         var image = this.canvasIndexRenderGraphPass.ColorImage;
 

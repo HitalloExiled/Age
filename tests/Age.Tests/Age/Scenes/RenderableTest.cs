@@ -5,7 +5,7 @@ namespace Age.Tests.Age.Scenes;
 
 public class RenderableTest
 {
-    private record TestCommand(string Name) : Command2D
+    private sealed record TestCommand(string Name) : Command2D
     {
         public override string ToString() => this.Name;
     }

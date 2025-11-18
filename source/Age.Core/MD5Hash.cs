@@ -25,10 +25,10 @@ public struct MD5Hash
     public static void Update(ReadOnlySpan<byte> source, ref MD5Hash hash) =>
         MD5.HashData(source, hash);
 
-    public unsafe Span<byte> AsSpan() =>
+    public Span<byte> AsSpan() =>
         MemoryMarshal.CreateSpan(ref this.element, SIZE);
 
-    public readonly unsafe ReadOnlySpan<byte> AsReadOnlySpan() =>
+    public readonly ReadOnlySpan<byte> AsReadOnlySpan() =>
         MemoryMarshal.CreateReadOnlySpan(in this.element, SIZE);
 
     public bool Equals(MD5Hash other) =>

@@ -6,7 +6,7 @@ using Age.Numerics;
 using Age.Scenes;
 namespace Age.Internal;
 
-public unsafe class BvhTree
+public class BvhTree
 {
     private const int MAX_ELEMENTS = 4;
     private readonly BvhNode<Layoutable> root = new();

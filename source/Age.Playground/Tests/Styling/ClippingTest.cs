@@ -38,10 +38,7 @@ public static class ClippingTest
             }
         };
 
-        n2_a_layer.Clicked += (in _) =>
-        {
-            n2_a_layer.Style.Overflow = n2_a_layer.Style.Overflow == Overflow.Clipping ? Overflow.None : Overflow.Clipping;
-        };
+        n2_a_layer.Clicked += (in _) => n2_a_layer.Style.Overflow = n2_a_layer.Style.Overflow == Overflow.Clipping ? Overflow.None : Overflow.Clipping;
 
         //n2_a_layer.Clicked += (in MouseEvent _) =>
         //    n2_a_layer.Detach();

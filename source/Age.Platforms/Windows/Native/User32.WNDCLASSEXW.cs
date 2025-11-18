@@ -7,7 +7,7 @@ internal static partial class User32
     /// <summary>
     /// See <see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexw"></see>
     /// </summary>
-    public unsafe struct WNDCLASSEXW
+    public struct WNDCLASSEXW
     {
         public UINT         cbSize;
         public CLASS_STYLES style;

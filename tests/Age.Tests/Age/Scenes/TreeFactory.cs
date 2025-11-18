@@ -1,8 +1,5 @@
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
 using Age.Commands;
-using Age.Core.Extensions;
-using Age.Elements;
 using Age.Scenes;
 
 namespace Age.Tests.Age.Scenes;
@@ -84,7 +81,6 @@ public static class TreeFactory
     where TBoundCommand : Command
     where TCommand : TBoundCommand, new() =>
         Linear<TNode, TBoundCommand, TCommand>(static name => new TNode { Name = name }, depth, childrenCount, commandsCount, commandSeparator, name);
-
 
     public static TNode Linear<TNode, TBoundCommand, TCommand>(Func<string, TNode> factory, int depth, int childrenCount = 0, int commandsCount = 0, int commandSeparator = -1, string? name = "$")
     where TNode : Renderable<TBoundCommand>

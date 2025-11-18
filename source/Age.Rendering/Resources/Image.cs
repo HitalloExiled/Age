@@ -235,7 +235,7 @@ public sealed class Image : Resource<VkImage>
         return images;
     }
 
-    private unsafe Buffer ReadBuffer(VkImageAspectFlags aspectMask, out nint data)
+    private Buffer ReadBuffer(VkImageAspectFlags aspectMask, out nint data)
     {
         var size = (ulong)(this.Extent.Width * this.Extent.Height * this.BytesPerPixel);
 
@@ -358,10 +358,10 @@ public sealed class Image : Resource<VkImage>
         commandBuffer.Instance.CopyImageToBuffer(this.Instance, VkImageLayout.TransferSrcOptimal, buffer.Instance, [bufferImageCopy]);
     }
 
-    public unsafe NativeArray<uint> ReadBuffer(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color) =>
+    public NativeArray<uint> ReadBuffer(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color) =>
         this.ReadBuffer<uint>(aspectMask);
 
-    public unsafe NativeArray<ulong> ReadBuffer64bits(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color) =>
+    public NativeArray<ulong> ReadBuffer64bits(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color) =>
         this.ReadBuffer<ulong>(aspectMask);
 
     public void TransitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout)

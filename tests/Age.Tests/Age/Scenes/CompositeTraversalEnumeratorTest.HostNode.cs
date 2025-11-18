@@ -4,7 +4,7 @@ namespace Age.Tests.Age.Scenes;
 
 public partial class CompositeTraversalEnumeratorTest
 {
-    private class HostNode : Node
+    private sealed class HostNode : Node
     {
         public override string NodeName => nameof(HostNode);
 

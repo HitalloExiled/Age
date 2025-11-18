@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Age.Core.Extensions;
 
 namespace Age.Scenes;
 

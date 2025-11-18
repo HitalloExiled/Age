@@ -5,7 +5,7 @@ namespace Age.Tests.Age.Scenes;
 
 public partial class SceneGraphCacheTest
 {
-    private class SealedComponent : Element
+    private sealed class SealedComponent : Element
     {
         public override string NodeName => nameof(SealedComponent);
 

@@ -14,7 +14,6 @@ using System.Runtime.CompilerServices;
 using Timer = Age.Scenes.Timer;
 
 using static Age.Shaders.CanvasShader;
-using Age.Scenes;
 
 namespace Age.Elements;
 
@@ -609,7 +608,9 @@ public sealed class Text : Layoutable
         ActiveText = this;
     }
 
+#pragma warning disable CA1822
     internal void HandleDeactivate() => ActiveText = null;
+#pragma warning restore CA1822
 
     internal void PropagateSelection(uint characterPosition)
     {

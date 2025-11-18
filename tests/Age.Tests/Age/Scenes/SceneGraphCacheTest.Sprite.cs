@@ -4,7 +4,7 @@ namespace Age.Tests.Age.Scenes;
 
 public partial class SceneGraphCacheTest
 {
-    private class Sprite : Spatial2D
+    private sealed class Sprite : Spatial2D
     {
         public override string NodeName => nameof(Sprite);
 

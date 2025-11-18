@@ -12,7 +12,7 @@ public static partial class Extension
             new() { Width = extent.Width, Height = extent.Height };
     }
 
-    extension<T>(in Extent<uint> extent) where T : INumber<T>
+    extension(in Extent<uint> extent)
     {
         public VkExtent3D ToVkExtent3D() =>
             new() { Width = extent.Width, Height = extent.Height };

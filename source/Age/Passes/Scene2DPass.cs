@@ -18,7 +18,9 @@ public abstract class Scene2DPass : RenderPass<Texture2D>
     [InlineArray(2)]
     private struct ClearValuesDefault
     {
+#pragma warning disable RCS1213
         private ClearValue _;
+#pragma warning restore RCS1213
 
         public ClearValuesDefault()
         {
@@ -65,7 +67,7 @@ public abstract class Scene2DPass : RenderPass<Texture2D>
     private void ClearStencilBuffer(in Size<uint> extent) =>
         this.ClearStencilBufferAttachment(extent, 0);
 
-    private unsafe void ClearStencilBufferAttachment(in Size<uint> extent, uint value)
+    private void ClearStencilBufferAttachment(in Size<uint> extent, uint value)
     {
         var attachment = new VkClearAttachment
         {
@@ -98,10 +100,10 @@ public abstract class Scene2DPass : RenderPass<Texture2D>
         this.CommandBuffer.ClearAttachments([attachment], [rect]);
     }
 
-    private unsafe void EraseStencil(StencilLayer stencilLayer, in Size<uint> extent) =>
+    private void EraseStencil(StencilLayer stencilLayer, in Size<uint> extent) =>
         this.SetStencil(this.canvasStencilEraserShader, stencilLayer, extent);
 
-    private unsafe void SetStencil(Shader shader, StencilLayer stencilLayer, in Size<uint> viewportSize)
+    private void SetStencil(Shader shader, StencilLayer stencilLayer, in Size<uint> viewportSize)
     {
         this.CommandBuffer.BindShader(shader);
 
@@ -118,7 +120,7 @@ public abstract class Scene2DPass : RenderPass<Texture2D>
         this.CommandBuffer.DrawIndexed(this.IndexBuffer);
     }
 
-    private unsafe void WriteStencil(StencilLayer stencilLayer, in Size<uint> extent) =>
+    private void WriteStencil(StencilLayer stencilLayer, in Size<uint> extent) =>
         this.SetStencil(this.canvasStencilWriterShader, stencilLayer, extent);
 
     protected override void OnConnected()

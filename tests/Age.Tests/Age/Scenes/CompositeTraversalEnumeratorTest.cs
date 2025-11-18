@@ -2,11 +2,9 @@ using Age.Scenes;
 
 namespace Age.Tests.Age.Scenes;
 
-#pragma warning disable CA1001
-
 public partial class CompositeTraversalEnumeratorTest
 {
-    private class TestNode : Node
+    private sealed class TestNode : Node
     {
         public override string NodeName => nameof(TestNode);
     }

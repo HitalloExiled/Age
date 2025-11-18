@@ -29,7 +29,7 @@ public abstract class IndexBuffer<T> : IndexBuffer where T : unmanaged, INumber<
         return buffer;
     }
 
-    public IndexBuffer(ReadOnlySpan<T> indices, VkIndexType indexType) : base(CreateBuffer(indices), (uint)indices.Length, indexType) { }
+    protected IndexBuffer(ReadOnlySpan<T> indices, VkIndexType indexType) : base(CreateBuffer(indices), (uint)indices.Length, indexType) { }
 
     protected override void OnDisposed(bool disposing)
     {

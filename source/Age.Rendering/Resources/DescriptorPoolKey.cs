@@ -65,12 +65,12 @@ public struct DescriptorPoolKey : IEquatable<DescriptorPoolKey>
                     case VkDescriptorType.MutableEXT:
                         span[16] = value;
                         break;
-                };
+                }
             }
         }
     }
 
-    public unsafe Span<uint> AsSpan() =>
+    public Span<uint> AsSpan() =>
         MemoryMarshal.CreateSpan(ref this.element, SIZE);
 
     public bool Equals(DescriptorPoolKey other) =>

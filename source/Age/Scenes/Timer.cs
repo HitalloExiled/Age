@@ -36,7 +36,7 @@ public sealed class Timer : Node
         this.Scene!.Viewport!.Window!.Tree.Timers.Remove(this);
     }
 
-    public new void Start()
+    public void Start()
     {
         this.Running = true;
 

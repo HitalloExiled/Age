@@ -34,15 +34,15 @@ public sealed class UniformSet : Resource
         this.Update(uniforms);
     }
 
-    private static unsafe DescriptorPoolKey CreatePoolKey(Shader shader, scoped ReadOnlySpan<Uniform> uniforms)
+    private static DescriptorPoolKey CreatePoolKey(Shader shader, scoped ReadOnlySpan<Uniform> uniforms)
     {
         DescriptorPoolKey poolKey = default;
 
         foreach (var uniform in uniforms)
         {
-            if (uniform.Binding > shader.UniformBindings.Length || shader.UniformBindings[uniform.Binding] != uniform.Type)
+            if (uniform.Binding > shader.UniformBindings.Length || shader.UniformBindings[(int)uniform.Binding] != uniform.Type)
             {
-                throw new InvalidOperationException($"The provided shader expects that binding {uniform.Binding} to be of type {shader.UniformBindings[uniform.Binding]}");
+                throw new InvalidOperationException($"The provided shader expects that binding {uniform.Binding} to be of type {shader.UniformBindings[(int)uniform.Binding]}");
             }
 
             poolKey[uniform.Type]++;

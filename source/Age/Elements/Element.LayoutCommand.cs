@@ -169,6 +169,6 @@ public abstract partial class Element
             layoutCommand = LayoutCommand.Box;
         }
 
-        this.SetCommandsSeparator((layoutCommand.HasValue ? this.GetIndex(layoutCommand.Value) + 1 : 0));
+        this.SetCommandsSeparator(layoutCommand.HasValue ? this.GetIndex(layoutCommand.Value) + 1 : 0);
     }
 }

@@ -130,7 +130,6 @@ public abstract class Layoutable : Spatial<Command2D, Matrix3x2<float>>
     private protected void MakePristine() =>
         this.IsDirty = false;
 
-
     private protected override void OnConnectedInternal()
     {
         base.OnConnectedInternal();
