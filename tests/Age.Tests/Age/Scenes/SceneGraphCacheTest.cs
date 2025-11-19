@@ -4,6 +4,15 @@ using Age.Scenes;
 
 namespace Age.Tests.Age.Scenes;
 
+file static class Entensions
+{
+    extension<T>(T[] nodes) where T : Node
+    {
+        public T[] IgnoreEmpty() =>
+            [.. nodes.Where(static x => x is not Empty)];
+    }
+}
+
 public partial class SceneGraphCacheTest
 {
     private sealed record ComponentCommand : Command2D;
@@ -78,7 +87,7 @@ public partial class SceneGraphCacheTest
         cache.InvalidatedSubTree(window);
         cache.Build();
 
-        var flat     = TreeFactory.Flatten(window);
+        var flat     = TreeFactory.Flatten(window).IgnoreEmpty();
         var expected = new NodeRange[44]
         {
             new(flat[0], new(0, 44)), // Window
@@ -140,7 +149,7 @@ public partial class SceneGraphCacheTest
         var actual = cache.Nodes.Select(ToNodeRange).ToArray();
 
         // Uncomment if you is lost
-        // Emit(expected, actual);
+        Emit(expected, actual);
 
         Assert.Equal(expected, actual);
 
@@ -153,7 +162,7 @@ public partial class SceneGraphCacheTest
         cache.InvalidatedSubTree(parent);
         cache.Build();
 
-        flat = TreeFactory.Flatten(window);
+        flat = TreeFactory.Flatten(window).IgnoreEmpty();;
 
         expected =
         [
@@ -206,7 +215,7 @@ public partial class SceneGraphCacheTest
         cache.InvalidatedSubTree(flat20);
         cache.Build();
 
-        flat = TreeFactory.Flatten(window);
+        flat = TreeFactory.Flatten(window).IgnoreEmpty();;
 
         expected =
         [
@@ -272,7 +281,7 @@ public partial class SceneGraphCacheTest
 
         window.Connect();
 
-        var flat = TreeFactory.Flatten(window);
+        var flat = TreeFactory.Flatten(window).IgnoreEmpty();;
 
         cache.InvalidatedSubTree(window);
         cache.Build();
@@ -305,7 +314,7 @@ public partial class SceneGraphCacheTest
 
         Assert.Equal(expected, actual);
 
-        flat = TreeFactory.Flatten(window);
+        flat = TreeFactory.Flatten(window).IgnoreEmpty();;
 
         expected =
         [
@@ -407,7 +416,7 @@ public partial class SceneGraphCacheTest
 
         window.Connect();
 
-        var flat = TreeFactory.Flatten(window);
+        var flat = TreeFactory.Flatten(window).IgnoreEmpty();;
 
         cache.InvalidatedSubTree(window);
         cache.Build();
@@ -444,7 +453,7 @@ public partial class SceneGraphCacheTest
         cache.InvalidatedSubTree(renderable);
         cache.Build();
 
-        flat = TreeFactory.Flatten(window);
+        flat = TreeFactory.Flatten(window).IgnoreEmpty();;
 
         expected =
         [
@@ -480,7 +489,7 @@ public partial class SceneGraphCacheTest
         cache.InvalidatedSubTree(renderable);
         cache.Build();
 
-        flat = TreeFactory.Flatten(window);
+        flat = TreeFactory.Flatten(window).IgnoreEmpty();;
 
         expected =
         [
@@ -524,7 +533,7 @@ public partial class SceneGraphCacheTest
             }
         };
 
-        var flat = TreeFactory.Flatten(window);
+        var flat = TreeFactory.Flatten(window).IgnoreEmpty();;
 
         var flat2 = (Renderable)flat[2];
         var flat4 = (Renderable)flat[4];

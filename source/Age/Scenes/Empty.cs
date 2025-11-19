@@ -1,6 +1,4 @@
-using Age.Scenes;
-
-namespace Age.Elements;
+namespace Age.Scenes;
 
 public sealed class Empty : Node
 {

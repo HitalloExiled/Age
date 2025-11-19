@@ -1,4 +1,3 @@
-using Age.Elements;
 using Age.Graphs;
 using Age.Numerics;
 using Age.Rendering.Resources;
