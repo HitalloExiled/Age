@@ -10,6 +10,8 @@ public abstract partial class Element
     private readonly Lock                               elementLock = new();
     private readonly KeyedList<EventProperty, Delegate> events      = [];
 
+    private bool AllowInputEvents => this.IsFocused || this is Canvas;
+
     private Action?              ActivatedEvent     => this.GetEvent<Action>(EventProperty.Activated);
     private MouseEventHandler?   BluredEvent        => this.GetEvent<MouseEventHandler>(EventProperty.Blured);
     private MouseEventHandler?   ClickedEvent       => this.GetEvent<MouseEventHandler>(EventProperty.Clicked);
@@ -296,7 +298,7 @@ public abstract partial class Element
 
     private void OnInput(char character)
     {
-        if (this.IsFocused)
+        if (this.AllowInputEvents)
         {
             this.InputEvent?.Invoke(character);
         }
@@ -304,7 +306,7 @@ public abstract partial class Element
 
     private void OnKeyDown(Key key)
     {
-        if (this.IsFocused)
+        if (this.AllowInputEvents)
         {
             var keyEvent = new KeyEvent
             {
@@ -329,7 +331,7 @@ public abstract partial class Element
 
     private void OnKeyUp(Key key)
     {
-        if (this.IsFocused)
+        if (this.AllowInputEvents)
         {
             var keyEvent = new KeyEvent
             {

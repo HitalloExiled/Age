@@ -61,7 +61,7 @@ public sealed class Editor : UIScene
     {
         var reload = true;
 
-        var window = this.Scene!.Viewport!.Window!;
+        var window = this.Scene!.Window!;
 
         var currentIndex = this.index;
 

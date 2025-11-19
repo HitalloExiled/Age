@@ -50,7 +50,7 @@ public abstract partial class Element
     {
         base.OnConnectedInternal();
 
-        if (this.Scene?.Viewport?.Window is Window window)
+        if (this.Scene?.Window is Window window)
         {
             if (this.events.ContainsKey(EventProperty.Input))
             {

@@ -11,7 +11,9 @@ public class UIScene : Scene
     public UIScene()
     {
         this.AppendChild(this.Canvas);
+
         this.Seal();
         this.SuspendUpdates();
+        this.SuspendChildrenUpdates();
     }
 }
