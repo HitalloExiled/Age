@@ -76,7 +76,7 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
         }
     }
 
-    public NativeList(scoped ReadOnlySpan<T> values) : this(values.Length)
+    public NativeList(ReadOnlySpan<T> values) : this(values.Length)
     {
         for (var i = 0; i < values.Length; i++)
         {

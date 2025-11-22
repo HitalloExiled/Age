@@ -447,7 +447,7 @@ public sealed class Image : Resource<VkImage>
         this.FinalLayout = newLayout;
     }
 
-    public void Update(scoped ReadOnlySpan<byte> data)
+    public void Update(ReadOnlySpan<byte> data)
     {
         using var buffer = new Buffer((ulong)data.Length, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 

@@ -89,7 +89,7 @@ public sealed unsafe class VkDevice : DisposableManagedHandle<VkDevice>
         new VkGraphicsPipeline(this, createInfo, pipelineCache);
 
     /// <inheritdoc cref="PInvoke.vkCreateGraphicsPipelines" />
-    public VkPipeline[] CreateGraphicsPipelines(VkPipelineCache pipelineCache, scoped ReadOnlySpan<VkGraphicsPipelineCreateInfo> createInfos)
+    public VkPipeline[] CreateGraphicsPipelines(VkPipelineCache pipelineCache, ReadOnlySpan<VkGraphicsPipelineCreateInfo> createInfos)
     {
         Span<VkHandle<VkPipeline>> vkPipelines = stackalloc VkHandle<VkPipeline>[createInfos.Length];
 
@@ -158,7 +158,7 @@ public sealed unsafe class VkDevice : DisposableManagedHandle<VkDevice>
     }
 
     /// <inheritdoc cref="PInvoke.vkUpdateDescriptorSets" />
-    public void UpdateDescriptorSets(scoped ReadOnlySpan<VkWriteDescriptorSet> descriptorWrites, scoped ReadOnlySpan<VkCopyDescriptorSet> descriptorCopies)
+    public void UpdateDescriptorSets(ReadOnlySpan<VkWriteDescriptorSet> descriptorWrites, ReadOnlySpan<VkCopyDescriptorSet> descriptorCopies)
     {
         fixed (VkWriteDescriptorSet* pDescriptorWrites = descriptorWrites)
         fixed (VkCopyDescriptorSet*  pDescriptorCopies = descriptorCopies)

@@ -7,7 +7,7 @@ public static partial class Extension
 {
     private const int RUN = 32;
 
-    private static void InsertionSort<T>(Func<T, T, int> comparer, scoped Span<T> span, int leftIndex, int rightIndex)
+    private static void InsertionSort<T>(Func<T, T, int> comparer, Span<T> span, int leftIndex, int rightIndex)
     {
         for (var currentIndex = leftIndex + 1; currentIndex <= rightIndex; currentIndex++)
         {
@@ -24,7 +24,7 @@ public static partial class Extension
         }
     }
 
-    private static void Merge<T>(Func<T, T, int> comparer, scoped Span<T> span, int leftIndex, int middleIndex, int rightIndex)
+    private static void Merge<T>(Func<T, T, int> comparer, Span<T> span, int leftIndex, int middleIndex, int rightIndex)
     {
         var leftLength  = middleIndex - leftIndex + 1;
         var rightLength = rightIndex - middleIndex;

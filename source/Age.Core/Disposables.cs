@@ -9,7 +9,7 @@ public sealed class Disposables : IDisposable, IEnumerable<IDisposable>
 
     public Disposables() { }
 
-    public Disposables(params scoped ReadOnlySpan<IDisposable> disposables) =>
+    public Disposables(params ReadOnlySpan<IDisposable> disposables) =>
         this.disposables.AddRange(disposables);
 
     ~Disposables() => this.Dispose();

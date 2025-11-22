@@ -28,7 +28,7 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
         }
     }
 
-    public Point<uint> Pack(scoped ReadOnlySpan<uint> pixels, in Size<uint> size)
+    public Point<uint> Pack(ReadOnlySpan<uint> pixels, in Size<uint> size)
     {
         this.maxHeight = Math.Max(this.maxHeight, size.Height);
 
@@ -66,7 +66,7 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
         return position;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe void copy<T>(scoped ReadOnlySpan<uint> pixels, in Size<uint> size) where T : unmanaged
+        unsafe void copy<T>(ReadOnlySpan<uint> pixels, in Size<uint> size) where T : unmanaged
         {
             var atlasWidth = this.Size.Width;
             var bitmapSpan = this.Bitmap.AsSpan();
@@ -83,7 +83,7 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
         }
     }
 
-    public Point<uint> Pack(scoped ReadOnlySpan<byte> pixels, in Size<uint> size) =>
+    public Point<uint> Pack(ReadOnlySpan<byte> pixels, in Size<uint> size) =>
         this.Pack(pixels.Cast<byte, uint>(), size);
 
     public void Update()

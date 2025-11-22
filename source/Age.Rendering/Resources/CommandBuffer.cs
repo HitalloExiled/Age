@@ -98,7 +98,7 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
     public void BindVertexBuffer(VertexBuffer vertexBuffer) =>
         this.Instance.BindVertexBuffers(0, 1, [vertexBuffer.Buffer.Instance], [0]);
 
-    public void BindVertexBuffer(scoped ReadOnlySpan<VertexBuffer> vertexBuffers)
+    public void BindVertexBuffer(ReadOnlySpan<VertexBuffer> vertexBuffers)
     {
         var handles = new VkBuffer[vertexBuffers.Length];
 
@@ -113,10 +113,10 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
     public void BindUniformSet(UniformSet uniformSet) =>
         this.Instance.BindDescriptorSets(uniformSet.Shader.BindPoint, uniformSet.Shader.PipelineLayout, 0, uniformSet.DescriptorSets, []);
 
-    public void ClearAttachments(scoped ReadOnlySpan<VkClearAttachment> attachments, scoped ReadOnlySpan<VkClearRect> rects) =>
+    public void ClearAttachments(ReadOnlySpan<VkClearAttachment> attachments, ReadOnlySpan<VkClearRect> rects) =>
         this.Instance.ClearAttachments(attachments, rects);
 
-    public void ClearImageColor(Image image, VkImageLayout imageLayout, VkClearColorValue color, scoped ReadOnlySpan<VkImageSubresourceRange> ranges) =>
+    public void ClearImageColor(Image image, VkImageLayout imageLayout, VkClearColorValue color, ReadOnlySpan<VkImageSubresourceRange> ranges) =>
         this.Instance.ClearColorImage(image, imageLayout, color, ranges);
 
     public void Draw(VertexBuffer vertexBuffer, uint instanceCount = 1, uint firstVertex = 0, uint firstInstance = 0) =>

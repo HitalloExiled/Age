@@ -61,7 +61,7 @@ public sealed unsafe class VkDeviceMemory : VkDeviceResource<VkDeviceMemory>
     public void Write<T>(ulong offset, uint flags, T[] data) where T : unmanaged =>
         this.Write(offset, flags, data.AsSpan());
 
-    public void Write<T>(ulong offset, uint flags, scoped ReadOnlySpan<T> data) where T : unmanaged
+    public void Write<T>(ulong offset, uint flags, ReadOnlySpan<T> data) where T : unmanaged
     {
         var ppData = (T**)NativeMemory.Alloc((uint)(sizeof(T*) * data.Length));
 

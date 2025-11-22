@@ -93,7 +93,7 @@ public sealed class Buffer : Resource<VkBuffer>
     public void Update<T>(T data) where T : unmanaged =>
         this.Update([data]);
 
-    public void Update<T>(scoped ReadOnlySpan<T> data) where T : unmanaged
+    public void Update<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
         var stagingBuffer = new Buffer(this.Allocation.Size, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 

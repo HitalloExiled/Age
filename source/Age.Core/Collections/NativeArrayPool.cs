@@ -27,7 +27,7 @@ public class NativeArrayPool<T> where T : unmanaged
         }
     }
 
-    public NativeArray<T> GetCopy(scoped ReadOnlySpan<T> span)
+    public NativeArray<T> GetCopy(ReadOnlySpan<T> span)
     {
         lock (this.@lock)
         {

@@ -42,7 +42,7 @@ public abstract class IndexBuffer<T> : IndexBuffer where T : unmanaged, INumber<
     public void Update(T data) =>
         this.Buffer.Update(data);
 
-    public void Update(scoped ReadOnlySpan<T> data) =>
+    public void Update(ReadOnlySpan<T> data) =>
         this.Buffer.Update(data);
 }
 

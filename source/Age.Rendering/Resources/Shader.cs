@@ -118,7 +118,7 @@ where TVertexInput  : IVertexInput
     }
 
     [MemberNotNull(nameof(pipeline), nameof(pipelineLayout), nameof(descriptorSetLayout))]
-    private void CompileShader(scoped ReadOnlySpan<byte> source)
+    private void CompileShader(ReadOnlySpan<byte> source)
     {
         Logger.Trace($"Compiling Shader [{this.filepath}]");
         var start = Stopwatch.GetTimestamp();

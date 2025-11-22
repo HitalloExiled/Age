@@ -12,7 +12,7 @@ public readonly struct VkHandle<T>(nint value) where T : ManagedHandle<T>
 
 public static class VkHandle
 {
-    public static VkHandle<T>[] GetHandles<T>(scoped ReadOnlySpan<T> managedHandles) where T : ManagedHandle<T>
+    public static VkHandle<T>[] GetHandles<T>(ReadOnlySpan<T> managedHandles) where T : ManagedHandle<T>
     {
         var handles = new VkHandle<T>[managedHandles.Length];
 

@@ -88,6 +88,6 @@ public partial class Texture : Resource
         }
     }
 
-    public void Update(scoped ReadOnlySpan<byte> buffer) =>
+    public void Update(ReadOnlySpan<byte> buffer) =>
         this.Image.Update(buffer);
 }

@@ -261,10 +261,10 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         commandBuffer.Dispose();
     }
 
-    public VkFormat FindSupportedFormat(scoped ReadOnlySpan<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features) =>
+    public VkFormat FindSupportedFormat(ReadOnlySpan<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features) =>
         this.Context.FindSupportedFormat(candidates, tiling, features);
 
-    public void UpdateDescriptorSets(scoped ReadOnlySpan<VkWriteDescriptorSet> descriptorWrites, scoped ReadOnlySpan<VkCopyDescriptorSet> descriptorCopies) =>
+    public void UpdateDescriptorSets(ReadOnlySpan<VkWriteDescriptorSet> descriptorWrites, ReadOnlySpan<VkCopyDescriptorSet> descriptorCopies) =>
         this.Context.Device.UpdateDescriptorSets(descriptorWrites, descriptorCopies);
 
     public void WaitIdle() =>

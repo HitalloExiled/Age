@@ -4,7 +4,7 @@ public static class IconExtensions
 {
     extension(Icon)
     {
-        public static Icon Parse(scoped ReadOnlySpan<char> name) =>
+        public static Icon Parse(ReadOnlySpan<char> name) =>
             name switch
             {
                 var value when value.Equals(nameof(Icon.Block),                StringComparison.OrdinalIgnoreCase) => Icon.Block,

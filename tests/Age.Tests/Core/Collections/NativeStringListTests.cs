@@ -4,7 +4,7 @@ namespace Age.Tests.Core.Collections;
 
 public class NativeStringListTests
 {
-    private static void AssertList(NativeStringList list, int capacty, scoped ReadOnlySpan<string> values)
+    private static void AssertList(NativeStringList list, int capacty, ReadOnlySpan<string> values)
     {
         Assert.Equal(capacty, list.Capacity);
         Assert.Equal(values.Length, list.Count);

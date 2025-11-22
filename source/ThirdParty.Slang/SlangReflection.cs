@@ -145,7 +145,7 @@ public unsafe class SlangReflection(SlangCompileRequest request) : ManagedSlang<
     public SlangReflectionEntryPoint GetEntryPointByIndex(ulong index) =>
         new(PInvoke.spReflection_getEntryPointByIndex(this.Handle, index));
 
-    public string GetHashedString(ulong index, scoped ReadOnlySpan<ulong> outCount)
+    public string GetHashedString(ulong index, ReadOnlySpan<ulong> outCount)
     {
         fixed (ulong* pOutCount = outCount)
         {
@@ -165,7 +165,7 @@ public unsafe class SlangReflection(SlangCompileRequest request) : ManagedSlang<
     public bool IsSubType(SlangReflectionType subType, SlangReflectionType superType) =>
         PInvoke.spReflection_isSubType(this.Handle, subType.Handle, superType.Handle);
 
-    public SlangReflectionGeneric SpecializeGeneric(SlangReflectionGeneric generic, long argCount, SlangReflectionGenericArgType argTypes, SlangReflectionGenericArg args, scoped ReadOnlySpan<nint> outDiagnostics)
+    public SlangReflectionGeneric SpecializeGeneric(SlangReflectionGeneric generic, long argCount, SlangReflectionGenericArgType argTypes, SlangReflectionGenericArg args, ReadOnlySpan<nint> outDiagnostics)
     {
         fixed (nint* pOutDiagnostics = outDiagnostics)
         {
@@ -173,7 +173,7 @@ public unsafe class SlangReflection(SlangCompileRequest request) : ManagedSlang<
         }
     }
 
-    public SlangReflectionType SpecializeType(SlangReflectionType inType, long specializationArgCount, SlangReflectionType specializationArgs, scoped ReadOnlySpan<nint> outDiagnostics)
+    public SlangReflectionType SpecializeType(SlangReflectionType inType, long specializationArgCount, SlangReflectionType specializationArgs, ReadOnlySpan<nint> outDiagnostics)
     {
         fixed (nint* pOutDiagnostics = outDiagnostics)
         {

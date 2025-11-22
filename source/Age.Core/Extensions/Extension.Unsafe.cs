@@ -8,7 +8,7 @@ public static partial class Extension
     extension(Unsafe)
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe ref readonly TTo AsReadOnly<TFrom, TTo>(scoped in TFrom value)
+        public static unsafe ref readonly TTo AsReadOnly<TFrom, TTo>(in TFrom value)
         where TFrom : unmanaged, allows ref struct
         where TTo : unmanaged, allows ref struct =>
             ref Unsafe.AsRef<TTo>((TTo*)Unsafe.AsPointer(in value));

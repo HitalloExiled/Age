@@ -2,7 +2,7 @@ namespace Age.Core.Extensions;
 
 public static partial class Extension
 {
-    extension(scoped ReadOnlySpan<char> value)
+    extension(ReadOnlySpan<char> value)
     {
         public int CountNonWhitespaceCharacters()
         {

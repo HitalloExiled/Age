@@ -14,7 +14,7 @@ public sealed class UniformSet : Resource
     public DescriptorPool    DescriptorPool { get; }
     public VkDescriptorSet[] DescriptorSets { get; }
 
-    public unsafe UniformSet(Shader shader, scoped ReadOnlySpan<Uniform> uniforms)
+    public unsafe UniformSet(Shader shader, ReadOnlySpan<Uniform> uniforms)
     {
         var key = CreatePoolKey(shader, uniforms);
 
@@ -34,7 +34,7 @@ public sealed class UniformSet : Resource
         this.Update(uniforms);
     }
 
-    private static DescriptorPoolKey CreatePoolKey(Shader shader, scoped ReadOnlySpan<Uniform> uniforms)
+    private static DescriptorPoolKey CreatePoolKey(Shader shader, ReadOnlySpan<Uniform> uniforms)
     {
         DescriptorPoolKey poolKey = default;
 
@@ -54,7 +54,7 @@ public sealed class UniformSet : Resource
     protected override void OnDisposed() =>
         this.DescriptorPool.FreeDescriptorSets(this.DescriptorSets);
 
-    public unsafe void Update(scoped ReadOnlySpan<Uniform> uniforms)
+    public unsafe void Update(ReadOnlySpan<Uniform> uniforms)
     {
         using var disposables = new Disposables();
         using var writes      = new RefList<VkWriteDescriptorSet>();

@@ -59,7 +59,7 @@ internal class TextStorage : Disposable
         }
     }
 
-    public TextureMap DrawGlyph(SKFont font, TextureAtlas atlas, scoped ReadOnlySpan<char> chars, in SKRect bounds)
+    public TextureMap DrawGlyph(SKFont font, TextureAtlas atlas, ReadOnlySpan<char> chars, in SKRect bounds)
     {
         const ushort PADDING = 2;
 

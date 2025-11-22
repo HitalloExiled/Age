@@ -39,6 +39,6 @@ public sealed class VertexBuffer<T> : VertexBuffer where T : unmanaged
     public void Update(T data) =>
         this.Buffer.Update(data);
 
-    public void Update(scoped ReadOnlySpan<T> data) =>
+    public void Update(ReadOnlySpan<T> data) =>
         this.Buffer.Update(data);
 }

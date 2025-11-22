@@ -72,7 +72,7 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
         }
     }
 
-    public RefList(scoped ReadOnlySpan<T> values) : this(values.Length)
+    public RefList(ReadOnlySpan<T> values) : this(values.Length)
     {
         for (var i = 0; i < values.Length; i++)
         {

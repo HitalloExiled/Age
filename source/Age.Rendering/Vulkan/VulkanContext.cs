@@ -290,7 +290,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
         }
     }
 
-    public VkFramebuffer CreateFrameBuffer(VkRenderPass renderPass, scoped ReadOnlySpan<VkImageView> attachments, VkExtent2D extent)
+    public VkFramebuffer CreateFrameBuffer(VkRenderPass renderPass, ReadOnlySpan<VkImageView> attachments, VkExtent2D extent)
     {
         var attachmentHandles = VkHandle.GetHandles(attachments);
 
@@ -488,7 +488,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
         throw new Exception("Failed to find suitable memory type");
     }
 
-    public VkFormat FindSupportedFormat(scoped ReadOnlySpan<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+    public VkFormat FindSupportedFormat(ReadOnlySpan<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
     {
         foreach (var format in candidates)
         {

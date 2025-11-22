@@ -789,7 +789,7 @@ public sealed class Text : Layoutable
         this.CursorPosition = position;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void resolveLine(scoped ReadOnlySpan<TextLine> lines, int index, ref uint position) =>
+        void resolveLine(ReadOnlySpan<TextLine> lines, int index, ref uint position) =>
             position = isCursorBefore(endAnchorRect)
                 ? lines[index].Start
                 : lines[index].End + 1 == textLength ? (uint)textLength : lines[index].End;
@@ -813,7 +813,7 @@ public sealed class Text : Layoutable
         bool isCursorAboveBottom(in Rect<float> rect) => cursor.Y > rect.Position.Y - rect.Size.Height;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void scanAbove(scoped ReadOnlySpan<Command> commands, int start, int end, scoped ReadOnlySpan<TextLine> lines, ref uint position)
+        void scanAbove(ReadOnlySpan<Command> commands, int start, int end, ReadOnlySpan<TextLine> lines, ref uint position)
         {
             for (var i = start; i > end; i--)
             {
@@ -829,7 +829,7 @@ public sealed class Text : Layoutable
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void scanBelow(scoped ReadOnlySpan<Command> commands, int start, int end, scoped ReadOnlySpan<TextLine> lines, ref uint position)
+        void scanBelow(ReadOnlySpan<Command> commands, int start, int end, ReadOnlySpan<TextLine> lines, ref uint position)
         {
             for (var i = start; i < end; i++)
             {
