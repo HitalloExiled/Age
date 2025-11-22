@@ -960,14 +960,21 @@ public abstract partial class Element
                 {
                     this.ownStencilLayer = new StencilLayer(this);
 
-                     this.StencilLayer?.AppendChild(this.ownStencilLayer);
+                    this.StencilLayer?.AppendChild(this.ownStencilLayer);
                 }
             }
             else
             {
-                this.ownStencilLayer?.Detach();
+                if (this.ownStencilLayer != null)
+                {
+                    this.ownStencilLayer.TryDisconnect();
+                    this.ownStencilLayer.Detach();
+                }
+
                 this.ownStencilLayer = null;
             }
+
+            this.ContentStencilLayer?.TryConnect();
 
             PropagateStencilLayer(this, this.ContentStencilLayer);
         }

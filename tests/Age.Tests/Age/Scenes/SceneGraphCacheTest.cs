@@ -157,7 +157,7 @@ public partial class SceneGraphCacheTest
         var actual = cache.NodesList.Select(ToNodeRange).ToArray();
 
         // Uncomment if you is lost
-        Emit(expected, actual);
+        // Emit(expected, actual);
 
         Assert.Equal(expected, actual);
 
@@ -264,7 +264,7 @@ public partial class SceneGraphCacheTest
         actual = [.. cache.NodesList.Select(ToNodeRange)];
 
         // Uncomment if you is lost
-        Emit(expected, actual);
+        // Emit(expected, actual);
 
         Assert.Equal(expected, actual);
     }
@@ -399,7 +399,7 @@ public partial class SceneGraphCacheTest
         actual = [..cache.NodesList.Select(ToNodeRange)];
 
         // Uncomment if you is lost
-        Emit(expected, actual);
+        // Emit(expected, actual);
 
         Assert.Equal(expected, actual);
     }

@@ -846,28 +846,32 @@ public abstract partial class Node : Disposable, IComparable<Node>
 
     internal void Connect()
     {
-        if (!this.IsConnected)
+        if (this.IsConnected)
         {
-            if (this.Parent != null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            this.PropagateOnConnected();
+            throw new InvalidOperationException("Subtree already connected.");
         }
+
+        if (this.Parent != null)
+        {
+            throw new InvalidOperationException("Only subtree root can call Connect.");
+        }
+
+        this.PropagateOnConnected();
     }
 
     internal void Disconnect()
     {
-        if (this.IsConnected)
+        if (!this.IsConnected)
         {
-            if (this.Parent != null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            this.PropagateOnDisconnecting();
+            throw new InvalidOperationException("Subtree already disconnected.");
         }
+
+        if (this.Parent != null)
+        {
+            throw new InvalidOperationException("Only subtree root can call Disconnect.");
+        }
+
+        this.PropagateOnDisconnecting();
     }
 
     internal CompositeEnumerator GetCompositeEnumerator() =>

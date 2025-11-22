@@ -209,7 +209,7 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
                             {
                                 if (command.StencilLayer is StencilLayer currentLayer)
                                 {
-                                    var currentDepth = currentLayer.Depth + 1;
+                                    var currentDepth = (uint)(currentLayer.Depth + 1);
 
                                     while (this.stencilStack.Count > currentDepth)
                                     {

@@ -122,11 +122,9 @@ public abstract class Viewport : Renderable
         }
         else
         {
-            Debug.Assert(this.Scene?.Window != null);
+            this.Window = this.Scene?.Window;
 
-            this.Window = this.Scene.Window;
-
-            this.Window.RenderTree.AddViewport(this);
+            this.Window?.RenderTree.AddViewport(this);
         }
     }
 
