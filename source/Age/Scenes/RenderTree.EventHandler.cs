@@ -49,11 +49,13 @@ public sealed partial class RenderTree
 
             this.buffer.Unmap();
 
-            if (id > -1 && id < this.Nodes.Count)
+            var nodes = this.Nodes;
+
+            if (id > -1 && id < nodes.Length)
             {
                 virtualChildIndex = (uint)((pixel >> 24) & 0xFFFFFF);
 
-                return this.Nodes[id];
+                return nodes[id];
             }
         }
 

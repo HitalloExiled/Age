@@ -179,7 +179,7 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
             new(1, 0)
         ];
 
-        var viewports = this.Window.Tree.GetViewports();
+        var viewports = this.Window.RenderTree.GetViewports();
 
         for (var i = viewports.Length - 1; i > -1; i--)
         {

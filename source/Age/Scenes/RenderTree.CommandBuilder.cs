@@ -7,7 +7,7 @@ public sealed partial class RenderTree
 
     private bool viewportDirty;
 
-    internal List<Renderable> Nodes => this.sceneGraphCache.Nodes;
+    internal ReadOnlySpan<Renderable> Nodes => this.sceneGraphCache.Nodes;
 
     private void BuildSceneGraphCache()
     {

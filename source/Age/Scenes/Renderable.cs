@@ -72,7 +72,7 @@ public abstract class Renderable : Node
 
         if (isPristine && this.IsConnected)
         {
-            (this as Window ?? this.Scene?.Viewport?.Window)?.Tree.InvalidatedSubTree(this);
+            (this as Window ?? this.Scene?.Viewport?.Window)?.RenderTree.InvalidatedSubTree(this);
         }
     }
 
@@ -118,6 +118,8 @@ public abstract partial class Renderable<T> : Renderable where T : Command
             this.MarkCommandsDirty();
         }
     }
+
+    public Window? Window => this.Scene?.Window;
 
     private protected void AddCommand(T command)
     {

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Age.Graphs;
 using Age.Numerics;
 using Age.Rendering.Resources;
@@ -87,7 +88,7 @@ public abstract class Viewport : Renderable
         }
     }
 
-    public Window? Window { get; internal protected set; }
+    public Window? Window { get; private set; }
 
     protected Viewport()
     {
@@ -107,15 +108,13 @@ public abstract class Viewport : Renderable
 
         if (this.Scene2D != null && this.Scene2D.Parent != this)
         {
-            this.RenderContext.Override2D(this.Scene2D!.Viewport!.RenderContext);
+            this.RenderContext.Override2D(this.Scene2D.Viewport!.RenderContext);
         }
 
         if (this.Scene3D != null && this.Scene3D.Parent != this)
         {
-            this.RenderContext.Override3D(this.Scene3D!.Viewport!.RenderContext);
+            this.RenderContext.Override3D(this.Scene3D.Viewport!.RenderContext);
         }
-
-        this.Window = this as Window ?? this.Scene!.Viewport!.Window;
 
         if (this is Window window)
         {
@@ -123,9 +122,11 @@ public abstract class Viewport : Renderable
         }
         else
         {
-            this.Window = this.Scene!.Viewport!.Window;
+            Debug.Assert(this.Scene?.Window != null);
 
-            this.Window?.Tree.AddViewport(this);
+            this.Window = this.Scene.Window;
+
+            this.Window.RenderTree.AddViewport(this);
         }
     }
 
@@ -138,7 +139,7 @@ public abstract class Viewport : Renderable
 
         if (this.Window != this)
         {
-            this.Window!.Tree.RemoveViewport(this);
+            this.Window!.RenderTree.RemoveViewport(this);
         }
 
         this.Window = null;

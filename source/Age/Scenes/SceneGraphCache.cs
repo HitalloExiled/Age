@@ -1,11 +1,16 @@
+using Age.Core.Extensions;
+
 namespace Age.Scenes;
 
 internal partial class SceneGraphCache
 {
     private readonly List<Renderable> dirtySubtrees = [];
 
-    internal List<Renderable> Nodes     { get; } = [];
-    internal List<Viewport>   Viewports { get; } = [];
+    private readonly List<Renderable> nodes     = [];
+    private readonly List<Viewport>   viewports = [];
+
+    internal ReadOnlySpan<Renderable> Nodes     => this.nodes.AsSpan();
+    internal ReadOnlySpan<Viewport>   Viewports => this.viewports.AsSpan();
 
     public void InvalidatedSubTree(Renderable renderable)
     {
@@ -44,7 +49,7 @@ internal partial class SceneGraphCache
 
         foreach (var subtree in this.dirtySubtrees)
         {
-            Collector.Collect(subtree, this.Nodes);
+            Collector.Collect(subtree, this.nodes);
         }
 
         this.dirtySubtrees.Clear();

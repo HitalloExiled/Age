@@ -117,16 +117,16 @@ public sealed class Window : Viewport
         set => this.window.Title = value;
     }
 
-    public RenderTree Tree { get; }
+    public RenderTree RenderTree { get; }
 
     public bool IsClosed    => this.window.IsClosed;
     public bool IsMaximized => this.window.IsMaximized;
     public bool IsMinimized => this.window.IsMinimized;
     public bool IsVisible   => this.window.IsVisible;
 
-    public override string NodeName           => nameof(Age.Window);
+    public override string       NodeName     => nameof(Age.Window);
     public override RenderTarget RenderTarget => this.renderTargets[this.Surface.CurrentBuffer];
-    public override Texture2D Texture         => Texture2D.Empty;
+    public override Texture2D    Texture      => Texture2D.Empty;
 
     public Window(string title, in Size<uint> size, in Point<int> position, Window? parent = null)
     {
@@ -144,7 +144,7 @@ public sealed class Window : Viewport
 
         windows.Add(this);
 
-        this.Tree = new RenderTree(this);
+        this.RenderTree = new RenderTree(this);
     }
 
     private void CreateRenderTargets()
@@ -197,7 +197,7 @@ public sealed class Window : Viewport
 
         VulkanRenderer.Singleton.DeferredDispose(this.Surface);
 
-        this.Tree.Dispose();
+        this.RenderTree.Dispose();
         this.window.Close();
     }
 

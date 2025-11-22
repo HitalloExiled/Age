@@ -82,7 +82,7 @@ public sealed class Engine : Disposable
 
         foreach (var window in Window.Windows)
         {
-            window.Tree.Initialize();
+            window.RenderTree.Initialize();
         }
 
         var watch = Stopwatch.StartNew();
@@ -103,13 +103,13 @@ public sealed class Engine : Disposable
 
                     if (!window.IsClosed)
                     {
-                        window.Tree.Update();
+                        window.RenderTree.Update();
 
-                        if (window.Tree.IsDirty)
+                        if (window.RenderTree.IsDirty)
                         {
                             this.renderingService.RequestDraw();
 
-                            window.Tree.MakePristine();
+                            window.RenderTree.MakePristine();
                         }
                     }
                 }

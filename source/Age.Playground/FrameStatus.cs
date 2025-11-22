@@ -46,7 +46,7 @@ public class FrameStatus : Element
 
         Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-        this.Scene.Viewport.Window.Tree.Updated += this.Update;
+        this.Scene.Viewport.Window.RenderTree.Updated += this.Update;
     }
 
     protected override void OnDisconnecting()
@@ -55,7 +55,7 @@ public class FrameStatus : Element
 
         Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-        this.Scene.Viewport.Window.Tree.Updated -= this.Update;
+        this.Scene.Viewport.Window.RenderTree.Updated -= this.Update;
     }
 
     public override void Update()

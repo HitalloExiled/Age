@@ -226,7 +226,7 @@ public abstract partial class Element
         {
             Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-            this.Scene.Viewport.Window.Tree.MouseMoved -= this.OnRenderTreeMouseMoved;
+            this.Scene.Viewport.Window.RenderTree.MouseMoved -= this.OnRenderTreeMouseMoved;
             this.HandleScrollBarMouseMoved(windowMouseEvent);
         }
         else if (this.CanScroll && !this.IsScrollBarVisible)
@@ -275,7 +275,7 @@ public abstract partial class Element
 
             Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-            this.Scene.Viewport.Window.Tree.MouseMoved += this.OnRenderTreeMouseMoved;
+            this.Scene.Viewport.Window.RenderTree.MouseMoved += this.OnRenderTreeMouseMoved;
             this.HandleScrollBarMouseMoved(windowMouseEvent);
 
             return;
@@ -391,7 +391,7 @@ public abstract partial class Element
 
             Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-            this.Scene.Viewport.Window.Tree.MouseMoved -= this.OnRenderTreeMouseMoved;
+            this.Scene.Viewport.Window.RenderTree.MouseMoved -= this.OnRenderTreeMouseMoved;
         }
     }
 

@@ -146,7 +146,7 @@ public abstract class Layoutable : Spatial<Command2D, Matrix3x2<float>>
 
     private protected void RequestUpdate(bool affectsBoundings)
     {
-        var tree = this.Scene?.Viewport?.Window?.Tree;
+        var tree = this.Scene?.Viewport?.Window?.RenderTree;
 
         for (var current = this; ; current = current.CompositeParentElement!)
         {

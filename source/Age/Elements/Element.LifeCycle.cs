@@ -72,9 +72,9 @@ public abstract partial class Element
                 window.MouseWheel += this.OnMouseWheel;
             }
 
-            if (!window.Tree.IsDirty && this.Visible)
+            if (!window.RenderTree.IsDirty && this.Visible)
             {
-                window.Tree.MakeDirty();
+                window.RenderTree.MakeDirty();
             }
         }
 
@@ -99,9 +99,9 @@ public abstract partial class Element
             window.KeyUp      -= this.OnKeyUp;
             window.MouseWheel -= this.OnMouseWheel;
 
-            if (!window.Tree.IsDirty && this.Visible)
+            if (!window.RenderTree.IsDirty && this.Visible)
             {
-                window.Tree.MakeDirty();
+                window.RenderTree.MakeDirty();
             }
         }
     }

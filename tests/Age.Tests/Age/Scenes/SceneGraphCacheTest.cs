@@ -6,10 +6,18 @@ namespace Age.Tests.Age.Scenes;
 
 file static class Entensions
 {
+    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "nodes")]
+    private static extern ref List<Renderable> GetNodes(SceneGraphCache sceneGraphCache);
+
     extension<T>(T[] nodes) where T : Node
     {
         public T[] IgnoreEmpty() =>
             [.. nodes.Where(static x => x is not Empty)];
+    }
+
+    extension(SceneGraphCache sceneGraphCache)
+    {
+        public List<Renderable> NodesList => GetNodes(sceneGraphCache);
     }
 }
 
@@ -146,7 +154,7 @@ public partial class SceneGraphCacheTest
                             new(flat[43], new(43, 44), new(116, 118)), // Component
         };
 
-        var actual = cache.Nodes.Select(ToNodeRange).ToArray();
+        var actual = cache.NodesList.Select(ToNodeRange).ToArray();
 
         // Uncomment if you is lost
         Emit(expected, actual);
@@ -200,7 +208,7 @@ public partial class SceneGraphCacheTest
                             new(flat[25], new(25, 26), new(26, 28)), // Component
         ];
 
-        actual = [.. cache.Nodes.Select(ToNodeRange)];
+        actual = [.. cache.NodesList.Select(ToNodeRange)];
 
         // Uncomment if you is lost
         // Emit(expected, actual);
@@ -253,7 +261,7 @@ public partial class SceneGraphCacheTest
                             new(flat[25], new(25, 26), new(20, 22)), // Component
         ];
 
-        actual = [.. cache.Nodes.Select(ToNodeRange)];
+        actual = [.. cache.NodesList.Select(ToNodeRange)];
 
         // Uncomment if you is lost
         Emit(expected, actual);
@@ -300,7 +308,7 @@ public partial class SceneGraphCacheTest
                             new(flat[8], new(8, 9), new(18, 21)), // Sprite
         };
 
-        var actual = cache.Nodes.Select(ToNodeRange).ToArray();
+        var actual = cache.NodesList.Select(ToNodeRange).ToArray();
 
         var component = TreeFactory.Linear<Component, Command2D, ComponentCommand>(2, 2, 2, -1, "$2D.1.1.1.1");
 
@@ -339,7 +347,7 @@ public partial class SceneGraphCacheTest
                             new(flat[15], new(15, 16), new(32, 35)), // Sprite
         ];
 
-        actual = [..cache.Nodes.Select(ToNodeRange)];
+        actual = [..cache.NodesList.Select(ToNodeRange)];
 
         // Uncomment if you is lost
         // Emit(expected, actual);
@@ -388,7 +396,7 @@ public partial class SceneGraphCacheTest
                             new(flat[15], new(15, 16), new(40, 43)), // Sprite
         ];
 
-        actual = [..cache.Nodes.Select(ToNodeRange)];
+        actual = [..cache.NodesList.Select(ToNodeRange)];
 
         // Uncomment if you is lost
         Emit(expected, actual);
@@ -434,7 +442,7 @@ public partial class SceneGraphCacheTest
                             new(flat[8], new(8, 9), new(18, 21)), // Sprite
         };
 
-        var actual = cache.Nodes.Select(ToNodeRange).ToArray();
+        var actual = cache.NodesList.Select(ToNodeRange).ToArray();
 
         // Uncomment if you is lost
         // Emit(expected, actual);
@@ -468,7 +476,7 @@ public partial class SceneGraphCacheTest
                             new(flat[8], new(8, 9), new(21, 24)), // Sprite
         ];
 
-        actual = [.. cache.Nodes.Select(ToNodeRange)];
+        actual = [.. cache.NodesList.Select(ToNodeRange)];
 
         // Uncomment if you is lost
         // Emit(expected, actual);
@@ -507,7 +515,7 @@ public partial class SceneGraphCacheTest
                             new(flat[9], new(9, 10), new(24, 27)), // Sprite
         ];
 
-        actual = [..cache.Nodes.Select(ToNodeRange)];
+        actual = [..cache.NodesList.Select(ToNodeRange)];
 
         // Uncomment if you is lost
         // Emit(expected, actual);

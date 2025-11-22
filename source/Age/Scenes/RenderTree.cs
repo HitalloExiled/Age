@@ -41,9 +41,11 @@ public sealed partial class RenderTree : Disposable
 
     private void ExecuteLateUpdates()
     {
-        for (var i = 0; i < this.Nodes.Count; i++)
+        var nodes = this.Nodes;
+
+        for (var i = 0; i < nodes.Length; i++)
         {
-            var node = this.Nodes[i];
+            var node = nodes[i];
 
             if (!node.IsUpdatesSuspended)
             {
@@ -59,9 +61,11 @@ public sealed partial class RenderTree : Disposable
 
     private void ExecuteUpdates()
     {
-        for (var i = 0; i < this.Nodes.Count; i++)
+        var nodes = this.Nodes;
+
+        for (var i = 0; i < nodes.Length; i++)
         {
-            var node = this.Nodes[i];
+            var node = nodes[i];
 
             node.InvokeStart();
 
