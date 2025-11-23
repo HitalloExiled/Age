@@ -1,7 +1,24 @@
 using System.Runtime.CompilerServices;
 using Age.Graphs;
+using Age.Numerics;
+using Age.Rendering.Resources;
+using Age.Scenes;
 
 namespace Age.Tests.Age;
+
+file sealed class Window : Viewport
+{
+#pragma warning disable CS0067
+    public override event Action? Resized;
+#pragma warning restore CS0067
+
+    public override Size<uint>   Size { get; set; }
+
+    public override string       NodeName     => throw new NotImplementedException();
+    public override RenderGraph  RenderGraph  => throw new NotImplementedException();
+    public override RenderTarget RenderTarget => throw new NotImplementedException();
+    public override Texture2D    Texture      => throw new NotImplementedException();
+}
 
 public partial class RenderGraphTest
 {
@@ -9,7 +26,7 @@ public partial class RenderGraphTest
     public void Execute()
     {
         var context  = new RenderContext();
-        var pipeline = new Graphs.RenderGraph();
+        var pipeline = new RenderGraph(new Window());
 
         var expected = new List<Entry>
         {
@@ -102,7 +119,7 @@ public partial class RenderGraphTest
         {
             actual.Clear();
 
-            pipeline.Execute(context);
+            pipeline.Execute();
 
             Assert.Equal(expected, actual);
         }
@@ -111,7 +128,7 @@ public partial class RenderGraphTest
     [Fact]
     public void ThrowIfCiclic()
     {
-        var pipeline = new Graphs.RenderGraph();
+        var pipeline = new RenderGraph(new Window());
 
         var normalPass = new NormalPass([]);
         var depthPass  = new DepthPass([]);

@@ -27,8 +27,8 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
 
     public SceneRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)
     {
-        this.depthFormat = renderer.DepthBufferFormat;
-        this.sampleCount = renderer.MaxUsableSampleCount;
+        this.depthFormat = (VkFormat)renderer.DepthBufferFormat;
+        this.sampleCount = (VkSampleCountFlags)renderer.MaxUsableSampleCount;
         this.renderPass  = this.CreateRenderPass();
 
         for (var i = 0; i < VulkanContext.MAX_FRAMES_IN_FLIGHT; i++)

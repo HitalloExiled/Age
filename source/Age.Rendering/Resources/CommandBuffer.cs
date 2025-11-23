@@ -4,6 +4,7 @@ using Age.Rendering.Extensions;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
+using Age.Rendering.Vulkan;
 
 namespace Age.Rendering.Resources;
 
@@ -13,10 +14,16 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
 
     internal override VkCommandBuffer Instance { get; }
 
-    internal CommandBuffer(VkCommandBuffer instance, bool owner)
+    internal CommandBuffer(VkCommandBuffer instance)
     {
         this.Instance = instance;
-        this.owner    = owner;
+        this.owner    = false;
+    }
+
+    internal CommandBuffer(VkCommandBufferLevel commandBufferLevel)
+    {
+        this.Instance = VulkanRenderer.Singleton.Context.AllocateCommand(commandBufferLevel);
+        this.owner    = true;
     }
 
     protected override void OnDisposed()
@@ -25,6 +32,33 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
         {
             this.Instance.Dispose();
         }
+    }
+
+    public static CommandBuffer BeginSingleTimeCommands()
+    {
+        var commandBuffer = new CommandBuffer(VkCommandBufferLevel.Primary);
+
+        commandBuffer.Begin(VkCommandBufferUsageFlags.OneTimeSubmit);
+
+        return commandBuffer;
+    }
+
+    public static unsafe void EndSingleTimeCommands(CommandBuffer commandBuffer)
+    {
+        commandBuffer.End();
+
+        var commandBufferHandle = commandBuffer.Instance.Handle;
+
+        var submitInfo = new VkSubmitInfo
+        {
+            CommandBufferCount = 1,
+            PCommandBuffers    = &commandBufferHandle
+        };
+
+        VulkanRenderer.Singleton.Context.GraphicsQueue.Submit(submitInfo);
+        VulkanRenderer.Singleton.Context.GraphicsQueue.WaitIdle();
+
+        commandBuffer.Dispose();
     }
 
     public void Begin(VkCommandBufferUsageFlags oneTimeSubmit) =>
@@ -169,5 +203,4 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
 
     public void SetStencilReference(VkStencilFaceFlags faceMask, uint reference) =>
         this.Instance.SetStencilReference(faceMask, reference);
-    internal void BindUniformSet(object value) => throw new NotImplementedException();
 }

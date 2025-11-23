@@ -57,7 +57,7 @@ public sealed class Buffer : Resource<VkBuffer>
 
     private static void Copy(Buffer source, Buffer destination)
     {
-        var commandBuffer = VulkanRenderer.Singleton.BeginSingleTimeCommands();
+        var commandBuffer = CommandBuffer.BeginSingleTimeCommands();
 
         var copyRegion = new VkBufferCopy
         {
@@ -66,7 +66,7 @@ public sealed class Buffer : Resource<VkBuffer>
 
         commandBuffer.Instance.CopyBuffer(source, destination, copyRegion);
 
-        VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
+        CommandBuffer.EndSingleTimeCommands(commandBuffer);
     }
 
     protected override void OnDisposed()

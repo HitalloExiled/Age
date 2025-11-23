@@ -68,7 +68,7 @@ public sealed partial class RenderTarget : Resource
 
         this.renderPass = CreateRenderPass(multiPassCreateInfo);
 
-        this.CreateResources(this.RenderPass, multiPassCreateInfo);
+        this.CreateResources(this.renderPass.Resource, multiPassCreateInfo);
     }
 
     public RenderTarget(in MultiPassCreateInfo multiPassCreateInfo)
@@ -77,7 +77,7 @@ public sealed partial class RenderTarget : Resource
 
         this.renderPass = CreateRenderPass(multiPassCreateInfo);
 
-        this.CreateResources(this.RenderPass, multiPassCreateInfo);
+        this.CreateResources(this.renderPass.Resource, multiPassCreateInfo);
     }
 
     [MemberNotNull(nameof(Framebuffer))]
@@ -118,7 +118,7 @@ public sealed partial class RenderTarget : Resource
                     };
 
                     var colorImage = new Image(imageCreateInfo);
-                    colorImage.ClearColor(Color.Margenta, VkImageLayout.ShaderReadOnlyOptimal);
+                    colorImage.ClearColor(Color.Margenta, (VkImageLayout)colorAttachment.FinalLayout);
 
                     colorTexture = new Texture2D(colorImage, true, TextureAspect.Color);
 
@@ -181,7 +181,7 @@ public sealed partial class RenderTarget : Resource
         this.Framebuffer = VulkanRenderer.Singleton.Context.CreateFrameBuffer(renderPass, imageViews.AsSpan(), multiPassCreateInfo.Size.ToExtent2D());
     }
 
-    private unsafe static SharedResource<VkRenderPass> CreateRenderPass(MultiPassCreateInfo createInfo)
+    private unsafe static SharedResource<VkRenderPass> CreateRenderPass(in MultiPassCreateInfo createInfo)
     {
         var hashcode = createInfo.GetHashCode();
 
@@ -222,7 +222,7 @@ public sealed partial class RenderTarget : Resource
                     {
                         Format         = (VkFormat)colorAttachment.Format,
                         Samples        = (VkSampleCountFlags)colorAttachment.SampleCount,
-                        FinalLayout    = colorAttachment.FinalLayout,
+                        FinalLayout    = (VkImageLayout)colorAttachment.FinalLayout,
                         LoadOp         = VkAttachmentLoadOp.Clear,
                         StoreOp        = VkAttachmentStoreOp.Store,
                         StencilLoadOp  = VkAttachmentLoadOp.DontCare,
@@ -259,7 +259,7 @@ public sealed partial class RenderTarget : Resource
                     var depthStencilAttachmentDescription = new VkAttachmentDescription
                     {
                         Format         = (VkFormat)depthStencilAttachmentInfo.Format,
-                        FinalLayout    = depthStencilAttachmentInfo.FinalLayout,
+                        FinalLayout    = (VkImageLayout)depthStencilAttachmentInfo.FinalLayout,
                         LoadOp         = VkAttachmentLoadOp.Clear,
                         Samples        = VkSampleCountFlags.N1,
                         StencilLoadOp  = VkAttachmentLoadOp.Clear,

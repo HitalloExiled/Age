@@ -44,7 +44,7 @@ public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
 
         this.vertexBuffer  = new(vertices.AsSpan());
         this.indexBuffer   = new([0, 1, 2, 0, 2, 3]);
-        this.CommandBuffer = renderer.AllocateCommand(VkCommandBufferLevel.Primary);
+        this.CommandBuffer = new(VkCommandBufferLevel.Primary);
         this.RenderPass    = CreateRenderPass(VkFormat.R16G16B16A16Unorm, VkImageLayout.General);
 
         this.CreateFramebuffer(out this.colorImage, out this.stencilImage, out this.framebuffer);
@@ -52,7 +52,7 @@ public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
         this.CanvasStencilWriterShader = new CanvasStencilMaskShader(this.RenderPass, StencilOp.Write, true);
         this.CanvasStencilEraserShader = new CanvasStencilMaskShader(this.RenderPass, StencilOp.Erase, true);
 
-        var shader = new CanvasIndexShader(this.RenderPass, true);
+        var shader = new CanvasEncodeShader(this.RenderPass, true);
 
         this.Pipelines =
         [
@@ -92,7 +92,7 @@ public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
 
         var stencilImageCreateInfo = colorImageCreateInfo;
 
-        stencilImageCreateInfo.Format = VulkanRenderer.Singleton.StencilBufferFormat;
+        stencilImageCreateInfo.Format = (VkFormat)VulkanRenderer.Singleton.StencilBufferFormat;
         stencilImageCreateInfo.Usage  = VkImageUsageFlags.DepthStencilAttachment;
 
         stencilImage = new Image(stencilImageCreateInfo);
@@ -127,6 +127,8 @@ public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
 
     protected unsafe override void AfterExecute()
     {
+        base.AfterExecute();
+
         this.CommandBuffer.End();
 
         var commandBufferHandle = this.CommandBuffer.Instance.Handle;

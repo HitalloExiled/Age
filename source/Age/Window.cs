@@ -7,6 +7,7 @@ using Age.Scenes;
 using DisplayWindow           = Age.Platforms.Display.Window;
 using WindowMouseEventHandler = Age.Platforms.Display.WindowMouseEventHandler;
 using Age.Core;
+using Age.Graphs;
 
 namespace Age;
 
@@ -119,6 +120,8 @@ public sealed class Window : Viewport
 
     public RenderTree RenderTree { get; }
 
+    public override RenderGraph RenderGraph { get; }
+
     public bool IsClosed    => this.window.IsClosed;
     public bool IsMaximized => this.window.IsMaximized;
     public bool IsMinimized => this.window.IsMinimized;
@@ -144,7 +147,8 @@ public sealed class Window : Viewport
 
         windows.Add(this);
 
-        this.RenderTree = new RenderTree(this);
+        this.RenderGraph = RenderGraph.CreateDefault(this);
+        this.RenderTree  = new RenderTree(this);
     }
 
     private void CreateRenderTargets()
@@ -167,8 +171,8 @@ public sealed class Window : Viewport
             ],
             DepthStencilAttachment = new()
             {
-                FinalLayout = ThirdParty.Vulkan.Enums.VkImageLayout.DepthStencilAttachmentOptimal,
-                Format      = (TextureFormat)VulkanRenderer.Singleton.StencilBufferFormat,
+                FinalLayout = ImageLayout.DepthStencilAttachmentOptimal,
+                Format      = VulkanRenderer.Singleton.StencilBufferFormat,
                 Aspect      = TextureAspect.Stencil,
             }
         };

@@ -6,11 +6,11 @@ using Age.Playground.Tests.Components;
 using Age.Playground.Tests.Scene;
 using Age.Playground.Tests.Styling;
 using Age.Playground.Tests;
-using Age.RenderPasses;
 using Age.Scenes;
 using System.Diagnostics;
 using ThirdParty.Vulkan.Flags;
 using Age.Internal;
+using Age.Passes;
 
 namespace Age.Playground;
 
@@ -116,13 +116,13 @@ public sealed class Editor : UIScene
         }
     }
 
-    private static void PrintCanvasIndex()
+    private void PrintCanvasIndex()
     {
-        var canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasEncodeRenderGraphPass>();
+        Debug.Assert(this.Scene?.Viewport != null);
 
-        var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
+        var scene2DEncodePass = this.Scene.Viewport.RenderGraph.GetNode<UISceneEncodePass>();
 
-        Common.SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "CanvasIndex.png");
+        Common.SaveImage(scene2DEncodePass.Output, VkImageAspectFlags.Color, "CanvasEncode.png");
     }
 
     private void Reload()

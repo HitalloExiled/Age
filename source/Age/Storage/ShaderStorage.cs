@@ -2,8 +2,9 @@ using Age.Core;
 using Age.Rendering.Resources;
 using Age.Shaders;
 using Age.Rendering.Vulkan;
-using Age.RenderPasses;
 using ThirdParty.Vulkan;
+using Age.Graphs;
+using Age.Passes;
 
 namespace Age.Storage;
 
@@ -31,7 +32,7 @@ public class ShaderStorage : Disposable
         }
     }
 
-    public Shader GetShader(string name)
+    public Shader GetShader(string name, RenderGraph renderGraph)
     {
         if (!this.shaders.TryGetValue(name, out var shader))
         {
@@ -39,9 +40,9 @@ public class ShaderStorage : Disposable
             {
                 case nameof(GeometryShader):
                     {
-                        var pass = RenderGraph.Active.GetRenderGraphPass<SceneRenderGraphPass>();
+                        var pass = renderGraph.GetNode<Scene3DPass>();
 
-                        this.shaders[name] = shader = new GeometryShader(pass.RenderPass, this.renderer.MaxUsableSampleCount, true);
+                        this.shaders[name] = shader = new GeometryShader(pass.Viewport!.RenderTarget!.RenderPass, this.renderer.MaxUsableSampleCount, true);
 
                         break;
                     }
@@ -58,7 +59,7 @@ public class ShaderStorage : Disposable
             switch (name)
             {
                 case nameof(GeometryShader):
-                    this.shaders[name] = shader = new GeometryShader(renderPass, ThirdParty.Vulkan.Flags.VkSampleCountFlags.N1, true);
+                    this.shaders[name] = shader = new GeometryShader(renderPass, SampleCount.N1, true);
 
                     break;
             }

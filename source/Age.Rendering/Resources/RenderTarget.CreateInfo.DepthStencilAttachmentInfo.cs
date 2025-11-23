@@ -10,7 +10,7 @@ public sealed partial class RenderTarget
         {
             internal Image? Image;
 
-            public required VkImageLayout FinalLayout;
+            public required ImageLayout   FinalLayout;
             public required TextureFormat Format;
             public required TextureAspect Aspect;
 

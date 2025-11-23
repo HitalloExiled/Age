@@ -18,8 +18,9 @@ public abstract class Viewport : Renderable
     public Camera2D? Camera2D { get; set; }
     public Camera3D? Camera3D { get; set; }
 
-    public abstract RenderTarget RenderTarget { get; }
     public abstract Size<uint>   Size         { get; set; }
+    public abstract RenderGraph  RenderGraph  { get; }
+    public abstract RenderTarget RenderTarget { get; }
     public abstract Texture2D    Texture      { get; }
 
     public Scene2D? Scene2D
@@ -122,9 +123,11 @@ public abstract class Viewport : Renderable
         }
         else
         {
-            this.Window = this.Scene?.Window;
+            Debug.Assert(this.Scene?.Window != null);
 
-            this.Window?.RenderTree.AddViewport(this);
+            this.Window = this.Scene.Window;
+
+            this.Window.RenderTree.AddViewport(this);
         }
     }
 

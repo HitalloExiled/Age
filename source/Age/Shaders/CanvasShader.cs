@@ -17,7 +17,7 @@ public partial class CanvasShader : Shader<CanvasShader.Vertex>
         new()
         {
             FrontFace            = VkFrontFace.Clockwise,
-            RasterizationSamples = ThirdParty.Vulkan.Flags.VkSampleCountFlags.N1,
+            RasterizationSamples = SampleCount.N1,
             StencilOp            = stencilOp,
             Subpass              = subpass,
             Watch                = watch,

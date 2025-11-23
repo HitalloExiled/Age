@@ -1,14 +1,17 @@
+using Age.Graphs;
 using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 
 namespace Age.Scenes;
 
-public sealed class SubViewport(in Size<uint> size) : Viewport
+public sealed class SubViewport : Viewport
 {
     public override event Action? Resized;
 
-    private RenderTarget renderTarget = CreateRenderTarget(size);
+    private readonly RenderGraph renderGraph;
+
+    private RenderTarget renderTarget;
 
     public override Size<uint> Size
     {
@@ -27,7 +30,14 @@ public sealed class SubViewport(in Size<uint> size) : Viewport
 
     public override string       NodeName     => nameof(SubViewport);
     public override RenderTarget RenderTarget => this.renderTarget;
+    public override RenderGraph  RenderGraph => this.renderGraph;
     public override Texture2D    Texture      => this.RenderTarget.ColorAttachments[0].Texture;
+
+    public SubViewport(in Size<uint> size)
+    {
+        this.renderTarget = CreateRenderTarget(size);
+        this.renderGraph  = RenderGraph.CreateDefault(this);
+    }
 
     private static RenderTarget CreateRenderTarget(Size<uint> size)
     {
@@ -38,7 +48,7 @@ public sealed class SubViewport(in Size<uint> size) : Viewport
             [
                 new()
                 {
-                    FinalLayout = ThirdParty.Vulkan.Enums.VkImageLayout.ShaderReadOnlyOptimal,
+                    FinalLayout = ImageLayout.ShaderReadOnlyOptimal,
                     Format      = TextureFormat.B8G8R8A8Unorm,
                     SampleCount = SampleCount.N1,
                     Usage       = TextureUsage.ColorAttachment | TextureUsage.Sampled,
@@ -46,8 +56,8 @@ public sealed class SubViewport(in Size<uint> size) : Viewport
             ],
             DepthStencilAttachment = new()
             {
-                FinalLayout = ThirdParty.Vulkan.Enums.VkImageLayout.DepthStencilAttachmentOptimal,
-                Format      = (TextureFormat)VulkanRenderer.Singleton.DepthBufferFormat,
+                FinalLayout = ImageLayout.DepthStencilAttachmentOptimal,
+                Format      = VulkanRenderer.Singleton.DepthBufferFormat,
                 Aspect      = TextureAspect.Depth,
             }
         };

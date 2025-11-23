@@ -485,7 +485,7 @@ where TVertexInput  : IVertexInput
             var pipelineMultisampleStateCreateInfo = new VkPipelineMultisampleStateCreateInfo
             {
                 SampleShadingEnable  = !isStencilMask,
-                RasterizationSamples = options.RasterizationSamples,
+                RasterizationSamples = (VkSampleCountFlags)options.RasterizationSamples,
                 MinSampleShading     = 1,
             };
 

@@ -7,14 +7,14 @@ internal class RenderingService : Disposable
 {
     private static RenderingService? singleton;
 
-    private readonly VulkanRenderer                  renderer;
-    private readonly Dictionary<Window, RenderGraph> renderGraphs = [];
+    private readonly VulkanRenderer renderer;
+    private readonly List<Window>   windows = [];
 
     private int changes;
 
     public static RenderingService Singleton => singleton ?? throw new NullReferenceException();
 
-    public RenderingService(Window window, VulkanRenderer renderer)
+    public RenderingService(VulkanRenderer renderer)
     {
         if (singleton != null)
         {
@@ -24,17 +24,22 @@ internal class RenderingService : Disposable
         singleton = this;
 
         this.renderer = renderer;
-        window.Surface.SwapchainRecreated += this.OnSwapchainRecreated;
     }
 
-    private void OnSwapchainRecreated()
+    public void RegisterWindow(Window window)
     {
-        this.RequestDrawIncremental();
+        this.windows.Add(window);
 
-        foreach (var renderGraph in this.renderGraphs.Values)
-        {
-            renderGraph.Recreate();
-        }
+        window.Surface.SwapchainRecreated += this.RequestDrawIncremental;
+        window.Resized                    += this.RequestDraw;
+    }
+
+    public void UnregisterWindow(Window window)
+    {
+        this.windows.Remove(window);
+
+        window.Surface.SwapchainRecreated -= this.RequestDrawIncremental;
+        window.Resized                    -= this.RequestDraw;
     }
 
     private void RequestDrawIncremental() =>
@@ -42,27 +47,22 @@ internal class RenderingService : Disposable
 
     protected override void OnDisposed(bool disposing)
     {
-        if (disposing)
+        foreach (var window in this.windows)
         {
-            this.renderer.DeferredDispose(this.renderGraphs.Values);
+            window.Surface.SwapchainRecreated -= this.RequestDrawIncremental;
+            window.Resized                    -= this.RequestDraw;
         }
     }
 
-    public void RegisterRenderGraph(Window window, RenderGraph renderGraph) =>
-        this.renderGraphs[window] = renderGraph;
-
-    public void Render(IEnumerable<Window> windows)
+    public void Render()
     {
         if (this.changes > 0)
         {
             this.renderer.BeginFrame();
 
-            foreach (var window in windows)
+            foreach (var window in Window.Windows)
             {
-                if (window.Surface.Visible)
-                {
-                    this.renderGraphs[window].Execute();
-                }
+                window.RenderGraph.Execute();
             }
 
             this.renderer.EndFrame();

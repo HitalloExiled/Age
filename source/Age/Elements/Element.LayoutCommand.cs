@@ -144,11 +144,9 @@ public abstract partial class Element
 
     private void UpdateBackgroundImageSize()
     {
-        if (this.ComputedStyle.BackgroundImage != null)
+        if (this.TryGetLayoutCommandImage(out var layoutCommandImage))
         {
-            var layoutCommandImage = this.GetLayoutCommandImage();
-
-            this.ResolveImageSize(this.ComputedStyle.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size, out var size, out var matrix, out var uv);
+            this.ResolveImageSize(this.ComputedStyle.BackgroundImage!, layoutCommandImage.TextureMap.Texture.Size, out var size, out var matrix, out var uv);
 
             layoutCommandImage.Size        = size;
             layoutCommandImage.LocalMatrix = matrix;

@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using Age.Graphs;
 
 namespace Age.Tests.Age;
 
@@ -10,7 +9,7 @@ public partial class RenderGraphTest
         [AllowNull]
         public override ColorPassInput Input { get; set => field = value ?? new(); } = new();
 
-        protected override void Execute(RenderContext context) =>
+        protected override void Execute() =>
             this.SetOutput((this.Input.Normal + this.Input.Depth + this.Input.Shadow + this.Input.Sky) * 10);
     }
 }

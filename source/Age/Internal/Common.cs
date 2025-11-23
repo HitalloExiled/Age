@@ -11,13 +11,13 @@ public static class Common
 {
     private static readonly string debugDirectory = Path.Join(Directory.GetCurrentDirectory(), ".debug");
 
-    public static void SaveImage(Image image, VkImageAspectFlags aspectMask, string filename)
+    public static void SaveImage(Texture2D texture, VkImageAspectFlags aspectMask, string filename)
     {
         SKColor[] pixels;
 
-        if (image.BytesPerPixel == 8)
+        if (texture.Image.BytesPerPixel == 8)
         {
-            var data = image.ReadBuffer64bits(aspectMask);
+            var data = texture.Image.ReadBuffer64bits(aspectMask);
 
             static SKColor convert(ulong value) => new(ColorFormatConverter.RGBAtoBGRA(ColorFormatConverter.RGBA64toRGBA32(value)));
 
@@ -25,14 +25,14 @@ public static class Common
         }
         else
         {
-            var data = image.ReadBuffer(aspectMask);
+            var data = texture.Image.ReadBuffer(aspectMask);
 
             static SKColor convert(uint value) => new(value);
 
             pixels = [.. data.Select(convert)];
         }
 
-        var bitmap = new SKBitmap((int)image.Extent.Width, (int)image.Extent.Height)
+        var bitmap = new SKBitmap((int)texture.Extent.Width, (int)texture.Extent.Height)
         {
             Pixels = pixels
         };

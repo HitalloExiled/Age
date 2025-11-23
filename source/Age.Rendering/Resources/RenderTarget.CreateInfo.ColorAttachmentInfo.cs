@@ -10,7 +10,7 @@ public sealed partial class RenderTarget
         {
             internal Image? Image;
 
-            public required VkImageLayout FinalLayout;
+            public required ImageLayout   FinalLayout;
             public required TextureFormat Format;
             public required SampleCount   SampleCount;
 
@@ -24,7 +24,7 @@ public sealed partial class RenderTarget
                     Format      = (TextureFormat)image.Format,
                     SampleCount = (SampleCount)image.Samples,
                     Usage       = (TextureUsage)image.Usage,
-                    FinalLayout = image.FinalLayout,
+                    FinalLayout = (ImageLayout)image.FinalLayout,
                 };
 
             public override readonly int GetHashCode()

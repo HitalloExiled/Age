@@ -34,7 +34,7 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
             if (!this.commandBuffers.TryGetValue(vkCommandBuffer, out var commandBuffer))
             {
-                this.commandBuffers[vkCommandBuffer] = commandBuffer = new(vkCommandBuffer, false);
+                this.commandBuffers[vkCommandBuffer] = commandBuffer = new(vkCommandBuffer);
             }
 
             return commandBuffer;
@@ -43,9 +43,9 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
     public VkQueue GraphicsQueue => this.Context.GraphicsQueue;
 
-    public VkFormat           DepthBufferFormat    { get; private set; }
-    public VkFormat           StencilBufferFormat  { get; private set; }
-    public VkSampleCountFlags MaxUsableSampleCount { get; private set; }
+    public TextureFormat DepthBufferFormat    { get; private set; }
+    public TextureFormat StencilBufferFormat  { get; private set; }
+    public SampleCount   MaxUsableSampleCount { get; private set; }
 
     public VulkanRenderer()
     {
@@ -113,14 +113,16 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
     private void OnContextDeviceInitialized()
     {
-        this.DepthBufferFormat   = this.FindSupportedFormat([VkFormat.D32Sfloat, VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint],      VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
-        this.StencilBufferFormat = this.FindSupportedFormat([VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint, VkFormat.D16UnormS8Uint], VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
+        this.DepthBufferFormat   = (TextureFormat)this.FindSupportedFormat([VkFormat.D32Sfloat, VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint],      VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
+        this.StencilBufferFormat = (TextureFormat)this.FindSupportedFormat([VkFormat.D32SfloatS8Uint, VkFormat.D24UnormS8Uint, VkFormat.D16UnormS8Uint], VkImageTiling.Optimal, VkFormatFeatureFlags.DepthStencilAttachment);
 
         this.Context.Device.PhysicalDevice.GetProperties(out var physicalDeviceProperties);
 
         var counts = physicalDeviceProperties.Limits.FramebufferColorSampleCounts & physicalDeviceProperties.Limits.FramebufferDepthSampleCounts;
 
-        this.MaxUsableSampleCount = counts.HasFlags(VkSampleCountFlags.N64)
+        this.MaxUsableSampleCount = (SampleCount)
+        (
+            counts.HasFlags(VkSampleCountFlags.N64)
             ? VkSampleCountFlags.N64
             : counts.HasFlags(VkSampleCountFlags.N32)
                 ? VkSampleCountFlags.N32
@@ -132,7 +134,8 @@ public sealed unsafe partial class VulkanRenderer : Disposable
                             ? VkSampleCountFlags.N4
                             : counts.HasFlags(VkSampleCountFlags.N2)
                                 ? VkSampleCountFlags.N2
-                                : VkSampleCountFlags.N1;
+                                : VkSampleCountFlags.N1
+        );
     }
 
     protected override void OnDisposed(bool disposing)
@@ -149,9 +152,6 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         }
     }
 
-    public CommandBuffer AllocateCommand(VkCommandBufferLevel commandBufferLevel) =>
-        new(this.Context.AllocateCommand(commandBufferLevel), true);
-
     public void BeginFrame()
     {
         this.DisposePendingResources();
@@ -162,15 +162,6 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         {
             this.Context.Frame.CommandBuffer.Begin();
         }
-    }
-
-    public CommandBuffer BeginSingleTimeCommands()
-    {
-        var commandBuffer = this.Context.Frame.CommandPool.AllocateCommand(VkCommandBufferLevel.Primary);
-
-        commandBuffer.Begin(VkCommandBufferUsageFlags.OneTimeSubmit);
-
-        return new(commandBuffer, true);
     }
 
     public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
@@ -241,24 +232,6 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         }
 
         this.Context.SwapBuffers();
-    }
-
-    public void EndSingleTimeCommands(CommandBuffer commandBuffer)
-    {
-        commandBuffer.End();
-
-        var commandBufferHandle = commandBuffer.Instance.Handle;
-
-        var submitInfo = new VkSubmitInfo
-        {
-            CommandBufferCount = 1,
-            PCommandBuffers    = &commandBufferHandle
-        };
-
-        this.Context.GraphicsQueue.Submit(submitInfo);
-        this.Context.GraphicsQueue.WaitIdle();
-
-        commandBuffer.Dispose();
     }
 
     public VkFormat FindSupportedFormat(ReadOnlySpan<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features) =>

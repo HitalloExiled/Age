@@ -1,24 +1,34 @@
+using Age.Core.Extensions;
+using Age.Passes;
+using Age.Scenes;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Graphs;
 
-public sealed class RenderGraph
+public sealed class RenderGraph(Viewport viewport)
 {
     private bool isDirty;
 
-    private readonly Stack<RenderGraphEdge> edgeStack     = [];
-    private readonly List<RenderGraphNode>  nodes         = [];
-    private readonly List<RenderGraphNode>  nodeStack     = [];
-    private readonly List<RenderGraphNode>  roots         = [];
+    private readonly Stack<RenderGraphEdge> edgeStack = [];
+    private readonly List<RenderGraphNode>  nodes     = [];
+    private readonly List<RenderGraphNode>  nodeStack = [];
+    private readonly List<RenderGraphNode>  roots     = [];
 
-    public IReadOnlyList<RenderGraphNode> Nodes         => this.nodes;
+    private readonly Dictionary<string, RenderGraphNode> nodesRegister = [];
+
+    public ReadOnlySpan<RenderGraphNode> Nodes => this.nodes.AsSpan();
+
+    public Viewport Viewport => viewport;
 
     private void AddNode(RenderGraphNode node)
     {
         if (node.RenderGraph == null)
         {
-            this.nodes.Add(node);
             node.RenderGraph = this;
+
+            this.nodesRegister.Add(node.Name, node);
+            this.nodes.Add(node);
         }
         else if (node.RenderGraph != this)
         {
@@ -147,7 +157,17 @@ public sealed class RenderGraph
         this.edgeStack.Clear();
     }
 
-    public void Execute(RenderContext context)
+    public static RenderGraph CreateDefault(Viewport viewport)
+    {
+        var renderGraph = new RenderGraph(viewport);
+
+        renderGraph.Connect(new UISceneEncodePass());
+        renderGraph.Connect(new UISceneColorPass());
+
+        return renderGraph;
+    }
+
+    public void Execute()
     {
         if (this.isDirty)
         {
@@ -158,12 +178,12 @@ public sealed class RenderGraph
 
         foreach (var node in this.nodes)
         {
-            node.CallExecute(context);
+            node.CallExecute();
         }
     }
 
-    public Connection<TFrom> Connect<TFrom>(TFrom node) where
-    TFrom : RenderGraphNode
+    public Connection<TFrom> Connect<TFrom>(TFrom node)
+    where TFrom : RenderGraphNode
     {
         this.AddNode(node);
 
@@ -233,5 +253,29 @@ public sealed class RenderGraph
         }
 
         this.isDirty = isDirty;
+    }
+
+    public T GetNode<T>() where T : RenderGraphNode =>
+        this.GetNode<T>(typeof(T).Name);
+
+    public T GetNode<T>(string name) where T : RenderGraphNode =>
+        !this.nodesRegister.TryGetValue(name, out var node)
+            ? throw new InvalidOperationException($"No node found with the name '{name}'.")
+            : node is not T target
+                ? throw new InvalidOperationException($"Node '{name}' is not of the requested type '{nameof(T)}'. Actual type: '{node.GetType().FullName}'.")
+                : target;
+
+    public bool TryGetNode<T>(string name, [NotNullWhen(true)] out T? renderGraphNode) where T : RenderGraphNode
+    {
+        if (this.nodesRegister.TryGetValue(name, out var node))
+        {
+            renderGraphNode = node as T;
+
+            return renderGraphNode != null;
+        }
+
+        renderGraphNode = null;
+
+        return false;
     }
 }

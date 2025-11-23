@@ -1,7 +1,7 @@
 using Age.Commands;
-using Age.Core;
 using Age.Core.Extensions;
-using Age.RenderPasses;
+using Age.Core;
+using Age.Passes;
 using System.Diagnostics.CodeAnalysis;
 using ThirdParty.Vulkan.Flags;
 
@@ -13,30 +13,38 @@ public sealed partial class RenderTree : Disposable
 {
     public event Action? Updated;
 
-    private readonly Queue<Action> updatesQueue = [];
+    private readonly UISceneEncodePass uiSceneEncodePass;
+    private readonly Queue<Action>     updatesQueue = [];
+
+    private Buffer buffer;
+    private ulong  bufferVersion;
 
     internal List<Timer> Timers { get; } = [];
-
     public bool IsDirty { get; private set; }
-
-    [AllowNull]
-    private Buffer buffer;
-
-    private ulong bufferVersion;
-
-    [AllowNull]
-    private CanvasEncodeRenderGraphPass canvasIndexRenderGraphPass;
 
     public Window Window { get; }
 
     public RenderTree(Window window)
     {
-        window.Closed += this.Dispose;
+        this.viewports.Add(window);
 
         window.Connect();
 
+        window.Closed      += this.Dispose;
+        window.Context     += this.OnContext;
+        window.DoubleClick += this.OnDoubleClick;
+        window.KeyDown     += this.OnKeyDown;
+        window.MouseDown   += this.OnMouseDown;
+        window.MouseMove   += this.OnMouseMove;
+        window.MouseUp     += this.OnMouseUp;
+        window.MouseWheel  += this.OnMouseWheel;
+        window.Resized     += this.UpdateBuffer;
+
+        this.uiSceneEncodePass = window.RenderGraph.GetNode<UISceneEncodePass>();
+
+        this.UpdateBuffer();
+
         this.Window = window;
-        this.viewports.Add(window);
     }
 
     private void ExecuteLateUpdates()
@@ -94,9 +102,9 @@ public sealed partial class RenderTree : Disposable
     {
         this.buffer?.Dispose();
 
-        var image = this.canvasIndexRenderGraphPass.ColorImage;
+        var texture = this.uiSceneEncodePass.Output;
 
-        var size = image.Extent.Width * image.Extent.Height * sizeof(ulong);
+        var size = texture.Extent.Width * texture.Extent.Height * sizeof(ulong);
 
         this.buffer = new Buffer(size, VkBufferUsageFlags.TransferDst, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
     }
@@ -138,23 +146,8 @@ public sealed partial class RenderTree : Disposable
     internal ReadOnlySpan<Viewport> GetViewports() =>
         this.viewports.AsSpan();
 
-    public void Initialize()
-    {
-        this.canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasEncodeRenderGraphPass>();
-        this.canvasIndexRenderGraphPass.Recreated += this.UpdateBuffer;
-
-        this.UpdateBuffer();
-
-        this.Window.Context     += this.OnContext;
-        this.Window.DoubleClick += this.OnDoubleClick;
-        this.Window.KeyDown     += this.OnKeyDown;
-        this.Window.MouseDown   += this.OnMouseDown;
-        this.Window.MouseMove   += this.OnMouseMove;
-        this.Window.MouseUp     += this.OnMouseUp;
-        this.Window.MouseWheel  += this.OnMouseWheel;
-
+    public void Initialize() =>
         this.BuildSceneGraphCache();
-    }
 
     public void Update()
     {

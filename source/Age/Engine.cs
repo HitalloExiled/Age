@@ -1,7 +1,6 @@
 using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
-using Age.RenderPasses;
 using Age.Services;
 using Age.Storage;
 using System.Diagnostics;
@@ -27,28 +26,14 @@ public sealed class Engine : Disposable
 
     public Engine(string name, Size<uint> windowSize, Point<int> windowPosition)
     {
-        this.Window           = new Window(name, windowSize, windowPosition);
-        this.renderingService = new RenderingService(this.Window, this.renderer);
+        this.renderingService = new RenderingService(this.renderer);
         this.shaderStorage    = new ShaderStorage(this.renderer);
         this.textStorage      = new TextStorage(this.renderer);
         this.textureStorage   = new TextureStorage(this.renderer);
 
-        var renderGraph = new RenderGraph
-        {
-            Name   = "Default",
-            Passes =
-            [
-                new CanvasEncodeRenderGraphPass(this.renderer, this.Window),
-                new SceneRenderGraphPass(this.renderer, this.Window),
-                new CanvasColorRenderGraphPass(this.renderer, this.Window),
-            ]
-        };
+        this.Window = new Window(name, windowSize, windowPosition);
 
-        RenderGraph.Active = renderGraph;
-
-        this.renderingService.RegisterRenderGraph(this.Window, renderGraph);
-
-        this.Window.Resized += this.renderingService.RequestDraw;
+        this.renderingService.RegisterWindow(this.Window);
 
         Input.ListenInputEvents(this.Window);
     }
@@ -114,7 +99,7 @@ public sealed class Engine : Disposable
                     }
                 }
 
-                this.renderingService.Render(Window.Windows);
+                this.renderingService.Render();
 
                 Time.Frames++;
 

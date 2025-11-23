@@ -88,7 +88,7 @@ public sealed class CanvasColorRenderGraphPass : CanvasRenderGraphPass
         {
             ArrayLayers   = 1,
             Extent        = extent,
-            Format        = VulkanRenderer.Singleton.StencilBufferFormat,
+            Format        = (VkFormat)VulkanRenderer.Singleton.StencilBufferFormat,
             ImageType     = VkImageType.N2D,
             InitialLayout = VkImageLayout.Undefined,
             MipLevels     = 1,

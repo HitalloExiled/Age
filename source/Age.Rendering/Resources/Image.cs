@@ -281,7 +281,7 @@ public sealed class Image : Resource<VkImage>
 
     public unsafe void ClearColor(in Color color, VkImageLayout layout)
     {
-        var commandBuffer = VulkanRenderer.Singleton.BeginSingleTimeCommands();
+        var commandBuffer = CommandBuffer.BeginSingleTimeCommands();
 
         var clearColor = new VkClearColorValue();
 
@@ -303,16 +303,16 @@ public sealed class Image : Resource<VkImage>
 
         this.TransitionLayout(commandBuffer, VkImageLayout.TransferDstOptimal, layout);
 
-        VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
+        CommandBuffer.EndSingleTimeCommands(commandBuffer);
     }
 
     public void CopyFromBuffer(Buffer buffer)
     {
-        var commandBuffer = VulkanRenderer.Singleton.BeginSingleTimeCommands();
+        var commandBuffer = CommandBuffer.BeginSingleTimeCommands();
 
         this.CopyFromBuffer(commandBuffer, buffer);
 
-        VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
+        CommandBuffer.EndSingleTimeCommands(commandBuffer);
     }
 
     public void CopyFromBuffer(CommandBuffer commandBuffer, Buffer buffer)
@@ -332,7 +332,7 @@ public sealed class Image : Resource<VkImage>
 
     public void CopyToBuffer(Buffer buffer, VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
     {
-        var commandBuffer = VulkanRenderer.Singleton.BeginSingleTimeCommands();
+        var commandBuffer = CommandBuffer.BeginSingleTimeCommands();
 
         this.TransitionLayout(commandBuffer, VkImageLayout.General, VkImageLayout.TransferSrcOptimal);
 
@@ -340,7 +340,7 @@ public sealed class Image : Resource<VkImage>
 
         this.TransitionLayout(commandBuffer, VkImageLayout.TransferSrcOptimal, VkImageLayout.General);
 
-        VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
+        CommandBuffer.EndSingleTimeCommands(commandBuffer);
     }
 
     public void CopyToBuffer(CommandBuffer commandBuffer, Buffer buffer, VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
@@ -366,11 +366,11 @@ public sealed class Image : Resource<VkImage>
 
     public void TransitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout)
     {
-        var commandBuffer = VulkanRenderer.Singleton.BeginSingleTimeCommands();
+        var commandBuffer = CommandBuffer.BeginSingleTimeCommands();
 
         this.TransitionLayout(commandBuffer, oldLayout, newLayout);
 
-        VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
+        CommandBuffer.EndSingleTimeCommands(commandBuffer);
     }
 
     public void TransitionLayout(CommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout)
@@ -453,7 +453,7 @@ public sealed class Image : Resource<VkImage>
 
         buffer.Allocation.Memory.Write(0, 0, data);
 
-        var commandBuffer = VulkanRenderer.Singleton.BeginSingleTimeCommands();
+        var commandBuffer = CommandBuffer.BeginSingleTimeCommands();
 
         this.TransitionLayout(commandBuffer, VkImageLayout.Undefined, VkImageLayout.TransferDstOptimal);
 
@@ -461,6 +461,6 @@ public sealed class Image : Resource<VkImage>
 
         this.TransitionLayout(commandBuffer, VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal);
 
-        VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
+        CommandBuffer.EndSingleTimeCommands(commandBuffer);
     }
 }

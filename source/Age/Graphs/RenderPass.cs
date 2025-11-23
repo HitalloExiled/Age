@@ -10,12 +10,12 @@ public abstract class RenderPass<TOutput> : RenderGraphNode<TOutput>
     protected abstract CommandBuffer            CommandBuffer { get; }
     protected abstract RenderTarget             RenderTarget  { get; }
 
-    protected sealed override void Execute(RenderContext context)
+    protected sealed override void Execute()
     {
         this.CommandBuffer.SetViewport(this.RenderTarget.Size);
         this.CommandBuffer.BeginRenderPass(this.RenderTarget, this.ClearValues);
 
-        this.Record(context);
+        this.Record(this.Viewport!.RenderContext);
 
         this.CommandBuffer.EndRenderPass();
     }
@@ -23,7 +23,4 @@ public abstract class RenderPass<TOutput> : RenderGraphNode<TOutput>
     protected abstract void Record(RenderContext context);
 }
 
-public abstract class RenderPass<TInput, TOutput> : RenderGraphNode<TInput, TOutput>
-{
-    protected sealed override void Execute(RenderContext context) => throw new NotImplementedException();
-}
+public abstract class RenderPass<TInput, TOutput> : RenderGraphNode<TInput, TOutput>;

@@ -9,6 +9,7 @@ public partial class RenderGraphTest
     {
         private TOutput? output;
         public override TOutput? Output => this.output;
+        public override string   Name   => typeof(TThis).Name;
 
         protected override void AfterExecute() =>
             results.Add(new(typeof(TThis).Name, null, this.Output?.ToString()));
@@ -25,6 +26,7 @@ public partial class RenderGraphTest
 
         public override TInput?  Input  { get; set; }
         public override TOutput? Output => this.output;
+        public override string   Name   => typeof(TThis).Name;
 
         protected override void AfterExecute() =>
             results.Add(new(typeof(TThis).Name, this.Input?.ToString(), this.Output?.ToString()));

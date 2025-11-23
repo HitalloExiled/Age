@@ -1,5 +1,6 @@
 using Age.Core;
 using Age.Core.Extensions;
+using Age.Scenes;
 
 namespace Age.Graphs;
 
@@ -13,47 +14,51 @@ public abstract class RenderGraphNode : Disposable
         get;
         set
         {
-            if (field != value)
+            if (field == value)
+            {
+                return;
+            }
+
+            if (value != null)
             {
                 field = value;
 
-                if (value != null)
-                {
-                    this.OnConnected();
-                }
-                else
-                {
-                    this.OnDisconnected();
-                }
+                this.OnConnected();
+            }
+            else
+            {
+                this.OnDisconnecting();
+
+                field = value;
             }
         }
     }
-    internal SortState    SortState   { get; set; }
+    internal SortState SortState { get; set; }
 
     public ReadOnlySpan<RenderGraphEdge> InputEdges  => this.inputEdges.AsSpan();
     public ReadOnlySpan<RenderGraphEdge> OutputEdges => this.outputEdges.AsSpan();
 
+    public Viewport? Viewport => this.RenderGraph?.Viewport;
+
+    public abstract string Name { get; }
+
     protected virtual void AfterExecute() { }
     protected virtual void BeforeExecute() { }
     protected virtual void OnConnected() { }
-    protected virtual void OnDisconnected() { }
+    protected virtual void OnDisconnecting() { }
 
-    protected abstract void Execute(RenderContext context);
+    protected abstract void Execute();
 
-    internal virtual void ClearInputs()
-    {
+    internal virtual void ClearInputs() =>
         this.inputEdges.Clear();
-    }
 
-    internal virtual void ClearOutputs()
-    {
+    internal virtual void ClearOutputs() =>
         this.outputEdges.Clear();
-    }
 
-    internal void CallExecute(RenderContext context)
+    internal void CallExecute()
     {
         this.BeforeExecute();
-        this.Execute(context);
+        this.Execute();
         this.AfterExecute();
 
         foreach (var edge in this.OutputEdges)

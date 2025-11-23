@@ -28,13 +28,13 @@ public sealed partial class RenderTree
 
     private unsafe Renderable? GetNode(ushort x, ushort y, out uint virtualChildIndex)
     {
-        var image = this.canvasIndexRenderGraphPass.ColorImage;
+        var texture = this.uiSceneEncodePass.Output;
 
-        if (x < image.Extent.Width && y < image.Extent.Height)
+        if (x < texture.Extent.Width && y < texture.Extent.Height)
         {
             if (this.bufferVersion != Time.Redraws)
             {
-                image.CopyToBuffer(this.buffer);
+                texture.Image.CopyToBuffer(this.buffer);
                 this.bufferVersion = Time.Redraws;
             }
 
@@ -42,7 +42,7 @@ public sealed partial class RenderTree
 
             var imageIndex = new Span<ulong>(imageIndexBuffer.ToPointer(), (int)this.buffer.Size / sizeof(ulong));
 
-            var index = x + (y * image.Extent.Width);
+            var index = x + (y * texture.Extent.Width);
             var pixel = imageIndex[(int)index];
 
             var id = (int)(pixel & 0x0000FFFFFF) - 1;

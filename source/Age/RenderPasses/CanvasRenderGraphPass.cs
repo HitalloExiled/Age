@@ -111,7 +111,7 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
                     ],
                     DepthStencilAttachment = new()
                     {
-                        Format         = VulkanRenderer.Singleton.StencilBufferFormat,
+                        Format         = (VkFormat)VulkanRenderer.Singleton.StencilBufferFormat,
                         Samples        = VkSampleCountFlags.N1,
                         InitialLayout  = VkImageLayout.Undefined,
                         FinalLayout    = VkImageLayout.DepthStencilAttachmentOptimal,
