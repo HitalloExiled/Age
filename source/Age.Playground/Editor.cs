@@ -29,7 +29,7 @@ public sealed class Editor : UIScene
 
     public Editor()
     {
-        this.setup = ButtonTest.Setup;
+        this.setup = ScrollTest.Setup;
 
         this.pages =
         [
