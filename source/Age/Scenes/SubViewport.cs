@@ -70,6 +70,7 @@ public sealed class SubViewport : Viewport
         base.OnDisposedInternal();
 
         this.RenderTarget.Dispose();
+        this.RenderGraph.Dispose();
     }
 
     protected override void OnAttached()

@@ -14,6 +14,8 @@ namespace Age.Passes;
 
 public sealed class UISceneEncodePass : UIScenePass
 {
+    [AllowNull]
+    private CommandBuffer commandBuffer;
 
     [AllowNull]
     private CanvasStencilMaskShader canvasStencilWriterShader;
@@ -30,7 +32,7 @@ public sealed class UISceneEncodePass : UIScenePass
     protected override CanvasStencilMaskShader CanvasStencilEraserShader => this.canvasStencilEraserShader;
     protected override CanvasStencilMaskShader CanvasStencilWriterShader => this.canvasStencilWriterShader;
     protected override Color                   ClearColor                => Color.Black;
-    protected override CommandBuffer           CommandBuffer             { get; } = new(VkCommandBufferLevel.Primary);
+    protected override CommandBuffer           CommandBuffer             => this.commandBuffer;
     protected override CommandFilter           CommandFilter             => CommandFilter.Encode;
     protected override RenderTarget            RenderTarget              => this.renderTarget;
     protected override CanvasShader            Shader                    => this.shader;
@@ -71,6 +73,8 @@ public sealed class UISceneEncodePass : UIScenePass
 
         this.CreateRenderTarget();
 
+        this.commandBuffer = new(VkCommandBufferLevel.Primary);
+
         this.shader = new CanvasEncodeShader(this.renderTarget, true);
         this.shader.Changed += RenderingService.Singleton.RequestDraw;
 
@@ -88,6 +92,8 @@ public sealed class UISceneEncodePass : UIScenePass
         base.OnDisconnecting();
 
         this.Viewport.Resized -= this.CreateRenderTarget;
+
+        this.commandBuffer.Dispose();
 
         this.shader.Changed -= RenderingService.Singleton.RequestDraw;
         this.shader.Dispose();
@@ -146,8 +152,7 @@ public sealed class UISceneEncodePass : UIScenePass
 
     protected override void OnDisposed(bool disposing)
     {
+        base.OnDisposed(disposing);
         this.OnDisconnecting();
-
-        this.CommandBuffer.Dispose();
     }
 }

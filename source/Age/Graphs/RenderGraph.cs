@@ -1,3 +1,4 @@
+using Age.Core;
 using Age.Core.Extensions;
 using Age.Passes;
 using Age.Scenes;
@@ -6,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Graphs;
 
-public sealed class RenderGraph(Viewport viewport)
+public sealed class RenderGraph(Viewport viewport) : Disposable
 {
     private bool isDirty;
 
@@ -277,5 +278,13 @@ public sealed class RenderGraph(Viewport viewport)
         renderGraphNode = null;
 
         return false;
+    }
+
+    protected override void OnDisposed(bool disposing)
+    {
+        foreach (var node in this.nodes)
+        {
+            node.Dispose();
+        }
     }
 }

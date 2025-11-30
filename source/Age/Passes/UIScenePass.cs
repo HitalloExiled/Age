@@ -104,6 +104,15 @@ public abstract partial class UIScenePass : RenderPass<Texture2D>
     private void WriteStencil(StencilLayer stencilLayer, in Size<uint> extent) =>
         this.SetStencil(this.CanvasStencilWriterShader, stencilLayer, extent);
 
+    protected override void OnDisposed(bool disposing)
+    {
+        if (disposing)
+        {
+            this.VertexBuffer.Dispose();
+            this.IndexBuffer.Dispose();
+        }
+    }
+
     protected override void Record(RenderContext context) =>
         this.Record(context.UIBuffer.Commands);
 

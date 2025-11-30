@@ -104,6 +104,9 @@ public class UISceneColorPass : UIScenePass
         this.CommandBuffer.DrawIndexed(this.IndexBuffer);
     }
 
-    protected override void OnDisposed(bool disposing) =>
+    protected override void OnDisposed(bool disposing)
+    {
+        base.OnDisposed(disposing);
         this.OnDisconnecting();
+    }
 }

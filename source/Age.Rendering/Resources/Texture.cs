@@ -48,9 +48,9 @@ public partial class Texture : Resource
         };
 
         this.IsImageOwner = true;
-        this.Image      = new(imageCreateInfo);
-        this.ImageView  = CreateImageView(this.Image, createInfo.Aspect);
-        this.Aspect     = createInfo.Aspect;
+        this.Image        = new(imageCreateInfo);
+        this.ImageView    = CreateImageView(this.Image, createInfo.Aspect);
+        this.Aspect       = createInfo.Aspect;
     }
 
     public Texture(in CreateInfo createInfo, in Color clearColor) : this(createInfo) =>

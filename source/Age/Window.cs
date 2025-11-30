@@ -202,6 +202,7 @@ public sealed class Window : Viewport
         VulkanRenderer.Singleton.DeferredDispose(this.Surface);
 
         this.RenderTree.Dispose();
+        this.RenderGraph.Dispose();
         this.window.Close();
     }
 

@@ -4,7 +4,7 @@ public abstract class DisposableManagedHandle<T> : ManagedHandle<T>, IDisposable
 {
     private bool disposed;
 
-    internal DisposableManagedHandle() : base() { }
+    internal DisposableManagedHandle() { }
     internal DisposableManagedHandle(VkHandle<T> handle) : base(handle) { }
 
     ~DisposableManagedHandle() =>

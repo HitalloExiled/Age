@@ -30,7 +30,7 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
     {
         if (this.owner)
         {
-            this.Instance.Dispose();
+            VulkanRenderer.Singleton.DeferredDispose(this.Instance);
         }
     }
 
