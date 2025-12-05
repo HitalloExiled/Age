@@ -446,10 +446,10 @@ public abstract partial class Element
 
     private void SetScrollBarXDefaultStyle(RectCommand command)
     {
-        command.Color          = scrollBarDefaultColor;
-        command.Size           = command.Size with { Height = SCROLL_BAR_DEFAULT_SIZE };
+        command.Color       = scrollBarDefaultColor;
+        command.Size        = command.Size with { Height = SCROLL_BAR_DEFAULT_SIZE };
         command.LocalMatrix = Matrix3x2<float>.Translated(command.LocalMatrix.Translation.X, this.GetScrollBarXPositionY());
-        command.Border         = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
+        command.Border      = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
 
         this.RequestUpdate(false);
     }
@@ -459,10 +459,10 @@ public abstract partial class Element
 
     private void SetScrollBarXHoverStyle(RectCommand command)
     {
-        command.Color          = scrollBarHoverColor;
-        command.Size           = command.Size with { Height = SCROLL_BAR_HOVER_SIZE };
+        command.Color       = scrollBarHoverColor;
+        command.Size        = command.Size with { Height = SCROLL_BAR_HOVER_SIZE };
         command.LocalMatrix = Matrix3x2<float>.Translated(command.LocalMatrix.Translation.X, -(this.Boundings.Height - this.border.Top - SCROLL_BAR_HOVER_SIZE - SCROLL_BAR_HOVER_MARGIN));
-        command.Border         = new(0, SCROLL_BAR_HOVER_BORDER_RADIUS, default);
+        command.Border      = new(0, SCROLL_BAR_HOVER_BORDER_RADIUS, default);
 
         this.RequestUpdate(false);
     }
@@ -482,10 +482,10 @@ public abstract partial class Element
 
     private void SetScrollBarYDefaultStyle(RectCommand command)
     {
-        command.Color          = scrollBarDefaultColor;
-        command.Size           = command.Size with { Width = SCROLL_BAR_DEFAULT_SIZE };
+        command.Color       = scrollBarDefaultColor;
+        command.Size        = command.Size with { Width = SCROLL_BAR_DEFAULT_SIZE };
         command.LocalMatrix = Matrix3x2<float>.Translated(this.GetScrollBarYPositionX(), command.LocalMatrix.Translation.Y);
-        command.Border         = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
+        command.Border      = new(0, SCROLL_BAR_DEFAULT_BORDER_RADIUS, default);
 
         this.RequestUpdate(false);
     }
@@ -495,10 +495,10 @@ public abstract partial class Element
 
     private void SetScrollBarYHoverStyle(RectCommand command)
     {
-        command.Color          = scrollBarHoverColor;
-        command.Size           = command.Size with { Width = SCROLL_BAR_HOVER_SIZE };
+        command.Color       = scrollBarHoverColor;
+        command.Size        = command.Size with { Width = SCROLL_BAR_HOVER_SIZE };
         command.LocalMatrix = Matrix3x2<float>.Translated(this.Boundings.Width - this.border.Left - SCROLL_BAR_HOVER_SIZE - SCROLL_BAR_HOVER_MARGIN, command.LocalMatrix.Translation.Y);
-        command.Border         = new(0, SCROLL_BAR_HOVER_BORDER_RADIUS, default);
+        command.Border      = new(0, SCROLL_BAR_HOVER_BORDER_RADIUS, default);
 
         this.RequestUpdate(false);
     }

@@ -118,6 +118,7 @@ public sealed partial class RenderTarget : Resource
                     };
 
                     var colorImage = new Image(imageCreateInfo);
+
                     colorImage.ClearColor(Color.Margenta, (VkImageLayout)colorAttachment.FinalLayout);
 
                     colorTexture = new Texture2D(colorImage, true, TextureAspect.Color);

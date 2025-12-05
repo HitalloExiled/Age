@@ -1,11 +1,9 @@
-using Age.Numerics;
 using Age.Rendering.Resources;
 
 namespace Age.Graphs;
 
 public abstract class RenderPass<TOutput> : RenderGraphNode<TOutput>
 {
-    protected abstract Color                    ClearColor    { get; }
     protected abstract ReadOnlySpan<ClearValue> ClearValues   { get; }
     protected abstract CommandBuffer            CommandBuffer { get; }
     protected abstract RenderTarget             RenderTarget  { get; }

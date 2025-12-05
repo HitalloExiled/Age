@@ -81,10 +81,10 @@ public abstract partial class UIScenePass : RenderPass<Texture2D>
         this.CommandBuffer.ClearAttachments([attachment], [rect]);
     }
 
-    private void EraseStencil(StencilLayer stencilLayer, in Size<uint> extent) =>
-        this.SetStencil(this.CanvasStencilEraserShader, stencilLayer, extent);
+    private void EraseStencil(StencilLayer stencilLayer, in Size<uint> viewport) =>
+        this.SetStencil(this.CanvasStencilEraserShader, stencilLayer, viewport);
 
-    private void SetStencil(Shader shader, StencilLayer stencilLayer, in Size<uint> viewportSize)
+    private void SetStencil(Shader shader, StencilLayer stencilLayer, in Size<uint> viewport)
     {
         this.CommandBuffer.BindShader(shader);
 
@@ -93,16 +93,16 @@ public abstract partial class UIScenePass : RenderPass<Texture2D>
             Size      = stencilLayer.Size,
             Transform = stencilLayer.Transform,
             Border    = stencilLayer.Border,
-            Viewport  = viewportSize,
+            Viewport  = viewport,
             UV        = UVRect.Normalized,
         };
 
-        this.CommandBuffer.PushConstant(this.CanvasStencilWriterShader, constant);
+        this.CommandBuffer.PushConstant(shader, constant);
         this.CommandBuffer.DrawIndexed(this.IndexBuffer);
     }
 
-    private void WriteStencil(StencilLayer stencilLayer, in Size<uint> extent) =>
-        this.SetStencil(this.CanvasStencilWriterShader, stencilLayer, extent);
+    private void WriteStencil(StencilLayer stencilLayer, in Size<uint> viewport) =>
+        this.SetStencil(this.CanvasStencilWriterShader, stencilLayer, viewport);
 
     protected override void OnDisposed(bool disposing)
     {

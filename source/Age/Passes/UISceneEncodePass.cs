@@ -31,7 +31,6 @@ public sealed class UISceneEncodePass : UIScenePass
 
     protected override CanvasStencilMaskShader CanvasStencilEraserShader => this.canvasStencilEraserShader;
     protected override CanvasStencilMaskShader CanvasStencilWriterShader => this.canvasStencilWriterShader;
-    protected override Color                   ClearColor                => Color.Black;
     protected override CommandBuffer           CommandBuffer             => this.commandBuffer;
     protected override CommandFilter           CommandFilter             => CommandFilter.Encode;
     protected override RenderTarget            RenderTarget              => this.renderTarget;

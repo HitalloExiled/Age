@@ -49,7 +49,10 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
 
         var rect = new VkClearRect
         {
-            Rect           = new() { Extent = extent },
+            Rect =
+            {
+                Extent = extent
+            },
             BaseArrayLayer = 0,
             LayerCount     = 1,
         };
@@ -66,9 +69,9 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
     private void WriteStencil(RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport) =>
         this.SetStencil(this.CanvasStencilWriterShader, pipeline, stencilLayer, viewport);
 
-    private void SetStencil(CanvasStencilMaskShader canvasStencilWriterShader, RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport)
+    private void SetStencil(CanvasStencilMaskShader shader, RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport)
     {
-        this.CommandBuffer.BindShader(canvasStencilWriterShader);
+        this.CommandBuffer.BindShader(shader);
 
         var constant = new CanvasShader.PushConstant
         {
@@ -79,7 +82,7 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
             UV        = UVRect.Normalized,
         };
 
-        this.CommandBuffer.PushConstant(canvasStencilWriterShader, constant);
+        this.CommandBuffer.PushConstant(shader, constant);
         this.CommandBuffer.DrawIndexed(pipeline.IndexBuffer);
     }
 

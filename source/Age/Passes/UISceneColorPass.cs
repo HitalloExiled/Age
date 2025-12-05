@@ -28,7 +28,6 @@ public class UISceneColorPass : UIScenePass
 
     protected override CanvasStencilMaskShader CanvasStencilEraserShader => this.canvasStencilEraserShader;
     protected override CanvasStencilMaskShader CanvasStencilWriterShader => this.canvasStencilWriterShader;
-    protected override Color                   ClearColor                => Color.Black;
     protected override CommandBuffer           CommandBuffer             => VulkanRenderer.Singleton.CurrentCommandBuffer;
     protected override CommandFilter           CommandFilter             => CommandFilter.Color;
     protected override CanvasShader            Shader                    => this.shader;
