@@ -57,7 +57,13 @@ public sealed class UISceneEncodePass : UIScenePass
                     Format      = TextureFormat.R16G16B16A16Unorm,
                     Usage       = TextureUsage.TransferDst | TextureUsage.TransferSrc | TextureUsage.Sampled | TextureUsage.ColorAttachment
                 }
-            ]
+            ],
+            DepthStencilAttachment = new()
+            {
+                FinalLayout = ImageLayout.DepthStencilAttachmentOptimal,
+                Format      = VulkanRenderer.Singleton.StencilBufferFormat,
+                Aspect      = TextureAspect.Stencil,
+            }
         };
 
         this.renderTarget = new(createInfo);
