@@ -10,7 +10,7 @@ public sealed record MeshCommand : Command3D
     public IndexBuffer32 IndexBuffer { get; set; }
 
     [AllowNull]
-    public VertexBuffer<GeometryShader.Vertex> VertexBuffer { get; set; }
+    public VertexBuffer<Geometry3DShader.Vertex> VertexBuffer { get; set; }
 
     public override void Reset()
     {

@@ -10,7 +10,7 @@ public sealed class Mesh : Spatial3D
 
     public Material Material { get; set; } = new();
 
-    public Mesh(ReadOnlySpan<GeometryShader.Vertex> vertices, ReadOnlySpan<uint> indices)
+    public Mesh(ReadOnlySpan<Geometry3DShader.Vertex> vertices, ReadOnlySpan<uint> indices)
     {
         var command = CommandPool.MeshCommand.Get(this, CommandFilter.Color);
 

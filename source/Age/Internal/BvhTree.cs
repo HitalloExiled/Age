@@ -198,7 +198,7 @@ public class BvhTree
             SingleCommand = new RectCommand
             {
                 Border      = new Border(2, 0, color * new Color(1, 1, 1, 1)),
-                Flags       = Shaders.CanvasShader.Flags.ColorAsBackground,
+                Flags       = Shaders.Geometry2DShader.Flags.ColorAsBackground,
                 Size        = new((uint)bvhNode.AABB.Size.X, (uint)bvhNode.AABB.Size.Y),
                 LocalMatrix = Matrix3x2<float>.Translated(bvhNode.AABB.Position.X, -bvhNode.AABB.Position.Y)
             }

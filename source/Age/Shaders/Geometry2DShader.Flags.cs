@@ -1,6 +1,6 @@
 namespace Age.Shaders;
 
-public partial class CanvasShader
+public partial class Geometry2DShader
 {
     [Flags]
     public enum Flags : uint

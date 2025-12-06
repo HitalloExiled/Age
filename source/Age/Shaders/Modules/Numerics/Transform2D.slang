@@ -1,6 +1,6 @@
 implementing Numerics;
 
-public struct Transform
+public struct Transform2D
 {
     public float2x2 rotation;
     public float2   position;

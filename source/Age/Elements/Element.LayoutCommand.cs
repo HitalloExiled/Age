@@ -4,7 +4,7 @@ using Age.Core.Collections;
 using System.Numerics;
 using System.Diagnostics.CodeAnalysis;
 
-using static Age.Shaders.CanvasShader;
+using static Age.Shaders.Geometry2DShader;
 
 namespace Age.Elements;
 

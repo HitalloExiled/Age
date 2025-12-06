@@ -5,11 +5,11 @@ namespace Age.RenderPasses;
 
 public abstract partial class CanvasRenderGraphPass
 {
-    protected struct RenderPipelines(CanvasShader shader, VertexBuffer vertexBuffer, IndexBuffer indexBuffer, bool enabled, bool ignoreStencil)
+    protected struct RenderPipelines(Geometry2DShader shader, VertexBuffer vertexBuffer, IndexBuffer indexBuffer, bool enabled, bool ignoreStencil)
     {
         #region 8-bytes
         public IndexBuffer  IndexBuffer   = indexBuffer;
-        public CanvasShader Shader        = shader;
+        public Geometry2DShader Shader        = shader;
         public VertexBuffer VertexBuffer  = vertexBuffer;
         #endregion
 

@@ -15,9 +15,9 @@ internal partial class StencilLayer(Element owner)
     public StencilLayer? Parent          { get; private set; }
     public StencilLayer? PreviousSibling { get; private set; }
 
-    public CanvasShader.Border Border    => this.Owner.ComputedStyle.Border ?? default(CanvasShader.Border);
-    public Size<uint>          Size      => this.Owner.Boundings;
-    public Matrix3x2<float>    Transform => this.Owner.CachedMatrix;
+    public Geometry2DShader.Border Border    => this.Owner.ComputedStyle.Border ?? new Geometry2DShader.Border();
+    public Size<uint>              Size      => this.Owner.Boundings;
+    public Matrix3x2<float>        Transform => this.Owner.CachedMatrix;
 
     public bool IsLeaf => this.FirstChild == null;
 

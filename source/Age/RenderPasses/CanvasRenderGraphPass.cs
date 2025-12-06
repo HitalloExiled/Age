@@ -20,8 +20,8 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
 
     protected UniformSet? LastUniformSet { get; set; }
 
-    protected abstract CanvasStencilMaskShader CanvasStencilEraserShader { get; }
-    protected abstract CanvasStencilMaskShader CanvasStencilWriterShader { get; }
+    protected abstract Geometry2DStencilMaskShader CanvasStencilEraserShader { get; }
+    protected abstract Geometry2DStencilMaskShader CanvasStencilWriterShader { get; }
     protected abstract Color                   ClearColor                { get; }
     protected abstract CommandBuffer           CommandBuffer             { get; }
     protected abstract CommandFilter           CommandFilter             { get; }
@@ -69,11 +69,11 @@ public abstract partial class CanvasRenderGraphPass(VulkanRenderer renderer, Win
     private void WriteStencil(RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport) =>
         this.SetStencil(this.CanvasStencilWriterShader, pipeline, stencilLayer, viewport);
 
-    private void SetStencil(CanvasStencilMaskShader shader, RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport)
+    private void SetStencil(Geometry2DStencilMaskShader shader, RenderPipelines pipeline, StencilLayer stencilLayer, in Size<uint> viewport)
     {
         this.CommandBuffer.BindShader(shader);
 
-        var constant = new CanvasShader.PushConstant
+        var constant = new Geometry2DShader.PushConstant
         {
             Size      = stencilLayer.Size,
             Transform = stencilLayer.Transform,

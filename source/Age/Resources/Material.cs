@@ -20,5 +20,5 @@ public sealed class Material : Disposable
     }
 
     internal Shader GetShader(RenderTarget renderTarget) =>
-        this.shader ??= ShaderStorage.Singleton.GetShader(nameof(GeometryShader), renderTarget.RenderPass);
+        this.shader ??= ShaderStorage.Singleton.GetShader(nameof(Geometry3DShader), renderTarget.RenderPass);
 }

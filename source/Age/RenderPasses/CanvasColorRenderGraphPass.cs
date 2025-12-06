@@ -18,11 +18,11 @@ public sealed class CanvasColorRenderGraphPass : CanvasRenderGraphPass
     private readonly Framebuffer[]                     framebuffers = new Framebuffer[VulkanContext.MAX_FRAMES_IN_FLIGHT];
     private readonly IndexBuffer32                     indexBuffer;
     private readonly Image[]                           stencilImages = new Image[VulkanContext.MAX_FRAMES_IN_FLIGHT];
-    private readonly VertexBuffer<CanvasShader.Vertex> vertexBuffer;
+    private readonly VertexBuffer<Geometry2DShader.Vertex> vertexBuffer;
     private readonly IndexBuffer32                     wireframeIndexBuffer;
 
-    protected override CanvasStencilMaskShader CanvasStencilEraserShader { get; }
-    protected override CanvasStencilMaskShader CanvasStencilWriterShader { get; }
+    protected override Geometry2DStencilMaskShader CanvasStencilEraserShader { get; }
+    protected override Geometry2DStencilMaskShader CanvasStencilWriterShader { get; }
     protected override Color                   ClearColor                { get; } = Color.Black;
     protected override CommandBuffer           CommandBuffer             => this.Renderer.CurrentCommandBuffer;
     protected override CommandFilter           CommandFilter             { get; } = CommandFilter.Color;
@@ -33,7 +33,7 @@ public sealed class CanvasColorRenderGraphPass : CanvasRenderGraphPass
 
     public CanvasColorRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)
     {
-        var vertices = new CanvasShader.Vertex[4]
+        var vertices = new Geometry2DShader.Vertex[4]
         {
             new(-1, -1),
             new( 1, -1),
@@ -47,10 +47,10 @@ public sealed class CanvasColorRenderGraphPass : CanvasRenderGraphPass
 
         this.RenderPass = CreateRenderPass(this.Window.Surface.Swapchain.Format, VkImageLayout.PresentSrcKHR);
 
-        this.CanvasStencilWriterShader = new CanvasStencilMaskShader(this.RenderPass, StencilOp.Write, true);
-        this.CanvasStencilEraserShader = new CanvasStencilMaskShader(this.RenderPass, StencilOp.Erase, true);
+        this.CanvasStencilWriterShader = new Geometry2DStencilMaskShader(this.RenderPass, StencilOp.Write, true);
+        this.CanvasStencilEraserShader = new Geometry2DStencilMaskShader(this.RenderPass, StencilOp.Erase, true);
 
-        var canvasShader          = new CanvasShader(this.RenderPass, true);
+        var canvasShader          = new Geometry2DColorShader(this.RenderPass, true);
         var canvasWireframeShader = new CanvasWireframeShader(this.RenderPass, true);
 
         this.Pipelines =
@@ -173,7 +173,7 @@ public sealed class CanvasColorRenderGraphPass : CanvasRenderGraphPass
             this.CommandBuffer.BindUniformSet(this.LastUniformSet = uniformSet);
         }
 
-        var constant = new CanvasShader.PushConstant
+        var constant = new Geometry2DShader.PushConstant
         {
             Border    = command.Border,
             Color     = command.Color,

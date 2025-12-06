@@ -18,19 +18,19 @@ public class UISceneColorPass : UIScenePass
     private UniformSet? lastUniformSet;
 
     [AllowNull]
-    private CanvasStencilMaskShader canvasStencilWriterShader;
+    private Geometry2DStencilMaskShader geometry2DStencilMaskWriterShader;
 
     [AllowNull]
-    private CanvasStencilMaskShader canvasStencilEraserShader;
+    private Geometry2DStencilMaskShader geometry2DStencilMaskEraserShader;
 
     [AllowNull]
-    private CanvasShader shader;
+    private Geometry2DColorShader shader;
 
-    protected override CanvasStencilMaskShader CanvasStencilEraserShader => this.canvasStencilEraserShader;
-    protected override CanvasStencilMaskShader CanvasStencilWriterShader => this.canvasStencilWriterShader;
-    protected override CommandBuffer           CommandBuffer             => VulkanRenderer.Singleton.CurrentCommandBuffer;
-    protected override CommandFilter           CommandFilter             => CommandFilter.Color;
-    protected override CanvasShader            Shader                    => this.shader;
+    protected override CommandBuffer               CommandBuffer                     => VulkanRenderer.Singleton.CurrentCommandBuffer;
+    protected override CommandFilter               CommandFilter                     => CommandFilter.Color;
+    protected override Geometry2DStencilMaskShader Geometry2DStencilMaskEraserShader => this.geometry2DStencilMaskEraserShader;
+    protected override Geometry2DStencilMaskShader Geometry2DStencilMaskWriterShader => this.geometry2DStencilMaskWriterShader;
+    protected override Geometry2DColorShader       Shader                            => this.shader;
 
     public override string Name => nameof(UISceneColorPass);
 
@@ -46,11 +46,11 @@ public class UISceneColorPass : UIScenePass
         this.shader = new(this.Viewport!.RenderTarget, true);
         this.shader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.canvasStencilWriterShader = new CanvasStencilMaskShader(this.RenderGraph.Viewport.RenderTarget, StencilOp.Write, true);
-        this.canvasStencilWriterShader.Changed += RenderingService.Singleton.RequestDraw;
+        this.geometry2DStencilMaskWriterShader = new Geometry2DStencilMaskShader(this.RenderGraph.Viewport.RenderTarget, StencilOp.Write, true);
+        this.geometry2DStencilMaskWriterShader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.canvasStencilEraserShader = new CanvasStencilMaskShader(this.RenderGraph.Viewport.RenderTarget, StencilOp.Erase, true);
-        this.canvasStencilEraserShader.Changed += RenderingService.Singleton.RequestDraw;
+        this.geometry2DStencilMaskEraserShader = new Geometry2DStencilMaskShader(this.RenderGraph.Viewport.RenderTarget, StencilOp.Erase, true);
+        this.geometry2DStencilMaskEraserShader.Changed += RenderingService.Singleton.RequestDraw;
     }
 
     protected override void OnDisconnecting()
@@ -60,11 +60,11 @@ public class UISceneColorPass : UIScenePass
         this.shader.Changed -= RenderingService.Singleton.RequestDraw;
         this.shader.Dispose();
 
-        this.canvasStencilWriterShader.Changed -= RenderingService.Singleton.RequestDraw;
-        this.canvasStencilWriterShader.Dispose();
+        this.geometry2DStencilMaskWriterShader.Changed -= RenderingService.Singleton.RequestDraw;
+        this.geometry2DStencilMaskWriterShader.Dispose();
 
-        this.canvasStencilEraserShader.Changed -= RenderingService.Singleton.RequestDraw;
-        this.canvasStencilEraserShader.Dispose();
+        this.geometry2DStencilMaskEraserShader.Changed -= RenderingService.Singleton.RequestDraw;
+        this.geometry2DStencilMaskEraserShader.Dispose();
     }
 
     protected override void Record(RectCommand command)
@@ -88,7 +88,7 @@ public class UISceneColorPass : UIScenePass
             this.CommandBuffer.BindUniformSet(this.lastUniformSet = uniformSet);
         }
 
-        var constant = new CanvasShader.PushConstant
+        var constant = new Geometry2DShader.PushConstant
         {
             Border    = command.Border,
             Color     = command.Color,

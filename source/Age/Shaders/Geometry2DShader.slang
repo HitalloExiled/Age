@@ -2,9 +2,9 @@
 
 import Modules.Common;
 
-import "CanvasShader.Flags";
-import "CanvasShader.BorderSide";
-import "CanvasShader.PushConstant";
+import "./Geometry2DShader.Flags";
+import "./Geometry2DShader.BorderSide";
+import "./Geometry2DShader.PushConstant";
 
 public struct VertexInput
 {

@@ -1,7 +1,7 @@
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Styling;
-using static Age.Shaders.CanvasShader;
+using static Age.Shaders.Geometry2DShader;
 
 namespace Age.Elements;
 

@@ -1,6 +1,6 @@
-import "CanvasShader.Helpers";
+import "./Geometry2DShader.Helpers";
 
-#include "./CanvasShader.Base.slang"
+#include "./Geometry2DShader.slang"
 
 [shader("fragment")]
 public FragmentOutput main(in FragmentInput input)

@@ -6,7 +6,7 @@ using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Scenes;
 using Age.Styling;
-using static Age.Shaders.CanvasShader;
+using static Age.Shaders.Geometry2DShader;
 
 namespace Age.Elements;
 

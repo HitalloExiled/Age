@@ -14,14 +14,14 @@ namespace Age.RenderPasses;
 public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
 {
     private readonly IndexBuffer32                     indexBuffer;
-    private readonly VertexBuffer<CanvasShader.Vertex> vertexBuffer;
+    private readonly VertexBuffer<Geometry2DShader.Vertex> vertexBuffer;
 
     private Image       colorImage;
     private Framebuffer framebuffer;
     private Image       stencilImage;
 
-    protected override CanvasStencilMaskShader CanvasStencilEraserShader { get; }
-    protected override CanvasStencilMaskShader CanvasStencilWriterShader { get; }
+    protected override Geometry2DStencilMaskShader CanvasStencilEraserShader { get; }
+    protected override Geometry2DStencilMaskShader CanvasStencilWriterShader { get; }
     protected override Color                   ClearColor                { get; } = Color.Black;
     protected override CommandBuffer           CommandBuffer             { get; }
     protected override CommandFilter           CommandFilter             { get; } = CommandFilter.Encode;
@@ -34,7 +34,7 @@ public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
 
     public CanvasEncodeRenderGraphPass(VulkanRenderer renderer, Window window) : base(renderer, window)
     {
-        var vertices = new CanvasShader.Vertex[4]
+        var vertices = new Geometry2DShader.Vertex[4]
         {
             new(-1, -1),
             new( 1, -1),
@@ -49,10 +49,10 @@ public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
 
         this.CreateFramebuffer(out this.colorImage, out this.stencilImage, out this.framebuffer);
 
-        this.CanvasStencilWriterShader = new CanvasStencilMaskShader(this.RenderPass, StencilOp.Write, true);
-        this.CanvasStencilEraserShader = new CanvasStencilMaskShader(this.RenderPass, StencilOp.Erase, true);
+        this.CanvasStencilWriterShader = new Geometry2DStencilMaskShader(this.RenderPass, StencilOp.Write, true);
+        this.CanvasStencilEraserShader = new Geometry2DStencilMaskShader(this.RenderPass, StencilOp.Erase, true);
 
-        var shader = new CanvasEncodeShader(this.RenderPass, true);
+        var shader = new Geometry2DEncodeShader(this.RenderPass, true);
 
         this.Pipelines =
         [
@@ -161,7 +161,7 @@ public sealed class CanvasEncodeRenderGraphPass : CanvasRenderGraphPass
 
     protected override void ExecuteCommand(RenderPipelines resource, RectCommand command, in Size<uint> viewport)
     {
-        var constant = new CanvasShader.PushConstant
+        var constant = new Geometry2DShader.PushConstant
         {
             Border    = command.Border,
             Color     = 0xFFFF_0000_0000_0000 | command.Metadata,

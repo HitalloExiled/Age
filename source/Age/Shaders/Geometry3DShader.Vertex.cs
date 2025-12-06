@@ -7,7 +7,7 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Shaders;
 
-public partial class GeometryShader
+public partial class Geometry3DShader
 {
     public struct Vertex(Vector3<float> position, Color color, in Vector2<float> uv) : IVertexInput
     {

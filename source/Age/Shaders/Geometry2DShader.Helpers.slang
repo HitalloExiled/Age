@@ -1,8 +1,8 @@
 import Modules.Common;
 import Modules.Numerics;
 
-import "CanvasShader.BorderSide";
-import "CanvasShader.PushConstant";
+import "Geometry2DShader.BorderSide";
+import "Geometry2DShader.PushConstant";
 
 public enum CornerKind
 {

@@ -1,4 +1,4 @@
-#include "./CanvasShader.Base.slang"
+#include "./Geometry2DShader.slang"
 
 [shader("fragment")]
 public FragmentOutput main()

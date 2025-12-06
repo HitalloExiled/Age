@@ -38,7 +38,7 @@ public record Border
     public Border(in BorderSide horizontal, in BorderSide vertical, ushort radius = 0) : this(horizontal, vertical, new BorderRadius(radius))
     { }
 
-    public static implicit operator CanvasShader.Border(in Border value) =>
+    public static implicit operator Geometry2DShader.Border(in Border value) =>
         new()
         {
             Top =

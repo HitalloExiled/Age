@@ -16,14 +16,14 @@ public abstract partial class UIScenePass : RenderPass<Texture2D>
     private readonly ClearValuesDefault  clearValues  = new();
     private readonly Stack<StencilLayer> stencilStack = [];
 
-    protected abstract CanvasStencilMaskShader CanvasStencilEraserShader { get; }
-    protected abstract CanvasStencilMaskShader CanvasStencilWriterShader { get; }
-    protected abstract CommandFilter           CommandFilter             { get; }
+    protected abstract CommandFilter               CommandFilter                     { get; }
+    protected abstract Geometry2DStencilMaskShader Geometry2DStencilMaskEraserShader { get; }
+    protected abstract Geometry2DStencilMaskShader Geometry2DStencilMaskWriterShader { get; }
 
-    protected abstract Shader Shader { get; }
+    protected abstract Geometry2DShader Shader { get; }
 
-    protected IndexBuffer32                     IndexBuffer    { get; }
-    protected VertexBuffer<CanvasShader.Vertex> VertexBuffer   { get; }
+    protected IndexBuffer32                         IndexBuffer  { get; }
+    protected VertexBuffer<Geometry2DShader.Vertex> VertexBuffer { get; }
 
     protected override RenderTarget             RenderTarget => this.RenderGraph!.Viewport.RenderTarget;
     protected override ReadOnlySpan<ClearValue> ClearValues  => this.clearValues;
@@ -33,7 +33,7 @@ public abstract partial class UIScenePass : RenderPass<Texture2D>
 
     protected UIScenePass()
     {
-        Span<CanvasShader.Vertex> vertices =
+        Span<Geometry2DShader.Vertex> vertices =
         [
             new(-1, -1),
             new( 1, -1),
@@ -82,13 +82,13 @@ public abstract partial class UIScenePass : RenderPass<Texture2D>
     }
 
     private void EraseStencil(StencilLayer stencilLayer, in Size<uint> viewport) =>
-        this.SetStencil(this.CanvasStencilEraserShader, stencilLayer, viewport);
+        this.SetStencil(this.Geometry2DStencilMaskEraserShader, stencilLayer, viewport);
 
     private void SetStencil(Shader shader, StencilLayer stencilLayer, in Size<uint> viewport)
     {
         this.CommandBuffer.BindShader(shader);
 
-        var constant = new CanvasShader.PushConstant
+        var constant = new Geometry2DShader.PushConstant
         {
             Size      = stencilLayer.Size,
             Transform = stencilLayer.Transform,
@@ -102,7 +102,7 @@ public abstract partial class UIScenePass : RenderPass<Texture2D>
     }
 
     private void WriteStencil(StencilLayer stencilLayer, in Size<uint> viewport) =>
-        this.SetStencil(this.CanvasStencilWriterShader, stencilLayer, viewport);
+        this.SetStencil(this.Geometry2DStencilMaskWriterShader, stencilLayer, viewport);
 
     protected override void OnDisposed(bool disposing)
     {

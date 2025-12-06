@@ -18,23 +18,23 @@ public sealed class UISceneEncodePass : UIScenePass
     private CommandBuffer commandBuffer;
 
     [AllowNull]
-    private CanvasStencilMaskShader canvasStencilWriterShader;
+    private Geometry2DStencilMaskShader geometry2DStencilMaskWriterShader;
 
     [AllowNull]
-    private CanvasStencilMaskShader canvasStencilEraserShader;
+    private Geometry2DStencilMaskShader geometry2DStencilMaskEraserShader;
 
     [AllowNull]
     private RenderTarget renderTarget;
 
     [AllowNull]
-    private CanvasShader shader;
+    private Geometry2DEncodeShader shader;
 
-    protected override CanvasStencilMaskShader CanvasStencilEraserShader => this.canvasStencilEraserShader;
-    protected override CanvasStencilMaskShader CanvasStencilWriterShader => this.canvasStencilWriterShader;
-    protected override CommandBuffer           CommandBuffer             => this.commandBuffer;
-    protected override CommandFilter           CommandFilter             => CommandFilter.Encode;
-    protected override RenderTarget            RenderTarget              => this.renderTarget;
-    protected override CanvasShader            Shader                    => this.shader;
+    protected override CommandBuffer               CommandBuffer                     => this.commandBuffer;
+    protected override CommandFilter               CommandFilter                     => CommandFilter.Encode;
+    protected override Geometry2DStencilMaskShader Geometry2DStencilMaskEraserShader => this.geometry2DStencilMaskEraserShader;
+    protected override Geometry2DStencilMaskShader Geometry2DStencilMaskWriterShader => this.geometry2DStencilMaskWriterShader;
+    protected override RenderTarget                RenderTarget                      => this.renderTarget;
+    protected override Geometry2DEncodeShader      Shader                            => this.shader;
 
     public override Texture2D Output => this.renderTarget?.ColorAttachments[0].Texture ?? Texture2D.Default;
     public override string    Name   => nameof(UISceneEncodePass);
@@ -80,14 +80,14 @@ public sealed class UISceneEncodePass : UIScenePass
 
         this.commandBuffer = new(VkCommandBufferLevel.Primary);
 
-        this.shader = new CanvasEncodeShader(this.renderTarget, true);
+        this.shader = new Geometry2DEncodeShader(this.renderTarget, true);
         this.shader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.canvasStencilWriterShader = new CanvasStencilMaskShader(this.renderTarget, StencilOp.Write, true);
-        this.canvasStencilWriterShader.Changed += RenderingService.Singleton.RequestDraw;
+        this.geometry2DStencilMaskWriterShader = new Geometry2DStencilMaskShader(this.renderTarget, StencilOp.Write, true);
+        this.geometry2DStencilMaskWriterShader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.canvasStencilEraserShader = new CanvasStencilMaskShader(this.renderTarget, StencilOp.Erase, true);
-        this.canvasStencilEraserShader.Changed += RenderingService.Singleton.RequestDraw;
+        this.geometry2DStencilMaskEraserShader = new Geometry2DStencilMaskShader(this.renderTarget, StencilOp.Erase, true);
+        this.geometry2DStencilMaskEraserShader.Changed += RenderingService.Singleton.RequestDraw;
     }
 
     protected override void OnDisconnecting()
@@ -103,11 +103,11 @@ public sealed class UISceneEncodePass : UIScenePass
         this.shader.Changed -= RenderingService.Singleton.RequestDraw;
         this.shader.Dispose();
 
-        this.canvasStencilWriterShader.Changed -= RenderingService.Singleton.RequestDraw;
-        this.canvasStencilWriterShader.Dispose();
+        this.geometry2DStencilMaskWriterShader.Changed -= RenderingService.Singleton.RequestDraw;
+        this.geometry2DStencilMaskWriterShader.Dispose();
 
-        this.canvasStencilEraserShader.Changed -= RenderingService.Singleton.RequestDraw;
-        this.canvasStencilEraserShader.Dispose();
+        this.geometry2DStencilMaskEraserShader.Changed -= RenderingService.Singleton.RequestDraw;
+        this.geometry2DStencilMaskEraserShader.Dispose();
 
         this.renderTarget.Dispose();
     }
@@ -140,7 +140,7 @@ public sealed class UISceneEncodePass : UIScenePass
     {
         Debug.Assert(this.Viewport != null);
 
-        var constant = new CanvasShader.PushConstant
+        var constant = new Geometry2DShader.PushConstant
         {
             Border    = command.Border,
             Color     = 0xFFFF_0000_0000_0000 | command.Metadata,
