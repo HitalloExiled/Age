@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Age.Core;
+using Age.Core.Exceptions;
 using Age.Core.Extensions;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
@@ -13,19 +14,20 @@ public struct ResourceEntry<T>(T resource, int users)
     public int Users    = users;
 }
 
-public class TextureStorage : Disposable
+public sealed class TextureStorage : Disposable
 {
-    private static TextureStorage? singleton;
-
     private readonly VulkanRenderer                            renderer;
     private readonly Dictionary<string, int>                   stringMap = [];
     private readonly Dictionary<int, ResourceEntry<Texture2D>> textures = [];
 
-    public static TextureStorage Singleton => singleton ?? throw new NullReferenceException();
+    [AllowNull]
+    public static TextureStorage Singleton { get; private set; }
 
     public TextureStorage(VulkanRenderer renderer)
     {
-        singleton = this;
+        SingletonViolationException.ThrowIfNoSingleton(Singleton);
+
+        Singleton = this;
 
         this.renderer = renderer;
     }

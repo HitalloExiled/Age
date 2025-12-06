@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using Age.Core;
+using Age.Core.Exceptions;
 using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Rendering.Resources;
@@ -8,10 +10,8 @@ using SkiaSharp;
 
 namespace Age.Storage;
 
-internal class TextStorage : Disposable
+internal sealed class TextStorage : Disposable
 {
-    private static TextStorage? singleton;
-
     private readonly Dictionary<int, TextureAtlas>               atlases = [];
     private readonly Dictionary<string, Dictionary<string, int>> codepoints = [];
     private readonly Dictionary<int, SKFont>                     fonts = [];
@@ -19,16 +19,14 @@ internal class TextStorage : Disposable
     private readonly SKPaint                                     paint;
     private readonly VulkanRenderer                              renderer;
 
-    public static TextStorage Singleton => singleton ?? throw new NullReferenceException();
+    [AllowNull]
+    public static TextStorage Singleton { get; private set; }
 
     public TextStorage(VulkanRenderer renderer)
     {
-        if (singleton != null)
-        {
-            throw new InvalidOperationException($"Only one single instace of {nameof(TextStorage)} is allowed");
-        }
+        SingletonViolationException.ThrowIfNoSingleton(Singleton);
 
-        singleton = this;
+        Singleton = this;
 
         this.renderer = renderer;
         this.paint    = new()

@@ -80,13 +80,13 @@ public sealed class UISceneEncodePass : UIScenePass
 
         this.commandBuffer = new(VkCommandBufferLevel.Primary);
 
-        this.shader = new Geometry2DEncodeShader(this.renderTarget, true);
+        this.shader = new Geometry2DEncodeShader(this.renderTarget.RenderPass, true);
         this.shader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.geometry2DStencilMaskWriterShader = new Geometry2DStencilMaskShader(this.renderTarget, StencilOp.Write, true);
+        this.geometry2DStencilMaskWriterShader = new Geometry2DStencilMaskShader(this.renderTarget.RenderPass, StencilOp.Write, true);
         this.geometry2DStencilMaskWriterShader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.geometry2DStencilMaskEraserShader = new Geometry2DStencilMaskShader(this.renderTarget, StencilOp.Erase, true);
+        this.geometry2DStencilMaskEraserShader = new Geometry2DStencilMaskShader(this.renderTarget.RenderPass, StencilOp.Erase, true);
         this.geometry2DStencilMaskEraserShader.Changed += RenderingService.Singleton.RequestDraw;
     }
 

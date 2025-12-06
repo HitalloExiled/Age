@@ -13,7 +13,12 @@ using ThirdParty.Vulkan;
 
 namespace Age.Rendering.Resources;
 
-public abstract class Shader(VkRenderPass renderPass, ShaderOptions options) : Resource
+public interface IShaderFactory
+{
+    public abstract static Shader Create(VkRenderPass renderPass, in ShaderOptions options);
+}
+
+public abstract class Shader(VkRenderPass renderPass, ShaderOptions options) : SharedDisposable<Shader>
 {
     public event Action? Changed;
 
@@ -565,11 +570,16 @@ where TVertexInput  : IVertexInput
         }
     }
 
-    protected override void OnDisposed()
+    protected override void OnDisposed(bool disposing)
     {
         watcher.Filters.Remove(this.filepath);
 
         watcher.Changed -= this.OnFileChanged;
+
+        if (!disposing)
+        {
+            return;
+        }
 
         VulkanRenderer.Singleton.DeferredDispose(this.Pipeline);
         VulkanRenderer.Singleton.DeferredDispose(this.PipelineLayout);

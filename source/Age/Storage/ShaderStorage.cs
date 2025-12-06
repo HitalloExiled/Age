@@ -5,21 +5,24 @@ using Age.Rendering.Vulkan;
 using ThirdParty.Vulkan;
 using Age.Graphs;
 using Age.Passes;
+using Age.Core.Exceptions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Storage;
 
-public class ShaderStorage : Disposable
+public sealed class ShaderStorage : Disposable
 {
-    private static ShaderStorage? singleton;
-
     private readonly VulkanRenderer             renderer;
     private readonly Dictionary<string, Shader> shaders = [];
 
-    public static ShaderStorage Singleton => singleton ?? throw new NullReferenceException();
+    [AllowNull]
+    public static ShaderStorage Singleton { get; private set; }
 
     public ShaderStorage(VulkanRenderer renderer)
     {
-        singleton = this;
+        SingletonViolationException.ThrowIfNoSingleton(Singleton);
+
+        Singleton = this;
 
         this.renderer = renderer;
     }
@@ -28,7 +31,10 @@ public class ShaderStorage : Disposable
     {
         if (disposing)
         {
-            this.renderer.DeferredDispose(this.shaders.Values);
+            foreach (var shader in this.shaders.Values)
+            {
+                this.renderer.DeferredDispose(shader);
+            }
         }
     }
 

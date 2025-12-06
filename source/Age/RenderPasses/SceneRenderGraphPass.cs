@@ -164,7 +164,10 @@ public sealed partial class SceneRenderGraphPass : RenderGraphPass
                     this.Renderer.DeferredDispose(ubo.Buffer);
                 }
 
-                this.Renderer.DeferredDispose(resource.UniformSets.Values);
+                foreach (var uniformSet in resource.UniformSets.Values)
+                {
+                    this.Renderer.DeferredDispose(uniformSet);
+                }
             }
         }
     }

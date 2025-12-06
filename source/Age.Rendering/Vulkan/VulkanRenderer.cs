@@ -203,27 +203,6 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         }
     }
 
-    public void DeferredDispose(IEnumerable<IDisposable> disposables)
-    {
-        lock (this.@lock)
-        {
-            if (this.disposingPendingResources)
-            {
-                foreach (var disposable in disposables)
-                {
-                    disposable.Dispose();
-                }
-            }
-            else
-            {
-                foreach (var disposable in disposables)
-                {
-                    this.AddPendingDisposes(disposable);
-                }
-            }
-        }
-    }
-
     public void EndFrame()
     {
         if (this.Context.Frame.BufferPrepared)

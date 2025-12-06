@@ -21,7 +21,7 @@ public sealed partial class RenderTarget : Resource
 
     internal VkFramebuffer Framebuffer { get; private set; }
 
-    internal VkRenderPass  RenderPass => this.renderPass.Resource;
+    internal VkRenderPass RenderPass => this.renderPass.Resource;
 
     public DepthStencilAttachment? DepthStencilAttachment { get; private set; }
 

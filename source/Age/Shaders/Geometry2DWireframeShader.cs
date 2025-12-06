@@ -1,14 +1,15 @@
 using Age.Rendering.Resources;
+using ThirdParty.Vulkan;
 using ThirdParty.Vulkan.Enums;
 
 namespace Age.Shaders;
 
-public sealed class CanvasWireframeShader(RenderPass renderPass, uint subpass, bool watch)
-: Geometry2DShader($"{nameof(CanvasWireframeShader)}.slang", renderPass, subpass, StencilOp.None, watch)
+public sealed class CanvasWireframeShader(VkRenderPass renderPass, in ShaderOptions shaderOptions)
+: Geometry2DShader($"{nameof(CanvasWireframeShader)}.slang", renderPass, shaderOptions)
 {
     public override string              Name              { get; } = nameof(CanvasWireframeShader);
     public override VkPrimitiveTopology PrimitiveTopology { get; } = VkPrimitiveTopology.LineList;
 
-    public CanvasWireframeShader(RenderPass renderPass, bool watch) : this(renderPass, 0, watch)
-    { }
+    public CanvasWireframeShader(VkRenderPass renderPass, bool watch)
+    :  this(renderPass, new ShaderOptions() { Watch = watch }) { }
 }

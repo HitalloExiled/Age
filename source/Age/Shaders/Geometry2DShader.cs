@@ -4,17 +4,13 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Shaders;
 
-public abstract partial class Geometry2DShader(string file, VkRenderPass renderPass, uint subpass, StencilOp stencilOp, bool watch)
+public abstract partial class Geometry2DShader(string file, VkRenderPass renderPass, ShaderOptions shaderOptions)
 : Shader<Geometry2DShader.Vertex>(
     file,
     renderPass,
-    new()
+    shaderOptions with
     {
-        FrontFace            = VkFrontFace.Clockwise,
-        RasterizationSamples = SampleCount.N1,
-        StencilOp            = stencilOp,
-        Subpass              = subpass,
-        Watch                = watch,
+        FrontFace = VkFrontFace.Clockwise,
     }
 )
 {
