@@ -4,19 +4,14 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Shaders;
 
-public sealed partial class Geometry3DShader(VkRenderPass renderPass, SampleCount rasterizationSamples, bool watch)
+public sealed partial class Geometry3DShader(VkRenderPass renderPass, SampleCount rasterizationSamples)
 : Shader<Geometry3DShader.Vertex>(
     $"{nameof(Geometry3DShader)}.slang",
-    renderPass,
-    new ShaderOptions
-    {
-        Watch                = watch,
-        FrontFace            = VkFrontFace.CounterClockwise,
-        RasterizationSamples = rasterizationSamples
-    }
+    renderPass
 )
 {
-    public override string              Name               { get; } = nameof(Geometry3DShader);
-    public override VkPipelineBindPoint BindPoint          { get; } = VkPipelineBindPoint.Graphics;
-    public override VkPrimitiveTopology PrimitiveTopology  { get; } = VkPrimitiveTopology.TriangleList;
+    public override VkPipelineBindPoint BindPoint          => VkPipelineBindPoint.Graphics;
+    public override VkFrontFace         FrontFace          => VkFrontFace.CounterClockwise;
+    public override string              Name               => nameof(Geometry3DShader);
+    public override VkPrimitiveTopology PrimitiveTopology  => VkPrimitiveTopology.TriangleList;
 }

@@ -27,7 +27,6 @@ public sealed partial class RenderTarget
                 if (pass.DepthStencilAttachment is int depthStencilAttachment)
                 {
                     hashcode.Add(depthStencilAttachment);
-
                     hashcode.Add(this.Attachments[depthStencilAttachment]);
                 }
             }

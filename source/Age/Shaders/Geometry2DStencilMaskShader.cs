@@ -3,14 +3,13 @@ using ThirdParty.Vulkan;
 
 namespace Age.Shaders;
 
-public sealed class Geometry2DStencilMaskShader(VkRenderPass renderPass, in ShaderOptions shaderOptions)
-: Geometry2DShader($"{nameof(Geometry2DStencilMaskShader)}.slang", renderPass, shaderOptions), IShaderFactory
+public sealed class Geometry2DStencilMaskShader : Geometry2DShader, IShaderFactory<Geometry2DStencilMaskShader>
 {
     public override string Name { get; } = nameof(Geometry2DStencilMaskShader);
 
-    public Geometry2DStencilMaskShader(VkRenderPass renderPass, StencilOp stencilOp, bool watch)
-    :  this(renderPass, new() { StencilOp = stencilOp, Watch = watch }) { }
+    private Geometry2DStencilMaskShader(VkRenderPass renderPass)
+    : base($"{nameof(Geometry2DStencilMaskShader)}.slang", renderPass) { }
 
-    public static Shader Create(VkRenderPass renderPass, in ShaderOptions options) =>
-        new Geometry2DStencilMaskShader(renderPass, options);
+    public static Geometry2DStencilMaskShader Create(VkRenderPass renderPass) =>
+        new(renderPass);
 }

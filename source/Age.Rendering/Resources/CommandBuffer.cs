@@ -127,7 +127,7 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
         this.Instance.BindIndexBuffer(indexBuffer.Buffer.Instance, 0, indexBuffer.Type);
 
     public void BindShader(Shader shader) =>
-        this.Instance.BindPipeline(shader.BindPoint, shader.Pipeline);
+        this.Instance.BindPipeline(shader.BindPoint, shader.Pipeline!);
 
     public void BindVertexBuffer(VertexBuffer vertexBuffer) =>
         this.Instance.BindVertexBuffers(0, 1, [vertexBuffer.Buffer.Instance], [0]);
@@ -145,7 +145,7 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
     }
 
     public void BindUniformSet(UniformSet uniformSet) =>
-        this.Instance.BindDescriptorSets(uniformSet.Shader.BindPoint, uniformSet.Shader.PipelineLayout, 0, uniformSet.DescriptorSets, []);
+        this.Instance.BindDescriptorSets(uniformSet.Shader.BindPoint, uniformSet.Shader.PipelineLayout!, 0, uniformSet.DescriptorSets, []);
 
     public void ClearAttachments(ReadOnlySpan<VkClearAttachment> attachments, ReadOnlySpan<VkClearRect> rects) =>
         this.Instance.ClearAttachments(attachments, rects);
@@ -172,7 +172,7 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
         this.Instance.Reset();
 
     public void PushConstant<T>(Shader shader, in T constant) where T : unmanaged =>
-        this.Instance.PushConstants(shader.PipelineLayout, shader.PushConstantStages, constant);
+        this.Instance.PushConstants(shader.PipelineLayout!, shader.PushConstantStages, constant);
 
     public void SetViewport(in Size<uint> size)
     {

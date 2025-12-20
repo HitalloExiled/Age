@@ -71,6 +71,33 @@ public static partial class Extension
 
     extension<T>(Span<T> span)
     {
+        public DiffResult<T> Diff(ReadOnlySpan<T> other)
+        {
+            var addedBuffer   = ArrayPool<T>.Shared.Rent(other.Length);
+            var removedBuffer = ArrayPool<T>.Shared.Rent(span.Length);
+
+            var updatedSet = new HashSet<T>(other.Length);
+
+            foreach (var item in other)
+            {
+                updatedSet.Add(item);
+            }
+
+            var removedCount = 0;
+
+            foreach (var item in span)
+            {
+                if (!updatedSet.Remove(item))
+                {
+                    removedBuffer[removedCount++] = item;
+                }
+            }
+
+            updatedSet.CopyTo(addedBuffer);
+
+            return new DiffResult<T>(addedBuffer, updatedSet.Count, removedBuffer, removedCount);
+        }
+
         public void TimSort(Func<T, T, int>? comparer = null)
         {
             comparer ??= Comparer<T>.Default.Compare;
@@ -93,6 +120,51 @@ public static partial class Extension
                     }
                 }
             }
+        }
+    }
+
+    extension<T>(Span<T> span) where T : IEquatable<T>
+    {
+        public Memory<T> Intersect(Span<T> other)
+        {
+            if (span.IsEmpty || other.IsEmpty)
+            {
+                return Memory<T>.Empty;
+            }
+
+            Span<T> lookupSource, iterateSource;
+
+            if (span.Length < other.Length)
+            {
+                iterateSource = other;
+                lookupSource  = span;
+            }
+            else
+            {
+                iterateSource = span;
+                lookupSource  = other;
+            }
+
+            var set = new HashSet<T>(lookupSource.Length);
+
+            var destination = new T[int.Max(span.Length, other.Length)];
+
+            foreach (var item in lookupSource)
+            {
+                set.Add(item);
+            }
+
+            var count = 0;
+
+            foreach (var item in iterateSource)
+            {
+                if (set.Remove(item))
+                {
+                    destination[count++] = item;
+                }
+            }
+
+            return destination.AsMemory(0, count);
         }
     }
 }

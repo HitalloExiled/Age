@@ -3,13 +3,12 @@ using ThirdParty.Vulkan;
 
 namespace Age.Shaders;
 
-public sealed class Geometry2DColorShader(VkRenderPass renderPass, in ShaderOptions shaderOptions)
-: Geometry2DShader($"{nameof(Geometry2DColorShader)}.slang", renderPass, shaderOptions), IShaderFactory
+public sealed class Geometry2DColorShader : Geometry2DShader, IShaderFactory<Geometry2DColorShader>
 {
     public override string Name { get; } = nameof(Geometry2DColorShader);
 
-    public Geometry2DColorShader(VkRenderPass renderPass, bool watch)
-    :  this(renderPass, new ShaderOptions() { Watch = watch }) { }
+    private Geometry2DColorShader(VkRenderPass renderPass)
+    : base($"{nameof(Geometry2DColorShader)}.slang", renderPass) { }
 
-    public static Shader Create(VkRenderPass renderPass, in ShaderOptions options) => new Geometry2DColorShader(renderPass, options);
+    public static Geometry2DColorShader Create(VkRenderPass renderPass) => new(renderPass);
 }

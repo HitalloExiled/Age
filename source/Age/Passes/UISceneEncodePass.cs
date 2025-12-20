@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Age.Cache;
 using Age.Commands;
 using Age.Numerics;
 using Age.Rendering.Resources;
@@ -80,13 +81,13 @@ public sealed class UISceneEncodePass : UIScenePass
 
         this.commandBuffer = new(VkCommandBufferLevel.Primary);
 
-        this.shader = new Geometry2DEncodeShader(this.renderTarget.RenderPass, true);
+        this.shader = ShaderCache.Singleton.Get<Geometry2DEncodeShader>(this.renderTarget);
         this.shader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.geometry2DStencilMaskWriterShader = new Geometry2DStencilMaskShader(this.renderTarget.RenderPass, StencilOp.Write, true);
+        this.geometry2DStencilMaskWriterShader = ShaderCache.Singleton.Get<Geometry2DStencilMaskShader>(this.renderTarget, new() { StencilOp = StencilOp.Write });
         this.geometry2DStencilMaskWriterShader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.geometry2DStencilMaskEraserShader = new Geometry2DStencilMaskShader(this.renderTarget.RenderPass, StencilOp.Erase, true);
+        this.geometry2DStencilMaskEraserShader = ShaderCache.Singleton.Get<Geometry2DStencilMaskShader>(this.renderTarget, new() { StencilOp = StencilOp.Erase });
         this.geometry2DStencilMaskEraserShader.Changed += RenderingService.Singleton.RequestDraw;
     }
 

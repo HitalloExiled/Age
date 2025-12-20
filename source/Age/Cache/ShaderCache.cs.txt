@@ -2,7 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using Age.Core;
 using Age.Core.Exceptions;
 using Age.Core.Extensions;
-using Age.Rendering;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 
@@ -12,7 +11,6 @@ public sealed class ShaderCache : Disposable
 {
     private readonly Dictionary<int, Shader> shaders = [];
     private readonly VulkanRenderer renderer;
-    private readonly ShaderCompiler shaderCompiler = new(true);
 
     [AllowNull]
     public static ShaderCache Singleton { get; private set; }
@@ -37,23 +35,21 @@ public sealed class ShaderCache : Disposable
         }
     }
 
-    public TShader Get<TShader>(RenderTarget renderTarget, in ShaderOptions? shaderOptions = null) where TShader : Shader, IShaderFactory<TShader>
+    public T Get<T>(RenderTarget renderTarget, in ShaderOptions shaderOptions = default) where T : Shader, IShaderFactory
     {
-        var hashcode = HashCode.Combine(renderTarget.RenderPass, typeof(TShader), shaderOptions);
+        var hashcode = HashCode.Combine(typeof(T), shaderOptions);
 
         ref var shader = ref this.shaders.GetValueRefOrAddDefault(hashcode, out var exists);
 
         if (!exists)
         {
-            shader = TShader.Create(renderTarget.RenderPass);
-
-            this.shaderCompiler.CompileShader(shader, shaderOptions ?? new());
+            shader = T.Create(renderTarget.RenderPass, shaderOptions);
 
             shader.Disposed += () => this.shaders.Remove(hashcode);
 
-            return (TShader)shader;
+            return (T)shader;
         }
 
-        return (TShader)shader!.Share();
+        return (T)shader!.Share();
     }
 }

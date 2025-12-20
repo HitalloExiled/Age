@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Age.Cache;
 using Age.Commands;
-using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Rendering.Uniforms;
 using Age.Rendering.Vulkan;
@@ -44,15 +43,15 @@ public class UISceneColorPass : UIScenePass
 
         Debug.Assert(this.RenderGraph != null);
 
-        this.shader = ShaderCache.Singleton.Get<Geometry2DColorShader>(this.Viewport!.RenderTarget, new() { Watch = true });
+        this.shader = ShaderCache.Singleton.Get<Geometry2DColorShader>(this.Viewport!.RenderTarget);
         this.shader.Changed += RenderingService.Singleton.RequestDraw;
 
         // this.geometry2DStencilMaskWriterShader = new Geometry2DStencilMaskShader(this.RenderGraph.Viewport.RenderTarget.RenderPass, StencilOp.Write, true);
-        this.geometry2DStencilMaskWriterShader = ShaderCache.Singleton.Get<Geometry2DStencilMaskShader>(this.Viewport!.RenderTarget, new() { StencilOp = StencilOp.Write, Watch = true });
+        this.geometry2DStencilMaskWriterShader = ShaderCache.Singleton.Get<Geometry2DStencilMaskShader>(this.Viewport!.RenderTarget, new() { StencilOp = StencilOp.Write });
         this.geometry2DStencilMaskWriterShader.Changed += RenderingService.Singleton.RequestDraw;
 
         // this.geometry2DStencilMaskEraserShader = new Geometry2DStencilMaskShader(this.RenderGraph.Viewport.RenderTarget.RenderPass, StencilOp.Erase, true);
-        this.geometry2DStencilMaskEraserShader = ShaderCache.Singleton.Get<Geometry2DStencilMaskShader>(this.Viewport!.RenderTarget, new() { StencilOp = StencilOp.Erase, Watch = true });
+        this.geometry2DStencilMaskEraserShader = ShaderCache.Singleton.Get<Geometry2DStencilMaskShader>(this.Viewport!.RenderTarget, new() { StencilOp = StencilOp.Erase });
         this.geometry2DStencilMaskEraserShader.Changed += RenderingService.Singleton.RequestDraw;
     }
 

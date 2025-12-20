@@ -15,8 +15,7 @@ public sealed partial class RenderTarget : Resource
 {
     private static readonly Dictionary<int, SharedResource<VkRenderPass>> renderPasses = [];
 
-    private readonly List<ColorAttachment> colorAttachments = [];
-
+    private readonly List<ColorAttachment>        colorAttachments = [];
     private readonly SharedResource<VkRenderPass> renderPass;
 
     internal VkFramebuffer Framebuffer { get; private set; }

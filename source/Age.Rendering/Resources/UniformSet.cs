@@ -21,7 +21,7 @@ public sealed class UniformSet : Resource
         this.Shader         = shader;
         this.DescriptorPool = DescriptorPool.CreateDescriptorPool(key);
 
-        var descriptorSetLayoutHandle = shader.DescriptorSetLayout.Handle;
+        var descriptorSetLayoutHandle = shader.DescriptorSetLayout!.Handle;
 
         var descriptorSetAllocateInfo = new VkDescriptorSetAllocateInfo
         {
@@ -40,7 +40,7 @@ public sealed class UniformSet : Resource
 
         foreach (var uniform in uniforms)
         {
-            if (uniform.Binding > shader.UniformBindings.Length || shader.UniformBindings[(int)uniform.Binding] != uniform.Type)
+            if (uniform.Binding > shader.UniformBindings!.Length || shader.UniformBindings[(int)uniform.Binding] != uniform.Type)
             {
                 throw new InvalidOperationException($"The provided shader expects that binding {uniform.Binding} to be of type {shader.UniformBindings[(int)uniform.Binding]}");
             }

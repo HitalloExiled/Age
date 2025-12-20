@@ -4,17 +4,13 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Shaders;
 
-public abstract partial class Geometry2DShader(string file, VkRenderPass renderPass, ShaderOptions shaderOptions)
-: Shader<Geometry2DShader.Vertex>(
+public abstract partial class Geometry2DShader(string file, VkRenderPass renderPass) : Shader<Geometry2DShader.Vertex>(
     file,
-    renderPass,
-    shaderOptions with
-    {
-        FrontFace = VkFrontFace.Clockwise,
-    }
+    renderPass
 )
 {
-    public override string              Name              { get; } = nameof(Geometry2DShader);
-    public override VkPipelineBindPoint BindPoint         { get; } = VkPipelineBindPoint.Graphics;
-    public override VkPrimitiveTopology PrimitiveTopology { get; } = VkPrimitiveTopology.TriangleList;
+    public override VkPipelineBindPoint BindPoint         => VkPipelineBindPoint.Graphics;
+    public override VkFrontFace         FrontFace         => VkFrontFace.Clockwise;
+    public override string              Name              => nameof(Geometry2DShader);
+    public override VkPrimitiveTopology PrimitiveTopology => VkPrimitiveTopology.TriangleList;
 }

@@ -48,7 +48,7 @@ public sealed class ShaderStorage : Disposable
                     {
                         var pass = renderGraph.GetNode<Scene3DPass>();
 
-                        this.shaders[name] = shader = new Geometry3DShader(pass.Viewport!.RenderTarget!.RenderPass, this.renderer.MaxUsableSampleCount, true);
+                        this.shaders[name] = shader = new Geometry3DShader(pass.Viewport!.RenderTarget!.RenderPass, this.renderer.MaxUsableSampleCount);
 
                         break;
                     }
@@ -65,7 +65,7 @@ public sealed class ShaderStorage : Disposable
             switch (name)
             {
                 case nameof(Geometry3DShader):
-                    this.shaders[name] = shader = new Geometry3DShader(renderPass, SampleCount.N1, true);
+                    this.shaders[name] = shader = new Geometry3DShader(renderPass, SampleCount.N1);
 
                     break;
             }
