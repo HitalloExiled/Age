@@ -13,7 +13,7 @@ namespace Age.Rendering.Resources;
 
 public sealed partial class RenderTarget : Resource
 {
-    private static readonly Dictionary<int, SharedResource<VkRenderPass>> renderPasses = [];
+    private static readonly Dictionary<RenderPassKey, SharedResource<VkRenderPass>> renderPasses = [];
 
     private readonly List<ColorAttachment>        colorAttachments = [];
     private readonly SharedResource<VkRenderPass> renderPass;
@@ -30,9 +30,9 @@ public sealed partial class RenderTarget : Resource
 
     public RenderTarget(in CreateInfo createInfo)
     {
-        var attachments = new MultiPassCreateInfo.AttachmentInfo[createInfo.ColorAttachments.Length + (createInfo.DepthStencilAttachment.HasValue ? 1 : 0)];
+        var attachments = new InlineList4<MultiPassCreateInfo.AttachmentInfo>(createInfo.ColorAttachments.Length + (createInfo.DepthStencilAttachment.HasValue ? 1 : 0));
 
-        var colorAttachments = new int[createInfo.ColorAttachments.Length];
+        var colorAttachments = new InlineList4<int>(createInfo.ColorAttachments.Length);
 
         for (var i = 0; i < createInfo.ColorAttachments.Length; i++)
         {
@@ -53,14 +53,15 @@ public sealed partial class RenderTarget : Resource
         {
             Size        = createInfo.Size,
             Attachments = attachments,
-            Passes      =
-            [
-                new()
-                {
-                    ColorAttachments       = colorAttachments,
-                    DepthStencilAttachment = depthStencilAttachment,
-                }
-            ]
+            Passes      = new(
+                [
+                    new()
+                    {
+                        ColorAttachments       = colorAttachments,
+                        DepthStencilAttachment = depthStencilAttachment,
+                    }
+                ]
+            )
         };
 
         this.Size = multiPassCreateInfo.Size;
@@ -86,9 +87,11 @@ public sealed partial class RenderTarget : Resource
 
         var imageViews = new List<VkImageView>(this.colorAttachments.Count);
 
-        for (var i = 0; i < multiPassCreateInfo.Attachments.Length; i++)
+        var attachments = multiPassCreateInfo.Attachments.AsSpan();
+
+        for (var i = 0; i < attachments.Length; i++)
         {
-            ref readonly var attachment = ref multiPassCreateInfo.Attachments[i];
+            ref readonly var attachment = ref attachments[i];
 
             if (attachment.TryGetColorAttachment(out var colorAttachment))
             {
@@ -183,9 +186,9 @@ public sealed partial class RenderTarget : Resource
 
     private unsafe static SharedResource<VkRenderPass> CreateRenderPass(in MultiPassCreateInfo createInfo)
     {
-        var hashcode = createInfo.GetHashCode();
+        var key = new RenderPassKey(createInfo);
 
-        ref var renderPass = ref renderPasses.GetValueRefOrAddDefault(hashcode, out var exists);
+        ref var renderPass = ref renderPasses.GetValueRefOrAddDefault(key, out var exists);
 
         if (!exists || renderPass!.IsDisposed)
         {
@@ -195,9 +198,11 @@ public sealed partial class RenderTarget : Resource
             using var attachmentDescriptions  = new RefList<VkAttachmentDescription>();
             using var depthStencilAttachments = new RefList<VkAttachmentDescription>();
 
-            for (var i = 0; i < createInfo.Passes.Length; i++)
+            var passes = createInfo.Passes.AsSpan();
+
+            for (var i = 0; i < passes.Length; i++)
             {
-                ref readonly var pass = ref createInfo.Passes[i];
+                ref readonly var pass = ref passes[i];
 
                 var colorAttachmentReferences        = new NativeList<VkAttachmentReference>(pass.ColorAttachments.Length);
                 var resolveAttachmentReferences      = new NativeList<VkAttachmentReference>();

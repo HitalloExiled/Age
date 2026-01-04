@@ -1,12 +1,10 @@
-using ThirdParty.Vulkan.Enums;
-
 namespace Age.Rendering.Resources;
 
 public sealed partial class RenderTarget
 {
     public ref partial struct CreateInfo
     {
-        public struct ColorAttachmentInfo
+        public struct ColorAttachmentInfo : IEquatable<ColorAttachmentInfo>
         {
             internal Image? Image;
 
@@ -27,17 +25,27 @@ public sealed partial class RenderTarget
                     FinalLayout = (ImageLayout)image.FinalLayout,
                 };
 
-            public override readonly int GetHashCode()
-            {
-                var hashcode = new HashCode();
+            public override readonly int GetHashCode() =>
+                HashCode.Combine(
+                    this.FinalLayout,
+                    this.Format,
+                    this.SampleCount,
+                    this.Usage,
+                    this.EnableResolve
+                );
 
-                hashcode.Add(this.Format);
-                hashcode.Add(this.SampleCount);
-                hashcode.Add(this.Usage);
-                hashcode.Add(this.EnableResolve);
+            public readonly bool Equals(ColorAttachmentInfo other) =>
+                this.FinalLayout      == other.FinalLayout
+                && this.Format        == other.Format
+                && this.SampleCount   == other.SampleCount
+                && this.Usage         == other.Usage
+                && this.EnableResolve == other.EnableResolve;
 
-                return hashcode.ToHashCode();
-            }
+            public override readonly bool Equals(object? obj) =>
+                obj is ColorAttachmentInfo colorAttachmentInfo && this.Equals(colorAttachmentInfo);
+
+            public static bool operator ==(ColorAttachmentInfo left, ColorAttachmentInfo right) => left.Equals(right);
+            public static bool operator !=(ColorAttachmentInfo left, ColorAttachmentInfo right) => !(left == right);
         }
     }
 }

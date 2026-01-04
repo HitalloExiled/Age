@@ -1,12 +1,10 @@
-using ThirdParty.Vulkan.Enums;
-
 namespace Age.Rendering.Resources;
 
 public sealed partial class RenderTarget
 {
     public ref partial struct CreateInfo
     {
-        public struct DepthStencilAttachmentInfo
+        public struct DepthStencilAttachmentInfo : IEquatable<DepthStencilAttachmentInfo>
         {
             internal Image? Image;
 
@@ -16,16 +14,25 @@ public sealed partial class RenderTarget
 
             public TextureUsage Usage;
 
-            public override readonly int GetHashCode()
-            {
-                var hashcode = new HashCode();
+            public override readonly int GetHashCode() =>
+                HashCode.Combine(
+                    this.FinalLayout,
+                    this.Format,
+                    this.Aspect,
+                    this.Usage
+                );
 
-                hashcode.Add(this.Format);
-                hashcode.Add(this.Aspect);
-                hashcode.Add(this.Usage);
+            public readonly bool Equals(DepthStencilAttachmentInfo other) =>
+                this.FinalLayout == other.FinalLayout
+                && this.Format   == other.Format
+                && this.Aspect   == other.Aspect
+                && this.Usage    == other.Usage;
 
-                return hashcode.ToHashCode();
-            }
+            public override readonly bool Equals(object? obj) =>
+                obj is DepthStencilAttachmentInfo depthStencilAttachmentInfo && this.Equals(depthStencilAttachmentInfo);
+
+            public static bool operator ==(DepthStencilAttachmentInfo left, DepthStencilAttachmentInfo right) => left.Equals(right);
+            public static bool operator !=(DepthStencilAttachmentInfo left, DepthStencilAttachmentInfo right) => !(left == right);
         }
     }
 }

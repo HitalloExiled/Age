@@ -8,14 +8,17 @@ using Age.Rendering.Vulkan;
 using Age.Resources;
 using SkiaSharp;
 
+using FontKey  = (string, float, int);
+using AtlasKey = (string, uint);
+
 namespace Age.Storage;
 
-internal sealed class TextStorage : Disposable
+internal sealed partial class TextStorage : Disposable
 {
-    private readonly Dictionary<int, TextureAtlas>               atlases = [];
+    private readonly Dictionary<AtlasKey, TextureAtlas>          atlases    = [];
     private readonly Dictionary<string, Dictionary<string, int>> codepoints = [];
-    private readonly Dictionary<int, SKFont>                     fonts = [];
-    private readonly Dictionary<int, TextureMap>                 glyphs = [];
+    private readonly Dictionary<FontKey, SKFont>                 fonts      = [];
+    private readonly Dictionary<GlyphKey, TextureMap>            glyphs     = [];
     private readonly SKPaint                                     paint;
     private readonly VulkanRenderer                              renderer;
 
@@ -61,7 +64,7 @@ internal sealed class TextStorage : Disposable
     {
         const ushort PADDING = 2;
 
-        var hashcode = string.GetHashCode(chars) ^ font.GetHashCode() ^ font.Size.GetHashCode();
+        var hashcode = new GlyphKey(chars, font);
 
         if (!this.glyphs.TryGetValue(hashcode, out var glyph))
         {
@@ -91,9 +94,9 @@ internal sealed class TextStorage : Disposable
 
     public TextureAtlas GetAtlas(string familyName, uint fontSize)
     {
-        var hashcode = familyName.GetHashCode() ^ fontSize.GetHashCode();
+        var key = (familyName, fontSize);
 
-        ref var atlas = ref this.atlases.GetValueRefOrAddDefault(hashcode, out var exists);
+        ref var atlas = ref this.atlases.GetValueRefOrAddDefault(key, out var exists);
 
         if (!exists)
         {
@@ -143,9 +146,9 @@ internal sealed class TextStorage : Disposable
 
     public SKFont GetFont(string fontFamily, float fontSize, int fontWeight, Dictionary<string, string>? externalSource)
     {
-        var hashcode = HashCode.Combine(fontFamily, fontSize, fontWeight);
+        var key = (fontFamily, fontSize, fontWeight);
 
-        ref var font = ref this.fonts.GetValueRefOrAddDefault(hashcode, out var exists);
+        ref var font = ref this.fonts.GetValueRefOrAddDefault(key, out var exists);
 
         if (!exists)
         {

@@ -69,6 +69,21 @@ public static partial class Extension
             MemoryMarshal.Cast<T, U>(span);
     }
 
+    extension<T>(Span<T>)
+    {
+        public static int CombineHashCode(Span<T> span)
+        {
+            var hashcode = new HashCode();
+
+            foreach (var item in span)
+            {
+                hashcode.Add(item);
+            }
+
+            return hashcode.ToHashCode();
+        }
+    }
+
     extension<T>(Span<T> span)
     {
         public DiffResult<T> Diff(ReadOnlySpan<T> other)

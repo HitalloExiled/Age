@@ -6,11 +6,13 @@ using Age.Rendering;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 
+using ShaderKey = (ThirdParty.Vulkan.VkRenderPass, System.Type, Age.Rendering.Resources.ShaderOptions);
+
 namespace Age.Cache;
 
 public sealed class ShaderCache : Disposable
 {
-    private readonly Dictionary<int, Shader> shaders = [];
+    private readonly Dictionary<ShaderKey, Shader> shaders = [];
     private readonly VulkanRenderer renderer;
     private readonly ShaderCompiler shaderCompiler = new(true);
 
@@ -39,9 +41,9 @@ public sealed class ShaderCache : Disposable
 
     public TShader Get<TShader>(RenderTarget renderTarget, in ShaderOptions? shaderOptions = null) where TShader : Shader, IShaderFactory<TShader>
     {
-        var hashcode = HashCode.Combine(renderTarget.RenderPass, typeof(TShader), shaderOptions);
+        var key = (renderTarget.RenderPass, typeof(TShader), shaderOptions.GetValueOrDefault());
 
-        ref var shader = ref this.shaders.GetValueRefOrAddDefault(hashcode, out var exists);
+        ref var shader = ref this.shaders.GetValueRefOrAddDefault(key, out var exists);
 
         if (!exists)
         {
@@ -49,7 +51,7 @@ public sealed class ShaderCache : Disposable
 
             this.shaderCompiler.CompileShader(shader, shaderOptions ?? new());
 
-            shader.Disposed += () => this.shaders.Remove(hashcode);
+            shader.Disposed += () => this.shaders.Remove(key);
 
             return (TShader)shader;
         }

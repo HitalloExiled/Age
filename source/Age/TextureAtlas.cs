@@ -2,7 +2,6 @@ using System.Runtime.CompilerServices;
 using Age.Core;
 using Age.Core.Extensions;
 using Age.Extensions;
-using Age.Internal;
 using Age.Numerics;
 using Age.Rendering.Resources;
 
@@ -92,9 +91,9 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
         {
             this.Texture.Update(this.Bitmap);
 
-            #if DEBUG
-            Common.SaveImage(this.Bitmap, $"TextureAtlas_{this.Size.Width}x{this.Size.Height}.png");
-            #endif
+#if DEBUG
+            Internal.Common.SaveImage(this.Bitmap, $"TextureAtlas_{this.Size.Width}x{this.Size.Height}.png");
+#endif
 
             this.isDirty = false;
         }

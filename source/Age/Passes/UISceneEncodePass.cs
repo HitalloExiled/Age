@@ -50,7 +50,7 @@ public sealed class UISceneEncodePass : UIScenePass
             Size             = this.Viewport.Size,
             ColorAttachments =
             [
-                new()
+                new RenderTarget.CreateInfo.ColorAttachmentInfo
                 {
                     FinalLayout = ImageLayout.General,
                     SampleCount = SampleCount.N1,

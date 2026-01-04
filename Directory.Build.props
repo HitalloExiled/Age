@@ -10,7 +10,6 @@
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
-    <DefineConstants>$(DefineConstants);TARGET_64BIT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Roslynator.Analyzers" Version="4.13.1">

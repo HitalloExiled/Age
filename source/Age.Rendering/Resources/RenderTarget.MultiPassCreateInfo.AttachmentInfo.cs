@@ -8,12 +8,12 @@ public sealed partial class RenderTarget
     public ref partial struct MultiPassCreateInfo
     {
         [StructLayout(LayoutKind.Explicit)]
-        public readonly partial struct AttachmentInfo
+        public readonly partial struct AttachmentInfo : IEquatable<AttachmentInfo>
         {
-#if TARGET_64BIT
-            private const int OFFSET = 8;
-#else
+#if TARGET_32BIT
             private const int OFFSET = 4;
+#else
+            private const int OFFSET = 8;
 #endif
 
             [FieldOffset(0)]
@@ -22,17 +22,25 @@ public sealed partial class RenderTarget
             [FieldOffset(OFFSET)]
             private readonly Union union;
 
-            public AttachmentInfo(in ColorAttachmentInfo colorAttachmentInfo)
+            private AttachmentInfo(in ColorAttachmentInfo colorAttachmentInfo)
             {
                 this.kind  = AttachmentInfoKind.Color;
                 this.union = new() { ColorAttachmentInfo = colorAttachmentInfo };
             }
 
-            public AttachmentInfo(in DepthStencilAttachmentInfo depthStencilAttachmentInfo)
+            private AttachmentInfo(in DepthStencilAttachmentInfo depthStencilAttachmentInfo)
             {
                 this.kind  = AttachmentInfoKind.DepthStencil;
                 this.union = new() { DepthStencilAttachmentInfo = depthStencilAttachmentInfo };
             }
+
+            public bool Equals(AttachmentInfo other) =>
+                this.kind == other.kind && this.kind switch
+                {
+                    AttachmentInfoKind.Color        => this.union.ColorAttachmentInfo.Equals(other.union.ColorAttachmentInfo),
+                    AttachmentInfoKind.DepthStencil => this.union.DepthStencilAttachmentInfo.Equals(other.union.DepthStencilAttachmentInfo),
+                    _ => false
+                };
 
             public bool TryGetColorAttachment(out ColorAttachmentInfo colorAttachmentInfo)
             {
@@ -64,7 +72,7 @@ public sealed partial class RenderTarget
                 this.kind switch
                 {
                     AttachmentInfoKind.Color        => this.union.ColorAttachmentInfo.GetHashCode(),
-                    AttachmentInfoKind.DepthStencil => this.union.ColorAttachmentInfo.GetHashCode(),
+                    AttachmentInfoKind.DepthStencil => this.union.DepthStencilAttachmentInfo.GetHashCode(),
                     _ => 0,
                 };
 
