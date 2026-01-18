@@ -6,23 +6,45 @@ public static class FileReader
 {
     public static NativeArray<byte> ReadAllBytes(string path)
     {
-        using var stream = File.OpenRead(path);
+        NativeArray<byte>? buffer = null;
 
-        var buffer = new NativeArray<byte>((int)stream.Length);
+        try
+        {
+            using var stream = File.OpenRead(path);
 
-        stream.ReadExactly(buffer);
+            buffer = new NativeArray<byte>((int)stream.Length);
 
-        return buffer;
+            stream.ReadExactly(buffer);
+
+            return buffer;
+        }
+        catch (Exception)
+        {
+            buffer?.Dispose();
+
+            throw;
+        }
     }
 
     public static RefArray<byte> ReadAllBytesAsRef(string path)
     {
-        using var stream = File.OpenRead(path);
+        RefArray<byte> buffer = default;
 
-        var buffer = new RefArray<byte>((int)stream.Length);
+        try
+        {
+            using var stream = File.OpenRead(path);
 
-        stream.ReadExactly(buffer);
+            buffer = new RefArray<byte>((int)stream.Length);
 
-        return buffer;
+            stream.ReadExactly(buffer);
+
+            return buffer;
+        }
+        catch (Exception)
+        {
+            buffer.Dispose();
+
+            throw;
+        }
     }
 }

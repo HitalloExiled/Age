@@ -14,4 +14,6 @@ public sealed partial class Geometry3DShader(VkRenderPass renderPass, SampleCoun
     public override VkFrontFace         FrontFace          => VkFrontFace.CounterClockwise;
     public override string              Name               => nameof(Geometry3DShader);
     public override VkPrimitiveTopology PrimitiveTopology  => VkPrimitiveTopology.TriangleList;
+
+    public SampleCount RasterizationSamples { get; } = rasterizationSamples;
 }

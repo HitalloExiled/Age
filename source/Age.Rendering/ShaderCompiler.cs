@@ -33,21 +33,49 @@ public partial class ShaderCompiler : Disposable
         }
     }
 
-    private void OnFileChanged(object sender, FileSystemEventArgs e)
+    private void OnFileChanged(object sender, FileSystemEventArgs fileSystemEventArgs)
     {
-        var filepath = Path.GetFullPath(e.FullPath);
+        var filepath = Path.GetFullPath(fileSystemEventArgs.FullPath);
 
-        if (this.RecompileWithDebounce(filepath, null))
+        ref var fileEntry = ref this.watcher!.Files.GetValueRefOrNullRef(filepath);
+
+        if (Unsafe.IsNullRef(ref fileEntry))
         {
             return;
         }
 
-        if (this.watcher!.Dependencies.TryGetValue(filepath, out var dependents))
+        var token = fileEntry.RefreshToken();
+
+        void action(Task task)
+        {
+            if (task.IsCompletedSuccessfully && !token.IsCancellationRequested)
+            {
+                Logger.Info($"FileChanged: {filepath}");
+
+                this.OnFileChanged(filepath);
+            }
+        }
+
+        Task.Delay(DEBOUNCE_DELAY, token)
+            .ContinueWith(action, TaskScheduler.Default);
+    }
+
+    private void OnFileChanged(string filepath)
+    {
+        using var bytes = FileReader.ReadAllBytesAsRef(filepath);
+
+        var dependencyHasChanged = !this.watcher!.Files.TryGetValue(filepath, out var fileEntry) || fileEntry.Hash != MD5Hash.Create(bytes);
+
+        if (dependencyHasChanged && this.watcher!.Dependencies.TryGetValue(filepath, out var dependents))
         {
             foreach (var dependent in dependents)
             {
-                this.RecompileWithDebounce(dependent, filepath);
+                this.Recompile(dependent, true);
             }
+        }
+        else
+        {
+            this.Recompile(filepath, false);
         }
     }
 
@@ -336,75 +364,41 @@ public partial class ShaderCompiler : Disposable
         }
     }
 
-    private void Recompile(Shader shader, in ShaderOptions shaderOptions, string? dependency)
+    private void Recompile(string filepath, bool dependencyHasChanged)
     {
-        var hasChanged = false;
-
-        using var source = FileReader.ReadAllBytesAsRef(shader.Filepath);
-
-        if (dependency != null)
+        if (this.watcher!.Shaders.TryGetValue(filepath, out var entries))
         {
-            using var bytes = FileReader.ReadAllBytesAsRef(dependency);
-
-            hasChanged = !this.watcher!.Files.TryGetValue(dependency, out var dependencyHash) || dependencyHash != MD5Hash.Create(bytes);
-        }
-        else
-        {
-            hasChanged = !this.watcher!.Files.TryGetValue(shader.Filepath, out var shaderHash) || shaderHash != MD5Hash.Create(source);
-        }
-
-        if (hasChanged && shader.IsCompiled)
-        {
-            try
+            foreach (var entry in entries.Values)
             {
-                Span<IDisposable> disposables = [shader.Pipeline, shader.PipelineLayout, shader.DescriptorSetLayout];
+                var shader        = entry.Shader;
+                var shaderOptions = entry.ShaderOptions;
 
-                this.CompileShader(shader, source, shaderOptions);
-
-                VulkanRenderer.Singleton.DeferredDispose(disposables);
-
-                shader.InvokeChanged();
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e.Message);
-            }
-        }
-    }
-
-    private bool RecompileWithDebounce(string filepath, string? trigger)
-    {
-        if (!this.watcher!.Shaders.TryGetValue(filepath, out var entries))
-        {
-            return false;
-        }
-
-        foreach (var key in entries.Keys)
-        {
-            ref var entry = ref entries.GetValueRefOrNullRef(key);
-
-            var token = entry.RefreshToken();
-
-            var @lock         = entry.Lock;
-            var shader        = entry.Shader;
-            var shaderOptions = entry.ShaderOptions;
-
-            void action(Task task)
-            {
-                if (task.IsCompletedSuccessfully && !token.IsCancellationRequested)
+                lock (entry.Lock)
                 {
-                    lock (@lock)
+                    using var source = FileReader.ReadAllBytesAsRef(shader.Filepath);
+
+                    var hasChanged = dependencyHasChanged || !this.watcher!.Files.TryGetValue(shader.Filepath, out var fileEntry) || fileEntry.Hash != MD5Hash.Create(source);
+
+                    if (hasChanged && shader.IsCompiled)
                     {
-                        this.Recompile(shader, shaderOptions, trigger);
+                        try
+                        {
+                            Span<IDisposable> disposables = [shader.Pipeline, shader.PipelineLayout, shader.DescriptorSetLayout];
+
+                            this.CompileShader(shader, source, shaderOptions);
+
+                            VulkanRenderer.Singleton.DeferredDispose(disposables);
+
+                            shader.InvokeChanged();
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error(e.Message);
+                        }
                     }
                 }
             }
-
-            Task.Delay(DEBOUNCE_DELAY, token)
-                .ContinueWith(action, TaskScheduler.Default);
         }
-
-        return true;
     }
 
     protected override void OnDisposed(bool disposing) => throw new NotImplementedException();
@@ -441,7 +435,7 @@ public partial class ShaderCompiler : Disposable
 
                 this.watcher.Update(shader, dependencies);
 
-                this.watcher.Files[shader.Filepath] = MD5Hash.Create(source);
+                this.watcher.Files[shader.Filepath] = new FileEntry(MD5Hash.Create(source));
             }
         }
         else

@@ -20,8 +20,8 @@ public partial class ShaderCompiler
         private readonly FileSystemWatcher fileSystemWatcher;
         private readonly string            shadersPath;
 
-        public Dictionary<string, List<string>>                    Dependencies { get; } = [];
-        public Dictionary<string, MD5Hash>                         Files        { get; } = [];
+        public Dictionary<string, HashSet<string>>                 Dependencies { get; } = [];
+        public Dictionary<string, FileEntry>                       Files        { get; } = [];
         public Dictionary<string, Dictionary<Shader, ShaderEntry>> Shaders      { get; } = [];
 
         public Watcher()
@@ -121,11 +121,18 @@ public partial class ShaderCompiler
 
             foreach (var dependecy in dependencies)
             {
-                ref var dependencieHash = ref this.Files.GetValueRefOrAddDefault(dependecy, out var _);
+                ref var fileEntry = ref this.Files.GetValueRefOrAddDefault(dependecy, out var exists);
 
                 using var bytes = FileReader.ReadAllBytesAsRef(dependecy);
 
-                MD5Hash.Update(bytes, ref dependencieHash);
+                if (!exists)
+                {
+                    fileEntry = new(MD5Hash.Create(bytes));
+                }
+                else
+                {
+                    MD5Hash.Update(bytes, ref fileEntry.Hash);
+                }
             }
 
             foreach (var dependecy in diff.Added)
