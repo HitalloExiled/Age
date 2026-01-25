@@ -1,19 +1,20 @@
-using Age.Core;
-using Age.Rendering.Resources;
-using Age.Shaders;
-using Age.Rendering.Vulkan;
-using ThirdParty.Vulkan;
-using Age.Graphs;
-using Age.Passes;
-using Age.Core.Exceptions;
 using System.Diagnostics.CodeAnalysis;
+using Age.Core;
+using Age.Core.Exceptions;
+using Age.Core.Extensions;
+using Age.Rendering;
+using Age.Rendering.Resources;
+using Age.Rendering.Vulkan;
+
+using ShaderKey = (ThirdParty.Vulkan.VkRenderPass, System.Type, Age.Rendering.Resources.ShaderOptions);
 
 namespace Age.Storage;
 
 public sealed class ShaderStorage : Disposable
 {
-    private readonly VulkanRenderer             renderer;
-    private readonly Dictionary<string, Shader> shaders = [];
+    private readonly Dictionary<ShaderKey, Shader> shaders = [];
+    private readonly VulkanRenderer renderer;
+    private readonly ShaderCompiler shaderCompiler = new(true);
 
     [AllowNull]
     public static ShaderStorage Singleton { get; private set; }
@@ -38,39 +39,23 @@ public sealed class ShaderStorage : Disposable
         }
     }
 
-    public Shader GetShader(string name, RenderGraph renderGraph)
+    public TShader Get<TShader>(RenderTarget renderTarget, in ShaderOptions? shaderOptions = null) where TShader : Shader, IShaderFactory<TShader>
     {
-        if (!this.shaders.TryGetValue(name, out var shader))
+        var key = (renderTarget.RenderPass, typeof(TShader), shaderOptions.GetValueOrDefault());
+
+        ref var shader = ref this.shaders.GetValueRefOrAddDefault(key, out var exists);
+
+        if (!exists)
         {
-            switch (name)
-            {
-                case nameof(Geometry3DShader):
-                    {
-                        var pass = renderGraph.GetNode<Scene3DPass>();
+            shader = TShader.Create(renderTarget.RenderPass);
 
-                        this.shaders[name] = shader = new Geometry3DShader(pass.Viewport!.RenderTarget!.RenderPass, this.renderer.MaxUsableSampleCount);
+            this.shaderCompiler.CompileShader(shader, shaderOptions ?? new());
 
-                        break;
-                    }
-            }
+            shader.Disposed += () => this.shaders.Remove(key);
+
+            return (TShader)shader;
         }
 
-        return shader ?? throw new InvalidOperationException($"Shader {name} not found");
-    }
-
-    public Shader GetShader(string name, VkRenderPass renderPass)
-    {
-        if (!this.shaders.TryGetValue(name, out var shader))
-        {
-            switch (name)
-            {
-                case nameof(Geometry3DShader):
-                    this.shaders[name] = shader = new Geometry3DShader(renderPass, SampleCount.N1);
-
-                    break;
-            }
-        }
-
-        return shader ?? throw new InvalidOperationException($"Shader {name} not found");
+        return (TShader)shader!.Share();
     }
 }

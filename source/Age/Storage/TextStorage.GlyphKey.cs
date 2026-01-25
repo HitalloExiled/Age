@@ -15,7 +15,7 @@ internal sealed partial class TextStorage
 
         public Chars(ReadOnlySpan<char> chars)
         {
-            Debug.Assert(chars.Length == 2);
+            Debug.Assert(chars.Length <= 2);
 
             chars.CopyTo(this);
         }

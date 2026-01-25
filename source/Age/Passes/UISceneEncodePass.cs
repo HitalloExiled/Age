@@ -1,15 +1,15 @@
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using Age.Cache;
 using Age.Commands;
 using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.Services;
 using Age.Shaders;
-using ThirdParty.Vulkan;
+using Age.Storage;
+using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
+using ThirdParty.Vulkan;
 
 namespace Age.Passes;
 
@@ -81,13 +81,13 @@ public sealed class UISceneEncodePass : UIScenePass
 
         this.commandBuffer = new(VkCommandBufferLevel.Primary);
 
-        this.shader = ShaderCache.Singleton.Get<Geometry2DEncodeShader>(this.renderTarget);
+        this.shader = ShaderStorage.Singleton.Get<Geometry2DEncodeShader>(this.renderTarget);
         this.shader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.geometry2DStencilMaskWriterShader = ShaderCache.Singleton.Get<Geometry2DStencilMaskShader>(this.renderTarget, new() { StencilOp = StencilOp.Write });
+        this.geometry2DStencilMaskWriterShader = ShaderStorage.Singleton.Get<Geometry2DStencilMaskShader>(this.renderTarget, new() { StencilOp = StencilOp.Write });
         this.geometry2DStencilMaskWriterShader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.geometry2DStencilMaskEraserShader = ShaderCache.Singleton.Get<Geometry2DStencilMaskShader>(this.renderTarget, new() { StencilOp = StencilOp.Erase });
+        this.geometry2DStencilMaskEraserShader = ShaderStorage.Singleton.Get<Geometry2DStencilMaskShader>(this.renderTarget, new() { StencilOp = StencilOp.Erase });
         this.geometry2DStencilMaskEraserShader.Changed += RenderingService.Singleton.RequestDraw;
     }
 

@@ -1,5 +1,6 @@
 using Age.Core;
 using Age.Rendering.Resources;
+using Age.Rendering.Vulkan;
 using Age.Shaders;
 using Age.Storage;
 
@@ -20,5 +21,5 @@ public sealed class Material : Disposable
     }
 
     internal Shader GetShader(RenderTarget renderTarget) =>
-        this.shader ??= ShaderStorage.Singleton.GetShader(nameof(Geometry3DShader), renderTarget.RenderPass);
+        this.shader ??= ShaderStorage.Singleton.Get<Geometry3DShader>(renderTarget, new() { RasterizationSamples = VulkanRenderer.Singleton.MaxUsableSampleCount });
 }

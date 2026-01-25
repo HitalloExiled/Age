@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using static Age.Rendering.Resources.RenderTarget.CreateInfo;
 
@@ -8,6 +9,7 @@ public sealed partial class RenderTarget
     public ref partial struct MultiPassCreateInfo
     {
         [StructLayout(LayoutKind.Explicit)]
+        [DebuggerTypeProxy(typeof(DebugView))]
         public readonly partial struct AttachmentInfo : IEquatable<AttachmentInfo>
         {
 #if TARGET_32BIT
