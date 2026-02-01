@@ -366,7 +366,7 @@ public partial class ShaderCompiler : Disposable
 
     private void Recompile(string filepath, bool dependencyHasChanged)
     {
-        if (this.watcher!.Shaders.TryGetValue(filepath, out var entries))
+        if (this.watcher!.ShaderEntries.TryGetValue(filepath, out var entries))
         {
             foreach (var entry in entries.Values)
             {
@@ -401,7 +401,8 @@ public partial class ShaderCompiler : Disposable
         }
     }
 
-    protected override void OnDisposed(bool disposing) => throw new NotImplementedException();
+    protected override void OnDisposed(bool disposing) =>
+        this.watcher?.Dispose();
 
     private void CompileShader(Shader shader, ReadOnlySpan<byte> source, in ShaderOptions shaderOptions)
     {

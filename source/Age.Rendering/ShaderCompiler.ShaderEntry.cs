@@ -36,8 +36,8 @@ public partial class ShaderCompiler
     {
         private CancellationTokenSource cancellationTokenSource = new();
 
-        public readonly Lock   Lock   { get; }               = new();
-        public readonly Shader Shader { get; }               = shader;
+        public readonly Lock          Lock          { get; } = new();
+        public readonly Shader        Shader        { get; } = shader;
         public readonly ShaderOptions ShaderOptions { get; } = shaderOptions;
 
         public Task? Execution { get; set; }

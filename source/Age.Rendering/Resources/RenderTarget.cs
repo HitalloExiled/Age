@@ -9,6 +9,12 @@ using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
 
+using RenderPassKey = (
+    Age.Core.Collections.InlineList4<Age.Rendering.Resources.RenderTarget.MultiPassCreateInfo.AttachmentInfo>,
+    Age.Core.Collections.InlineList4<Age.Rendering.Resources.RenderTarget.MultiPassCreateInfo.SubPassInfo>,
+    Age.Core.Collections.InlineList4<Age.Rendering.Resources.RenderTarget.MultiPassCreateInfo.SubPassDependency>
+);
+
 namespace Age.Rendering.Resources;
 
 public sealed partial class RenderTarget : Resource
@@ -79,6 +85,9 @@ public sealed partial class RenderTarget : Resource
 
         this.CreateResources(this.renderPass.Resource, multiPassCreateInfo);
     }
+
+    private static RenderPassKey CreateRenderPassKey(in MultiPassCreateInfo multiPassCreateInfo) =>
+        (multiPassCreateInfo.Attachments, multiPassCreateInfo.Passes, multiPassCreateInfo.Dependencies);
 
     [MemberNotNull(nameof(Framebuffer))]
     private void CreateResources(VkRenderPass renderPass, in MultiPassCreateInfo multiPassCreateInfo)
@@ -186,7 +195,7 @@ public sealed partial class RenderTarget : Resource
 
     private unsafe static SharedResource<VkRenderPass> CreateRenderPass(in MultiPassCreateInfo createInfo)
     {
-        var key = new RenderPassKey(createInfo);
+        var key = CreateRenderPassKey(createInfo);
 
         ref var renderPass = ref renderPasses.GetValueRefOrAddDefault(key, out var exists);
 
@@ -194,11 +203,55 @@ public sealed partial class RenderTarget : Resource
         {
             using var disposables = new Disposables();
 
-            using var subpassDescriptions     = new RefList<VkSubpassDescription>();
             using var attachmentDescriptions  = new RefList<VkAttachmentDescription>();
+            using var subpassDescriptions     = new RefList<VkSubpassDescription>();
             using var depthStencilAttachments = new RefList<VkAttachmentDescription>();
 
             var passes = createInfo.Passes.AsSpan();
+
+            foreach (var attachment in createInfo.Attachments)
+            {
+                if (attachment.TryGetColorAttachment(out var colorAttachment))
+                {
+                    var colorAttachmentDescription = new VkAttachmentDescription
+                    {
+                        Format         = (VkFormat)colorAttachment.Format,
+                        Samples        = (VkSampleCountFlags)colorAttachment.SampleCount,
+                        FinalLayout    = (VkImageLayout)colorAttachment.FinalLayout,
+                        LoadOp         = VkAttachmentLoadOp.Clear,
+                        StoreOp        = VkAttachmentStoreOp.Store,
+                        StencilLoadOp  = VkAttachmentLoadOp.DontCare,
+                        StencilStoreOp = VkAttachmentStoreOp.DontCare,
+                    };
+
+                    attachmentDescriptions.Add(colorAttachmentDescription);
+
+                    if (colorAttachment.EnableResolve)
+                    {
+                        var resolveAttachmentDescription = colorAttachmentDescription;
+
+                        resolveAttachmentDescription.Samples = VkSampleCountFlags.N1;
+                        resolveAttachmentDescription.LoadOp  = VkAttachmentLoadOp.DontCare;
+
+                        attachmentDescriptions.Add(resolveAttachmentDescription);
+                    }
+                }
+                else if (attachment.TryGetDepthStencilAttachment(out var depthStencilAttachmentInfo))
+                {
+                    var depthStencilAttachmentDescription = new VkAttachmentDescription
+                    {
+                        Format         = (VkFormat)depthStencilAttachmentInfo.Format,
+                        FinalLayout    = (VkImageLayout)depthStencilAttachmentInfo.FinalLayout,
+                        LoadOp         = VkAttachmentLoadOp.Clear,
+                        Samples        = VkSampleCountFlags.N1,
+                        StencilLoadOp  = VkAttachmentLoadOp.Clear,
+                        StencilStoreOp = VkAttachmentStoreOp.DontCare,
+                        StoreOp        = VkAttachmentStoreOp.Store,
+                    };
+
+                    attachmentDescriptions.Add(depthStencilAttachmentDescription);
+                }
+            }
 
             for (var i = 0; i < passes.Length; i++)
             {
@@ -221,20 +274,7 @@ public sealed partial class RenderTarget : Resource
                         throw new InvalidOperationException($"Passes[{i}].ColorAttachments[{j}] must reference a valid {nameof(CreateInfo.ColorAttachmentInfo)} at {index}, but got {createInfo.Attachments[index]}");
                     }
 
-                    colorAttachmentReferences.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = VkImageLayout.ColorAttachmentOptimal });
-
-                    var colorAttachmentDescription = new VkAttachmentDescription
-                    {
-                        Format         = (VkFormat)colorAttachment.Format,
-                        Samples        = (VkSampleCountFlags)colorAttachment.SampleCount,
-                        FinalLayout    = (VkImageLayout)colorAttachment.FinalLayout,
-                        LoadOp         = VkAttachmentLoadOp.Clear,
-                        StoreOp        = VkAttachmentStoreOp.Store,
-                        StencilLoadOp  = VkAttachmentLoadOp.DontCare,
-                        StencilStoreOp = VkAttachmentStoreOp.DontCare,
-                    };
-
-                    attachmentDescriptions.Add(colorAttachmentDescription);
+                    colorAttachmentReferences.Add(new() { Attachment = (uint)index, Layout = VkImageLayout.ColorAttachmentOptimal });
 
                     if (!colorAttachment.EnableResolve)
                     {
@@ -242,13 +282,7 @@ public sealed partial class RenderTarget : Resource
                     }
                     else
                     {
-                        var resolveAttachmentDescription = colorAttachmentDescription;
-
-                        resolveAttachmentDescription.Samples = VkSampleCountFlags.N1;
-                        resolveAttachmentDescription.LoadOp  = VkAttachmentLoadOp.DontCare;
-
-                        resolveAttachmentReferences.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = VkImageLayout.ColorAttachmentOptimal });
-                        attachmentDescriptions.Add(resolveAttachmentDescription);
+                        resolveAttachmentReferences.Add(new() { Attachment = (uint)index + 1, Layout = VkImageLayout.ColorAttachmentOptimal });
                     }
                 }
 
@@ -259,20 +293,7 @@ public sealed partial class RenderTarget : Resource
                         throw new InvalidOperationException($"Passes[{i}].DepthStencilAttachment must reference a valid {nameof(CreateInfo.DepthStencilAttachmentInfo)} at {depthStencilAttachmentIndex}, but got {createInfo.Attachments[depthStencilAttachmentIndex]}");
                     }
 
-                    depthStencilAttachmentReferences.Add(new() { Attachment = (uint)attachmentDescriptions.Count, Layout = VkImageLayout.DepthStencilAttachmentOptimal });
-
-                    var depthStencilAttachmentDescription = new VkAttachmentDescription
-                    {
-                        Format         = (VkFormat)depthStencilAttachmentInfo.Format,
-                        FinalLayout    = (VkImageLayout)depthStencilAttachmentInfo.FinalLayout,
-                        LoadOp         = VkAttachmentLoadOp.Clear,
-                        Samples        = VkSampleCountFlags.N1,
-                        StencilLoadOp  = VkAttachmentLoadOp.Clear,
-                        StencilStoreOp = VkAttachmentStoreOp.DontCare,
-                        StoreOp        = VkAttachmentStoreOp.Store,
-                    };
-
-                    attachmentDescriptions.Add(depthStencilAttachmentDescription);
+                    depthStencilAttachmentReferences.Add(new() { Attachment = (uint)depthStencilAttachmentIndex, Layout = VkImageLayout.DepthStencilAttachmentOptimal });
                 }
 
                 var subpassDescription = new VkSubpassDescription

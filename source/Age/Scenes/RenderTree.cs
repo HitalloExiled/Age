@@ -1,4 +1,3 @@
-using Age.Commands;
 using Age.Core.Extensions;
 using Age.Core;
 using Age.Passes;
@@ -20,6 +19,9 @@ public sealed partial class RenderTree : Disposable
     private ulong  bufferVersion;
 
     internal List<Timer> Timers { get; } = [];
+
+    internal ReadOnlySpan<Viewport> Viewports => this.viewports.AsSpan();
+
     public bool IsDirty { get; private set; }
 
     public Window Window { get; }
@@ -136,15 +138,6 @@ public sealed partial class RenderTree : Disposable
 
     internal void MakeDirty() =>
         this.IsDirty = true;
-
-    internal ReadOnlySpan<Command> Get2DCommands() =>
-        this.Window.RenderContext.Buffer2D.Commands;
-
-    internal ReadOnlySpan<Command> Get3DCommands() =>
-        this.Window.RenderContext.Buffer3D.Commands;
-
-    internal ReadOnlySpan<Viewport> GetViewports() =>
-        this.viewports.AsSpan();
 
     public void Initialize() =>
         this.BuildSceneGraphCache();

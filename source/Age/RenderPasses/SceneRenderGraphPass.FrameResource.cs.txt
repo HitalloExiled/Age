@@ -1,3 +1,4 @@
+using Age.Passes;
 using Age.Rendering.Resources;
 
 namespace Age.RenderPasses;

@@ -33,7 +33,10 @@ public abstract class RenderGraphNode : Disposable
             }
         }
     }
+
     internal SortState SortState { get; set; }
+
+    public bool IsConnected => this.RenderGraph != null;
 
     public ReadOnlySpan<RenderGraphEdge> InputEdges  => this.inputEdges.AsSpan();
     public ReadOnlySpan<RenderGraphEdge> OutputEdges => this.outputEdges.AsSpan();

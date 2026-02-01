@@ -62,7 +62,12 @@ internal class RenderingService : Disposable
 
             foreach (var window in Window.Windows)
             {
-                window.RenderGraph.Execute();
+                var viewports = window.RenderTree.Viewports;
+
+                for (var i = viewports.Length - 1; i > -1; i--)
+                {
+                    viewports[i].RenderGraph.Execute();
+                }
             }
 
             this.renderer.EndFrame();

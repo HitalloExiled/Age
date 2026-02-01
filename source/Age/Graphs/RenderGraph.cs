@@ -163,7 +163,7 @@ public sealed class RenderGraph(Viewport viewport) : Disposable
         var renderGraph = new RenderGraph(viewport);
 
         renderGraph.Connect(new UISceneEncodePass());
-        renderGraph.Connect(new UISceneColorPass());
+        renderGraph.Connect(new Scene3DColorPass { SubPasses = [new UISceneColorPass()] });
 
         return renderGraph;
     }

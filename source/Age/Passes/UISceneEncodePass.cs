@@ -81,13 +81,13 @@ public sealed class UISceneEncodePass : UIScenePass
 
         this.commandBuffer = new(VkCommandBufferLevel.Primary);
 
-        this.shader = ShaderStorage.Singleton.Get<Geometry2DEncodeShader>(this.renderTarget);
+        this.shader = ShaderStorage.Singleton.Get<Geometry2DEncodeShader>(this.renderTarget, new() { Subpass = this.Index });
         this.shader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.geometry2DStencilMaskWriterShader = ShaderStorage.Singleton.Get<Geometry2DStencilMaskShader>(this.renderTarget, new() { StencilOp = StencilOp.Write });
+        this.geometry2DStencilMaskWriterShader = ShaderStorage.Singleton.Get<Geometry2DStencilMaskShader>(this.renderTarget, new() { StencilOp = StencilOp.Write, Subpass = this.Index });
         this.geometry2DStencilMaskWriterShader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.geometry2DStencilMaskEraserShader = ShaderStorage.Singleton.Get<Geometry2DStencilMaskShader>(this.renderTarget, new() { StencilOp = StencilOp.Erase });
+        this.geometry2DStencilMaskEraserShader = ShaderStorage.Singleton.Get<Geometry2DStencilMaskShader>(this.renderTarget, new() { StencilOp = StencilOp.Erase, Subpass = this.Index });
         this.geometry2DStencilMaskEraserShader.Changed += RenderingService.Singleton.RequestDraw;
     }
 

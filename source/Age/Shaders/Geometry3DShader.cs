@@ -5,7 +5,7 @@ using ThirdParty.Vulkan.Enums;
 namespace Age.Shaders;
 
 public sealed partial class Geometry3DShader(VkRenderPass renderPass)
-: Shader<Geometry3DShader.Vertex>($"{nameof(Geometry3DShader)}.slang",renderPass), IShaderFactory<Geometry3DShader>
+: Shader<Geometry3DShader.Vertex>($"{nameof(Geometry3DShader)}.slang", renderPass), IShaderFactory<Geometry3DShader>
 {
     public override VkPipelineBindPoint BindPoint          => VkPipelineBindPoint.Graphics;
     public override VkFrontFace         FrontFace          => VkFrontFace.CounterClockwise;

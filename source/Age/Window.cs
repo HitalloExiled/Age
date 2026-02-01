@@ -162,16 +162,32 @@ public sealed class Window : Viewport
 
     private RenderTarget CreateRenderTarget(Image image)
     {
-        var createInfo = new RenderTarget.CreateInfo
+        var createInfo = new RenderTarget.MultiPassCreateInfo
         {
-            Size                   = this.window.ClientSize,
-            ColorAttachments       = [RenderTarget.CreateInfo.ColorAttachmentInfo.From(image)],
-            DepthStencilAttachment = new()
-            {
-                FinalLayout = ImageLayout.DepthStencilAttachmentOptimal,
-                Format      = VulkanRenderer.Singleton.StencilBufferFormat,
-                Aspect      = TextureAspect.Stencil,
-            }
+            Size        = this.window.ClientSize,
+            Attachments =
+            [
+                RenderTarget.CreateInfo.ColorAttachmentInfo.From(image),
+                new RenderTarget.CreateInfo.DepthStencilAttachmentInfo
+                {
+                    FinalLayout = ImageLayout.DepthStencilAttachmentOptimal,
+                    Format      = VulkanRenderer.Singleton.StencilBufferFormat,
+                    Aspect      = TextureAspect.Stencil,
+                }
+            ],
+            Passes =
+            [
+                new()
+                {
+                    ColorAttachments       = [0],
+                    DepthStencilAttachment = 1
+                },
+                new()
+                {
+                    ColorAttachments       = [0],
+                    DepthStencilAttachment = 1
+                }
+            ]
         };
 
         return new RenderTarget(createInfo);

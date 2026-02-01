@@ -11,9 +11,8 @@ using ThirdParty.Vulkan;
 
 namespace Age.Passes;
 
-public abstract partial class UIScenePass : RenderPass<Texture2D>
+public abstract class UIScenePass : RenderPass<Texture2D>
 {
-    private readonly ClearValuesDefault  clearValues  = new();
     private readonly Stack<StencilLayer> stencilStack = [];
 
     protected abstract CommandFilter               CommandFilter                     { get; }
@@ -25,8 +24,8 @@ public abstract partial class UIScenePass : RenderPass<Texture2D>
     protected IndexBuffer32                         IndexBuffer  { get; }
     protected VertexBuffer<Geometry2DShader.Vertex> VertexBuffer { get; }
 
-    protected override RenderTarget             RenderTarget => this.RenderGraph!.Viewport.RenderTarget;
-    protected override ReadOnlySpan<ClearValue> ClearValues  => this.clearValues;
+    protected override ClearValues  ClearValues  => ClearValues.Default;
+    protected override RenderTarget RenderTarget => this.RenderGraph!.Viewport.RenderTarget;
 
     [AllowNull]
     public override Texture2D Output => this.RenderGraph?.Viewport.Texture ?? Texture2D.Default;
@@ -106,6 +105,8 @@ public abstract partial class UIScenePass : RenderPass<Texture2D>
 
     protected override void OnDisposed(bool disposing)
     {
+        base.OnDisposed(disposing);
+
         if (disposing)
         {
             this.VertexBuffer.Dispose();

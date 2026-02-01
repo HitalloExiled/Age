@@ -9,8 +9,6 @@ public sealed class SubViewport : Viewport
 {
     public override event Action? Resized;
 
-    private readonly RenderGraph renderGraph;
-
     private RenderTarget renderTarget;
 
     public override Size<uint> Size
@@ -29,37 +27,50 @@ public sealed class SubViewport : Viewport
     }
 
     public override string       NodeName     => nameof(SubViewport);
+    public override RenderGraph  RenderGraph { get; }
     public override RenderTarget RenderTarget => this.renderTarget;
-    public override RenderGraph  RenderGraph => this.renderGraph;
     public override Texture2D    Texture      => this.RenderTarget.ColorAttachments[0].Texture;
 
     public SubViewport(in Size<uint> size)
     {
         this.renderTarget = CreateRenderTarget(size);
-        this.renderGraph  = RenderGraph.CreateDefault(this);
+        this.RenderGraph  = RenderGraph.CreateDefault(this);
     }
 
     private static RenderTarget CreateRenderTarget(Size<uint> size)
     {
-        var createInfo = new RenderTarget.CreateInfo
+        var createInfo = new RenderTarget.MultiPassCreateInfo
         {
-            Size             = size,
-            ColorAttachments =
+            Size        = size,
+            Attachments =
             [
-                new()
+                new RenderTarget.CreateInfo.ColorAttachmentInfo
                 {
                     FinalLayout = ImageLayout.ShaderReadOnlyOptimal,
                     Format      = TextureFormat.B8G8R8A8Unorm,
                     SampleCount = SampleCount.N1,
                     Usage       = TextureUsage.ColorAttachment | TextureUsage.Sampled,
+                },
+                new RenderTarget.CreateInfo.DepthStencilAttachmentInfo
+                {
+                    FinalLayout = ImageLayout.DepthStencilAttachmentOptimal,
+                    Format      = VulkanRenderer.Singleton.DepthBufferFormat,
+                    Aspect      = TextureAspect.Depth,
                 }
             ],
-            DepthStencilAttachment = new()
-            {
-                FinalLayout = ImageLayout.DepthStencilAttachmentOptimal,
-                Format      = VulkanRenderer.Singleton.DepthBufferFormat,
-                Aspect      = TextureAspect.Depth,
-            }
+            Passes =
+            [
+                new()
+                {
+                    ColorAttachments       = [0],
+                    DepthStencilAttachment = 1
+                },
+                new()
+                {
+                    ColorAttachments       = [0],
+                    DepthStencilAttachment = 1
+                }
+            ]
         };
 
         return new(createInfo);

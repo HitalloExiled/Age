@@ -20,9 +20,9 @@ public partial class ShaderCompiler
         private readonly FileSystemWatcher fileSystemWatcher;
         private readonly string            shadersPath;
 
-        public Dictionary<string, HashSet<string>>                 Dependencies { get; } = [];
-        public Dictionary<string, FileEntry>                       Files        { get; } = [];
-        public Dictionary<string, Dictionary<Shader, ShaderEntry>> Shaders      { get; } = [];
+        public Dictionary<string, HashSet<string>>                 Dependencies  { get; } = [];
+        public Dictionary<string, FileEntry>                       Files         { get; } = [];
+        public Dictionary<string, Dictionary<Shader, ShaderEntry>> ShaderEntries { get; } = [];
 
         public Watcher()
         {
@@ -41,6 +41,14 @@ public partial class ShaderCompiler
                 if (disposing)
                 {
                     this.fileSystemWatcher.Dispose();
+
+                    foreach (var entries in this.ShaderEntries.Values)
+                    {
+                        foreach (var entry in entries.Values)
+                        {
+                            entry.Dispose();
+                        }
+                    }
                 }
 
                 this.disposed = true;
@@ -55,7 +63,7 @@ public partial class ShaderCompiler
 
         public void Watch(Shader shader, in ShaderOptions shaderOptions)
         {
-            ref var entries = ref this.Shaders.GetValueRefOrAddDefault(shader.Filepath, out var exists);
+            ref var entries = ref this.ShaderEntries.GetValueRefOrAddDefault(shader.Filepath, out var exists);
 
             if (!exists)
             {
@@ -84,7 +92,7 @@ public partial class ShaderCompiler
 
         public void Unwatch(Shader shader)
         {
-            if (this.Shaders.TryGetValue(shader.Filepath, out var entries) && entries.Remove(shader, out var entry))
+            if (this.ShaderEntries.TryGetValue(shader.Filepath, out var entries) && entries.Remove(shader, out var entry))
             {
                 entry.Dispose();
 

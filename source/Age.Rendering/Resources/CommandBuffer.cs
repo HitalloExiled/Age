@@ -111,9 +111,8 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
                 ClearValueCount = (uint)clearValues.Length,
                 Framebuffer     = framebuffer.Handle,
                 PClearValues    = pClearValues,
-                RenderArea      = new()
+                RenderArea      =
                 {
-                    Offset = default,
                     Extent = extent,
                 },
                 RenderPass = renderPass.Handle,
