@@ -45,6 +45,8 @@ public sealed class UISceneEncodePass : UIScenePass
     {
         Debug.Assert(this.Viewport != null);
 
+        this.renderTarget?.Dispose();
+
         var createInfo = new RenderTarget.CreateInfo
         {
             Size             = this.Viewport.Size,
@@ -115,6 +117,8 @@ public sealed class UISceneEncodePass : UIScenePass
 
     protected unsafe override void AfterExecute()
     {
+        base.AfterExecute();
+
         this.CommandBuffer.End();
 
         var commandBufferHandle = this.CommandBuffer.Instance.Handle;

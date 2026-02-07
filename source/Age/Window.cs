@@ -127,6 +127,7 @@ public sealed class Window : Viewport
     public bool IsMinimized => this.window.IsMinimized;
     public bool IsVisible   => this.window.IsVisible;
 
+    public override bool         IsDirty      => this.Surface.IsDirty;
     public override string       NodeName     => nameof(Age.Window);
     public override RenderTarget RenderTarget => this.renderTargets[this.Surface.CurrentBuffer];
     public override Texture2D    Texture      => Texture2D.Empty;
@@ -190,7 +191,7 @@ public sealed class Window : Viewport
             ]
         };
 
-        return new RenderTarget(createInfo);
+        return new(createInfo);
     }
 
     private void OnWindowResized()

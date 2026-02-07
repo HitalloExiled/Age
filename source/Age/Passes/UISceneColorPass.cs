@@ -34,8 +34,12 @@ public class UISceneColorPass : UIScenePass
 
     public override string Name => nameof(UISceneColorPass);
 
-    protected override void BeforeExecute() =>
+    protected override void BeforeExecute()
+    {
+        base.BeforeExecute();
+
         this.lastUniformSet = null;
+    }
 
     protected override void OnConnected()
     {

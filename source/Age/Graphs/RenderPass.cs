@@ -70,8 +70,33 @@ public abstract class RenderPass<TOutput> : RenderGraphNode<TOutput>
         }
     }
 
+    protected override void BeforeExecute()
+    {
+        base.BeforeExecute();
+
+        foreach (var subPass in this.subPasses)
+        {
+            subPass.BeforeExecute();
+        }
+    }
+
+    protected override void AfterExecute()
+    {
+        base.AfterExecute();
+
+        foreach (var subPass in this.subPasses)
+        {
+            subPass.AfterExecute();
+        }
+    }
+
     protected sealed override void Execute()
     {
+        if (this.Viewport!.IsDirty)
+        {
+            return;
+        }
+
         this.CommandBuffer.SetViewport(this.RenderTarget.Size);
         this.CommandBuffer.BeginRenderPass(this.RenderTarget, this.ClearValues.AsReadOnlySpan());
 
@@ -83,7 +108,9 @@ public abstract class RenderPass<TOutput> : RenderGraphNode<TOutput>
         {
             this.CommandBuffer.NextSubPass();
 
+            subPass.BeforeExecute();
             subPass.Record(renderContext);
+            subPass.AfterExecute();
         }
 
         this.CommandBuffer.EndRenderPass();

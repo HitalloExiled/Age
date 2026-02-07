@@ -14,6 +14,7 @@ file sealed class Window : Viewport
 
     public override Size<uint>   Size { get; set; }
 
+    public override bool         IsDirty      => throw new NotImplementedException();
     public override string       NodeName     => throw new NotImplementedException();
     public override RenderGraph  RenderGraph  => throw new NotImplementedException();
     public override RenderTarget RenderTarget => throw new NotImplementedException();

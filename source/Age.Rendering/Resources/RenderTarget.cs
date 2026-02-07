@@ -19,14 +19,14 @@ namespace Age.Rendering.Resources;
 
 public sealed partial class RenderTarget : Resource
 {
-    private static readonly Dictionary<RenderPassKey, SharedResource<VkRenderPass>> renderPasses = [];
+    private static readonly Dictionary<RenderPassKey, RenderPass> renderPasses = [];
 
-    private readonly List<ColorAttachment>        colorAttachments = [];
-    private readonly SharedResource<VkRenderPass> renderPass;
+    private readonly List<ColorAttachment> colorAttachments = [];
+    private readonly RenderPass            renderPass;
 
     internal VkFramebuffer Framebuffer { get; private set; }
 
-    internal VkRenderPass RenderPass => this.renderPass.Resource;
+    internal RenderPass RenderPass => this.renderPass;
 
     public DepthStencilAttachment? DepthStencilAttachment { get; private set; }
 
@@ -74,7 +74,7 @@ public sealed partial class RenderTarget : Resource
 
         this.renderPass = CreateRenderPass(multiPassCreateInfo);
 
-        this.CreateResources(this.renderPass.Resource, multiPassCreateInfo);
+        this.CreateResources(this.renderPass, multiPassCreateInfo);
     }
 
     public RenderTarget(in MultiPassCreateInfo multiPassCreateInfo)
@@ -83,7 +83,7 @@ public sealed partial class RenderTarget : Resource
 
         this.renderPass = CreateRenderPass(multiPassCreateInfo);
 
-        this.CreateResources(this.renderPass.Resource, multiPassCreateInfo);
+        this.CreateResources(this.renderPass, multiPassCreateInfo);
     }
 
     private static RenderPassKey CreateRenderPassKey(in MultiPassCreateInfo multiPassCreateInfo) =>
@@ -193,7 +193,7 @@ public sealed partial class RenderTarget : Resource
         this.Framebuffer = VulkanRenderer.Singleton.Context.CreateFrameBuffer(renderPass, imageViews.AsSpan(), multiPassCreateInfo.Size.ToExtent2D());
     }
 
-    private unsafe static SharedResource<VkRenderPass> CreateRenderPass(in MultiPassCreateInfo createInfo)
+    private unsafe static RenderPass CreateRenderPass(in MultiPassCreateInfo createInfo)
     {
         var key = CreateRenderPassKey(createInfo);
 
@@ -316,7 +316,7 @@ public sealed partial class RenderTarget : Resource
                 PSubpasses      = subpassDescriptions.AsPointer(),
             };
 
-            renderPass = new(VulkanRenderer.Singleton.Context.Device.CreateRenderPass(renderPassCreateInfo));
+            return renderPass = new(VulkanRenderer.Singleton.Context.Device.CreateRenderPass(renderPassCreateInfo));
         }
 
         return renderPass!.Share();
@@ -324,8 +324,7 @@ public sealed partial class RenderTarget : Resource
 
     protected override void OnDisposed()
     {
-        VulkanRenderer.Singleton.DeferredDispose(this.renderPass);
-        VulkanRenderer.Singleton.DeferredDispose(this.Framebuffer);
+        this.renderPass.Dispose();
 
         foreach (var attachment in this.colorAttachments)
         {
@@ -336,5 +335,7 @@ public sealed partial class RenderTarget : Resource
 
         this.DepthStencilAttachment?.Dispose();
         this.DepthStencilAttachment = null;
+
+        VulkanRenderer.Singleton.DeferredDispose(this.Framebuffer);
     }
 }

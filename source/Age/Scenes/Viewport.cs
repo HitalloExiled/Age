@@ -91,6 +91,8 @@ public abstract class Viewport : Renderable
 
     public Window? Window { get; private set; }
 
+    public abstract bool IsDirty { get; }
+
     protected Viewport()
     {
         this.Children =

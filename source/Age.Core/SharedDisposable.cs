@@ -11,7 +11,8 @@ where T : SharedDisposable<T>
 
     private int users = 1;
 
-    public int Users => this.users;
+    public bool IsDisposed => this.disposedState == 1;
+    public int  Users      => this.users;
 
     ~SharedDisposable() =>
         this.Dispose(false);

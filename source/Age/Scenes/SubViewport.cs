@@ -30,6 +30,7 @@ public sealed class SubViewport : Viewport
     public override RenderGraph  RenderGraph { get; }
     public override RenderTarget RenderTarget => this.renderTarget;
     public override Texture2D    Texture      => this.RenderTarget.ColorAttachments[0].Texture;
+    public override bool         IsDirty      => false;
 
     public SubViewport(in Size<uint> size)
     {

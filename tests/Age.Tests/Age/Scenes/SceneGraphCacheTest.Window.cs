@@ -15,6 +15,7 @@ public partial class SceneGraphCacheTest
 
         public override Size<uint>   Size { get; set; }
 
+        public override bool         IsDirty      => throw new NotImplementedException();
         public override string       NodeName     => nameof(SceneGraphCacheTest.Window);
         public override RenderGraph  RenderGraph  => throw new NotImplementedException();
         public override RenderTarget RenderTarget => throw new NotImplementedException();
