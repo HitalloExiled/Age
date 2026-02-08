@@ -168,7 +168,7 @@ public abstract class UIScenePass : RenderPass<Texture2D>
                     {
                         this.stencilStack.Clear();
                         this.ClearStencilBuffer(viewport);
-                        this.CommandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, previousDepth = 0u);
+                        this.CommandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, previousDepth = 0);
                         this.CommandBuffer.BindShader(this.Shader);
                     }
                 }

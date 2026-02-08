@@ -45,15 +45,17 @@ public class UISceneColorPass : UIScenePass
     {
         base.OnConnected();
 
-        Debug.Assert(this.RenderGraph != null);
+        Debug.Assert(this.Viewport != null);
 
-        this.shader = ShaderStorage.Singleton.Get<Geometry2DColorShader>(this.Viewport!.RenderTarget, new() { Subpass = this.Index });
+        var renderTarget = this.Viewport.RenderTarget;
+
+        this.shader = ShaderStorage.Singleton.Get<Geometry2DColorShader>(renderTarget, new() { Subpass = this.Index });
         this.shader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.geometry2DStencilMaskWriterShader = ShaderStorage.Singleton.Get<Geometry2DStencilMaskShader>(this.Viewport!.RenderTarget, new() { StencilOp = StencilOp.Write, Subpass = this.Index });
+        this.geometry2DStencilMaskWriterShader = ShaderStorage.Singleton.Get<Geometry2DStencilMaskShader>(renderTarget, new() { StencilOp = StencilOp.Write, Subpass = this.Index });
         this.geometry2DStencilMaskWriterShader.Changed += RenderingService.Singleton.RequestDraw;
 
-        this.geometry2DStencilMaskEraserShader = ShaderStorage.Singleton.Get<Geometry2DStencilMaskShader>(this.Viewport!.RenderTarget, new() { StencilOp = StencilOp.Erase, Subpass = this.Index });
+        this.geometry2DStencilMaskEraserShader = ShaderStorage.Singleton.Get<Geometry2DStencilMaskShader>(renderTarget, new() { StencilOp = StencilOp.Erase, Subpass = this.Index });
         this.geometry2DStencilMaskEraserShader.Changed += RenderingService.Singleton.RequestDraw;
     }
 
