@@ -453,7 +453,7 @@ public partial class ShaderCompiler : Disposable
     {
         if (this.Watching)
         {
-            this.watcher.Watch(shader, shaderOptions);
+            this.watcher.Watch(shader.Share(), shaderOptions);
         }
 
         using var source = FileReader.ReadAllBytesAsRef(shader.Filepath);

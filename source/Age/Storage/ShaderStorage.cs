@@ -51,8 +51,6 @@ public sealed class ShaderStorage : Disposable
 
             this.shaderCompiler.CompileShader(shader, shaderOptions ?? new());
 
-            shader.Disposed += () => this.shaders.Remove(key);
-
             return (TShader)shader;
         }
 
