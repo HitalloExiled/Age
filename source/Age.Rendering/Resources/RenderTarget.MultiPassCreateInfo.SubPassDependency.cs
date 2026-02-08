@@ -6,12 +6,12 @@ public sealed partial class RenderTarget
     {
         public struct SubPassDependency : IEquatable<SubPassDependency>
         {
-            public int  SrcSubpass;
-            public int  DstSubpass;
-            public uint SrcStageMask;
-            public uint DstStageMask;
-            public uint SrcAccessMask;
-            public uint DstAccessMask;
+            public uint          SrcSubpass;
+            public uint          DstSubpass;
+            public PipelineStage SrcStageMask;
+            public PipelineStage DstStageMask;
+            public AccessMask    SrcAccessMask;
+            public AccessMask    DstAccessMask;
 
             public readonly bool Equals(SubPassDependency other) =>
                 this.SrcSubpass       == other.SrcSubpass

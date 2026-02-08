@@ -19,6 +19,8 @@ namespace Age.Rendering.Resources;
 
 public sealed partial class RenderTarget : Resource
 {
+    public const uint SUBPASS_EXTERNAL = VkConstants.VK_SUBPASS_EXTERNAL;
+
     private static readonly Dictionary<RenderPassKey, RenderPass> renderPasses = [];
 
     private readonly List<ColorAttachment> colorAttachments = [];
@@ -206,6 +208,7 @@ public sealed partial class RenderTarget : Resource
             using var attachmentDescriptions  = new RefList<VkAttachmentDescription>();
             using var subpassDescriptions     = new RefList<VkSubpassDescription>();
             using var depthStencilAttachments = new RefList<VkAttachmentDescription>();
+            using var subpassDependencies     = new RefList<VkSubpassDependency>();
 
             var passes = createInfo.Passes.AsSpan();
 
@@ -308,12 +311,29 @@ public sealed partial class RenderTarget : Resource
                 subpassDescriptions.Add(subpassDescription);
             }
 
+            foreach (var dependency in createInfo.Dependencies)
+            {
+                var subpassDependency = new VkSubpassDependency
+                {
+                    DstAccessMask = (VkAccessFlags)dependency.DstAccessMask,
+                    DstStageMask  = (VkPipelineStageFlags)dependency.DstStageMask,
+                    DstSubpass    = dependency.DstSubpass,
+                    SrcAccessMask = (VkAccessFlags)dependency.SrcAccessMask,
+                    SrcStageMask  = (VkPipelineStageFlags)dependency.SrcStageMask,
+                    SrcSubpass    = dependency.SrcSubpass,
+                };
+
+                subpassDependencies.Add(subpassDependency);
+            }
+
             var renderPassCreateInfo = new VkRenderPassCreateInfo
             {
                 AttachmentCount = (uint)attachmentDescriptions.Count,
                 PAttachments    = attachmentDescriptions.AsPointer(),
                 SubpassCount    = (uint)subpassDescriptions.Count,
                 PSubpasses      = subpassDescriptions.AsPointer(),
+                PDependencies   = subpassDependencies.AsPointer(),
+                DependencyCount = (uint)subpassDependencies.Count,
             };
 
             return renderPass = new(VulkanRenderer.Singleton.Context.Device.CreateRenderPass(renderPassCreateInfo));

@@ -2,6 +2,7 @@ using Age.Graphs;
 using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
+using ThirdParty.Vulkan;
 
 namespace Age.Scenes;
 
@@ -70,6 +71,27 @@ public sealed class SubViewport : Viewport
                 {
                     ColorAttachments       = [0],
                     DepthStencilAttachment = 1
+                }
+            ],
+            Dependencies =
+            [
+                new()
+                {
+                    SrcSubpass    = RenderTarget.SUBPASS_EXTERNAL,
+                    DstSubpass    = 0,
+                    SrcStageMask  = PipelineStage.ColorAttachmentOutput,
+                    DstStageMask  = PipelineStage.ColorAttachmentOutput,
+                    SrcAccessMask = AccessMask.ColorAttachmentWrite,
+                    DstAccessMask = AccessMask.ColorAttachmentRead | AccessMask.ColorAttachmentWrite,
+                },
+                new()
+                {
+                    SrcSubpass    = RenderTarget.SUBPASS_EXTERNAL,
+                    DstSubpass    = 1,
+                    SrcStageMask  = PipelineStage.ColorAttachmentOutput,
+                    DstStageMask  = PipelineStage.ColorAttachmentOutput,
+                    SrcAccessMask = AccessMask.ColorAttachmentWrite,
+                    DstAccessMask = AccessMask.ColorAttachmentRead | AccessMask.ColorAttachmentWrite,
                 }
             ]
         };

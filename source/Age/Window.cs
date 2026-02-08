@@ -8,6 +8,8 @@ using DisplayWindow           = Age.Platforms.Display.Window;
 using WindowMouseEventHandler = Age.Platforms.Display.WindowMouseEventHandler;
 using Age.Core;
 using Age.Graphs;
+using ThirdParty.Vulkan;
+using ThirdParty.Vulkan.Flags;
 
 namespace Age;
 
@@ -187,6 +189,27 @@ public sealed class Window : Viewport
                 {
                     ColorAttachments       = [0],
                     DepthStencilAttachment = 1
+                }
+            ],
+            Dependencies =
+            [
+                new()
+                {
+                    SrcSubpass    = RenderTarget.SUBPASS_EXTERNAL,
+                    DstSubpass    = 0,
+                    SrcStageMask  = PipelineStage.ColorAttachmentOutput,
+                    DstStageMask  = PipelineStage.ColorAttachmentOutput,
+                    SrcAccessMask = AccessMask.ColorAttachmentWrite,
+                    DstAccessMask = AccessMask.ColorAttachmentRead | AccessMask.ColorAttachmentWrite,
+                },
+                new()
+                {
+                    SrcSubpass    = RenderTarget.SUBPASS_EXTERNAL,
+                    DstSubpass    = 1,
+                    SrcStageMask  = PipelineStage.ColorAttachmentOutput,
+                    DstStageMask  = PipelineStage.ColorAttachmentOutput,
+                    SrcAccessMask = AccessMask.ColorAttachmentWrite,
+                    DstAccessMask = AccessMask.ColorAttachmentRead | AccessMask.ColorAttachmentWrite,
                 }
             ]
         };
