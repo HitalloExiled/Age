@@ -8,6 +8,5 @@ public abstract partial class Geometry2DShader(string file, VkRenderPass renderP
 {
     public override VkPipelineBindPoint BindPoint         => VkPipelineBindPoint.Graphics;
     public override VkFrontFace         FrontFace         => VkFrontFace.Clockwise;
-    public override string              Name              => nameof(Geometry2DShader);
     public override VkPrimitiveTopology PrimitiveTopology => VkPrimitiveTopology.TriangleList;
 }

@@ -28,7 +28,7 @@ public sealed partial class RenderTree
 
     private unsafe Renderable? GetNode(ushort x, ushort y, out uint virtualChildIndex)
     {
-        var texture = this.uiSceneEncodePass.Output;
+        var texture = this.encodeCompositeRenderPass.Output!;
 
         if (x < texture.Extent.Width && y < texture.Extent.Height)
         {

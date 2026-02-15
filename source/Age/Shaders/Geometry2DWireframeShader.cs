@@ -6,8 +6,8 @@ namespace Age.Shaders;
 
 public sealed class CanvasWireframeShader : Geometry2DShader, IShaderFactory<CanvasWireframeShader>
 {
-    public override string              Name              { get; } = nameof(CanvasWireframeShader);
-    public override VkPrimitiveTopology PrimitiveTopology { get; } = VkPrimitiveTopology.LineList;
+    public override string              Name              => nameof(CanvasWireframeShader);
+    public override VkPrimitiveTopology PrimitiveTopology => VkPrimitiveTopology.LineList;
 
     private CanvasWireframeShader(VkRenderPass renderPass)
     : base($"{nameof(CanvasWireframeShader)}.slang", renderPass) { }

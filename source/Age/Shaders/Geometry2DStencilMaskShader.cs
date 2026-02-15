@@ -5,7 +5,7 @@ namespace Age.Shaders;
 
 public sealed class Geometry2DStencilMaskShader : Geometry2DShader, IShaderFactory<Geometry2DStencilMaskShader>
 {
-    public override string Name { get; } = nameof(Geometry2DStencilMaskShader);
+    public override string Name => nameof(Geometry2DStencilMaskShader);
 
     private Geometry2DStencilMaskShader(VkRenderPass renderPass)
     : base($"{nameof(Geometry2DStencilMaskShader)}.slang", renderPass) { }

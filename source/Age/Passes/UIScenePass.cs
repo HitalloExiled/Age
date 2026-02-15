@@ -11,7 +11,7 @@ using ThirdParty.Vulkan;
 
 namespace Age.Passes;
 
-public abstract class UIScenePass : RenderPass<Texture2D>
+public abstract class UIScenePass : RenderPass
 {
     private readonly Stack<StencilLayer> stencilStack = [];
 
@@ -105,8 +105,6 @@ public abstract class UIScenePass : RenderPass<Texture2D>
 
     protected override void OnDisposed(bool disposing)
     {
-        base.OnDisposed(disposing);
-
         if (disposing)
         {
             this.VertexBuffer.Dispose();

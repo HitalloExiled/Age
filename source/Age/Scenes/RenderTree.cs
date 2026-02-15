@@ -12,8 +12,8 @@ public sealed partial class RenderTree : Disposable
 {
     public event Action? Updated;
 
-    private readonly UISceneEncodePass uiSceneEncodePass;
-    private readonly Queue<Action>     updatesQueue = [];
+    private readonly EncodeCompositeRenderPass encodeCompositeRenderPass;
+    private readonly Queue<Action>             updatesQueue = [];
 
     private Buffer buffer;
     private ulong  bufferVersion;
@@ -42,7 +42,7 @@ public sealed partial class RenderTree : Disposable
         window.MouseWheel  += this.OnMouseWheel;
         window.Resized     += this.UpdateBuffer;
 
-        this.uiSceneEncodePass = window.RenderGraph.GetNode<UISceneEncodePass>();
+        this.encodeCompositeRenderPass = window.RenderGraph.GetNode<EncodeCompositeRenderPass>();
 
         this.UpdateBuffer();
 
@@ -104,7 +104,7 @@ public sealed partial class RenderTree : Disposable
     {
         this.buffer?.Dispose();
 
-        var texture = this.uiSceneEncodePass.Output;
+        var texture = this.encodeCompositeRenderPass.Output!;
 
         var size = texture.Extent.Width * texture.Extent.Height * sizeof(ulong);
 

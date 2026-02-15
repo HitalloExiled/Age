@@ -39,6 +39,7 @@ public sealed partial class RenderTarget : Resource
     public RenderTarget(in CreateInfo createInfo)
     {
         var attachments = new InlineList4<MultiPassCreateInfo.AttachmentInfo>(createInfo.ColorAttachments.Length + (createInfo.DepthStencilAttachment.HasValue ? 1 : 0));
+        var dependecies = new InlineList4<MultiPassCreateInfo.SubPassDependency>(createInfo.Dependency.HasValue ? 1 : 0);
 
         var colorAttachments = new InlineList4<int>(createInfo.ColorAttachments.Length);
 
@@ -57,19 +58,24 @@ public sealed partial class RenderTarget : Resource
             depthStencilAttachment = attachments.Length - 1;
         }
 
+        if (createInfo.Dependency.HasValue)
+        {
+            dependecies[0] = createInfo.Dependency.Value;
+        }
+
         var multiPassCreateInfo = new MultiPassCreateInfo
         {
             Size        = createInfo.Size,
             Attachments = attachments,
-            Passes      = new(
-                [
-                    new()
-                    {
-                        ColorAttachments       = colorAttachments,
-                        DepthStencilAttachment = depthStencilAttachment,
-                    }
-                ]
-            )
+            Passes      =
+            [
+                new()
+                {
+                    ColorAttachments       = colorAttachments,
+                    DepthStencilAttachment = depthStencilAttachment,
+                }
+            ],
+            Dependencies = dependecies,
         };
 
         this.Size = multiPassCreateInfo.Size;

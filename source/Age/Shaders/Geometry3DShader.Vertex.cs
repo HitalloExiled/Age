@@ -9,7 +9,7 @@ namespace Age.Shaders;
 
 public partial class Geometry3DShader
 {
-    public struct Vertex(Vector3<float> position, Color color, in Vector2<float> uv) : IVertexInput
+    public struct Vertex(in Vector3<float> position, in Color color, in Vector2<float> uv) : IVertexInput
     {
         public Vector3<float> Position = position;
         public Color          Color    = color;

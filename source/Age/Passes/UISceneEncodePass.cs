@@ -40,35 +40,12 @@ public sealed class UISceneEncodePass : UIScenePass
     public override Texture2D Output => this.renderTarget?.ColorAttachments[0].Texture ?? Texture2D.Default;
     public override string    Name   => nameof(UISceneEncodePass);
 
-    [MemberNotNull(nameof(renderTarget))]
-    private void CreateRenderTarget()
+    private void RecreateRenderTarget()
     {
         Debug.Assert(this.Viewport != null);
 
         this.renderTarget?.Dispose();
-
-        var createInfo = new RenderTarget.CreateInfo
-        {
-            Size             = this.Viewport.Size,
-            ColorAttachments =
-            [
-                new RenderTarget.CreateInfo.ColorAttachmentInfo
-                {
-                    FinalLayout = ImageLayout.General,
-                    SampleCount = SampleCount.N1,
-                    Format      = TextureFormat.R16G16B16A16Unorm,
-                    Usage       = TextureUsage.TransferDst | TextureUsage.TransferSrc | TextureUsage.Sampled | TextureUsage.ColorAttachment
-                }
-            ],
-            DepthStencilAttachment = new()
-            {
-                FinalLayout = ImageLayout.DepthStencilAttachmentOptimal,
-                Format      = VulkanRenderer.Singleton.StencilBufferFormat,
-                Aspect      = TextureAspect.Stencil,
-            }
-        };
-
-        this.renderTarget = new(createInfo);
+        this.renderTarget = RenderTargetFactory.ForEncode(this.Viewport.Size);
     }
 
     protected override void OnConnected()
@@ -77,11 +54,18 @@ public sealed class UISceneEncodePass : UIScenePass
 
         base.OnConnected();
 
-        this.Viewport.Resized += this.CreateRenderTarget;
+        if (this.Composite == null)
+        {
+            this.Viewport.Resized += this.RecreateRenderTarget;
 
-        this.CreateRenderTarget();
-
-        this.commandBuffer = new(VkCommandBufferLevel.Primary);
+            this.renderTarget  = RenderTargetFactory.ForEncode(this.Viewport.Size);
+            this.commandBuffer = new(VkCommandBufferLevel.Primary);
+        }
+        else
+        {
+            this.renderTarget  = this.Composite.RenderTarget;
+            this.commandBuffer = this.Composite.CommandBuffer;
+        }
 
         this.shader = ShaderStorage.Singleton.Get<Geometry2DEncodeShader>(this.renderTarget, new() { Subpass = this.Index });
         this.shader.Changed += RenderingService.Singleton.RequestDraw;
@@ -95,24 +79,33 @@ public sealed class UISceneEncodePass : UIScenePass
 
     protected override void OnDisconnecting()
     {
-        Debug.Assert(this.Viewport != null);
-
         base.OnDisconnecting();
 
-        this.Viewport.Resized -= this.CreateRenderTarget;
+        if (this.Composite == null)
+        {
+            this.Viewport?.Resized -= this.RecreateRenderTarget;
 
-        this.commandBuffer.Dispose();
+            this.renderTarget?.Dispose();
+            this.commandBuffer?.Dispose();
+        }
 
-        this.shader.Changed -= RenderingService.Singleton.RequestDraw;
-        this.shader.Dispose();
+        if (this.shader != null)
+        {
+            this.shader.Changed -= RenderingService.Singleton.RequestDraw;
+            this.shader.Dispose();
+        }
 
-        this.geometry2DStencilMaskWriterShader.Changed -= RenderingService.Singleton.RequestDraw;
-        this.geometry2DStencilMaskWriterShader.Dispose();
+        if (this.geometry2DStencilMaskWriterShader != null)
+        {
+            this.geometry2DStencilMaskWriterShader.Changed -= RenderingService.Singleton.RequestDraw;
+            this.geometry2DStencilMaskWriterShader.Dispose();
+        }
 
-        this.geometry2DStencilMaskEraserShader.Changed -= RenderingService.Singleton.RequestDraw;
-        this.geometry2DStencilMaskEraserShader.Dispose();
-
-        this.renderTarget.Dispose();
+        if (this.geometry2DStencilMaskEraserShader != null)
+        {
+            this.geometry2DStencilMaskEraserShader.Changed -= RenderingService.Singleton.RequestDraw;
+            this.geometry2DStencilMaskEraserShader.Dispose();
+        }
     }
 
     protected unsafe override void AfterExecute()

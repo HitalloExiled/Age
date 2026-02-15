@@ -13,8 +13,8 @@ public abstract class RenderGraphEdge
 }
 
 public sealed class RenderGraphEdge<TFrom, TTo, TValue>(TFrom from, TTo to, Func<TFrom, TValue> getter, Action<TTo, TValue?> setter) : RenderGraphEdge
-where TFrom  : RenderGraphNode
-where TTo    : RenderGraphNode
+where TFrom : RenderGraphNode
+where TTo   : RenderGraphNode
 {
     public override TFrom From => from;
     public override TTo   To   => to;

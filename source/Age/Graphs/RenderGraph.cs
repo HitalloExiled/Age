@@ -158,12 +158,21 @@ public sealed class RenderGraph(Viewport viewport) : Disposable
         this.edgeStack.Clear();
     }
 
+    protected override void OnDisposed(bool disposing)
+    {
+        foreach (var node in this.nodes)
+        {
+            node.Dispose();
+        }
+    }
+
     public static RenderGraph CreateDefault(Viewport viewport)
     {
         var renderGraph = new RenderGraph(viewport);
 
-        renderGraph.Connect(new UISceneEncodePass());
-        renderGraph.Connect(new Scene3DColorPass { SubPasses = [new UISceneColorPass()] });
+        // renderGraph.Connect(new UISceneEncodePass());
+        renderGraph.Connect(new EncodeCompositeRenderPass([new Scene3DEncodePass(), new UISceneEncodePass()]));
+        renderGraph.Connect(new ColorCompositeRenderPass([new Scene3DColorPass(), new UISceneColorPass()]));
 
         return renderGraph;
     }
@@ -278,13 +287,5 @@ public sealed class RenderGraph(Viewport viewport) : Disposable
         renderGraphNode = null;
 
         return false;
-    }
-
-    protected override void OnDisposed(bool disposing)
-    {
-        foreach (var node in this.nodes)
-        {
-            node.Dispose();
-        }
     }
 }

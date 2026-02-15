@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Age.Core;
 using Age.Core.Extensions;
 using Age.Scenes;
@@ -36,6 +37,7 @@ public abstract class RenderGraphNode : Disposable
 
     internal SortState SortState { get; set; }
 
+    [MemberNotNullWhen(true, nameof(RenderGraph))]
     public bool IsConnected => this.RenderGraph != null;
 
     public ReadOnlySpan<RenderGraphEdge> InputEdges  => this.inputEdges.AsSpan();

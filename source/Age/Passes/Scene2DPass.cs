@@ -1,6 +1,3 @@
-using Age.Graphs;
-using Age.Rendering.Resources;
-
 namespace Age.Passes;
 
-public abstract class Scene2DPass : RenderPass<Texture2D>;
+public abstract class Scene2DPass : RenderPass;

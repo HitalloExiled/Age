@@ -1,3 +1,5 @@
+import "./Geometry3DShader.PushConstant";
+
 struct UniformBufferObject
 {
     float4x4 model;
@@ -47,10 +49,4 @@ VertexOutput main(VertexInput input)
         input.color,
         input.uv
     };
-}
-
-[shader("fragment")]
-float4 main(FragmentInput input) : SV_Target
-{
-    return sampledTexture.Sample(input.uv);
 }

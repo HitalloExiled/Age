@@ -29,7 +29,7 @@ public sealed class Editor : UIScene
 
     public Editor()
     {
-        this.setup = BaselineTest.Setup;
+        this.setup = SubViewportTest.Setup;
 
         this.pages =
         [
@@ -89,7 +89,7 @@ public sealed class Editor : UIScene
         }
         else if (keyEvent.Modifiers.HasFlags(KeyStates.Control) && keyEvent.Key == Key.P)
         {
-            PrintCanvasIndex();
+            this.PrintCanvasIndex();
             reload = false;
         }
         else
@@ -120,9 +120,9 @@ public sealed class Editor : UIScene
     {
         Debug.Assert(this.Scene?.Viewport != null);
 
-        var scene2DEncodePass = this.Scene.Viewport.RenderGraph.GetNode<UISceneEncodePass>();
+        var encodeCompositeRenderPass = this.Scene.Viewport.RenderGraph.GetNode<EncodeCompositeRenderPass>();
 
-        Common.SaveImage(scene2DEncodePass.Output, VkImageAspectFlags.Color, "CanvasEncode.png");
+        Common.SaveImage(encodeCompositeRenderPass.Output!, VkImageAspectFlags.Color, "CanvasEncode.png");
     }
 
     private void Reload()
