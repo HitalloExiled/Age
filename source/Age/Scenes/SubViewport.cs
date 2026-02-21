@@ -2,7 +2,6 @@ using Age.Graphs;
 using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
-using ThirdParty.Vulkan;
 
 namespace Age.Scenes;
 

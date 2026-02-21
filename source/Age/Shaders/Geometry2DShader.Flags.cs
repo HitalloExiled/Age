@@ -9,5 +9,6 @@ public partial class Geometry2DShader
         GrayscaleTexture  = 1 << 0,
         MultiplyColor     = 1 << 1,
         ColorAsBackground = 1 << 2,
+        SamplerAsEncode   = 1 << 3,
     }
 }

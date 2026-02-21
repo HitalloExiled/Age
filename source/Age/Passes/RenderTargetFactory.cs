@@ -41,7 +41,7 @@ internal static class RenderTargetFactory
             [
                 new RenderTarget.CreateInfo.ColorAttachmentInfo
                 {
-                    FinalLayout = ImageLayout.General,
+                    FinalLayout = ImageLayout.ShaderReadOnlyOptimal,
                     SampleCount = SampleCount.N1,
                     Format      = TextureFormat.R16G16B16A16Unorm,
                     Usage       = TextureUsage.TransferDst | TextureUsage.TransferSrc | TextureUsage.Sampled | TextureUsage.ColorAttachment

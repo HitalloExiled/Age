@@ -90,7 +90,7 @@ public abstract partial class Scene3DPass : RenderPass
         {
             foreach (var command in context.Buffer3D)
             {
-                if (command.CommandFilter.HasAnyFlag(this.CommandFilter))
+                if (this.CommandFilter.HasAnyFlag(command.CommandFilter))
                 {
                     switch (command)
                     {

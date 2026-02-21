@@ -334,11 +334,11 @@ public sealed class Image : Resource<VkImage>
     {
         var commandBuffer = CommandBuffer.BeginSingleTimeCommands();
 
-        this.TransitionLayout(commandBuffer, VkImageLayout.General, VkImageLayout.TransferSrcOptimal);
+        this.TransitionLayout(commandBuffer, VkImageLayout.ShaderReadOnlyOptimal, VkImageLayout.TransferSrcOptimal);
 
         this.CopyToBuffer(commandBuffer, buffer, aspectMask);
 
-        this.TransitionLayout(commandBuffer, VkImageLayout.TransferSrcOptimal, VkImageLayout.General);
+        this.TransitionLayout(commandBuffer, VkImageLayout.TransferSrcOptimal, VkImageLayout.ColorAttachmentOptimal);
 
         CommandBuffer.EndSingleTimeCommands(commandBuffer);
     }
@@ -375,50 +375,46 @@ public sealed class Image : Resource<VkImage>
 
     public void TransitionLayout(CommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout)
     {
-        VkPipelineStageFlags sourceStage;
-        VkPipelineStageFlags destinationStage;
+        VkPipelineStageFlags srcStage;
+        VkPipelineStageFlags dstStage;
         VkAccessFlags        srcAccessMask;
         VkAccessFlags        dstAccessMask;
 
         switch ((oldLayout, newLayout))
         {
-            case (VkImageLayout.General,               VkImageLayout.TransferDstOptimal):
-            case (VkImageLayout.General,               VkImageLayout.TransferSrcOptimal):
-            case (VkImageLayout.ShaderReadOnlyOptimal, VkImageLayout.General):
-            case (VkImageLayout.TransferDstOptimal,    VkImageLayout.General):
-            case (VkImageLayout.TransferSrcOptimal,    VkImageLayout.General):
-            case (VkImageLayout.Undefined,             VkImageLayout.General):
-            case (VkImageLayout.Undefined,             VkImageLayout.TransferDstOptimal):
+            case (VkImageLayout.Undefined, VkImageLayout.TransferDstOptimal):
+                srcStage = VkPipelineStageFlags.TopOfPipe;
+                dstStage = VkPipelineStageFlags.Transfer;
+
                 srcAccessMask = default;
                 dstAccessMask = VkAccessFlags.TransferWrite;
 
-                sourceStage      = VkPipelineStageFlags.TopOfPipe;
-                destinationStage = VkPipelineStageFlags.Transfer;
-
                 break;
-            case (VkImageLayout.Undefined, VkImageLayout.ColorAttachmentOptimal):
-                srcAccessMask = default;
-                dstAccessMask = VkAccessFlags.ColorAttachmentWrite;
 
-                sourceStage      = VkPipelineStageFlags.TopOfPipe;
-                destinationStage = VkPipelineStageFlags.ColorAttachmentOutput;
-
-                break;
             case (VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal):
-            case (VkImageLayout.Undefined,          VkImageLayout.ShaderReadOnlyOptimal):
+                srcStage = VkPipelineStageFlags.Transfer;
+                dstStage = VkPipelineStageFlags.FragmentShader;
+
                 srcAccessMask = VkAccessFlags.TransferWrite;
                 dstAccessMask = VkAccessFlags.ShaderRead;
 
-                sourceStage      = VkPipelineStageFlags.Transfer;
-                destinationStage = VkPipelineStageFlags.FragmentShader;
+                break;
+
+            case (VkImageLayout.ShaderReadOnlyOptimal, VkImageLayout.TransferSrcOptimal):
+                srcStage = VkPipelineStageFlags.FragmentShader;
+                dstStage = VkPipelineStageFlags.Transfer;
+
+                srcAccessMask = VkAccessFlags.ShaderRead;
+                dstAccessMask = VkAccessFlags.TransferRead;
 
                 break;
-            case (VkImageLayout.ColorAttachmentOptimal, VkImageLayout.PresentSrcKHR):
-                srcAccessMask = VkAccessFlags.ColorAttachmentWrite;
-                dstAccessMask = VkAccessFlags.MemoryRead;
 
-                sourceStage      = VkPipelineStageFlags.ColorAttachmentOutput;
-                destinationStage = VkPipelineStageFlags.BottomOfPipe;
+            case (VkImageLayout.TransferSrcOptimal, VkImageLayout.ColorAttachmentOptimal):
+                srcStage = VkPipelineStageFlags.Transfer;
+                dstStage = VkPipelineStageFlags.ColorAttachmentOutput;
+
+                srcAccessMask = VkAccessFlags.TransferRead;
+                dstAccessMask = VkAccessFlags.ColorAttachmentWrite;
 
                 break;
             default:
@@ -442,7 +438,7 @@ public sealed class Image : Resource<VkImage>
             }
         };
 
-        commandBuffer.Instance.PipelineBarrier(sourceStage, destinationStage, default, [], [], [imageMemoryBarrier]);
+        commandBuffer.Instance.PipelineBarrier(srcStage, dstStage, default, [], [], [imageMemoryBarrier]);
 
         this.FinalLayout = newLayout;
     }

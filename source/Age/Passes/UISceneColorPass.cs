@@ -13,10 +13,6 @@ namespace Age.Passes;
 
 public class UISceneColorPass : UIScenePass
 {
-    private readonly ResourceCache<Texture2D, UniformSet> uniformSets = new();
-
-    private UniformSet? lastUniformSet;
-
     [AllowNull]
     private Geometry2DStencilMaskShader geometry2DStencilMaskWriterShader;
 
@@ -33,13 +29,6 @@ public class UISceneColorPass : UIScenePass
     protected override Geometry2DColorShader       Shader                            => this.shader;
 
     public override string Name => nameof(UISceneColorPass);
-
-    protected override void BeforeExecute()
-    {
-        base.BeforeExecute();
-
-        this.lastUniformSet = null;
-    }
 
     protected override void OnConnected()
     {
@@ -75,7 +64,7 @@ public class UISceneColorPass : UIScenePass
 
     protected override void Record(RectCommand command)
     {
-        if (!this.uniformSets.TryGetValue(command.TextureMap.Texture, out var uniformSet))
+        if (!this.UniformSets.TryGetValue(command.TextureMap.Texture, out var uniformSet))
         {
             var diffuse = new CombinedImageSamplerUniform
             {
@@ -86,12 +75,12 @@ public class UISceneColorPass : UIScenePass
                 Sampler     = command.TextureMap.Texture.Sampler,
             };
 
-            this.uniformSets.Set(command.TextureMap.Texture, uniformSet = new UniformSet(this.Shader, [diffuse]));
+            this.UniformSets.Set(command.TextureMap.Texture, uniformSet = new UniformSet(this.Shader, [diffuse]));
         }
 
-        if (uniformSet != null  && this.lastUniformSet != uniformSet)
+        if (uniformSet != null  && this.LastUniformSet != uniformSet)
         {
-            this.CommandBuffer.BindUniformSet(this.lastUniformSet = uniformSet);
+            this.CommandBuffer.BindUniformSet(this.LastUniformSet = uniformSet);
         }
 
         var constant = new Geometry2DShader.PushConstant

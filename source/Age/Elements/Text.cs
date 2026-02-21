@@ -36,7 +36,7 @@ public sealed class Text : Layoutable
     private  bool        CanSelect  => this.CompositeParentElement?.ComputedStyle.TextSelection != false;
     internal Rect<float> CursorRect => this.caretCommand.GetAffineRect();
 
-    internal override bool IsParentDependent { get; }
+    internal override bool IsParentDependent => false;
 
     internal override StencilLayer? StencilLayer
     {

@@ -5,7 +5,9 @@ import "./Geometry2DShader.Helpers";
 [shader("fragment")]
 FragmentOutput main(in FragmentInput input)
 {
-    var color = data.color;
+    var color = hasFlag(data.flags, Flags.SamplerAsEncode)
+        ? texture.Sample(input.uv)
+        : data.color;
 
     if (hasBorder(data))
     {

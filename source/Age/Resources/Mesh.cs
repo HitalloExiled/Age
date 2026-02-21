@@ -16,8 +16,16 @@ public sealed class Mesh : Spatial3D
 
         command.IndexBuffer   = new(indices);
         command.VertexBuffer  = new(vertices);
+        command.CommandFilter = CommandFilter.Color | CommandFilter.Encode;
 
         this.SingleCommand = command;
+    }
+
+    private protected override void OnIndexChangedInternal()
+    {
+        base.OnIndexChangedInternal();
+
+        this.SingleCommand!.Metadata = (ulong)(this.Index + 1);
     }
 
     private protected override void OnDisposedInternal()

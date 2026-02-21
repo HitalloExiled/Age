@@ -15,6 +15,9 @@ public abstract class UIScenePass : RenderPass
 {
     private readonly Stack<StencilLayer> stencilStack = [];
 
+    protected ResourceCache<Texture2D, UniformSet> UniformSets    { get; } = new();
+    protected UniformSet?                          LastUniformSet { get; set; }
+
     protected abstract CommandFilter               CommandFilter                     { get; }
     protected abstract Geometry2DStencilMaskShader Geometry2DStencilMaskEraserShader { get; }
     protected abstract Geometry2DStencilMaskShader Geometry2DStencilMaskWriterShader { get; }
@@ -102,6 +105,13 @@ public abstract class UIScenePass : RenderPass
 
     private void WriteStencil(StencilLayer stencilLayer, in Size<uint> viewport) =>
         this.SetStencil(this.Geometry2DStencilMaskWriterShader, stencilLayer, viewport);
+
+    protected override void BeforeExecute()
+    {
+        base.BeforeExecute();
+
+        this.LastUniformSet = null;
+    }
 
     protected override void OnDisposed(bool disposing)
     {

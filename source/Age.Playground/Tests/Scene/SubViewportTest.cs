@@ -71,10 +71,9 @@ public static class SubViewportTest
                                 {
                                     Style =
                                     {
-                                        Border          = new(BORDER_SIZE, default, Color.Margenta),
-                                        BackgroundImage = new(subViewportFree.Texture),
-                                        Size            = subViewportFree.Size,
+                                        Border = new(BORDER_SIZE, default, Color.Margenta),
                                     },
+                                    Children = [new EmbeddedViewport(subViewportFree)]
                                 },
                                 new FlexBox
                                 {
@@ -88,28 +87,25 @@ public static class SubViewportTest
                                         {
                                             Style =
                                             {
-                                                Border          = new(BORDER_SIZE, default, Color.Red),
-                                                BackgroundImage = new(subViewportX.Texture),
-                                                Size            = subViewportX.Size,
+                                                Border = new(BORDER_SIZE, default, Color.Red),
                                             },
+                                            Children = [new EmbeddedViewport(subViewportX)]
                                         },
                                         new FlexBox
                                         {
                                             Style =
                                             {
-                                                Border          = new(BORDER_SIZE, default, Color.Green),
-                                                BackgroundImage = new(subViewportY.Texture),
-                                                Size            = subViewportY.Size,
+                                                Border = new(BORDER_SIZE, default, Color.Green),
                                             },
+                                            Children = [new EmbeddedViewport(subViewportY)]
                                         },
                                         new FlexBox
                                         {
                                             Style =
                                             {
-                                                Border           = new(BORDER_SIZE, default, Color.Blue),
-                                                BackgroundImage = new(subViewportZ.Texture),
-                                                Size            = subViewportZ.Size,
+                                                Border = new(BORDER_SIZE, default, Color.Blue),
                                             },
+                                            Children = [new EmbeddedViewport(subViewportZ)]
                                         }
                                     ]
                                 }

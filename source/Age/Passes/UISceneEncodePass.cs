@@ -10,6 +10,8 @@ using System.Diagnostics;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
+using Age.Rendering.Uniforms;
+using Age.Core.Extensions;
 
 namespace Age.Passes;
 
@@ -112,6 +114,11 @@ public sealed class UISceneEncodePass : UIScenePass
     {
         base.AfterExecute();
 
+        if (this.Composite != null)
+        {
+            return;
+        }
+
         this.CommandBuffer.End();
 
         var commandBufferHandle = this.CommandBuffer.Instance.Handle;
@@ -130,6 +137,11 @@ public sealed class UISceneEncodePass : UIScenePass
     {
         base.BeforeExecute();
 
+        if (this.Composite != null)
+        {
+            return;
+        }
+
         this.CommandBuffer.Reset();
         this.CommandBuffer.Begin(VkCommandBufferUsageFlags.OneTimeSubmit);
     }
@@ -137,6 +149,25 @@ public sealed class UISceneEncodePass : UIScenePass
     protected override void Record(RectCommand command)
     {
         Debug.Assert(this.Viewport != null);
+
+        if (!this.UniformSets.TryGetValue(command.TextureMap.Texture, out var uniformSet))
+        {
+            var diffuse = new CombinedImageSamplerUniform
+            {
+                Binding     = 0,
+                ImageLayout = VkImageLayout.ShaderReadOnlyOptimal,
+                Image       = command.TextureMap.Texture.Image,
+                ImageView   = command.TextureMap.Texture.ImageView,
+                Sampler     = command.TextureMap.Texture.Sampler,
+            };
+
+            this.UniformSets.Set(command.TextureMap.Texture, uniformSet = new UniformSet(this.Shader, [diffuse]));
+        }
+
+        if (uniformSet != null && this.LastUniformSet != uniformSet)
+        {
+            this.CommandBuffer.BindUniformSet(this.LastUniformSet = uniformSet);
+        }
 
         var constant = new Geometry2DShader.PushConstant
         {
