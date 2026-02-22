@@ -11,10 +11,41 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''" >
+    <IsLinux>$(RuntimeIdentifier.StartsWith('linux'))</IsLinux>
+    <IsWindows>$(RuntimeIdentifier.StartsWith('win'))</IsWindows>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == ''" >
+    <IsLinux>$([MSBuild]::IsOSPlatform('Linux'))</IsLinux>
+    <IsWindows>$([MSBuild]::IsOSPlatform('Windows'))</IsWindows>
+
+    <RuntimeIdentifier Condition="$(IsWindows)">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="$(IsLinux)">linux-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <BuildTaskPath>$(MSBuildProjectDirectory)/../../tasks/Build.Tasks/bin/Debug/netstandard2.1/Build.Tasks.dll</BuildTaskPath>
+    <DefineConstants Condition="$(IsWindows)">$(DefineConstants);WINDOWS</DefineConstants>
+    <DefineConstants Condition="$(IsLinux)">$(DefineConstants);LINUX</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Roslynator.Analyzers" Version="4.13.1">
+    <ProjectReference Include="../../tasks/Build.Tasks/Build.Tasks.csproj" ReferenceOutputAssembly="false" OutputItemType="BuildTasks" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Roslynator.Analyzers" Version="4.15">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+
+  <UsingTask TaskName="Build.Tasks.DownloadFileUnzip" AssemblyFile="$(BuildTaskPath)" />
+
+  <Target Name="LogCustomMessageBuildProps" BeforeTargets="Build">
+    <Message Importance="high" Text="[BuildProps] - RuntimeIdentifier: $(RuntimeIdentifier), IsLinux: $(IsLinux), IsWindows: $(IsWindows)" />
+  </Target>
 </Project>

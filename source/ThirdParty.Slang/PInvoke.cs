@@ -4,6 +4,12 @@ namespace ThirdParty.Slang;
 
 internal static unsafe partial class PInvoke
 {
+#if WINDOWS
+    private const string PLATFORM_PATH = "slang";
+#elif LINUX
+    private const string PLATFORM_PATH = "libslang";
+#endif
+
     #region SlangGlobalSession
     // [LibraryImport(PLATFORM_PATH)]
     // internal static partial SlangResult slang_createGlobalSession(SlangInt apiVersion, Handle<IGlobalSession>* outGlobalSession);

@@ -39,3 +39,4 @@ packages/
 
 /BenchmarkDotNet.Artifacts
 .debug
+source/ThirdParty.Slang/native

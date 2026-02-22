@@ -11,11 +11,12 @@
         "**/.git": true,
         "**/.hg": true,
         "**/.svn": true,
+        "**/bin": true,
         "**/CVS": true,
+        "**/external": true,
+        "**/obj": true,
         "**/TestResults": true,
         "**/Thumbs.db": true,
-        "**/bin": true,
-        "**/obj": true,
         ".coverage": true,
         "BenchmarkDotNet.Artifacts": true
     }

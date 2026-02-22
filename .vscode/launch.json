@@ -3,11 +3,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Playground",
+            "name": "(Windows) Launch Playground",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/source/Age.Playground/bin/Debug/net10.0/Age.Playground.exe",
+            "program": "${workspaceFolder}/source/Age.Playground/bin/Debug/net10.0/win-x64/Age.Playground.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
@@ -20,11 +20,11 @@
             "enableStepFiltering": true,
         },
         {
-            "name": "Launch StoryBook",
+            "name": "(Windows) Launch StoryBook",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/source/Age.StoryBook/bin/Debug/net10.0/Age.StoryBook.exe",
+            "program": "${workspaceFolder}/source/Age.StoryBook/bin/Debug/net10.0/win-x64/Age.StoryBook.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",

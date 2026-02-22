@@ -1,10 +1,57 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
+    <ProjectReference Include="../Age.Core/Age.Core.csproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <SlangVersion>2026.3.1</SlangVersion>
+  </PropertyGroup>
+
+  <Target Name="DownloadSlangFiles" BeforeTargets="Restore">
+    <PropertyGroup Condition="'$(IsWindows)' == 'True'">
+      <Platform>windows</Platform>
+      <Filename>slang.dll</Filename>
+      <ArchivePath>bin</ArchivePath>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(IsLinux)' == 'True'">
+      <Platform>linux</Platform>
+      <Filename>libslang.so</Filename>
+      <ArchivePath>lib</ArchivePath>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <ZipFilename>slang-$(SlangVersion)-$(Platform)-x86_64.zip</ZipFilename>
+      <SlangFilePath>$(ProjectDir)native/$(SlangFile)</SlangFilePath>
+      <DownloadUrl>https://github.com/shader-slang/slang/releases/download/v$(SlangVersion)/$(ZipFilename)</DownloadUrl>
+      <Destination>$(ProjectDir)/native</Destination>
+    </PropertyGroup>
+
+    <DownloadFileUnzip
+      Url="$(DownloadUrl)"
+      Files="$(ArchivePath)/$(Filename)"
+      Destination="$(Destination)"
+      Condition="!Exists('$(Destination)/$(Filename)')"
+    />
+  </Target>
+
+  <PropertyGroup Condition="$(IsWindows)">
+    <Extension>dll</Extension>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(IsLinux)">
+    <Extension>so</Extension>
+  </PropertyGroup>
+
   <ItemGroup>
-    <None Include="./Native/Lib/*.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes/win-x64/native/%(Filename)%(Extension)" />
+    <None Include="./native/*.$(Extension)" CopyToOutputDirectory="PreserveNewest" TargetPath="%(Filename)%(Extension)"/>
+  </ItemGroup>
+
+  <Target Name="LogCustomMessage" BeforeTargets="Build">
+    <Message Importance="high" Text="RuntimeIdentifier: $(RuntimeIdentifier), IsLinux: $(IsLinux), IsWindows: $(IsWindows)" />
+  </Target>
+
+  <ItemGroup>
+    <DirectPInvoke Condition="$(IsWindows)" Include="slang" />
+    <DirectPInvoke Condition="$(IsLinux)" Include="libslang" />
   </ItemGroup>
 
 </Project>
