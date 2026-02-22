@@ -63,7 +63,7 @@ public sealed unsafe class VkCommandBuffer : DisposableManagedHandle<VkCommandBu
     }
 
     /// <inheritdoc cref="PInvoke.vkCmdBindDescriptorSets" />
-    public void BindDescriptorSets(VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint firstSet, scoped ReadOnlySpan<VkDescriptorSet> descriptorSets, scoped ReadOnlySpan<uint> dynamicOffsets)
+    public void BindDescriptorSets(VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint firstSet, ReadOnlySpan<VkDescriptorSet> descriptorSets, ReadOnlySpan<uint> dynamicOffsets)
     {
         fixed (VkHandle<VkDescriptorSet>* pDescriptorSets = VkHandle.GetHandles(descriptorSets))
         fixed (uint*                      pDynamicOffsets = dynamicOffsets)
@@ -89,7 +89,7 @@ public sealed unsafe class VkCommandBuffer : DisposableManagedHandle<VkCommandBu
     }
 
     /// <inheritdoc cref="PInvoke.vkCmdBindVertexBuffers" />
-    public void BindVertexBuffers(uint firstBinding, uint bindingCount, scoped ReadOnlySpan<VkBuffer> vertexBuffers, scoped ReadOnlySpan<ulong> offsets)
+    public void BindVertexBuffers(uint firstBinding, uint bindingCount, ReadOnlySpan<VkBuffer> vertexBuffers, ReadOnlySpan<ulong> offsets)
     {
         fixed (VkHandle<VkBuffer>* pVertexBuffers = VkHandle.GetHandles(vertexBuffers))
         fixed (ulong*              pOffsets       = offsets)
@@ -108,7 +108,7 @@ public sealed unsafe class VkCommandBuffer : DisposableManagedHandle<VkCommandBu
     }
 
     /// <inheritdoc cref="PInvoke.vkCmdClearAttachments" />
-    public void ClearAttachments(scoped ReadOnlySpan<VkClearAttachment> attachments, scoped ReadOnlySpan<VkClearRect> rects)
+    public void ClearAttachments(ReadOnlySpan<VkClearAttachment> attachments, ReadOnlySpan<VkClearRect> rects)
     {
         fixed (VkClearAttachment* pAttachments = attachments)
         fixed (VkClearRect*       pRects       = rects)
@@ -118,7 +118,7 @@ public sealed unsafe class VkCommandBuffer : DisposableManagedHandle<VkCommandBu
     }
 
     /// <inheritdoc cref="PInvoke.vkCmdClearColorImage" />
-    public void ClearColorImage(VkImage image, VkImageLayout imageLayout, in VkClearColorValue color, scoped ReadOnlySpan<VkImageSubresourceRange> ranges)
+    public void ClearColorImage(VkImage image, VkImageLayout imageLayout, in VkClearColorValue color, ReadOnlySpan<VkImageSubresourceRange> ranges)
     {
         fixed (VkClearColorValue*       pColor  = &color)
         fixed (VkImageSubresourceRange* pRanges = ranges)
@@ -137,7 +137,7 @@ public sealed unsafe class VkCommandBuffer : DisposableManagedHandle<VkCommandBu
     }
 
     /// <inheritdoc cref="PInvoke.vkCmdCopyBufferToImage" />
-    public void CopyBufferToImage(VkBuffer sourceBuffer, VkImage destinationImage, VkImageLayout transferDstOptimal, scoped ReadOnlySpan<VkBufferImageCopy> regions)
+    public void CopyBufferToImage(VkBuffer sourceBuffer, VkImage destinationImage, VkImageLayout transferDstOptimal, ReadOnlySpan<VkBufferImageCopy> regions)
     {
         fixed (VkBufferImageCopy* pRegions = regions)
         {
@@ -146,7 +146,7 @@ public sealed unsafe class VkCommandBuffer : DisposableManagedHandle<VkCommandBu
     }
 
     /// <inheritdoc cref="PInvoke.vkCmdCopyBufferToImage" />
-    public void CopyImageToBuffer(VkImage srcImage, VkImageLayout srcImageLayout, VkBuffer dstBuffer, scoped ReadOnlySpan<VkBufferImageCopy> regions)
+    public void CopyImageToBuffer(VkImage srcImage, VkImageLayout srcImageLayout, VkBuffer dstBuffer, ReadOnlySpan<VkBufferImageCopy> regions)
     {
         fixed (VkBufferImageCopy* pRegions = regions)
         {

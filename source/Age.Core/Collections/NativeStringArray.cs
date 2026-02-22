@@ -9,7 +9,7 @@ public unsafe class NativeStringArray : Disposable
 
     public int Length { get; }
 
-    public NativeStringArray(scoped ReadOnlySpan<string> source)
+    public NativeStringArray(ReadOnlySpan<string> source)
     {
         var buffer = (byte**)NativeMemory.Alloc((uint)(sizeof(byte*) * source.Length));
 

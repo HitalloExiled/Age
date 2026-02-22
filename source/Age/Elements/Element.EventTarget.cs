@@ -1,7 +1,6 @@
 using Age.Core.Collections;
 using Age.Elements.Events;
 using Age.Platforms.Display;
-using Age.Scene;
 using AgeInput = Age.Input;
 
 namespace Age.Elements;
@@ -10,6 +9,8 @@ public abstract partial class Element
 {
     private readonly Lock                               elementLock = new();
     private readonly KeyedList<EventProperty, Delegate> events      = [];
+
+    private bool AllowInputEvents => this.IsFocused || this is Canvas;
 
     private Action?              ActivatedEvent     => this.GetEvent<Action>(EventProperty.Activated);
     private MouseEventHandler?   BluredEvent        => this.GetEvent<MouseEventHandler>(EventProperty.Blured);
@@ -81,9 +82,9 @@ public abstract partial class Element
             {
                 this.AddEvent(EventProperty.Input, value, out var added);
 
-                if (this.Tree is RenderTree renderTree && added)
+                if (this.Scene?.Viewport?.Window is Window window && added)
                 {
-                    renderTree.Window.Input += this.OnInput;
+                    window.Input += this.OnInput;
                 }
             }
         }
@@ -93,9 +94,9 @@ public abstract partial class Element
             {
                 this.RemoveEvent(EventProperty.Input, value, out var removed);
 
-                if (this.Tree is RenderTree renderTree && removed)
+                if (this.Scene?.Viewport?.Window is Window window && removed)
                 {
-                    renderTree.Window.Input -= this.OnInput;
+                    window.Input -= this.OnInput;
                 }
             }
         }
@@ -109,9 +110,9 @@ public abstract partial class Element
             {
                 this.AddEvent(EventProperty.KeyDown, value, out var added);
 
-                if (this.Tree is RenderTree renderTree && added)
+                if (this.Scene?.Viewport?.Window is Window window && added)
                 {
-                    renderTree.Window.KeyDown += this.OnKeyDown;
+                    window.KeyDown += this.OnKeyDown;
                 }
             }
         }
@@ -121,9 +122,9 @@ public abstract partial class Element
             {
                 this.RemoveEvent(EventProperty.KeyDown, value, out var removed);
 
-                if (this.Tree is RenderTree renderTree && removed)
+                if (this.Scene?.Viewport?.Window is Window window && removed)
                 {
-                    renderTree.Window.KeyDown -= this.OnKeyDown;
+                    window.KeyDown -= this.OnKeyDown;
                 }
             }
         }
@@ -137,9 +138,9 @@ public abstract partial class Element
             {
                 this.AddEvent(EventProperty.KeyUp, value, out var added);
 
-                if (this.Tree is RenderTree renderTree && added)
+                if (this.Scene?.Viewport?.Window is Window window  && added)
                 {
-                    renderTree.Window.KeyUp += this.OnKeyUp;
+                    window.KeyUp += this.OnKeyUp;
                 }
             }
         }
@@ -149,9 +150,9 @@ public abstract partial class Element
             {
                 this.RemoveEvent(EventProperty.KeyUp, value, out var removed);
 
-                if (this.Tree is RenderTree renderTree && removed)
+                if (this.Scene?.Viewport?.Window is Window window && removed)
                 {
-                    renderTree.Window.KeyUp -= this.OnKeyUp;
+                    window.KeyUp -= this.OnKeyUp;
                 }
             }
         }
@@ -207,9 +208,9 @@ public abstract partial class Element
             {
                 this.AddEvent(EventProperty.MouseWheel, value, out var added);
 
-                if (this.Tree is RenderTree renderTree && added)
+                if (this.Scene?.Viewport?.Window is Window window  && added)
                 {
-                    renderTree.Window.MouseWheel += this.OnMouseWheel;
+                    window.MouseWheel += this.OnMouseWheel;
                 }
             }
         }
@@ -219,9 +220,9 @@ public abstract partial class Element
             {
                 this.RemoveEvent(EventProperty.MouseWheel, value, out var removed);
 
-                if (this.Tree is RenderTree renderTree && removed)
+                if (this.Scene?.Viewport?.Window is Window window && removed)
                 {
-                    renderTree.Window.MouseWheel -= this.OnMouseWheel;
+                    window.MouseWheel -= this.OnMouseWheel;
                 }
             }
         }
@@ -297,7 +298,7 @@ public abstract partial class Element
 
     private void OnInput(char character)
     {
-        if (this.IsFocused)
+        if (this.AllowInputEvents)
         {
             this.InputEvent?.Invoke(character);
         }
@@ -305,7 +306,7 @@ public abstract partial class Element
 
     private void OnKeyDown(Key key)
     {
-        if (this.IsFocused)
+        if (this.AllowInputEvents)
         {
             var keyEvent = new KeyEvent
             {
@@ -330,7 +331,7 @@ public abstract partial class Element
 
     private void OnKeyUp(Key key)
     {
-        if (this.IsFocused)
+        if (this.AllowInputEvents)
         {
             var keyEvent = new KeyEvent
             {

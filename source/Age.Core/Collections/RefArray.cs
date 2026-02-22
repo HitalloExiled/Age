@@ -48,7 +48,7 @@ public unsafe ref partial struct RefArray<T>(int length = 0) : IDisposable, IEnu
     public RefArray(uint length) : this((int)length)
     { }
 
-    public RefArray(scoped ReadOnlySpan<T> values) : this(values.Length)
+    public RefArray(ReadOnlySpan<T> values) : this(values.Length)
     {
         for (var i = 0; i < values.Length; i++)
         {
@@ -114,7 +114,7 @@ public unsafe ref partial struct RefArray<T>(int length = 0) : IDisposable, IEnu
         this.Length = length;
     }
 
-    public void ResizeCopy(scoped ReadOnlySpan<T> source)
+    public void ResizeCopy(ReadOnlySpan<T> source)
     {
         if (source.Length != this.Length)
         {

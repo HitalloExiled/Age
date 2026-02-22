@@ -58,7 +58,7 @@ public sealed class StringBuffer
     public StringBuffer(int capacity = 32) =>
         this.Capacity = capacity;
 
-    public StringBuffer(scoped ReadOnlySpan<char> value) =>
+    public StringBuffer(ReadOnlySpan<char> value) =>
         this.Append(value);
 
     private void CheckIndex(int index)
@@ -73,7 +73,7 @@ public sealed class StringBuffer
         new(this.buffer, 0, this.Length);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Append(scoped ReadOnlySpan<char> value, bool dispatchEvent)
+    private void Append(ReadOnlySpan<char> value, bool dispatchEvent)
     {
         if (value.IsEmpty)
         {
@@ -92,10 +92,10 @@ public sealed class StringBuffer
         }
     }
 
-    public void Append(scoped ReadOnlySpan<char> value) =>
+    public void Append(ReadOnlySpan<char> value) =>
         this.Append(value, true);
 
-    public void AppendLine(scoped ReadOnlySpan<char> value)
+    public void AppendLine(ReadOnlySpan<char> value)
     {
         this.Append(value, false);
         this.Append(['\n'], false);
@@ -120,7 +120,7 @@ public sealed class StringBuffer
         this.Modified?.Invoke();
     }
 
-    public bool Equals(scoped ReadOnlySpan<char> value) =>
+    public bool Equals(ReadOnlySpan<char> value) =>
         value.SequenceEqual(this.AsSpan());
 
     public void EnsureCapacity(int capacity)
@@ -139,7 +139,7 @@ public sealed class StringBuffer
         }
     }
 
-    public void Insert(int index, scoped ReadOnlySpan<char> value)
+    public void Insert(int index, ReadOnlySpan<char> value)
     {
         this.CheckIndex(index);
 
@@ -187,7 +187,7 @@ public sealed class StringBuffer
         this.Modified?.Invoke();
     }
 
-    public void Set(scoped ReadOnlySpan<char> value)
+    public void Set(ReadOnlySpan<char> value)
     {
         if (this.Equals(value))
         {

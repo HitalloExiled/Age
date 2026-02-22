@@ -4,8 +4,9 @@ using Age.Numerics;
 using Age.Styling;
 using System.Runtime.CompilerServices;
 using Age.Storage;
-using Age.Resources;
 using Age.Commands;
+using Age.Rendering.Resources;
+using Image = Age.Styling.Image;
 
 namespace Age.Elements;
 
@@ -17,7 +18,6 @@ public abstract partial class Element
         | StyleProperty.FontFamily
         | StyleProperty.FontSize
         | StyleProperty.FontWeight
-        | StyleProperty.Hidden
         | StyleProperty.Margin
         | StyleProperty.MaxSize
         | StyleProperty.MinSize
@@ -106,7 +106,7 @@ public abstract partial class Element
 
     private protected override StencilLayer? ContentStencilLayer => this.ownStencilLayer ?? this.StencilLayer;
 
-    private protected override Transform2D LayoutTransform
+    private protected override Matrix3x2<float> LayoutMatrix
     {
         get
         {
@@ -119,19 +119,19 @@ public abstract partial class Element
                 var x = Unit.Resolve(transformOrigin.X, boundings.Width,  fontSize);
                 var y = Unit.Resolve(transformOrigin.Y, boundings.Height, fontSize);
 
-                var origin = Transform2D.CreateTranslated(-x, y);
+                var origin = Matrix3x2<float>.Translated(-x, y);
 
-                var transform = Transform2D.Identity;
+                var transform = Matrix3x2<float>.Identity;
 
                 for (var i = this.ComputedStyle.Transforms.Length - 1; i >= 0; i--)
                 {
                     transform *= TransformOp.Resolve(in this.ComputedStyle.Transforms[i], boundings, fontSize);
                 }
 
-                return origin * transform * origin.Inverse() * base.LayoutTransform;
+                return origin * transform * origin.Inverse() * base.LayoutMatrix;
             }
 
-            return base.LayoutTransform;
+            return base.LayoutMatrix;
         }
     }
 
@@ -441,11 +441,16 @@ public abstract partial class Element
 
     private static void PropagateStencilLayer(Element target, StencilLayer? stencilLayer)
     {
-        var enumerator = target.GetComposedTreeTraversalEnumerator();
+        var enumerator = target.GetCompositeTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
-            var current = enumerator.Current;
+            if (enumerator.Current is not Layoutable current)
+            {
+                enumerator.SkipToNextSibling();
+
+                continue;
+            }
 
             if (current.StencilLayer == stencilLayer)
             {
@@ -579,13 +584,16 @@ public abstract partial class Element
         this.staticContent = new Size<uint>();
         this.BaseLine      = -1;
 
-        var enumerator = this.GetComposedElementEnumerator();
+        var enumerator = this.GetCompositeEnumerator();
 
         while (enumerator.MoveNext())
         {
-            var child = enumerator.Current;
+            if (enumerator.Current is not Layoutable child)
+            {
+                continue;
+            }
 
-            if (child.Hidden)
+            if (!child.Visible)
             {
                 continue;
             }
@@ -804,8 +812,6 @@ public abstract partial class Element
         }
     }
 
-
-
     private void OnStyleChanged(StyleProperty property)
     {
         if (!this.IsConnected)
@@ -813,27 +819,50 @@ public abstract partial class Element
             return;
         }
 
-        var hidden = this.ComputedStyle.Hidden == true;
+        var computedStyle = this.ComputedStyle;
+
+        var command = this.AllocateLayoutCommandBox();
+
+        if (property.HasFlags(StyleProperty.BackgroundColor))
+        {
+            command.Color = computedStyle.BackgroundColor.GetValueOrDefault();
+        }
 
         if (property.HasFlags(StyleProperty.BackgroundImage))
         {
-            this.SetBackgroundImage(this.ComputedStyle.BackgroundImage);
+            this.SetBackgroundImage(computedStyle.BackgroundImage);
         }
 
         if (property.HasFlags(StyleProperty.Border))
         {
-            this.border = new()
+            if (computedStyle.Border != null)
             {
-                Top    = this.ComputedStyle.Border?.Top.Thickness ?? 0,
-                Right  = this.ComputedStyle.Border?.Right.Thickness ?? 0,
-                Bottom = this.ComputedStyle.Border?.Bottom.Thickness ?? 0,
-                Left   = this.ComputedStyle.Border?.Left.Thickness ?? 0,
-            };
+                this.border = new()
+                {
+                    Top    = computedStyle.Border.Top.Thickness,
+                    Right  = computedStyle.Border.Right.Thickness,
+                    Bottom = computedStyle.Border.Bottom.Thickness,
+                    Left   = computedStyle.Border.Left.Thickness,
+                };
+
+                command.Border = computedStyle.Border;
+            }
+            else
+            {
+                this.border = default;
+
+                command.Border = default;
+            }
+        }
+
+        if (property.HasFlags(StyleProperty.Color))
+        {
+            command.Color = computedStyle.BackgroundColor ?? default;
         }
 
         if (property.HasFlags(StyleProperty.Cursor) && this.IsHovered)
         {
-            this.SetCursor(this.ComputedStyle.Cursor);
+            this.SetCursor(computedStyle.Cursor);
         }
 
         var hasSizeChanges    = property.HasAnyFlag(StyleProperty.Size | StyleProperty.MinSize | StyleProperty.MaxSize);
@@ -850,13 +879,13 @@ public abstract partial class Element
                 this.contentDependencies = Dependency.None;
                 this.parentDependencies = Dependency.None;
 
-                var absWidth = this.ComputedStyle.Size?.Width;
-                var minWidth = this.ComputedStyle.MinSize?.Width;
-                var maxWidth = this.ComputedStyle.MaxSize?.Width;
+                var absWidth = computedStyle.Size?.Width;
+                var minWidth = computedStyle.MinSize?.Width;
+                var maxWidth = computedStyle.MaxSize?.Width;
 
-                var absHeight = this.ComputedStyle.Size?.Height;
-                var minHeight = this.ComputedStyle.MinSize?.Height;
-                var maxHeight = this.ComputedStyle.MaxSize?.Height;
+                var absHeight = computedStyle.Size?.Height;
+                var minHeight = computedStyle.MinSize?.Height;
+                var maxHeight = computedStyle.MaxSize?.Height;
 
                 if (IsAllNull(absWidth, minWidth, maxWidth))
                 {
@@ -877,77 +906,75 @@ public abstract partial class Element
                 }
             }
 
-            if (hasMarginChanges && HasRelativeEdges(this.ComputedStyle.Margin))
+            if (hasMarginChanges && HasRelativeEdges(computedStyle.Margin))
             {
                 this.parentDependencies |= Dependency.Margin;
             }
 
-            if (hasPaddingChanges && HasRelativeEdges(this.ComputedStyle.Padding))
+            if (hasPaddingChanges && HasRelativeEdges(computedStyle.Padding))
             {
                 this.parentDependencies |= Dependency.Padding;
             }
 
-            var justHidden      = hidden && !this.Hidden;
-            var justUnhidden    = !hidden && this.Hidden;
             var justUndependent = oldParentDependencies != Dependency.None && this.parentDependencies == Dependency.None;
             var justDependent   = oldParentDependencies == Dependency.None && this.parentDependencies != Dependency.None;
 
-            if (this.ComposedParentElement is Element parent)
+            if (this.CompositeParentElement is Element parent)
             {
                 parent.dependenciesHasChanged = oldContentDependencies != this.contentDependencies || oldParentDependencies != this.parentDependencies;
 
-                if (justUnhidden || justDependent)
+                if (parent.dependenciesHasChanged)
                 {
-                    if (justUnhidden)
+                    if (justDependent)
                     {
-                        parent.renderableNodes++;
-                    }
+                        if (this.parentDependencies != Dependency.None)
+                        {
+                            var dependents = parent.dependents;
 
-                    if (this.parentDependencies != Dependency.None)
+                            dependents.Add(this);
+                            dependents.Sort();
+                        }
+                    }
+                    else if (justUndependent)
                     {
-                        var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
+                        var dependents = parent.dependents;
 
-                        dependents.Add(this);
-                        dependents.Sort();
+                        dependents.Remove(this);
                     }
-                }
-                else if (justHidden || justUndependent)
-                {
-                    if (justHidden)
-                    {
-                        parent.renderableNodes--;
-                    }
-
-                    var dependents = this.AssignedSlot?.dependents ?? parent.dependents;
-
-                    dependents.Remove(this);
                 }
             }
         }
 
         if (property.HasFlags(StyleProperty.Overflow))
         {
-            this.IsScrollable = this.ComputedStyle.Overflow?.HasAnyFlag(Overflow.Scroll) == true && this.contentDependencies != (Dependency.Width | Dependency.Height);
+            this.IsScrollable = computedStyle.Overflow?.HasAnyFlag(Overflow.Scroll) == true && this.contentDependencies != (Dependency.Width | Dependency.Height);
 
             if (!this.IsScrollable)
             {
                 this.ReleaseScrollBar();
             }
 
-            if (this.ComputedStyle.Overflow?.HasFlags(Overflow.Clipping) == true && this.contentDependencies != (Dependency.Width | Dependency.Height))
+            if (computedStyle.Overflow?.HasFlags(Overflow.Clipping) == true && this.contentDependencies != (Dependency.Width | Dependency.Height))
             {
                 if (this.ownStencilLayer == null)
                 {
                     this.ownStencilLayer = new StencilLayer(this);
 
-                     this.StencilLayer?.AppendChild(this.ownStencilLayer);
+                    this.StencilLayer?.AppendChild(this.ownStencilLayer);
                 }
             }
             else
             {
-                this.ownStencilLayer?.Detach();
+                if (this.ownStencilLayer != null)
+                {
+                    this.ownStencilLayer.TryDisconnect();
+                    this.ownStencilLayer.Detach();
+                }
+
                 this.ownStencilLayer = null;
             }
+
+            this.ContentStencilLayer?.TryConnect();
 
             PropagateStencilLayer(this, this.ContentStencilLayer);
         }
@@ -956,28 +983,10 @@ public abstract partial class Element
 
         if (property.HasAnyFlag(TRANSFORM_AFFECTED_PROPERTIES | LAYOUT_AFFECTED_PROPERTIES))
         {
-            this.RenderTree!.RequestMouseEvent();
+            this.Scene!.Viewport!.Window!.RenderTree.RequestMouseEvent();
         }
 
-        if (hidden)
-        {
-            this.RequestUpdate(affectsBoundings);
-
-            this.Hidden = hidden;
-        }
-        else
-        {
-            this.Hidden = hidden;
-
-            if (property.HasFlags(StyleProperty.Color) && this.TryGetLayoutCommandBox(out var command))
-            {
-                command.Color = this.ComputedStyle.BackgroundColor ?? default;
-            }
-
-            this.RequestUpdate(affectsBoundings);
-        }
-
-        this.Visible = !hidden;
+        this.RequestUpdate(affectsBoundings);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -998,7 +1007,7 @@ public abstract partial class Element
         return resolved;
     }
 
-    private void ResolveImageSize(Image image, in Size<float> textureSize, out Size<float> size, out Transform2D transform, out UVRect uv)
+    private void ResolveImageSize(Image image, in Size<uint> textureSize, out Size<uint> size, out Matrix3x2<float> matrix, out UVRect uv)
     {
         var fontSize      = this.FontSize;
         var imageSize     = image.Size;
@@ -1009,16 +1018,16 @@ public abstract partial class Element
         {
             case ImageSizeKind.Fit:
                 {
-                    var boundings = this.SizeWithPadding.Cast<float>();
+                    var boundings = this.SizeWithPadding;
 
-                    var x = Unit.Resolve(imagePosition.X, (uint)boundings.Width, fontSize);
-                    var y = Unit.Resolve(imagePosition.Y, (uint)boundings.Height, fontSize);
+                    var x = Unit.Resolve(imagePosition.X, boundings.Width, fontSize);
+                    var y = Unit.Resolve(imagePosition.Y, boundings.Height, fontSize);
 
                     var offset = new Vector2<float>(x + this.border.Left, -y + -this.border.Top);
 
-                    size      = boundings;
-                    transform = Transform2D.CreateTranslated(offset);
-                    uv        = UVRect.Normalized;
+                    size   = boundings;
+                    matrix = Matrix3x2<float>.Translated(offset);
+                    uv     = UVRect.Normalized;
 
                     break;
                 }
@@ -1031,22 +1040,22 @@ public abstract partial class Element
 
                     if (boundings == default)
                     {
-                        size      = default;
-                        transform = Transform2D.Identity;
+                        size   = default;
+                        matrix = Matrix3x2<float>.Identity;
 
                         break;
                     }
 
                     var scale = float.Min(boundings.Width, boundings.Height) / float.Max(textureSize.Width, textureSize.Height);
 
-                    size = textureSize * scale;
+                    size = new((uint)(textureSize.Width * scale), (uint)(textureSize.Height * scale));
 
-                    var x = Unit.Resolve(imagePosition.X, (uint)size.Width, fontSize);
-                    var y = Unit.Resolve(imagePosition.Y, (uint)size.Height, fontSize);
+                    var x = Unit.Resolve(imagePosition.X, size.Width, fontSize);
+                    var y = Unit.Resolve(imagePosition.Y, size.Height, fontSize);
 
                     var offset = new Vector2<float>(x + this.border.Left, y + this.border.Top);
 
-                    transform = Transform2D.CreateTranslated(offset.InvertedY);
+                    matrix = Matrix3x2<float>.Translated(offset.InvertedY);
 
                     break;
                 }
@@ -1056,14 +1065,14 @@ public abstract partial class Element
 
                     if (boundings == default)
                     {
-                        size      = default;
-                        transform = Transform2D.Identity;
-                        uv        = default;
+                        size   = default;
+                        matrix = Matrix3x2<float>.Identity;
+                        uv     = default;
 
                         break;
                     }
 
-                    var width = Unit.Resolve(imageSize.Value.Width, (uint)boundings.Width, fontSize);
+                    var width  = Unit.Resolve(imageSize.Value.Width, (uint)boundings.Width, fontSize);
                     var height = Unit.Resolve(imageSize.Value.Height, (uint)boundings.Height, fontSize);
 
                     var x = Unit.Resolve(imagePosition.X, (uint)(boundings.Width - width), fontSize);
@@ -1105,9 +1114,9 @@ public abstract partial class Element
                         offset.Y = this.border.Top + y;
                     }
 
-                    size      = new(width, height);
-                    transform = Transform2D.CreateTranslated(offset.InvertedY);
-                    uv        = new()
+                    size   = new((uint)width, (uint)height);
+                    matrix = Matrix3x2<float>.Translated(offset.InvertedY);
+                    uv     = new()
                     {
                         P1 = new(offsetX, offsetY),
                         P2 = new(offsetX + repeatX, offsetY),
@@ -1169,17 +1178,26 @@ public abstract partial class Element
 
         if (image != null)
         {
-            if (!TextureStorage.Singleton.TryGet(image.Uri, out var texture) && File.Exists(image.Uri))
+            Texture2D? texture;
+
+            if (image.Uri != null)
             {
-                texture = Texture2D.Load(image.Uri);
-                TextureStorage.Singleton.Add(image.Uri, texture);
+                if (!TextureStorage.Singleton.TryGet(image.Uri, out texture) && File.Exists(image.Uri))
+                {
+                    texture = Texture2D.Load(image.Uri);
+                    TextureStorage.Singleton.Add(image.Uri, texture);
+                }
+            }
+            else
+            {
+                texture = image.Texture;
             }
 
             if (texture != null)
             {
-                command.TextureMap      = new(texture, UVRect.Normalized);
-                command.PipelineVariant = PipelineVariant.Color;
-                command.StencilLayer    = new StencilLayer(this);
+                command.CommandFilter = CommandFilter.Color;
+                command.StencilLayer  = new StencilLayer(this);
+                command.TextureMap    = new(texture, UVRect.Normalized);
 
                 this.StencilLayer?.AppendChild(command.StencilLayer);
 
@@ -1212,13 +1230,13 @@ public abstract partial class Element
 
         var index = 0;
 
-        var enumerator = this.GetComposedElementEnumerator();
+        var enumerator = this.GetCompositeEnumerator();
 
         while (enumerator.MoveNext())
         {
             var node = enumerator.Current;
 
-            if (node is not Layoutable child || child.Hidden)
+            if (node is not Layoutable child || !child.Visible)
             {
                 continue;
             }
@@ -1368,7 +1386,7 @@ public abstract partial class Element
 
         if (previous != this.Boundings)
         {
-            this.UpdateBackgroundImage();
+            this.UpdateBackgroundImageSize();
 
             this.ClampContentOffset(ref this.contentOffset);
 
@@ -1376,27 +1394,55 @@ public abstract partial class Element
             {
                 this.RefreshScrollBarControls();
             }
+
+            var layoutCommandBox = this.AllocateLayoutCommandBox();
+
+            if (this.Boundings.Area > 0)
+            {
+                layoutCommandBox.CommandFilter = CommandFilter.Color | CommandFilter.Encode;
+                layoutCommandBox.Metadata      = (uint)(this.Index + 1);
+                layoutCommandBox.Size          = this.Boundings;
+            }
+            else
+            {
+                layoutCommandBox.CommandFilter = CommandFilter.None;
+            }
         }
+    }
 
-        var layoutCommandBox = this.AllocateLayoutCommandBox();
+    private protected override void OnVisibilityChangedInternal()
+    {
+        base.OnVisibilityChangedInternal();
 
-        if (this.Boundings.Area > 0)
+        var parent = this.CompositeParentElement!;
+
+        if (this.Visible)
         {
-            layoutCommandBox.Size            = this.Boundings.Cast<float>();
-            layoutCommandBox.Border          = this.ComputedStyle.Border ?? default(Shaders.CanvasShader.Border);
-            layoutCommandBox.Color           = this.ComputedStyle.BackgroundColor ?? default;
-            layoutCommandBox.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
-            layoutCommandBox.ObjectId        = (uint)(this.Index + 1);
+            parent.renderableNodes++;
+
+            if (this.parentDependencies != Dependency.None)
+            {
+                var dependents = parent.dependents;
+
+                dependents.Add(this);
+                dependents.Sort();
+            }
         }
         else
         {
-            layoutCommandBox.PipelineVariant = PipelineVariant.None;
+            parent.renderableNodes--;
+
+            var dependents = parent.dependents;
+
+            dependents.Remove(this);
         }
+
+        parent.RequestUpdate(true);
     }
 
     internal void HandleElementRemoved(Element element)
     {
-        if (!element.Hidden && element.parentDependencies != Dependency.None)
+        if (element.Visible && element.parentDependencies != Dependency.None)
         {
             this.dependents.Remove(element);
         }
@@ -1404,7 +1450,7 @@ public abstract partial class Element
 
     internal void HandleLayoutableAppended(Layoutable layoutable)
     {
-        if (!layoutable.Hidden)
+        if (layoutable.Visible)
         {
             this.childsChanged = true;
             this.renderableNodes++;
@@ -1419,7 +1465,7 @@ public abstract partial class Element
             this.HandleElementRemoved(element);
         }
 
-        if (!layoutable.Hidden)
+        if (layoutable.Visible)
         {
             this.childsChanged = true;
             this.renderableNodes--;

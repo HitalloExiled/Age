@@ -1,5 +1,5 @@
 using Age.Commands;
-using Age.Scene;
+using Age.Scenes;
 using Age.Storage;
 
 namespace Age.Elements;
@@ -19,90 +19,94 @@ public abstract partial class Element
         }
     }
 
-    protected override void OnChildAppended(Node child)
+    private protected override void OnAttachedInternal()
     {
-        if (this.ShadowTree == null && child is Layoutable layoutable)
+        base.OnAttachedInternal();
+
+        this.CompositeParentElement?.StyleChanged += this.OnParentStyleChanged;
+    }
+
+    private protected override void OnChildAttachedInternal(Node child)
+    {
+        base.OnChildAttachedInternal(child);
+
+        if (child is Layoutable layoutable)
         {
             this.HandleLayoutableAppended(layoutable);
         }
     }
 
-    protected override void OnChildRemoved(Node child)
+    private protected override void OnChildDetachingInternal(Node child)
     {
-        if (this.ShadowTree == null && child is Layoutable layoutable)
+        base.OnChildDetachingInternal(child);
+
+        if (child is Layoutable layoutable)
         {
             this.HandleLayoutableRemoved(layoutable);
         }
     }
 
-    protected override void OnConnected(NodeTree tree)
+    private protected override void OnConnectedInternal()
     {
-        base.OnConnected(tree);
+        base.OnConnectedInternal();
 
-        this.ShadowTree?.Tree = tree;
-    }
-
-    protected override void OnConnected(RenderTree renderTree)
-    {
-        base.OnConnected(renderTree);
-
-        if (this.events.ContainsKey(EventProperty.Input))
+        if (this.Scene?.Window is Window window)
         {
-            renderTree.Window.Input += this.OnInput;
-        }
+            if (this.events.ContainsKey(EventProperty.Input))
+            {
+                window.Input += this.OnInput;
+            }
 
-        if (this.events.ContainsKey(EventProperty.KeyDown))
-        {
-            renderTree.Window.KeyDown += this.OnKeyDown;
-        }
+            if (this.events.ContainsKey(EventProperty.KeyDown))
+            {
+                window.KeyDown += this.OnKeyDown;
+            }
 
-        if (this.events.ContainsKey(EventProperty.KeyUp))
-        {
-            renderTree.Window.KeyUp += this.OnKeyUp;
-        }
+            if (this.events.ContainsKey(EventProperty.KeyUp))
+            {
+                window.KeyUp += this.OnKeyUp;
+            }
 
-        if (this.events.ContainsKey(EventProperty.MouseWheel))
-        {
-            renderTree.Window.MouseWheel += this.OnMouseWheel;
-        }
+            if (this.events.ContainsKey(EventProperty.MouseWheel))
+            {
+                window.MouseWheel += this.OnMouseWheel;
+            }
 
-        if (!renderTree.IsDirty && !this.Hidden)
-        {
-            renderTree.MakeDirty();
+            if (!window.RenderTree.IsDirty && this.Visible)
+            {
+                window.RenderTree.MakeDirty();
+            }
         }
-
-        this.Canvas = this.ComposedParentElement?.Canvas ?? this.Parent as Canvas;
 
         this.ComputeStyle(default);
-
-        GetStyleSource(this.Parent)?.StyleChanged += this.OnParentStyleChanged;
     }
 
-    protected override void OnDisconnected(NodeTree tree)
+    private protected override void OnDetachingInternal()
     {
-        base.OnDisconnected(tree);
+        base.OnDetachingInternal();
 
-        this.ShadowTree?.Tree = null;
+        this.CompositeParentElement?.StyleChanged -= this.OnParentStyleChanged;
     }
 
-    protected override void OnDisconnected(RenderTree renderTree)
+    private protected override void OnDisconnectingInternal()
     {
-        base.OnDisconnected(renderTree);
+        base.OnDisconnectingInternal();
 
-        this.Canvas = null;
-
-        renderTree.Window.Input      -= this.OnInput;
-        renderTree.Window.KeyDown    -= this.OnKeyDown;
-        renderTree.Window.KeyUp      -= this.OnKeyUp;
-        renderTree.Window.MouseWheel -= this.OnMouseWheel;
-
-        if (!renderTree.IsDirty && !this.Hidden)
+        if (this.Scene?.Viewport?.Window is Window window)
         {
-            renderTree.MakeDirty();
+            window.Input      -= this.OnInput;
+            window.KeyDown    -= this.OnKeyDown;
+            window.KeyUp      -= this.OnKeyUp;
+            window.MouseWheel -= this.OnMouseWheel;
+
+            if (!window.RenderTree.IsDirty && this.Visible)
+            {
+                window.RenderTree.MakeDirty();
+            }
         }
     }
 
-    protected override void OnDisposed()
+    private protected override void OnDisposedInternal()
     {
         if (this.TryGetLayoutCommandImage(out var layoutCommandImage))
         {
@@ -114,34 +118,31 @@ public abstract partial class Element
             CommandPool.RectCommand.Return((RectCommand)item);
         }
 
-        this.Commands.Clear();
-
-        this.ShadowTree?.Dispose();
+        this.ClearCommands();
 
         stylePool.Return(this.ComputedStyle);
     }
 
-    protected override void OnIndexed()
+    private protected override void OnIndexChangedInternal()
     {
-        var zIndex = this.ComputedStyle.ZIndex ?? this.ComposedParentElement?.ComputedStyle.ZIndex ?? 0;
+        var zIndex = this.ComputedStyle.ZIndex ?? this.CompositeParentElement?.ComputedStyle.ZIndex ?? 0;
 
         if (this.TryGetLayoutCommandBox(out var boxCommand))
         {
-            boxCommand.ObjectId = this.Boundings.Area > 0 ? (uint)(this.Index + 1) : 0;
+            boxCommand.Metadata = this.Boundings.Area > 0 ? (uint)(this.Index + 1) : 0;
             boxCommand.ZIndex   = zIndex;
         }
 
         if (this.TryGetLayoutCommandScrollBarX(out var scrollXCommand))
         {
-            scrollXCommand.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarX);
+            scrollXCommand.Metadata = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarX);
             scrollXCommand.ZIndex   = zIndex;
         }
 
         if (this.TryGetLayoutCommandScrollBarY(out var scrollYCommand))
         {
-            scrollYCommand.ObjectId = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarY);
+            scrollYCommand.Metadata = CombineIds(this.Index + 1, (int)LayoutCommand.ScrollBarY);
             scrollYCommand.ZIndex   = zIndex;
         }
     }
-
 }

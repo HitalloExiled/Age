@@ -2,8 +2,9 @@ using Age.Core.Extensions;
 using Age.Commands;
 using Age.Core.Collections;
 using System.Numerics;
-using static Age.Shaders.CanvasShader;
 using System.Diagnostics.CodeAnalysis;
+
+using static Age.Shaders.Geometry2DShader;
 
 namespace Age.Elements;
 
@@ -19,11 +20,7 @@ public abstract partial class Element
         ScrollBarY = 1 << 3,
     }
 
-    private byte          commandsSeparator;
     private LayoutCommand layoutCommands;
-
-    internal ReadOnlySpan<Command> PreCommands  => this.Commands.AsSpan(..this.commandsSeparator);
-    internal ReadOnlySpan<Command> PostCommands => this.Commands.AsSpan(this.commandsSeparator..);
 
     private RectCommand AllocateLayoutCommand(LayoutCommand layoutCommand)
     {
@@ -34,25 +31,16 @@ public abstract partial class Element
             return (RectCommand)this.Commands[index];
         }
 
-        var command = CommandPool.RectCommand.Get();
+        var command = CommandPool.RectCommand.Get(this, CommandFilter.Color | CommandFilter.Encode);
 
-        switch (layoutCommand)
+        if (layoutCommand == LayoutCommand.Box)
         {
-            case LayoutCommand.Box:
-                command.Flags           = Flags.ColorAsBackground;
-                command.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
-
-                break;
-
-            default:
-                command.PipelineVariant = PipelineVariant.Color | PipelineVariant.Index;
-
-                break;
+            command.Flags = Flags.ColorAsBackground;
         }
 
         command.StencilLayer = this.StencilLayer;
 
-        this.Commands.Insert(index, command);
+        this.InsertCommand(index, command);
 
         this.layoutCommands |= layoutCommand;
 
@@ -77,9 +65,6 @@ public abstract partial class Element
         this.TryGetLayoutCommand(layoutCommand, out var rectCommand)
             ? rectCommand
             : throw new InvalidOperationException($"{this} - {layoutCommand} not allocated.");
-
-    private RectCommand GetLayoutCommandBox() =>
-        this.GetLayoutCommand(LayoutCommand.Box);
 
     private RectCommand GetLayoutCommandImage() =>
         this.GetLayoutCommand(LayoutCommand.Image);
@@ -114,16 +99,13 @@ public abstract partial class Element
 
             CommandPool.RectCommand.Return(command);
 
-            this.Commands.RemoveAt(index);
+            this.RemoveCommandAt(index);
 
             this.layoutCommands &= ~layoutCommand;
 
             this.UpdateCommandsSeparator();
         }
     }
-
-    private void ReleaseLayoutCommandBox() =>
-        this.ReleaseLayoutCommand(LayoutCommand.Box);
 
     private void ReleaseLayoutCommandImage() =>
         this.ReleaseLayoutCommand(LayoutCommand.Image);
@@ -160,17 +142,15 @@ public abstract partial class Element
     private bool TryGetLayoutCommandScrollBarY([NotNullWhen(true)] out RectCommand? rectCommand) =>
         this.TryGetLayoutCommand(LayoutCommand.ScrollBarY, out rectCommand);
 
-    private void UpdateBackgroundImage()
+    private void UpdateBackgroundImageSize()
     {
-        if (this.ComputedStyle.BackgroundImage != null)
+        if (this.TryGetLayoutCommandImage(out var layoutCommandImage))
         {
-            var layoutCommandImage = this.GetLayoutCommandImage();
+            this.ResolveImageSize(this.ComputedStyle.BackgroundImage!, layoutCommandImage.TextureMap.Texture.Size, out var size, out var matrix, out var uv);
 
-            this.ResolveImageSize(this.ComputedStyle.BackgroundImage, layoutCommandImage.TextureMap.Texture.Size.Cast<float>(), out var size, out var transform, out var uv);
-
-            layoutCommandImage.Size       = size;
-            layoutCommandImage.Transform  = transform;
-            layoutCommandImage.TextureMap = layoutCommandImage.TextureMap with { UV = uv };
+            layoutCommandImage.Size        = size;
+            layoutCommandImage.LocalMatrix = matrix;
+            layoutCommandImage.TextureMap  = layoutCommandImage.TextureMap with { UV = uv };
         }
     }
 
@@ -187,6 +167,6 @@ public abstract partial class Element
             layoutCommand = LayoutCommand.Box;
         }
 
-        this.commandsSeparator = (byte)(layoutCommand.HasValue ? this.GetIndex(layoutCommand.Value) + 1 : 0);
+        this.SetCommandsSeparator(layoutCommand.HasValue ? this.GetIndex(layoutCommand.Value) + 1 : 0);
     }
 }

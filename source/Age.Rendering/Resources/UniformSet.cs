@@ -14,14 +14,14 @@ public sealed class UniformSet : Resource
     public DescriptorPool    DescriptorPool { get; }
     public VkDescriptorSet[] DescriptorSets { get; }
 
-    public unsafe UniformSet(Shader shader, scoped ReadOnlySpan<Uniform> uniforms)
+    public unsafe UniformSet(Shader shader, ReadOnlySpan<Uniform> uniforms)
     {
         var key = CreatePoolKey(shader, uniforms);
 
         this.Shader         = shader;
         this.DescriptorPool = DescriptorPool.CreateDescriptorPool(key);
 
-        var descriptorSetLayoutHandle = shader.DescriptorSetLayout.Handle;
+        var descriptorSetLayoutHandle = shader.DescriptorSetLayout!.Handle;
 
         var descriptorSetAllocateInfo = new VkDescriptorSetAllocateInfo
         {
@@ -34,15 +34,15 @@ public sealed class UniformSet : Resource
         this.Update(uniforms);
     }
 
-    private static unsafe DescriptorPoolKey CreatePoolKey(Shader shader, scoped ReadOnlySpan<Uniform> uniforms)
+    private static DescriptorPoolKey CreatePoolKey(Shader shader, ReadOnlySpan<Uniform> uniforms)
     {
         DescriptorPoolKey poolKey = default;
 
         foreach (var uniform in uniforms)
         {
-            if (uniform.Binding > shader.UniformBindings.Length || shader.UniformBindings[uniform.Binding] != uniform.Type)
+            if (uniform.Binding > shader.UniformBindings!.Length || shader.UniformBindings[(int)uniform.Binding] != uniform.Type)
             {
-                throw new InvalidOperationException($"The provided shader expects that binding {uniform.Binding} to be of type {shader.UniformBindings[uniform.Binding]}");
+                throw new InvalidOperationException($"The provided shader expects that binding {uniform.Binding} to be of type {shader.UniformBindings[(int)uniform.Binding]}");
             }
 
             poolKey[uniform.Type]++;
@@ -54,7 +54,7 @@ public sealed class UniformSet : Resource
     protected override void OnDisposed() =>
         this.DescriptorPool.FreeDescriptorSets(this.DescriptorSets);
 
-    public unsafe void Update(scoped ReadOnlySpan<Uniform> uniforms)
+    public unsafe void Update(ReadOnlySpan<Uniform> uniforms)
     {
         using var disposables = new Disposables();
         using var writes      = new RefList<VkWriteDescriptorSet>();

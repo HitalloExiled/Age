@@ -1,5 +1,5 @@
+using System.Diagnostics;
 using Age.Numerics;
-using Age.Scene;
 
 namespace Age.Elements;
 
@@ -9,40 +9,38 @@ public sealed class Canvas : Element
 
     public override string NodeName => nameof(Elements.Canvas);
 
-    public Canvas()
-    {
-        this.NodeFlags = NodeFlags.IgnoreUpdates;
-        this.Style     = new()
+    public Canvas() =>
+        this.Style = new()
         {
             // Padding = new(Unit.Px(PADDING)),
-            Color           = Color.White,
+            Color = Color.White,
             //BackgroundColor = Color.Green.WithAlpha(0.5f),
         };
+
+    private void OnViewportResized() =>
+        this.Style.Size = this.Scene!.Viewport!.Size;
+
+    private protected override void OnConnectedInternal()
+    {
+        base.OnConnectedInternal();
+
+        Debug.Assert(this.Scene?.Viewport?.Window != null);
+
+        var viewport = this.Scene?.Viewport;
+
+        viewport!.Window!.RenderTree.AddDeferredUpdate(this.UpdateDirtyLayout);
+
+        viewport.Resized += this.OnViewportResized;
+
+        this.OnViewportResized();
     }
 
-    private void OnWindowResized()
+    private protected override void OnDisconnectingInternal()
     {
-        if (this.Tree is RenderTree renderTree)
-        {
-            this.Style.Size = new(renderTree.Window.ClientSize.Width, renderTree.Window.ClientSize.Height);
-        }
-    }
+        base.OnDisconnectingInternal();
 
-    protected override void OnConnected(RenderTree renderTree)
-    {
-        base.OnConnected(renderTree);
+        Debug.Assert(this.Scene?.Viewport != null);
 
-        renderTree.Window.Resized += this.OnWindowResized;
-
-        this.OnWindowResized();
-
-        renderTree.AddDeferredUpdate(this.UpdateDirtyLayout);
-    }
-
-    protected override void OnDisconnected(RenderTree renderTree)
-    {
-        base.OnDisconnected(renderTree);
-
-        renderTree.Window.Resized -= this.OnWindowResized;
+        this.Scene.Viewport.Resized -= this.OnViewportResized;
     }
 }

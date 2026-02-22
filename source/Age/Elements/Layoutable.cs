@@ -1,26 +1,27 @@
-using System.Runtime.CompilerServices;
+using Age.Commands;
 using Age.Core;
 using Age.Numerics;
 using Age.Platforms.Display;
-using Age.Scene;
+using Age.Scenes;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Age.Elements;
 
-public abstract class Layoutable : Spatial2D
+public abstract class Layoutable : Spatial<Command2D, Matrix3x2<float>>
 {
     internal const string DEFAULT_FONT_FAMILY = "Segoi UI";
-    internal const ushort DEFAULT_FONT_SIZE = 16;
+    internal const ushort DEFAULT_FONT_SIZE   = 16;
 
-    private CacheValue<Transform2D> transformWithOffsetCache;
+    private CacheValue<Matrix3x2<float>> matrixCache;
 
-    private Transform2D CachedComposedParentTransformWithOffset => (this.ComposedParentElement as Layoutable)?.CachedTransformWithOffset ?? Transform2D.Identity;
-    private Transform2D CombinedTransform                       => this.LayoutTransform * this.LocalTransform * this.ParentContentOffset;
-    private Transform2D ComposedParentTransform                 => (this.ComposedParentElement as Layoutable)?.Transform ?? Transform2D.Identity;
-    private Transform2D ComposedParentTransformWithOffset       => (this.ComposedParentElement as Layoutable)?.TransformWithOffset ?? Transform2D.Identity;
-    private Transform2D ParentContentOffset                     => Transform2D.CreateTranslated((this.ComposedParentElement?.ContentOffset ?? default).ToVector2<float>().InvertedX);
+    private Matrix3x2<float> CachedCompositeParentMatrix => (this.CompositeParentElement as Layoutable)?.CachedMatrix ?? Matrix3x2<float>.Identity;
+    private Matrix3x2<float> CombinedMatrix              => this.LayoutMatrix * this.ParentContentOffset;
+    private Matrix3x2<float> CompositeParentMatrix       => (this.CompositeParentElement as Layoutable)?.Matrix ?? Matrix3x2<float>.Identity;
+    private Matrix3x2<float> ParentContentOffset         => Matrix3x2<float>.Translated((this.CompositeParentElement?.ContentOffset ?? default).ToVector2<float>().InvertedX);
 
-    private protected virtual StencilLayer? ContentStencilLayer { get; }
-    private protected virtual Transform2D   LayoutTransform => Transform2D.CreateTranslated(this.Offset);
+    private protected virtual StencilLayer?    ContentStencilLayer { get; }
+    private protected virtual Matrix3x2<float> LayoutMatrix => Matrix3x2<float>.Translated(this.Offset);
 
     protected static Element?     ActiveScrollBarTarget  { get; set; }
     protected static Text?        ActiveText             { get; set; }
@@ -34,7 +35,7 @@ public abstract class Layoutable : Spatial2D
     protected static bool IsHoveringScrollBar => IsHoveringScrollBarX || IsHoveringScrollBarY;
 
     internal static bool IsDraggingScrollBar => IsDraggingScrollBarX || IsDraggingScrollBarY;
-    internal static bool IsSelectingText  => ActiveText != null;
+    internal static bool IsSelectingText     => ActiveText != null;
 
     internal bool IsDirty { get; private set; }
 
@@ -44,54 +45,26 @@ public abstract class Layoutable : Spatial2D
     internal uint           LineHeight { get; set; }
     internal Vector2<float> Offset     { get; set; }
 
-    internal virtual bool          Hidden       { get; set; }
     internal virtual StencilLayer? StencilLayer { get; set; }
-
-    internal Transform2D CachedTransformWithOffset
-    {
-        get
-        {
-            if (this.transformWithOffsetCache.IsInvalid)
-            {
-                this.transformWithOffsetCache = new(this.CombinedTransform * this.CachedComposedParentTransformWithOffset);
-            }
-
-            return this.transformWithOffsetCache.Value;
-        }
-    }
-
-    internal Transform2D TransformWithOffset => this.CombinedTransform * this.ComposedParentTransformWithOffset;
 
     internal abstract bool IsParentDependent { get; }
 
-    public Slot? AssignedSlot { get; internal set; }
-
-    public string? Slot
+    public sealed override Matrix3x2<float> CachedMatrix
     {
-        get;
-        set
+        get
         {
-            if (field != value)
+            if (this.matrixCache.IsInvalid)
             {
-                if (this.Parent is Element parentElement && parentElement.ShadowTree != null)
-                {
-                    parentElement.ShadowTree.UnassignSlot(field ?? "", this);
-                    parentElement.ShadowTree.AssignSlot(value   ?? "", this);
-                }
-
-                field = value;
+                this.matrixCache = new(this.CombinedMatrix * this.CachedCompositeParentMatrix);
             }
+
+            return this.matrixCache.Value;
         }
     }
 
-    public override Transform2D Transform
-    {
-        get => this.LayoutTransform * this.LocalTransform * this.ComposedParentTransform;
-        set => this.LocalTransform = this.LayoutTransform.Inverse() * value * this.ComposedParentTransform.Inverse();
-    }
+    public Canvas? Canvas => this.Scene?.Canvas;
 
-    public Element? ComposedParentElement  => this.AssignedSlot ?? this.EffectiveParentElement;
-    public Element? EffectiveParentElement => this.Parent is ShadowTree shadowTree ? shadowTree.Host: this.Parent as Element;
+    public Element? CompositeParentElement => this.CompositeParent as Element;
 
     public Element? NextElementSibling
     {
@@ -127,15 +100,12 @@ public abstract class Layoutable : Spatial2D
         }
     }
 
+    public new UIScene? Scene => base.Scene as UIScene;
+
+    public override Matrix3x2<float> Matrix => this.CombinedMatrix * this.CompositeParentMatrix;
+
     private protected static ulong CombineIds(int elementIndex, int childIndex) =>
         ((ulong)childIndex << 24) | ((uint)elementIndex);
-
-    private protected static Element? GetStyleSource(Node? node) =>
-        node is not ShadowTree shadowTree
-            ? (node as Element)
-            : shadowTree.InheritsHostStyle
-                ? shadowTree.Host
-                : null;
 
     private protected Layoutable GetIndependentAncestor()
     {
@@ -160,59 +130,38 @@ public abstract class Layoutable : Spatial2D
     private protected void MakePristine() =>
         this.IsDirty = false;
 
-    protected override void OnAdopted(Node parent)
+    private protected override void OnConnectedInternal()
     {
-        base.OnAdopted(parent);
+        base.OnConnectedInternal();
 
-        if (parent is Element parentElement && parentElement.ShadowTree != null)
-        {
-            parentElement.ShadowTree.AssignSlot(this.Slot ?? "", this);
-        }
+        this.StencilLayer = this.CompositeParentElement?.ContentStencilLayer;
     }
 
-    protected override void OnConnected(RenderTree renderTree) =>
-        this.StencilLayer = this.ComposedParentElement?.ContentStencilLayer;
+    private protected override void OnDisconnectingInternal()
+    {
+        base.OnDisconnectingInternal();
 
-    protected override void OnDisconnected(RenderTree renderTree) =>
         this.StencilLayer = null;
-
-    protected override void OnDisposed(bool disposing)
-    {
-        if (disposing)
-        {
-            this.OnDisposed();
-        }
-    }
-
-    protected override void OnRemoved(Node parent)
-    {
-        base.OnRemoved(parent);
-
-        if (parent is Element parentElement && parentElement.ShadowTree != null)
-        {
-            parentElement.ShadowTree.UnassignSlot(this.Slot ?? "", this);
-        }
     }
 
     private protected void RequestUpdate(bool affectsBoundings)
     {
-        for (var current = this; ; current = current.ComposedParentElement!)
+        var tree = this.Scene?.Viewport?.Window?.RenderTree;
+
+        for (var current = this; ; current = current.CompositeParentElement!)
         {
-            if (current.IsDirty || current.Hidden)
+            if (current.IsDirty || !current.Visible)
             {
                 return;
             }
 
             current.MakeDirty();
 
-            var stopPropagation = (!current.IsParentDependent && !affectsBoundings) || current.ComposedParentElement == null;
+            var stopPropagation = (!current.IsParentDependent && !affectsBoundings) || current.CompositeParentElement == null;
 
             if (stopPropagation)
             {
-                if (current.Tree is RenderTree renderTree)
-                {
-                    renderTree.AddDeferredUpdate(current.UpdateDirtyLayout);
-                }
+                tree?.AddDeferredUpdate(current.UpdateDirtyLayout);
 
                 return;
             }
@@ -221,10 +170,9 @@ public abstract class Layoutable : Spatial2D
 
     private protected void SetCursor(Cursor? cursor)
     {
-        if (this.Tree is RenderTree renderTree)
-        {
-            renderTree.Window.Cursor = cursor ?? default;
-        }
+        Debug.Assert(this.Scene?.Viewport?.Window != null);
+
+        this.Scene.Viewport.Window.Cursor = cursor ?? default;
     }
 
     private protected void UpdateLayoutIndependentAncestor()
@@ -237,18 +185,18 @@ public abstract class Layoutable : Spatial2D
 
     internal static Layoutable? GetCommonComposedAncestor(Layoutable left, Layoutable right)
     {
-        var leftComposedParentElement  = left.ComposedParentElement;
-        var rightComposedParentElement = right.ComposedParentElement;
+        var leftCompositeParentElement  = left.CompositeParentElement;
+        var rightCompositeParentElement = right.CompositeParentElement;
 
-        if (leftComposedParentElement == rightComposedParentElement)
+        if (leftCompositeParentElement == rightCompositeParentElement)
         {
-            return leftComposedParentElement;
+            return leftCompositeParentElement;
         }
-        else if (left == rightComposedParentElement)
+        else if (left == rightCompositeParentElement)
         {
             return left;
         }
-        else if (leftComposedParentElement == right)
+        else if (leftCompositeParentElement == right)
         {
             return right;
         }
@@ -257,19 +205,19 @@ public abstract class Layoutable : Spatial2D
             var leftDepth  = 0;
             var rightDepth = 0;
 
-            Layoutable? currentLeft  = leftComposedParentElement;
-            Layoutable? currentRight = rightComposedParentElement;
+            Layoutable? currentLeft  = leftCompositeParentElement;
+            Layoutable? currentRight = rightCompositeParentElement;
 
             while (currentLeft != null)
             {
                 leftDepth++;
-                currentLeft  = currentLeft.ComposedParentElement;
+                currentLeft  = currentLeft.CompositeParentElement;
             }
 
             while (currentRight != null)
             {
                 rightDepth++;
-                currentRight  = currentRight.ComposedParentElement;
+                currentRight  = currentRight.CompositeParentElement;
             }
 
             currentLeft  = left;
@@ -277,20 +225,20 @@ public abstract class Layoutable : Spatial2D
 
             while (leftDepth > rightDepth)
             {
-                currentLeft = currentLeft.ComposedParentElement!;
+                currentLeft = currentLeft.CompositeParentElement!;
                 leftDepth--;
             }
 
             while (leftDepth < rightDepth)
             {
-                currentRight = currentRight.ComposedParentElement!;
+                currentRight = currentRight.CompositeParentElement!;
                 rightDepth--;
             }
 
             while (currentLeft != currentRight)
             {
-                currentLeft  = currentLeft.ComposedParentElement;
-                currentRight = currentRight.ComposedParentElement;
+                currentLeft  = currentLeft.CompositeParentElement;
+                currentRight = currentRight.CompositeParentElement;
 
                 if (currentLeft == null || currentRight == null)
                 {
@@ -302,115 +250,16 @@ public abstract class Layoutable : Spatial2D
         }
     }
 
-    internal static ComposedPath GetComposedPathBetween(Layoutable left, Layoutable right)
-    {
-        var leftToAncestor  = new List<Layoutable>();
-        var rightToAncestor = new List<Layoutable>();
-
-        GetComposedPathBetween(leftToAncestor, rightToAncestor, left, right);
-
-        return new(leftToAncestor, rightToAncestor);
-    }
-
-    internal static void GetComposedPathBetween(List<Layoutable> leftToAncestor, List<Layoutable> rightToAncestor, Layoutable left, Layoutable right)
-    {
-        const string ERROR_MESSAGE = "The specified elements do not share a common ancestor in the composed tree.";
-
-        leftToAncestor.Clear();
-        rightToAncestor.Clear();
-
-        leftToAncestor.Add(left);
-        rightToAncestor.Add(right);
-
-        var leftComposedParentElement  = left.ComposedParentElement;
-        var rightComposedParentElement = right.ComposedParentElement;
-
-        if (leftComposedParentElement == rightComposedParentElement)
-        {
-            if (leftComposedParentElement == null)
-            {
-                throw new InvalidOperationException(ERROR_MESSAGE);
-            }
-
-            leftToAncestor.Add(leftComposedParentElement);
-            rightToAncestor.Add(leftComposedParentElement);
-        }
-        else if (left == rightComposedParentElement)
-        {
-            rightToAncestor.Add(left);
-        }
-        else if (leftComposedParentElement == right)
-        {
-            leftToAncestor.Add(right);
-        }
-        else
-        {
-            var leftDepth  = 0;
-            var rightDepth = 0;
-
-            Layoutable? currentLeft  = leftComposedParentElement;
-            Layoutable? currentRight = rightComposedParentElement;
-
-            while (currentLeft != null)
-            {
-                leftDepth++;
-                currentLeft = currentLeft.ComposedParentElement;
-            }
-
-            while (currentRight != null)
-            {
-                rightDepth++;
-                currentRight  = currentRight.ComposedParentElement;
-            }
-
-            currentLeft  = left;
-            currentRight = right;
-
-            while (leftDepth > rightDepth)
-            {
-                currentLeft = currentLeft.ComposedParentElement!;
-                leftDepth--;
-
-                leftToAncestor.Add(currentLeft);
-            }
-
-            while (leftDepth < rightDepth)
-            {
-                currentRight = currentRight.ComposedParentElement!;
-                rightDepth--;
-
-                rightToAncestor.Add(currentRight);
-            }
-
-            while (currentLeft != currentRight)
-            {
-                currentLeft  = currentLeft.ComposedParentElement;
-                currentRight = currentRight.ComposedParentElement;
-
-                if (currentLeft == null || currentRight == null)
-                {
-                    leftToAncestor.Clear();
-                    rightToAncestor.Clear();
-
-                    throw new InvalidOperationException(ERROR_MESSAGE);
-                }
-
-                leftToAncestor.Add(currentLeft);
-                rightToAncestor.Add(currentRight);
-            }
-        }
-    }
-
     internal int GetEffectiveDepth()
     {
         var depth = 0;
 
-        var node = this.EffectiveParentElement;
+        var node = this.CompositeParentElement;
 
         while (node != null)
         {
             depth++;
-            node = node.EffectiveParentElement;
+            node = node.CompositeParentElement;
         }
 
         return depth;
@@ -432,36 +281,11 @@ public abstract class Layoutable : Spatial2D
     {
         this.UpdateLayoutIndependentAncestor();
 
-        var transform = this.TransformWithOffset;
+        var matrix = this.Matrix;
 
         var size     = this.Boundings.Cast<int>();
-        var position = new Point<int>((int)transform.Position.X, -(int)transform.Position.Y);
+        var position = new Point<int>((int)matrix.Translation.X, -(int)matrix.Translation.Y);
 
         return new(size, position);
     }
-
-    public bool IsComposedAncestor(Layoutable other)
-    {
-        if (this == other)
-        {
-            return false;
-        }
-
-        var parent = other.ComposedParentElement;
-
-        while (parent != this)
-        {
-            if (parent == null)
-            {
-                return false;
-            }
-
-            parent = parent.ComposedParentElement;
-        }
-
-        return true;
-    }
-
-    public bool IsComposedDescendent(Layoutable other) =>
-        other.IsComposedAncestor(this);
 }

@@ -3,27 +3,27 @@ using Age.Core.Extensions;
 using Age.Elements;
 using Age.Styling;
 using Age.Numerics;
-using Age.Scene;
+using Age.Scenes;
 namespace Age.Internal;
 
-public unsafe class BvhTree
+public class BvhTree
 {
     private const int MAX_ELEMENTS = 4;
     private readonly BvhNode<Layoutable> root = new();
 
-    private static AABB<float> GetBounding(scoped ReadOnlySpan<Layoutable> nodes, Dictionary<Layoutable, int> depths)
+    private static AABB<float> GetBounding(ReadOnlySpan<Layoutable> nodes, Dictionary<Layoutable, int> depths)
     {
         var aabb = new AABB<float>();
 
         foreach (var node in nodes)
         {
-            aabb.Extends(new(node.Boundings.ToVector(), 1), new(node.Transform.Position.InvertedY, depths[node]));
+            aabb.Extends(new(node.Boundings.ToVector(), 1), new(node.Matrix.Translation.InvertedY, depths[node]));
         }
 
         return aabb;
     }
 
-    private static void Split(BvhNode<Layoutable> bvhNode, scoped ReadOnlySpan<Layoutable> nodes, Dictionary<Layoutable, int> depths)
+    private static void Split(BvhNode<Layoutable> bvhNode, ReadOnlySpan<Layoutable> nodes, Dictionary<Layoutable, int> depths)
     {
         var particion = bvhNode.AABB.Size.X > bvhNode.AABB.Size.Y
             ? new AABB<float>(
@@ -50,7 +50,7 @@ public unsafe class BvhTree
 
         foreach (var node in nodes)
         {
-            var aabb = new AABB<float>(new(node.Boundings.ToVector(), 1), new(node.Transform.Position.InvertedY, depths[node]));
+            var aabb = new AABB<float>(new(node.Boundings.ToVector(), 1), new(node.Matrix.Translation.InvertedY, depths[node]));
 
             var intersection = particion.Intersection(aabb);
 
@@ -81,7 +81,7 @@ public unsafe class BvhTree
         {
             var sortedElements = leftNodes
                 .OrderByDescending(static x => x.Boundings.Area)
-                .ThenBy(static x => x.Transform.Position.X)
+                .ThenBy(static x => x.Matrix.Translation.X)
                 .ToArray()
                 .AsSpan();
 
@@ -130,7 +130,7 @@ public unsafe class BvhTree
         {
             var sortedElements = rightNodes
                 .OrderByDescending(static x => x.Boundings.Area)
-                .ThenByDescending(static x => x.Transform.Position.X)
+                .ThenByDescending(static x => x.Matrix.Translation.X)
                 .ToArray()
                 .AsSpan();
 
@@ -197,10 +197,10 @@ public unsafe class BvhTree
         {
             SingleCommand = new RectCommand
             {
-                Border    = new Border(2, 0, color * new Color(1, 1, 1, 1)),
-                Flags     = Shaders.CanvasShader.Flags.ColorAsBackground,
-                Size      = new(bvhNode.AABB.Size.X, bvhNode.AABB.Size.Y),
-                Transform = Transform2D.CreateTranslated(bvhNode.AABB.Position.X, -bvhNode.AABB.Position.Y)
+                Border      = new Border(2, 0, color * new Color(1, 1, 1, 1)),
+                Flags       = Shaders.Geometry2DShader.Flags.ColorAsBackground,
+                Size        = new((uint)bvhNode.AABB.Size.X, (uint)bvhNode.AABB.Size.Y),
+                LocalMatrix = Matrix3x2<float>.Translated(bvhNode.AABB.Position.X, -bvhNode.AABB.Position.Y)
             }
         };
 
@@ -220,21 +220,21 @@ public unsafe class BvhTree
     internal BvhDebugNode Draw() =>
         Draw(this.root, Color.Green);
 
-    public void Build(NodeTree tree)
+    public void Build(RenderTree tree)
     {
         var depths = new Dictionary<Layoutable, int>();
 
         var aabb  = new AABB<float>();
         var nodes = new List<Layoutable>();
 
-        foreach (var (node, depth) in Traverse(tree.Root))
+        foreach (var (node, depth) in Traverse(tree.Window))
         {
             if (node is not Element element || element.Style.Border != null)
             {
                 depths[node] = depth;
                 nodes.Add(node);
 
-                aabb.Extends(new(node.Boundings.ToVector(), 1), new(node.Transform.Position.InvertedY, depth));
+                aabb.Extends(new(node.Boundings.ToVector(), 1), new(node.Matrix.Translation.InvertedY, depth));
             }
         }
 

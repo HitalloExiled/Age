@@ -9,5 +9,8 @@ public static partial class Extension
     {
         public Size<uint> ToSize() =>
             new(extent.Width, extent.Height);
+
+        public Extent<uint> ToExtent() =>
+            new(extent.Width, extent.Height, extent.Depth);
     }
 }

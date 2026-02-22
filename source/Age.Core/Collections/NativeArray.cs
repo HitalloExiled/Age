@@ -50,7 +50,7 @@ public unsafe partial class NativeArray<T>(int length = 0) : Disposable, IEnumer
     public NativeArray(uint length) : this((int)length)
     { }
 
-    public NativeArray(scoped ReadOnlySpan<T> values) : this(values.Length) =>
+    public NativeArray(ReadOnlySpan<T> values) : this(values.Length) =>
         values.CopyTo(this);
 
     private void CheckIndex(int index)
@@ -146,7 +146,7 @@ public unsafe partial class NativeArray<T>(int length = 0) : Disposable, IEnumer
         this.Length = length;
     }
 
-    public void ResizeCopy(scoped ReadOnlySpan<T> source)
+    public void ResizeCopy(ReadOnlySpan<T> source)
     {
         if (source.Length != this.Length)
         {

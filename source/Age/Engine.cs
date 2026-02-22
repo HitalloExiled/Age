@@ -1,8 +1,6 @@
 using Age.Core;
 using Age.Numerics;
 using Age.Rendering.Vulkan;
-using Age.RenderPasses;
-using Age.Scene;
 using Age.Services;
 using Age.Storage;
 using System.Diagnostics;
@@ -20,7 +18,6 @@ public sealed class Engine : Disposable
 
     public Window Window { get; }
 
-    private readonly IconStorage    iconStorage;
     private readonly ShaderStorage  shaderStorage;
     private readonly TextStorage    textStorage;
     private readonly TextureStorage textureStorage;
@@ -29,31 +26,14 @@ public sealed class Engine : Disposable
 
     public Engine(string name, Size<uint> windowSize, Point<int> windowPosition)
     {
-        Window.Register(this.renderer);
-
-        this.Window           = new Window(name, windowSize, windowPosition);
         this.renderingService = new RenderingService(this.renderer);
-        this.iconStorage      = new IconStorage(this.renderer);
         this.shaderStorage    = new ShaderStorage(this.renderer);
         this.textStorage      = new TextStorage(this.renderer);
         this.textureStorage   = new TextureStorage(this.renderer);
 
-        var renderGraph = new RenderGraph
-        {
-            Name   = "Default",
-            Passes =
-            [
-                new CanvasIndexRenderGraphPass(this.renderer, this.Window),
-                new SceneRenderGraphPass(this.renderer, this.Window),
-                new CanvasRenderGraphPass(this.renderer, this.Window),
-            ]
-        };
+        this.Window = new Window(name, windowSize, windowPosition);
 
-        RenderGraph.Active = renderGraph;
-
-        this.renderingService.RegisterRenderGraph(this.Window, renderGraph);
-
-        this.Window.Resized += this.renderingService.RequestDraw;
+        this.renderingService.RegisterWindow(this.Window);
 
         Input.ListenInputEvents(this.Window);
     }
@@ -65,7 +45,6 @@ public sealed class Engine : Disposable
             Platforms.Display.Window.CloseAll();
 
             this.renderingService.Dispose();
-            this.iconStorage.Dispose();
             this.shaderStorage.Dispose();
             this.textStorage.Dispose();
             this.textureStorage.Dispose();
@@ -88,7 +67,7 @@ public sealed class Engine : Disposable
 
         foreach (var window in Window.Windows)
         {
-            window.Tree.Initialize();
+            window.RenderTree.Initialize();
         }
 
         var watch = Stopwatch.StartNew();
@@ -103,24 +82,24 @@ public sealed class Engine : Disposable
             {
                 Time.DeltaTime = frameTime / 1000 * Time.Scale;
 
-                foreach (var window in Window.Windows)
+                foreach (var window in Window.Windows.ToArray())
                 {
                     window.DoEvents();
 
                     if (!window.IsClosed)
                     {
-                        window.Tree.Update();
+                        window.RenderTree.Update();
 
-                        if (window.Tree.IsDirty)
+                        if (window.RenderTree.IsDirty)
                         {
                             this.renderingService.RequestDraw();
 
-                            window.Tree.MakePristine();
+                            window.RenderTree.MakePristine();
                         }
                     }
                 }
 
-                this.renderingService.Render(Window.Windows);
+                this.renderingService.Render();
 
                 Time.Frames++;
 

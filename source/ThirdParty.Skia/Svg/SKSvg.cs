@@ -972,7 +972,7 @@ public partial class SKSvg(float pixelsPerInch, SKSize canvasSize)
     {
         var localName = element.Name.LocalName;
 
-        return !(localName == "linearGradient")
+        return localName != "linearGradient"
             ? localName == "radialGradient" ? this.ReadRadialGradient(element) : null
             : this.ReadLinearGradient(element);
     }
@@ -1336,7 +1336,7 @@ public partial class SKSvg(float pixelsPerInch, SKSize canvasSize)
                     {
                         var content = fillValue.Slice(enumerator.Current);
 
-                        var groupEnumerator = groupPattern.EnumerateMatches(content);;
+                        var groupEnumerator = groupPattern.EnumerateMatches(content);
 
                         groupEnumerator.MoveNext();
 

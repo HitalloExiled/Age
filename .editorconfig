@@ -254,7 +254,7 @@ dotnet_style_parentheses_in_arithmetic_binary_operators    = always_for_clarity:
 dotnet_style_parentheses_in_other_binary_operators         = always_for_clarity:suggestion
 dotnet_style_parentheses_in_other_operators                = never_if_unnecessary:suggestion
 dotnet_style_parentheses_in_relational_binary_operators    = never_if_unnecessary:suggestion
-dotnet_style_prefer_auto_properties                        = true:silent
+dotnet_style_prefer_auto_properties                        = true:suggestion
 dotnet_style_prefer_compound_assignment                    = true:suggestion
 dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
 dotnet_style_prefer_conditional_expression_over_return     = true:suggestion
@@ -352,19 +352,29 @@ dotnet_diagnostic.IDE1006.severity = suggestion # Remove unnecessary suppression
 dotnet_diagnostic.RCS1001.severity = none       # Add braces (when expression spans over multiple lines)
 dotnet_diagnostic.RCS1123.severity = none       # Add parentheses when
 dotnet_diagnostic.RCS1130.severity = none       # Bitwise operation on enum without Flags attribute
+dotnet_diagnostic.RCS1158.severity = none       # Static member in generic type should use a type parameter
 dotnet_diagnostic.RCS1242.severity = none       # Do not pass non-read-only struct by read-only reference
 
-[**/*Extension{s,}.*.cs]
-dotnet_diagnostic.CA1822.severity = none
+
+dotnet_diagnostic.RCS0063.severity = none       # Remove unnecessary blank line [deprecated]
+dotnet_diagnostic.RCS1036.severity = suggestion # Remove unnecessary blank line
+
+# [**/*Extension{s,}.*.cs]
+# dotnet_diagnostic.CA1822.severity = none # Mark members as static
 
 [**/obj/**.cs]
-dotnet_diagnostic.CS8019.severity = none
+dotnet_diagnostic.CS8019.severity = none # Unnecessary using directive
 
 [**/Native/**.cs]
-dotnet_diagnostic.IDE1006.severity = none
-
-[ThirdParty*/**.cs]
+dotnet_diagnostic.IDE1006.severity = none # Naming rule violation
 dotnet_diagnostic.RCS1135.severity = none # Declare enum member with zero value (when enum has FlagsAttribute)
+dotnet_diagnostic.RCS1154.severity = none # Sort enum members
+dotnet_diagnostic.RCS1191.severity = none # Declare enum value as combination of names
+
+[**/ThirdParty*/**.cs]
+dotnet_diagnostic.RCS1135.severity = none # Declare enum member with zero value (when enum has FlagsAttribute)
+dotnet_diagnostic.RCS1154.severity = none # Sort enum members
+dotnet_diagnostic.RCS1191.severity = none # Declare enum value as combination of names
 
 [*.{csproj,xml,yml,yaml,props}]
 indent_style = space

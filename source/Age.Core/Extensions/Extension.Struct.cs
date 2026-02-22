@@ -17,7 +17,7 @@ public static partial class Extension
             ref Unsafe.As<byte, T>(ref MemoryMarshal.GetReference(source));
     }
 
-    extension(scoped ReadOnlySpan<byte> source)
+    extension(ReadOnlySpan<byte> source)
     {
         public T Read<T>() where T : unmanaged =>
             MemoryMarshal.Read<T>(source);

@@ -6,7 +6,7 @@ namespace Age.Core.Extensions;
 public static partial class Extension
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private unsafe static void CopyTo(scoped ReadOnlySpan<byte> source, int sizeOfSource, scoped Span<byte> destination, int sizeOfDestination, int length, bool alignToEnd)
+    private static void CopyTo(ReadOnlySpan<byte> source, int sizeOfSource, Span<byte> destination, int sizeOfDestination, int length, bool alignToEnd)
     {
         if (sizeOfSource == sizeOfDestination)
         {
@@ -48,10 +48,10 @@ public static partial class Extension
             MemoryMarshal.Cast<T, U>(span);
     }
 
-    extension<TSource>(scoped ReadOnlySpan<TSource> source) where TSource : unmanaged
+    extension<TSource>(ReadOnlySpan<TSource> source) where TSource : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void CopyTo<TDestination>(scoped Span<TDestination> destination, bool alignToEnd = false) where TDestination : unmanaged
+        public unsafe void CopyTo<TDestination>(Span<TDestination> destination, bool alignToEnd = false) where TDestination : unmanaged
         {
             if (source.Length > destination.Length)
             {
@@ -62,7 +62,7 @@ public static partial class Extension
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void CopyTo(scoped Span<byte> destination, int sizeOfDestination, bool alignToEnd = false)
+        public unsafe void CopyTo(Span<byte> destination, int sizeOfDestination, bool alignToEnd = false)
         {
             var destinationLength = destination.Length / sizeOfDestination;
 
@@ -75,10 +75,10 @@ public static partial class Extension
         }
     }
 
-    extension(scoped ReadOnlySpan<byte> source)
+    extension(ReadOnlySpan<byte> source)
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void CopyTo<TDestination>(int sizeOfSource, scoped Span<TDestination> destination, bool alignToEnd = false) where TDestination : unmanaged
+        public unsafe void CopyTo<TDestination>(int sizeOfSource, Span<TDestination> destination, bool alignToEnd = false) where TDestination : unmanaged
         {
             var sourceLength = source.Length / sizeOfSource;
 

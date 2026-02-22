@@ -1,8 +1,6 @@
 using Age.Commands;
-using Age.Rendering.Vulkan;
-using Age.Scene;
-
-using static Age.Shaders.GeometryShader;
+using Age.Scenes;
+using Age.Shaders;
 
 namespace Age.Resources;
 
@@ -12,18 +10,25 @@ public sealed class Mesh : Spatial3D
 
     public Material Material { get; set; } = new();
 
-    public Mesh(scoped ReadOnlySpan<Vertex> vertices, scoped ReadOnlySpan<uint> indices)
+    public Mesh(ReadOnlySpan<Geometry3DShader.Vertex> vertices, ReadOnlySpan<uint> indices)
     {
-        var command = CommandPool.MeshCommand.Get();
+        var command = CommandPool.MeshCommand.Get(this, CommandFilter.Color);
 
-        command.VertexBuffer = VulkanRenderer.Singleton.CreateVertexBuffer(vertices);
-        command.IndexBuffer  = VulkanRenderer.Singleton.CreateIndexBuffer(indices);
-        command.Mesh         = this;
+        command.IndexBuffer   = new(indices);
+        command.VertexBuffer  = new(vertices);
+        command.CommandFilter = CommandFilter.Color | CommandFilter.Encode;
 
         this.SingleCommand = command;
     }
 
-    protected override void OnDisposed()
+    private protected override void OnIndexChangedInternal()
+    {
+        base.OnIndexChangedInternal();
+
+        this.SingleCommand!.Metadata = (ulong)(this.Index + 1);
+    }
+
+    private protected override void OnDisposedInternal()
     {
         if (this.SingleCommand is MeshCommand command)
         {
@@ -32,5 +37,7 @@ public sealed class Mesh : Spatial3D
 
             CommandPool.MeshCommand.Return(command);
         }
+
+        this.Material.Dispose();
     }
 }

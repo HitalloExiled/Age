@@ -55,7 +55,7 @@ public unsafe ref struct RefStringBuffer : IDisposable
     public RefStringBuffer(int capacity) =>
         this.Capacity = capacity;
 
-    public RefStringBuffer(scoped ReadOnlySpan<char> value) =>
+    public RefStringBuffer(ReadOnlySpan<char> value) =>
         this.Append(value);
 
     private readonly void CheckIndex(int index)
@@ -70,7 +70,7 @@ public unsafe ref struct RefStringBuffer : IDisposable
         new(this.buffer, this.Length);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Append(scoped ReadOnlySpan<char> value)
+    public void Append(ReadOnlySpan<char> value)
     {
         if (value.IsEmpty)
         {
@@ -84,13 +84,13 @@ public unsafe ref struct RefStringBuffer : IDisposable
         this.Length += value.Length;
     }
 
-    public void AppendLine(scoped ReadOnlySpan<char> value)
+    public void AppendLine(ReadOnlySpan<char> value)
     {
         this.Append(value);
         this.Append(['\n']);
     }
 
-    public readonly RefStringBuffer Concat(scoped in RefStringBuffer other)
+    public readonly RefStringBuffer Concat(in RefStringBuffer other)
     {
         var handler = new RefStringBuffer(this.Length + other.Length);
 
@@ -110,7 +110,7 @@ public unsafe ref struct RefStringBuffer : IDisposable
         this.Length = 0;
     }
 
-    public readonly bool Equals(scoped ReadOnlySpan<char> value) =>
+    public readonly bool Equals(ReadOnlySpan<char> value) =>
         value.SequenceEqual(this.AsSpan());
 
     public void EnsureCapacity(int capacity)
@@ -124,7 +124,7 @@ public unsafe ref struct RefStringBuffer : IDisposable
     public readonly Span<char>.Enumerator GetEnumerator() =>
         this.AsSpan().GetEnumerator();
 
-    public void Insert(int index, scoped ReadOnlySpan<char> value)
+    public void Insert(int index, ReadOnlySpan<char> value)
     {
         this.CheckIndex(index);
 
@@ -168,7 +168,7 @@ public unsafe ref struct RefStringBuffer : IDisposable
         this.Length = int.Max(this.Length - count, 0);
     }
 
-    public void Set(scoped ReadOnlySpan<char> value)
+    public void Set(ReadOnlySpan<char> value)
     {
         if (this.Equals(value))
         {

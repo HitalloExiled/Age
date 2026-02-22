@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using Age.Core;
 using Age.Core.Extensions;
 using Age.Core.Interfaces;
 using Age.Numerics;
@@ -85,12 +84,6 @@ public record Style : IPoolable
     {
         get => this.data.FontWeight;
         set => this.Set(ref this.data.FontWeight, value, StyleProperty.FontWeight);
-    }
-
-    public bool? Hidden
-    {
-        get => this.data.Hidden;
-        set => this.Set(ref this.data.Hidden, value, StyleProperty.Hidden);
     }
 
     public ItemsAlignment? ItemsAlignment

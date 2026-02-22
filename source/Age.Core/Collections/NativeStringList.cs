@@ -44,7 +44,7 @@ public unsafe partial class NativeStringList : Disposable, IEnumerable<string>
         }
     }
 
-    public NativeStringList(scoped ReadOnlySpan<string?> values) : this(values.Length)
+    public NativeStringList(ReadOnlySpan<string?> values) : this(values.Length)
     {
         for (var i = 0; i < values.Length; i++)
         {

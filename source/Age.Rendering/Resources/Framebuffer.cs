@@ -7,10 +7,10 @@ namespace Age.Rendering.Resources;
 
 public sealed class Framebuffer : Resource<VkFramebuffer>
 {
+    internal override VkFramebuffer Instance { get; }
+
     public VkExtent2D    Extent     { get; }
     public VkImageView[] ImageViews { get; }
-
-    public override VkFramebuffer Instance { get; }
 
     public Framebuffer(in FramebufferCreateInfo createInfo)
     {

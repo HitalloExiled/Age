@@ -1,33 +1,35 @@
+using System.Diagnostics.CodeAnalysis;
 using Age.Core;
+using Age.Core.Exceptions;
 using Age.Core.Extensions;
 using Age.Numerics;
+using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.Resources;
 using SkiaSharp;
 
+using FontKey  = (string, float, int);
+using AtlasKey = (string, uint);
+
 namespace Age.Storage;
 
-internal class TextStorage : Disposable
+internal sealed partial class TextStorage : Disposable
 {
-    private static TextStorage? singleton;
-
-    private readonly Dictionary<int, TextureAtlas>               atlases = [];
+    private readonly Dictionary<AtlasKey, TextureAtlas>          atlases    = [];
     private readonly Dictionary<string, Dictionary<string, int>> codepoints = [];
-    private readonly Dictionary<int, SKFont>                     fonts = [];
-    private readonly Dictionary<int, TextureMap>                 glyphs = [];
+    private readonly Dictionary<FontKey, SKFont>                 fonts      = [];
+    private readonly Dictionary<GlyphKey, TextureMap>            glyphs     = [];
     private readonly SKPaint                                     paint;
     private readonly VulkanRenderer                              renderer;
 
-    public static TextStorage Singleton => singleton ?? throw new NullReferenceException();
+    [AllowNull]
+    public static TextStorage Singleton { get; private set; }
 
     public TextStorage(VulkanRenderer renderer)
     {
-        if (singleton != null)
-        {
-            throw new InvalidOperationException($"Only one single instace of {nameof(TextStorage)} is allowed");
-        }
+        SingletonViolationException.ThrowIfNoSingleton(Singleton);
 
-        singleton = this;
+        Singleton = this;
 
         this.renderer = renderer;
         this.paint    = new()
@@ -58,11 +60,11 @@ internal class TextStorage : Disposable
         }
     }
 
-    public TextureMap DrawGlyph(SKFont font, TextureAtlas atlas, scoped ReadOnlySpan<char> chars, in SKRect bounds)
+    public TextureMap DrawGlyph(SKFont font, TextureAtlas atlas, ReadOnlySpan<char> chars, in SKRect bounds)
     {
         const ushort PADDING = 2;
 
-        var hashcode = string.GetHashCode(chars) ^ font.GetHashCode() ^ font.Size.GetHashCode();
+        var hashcode = new GlyphKey(chars, font);
 
         if (!this.glyphs.TryGetValue(hashcode, out var glyph))
         {
@@ -92,9 +94,9 @@ internal class TextStorage : Disposable
 
     public TextureAtlas GetAtlas(string familyName, uint fontSize)
     {
-        var hashcode = familyName.GetHashCode() ^ fontSize.GetHashCode();
+        var key = (familyName, fontSize);
 
-        ref var atlas = ref this.atlases.GetValueRefOrAddDefault(hashcode, out var exists);
+        ref var atlas = ref this.atlases.GetValueRefOrAddDefault(key, out var exists);
 
         if (!exists)
         {
@@ -139,14 +141,14 @@ internal class TextStorage : Disposable
             }
         }
 
-        return entries!;
+        return entries;
     }
 
     public SKFont GetFont(string fontFamily, float fontSize, int fontWeight, Dictionary<string, string>? externalSource)
     {
-        var hashcode = HashCode.Combine(fontFamily, fontSize, fontWeight);
+        var key = (fontFamily, fontSize, fontWeight);
 
-        ref var font = ref this.fonts.GetValueRefOrAddDefault(hashcode, out var exists);
+        ref var font = ref this.fonts.GetValueRefOrAddDefault(key, out var exists);
 
         if (!exists)
         {

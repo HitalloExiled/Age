@@ -1,7 +1,7 @@
+using System.Runtime.CompilerServices;
 using Age.Core.Extensions;
 using Age.Elements;
 using Age.Numerics;
-using Age.Scene;
 using Age.Storage;
 using Age.Styling;
 using Age.Themes;
@@ -10,9 +10,9 @@ namespace Age.Components;
 
 public class Icon : Element
 {
-    private readonly Text text = new();
-
     private Dictionary<string, int>? codepoints;
+
+    private Text Text => Unsafe.As<Text>(this.ShadowRoot)!;
 
     public string? IconName
     {
@@ -32,7 +32,7 @@ public class Icon : Element
 
     public Icon(string? iconName = null, ushort? fontSize = null, Color? color = null)
     {
-        this.NodeFlags = NodeFlags.Immutable;
+        this.AttachShadowRoot(new Text());
 
         this.IconName = iconName;
 
@@ -48,21 +48,20 @@ public class Icon : Element
 
         this.StyleSheet = Theme.Current.Icon.Default;
 
-        this.AttachShadowTree(true);
-        this.ShadowTree.AppendChild(this.text);
-
         this.StyleChanged += this.OnHostStyleChanged;
+
+        this.Seal();
     }
 
     private void SetCodepoint(string? iconName)
     {
         if (iconName != null && this.codepoints?.TryGetValue(iconName, out var codepoint) == true)
         {
-            this.text.Buffer.Set([(char)codepoint]);
+            this.Text.Buffer.Set([(char)codepoint]);
         }
         else
         {
-            this.text.Buffer.Clear();
+            this.Text.Buffer.Clear();
         }
     }
 

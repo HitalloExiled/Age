@@ -13,7 +13,7 @@ public abstract class Parser
 
     protected Token Lookahead { get; private set; }
 
-    public Parser(StreamReader reader)
+    protected Parser(StreamReader reader)
     {
         this.scanner   = new(reader);
         this.Lookahead = this.scanner.NextToken();
@@ -86,9 +86,8 @@ public abstract class Parser
         parsed = 0;
 
         var values = new float[size];
-        var index  = 0;
 
-        while (index < values.Length)
+        for (var index = 0; index < values.Length; index++)
         {
             var toke = this.Lookahead;
 
@@ -107,8 +106,6 @@ public abstract class Parser
             {
                 values[index] = index < minSize ? throw UnexpectedTokenError(this.Lookahead) : defaultValue;
             }
-
-            index++;
         }
 
         return values;
@@ -143,7 +140,7 @@ public abstract class Parser
         {
             var sign = isNegative ? "-" : "";
 
-            value = T.Parse(sign + this.NextToken().Value!, CultureInfo.InvariantCulture);
+            value = T.Parse(sign + this.NextToken().Value, CultureInfo.InvariantCulture);
 
             return true;
         }

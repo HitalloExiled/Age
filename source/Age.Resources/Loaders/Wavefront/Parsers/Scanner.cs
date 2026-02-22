@@ -61,7 +61,7 @@ public partial class Scanner(StreamReader reader)
         {
             while (!this.Eof && char.IsDigit(this.Next))
             {
-                result!.Append(this.Next);
+                result.Append(this.Next);
 
                 this.Advance();
             }

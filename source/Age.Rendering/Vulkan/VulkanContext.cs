@@ -1,3 +1,4 @@
+using Age.Rendering.Extensions;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Age.Core;
@@ -10,13 +11,13 @@ using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Extensions;
 using ThirdParty.Vulkan.Flags;
 using static Age.Core.PointerHelper;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Rendering.Vulkan;
 
 internal sealed unsafe partial class VulkanContext : Disposable
 {
     public event Action? DeviceInitialized;
-    public event Action? SwapchainRecreated;
 
     public const ushort MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -31,17 +32,28 @@ internal sealed unsafe partial class VulkanContext : Disposable
     private readonly VkSemaphore[]             renderingFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
     private readonly VkSurfaceExtensionKHR     surfaceExtension;
 
-    private VkCommandPool           commandPool = null!;
-    private ushort                  currentFrame;
-    private VkDevice                device = null!;
-    private bool                    deviceInitialized;
-    private VkQueue                 graphicsQueue = null!;
-    private uint                    graphicsQueueIndex;
-    private VkPhysicalDevice        physicalDevice = null!;
-    private VkQueue                 presentationQueue = null!;
-    private uint                    presentationQueueIndex;
-    private VkSurfaceFormatKHR      surfaceFormat;
-    private VkSwapchainExtensionKHR swapchainExtension = null!;
+    [AllowNull]
+    private VkCommandPool commandPool;
+    private ushort        currentFrame;
+
+    [AllowNull]
+    private VkDevice device;
+    private bool     deviceInitialized;
+
+    [AllowNull]
+    private VkQueue graphicsQueue;
+    private uint    graphicsQueueIndex;
+
+    [AllowNull]
+    private VkPhysicalDevice physicalDevice;
+
+    [AllowNull]
+    private VkQueue            presentationQueue;
+    private uint               presentationQueueIndex;
+    private VkSurfaceFormatKHR surfaceFormat;
+
+    [AllowNull]
+    private VkSwapchainExtensionKHR swapchainExtension;
 
     private Span<string> RequiredExtensions
     {
@@ -152,7 +164,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
         }
     }
 
-    private unsafe static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+    private static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
         var logLevel = messageSeverity switch
         {
@@ -220,26 +232,6 @@ internal sealed unsafe partial class VulkanContext : Disposable
         }
     }
 
-    private VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspect)
-    {
-        var createInfo = new VkImageViewCreateInfo
-        {
-            Format           = format,
-            Image            = image.Handle,
-            SubresourceRange = new()
-            {
-                AspectMask = aspect,
-                LayerCount = 1,
-                LevelCount = 1,
-            },
-            ViewType = VkImageViewType.N2D,
-        };
-
-        var imageView = this.device.CreateImageView(createInfo);
-
-        return imageView;
-    }
-
     private Swapchain CreateSwapchain(VkSurfaceKHR surface, Size<uint> size)
     {
         this.surfaceExtension.GetPhysicalDeviceSurfaceCapabilities(this.physicalDevice, surface, out var surfaceCapabilities);
@@ -266,7 +258,25 @@ internal sealed unsafe partial class VulkanContext : Disposable
             };
 
             var swapchain = this.swapchainExtension.CreateSwapchain(swapchainCreateInfo);
-            var images    = swapchain.GetImages();
+            var vkImages  = swapchain.GetImages();
+
+            var images = new Image[vkImages.Length];
+
+            for (var i = 0; i < images.Length; i++)
+            {
+                images[i] = new(
+                    vkImages[i],
+                    new()
+                    {
+                        Extent        = size.ToExtent3D(),
+                        Format        = swapchainCreateInfo.ImageFormat,
+                        ImageType     = VkImageType.N2D,
+                        Samples       = VkSampleCountFlags.N1,
+                        Usage         = swapchainCreateInfo.ImageUsage,
+                        InitialLayout = VkImageLayout.ColorAttachmentOptimal,
+                    }
+                );
+            }
 
             return new Swapchain
             {
@@ -279,7 +289,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
         }
     }
 
-    public VkFramebuffer CreateFrameBuffer(VkRenderPass renderPass, scoped ReadOnlySpan<VkImageView> attachments, VkExtent2D extent)
+    public VkFramebuffer CreateFrameBuffer(VkRenderPass renderPass, ReadOnlySpan<VkImageView> attachments, VkExtent2D extent)
     {
         var attachmentHandles = VkHandle.GetHandles(attachments);
 
@@ -382,19 +392,17 @@ internal sealed unsafe partial class VulkanContext : Disposable
         throw new Exception("Failed to find a suitable GPU!");
     }
 
-    private void RecreateSwapchain(Surface context)
+    private void RecreateSwapchain(Surface surface)
     {
-        if (!context.Hidden)
-        {
-            this.Device.WaitIdle();
+        this.Device.WaitIdle();
 
-            context.Swapchain.Dispose();
+        surface.Swapchain.Dispose();
 
-            context.Swapchain = this.CreateSwapchain(context.Value, context.Size);
+        surface.Swapchain = this.CreateSwapchain(surface.Value, surface.Size);
 
-            SwapchainRecreated?.Invoke();
-        }
+        surface.MakePristine();
     }
+
     private void SetupFrameData()
     {
         var createInfo = new VkCommandPoolCreateInfo
@@ -440,16 +448,16 @@ internal sealed unsafe partial class VulkanContext : Disposable
         this.instance.Dispose();
     }
 
-    public Surface CreateSurface(VkSurfaceKHR surface, Size<uint> size)
+    public Surface CreateSurface(VkSurfaceKHR vkSurfaceKHR, Size<uint> size)
     {
         if (!this.deviceInitialized)
         {
-            this.InitializeDevice(surface);
+            this.InitializeDevice(vkSurfaceKHR);
 
             this.deviceInitialized = true;
         }
 
-        var swapchain = this.CreateSwapchain(surface, size);
+        var swapchain = this.CreateSwapchain(vkSurfaceKHR, size);
 
         var semaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
 
@@ -458,15 +466,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
             semaphores[i] = this.device.CreateSemaphore();
         }
 
-        var surfaceContext = new Surface
-        {
-            Semaphores  = semaphores,
-            Size        = size,
-            Value       = surface,
-            Swapchain   = swapchain,
-        };
-
-        return surfaceContext;
+        return new(vkSurfaceKHR, size, semaphores, swapchain);
     }
 
     public VkCommandBuffer AllocateCommand(VkCommandBufferLevel commandBufferLevel) =>
@@ -487,7 +487,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
         throw new Exception("Failed to find suitable memory type");
     }
 
-    public VkFormat FindSupportedFormat(scoped ReadOnlySpan<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+    public VkFormat FindSupportedFormat(ReadOnlySpan<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
     {
         foreach (var format in candidates)
         {
@@ -508,7 +508,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
 
     public void PrepareBuffers()
     {
-        if (Surface.Entries.Count == 0 || Surface.Entries.All(x => x.Hidden))
+        if (Surface.AllHidden)
         {
             return;
         }
@@ -517,20 +517,20 @@ internal sealed unsafe partial class VulkanContext : Disposable
 
         fence.Wait(true, ulong.MaxValue);
 
-        foreach (var context in Surface.Entries)
+        foreach (var surface in Surface.Entries)
         {
-            if (!context.Hidden)
+            if (surface.Visible)
             {
                 uint imageIndex = 0;
                 try
                 {
-                    imageIndex = context.Swapchain.Value.AcquireNextImage(ulong.MaxValue, context.Semaphores[this.currentFrame], default);
+                    imageIndex = surface.Swapchain.Value.AcquireNextImage(ulong.MaxValue, surface.Semaphores[this.currentFrame], default);
                 }
                 catch (VkException exception)
                 {
                     if (exception.Result == VkResult.ErrorOutOfDateKHR)
                     {
-                        this.RecreateSwapchain(context);
+                        this.RecreateSwapchain(surface);
                     }
                 }
                 catch (Exception)
@@ -538,7 +538,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
                     throw;
                 }
 
-                context.CurrentBuffer = imageIndex;
+                surface.CurrentBuffer = imageIndex;
             }
         }
 
@@ -555,7 +555,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
             return;
         }
 
-        var visibleSurfaces = Surface.Entries.Where(x => !x.Hidden).ToArray();
+        var visibleSurfaces = Surface.Visibles;
 
         var fence          = this.fences[this.currentFrame];
         var imageIndices   = new uint[visibleSurfaces.Length];

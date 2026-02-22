@@ -4,8 +4,8 @@ public sealed partial record TextCommand : RectCommand
 {
     public int Index
     {
-        get => (int)this.Metadata;
-        set => this.Metadata = value;
+        get => (int)this.UserData;
+        set => this.UserData = value;
     }
 
     public int           Line      { get; set; }

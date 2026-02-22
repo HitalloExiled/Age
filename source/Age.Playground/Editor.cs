@@ -1,15 +1,16 @@
-using Age.Playground.Tests;
+using Age.Core.Extensions;
+using Age.Elements.Events;
 using Age.Elements;
-using Age.Numerics;
 using Age.Platforms.Display;
-using Age.RenderPasses;
-using Age.Scene;
-using Age.Styling;
-using ThirdParty.Vulkan.Flags;
-
-using Common = Age.Internal.Common;
-using Age.Playground.Tests.Styling;
 using Age.Playground.Tests.Components;
+using Age.Playground.Tests.Scene;
+using Age.Playground.Tests.Styling;
+using Age.Playground.Tests;
+using Age.Scenes;
+using System.Diagnostics;
+using ThirdParty.Vulkan.Flags;
+using Age.Internal;
+using Age.Passes;
 
 namespace Age.Playground;
 
@@ -17,10 +18,8 @@ internal record struct Page(string Title, Setup Setup);
 
 internal delegate void Setup(Canvas canvas);
 
-public class Editor : Node
+public sealed class Editor : UIScene
 {
-    private const uint BORDER_SIZE = 10;
-    private readonly Canvas canvas = new();
     private readonly Page[] pages;
     private int index;
 
@@ -30,8 +29,7 @@ public class Editor : Node
 
     public Editor()
     {
-        this.AppendChild(this.canvas);
-        this.setup = ScrollTest.Setup;
+        this.setup = SubViewportTest.Setup;
 
         this.pages =
         [
@@ -50,146 +48,53 @@ public class Editor : Node
             new(nameof(MarginTest),               MarginTest.Setup),
             new(nameof(PaddingTest),              PaddingTest.Setup),
             new(nameof(ScrollTest),               ScrollTest.Setup),
+            new(nameof(ShadowRootTest),           ShadowRootTest.Setup),
+            new(nameof(TextSelectionTest),        TextSelectionTest.Setup),
 
-            new(nameof(ShadowTreeTest),    ShadowTreeTest.Setup),
-            new(nameof(TextSelectionTest), TextSelectionTest.Setup),
+            new(nameof(SubViewportTest), SubViewportTest.Setup),
         ];
 
-        this.Reload();
-        // this.CreateDemoScene();
+        this.Canvas.KeyDown += this.OnCanvasKeyDown;
     }
 
-    private void CreateDemoScene()
-    {
-        var root = new FlexBox
-        {
-            Name  = "Root",
-            Style = new()
-            {
-                Size   = new(Unit.Pc(100)),
-                Border = new(BORDER_SIZE, default, Color.Margenta),
-            }
-        };
-
-        var verticalStack = new FlexBox()
-        {
-            Name  = "VStack",
-            Style = new()
-            {
-                StackDirection = StackDirection.Vertical,
-                Size           = new(Unit.Pc(100)),
-                Border         = new(BORDER_SIZE, default, Color.Yellow),
-            }
-        };
-
-        var header = new FlexBox
-        {
-            Name  = "Header",
-            Style = new()
-            {
-                Size   = new(Unit.Pc(100), null),
-                Border = new(BORDER_SIZE, default, Color.Red),
-            }
-        };
-
-        var content = new FlexBox
-        {
-            Name  = "Content",
-            Style = new()
-            {
-                Size   = new(Unit.Pc(100)),
-                Border = new(BORDER_SIZE, default, Color.Green),
-            }
-        };
-
-        var viewports = new FlexBox
-        {
-            Name  = "Viewports",
-            Style = new()
-            {
-                Alignment = Alignment.Center,
-                Border    = new(BORDER_SIZE, default, Color.Blue),
-            }
-        };
-
-        var scene = new DemoScene();
-
-        var freeViewport  = new Viewport(new(600)) { Name = "Red" };
-        var redViewport   = new Viewport(new(200)) { Name = "Red" };
-        var greenViewport = new Viewport(new(200)) { Name = "Green" };
-        var blueViewport  = new Viewport(new(200)) { Name = "Blue" };
-
-        freeViewport.Style.Border  = new(1, 0, Color.White);
-        redViewport.Style.Border   = new(1, 0, Color.Red);
-        greenViewport.Style.Border = new(1, 0, Color.Green);
-        blueViewport.Style.Border  = new(1, 0, Color.Blue);
-
-        freeViewport.Style.BoxSizing = redViewport.Style.BoxSizing = greenViewport.Style.BoxSizing = blueViewport.Style.BoxSizing = BoxSizing.Border;
-
-        scene.FreeCamera.RenderTargets.Add(freeViewport.RenderTarget);
-        scene.RedCamera.RenderTargets.Add(redViewport.RenderTarget);
-        scene.GreenCamera.RenderTargets.Add(greenViewport.RenderTarget);
-        scene.BlueCamera.RenderTargets.Add(blueViewport.RenderTarget);
-
-        var sideViews = new FlexBox() { Style = new() { StackDirection = StackDirection.Vertical } };
-
-        this.canvas.AppendChild(root);
-        this.AppendChild(scene);
-
-            root.AppendChild(verticalStack);
-
-                verticalStack.AppendChild(header);
-                    header.AppendChild(new FrameStatus());
-
-                verticalStack.AppendChild(content);
-                    content.AppendChild(viewports);
-
-                        viewports.AppendChild(freeViewport);
-                        viewports.AppendChild(sideViews);
-
-                            sideViews.AppendChild(redViewport);
-                            sideViews.AppendChild(greenViewport);
-                            sideViews.AppendChild(blueViewport);
-    }
-
-    private void HandleInputs()
+    private void OnCanvasKeyDown(in KeyEvent keyEvent)
     {
         var reload = true;
 
-        var window = ((RenderTree)this.canvas.Tree!).Window;
+        var window = this.Scene!.Window!;
 
         var currentIndex = this.index;
 
-        if (Input.IsKeyJustPressed(Key.Up))
+        if (keyEvent.Key == Key.Up)
         {
             currentIndex = 0;
         }
-        else if (Input.IsKeyJustPressed(Key.Down))
+        else if (keyEvent.Key == Key.Down)
         {
             currentIndex = this.pages.Length - 1;
         }
-        else if (Input.IsKeyJustPressed(Key.Left))
+        else if (keyEvent.Key == Key.Left)
         {
             if (--currentIndex < 0)
             {
                 currentIndex = this.pages.Length - 1;
             }
         }
-        else if (Input.IsKeyJustPressed(Key.Right))
+        else if (keyEvent.Key == Key.Right)
         {
             if (++currentIndex == this.pages.Length)
             {
                 currentIndex = 0;
             }
         }
-        else if (Input.IsKeyPressed(Key.Control) && Input.IsKeyJustPressed(Key.P))
+        else if (keyEvent.Modifiers.HasFlags(KeyStates.Control) && keyEvent.Key == Key.P)
         {
-            PrintCanvasIndex();
+            this.PrintCanvasIndex();
             reload = false;
         }
         else
         {
-            reload = Input.IsKeyJustPressed(Key.R);
+            reload = keyEvent.Key == Key.R;
         }
 
         if (this.index != currentIndex)
@@ -211,30 +116,43 @@ public class Editor : Node
         }
     }
 
-    private static void PrintCanvasIndex()
+    private void PrintCanvasIndex()
     {
-        var canvasIndexRenderGraphPass = RenderGraph.Active.GetRenderGraphPass<CanvasIndexRenderGraphPass>();
+        Debug.Assert(this.Scene?.Viewport != null);
 
-        var canvasIndexImage = canvasIndexRenderGraphPass.ColorImage;
+        var encodeCompositeRenderPass = this.Scene.Viewport.RenderGraph.GetNode<EncodeCompositeRenderPass>();
 
-        Common.SaveImage(canvasIndexImage, VkImageAspectFlags.Color, "CanvasIndex.png");
+        Common.SaveImage(encodeCompositeRenderPass.Output!, VkImageAspectFlags.Color, "CanvasEncode.png");
     }
 
     private void Reload()
     {
-        this.canvas.DisposeChildren();
+        var start = Stopwatch.GetTimestamp();
 
-        this.setup.Invoke(this.canvas);
+        this.Canvas.DisposeChildren();
+
+        this.setup.Invoke(this.Canvas);
+
+        Console.WriteLine($"Reload time: {Stopwatch.GetElapsedTime(start).TotalMilliseconds}ms");
+    }
+
+    protected override void OnStart()
+    {
+        base.OnStart();
+        this.Reload();
     }
 
 #if DEBUG
-    protected override void OnConnected(NodeTree tree) =>
+    protected override void OnConnected()
+    {
+        base.OnConnected();
         HotReloadService.ApplicationUpdated += this.Reload;
+    }
 
-    protected override void OnDisconnected(NodeTree tree) =>
+    protected override void OnDisconnecting()
+    {
+        base.OnDisconnecting();
         HotReloadService.ApplicationUpdated -= this.Reload;
+    }
 #endif
-
-    public override void Update() =>
-        this.HandleInputs();
 }

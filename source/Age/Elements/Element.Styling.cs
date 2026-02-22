@@ -1,5 +1,5 @@
+using Age.Core;
 using Age.Core.Extensions;
-using Age.Scene;
 using Age.Styling;
 using System.Runtime.CompilerServices;
 
@@ -7,7 +7,7 @@ namespace Age.Elements;
 
 public abstract partial class Element
 {
-    private static readonly StylePool stylePool = new();
+    private static readonly ObjectPool<Style> stylePool = new();
 
     internal event Action<StyleProperty>? StyleChanged;
 
@@ -118,7 +118,7 @@ public abstract partial class Element
     }
 
     private StyleData GetInheritedProperties() =>
-        GetStyleSource(this.Parent)?.ComputedStyle is Style parentStyle
+        this.CompositeParentElement?.ComputedStyle is Style parentStyle
             ? new StyleData
             {
                 Color         = parentStyle.Color,
@@ -140,12 +140,5 @@ public abstract partial class Element
     {
         this.ComputedStyle?.Copy(this.UserStyle!, property);
         this.InvokeStyleChanged(property);
-    }
-
-    protected override void OnRemoved(Node parent)
-    {
-        base.OnRemoved(parent);
-
-        GetStyleSource(parent)?.StyleChanged -= this.OnParentStyleChanged;
     }
 }

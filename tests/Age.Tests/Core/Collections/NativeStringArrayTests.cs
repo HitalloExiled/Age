@@ -5,7 +5,7 @@ namespace Age.Tests.Core.Collections;
 public class NativeStringArrayTests
 {
     [Fact]
-    public unsafe void ToListShouldPass()
+    public void ToListShouldPass()
     {
         var list = new[]
         {
@@ -35,7 +35,7 @@ public class NativeStringArrayTests
     }
 
     [Fact]
-    public unsafe void DisposeShouldPass()
+    public void DisposeShouldPass()
     {
         var list = new[]
         {
@@ -51,7 +51,7 @@ public class NativeStringArrayTests
     }
 
     [Fact]
-    public unsafe void DestructorShouldPass()
+    public void DestructorShouldPass()
     {
         _ = new NativeStringArray(Array.Empty<string>());
 

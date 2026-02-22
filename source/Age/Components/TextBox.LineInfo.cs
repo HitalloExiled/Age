@@ -90,16 +90,12 @@ public partial class TextBox
 
         private static uint GetCursorEndOfLine(ReadOnlySpan<char> text, uint position)
         {
-            var current = (int)position;
-
-            while (current < text.Length)
+            for (var current = (int)position; current < text.Length; current++)
             {
                 if (text[current] == '\n')
                 {
                     return (uint)current;
                 }
-
-                current++;
             }
 
             return (uint)(text.Length - 1);

@@ -1,0 +1,226 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Roslynator>
+  <CodeAnalysis>
+    <Summary>
+      <Diagnostic Id="CA1852" Title="Tipos internos de selo" Count="2">
+        <Description>Quando um tipo não está acessível fora da sua assembly e não tem subtipos dentro da sua assemlby que o contém, ele pode ser selado com segurança. Tipos de selagem podem melhorar o desempenho.</Description>
+        <HelpLink>https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1852</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="RCS1068" Title="Simplify logical negation" Count="1">
+        <HelpLink>https://josefpihrt.github.io/docs/roslynator/analyzers/RCS1068</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="RCS1135" Title="Declare enum member with zero value (when enum has FlagsAttribute)" Count="1">
+        <HelpLink>https://josefpihrt.github.io/docs/roslynator/analyzers/RCS1135</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="RCS1154" Title="Sort enum members" Count="19">
+        <HelpLink>https://josefpihrt.github.io/docs/roslynator/analyzers/RCS1154</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="RCS1191" Title="Declare enum value as combination of names" Count="2">
+        <HelpLink>https://josefpihrt.github.io/docs/roslynator/analyzers/RCS1191</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="RCS1226" Title="Add paragraph to documentation comment" Count="2">
+        <HelpLink>https://josefpihrt.github.io/docs/roslynator/analyzers/RCS1226</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="RCS1251" Title="Remove unnecessary braces from record declaration" Count="2">
+        <HelpLink>https://josefpihrt.github.io/docs/roslynator/analyzers/RCS1251</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="RCS1259" Title="Remove empty syntax" Count="1">
+        <HelpLink>https://josefpihrt.github.io/docs/roslynator/analyzers/RCS1259</HelpLink>
+      </Diagnostic>
+    </Summary>
+    <Projects>
+      <Project Name="ThirdParty.Skia" FilePath="F:\Projects\Age\source\ThirdParty.Skia\ThirdParty.Skia.csproj">
+        <Diagnostics>
+          <Diagnostic Id="RCS1068">
+            <Severity>Info</Severity>
+            <Message>Simplify logical negation</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Skia\Svg\SKSvg.cs</FilePath>
+            <Location Line="975" Character="16" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1259">
+            <Severity>Info</Severity>
+            <Message>Remove empty syntax</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Skia\Svg\SKSvg.cs</FilePath>
+            <Location Line="1339" Character="86" />
+          </Diagnostic>
+          <Diagnostic Id="CA1852">
+            <Severity>Info</Severity>
+            <Message>Tipos internos de selo</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Skia\Svg\SKText.cs</FilePath>
+            <Location Line="5" Character="16" />
+          </Diagnostic>
+          <Diagnostic Id="CA1852">
+            <Severity>Info</Severity>
+            <Message>Tipos internos de selo</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Skia\Svg\SkTextSpanPath.cs</FilePath>
+            <Location Line="5" Character="17" />
+          </Diagnostic>
+        </Diagnostics>
+      </Project>
+      <Project Name="ThirdParty.Slang" FilePath="F:\Projects\Age\source\ThirdParty.Slang\ThirdParty.Slang.csproj">
+        <Diagnostics>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Slang\SlangBindingType.cs</FilePath>
+            <Location Line="3" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Slang\SlangParameterCategory.cs</FilePath>
+            <Location Line="3" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1226">
+            <Severity>Info</Severity>
+            <Message>Add paragraph to documentation comment</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Slang\SlangParameterCategory.cs</FilePath>
+            <Location Line="34" Character="8" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1226">
+            <Severity>Info</Severity>
+            <Message>Add paragraph to documentation comment</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Slang\SlangParameterCategory.cs</FilePath>
+            <Location Line="56" Character="8" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Slang\SlangResourceShape.cs</FilePath>
+            <Location Line="3" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1135">
+            <Severity>Info</Severity>
+            <Message>Declare enum member with zero value (when enum has FlagsAttribute)</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Slang\SlangTargetFlags.cs</FilePath>
+            <Location Line="4" Character="13" />
+          </Diagnostic>
+        </Diagnostics>
+      </Project>
+      <Project Name="ThirdParty.Vulkan" FilePath="F:\Projects\Age\source\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj">
+        <Diagnostics>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Enums\VkDescriptorType.cs</FilePath>
+            <Location Line="6" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Enums\VkDynamicState.cs</FilePath>
+            <Location Line="6" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Enums\VkFormat.cs</FilePath>
+            <Location Line="6" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Enums\VkObjectType.cs</FilePath>
+            <Location Line="6" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkAccessFlags.cs</FilePath>
+            <Location Line="7" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkBufferCreateFlags.cs</FilePath>
+            <Location Line="7" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1191">
+            <Severity>Info</Severity>
+            <Message>Declare enum value as combination of names</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkCullModeFlags.cs</FilePath>
+            <Location Line="12" Character="20" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkDependencyFlags.cs</FilePath>
+            <Location Line="7" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkDescriptorPoolCreateFlags.cs</FilePath>
+            <Location Line="7" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkDescriptorSetLayoutCreateFlags.cs</FilePath>
+            <Location Line="7" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkImageAspectFlags.cs</FilePath>
+            <Location Line="7" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkImageCreateFlags.cs</FilePath>
+            <Location Line="7" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkPipelineDepthStencilStateCreateFlags.cs</FilePath>
+            <Location Line="7" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkPipelineShaderStageCreateFlags.cs</FilePath>
+            <Location Line="7" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkPipelineStageFlags.cs</FilePath>
+            <Location Line="4" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkShaderStageFlags.cs</FilePath>
+            <Location Line="7" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1191">
+            <Severity>Info</Severity>
+            <Message>Declare enum value as combination of names</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkShaderStageFlags.cs</FilePath>
+            <Location Line="15" Character="30" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1154">
+            <Severity>Info</Severity>
+            <Message>Sort enum members</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\Flags\VkSubpassDescriptionFlags.cs</FilePath>
+            <Location Line="7" Character="13" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1251">
+            <Severity>Info</Severity>
+            <Message>Remove unnecessary braces from record declaration</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\VkPipelineCache.cs</FilePath>
+            <Location Line="7" Character="1" />
+          </Diagnostic>
+          <Diagnostic Id="RCS1251">
+            <Severity>Info</Severity>
+            <Message>Remove unnecessary braces from record declaration</Message>
+            <FilePath>F:\Projects\Age\source\ThirdParty.Vulkan\VkSampleMask.cs</FilePath>
+            <Location Line="4" Character="1" />
+          </Diagnostic>
+        </Diagnostics>
+      </Project>
+    </Projects>
+  </CodeAnalysis>
+</Roslynator>

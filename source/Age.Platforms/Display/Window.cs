@@ -23,7 +23,7 @@ public partial class Window : Disposable
     public event WindowMouseEventHandler?   MouseMove;
     public event WindowMouseEventHandler?   MouseUp;
     public event WindowMouseEventHandler?   MouseWheel;
-    public event Action?              Resized;
+    public event Action?                    Resized;
     #endregion events
 
     private static string? className;
@@ -159,12 +159,13 @@ public partial class Window : Disposable
     {
         if (!this.IsClosed)
         {
+            this.IsClosed = true;
+
             this.PlatformClose();
 
             this.Parent?.Children.Remove(this);
-            Closed?.Invoke();
 
-            this.IsClosed = true;
+            Closed?.Invoke();
         }
     }
 

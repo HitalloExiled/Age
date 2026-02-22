@@ -1,23 +1,29 @@
+using System.Diagnostics.CodeAnalysis;
 using Age.Core;
+using Age.Core.Exceptions;
+using Age.Core.Extensions;
+using Age.Rendering;
 using Age.Rendering.Resources;
-using Age.Shaders;
 using Age.Rendering.Vulkan;
-using Age.RenderPasses;
+
+using ShaderKey = (ThirdParty.Vulkan.VkRenderPass, System.Type, Age.Rendering.Resources.ShaderOptions);
 
 namespace Age.Storage;
 
-public class ShaderStorage : Disposable
+public sealed class ShaderStorage : Disposable
 {
-    private static ShaderStorage? singleton;
+    private readonly Dictionary<ShaderKey, Shader> shaders = [];
+    private readonly VulkanRenderer renderer;
+    private readonly ShaderCompiler shaderCompiler = new(true);
 
-    private readonly VulkanRenderer             renderer;
-    private readonly Dictionary<string, Shader> shaders = [];
-
-    public static ShaderStorage Singleton => singleton ?? throw new NullReferenceException();
+    [AllowNull]
+    public static ShaderStorage Singleton { get; private set; }
 
     public ShaderStorage(VulkanRenderer renderer)
     {
-        singleton = this;
+        SingletonViolationException.ThrowIfNoSingleton(Singleton);
+
+        Singleton = this;
 
         this.renderer = renderer;
     }
@@ -26,27 +32,28 @@ public class ShaderStorage : Disposable
     {
         if (disposing)
         {
-            this.renderer.DeferredDispose(this.shaders.Values);
+            foreach (var shader in this.shaders.Values)
+            {
+                this.renderer.DeferredDispose(shader);
+            }
         }
     }
 
-    public Shader GetShader(string name)
+    public TShader Get<TShader>(RenderTarget renderTarget, in ShaderOptions? shaderOptions = null) where TShader : Shader, IShaderFactory<TShader>
     {
-        if (!this.shaders.TryGetValue(name, out var shader))
+        var key = (renderTarget.RenderPass, typeof(TShader), shaderOptions.GetValueOrDefault());
+
+        ref var shader = ref this.shaders.GetValueRefOrAddDefault(key, out var exists);
+
+        if (!exists)
         {
-            switch (name)
-            {
-                case nameof(GeometryShader):
-                    {
-                        var pass = RenderGraph.Active.GetRenderGraphPass<SceneRenderGraphPass>();
+            shader = TShader.Create(renderTarget.RenderPass);
 
-                        this.shaders[name] = shader = new GeometryShader(pass.RenderPass, this.renderer.MaxUsableSampleCount, true);
+            this.shaderCompiler.CompileShader(shader, shaderOptions ?? new());
 
-                        break;
-                    }
-            }
+            return (TShader)shader;
         }
 
-        return shader ?? throw new InvalidOperationException($"Shader {name} not found");
+        return (TShader)shader!.Share();
     }
 }

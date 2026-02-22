@@ -1,6 +1,6 @@
 namespace Age.Rendering.Vulkan;
 
-public unsafe partial class VulkanRenderer
+public partial class VulkanRenderer
 {
     private struct PendingDisposable(IDisposable disposable, ushort framesRemaining)
     {

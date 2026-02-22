@@ -2,9 +2,9 @@ using Age.Core.Collections;
 
 namespace Age.Tests.Core.Collections;
 
-public unsafe class RefListTests
+public class RefListTests
 {
-    private static void AssertIt(scoped in RefList<int> list, ReadOnlySpan<int> values, int capacity)
+    private static void AssertIt(in RefList<int> list, ReadOnlySpan<int> values, int capacity)
     {
         Assert.Equal(capacity, list.Capacity);
         Assert.Equal(values.Length, list.Count);
@@ -12,7 +12,7 @@ public unsafe class RefListTests
         Assert.True(list.AsSpan().SequenceEqual(values));
     }
 
-    private static void AssertIt(scoped in Span<int> list, ReadOnlySpan<int> values, int capacity)
+    private static void AssertIt(Span<int> list, ReadOnlySpan<int> values)
     {
         Assert.Equal(values.Length, list.Length);
 
@@ -67,7 +67,7 @@ public unsafe class RefListTests
 
         var slice = list[3..6];
 
-        AssertIt(slice, [4, 5, 6], 3);
+        AssertIt(slice, [4, 5, 6]);
     }
 
     [Fact]
@@ -158,26 +158,31 @@ public unsafe class RefListTests
     [Fact]
     public void DecreaseCapacity()
     {
-        var list = new RefList<int>([1, 2, 3, 4, 5, 6]);
+        var list = new RefList<int>(4);
 
-        Assert.Equal(6, list.Capacity);
-        Assert.Equal(6, list.Count);
+        Assert.Equal(0, list.Count);
+        Assert.Equal(4, list.Capacity);
 
-        Assert.Equal(1, list[0]);
-        Assert.Equal(2, list[1]);
-        Assert.Equal(3, list[2]);
-        Assert.Equal(4, list[3]);
-        Assert.Equal(5, list[4]);
-        Assert.Equal(6, list[5]);
+        list.Add(0);
+        list.Add(1);
+        list.Add(2);
+
+        Assert.Equal(3, list.Count);
+        Assert.Equal(4, list.Capacity);
 
         list.Capacity = 3;
 
-        Assert.Equal(3, list.Capacity);
         Assert.Equal(3, list.Count);
+        Assert.Equal(3, list.Capacity);
 
-        Assert.Equal(1, list[0]);
-        Assert.Equal(2, list[1]);
-        Assert.Equal(3, list[2]);
+        try
+        {
+            list.Capacity = 2;
+        }
+        catch (Exception exception)
+        {
+            Assert.IsType<ArgumentOutOfRangeException>(exception);
+        }
 
         list.Dispose();
     }

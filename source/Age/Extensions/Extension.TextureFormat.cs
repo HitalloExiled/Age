@@ -1,4 +1,4 @@
-using Age.Resources;
+using Age.Rendering.Resources;
 
 namespace Age.Extensions;
 

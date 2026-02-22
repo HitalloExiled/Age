@@ -4,18 +4,60 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Rendering.Resources;
 
-public sealed class Buffer(VkBuffer instance) : Resource<VkBuffer>
+public sealed class Buffer : Resource<VkBuffer>
 {
-    public required Allocation         Allocation { get; init; }
-    public required VkBufferUsageFlags Usage      { get; init; }
+    internal override VkBuffer Instance { get; }
 
-    public override VkBuffer Instance => instance;
+    public Allocation         Allocation { get; }
+    public VkBufferUsageFlags Usage      { get; }
 
     public ulong Size => this.Allocation.Size;
 
+    public Buffer(ulong size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
+    {
+        var context = VulkanRenderer.Singleton.Context;
+
+        var bufferCreateInfo = new VkBufferCreateInfo
+        {
+            Size  = size,
+            Usage = usage,
+        };
+
+        var device = context.Device;
+
+        var buffer = device.CreateBuffer(bufferCreateInfo);
+
+        buffer.GetMemoryRequirements(out var memRequirements);
+
+        var memoryType = context.FindMemoryType(memRequirements.MemoryTypeBits, properties);
+
+        var memoryAllocateInfo = new VkMemoryAllocateInfo
+        {
+            AllocationSize  = memRequirements.Size,
+            MemoryTypeIndex = memoryType
+        };
+
+        var memory = device.AllocateMemory(memoryAllocateInfo);
+
+        buffer.BindMemory(memory, 0);
+
+        this.Instance = buffer;
+
+        this.Allocation = new()
+        {
+            Alignment  = memRequirements.Alignment,
+            Memory     = memory,
+            Memorytype = memoryType,
+            Offset     = 0,
+            Size       = size,
+        };
+
+        this.Usage = usage;
+    }
+
     private static void Copy(Buffer source, Buffer destination)
     {
-        var commandBuffer = VulkanRenderer.Singleton.BeginSingleTimeCommands();
+        var commandBuffer = CommandBuffer.BeginSingleTimeCommands();
 
         var copyRegion = new VkBufferCopy
         {
@@ -24,13 +66,13 @@ public sealed class Buffer(VkBuffer instance) : Resource<VkBuffer>
 
         commandBuffer.Instance.CopyBuffer(source, destination, copyRegion);
 
-        VulkanRenderer.Singleton.EndSingleTimeCommands(commandBuffer);
+        CommandBuffer.EndSingleTimeCommands(commandBuffer);
     }
 
     protected override void OnDisposed()
     {
-        this.Allocation.Dispose();
-        this.Instance.Dispose();
+        VulkanRenderer.Singleton.DeferredDispose(this.Allocation);
+        VulkanRenderer.Singleton.DeferredDispose(this.Instance);
     }
 
     public void CopyFrom(Buffer source) =>
@@ -51,9 +93,9 @@ public sealed class Buffer(VkBuffer instance) : Resource<VkBuffer>
     public void Update<T>(T data) where T : unmanaged =>
         this.Update([data]);
 
-    public void Update<T>(scoped ReadOnlySpan<T> data) where T : unmanaged
+    public void Update<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
-        var stagingBuffer = VulkanRenderer.Singleton.CreateBuffer(this.Allocation.Size, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+        var stagingBuffer = new Buffer(this.Allocation.Size, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
 
         stagingBuffer.Allocation.Memory.Write(0, 0, data);
 

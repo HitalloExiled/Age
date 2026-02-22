@@ -25,7 +25,7 @@ public static class IconTest
                 Children =
                 [
                     new Text("search"),
-                    new Icon("search", color: Color.Red) { InnerText = "Ignored" },
+                    new Icon("search", color: Color.Red),
                     new Text("home"),
                     new Icon("home",   color: Color.Green) { Style = { Margin = new(10) } },
                     new Text("close"),

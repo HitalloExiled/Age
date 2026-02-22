@@ -31,44 +31,50 @@ public enum SlangParameterCategory : uint
     ShaderRecord,
 
     /// <summary>
+    /// <para>
     /// An existential type parameter represents a "hole" that
     /// needs to be filled with a concrete type to enable
     /// generation of specialized code.
-    ///
-    /// Consider this example:
-    ///
+    /// </para>
+    /// <para>Consider this example:</para>
+    /// <para>
     ///      struct MyParams
     ///      {
     ///          IMaterial material;
     ///          ILight lights[3];
     ///      };
-    ///
+    /// </para>
+    /// <para>
     /// This `MyParams` type introduces two existential type parameters:
     /// one for `material` and one for `lights`. Even though `lights`
     /// is an array, it only introduces one type parameter, because
     /// we need to have a *single* concrete type for all the array
     /// elements to be able to generate specialized code.
+    /// </para>
     ///
     /// </summary>
     ExistentialTypeParam,
 
     /// <summary>
+    /// <para>
     /// An existential object parameter represents a value
     /// that needs to be passed in to provide data for some
     /// interface-type shader parameter.
-    ///
-    /// Consider this example:
-    ///
+    /// </para>
+    /// <para>Consider this example:</para>
+    /// <para>
     ///      struct MyParams
     ///      {
     ///          IMaterial material;
     ///          ILight lights[3];
     ///      };
-    ///
+    /// </para>
+    /// <para>
     /// This `MyParams` type introduces four existential object parameters:
     /// one for `material` and three for `lights` (one for each array
     /// element). This is consistent with the number of interface-type
     /// "objects" that are being passed through to the shader.
+    /// </para>
     /// </summary>
     ExistentialObjectParam,
 

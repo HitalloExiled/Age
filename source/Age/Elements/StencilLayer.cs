@@ -1,63 +1,68 @@
-using System.Collections;
-using System.IO;
-using System.Runtime.InteropServices;
-using Age.Elements.Enumerators;
 using Age.Numerics;
 using Age.Shaders;
+using System.Runtime.CompilerServices;
 
 namespace Age.Elements;
 
-internal class StencilLayer(Element owner) : IEnumerable<StencilLayer>
+internal partial class StencilLayer(Element owner)
 {
     public Element Owner { get; } = owner;
 
-    public uint          Depth           { get; private set; }
+    public ushort        Depth           { get; private set; }
     public StencilLayer? FirstChild      { get; private set; }
     public StencilLayer? LastChild       { get; private set; }
     public StencilLayer? NextSibling     { get; private set; }
     public StencilLayer? Parent          { get; private set; }
     public StencilLayer? PreviousSibling { get; private set; }
 
-    public CanvasShader.Border Border    => this.Owner.ComputedStyle.Border ?? default(CanvasShader.Border);
-    public Size<float>         Size      => this.Owner.Boundings.Cast<float>();
-    public Transform2D         Transform => this.Owner.CachedTransformWithOffset;
+    public Geometry2DShader.Border Border    => this.Owner.ComputedStyle.Border ?? new Geometry2DShader.Border();
+    public Size<uint>              Size      => this.Owner.Boundings;
+    public Matrix3x2<float>        Transform => this.Owner.CachedMatrix;
 
+    public bool IsLeaf => this.FirstChild == null;
 
-    private void InvokeConnected()
+    public bool IsConnected { get; private set; }
+
+    private TraversalEnumerator GetTraversalEnumerator() =>
+        new(this);
+
+    private void PropagateOnConnected()
     {
-        this.OnConnected();
+        apply(this);
 
-        var enumerator = new StencilLayerTraverseEnumerator(this);
+        var enumerator = this.GetTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
-            enumerator.Current.OnConnected();
+            apply(enumerator.Current);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void apply(StencilLayer layer)
+        {
+            layer.Depth       = (ushort)((layer.Parent?.Depth ?? -1) + 1);
+            layer.IsConnected = true;
         }
     }
 
-    private void InvokeDisconnected()
+    private void PropagateOnDisconnecting()
     {
-        this.OnDisconnected();
+        apply(this);
 
-        var enumerator = new StencilLayerTraverseEnumerator(this);
+        var enumerator = this.GetTraversalEnumerator();
 
         while (enumerator.MoveNext())
         {
-            enumerator.Current.OnDisconnected();
+            apply(enumerator.Current);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void apply(StencilLayer layer)
+        {
+            layer.Depth       = default;
+            layer.IsConnected = default;
         }
     }
-
-    private void OnConnected() =>
-        this.Depth = this.Parent!.Depth + 1;
-
-    private void OnDisconnected() =>
-        this.Depth = this.Parent != null ? this.Parent.Depth + 1 : 0;
-
-    IEnumerator IEnumerable.GetEnumerator() =>
-        this.GetEnumerator();
-
-    IEnumerator<StencilLayer> IEnumerable<StencilLayer>.GetEnumerator() =>
-        this.GetEnumerator();
 
     public void AppendChild(StencilLayer layer)
     {
@@ -73,7 +78,7 @@ internal class StencilLayer(Element owner) : IEnumerable<StencilLayer>
             if (this.LastChild != null)
             {
                 this.LastChild.NextSibling = layer;
-                layer.PreviousSibling = this.LastChild;
+                layer.PreviousSibling      = this.LastChild;
 
                 this.LastChild = layer;
             }
@@ -84,29 +89,15 @@ internal class StencilLayer(Element owner) : IEnumerable<StencilLayer>
 
             layer.Parent = this;
 
-            layer.InvokeConnected();
+            if (this.IsConnected)
+            {
+                layer.PropagateOnConnected();
+            }
         }
     }
 
     public void Detach() =>
         this.Parent?.RemoveChild(this);
-
-    public void DelegateChildren()
-    {
-        if (this.Parent != null)
-        {
-            foreach (var node in this)
-            {
-                this.Parent.AppendChild(node);
-            }
-        }
-    }
-
-    public StencilLayerEnumerator GetEnumerator() =>
-        new(this);
-
-    public bool IsSibling(StencilLayer other) =>
-        this.PreviousSibling == other || this.NextSibling == other;
 
     public void RemoveChild(StencilLayer layer)
     {
@@ -133,13 +124,36 @@ internal class StencilLayer(Element owner) : IEnumerable<StencilLayer>
             layer.NextSibling.PreviousSibling = layer.PreviousSibling;
         }
 
+        if (this.IsConnected)
+        {
+            layer.PropagateOnDisconnecting();
+        }
+
         layer.NextSibling     = null;
         layer.Parent          = null;
         layer.PreviousSibling = null;
-
-        layer.InvokeDisconnected();
     }
 
     public override string ToString() =>
         $"{{ Owner: {this.Owner} }}";
+
+    public void TryConnect()
+    {
+        if (this.IsConnected || this.Parent != null)
+        {
+            return;
+        }
+
+        this.PropagateOnConnected();
+    }
+
+    public void TryDisconnect()
+    {
+        if (!this.IsConnected || this.Parent != null)
+        {
+            return;
+        }
+
+        this.PropagateOnDisconnecting();
+    }
 }

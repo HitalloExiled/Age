@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace Age.Core.Collections;
 
-public unsafe ref partial struct RefArray<T> where T : unmanaged
+public ref partial struct RefArray<T> where T : unmanaged
 {
     internal ref struct DebugView(RefArray<T> source)
     {

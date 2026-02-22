@@ -13,7 +13,7 @@ public unsafe class SlangReflectionUserAttribute : ManagedSlang<SlangReflectionU
     internal SlangReflectionUserAttribute(Handle<SlangReflectionUserAttribute> handle) : base(handle)
     { }
 
-    public SlangResult GetArgumentValueFloat(uint index, scoped ReadOnlySpan<float> rs)
+    public SlangResult GetArgumentValueFloat(uint index, ReadOnlySpan<float> rs)
     {
         fixed (float* pRs = rs)
         {
@@ -21,7 +21,7 @@ public unsafe class SlangReflectionUserAttribute : ManagedSlang<SlangReflectionU
         }
     }
 
-    public SlangResult GetArgumentValueInt(uint index, scoped ReadOnlySpan<int> rs)
+    public SlangResult GetArgumentValueInt(uint index, ReadOnlySpan<int> rs)
     {
         fixed (int* pRs = rs)
         {
@@ -29,7 +29,7 @@ public unsafe class SlangReflectionUserAttribute : ManagedSlang<SlangReflectionU
         }
     }
 
-    public string GetArgumentValueString(uint index, scoped ReadOnlySpan<ulong> bufLen)
+    public string GetArgumentValueString(uint index, ReadOnlySpan<ulong> bufLen)
     {
         fixed (ulong* pBufLen = bufLen)
         {

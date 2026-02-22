@@ -2,9 +2,8 @@ using System.Runtime.CompilerServices;
 using Age.Core;
 using Age.Core.Extensions;
 using Age.Extensions;
-using Age.Internal;
 using Age.Numerics;
-using Age.Resources;
+using Age.Rendering.Resources;
 
 namespace Age;
 
@@ -15,8 +14,10 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
     private uint        maxHeight;
 
     public Bitmap    Bitmap  { get; } = new(size, format.BytesPerPixel());
+    public Texture2D Texture { get; } = new(new Texture2D.CreateInfo { Size = size, Format = format });
+
     public Size<uint> Size => this.Bitmap.Size;
-    public Texture2D Texture { get; } = new(size, format);
+
     protected override void OnDisposed(bool disposing)
     {
         if (disposing)
@@ -26,7 +27,7 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
         }
     }
 
-    public Point<uint> Pack(scoped ReadOnlySpan<uint> pixels, in Size<uint> size)
+    public Point<uint> Pack(ReadOnlySpan<uint> pixels, in Size<uint> size)
     {
         this.maxHeight = Math.Max(this.maxHeight, size.Height);
 
@@ -64,7 +65,7 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
         return position;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe void copy<T>(scoped ReadOnlySpan<uint> pixels, in Size<uint> size) where T : unmanaged
+        unsafe void copy<T>(ReadOnlySpan<uint> pixels, in Size<uint> size) where T : unmanaged
         {
             var atlasWidth = this.Size.Width;
             var bitmapSpan = this.Bitmap.AsSpan();
@@ -81,7 +82,7 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
         }
     }
 
-    public Point<uint> Pack(scoped ReadOnlySpan<byte> pixels, in Size<uint> size) =>
+    public Point<uint> Pack(ReadOnlySpan<byte> pixels, in Size<uint> size) =>
         this.Pack(pixels.Cast<byte, uint>(), size);
 
     public void Update()
@@ -90,9 +91,9 @@ public sealed class TextureAtlas(Size<uint> size, TextureFormat format) : Dispos
         {
             this.Texture.Update(this.Bitmap);
 
-            #if DEBUG
-            Common.SaveImage(this.Bitmap, $"TextureAtlas_{this.Size.Width}x{this.Size.Height}.png");
-            #endif
+#if DEBUG
+            Internal.Common.SaveImage(this.Bitmap, $"TextureAtlas_{this.Size.Width}x{this.Size.Height}.png");
+#endif
 
             this.isDirty = false;
         }

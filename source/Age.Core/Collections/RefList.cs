@@ -12,32 +12,17 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
 
     public int Capacity
     {
-        readonly get => field;
+        readonly get;
         set
         {
-            if (value == 0)
-            {
-                NativeMemory.Free(this.buffer);
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, this.Count);
 
-                this.Count = 0;
-            }
-            else
-            {
-                this.buffer = (T*)NativeMemory.Realloc(this.buffer, (uint)(sizeof(T) * value));
+            if (field == value)
+			{
+				return;
+			}
 
-                if (value > field)
-                {
-                    for (var i = field; i < value; i++)
-                    {
-                        this.buffer[i] = default;
-                    }
-                }
-
-                if (value < this.Count)
-                {
-                    this.Count = value;
-                }
-            }
+			this.buffer = (T*)NativeMemory.Realloc(this.buffer, (uint)(sizeof(T) * value));
 
             field = value;
         }
@@ -87,7 +72,7 @@ public unsafe ref partial struct RefList<T> : IEnumerable<T>, IDisposable where 
         }
     }
 
-    public RefList(scoped ReadOnlySpan<T> values) : this(values.Length)
+    public RefList(ReadOnlySpan<T> values) : this(values.Length)
     {
         for (var i = 0; i < values.Length; i++)
         {

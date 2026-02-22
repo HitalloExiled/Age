@@ -12,21 +12,21 @@ public struct TransformOp
     [FieldOffset(4)]
     internal TransformOpData Data;
 
-    internal static Transform2D Resolve(in TransformOp transform, in Size<uint> size, uint fontSize)
+    internal static Matrix3x2<float> Resolve(in TransformOp transform, in Size<uint> size, uint fontSize)
     {
         if (transform.Kind == TransformOpKind.Translation)
         {
             var x = Unit.Resolve(transform.Data.Translation.X, size.Width,  fontSize);
             var y = Unit.Resolve(transform.Data.Translation.Y, size.Height, fontSize);
 
-            return Transform2D.CreateTranslated(x, -y);
+            return Matrix3x2<float>.Translated(x, -y);
         }
 
         return transform.Kind switch
         {
-            TransformOpKind.Rotation => Transform2D.CreateRotated(transform.Data.Rotation),
-            TransformOpKind.Scale    => Transform2D.CreateScaled(transform.Data.Scale.ToVector2()),
-            TransformOpKind.Matrix   => new(transform.Data.Matrix),
+            TransformOpKind.Rotation => Matrix3x2<float>.Rotated(transform.Data.Rotation),
+            TransformOpKind.Scale    => Matrix3x2<float>.Scaled(transform.Data.Scale.ToVector2()),
+            TransformOpKind.Matrix   => transform.Data.Matrix,
             _ => throw new NotImplementedException(),
         };
     }

@@ -5,49 +5,78 @@ namespace Age.Core.Extensions;
 
 public static partial class Extension
 {
+    private static void Resize<T>(List<T> source, int size)
+    {
+        source.EnsureCapacity(size);
+        source.SetCount(size);
+    }
+
     extension<T>(List<T> source)
     {
         public Span<T> AsSpan() =>
             CollectionsMarshal.AsSpan(source);
 
+        public Span<U> AsSpan<U>() where U : T =>
+            CollectionsMarshal.AsSpan(Unsafe.As<List<U>>(source));
+
         public Span<T> AsSpan(int start) =>
-            CollectionsMarshal.AsSpan(source)[start..];
+            source.AsSpan()[start..];
+
+        public Span<U> AsSpan<U>(int start) where U : T =>
+            source.AsSpan<T, U>()[start..];
 
         public Span<T> AsSpan(int start, int length) =>
-            CollectionsMarshal.AsSpan(source).Slice(start, length);
+            source.AsSpan().Slice(start, length);
+
+        public Span<U> AsSpan<U>(int start, int length) where U : T =>
+            source.AsSpan<T, U>().Slice(start, length);
 
         public Span<T> AsSpan(Range range) =>
-            CollectionsMarshal.AsSpan(source)[range];
+            source.AsSpan()[range];
 
-        public ReadOnlySpan<T> AsReadOnlySpan() =>
-            source.AsSpan();
+        public Span<U> AsSpan<U>(Range range) where U : T =>
+            source.AsSpan<T, U>()[range];
 
-        public ReadOnlySpan<T> AsReadOnlySpan(int start) =>
-            source.AsSpan(start);
+        public void ReplaceRange(Range range, ReadOnlySpan<T> values)
+        {
+            var (offset, length) = range.GetOffsetAndLength(source.Count);
 
-        public ReadOnlySpan<T> AsReadOnlySpan(int start, int length) =>
-            source.AsSpan(start, length);
+            if (length == values.Length)
+            {
+                values.CopyTo(source.AsSpan(offset));
+            }
+            else if (length > values.Length)
+            {
+                values.CopyTo(source.AsSpan(offset));
 
-        public ReadOnlySpan<T> AsReadOnlySpan(Range range) =>
-            source.AsSpan(range);
+                source.RemoveRange(offset + values.Length, length - values.Length);
+            }
+            else
+            {
+                var size      = source.Count + (values.Length - length);
+                var remaining = source.Count - (offset + length);
+
+                Resize(source, size);
+
+                var from = source.AsSpan(offset + length, remaining);
+                var to   = source.AsSpan(size - remaining);
+
+                from.CopyTo(to);
+
+                values.CopyTo(source.AsSpan(offset));
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(int size, T defaultValue)
         {
-            source.EnsureCapacity(size);
-
             if (size > source.Count)
             {
-                var previous = source.Count;
+                var start = source.Count;
 
-                source.SetCount(size);
+                Resize(source, size);
 
-                var span = source.AsSpan();
-
-                for (var i = previous; i < span.Length; i++)
-                {
-                    span[i] = defaultValue;
-                }
+                source.AsSpan(start).Fill(defaultValue);
             }
             else
             {

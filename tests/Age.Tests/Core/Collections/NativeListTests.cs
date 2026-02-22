@@ -2,7 +2,7 @@ using Age.Core.Collections;
 
 namespace Age.Tests.Core.Collections;
 
-public unsafe class NativeListTests
+public class NativeListTests
 {
     private static void AssertIt(NativeList<int> list, ReadOnlySpan<int> values, int capacity)
     {
@@ -139,25 +139,23 @@ public unsafe class NativeListTests
     [Fact]
     public void DecreaseCapacity()
     {
-        using var list = new NativeList<int>([1, 2, 3, 4, 5, 6]);
+        using var list = new NativeList<int>(4);
 
-        Assert.Equal(6, list.Capacity);
-        Assert.Equal(6, list.Count);
+        Assert.Equal(0, list.Count);
+        Assert.Equal(4, list.Capacity);
 
-        Assert.Equal(1, list[0]);
-        Assert.Equal(2, list[1]);
-        Assert.Equal(3, list[2]);
-        Assert.Equal(4, list[3]);
-        Assert.Equal(5, list[4]);
-        Assert.Equal(6, list[5]);
+        list.Add(0);
+        list.Add(1);
+        list.Add(2);
+
+        Assert.Equal(3, list.Count);
+        Assert.Equal(4, list.Capacity);
 
         list.Capacity = 3;
 
-        Assert.Equal(3, list.Capacity);
         Assert.Equal(3, list.Count);
+        Assert.Equal(3, list.Capacity);
 
-        Assert.Equal(1, list[0]);
-        Assert.Equal(2, list[1]);
-        Assert.Equal(3, list[2]);
+        Assert.Throws<ArgumentOutOfRangeException>(() => list.Capacity = 2);
     }
 }

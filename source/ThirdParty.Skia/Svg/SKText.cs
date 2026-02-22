@@ -2,7 +2,7 @@ using SkiaSharp;
 
 namespace ThirdParty.Skia.Svg;
 
-internal class SKText(SKPoint location, SKTextAlign textAlign) : IDisposable
+internal sealed class SKText(SKPoint location, SKTextAlign textAlign) : IDisposable
 {
     private readonly List<SKTextSpan> spans = [];
 

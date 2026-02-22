@@ -61,7 +61,10 @@ public sealed unsafe class VkCommandPool : VkDeviceResource<VkCommandPool>
         return commands;
     }
 
-    public void FreeCommandBuffers(scoped ReadOnlySpan<VkCommandBuffer> commandBuffers)
+    public void FreeCommandBuffer(VkCommandBuffer commandBuffers) =>
+        this.FreeCommandBuffers([commandBuffers]);
+
+    public void FreeCommandBuffers(ReadOnlySpan<VkCommandBuffer> commandBuffers)
     {
         fixed (VkHandle<VkCommandPool>*   pHandle         = &this.handle)
         fixed (VkHandle<VkCommandBuffer>* pCommandBuffers = VkHandle.GetHandles(commandBuffers))

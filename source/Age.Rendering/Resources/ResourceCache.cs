@@ -8,13 +8,11 @@ public partial class ResourceCache<TKey, TValue>
 where TKey   : notnull, Resource
 where TValue : notnull, Resource
 {
-    private readonly Dictionary<int, TValue> entries = [];
+    private readonly Dictionary<TKey, TValue> entries = [];
 
     public bool TryGetValue(TKey key, [NotNullWhen(true)] out TValue? resource)
     {
-        var hash = key.GetHashCode();
-
-        ref var entry = ref this.entries.GetValueRefOrNullRef(hash);
+        ref var entry = ref this.entries.GetValueRefOrNullRef(key);
 
         if (!Unsafe.IsNullRef(ref entry))
         {
@@ -28,11 +26,9 @@ where TValue : notnull, Resource
 
     public void Set(TKey key, TValue resource)
     {
-        var hash = key.GetHashCode();
+        this.entries[key] = resource;
 
-        this.entries[hash] = resource;
-
-        var entry = new Entry(hash, this);
+        var entry = new Entry(key, this);
 
         key.Dependencies.Add(Unsafe.As<Entry, ResourceCache.Entry>(ref entry));
     }

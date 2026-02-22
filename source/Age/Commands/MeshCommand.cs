@@ -1,26 +1,22 @@
 using System.Diagnostics.CodeAnalysis;
 using Age.Rendering.Resources;
-using Age.Resources;
+using Age.Shaders;
 
 namespace Age.Commands;
 
-public sealed record MeshCommand : Command
+public sealed record MeshCommand : Command3D
 {
     [AllowNull]
-    public IndexBuffer IndexBuffer { get; set; }
+    public IndexBuffer32 IndexBuffer { get; set; }
 
     [AllowNull]
-    public Mesh Mesh { get; set; }
-
-    [AllowNull]
-    public VertexBuffer VertexBuffer { get; set; }
+    public VertexBuffer<Geometry3DShader.Vertex> VertexBuffer { get; set; }
 
     public override void Reset()
     {
         base.Reset();
 
         this.IndexBuffer  = default;
-        this.Mesh         = default;
         this.VertexBuffer = default;
     }
 }

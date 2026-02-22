@@ -97,28 +97,28 @@ public static partial class Extension
                 case 1:
                     {
                         var byteValue = Unsafe.As<T, byte>(ref flags);
-                        var byteFlag = Unsafe.As<T, byte>(ref other);
+                        var byteFlag  = Unsafe.As<T, byte>(ref other);
 
                         return (byteValue & byteFlag) == byteFlag;
                     }
                 case 2:
                     {
                         var shortValue = Unsafe.As<T, short>(ref flags);
-                        var shortFlag = Unsafe.As<T, short>(ref other);
+                        var shortFlag  = Unsafe.As<T, short>(ref other);
 
                         return (shortValue & shortFlag) == shortFlag;
                     }
                 case 4:
                     {
                         var intValue = Unsafe.As<T, int>(ref flags);
-                        var intFlag = Unsafe.As<T, int>(ref other);
+                        var intFlag  = Unsafe.As<T, int>(ref other);
 
                         return (intValue & intFlag) == intFlag;
                     }
                 case 8:
                     {
                         var longValue = Unsafe.As<T, long>(ref flags);
-                        var longFlag = Unsafe.As<T, long>(ref other);
+                        var longFlag  = Unsafe.As<T, long>(ref other);
 
                         return (longValue & longFlag) == longFlag;
                     }

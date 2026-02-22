@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Age.Commands;
 using Age.Core;
 using Age.Core.Collections;
@@ -6,14 +5,15 @@ using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Resources;
-using Age.Scene;
 using Age.Storage;
 using Age.Styling;
 using SkiaSharp;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
-using Timer = Age.Scene.Timer;
+using Timer = Age.Scenes.Timer;
 
-using static Age.Shaders.CanvasShader;
+using static Age.Shaders.Geometry2DShader;
 
 namespace Age.Elements;
 
@@ -21,7 +21,7 @@ public sealed class Text : Layoutable
 {
     private readonly RectCommand    caretCommand;
     private readonly Timer          caretTimer;
-    private readonly int            caretWidth = 2;
+    private readonly uint           caretWidth = 2;
     private readonly Timer          selectionTimer;
     private readonly List<TextLine> textLines = new(1);
 
@@ -33,10 +33,10 @@ public sealed class Text : Layoutable
     private bool           selectionIsDirty;
     private bool           textIsDirty;
 
-    private  bool        CanSelect  => this.ComposedParentElement?.ComputedStyle.TextSelection != false;
+    private  bool        CanSelect  => this.CompositeParentElement?.ComputedStyle.TextSelection != false;
     internal Rect<float> CursorRect => this.caretCommand.GetAffineRect();
 
-    internal override bool IsParentDependent { get; }
+    internal override bool IsParentDependent => false;
 
     internal override StencilLayer? StencilLayer
     {
@@ -114,64 +114,22 @@ public sealed class Text : Layoutable
         this.AppendChild(this.caretTimer);
         this.AppendChild(this.selectionTimer);
 
-        this.NodeFlags = NodeFlags.Immutable;
-
-        this.caretCommand              = CommandPool.RectCommand.Get();
-        this.caretCommand.Metadata     = 1337; // TODO: Remove
+        this.caretCommand              = CommandPool.RectCommand.Get(this);
         this.caretCommand.Color        = Color.White;
         this.caretCommand.Flags        = Flags.ColorAsBackground;
-        this.caretCommand.TextureMap   = TextureMap.Default;
         this.caretCommand.Size         = new(this.caretWidth, this.LineHeight);
         this.caretCommand.StencilLayer = this.StencilLayer;
+        this.caretCommand.TextureMap   = TextureMap.Default;
 
-        this.Commands.Add(this.caretCommand);
+        this.AddCommand(this.caretCommand);
 
         this.Buffer.Modified += this.OnTextChange;
+
+        this.Seal();
     }
 
     public Text(string? value) : this() =>
         this.Buffer.Set(value);
-
-    private static void AllocateCommands(List<Command> commands, int count)
-    {
-        commands.EnsureCapacity(count);
-
-        if (count < commands.Count)
-        {
-            ReleaseCommands(commands, commands.Count - count);
-        }
-        else
-        {
-            var previousCount = commands.Count;
-
-            commands.SetCount(count);
-
-            var span = commands.AsSpan();
-
-            for (var i = previousCount; i < span.Length; i++)
-            {
-                span[i] = CommandPool.TextCommand.Get();
-            }
-        }
-    }
-
-    private static void ReleaseCommands(List<Command> commands, int count)
-    {
-        if (count > 0)
-        {
-            var span  = commands.AsSpan();
-            var start = span.Length - count;
-
-            for (var i = start; i < span.Length; i++)
-            {
-                CommandPool.TextCommand.Return((TextCommand)span[i]);
-
-                span[i] = default!;
-            }
-
-            commands.SetCount(start);
-        }
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ApplySelection(int index, in TextSelection selection, TextCommand selectionCommand)
@@ -183,9 +141,9 @@ public sealed class Text : Layoutable
 
         if (index >= selection.Start && index < selection.End)
         {
-            selectionCommand.Color           = new(0, 0, 1, 0.5f);
-            selectionCommand.Flags           = Flags.ColorAsBackground;
-            selectionCommand.PipelineVariant = PipelineVariant.Index | PipelineVariant.Color;
+            selectionCommand.Color         = new(0, 0, 1, 0.5f);
+            selectionCommand.CommandFilter = CommandFilter.Color | CommandFilter.Encode;
+            selectionCommand.Flags         = Flags.ColorAsBackground;
 
             if (selectionCommand.Index != default)
             {
@@ -202,7 +160,7 @@ public sealed class Text : Layoutable
     {
         this.caretIsVisible = !this.caretIsVisible;
 
-        this.caretCommand.PipelineVariant = this.caretIsVisible ? PipelineVariant.Color : default;
+        this.caretCommand.CommandFilter = this.caretIsVisible ? CommandFilter.Color : default;
 
         this.RequestUpdate(false);
     }
@@ -214,9 +172,9 @@ public sealed class Text : Layoutable
             return;
         }
 
-        selectionCommand.Color           = default;
-        selectionCommand.Flags           = default;
-        selectionCommand.PipelineVariant = PipelineVariant.Index;
+        selectionCommand.Color         = default;
+        selectionCommand.CommandFilter = CommandFilter.Encode;
+        selectionCommand.Flags         = default;
 
         if (selectionCommand.Index != default)
         {
@@ -239,24 +197,24 @@ public sealed class Text : Layoutable
                 if (this.Buffer[^1] == '\n')
                 {
                     position.X = 0;
-                    position.Y = command.Transform.Position.Y - this.LineHeight;
+                    position.Y = command.LocalMatrix.Translation.Y - this.LineHeight;
                 }
                 else
                 {
-                    position = command.Transform.Position;
+                    position = command.LocalMatrix.Translation;
                     position.X += command.Size.Width;
                 }
             }
             else
             {
-                position = ((RectCommand)this.Commands[(int)this.CursorPosition]).Transform.Position;
+                position = this.Commands[(int)this.CursorPosition].LocalMatrix.Translation;
             }
 
-            this.caretCommand.Transform = Transform2D.CreateTranslated(position);
+            this.caretCommand.LocalMatrix = Matrix3x2<float>.Translated(position);
         }
         else
         {
-            this.caretCommand.Transform = Transform2D.Identity;
+            this.caretCommand.LocalMatrix = Matrix3x2<float>.Identity;
         }
     }
 
@@ -315,11 +273,11 @@ public sealed class Text : Layoutable
 
         lines[0].Start = 0;
 
-        this.Commands.RemoveAt(this.Commands.Count - 1);
+        this.RemoveCommandAt(^1);
 
-        AllocateCommands(this.Commands, textSpan.Length + visibleCharacterCount);
+        this.AllocateCommands(textSpan.Length + visibleCharacterCount, CommandPool.TextCommand);
 
-        this.Commands.Add(this.caretCommand);
+        this.AddCommand(this.caretCommand);
 
         var elementIndex = this.Index + 1;
         var range = this.Selection?.Ordered();
@@ -328,11 +286,12 @@ public sealed class Text : Layoutable
         var charOffset = 0;
         var lineIndex  = 0;
         var color      = style?.Color ?? new();
+        var commands   = this.Commands;
 
         for (var i = 0; i < textSpan.Length; i++)
         {
-            var charIndex = i - charOffset;
-            var selectionCommand = (TextCommand)this.Commands[i];
+            var charIndex        = i - charOffset;
+            var selectionCommand = (TextCommand)commands[i];
 
             selectionCommand.Border       = default;
             selectionCommand.Color        = default;
@@ -340,16 +299,18 @@ public sealed class Text : Layoutable
             selectionCommand.Index        = default;
             selectionCommand.Surrogate    = default;
             selectionCommand.Line         = lineIndex;
-            selectionCommand.TextureMap   = TextureMap.Default;
             selectionCommand.StencilLayer = this.StencilLayer;
+            selectionCommand.TextureMap   = TextureMap.Default;
 
             var character = textSpan[i];
 
             if (!char.IsLowSurrogate(character))
             {
-                selectionCommand.ObjectId  = CombineIds(elementIndex, i + 1);
-                selectionCommand.Size      = new(glyphsWidths[charIndex], this.LineHeight);
-                selectionCommand.Transform = Transform2D.CreateTranslated(new(cursor.X, cursor.Y - baseLine));
+                var width = (uint)float.Round(glyphsWidths[charIndex]);
+
+                selectionCommand.LocalMatrix = Matrix3x2<float>.Translated(new(cursor.X, cursor.Y - baseLine));
+                selectionCommand.Metadata    = CombineIds(elementIndex, i + 1);
+                selectionCommand.Size        = new(width, this.LineHeight);
 
                 if (!char.IsWhiteSpace(character))
                 {
@@ -361,37 +322,37 @@ public sealed class Text : Layoutable
                     {
                         len++;
                         charOffset++;
-                        selectionCommand.Surrogate       = TextCommand.SurrogateKind.High;
-                        selectionCommand.PipelineVariant = PipelineVariant.None;
+                        selectionCommand.CommandFilter = CommandFilter.None;
+                        selectionCommand.Surrogate     = TextCommand.SurrogateKind.High;
                     }
 
                     var chars = textSpan.Slice(i, len);
 
                     var glyph  = TextStorage.Singleton.DrawGlyph(this.font, atlas, chars, bounds);
-                    var size   = new Size<float>(bounds.Width, bounds.Height);
+                    var size   = new Size<uint>((uint)bounds.Width, (uint)bounds.Height);
                     var offset = new Vector2<float>(float.Round(cursor.X + bounds.Left), float.Round(cursor.Y - bounds.Top));
 
                     var characterIndex = textSpan.Length + textOffset;
 
                     selectionCommand.Index = characterIndex;
 
-                    var characterCommand = (TextCommand)this.Commands[characterIndex];
+                    var characterCommand = (TextCommand)commands[characterIndex];
 
-                    characterCommand.Metadata = default;
                     characterCommand.Border   = default;
-                    characterCommand.ObjectId = default;
+                    characterCommand.Metadata = default;
+                    characterCommand.UserData = default;
 
-                    characterCommand.Color           = color;
-                    characterCommand.Flags           = Flags.GrayscaleTexture | Flags.MultiplyColor;
-                    characterCommand.Index           = selectionCommand.Index;
-                    characterCommand.Line            = selectionCommand.Line;
-                    characterCommand.TextureMap      = glyph;
-                    characterCommand.PipelineVariant = PipelineVariant.Color;
-                    characterCommand.Size            = size;
-                    characterCommand.Transform       = Transform2D.CreateTranslated(offset);
-                    characterCommand.StencilLayer    = this.StencilLayer;
+                    characterCommand.Color         = color;
+                    characterCommand.CommandFilter = CommandFilter.Color;
+                    characterCommand.Flags         = Flags.GrayscaleTexture | Flags.MultiplyColor;
+                    characterCommand.Index         = selectionCommand.Index;
+                    characterCommand.Line          = selectionCommand.Line;
+                    characterCommand.LocalMatrix   = Matrix3x2<float>.Translated(offset);
+                    characterCommand.Size          = size;
+                    characterCommand.StencilLayer  = this.StencilLayer;
+                    characterCommand.TextureMap    = glyph;
 
-                    cursor.X += (int)float.Round(glyphsWidths[charIndex]);
+                    cursor.X += (int)width;
 
                     textOffset++;
                 }
@@ -413,20 +374,20 @@ public sealed class Text : Layoutable
                 }
                 else
                 {
-                    cursor.X += (int)float.Round(glyphsWidths[charIndex]);
+                    cursor.X += (int)width;
                 }
 
                 boundings.Width = uint.Max(boundings.Width, (uint)cursor.X);
             }
             else
             {
-                var previous = (TextCommand)this.Commands[i - 1];
+                var previous = (TextCommand)commands[i - 1];
 
-                selectionCommand.Index     = previous.Index;
-                selectionCommand.ObjectId  = previous.ObjectId;
-                selectionCommand.Size      = previous.Size;
-                selectionCommand.Transform = previous.Transform;
-                selectionCommand.Surrogate = TextCommand.SurrogateKind.Low;
+                selectionCommand.Index          = previous.Index;
+                selectionCommand.LocalMatrix = previous.LocalMatrix;
+                selectionCommand.Metadata       = previous.Metadata;
+                selectionCommand.Size           = previous.Size;
+                selectionCommand.Surrogate      = TextCommand.SurrogateKind.Low;
             }
 
             if (range.HasValue)
@@ -455,16 +416,16 @@ public sealed class Text : Layoutable
 
         var command = (TextCommand)this.Commands[(int)character];
 
-        var cursor = this.Transform.Matrix.Inverse() * new Vector2<float>(x, -y);
+        var cursor = this.Matrix.Inverse() * new Vector2<float>(x, -y);
 
-        if (cursor.X > command.Transform.Position.X + (command.Size.Width / 2))
+        if (cursor.X > command.LocalMatrix.Translation.X + (command.Size.Width / 2))
         {
             character += command.Surrogate == TextCommand.SurrogateKind.High ? 2u : 1;
         }
     }
 
     private Element? GetInheritedStyleSource() =>
-        GetStyleSource(this.Parent);
+        this.CompositeParentElement;
 
     private void OnParentStyleChanged(StyleProperty property)
     {
@@ -505,21 +466,46 @@ public sealed class Text : Layoutable
         this.RequestUpdate(true);
     }
 
-    protected override void OnAdopted(Node parent)
+    private void SetCaret(ushort x, ushort y, uint position)
     {
-        switch (parent)
+        if (!this.CanSelect)
         {
-            case Element parentElement:
-                this.HandleAdopted(parentElement);
-                break;
+            return;
+        }
 
-            case ShadowTree shadowTree:
-                this.HandleAdopted(shadowTree.Host);
-                break;
+        this.GetCharacterOffset(x, y, ref position);
+
+        this.CursorPosition = position;
+    }
+
+    private void WindowOnMouseMove(in WindowMouseEvent mouseEvent)
+    {
+        if (mouseEvent.IsHoldingPrimaryButton)
+        {
+            this.UpdateSelection(mouseEvent.X, mouseEvent.Y);
+        }
+        else
+        {
+            Debug.Assert(this.Scene?.Viewport?.Window != null);
+
+            this.Scene.Viewport.Window.MouseMove -= this.WindowOnMouseMove;
+            this.HandleDeactivate();
         }
     }
 
-    protected override void OnDisposed()
+    private protected override void OnConnectedInternal()
+    {
+        base.OnConnectedInternal();
+
+        if (this.CompositeParent is Element parentElement)
+        {
+            this.HandleAdopted(parentElement);
+        }
+
+        this.UpdateDirtyLayout();
+    }
+
+    private protected override void OnDisposedInternal()
     {
         foreach (var command in this.Commands[..^1])
         {
@@ -527,15 +513,13 @@ public sealed class Text : Layoutable
         }
 
         CommandPool.RectCommand.Return(this.caretCommand);
-        this.Commands.Clear();
+        this.ClearCommands();
     }
 
-    protected override void OnIndexed()
+    private protected override void OnIndexChangedInternal()
     {
-        this.UpdateDirtyLayout();
-
         var elementIndex = this.Index + 1;
-        var commands     = this.Commands.AsSpan(0, this.Buffer.Length);
+        var commands     = this.Commands[..this.Buffer.Length];
 
         for (var i = 0; i < commands.Length; i++)
         {
@@ -543,31 +527,27 @@ public sealed class Text : Layoutable
 
             if (command.Surrogate != TextCommand.SurrogateKind.Low)
             {
-                commands[i].ObjectId = CombineIds(elementIndex, i + 1);
+                commands[i].Metadata = CombineIds(elementIndex, i + 1);
             }
             else
             {
-                command.ObjectId = commands[i - 1].ObjectId;
+                command.Metadata = commands[i - 1].Metadata;
             }
         }
     }
 
-    protected override void OnRemoved(Node parent)
+    private protected override void OnDisconnectingInternal()
     {
-        switch (parent)
-        {
-            case Element parentElement:
-                this.HandleRemoved(parentElement);
-                break;
+        base.OnDisconnectingInternal();
 
-            case ShadowTree shadowTree:
-                this.HandleRemoved(shadowTree.Host);
-                break;
+        if (this.CompositeParent is Element parentElement)
+        {
+            this.HandleRemoved(parentElement);
         }
     }
 
     internal void AdjustScroll() =>
-        this.ComposedParentElement?.ScrollTo(this.GetCursorBoundings());
+        this.CompositeParentElement?.ScrollTo(this.GetCursorBoundings());
 
     internal void ClearCaret()
     {
@@ -597,7 +577,9 @@ public sealed class Text : Layoutable
 
         if (IsSelectingText)
         {
-            this.RenderTree!.Window.MouseMove += this.WindowOnMouseMove;
+            Debug.Assert(this.Scene?.Viewport?.Window != null);
+
+            this.Scene.Viewport.Window.MouseMove += this.WindowOnMouseMove;
         }
     }
 
@@ -626,20 +608,9 @@ public sealed class Text : Layoutable
         ActiveText = this;
     }
 
-    private void WindowOnMouseMove(in WindowMouseEvent mouseEvent)
-    {
-        if (mouseEvent.IsHoldingPrimaryButton)
-        {
-            this.UpdateSelection(mouseEvent.X, mouseEvent.Y);
-        }
-        else
-        {
-            this.RenderTree!.Window.MouseMove -= this.WindowOnMouseMove;
-            this.HandleDeactivate();
-        }
-    }
-
+#pragma warning disable CA1822
     internal void HandleDeactivate() => ActiveText = null;
+#pragma warning restore CA1822
 
     internal void PropagateSelection(uint characterPosition)
     {
@@ -677,7 +648,7 @@ public sealed class Text : Layoutable
             return;
         }
 
-        var cursor = this.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
+        var cursor = this.Matrix.Inverse() * new Vector2<float>(x, -y);
 
         if (cursor == this.previouCursor)
         {
@@ -697,7 +668,7 @@ public sealed class Text : Layoutable
 
         for (var i = 0; i < lineSpan.Length; i++)
         {
-            var rect = ((TextCommand)this.Commands[(int)lineSpan[i].Start]).GetAffineRect();
+            var rect = this.Commands[(int)lineSpan[i].Start].GetAffineRect();
 
             if (isOnCursorLine(rect))
             {
@@ -712,29 +683,17 @@ public sealed class Text : Layoutable
         this.CursorPosition = position;
     }
 
-    private void SetCaret(ushort x, ushort y, uint position)
-    {
-        if (!this.CanSelect)
-        {
-            return;
-        }
-
-        this.GetCharacterOffset(x, y, ref position);
-
-        this.CursorPosition = position;
-    }
-
     internal override void UpdateLayout()
     {
         if (this.Buffer.IsEmpty)
         {
             if (this.textIsDirty)
             {
-                this.Commands.RemoveAt(this.Commands.Count - 1);
+                this.RemoveCommandAt(^1);
 
-                ReleaseCommands(this.Commands, this.Commands.Count);
+                this.ReleaseCommands(this.Commands.Length, CommandPool.TextCommand);
 
-                this.Commands.Add(this.caretCommand);
+                this.AddCommand(this.caretCommand);
 
                 this.Selection = default;
                 this.Boundings = default;
@@ -769,7 +728,7 @@ public sealed class Text : Layoutable
             return;
         }
 
-        var cursor = this.TransformWithOffset.Matrix.Inverse() * new Vector2<float>(x, -y);
+        var cursor = this.Matrix.Inverse() * new Vector2<float>(x, -y);
 
         if (cursor == this.previouCursor)
         {
@@ -784,11 +743,11 @@ public sealed class Text : Layoutable
         var startIndex = int.Min((int)selection.Start, textLength - 1);
         var endIndex   = int.Min((int)selection.End, textLength - 1);
 
-        var lineSpan     = this.textLines.AsSpan();
-        var commandsSpan = this.Commands.AsSpan();
+        var lineSpan = this.textLines.AsSpan();
+        var commands = this.Commands;
 
-        var startAnchor = (TextCommand)commandsSpan[startIndex];
-        var endAnchor   = (TextCommand)commandsSpan[endIndex];
+        var startAnchor = (TextCommand)commands[startIndex];
+        var endAnchor   = (TextCommand)commands[endIndex];
 
         var startAnchorRect = startAnchor.GetAffineRect();
         var endAnchorRect   = endAnchor.GetAffineRect();
@@ -805,11 +764,11 @@ public sealed class Text : Layoutable
             {
                 position = (uint)textLength;
 
-                scanBelow(commandsSpan, endAnchor.Line, lineSpan.Length, lineSpan, ref position);
+                scanBelow(commands, endAnchor.Line, lineSpan.Length, lineSpan, ref position);
             }
             else
             {
-                scanAbove(commandsSpan, endAnchor.Line, startAnchor.Line, lineSpan, ref position);
+                scanAbove(commands, endAnchor.Line, startAnchor.Line, lineSpan, ref position);
             }
         }
         else
@@ -818,11 +777,11 @@ public sealed class Text : Layoutable
             {
                 position = 0;
 
-                scanAbove(commandsSpan, endAnchor.Line, -1, lineSpan, ref position);
+                scanAbove(commands, endAnchor.Line, -1, lineSpan, ref position);
             }
             else
             {
-                scanBelow(commandsSpan, endAnchor.Line, startAnchor.Line + 1, lineSpan, ref position);
+                scanBelow(commands, endAnchor.Line, startAnchor.Line + 1, lineSpan, ref position);
             }
         }
 
@@ -830,7 +789,7 @@ public sealed class Text : Layoutable
         this.CursorPosition = position;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void resolveLine(scoped ReadOnlySpan<TextLine> lines, int index, ref uint position) =>
+        void resolveLine(ReadOnlySpan<TextLine> lines, int index, ref uint position) =>
             position = isCursorBefore(endAnchorRect)
                 ? lines[index].Start
                 : lines[index].End + 1 == textLength ? (uint)textLength : lines[index].End;
@@ -854,7 +813,7 @@ public sealed class Text : Layoutable
         bool isCursorAboveBottom(in Rect<float> rect) => cursor.Y > rect.Position.Y - rect.Size.Height;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void scanAbove(scoped ReadOnlySpan<Command> commands, int start, int end, scoped ReadOnlySpan<TextLine> lines, ref uint position)
+        void scanAbove(ReadOnlySpan<Command> commands, int start, int end, ReadOnlySpan<TextLine> lines, ref uint position)
         {
             for (var i = start; i > end; i--)
             {
@@ -870,7 +829,7 @@ public sealed class Text : Layoutable
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void scanBelow(scoped ReadOnlySpan<Command> commands, int start, int end, scoped ReadOnlySpan<TextLine> lines, ref uint position)
+        void scanBelow(ReadOnlySpan<Command> commands, int start, int end, ReadOnlySpan<TextLine> lines, ref uint position)
         {
             for (var i = start; i < end; i++)
             {
@@ -912,6 +871,9 @@ public sealed class Text : Layoutable
 
         if (mouseEvent.IsHoldingPrimaryButton)
         {
+            Debug.Assert(this.Scene?.Viewport?.Window != null);
+
+            this.Scene.Viewport.Window.MouseMove -= this.WindowOnMouseMove;
             this.UpdateSelection(mouseEvent.X, mouseEvent.Y, virtualChildIndex - 1);
         }
     }
@@ -991,13 +953,13 @@ public sealed class Text : Layoutable
 
         this.UpdateLayoutIndependentAncestor();
 
-        var rect = ((RectCommand)this.Commands[(int)index]).GetAffineRect();
+        var rect = this.Commands[(int)index].GetAffineRect();
 
-        var transform = this.TransformWithOffset;
+        var matrix = this.Matrix;
 
         var position = new Point<int>(
-            (int)(transform.Position.X  + rect.Position.X),
-            -(int)(transform.Position.Y + rect.Position.Y)
+            (int)(matrix.Translation.X  + rect.Position.X),
+            -(int)(matrix.Translation.Y + rect.Position.Y)
         );
 
         return new(rect.Size.Cast<int>(), position);
@@ -1025,11 +987,11 @@ public sealed class Text : Layoutable
 
         var rect = this.CursorRect;
 
-        var transform = this.TransformWithOffset;
+        var matrix = this.Matrix;
 
         var position = new Point<int>(
-            (int)(transform.Position.X  + rect.Position.X),
-            -(int)(transform.Position.Y + rect.Position.Y)
+            (int)(matrix.Translation.X  + rect.Position.X),
+            -(int)(matrix.Translation.Y + rect.Position.Y)
         );
 
         return new(rect.Size.Cast<int>(), position);
@@ -1046,7 +1008,7 @@ public sealed class Text : Layoutable
 
         this.UpdateLayoutIndependentAncestor();
 
-        var slice = this.Commands.AsSpan((int)textSelection.Start + 1, textSelection.Length);
+        var slice = this.Commands.Slice((int)textSelection.Start + 1, textSelection.Length);
 
         var rect = new Rect<float>();
 
@@ -1057,11 +1019,11 @@ public sealed class Text : Layoutable
             rect.Grow(command.GetAffineRect());
         }
 
-        var transform = this.TransformWithOffset;
+        var matrix = this.Matrix;
 
         rect.Position = new Point<float>(
-            (float)(transform.Position.X + rect.Position.X),
-            -(float)(transform.Position.Y + rect.Position.Y)
+            (float)(matrix.Translation.X + rect.Position.X),
+            -(float)(matrix.Translation.Y + rect.Position.Y)
         );
 
         return rect.Cast<int>();
@@ -1072,7 +1034,7 @@ public sealed class Text : Layoutable
         this.caretIsDirty   = true;
         this.caretIsVisible = false;
 
-        this.caretCommand.PipelineVariant = default;
+        this.caretCommand.CommandFilter = default;
 
         this.caretTimer.Stop();
 
@@ -1084,7 +1046,7 @@ public sealed class Text : Layoutable
         this.caretIsDirty   = true;
         this.caretIsVisible = true;
 
-        this.caretCommand.PipelineVariant = PipelineVariant.Color;
+        this.caretCommand.CommandFilter = CommandFilter.Color;
 
         this.caretTimer.Start();
 

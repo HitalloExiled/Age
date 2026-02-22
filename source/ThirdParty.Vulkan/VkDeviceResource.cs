@@ -7,7 +7,7 @@ public abstract class VkDeviceResource<T> : DisposableManagedHandle<T> where T :
     internal VkInstance       Instance       => this.Device.PhysicalDevice.Instance;
     internal VkPhysicalDevice PhysicalDevice => this.Device.PhysicalDevice;
 
-    internal VkDeviceResource(VkDevice device) : base() =>
+    internal VkDeviceResource(VkDevice device) =>
         this.Device = device;
 
     internal VkDeviceResource(VkHandle<T> handle, VkDevice device) : base(handle) =>
