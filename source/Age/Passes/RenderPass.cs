@@ -28,7 +28,7 @@ public abstract class RenderPass : RenderGraphNode<Texture2D>
 
         this.Record(renderContext);
 
-        this.CommandBuffer.EndRenderPass();
+        this.CommandBuffer.EndRenderPass(this.RenderTarget);
     }
 
     protected abstract void Record(RenderContext context);

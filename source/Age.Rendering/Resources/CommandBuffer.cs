@@ -161,8 +161,12 @@ public sealed class CommandBuffer : Resource<VkCommandBuffer>
     public void End() =>
         this.Instance.End();
 
-    public void EndRenderPass() =>
+    public void EndRenderPass(RenderTarget renderTarget)
+    {
         this.Instance.EndRenderPass();
+
+        renderTarget.UpdateAttachmentLayouts();
+    }
 
     public void NextSubPass() =>
         this.Instance.NextSubPass(VkSubpassContents.Inline);

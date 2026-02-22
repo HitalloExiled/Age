@@ -15,14 +15,14 @@ public sealed partial class RenderTarget
             public TextureUsage Usage;
             public bool         EnableResolve;
 
-            internal static ColorAttachmentInfo From(Image image) =>
+            internal static ColorAttachmentInfo From(Image image, ImageLayout finalLayout) =>
                 new()
                 {
                     Image       = image,
                     Format      = (TextureFormat)image.Format,
                     SampleCount = (SampleCount)image.Samples,
                     Usage       = (TextureUsage)image.Usage,
-                    FinalLayout = (ImageLayout)image.FinalLayout,
+                    FinalLayout = finalLayout,
                 };
 
             public override readonly int GetHashCode() =>

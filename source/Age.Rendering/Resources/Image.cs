@@ -17,12 +17,11 @@ public sealed class Image : Resource<VkImage>
 
     public VkExtent3D         Extent        { get; }
     public VkFormat           Format        { get; }
-    public VkImageLayout      InitialLayout { get; }
     public VkSampleCountFlags Samples       { get; }
     public VkImageType        Type          { get; }
     public VkImageUsageFlags  Usage         { get; }
 
-    public VkImageLayout FinalLayout { get; private set; }
+    public VkImageLayout Layout { get; internal set; }
 
     public VkImageAspectFlags Aspect
     {
@@ -171,19 +170,18 @@ public sealed class Image : Resource<VkImage>
             _ => 0,
         };
 
-    internal Image(VkImage instance, in VkImageCreateInfo description, VkImageLayout finalLayout)
+    internal Image(VkImage instance, in VkImageCreateInfo description)
     {
-        this.Instance      = instance;
-        this.Extent        = description.Extent;
-        this.Format        = description.Format;
-        this.Type          = description.ImageType;
-        this.InitialLayout = description.InitialLayout;
-        this.Samples       = description.Samples;
-        this.Usage         = description.Usage;
-        this.FinalLayout   = finalLayout;
+        this.Instance = instance;
+        this.Extent   = description.Extent;
+        this.Format   = description.Format;
+        this.Layout   = description.InitialLayout;
+        this.Samples  = description.Samples;
+        this.Type     = description.ImageType;
+        this.Usage    = description.Usage;
     }
 
-    public Image(in VkImageCreateInfo createInfo, VkImageLayout finalLayout = default)
+    public Image(in VkImageCreateInfo createInfo)
     {
         this.Instance = VulkanRenderer.Singleton.Context.Device.CreateImage(createInfo);
         this.Instance.GetMemoryRequirements(out var memRequirements);
@@ -200,13 +198,12 @@ public sealed class Image : Resource<VkImage>
 
         this.Instance.BindMemory(deviceMemory, 0);
 
-        this.Extent        = createInfo.Extent;
-        this.Format        = createInfo.Format;
-        this.Type          = createInfo.ImageType;
-        this.Usage         = createInfo.Usage;
-        this.InitialLayout = createInfo.InitialLayout;
-        this.Samples       = createInfo.Samples;
-        this.FinalLayout   = finalLayout;
+        this.Extent  = createInfo.Extent;
+        this.Format  = createInfo.Format;
+        this.Type    = createInfo.ImageType;
+        this.Usage   = createInfo.Usage;
+        this.Layout  = createInfo.InitialLayout;
+        this.Samples = createInfo.Samples;
 
         this.allocation = new()
         {
@@ -216,23 +213,6 @@ public sealed class Image : Resource<VkImage>
             Offset     = 0,
             Size       = memRequirements.Size,
         };
-
-        if (finalLayout != createInfo.InitialLayout)
-        {
-            this.TransitionLayout(createInfo.InitialLayout, finalLayout);
-        }
-    }
-
-    public static Image[] Create(in VkImageCreateInfo createInfo, int count)
-    {
-        var images = new Image[count];
-
-        for (var i = 0; i < count; i++)
-        {
-            images[i] = new(createInfo);
-        }
-
-        return images;
     }
 
     private Buffer ReadBuffer(VkImageAspectFlags aspectMask, out nint data)
@@ -270,6 +250,94 @@ public sealed class Image : Resource<VkImage>
         }
     }
 
+    private void TransitionLayout(CommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout)
+    {
+        VkPipelineStageFlags srcStage;
+        VkPipelineStageFlags dstStage;
+        VkAccessFlags        srcAccessMask;
+        VkAccessFlags        dstAccessMask;
+
+        switch ((oldLayout, newLayout))
+        {
+            case (VkImageLayout.Undefined, VkImageLayout.TransferDstOptimal):
+                srcStage = VkPipelineStageFlags.TopOfPipe;
+                dstStage = VkPipelineStageFlags.Transfer;
+
+                srcAccessMask = default;
+                dstAccessMask = VkAccessFlags.TransferWrite;
+
+                break;
+
+            case (VkImageLayout.TransferSrcOptimal, VkImageLayout.ColorAttachmentOptimal):
+                srcStage = VkPipelineStageFlags.Transfer;
+                dstStage = VkPipelineStageFlags.ColorAttachmentOutput;
+
+                srcAccessMask = VkAccessFlags.TransferRead;
+                dstAccessMask = VkAccessFlags.ColorAttachmentWrite;
+
+                break;
+
+            case (VkImageLayout.TransferSrcOptimal, VkImageLayout.ShaderReadOnlyOptimal):
+                srcStage = VkPipelineStageFlags.Transfer;
+                dstStage = VkPipelineStageFlags.FragmentShader;
+
+                srcAccessMask = VkAccessFlags.TransferRead;
+                dstAccessMask = VkAccessFlags.ShaderRead;
+
+                break;
+
+            case (VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal):
+                srcStage = VkPipelineStageFlags.Transfer;
+                dstStage = VkPipelineStageFlags.FragmentShader;
+
+                srcAccessMask = VkAccessFlags.TransferWrite;
+                dstAccessMask = VkAccessFlags.ShaderRead;
+
+                break;
+
+            case (VkImageLayout.ShaderReadOnlyOptimal, VkImageLayout.TransferSrcOptimal):
+                srcStage = VkPipelineStageFlags.FragmentShader;
+                dstStage = VkPipelineStageFlags.Transfer;
+
+                srcAccessMask = VkAccessFlags.ShaderRead;
+                dstAccessMask = VkAccessFlags.TransferRead;
+
+                break;
+
+            case (VkImageLayout.ShaderReadOnlyOptimal, VkImageLayout.TransferDstOptimal):
+                srcStage = VkPipelineStageFlags.FragmentShader;
+                dstStage = VkPipelineStageFlags.Transfer;
+
+                srcAccessMask = VkAccessFlags.ShaderRead;
+                dstAccessMask = VkAccessFlags.TransferWrite;
+
+                break;
+            default:
+                throw new Exception($"Unsupported layout transition! - {oldLayout} -> {newLayout}");
+        }
+
+        var imageMemoryBarrier = new VkImageMemoryBarrier
+        {
+            DstAccessMask       = dstAccessMask,
+            DstQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
+            Image               = this.Instance.Handle,
+            NewLayout           = newLayout,
+            OldLayout           = oldLayout,
+            SrcAccessMask       = srcAccessMask,
+            SrcQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
+            SubresourceRange    = new()
+            {
+                AspectMask = VkImageAspectFlags.Color,
+                LayerCount = 1,
+                LevelCount = 1,
+            }
+        };
+
+        commandBuffer.Instance.PipelineBarrier(srcStage, dstStage, default, [], [], [imageMemoryBarrier]);
+
+        this.Layout = newLayout;
+    }
+
     protected override void OnDisposed()
     {
         if (this.allocation != null)
@@ -297,7 +365,7 @@ public sealed class Image : Resource<VkImage>
             LayerCount = 1,
         };
 
-        this.TransitionLayout(commandBuffer, this.InitialLayout, VkImageLayout.TransferDstOptimal);
+        this.TransitionLayout(commandBuffer, this.Layout, VkImageLayout.TransferDstOptimal);
 
         commandBuffer.ClearImageColor(this, VkImageLayout.TransferDstOptimal, clearColor, [range]);
 
@@ -332,13 +400,20 @@ public sealed class Image : Resource<VkImage>
 
     public void CopyToBuffer(Buffer buffer, VkImageAspectFlags aspectMask = VkImageAspectFlags.Color)
     {
+        if (this.Layout == VkImageLayout.Undefined)
+        {
+            return;
+        }
+
         var commandBuffer = CommandBuffer.BeginSingleTimeCommands();
 
-        this.TransitionLayout(commandBuffer, VkImageLayout.ShaderReadOnlyOptimal, VkImageLayout.TransferSrcOptimal);
+        var previous = this.Layout;
+
+        this.TransitionLayout(commandBuffer, this.Layout, VkImageLayout.TransferSrcOptimal);
 
         this.CopyToBuffer(commandBuffer, buffer, aspectMask);
 
-        this.TransitionLayout(commandBuffer, VkImageLayout.TransferSrcOptimal, VkImageLayout.ColorAttachmentOptimal);
+        this.TransitionLayout(commandBuffer, this.Layout, previous);
 
         CommandBuffer.EndSingleTimeCommands(commandBuffer);
     }
@@ -364,83 +439,13 @@ public sealed class Image : Resource<VkImage>
     public NativeArray<ulong> ReadBuffer64bits(VkImageAspectFlags aspectMask = VkImageAspectFlags.Color) =>
         this.ReadBuffer<ulong>(aspectMask);
 
-    public void TransitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout)
+    public void TransitionLayout(VkImageLayout newLayout)
     {
         var commandBuffer = CommandBuffer.BeginSingleTimeCommands();
 
-        this.TransitionLayout(commandBuffer, oldLayout, newLayout);
+        this.TransitionLayout(commandBuffer, this.Layout, newLayout);
 
         CommandBuffer.EndSingleTimeCommands(commandBuffer);
-    }
-
-    public void TransitionLayout(CommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout)
-    {
-        VkPipelineStageFlags srcStage;
-        VkPipelineStageFlags dstStage;
-        VkAccessFlags        srcAccessMask;
-        VkAccessFlags        dstAccessMask;
-
-        switch ((oldLayout, newLayout))
-        {
-            case (VkImageLayout.Undefined, VkImageLayout.TransferDstOptimal):
-                srcStage = VkPipelineStageFlags.TopOfPipe;
-                dstStage = VkPipelineStageFlags.Transfer;
-
-                srcAccessMask = default;
-                dstAccessMask = VkAccessFlags.TransferWrite;
-
-                break;
-
-            case (VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal):
-                srcStage = VkPipelineStageFlags.Transfer;
-                dstStage = VkPipelineStageFlags.FragmentShader;
-
-                srcAccessMask = VkAccessFlags.TransferWrite;
-                dstAccessMask = VkAccessFlags.ShaderRead;
-
-                break;
-
-            case (VkImageLayout.ShaderReadOnlyOptimal, VkImageLayout.TransferSrcOptimal):
-                srcStage = VkPipelineStageFlags.FragmentShader;
-                dstStage = VkPipelineStageFlags.Transfer;
-
-                srcAccessMask = VkAccessFlags.ShaderRead;
-                dstAccessMask = VkAccessFlags.TransferRead;
-
-                break;
-
-            case (VkImageLayout.TransferSrcOptimal, VkImageLayout.ColorAttachmentOptimal):
-                srcStage = VkPipelineStageFlags.Transfer;
-                dstStage = VkPipelineStageFlags.ColorAttachmentOutput;
-
-                srcAccessMask = VkAccessFlags.TransferRead;
-                dstAccessMask = VkAccessFlags.ColorAttachmentWrite;
-
-                break;
-            default:
-                throw new Exception($"Unsupported layout transition! - {oldLayout} -> {newLayout}");
-        }
-
-        var imageMemoryBarrier = new VkImageMemoryBarrier
-        {
-            DstAccessMask       = dstAccessMask,
-            DstQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
-            Image               = this.Instance.Handle,
-            NewLayout           = newLayout,
-            OldLayout           = oldLayout,
-            SrcAccessMask       = srcAccessMask,
-            SrcQueueFamilyIndex = VkConstants.VK_QUEUE_FAMILY_IGNORED,
-            SubresourceRange    = new()
-            {
-                AspectMask = VkImageAspectFlags.Color,
-                LayerCount = 1,
-                LevelCount = 1,
-            }
-        };
-
-        commandBuffer.Instance.PipelineBarrier(srcStage, dstStage, default, [], [], [imageMemoryBarrier]);
-
-        this.FinalLayout = newLayout;
     }
 
     public void Update(ReadOnlySpan<byte> data)
@@ -451,11 +456,11 @@ public sealed class Image : Resource<VkImage>
 
         var commandBuffer = CommandBuffer.BeginSingleTimeCommands();
 
-        this.TransitionLayout(commandBuffer, VkImageLayout.Undefined, VkImageLayout.TransferDstOptimal);
+        this.TransitionLayout(commandBuffer, this.Layout, VkImageLayout.TransferDstOptimal);
 
         this.CopyFromBuffer(commandBuffer, buffer);
 
-        this.TransitionLayout(commandBuffer, VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal);
+        this.TransitionLayout(commandBuffer, this.Layout, VkImageLayout.ShaderReadOnlyOptimal);
 
         CommandBuffer.EndSingleTimeCommands(commandBuffer);
     }

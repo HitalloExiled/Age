@@ -154,7 +154,7 @@ public sealed partial class RenderTarget : Resource
                     }
                 }
 
-                this.colorAttachments.Add(new(colorTexture, resolveTexture));
+                this.colorAttachments.Add(new(colorTexture, resolveTexture, colorAttachment.FinalLayout));
             }
             else if (attachment.TryGetDepthStencilAttachment(out var depthStencilAttachment))
             {
@@ -172,7 +172,7 @@ public sealed partial class RenderTarget : Resource
 
                 if (depthStencilAttachment.Image != null)
                 {
-                    this.DepthStencilAttachment = new(new(depthStencilAttachment.Image, false, depthStencilAttachment.Aspect));
+                    this.DepthStencilAttachment = new(new(depthStencilAttachment.Image, false, depthStencilAttachment.Aspect), depthStencilAttachment.FinalLayout);
                 }
                 else
                 {
@@ -191,7 +191,7 @@ public sealed partial class RenderTarget : Resource
 
                     var image = new Image(imageCreateInfo);
 
-                    this.DepthStencilAttachment = new(new(image, true, depthStencilAttachment.Aspect));
+                    this.DepthStencilAttachment = new(new(image, true, depthStencilAttachment.Aspect), depthStencilAttachment.FinalLayout);
                 }
 
                 imageViews.Add(this.DepthStencilAttachment.Value.Texture.ImageView);
@@ -363,5 +363,18 @@ public sealed partial class RenderTarget : Resource
         this.DepthStencilAttachment = null;
 
         VulkanRenderer.Singleton.DeferredDispose(this.Framebuffer);
+    }
+
+    internal void UpdateAttachmentLayouts()
+    {
+        foreach (var attachment in this.ColorAttachments)
+        {
+            attachment.Texture.Image.Layout = (VkImageLayout)attachment.FinalLayout;
+        }
+
+        if (this.DepthStencilAttachment != null)
+        {
+            this.DepthStencilAttachment.Value.Texture.Image.Layout = (VkImageLayout)this.DepthStencilAttachment.Value.FinalLayout;
+        }
     }
 }

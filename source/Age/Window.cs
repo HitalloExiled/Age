@@ -170,7 +170,7 @@ public sealed class Window : Viewport
             Size        = this.window.ClientSize,
             Attachments =
             [
-                RenderTarget.CreateInfo.ColorAttachmentInfo.From(image),
+                RenderTarget.CreateInfo.ColorAttachmentInfo.From(image, ImageLayout.PresentSrcKHR),
                 new RenderTarget.CreateInfo.DepthStencilAttachmentInfo
                 {
                     FinalLayout = ImageLayout.DepthStencilAttachmentOptimal,

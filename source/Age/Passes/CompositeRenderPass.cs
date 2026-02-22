@@ -78,7 +78,7 @@ public abstract class CompositeRenderPass : RenderGraphNode<Texture2D>
             pass.InternalRecord(renderContext);
         }
 
-        this.CommandBuffer.EndRenderPass();
+        this.CommandBuffer.EndRenderPass(this.RenderTarget);
     }
 
     protected override void OnConnected()

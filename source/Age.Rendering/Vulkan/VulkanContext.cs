@@ -258,7 +258,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
             };
 
             var swapchain = this.swapchainExtension.CreateSwapchain(swapchainCreateInfo);
-            var vkImages    = swapchain.GetImages();
+            var vkImages  = swapchain.GetImages();
 
             var images = new Image[vkImages.Length];
 
@@ -274,8 +274,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
                         Samples       = VkSampleCountFlags.N1,
                         Usage         = swapchainCreateInfo.ImageUsage,
                         InitialLayout = VkImageLayout.ColorAttachmentOptimal,
-                    },
-                    VkImageLayout.PresentSrcKHR
+                    }
                 );
             }
 
