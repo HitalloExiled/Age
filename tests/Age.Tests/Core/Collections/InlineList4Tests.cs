@@ -6,7 +6,7 @@ public class InlineList4Tests
 {
     private static void AssertIt<T>(in InlineList4<T> list, ReadOnlySpan<T> expected)
     {
-        Assert.Equal(expected.Length, list.Length);
+        Assert.Equal(expected.Length, list.Count);
         Assert.True(expected.SequenceEqual(list));
     }
 
@@ -40,6 +40,50 @@ public class InlineList4Tests
         AssertIt(list, [1]);
 
         list.Remove(1);
+
+        AssertIt(list, []);
+    }
+
+    [Fact]
+    public void RemoveWithReferences()
+    {
+        InlineList4<string> list = ["1", "2", "3", "4"];
+
+        AssertIt(list, ["1", "2", "3", "4"]);
+
+        list.RemoveAt(1, 2);
+
+        AssertIt(list, ["1", "4"]);
+
+        list.RemoveAt(1);
+
+        AssertIt(list, ["1"]);
+
+        list.Remove("1");
+
+        AssertIt(list, []);
+    }
+
+    [Fact]
+    public void Clear()
+    {
+        InlineList4<int> list = [1, 2, 3, 4];
+
+        AssertIt(list, [1, 2, 3, 4]);
+
+        list.Clear();
+
+        AssertIt(list, []);
+    }
+
+    [Fact]
+    public void ClearWithReferences()
+    {
+        InlineList4<string> list = ["1", "2", "3", "4"];
+
+        AssertIt(list, ["1", "2", "3", "4"]);
+
+        list.Clear();
 
         AssertIt(list, []);
     }

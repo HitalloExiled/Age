@@ -38,12 +38,12 @@ public sealed partial class RenderTarget : Resource
 
     public RenderTarget(in CreateInfo createInfo)
     {
-        var attachments = new InlineList4<MultiPassCreateInfo.AttachmentInfo>(createInfo.ColorAttachments.Length + (createInfo.DepthStencilAttachment.HasValue ? 1 : 0));
+        var attachments = new InlineList4<MultiPassCreateInfo.AttachmentInfo>(createInfo.ColorAttachments.Count + (createInfo.DepthStencilAttachment.HasValue ? 1 : 0));
         var dependecies = new InlineList4<MultiPassCreateInfo.SubPassDependency>(createInfo.Dependency.HasValue ? 1 : 0);
 
-        var colorAttachments = new InlineList4<int>(createInfo.ColorAttachments.Length);
+        var colorAttachments = new InlineList4<int>(createInfo.ColorAttachments.Count);
 
-        for (var i = 0; i < createInfo.ColorAttachments.Length; i++)
+        for (var i = 0; i < createInfo.ColorAttachments.Count; i++)
         {
             attachments[i]      = createInfo.ColorAttachments[i];
             colorAttachments[i] = i;
@@ -55,7 +55,7 @@ public sealed partial class RenderTarget : Resource
         {
             attachments[^1] = createInfo.DepthStencilAttachment.Value;
 
-            depthStencilAttachment = attachments.Length - 1;
+            depthStencilAttachment = attachments.Count - 1;
         }
 
         if (createInfo.Dependency.HasValue)
@@ -100,7 +100,7 @@ public sealed partial class RenderTarget : Resource
     [MemberNotNull(nameof(Framebuffer))]
     private void CreateResources(VkRenderPass renderPass, in MultiPassCreateInfo multiPassCreateInfo)
     {
-        this.colorAttachments.EnsureCapacity(multiPassCreateInfo.Attachments.Length);
+        this.colorAttachments.EnsureCapacity(multiPassCreateInfo.Attachments.Count);
 
         var imageViews = new List<VkImageView>(this.colorAttachments.Count);
 
@@ -266,7 +266,7 @@ public sealed partial class RenderTarget : Resource
             {
                 ref readonly var pass = ref passes[i];
 
-                var colorAttachmentReferences        = new NativeList<VkAttachmentReference>(pass.ColorAttachments.Length);
+                var colorAttachmentReferences        = new NativeList<VkAttachmentReference>(pass.ColorAttachments.Count);
                 var resolveAttachmentReferences      = new NativeList<VkAttachmentReference>();
                 var depthStencilAttachmentReferences = new NativeList<VkAttachmentReference>();
 
@@ -274,7 +274,7 @@ public sealed partial class RenderTarget : Resource
                 disposables.Add(resolveAttachmentReferences);
                 disposables.Add(depthStencilAttachmentReferences);
 
-                for (var j = 0; j < pass.ColorAttachments.Length; j++)
+                for (var j = 0; j < pass.ColorAttachments.Count; j++)
                 {
                     var index = pass.ColorAttachments[j];
 

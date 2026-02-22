@@ -12,21 +12,21 @@ public partial struct InlineList8<T> : IEquatable<InlineList8<T>>
 {
     private const int CAPACITY = 8;
 
-    private Buffer buffer;
+    private InlineArray8<T> buffer;
 
-    public int Length { get; private set; }
+    public int Count { get; private set; }
 
     public T this[int index]
     {
         readonly get
         {
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, this.Length);
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, this.Count);
 
             return this.buffer[index];
         }
         set
         {
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, this.Length);
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, this.Count);
 
             this.buffer[index] = value;
         }
@@ -34,15 +34,15 @@ public partial struct InlineList8<T> : IEquatable<InlineList8<T>>
 
     public T this[Index index]
     {
-        readonly get => this.buffer[index.GetOffset(this.Length)];
-        set => this.buffer[index.GetOffset(this.Length)] = value;
+        readonly get => this.buffer[index.GetOffset(this.Count)];
+        set => this.buffer[index.GetOffset(this.Count)] = value;
     }
 
     public InlineList8(int size)
     {
         InlineListException.ThrowsIfExceeds(size, CAPACITY);
 
-        this.Length = size;
+        this.Count = size;
     }
 
     public InlineList8(params ReadOnlySpan<T> elements) : this(elements.Length)
@@ -54,21 +54,24 @@ public partial struct InlineList8<T> : IEquatable<InlineList8<T>>
 
     public void Add(T item)
     {
-        InlineListException.ThrowsIfExceeds(this.Length + 1, CAPACITY);
+        InlineListException.ThrowsIfExceeds(this.Count + 1, CAPACITY);
 
-        this.buffer[this.Length++] = item;
+        this.buffer[this.Count++] = item;
     }
 
     public void Remove(T item) =>
         this.RemoveAt(this.AsSpan().IndexOf(item), 1);
 
+    public void RemoveAt(int index) =>
+        this.RemoveAt(index, 1);
+
     public void RemoveAt(int startIndex, int count)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(startIndex, this.Length);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(startIndex, this.Count);
         ArgumentOutOfRangeException.ThrowIfLessThan(count - startIndex, 0);
 
         var endIndex = startIndex + count;
-        var length   = this.Length - endIndex;
+        var length   = this.Count - endIndex;
 
         var span = this.AsSpan();
 
@@ -80,17 +83,32 @@ public partial struct InlineList8<T> : IEquatable<InlineList8<T>>
             source.CopyTo(destination);
         }
 
-        this.Length = int.Max(this.Length - count, 0);
+        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+        {
+            span[(startIndex + length)..].Clear();
+        }
+
+        this.Count = int.Max(this.Count - count, 0);
     }
 
     public Span<T> AsSpan() =>
-        MemoryMarshal.CreateSpan(ref this.buffer[0], this.Length);
+        MemoryMarshal.CreateSpan(ref this.buffer[0], this.Count);
+
+    public void Clear()
+    {
+        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+        {
+            this.AsSpan().Clear();
+        }
+
+        this.Count = 0;
+    }
 
     public void CopyTo(ref InlineList8<T> other)
     {
         MemoryMarshal.CreateSpan(ref this.buffer[0], CAPACITY).CopyTo(MemoryMarshal.CreateSpan(ref other.buffer[0], CAPACITY));
 
-        other.Length = this.Length;
+        other.Count = this.Count;
     }
 
     public override bool Equals([NotNullWhen(true)] object? obj) =>
