@@ -32,7 +32,7 @@ public sealed partial class RenderTarget : Resource
 
     public DepthStencilAttachment? DepthStencilAttachment { get; private set; }
 
-    public IReadOnlyList<ColorAttachment> ColorAttachments => this.colorAttachments;
+    public ReadOnlySpan<ColorAttachment> ColorAttachments => this.colorAttachments.AsSpan();
 
     public Size<uint> Size { get; }
 
@@ -372,9 +372,6 @@ public sealed partial class RenderTarget : Resource
             attachment.Texture.Image.Layout = (VkImageLayout)attachment.FinalLayout;
         }
 
-        if (this.DepthStencilAttachment != null)
-        {
-            this.DepthStencilAttachment.Value.Texture.Image.Layout = (VkImageLayout)this.DepthStencilAttachment.Value.FinalLayout;
-        }
+        this.DepthStencilAttachment?.Texture.Image.Layout = (VkImageLayout)this.DepthStencilAttachment.Value.FinalLayout;
     }
 }
