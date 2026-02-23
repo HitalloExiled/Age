@@ -23,7 +23,7 @@ public partial class Window : Disposable
     public event WindowMouseEventHandler?   MouseMove;
     public event WindowMouseEventHandler?   MouseUp;
     public event WindowMouseEventHandler?   MouseWheel;
-    public event Action?              Resized;
+    public event Action?                    Resized;
     #endregion events
 
     private static string? className;

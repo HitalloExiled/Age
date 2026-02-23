@@ -173,7 +173,9 @@ internal sealed unsafe partial class VulkanContext : Disposable
     {
         var properties = VkInstance.EnumerateLayerProperties();
 
-        return validationLayers.Overlaps(properties.Select(x => Marshal.PtrToStringAnsi((nint)x.LayerName)!));
+        var propertyNames = properties.Select(x => Marshal.PtrToStringAnsi((nint)x.LayerName)!).ToArray();
+
+        return validationLayers.Overlaps(propertyNames);
     }
 
     private void CreateDevice(out VkDevice device, out VkSwapchainExtensionKHR swapchainExtension, out VkQueue graphicsQueue, out VkQueue presentationQueue)

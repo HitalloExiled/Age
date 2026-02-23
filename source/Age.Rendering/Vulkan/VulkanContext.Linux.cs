@@ -1,4 +1,4 @@
-#if WINDOWS
+#if LINUX
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Age.Numerics;

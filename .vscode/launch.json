@@ -7,7 +7,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/source/Age.Playground/bin/Debug/net10.0/Age.Playground.exe",
+            "program": "${workspaceFolder}/source/Age.Playground/bin/Debug/net10.0/Age.Playground",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
@@ -16,6 +16,9 @@
             "symbolOptions": {
                 "searchMicrosoftSymbolServer": false,
                 "searchNuGetOrgSymbolServer": false,
+            },
+            "env": {
+                "VK_INSTANCE_LAYERS": "VK_LAYER_KHRONOS_validation"
             },
             "enableStepFiltering": true,
         },
