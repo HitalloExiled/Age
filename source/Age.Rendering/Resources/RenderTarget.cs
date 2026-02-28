@@ -211,10 +211,10 @@ public sealed partial class RenderTarget : Resource
         {
             using var disposables = new Disposables();
 
-            using var attachmentDescriptions  = new RefList<VkAttachmentDescription>();
-            using var subpassDescriptions     = new RefList<VkSubpassDescription>();
-            using var depthStencilAttachments = new RefList<VkAttachmentDescription>();
-            using var subpassDependencies     = new RefList<VkSubpassDependency>();
+            using var attachmentDescriptions  = new NativeRefList<VkAttachmentDescription>();
+            using var subpassDescriptions     = new NativeRefList<VkSubpassDescription>();
+            using var depthStencilAttachments = new NativeRefList<VkAttachmentDescription>();
+            using var subpassDependencies     = new NativeRefList<VkSubpassDependency>();
 
             var passes = createInfo.Passes.AsSpan();
 
@@ -308,10 +308,10 @@ public sealed partial class RenderTarget : Resource
                 var subpassDescription = new VkSubpassDescription
                 {
                     PipelineBindPoint       = VkPipelineBindPoint.Graphics,
-                    PColorAttachments       = colorAttachmentReferences.AsPointer(),
-                    PResolveAttachments     = resolveAttachmentReferences.AsPointer(),
+                    PColorAttachments       = colorAttachmentReferences.Buffer,
+                    PResolveAttachments     = resolveAttachmentReferences.Buffer,
                     ColorAttachmentCount    = (uint)colorAttachmentReferences.Count,
-                    PDepthStencilAttachment = depthStencilAttachmentReferences.AsPointer(),
+                    PDepthStencilAttachment = depthStencilAttachmentReferences.Buffer,
                 };
 
                 subpassDescriptions.Add(subpassDescription);
@@ -335,10 +335,10 @@ public sealed partial class RenderTarget : Resource
             var renderPassCreateInfo = new VkRenderPassCreateInfo
             {
                 AttachmentCount = (uint)attachmentDescriptions.Count,
-                PAttachments    = attachmentDescriptions.AsPointer(),
+                PAttachments    = attachmentDescriptions.Buffer,
                 SubpassCount    = (uint)subpassDescriptions.Count,
-                PSubpasses      = subpassDescriptions.AsPointer(),
-                PDependencies   = subpassDependencies.AsPointer(),
+                PSubpasses      = subpassDescriptions.Buffer,
+                PDependencies   = subpassDependencies.Buffer,
                 DependencyCount = (uint)subpassDependencies.Count,
             };
 

@@ -2,7 +2,7 @@ using Age.Core.Collections;
 
 namespace Age.Tests.Core.Collections;
 
-public unsafe class NativeArrayTests
+public unsafe class NativeArrayTest
 {
     private static void AssertIt(NativeArray<int> list, ReadOnlySpan<int> values)
     {
@@ -16,7 +16,29 @@ public unsafe class NativeArrayTests
     {
         using var array = new NativeArray<int>(4);
 
-        var ptr = array.AsPointer();
+        var ptr = array.Buffer;
+
+        ptr[0] = 1;
+        ptr[1] = 2;
+        ptr[2] = 3;
+        ptr[3] = 4;
+
+        AssertIt(array, [1, 2, 3, 4]);
+
+        array[0] = 2;
+        array[1] = 3;
+        array[2] = 4;
+        array[3] = 5;
+
+        AssertIt(array, [2, 3, 4, 5]);
+    }
+
+    [Fact]
+    public void CreateInitialized()
+    {
+        using NativeArray<int> array = [1, 2, 3, 4];
+
+        var ptr = array.Buffer;
 
         ptr[0] = 1;
         ptr[1] = 2;

@@ -7,7 +7,7 @@ using Age.Core.Extensions;
 namespace Age.Core.Collections;
 
 [DebuggerTypeProxy(typeof(InlineList4<>.DebugView))]
-[CollectionBuilder(typeof(InlineListBuilder), nameof(InlineListBuilder.InlineList4))]
+[CollectionBuilder(typeof(Builders), nameof(Builders.InlineList4))]
 public partial struct InlineList4<T> : IEquatable<InlineList4<T>>
 {
     private const int CAPACITY = 4;

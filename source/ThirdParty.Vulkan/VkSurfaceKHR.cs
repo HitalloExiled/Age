@@ -6,7 +6,7 @@ namespace ThirdParty.Vulkan;
 
 #pragma warning disable IDE0001
 
-public sealed unsafe class VkSurfaceKHR : DisposableManagedHandle<VkSurfaceKHR>
+public sealed class VkSurfaceKHR : DisposableManagedHandle<VkSurfaceKHR>
 {
     private readonly VkSurfaceExtensionKHR extension;
 

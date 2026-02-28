@@ -231,7 +231,7 @@ public partial class SKSvg(float pixelsPerInch, SKSize canvasSize)
         return text != "end" ? text == "middle" ? SKTextAlign.Center : SKTextAlign.Left : SKTextAlign.Right;
     }
 
-    private static RefArray<byte> ReadUriBytes(ReadOnlySpan<char> uri)
+    private static NativeRefArray<byte> ReadUriBytes(ReadOnlySpan<char> uri)
     {
         if (!uri.IsEmpty)
         {
@@ -243,7 +243,7 @@ public partial class SKSvg(float pixelsPerInch, SKSize canvasSize)
 
                 var bytesLenght = (uri.Length * 3 / 4) - 2;
 
-                var bytes = new RefArray<byte>(bytesLenght);
+                var bytes = new NativeRefArray<byte>(bytesLenght);
 
                 if (Convert.TryFromBase64Chars(uri, bytes, out var bytesWritten))
                 {
@@ -640,7 +640,7 @@ public partial class SKSvg(float pixelsPerInch, SKSize canvasSize)
         var height = this.ReadNumber(element.Attribute("height")!);
         var rect   = SKRect.Create(x, y, width, height);
 
-        RefArray<byte> bytes = default;
+        NativeRefArray<byte> bytes = default;
 
         var text = ReadHrefString(element);
 

@@ -1,16 +1,17 @@
-using System.Collections;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Core.Collections;
 
-[DebuggerTypeProxy(typeof(NativeArray<>.DebugView))]
-[CollectionBuilder(typeof(Builders), nameof(Builders.NativeArray))]
-public unsafe partial class NativeArray<T> : Disposable, IEnumerable<T> where T : unmanaged
+[DebuggerTypeProxy(typeof(NativeRefArray<>.DebugView))]
+[CollectionBuilder(typeof(Builders), nameof(Builders.NativeRefArray))]
+public unsafe ref partial struct NativeRefArray<T> where T : unmanaged
 {
+    private bool disposed;
+
     private UnsafeArrayBuffer<T> unsafeBuffer;
 
-    public T this[uint index]
+    public readonly T this[uint index]
     {
         get
         {
@@ -26,7 +27,7 @@ public unsafe partial class NativeArray<T> : Disposable, IEnumerable<T> where T 
         }
     }
 
-    public T this[int index]
+    public readonly T this[int index]
     {
         get
         {
@@ -42,7 +43,7 @@ public unsafe partial class NativeArray<T> : Disposable, IEnumerable<T> where T 
         }
     }
 
-    public Span<T> this[Range range]
+    public readonly Span<T> this[Range range]
     {
         get
         {
@@ -52,7 +53,7 @@ public unsafe partial class NativeArray<T> : Disposable, IEnumerable<T> where T 
         }
     }
 
-    public T* Buffer
+    public readonly T* Buffer
     {
         get
         {
@@ -62,70 +63,76 @@ public unsafe partial class NativeArray<T> : Disposable, IEnumerable<T> where T 
         }
     }
 
-    public bool IsEmpty => this.unsafeBuffer.IsEmpty;
-    public int Length   => this.unsafeBuffer.Length;
+    public readonly bool IsEmpty => this.unsafeBuffer.IsEmpty;
+    public readonly int  Length  => this.unsafeBuffer.Length;
 
-    public NativeArray(int size) =>
+    public NativeRefArray(int size) =>
         this.unsafeBuffer = new(size);
 
-    public NativeArray(uint size) =>
+    public NativeRefArray(uint size) =>
         this.unsafeBuffer = new(size);
 
-    public NativeArray(ReadOnlySpan<T> values) =>
+    public NativeRefArray(ReadOnlySpan<T> values) =>
         this.unsafeBuffer = new(values);
 
-    protected override void OnDisposed(bool disposing) =>
+    private readonly void ThrowIfDisposed() =>
+        ObjectDisposedException.ThrowIf(this.disposed, typeof(NativeRefArray<T>));
+
+    public void Dispose()
+    {
+        if (this.disposed)
+        {
+            return;
+        }
+
         this.unsafeBuffer.Dispose();
 
-    IEnumerator IEnumerable.GetEnumerator() =>
-        this.unsafeBuffer.GetEnumerator();
+        this.disposed = true;
+    }
 
-    IEnumerator<T> IEnumerable<T>.GetEnumerator() =>
-        this.unsafeBuffer.GetEnumerator();
-
-    public Span<T> AsSpan()
+    public readonly Span<T> AsSpan()
     {
         this.ThrowIfDisposed();
 
         return this.unsafeBuffer.AsSpan();
     }
 
-    public void Clear()
+    public readonly void Clear()
     {
         this.ThrowIfDisposed();
 
         this.unsafeBuffer.Clear();
     }
 
-    public bool Contains(T item)
+    public readonly bool Contains(T item)
     {
         this.ThrowIfDisposed();
 
         return this.unsafeBuffer.Contains(item);
     }
 
-    public void CopyTo(Span<T> span)
+    public readonly void CopyTo(Span<T> span)
     {
         this.ThrowIfDisposed();
 
         this.unsafeBuffer.CopyTo(span);
     }
 
-    public void CopyTo(Span<T> array, int startIndex)
+    public readonly void CopyTo(Span<T> array, int startIndex)
     {
         this.ThrowIfDisposed();
 
         this.unsafeBuffer.CopyTo(array, startIndex);
     }
 
-    public UnsafeEnumerator<T> GetEnumerator()
+    public readonly UnsafeEnumerator<T> GetEnumerator()
     {
         this.ThrowIfDisposed();
 
         return this.unsafeBuffer.GetEnumerator();
     }
 
-    public int IndexOf(T item)
+    public readonly int IndexOf(T item)
     {
         this.ThrowIfDisposed();
 
@@ -146,13 +153,13 @@ public unsafe partial class NativeArray<T> : Disposable, IEnumerable<T> where T 
         this.unsafeBuffer.ResizeCopy(source);
     }
 
-    public Span<T> Slice(int start, int length)
+    public readonly Span<T> Slice(int start, int length)
     {
         this.ThrowIfDisposed();
 
         return this.unsafeBuffer.Slice(start, length);
     }
 
-    public static implicit operator T*(NativeArray<T> value) => value.Buffer;
-    public static implicit operator Span<T>(NativeArray<T> value) => value.AsSpan();
+    public static implicit operator T*(NativeRefArray<T> value) => value.Buffer;
+    public static implicit operator Span<T>(NativeRefArray<T> value) => value.AsSpan();
 }

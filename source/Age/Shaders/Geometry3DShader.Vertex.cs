@@ -15,9 +15,9 @@ public partial class Geometry3DShader
         public Color          Color    = color;
         public Vector2<float> UV       = uv;
 
-        public static RefArray<VkVertexInputAttributeDescription> GetAttributes()
+        public static NativeRefArray<VkVertexInputAttributeDescription> GetAttributes()
         {
-            var attributes = new RefArray<VkVertexInputAttributeDescription>(3);
+            var attributes = new NativeRefArray<VkVertexInputAttributeDescription>(3);
 
             attributes[0] = new()
             {

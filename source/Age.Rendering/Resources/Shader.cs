@@ -21,7 +21,7 @@ public abstract class Shader(string filepath, VkRenderPass renderPass) : SharedD
 
     public event Action? Changed;
 
-    internal abstract RefArray<VkVertexInputAttributeDescription> GetAttributes();
+    internal abstract NativeRefArray<VkVertexInputAttributeDescription> GetAttributes();
     internal abstract VkVertexInputBindingDescription GetBindings();
 
     public string       Filepath   { get; } = Path.IsPathRooted(filepath) ? filepath : Path.Join(ShadersPath, filepath);
@@ -52,7 +52,7 @@ where TVertexInput : IVertexInput
 {
     protected Shader(string file, RenderTarget renderTarget) : this(file, renderTarget.RenderPass) { }
 
-    internal override RefArray<VkVertexInputAttributeDescription> GetAttributes() => TVertexInput.GetAttributes();
+    internal override NativeRefArray<VkVertexInputAttributeDescription> GetAttributes() => TVertexInput.GetAttributes();
     internal override VkVertexInputBindingDescription             GetBindings()   => TVertexInput.GetBindings();
 
     protected override void OnDisposed(bool disposing)

@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>preview</LangVersion>
+    <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -44,8 +44,4 @@
   </ItemGroup>
 
   <UsingTask TaskName="Build.Tasks.DownloadFileUnzip" AssemblyFile="$(BuildTaskPath)" />
-
-  <Target Name="LogCustomMessageBuildProps" BeforeTargets="Build">
-    <Message Importance="high" Text="[BuildProps] - RuntimeIdentifier: $(RuntimeIdentifier), IsLinux: $(IsLinux), IsWindows: $(IsWindows)" />
-  </Target>
 </Project>

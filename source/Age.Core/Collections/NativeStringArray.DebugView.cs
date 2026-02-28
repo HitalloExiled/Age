@@ -3,12 +3,12 @@ using System.Diagnostics;
 
 namespace Age.Core.Collections;
 
-public partial class NativeStringList
+public partial class NativeStringArray
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
-    internal readonly ref struct DebugView(NativeStringList source)
+    internal readonly ref struct DebugView(NativeStringArray source)
     {
-        private readonly NativeStringList source = source;
+        private readonly NativeStringArray source = source;
 
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
         public readonly string[] Elements => this.source.ToArray();

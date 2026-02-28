@@ -2,7 +2,7 @@ using Age.Core.Collections;
 
 namespace Age.Tests.Core.Collections;
 
-public class NativeStackTests
+public class NativeStackTest
 {
     private static void AssertIt(NativeStack<int> stack, ReadOnlySpan<int> values, int capacity)
     {

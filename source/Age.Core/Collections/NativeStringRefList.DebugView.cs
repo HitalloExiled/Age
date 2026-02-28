@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Age.Core.Collections;
 
-public partial class NativeStringList
+public ref partial struct NativeStringRefList
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
     internal readonly ref struct DebugView(NativeStringList source)

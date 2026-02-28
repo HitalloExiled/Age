@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
-using Age.Core.Collections;
+using Age.Core.Extensions;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan.Interfaces;
 
@@ -22,7 +22,7 @@ public sealed unsafe class VkDevice : DisposableManagedHandle<VkDevice>
     internal VkDevice(VkPhysicalDevice physicalDevice, in VkDeviceCreateInfo createInfo)
     {
         this.PhysicalDevice    = physicalDevice;
-        this.enabledExtensions = [..NativeStringArray.ToArray(createInfo.PpEnabledExtensionNames, createInfo.EnabledExtensionCount)];
+        this.enabledExtensions = [..Array.ToUTF8StringArray(createInfo.PpEnabledExtensionNames, createInfo.EnabledExtensionCount)];
 
         fixed (VkHandle<VkDevice>*    pHandle     = &this.handle)
         fixed (VkDeviceCreateInfo*    pCreateInfo = &createInfo)

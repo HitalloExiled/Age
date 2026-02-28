@@ -2,10 +2,10 @@ using Age.Core.Collections;
 
 namespace Age.Tests.Core.Collections;
 
-public class NativeStringArrayTests
+public class NativeStringArrayTest
 {
     [Fact]
-    public void ToListShouldPass()
+    public void ToArrayShouldPass()
     {
         var list = new[]
         {
@@ -31,7 +31,7 @@ public class NativeStringArrayTests
 
         byte** ppData = stringArrayPtr;
 
-        Assert.True(ppData == stringArrayPtr.AsPointer());
+        Assert.True(ppData == stringArrayPtr.Buffer);
     }
 
     [Fact]

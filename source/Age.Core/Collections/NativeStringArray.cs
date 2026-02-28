@@ -1,63 +1,63 @@
-using System.Runtime.InteropServices;
-using System.Text;
+using System.Runtime.CompilerServices;
 
 namespace Age.Core.Collections;
 
-public unsafe class NativeStringArray : Disposable
+[CollectionBuilder(typeof(Builders), nameof(Builders.NativeStringArray))]
+public unsafe partial class NativeStringArray : Disposable
 {
-    private byte** buffer;
+    private UnsafeStringArrayBuffer unsafeBuffer;
 
-    public int Length { get; }
-
-    public NativeStringArray(ReadOnlySpan<string> source)
+    public string? this[int index]
     {
-        var buffer = (byte**)NativeMemory.Alloc((uint)(sizeof(byte*) * source.Length));
-
-        for (var i = 0; i < source.Length; i++)
+        get
         {
-            var bytes = Encoding.UTF8.GetBytes(source[i]);
+            this.ThrowIfDisposed();
 
-            var pData = (byte*)NativeMemory.Alloc((uint)((sizeof(byte) * bytes.Length) + 1));
-
-            pData[bytes.Length] = 0;
-
-            bytes.AsSpan().CopyTo(new Span<byte>(pData, bytes.Length));
-
-            buffer[i] = pData;
+            return this.unsafeBuffer[index];
         }
+        set
+        {
+            this.ThrowIfDisposed();
 
-        this.buffer = buffer;
-        this.Length = source.Length;
+            this.unsafeBuffer[index] = value;
+        }
     }
 
-    protected override void OnDisposed(bool disposing)
+    public byte** Buffer
     {
-        for (var i = 0; i < this.Length; i++)
+        get
         {
-            NativeMemory.Free(this.buffer[i]);
+            this.ThrowIfDisposed();
+
+            return this.unsafeBuffer.Buffer;
         }
-
-        NativeMemory.Free(this.buffer);
-
-        this.buffer = null;
     }
 
-    public static string[] ToArray(byte** ppSource, uint length)
+    public bool IsEmpty => this.unsafeBuffer.IsEmpty;
+    public int  Length  => this.unsafeBuffer.Length;
+
+    public NativeStringArray(int size) =>
+        this.unsafeBuffer = new(size);
+
+    public NativeStringArray(ReadOnlySpan<string> values) =>
+        this.unsafeBuffer = new(values);
+
+    protected override void OnDisposed(bool disposing) =>
+        this.unsafeBuffer.Dispose();
+
+    public Span<string>.Enumerator GetEnumerator()
     {
-        var result = new string[length];
+        this.ThrowIfDisposed();
 
-        for (var i = 0; i < length; i++)
-        {
-            result[i] = Marshal.PtrToStringAnsi((nint)ppSource[i])!;
-        }
-
-        return result;
+        return this.unsafeBuffer.GetEnumerator();
     }
 
-    public byte** AsPointer() => this.buffer;
+    public string[] ToArray()
+    {
+        this.ThrowIfDisposed();
 
-    public string[] ToArray() =>
-        ToArray(this.buffer, (uint)this.Length);
+        return this.unsafeBuffer.ToArray();
+    }
 
-    public static implicit operator byte**(NativeStringArray value) => value.buffer;
+    public static implicit operator byte**(NativeStringArray value) => value.Buffer;
 }

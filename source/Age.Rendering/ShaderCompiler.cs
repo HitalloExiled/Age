@@ -106,9 +106,9 @@ public partial class ShaderCompiler : Disposable
     {
         var reflection = compileRequest.GetReflection();
 
-        using var bindings                       = new RefList<VkDescriptorSetLayoutBinding>((int)reflection.ParameterCount);
-        using var pipelineShaderStageCreateInfos = new RefList<VkPipelineShaderStageCreateInfo>((int)reflection.EntryPointCount);
-        using var pushConstantRanges             = new RefList<VkPushConstantRange>();
+        using var bindings                       = new NativeRefList<VkDescriptorSetLayoutBinding>((int)reflection.ParameterCount);
+        using var pipelineShaderStageCreateInfos = new NativeRefList<VkPipelineShaderStageCreateInfo>((int)reflection.EntryPointCount);
+        using var pushConstantRanges             = new NativeRefList<VkPushConstantRange>();
 
         var entryPoints = reflection.EntryPoints;
         var parameters  = reflection.Parameters;
@@ -136,14 +136,14 @@ public partial class ShaderCompiler : Disposable
             var createInfo = new VkPipelineShaderStageCreateInfo()
             {
                 Module = shaderModule.Handle,
-                PName  = (byte*)entryPointNames.GetHandle(i),
+                PName  = entryPointNames.Buffer[i],
                 Stage  = stage,
             };
 
             pipelineShaderStageCreateInfos.Add(createInfo);
         }
 
-        using var uniformBindings = new RefList<VkDescriptorType>(parameters.Length);
+        using var uniformBindings = new NativeRefList<VkDescriptorType>(parameters.Length);
 
         for (var i = 0; i < parameters.Length; i++)
         {

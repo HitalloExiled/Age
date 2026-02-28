@@ -11,7 +11,6 @@ using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
 using Age.Rendering.Uniforms;
-using Age.Core.Extensions;
 
 namespace Age.Passes;
 

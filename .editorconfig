@@ -340,6 +340,7 @@ dotnet_diagnostic.IDE0002.severity = suggestion # Name can be simplyfied
 dotnet_diagnostic.IDE0004.severity = suggestion # Redundant conversion
 dotnet_diagnostic.IDE0005.severity = suggestion # Remove unnecessary using directives
 dotnet_diagnostic.IDE0010.severity = none       # Add missing cases to switch statement
+dotnet_diagnostic.IDE0028.severity = none       # Collection initialization can be simplified
 dotnet_diagnostic.IDE0032.severity = suggestion # Use auto property
 dotnet_diagnostic.IDE0047.severity = suggestion # Remove unnecessary cast
 dotnet_diagnostic.IDE0049.severity = suggestion # Name can be simplyfied
@@ -354,7 +355,6 @@ dotnet_diagnostic.RCS1123.severity = none       # Add parentheses when
 dotnet_diagnostic.RCS1130.severity = none       # Bitwise operation on enum without Flags attribute
 dotnet_diagnostic.RCS1158.severity = none       # Static member in generic type should use a type parameter
 dotnet_diagnostic.RCS1242.severity = none       # Do not pass non-read-only struct by read-only reference
-
 
 dotnet_diagnostic.RCS0063.severity = none       # Remove unnecessary blank line [deprecated]
 dotnet_diagnostic.RCS1036.severity = suggestion # Remove unnecessary blank line

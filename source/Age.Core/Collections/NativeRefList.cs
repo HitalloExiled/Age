@@ -1,16 +1,17 @@
-using System.Collections;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Core.Collections;
 
-[DebuggerTypeProxy(typeof(NativeList<>.DebugView))]
-[CollectionBuilder(typeof(Builders), nameof(Builders.NativeList))]
-public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T : unmanaged
+[DebuggerTypeProxy(typeof(NativeRefList<>.DebugView))]
+[CollectionBuilder(typeof(Builders), nameof(Builders.NativeRefList))]
+public unsafe ref partial struct NativeRefList<T> where T : unmanaged
 {
+    private bool disposed;
+
     private UnsafeListBuffer<T> unsefeBuffer;
 
-    public T this[uint index]
+    public readonly T this[uint index]
     {
         get => this.unsefeBuffer[(int)index];
         set => this.unsefeBuffer[(int)index] = value;
@@ -18,7 +19,7 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
 
     public T this[int index]
     {
-        get
+        readonly get
         {
             this.ThrowIfDisposed();
 
@@ -34,7 +35,7 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
 
     public int Capacity
     {
-        get => this.unsefeBuffer.Capacity;
+        readonly get => this.unsefeBuffer.Capacity;
         set
         {
             this.ThrowIfDisposed();
@@ -43,9 +44,9 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
         }
     }
 
-    public Span<T> this[Range range] => this.unsefeBuffer[range];
+    public readonly Span<T> this[Range range] => this.unsefeBuffer[range];
 
-    public T* Buffer
+    public readonly T* Buffer
     {
         get
         {
@@ -55,31 +56,17 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
         }
     }
 
-    public int  Count   => this.unsefeBuffer.Count;
-    public bool IsEmpty => this.unsefeBuffer.IsEmpty;
+    public readonly int  Count   => this.unsefeBuffer.Count;
+    public readonly bool IsEmpty => this.unsefeBuffer.IsEmpty;
 
-    public NativeList(int capacity = 0) =>
+    public NativeRefList(int capacity = 0) =>
         this.unsefeBuffer = new(capacity);
 
-    public NativeList(ReadOnlySpan<T> values) =>
+    public NativeRefList(ReadOnlySpan<T> values) =>
         this.unsefeBuffer = new(values);
 
-    protected override void OnDisposed(bool disposing) =>
-        this.unsefeBuffer.Dispose();
-
-    IEnumerator<T> IEnumerable<T>.GetEnumerator()
-    {
-        this.ThrowIfDisposed();
-
-        return this.unsefeBuffer.GetEnumerator();
-    }
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        this.ThrowIfDisposed();
-
-        return this.unsefeBuffer.GetEnumerator();
-    }
+    private readonly void ThrowIfDisposed() =>
+        ObjectDisposedException.ThrowIf(this.disposed, typeof(NativeRefList<T>));
 
     public ref T Add()
     {
@@ -95,7 +82,7 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
         this.unsefeBuffer.Add(item);
     }
 
-    public Span<T> AsSpan()
+    public readonly Span<T> AsSpan()
     {
         this.ThrowIfDisposed();
 
@@ -109,10 +96,10 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
         this.unsefeBuffer.Clear();
     }
 
-    public bool Contains(T item) =>
+    public readonly bool Contains(T item) =>
         this.unsefeBuffer.Contains(item);
 
-    public void CopyTo(Span<T> items, int startIndex) =>
+    public readonly void CopyTo(Span<T> items, int startIndex) =>
         this.unsefeBuffer.CopyTo(items, startIndex);
 
     public void EnsureCapacity(int capacity)
@@ -122,17 +109,29 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
         this.unsefeBuffer.EnsureCapacity(capacity);
     }
 
-    public UnsafeEnumerator<T> GetEnumerator() =>
+    public void Dispose()
+    {
+        if (this.disposed)
+        {
+            return;
+        }
+
+        this.unsefeBuffer.Dispose();
+
+        this.disposed = true;
+    }
+
+    public readonly UnsafeEnumerator<T> GetEnumerator() =>
         this.unsefeBuffer.GetEnumerator();
 
-    public int IndexOf(T item)
+    public readonly int IndexOf(T item)
     {
         this.ThrowIfDisposed();
 
         return this.unsefeBuffer.IndexOf(item);
     }
 
-    public void Insert(int index, in T item)
+    public void Insert(int index, T item)
     {
         this.ThrowIfDisposed();
 
@@ -160,13 +159,13 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
         this.unsefeBuffer.RemoveAt(startIndex, count);
     }
 
-    public Span<T> Slice(int start, int length)
+    public readonly Span<T> Slice(int start, int length)
     {
         this.ThrowIfDisposed();
 
         return this.unsefeBuffer.Slice(start, length);
     }
 
-    public static implicit operator T*(NativeList<T> value) => value.Buffer;
-    public static implicit operator Span<T>(NativeList<T> value) => value.AsSpan();
+    public static implicit operator T*(NativeRefList<T> value) => value.Buffer;
+    public static implicit operator Span<T>(NativeRefList<T> value) => value.AsSpan();
 }

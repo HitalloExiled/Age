@@ -4,12 +4,14 @@ using System.Runtime.CompilerServices;
 namespace Age.Core.Collections;
 
 [DebuggerTypeProxy(typeof(DebugView))]
-[CollectionBuilder(typeof(Builders), nameof(Builders.NativeStringList))]
-public partial class NativeStringList : Disposable
+[CollectionBuilder(typeof(Builders), nameof(Builders.NativeStringRefList))]
+public ref partial struct NativeStringRefList
 {
+    private bool disposed;
+
     private UnsafeStringListBuffer unsafeBuffer;
 
-    public string this[int index]
+    public readonly string this[int index]
     {
         get
         {
@@ -27,7 +29,7 @@ public partial class NativeStringList : Disposable
 
     public int Capacity
     {
-        get => this.unsafeBuffer.Capacity;
+        readonly get => this.unsafeBuffer.Capacity;
         set
         {
             this.ThrowIfDisposed();
@@ -36,7 +38,7 @@ public partial class NativeStringList : Disposable
         }
     }
 
-    public unsafe byte** Buffer
+    public readonly unsafe byte** Buffer
     {
         get
         {
@@ -46,17 +48,17 @@ public partial class NativeStringList : Disposable
         }
     }
 
-    public int  Count   => this.unsafeBuffer.Count;
-    public bool IsEmpty => this.unsafeBuffer.IsEmpty;
+    public readonly int  Count   => this.unsafeBuffer.Count;
+    public readonly bool IsEmpty => this.unsafeBuffer.IsEmpty;
 
-    public NativeStringList(int capacity = 0) =>
+    public NativeStringRefList(int capacity = 0) =>
         this.unsafeBuffer = new(capacity);
 
-    public NativeStringList(ReadOnlySpan<string?> values) =>
+    public NativeStringRefList(ReadOnlySpan<string?> values) =>
         this.unsafeBuffer = new(values);
 
-    protected override void OnDisposed(bool disposing) =>
-        this.unsafeBuffer.Dispose();
+    private readonly void ThrowIfDisposed() =>
+        ObjectDisposedException.ThrowIf(this.disposed, typeof(NativeStringRefList));
 
     public void Add(string? value)
     {
@@ -72,7 +74,19 @@ public partial class NativeStringList : Disposable
         this.unsafeBuffer.Clear();
     }
 
-    public Span<string>.Enumerator GetEnumerator()
+    public void Dispose()
+    {
+        if (this.disposed)
+        {
+            return;
+        }
+
+        this.unsafeBuffer.Dispose();
+
+        this.disposed = true;
+    }
+
+    public readonly Span<string>.Enumerator GetEnumerator()
     {
         this.ThrowIfDisposed();
 
@@ -86,7 +100,7 @@ public partial class NativeStringList : Disposable
         this.unsafeBuffer.Remove(startIndex, count);
     }
 
-    public string[] ToArray()
+    public readonly string[] ToArray()
     {
         this.ThrowIfDisposed();
 
