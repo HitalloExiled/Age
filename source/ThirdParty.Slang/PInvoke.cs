@@ -5,88 +5,113 @@ namespace ThirdParty.Slang;
 internal static unsafe partial class PInvoke
 {
 #if WINDOWS
-    private const string PLATFORM_PATH = "slang";
+    private const string PLATFORM_PATH = "slang-compiler.dll";
 #elif LINUX
-    private const string PLATFORM_PATH = "libslang";
+    private const string PLATFORM_PATH = "libslang-compiler.so";
 #endif
 
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial IBlob* slang_createBlob(void* data, size_t size);
+
     #region SlangGlobalSession
-    // [LibraryImport(PLATFORM_PATH)]
-    // internal static partial SlangResult slang_createGlobalSession(SlangInt apiVersion, Handle<IGlobalSession>* outGlobalSession);
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangResult slang_createGlobalSession(SlangInt apiVersion, IGlobalSession** outGlobalSession);
 
-    // [LibraryImport(PLATFORM_PATH)]
-    // internal static partial void slang_shutdown();
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial void slang_shutdown();
 
-    // [LibraryImport(PLATFORM_PATH)]
-    // internal static partial byte* slang_getLastInternalErrorMessage();
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial byte* slang_getLastInternalErrorMessage();
     #endregion
 
     #region SlangSession
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial Handle<SlangSession> spCreateSession(byte* chars);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial Handle<SlangCompileRequest> spCreateCompileRequest(Handle<SlangSession> session);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial SlangProfileID spFindProfile(Handle<SlangSession> session, byte* name);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial void spDestroySession(Handle<SlangSession> inSession);
     #endregion
 
     #region SlangCompileRequest
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial int spAddCodeGenTarget(Handle<SlangCompileRequest> request, SlangCompileTarget target);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial int spAddEntryPoint(Handle<SlangCompileRequest> request, int translationUnitIndex, byte* name, SlangStage stage);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial void spAddSearchPath(Handle<SlangCompileRequest> request, byte* path);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial int spAddTranslationUnit(Handle<SlangCompileRequest> request, SlangSourceLanguage language, byte* inName);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial void spAddTranslationUnitSourceFile(Handle<SlangCompileRequest> request, int translationUnitIndex, byte* path);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial void spAddTranslationUnitSourceString(Handle<SlangCompileRequest> request, int translationUnitIndex, byte* path, byte* source);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial SlangResult spCompile(Handle<SlangCompileRequest> request);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial void spDestroyCompileRequest(Handle<SlangCompileRequest> request);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial int spGetDependencyFileCount(Handle<SlangCompileRequest> request);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial byte* spGetDependencyFilePath(Handle<SlangCompileRequest> request, int index);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial byte* spGetDiagnosticOutput(Handle<SlangCompileRequest> request);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial void* spGetEntryPointCode(Handle<SlangCompileRequest> request, int entryPointIndex, size_t* outSize);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial Handle<SlangReflection> spGetReflection(Handle<SlangCompileRequest> request);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial void spSetCodeGenTarget(Handle<SlangCompileRequest> request, SlangCompileTarget target);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial void spSetDebugInfoLevel(Handle<SlangCompileRequest> request, SlangDebugInfoLevel level);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial void spSetOptimizationLevel(Handle<SlangCompileRequest> request, SlangOptimizationLevel level);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial void spSetTargetFlags(Handle<SlangCompileRequest> request, int targetIndex, SlangTargetFlags flags);
 
+    [Obsolete]
     [LibraryImport(PLATFORM_PATH)]
     internal static partial void spSetTargetProfile(Handle<SlangCompileRequest> request, int targetIndex, SlangProfileID profile);
     #endregion

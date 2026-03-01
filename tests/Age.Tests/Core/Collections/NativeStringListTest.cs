@@ -24,6 +24,20 @@ public class NativeStringListTest
     }
 
     [Fact]
+    public void AddAndModify()
+    {
+        using NativeStringList list = ["one", "two", "three"];
+
+        AssertList(list, 3, ["one", "two", "three"]);
+
+        list[0] = "four";
+        list[1] = "five";
+        list[2] = "six";
+
+        AssertList(list, 3, ["four", "five", "six"]);
+    }
+
+    [Fact]
     public void Remove()
     {
         using var list = new NativeStringList(["four", "five", "six"]);

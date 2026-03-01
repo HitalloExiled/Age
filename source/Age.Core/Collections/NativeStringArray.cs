@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Core.Collections;
 
+[DebuggerTypeProxy(typeof(DebugView))]
 [CollectionBuilder(typeof(Builders), nameof(Builders.NativeStringArray))]
 public unsafe partial class NativeStringArray : Disposable
 {

@@ -5,7 +5,7 @@ namespace Age.Core.Collections;
 
 [DebuggerTypeProxy(typeof(NativeRefArray<>.DebugView))]
 [CollectionBuilder(typeof(Builders), nameof(Builders.NativeRefArray))]
-public unsafe ref partial struct NativeRefArray<T> where T : unmanaged
+public unsafe ref partial struct NativeRefArray<T> : IDisposable where T : unmanaged
 {
     private bool disposed;
 

@@ -4,7 +4,6 @@ namespace Age.Rendering.Resources;
 
 #pragma warning disable CA1069
 
-
 public enum PipelineStage
 {
     None                             = VkPipelineStageFlags.None,

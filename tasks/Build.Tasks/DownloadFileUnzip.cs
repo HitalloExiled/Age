@@ -6,15 +6,22 @@ using Task = Microsoft.Build.Utilities.Task;
 namespace Build.Tasks;
 
 internal delegate void Log(string message, params object[] messageArgs);
+internal delegate void LogMessage(MessageImportance importance, string message, params object[] messageArgs);
 
 public class Logger(TaskLoggingHelper? helper = null)
 {
-    private readonly Log logMessage = helper != null ? helper.LogMessage : Console.WriteLine;
-    private readonly Log logError   = helper != null ? helper.LogError : Console.WriteLine;
-    private readonly Log logWarning = helper != null ? helper.LogWarning : Console.WriteLine;
+    private readonly LogMessage logMessage = helper != null ? helper.LogMessage : InternalLogMessage;
+    private readonly Log        logError   = helper != null ? helper.LogError : Console.WriteLine;
+    private readonly Log        logWarning = helper != null ? helper.LogWarning : Console.WriteLine;
+
+    private static void InternalLogMessage(MessageImportance importance, string message, params object[] messageArgs) =>
+        Console.WriteLine(message, messageArgs);
 
     public void LogMessage(string message, params object[] messageArgs) =>
-        this.logMessage.Invoke(message, messageArgs);
+        this.logMessage.Invoke(MessageImportance.Normal, message, messageArgs);
+
+    public void LogMessage(MessageImportance importance, string message, params object[] messageArgs) =>
+        this.logMessage.Invoke(importance, message, messageArgs);
 
     public void LogError(string message, params object[] messageArgs) =>
         this.logError.Invoke(message, messageArgs);
@@ -37,7 +44,7 @@ public class DownloadFileUnzip : Task
             {
                 using var client = new HttpClient();
 
-                logger.LogMessage($"Downloading '{url}'...");
+                logger.LogMessage(MessageImportance.High, $"Downloading '{url}'...");
 
                 var response = await client.GetAsync(url);
 

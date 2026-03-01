@@ -376,6 +376,9 @@ dotnet_diagnostic.RCS1135.severity = none # Declare enum member with zero value 
 dotnet_diagnostic.RCS1154.severity = none # Sort enum members
 dotnet_diagnostic.RCS1191.severity = none # Declare enum value as combination of names
 
+# IDE0052: Remove unread private members
+dotnet_diagnostic.IDE0052.severity = none
+
 [*.{csproj,xml,yml,yaml,props}]
 indent_style = space
 indent_size  = 2

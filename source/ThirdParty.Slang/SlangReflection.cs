@@ -4,9 +4,9 @@ using System.Text;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflection(SlangCompileRequest request) : ManagedSlang<SlangReflection>(PInvoke.spGetReflection(request.Handle))
+public unsafe class SlangReflection : ManagedSlang<SlangReflection>
 {
-    public SlangCompileRequest Request { get; } = request;
+    public SlangCompileRequest Request { get; }
 
     [field: AllowNull]
     public SlangReflectionEntryPoint[] EntryPoints
@@ -71,13 +71,22 @@ public unsafe class SlangReflection(SlangCompileRequest request) : ManagedSlang<
         }
     }
 
-    public ulong        EntryPointCount             => PInvoke.spReflection_getEntryPointCount(this.Handle);
-    public ulong        GlobalConstantBufferBinding => PInvoke.spReflection_getGlobalConstantBufferBinding(this.Handle);
-    public ulong        GlobalConstantBufferSize    => PInvoke.spReflection_getGlobalConstantBufferSize(this.Handle);
-    public ulong        HashedStringCount           => PInvoke.spReflection_getHashedStringCount(this.Handle);
-    public uint         ParameterCount              => PInvoke.spReflection_GetParameterCount(this.Handle);
-    public SlangSession Session                     => this.Request.Session;
-    public uint         TypeParameterCount          => PInvoke.spReflection_GetTypeParameterCount(this.Handle);
+    public ulong EntryPointCount             => PInvoke.spReflection_getEntryPointCount(this.Handle);
+    public ulong GlobalConstantBufferBinding => PInvoke.spReflection_getGlobalConstantBufferBinding(this.Handle);
+    public ulong GlobalConstantBufferSize    => PInvoke.spReflection_getGlobalConstantBufferSize(this.Handle);
+    public ulong HashedStringCount           => PInvoke.spReflection_getHashedStringCount(this.Handle);
+    public uint  ParameterCount              => PInvoke.spReflection_GetParameterCount(this.Handle);
+
+    [Obsolete]
+    public SlangSession Session => this.Request.Session;
+
+    public uint TypeParameterCount => PInvoke.spReflection_GetTypeParameterCount(this.Handle);
+
+    internal SlangReflection(Handle<SlangReflection> handle) : base(handle) => this.Request = null!;
+
+    [Obsolete("Use ComponentType.GetLayout")]
+    public SlangReflection(SlangCompileRequest request) : base(PInvoke.spGetReflection(request.Handle)) =>
+        this.Request = request;
 
     public static SlangReflectionType GetTypeFromDecl(SlangReflectionDecl decl) =>
         new(PInvoke.spReflection_getTypeFromDecl(decl.Handle));

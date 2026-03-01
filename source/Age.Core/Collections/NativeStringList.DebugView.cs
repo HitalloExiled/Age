@@ -8,9 +8,7 @@ public partial class NativeStringList
     [EditorBrowsable(EditorBrowsableState.Never)]
     internal readonly ref struct DebugView(NativeStringList source)
     {
-        private readonly NativeStringList source = source;
-
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public readonly string[] Elements => this.source.ToArray();
+        public readonly string[] Elements => source.ToArray();
     }
 }

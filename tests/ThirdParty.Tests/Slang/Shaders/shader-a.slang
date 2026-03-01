@@ -1,11 +1,14 @@
 import shader_b;
 
+module shader_a;
+
 public struct A
 {
     public B B;
     public float Value;
 };
 
+[shader("vertex")]
 float4 main(float4 position : POSITION) : SV_POSITION
 {
     var a = A();

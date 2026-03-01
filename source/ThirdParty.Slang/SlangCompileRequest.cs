@@ -3,6 +3,7 @@ using System.Text;
 
 namespace ThirdParty.Slang;
 
+[Obsolete("Use Module.Link")]
 public unsafe class SlangCompileRequest(SlangSession session) : DisposableManagedSlang<SlangCompileRequest>(PInvoke.spCreateCompileRequest(session.Handle))
 {
     public SlangSession Session { get; } = session;

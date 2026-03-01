@@ -18,9 +18,9 @@ public static partial class Extension
 
             var pData = (byte*)NativeMemory.Alloc((nuint)bytesCount + 1);
 
-            var written = Encoding.UTF8.GetBytes(value, new Span<byte>(pData, bytesCount));
+            Encoding.UTF8.GetBytes(value, new Span<byte>(pData, bytesCount));
 
-            pData[written] = 0;
+            pData[bytesCount] = 0;
 
             return pData;
         }

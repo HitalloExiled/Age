@@ -1,3 +1,5 @@
+#define WINDOWS
+
 #if WINDOWS
 using System.Runtime.CompilerServices;
 using Age.Core.Extensions;

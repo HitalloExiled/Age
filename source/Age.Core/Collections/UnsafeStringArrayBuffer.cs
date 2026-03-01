@@ -5,11 +5,11 @@ using Age.Core.Extensions;
 
 namespace Age.Core.Collections;
 
-internal unsafe struct UnsafeStringArrayBuffer(int size)
+public unsafe struct UnsafeStringArrayBuffer(int size)
 {
-    public byte** Buffer { get; private set; } = (byte**)NativeMemory.Alloc((uint)(sizeof(byte*) * size));
+    public byte** Buffer { get; private set; } = (byte**)NativeMemory.AllocZeroed((uint)(sizeof(byte*) * size));
 
-    public int Length { get; }
+    public int Length { get; } = size;
 
     public readonly string? this[int index]
     {
@@ -37,8 +37,6 @@ internal unsafe struct UnsafeStringArrayBuffer(int size)
         {
             this.Buffer[i] = MemoryMarshal.CreateUTF8StringBuffer(values[i]);
         }
-
-        this.Length = values.Length;
     }
 
     private readonly void CheckIndex(int index)

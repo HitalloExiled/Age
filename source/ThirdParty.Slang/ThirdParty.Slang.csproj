@@ -4,33 +4,39 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <SlangVersion>2026.3.1</SlangVersion>
+    <SlangVersion>2026.4</SlangVersion>
   </PropertyGroup>
 
-  <Target Name="DownloadSlangFiles" BeforeTargets="Restore">
+  <Target Name="DownloadSlangFiles" BeforeTargets="CollectPackageReferences">
     <PropertyGroup Condition="'$(IsWindows)' == 'True'">
       <Platform>windows</Platform>
-      <Filename>slang.dll</Filename>
-      <ArchivePath>bin</ArchivePath>
+      <File>bin/slang-compiler.dll</File>
     </PropertyGroup>
     <PropertyGroup Condition="'$(IsLinux)' == 'True'">
       <Platform>linux</Platform>
-      <Filename>libslang.so</Filename>
-      <ArchivePath>lib</ArchivePath>
+      <File>lib/libslang-compiler.so.0.$(SlangVersion)</File>
     </PropertyGroup>
 
     <PropertyGroup>
       <ZipFilename>slang-$(SlangVersion)-$(Platform)-x86_64.zip</ZipFilename>
       <SlangFilePath>$(ProjectDir)native/$(SlangFile)</SlangFilePath>
       <DownloadUrl>https://github.com/shader-slang/slang/releases/download/v$(SlangVersion)/$(ZipFilename)</DownloadUrl>
-      <Destination>$(ProjectDir)/native</Destination>
+      <Destination>$(ProjectDir)/native/$(RuntimeIdentifier)</Destination>
+      <FileName>$([System.IO.Path]::GetFileName('$(File)'))</FileName>
     </PropertyGroup>
 
     <DownloadFileUnzip
       Url="$(DownloadUrl)"
-      Files="$(ArchivePath)/$(Filename)"
+      Files="$(File)"
       Destination="$(Destination)"
-      Condition="!Exists('$(Destination)/$(Filename)')"
+      Condition="!Exists('$(Destination)')"
+    />
+
+    <Move
+      Condition="$(IsLinux) AND Exists('$(Destination)/$(FileName)')"
+      SourceFiles="$(Destination)/$(FileName)"
+      DestinationFiles="$(Destination)/libslang-compiler.so"
+      OverwriteReadOnlyFiles="true"
     />
   </Target>
 
@@ -42,12 +48,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="./native/*.$(Extension)" CopyToOutputDirectory="PreserveNewest" TargetPath="%(Filename)%(Extension)"/>
+    <None Include="./native/$(RuntimeIdentifier)/*" CopyToOutputDirectory="PreserveNewest" TargetPath="%(Filename)%(Extension)"/>
   </ItemGroup>
-
-  <Target Name="LogCustomMessage" BeforeTargets="Build">
-    <Message Importance="high" Text="RuntimeIdentifier: $(RuntimeIdentifier), IsLinux: $(IsLinux), IsWindows: $(IsWindows)" />
-  </Target>
 
   <ItemGroup>
     <DirectPInvoke Condition="$(IsWindows)" Include="slang" />

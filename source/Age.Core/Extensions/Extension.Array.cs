@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Age.Core.Extensions;
@@ -13,7 +12,7 @@ public static partial class Extension
 
             for (var i = 0; i < length; i++)
             {
-                result[i] = Encoding.UTF8.GetString(MemoryMarshal.CreateReadOnlySpanFromNullTerminated(ppSource[i]));
+                result[i] = Encoding.GetStringFromNullTerminated(ppSource[i])!;
             }
 
             return result;

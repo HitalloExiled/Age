@@ -2,6 +2,7 @@ using System.Text;
 
 namespace ThirdParty.Slang;
 
+[Obsolete("Use GlobalSession.CreateSession")]
 public unsafe class SlangSession : DisposableManagedSlang<SlangSession>
 {
     public SlangSession() : base(PInvoke.spCreateSession(null))
