@@ -10,13 +10,11 @@
   <Target Name="DownloadSlangFiles" BeforeTargets="Restore">
     <PropertyGroup Condition="'$(IsWindows)' == 'True'">
       <Platform>windows</Platform>
-      <Filename>slang.dll</Filename>
-      <ArchivePath>bin</ArchivePath>
+      <Files>bin/slang.dll;bin/slang-compiler.dll</Files>
     </PropertyGroup>
     <PropertyGroup Condition="'$(IsLinux)' == 'True'">
       <Platform>linux</Platform>
-      <Filename>libslang.so</Filename>
-      <ArchivePath>lib</ArchivePath>
+      <Files>lib/libslang.so</Files>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -28,9 +26,9 @@
 
     <DownloadFileUnzip
       Url="$(DownloadUrl)"
-      Files="$(ArchivePath)/$(Filename)"
+      Files="$(Files)"
       Destination="$(Destination)"
-      Condition="!Exists('$(Destination)/$(Filename)')"
+      Condition="!Exists('$(Destination)')"
     />
   </Target>
 
@@ -44,10 +42,6 @@
   <ItemGroup>
     <None Include="./native/*.$(Extension)" CopyToOutputDirectory="PreserveNewest" TargetPath="%(Filename)%(Extension)"/>
   </ItemGroup>
-
-  <Target Name="LogCustomMessage" BeforeTargets="Build">
-    <Message Importance="high" Text="RuntimeIdentifier: $(RuntimeIdentifier), IsLinux: $(IsLinux), IsWindows: $(IsWindows)" />
-  </Target>
 
   <ItemGroup>
     <DirectPInvoke Condition="$(IsWindows)" Include="slang" />

@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Age.Core.Collections;
 
-internal unsafe struct UnsafeListBuffer<T> where T : unmanaged
+public unsafe struct UnsafeListBuffer<T> where T : unmanaged
 {
     public T* Buffer { get; private set; }
 

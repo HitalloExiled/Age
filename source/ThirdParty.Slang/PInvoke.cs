@@ -11,14 +11,14 @@ internal static unsafe partial class PInvoke
 #endif
 
     #region SlangGlobalSession
-    // [LibraryImport(PLATFORM_PATH)]
-    // internal static partial SlangResult slang_createGlobalSession(SlangInt apiVersion, Handle<IGlobalSession>* outGlobalSession);
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial SlangResult slang_createGlobalSession(SlangInt apiVersion, IGlobalSession** outGlobalSession);
 
-    // [LibraryImport(PLATFORM_PATH)]
-    // internal static partial void slang_shutdown();
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial void slang_shutdown();
 
-    // [LibraryImport(PLATFORM_PATH)]
-    // internal static partial byte* slang_getLastInternalErrorMessage();
+    [LibraryImport(PLATFORM_PATH)]
+    internal static partial byte* slang_getLastInternalErrorMessage();
     #endregion
 
     #region SlangSession

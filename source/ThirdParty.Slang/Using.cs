@@ -5,4 +5,6 @@ global using size_t      = ulong;
 global using SlangInt    = long;
 global using SlangResult = int;
 global using SlangUInt   = ulong;
+global using uint16_t    = ushort;
 global using uint32_t    = uint;
+global using uint8_t     = byte;

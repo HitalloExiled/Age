@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Age.Core.Collections;
 
-internal unsafe struct UnsafeArrayBuffer<T>(int size) where T : unmanaged
+public unsafe struct UnsafeArrayBuffer<T>(int size) where T : unmanaged
 {
     public T* Buffer { get; private set; } = (T*)NativeMemory.AllocZeroed((uint)(sizeof(T) * size));
 

@@ -5,7 +5,7 @@ using Age.Core.Extensions;
 
 namespace Age.Core.Collections;
 
-internal unsafe struct UnsafeStringArrayBuffer(int size)
+public unsafe struct UnsafeStringArrayBuffer(int size)
 {
     public byte** Buffer { get; private set; } = (byte**)NativeMemory.Alloc((uint)(sizeof(byte*) * size));
 
