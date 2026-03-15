@@ -3,7 +3,7 @@ using System.Text;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionTypeLayout>
+public unsafe class SlangReflectionTypeLayout : SessionResource<SlangReflectionTypeLayout>
 {
     [field: AllowNull]
     public SlangBindingType[] BindingRangeTypes
@@ -44,16 +44,16 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionType
     }
 
     [field: AllowNull]
-    public SlangReflectionVariableLayout? ContainerVarLayout => field ??= PInvoke.spReflectionTypeLayout_getContainerVarLayout(this.Handle) is var x && x != default ? new(x) : null;
+    public SlangReflectionVariableLayout? ContainerVarLayout => field ??= PInvoke.spReflectionTypeLayout_getContainerVarLayout(this.Handle) is var x && x != default ? new(this.Session, x) : null;
 
     [field: AllowNull]
-    public SlangReflectionTypeLayout? ElementTypeLayout => field ??= PInvoke.spReflectionTypeLayout_GetElementTypeLayout(this.Handle) is var x && x != default ? new(x) : null;
+    public SlangReflectionTypeLayout? ElementTypeLayout => field ??= PInvoke.spReflectionTypeLayout_GetElementTypeLayout(this.Handle) is var x && x != default ? new(this.Session, x) : null;
 
     [field: AllowNull]
-    public SlangReflectionVariableLayout? ElementVarLayout => field ??= PInvoke.spReflectionTypeLayout_GetElementVarLayout(this.Handle) is var x && x != default ? new(x) : null;
+    public SlangReflectionVariableLayout? ElementVarLayout => field ??= PInvoke.spReflectionTypeLayout_GetElementVarLayout(this.Handle) is var x && x != default ? new(this.Session, x) : null;
 
     [field: AllowNull]
-    public SlangReflectionVariableLayout? ExplicitCounter => field ??= PInvoke.spReflectionTypeLayout_GetExplicitCounter(this.Handle) is var x && x != default ? new(x) : null;
+    public SlangReflectionVariableLayout? ExplicitCounter => field ??= PInvoke.spReflectionTypeLayout_GetExplicitCounter(this.Handle) is var x && x != default ? new(this.Session, x) : null;
 
     [field: AllowNull]
     public SlangReflectionVariableLayout[] Fields
@@ -75,13 +75,13 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionType
     }
 
     [field: AllowNull]
-    public SlangReflectionTypeLayout? PendingDataTypeLayout => field ??= PInvoke.spReflectionTypeLayout_getPendingDataTypeLayout(this.Handle) is var x && x != default ? new(x) : null;
+    public SlangReflectionTypeLayout? PendingDataTypeLayout => field ??= PInvoke.spReflectionTypeLayout_getPendingDataTypeLayout(this.Handle) is var x && x != default ? new(this.Session, x) : null;
 
     [field: AllowNull]
-    public SlangReflectionVariableLayout? SpecializedTypePendingDataVarLayout => field ??= PInvoke.spReflectionTypeLayout_getSpecializedTypePendingDataVarLayout(this.Handle) is var x && x != default ? new(x) : null;
+    public SlangReflectionVariableLayout? SpecializedTypePendingDataVarLayout => field ??= PInvoke.spReflectionTypeLayout_getSpecializedTypePendingDataVarLayout(this.Handle) is var x && x != default ? new(this.Session, x) : null;
 
     [field: AllowNull]
-    public SlangReflectionType? Type => field ??= PInvoke.spReflectionTypeLayout_GetType(this.Handle) is var x && x != default ? new(x) : null;
+    public SlangReflectionType? Type => field ??= PInvoke.spReflectionTypeLayout_GetType(this.Handle) is var x && x != default ? new(this.Session, x) : null;
 
     public int                    ParameterAlignment                => PInvoke.spReflectionTypeLayout_getAlignment(this.Handle, this.ParameterCategory);
     public SlangInt               BindingRangeCount                 => PInvoke.spReflectionTypeLayout_getBindingRangeCount(this.Handle);
@@ -98,7 +98,7 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionType
     public ulong                  ParameterStride                   => PInvoke.spReflectionTypeLayout_GetStride(this.Handle, this.ParameterCategory);
     public long                   SubObjectRangeCount               => PInvoke.spReflectionTypeLayout_getSubObjectRangeCount(this.Handle);
 
-    internal SlangReflectionTypeLayout(Handle<SlangReflectionTypeLayout> handle) : base(handle)
+    internal SlangReflectionTypeLayout(Session session, Handle<SlangReflectionTypeLayout> handle) : base(session, handle)
     { }
 
     public long FindFieldIndexByName(string nameBegin, string nameEnd)
@@ -132,10 +132,10 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionType
         PInvoke.spReflectionTypeLayout_getBindingRangeImageFormat(this.Handle, index);
 
     public SlangReflectionTypeLayout GetBindingRangeLeafTypeLayout(long index) =>
-        new(PInvoke.spReflectionTypeLayout_getBindingRangeLeafTypeLayout(this.Handle, index));
+        new(this.Session, PInvoke.spReflectionTypeLayout_getBindingRangeLeafTypeLayout(this.Handle, index));
 
-    public SlangReflectionVariable GetBindingRangeLeafVariable(long index) =>
-        new(PInvoke.spReflectionTypeLayout_getBindingRangeLeafVariable(this.Handle, index));
+    public VariableReflection GetBindingRangeLeafVariable(long index) =>
+        new(this.Session, PInvoke.spReflectionTypeLayout_getBindingRangeLeafVariable(this.Handle, index));
 
     public SlangParameterCategory GetCategoryByIndex(uint index) =>
         PInvoke.spReflectionTypeLayout_GetCategoryByIndex(this.Handle, index);
@@ -165,7 +165,7 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionType
         PInvoke.spReflectionTypeLayout_getFieldBindingRangeOffset(this.Handle, fieldIndex);
 
     public SlangReflectionVariableLayout GetFieldByIndex(uint index) =>
-        new(PInvoke.spReflectionTypeLayout_GetFieldByIndex(this.Handle, index));
+        new(this.Session, PInvoke.spReflectionTypeLayout_GetFieldByIndex(this.Handle, index));
 
     public ulong GetSize(SlangParameterCategory category) =>
         PInvoke.spReflectionTypeLayout_GetSize(this.Handle, category);
@@ -195,13 +195,13 @@ public unsafe class SlangReflectionTypeLayout : ManagedSlang<SlangReflectionType
         PInvoke.spReflectionTypeLayout_getSubObjectRangeObjectCount(this.Handle, index);
 
     public SlangReflectionVariableLayout GetSubObjectRangeOffset(long subObjectRangeIndex) =>
-        new(PInvoke.spReflectionTypeLayout_getSubObjectRangeOffset(this.Handle, subObjectRangeIndex));
+        new(this.Session, PInvoke.spReflectionTypeLayout_getSubObjectRangeOffset(this.Handle, subObjectRangeIndex));
 
     public long GetSubObjectRangeSpaceOffset(long subObjectRangeIndex) =>
         PInvoke.spReflectionTypeLayout_getSubObjectRangeSpaceOffset(this.Handle, subObjectRangeIndex);
 
     public SlangReflectionTypeLayout GetSubObjectRangeTypeLayout(long index) =>
-        new(PInvoke.spReflectionTypeLayout_getSubObjectRangeTypeLayout(this.Handle, index));
+        new(this.Session, PInvoke.spReflectionTypeLayout_getSubObjectRangeTypeLayout(this.Handle, index));
 
     public long IsBindingRangeSpecializable(long index) =>
         PInvoke.spReflectionTypeLayout_isBindingRangeSpecializable(this.Handle, index);

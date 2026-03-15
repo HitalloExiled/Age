@@ -7,7 +7,7 @@ public unsafe struct IComponentType
         internal ISlangUnknown.VTable SlangUnknown;
 
         internal void* GetSession;
-        internal delegate* unmanaged<IComponentType*, SlangInt, IBlob**, Handle<SlangReflection>> GetLayout;
+        internal delegate* unmanaged<IComponentType*, SlangInt, IBlob**, Handle<ShaderReflection>> GetLayout;
         internal void* GetSpecializationParamCount;
         internal delegate* unmanaged<IComponentType*, SlangInt, SlangInt, IBlob**, IBlob**, SlangResult> GetEntryPointCode;
         internal void* GetResultAsFileSystem;

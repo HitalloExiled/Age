@@ -10,7 +10,6 @@ public class SessionTest
     {
         using var globalSession = new GlobalSession(0);
 
-        using NativeStringRefArray       searchPath = [Path.Combine(Path.RootLocation, "./Shaders")];
         using NativeRefArray<TargetDesc> targets =
         [
             new()
@@ -22,8 +21,6 @@ public class SessionTest
 
         var sessionDesc = new SessionDesc
         {
-            SearchPaths     = searchPath,
-            SearchPathCount = searchPath.Length,
             Targets         = targets,
             TargetCount     = targets.Length,
         };

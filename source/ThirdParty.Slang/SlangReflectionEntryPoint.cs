@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflectionEntryPoint : ManagedSlang<SlangReflectionEntryPoint>
+public unsafe class SlangReflectionEntryPoint : SessionResource<SlangReflectionEntryPoint>
 {
     public SlangReflectionFunction Function => new(PInvoke.spReflectionEntryPoint_getFunction(this.Handle));
 
@@ -34,12 +34,12 @@ public unsafe class SlangReflectionEntryPoint : ManagedSlang<SlangReflectionEntr
 
     public int                           HasDefaultConstantBuffer => PInvoke.spReflectionEntryPoint_hasDefaultConstantBuffer(this.Handle);
     public uint                          ParameterCount           => PInvoke.spReflectionEntryPoint_getParameterCount(this.Handle);
-    public SlangReflectionVariableLayout ResultVarLayout          => new(PInvoke.spReflectionEntryPoint_getResultVarLayout(this.Handle));
+    public SlangReflectionVariableLayout ResultVarLayout          => new(this.Session, PInvoke.spReflectionEntryPoint_getResultVarLayout(this.Handle));
     public SlangStage                    Stage                    => PInvoke.spReflectionEntryPoint_getStage(this.Handle);
     public int                           UsesAnySampleRateInput   => PInvoke.spReflectionEntryPoint_usesAnySampleRateInput(this.Handle);
-    public SlangReflectionVariableLayout VarLayout                => new(PInvoke.spReflectionEntryPoint_getVarLayout(this.Handle));
+    public SlangReflectionVariableLayout VarLayout                => new(this.Session, PInvoke.spReflectionEntryPoint_getVarLayout(this.Handle));
 
-    internal SlangReflectionEntryPoint(Handle<SlangReflectionEntryPoint> handle) : base(handle)
+    internal SlangReflectionEntryPoint(Session session, Handle<SlangReflectionEntryPoint> handle) : base(session, handle)
     { }
 
     public void GetComputeThreadGroupSize(ulong axisCount, ReadOnlySpan<ulong> outSizeAlongAxis)
@@ -59,5 +59,5 @@ public unsafe class SlangReflectionEntryPoint : ManagedSlang<SlangReflectionEntr
     }
 
     public SlangReflectionVariableLayout GetParameterByIndex(uint index) =>
-        new(PInvoke.spReflectionEntryPoint_getParameterByIndex(this.Handle, index));
+        new(this.Session, PInvoke.spReflectionEntryPoint_getParameterByIndex(this.Handle, index));
 }

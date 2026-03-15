@@ -4,7 +4,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <SlangVersion>2026.4</SlangVersion>
+    <SlangVersion>2026.4.2</SlangVersion>
   </PropertyGroup>
 
   <Target Name="DownloadSlangFiles" BeforeTargets="CollectPackageReferences">
@@ -40,20 +40,13 @@
     />
   </Target>
 
-  <PropertyGroup Condition="$(IsWindows)">
-    <Extension>dll</Extension>
-  </PropertyGroup>
-  <PropertyGroup Condition="$(IsLinux)">
-    <Extension>so</Extension>
-  </PropertyGroup>
-
   <ItemGroup>
     <None Include="./native/$(RuntimeIdentifier)/*" CopyToOutputDirectory="PreserveNewest" TargetPath="%(Filename)%(Extension)"/>
   </ItemGroup>
 
   <ItemGroup>
-    <DirectPInvoke Condition="$(IsWindows)" Include="slang" />
-    <DirectPInvoke Condition="$(IsLinux)" Include="libslang" />
+    <DirectPInvoke Condition="$(IsWindows)" Include="slang-compiler" />
+    <DirectPInvoke Condition="$(IsLinux)" Include="libslang-compiler" />
   </ItemGroup>
 
 </Project>

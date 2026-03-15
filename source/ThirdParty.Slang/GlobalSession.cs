@@ -4,7 +4,7 @@ namespace ThirdParty.Slang;
 
 public unsafe class GlobalSession : SlangUnknown
 {
-    private new IGlobalSession* Handle => (IGlobalSession*)base.Handle;
+    internal new IGlobalSession* Handle => (IGlobalSession*)base.Handle;
 
     public GlobalSession(uint version) : base(true)
     {

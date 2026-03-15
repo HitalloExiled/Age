@@ -23,6 +23,10 @@ public partial class ShaderCompiler : Disposable
     [MemberNotNullWhen(true, nameof(watcher))]
     private bool Watching { get; }
 
+    private readonly GlobalSession globalSession = new(0);
+
+    private Session session;
+
     public ShaderCompiler(bool watch)
     {
         if (this.Watching = watch)
@@ -31,6 +35,31 @@ public partial class ShaderCompiler : Disposable
 
             this.watcher.Changed += this.OnFileChanged;
         }
+
+        this.session = this.CreateSession();
+    }
+
+    private Session CreateSession()
+    {
+        using NativeStringRefArray       searchPath = [Shader.ShadersPath];
+        using NativeRefArray<TargetDesc> targets    =
+        [
+            new()
+            {
+                Format  = SlangCompileTarget.Spirv,
+                Profile = this.globalSession.FindProfile("spirv_1_5"),
+            }
+        ];
+
+        var sessionDesc = new SessionDesc
+        {
+            SearchPaths     = searchPath,
+            SearchPathCount = searchPath.Length,
+            Targets         = targets,
+            TargetCount     = targets.Length,
+        };
+
+        return this.globalSession.CreateSession(sessionDesc);
     }
 
     private void OnFileChanged(object sender, FileSystemEventArgs fileSystemEventArgs)
@@ -62,6 +91,9 @@ public partial class ShaderCompiler : Disposable
 
     private void OnFileChanged(string filepath)
     {
+        this.session.Dispose();
+        this.session = this.CreateSession();
+
         using var bytes = FileReader.ReadAllBytesAsRef(filepath);
 
         var dependencyHasChanged = !this.watcher!.Files.TryGetValue(filepath, out var fileEntry) || fileEntry.Hash != MD5Hash.Create(bytes);
@@ -102,9 +134,9 @@ public partial class ShaderCompiler : Disposable
             _ => throw new InvalidOperationException("Unsuported shader stage"),
         };
 
-    private unsafe void CreateResources(SlangCompileRequest compileRequest, Shader shader, in ShaderOptions shaderOptions)
+    private unsafe void CreateResources(ComponentType program, Shader shader, in ShaderOptions shaderOptions)
     {
-        var reflection = compileRequest.GetReflection();
+        var reflection = program.GetLayout()!;
 
         using var bindings                       = new NativeRefList<VkDescriptorSetLayoutBinding>((int)reflection.ParameterCount);
         using var pipelineShaderStageCreateInfos = new NativeRefList<VkPipelineShaderStageCreateInfo>((int)reflection.EntryPointCount);
@@ -125,7 +157,7 @@ public partial class ShaderCompiler : Disposable
 
             entryPointNames.Add(entryPoint.Name);
 
-            var shaderModule = CreateShaderModule(compileRequest.GetEntryPointCode(i));
+            var shaderModule = CreateShaderModule(program.GetEntryPointCode(i));
 
             disposables.Add(shaderModule);
 
@@ -182,7 +214,7 @@ public partial class ShaderCompiler : Disposable
                     }
 
                     break;
-                case { Kind: SlangTypeKind.Resource, Type.ResourceShape: SlangResourceShape.Texture2D }:
+                case { Kind: SlangTypeKind.Resource, Type.ResourceShape: SlangResourceShape.Texture2D | SlangResourceShape.TextureCombined }:
                     {
                         uniformBindings.Add(VkDescriptorType.CombinedImageSampler);
 
@@ -401,8 +433,12 @@ public partial class ShaderCompiler : Disposable
         }
     }
 
-    protected override void OnDisposed(bool disposing) =>
+    protected override void OnDisposed(bool disposing)
+    {
         this.watcher?.Dispose();
+        this.session.Dispose();
+        this.globalSession.Dispose();
+    }
 
     private void CompileShader(Shader shader, ReadOnlySpan<byte> source, in ShaderOptions shaderOptions)
     {
@@ -410,42 +446,34 @@ public partial class ShaderCompiler : Disposable
 
         var start = Stopwatch.GetTimestamp();
 
-        using var session = new SlangSession();
-        using var request = new SlangCompileRequest(session);
+        var module = this.session.LoadModule(shader.Filepath);
 
-        var translationUnitIndex = request.AddTranslationUnit(SlangSourceLanguage.Slang, Path.GetFileName(shader.Filepath.AsSpan()));
+        Debug.Assert(module != null);
 
-        request.AddTranslationUnitSourceString(translationUnitIndex, shader.Filepath, source);
-        request.SetCodeGenTarget(SlangCompileTarget.Spirv);
-        request.SetTargetProfile(0, session.FindProfile("spirv_1_0"));
+        using var entrypoints = module.GetDefinedEntryPoints();
 
-        if (request.Compile())
+        Debug.Assert(entrypoints.Length > 0);
+
+        using var composedProgram = this.session.CreateCompositeComponentType([..entrypoints, module]);
+
+        using var program = composedProgram.Link();
+
+        this.CreateResources(program, shader, shaderOptions);
+
+        Logger.Info($"Shader {shader.Filepath} compiled in {Stopwatch.GetElapsedTime(start).Milliseconds}ms.");
+
+        if (this.Watching)
         {
-            this.CreateResources(request, shader, shaderOptions);
+            var dependencies = module.GetDependencyFiles().AsSpan(1);
 
-            Logger.Info($"Shader {shader.Filepath} compiled in {Stopwatch.GetElapsedTime(start).Milliseconds}ms.");
-
-            if (this.Watching)
+            if (dependencies.Length > 0 && dependencies[^1] == GLSL)
             {
-                var dependencies = request.GetDependencyFiles().AsSpan(1);
-
-                if (dependencies.Length > 0 && dependencies[^1] == GLSL)
-                {
-                    dependencies = dependencies[..^1];
-                }
-
-                this.watcher.Update(shader, dependencies);
-
-                this.watcher.Files[shader.Filepath] = new FileEntry(MD5Hash.Create(source));
+                dependencies = dependencies[..^1];
             }
-        }
-        else
-        {
-            var diagnostic = request.GetDiagnosticOutput()!;
 
-            Logger.Error(diagnostic);
+            this.watcher.Update(shader, dependencies);
 
-            throw new ShaderCompilationException(diagnostic);
+            this.watcher.Files[shader.Filepath] = new FileEntry(MD5Hash.Create(source));
         }
     }
 

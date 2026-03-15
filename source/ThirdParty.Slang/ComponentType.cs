@@ -30,11 +30,11 @@ public unsafe class ComponentType : SlangUnknown
         return outCode;
     }
 
-    public SlangReflection? GetLayout(int targetIndex = 0)
+    public ShaderReflection? GetLayout(int targetIndex = 0)
     {
         var handle = this.Handle->Vtbl->GetLayout(this.Handle, targetIndex, null);
 
-        return handle == default ? null : new(handle);
+        return handle == default ? null : new(this.Session, handle);
     }
 
     public static implicit operator IComponentType*(ComponentType componentType) => componentType.Handle;

@@ -1,13 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
+using Age.Core;
 
 namespace ThirdParty.Slang;
 
-public unsafe class SlangReflection : ManagedSlang<SlangReflection>
+public unsafe class ShaderReflection : SessionResource<ShaderReflection>
 {
-    public SlangCompileRequest Request { get; }
-
     [field: AllowNull]
     public SlangReflectionEntryPoint[] EntryPoints
     {
@@ -28,10 +27,10 @@ public unsafe class SlangReflection : ManagedSlang<SlangReflection>
     }
 
     [field: AllowNull]
-    public SlangReflectionTypeLayout GlobalParamsTypeLayout => field ??= new(PInvoke.spReflection_getGlobalParamsTypeLayout(this.Handle));
+    public SlangReflectionTypeLayout GlobalParamsTypeLayout => field ??= new(this.Session, PInvoke.spReflection_getGlobalParamsTypeLayout(this.Handle));
 
     [field: AllowNull]
-    public SlangReflectionVariableLayout GlobalParamsVarLayout => field ??= new(PInvoke.spReflection_getGlobalParamsVarLayout(this.Handle));
+    public SlangReflectionVariableLayout GlobalParamsVarLayout => field ??= new(this.Session, PInvoke.spReflection_getGlobalParamsVarLayout(this.Handle));
 
     [field: AllowNull]
     public SlangReflectionParameter[] Parameters
@@ -77,82 +76,70 @@ public unsafe class SlangReflection : ManagedSlang<SlangReflection>
     public ulong HashedStringCount           => PInvoke.spReflection_getHashedStringCount(this.Handle);
     public uint  ParameterCount              => PInvoke.spReflection_GetParameterCount(this.Handle);
 
-    [Obsolete]
-    public SlangSession Session => this.Request.Session;
-
     public uint TypeParameterCount => PInvoke.spReflection_GetTypeParameterCount(this.Handle);
 
-    internal SlangReflection(Handle<SlangReflection> handle) : base(handle) => this.Request = null!;
+    internal ShaderReflection(Session session, Handle<ShaderReflection> handle) : base(session, handle) { }
 
-    [Obsolete("Use ComponentType.GetLayout")]
-    public SlangReflection(SlangCompileRequest request) : base(PInvoke.spGetReflection(request.Handle)) =>
-        this.Request = request;
-
-    public static SlangReflectionType GetTypeFromDecl(SlangReflectionDecl decl) =>
-        new(PInvoke.spReflection_getTypeFromDecl(decl.Handle));
+    public SlangReflectionType GetTypeFromDecl(SlangReflectionDecl decl) =>
+        new(this.Session, PInvoke.spReflection_getTypeFromDecl(decl.Handle));
 
     public SlangReflectionEntryPoint? FindEntryPointByName(string name)
     {
-        fixed (byte* pName = Encoding.UTF8.GetBytes(name))
+        using var pName = new UnmanagedString(name);
         {
             var handle = PInvoke.spReflection_findEntryPointByName(this.Handle, pName);
 
-            return handle == default ? null : new(handle);
+            return handle == default ? null : new(this.Session, handle);
         }
     }
 
     public SlangReflectionFunction? FindFunctionByName(string name)
     {
-        fixed (byte* pName = Encoding.UTF8.GetBytes(name))
-        {
-            var handle = PInvoke.spReflection_FindFunctionByName(this.Handle, pName);
+        using var pName = new UnmanagedString(name);
 
-            return handle == default ? null : new(handle);
-        }
+        var handle = PInvoke.spReflection_FindFunctionByName(this.Handle, pName);
+
+        return handle == default ? null : new(handle);
     }
 
     public SlangReflectionFunction? FindFunctionByNameInType(SlangReflectionType reflType, string name)
     {
-        fixed (byte* pName = Encoding.UTF8.GetBytes(name))
-        {
-            var handle = PInvoke.spReflection_FindFunctionByNameInType(this.Handle, reflType.Handle, pName);
+        using var pName = new UnmanagedString(name);
 
-            return handle == default ? null : new(handle);
-        }
+        var handle = PInvoke.spReflection_FindFunctionByNameInType(this.Handle, reflType.Handle, pName);
+
+        return handle == default ? null : new(handle);
     }
 
     public SlangReflectionType? FindTypeByName(string name)
     {
-        fixed (byte* pName = Encoding.UTF8.GetBytes(name))
-        {
-            var handle = PInvoke.spReflection_FindTypeByName(this.Handle, pName);
+        using var pName = new UnmanagedString(name);
 
-            return handle == default ? null : new(handle);
-        }
+        var handle = PInvoke.spReflection_FindTypeByName(this.Handle, pName);
+
+        return handle == default ? null : new(this.Session, handle);
     }
 
     public SlangReflectionTypeParameter? FindTypeParameter(string name)
     {
-        fixed (byte* pName = Encoding.UTF8.GetBytes(name))
-        {
-            var handle = PInvoke.spReflection_FindTypeParameter(this.Handle, pName);
+        using var pName = new UnmanagedString(name);
 
-            return handle == default ? null : new(handle);
-        }
+        var handle = PInvoke.spReflection_FindTypeParameter(this.Handle, pName);
+
+        return handle == default ? null : new(this.Session, handle);
     }
 
-    public SlangReflectionVariable? FindVarByNameInType(SlangReflectionType reflType, string name)
+    public VariableReflection? FindVarByNameInType(SlangReflectionType reflType, string name)
     {
-        fixed (byte* pName = Encoding.UTF8.GetBytes(name))
-        {
-            var handle = PInvoke.spReflection_FindVarByNameInType(this.Handle, reflType.Handle, pName);
+        using var pName = new UnmanagedString(name);
 
-            return handle == default ? null : new(handle);
-        }
+        var handle = PInvoke.spReflection_FindVarByNameInType(this.Handle, reflType.Handle, pName);
+
+        return handle == default ? null : new(this.Session, handle);
     }
 
     public SlangReflectionEntryPoint GetEntryPointByIndex(ulong index) =>
-        new(PInvoke.spReflection_getEntryPointByIndex(this.Handle, index));
+        new(this.Session, PInvoke.spReflection_getEntryPointByIndex(this.Handle, index));
 
     public string GetHashedString(ulong index, ReadOnlySpan<ulong> outCount)
     {
@@ -166,10 +153,10 @@ public unsafe class SlangReflection : ManagedSlang<SlangReflection>
         new(PInvoke.spReflection_GetParameterByIndex(this.Handle, index));
 
     public SlangReflectionTypeLayout GetTypeLayout(SlangReflectionType inType, SlangLayoutRules rules) =>
-        new(PInvoke.spReflection_GetTypeLayout(this.Handle, inType.Handle, rules));
+        new(this.Session, PInvoke.spReflection_GetTypeLayout(this.Handle, inType.Handle, rules));
 
     public SlangReflectionTypeParameter GetTypeParameterByIndex(uint index) =>
-        new(PInvoke.spReflection_GetTypeParameterByIndex(this.Handle, index));
+        new(this.Session, PInvoke.spReflection_GetTypeParameterByIndex(this.Handle, index));
 
     public bool IsSubType(SlangReflectionType subType, SlangReflectionType superType) =>
         PInvoke.spReflection_isSubType(this.Handle, subType.Handle, superType.Handle);
@@ -178,7 +165,7 @@ public unsafe class SlangReflection : ManagedSlang<SlangReflection>
     {
         fixed (nint* pOutDiagnostics = outDiagnostics)
         {
-            return new(PInvoke.spReflection_specializeGeneric(this.Handle, generic.Handle, argCount, argTypes.Handle, args.Handle, pOutDiagnostics));
+            return new(this.Session, PInvoke.spReflection_specializeGeneric(this.Handle, generic.Handle, argCount, argTypes.Handle, args.Handle, pOutDiagnostics));
         }
     }
 
@@ -186,7 +173,7 @@ public unsafe class SlangReflection : ManagedSlang<SlangReflection>
     {
         fixed (nint* pOutDiagnostics = outDiagnostics)
         {
-            return new(PInvoke.spReflection_specializeType(this.Handle, inType.Handle, specializationArgCount, specializationArgs.Handle, pOutDiagnostics));
+            return new(this.Session, PInvoke.spReflection_specializeType(this.Handle, inType.Handle, specializationArgCount, specializationArgs.Handle, pOutDiagnostics));
         }
     }
 }

@@ -24,171 +24,76 @@ internal static unsafe partial class PInvoke
     internal static partial byte* slang_getLastInternalErrorMessage();
     #endregion
 
-    #region SlangSession
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangSession> spCreateSession(byte* chars);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangCompileRequest> spCreateCompileRequest(Handle<SlangSession> session);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial SlangProfileID spFindProfile(Handle<SlangSession> session, byte* name);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial void spDestroySession(Handle<SlangSession> inSession);
-    #endregion
-
-    #region SlangCompileRequest
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial int spAddCodeGenTarget(Handle<SlangCompileRequest> request, SlangCompileTarget target);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial int spAddEntryPoint(Handle<SlangCompileRequest> request, int translationUnitIndex, byte* name, SlangStage stage);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial void spAddSearchPath(Handle<SlangCompileRequest> request, byte* path);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial int spAddTranslationUnit(Handle<SlangCompileRequest> request, SlangSourceLanguage language, byte* inName);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial void spAddTranslationUnitSourceFile(Handle<SlangCompileRequest> request, int translationUnitIndex, byte* path);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial void spAddTranslationUnitSourceString(Handle<SlangCompileRequest> request, int translationUnitIndex, byte* path, byte* source);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial SlangResult spCompile(Handle<SlangCompileRequest> request);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial void spDestroyCompileRequest(Handle<SlangCompileRequest> request);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial int spGetDependencyFileCount(Handle<SlangCompileRequest> request);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial byte* spGetDependencyFilePath(Handle<SlangCompileRequest> request, int index);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial byte* spGetDiagnosticOutput(Handle<SlangCompileRequest> request);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial void* spGetEntryPointCode(Handle<SlangCompileRequest> request, int entryPointIndex, size_t* outSize);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflection> spGetReflection(Handle<SlangCompileRequest> request);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial void spSetCodeGenTarget(Handle<SlangCompileRequest> request, SlangCompileTarget target);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial void spSetDebugInfoLevel(Handle<SlangCompileRequest> request, SlangDebugInfoLevel level);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial void spSetOptimizationLevel(Handle<SlangCompileRequest> request, SlangOptimizationLevel level);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial void spSetTargetFlags(Handle<SlangCompileRequest> request, int targetIndex, SlangTargetFlags flags);
-
-    [Obsolete]
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial void spSetTargetProfile(Handle<SlangCompileRequest> request, int targetIndex, SlangProfileID profile);
-    #endregion
-
     #region SlangReflection
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionEntryPoint> spReflection_findEntryPointByName(Handle<SlangReflection> inProgram, byte* name);
+    internal static partial Handle<SlangReflectionEntryPoint> spReflection_findEntryPointByName(Handle<ShaderReflection> inProgram, byte* name);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionFunction> spReflection_FindFunctionByName(Handle<SlangReflection> reflection, byte* name);
+    internal static partial Handle<SlangReflectionFunction> spReflection_FindFunctionByName(Handle<ShaderReflection> reflection, byte* name);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionFunction> spReflection_FindFunctionByNameInType(Handle<SlangReflection> reflection, Handle<SlangReflectionType> reflType, byte* name);
+    internal static partial Handle<SlangReflectionFunction> spReflection_FindFunctionByNameInType(Handle<ShaderReflection> reflection, Handle<SlangReflectionType> reflType, byte* name);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionType> spReflection_FindTypeByName(Handle<SlangReflection> reflection, byte* name);
+    internal static partial Handle<SlangReflectionType> spReflection_FindTypeByName(Handle<ShaderReflection> reflection, byte* name);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionTypeParameter> spReflection_FindTypeParameter(Handle<SlangReflection> inProgram, byte* name);
+    internal static partial Handle<SlangReflectionTypeParameter> spReflection_FindTypeParameter(Handle<ShaderReflection> inProgram, byte* name);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionVariable> spReflection_FindVarByNameInType(Handle<SlangReflection> reflection, Handle<SlangReflectionType> reflType, byte* name);
+    internal static partial Handle<VariableReflection> spReflection_FindVarByNameInType(Handle<ShaderReflection> reflection, Handle<SlangReflectionType> reflType, byte* name);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionEntryPoint> spReflection_getEntryPointByIndex(Handle<SlangReflection> inProgram, SlangUInt index);
+    internal static partial Handle<SlangReflectionEntryPoint> spReflection_getEntryPointByIndex(Handle<ShaderReflection> inProgram, SlangUInt index);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial SlangUInt spReflection_getEntryPointCount(Handle<SlangReflection> inProgram);
+    internal static partial SlangUInt spReflection_getEntryPointCount(Handle<ShaderReflection> inProgram);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial SlangUInt spReflection_getGlobalConstantBufferBinding(Handle<SlangReflection> inProgram);
+    internal static partial SlangUInt spReflection_getGlobalConstantBufferBinding(Handle<ShaderReflection> inProgram);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial size_t spReflection_getGlobalConstantBufferSize(Handle<SlangReflection> inProgram);
+    internal static partial size_t spReflection_getGlobalConstantBufferSize(Handle<ShaderReflection> inProgram);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionTypeLayout> spReflection_getGlobalParamsTypeLayout(Handle<SlangReflection> reflection);
+    internal static partial Handle<SlangReflectionTypeLayout> spReflection_getGlobalParamsTypeLayout(Handle<ShaderReflection> reflection);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionVariableLayout> spReflection_getGlobalParamsVarLayout(Handle<SlangReflection> inProgram);
+    internal static partial Handle<SlangReflectionVariableLayout> spReflection_getGlobalParamsVarLayout(Handle<ShaderReflection> inProgram);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial byte* spReflection_getHashedString(Handle<SlangReflection> reflection, SlangUInt index, size_t* outCount);
+    internal static partial byte* spReflection_getHashedString(Handle<ShaderReflection> reflection, SlangUInt index, size_t* outCount);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial SlangUInt spReflection_getHashedStringCount(Handle<SlangReflection> reflection);
+    internal static partial SlangUInt spReflection_getHashedStringCount(Handle<ShaderReflection> reflection);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionParameter> spReflection_GetParameterByIndex(Handle<SlangReflection> inProgram, uint index);
+    internal static partial Handle<SlangReflectionParameter> spReflection_GetParameterByIndex(Handle<ShaderReflection> inProgram, uint index);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial uint spReflection_GetParameterCount(Handle<SlangReflection> inProgram);
-
-    [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangSession> spReflection_GetSession(Handle<SlangReflection> reflection);
+    internal static partial uint spReflection_GetParameterCount(Handle<ShaderReflection> inProgram);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial Handle<SlangReflectionType> spReflection_getTypeFromDecl(Handle<SlangReflectionDecl> decl);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionTypeLayout> spReflection_GetTypeLayout(Handle<SlangReflection> reflection, Handle<SlangReflectionType> inType, SlangLayoutRules rules);
+    internal static partial Handle<SlangReflectionTypeLayout> spReflection_GetTypeLayout(Handle<ShaderReflection> reflection, Handle<SlangReflectionType> inType, SlangLayoutRules rules);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionTypeParameter> spReflection_GetTypeParameterByIndex(Handle<SlangReflection> reflection, uint index);
+    internal static partial Handle<SlangReflectionTypeParameter> spReflection_GetTypeParameterByIndex(Handle<ShaderReflection> reflection, uint index);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial uint spReflection_GetTypeParameterCount(Handle<SlangReflection> reflection);
+    internal static partial uint spReflection_GetTypeParameterCount(Handle<ShaderReflection> reflection);
 
     [LibraryImport(PLATFORM_PATH)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    internal static partial bool spReflection_isSubType(Handle<SlangReflection> reflection, Handle<SlangReflectionType> subType, Handle<SlangReflectionType> superType);
+    internal static partial bool spReflection_isSubType(Handle<ShaderReflection> reflection, Handle<SlangReflectionType> subType, Handle<SlangReflectionType> superType);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionGeneric> spReflection_specializeGeneric(Handle<SlangReflection> inProgramLayout, Handle<SlangReflectionGeneric> generic, SlangInt argCount, Handle<SlangReflectionGenericArgType> argTypes, Handle<SlangReflectionGenericArg> args, ISlangBlob* outDiagnostics);
+    internal static partial Handle<SlangReflectionGeneric> spReflection_specializeGeneric(Handle<ShaderReflection> inProgramLayout, Handle<SlangReflectionGeneric> generic, SlangInt argCount, Handle<SlangReflectionGenericArgType> argTypes, Handle<SlangReflectionGenericArg> args, ISlangBlob* outDiagnostics);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionType> spReflection_specializeType(Handle<SlangReflection> inProgramLayout, Handle<SlangReflectionType> inType, SlangInt specializationArgCount, Handle<SlangReflectionType> specializationArgs, ISlangBlob* outDiagnostics);
+    internal static partial Handle<SlangReflectionType> spReflection_specializeType(Handle<ShaderReflection> inProgramLayout, Handle<SlangReflectionType> inType, SlangInt specializationArgCount, Handle<SlangReflectionType> specializationArgs, ISlangBlob* outDiagnostics);
     #endregion
 
     #region SlangReflectionEntryPoint
@@ -271,7 +176,7 @@ internal static unsafe partial class PInvoke
     internal static partial Handle<SlangReflectionType> spReflectionType_GetElementType(Handle<SlangReflectionType> inType);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionVariable> spReflectionType_GetFieldByIndex(Handle<SlangReflectionType> inType, uint index);
+    internal static partial Handle<VariableReflection> spReflectionType_GetFieldByIndex(Handle<SlangReflectionType> inType, uint index);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial uint spReflectionType_GetFieldCount(Handle<SlangReflectionType> inType);
@@ -349,7 +254,7 @@ internal static unsafe partial class PInvoke
     internal static partial Handle<SlangReflectionTypeLayout> spReflectionTypeLayout_getBindingRangeLeafTypeLayout(Handle<SlangReflectionTypeLayout> inTypeLayout, SlangInt index);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionVariable> spReflectionTypeLayout_getBindingRangeLeafVariable(Handle<SlangReflectionTypeLayout> inTypeLayout, SlangInt index);
+    internal static partial Handle<VariableReflection> spReflectionTypeLayout_getBindingRangeLeafVariable(Handle<SlangReflectionTypeLayout> inTypeLayout, SlangInt index);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial SlangParameterCategory spReflectionTypeLayout_GetCategoryByIndex(Handle<SlangReflectionTypeLayout> inTypeLayout, uint index);
@@ -485,32 +390,32 @@ internal static unsafe partial class PInvoke
 
     #region SlangReflectionVariable
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionVariable> spReflectionVariable_applySpecializations(Handle<SlangReflectionVariable> var, Handle<SlangReflectionGeneric> generic);
+    internal static partial Handle<VariableReflection> spReflectionVariable_applySpecializations(Handle<VariableReflection> var, Handle<SlangReflectionGeneric> generic);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionModifier> spReflectionVariable_FindModifier(Handle<SlangReflectionVariable> inVar, SlangModifierID modifierID);
+    internal static partial Handle<SlangReflectionModifier> spReflectionVariable_FindModifier(Handle<VariableReflection> inVar, SlangModifierID modifierID);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionUserAttribute> spReflectionVariable_FindUserAttributeByName(Handle<SlangReflectionVariable> inVar, Handle<SlangSession> session, byte* name);
+    internal static partial Handle<SlangReflectionUserAttribute> spReflectionVariable_FindUserAttributeByName(Handle<VariableReflection> inVar, IGlobalSession* session, byte* name);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionGeneric> spReflectionVariable_GetGenericContainer(Handle<SlangReflectionVariable> var);
+    internal static partial Handle<SlangReflectionGeneric> spReflectionVariable_GetGenericContainer(Handle<VariableReflection> var);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial byte* spReflectionVariable_GetName(Handle<SlangReflectionVariable> inVar);
+    internal static partial byte* spReflectionVariable_GetName(Handle<VariableReflection> inVar);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionType> spReflectionVariable_GetType(Handle<SlangReflectionVariable> inVar);
+    internal static partial Handle<SlangReflectionType> spReflectionVariable_GetType(Handle<VariableReflection> inVar);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionUserAttribute> spReflectionVariable_GetUserAttribute(Handle<SlangReflectionVariable> inVar, uint index);
+    internal static partial Handle<SlangReflectionUserAttribute> spReflectionVariable_GetUserAttribute(Handle<VariableReflection> inVar, uint index);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial uint spReflectionVariable_GetUserAttributeCount(Handle<SlangReflectionVariable> inVar);
+    internal static partial uint spReflectionVariable_GetUserAttributeCount(Handle<VariableReflection> inVar);
 
     [LibraryImport(PLATFORM_PATH)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    internal static partial bool spReflectionVariable_HasDefaultValue(Handle<SlangReflectionVariable> inVar);
+    internal static partial bool spReflectionVariable_HasDefaultValue(Handle<VariableReflection> inVar);
     #endregion
 
     #region SlangReflectionVariableLayout
@@ -536,7 +441,7 @@ internal static unsafe partial class PInvoke
     internal static partial Handle<SlangReflectionTypeLayout> spReflectionVariableLayout_GetTypeLayout(Handle<SlangReflectionVariableLayout> inVarLayout);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionVariable> spReflectionVariableLayout_GetVariable(Handle<SlangReflectionVariableLayout> inVarLayout);
+    internal static partial Handle<VariableReflection> spReflectionVariableLayout_GetVariable(Handle<SlangReflectionVariableLayout> inVarLayout);
     #endregion
 
     #region SlangReflectionGeneric
@@ -547,10 +452,10 @@ internal static unsafe partial class PInvoke
     internal static partial Handle<SlangReflectionDecl> spReflectionGeneric_asDecl(Handle<SlangReflectionGeneric> generic);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial int64_t spReflectionGeneric_GetConcreteIntVal(Handle<SlangReflectionGeneric> generic, Handle<SlangReflectionVariable> valueParam);
+    internal static partial int64_t spReflectionGeneric_GetConcreteIntVal(Handle<SlangReflectionGeneric> generic, Handle<VariableReflection> valueParam);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionType> spReflectionGeneric_GetConcreteType(Handle<SlangReflectionGeneric> generic, Handle<SlangReflectionVariable> typeParam);
+    internal static partial Handle<SlangReflectionType> spReflectionGeneric_GetConcreteType(Handle<SlangReflectionGeneric> generic, Handle<VariableReflection> typeParam);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial Handle<SlangReflectionDecl> spReflectionGeneric_GetInnerDecl(Handle<SlangReflectionGeneric> generic);
@@ -565,19 +470,19 @@ internal static unsafe partial class PInvoke
     internal static partial Handle<SlangReflectionGeneric> spReflectionGeneric_GetOuterGenericContainer(Handle<SlangReflectionGeneric> generic);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionVariable> spReflectionGeneric_GetTypeParameter(Handle<SlangReflectionGeneric> generic, uint index);
+    internal static partial Handle<VariableReflection> spReflectionGeneric_GetTypeParameter(Handle<SlangReflectionGeneric> generic, uint index);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial uint spReflectionGeneric_GetTypeParameterConstraintCount(Handle<SlangReflectionGeneric> generic, Handle<SlangReflectionVariable> typeParam);
+    internal static partial uint spReflectionGeneric_GetTypeParameterConstraintCount(Handle<SlangReflectionGeneric> generic, Handle<VariableReflection> typeParam);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionType> spReflectionGeneric_GetTypeParameterConstraintType(Handle<SlangReflectionGeneric> generic, Handle<SlangReflectionVariable> typeParam, uint index);
+    internal static partial Handle<SlangReflectionType> spReflectionGeneric_GetTypeParameterConstraintType(Handle<SlangReflectionGeneric> generic, Handle<VariableReflection> typeParam, uint index);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial uint spReflectionGeneric_GetTypeParameterCount(Handle<SlangReflectionGeneric> generic);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionVariable> spReflectionGeneric_GetValueParameter(Handle<SlangReflectionGeneric> generic, uint index);
+    internal static partial Handle<VariableReflection> spReflectionGeneric_GetValueParameter(Handle<SlangReflectionGeneric> generic, uint index);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial uint spReflectionGeneric_GetValueParameterCount(Handle<SlangReflectionGeneric> generic);
@@ -594,7 +499,7 @@ internal static unsafe partial class PInvoke
     internal static partial Handle<SlangReflectionModifier> spReflectionFunction_FindModifier(Handle<SlangReflectionFunction> inFunc, SlangModifierID modifierID);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionUserAttribute> spReflectionFunction_FindUserAttributeByName(Handle<SlangReflectionFunction> inFunc, Handle<SlangSession> session, byte* name);
+    internal static partial Handle<SlangReflectionUserAttribute> spReflectionFunction_FindUserAttributeByName(Handle<SlangReflectionFunction> inFunc, IGlobalSession* session, byte* name);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial Handle<SlangReflectionGeneric> spReflectionFunction_GetGenericContainer(Handle<SlangReflectionFunction> func);
@@ -609,7 +514,7 @@ internal static unsafe partial class PInvoke
     internal static partial uint spReflectionFunction_getOverloadCount(Handle<SlangReflectionFunction> func);
 
     [LibraryImport(PLATFORM_PATH)]
-    internal static partial Handle<SlangReflectionVariable> spReflectionFunction_GetParameter(Handle<SlangReflectionFunction> inFunc, uint index);
+    internal static partial Handle<VariableReflection> spReflectionFunction_GetParameter(Handle<SlangReflectionFunction> inFunc, uint index);
 
     [LibraryImport(PLATFORM_PATH)]
     internal static partial uint spReflectionFunction_GetParameterCount(Handle<SlangReflectionFunction> inFunc);

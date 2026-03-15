@@ -1,7 +1,6 @@
 namespace ThirdParty.Slang;
 
 public abstract class ManagedSlang<T>
-where T : ManagedSlang<T>
 {
     internal Handle<T> Handle { get; }
 
