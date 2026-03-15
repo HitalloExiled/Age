@@ -1,20 +1,19 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using System.Text;
 using Age.Core;
 
 namespace ThirdParty.Slang;
 
-public unsafe class ShaderReflection : SessionResource<ShaderReflection>
+public unsafe class ShaderReflection : Managed<ShaderReflection>
 {
     [field: AllowNull]
-    public SlangReflectionEntryPoint[] EntryPoints
+    public EntryPointReflection[] EntryPoints
     {
         get
         {
             if (field == null)
             {
-                field = new SlangReflectionEntryPoint[this.EntryPointCount];
+                field = new EntryPointReflection[this.EntryPointCount];
 
                 for (var i = 0; i < field.Length; i++)
                 {
@@ -27,19 +26,19 @@ public unsafe class ShaderReflection : SessionResource<ShaderReflection>
     }
 
     [field: AllowNull]
-    public SlangReflectionTypeLayout GlobalParamsTypeLayout => field ??= new(this.Session, PInvoke.spReflection_getGlobalParamsTypeLayout(this.Handle));
+    public TypeLayoutReflection GlobalParamsTypeLayout => field ??= new(this.Session, PInvoke.spReflection_getGlobalParamsTypeLayout(this.Handle));
 
     [field: AllowNull]
-    public SlangReflectionVariableLayout GlobalParamsVarLayout => field ??= new(this.Session, PInvoke.spReflection_getGlobalParamsVarLayout(this.Handle));
+    public VariableLayoutReflection GlobalParamsVarLayout => field ??= new(this.Session, PInvoke.spReflection_getGlobalParamsVarLayout(this.Handle));
 
     [field: AllowNull]
-    public SlangReflectionParameter[] Parameters
+    public VariableLayoutReflection[] Parameters
     {
         get
         {
             if (field == null)
             {
-                field = new SlangReflectionParameter[this.ParameterCount];
+                field = new VariableLayoutReflection[this.ParameterCount];
 
                 for (var i = 0; i < field.Length; i++)
                 {
@@ -52,13 +51,13 @@ public unsafe class ShaderReflection : SessionResource<ShaderReflection>
     }
 
     [field: AllowNull]
-    public SlangReflectionTypeParameter[] TypeParameters
+    public TypeParameterReflection[] TypeParameters
     {
         get
         {
             if (field == null)
             {
-                field = new SlangReflectionTypeParameter[this.TypeParameterCount];
+                field = new TypeParameterReflection[this.TypeParameterCount];
 
                 for (var i = 0; i < field.Length; i++)
                 {
@@ -75,15 +74,15 @@ public unsafe class ShaderReflection : SessionResource<ShaderReflection>
     public ulong GlobalConstantBufferSize    => PInvoke.spReflection_getGlobalConstantBufferSize(this.Handle);
     public ulong HashedStringCount           => PInvoke.spReflection_getHashedStringCount(this.Handle);
     public uint  ParameterCount              => PInvoke.spReflection_GetParameterCount(this.Handle);
-
-    public uint TypeParameterCount => PInvoke.spReflection_GetTypeParameterCount(this.Handle);
+    public uint  TypeParameterCount          => PInvoke.spReflection_GetTypeParameterCount(this.Handle);
+    public long  BindlessSpaceIndex          => PInvoke.spReflection_getBindlessSpaceIndex(this.Handle);
 
     internal ShaderReflection(Session session, Handle<ShaderReflection> handle) : base(session, handle) { }
 
-    public SlangReflectionType GetTypeFromDecl(SlangReflectionDecl decl) =>
-        new(this.Session, PInvoke.spReflection_getTypeFromDecl(decl.Handle));
+    public TypeReflection GetTypeFromDecl(SlangReflectionDecl decl) =>
+        new(this.Session, PInvoke.spReflection_getTypeFromDecl(decl));
 
-    public SlangReflectionEntryPoint? FindEntryPointByName(string name)
+    public EntryPointReflection? FindEntryPointByName(string name)
     {
         using var pName = new UnmanagedString(name);
         {
@@ -93,25 +92,25 @@ public unsafe class ShaderReflection : SessionResource<ShaderReflection>
         }
     }
 
-    public SlangReflectionFunction? FindFunctionByName(string name)
+    public FunctionReflection? FindFunctionByName(string name)
     {
         using var pName = new UnmanagedString(name);
 
         var handle = PInvoke.spReflection_FindFunctionByName(this.Handle, pName);
 
-        return handle == default ? null : new(handle);
+        return handle == default ? null : new(this.Session, handle);
     }
 
-    public SlangReflectionFunction? FindFunctionByNameInType(SlangReflectionType reflType, string name)
+    public FunctionReflection? FindFunctionByNameInType(TypeReflection reflType, string name)
     {
         using var pName = new UnmanagedString(name);
 
         var handle = PInvoke.spReflection_FindFunctionByNameInType(this.Handle, reflType.Handle, pName);
 
-        return handle == default ? null : new(handle);
+        return handle == default ? null : new(this.Session, handle);
     }
 
-    public SlangReflectionType? FindTypeByName(string name)
+    public TypeReflection? FindTypeByName(string name)
     {
         using var pName = new UnmanagedString(name);
 
@@ -120,7 +119,7 @@ public unsafe class ShaderReflection : SessionResource<ShaderReflection>
         return handle == default ? null : new(this.Session, handle);
     }
 
-    public SlangReflectionTypeParameter? FindTypeParameter(string name)
+    public TypeParameterReflection? FindTypeParameter(string name)
     {
         using var pName = new UnmanagedString(name);
 
@@ -129,16 +128,16 @@ public unsafe class ShaderReflection : SessionResource<ShaderReflection>
         return handle == default ? null : new(this.Session, handle);
     }
 
-    public VariableReflection? FindVarByNameInType(SlangReflectionType reflType, string name)
+    public VariableReflection? FindVarByNameInType(TypeReflection type, string name)
     {
         using var pName = new UnmanagedString(name);
 
-        var handle = PInvoke.spReflection_FindVarByNameInType(this.Handle, reflType.Handle, pName);
+        var handle = PInvoke.spReflection_FindVarByNameInType(this.Handle, type.Handle, pName);
 
         return handle == default ? null : new(this.Session, handle);
     }
 
-    public SlangReflectionEntryPoint GetEntryPointByIndex(ulong index) =>
+    public EntryPointReflection GetEntryPointByIndex(ulong index) =>
         new(this.Session, PInvoke.spReflection_getEntryPointByIndex(this.Handle, index));
 
     public string GetHashedString(ulong index, ReadOnlySpan<ulong> outCount)
@@ -149,31 +148,26 @@ public unsafe class ShaderReflection : SessionResource<ShaderReflection>
         }
     }
 
-    public SlangReflectionParameter GetParameterByIndex(uint index) =>
-        new(PInvoke.spReflection_GetParameterByIndex(this.Handle, index));
+    public VariableLayoutReflection GetParameterByIndex(uint index) =>
+        new(this.Session, PInvoke.spReflection_GetParameterByIndex(this.Handle, index));
 
-    public SlangReflectionTypeLayout GetTypeLayout(SlangReflectionType inType, SlangLayoutRules rules) =>
+    public TypeLayoutReflection GetTypeLayout(TypeReflection inType, SlangLayoutRules rules) =>
         new(this.Session, PInvoke.spReflection_GetTypeLayout(this.Handle, inType.Handle, rules));
 
-    public SlangReflectionTypeParameter GetTypeParameterByIndex(uint index) =>
+    public TypeParameterReflection GetTypeParameterByIndex(uint index) =>
         new(this.Session, PInvoke.spReflection_GetTypeParameterByIndex(this.Handle, index));
 
-    public bool IsSubType(SlangReflectionType subType, SlangReflectionType superType) =>
+    public bool IsSubType(TypeReflection subType, TypeReflection superType) =>
         PInvoke.spReflection_isSubType(this.Handle, subType.Handle, superType.Handle);
 
-    public SlangReflectionGeneric SpecializeGeneric(SlangReflectionGeneric generic, long argCount, SlangReflectionGenericArgType argTypes, SlangReflectionGenericArg args, ReadOnlySpan<nint> outDiagnostics)
+    public GenericReflection SpecializeGeneric(GenericReflection generic, ReadOnlySpan<SlangReflectionGenericArgType> argTypes, ReadOnlySpan<ReflectionGenericArg> args)
     {
-        fixed (nint* pOutDiagnostics = outDiagnostics)
-        {
-            return new(this.Session, PInvoke.spReflection_specializeGeneric(this.Handle, generic.Handle, argCount, argTypes.Handle, args.Handle, pOutDiagnostics));
-        }
+        var pArgTypes = stackalloc SlangReflectionGenericArgType[args.Length];
+        var pArgs     = stackalloc ReflectionGenericArg[args.Length];
+
+        return new(this.Session, PInvoke.spReflection_specializeGeneric(this.Handle, generic.Handle, argTypes.Length, pArgTypes, pArgs, null));
     }
 
-    public SlangReflectionType SpecializeType(SlangReflectionType inType, long specializationArgCount, SlangReflectionType specializationArgs, ReadOnlySpan<nint> outDiagnostics)
-    {
-        fixed (nint* pOutDiagnostics = outDiagnostics)
-        {
-            return new(this.Session, PInvoke.spReflection_specializeType(this.Handle, inType.Handle, specializationArgCount, specializationArgs.Handle, pOutDiagnostics));
-        }
-    }
+    public TypeReflection SpecializeType(TypeReflection inType, long specializationArgCount, TypeReflection specializationArgs) =>
+        new(this.Session, PInvoke.spReflection_specializeType(this.Handle, inType.Handle, specializationArgCount, specializationArgs.Handle, null));
 }

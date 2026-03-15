@@ -14,7 +14,7 @@ public class SessionTest
         [
             new()
             {
-                Format  = SlangCompileTarget.Spirv,
+                Format  = CompileTarget.Spirv,
                 Profile = globalSession.FindProfile("spirv_1_0"),
             }
         ];
@@ -72,7 +72,7 @@ public class SessionTest
         [
             new()
             {
-                Format  = SlangCompileTarget.Spirv,
+                Format  = CompileTarget.Spirv,
                 Profile = globalSession.FindProfile("spirv_1_0"),
             }
         ];
@@ -185,8 +185,8 @@ public class SessionTest
             {
                 TypeLayout.ElementTypeLayout.ParameterSize:  192,
                 TypeLayout.ElementVarLayout.ParameterOffset: 0,
-                TypeLayout.ParameterCategory: SlangParameterCategory.DescriptorTableSlot,
-                TypeLayout.Type.Kind:         SlangTypeKind.ConstantBuffer,
+                TypeLayout.ParameterCategory: ParameterCategory.DescriptorTableSlot,
+                TypeLayout.Type.Kind:         TypeKind.ConstantBuffer,
                 Variable.Name:                "ubo",
             }
         );
@@ -194,9 +194,9 @@ public class SessionTest
         Assert.True(
             fields[1] is
             {
-                TypeLayout.ParameterCategory:  SlangParameterCategory.DescriptorTableSlot,
-                TypeLayout.Type.Kind:          SlangTypeKind.Resource,
-                TypeLayout.Type.ResourceShape: SlangResourceShape.Texture2D | SlangResourceShape.TextureCombined,
+                TypeLayout.ParameterCategory:  ParameterCategory.DescriptorTableSlot,
+                TypeLayout.Type.Kind:          TypeKind.Resource,
+                TypeLayout.Type.ResourceShape: ResourceShape.Texture2D | ResourceShape.TextureCombined,
                 Variable.Name:                 "sampledTexture",
             }
         );
@@ -206,8 +206,8 @@ public class SessionTest
             {
                 TypeLayout.ElementTypeLayout.ParameterSize:  12,
                 TypeLayout.ElementVarLayout.ParameterOffset: 0,
-                TypeLayout.ParameterCategory:                SlangParameterCategory.PushConstantBuffer,
-                TypeLayout.Type.Kind:                        SlangTypeKind.ConstantBuffer,
+                TypeLayout.ParameterCategory:                ParameterCategory.PushConstantBuffer,
+                TypeLayout.Type.Kind:                        TypeKind.ConstantBuffer,
                 Variable.Name:                               "pushConstant",
             }
         );
@@ -241,7 +241,7 @@ public class SessionTest
                         ]
                     }
                 ],
-                Stage: SlangStage.Vertex,
+                Stage: Stage.Vertex,
             }
         );
 
@@ -266,7 +266,7 @@ public class SessionTest
                         ]
                     }
                 ],
-                Stage: SlangStage.Fragment,
+                Stage: Stage.Fragment,
             }
         );
     }

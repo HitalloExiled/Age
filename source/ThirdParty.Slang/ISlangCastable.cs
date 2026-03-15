@@ -1,6 +1,6 @@
 namespace ThirdParty.Slang;
 
-internal unsafe struct ISlangCastable
+public unsafe struct ISlangCastable
 {
     internal struct VTable
     {

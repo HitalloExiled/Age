@@ -15,7 +15,7 @@ public class GlobalSessionTest
         [
             new()
             {
-                Format  = SlangCompileTarget.Spirv,
+                Format  = CompileTarget.Spirv,
                 Profile = globalSession.FindProfile("spirv_1_0"),
             }
         ];

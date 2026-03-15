@@ -46,7 +46,7 @@ public partial class ShaderCompiler : Disposable
         [
             new()
             {
-                Format  = SlangCompileTarget.Spirv,
+                Format  = CompileTarget.Spirv,
                 Profile = this.globalSession.FindProfile("spirv_1_5"),
             }
         ];
@@ -126,11 +126,11 @@ public partial class ShaderCompiler : Disposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static VkShaderStageFlags SlangStageToVkShaderStageFlags(SlangStage stage) =>
+    private static VkShaderStageFlags SlangStageToVkShaderStageFlags(Stage stage) =>
         stage switch
         {
-            SlangStage.Vertex   => VkShaderStageFlags.Vertex,
-            SlangStage.Fragment => VkShaderStageFlags.Fragment,
+            Stage.Vertex   => VkShaderStageFlags.Vertex,
+            Stage.Fragment => VkShaderStageFlags.Fragment,
             _ => throw new InvalidOperationException("Unsuported shader stage"),
         };
 
@@ -185,7 +185,7 @@ public partial class ShaderCompiler : Disposable
 
             switch (typeLayout)
             {
-                case { Kind: SlangTypeKind.ConstantBuffer, ParameterCategory: SlangParameterCategory.PushConstantBuffer }:
+                case { Kind: TypeKind.ConstantBuffer, ParameterCategory: ParameterCategory.PushConstantBuffer }:
                     {
                         var pushConstantRange = new VkPushConstantRange
                         {
@@ -198,7 +198,7 @@ public partial class ShaderCompiler : Disposable
                     }
 
                     break;
-                case { Kind: SlangTypeKind.ConstantBuffer, ParameterCategory: SlangParameterCategory.DescriptorTableSlot }:
+                case { Kind: TypeKind.ConstantBuffer, ParameterCategory: ParameterCategory.DescriptorTableSlot }:
                     {
                         uniformBindings.Add(VkDescriptorType.UniformBuffer);
 
@@ -214,7 +214,7 @@ public partial class ShaderCompiler : Disposable
                     }
 
                     break;
-                case { Kind: SlangTypeKind.Resource, Type.ResourceShape: SlangResourceShape.Texture2D | SlangResourceShape.TextureCombined }:
+                case { Kind: TypeKind.Resource, Type.ResourceShape: ResourceShape.Texture2D | ResourceShape.TextureCombined }:
                     {
                         uniformBindings.Add(VkDescriptorType.CombinedImageSampler);
 
