@@ -20,6 +20,9 @@
     <Project Path="source/ThirdParty.Slang/ThirdParty.Slang.csproj" />
     <Project Path="source/ThirdParty.Vulkan/ThirdParty.Vulkan.csproj" />
   </Folder>
+  <Folder Name="/tasks/">
+    <Project Path="tasks/Build.Tasks/Build.Tasks.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Age.Tests/Age.Tests.csproj" />
     <Project Path="tests/ThirdParty.Tests/ThirdParty.Tests.csproj" />

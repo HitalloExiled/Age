@@ -1,168 +1,95 @@
-using System.Collections;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace Age.Core.Collections;
 
 [DebuggerTypeProxy(typeof(DebugView))]
-public unsafe partial class NativeStringList : Disposable, IEnumerable<string>
+[CollectionBuilder(typeof(Builders), nameof(Builders.NativeStringList))]
+public partial class NativeStringList : Disposable
 {
-    private nint* handles;
-
-    public int Capacity
-    {
-        get;
-        set
-        {
-            if (value == 0)
-            {
-                NativeMemory.Free(this.handles);
-
-                this.Count = 0;
-            }
-            else
-            {
-                this.handles = (nint*)NativeMemory.Realloc(this.handles, (uint)(sizeof(nint) * value));
-
-                if (value < this.Count)
-                {
-                    this.Count = value;
-                }
-            }
-
-            field = value;
-        }
-    }
-
-    public int Count { get; private set; }
-
-    public NativeStringList(int capacity = 0)
-    {
-        if (capacity > 0)
-        {
-            this.Capacity = capacity;
-        }
-    }
-
-    public NativeStringList(ReadOnlySpan<string?> values) : this(values.Length)
-    {
-        for (var i = 0; i < values.Length; i++)
-        {
-            this.handles[i] = Marshal.StringToHGlobalAnsi(values[i]);
-        }
-
-        this.Count = values.Length;
-    }
+    private UnsafeStringListBuffer unsafeBuffer;
 
     public string this[int index]
     {
         get
         {
             this.ThrowIfDisposed();
-            this.CheckIndex(index);
 
-            return Marshal.PtrToStringAnsi(this.handles[index])!;
+            return this.unsafeBuffer[index];
         }
         set
         {
             this.ThrowIfDisposed();
-            this.CheckIndex(index);
 
-            Marshal.FreeHGlobal(this.handles[index]);
-
-            this.handles[index] = Marshal.StringToHGlobalAnsi(value);
+            this.unsafeBuffer[index] = value;
         }
     }
 
-    private void CheckIndex(int index)
+    public int Capacity
     {
-        if (index >= this.Count)
+        get => this.unsafeBuffer.Capacity;
+        set
         {
-            throw new IndexOutOfRangeException();
+            this.ThrowIfDisposed();
+
+            this.unsafeBuffer.Capacity = value;
         }
     }
 
-    private void EnsureCapacity()
+    public unsafe byte** Buffer
     {
-        if (this.Count + 1 > this.Capacity)
+        get
         {
-            this.Capacity = int.Min(this.Capacity == 0 ? 4 : this.Capacity * 2, int.MaxValue);
+            this.ThrowIfDisposed();
+
+            return this.unsafeBuffer.Buffer;
         }
     }
+
+    public int  Count   => this.unsafeBuffer.Count;
+    public bool IsEmpty => this.unsafeBuffer.IsEmpty;
+
+    public NativeStringList(int capacity = 0) =>
+        this.unsafeBuffer = new(capacity);
+
+    public NativeStringList(ReadOnlySpan<string?> values) =>
+        this.unsafeBuffer = new(values);
 
     protected override void OnDisposed(bool disposing) =>
-        this.Clear();
-
-    IEnumerator IEnumerable.GetEnumerator() =>
-        this.GetEnumerator();
+        this.unsafeBuffer.Dispose();
 
     public void Add(string? value)
     {
         this.ThrowIfDisposed();
-        this.EnsureCapacity();
 
-        this.handles[this.Count] = Marshal.StringToHGlobalAnsi(value);
-
-        this.Count++;
+        this.unsafeBuffer.Add(value);
     }
-
-    public Span<nint> AsSpan() =>
-        new(this.handles, this.Count);
-
-    public ReadOnlySpan<nint> AsReadOnlySpan() =>
-        new(this.handles, this.Count);
 
     public void Clear()
     {
         this.ThrowIfDisposed();
 
-        for (var i = 0; i < this.Count; i++)
-        {
-            Marshal.FreeHGlobal(this.handles[i]);
-        }
-
-        this.Count = 0;
+        this.unsafeBuffer.Clear();
     }
 
-    public nint GetHandle(int index)
+    public Span<string>.Enumerator GetEnumerator()
     {
-        this.CheckIndex(index);
         this.ThrowIfDisposed();
 
-        return this.handles[index];
+        return this.unsafeBuffer.GetEnumerator();
     }
 
     public void Remove(int startIndex, int count = 1)
     {
         this.ThrowIfDisposed();
-        this.CheckIndex(startIndex);
 
-        var endIndex = startIndex + count;
-        var length   = this.Count - endIndex;
-
-        for (var i = startIndex; i < endIndex; i++)
-        {
-            NativeMemory.Free((void*)this.handles[i]);
-        }
-
-        if (length > 0)
-        {
-            var source      = new Span<nint>(this.handles + endIndex,   length);
-            var destination = new Span<nint>(this.handles + startIndex, length);
-
-            source.CopyTo(destination);
-        }
-
-        this.Count = int.Max(this.Count - count, 0);
+        this.unsafeBuffer.Remove(startIndex, count);
     }
 
-    public IEnumerator<string> GetEnumerator()
+    public string[] ToArray()
     {
-        var span = this.AsSpan().ToArray();
+        this.ThrowIfDisposed();
 
-        for (var i = 0; i < this.Count; i++)
-        {
-            yield return Marshal.PtrToStringAnsi(span[i])!;
-        }
+        return this.unsafeBuffer.ToArray();
     }
 }

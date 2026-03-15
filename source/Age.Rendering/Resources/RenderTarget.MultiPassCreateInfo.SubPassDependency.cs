@@ -36,8 +36,6 @@ public sealed partial class RenderTarget
 
             public static bool operator ==(SubPassDependency left, SubPassDependency right) => left.Equals(right);
             public static bool operator !=(SubPassDependency left, SubPassDependency right) => !(left == right);
-
-
         }
     }
 }

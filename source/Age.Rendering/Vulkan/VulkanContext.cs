@@ -206,11 +206,20 @@ internal sealed unsafe partial class VulkanContext : Disposable
 
         using var ppEnabledExtensionNames = new NativeStringArray([VkSwapchainExtensionKHR.Name]);
 
-        var enabledFeatures = new VkPhysicalDeviceFeatures
+        var physicalDeviceVulkan11Features = new VkPhysicalDeviceVulkan11Features
         {
-            SamplerAnisotropy = true,
-            SampleRateShading = true,
-            GeometryShader    = true,
+            ShaderDrawParameters = true,
+        };
+
+        var physicalDeviceFeatures = new VkPhysicalDeviceFeatures2
+        {
+            Features =
+            {
+                SamplerAnisotropy = true,
+                SampleRateShading = true,
+                GeometryShader    = true,
+            },
+            PNext = &physicalDeviceVulkan11Features,
         };
 
         fixed (VkDeviceQueueCreateInfo* pQueueCreateInfos = queueCreateInfos)
@@ -220,8 +229,8 @@ internal sealed unsafe partial class VulkanContext : Disposable
                 EnabledExtensionCount   = (uint)ppEnabledExtensionNames.Length,
                 PpEnabledExtensionNames = ppEnabledExtensionNames,
                 PQueueCreateInfos       = pQueueCreateInfos,
-                PEnabledFeatures        = &enabledFeatures,
                 QueueCreateInfoCount    = (uint)queueCreateInfos.Length,
+                PNext                   = &physicalDeviceFeatures,
             };
 
             device             = this.physicalDevice.CreateDevice(deviceCreateInfo);

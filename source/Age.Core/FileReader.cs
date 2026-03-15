@@ -26,15 +26,15 @@ public static class FileReader
         }
     }
 
-    public static RefArray<byte> ReadAllBytesAsRef(string path)
+    public static NativeRefArray<byte> ReadAllBytesAsRef(string path)
     {
-        RefArray<byte> buffer = default;
+        NativeRefArray<byte> buffer = default;
 
         try
         {
             using var stream = File.OpenRead(path);
 
-            buffer = new RefArray<byte>((int)stream.Length);
+            buffer = new NativeRefArray<byte>((int)stream.Length);
 
             stream.ReadExactly(buffer);
 

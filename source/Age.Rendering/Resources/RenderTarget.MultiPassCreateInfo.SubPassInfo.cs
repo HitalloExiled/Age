@@ -23,8 +23,6 @@ public sealed partial class RenderTarget
 
             public static bool operator ==(SubPassInfo left, SubPassInfo right) => left.Equals(right);
             public static bool operator !=(SubPassInfo left, SubPassInfo right) => !(left == right);
-
-
         }
     }
 }

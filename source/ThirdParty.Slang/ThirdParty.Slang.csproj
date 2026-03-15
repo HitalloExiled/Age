@@ -1,10 +1,52 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <ProjectReference Include="..\Age.Core\Age.Core.csproj" />
+    <ProjectReference Include="../Age.Core/Age.Core.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <SlangVersion>2026.4.2</SlangVersion>
+  </PropertyGroup>
+
+  <Target Name="DownloadSlangFiles" BeforeTargets="CollectPackageReferences">
+    <PropertyGroup Condition="'$(IsWindows)' == 'True'">
+      <Platform>windows</Platform>
+      <File>bin/slang-compiler.dll</File>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(IsLinux)' == 'True'">
+      <Platform>linux</Platform>
+      <File>lib/libslang-compiler.so.0.$(SlangVersion)</File>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <ZipFilename>slang-$(SlangVersion)-$(Platform)-x86_64.zip</ZipFilename>
+      <SlangFilePath>$(ProjectDir)native/$(SlangFile)</SlangFilePath>
+      <DownloadUrl>https://github.com/shader-slang/slang/releases/download/v$(SlangVersion)/$(ZipFilename)</DownloadUrl>
+      <Destination>$(ProjectDir)/native/$(RuntimeIdentifier)</Destination>
+      <FileName>$([System.IO.Path]::GetFileName('$(File)'))</FileName>
+    </PropertyGroup>
+
+    <DownloadFileUnzip
+      Url="$(DownloadUrl)"
+      Files="$(File)"
+      Destination="$(Destination)"
+      Condition="!Exists('$(Destination)')"
+    />
+
+    <Move
+      Condition="$(IsLinux) AND Exists('$(Destination)/$(FileName)')"
+      SourceFiles="$(Destination)/$(FileName)"
+      DestinationFiles="$(Destination)/libslang-compiler.so"
+      OverwriteReadOnlyFiles="true"
+    />
+  </Target>
+
+  <ItemGroup>
+    <None Include="./native/$(RuntimeIdentifier)/*" CopyToOutputDirectory="PreserveNewest" TargetPath="%(Filename)%(Extension)"/>
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="./Native/Lib/*.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes/win-x64/native/%(Filename)%(Extension)" />
+    <DirectPInvoke Condition="$(IsWindows)" Include="slang-compiler" />
+    <DirectPInvoke Condition="$(IsLinux)" Include="libslang-compiler" />
   </ItemGroup>
 
 </Project>

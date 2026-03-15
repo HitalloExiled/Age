@@ -254,8 +254,8 @@ public sealed class Text : Layoutable
         var glyphs = this.font.Typeface.GetGlyphs(textSpan);
         var atlas  = TextStorage.Singleton.GetAtlas(this.font.Typeface.FamilyName, (uint)this.font.Size);
 
-        using var glyphsBoundsRef = new RefArray<SKRect>(glyphs.Length);
-        using var glyphsWidths    = new RefArray<float>(glyphs.Length);
+        using var glyphsBoundsRef = new NativeRefArray<SKRect>(glyphs.Length);
+        using var glyphsWidths    = new NativeRefArray<float>(glyphs.Length);
 
         var glyphsBounds = glyphsBoundsRef.AsSpan();
 

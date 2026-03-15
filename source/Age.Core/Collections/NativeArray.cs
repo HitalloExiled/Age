@@ -1,22 +1,29 @@
 using System.Collections;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace Age.Core.Collections;
 
 [DebuggerTypeProxy(typeof(NativeArray<>.DebugView))]
-public unsafe partial class NativeArray<T>(int length = 0) : Disposable, IEnumerable<T> where T : unmanaged
+[CollectionBuilder(typeof(Builders), nameof(Builders.NativeArray))]
+public unsafe partial class NativeArray<T> : Disposable, IEnumerable<T> where T : unmanaged
 {
-    public static NativeArray<T> Empty { get; } = [];
-
-    private T* buffer = (T*)NativeMemory.AllocZeroed((uint)(sizeof(T) * length));
-
-    public int Length { get; private set; } = length;
+    private UnsafeArrayBuffer<T> unsafeBuffer;
 
     public T this[uint index]
     {
-        get => this[(int)index];
-        set => this[(int)index] = value;
+        get
+        {
+            this.ThrowIfDisposed();
+
+            return this.unsafeBuffer[index];
+        }
+        set
+        {
+            this.ThrowIfDisposed();
+
+            this.unsafeBuffer[index] = value;
+        }
     }
 
     public T this[int index]
@@ -24,140 +31,128 @@ public unsafe partial class NativeArray<T>(int length = 0) : Disposable, IEnumer
         get
         {
             this.ThrowIfDisposed();
-            this.CheckIndex(index);
 
-            return this.buffer[index];
+            return this.unsafeBuffer[index];
         }
         set
         {
             this.ThrowIfDisposed();
-            this.CheckIndex(index);
 
-            this.buffer[index] = value;
+            this.unsafeBuffer[index] = value;
         }
     }
 
-    public NativeArray<T> this[Range range]
+    public Span<T> this[Range range]
     {
         get
         {
-            var (start, length) = range.GetOffsetAndLength(this.Length);
+            this.ThrowIfDisposed();
 
-            return this.Slice(start, length);
+            return this.unsafeBuffer[range];
         }
     }
 
-    public NativeArray(uint length) : this((int)length)
-    { }
-
-    public NativeArray(ReadOnlySpan<T> values) : this(values.Length) =>
-        values.CopyTo(this);
-
-    private void CheckIndex(int index)
+    public T* Buffer
     {
-        if (index >= this.Length)
+        get
         {
-            throw new IndexOutOfRangeException();
+            this.ThrowIfDisposed();
+
+            return this.unsafeBuffer.Buffer;
         }
     }
 
-    protected override void OnDisposed(bool disposing)
-    {
-        NativeMemory.Free(this.buffer);
-        this.buffer = default;
-        this.Length = 0;
-    }
+    public bool IsEmpty => this.unsafeBuffer.IsEmpty;
+    public int Length   => this.unsafeBuffer.Length;
+
+    public NativeArray(int size) =>
+        this.unsafeBuffer = new(size);
+
+    public NativeArray(uint size) =>
+        this.unsafeBuffer = new(size);
+
+    public NativeArray(ReadOnlySpan<T> values) =>
+        this.unsafeBuffer = new(values);
+
+    protected override void OnDisposed(bool disposing) =>
+        this.unsafeBuffer.Dispose();
 
     IEnumerator IEnumerable.GetEnumerator() =>
-        this.GetEnumerator();
+        this.unsafeBuffer.GetEnumerator();
 
     IEnumerator<T> IEnumerable<T>.GetEnumerator() =>
-        this.GetEnumerator();
-
-    public T* AsPointer()
-    {
-        this.ThrowIfDisposed();
-
-        return this.buffer;
-    }
+        this.unsafeBuffer.GetEnumerator();
 
     public Span<T> AsSpan()
     {
         this.ThrowIfDisposed();
 
-        return new(this.buffer, this.Length);
+        return this.unsafeBuffer.AsSpan();
     }
 
     public void Clear()
     {
         this.ThrowIfDisposed();
 
-        this.AsSpan().Clear();
+        this.unsafeBuffer.Clear();
     }
 
     public bool Contains(T item)
     {
         this.ThrowIfDisposed();
 
-        return this.IndexOf(item) > -1;
+        return this.unsafeBuffer.Contains(item);
     }
 
     public void CopyTo(Span<T> span)
     {
         this.ThrowIfDisposed();
 
-        this.AsSpan().CopyTo(span);
+        this.unsafeBuffer.CopyTo(span);
     }
 
-    public void CopyTo(T[] array, int arrayIndex)
+    public void CopyTo(Span<T> array, int startIndex)
     {
         this.ThrowIfDisposed();
 
-        this.AsSpan()[arrayIndex..].CopyTo(array);
+        this.unsafeBuffer.CopyTo(array, startIndex);
     }
 
     public UnsafeEnumerator<T> GetEnumerator()
     {
         this.ThrowIfDisposed();
 
-        return new(this.buffer, this.Length);
+        return this.unsafeBuffer.GetEnumerator();
     }
 
     public int IndexOf(T item)
     {
         this.ThrowIfDisposed();
 
-        for (var i = 0; i < this.Length; i++)
-        {
-            if (this.buffer[i].Equals(item))
-            {
-                return i;
-            }
-        }
-
-        return -1;
+        return this.unsafeBuffer.IndexOf(item);
     }
 
-    public void Resize(int length)
+    public void Resize(int size)
     {
         this.ThrowIfDisposed();
 
-        this.buffer = (T*)NativeMemory.Realloc(this.buffer, (uint)(sizeof(T) * length));
-        this.Length = length;
+        this.unsafeBuffer.Resize(size);
     }
 
     public void ResizeCopy(ReadOnlySpan<T> source)
     {
-        if (source.Length != this.Length)
-        {
-            this.Resize(source.Length);
-        }
+        this.ThrowIfDisposed();
 
-        source.CopyTo(this);
+        this.unsafeBuffer.ResizeCopy(source);
     }
 
-    public NativeArray<T> Slice(int start, int length) =>
-        new(new Span<T>(this.buffer + start, length));
+    public Span<T> Slice(int start, int length)
+    {
+        this.ThrowIfDisposed();
 
+        return this.unsafeBuffer.Slice(start, length);
+    }
+
+    public static implicit operator T*(NativeArray<T> value) => value.Buffer;
     public static implicit operator Span<T>(NativeArray<T> value) => value.AsSpan();
 }

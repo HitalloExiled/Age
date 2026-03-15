@@ -57,7 +57,7 @@ public sealed class UniformSet : Resource
     public unsafe void Update(ReadOnlySpan<Uniform> uniforms)
     {
         using var disposables = new Disposables();
-        using var writes      = new RefList<VkWriteDescriptorSet>();
+        using var writes      = new NativeRefList<VkWriteDescriptorSet>();
 
         foreach (var uniform in uniforms)
         {
@@ -82,7 +82,7 @@ public sealed class UniformSet : Resource
                         DescriptorType  = VkDescriptorType.CombinedImageSampler,
                         DstBinding      = uniform.Binding,
                         DstSet          = this.DescriptorSets[0].Handle,
-                        PImageInfo      = pImageInfo.AsPointer(),
+                        PImageInfo      = pImageInfo.Buffer,
                     };
 
                     writes.Add(writeDescriptorSet);
@@ -108,7 +108,7 @@ public sealed class UniformSet : Resource
                         DescriptorType  = VkDescriptorType.UniformBuffer,
                         DstBinding      = uniform.Binding,
                         DstSet          = this.DescriptorSets[0].Handle,
-                        PBufferInfo     = pBufferInfo.AsPointer(),
+                        PBufferInfo     = pBufferInfo.Buffer,
                     };
 
                     writes.Add(writeDescriptorSet);

@@ -1,8 +1,6 @@
-#if !Windows
-#define Windows
-#endif
+#define WINDOWS
 
-#if Windows
+#if WINDOWS
 using System.Runtime.CompilerServices;
 using Age.Core.Extensions;
 using Age.Numerics;

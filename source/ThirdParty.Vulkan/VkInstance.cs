@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
-using Age.Core.Collections;
+using Age.Core.Extensions;
 using ThirdParty.Vulkan.Interfaces;
 
 using static Age.Core.PointerHelper;
@@ -20,7 +20,7 @@ public sealed unsafe class VkInstance : DisposableManagedHandle<VkInstance>
     public VkInstance(in VkInstanceCreateInfo createInfo, in VkAllocationCallbacks allocator = default)
     {
         this.Allocator         = allocator;
-        this.enabledExtensions = [.. NativeStringArray.ToArray(createInfo.PpEnabledExtensionNames, createInfo.EnabledExtensionCount)];
+        this.enabledExtensions = [.. Array.ToUTF8StringArray(createInfo.PpEnabledExtensionNames, createInfo.EnabledExtensionCount)];
 
         fixed (VkHandle<VkInstance>*  pHandler    = &this.handle)
         fixed (VkInstanceCreateInfo*  pCreateInfo = &createInfo)

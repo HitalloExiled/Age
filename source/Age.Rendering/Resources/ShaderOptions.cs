@@ -17,5 +17,4 @@ public struct ShaderOptions
             this.StencilOp,
             this.Subpass
         );
-
 }

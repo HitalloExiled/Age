@@ -21,9 +21,9 @@ public partial class Geometry2DShader
         public Vertex(Point<float> position) =>
             this.Position = position;
 
-        public static RefArray<VkVertexInputAttributeDescription> GetAttributes()
+        public static NativeRefArray<VkVertexInputAttributeDescription> GetAttributes()
         {
-            var attributes = new RefArray<VkVertexInputAttributeDescription>(1);
+            var attributes = new NativeRefArray<VkVertexInputAttributeDescription>(1);
 
             attributes[0] = new()
             {

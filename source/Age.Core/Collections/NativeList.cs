@@ -1,41 +1,19 @@
 using System.Collections;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace Age.Core.Collections;
 
-[DebuggerDisplay("Count = {Count}")]
 [DebuggerTypeProxy(typeof(NativeList<>.DebugView))]
+[CollectionBuilder(typeof(Builders), nameof(Builders.NativeList))]
 public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T : unmanaged
 {
-    public static NativeList<T> Empty { get; } = [];
-
-    private T* buffer;
-
-    public int Capacity
-    {
-        get => field;
-        set
-        {
-            ArgumentOutOfRangeException.ThrowIfLessThan(value, this.Count);
-
-            if (field == value)
-			{
-				return;
-			}
-
-			this.buffer = (T*)NativeMemory.Realloc(this.buffer, (uint)(sizeof(T) * value));
-
-            field = value;
-        }
-    }
-
-    public int Count { get; private set; }
+    private UnsafeListBuffer<T> unsefeBuffer;
 
     public T this[uint index]
     {
-        get => this[(int)index];
-        set => this[(int)index] = value;
+        get => this.unsefeBuffer[(int)index];
+        set => this.unsefeBuffer[(int)index] = value;
     }
 
     public T this[int index]
@@ -43,225 +21,152 @@ public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T :
         get
         {
             this.ThrowIfDisposed();
-            this.CheckIndex(index);
 
-            return this.buffer[index];
+            return this.unsefeBuffer[index];
         }
         set
         {
             this.ThrowIfDisposed();
-            this.CheckIndex(index);
 
-            this.buffer[index] = value;
+            this.unsefeBuffer[index] = value;
         }
     }
 
-    public NativeList<T> this[Range range]
+    public int Capacity
+    {
+        get => this.unsefeBuffer.Capacity;
+        set
+        {
+            this.ThrowIfDisposed();
+
+            this.unsefeBuffer.Capacity = value;
+        }
+    }
+
+    public Span<T> this[Range range] => this.unsefeBuffer[range];
+
+    public T* Buffer
     {
         get
         {
-            var (start, length) = range.GetOffsetAndLength(this.Count);
+            this.ThrowIfDisposed();
 
-            return this.Slice(start, length);
+            return this.unsefeBuffer.Buffer;
         }
     }
 
-    public NativeList(int capacity = 0)
-    {
-        if (capacity > 0)
-        {
-            this.buffer = (T*)NativeMemory.AllocZeroed((uint)(sizeof(T) * capacity));
+    public int  Count   => this.unsefeBuffer.Count;
+    public bool IsEmpty => this.unsefeBuffer.IsEmpty;
 
-            this.Capacity = capacity;
-        }
-    }
+    public NativeList(int capacity = 0) =>
+        this.unsefeBuffer = new(capacity);
 
-    public NativeList(ReadOnlySpan<T> values) : this(values.Length)
-    {
-        for (var i = 0; i < values.Length; i++)
-        {
-            this.buffer[i] = values[i];
-        }
+    public NativeList(ReadOnlySpan<T> values) =>
+        this.unsefeBuffer = new(values);
 
-        this.Count = values.Length;
-    }
-
-    private void CheckIndex(int index)
-    {
-        if (index >= this.Count)
-        {
-            throw new IndexOutOfRangeException();
-        }
-    }
-
-    private void EnsureCapacity()
-    {
-        if (this.Count + 1 > this.Capacity)
-        {
-            this.Capacity = int.Min(this.Capacity == 0 ? 4 : this.Count * 2, int.MaxValue);
-        }
-    }
-
-    protected override void OnDisposed(bool disposing)
-    {
-        NativeMemory.Free(this.buffer);
-        this.buffer = default;
-        this.Count  = 0;
-    }
+    protected override void OnDisposed(bool disposing) =>
+        this.unsefeBuffer.Dispose();
 
     IEnumerator<T> IEnumerable<T>.GetEnumerator()
     {
         this.ThrowIfDisposed();
 
-        return this.GetEnumerator();
+        return this.unsefeBuffer.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
     {
         this.ThrowIfDisposed();
 
-        return this.GetEnumerator();
+        return this.unsefeBuffer.GetEnumerator();
     }
 
     public ref T Add()
     {
         this.ThrowIfDisposed();
-        this.EnsureCapacity();
 
-        ref var element = ref this.buffer[this.Count];
-
-        this.Count++;
-
-        return ref element;
+        return ref this.unsefeBuffer.Add();
     }
 
     public void Add(T item)
     {
-        ref var element = ref this.Add();
-
-        element = item;
-    }
-
-    public T* AsPointer()
-    {
         this.ThrowIfDisposed();
-        return this.buffer;
+
+        this.unsefeBuffer.Add(item);
     }
 
     public Span<T> AsSpan()
     {
         this.ThrowIfDisposed();
-        return new(this.buffer, this.Count);
+
+        return this.unsefeBuffer.AsSpan();
     }
 
     public void Clear()
     {
         this.ThrowIfDisposed();
-        this.Count = 0;
+
+        this.unsefeBuffer.Clear();
     }
 
     public bool Contains(T item) =>
-        this.IndexOf(item) > -1;
+        this.unsefeBuffer.Contains(item);
 
-    public void CopyTo(T[] array, int arrayIndex) =>
-        this.AsSpan()[arrayIndex..].CopyTo(array);
+    public void CopyTo(Span<T> items, int startIndex) =>
+        this.unsefeBuffer.CopyTo(items, startIndex);
 
     public void EnsureCapacity(int capacity)
     {
         this.ThrowIfDisposed();
 
-        if (capacity > this.Capacity)
-        {
-            this.Capacity = capacity;
-        }
+        this.unsefeBuffer.EnsureCapacity(capacity);
     }
 
     public UnsafeEnumerator<T> GetEnumerator() =>
-        new(this.buffer, this.Count);
+        this.unsefeBuffer.GetEnumerator();
 
     public int IndexOf(T item)
     {
         this.ThrowIfDisposed();
 
-        for (var i = 0; i < this.Count; i++)
-        {
-            if (this.buffer[i].Equals(item))
-            {
-                return i;
-            }
-        }
-
-        return -1;
+        return this.unsefeBuffer.IndexOf(item);
     }
 
-    public void Insert(int index, T item)
+    public void Insert(int index, in T item)
     {
         this.ThrowIfDisposed();
 
-        if (index > this.Count)
-        {
-            throw new IndexOutOfRangeException();
-        }
-
-        this.EnsureCapacity();
-
-        this.Count++;
-
-        var length = this.Count - index - 1;
-
-        if (length > 0)
-        {
-            var source      = new Span<T>(this.buffer + index, length);
-            var destination = new Span<T>(this.buffer + index + 1, length);
-
-            source.CopyTo(destination);
-        }
-
-        this.buffer[index] = item;
+        this.unsefeBuffer.Insert(index, item);
     }
 
     public bool Remove(T item)
     {
-        var index = this.IndexOf(item);
+        this.ThrowIfDisposed();
 
-        if (index > -1)
-        {
-            this.RemoveAt(index);
-
-            return true;
-        }
-
-        return false;
+        return this.unsefeBuffer.Remove(item);
     }
 
-    public void RemoveAt(int index) =>
-        this.RemoveAt(index, 1);
+    public void RemoveAt(int index)
+    {
+        this.ThrowIfDisposed();
+
+        this.unsefeBuffer.RemoveAt(index);
+    }
 
     public void RemoveAt(int startIndex, int count)
     {
         this.ThrowIfDisposed();
-        this.CheckIndex(startIndex);
 
-        var endIndex = startIndex + count;
-        var length   = this.Count - endIndex;
-
-        if (length > 0)
-        {
-            var source      = new Span<T>(this.buffer + endIndex,   length);
-            var destination = new Span<T>(this.buffer + startIndex, length);
-
-            source.CopyTo(destination);
-        }
-
-        this.Count = int.Max(this.Count - count, 0);
+        this.unsefeBuffer.RemoveAt(startIndex, count);
     }
 
-    public NativeList<T> Slice(int start, int length)
+    public Span<T> Slice(int start, int length)
     {
         this.ThrowIfDisposed();
 
-        return new(new Span<T>(this.buffer + start, length));
+        return this.unsefeBuffer.Slice(start, length);
     }
 
-    public static implicit operator Span<T>(in NativeList<T> value) => value.AsSpan();
+    public static implicit operator T*(NativeList<T> value) => value.Buffer;
+    public static implicit operator Span<T>(NativeList<T> value) => value.AsSpan();
 }
