@@ -1,16 +1,65 @@
-#define WINDOWS
-
 #if WINDOWS
-using System.Runtime.CompilerServices;
 using Age.Core.Extensions;
 using Age.Numerics;
-using Age.Platforms.Windows.Native;
-using Age.Platforms.Windows.Native.Types;
+using Age.Platforms.Windows;
+using System.Runtime.CompilerServices;
 
 namespace Age.Platforms.Display;
 
 public partial class Window
 {
+    public partial Size<uint> ClientSize
+    {
+        get
+        {
+            User32.GetClientRect(this.Handle, out var rect);
+
+            return new((uint)rect.right, (uint)rect.bottom);
+        }
+    }
+
+    public partial Cursor Cursor
+    {
+        get;
+        set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+
+            UpdateCursor();
+        }
+    }
+
+    public partial Point<int> Position
+    {
+        get => this.position;
+        set => throw new NotImplementedException();
+    }
+
+    public partial Size<uint> Size
+    {
+        get => this.size;
+        set => throw new NotImplementedException();
+    }
+
+    public partial string Title
+    {
+        get => this.title;
+        set
+        {
+            if (this.title != value)
+            {
+                User32.SetWindowText(this.Handle, value);
+
+                this.title = value;
+            }
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static short LoWord(uint value) => (short)((int)value & 0xffff);
 
@@ -51,7 +100,16 @@ public partial class Window
     private static MouseButton GetPrimaryButton() =>
         User32.GetSystemMetrics(User32.SYSTEM_METRIC.SM_SWAPBUTTON) == 0 ? MouseButton.Left : MouseButton.Right;
 
-    private static User32.IDC_STANDARD_CURSORS GetPlatformCursor(Cursor cursor) =>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Size<uint> GetWindowSize(HWND hwnd)
+    {
+        User32.GetWindowRect(hwnd, out var rect);
+
+        return new((uint)(rect.right - rect.left), (uint)(rect.bottom - rect.top));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static User32.IDC_STANDARD_CURSORS ToIdcStandardCursors(Cursor cursor) =>
         cursor switch
         {
             Cursor.Arrow            => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
@@ -203,7 +261,8 @@ public partial class Window
                 case User32.WINDOW_MESSAGE.WM_SETCURSOR:
                     if ((User32.HIT_TEST)LoWord(lParam) == User32.HIT_TEST.HTCLIENT)
                     {
-                        PlatformSetCursor(window.Cursor);
+                        window.UpdateCursor();
+
                         return 1;
                     }
 
@@ -214,8 +273,16 @@ public partial class Window
         return User32.DefWindowProcW(hwnd, msg, wParam, lParam);
     }
 
-    protected static unsafe void PlatformRegister(string className)
+    private partial void UpdateCursor() =>
+        User32.SetCursor(User32.LoadCursorW(default, ToIdcStandardCursors(this.Cursor)));
+
+    public static unsafe partial void Register(string className)
     {
+        if (Registered)
+        {
+            throw new Exception("Windows class already registered");
+        }
+
         fixed (char* lpszClassName = className)
         {
             var windowClass = new User32.WNDCLASSEXW
@@ -237,42 +304,38 @@ public partial class Window
                 throw new Exception("Failed to register window class");
             }
         }
+
+        Registered = true;
+
+        Window.className = className;
     }
 
-    protected static Size<uint> PlatformGetClientSize(HWND hwnd)
+    public partial void Close()
     {
-        User32.GetClientRect(hwnd, out var rect);
-
-        return new((uint)rect.right, (uint)rect.bottom);
-    }
-
-    protected static Size<uint> PlatformGetWindowSize(HWND hwnd)
-    {
-        User32.GetWindowRect(hwnd, out var rect);
-
-        return new((uint)(rect.right - rect.left), (uint)(rect.bottom - rect.top));
-    }
-
-    protected static void PlatformSetCursor(Cursor value) =>
-        User32.SetCursor(User32.LoadCursorW(default, GetPlatformCursor(value)));
-
-    protected virtual void PlatformClose()
-    {
-        foreach (var child in this.Children)
+        if (!this.IsClosed)
         {
-            child.IsClosed = true;
+            this.IsClosed = true;
 
-            WindowsMap.Remove(child.Handle);
+            foreach (var child in this.Children)
+            {
+                child.IsClosed = true;
 
-            child.Closed?.Invoke();
+                WindowsMap.Remove(child.Handle);
+
+                child.Closed?.Invoke();
+            }
+
+            User32.DestroyWindow(this.Handle);
+
+            WindowsMap.Remove(this.Handle);
+
+            this.Parent?.Children.Remove(this);
+
+            Closed?.Invoke();
         }
-
-        User32.DestroyWindow(this.Handle);
-
-        WindowsMap.Remove(this.Handle);
     }
 
-    protected virtual void PlatformCreate(string title, Size<uint> size, Point<int> position, Window? parent)
+    private unsafe partial void Create(string title, Size<uint> size, Point<int> position, Window? parent)
     {
         if (!Registered)
         {
@@ -302,31 +365,7 @@ public partial class Window
         WindowsMap[this.Handle] = this;
     }
 
-    protected string? PlatformGetClipboardData()
-    {
-        if (User32.OpenClipboard(this.Handle))
-        {
-            var text = User32.GetClipboardTextData();
-
-            User32.CloseClipboard();
-
-            return text;
-        }
-
-        return null;
-    }
-
-    protected void PlatformSetClipboardData(string value)
-    {
-        if (User32.OpenClipboard(this.Handle))
-        {
-            User32.EmptyClipboard();
-            User32.SetClipboardData(value);
-            User32.CloseClipboard();
-        }
-    }
-
-    protected void PlatformDoEvents()
+    public partial void DoEvents()
     {
         while (User32.PeekMessageW(out var msg, this.Handle, 0, 0, User32.PEEK_MESSAGE.PM_REMOVE) && !this.IsClosed)
         {
@@ -348,7 +387,7 @@ public partial class Window
             this.IsMaximized = placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMAXIMIZED;
             this.IsMinimized = placement.showCmd == User32.SHOW_WINDOW_COMMANDS.SW_SHOWMINIMIZED;
 
-            var size = PlatformGetWindowSize(this.Handle);
+            var size = GetWindowSize(this.Handle);
 
             if (size.Width != this.Size.Width || size.Height != this.Size.Height)
             {
@@ -368,31 +407,43 @@ public partial class Window
         this.windowChanges = WindowChanges.None;
     }
 
-    protected Size<uint> PlatformGetClientSize() =>
-        PlatformGetClientSize(this.Handle);
+    public partial string? GetClipboardData()
+    {
+        if (User32.OpenClipboard(this.Handle))
+        {
+            var text = User32.GetClipboardTextData();
 
-    protected void PlatformHide() =>
+            User32.CloseClipboard();
+
+            return text;
+        }
+
+        return null;
+    }
+
+    public partial void Hide() =>
         User32.ShowWindow(this.Handle, User32.SHOW_WINDOW_COMMANDS.SW_HIDE);
 
-    protected void PlatformMaximize() =>
+    public partial void Maximize() =>
         User32.ShowWindow(this.Handle, User32.SHOW_WINDOW_COMMANDS.SW_MAXIMIZE);
 
-    protected void PlatformMinimize() =>
+    public partial void Minimize() =>
         User32.ShowWindow(this.Handle, User32.SHOW_WINDOW_COMMANDS.SW_MINIMIZE);
 
-    protected void PlatformRestore() =>
+    public partial void Restore() =>
         User32.ShowWindow(this.Handle, User32.SHOW_WINDOW_COMMANDS.SW_RESTORE);
 
-    protected void PlatformSetPosition(in Point<int> value) =>
-        throw new NotImplementedException();
+    public partial void SetClipboardData(string value)
+    {
+        if (User32.OpenClipboard(this.Handle))
+        {
+            User32.EmptyClipboard();
+            User32.SetClipboardData(value);
+            User32.CloseClipboard();
+        }
+    }
 
-    protected void PlatformSetSize(in Size<uint> value) =>
-        throw new NotImplementedException();
-
-    protected void PlatformSetTitle(string value) =>
-        User32.SetWindowText(this.Handle, value);
-
-    protected void PlatformShow() =>
+    public partial void Show() =>
         User32.ShowWindow(this.Handle, User32.SHOW_WINDOW_COMMANDS.SW_SHOW);
 }
 #endif

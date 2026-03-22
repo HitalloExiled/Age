@@ -11,6 +11,8 @@
     <Project Path="source/Age.Core/Age.Core.csproj" />
     <Project Path="source/Age.Numerics/Age.Numerics.csproj" />
     <Project Path="source/Age.Platforms/Age.Platforms.csproj" />
+    <Project Path="source/Age.Platforms.Windows/Age.Platforms.Windows.csproj" />
+    <Project Path="source/Age.Platforms.Linux/Age.Platforms.Linux.csproj" />
     <Project Path="source/Age.Playground/Age.Playground.csproj" />
     <Project Path="source/Age.Rendering/Age.Rendering.csproj" />
     <Project Path="source/Age.Resources/Age.Resources.csproj" />

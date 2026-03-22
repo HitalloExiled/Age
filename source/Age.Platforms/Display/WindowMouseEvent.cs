@@ -16,4 +16,4 @@ public struct WindowMouseEvent
     public readonly bool IsHoldingPrimaryButton =>
         (this.PrimaryButton == MouseButton.Left && this.KeyStates.HasFlags(MouseKeyStates.LeftButton))
         || (this.PrimaryButton == MouseButton.Right && this.KeyStates.HasFlags(MouseKeyStates.RightButton));
-};
+}

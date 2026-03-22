@@ -49,59 +49,11 @@ public partial class Window : Disposable
     public bool IsMinimized { get; private set; }
     public bool IsVisible   { get; private set; } = true;
 
-    public Size<uint> ClientSize => this.PlatformGetClientSize();
-
-    public Cursor Cursor
-    {
-        get;
-        set
-        {
-            if (field != value)
-            {
-                field = value;
-                PlatformSetCursor(value);
-            }
-        }
-    }
-
-    public Point<int> Position
-    {
-        get => this.position;
-        set
-        {
-            if (this.position != value)
-            {
-                this.position = value;
-                this.PlatformSetPosition(value);
-            }
-        }
-    }
-
-    public Size<uint> Size
-    {
-        get => this.size;
-        set
-        {
-            if (this.size != value)
-            {
-                this.size = value;
-                this.PlatformSetSize(value);
-            }
-        }
-    }
-
-    public string Title
-    {
-        get => this.title;
-        set
-        {
-            if (this.title != value)
-            {
-                this.title = value;
-                this.PlatformSetTitle(value);
-            }
-        }
-    }
+    public partial Size<uint> ClientSize { get; }
+    public partial Cursor     Cursor     { get; set; }
+    public partial Point<int> Position   { get; set; }
+    public partial Size<uint> Size       { get; set; }
+    public partial string     Title      { get; set; }
 
     public Window(string title, Size<uint> size, Point<int> position, Window? parent = null)
     {
@@ -110,24 +62,21 @@ public partial class Window : Disposable
         this.position = position;
         this.Parent   = parent;
 
-        this.PlatformCreate(title, size, position, parent);
+        this.Create(title, size, position, parent);
 
         parent?.Children.Add(this);
     }
 
-    public static void Register(string className)
+    protected override void OnDisposed(bool disposing)
     {
-        if (Registered)
+        if (disposing)
         {
-            throw new Exception("Windows class already registered");
+            this.Close();
         }
-
-        PlatformRegister(className);
-
-        Registered = true;
-
-        Window.className = className;
     }
+
+    private unsafe partial void Create(string title, Size<uint> size, Point<int> position, Window? parent);
+    private partial void UpdateCursor();
 
     public static void CloseAll()
     {
@@ -147,72 +96,15 @@ public partial class Window : Disposable
         }
     }
 
-    protected override void OnDisposed(bool disposing)
-    {
-        if (disposing)
-        {
-            this.Close();
-        }
-    }
+    public static unsafe partial void Register(string className);
 
-    public void Close()
-    {
-        if (!this.IsClosed)
-        {
-            this.IsClosed = true;
-
-            this.PlatformClose();
-
-            this.Parent?.Children.Remove(this);
-
-            Closed?.Invoke();
-        }
-    }
-
-    public string? GetClipboardData() =>
-        this.PlatformGetClipboardData();
-
-    public void SetClipboardData(string value) =>
-        this.PlatformSetClipboardData(value);
-
-    public void DoEvents() =>
-        this.PlatformDoEvents();
-
-    public void Hide()
-    {
-        this.PlatformHide();
-
-        this.IsVisible = false;
-    }
-
-    public void Maximize()
-    {
-        this.PlatformMaximize();
-
-        this.IsMaximized = true;
-        this.IsMinimized = false;
-    }
-
-    public void Minimize()
-    {
-        this.PlatformMinimize();
-
-        this.IsMaximized = false;
-        this.IsMinimized = true;
-    }
-
-    public void Restore()
-    {
-        this.PlatformRestore();
-
-        this.IsMaximized = false;
-        this.IsMinimized = false;
-    }
-
-    public void Show()
-    {
-        this.PlatformShow();
-
-        this.IsVisible = true;
-    }
+    public partial void Close();
+    public partial string? GetClipboardData();
+    public partial void DoEvents();
+    public partial void Hide();
+    public partial void Maximize();
+    public partial void Minimize();
+    public partial void Restore();
+    public partial void SetClipboardData(string value);
+    public partial void Show();
 }
