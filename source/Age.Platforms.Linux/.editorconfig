@@ -1,6 +1,7 @@
 root = false
 
-[*.cs]
+[**.cs]
 dotnet_naming_rule.public_fields_rule.severity = none
 dotnet_diagnostic.CA1707.severity              = none
-dotnet_diagnostic.RCS1154.severity             = none
+dotnet_diagnostic.CA2211.severity              = none
+dotnet_diagnostic.IDE1006.severity             = none

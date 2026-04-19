@@ -1,7 +1,20 @@
+using System.Runtime.InteropServices;
+
 namespace Age.Core.Extensions;
 
 public static partial class Extension
 {
+    extension(string)
+    {
+        public unsafe static bool Compare(byte* left, byte* right)
+        {
+            var leftSpan  = MemoryMarshal.CreateReadOnlySpanFromNullTerminated(left);
+            var rightSpan = MemoryMarshal.CreateReadOnlySpanFromNullTerminated(right);
+
+            return leftSpan.SequenceEqual(rightSpan);
+        }
+    }
+
     extension(ReadOnlySpan<char> value)
     {
         public int CountNonWhitespaceCharacters()
@@ -37,4 +50,6 @@ public static partial class Extension
             }
         }
     }
+
+
 }

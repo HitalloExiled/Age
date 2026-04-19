@@ -55,14 +55,14 @@ public partial class Window : Disposable
     public partial Size<uint> Size       { get; set; }
     public partial string     Title      { get; set; }
 
-    public Window(string title, Size<uint> size, Point<int> position, Window? parent = null)
+    public Window(string? title = default, Size<uint>? size = default, Point<int>? position = default, Window? parent = null)
     {
-        this.title    = title;
-        this.size     = size;
-        this.position = position;
+        this.title    = title    ?? "Untitled";
+        this.size     = size     ?? new(800, 400);
+        this.position = position ?? default;
         this.Parent   = parent;
 
-        this.Create(title, size, position, parent);
+        this.Create(this.title, this.size, this.position, parent);
 
         parent?.Children.Add(this);
     }
@@ -75,7 +75,7 @@ public partial class Window : Disposable
         }
     }
 
-    private unsafe partial void Create(string title, Size<uint> size, Point<int> position, Window? parent);
+    private partial void Create(string title, Size<uint> size, Point<int> position, Window? parent);
     private partial void UpdateCursor();
 
     public static void CloseAll()
@@ -96,7 +96,7 @@ public partial class Window : Disposable
         }
     }
 
-    public static unsafe partial void Register(string className);
+    public static partial void Register(string? className);
 
     public partial void Close();
     public partial string? GetClipboardData();

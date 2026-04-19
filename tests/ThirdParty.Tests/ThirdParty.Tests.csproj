@@ -28,8 +28,6 @@
     <ProjectReference Include="../../source/ThirdParty.Skia/ThirdParty.Skia.csproj" />
     <ProjectReference Include="../../source/ThirdParty.Slang/ThirdParty.Slang.csproj" />
     <ProjectReference Include="../../source/ThirdParty.Vulkan/ThirdParty.Vulkan.csproj" />
-
-    <ProjectReference Condition="$(IsLinux)" Include="../../source/ThirdParty.Wayland/ThirdParty.Wayland.csproj" />
   </ItemGroup>
 
   <ItemGroup>

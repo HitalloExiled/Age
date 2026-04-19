@@ -3,11 +3,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(Windows) Launch Playground",
+            "name": "Launch Playground",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/source/Age.Playground/bin/Debug/net10.0/win-x64/Age.Playground.exe",
+            "program": "${workspaceFolder}/source/Age.Playground/bin/Debug/net10.0/linux-x64/Age.Playground",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
@@ -18,13 +18,16 @@
                 "searchNuGetOrgSymbolServer": false,
             },
             "enableStepFiltering": true,
+            "windows": {
+                "program": "${workspaceFolder}/source/Age.Playground/bin/Debug/net10.0/win-x64/Age.Playground.exe"
+            },
         },
         {
-            "name": "(Windows) Launch StoryBook",
+            "name": "Launch StoryBook",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/source/Age.StoryBook/bin/Debug/net10.0/win-x64/Age.StoryBook.exe",
+            "program": "${workspaceFolder}/source/Age.StoryBook/bin/Debug/net10.0/linux-x64/Age.StoryBook",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
@@ -35,6 +38,9 @@
                 "searchNuGetOrgSymbolServer": false,
             },
             "enableStepFiltering": true,
+            "windows": {
+                "program": "${workspaceFolder}/source/Age.StoryBook/bin/Debug/net10.0/win-x64/Age.StoryBook.exe"
+            },
         },
     ]
 }
