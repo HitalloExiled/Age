@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Age.Core.Extensions;
 
@@ -89,5 +90,13 @@ public static partial class Extension
 
             CopyTo(source, sizeOfSource, destination.Cast<TDestination, byte>(), sizeof(TDestination), sourceLength, alignToEnd);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string ToString(Encoding encoding) =>
+            encoding.GetString(source);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string ToUTF8String() =>
+            Encoding.UTF8.GetString(source);
     }
 }

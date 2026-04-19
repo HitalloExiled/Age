@@ -21,6 +21,7 @@
     <Project Path="source/ThirdParty.Skia/ThirdParty.Skia.csproj" />
     <Project Path="source/ThirdParty.Slang/ThirdParty.Slang.csproj" />
     <Project Path="source/ThirdParty.Vulkan/ThirdParty.Vulkan.csproj" />
+    <Project Path="source/ThirdParty.Wayland/ThirdParty.Wayland.csproj" />
   </Folder>
   <Folder Name="/tasks/">
     <Project Path="tasks/Build.Tasks/Build.Tasks.csproj" />

@@ -72,7 +72,7 @@ public unsafe ref partial struct NativeRefArray<T> : IDisposable where T : unman
     public NativeRefArray(uint size) =>
         this.unsafeBuffer = new(size);
 
-    public NativeRefArray(ReadOnlySpan<T> values) =>
+    public NativeRefArray(params ReadOnlySpan<T> values) =>
         this.unsafeBuffer = new(values);
 
     private readonly void ThrowIfDisposed() =>
