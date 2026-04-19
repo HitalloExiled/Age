@@ -9,12 +9,12 @@ public unsafe ref partial struct NativeRefList<T> where T : unmanaged
 {
     private bool disposed;
 
-    private UnsafeListBuffer<T> unsefeBuffer;
+    private UnsafeListBuffer<T> unsafeBuffer;
 
     public readonly T this[uint index]
     {
-        get => this.unsefeBuffer[(int)index];
-        set => this.unsefeBuffer[(int)index] = value;
+        get => this.unsafeBuffer[(int)index];
+        set => this.unsafeBuffer[(int)index] = value;
     }
 
     public T this[int index]
@@ -23,28 +23,28 @@ public unsafe ref partial struct NativeRefList<T> where T : unmanaged
         {
             this.ThrowIfDisposed();
 
-            return this.unsefeBuffer[index];
+            return this.unsafeBuffer[index];
         }
         set
         {
             this.ThrowIfDisposed();
 
-            this.unsefeBuffer[index] = value;
+            this.unsafeBuffer[index] = value;
         }
     }
 
     public int Capacity
     {
-        readonly get => this.unsefeBuffer.Capacity;
+        readonly get => this.unsafeBuffer.Capacity;
         set
         {
             this.ThrowIfDisposed();
 
-            this.unsefeBuffer.Capacity = value;
+            this.unsafeBuffer.Capacity = value;
         }
     }
 
-    public readonly Span<T> this[Range range] => this.unsefeBuffer[range];
+    public readonly Span<T> this[Range range] => this.unsafeBuffer[range];
 
     public readonly T* Buffer
     {
@@ -52,18 +52,18 @@ public unsafe ref partial struct NativeRefList<T> where T : unmanaged
         {
             this.ThrowIfDisposed();
 
-            return this.unsefeBuffer.Buffer;
+            return this.unsafeBuffer.Buffer;
         }
     }
 
-    public readonly int  Count   => this.unsefeBuffer.Count;
-    public readonly bool IsEmpty => this.unsefeBuffer.IsEmpty;
+    public readonly int  Count   => this.unsafeBuffer.Count;
+    public readonly bool IsEmpty => this.unsafeBuffer.IsEmpty;
 
     public NativeRefList(int capacity = 0) =>
-        this.unsefeBuffer = new(capacity);
+        this.unsafeBuffer = new(capacity);
 
     public NativeRefList(ReadOnlySpan<T> values) =>
-        this.unsefeBuffer = new(values);
+        this.unsafeBuffer = new(values);
 
     private readonly void ThrowIfDisposed() =>
         ObjectDisposedException.ThrowIf(this.disposed, typeof(NativeRefList<T>));
@@ -72,41 +72,41 @@ public unsafe ref partial struct NativeRefList<T> where T : unmanaged
     {
         this.ThrowIfDisposed();
 
-        return ref this.unsefeBuffer.Add();
+        return ref this.unsafeBuffer.Add();
     }
 
     public void Add(T item)
     {
         this.ThrowIfDisposed();
 
-        this.unsefeBuffer.Add(item);
+        this.unsafeBuffer.Add(item);
     }
 
     public readonly Span<T> AsSpan()
     {
         this.ThrowIfDisposed();
 
-        return this.unsefeBuffer.AsSpan();
+        return this.unsafeBuffer.AsSpan();
     }
 
     public void Clear()
     {
         this.ThrowIfDisposed();
 
-        this.unsefeBuffer.Clear();
+        this.unsafeBuffer.Clear();
     }
 
     public readonly bool Contains(T item) =>
-        this.unsefeBuffer.Contains(item);
+        this.unsafeBuffer.Contains(item);
 
     public readonly void CopyTo(Span<T> items, int startIndex) =>
-        this.unsefeBuffer.CopyTo(items, startIndex);
+        this.unsafeBuffer.CopyTo(items, startIndex);
 
     public void EnsureCapacity(int capacity)
     {
         this.ThrowIfDisposed();
 
-        this.unsefeBuffer.EnsureCapacity(capacity);
+        this.unsafeBuffer.EnsureCapacity(capacity);
     }
 
     public void Dispose()
@@ -116,54 +116,54 @@ public unsafe ref partial struct NativeRefList<T> where T : unmanaged
             return;
         }
 
-        this.unsefeBuffer.Dispose();
+        this.unsafeBuffer.Dispose();
 
         this.disposed = true;
     }
 
     public readonly UnsafeEnumerator<T> GetEnumerator() =>
-        this.unsefeBuffer.GetEnumerator();
+        this.unsafeBuffer.GetEnumerator();
 
     public readonly int IndexOf(T item)
     {
         this.ThrowIfDisposed();
 
-        return this.unsefeBuffer.IndexOf(item);
+        return this.unsafeBuffer.IndexOf(item);
     }
 
     public void Insert(int index, T item)
     {
         this.ThrowIfDisposed();
 
-        this.unsefeBuffer.Insert(index, item);
+        this.unsafeBuffer.Insert(index, item);
     }
 
     public bool Remove(T item)
     {
         this.ThrowIfDisposed();
 
-        return this.unsefeBuffer.Remove(item);
+        return this.unsafeBuffer.Remove(item);
     }
 
     public void RemoveAt(int index)
     {
         this.ThrowIfDisposed();
 
-        this.unsefeBuffer.RemoveAt(index);
+        this.unsafeBuffer.RemoveAt(index);
     }
 
     public void RemoveAt(int startIndex, int count)
     {
         this.ThrowIfDisposed();
 
-        this.unsefeBuffer.RemoveAt(startIndex, count);
+        this.unsafeBuffer.RemoveAt(startIndex, count);
     }
 
     public readonly Span<T> Slice(int start, int length)
     {
         this.ThrowIfDisposed();
 
-        return this.unsefeBuffer.Slice(start, length);
+        return this.unsafeBuffer.Slice(start, length);
     }
 
     public static implicit operator T*(NativeRefList<T> value) => value.Buffer;

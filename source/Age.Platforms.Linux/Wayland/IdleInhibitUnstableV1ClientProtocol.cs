@@ -11,6 +11,8 @@ internal struct zwp_idle_inhibit_manager_v1;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline")]
 internal static unsafe class IdleInhibitUnstableV1ClientProtocol
 {
+    private const uint ZWP_IDLE_INHIBIT_MANAGER_V1_DESTROY = 0;
+
     private static readonly wl_interface** idle_inhibit_unstable_v1_types;
 
     private readonly static wl_message* zwp_idle_inhibit_manager_v1_requests;
@@ -53,4 +55,13 @@ internal static unsafe class IdleInhibitUnstableV1ClientProtocol
         idle_inhibit_unstable_v1_types[0] = zwp_idle_inhibitor_v1_interface;
         idle_inhibit_unstable_v1_types[1] = wl_surface_interface;
     }
+
+    public static void zwp_idle_inhibit_manager_v1_destroy(zwp_idle_inhibit_manager_v1* zwp_idle_inhibit_manager_v1) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)zwp_idle_inhibit_manager_v1,
+            ZWP_IDLE_INHIBIT_MANAGER_V1_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)zwp_idle_inhibit_manager_v1),
+            WL_MARSHAL_FLAG_DESTROY
+        );
 }

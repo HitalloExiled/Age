@@ -5,8 +5,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Condition="$(IsWindows)" Include="../Age.Platforms.Windows/Age.Platforms.Windows.csproj"></ProjectReference>
-    <ProjectReference Condition="$(IsLinux)"   Include="../Age.Platforms.Linux/Age.Platforms.Linux.csproj"></ProjectReference>
+    <!-- <ProjectReference Condition="$(IsWindows)" Include="../Age.Platforms.Windows/Age.Platforms.Windows.csproj"></ProjectReference>
+    <ProjectReference Condition="$(IsLinux)"   Include="../Age.Platforms.Linux/Age.Platforms.Linux.csproj"></ProjectReference> -->
+    <ProjectReference Include="../Age.Platforms.Windows/Age.Platforms.Windows.csproj"></ProjectReference>
+    <ProjectReference Include="../Age.Platforms.Linux/Age.Platforms.Linux.csproj"></ProjectReference>
   </ItemGroup>
 
 </Project>

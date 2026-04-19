@@ -248,7 +248,7 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             wl_proxy_get_version((wl_proxy*)
             zwp_tablet_manager_v2),
             0,
-            null,
+            default,
             seat
         );
 

@@ -26,18 +26,16 @@ public partial class Window : Disposable
     public event Action?                    Resized;
     #endregion events
 
-    private static string? className;
+    private static Size<uint> defaultSize = new(800, 600);
+    private static string?    appId;
 
-    protected static Dictionary<nint, Window> WindowsMap { get; } = [];
+    private string        title;
+    private WindowChanges windowChanges;
 
     public static IEnumerable<Window> Windows => WindowsMap.Values;
 
-    protected static bool Registered { get; set; }
-
-    private Point<int>    position;
-    private Size<uint>    size;
-    private string        title;
-    private WindowChanges windowChanges;
+    protected static bool                     Registered { get; set; }
+    protected static Dictionary<nint, Window> WindowsMap { get; } = [];
 
     protected List<Window> Children { get; } = [];
 
@@ -55,17 +53,7 @@ public partial class Window : Disposable
     public partial Size<uint> Size       { get; set; }
     public partial string     Title      { get; set; }
 
-    public Window(string? title = default, Size<uint>? size = default, Point<int>? position = default, Window? parent = null)
-    {
-        this.title    = title    ?? "Untitled";
-        this.size     = size     ?? new(800, 400);
-        this.position = position ?? default;
-        this.Parent   = parent;
-
-        this.Create(this.title, this.size, this.position, parent);
-
-        parent?.Children.Add(this);
-    }
+    public partial Window(string? title = default, Size<uint>? size = default, Point<int>? position = default, Window? parent = null);
 
     protected override void OnDisposed(bool disposing)
     {
@@ -75,7 +63,6 @@ public partial class Window : Disposable
         }
     }
 
-    private partial void Create(string title, Size<uint> size, Point<int> position, Window? parent);
     private partial void UpdateCursor();
 
     public static void CloseAll()
@@ -96,7 +83,8 @@ public partial class Window : Disposable
         }
     }
 
-    public static partial void Register(string? className);
+    public static partial void Register(string appId);
+    public static partial void Destroy();
 
     public partial void Close();
     public partial string? GetClipboardData();

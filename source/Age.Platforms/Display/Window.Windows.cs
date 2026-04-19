@@ -1,3 +1,5 @@
+// #define WINDOWS
+
 #if WINDOWS
 using Age.Core.Extensions;
 using Age.Numerics;
@@ -8,6 +10,9 @@ namespace Age.Platforms.Display;
 
 public unsafe partial class Window
 {
+    private Size<uint> size;
+    private Point<int> position;
+
     public partial Size<uint> ClientSize
     {
         get
@@ -58,6 +63,43 @@ public unsafe partial class Window
                 this.title = value;
             }
         }
+    }
+
+    public partial Window(string? title, Size<uint>? size, Point<int>? position, Window? parent)
+    {
+        this.title    = title ?? "Untitled";
+        this.Parent   = parent;
+        this.size     = size ?? new(800, 400);
+        this.position = position ?? default;
+
+        parent?.Children.Add(this);
+
+        if (!Registered)
+        {
+            Register();
+        }
+
+        this.Handle = User32.CreateWindowExW(
+            User32.WINDOW_STYLES_EX.WS_EX_APPWINDOW | User32.WINDOW_STYLES_EX.WS_EX_WINDOWEDGE,
+            className,
+            title,
+            User32.WINDOW_STYLES.WS_VISIBLE | User32.WINDOW_STYLES.WS_OVERLAPPEDWINDOW,
+            this.position.X,
+            this.position.Y,
+            (int)this.size.Width,
+            (int)this.size.Height,
+            parent?.Handle ?? default,
+            default,
+            default,
+            0
+        );
+
+        if (this.Handle == default)
+        {
+            throw new Exception("Failed to create window on Windows OS.");
+		}
+
+        WindowsMap[this.Handle] = this;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -276,16 +318,14 @@ public unsafe partial class Window
     private partial void UpdateCursor() =>
         User32.SetCursor(User32.LoadCursorW(default, ToIdcStandardCursors(this.Cursor)));
 
-    public static partial void Register(string? className)
+    public static partial void Register(string appId)
     {
         if (Registered)
         {
             throw new Exception("Windows class already registered");
         }
 
-        className = "Age.Platforms.Display.Window";
-
-        fixed (char* lpszClassName = className)
+        fixed (char* lpszClassName = appId)
         {
             var windowClass = new User32.WNDCLASSEXW
             {
@@ -307,9 +347,8 @@ public unsafe partial class Window
             }
         }
 
-        Registered = true;
-
-        Window.className = className;
+        Registered   = true;
+        Window.appId = appId;
     }
 
     public partial void Close()
@@ -317,6 +356,8 @@ public unsafe partial class Window
         if (!this.IsClosed)
         {
             this.IsClosed = true;
+
+            Closed?.Invoke();
 
             foreach (var child in this.Children)
             {
@@ -332,40 +373,10 @@ public unsafe partial class Window
             WindowsMap.Remove(this.Handle);
 
             this.Parent?.Children.Remove(this);
-
-            Closed?.Invoke();
         }
     }
 
-    private unsafe partial void Create(string title, Size<uint> size, Point<int> position, Window? parent)
-    {
-        if (!Registered)
-        {
-            Register("Age.Platforms.Window");
-        }
-
-        this.Handle = User32.CreateWindowExW(
-            User32.WINDOW_STYLES_EX.WS_EX_APPWINDOW | User32.WINDOW_STYLES_EX.WS_EX_WINDOWEDGE,
-            className,
-            title,
-            User32.WINDOW_STYLES.WS_VISIBLE | User32.WINDOW_STYLES.WS_OVERLAPPEDWINDOW,
-            position.X,
-            position.Y,
-            (int)size.Width,
-            (int)size.Height,
-            parent?.Handle ?? default,
-            default,
-            default,
-            0
-        );
-
-        if (this.Handle == default)
-        {
-            throw new Exception("Failed to create window on Windows OS.");
-		}
-
-        WindowsMap[this.Handle] = this;
-    }
+    public static partial void Destroy() { }
 
     public partial void DoEvents()
     {

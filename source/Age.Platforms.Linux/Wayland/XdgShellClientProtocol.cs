@@ -19,8 +19,12 @@ internal unsafe struct wl_array
 }
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline")]
-internal static unsafe partial class XdgShellClientProtocol
+internal static unsafe class XdgShellClientProtocol
 {
+    private const uint XDG_SURFACE_SET_WINDOW_GEOMETRY = 3;
+    private const uint XDG_WM_BASE_DESTROY             = 0;
+    private const uint XDG_WM_BASE_GET_XDG_SURFACE     = 2;
+
     private static readonly wl_interface** xdg_shell_types;
 
     private readonly static wl_message* xdg_popup_events;
@@ -174,12 +178,34 @@ internal static unsafe partial class XdgShellClientProtocol
     }
 
     #region wl_proxy - xdg_surface
-    [LibraryImport(LIBRARY)]
-    public static partial void* wl_proxy_marshal_flags(xdg_surface* proxy, uint32_t opcode, wl_interface* @interface, uint32_t version, uint32_t flags, uint arg1);
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int xdg_surface_add_listener(xdg_surface* proxy, xdg_surface_listener* implementation, void* data) =>
         wl_proxy_add_listener((wl_proxy*)proxy, (void**)implementation, data);
+
+    public static xdg_surface* xdg_wm_base_get_xdg_surface(xdg_wm_base* xdg_wm_base, wl_surface* surface) =>
+        (xdg_surface*)wl_proxy_marshal_flags(
+            (wl_proxy*)xdg_wm_base,
+            XDG_WM_BASE_GET_XDG_SURFACE,
+            xdg_surface_interface,
+            wl_proxy_get_version((wl_proxy*)xdg_wm_base),
+            0,
+            default,
+            surface
+        );
+
+    public static void xdg_surface_set_window_geometry(xdg_surface* xdg_surface, int32_t x, int32_t y, int32_t width, int32_t height) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)xdg_surface,
+            XDG_SURFACE_SET_WINDOW_GEOMETRY,
+            null,
+            wl_proxy_get_version((wl_proxy*)xdg_surface),
+            0,
+            x,
+            y,
+            width,
+            height
+        );
+
     #endregion
 
     #region wl_proxy - xdg_toplevel
@@ -193,5 +219,14 @@ internal static unsafe partial class XdgShellClientProtocol
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int xdg_wm_base_add_listener(xdg_wm_base* xdg_wm_base, xdg_wm_base_listener* listener, void* data) =>
         wl_proxy_add_listener((wl_proxy*)xdg_wm_base, (void**)listener, data);
+
+    public static void xdg_wm_base_destroy(xdg_wm_base* xdg_wm_base) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)xdg_wm_base,
+            XDG_WM_BASE_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)xdg_wm_base),
+            WL_MARSHAL_FLAG_DESTROY
+        );
     #endregion
 }

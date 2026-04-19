@@ -1,0 +1,16 @@
+// #undef LINUX
+#if LINUX
+using Age.Platforms.Linux.Wayland;
+
+namespace Age.Platforms.Display;
+
+public unsafe partial class Window
+{
+    private struct BufferData
+    {
+        public required void*      Data;
+        public required ulong      Size;
+        public required wl_buffer* Buffer;
+    }
+}
+#endif

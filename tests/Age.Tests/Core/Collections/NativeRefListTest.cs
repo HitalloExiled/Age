@@ -1,9 +1,16 @@
+using System.Runtime.InteropServices;
 using Age.Core.Collections;
+using Age.Core.Extensions;
 
 namespace Age.Tests.Core.Collections;
 
 public class NativeRefListTest
 {
+    private ref struct Wrapper()
+    {
+        public NativeRefList<int> List;
+    }
+
     private static void AssertIt(in NativeRefList<int> list, ReadOnlySpan<int> values, int capacity)
     {
         Assert.Equal(capacity, list.Capacity);
@@ -115,17 +122,11 @@ public class NativeRefListTest
     {
         using var list = new NativeRefList<int>([4, 5, 6]);
 
-        Assert.Equal(3, list.Capacity);
-        Assert.Equal(3, list.Count);
-
-        Assert.Equal(4, list[0]);
-        Assert.Equal(5, list[1]);
-        Assert.Equal(6, list[2]);
+        AssertIt(list, [4, 5, 6], 3);
 
         list.Clear();
 
-        Assert.Equal(3, list.Capacity);
-        Assert.Equal(0, list.Count);
+        AssertIt(list, [], 3);
     }
 
     [Fact]
@@ -133,24 +134,17 @@ public class NativeRefListTest
     {
         var list = new NativeRefList<int>([1, 2, 3]);
 
-        Assert.Equal(3, list.Capacity);
-        Assert.Equal(3, list.Count);
-
-        Assert.Equal(1, list[0]);
-        Assert.Equal(2, list[1]);
-        Assert.Equal(3, list[2]);
+        AssertIt(list, [1, 2, 3], 3);
 
         list.Capacity = 6;
 
-        Assert.Equal(6, list.Capacity);
-        Assert.Equal(3, list.Count);
+        AssertIt(list, [1, 2, 3], 6);
 
         list.Add(4);
         list.Add(5);
         list.Add(6);
 
-        Assert.Equal(6, list.Capacity);
-        Assert.Equal(6, list.Count);
+        AssertIt(list, [1, 2, 3, 4, 5, 6], 6);
 
         list.Dispose();
     }
@@ -160,20 +154,17 @@ public class NativeRefListTest
     {
         var list = new NativeRefList<int>(4);
 
-        Assert.Equal(0, list.Count);
-        Assert.Equal(4, list.Capacity);
+        AssertIt(list, [], 4);
 
         list.Add(0);
         list.Add(1);
         list.Add(2);
 
-        Assert.Equal(3, list.Count);
-        Assert.Equal(4, list.Capacity);
+        AssertIt(list, [0, 1, 2], 4);
 
         list.Capacity = 3;
 
-        Assert.Equal(3, list.Count);
-        Assert.Equal(3, list.Capacity);
+        AssertIt(list, [0, 1, 2], 3);
 
         try
         {
@@ -185,5 +176,55 @@ public class NativeRefListTest
         }
 
         list.Dispose();
+    }
+
+    [Fact]
+    public unsafe void Nested()
+    {
+        var wrapper = new Wrapper();
+
+        wrapper.List.Add(1);
+        wrapper.List.Add(2);
+        wrapper.List.Add(3);
+
+        AssertIt(wrapper.List, [1, 2, 3], 4);
+
+        addMore(&wrapper);
+
+        AssertIt(wrapper.List, [1, 2, 3, 4, 5, 6], 8);
+
+        wrapper.List.Dispose();
+
+        static void addMore(Wrapper* wrapper)
+        {
+            wrapper->List.Add(4);
+            wrapper->List.Add(5);
+            wrapper->List.Add(6);
+        }
+    }
+
+    [Fact]
+    public unsafe void NestedPointer()
+    {
+        var wrapper = NativeMemory.AllocZeroed<Wrapper>();
+
+        wrapper->List.Add(1);
+        wrapper->List.Add(2);
+        wrapper->List.Add(3);
+
+        AssertIt(wrapper->List, [1, 2, 3], 4);
+
+        addMore(wrapper);
+
+        AssertIt(wrapper->List, [1, 2, 3, 4, 5, 6], 8);
+
+        wrapper->List.Dispose();
+
+        static void addMore(Wrapper* wrapper)
+        {
+            wrapper->List.Add(4);
+            wrapper->List.Add(5);
+            wrapper->List.Add(6);
+        }
     }
 }

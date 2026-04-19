@@ -16,7 +16,7 @@ public static partial class Extension
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe static void ValidateNotNull<T>(T* value, string? message = null) where T : unmanaged
+        public unsafe static void ValidateNotNull<T>(T* value, string? message = null) where T : unmanaged, allows ref struct
         {
             if (value == null)
             {

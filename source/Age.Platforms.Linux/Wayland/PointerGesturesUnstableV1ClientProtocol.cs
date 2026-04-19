@@ -113,4 +113,7 @@ internal static unsafe class PointerGesturesUnstableV1ClientProtocol
 
         pointer_gestures_unstable_v1_types[21] = wl_surface_interface;
     }
+
+    public static void zwp_pointer_gestures_v1_destroy(zwp_pointer_gestures_v1* zwp_pointer_gestures_v1) =>
+        wl_proxy_destroy((wl_proxy*)zwp_pointer_gestures_v1);
 }

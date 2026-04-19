@@ -11,6 +11,8 @@ internal struct xdg_activation_v1;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline")]
 internal static unsafe class XdgActivationV1ClientProtocol
 {
+    private const uint XDG_ACTIVATION_V1_DESTROY = 0;
+
     private static readonly wl_interface** xdg_activation_v1_types;
 
     private readonly static wl_message* xdg_activation_v1_requests;
@@ -67,4 +69,13 @@ internal static unsafe class XdgActivationV1ClientProtocol
         xdg_activation_v1_types[5] = wl_seat_interface;
         xdg_activation_v1_types[6] = wl_surface_interface;
     }
+
+    public static void xdg_activation_v1_destroy(xdg_activation_v1* xdg_activation_v1) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)xdg_activation_v1,
+            XDG_ACTIVATION_V1_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)xdg_activation_v1),
+            WL_MARSHAL_FLAG_DESTROY
+        );
 }

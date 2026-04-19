@@ -10,9 +10,12 @@
 
 // engine.Run();
 
+using Age.Core;
 using Age.Platforms.Display;
 
-Window.Register(null);
+Logger.Level = LogLevel.Trace;
+
+Window.Register("org.age.playground");
 
 var window = new Window();
 
@@ -20,3 +23,5 @@ while (!window.IsClosed)
 {
     window.DoEvents();
 }
+
+Window.Destroy();

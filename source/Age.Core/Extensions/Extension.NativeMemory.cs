@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Age.Core.Extensions;
@@ -6,31 +7,42 @@ public static partial class Extension
 {
     extension(NativeMemory)
     {
-        public static unsafe T* Alloc<T>() where T : unmanaged =>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* Alloc<T>() where T : unmanaged, allows ref struct =>
             (T*)NativeMemory.Alloc((nuint)sizeof(T));
 
-        public static unsafe T* Alloc<T>(uint count) where T : unmanaged =>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* Alloc<T>(uint count) where T : unmanaged, allows ref struct =>
             (T*)NativeMemory.Alloc((nuint)sizeof(T) * count);
 
-        public static unsafe T* AllocSet<T>(T value) where T : unmanaged =>
-            AllocSet([value]);
-
-        public static unsafe T* AllocSet<T>(ReadOnlySpan<T> values) where T : unmanaged
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* AllocSet<T>(T value) where T : unmanaged, allows ref struct
         {
-            var pointer = (T*)NativeMemory.Alloc((nuint)(sizeof(T) * values.Length));
+            var pointer = (T*)NativeMemory.Alloc((nuint)sizeof(T));
 
-            for (var i = 0; i < values.Length; i++)
-            {
-                pointer[0] = values[i];
-            }
+            pointer[0] = value;
 
             return pointer;
         }
 
-        public static unsafe T* AllocZeroed<T>() where T : unmanaged =>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* AllocSet<T>(ReadOnlySpan<T> values) where T : unmanaged
+        {
+            var pointer = (T*)NativeMemory.Alloc((nuint)(sizeof(T) * values.Length));
+
+            var span = new Span<T>(pointer, values.Length);
+
+            values.CopyTo(span);
+
+            return pointer;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* AllocZeroed<T>() where T : unmanaged, allows ref struct =>
             (T*)NativeMemory.AllocZeroed((nuint)sizeof(T));
 
-        public static unsafe T* AllocZeroed<T>(uint count) where T : unmanaged =>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* AllocZeroed<T>(uint count) where T : unmanaged, allows ref struct =>
             (T*)NativeMemory.AllocZeroed((nuint)sizeof(T) * count);
     }
 }

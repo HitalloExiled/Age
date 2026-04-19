@@ -82,7 +82,7 @@ internal unsafe static class TextInputUnstableV3ClientProtocol
             zwp_text_input_v3_interface,
             wl_proxy_get_version((wl_proxy*)zwp_text_input_manager_v3),
             0,
-            null,
+            default,
             seat
         );
 

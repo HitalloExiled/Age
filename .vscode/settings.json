@@ -19,5 +19,8 @@
         "**/Thumbs.db": false,
         ".coverage": false,
         "BenchmarkDotNet.Artifacts": false
-    }
+    },
+    // "lldb.showDisassembly": "never",
+    "lldb.suppressMissingSourceFiles": true,
+    "lldb.library": "/usr/lib64/liblldb.so",
 }

@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using Age.Core.Extensions;
 
 using static Age.Platforms.Linux.Wayland.Helper;
+using static Age.Platforms.Linux.Wayland.WaylandClientProtocol;
 using static Age.Platforms.Linux.Wayland.XdgShellClientProtocol;
 
 namespace Age.Platforms.Linux.Wayland;
@@ -11,6 +12,8 @@ internal struct zxdg_decoration_manager_v1;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline")]
 internal static unsafe class XdgDecorationUnstableV1ClientProtocol
 {
+    private const uint ZXDG_DECORATION_MANAGER_V1_DESTROY = 0;
+
     private static readonly wl_interface** xdg_decoration_unstable_v1_types;
 
     private readonly static wl_message* zxdg_decoration_manager_v1_requests;
@@ -60,4 +63,13 @@ internal static unsafe class XdgDecorationUnstableV1ClientProtocol
         xdg_decoration_unstable_v1_types[1] = zxdg_toplevel_decoration_v1_interface;
         xdg_decoration_unstable_v1_types[2] = xdg_toplevel_interface;
     }
+
+    public static void zxdg_decoration_manager_v1_destroy(zxdg_decoration_manager_v1* zxdg_decoration_manager_v1) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)zxdg_decoration_manager_v1,
+            ZXDG_DECORATION_MANAGER_V1_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)zxdg_decoration_manager_v1),
+            WL_MARSHAL_FLAG_DESTROY
+        );
 }

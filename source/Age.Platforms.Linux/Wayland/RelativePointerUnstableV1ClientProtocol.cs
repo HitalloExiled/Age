@@ -2,6 +2,7 @@ using Age.Core.Extensions;
 using System.Runtime.InteropServices;
 
 using static Age.Platforms.Linux.Wayland.Helper;
+using static Age.Platforms.Linux.Wayland.WaylandClientProtocol;
 
 namespace Age.Platforms.Linux.Wayland;
 
@@ -10,6 +11,8 @@ internal struct zwp_relative_pointer_manager_v1;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline")]
 internal static unsafe class RelativePointerUnstableV1ClientProtocol
 {
+    private const uint ZWP_RELATIVE_POINTER_MANAGER_V1_DESTROY = 0;
+
     private static readonly wl_interface** relative_pointer_unstable_v1_types;
 
     private readonly static wl_message* zwp_relative_pointer_manager_v1_requests;
@@ -57,4 +60,13 @@ internal static unsafe class RelativePointerUnstableV1ClientProtocol
         relative_pointer_unstable_v1_types[6] = zwp_relative_pointer_v1_interface;
         relative_pointer_unstable_v1_types[7] = WaylandClientProtocol.wl_pointer_interface;
     }
+
+    public static void zwp_relative_pointer_manager_v1_destroy(zwp_relative_pointer_manager_v1* zwp_relative_pointer_manager_v1) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)zwp_relative_pointer_manager_v1,
+            ZWP_RELATIVE_POINTER_MANAGER_V1_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)zwp_relative_pointer_manager_v1),
+            WL_MARSHAL_FLAG_DESTROY
+        );
 }

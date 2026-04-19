@@ -11,6 +11,8 @@ internal struct zwp_pointer_constraints_v1;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline")]
 internal static unsafe class PointerConstraintsUnstableV1ClientProtocol
 {
+    private const uint ZWP_POINTER_CONSTRAINTS_V1_DESTROY = 0;
+
     private static readonly wl_interface** pointer_constraints_unstable_v1_types;
 
     private readonly static wl_message* zwp_pointer_constraints_v1_requests;
@@ -93,4 +95,13 @@ internal static unsafe class PointerConstraintsUnstableV1ClientProtocol
         pointer_constraints_unstable_v1_types[12] = wl_region_interface;
         pointer_constraints_unstable_v1_types[13] = wl_region_interface;
     }
+
+    public static void zwp_pointer_constraints_v1_destroy(zwp_pointer_constraints_v1* zwp_pointer_constraints_v1) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)zwp_pointer_constraints_v1,
+            ZWP_POINTER_CONSTRAINTS_V1_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)zwp_pointer_constraints_v1),
+            WL_MARSHAL_FLAG_DESTROY
+        );
 }

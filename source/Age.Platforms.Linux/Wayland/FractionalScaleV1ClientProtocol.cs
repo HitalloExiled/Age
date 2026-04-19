@@ -2,14 +2,19 @@ using System.Runtime.InteropServices;
 using Age.Core.Extensions;
 
 using static Age.Platforms.Linux.Wayland.Helper;
+using static Age.Platforms.Linux.Wayland.WaylandClientProtocol;
 
 namespace Age.Platforms.Linux.Wayland;
 
 internal struct wp_fractional_scale_manager_v1;
+internal struct wp_fractional_scale_v1;
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline")]
 internal static unsafe class FractionalScaleV1ClientProtocol
 {
+    private const uint WP_FRACTIONAL_SCALE_MANAGER_V1_DESTROY              = 0;
+    private const uint WP_FRACTIONAL_SCALE_MANAGER_V1_GET_FRACTIONAL_SCALE = 1;
+
     private static readonly wl_interface** fractional_scale_v1_types;
 
     private readonly static wl_message* wp_fractional_scale_manager_v1_requests;
@@ -55,6 +60,29 @@ internal static unsafe class FractionalScaleV1ClientProtocol
         );
 
         fractional_scale_v1_types[1] = wp_fractional_scale_v1_interface;
-        fractional_scale_v1_types[2] = WaylandClientProtocol.wl_surface_interface;
+        fractional_scale_v1_types[2] = wl_surface_interface;
     }
+
+    public static int wp_fractional_scale_v1_add_listener(wp_fractional_scale_v1* wp_fractional_scale_v1, wp_fractional_scale_v1_listener* listener, void* data) =>
+        wl_proxy_add_listener((wl_proxy*)wp_fractional_scale_v1, (void**)listener, data);
+
+    public static void wp_fractional_scale_manager_v1_destroy(wp_fractional_scale_manager_v1* wp_fractional_scale_manager_v1) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wp_fractional_scale_manager_v1,
+            WP_FRACTIONAL_SCALE_MANAGER_V1_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)wp_fractional_scale_manager_v1),
+            WL_MARSHAL_FLAG_DESTROY
+        );
+
+    public static wp_fractional_scale_v1* wp_fractional_scale_manager_v1_get_fractional_scale(wp_fractional_scale_manager_v1* wp_fractional_scale_manager_v1, wl_surface* surface) =>
+        (wp_fractional_scale_v1*)wl_proxy_marshal_flags(
+            (wl_proxy*)wp_fractional_scale_manager_v1,
+            WP_FRACTIONAL_SCALE_MANAGER_V1_GET_FRACTIONAL_SCALE,
+            wp_fractional_scale_v1_interface,
+            wl_proxy_get_version((wl_proxy*)wp_fractional_scale_manager_v1),
+            0,
+            default,
+            surface
+        );
 }

@@ -12,6 +12,8 @@ internal struct wp_cursor_shape_manager_v1;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline")]
 internal static unsafe class CursorShapeV1ClientProtocol
 {
+    private const uint WP_CURSOR_SHAPE_MANAGER_V1_DESTROY = 0;
+
     private static readonly wl_interface** cursor_shape_v1_types;
 
     private readonly static wl_message* wp_cursor_shape_manager_v1_requests;
@@ -58,4 +60,13 @@ internal static unsafe class CursorShapeV1ClientProtocol
         cursor_shape_v1_types[4] = wp_cursor_shape_device_v1_interface;
         cursor_shape_v1_types[5] = zwp_tablet_tool_v2_interface;
     }
+
+    public static void wp_cursor_shape_manager_v1_destroy(wp_cursor_shape_manager_v1* wp_cursor_shape_manager_v1) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wp_cursor_shape_manager_v1,
+            WP_CURSOR_SHAPE_MANAGER_V1_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)wp_cursor_shape_manager_v1),
+            WL_MARSHAL_FLAG_DESTROY
+        );
 }
