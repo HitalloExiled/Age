@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace Age.Platforms.Display;
 
-public partial class Window
+public unsafe partial class Window
 {
     public partial Size<uint> ClientSize
     {
@@ -276,12 +276,14 @@ public partial class Window
     private partial void UpdateCursor() =>
         User32.SetCursor(User32.LoadCursorW(default, ToIdcStandardCursors(this.Cursor)));
 
-    public static unsafe partial void Register(string className)
+    public static partial void Register(string? className)
     {
         if (Registered)
         {
             throw new Exception("Windows class already registered");
         }
+
+        className = "Age.Platforms.Display.Window";
 
         fixed (char* lpszClassName = className)
         {

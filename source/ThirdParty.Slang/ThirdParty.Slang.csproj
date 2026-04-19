@@ -7,7 +7,7 @@
     <SlangVersion>2026.4.2</SlangVersion>
   </PropertyGroup>
 
-  <Target Name="DownloadSlangFiles" BeforeTargets="CollectPackageReferences">
+  <Target Name="DownloadSlangFiles" BeforeTargets="Restore;Build">
     <PropertyGroup Condition="'$(IsWindows)' == 'True'">
       <Platform>windows</Platform>
       <File>bin/slang-compiler.dll</File>
