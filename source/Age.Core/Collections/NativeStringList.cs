@@ -1,95 +1,148 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text;
+using Age.Core.Extensions;
 
 namespace Age.Core.Collections;
 
 [DebuggerTypeProxy(typeof(DebugView))]
 [CollectionBuilder(typeof(Builders), nameof(Builders.NativeStringList))]
-public partial class NativeStringList : Disposable
+public unsafe partial struct NativeStringList : IDisposable
 {
-    private UnsafeStringListBuffer unsafeBuffer;
+    public byte** Buffer { get; private set; }
 
-    public string this[int index]
+    public readonly string this[int index]
     {
         get
         {
-            this.ThrowIfDisposed();
+            this.CheckIndex(index);
 
-            return this.unsafeBuffer[index];
+            var span = MemoryMarshal.CreateReadOnlySpanFromNullTerminated(this.Buffer[index]);
+
+            return Encoding.UTF8.GetString(span);
         }
         set
         {
-            this.ThrowIfDisposed();
+            this.CheckIndex(index);
 
-            this.unsafeBuffer[index] = value;
+            NativeMemory.Free(this.Buffer[index]);
+
+            this.Buffer[index] = MemoryMarshal.CreateUTF8StringBuffer(value);
         }
     }
 
     public int Capacity
     {
-        get => this.unsafeBuffer.Capacity;
+        get;
         set
         {
-            this.ThrowIfDisposed();
+            if (field == value)
+            {
+                return;
+            }
 
-            this.unsafeBuffer.Capacity = value;
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, this.Count);
+
+            this.Buffer = (byte**)NativeMemory.Realloc(this.Buffer, (nuint)(sizeof(byte*) * value));
+
+            field = value;
         }
     }
 
-    public unsafe byte** Buffer
+    public int Count { get; private set; }
+
+    public readonly bool IsEmpty
     {
-        get
-        {
-            this.ThrowIfDisposed();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.Count == 0;
+    }
 
-            return this.unsafeBuffer.Buffer;
+    public NativeStringList(int capacity) =>
+        this.Capacity = capacity;
+
+    public NativeStringList() : this(4)
+    { }
+
+    public NativeStringList(ReadOnlySpan<string?> values) : this(values.Length)
+    {
+        for (var i = 0; i < values.Length; i++)
+        {
+            this.Buffer[i] = MemoryMarshal.CreateUTF8StringBuffer(values[i]);
+        }
+
+        this.Count = values.Length;
+    }
+
+    private readonly void CheckIndex(int index)
+    {
+        if (index < 0 || index >= this.Count)
+        {
+            throw new IndexOutOfRangeException();
         }
     }
 
-    public int  Count   => this.unsafeBuffer.Count;
-    public bool IsEmpty => this.unsafeBuffer.IsEmpty;
-
-    public NativeStringList(int capacity = 0) =>
-        this.unsafeBuffer = new(capacity);
-
-    public NativeStringList(ReadOnlySpan<string?> values) =>
-        this.unsafeBuffer = new(values);
-
-    protected override void OnDisposed(bool disposing) =>
-        this.unsafeBuffer.Dispose();
+    private void EnsureCapacity()
+    {
+        if (this.Count + 1 > this.Capacity)
+        {
+            this.Capacity = int.Min(this.Capacity == 0 ? 4 : this.Capacity * 2, int.MaxValue);
+        }
+    }
 
     public void Add(string? value)
     {
-        this.ThrowIfDisposed();
+        this.EnsureCapacity();
 
-        this.unsafeBuffer.Add(value);
+        this.Buffer[this.Count] = MemoryMarshal.CreateUTF8StringBuffer(value);
+
+        this.Count++;
     }
 
     public void Clear()
     {
-        this.ThrowIfDisposed();
+        for (var i = 0; i < this.Count; i++)
+        {
+            NativeMemory.Free(this.Buffer[i]);
+            this.Buffer[i] = null;
+        }
 
-        this.unsafeBuffer.Clear();
+        this.Count = 0;
     }
 
-    public Span<string>.Enumerator GetEnumerator()
+    public void Dispose()
     {
-        this.ThrowIfDisposed();
+        this.Clear();
 
-        return this.unsafeBuffer.GetEnumerator();
+        NativeMemory.Free(this.Buffer);
     }
+
+    public readonly Span<string>.Enumerator GetEnumerator() =>
+        this.ToArray().AsSpan().GetEnumerator();
 
     public void Remove(int startIndex, int count = 1)
     {
-        this.ThrowIfDisposed();
+        this.CheckIndex(startIndex);
 
-        this.unsafeBuffer.Remove(startIndex, count);
+        var endIndex = startIndex + count;
+        var length   = this.Count - endIndex;
+
+        for (var i = startIndex; i < endIndex; i++)
+        {
+            NativeMemory.Free(this.Buffer[i]);
+        }
+
+        if (length > 0)
+        {
+            var source      = new Span<nint>(this.Buffer + endIndex,   length);
+            var destination = new Span<nint>(this.Buffer + startIndex, length);
+
+            source.CopyTo(destination);
+        }
+
+        this.Count = int.Max(this.Count - count, 0);
     }
 
-    public string[] ToArray()
-    {
-        this.ThrowIfDisposed();
-
-        return this.unsafeBuffer.ToArray();
-    }
+    public readonly string[] ToArray() =>
+        Array.ToUTF8StringArray(this.Buffer, (uint)this.Count);
 }

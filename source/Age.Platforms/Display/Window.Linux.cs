@@ -354,14 +354,14 @@ public unsafe partial class Window
 
     private static bool ProxyIsAge(wl_proxy* proxy)
     {
-        NullReferenceException.ValidateNotNull(proxy);
+        NullReferenceException.ThrowIfNull(proxy);
 
         return wl_proxy_get_tag(proxy) == pTag;
     }
 
     private static void SetProxyTag(wl_proxy* proxy)
     {
-        NullReferenceException.ValidateNotNull(proxy);
+        NullReferenceException.ThrowIfNull(proxy);
 
         wl_proxy_set_tag(proxy, pTag);
     }
@@ -704,7 +704,7 @@ public unsafe partial class Window
             {
                 var seatState = GetSeatState(seat);
 
-                NullReferenceException.ValidateNotNull(seatState);
+                NullReferenceException.ThrowIfNull(seatState);
 
                 if (seatState->PrimarySelectionDevice == default)
                 {
@@ -754,7 +754,7 @@ public unsafe partial class Window
             {
                 var seatState = GetSeatState(seat);
 
-                NullReferenceException.ValidateNotNull(seatState);
+                NullReferenceException.ThrowIfNull(seatState);
 
                 seatState->TabletSeat = zwp_tablet_manager_v2_get_tablet_seat(tabletManager, seat);
 
@@ -775,7 +775,7 @@ public unsafe partial class Window
             {
                 var seatState = GetSeatState(seat);
 
-                NullReferenceException.ValidateNotNull(seatState);
+                NullReferenceException.ThrowIfNull(seatState);
 
                 seatState->TextInput = zwp_text_input_manager_v3_get_text_input(textInputManager, seat);
 
@@ -958,13 +958,13 @@ public unsafe partial class Window
 
         display = wl_display_connect(null);
 
-        NullReferenceException.ValidateNotNull(display, "Can't connect to a Wayland display.");
+        NullReferenceException.ThrowIfNull(display, "Can't connect to a Wayland display.");
 
         eventLoopThread.Start();
 
         registry = wl_display_get_registry(display);
 
-        NullReferenceException.ValidateNotNull(registry, "Can't obtain the Wayland registry global.");
+        NullReferenceException.ThrowIfNull(registry, "Can't obtain the Wayland registry global.");
 
         fixed (wl_registry_listener* pRegistryListener = &registryListener)
         {
@@ -973,16 +973,16 @@ public unsafe partial class Window
 
         _ = wl_display_roundtrip(display);
 
-        NullReferenceException.ValidateNotNull(shm, "Can't obtain the Wayland shared memory global.");
-	    NullReferenceException.ValidateNotNull(compositor, "Can't obtain the Wayland compositor global.");
-	    NullReferenceException.ValidateNotNull(wmBase, "Can't obtain the Wayland XDG shell global.");
+        NullReferenceException.ThrowIfNull(shm, "Can't obtain the Wayland shared memory global.");
+	    NullReferenceException.ThrowIfNull(compositor, "Can't obtain the Wayland compositor global.");
+	    NullReferenceException.ThrowIfNull(wmBase, "Can't obtain the Wayland XDG shell global.");
 
         fixed (libdecor_interface* pLibdecorInterface = &libdecorInterface)
         {
             libdecorContext = libdecor_new(display, pLibdecorInterface);
         }
 
-        NullReferenceException.ValidateNotNull(libdecorContext, "Can't create libdecor Context.");
+        NullReferenceException.ThrowIfNull(libdecorContext, "Can't create libdecor Context.");
     }
 
     public static partial void Destroy()

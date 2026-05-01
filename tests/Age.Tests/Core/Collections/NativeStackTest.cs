@@ -13,13 +13,19 @@ public class NativeStackTest
     }
 
     [Fact]
-    public void Add()
+    public void Create()
+    {
+        using NativeStack<int> stack = [1, 2, 3, 4];
+
+        AssertIt(stack, [1, 2, 3, 4], 4);
+    }
+
+    [Fact]
+    public void Push()
     {
         using var stack = new NativeStack<int>();
 
-        ref var first = ref stack.Push();
-
-        first = 1;
+        stack.Push(1);
 
         AssertIt(stack, [1], 4);
 
@@ -29,7 +35,7 @@ public class NativeStackTest
     }
 
     [Fact]
-    public void Remove()
+    public void Pop()
     {
         using var stack = new NativeStack<int>();
 
@@ -62,10 +68,6 @@ public class NativeStackTest
         AssertIt(stack, [1], 4);
 
         Assert.Equal(1, stack.Peek());
-
-        stack.Peek() = 2;
-
-        Assert.Equal(2, stack.Peek());
     }
 
     [Fact]
@@ -109,20 +111,24 @@ public class NativeStackTest
     [Fact]
     public void DecreaseCapacity()
     {
-        using var stack = new NativeStack<int>(6);
+        using var stack = new NativeStack<int>(4);
 
+        Assert.Equal(0, stack.Count);
+        Assert.Equal(4, stack.Capacity);
+
+        stack.Push(0);
         stack.Push(1);
         stack.Push(2);
-        stack.Push(3);
-        stack.Push(4);
-        stack.Push(5);
-        stack.Push(6);
 
-        AssertIt(stack, [1, 2, 3, 4, 5, 6], 6);
+        Assert.Equal(3, stack.Count);
+        Assert.Equal(4, stack.Capacity);
 
         stack.Capacity = 3;
 
-        AssertIt(stack, [1, 2, 3], 3);
+        Assert.Equal(3, stack.Count);
+        Assert.Equal(3, stack.Capacity);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => stack.Capacity = 2);
     }
 
     [Fact]
@@ -140,8 +146,39 @@ public class NativeStackTest
         var expected = new int[] { 6, 5, 4, 3, 2, 1 };
         var actual   = new List<int>(6);
 
-        actual.AddRange(stack);
+        foreach (var item in stack)
+        {
+            actual.AddRange(item);
+        }
 
         Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void ToArray()
+    {
+        using var stack = new NativeStack<int>(6);
+
+        stack.Push(1);
+        stack.Push(2);
+        stack.Push(3);
+        stack.Push(4);
+        stack.Push(5);
+        stack.Push(6);
+
+        var expected = new int[] { 6, 5, 4, 3, 2, 1 };
+
+        Assert.Equal(expected, stack.ToArray());
+    }
+
+    [Fact]
+    public void DisposeShouldPass()
+    {
+        var stack = new NativeStack<int>([1]);
+
+        stack.Dispose();
+        stack.Dispose();
+
+        Assert.True(true);
     }
 }

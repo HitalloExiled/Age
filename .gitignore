@@ -36,6 +36,7 @@ packages/
 *.bkp
 *.dtmp
 .debug/*
+*.lscache
 
 /BenchmarkDotNet.Artifacts
 .debug

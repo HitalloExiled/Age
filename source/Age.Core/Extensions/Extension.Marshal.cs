@@ -1,26 +1,31 @@
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Age.Core.Extensions;
-
-file struct AlignmentHelper<T> where T : unmanaged
-{
-    public byte Sentinel;
-    public T    Target;
-}
 
 public static partial class Extension
 {
     extension(Marshal)
     {
-        public static int GetAlignment<T>() where T : unmanaged
-        {
-            AlignmentHelper<T> helper = default;
+        public unsafe static int GetAlignment<T>() where T : unmanaged =>
+            GetAlignment(sizeof(T));
 
-            ref var origin = ref Unsafe.As<AlignmentHelper<T>, byte>(ref helper);
-            ref var target = ref Unsafe.As<T, byte>(ref helper.Target);
+        public static int GetAlignment(int stride) =>
+            (stride & 7) == 0
+                ? 8
+                : (stride & 3) == 0
+                    ? 4
+                    : (stride & 1) == 0
+                        ? 2
+                        : 1;
 
-            return (int)Unsafe.ByteOffset(ref origin, ref target);
-        }
+        public static int RoundToAlignment(int stride, int alignment) =>
+            alignment switch
+            {
+                1 => stride,
+                2 => ((stride + 1) >> 1) * 2,
+                4 => ((stride + 3) >> 2) * 4,
+                8 => ((stride + 7) >> 3) * 8,
+                _ => throw new InvalidOperationException($"Invalid Alignment: {alignment}"),
+            };
     }
 }

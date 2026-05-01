@@ -1,135 +1,140 @@
-using System.Collections;
-using System.Runtime.InteropServices;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Age.Core.Collections;
 
-public unsafe partial class NativeStack<T> : Disposable, IEnumerable<T> where T : unmanaged
+[DebuggerTypeProxy(typeof(NativeStack<>.DebugView))]
+[CollectionBuilder(typeof(Builders), nameof(Builders.NativeStack))]
+public unsafe partial struct NativeStack<T>(int capacity, bool fixedSize = false) : IDisposable where T : unmanaged
 {
-    private T* buffer;
+    private UnsafeStack* inner = UnsafeStack.Allocate<T>(capacity, fixedSize);
 
-    public int Capacity
+    public readonly T* Buffer
     {
-        get => field;
-        set
-        {
-            if (field == value)
-            {
-                return;
-            }
-
-            if (value == 0)
-            {
-                NativeMemory.Free(this.buffer);
-
-                this.Count = 0;
-            }
-            else
-            {
-                this.buffer = (T*)NativeMemory.Realloc(this.buffer, (uint)(sizeof(T) * value));
-
-                if (value < this.Count)
-                {
-                    this.Count = value;
-                }
-            }
-
-            field = value;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => (T*)UnsafeStack.GetBuffer(this.inner);
     }
 
-    public int Count { get; private set; }
-
-    public NativeStack(int capacity = 0)
+    public readonly int Capacity
     {
-        if (capacity > 0)
-        {
-            this.buffer = (T*)NativeMemory.Alloc((uint)(sizeof(T) * capacity));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        set => UnsafeStack.SetCapacity(this.inner, value);
 
-            this.Capacity = capacity;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => UnsafeStack.GetCapacity(this.inner);
     }
 
-    IEnumerator IEnumerable.GetEnumerator() =>
-        this.GetEnumerator();
-
-    IEnumerator<T> IEnumerable<T>.GetEnumerator() =>
-        this.GetEnumerator();
-
-    private void ThrowIfEmpty()
+    public readonly int Count
     {
-        if (this.Count == 0)
-        {
-            throw new InvalidOperationException("Empty Stack");
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => UnsafeStack.GetCount(this.inner);
     }
 
-    private void CheckIndex(int index)
+    public readonly bool IsCreated
     {
-        if (index >= this.Count)
-        {
-            throw new IndexOutOfRangeException();
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.inner != null;
     }
 
-    private void EnsureCapacity()
+    public readonly bool IsDisposed
     {
-        if (this.Count + 1 > this.Capacity)
-        {
-            this.Capacity = int.Min(this.Capacity == 0 ? 4 : this.Capacity * 2, int.MaxValue);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.inner == null;
     }
 
-    protected override void OnDisposed(bool disposing)
+    public readonly bool IsFixedSize
     {
-        NativeMemory.Free(this.buffer);
-        this.buffer = default;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => UnsafeStack.IsFixedSize(this.inner);
     }
 
-    public ref T Peek()
-    {
-        this.ThrowIfEmpty();
+    public NativeStack() : this(4)
+    { }
 
-        return ref this.buffer[this.Count - 1];
+    public NativeStack(ReadOnlySpan<T> values, bool fixedSize = false) : this(values.Length, fixedSize)
+    {
+        UnsafeStack.SetCount(this.inner, values.Length);
+
+        values.CopyTo(this);
     }
 
-    public ref T Push()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal readonly UnsafeStack* GetUnsafeStack() =>
+        this.inner;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly Span<T> AsSpan() =>
+        UnsafeStack.GetSpan<T>(this.inner);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void Clear() =>
+        UnsafeStack.Clear(this.inner);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void CopyTo(Span<T> span, int arrayIndex) =>
+        this.Slice(arrayIndex).CopyTo(span);
+
+    public void Dispose()
     {
-        this.ThrowIfDisposed();
-        this.EnsureCapacity();
-
-        ref var element = ref this.buffer[this.Count];
-
-        element = default;
-
-        this.Count++;
-
-        return ref element;
+        UnsafeStack.Free(this.inner);
+        this.inner = null;
     }
 
-    public void Push(in T item)
-    {
-        ref var element = ref this.Push();
+    public readonly UnsafeStack.Enumerator<T> GetEnumerator() =>
+        UnsafeStack.GetEnumerator<T>(this.inner);
 
-        element = item;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly T Peek() =>
+        UnsafeStack.Peek<T>(this.inner);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly T Pop() =>
+        UnsafeStack.Pop<T>(this.inner);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void Push(T item) =>
+        UnsafeStack.Push(this.inner, item);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly Span<T> Slice(int start) =>
+        UnsafeStack.GetSpan<T>(this.inner, start);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly Span<T> Slice(int start, int length) =>
+        UnsafeStack.GetSpan<T>(this.inner, start, length);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly T[] ToArray()
+    {
+        var array = this.AsSpan().ToArray();
+
+        array.AsSpan().Reverse();
+
+        return array;
     }
 
-    public void Clear()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly NativeArray<T> ToNativeArray()
     {
-        this.ThrowIfDisposed();
-        this.Count = 0;
+        var array = new NativeArray<T>(this.AsSpan());
+
+        array.AsSpan().Reverse();
+
+        return array;
     }
 
-    public T Pop()
-    {
-        this.ThrowIfDisposed();
-        this.ThrowIfEmpty();
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly bool TryPeek(out T item) =>
+        UnsafeStack.TryPeek(this.inner, out item);
 
-        this.Count--;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly bool TryPop(out T item) =>
+        UnsafeStack.TryPop(this.inner, out item);
 
-        return this.buffer[this.Count];
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly bool TryPush(T item) =>
+        UnsafeStack.TryPush(this.inner, item);
 
-    public Span<T> AsSpan() => new(this.buffer, this.Count);
-
-    public Enumerator GetEnumerator() => new(this);
+    public static implicit operator T*(NativeStack<T> value) => value.Buffer;
+    public static implicit operator Span<T>(NativeStack<T> value) => value.AsSpan();
 }

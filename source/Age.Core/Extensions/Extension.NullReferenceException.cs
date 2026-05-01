@@ -7,7 +7,7 @@ public static partial class Extension
     extension(NullReferenceException)
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ValidateNotNull<T>(T? value, string? message = null)
+        public static void ThrowIfNull<T>(T? value, string? message = null)
         {
             if (value == null)
             {
@@ -16,7 +16,7 @@ public static partial class Extension
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe static void ValidateNotNull<T>(T* value, string? message = null) where T : unmanaged, allows ref struct
+        public unsafe static void ThrowIfNull<T>(T* value, string? message = null) where T : unmanaged, allows ref struct
         {
             if (value == null)
             {

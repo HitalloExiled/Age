@@ -211,10 +211,10 @@ public sealed partial class RenderTarget : Resource
         {
             using var disposables = new Disposables();
 
-            using var attachmentDescriptions  = new NativeRefList<VkAttachmentDescription>();
-            using var subpassDescriptions     = new NativeRefList<VkSubpassDescription>();
-            using var depthStencilAttachments = new NativeRefList<VkAttachmentDescription>();
-            using var subpassDependencies     = new NativeRefList<VkSubpassDependency>();
+            using var attachmentDescriptions  = new NativeList<VkAttachmentDescription>();
+            using var subpassDescriptions     = new NativeList<VkSubpassDescription>();
+            using var depthStencilAttachments = new NativeList<VkAttachmentDescription>();
+            using var subpassDependencies     = new NativeList<VkSubpassDependency>();
 
             var passes = createInfo.Passes.AsSpan();
 

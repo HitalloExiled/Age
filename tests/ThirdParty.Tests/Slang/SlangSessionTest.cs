@@ -10,7 +10,7 @@ public class SessionTest
     {
         using var globalSession = new GlobalSession(0);
 
-        using NativeRefArray<TargetDesc> targets =
+        using NativeArray<TargetDesc> targets =
         [
             new()
             {
@@ -67,8 +67,8 @@ public class SessionTest
     {
         using var globalSession = new GlobalSession(0);
 
-        using NativeStringRefArray       searchPath = [Path.Combine(Path.RootLocation, "./Shaders")];
-        using NativeRefArray<TargetDesc> targets =
+        using NativeStringArray       searchPath = [Path.Combine(Path.RootLocation, "./Shaders")];
+        using NativeArray<TargetDesc> targets    =
         [
             new()
             {

@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -6,166 +5,133 @@ namespace Age.Core.Collections;
 
 [DebuggerTypeProxy(typeof(NativeList<>.DebugView))]
 [CollectionBuilder(typeof(Builders), nameof(Builders.NativeList))]
-public unsafe partial class NativeList<T> : Disposable, IEnumerable<T> where T : unmanaged
+public unsafe partial struct NativeList<T>(int capacity, bool fixedSize = false) : IDisposable where T : unmanaged
 {
-    private UnsafeListBuffer<T> unsefeBuffer;
+    private UnsafeList* inner = UnsafeList.Allocate<T>(capacity, fixedSize);
 
-    public T this[uint index]
+    public readonly T this[int index]
     {
-        get => this.unsefeBuffer[(int)index];
-        set => this.unsefeBuffer[(int)index] = value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => UnsafeList.Get<T>(this.inner, index);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        set => UnsafeList.Set(this.inner, index, value);
     }
 
-    public T this[int index]
+    public readonly T* Buffer
     {
-        get
-        {
-            this.ThrowIfDisposed();
-
-            return this.unsefeBuffer[index];
-        }
-        set
-        {
-            this.ThrowIfDisposed();
-
-            this.unsefeBuffer[index] = value;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => (T*)UnsafeList.GetBuffer(this.inner);
     }
 
-    public int Capacity
+    public readonly int Capacity
     {
-        get => this.unsefeBuffer.Capacity;
-        set
-        {
-            this.ThrowIfDisposed();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        set => UnsafeList.SetCapacity(this.inner, value);
 
-            this.unsefeBuffer.Capacity = value;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => UnsafeList.GetCapacity(this.inner);
     }
 
-    public Span<T> this[Range range] => this.unsefeBuffer[range];
+    public readonly Span<T> this[Range range] => this.AsSpan()[range];
 
-    public T* Buffer
+    public readonly int Count
     {
-        get
-        {
-            this.ThrowIfDisposed();
-
-            return this.unsefeBuffer.Buffer;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => UnsafeList.GetCount(this.inner);
     }
 
-    public int  Count   => this.unsefeBuffer.Count;
-    public bool IsEmpty => this.unsefeBuffer.IsEmpty;
-
-    public NativeList(int capacity = 0) =>
-        this.unsefeBuffer = new(capacity);
-
-    public NativeList(ReadOnlySpan<T> values) =>
-        this.unsefeBuffer = new(values);
-
-    protected override void OnDisposed(bool disposing) =>
-        this.unsefeBuffer.Dispose();
-
-    IEnumerator<T> IEnumerable<T>.GetEnumerator()
+    public readonly bool IsCreated
     {
-        this.ThrowIfDisposed();
-
-        return this.unsefeBuffer.GetEnumerator();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.inner != null;
     }
 
-    IEnumerator IEnumerable.GetEnumerator()
+    public readonly bool IsDisposed
     {
-        this.ThrowIfDisposed();
-
-        return this.unsefeBuffer.GetEnumerator();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.inner == null;
     }
 
-    public ref T Add()
+    public readonly bool IsEmpty
     {
-        this.ThrowIfDisposed();
-
-        return ref this.unsefeBuffer.Add();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.Count == 0;
     }
 
-    public void Add(T item)
+    public readonly bool IsFixedSize
     {
-        this.ThrowIfDisposed();
-
-        this.unsefeBuffer.Add(item);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => UnsafeList.IsFixedSize(this.inner);
     }
 
-    public Span<T> AsSpan()
-    {
-        this.ThrowIfDisposed();
+    public NativeList() : this(4)
+    { }
 
-        return this.unsefeBuffer.AsSpan();
+    public NativeList(ReadOnlySpan<T> values, bool fixedSize = false) : this(values.Length, fixedSize)
+    {
+        UnsafeList.SetCount(this.inner, values.Length);
+
+        values.CopyTo(this);
     }
 
-    public void Clear()
-    {
-        this.ThrowIfDisposed();
+    internal readonly UnsafeList* GetUnsafeList() =>
+        this.inner;
 
-        this.unsefeBuffer.Clear();
+    public void Dispose()
+    {
+        UnsafeList.Free(this.inner);
+
+        this.inner = null;
     }
 
-    public bool Contains(T item) =>
-        this.unsefeBuffer.Contains(item);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void Add(T item) =>
+        UnsafeList.Add(this.inner, item);
 
-    public void CopyTo(Span<T> items, int startIndex) =>
-        this.unsefeBuffer.CopyTo(items, startIndex);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly Span<T> AsSpan() =>
+        UnsafeList.GetSpan<T>(this.inner);
 
-    public void EnsureCapacity(int capacity)
-    {
-        this.ThrowIfDisposed();
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void Clear() =>
+        UnsafeList.Clear(this.inner);
 
-        this.unsefeBuffer.EnsureCapacity(capacity);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void CopyTo(Span<T> destination) =>
+        this.AsSpan().CopyTo(destination);
 
-    public UnsafeEnumerator<T> GetEnumerator() =>
-        this.unsefeBuffer.GetEnumerator();
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly UnsafeList.Enumerator<T> GetEnumerator() =>
+        UnsafeList.GetEnumerator<T>(this.inner);
 
-    public int IndexOf(T item)
-    {
-        this.ThrowIfDisposed();
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void Insert(int index, in T item) =>
+        UnsafeList.Insert(this.inner, index, item);
 
-        return this.unsefeBuffer.IndexOf(item);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void RemoveAt(int index) =>
+        UnsafeList.RemoveAt(this.inner, index);
 
-    public void Insert(int index, in T item)
-    {
-        this.ThrowIfDisposed();
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void RemoveAt(int startIndex, int count) =>
+        UnsafeList.RemoveAt(this.inner, startIndex, count);
 
-        this.unsefeBuffer.Insert(index, item);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly Span<T> Slice(int start) =>
+        UnsafeList.GetSpan<T>(this.inner, start);
 
-    public bool Remove(T item)
-    {
-        this.ThrowIfDisposed();
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly Span<T> Slice(int start, int length) =>
+        UnsafeList.GetSpan<T>(this.inner, start, length);
 
-        return this.unsefeBuffer.Remove(item);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly T[] ToArray() =>
+        this.AsSpan().ToArray();
 
-    public void RemoveAt(int index)
-    {
-        this.ThrowIfDisposed();
-
-        this.unsefeBuffer.RemoveAt(index);
-    }
-
-    public void RemoveAt(int startIndex, int count)
-    {
-        this.ThrowIfDisposed();
-
-        this.unsefeBuffer.RemoveAt(startIndex, count);
-    }
-
-    public Span<T> Slice(int start, int length)
-    {
-        this.ThrowIfDisposed();
-
-        return this.unsefeBuffer.Slice(start, length);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly NativeArray<T> ToNativeArray() =>
+        this.Count == 0 ? [] : new NativeArray<T>(this.AsSpan());
 
     public static implicit operator T*(NativeList<T> value) => value.Buffer;
     public static implicit operator Span<T>(NativeList<T> value) => value.AsSpan();

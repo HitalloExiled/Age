@@ -1,65 +1,87 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text;
+using Age.Core.Extensions;
 
 namespace Age.Core.Collections;
 
 [DebuggerTypeProxy(typeof(DebugView))]
 [CollectionBuilder(typeof(Builders), nameof(Builders.NativeStringArray))]
-public unsafe partial class NativeStringArray : Disposable
+public unsafe partial struct NativeStringArray(int size) : IDisposable
 {
-    private UnsafeStringArrayBuffer unsafeBuffer;
+    public byte** Buffer { get; private set; } = (byte**)NativeMemory.AllocZeroed((uint)(sizeof(byte*) * size));
 
-    public string? this[int index]
+    public readonly string? this[int index]
     {
         get
         {
-            this.ThrowIfDisposed();
+            this.CheckIndex(index);
 
-            return this.unsafeBuffer[index];
+            return Encoding.UTF8.GetString(MemoryMarshal.CreateReadOnlySpanFromNullTerminated(this.Buffer[index]));
         }
         set
         {
-            this.ThrowIfDisposed();
+            this.CheckIndex(index);
 
-            this.unsafeBuffer[index] = value;
+            NativeMemory.Free(this.Buffer[index]);
+
+            this.Buffer[index] = MemoryMarshal.CreateUTF8StringBuffer(value);
         }
     }
 
-    public byte** Buffer
+    public readonly bool IsEmpty
     {
-        get
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.Length == 0;
+    }
+
+    public readonly int Length
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => size;
+    }
+
+    public NativeStringArray(ReadOnlySpan<string> values) : this(values.Length)
+    {
+        for (var i = 0; i < values.Length; i++)
         {
-            this.ThrowIfDisposed();
-
-            return this.unsafeBuffer.Buffer;
+            this.Buffer[i] = MemoryMarshal.CreateUTF8StringBuffer(values[i]);
         }
     }
 
-    public bool IsEmpty => this.unsafeBuffer.IsEmpty;
-    public int  Length  => this.unsafeBuffer.Length;
-
-    public NativeStringArray(int size) =>
-        this.unsafeBuffer = new(size);
-
-    public NativeStringArray(ReadOnlySpan<string> values) =>
-        this.unsafeBuffer = new(values);
-
-    protected override void OnDisposed(bool disposing) =>
-        this.unsafeBuffer.Dispose();
-
-    public Span<string>.Enumerator GetEnumerator()
+    private readonly void CheckIndex(int index)
     {
-        this.ThrowIfDisposed();
-
-        return this.unsafeBuffer.GetEnumerator();
+        if (index < 0 || index >= this.Length)
+        {
+            throw new IndexOutOfRangeException();
+        }
     }
 
-    public string[] ToArray()
+    public void Dispose()
     {
-        this.ThrowIfDisposed();
+        if (this.Buffer == null)
+        {
+            return;
+        }
 
-        return this.unsafeBuffer.ToArray();
+        for (var i = 0; i < this.Length; i++)
+        {
+            NativeMemory.Free(this.Buffer[i]);
+        }
+
+        NativeMemory.Free(this.Buffer);
+
+        this.Buffer = null;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly Span<string>.Enumerator GetEnumerator() =>
+        this.ToArray().AsSpan().GetEnumerator();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly string[] ToArray() =>
+        Array.ToUTF8StringArray(this.Buffer, (uint)this.Length);
 
     public static implicit operator byte**(NativeStringArray value) => value.Buffer;
 }

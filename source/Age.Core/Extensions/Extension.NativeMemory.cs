@@ -12,8 +12,8 @@ public static partial class Extension
             (T*)NativeMemory.Alloc((nuint)sizeof(T));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe T* Alloc<T>(uint count) where T : unmanaged, allows ref struct =>
-            (T*)NativeMemory.Alloc((nuint)sizeof(T) * count);
+        public static unsafe T* Alloc<T>(nuint count) where T : unmanaged, allows ref struct =>
+            (T*)NativeMemory.Alloc(count, (nuint)sizeof(T));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe T* AllocSet<T>(T value) where T : unmanaged, allows ref struct
@@ -42,7 +42,21 @@ public static partial class Extension
             (T*)NativeMemory.AllocZeroed((nuint)sizeof(T));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe T* AllocZeroed<T>(uint count) where T : unmanaged, allows ref struct =>
+        public static unsafe T* AllocZeroed<T>(nuint count) where T : unmanaged, allows ref struct =>
             (T*)NativeMemory.AllocZeroed((nuint)sizeof(T) * count);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void* AlignedAllocZeroed(nuint byteCount, nuint alignment)
+        {
+            var pointer = NativeMemory.AlignedAlloc(byteCount, alignment);
+
+            NativeMemory.Fill(pointer, byteCount, 0);
+
+            return pointer;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* AlignedAllocZeroed<T>() where T : unmanaged, allows ref struct =>
+            (T*)AlignedAllocZeroed((nuint)sizeof(T), (nuint)Marshal.GetAlignment(sizeof(T)));
     }
 }

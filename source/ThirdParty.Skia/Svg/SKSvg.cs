@@ -231,7 +231,7 @@ public partial class SKSvg(float pixelsPerInch, SKSize canvasSize)
         return text != "end" ? text == "middle" ? SKTextAlign.Center : SKTextAlign.Left : SKTextAlign.Right;
     }
 
-    private static NativeRefArray<byte> ReadUriBytes(ReadOnlySpan<char> uri)
+    private static NativeArray<byte> ReadUriBytes(ReadOnlySpan<char> uri)
     {
         if (!uri.IsEmpty)
         {
@@ -243,13 +243,15 @@ public partial class SKSvg(float pixelsPerInch, SKSize canvasSize)
 
                 var bytesLenght = (uri.Length * 3 / 4) - 2;
 
-                var bytes = new NativeRefArray<byte>(bytesLenght);
+                var bytes = new NativeArray<byte>(bytesLenght);
 
                 if (Convert.TryFromBase64Chars(uri, bytes, out var bytesWritten))
                 {
-                    bytes.Resize(bytesWritten);
+                    var written = new NativeArray<byte>(bytes.Slice(0, bytesWritten));
 
-                    return bytes;
+                    bytes.Dispose();
+
+                    return written;
                 }
             }
         }
@@ -640,7 +642,7 @@ public partial class SKSvg(float pixelsPerInch, SKSize canvasSize)
         var height = this.ReadNumber(element.Attribute("height")!);
         var rect   = SKRect.Create(x, y, width, height);
 
-        NativeRefArray<byte> bytes = default;
+        NativeArray<byte> bytes = default;
 
         var text = ReadHrefString(element);
 
@@ -653,6 +655,8 @@ public partial class SKSvg(float pixelsPerInch, SKSize canvasSize)
             else
             {
                 this.LogOrThrow("Remote images are not supported");
+
+                bytes = [];
             }
         }
 

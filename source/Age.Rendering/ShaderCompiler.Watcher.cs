@@ -131,7 +131,7 @@ public partial class ShaderCompiler
             {
                 ref var fileEntry = ref this.Files.GetValueRefOrAddDefault(dependecy, out var exists);
 
-                using var bytes = FileReader.ReadAllBytesAsRef(dependecy);
+                using var bytes = FileReader.ReadAllBytes(dependecy);
 
                 if (!exists)
                 {

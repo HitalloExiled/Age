@@ -8,7 +8,7 @@ using Age.Core.Extensions;
 namespace Age.Core.Collections;
 
 [DebuggerTypeProxy(typeof(KeyedList<,>.DebugView))]
-public unsafe partial class KeyedList<TKey, TValue>(int capacity = 0) : IEnumerable<KeyValuePair<TKey, TValue>>
+public unsafe partial class KeyedList<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
 where TKey   : unmanaged, Enum
 where TValue : notnull
 {
@@ -22,28 +22,23 @@ where TValue : notnull
         get;
         set
         {
-            if (field != value)
+            if (field == value)
             {
-                if (value > this.values.Length)
-                {
-                    if (value > int.MaxValue)
-                    {
-                        throw new InvalidOperationException($"Requested capacity ({value}) exceeds the maximum allowed size for {typeof(TKey).Name} ({maxSize}).");
-                    }
-
-                    var newBuffer = ArrayPool<TValue>.Shared.Rent(value);
-
-                    this.values.AsSpan(0, this.Count).CopyTo(newBuffer);
-
-                    ArrayPool<TValue>.Shared.Return(this.values, true);
-
-                    this.values = newBuffer;
-                }
-
-                field = value;
+                return;
             }
+
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, this.values.Length);
+
+            if (value > int.MaxValue)
+            {
+                throw new InvalidOperationException($"Requested capacity ({value}) exceeds the maximum allowed size for {typeof(TKey).Name} ({maxSize}).");
+            }
+
+            Array.Resize(ref this.values, value);
+
+            field = value;
         }
-    } = capacity;
+    }
 
     public int Count { get; private set; }
 
@@ -52,6 +47,9 @@ where TValue : notnull
         get => this.Get(key);
         set => this.Add(key, value);
     }
+
+    public KeyedList(int capacity = 0) =>
+        this.Capacity = capacity;
 
     private static void ThrowIfNotSingleFlag(TKey key)
     {

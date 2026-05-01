@@ -8,7 +8,7 @@ namespace Age.Platforms.Display;
 
 public unsafe partial class Window
 {
-    private ref struct WindowState
+    private struct WindowState
     {
         public required wl_surface* Surface;
 
@@ -21,7 +21,7 @@ public unsafe partial class Window
         public required Size<int>  Size;
         public required Point<int> Position;
 
-        public NativeRefList<Message> Messages = [];
+        public NativeList<Message> Messages = [];
 
         public WindowMode Mode;
         public bool       Suspended;

@@ -2,11 +2,11 @@ using System.Diagnostics;
 
 namespace Age.Core.Collections;
 
-public partial class NativeArray<T> where T : unmanaged
+public partial struct NativeArray<T> where T : unmanaged
 {
-    internal sealed class DebugView(NativeArray<T> source)
+    internal struct DebugView(NativeArray<T> source)
     {
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public T[] Elements => [..source];
+        public readonly T[] Elements => source.ToArray();
     }
 }

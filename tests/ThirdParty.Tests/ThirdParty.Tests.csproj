@@ -29,9 +29,4 @@
     <ProjectReference Include="../../source/ThirdParty.Slang/ThirdParty.Slang.csproj" />
     <ProjectReference Include="../../source/ThirdParty.Vulkan/ThirdParty.Vulkan.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <None Include="./Skia/Svg/Files/*.svg"  CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
 </Project>

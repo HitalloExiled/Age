@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using SkiaSharp;
 using ThirdParty.Skia.Svg;
 
@@ -6,10 +5,7 @@ namespace ThirdParty.Tests.Skia.Svg;
 
 public class SkSvgTest
 {
-    private static readonly string workingDirectory = Debugger.IsAttached
-        ? Path.GetFullPath(Path.Join(Directory.GetCurrentDirectory(), "../../.."))
-        : Directory.GetCurrentDirectory();
-
+    private static readonly string workingDirectory = Path.RootLocation;
     private static readonly string debugDirectory = Path.Join(workingDirectory, "Skia", "Svg", ".debug");
     private static readonly string iconsFolder = Path.Join(workingDirectory, "Skia", "Svg", "Files");
 
@@ -52,7 +48,7 @@ public class SkSvgTest
     {
         var iconsDirectory = new DirectoryInfo(iconsFolder);
 
-        foreach (var file in iconsDirectory.GetFiles())
+        foreach (var file in iconsDirectory.GetFiles("*.svg"))
         {
             var svg = new SKSvg();
 

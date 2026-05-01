@@ -26,5 +26,14 @@ public static partial class Extension
 
             return leftSpan.SequenceEqual(rightSpan);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe static bool BitEqual<T>(in T left, in T right) where T : unmanaged, allows ref struct
+        {
+            var leftSpan  = new ReadOnlySpan<byte>(Unsafe.AsPointer(in left),  sizeof(T));
+            var rightSpan = new ReadOnlySpan<byte>(Unsafe.AsPointer(in right), sizeof(T));
+
+            return leftSpan.SequenceEqual(rightSpan);
+        }
     }
 }
