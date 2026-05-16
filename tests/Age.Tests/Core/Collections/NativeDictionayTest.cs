@@ -56,6 +56,20 @@ public class NativeDictionayTest
     }
 
     [Fact]
+    public void Set()
+    {
+        using var dictionary = new NativeDictionary<int, int>();
+
+        dictionary[0] = 100;
+
+        AssertIt(dictionary, [new(0, 100)], 3);
+
+        dictionary[0] = 200;
+
+        AssertIt(dictionary, [new(0, 200)], 3);
+    }
+
+    [Fact]
     public void Remove()
     {
         using var dictionary = new NativeDictionary<int, int>(4);
@@ -82,6 +96,23 @@ public class NativeDictionayTest
         dictionary[9] = 900;
 
         AssertIt(dictionary, [new(1, 100), new(3, 300), new(6, 600), new(9, 900)], 7);
+    }
+
+    [Fact]
+    public void RemoveAndOut()
+    {
+        using var dictionary = new NativeDictionary<int, int>(4);
+
+        dictionary[1] = 100;
+        dictionary[2] = 200;
+        dictionary[3] = 300;
+        dictionary[4] = 400;
+
+        AssertIt(dictionary, [new(1, 100), new(2, 200), new(3, 300), new(4, 400)], 7);
+
+        Assert.True(dictionary.Remove(2, out var value) && value == 200);
+
+        AssertIt(dictionary, [new(1, 100), new(3, 300), new(4, 400)], 7);
     }
 
     [Fact]

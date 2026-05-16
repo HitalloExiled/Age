@@ -8,6 +8,7 @@ using DisplayWindow = Age.Platforms.Display.Window;
 using WindowMouseEventHandler = Age.Platforms.Display.WindowMouseEventHandler;
 using Age.Core;
 using Age.Graphs;
+using Age.Core.Extensions;
 
 namespace Age;
 
@@ -96,7 +97,7 @@ public sealed class Window : Viewport
     private readonly RenderTarget[] renderTargets;
     private readonly DisplayWindow  window;
 
-    public static IReadOnlyList<Window> Windows => windows;
+    public static ReadOnlySpan<Window> Windows => windows.AsSpan();
 
     public Surface Surface { get; }
 
@@ -137,7 +138,13 @@ public sealed class Window : Viewport
         this.MakeSubtreeStatePristine();
 
         this.window        = new DisplayWindow(title, size, position, parent?.window);
-        this.Surface       = VulkanRenderer.Singleton.CreateSurface(this.window.Handle, this.window.ClientSize);
+
+#if WINDOWS
+        this.Surface = VulkanRenderer.Singleton.CreateSurface(this.window.Surface, this.window.ClientSize);
+#else
+        this.Surface = VulkanRenderer.Singleton.CreateSurface(WindowManager.Instance.Display, this.window.Surface, this.window.ClientSize);
+#endif
+
         this.renderTargets = new RenderTarget[this.Surface.Swapchain.Images.Length];
 
         this.Surface.SwapchainRecreated += this.CreateRenderTargets;

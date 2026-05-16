@@ -32,12 +32,12 @@ internal static unsafe class ViewporterProtocol
 
         viewporter_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        wp_viewporter_requests = NativeMemory.AllocSet<wl_message>([
+        wp_viewporter_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),      Ustr(""),   viewporter_types + 0),
             new(Ustr("get_viewport"), Ustr("no"), viewporter_types + 4),
         ]);
 
-        wp_viewporter_interface = NativeMemory.AllocSet(
+        wp_viewporter_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("wp_viewporter"), 1,
                 2, wp_viewporter_requests,
@@ -45,13 +45,13 @@ internal static unsafe class ViewporterProtocol
             )
         );
 
-        wp_viewport_requests = NativeMemory.AllocSet<wl_message>([
+        wp_viewport_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),         Ustr(""),     viewporter_types + 0),
             new(Ustr("set_source"),      Ustr("ffff"), viewporter_types + 0),
             new(Ustr("set_destination"), Ustr("ii"),   viewporter_types + 0),
         ]);
 
-        wp_viewport_interface = NativeMemory.AllocSet(
+        wp_viewport_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("wp_viewport"), 1,
                 3, wp_viewport_requests,

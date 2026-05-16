@@ -25,12 +25,12 @@ internal static unsafe class XdgSystemBellV1ClientProtocol
 
         xdg_system_bell_v1_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        xdg_system_bell_v1_requests = NativeMemory.AllocSet<wl_message>([
+        xdg_system_bell_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"), Ustr(""),   xdg_system_bell_v1_types + 0),
             new(Ustr("ring"),    Ustr("?o"), xdg_system_bell_v1_types + 0),
         ]);
 
-        xdg_system_bell_v1_interface = NativeMemory.AllocSet(
+        xdg_system_bell_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("xdg_system_bell_v1"), 1,
                 2, xdg_system_bell_v1_requests,

@@ -1,27 +1,25 @@
-// using Age;
-// using Age.Core;
-// using Age.Playground;
-
-// Logger.Level = LogLevel.Info;
-
-// using var engine = new Engine("Age", new(800 + 16, 800 + 39), new(800, 100));
-
-// engine.Window.UIScene = new Editor();
-
-// engine.Run();
-
+using Age;
 using Age.Core;
-using Age.Platforms.Display;
+using Age.Playground;
 
-Logger.Level = LogLevel.Trace;
+Logger.Level = LogLevel.Info;
 
-Window.Register("org.age.playground");
+using var engine = new Engine("Age", new(800 + 16, 800 + 39), new(800, 100));
 
-var window = new Window();
+engine.Window.UIScene = new Editor();
 
-while (!window.IsClosed)
-{
-    window.DoEvents();
-}
+engine.Run();
 
-Window.Destroy();
+// using Age.Core;
+// using Age.Platforms.Display;
+
+// Logger.Level = LogLevel.Trace;
+
+// using var windowManager = new WindowManager("org.age.playground");
+
+// var window = new Window();
+
+// while (!window.IsClosed)
+// {
+//     window.DoEvents();
+// }

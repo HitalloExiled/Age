@@ -87,6 +87,10 @@ where V : unmanaged
         UnsafeDictionary.Remove(this.inner, key);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly bool Remove(K key, out V value) =>
+        UnsafeDictionary.Remove(this.inner, key, out value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool Remove(KeyValuePair<K, V> item) =>
         this.Remove(item.Key);
 

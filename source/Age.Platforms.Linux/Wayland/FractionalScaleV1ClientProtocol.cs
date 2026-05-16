@@ -30,12 +30,12 @@ internal static unsafe class FractionalScaleV1ClientProtocol
 
         fractional_scale_v1_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        wp_fractional_scale_manager_v1_requests = NativeMemory.AllocSet<wl_message>([
+        wp_fractional_scale_manager_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),              Ustr(""),   fractional_scale_v1_types + 0),
             new(Ustr("get_fractional_scale"), Ustr("no"), fractional_scale_v1_types + 1),
         ]);
 
-        wp_fractional_scale_manager_v1_interface = NativeMemory.AllocSet(
+        wp_fractional_scale_manager_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("wp_fractional_scale_manager_v1"), 1,
                 2, wp_fractional_scale_manager_v1_requests,
@@ -43,15 +43,15 @@ internal static unsafe class FractionalScaleV1ClientProtocol
             )
         );
 
-        wp_fractional_scale_v1_requests = NativeMemory.AllocSet<wl_message>([
+        wp_fractional_scale_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"), Ustr(""), fractional_scale_v1_types + 0),
         ]);
 
-        wp_fractional_scale_v1_events = NativeMemory.AllocSet<wl_message>([
+        wp_fractional_scale_v1_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("preferred_scale"), Ustr("u"), fractional_scale_v1_types + 0),
         ]);
 
-        wp_fractional_scale_v1_interface = NativeMemory.AllocSet(
+        wp_fractional_scale_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("wp_fractional_scale_v1"), 1,
                 1, wp_fractional_scale_v1_requests,

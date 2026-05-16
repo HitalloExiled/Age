@@ -34,7 +34,7 @@ Fedora / RHEL
 
 ```sh
 # Update and install Vulkan SDK components
-sudo dnf install vulkan-tools vulkan-loader-devel vulkan-validation-layers-devel mesa-vulkan-drivers
+sudo dnf install vulkan-tools vulkan-loader-devel sudo dnf install vulkan-validation-layers vulkan-validation-layers-devel mesa-vulkan-drivers
 
 # Install .NET 10 and Native AOT dependencies
 sudo dnf install dotnet-sdk-10.0 dotnet-sdk-aot-10.0

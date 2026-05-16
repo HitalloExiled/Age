@@ -268,6 +268,24 @@ public unsafe partial struct UnsafeDictionary
         return UnsafeHashCollection.Remove(&dictionary->collection, key, key.GetHashCode());
     }
 
+    public static bool Remove<K, V>(UnsafeDictionary* dictionary, K key, out V value)
+    where K : unmanaged, IEquatable<K>
+    where V : unmanaged
+    {
+        AssertSafeGuards<K, V>(dictionary);
+
+        if (UnsafeHashCollection.Remove(&dictionary->collection, key, key.GetHashCode()))
+        {
+            value = *GetValue<V>(dictionary->valueOffset, dictionary->collection.FreeHead);
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
     public static void Set<K, V>(UnsafeDictionary* dictionary, K key, V value)
     where K : unmanaged, IEquatable<K>
     where V : unmanaged =>
@@ -314,12 +332,9 @@ public unsafe partial struct UnsafeDictionary
                 return true;
             }
 
-            if (behaviour == MapInsertionBehaviour.ThrowIfExists)
-            {
-                throw new ArgumentException($"An item with the same key has already been added. Key: {key}");
-            }
-
-            return false;
+            return behaviour == MapInsertionBehaviour.ThrowIfExists
+                ? throw new ArgumentException($"An item with the same key has already been added. Key: {key}")
+                : false;
         }
         else
         {

@@ -31,13 +31,13 @@ internal static unsafe class PointerConstraintsUnstableV1ClientProtocol
 
         pointer_constraints_unstable_v1_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        zwp_pointer_constraints_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_pointer_constraints_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),         Ustr(""),       pointer_constraints_unstable_v1_types + 0),
             new(Ustr("lock_pointer"),    Ustr("noo?ou"), pointer_constraints_unstable_v1_types + 2),
             new(Ustr("confine_pointer"), Ustr("noo?ou"), pointer_constraints_unstable_v1_types + 7),
         ]);
 
-        zwp_pointer_constraints_v1_interface = NativeMemory.AllocSet(
+        zwp_pointer_constraints_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_pointer_constraints_v1"), 1,
                 3, zwp_pointer_constraints_v1_requests,
@@ -45,18 +45,18 @@ internal static unsafe class PointerConstraintsUnstableV1ClientProtocol
             )
         );
 
-        zwp_locked_pointer_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_locked_pointer_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),                  Ustr(""),   pointer_constraints_unstable_v1_types + 0),
             new(Ustr("set_cursor_position_hint"), Ustr("ff"), pointer_constraints_unstable_v1_types + 0),
             new(Ustr("set_region"),               Ustr("?o"), pointer_constraints_unstable_v1_types + 12),
         ]);
 
-        zwp_locked_pointer_v1_events = NativeMemory.AllocSet<wl_message>([
+        zwp_locked_pointer_v1_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("locked"),   Ustr(""), pointer_constraints_unstable_v1_types + 0),
             new(Ustr("unlocked"), Ustr(""), pointer_constraints_unstable_v1_types + 0),
         ]);
 
-        zwp_locked_pointer_v1_interface = NativeMemory.AllocSet(
+        zwp_locked_pointer_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_locked_pointer_v1"), 1,
                 3, zwp_locked_pointer_v1_requests,
@@ -64,17 +64,17 @@ internal static unsafe class PointerConstraintsUnstableV1ClientProtocol
             )
         );
 
-        zwp_confined_pointer_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_confined_pointer_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),    Ustr(""),   pointer_constraints_unstable_v1_types + 0),
             new(Ustr("set_region"), Ustr("?o"), pointer_constraints_unstable_v1_types + 13),
         ]);
 
-        zwp_confined_pointer_v1_events = NativeMemory.AllocSet<wl_message>([
+        zwp_confined_pointer_v1_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("confined"),   Ustr(""), pointer_constraints_unstable_v1_types + 0),
             new(Ustr("unconfined"), Ustr(""), pointer_constraints_unstable_v1_types + 0),
         ]);
 
-        zwp_confined_pointer_v1_interface = NativeMemory.AllocSet(
+        zwp_confined_pointer_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_confined_pointer_v1"), 1,
                 2, zwp_confined_pointer_v1_requests,

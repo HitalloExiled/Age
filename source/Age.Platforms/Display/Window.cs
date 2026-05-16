@@ -27,31 +27,26 @@ public partial class Window : Disposable
     #endregion events
 
     private static Size<uint> defaultSize = new(800, 600);
-    private static string?    appId;
 
     private string        title;
     private WindowChanges windowChanges;
 
-    public static IEnumerable<Window> Windows => WindowsMap.Values;
-
-    protected static bool                     Registered { get; set; }
-    protected static Dictionary<nint, Window> WindowsMap { get; } = [];
-
     protected List<Window> Children { get; } = [];
 
-    public Window? Parent { get; }
-
-    public nint Handle      { get; private set; }
     public bool IsClosed    { get; private set; }
     public bool IsMaximized { get; private set; }
     public bool IsMinimized { get; private set; }
     public bool IsVisible   { get; private set; } = true;
 
+    public partial Cursor     Cursor   { get; set; }
+    public partial Point<int> Position { get; set; }
+    public partial Size<uint> Size     { get; set; }
+    public partial string     Title    { get; set; }
+
+    public Window? Parent { get; }
+
     public partial Size<uint> ClientSize { get; }
-    public partial Cursor     Cursor     { get; set; }
-    public partial Point<int> Position   { get; set; }
-    public partial Size<uint> Size       { get; set; }
-    public partial string     Title      { get; set; }
+    public partial nint       Surface    { get; }
 
     public partial Window(string? title = default, Size<uint>? size = default, Point<int>? position = default, Window? parent = null);
 
@@ -63,28 +58,7 @@ public partial class Window : Disposable
         }
     }
 
-    private partial void UpdateCursor();
-
-    public static void CloseAll()
-    {
-        foreach (var window in WindowsMap.Values)
-        {
-            window.Close();
-        }
-
-        WindowsMap.Clear();
-    }
-
-    public static void DoEventsAll()
-    {
-        foreach (var window in WindowsMap.Values)
-        {
-            window.DoEvents();
-        }
-    }
-
-    public static partial void Register(string appId);
-    public static partial void Destroy();
+    internal partial void UpdateCursor();
 
     public partial void Close();
     public partial string? GetClipboardData();

@@ -49,18 +49,18 @@ internal static unsafe class XdgShellClientProtocol
 
         xdg_shell_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        xdg_wm_base_requests = NativeMemory.AllocSet<wl_message>([
+        xdg_wm_base_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),           Ustr(""),   xdg_shell_types + 0),
             new(Ustr("create_positioner"), Ustr("n"),  xdg_shell_types + 4),
             new(Ustr("get_xdg_surface"),   Ustr("no"), xdg_shell_types + 5),
             new(Ustr("pong"),              Ustr("u"),  xdg_shell_types + 5),
         ]);
 
-        xdg_wm_base_events = NativeMemory.AllocSet<wl_message>([
+        xdg_wm_base_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("ping"), Ustr("u"), xdg_shell_types + 0),
         ]);
 
-        xdg_wm_base_interface = NativeMemory.AllocSet(
+        xdg_wm_base_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("xdg_wm_base"), 7,
                 4, xdg_wm_base_requests,
@@ -68,7 +68,7 @@ internal static unsafe class XdgShellClientProtocol
             )
         );
 
-        xdg_positioner_requests = NativeMemory.AllocSet<wl_message>([
+        xdg_positioner_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),                   Ustr(""),     xdg_shell_types + 0),
             new(Ustr("set_size"),                  Ustr("ii"),   xdg_shell_types + 0),
             new(Ustr("set_anchor_rect"),           Ustr("iiii"), xdg_shell_types + 0),
@@ -81,7 +81,7 @@ internal static unsafe class XdgShellClientProtocol
             new(Ustr("set_parent_configure"),      Ustr("3u"),   xdg_shell_types + 0),
         ]);
 
-        xdg_positioner_interface = NativeMemory.AllocSet(
+        xdg_positioner_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("xdg_positioner"), 1,
                 10, xdg_positioner_requests,
@@ -89,7 +89,7 @@ internal static unsafe class XdgShellClientProtocol
             )
         );
 
-        xdg_surface_requests = NativeMemory.AllocSet<wl_message>([
+        xdg_surface_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),             Ustr(""),     xdg_shell_types + 0),
             new(Ustr("get_toplevel"),        Ustr("n"),    xdg_shell_types + 7),
             new(Ustr("get_popup"),           Ustr("n?oo"), xdg_shell_types + 8),
@@ -97,11 +97,11 @@ internal static unsafe class XdgShellClientProtocol
             new(Ustr("ack_configure"),       Ustr("u"),    xdg_shell_types + 0),
         ]);
 
-        xdg_surface_events = NativeMemory.AllocSet<wl_message>([
+        xdg_surface_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("configure"), Ustr("u"), xdg_shell_types + 0)
         ]);
 
-        xdg_surface_interface = NativeMemory.AllocSet(
+        xdg_surface_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("xdg_surface"), 7,
                 5, xdg_surface_requests,
@@ -109,7 +109,7 @@ internal static unsafe class XdgShellClientProtocol
             )
         );
 
-        xdg_toplevel_requests = NativeMemory.AllocSet<wl_message>([
+        xdg_toplevel_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),          Ustr(""),      xdg_shell_types + 0),
             new(Ustr("set_parent"),       Ustr("?)o"),   xdg_shell_types + 11),
             new(Ustr("set_title"),        Ustr("s)"),    xdg_shell_types + 0),
@@ -126,14 +126,14 @@ internal static unsafe class XdgShellClientProtocol
             new(Ustr("set_minimized"),    Ustr(""),      xdg_shell_types + 0),
         ]);
 
-        xdg_toplevel_events = NativeMemory.AllocSet<wl_message>([
+        xdg_toplevel_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("configure"),        Ustr("iia"), xdg_shell_types + 0),
             new(Ustr("close"),            Ustr(""),    xdg_shell_types + 0),
             new(Ustr("configure_bounds"), Ustr("4ii"), xdg_shell_types + 0),
             new(Ustr("wm_capabilities"),  Ustr("5a"),  xdg_shell_types + 0),
         ]);
 
-        xdg_toplevel_interface = NativeMemory.AllocSet(
+        xdg_toplevel_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("xdg_toplevel"), 7,
                 14, xdg_toplevel_requests,
@@ -141,15 +141,15 @@ internal static unsafe class XdgShellClientProtocol
             )
         );
 
-        xdg_popup_requests = NativeMemory.AllocSet<wl_message>([
+        xdg_popup_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"), Ustr(""), xdg_shell_types + 0)
         ]);
 
-        xdg_popup_events = NativeMemory.AllocSet<wl_message>([
+        xdg_popup_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("popup_done"), Ustr(""), xdg_shell_types + 0),
         ]);
 
-        xdg_popup_interface = NativeMemory.AllocSet(
+        xdg_popup_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("xdg_popup"), 1,
                 3, xdg_popup_requests,

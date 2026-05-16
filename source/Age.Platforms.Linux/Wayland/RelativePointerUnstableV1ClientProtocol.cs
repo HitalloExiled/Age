@@ -28,12 +28,12 @@ internal static unsafe class RelativePointerUnstableV1ClientProtocol
 
         relative_pointer_unstable_v1_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        zwp_relative_pointer_manager_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_relative_pointer_manager_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),               Ustr(""),   relative_pointer_unstable_v1_types + 0),
             new(Ustr("get_relative_pointer"),  Ustr("no"), relative_pointer_unstable_v1_types + 6),
         ]);
 
-        zwp_relative_pointer_manager_v1_interface = NativeMemory.AllocSet(
+        zwp_relative_pointer_manager_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_relative_pointer_manager_v1"), 1,
                 2, zwp_relative_pointer_manager_v1_requests,
@@ -41,15 +41,15 @@ internal static unsafe class RelativePointerUnstableV1ClientProtocol
             )
         );
 
-        zwp_relative_pointer_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_relative_pointer_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"), Ustr(""), relative_pointer_unstable_v1_types + 0),
         ]);
 
-        zwp_relative_pointer_v1_events = NativeMemory.AllocSet<wl_message>([
+        zwp_relative_pointer_v1_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("relative_motion"), Ustr("uuffff"), relative_pointer_unstable_v1_types + 0),
         ]);
 
-        zwp_relative_pointer_v1_interface = NativeMemory.AllocSet(
+        zwp_relative_pointer_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_relative_pointer_v1"), 1,
                 1, zwp_relative_pointer_v1_requests,

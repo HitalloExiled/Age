@@ -50,12 +50,12 @@ internal static unsafe class TabletUnstableV2ClientProtocol
 
         tablet_unstable_v2_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        zwp_tablet_manager_v2_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_manager_v2_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("get_tablet_seat"), Ustr("no"), tablet_unstable_v2_types + 3),
             new(Ustr("destroy"),         Ustr(""),   tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_manager_v2_interface = NativeMemory.AllocSet(
+        zwp_tablet_manager_v2_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_tablet_manager_v2"), 1,
                 2, zwp_tablet_manager_v2_requests,
@@ -63,17 +63,17 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             )
         );
 
-        zwp_tablet_seat_v2_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_seat_v2_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"), Ustr(""), tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_seat_v2_events = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_seat_v2_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("tablet_added"), Ustr("n"), tablet_unstable_v2_types + 5),
             new(Ustr("tool_added"),   Ustr("n"), tablet_unstable_v2_types + 6),
             new(Ustr("pad_added"),    Ustr("n"), tablet_unstable_v2_types + 7),
         ]);
 
-        zwp_tablet_seat_v2_interface = NativeMemory.AllocSet(
+        zwp_tablet_seat_v2_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_tablet_seat_v2"), 1,
                 1, zwp_tablet_seat_v2_requests,
@@ -81,12 +81,12 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             )
         );
 
-        zwp_tablet_tool_v2_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_tool_v2_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("set_cursor"), Ustr("u?oii"), tablet_unstable_v2_types + 8),
             new(Ustr("destroy"),    Ustr(""),      tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_tool_v2_events = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_tool_v2_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("type"),              Ustr("u"),    tablet_unstable_v2_types + 0),
             new(Ustr("hardware_serial"),   Ustr("uu"),   tablet_unstable_v2_types + 0),
             new(Ustr("hardware_id_wacom"), Ustr("uu"),   tablet_unstable_v2_types + 0),
@@ -108,7 +108,7 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             new(Ustr("frame"),             Ustr("u"),    tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_tool_v2_interface = NativeMemory.AllocSet(
+        zwp_tablet_tool_v2_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_tablet_tool_v2"), 1,
                 2, zwp_tablet_tool_v2_requests,
@@ -116,11 +116,11 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             )
         );
 
-        zwp_tablet_v2_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_v2_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"), Ustr(""), tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_v2_events = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_v2_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("name"),    Ustr("s"),  tablet_unstable_v2_types + 0),
             new(Ustr("id"),      Ustr("uu"), tablet_unstable_v2_types + 0),
             new(Ustr("path"),    Ustr("s"),  tablet_unstable_v2_types + 0),
@@ -128,7 +128,7 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             new(Ustr("removed"), Ustr(""),   tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_v2_interface = NativeMemory.AllocSet(
+        zwp_tablet_v2_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_tablet_v2"), 1,
                 1, zwp_tablet_v2_requests,
@@ -136,19 +136,19 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             )
         );
 
-        zwp_tablet_pad_ring_v2_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_pad_ring_v2_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("set_feedback"), Ustr("su"), tablet_unstable_v2_types + 0),
             new(Ustr("destroy"),      Ustr(""),   tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_pad_ring_v2_events = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_pad_ring_v2_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("source"), Ustr("u"), tablet_unstable_v2_types + 0),
             new(Ustr("angle"),  Ustr("f"), tablet_unstable_v2_types + 0),
             new(Ustr("stop"),   Ustr(""),  tablet_unstable_v2_types + 0),
             new(Ustr("frame"),  Ustr("u"), tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_pad_ring_v2_interface = NativeMemory.AllocSet(
+        zwp_tablet_pad_ring_v2_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_tablet_pad_ring_v2"), 1,
                 2, zwp_tablet_pad_ring_v2_requests,
@@ -156,19 +156,19 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             )
         );
 
-        zwp_tablet_pad_strip_v2_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_pad_strip_v2_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("set_feedback"), Ustr("su"), tablet_unstable_v2_types + 0),
             new(Ustr("destroy"),      Ustr(""),   tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_pad_strip_v2_events = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_pad_strip_v2_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("source"),   Ustr("u"), tablet_unstable_v2_types + 0),
             new(Ustr("position"), Ustr("u"), tablet_unstable_v2_types + 0),
             new(Ustr("stop"),     Ustr(""),  tablet_unstable_v2_types + 0),
             new(Ustr("frame"),    Ustr("u"), tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_pad_strip_v2_interface = NativeMemory.AllocSet(
+        zwp_tablet_pad_strip_v2_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_tablet_pad_strip_v2"), 1,
                 2, zwp_tablet_pad_strip_v2_requests,
@@ -176,11 +176,11 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             )
         );
 
-        zwp_tablet_pad_group_v2_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_pad_group_v2_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"), Ustr(""), tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_pad_group_v2_events = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_pad_group_v2_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("buttons"),     Ustr("a"),   tablet_unstable_v2_types + 0),
             new(Ustr("ring"),        Ustr("n"),   tablet_unstable_v2_types + 15),
             new(Ustr("strip"),       Ustr("n"),   tablet_unstable_v2_types + 16),
@@ -189,7 +189,7 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             new(Ustr("mode_switch"), Ustr("uuu"), tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_pad_group_v2_interface = NativeMemory.AllocSet(
+        zwp_tablet_pad_group_v2_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_tablet_pad_group_v2"), 1,
                 1, zwp_tablet_pad_group_v2_requests,
@@ -197,12 +197,12 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             )
         );
 
-        zwp_tablet_pad_v2_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_pad_v2_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("set_feedback"), Ustr("usu"), tablet_unstable_v2_types + 0),
             new(Ustr("destroy"),      Ustr(""),    tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_pad_v2_events = NativeMemory.AllocSet<wl_message>([
+        zwp_tablet_pad_v2_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("group"),   Ustr("n"),   tablet_unstable_v2_types + 17),
             new(Ustr("path"),    Ustr("s"),   tablet_unstable_v2_types + 0),
             new(Ustr("buttons"), Ustr("u"),   tablet_unstable_v2_types + 0),
@@ -213,7 +213,7 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             new(Ustr("removed"), Ustr(""),    tablet_unstable_v2_types + 0),
         ]);
 
-        zwp_tablet_pad_v2_interface = NativeMemory.AllocSet(
+        zwp_tablet_pad_v2_interface = NativeMemory.Alloc(
             new wl_interface(Ustr("zwp_tablet_pad_v2"), 1,
                 2, zwp_tablet_pad_v2_requests,
                 8, zwp_tablet_pad_v2_events

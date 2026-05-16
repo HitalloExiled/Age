@@ -39,13 +39,13 @@ internal unsafe static class WpPrimarySelectionUnstableV1ClientProtocol
 
         wp_primary_selection_unstable_v1_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        zwp_primary_selection_device_manager_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_primary_selection_device_manager_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("create_source"), Ustr("n"),  wp_primary_selection_unstable_v1_types + 2),
             new(Ustr("get_device"),    Ustr("no"), wp_primary_selection_unstable_v1_types + 3),
             new(Ustr("destroy"),       Ustr(""),   wp_primary_selection_unstable_v1_types + 0)
         ]);
 
-        zwp_primary_selection_device_manager_v1_interface = NativeMemory.AllocSet(
+        zwp_primary_selection_device_manager_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_primary_selection_device_manager_v1"), 1,
                 3, zwp_primary_selection_device_manager_v1_requests,
@@ -53,17 +53,17 @@ internal unsafe static class WpPrimarySelectionUnstableV1ClientProtocol
             )
         );
 
-        zwp_primary_selection_device_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_primary_selection_device_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("set_selection"), Ustr("?ou"), wp_primary_selection_unstable_v1_types + 5),
 	        new(Ustr("destroy"),       Ustr(""), wp_primary_selection_unstable_v1_types + 0),
         ]);
 
-        zwp_primary_selection_device_v1_events = NativeMemory.AllocSet<wl_message>([
+        zwp_primary_selection_device_v1_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("data_offer"), Ustr("n"),  wp_primary_selection_unstable_v1_types + 7),
 	        new(Ustr("selection"),  Ustr("?o"), wp_primary_selection_unstable_v1_types + 8),
         ]);
 
-        zwp_primary_selection_device_v1_interface = NativeMemory.AllocSet(
+        zwp_primary_selection_device_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_primary_selection_device_v1"), 1,
                 2, zwp_primary_selection_device_v1_requests,
@@ -71,16 +71,16 @@ internal unsafe static class WpPrimarySelectionUnstableV1ClientProtocol
             )
         );
 
-        zwp_primary_selection_offer_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_primary_selection_offer_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("receive"), Ustr("sh"), wp_primary_selection_unstable_v1_types + 0),
 	        new(Ustr("destroy"), Ustr(""),   wp_primary_selection_unstable_v1_types + 0),
         ]);
 
-        zwp_primary_selection_offer_v1_events = NativeMemory.AllocSet<wl_message>([
+        zwp_primary_selection_offer_v1_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("offer"), Ustr("s"), wp_primary_selection_unstable_v1_types + 0),
         ]);
 
-        zwp_primary_selection_offer_v1_interface = NativeMemory.AllocSet(
+        zwp_primary_selection_offer_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_primary_selection_offer_v1"), 1,
                 2, zwp_primary_selection_offer_v1_requests,
@@ -88,17 +88,17 @@ internal unsafe static class WpPrimarySelectionUnstableV1ClientProtocol
             )
         );
 
-        zwp_primary_selection_source_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_primary_selection_source_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("offer"),   Ustr("s"), wp_primary_selection_unstable_v1_types + 0),
 	        new(Ustr("destroy"), Ustr(""),  wp_primary_selection_unstable_v1_types + 0),
         ]);
 
-        zwp_primary_selection_source_v1_events = NativeMemory.AllocSet<wl_message>([
+        zwp_primary_selection_source_v1_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("send"),      Ustr("sh"), wp_primary_selection_unstable_v1_types + 0),
 	        new(Ustr("cancelled"), Ustr(""),   wp_primary_selection_unstable_v1_types + 0),
         ]);
 
-        zwp_primary_selection_source_v1_interface = NativeMemory.AllocSet(
+        zwp_primary_selection_source_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_primary_selection_source_v1"), 1,
                 2, zwp_primary_selection_source_v1_requests,

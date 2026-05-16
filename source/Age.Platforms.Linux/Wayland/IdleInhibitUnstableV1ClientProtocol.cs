@@ -27,12 +27,12 @@ internal static unsafe class IdleInhibitUnstableV1ClientProtocol
 
         idle_inhibit_unstable_v1_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        zwp_idle_inhibit_manager_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_idle_inhibit_manager_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),          Ustr(""),   idle_inhibit_unstable_v1_types + 0),
             new(Ustr("create_inhibitor"), Ustr("no"), idle_inhibit_unstable_v1_types + 0),
         ]);
 
-        zwp_idle_inhibit_manager_v1_interface = NativeMemory.AllocSet(
+        zwp_idle_inhibit_manager_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_idle_inhibit_manager_v1"), 1,
                 2, zwp_idle_inhibit_manager_v1_requests,
@@ -40,11 +40,11 @@ internal static unsafe class IdleInhibitUnstableV1ClientProtocol
             )
         );
 
-        zwp_idle_inhibitor_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_idle_inhibitor_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"), Ustr(""), idle_inhibit_unstable_v1_types + 0),
         ]);
 
-        zwp_idle_inhibitor_v1_interface = NativeMemory.AllocSet(
+        zwp_idle_inhibitor_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_idle_inhibitor_v1"), 1,
                 1, zwp_idle_inhibitor_v1_requests,

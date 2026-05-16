@@ -29,12 +29,12 @@ internal static unsafe class XdgDecorationUnstableV1ClientProtocol
 
         xdg_decoration_unstable_v1_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        zxdg_decoration_manager_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zxdg_decoration_manager_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),                  Ustr(""),   xdg_decoration_unstable_v1_types + 0),
             new(Ustr("get_toplevel_decoration"),  Ustr("no"), xdg_decoration_unstable_v1_types + 1),
         ]);
 
-        zxdg_decoration_manager_v1_interface = NativeMemory.AllocSet(
+        zxdg_decoration_manager_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zxdg_decoration_manager_v1"), 1,
                 2, zxdg_decoration_manager_v1_requests,
@@ -42,17 +42,17 @@ internal static unsafe class XdgDecorationUnstableV1ClientProtocol
             )
         );
 
-        zxdg_toplevel_decoration_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zxdg_toplevel_decoration_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),    Ustr(""),  xdg_decoration_unstable_v1_types + 0),
             new(Ustr("set_mode"),   Ustr("u"), xdg_decoration_unstable_v1_types + 0),
             new(Ustr("unset_mode"), Ustr(""),  xdg_decoration_unstable_v1_types + 0),
         ]);
 
-        zxdg_toplevel_decoration_v1_events = NativeMemory.AllocSet<wl_message>([
+        zxdg_toplevel_decoration_v1_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("configure"), Ustr("u"), xdg_decoration_unstable_v1_types + 0),
         ]);
 
-        zxdg_toplevel_decoration_v1_interface = NativeMemory.AllocSet(
+        zxdg_toplevel_decoration_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zxdg_toplevel_decoration_v1"), 1,
                 3, zxdg_toplevel_decoration_v1_requests,

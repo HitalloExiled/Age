@@ -3,7 +3,7 @@ using Age.Platforms.Linux.Wayland;
 
 namespace Age.Platforms.Display;
 
-public unsafe partial class Window
+public unsafe partial class WindowManager
 {
     private struct SeatState
     {

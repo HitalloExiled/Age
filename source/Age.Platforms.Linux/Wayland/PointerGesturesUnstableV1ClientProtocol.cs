@@ -32,14 +32,14 @@ internal static unsafe class PointerGesturesUnstableV1ClientProtocol
 
         pointer_gestures_unstable_v1_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        zwp_pointer_gestures_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_pointer_gestures_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("get_swipe_gesture"), Ustr("no"),  pointer_gestures_unstable_v1_types + 5),
             new(Ustr("get_pinch_gesture"), Ustr("no"),  pointer_gestures_unstable_v1_types + 7),
             new(Ustr("release"),           Ustr("2"),   pointer_gestures_unstable_v1_types + 0),
             new(Ustr("get_hold_gesture"),  Ustr("3no"), pointer_gestures_unstable_v1_types + 9),
         ]);
 
-        zwp_pointer_gestures_v1_interface = NativeMemory.AllocSet(
+        zwp_pointer_gestures_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_pointer_gestures_v1"), 3,
                 4, zwp_pointer_gestures_v1_requests,
@@ -47,17 +47,17 @@ internal static unsafe class PointerGesturesUnstableV1ClientProtocol
             )
         );
 
-        zwp_pointer_gesture_swipe_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_pointer_gesture_swipe_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"), Ustr(""), pointer_gestures_unstable_v1_types + 0),
         ]);
 
-        zwp_pointer_gesture_swipe_v1_events = NativeMemory.AllocSet<wl_message>([
+        zwp_pointer_gesture_swipe_v1_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("begin"),  Ustr("uuou"), pointer_gestures_unstable_v1_types + 11),
             new(Ustr("update"), Ustr("uff"),  pointer_gestures_unstable_v1_types + 0),
             new(Ustr("end"),    Ustr("uui"),  pointer_gestures_unstable_v1_types + 0),
         ]);
 
-        zwp_pointer_gesture_swipe_v1_interface = NativeMemory.AllocSet(
+        zwp_pointer_gesture_swipe_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_pointer_gesture_swipe_v1"), 2,
                 1, zwp_pointer_gesture_swipe_v1_requests,
@@ -65,17 +65,17 @@ internal static unsafe class PointerGesturesUnstableV1ClientProtocol
             )
         );
 
-        zwp_pointer_gesture_pinch_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_pointer_gesture_pinch_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"), Ustr(""), pointer_gestures_unstable_v1_types + 0),
         ]);
 
-        zwp_pointer_gesture_pinch_v1_events = NativeMemory.AllocSet<wl_message>([
+        zwp_pointer_gesture_pinch_v1_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("begin"),  Ustr("uuou"),  pointer_gestures_unstable_v1_types + 15),
             new(Ustr("update"), Ustr("uffff"), pointer_gestures_unstable_v1_types + 0),
             new(Ustr("end"),    Ustr("uui"),   pointer_gestures_unstable_v1_types + 0),
         ]);
 
-        zwp_pointer_gesture_pinch_v1_interface = NativeMemory.AllocSet(
+        zwp_pointer_gesture_pinch_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_pointer_gesture_pinch_v1"), 2,
                 1, zwp_pointer_gesture_pinch_v1_requests,
@@ -83,16 +83,16 @@ internal static unsafe class PointerGesturesUnstableV1ClientProtocol
             )
         );
 
-        zwp_pointer_gesture_hold_v1_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_pointer_gesture_hold_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"), Ustr("3"), pointer_gestures_unstable_v1_types + 0),
         ]);
 
-        zwp_pointer_gesture_hold_v1_events = NativeMemory.AllocSet<wl_message>([
+        zwp_pointer_gesture_hold_v1_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("begin"), Ustr("3uuou"), pointer_gestures_unstable_v1_types + 19),
             new(Ustr("end"),   Ustr("3uui"),  pointer_gestures_unstable_v1_types + 0),
         ]);
 
-        zwp_pointer_gesture_hold_v1_interface = NativeMemory.AllocSet(
+        zwp_pointer_gesture_hold_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_pointer_gesture_hold_v1"), 3,
                 1, zwp_pointer_gesture_hold_v1_requests,

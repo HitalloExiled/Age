@@ -51,7 +51,7 @@ public unsafe partial struct NativeStack<T>(int capacity, bool fixedSize = false
     public NativeStack() : this(4)
     { }
 
-    public NativeStack(ReadOnlySpan<T> values, bool fixedSize = false) : this(values.Length, fixedSize)
+    public NativeStack(ReadOnlySpan<T> values, bool fixedSize = false) : this(values.Length > 0 ? values.Length : 4, fixedSize)
     {
         UnsafeStack.SetCount(this.inner, values.Length);
 
@@ -122,6 +122,9 @@ public unsafe partial struct NativeStack<T>(int capacity, bool fixedSize = false
 
         return array;
     }
+
+    public override readonly string ToString() =>
+        $"Count = {this.Count}";
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool TryPeek(out T item) =>

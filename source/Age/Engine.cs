@@ -1,5 +1,6 @@
 using Age.Core;
 using Age.Numerics;
+using Age.Platforms.Display;
 using Age.Rendering.Vulkan;
 using Age.Services;
 using Age.Storage;
@@ -15,6 +16,7 @@ public sealed class Engine : Disposable
 
     private readonly VulkanRenderer   renderer  = new();
     private readonly RenderingService renderingService;
+    private readonly WindowManager    windowManager;
 
     public Window Window { get; }
 
@@ -26,6 +28,7 @@ public sealed class Engine : Disposable
 
     public Engine(string name, Size<uint> windowSize, Point<int> windowPosition)
     {
+        this.windowManager    = new WindowManager(name);
         this.renderingService = new RenderingService(this.renderer);
         this.shaderStorage    = new ShaderStorage(this.renderer);
         this.textStorage      = new TextStorage(this.renderer);
@@ -42,12 +45,11 @@ public sealed class Engine : Disposable
     {
         if (disposing)
         {
-            Platforms.Display.Window.CloseAll();
-
-            this.renderingService.Dispose();
-            this.shaderStorage.Dispose();
-            this.textStorage.Dispose();
             this.textureStorage.Dispose();
+            this.textStorage.Dispose();
+            this.shaderStorage.Dispose();
+            this.renderingService.Dispose();
+            this.windowManager.Dispose();
 
             GC.Collect();
 

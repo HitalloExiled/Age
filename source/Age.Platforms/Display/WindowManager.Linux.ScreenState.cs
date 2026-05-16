@@ -1,7 +1,7 @@
 #if LINUX
 namespace Age.Platforms.Display;
 
-public partial class Window
+public partial class WindowManager
 {
     private struct ScreenState
     {

@@ -23,7 +23,8 @@
             },
             "linux": {
                 "env": {
-                    "WAYLAND_DEBUG": "1"
+                    "VK_INSTANCE_LAYERS": "VK_LAYER_KHRONOS_validation",
+                    "WAYLAND_DEBUG": "1",
                 }
             }
         },

@@ -28,13 +28,13 @@ internal static unsafe class CursorShapeV1ClientProtocol
 
         cursor_shape_v1_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        wp_cursor_shape_manager_v1_requests = NativeMemory.AllocSet<wl_message>([
+        wp_cursor_shape_manager_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),            Ustr(""),   cursor_shape_v1_types + 0),
             new(Ustr("get_pointer"),        Ustr("no"), cursor_shape_v1_types + 2),
             new(Ustr("get_tablet_tool_v2"), Ustr("no"), cursor_shape_v1_types + 4),
         ]);
 
-        wp_cursor_shape_manager_v1_interface = NativeMemory.AllocSet(
+        wp_cursor_shape_manager_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("wp_cursor_shape_manager_v1"), 2,
                 3, wp_cursor_shape_manager_v1_requests,
@@ -42,12 +42,12 @@ internal static unsafe class CursorShapeV1ClientProtocol
             )
         );
 
-        wp_cursor_shape_device_v1_requests = NativeMemory.AllocSet<wl_message>([
+        wp_cursor_shape_device_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),   Ustr(""),   cursor_shape_v1_types + 0),
             new(Ustr("set_shape"), Ustr("uu"), cursor_shape_v1_types + 0),
         ]);
 
-        wp_cursor_shape_device_v1_interface = NativeMemory.AllocSet(
+        wp_cursor_shape_device_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("wp_cursor_shape_device_v1"), 2,
                 2, wp_cursor_shape_device_v1_requests,

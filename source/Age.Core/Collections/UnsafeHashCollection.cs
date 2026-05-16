@@ -125,7 +125,7 @@ internal unsafe partial struct UnsafeHashCollection
             collection->FreeHead = entry->Next;
             collection->FreeCount--;
 
-            Debug.Assert(entry->State == EntryState.Free);
+            Debug.Assert(entry->State == EntryState.Free, ExceptionMessages.CONCURRENT_OPERATION_ARE_NOT_SUPPORTED);
         }
         else
         {
@@ -143,7 +143,7 @@ internal unsafe partial struct UnsafeHashCollection
 
             collection->UsedCount++;
 
-            Debug.Assert(entry->State == EntryState.None);
+            Debug.Assert(entry->State == EntryState.None, ExceptionMessages.CONCURRENT_OPERATION_ARE_NOT_SUPPORTED);
         }
 
         var bucketHash = valueHash % collection->Entries.Length;

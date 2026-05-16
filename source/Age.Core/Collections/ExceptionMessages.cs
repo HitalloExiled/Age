@@ -13,6 +13,7 @@ internal static class ExceptionMessages
     internal const string ARGUMENT_OUT_OF_RANGE_MUST_BE_NON_NEG_NUM        = "{0} must be non-negative.";
     internal const string ARGUMENT_OUT_OF_RANGE_MUST_BE_POSITIVE           = "{0} must be greater than zero.";
     internal const string ARGUMENT_OUT_OF_RANGE_NEED_NON_NEG_NUM           = "Non-negative number required.";
+    internal const string CONCURRENT_OPERATION_ARE_NOT_SUPPORTED           = "Concurrent Operation are not supported.";
     internal const string INVALID_OPERATION_COLLECTION_FULL                = "Fixed size collection is full.";
     internal const string INVALID_OPERATION_EMPTY_HEAP                     = "Heap empty.";
     internal const string INVALID_OPERATION_EMPTY_LINKED_LIST              = "The LinkedList is empty.";

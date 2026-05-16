@@ -28,13 +28,13 @@ internal static unsafe class XdgActivationV1ClientProtocol
 
         xdg_activation_v1_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        xdg_activation_v1_requests = NativeMemory.AllocSet<wl_message>([
+        xdg_activation_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),              Ustr(""),   xdg_activation_v1_types + 0),
             new(Ustr("get_activation_token"), Ustr("n"),  xdg_activation_v1_types + 1),
             new(Ustr("activate"),             Ustr("so"), xdg_activation_v1_types + 2),
         ]);
 
-        xdg_activation_v1_interface = NativeMemory.AllocSet(
+        xdg_activation_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("xdg_activation_v1"), 1,
                 3, xdg_activation_v1_requests,
@@ -42,7 +42,7 @@ internal static unsafe class XdgActivationV1ClientProtocol
             )
         );
 
-        xdg_activation_token_v1_requests = NativeMemory.AllocSet<wl_message>([
+        xdg_activation_token_v1_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("set_serial"),  Ustr("uo"), xdg_activation_v1_types + 4),
             new(Ustr("set_app_id"),  Ustr("s"),  xdg_activation_v1_types + 0),
             new(Ustr("set_surface"), Ustr("o"),  xdg_activation_v1_types + 6),
@@ -50,11 +50,11 @@ internal static unsafe class XdgActivationV1ClientProtocol
             new(Ustr("destroy"),     Ustr(""),   xdg_activation_v1_types + 0),
         ]);
 
-        xdg_activation_token_v1_events = NativeMemory.AllocSet<wl_message>([
+        xdg_activation_token_v1_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("done"), Ustr("s"), xdg_activation_v1_types + 0),
         ]);
 
-        xdg_activation_token_v1_interface = NativeMemory.AllocSet(
+        xdg_activation_token_v1_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("xdg_activation_token_v1"), 1,
                 5, xdg_activation_token_v1_requests,

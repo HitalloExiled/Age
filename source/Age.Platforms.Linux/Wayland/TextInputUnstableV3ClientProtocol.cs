@@ -27,7 +27,7 @@ internal unsafe static class TextInputUnstableV3ClientProtocol
 
         text_input_unstable_v3_types = (wl_interface**)NativeMemory.AllocZeroed<nint>(TYPES_COUNT);
 
-        zwp_text_input_v3_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_text_input_v3_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),                Ustr(""),     text_input_unstable_v3_types + 0),
             new(Ustr("enable"),                 Ustr(""),     text_input_unstable_v3_types + 0),
             new(Ustr("disable"),                Ustr(""),     text_input_unstable_v3_types + 0),
@@ -38,7 +38,7 @@ internal unsafe static class TextInputUnstableV3ClientProtocol
             new(Ustr("commit"),                 Ustr(""),     text_input_unstable_v3_types + 0),
         ]);
 
-        zwp_text_input_v3_events = NativeMemory.AllocSet<wl_message>([
+        zwp_text_input_v3_events = NativeMemory.Alloc<wl_message>([
             new(Ustr("enter"),                    Ustr("o"),    text_input_unstable_v3_types + 4),
             new(Ustr("leave"),                    Ustr("o"),    text_input_unstable_v3_types + 5),
             new(Ustr("preedit_string"),           Ustr("?sii"), text_input_unstable_v3_types + 0),
@@ -47,7 +47,7 @@ internal unsafe static class TextInputUnstableV3ClientProtocol
             new(Ustr("done"),                     Ustr("u"),    text_input_unstable_v3_types + 0),
         ]);
 
-        zwp_text_input_v3_interface = NativeMemory.AllocSet(
+        zwp_text_input_v3_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_text_input_v3"), 1,
                 8, zwp_text_input_v3_requests,
@@ -55,12 +55,12 @@ internal unsafe static class TextInputUnstableV3ClientProtocol
             )
         );
 
-        zwp_text_input_manager_v3_requests = NativeMemory.AllocSet<wl_message>([
+        zwp_text_input_manager_v3_requests = NativeMemory.Alloc<wl_message>([
             new(Ustr("destroy"),        Ustr(""),   text_input_unstable_v3_types + 0),
             new(Ustr("get_text_input"), Ustr("no"), text_input_unstable_v3_types + 6),
         ]);
 
-        zwp_text_input_manager_v3_interface = NativeMemory.AllocSet(
+        zwp_text_input_manager_v3_interface = NativeMemory.Alloc(
             new wl_interface(
                 Ustr("zwp_text_input_manager_v3"), 1,
                 2, zwp_text_input_manager_v3_requests,

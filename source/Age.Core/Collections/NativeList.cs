@@ -68,7 +68,7 @@ public unsafe partial struct NativeList<T>(int capacity, bool fixedSize = false)
     public NativeList() : this(4)
     { }
 
-    public NativeList(ReadOnlySpan<T> values, bool fixedSize = false) : this(values.Length, fixedSize)
+    public NativeList(ReadOnlySpan<T> values, bool fixedSize = false) : this(values.Length > 0 ? values.Length : 4, fixedSize)
     {
         UnsafeList.SetCount(this.inner, values.Length);
 
@@ -132,6 +132,9 @@ public unsafe partial struct NativeList<T>(int capacity, bool fixedSize = false)
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly NativeArray<T> ToNativeArray() =>
         this.Count == 0 ? [] : new NativeArray<T>(this.AsSpan());
+
+    public override readonly string ToString() =>
+        $"Count = {this.Count}";
 
     public static implicit operator T*(NativeList<T> value) => value.Buffer;
     public static implicit operator Span<T>(NativeList<T> value) => value.AsSpan();
