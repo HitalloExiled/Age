@@ -109,7 +109,7 @@ public sealed class Window : Viewport
 
     public override Size<uint> Size
     {
-        get => this.window.ClientSize;
+        get => this.window.Size;
         set => Logger.Warn("Window size cant be modified");
     }
 
@@ -133,16 +133,16 @@ public sealed class Window : Viewport
     public override RenderTarget RenderTarget => this.renderTargets[this.Surface.CurrentBuffer];
     public override Texture2D    Texture      => Texture2D.Empty;
 
-    public Window(string title, in Size<uint> size, in Point<int> position, Window? parent = null)
+    public Window(string title, in Size<uint> size, Window? parent = null)
     {
         this.MakeSubtreeStatePristine();
 
-        this.window        = new DisplayWindow(title, size, position, parent?.window);
+        this.window = new DisplayWindow(title, size, parent?.window);
 
 #if WINDOWS
         this.Surface = VulkanRenderer.Singleton.CreateSurface(this.window.Surface, this.window.ClientSize);
 #else
-        this.Surface = VulkanRenderer.Singleton.CreateSurface(WindowManager.Instance.Display, this.window.Surface, this.window.ClientSize);
+        this.Surface = VulkanRenderer.Singleton.CreateSurface(WindowManager.Instance.Display, this.window.Surface, this.window.Size);
 #endif
 
         this.renderTargets = new RenderTarget[this.Surface.Swapchain.Images.Length];
@@ -172,7 +172,7 @@ public sealed class Window : Viewport
     {
         var createInfo = new RenderTarget.MultiPassCreateInfo
         {
-            Size        = this.window.ClientSize,
+            Size        = this.window.Size,
             Attachments =
             [
                 RenderTarget.CreateInfo.ColorAttachmentInfo.From(image, ImageLayout.PresentSrcKHR),
@@ -226,7 +226,7 @@ public sealed class Window : Viewport
     {
         if (this.Surface.Visible = this.window.IsVisible && !this.window.IsMinimized)
         {
-            this.Surface.Size = this.window.ClientSize;
+            this.Surface.Size = this.window.Size;
         }
     }
 

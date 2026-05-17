@@ -131,7 +131,7 @@ public unsafe partial struct NativeList<T>(int capacity, bool fixedSize = false)
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly NativeArray<T> ToNativeArray() =>
-        this.Count == 0 ? [] : new NativeArray<T>(this.AsSpan());
+        new(this);
 
     public override readonly string ToString() =>
         $"Count = {this.Count}";

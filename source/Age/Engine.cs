@@ -26,7 +26,7 @@ public sealed class Engine : Disposable
 
     public bool Running { get; private set; }
 
-    public Engine(string name, Size<uint> windowSize, Point<int> windowPosition)
+    public Engine(string name, Size<uint> windowSize)
     {
         this.windowManager    = new WindowManager(name);
         this.renderingService = new RenderingService(this.renderer);
@@ -34,7 +34,7 @@ public sealed class Engine : Disposable
         this.textStorage      = new TextStorage(this.renderer);
         this.textureStorage   = new TextureStorage(this.renderer);
 
-        this.Window = new Window(name, windowSize, windowPosition);
+        this.Window = new Window(name, windowSize);
 
         this.renderingService.RegisterWindow(this.Window);
 

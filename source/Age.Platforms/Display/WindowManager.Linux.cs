@@ -157,8 +157,6 @@ public unsafe sealed partial class WindowManager
 
         this.Id = id;
 
-        using var uAppId = new UnmanagedString(id);
-
         var display = this.registryState->Display = wl_display_connect(null);
 
         NullReferenceException.ThrowIfNull(display, "Can't connect to a Wayland display.");
@@ -250,9 +248,7 @@ public unsafe sealed partial class WindowManager
     {
         var state = (WindowState*)userData;
 
-        using var _ = UnsafeLock.Lock(ref state->Lock);
-
-        state->Messages.Add(WindowMessage.Closed());
+        state->AddMessage(WindowMessage.Closed());
     }
 
     [UnmanagedCallersOnly]
@@ -303,7 +299,7 @@ public unsafe sealed partial class WindowManager
             }
         }
 
-        Window.UpdateSize(state, new(width, height));
+        UpdateSize(state, new(width, height));
     }
 
     [UnmanagedCallersOnly]
@@ -381,9 +377,9 @@ public unsafe sealed partial class WindowManager
         {
             registryState->DataDeviceManager = new(name, (wl_data_device_manager*)wl_registry_bind(registry, name, wl_data_device_manager_interface, Math.Clamp(version, 1, 6)));
 
-            using var _ = UnsafeLock.Lock(ref registryState->Lock);
+            using var seats = registryState->GetSeats();
 
-            foreach (var seat in registryState->Seats)
+            foreach (var seat in seats)
             {
                 var seatState = GetSeatState(seat);
 
@@ -405,20 +401,17 @@ public unsafe sealed partial class WindowManager
         {
             var output = (wl_output*)wl_registry_bind(registry, name, wl_output_interface, Math.Clamp(version, 1, 4));
 
-            using (UnsafeLock.Lock(ref registryState->Lock))
+            registryState->AddOutput(output);
+
+            var screenState = NativeMemory.Alloc<ScreenState>();
+
+            registryState->AddScreenState(name, screenState);
+
+            SetProxyTag((wl_proxy*)output);
+
+            fixed (wl_output_listener* pOutputListener = &outputListener)
             {
-                registryState->Outputs.Add(output);
-
-                var screenState = NativeMemory.Alloc<ScreenState>();
-
-                registryState->ScreenStates[name] = screenState;
-
-                SetProxyTag((wl_proxy*)output);
-
-                fixed (wl_output_listener* pOutputListener = &outputListener)
-                {
-                    wl_output_add_listener(output, pOutputListener, screenState);
-                }
+                wl_output_add_listener(output, pOutputListener, screenState);
             }
         }
 
@@ -467,10 +460,7 @@ public unsafe sealed partial class WindowManager
                 }
             }
 
-            using (UnsafeLock.Lock(ref registryState->Lock))
-            {
-                registryState->Seats.Add(seat);
-            }
+            registryState->AddSeat(seat);
 
             fixed (wl_seat_listener* pSeatListener = &seatListener)
             {
@@ -547,7 +537,9 @@ public unsafe sealed partial class WindowManager
         {
             registryState->PrimarySelectionDeviceManager = (zwp_primary_selection_device_manager_v1*)wl_registry_bind(registry, name, zwp_primary_selection_device_manager_v1_interface, 1);
 
-            foreach (var seat in registryState->Seats)
+            using var seats = registryState->GetSeats();
+
+            foreach (var seat in seats)
             {
                 var seatState = GetSeatState(seat);
 
@@ -597,9 +589,9 @@ public unsafe sealed partial class WindowManager
         {
             registryState->TabletManager = new(name, (zwp_tablet_manager_v2*)wl_registry_bind(registry, name, zwp_tablet_manager_v2_interface, 1));
 
-            using var _ = UnsafeLock.Lock(ref registryState->Lock);
+            using var seats = registryState->GetSeats();
 
-            foreach (var seat in registryState->Seats)
+            foreach (var seat in seats)
             {
                 var seatState = GetSeatState(seat);
 
@@ -620,9 +612,9 @@ public unsafe sealed partial class WindowManager
         {
             registryState->TextInputManager = new(name, (zwp_text_input_manager_v3*)wl_registry_bind(registry, name, zwp_text_input_manager_v3_interface, 1));
 
-            using var _ = UnsafeLock.Lock(ref registryState->Lock);
+            using var seats = registryState->GetSeats();
 
-            foreach (var seat in registryState->Seats)
+            foreach (var seat in seats)
             {
                 var seatState = GetSeatState(seat);
 
@@ -641,9 +633,9 @@ public unsafe sealed partial class WindowManager
     [UnmanagedCallersOnly]
     private static void OnRegistryGlobalRemove(void* data, wl_registry* registry, uint name)
     {
-        var pData = (RegistryState*)data;
+        var registryState = (RegistryState*)data;
 
-        if (pData->ScreenStates.Remove(name, out var screenState))
+        if (registryState->RemoveScreenState(name, out var screenState))
         {
             NativeMemory.Free(screenState);
         }
@@ -796,7 +788,9 @@ public unsafe sealed partial class WindowManager
             window.Close();
         }
 
-        foreach (var seat in this.registryState->Seats)
+        using var seats = this.registryState->GetSeats();
+
+        foreach (var seat in seats)
         {
             var seatState = GetSeatState(seat);
 
@@ -850,7 +844,9 @@ public unsafe sealed partial class WindowManager
             NativeMemory.Free(seatState);
         }
 
-        foreach (var output in this.registryState->Outputs)
+        using var outputs = this.registryState->GetOutputs();
+
+        foreach (var output in outputs)
         {
             wl_output_destroy(output);
         }
@@ -936,16 +932,15 @@ public unsafe sealed partial class WindowManager
         NativeMemory.Free(this.registryState);
     }
 
-    internal WindowState* CreateState(Window window, Size<uint> size, Point<int> position)
+    internal WindowState* CreateState(Window window, Size<uint> size)
     {
         this.windows.Add(window);
 
         var state = NativeMemory.Alloc(
             new WindowState
             {
-                Surface  = wl_compositor_create_surface(registryState->Compositor),
-                Position = position,
-                Size     = size.Cast<int>(),
+                Surface = wl_compositor_create_surface(this.registryState->Compositor),
+                Size    = size.Cast<int>(),
             }
         );
 
@@ -989,7 +984,7 @@ public unsafe sealed partial class WindowManager
 
         _ = wl_display_roundtrip(this.registryState->Display);
 
-        Window.UpdateSize(state, state->Size);
+        UpdateSize(state, state->Size);
 
         using var uId = new UnmanagedString(this.Id);
 
@@ -1008,6 +1003,35 @@ public unsafe sealed partial class WindowManager
         window.State->Dispose();
 
         NativeMemory.Free(window.State);
+    }
+
+    internal static void UpdateSize(WindowState* state, Size<int> size)
+    {
+        var sizeHasChanged = false;
+
+        if (state->Size != size)
+        {
+            state->Size = size;
+
+            sizeHasChanged = true;
+        }
+
+        if (state->Surface != null && state->Viewport != null)
+        {
+            wp_viewport_set_destination(state->Viewport, size.Width, size.Height);
+        }
+
+        var libdecorState = libdecor_state_new(size.Width, size.Height);
+
+        libdecor_frame_commit(state->Frame, libdecorState, state->PendingLibdecorConfiguration);
+        libdecor_state_free(libdecorState);
+
+        if (sizeHasChanged)
+        {
+            state->AddMessage(WindowMessage.Resized());
+        }
+
+        state->PendingLibdecorConfiguration = null;
     }
 }
 #endif

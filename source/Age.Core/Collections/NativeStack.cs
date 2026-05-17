@@ -116,7 +116,7 @@ public unsafe partial struct NativeStack<T>(int capacity, bool fixedSize = false
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly NativeArray<T> ToNativeArray()
     {
-        var array = new NativeArray<T>(this.AsSpan());
+        var array = new NativeArray<T>(this);
 
         array.AsSpan().Reverse();
 

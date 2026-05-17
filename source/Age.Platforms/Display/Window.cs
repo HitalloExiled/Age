@@ -38,17 +38,15 @@ public partial class Window : Disposable
     public bool IsMinimized { get; private set; }
     public bool IsVisible   { get; private set; } = true;
 
-    public partial Cursor     Cursor   { get; set; }
-    public partial Point<int> Position { get; set; }
-    public partial Size<uint> Size     { get; set; }
-    public partial string     Title    { get; set; }
+    public partial Cursor Cursor   { get; set; }
+    public partial string Title    { get; set; }
 
     public Window? Parent { get; }
 
-    public partial Size<uint> ClientSize { get; }
-    public partial nint       Surface    { get; }
+    public partial Size<uint> Size     { get; }
+    public partial nint       Surface  { get; }
 
-    public partial Window(string? title = default, Size<uint>? size = default, Point<int>? position = default, Window? parent = null);
+    public partial Window(string? title = default, Size<uint>? size = default, Window? parent = null);
 
     protected override void OnDisposed(bool disposing)
     {

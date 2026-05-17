@@ -24,7 +24,7 @@
             "linux": {
                 "env": {
                     "VK_INSTANCE_LAYERS": "VK_LAYER_KHRONOS_validation",
-                    "WAYLAND_DEBUG": "1",
+                    "WAYLAND_DEBUG": "0",
                 }
             }
         },
@@ -47,6 +47,12 @@
             "windows": {
                 "program": "${workspaceFolder}/source/Age.StoryBook/bin/Debug/net10.0/win-x64/Age.StoryBook.exe"
             },
+            "linux": {
+                "env": {
+                    "VK_INSTANCE_LAYERS": "VK_LAYER_KHRONOS_validation",
+                    "WAYLAND_DEBUG": "0",
+                }
+            }
         },
     ]
 }

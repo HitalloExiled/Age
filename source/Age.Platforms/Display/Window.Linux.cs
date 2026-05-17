@@ -1,17 +1,12 @@
 #if LINUX
-using Age.Core;
 using Age.Core.Extensions;
 using Age.Numerics;
-using static Age.Platforms.Linux.LibDecor.LibDecor;
-using static Age.Platforms.Linux.Wayland.ViewporterProtocol;
 
 namespace Age.Platforms.Display;
 
 public unsafe partial class Window
 {
     internal WindowState* State { get; }
-
-    public partial Size<uint> ClientSize => this.State->Size.Cast<uint>();
 
     public partial Cursor Cursor
     {
@@ -29,17 +24,7 @@ public unsafe partial class Window
         }
     }
 
-    public partial Point<int> Position
-    {
-        get => this.State->Position;
-        set => throw new NotImplementedException();
-    }
-
-    public partial Size<uint> Size
-    {
-        get => this.State->Size.Cast<uint>();
-        set => UpdateSize(this.State, value.Cast<int>());
-    }
+    public partial Size<uint> Size => this.State->Size.Cast<uint>();
 
     public partial string Title
     {
@@ -49,41 +34,12 @@ public unsafe partial class Window
 
     public partial nint Surface => (nint)this.State->Surface;
 
-    public partial Window(string? title, Size<uint>? size, Point<int>? position, Window? parent)
+    public partial Window(string? title, Size<uint>? size, Window? parent)
     {
         this.title = title ?? "Untitled";
-        this.State = WindowManager.Instance.CreateState(this, (size ?? defaultSize), position ?? default);
+        this.State = WindowManager.Instance.CreateState(this, size ?? defaultSize);
 
         this.Parent?.Children.Add(this);
-    }
-
-    internal static void UpdateSize(WindowState* state, Size<int> size)
-    {
-        var sizeHasChanged = false;
-
-        if (state->Size != size)
-        {
-            state->Size = size;
-
-            sizeHasChanged = true;
-        }
-
-        if (state->Surface != null && state->Viewport != null)
-        {
-            wp_viewport_set_destination(state->Viewport, size.Width, size.Height);
-        }
-
-        var libdecorState = libdecor_state_new(size.Width, size.Height);
-
-        libdecor_frame_commit(state->Frame, libdecorState, state->PendingLibdecorConfiguration);
-        libdecor_state_free(libdecorState);
-
-        if (sizeHasChanged)
-        {
-            state->Messages.Add(WindowMessage.Resized());
-        }
-
-        state->PendingLibdecorConfiguration = null;
     }
 
     internal partial void UpdateCursor() => throw new NotImplementedException();
@@ -109,11 +65,14 @@ public unsafe partial class Window
 
     public partial void DoEvents()
     {
-        using var _ = UnsafeLock.Lock(ref this.State->Lock);
+        using var messages = this.State->GetMessages();
 
-        this.windowChanges = default;
+        if (messages.IsEmpty)
+        {
+            return;
+        }
 
-        foreach (var message in this.State->Messages)
+        foreach (var message in messages)
         {
             switch (message.Kind)
             {
@@ -184,7 +143,7 @@ public unsafe partial class Window
             }
         }
 
-        this.State->Messages.Clear();
+        this.State->ClearMessages();
 
         if (this.windowChanges.HasFlags(WindowChanges.Close))
         {
@@ -197,6 +156,8 @@ public unsafe partial class Window
         {
             this.Resized?.Invoke();
         }
+
+        this.windowChanges = default;
     }
 
     public partial string? GetClipboardData() => throw new NotImplementedException();
