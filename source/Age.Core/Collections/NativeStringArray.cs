@@ -36,6 +36,9 @@ public unsafe partial struct NativeStringArray(int size) : IDisposable
         get => this.Length == 0;
     }
 
+    public readonly bool IsCreated  => this.Buffer != null;
+    public readonly bool IsDisposed => this.Buffer == null;
+
     public readonly int Length
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -82,6 +85,9 @@ public unsafe partial struct NativeStringArray(int size) : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly string[] ToArray() =>
         Array.ToUTF8StringArray(this.Buffer, (uint)this.Length);
+
+    public override readonly string ToString() =>
+        this.IsCreated ? $"Length = {this.Length}" : "";
 
     public static implicit operator byte**(NativeStringArray value) => value.Buffer;
 }

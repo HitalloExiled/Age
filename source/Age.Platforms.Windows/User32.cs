@@ -107,7 +107,7 @@ internal static unsafe partial class User32
     );
 
     /// <inheritdoc cref="CreateWindowExW" />
-    public static HWND CreateWindowExW<T>(
+    public static HWND CreateWindowExW(
         WINDOW_STYLES_EX dwExStyle,
         string?          className,
         string?          windowName,
@@ -119,12 +119,11 @@ internal static unsafe partial class User32
         HWND             hWndParent,
         HMENU            hMenu,
         HINSTANCE        hInstance,
-        in T             param
-    ) where T : unmanaged
+        nint             param
+    )
     {
         fixed (char* lpClassName  = className)
         fixed (char* lpWindowName = windowName)
-        fixed (void* lpParam      = &param)
         {
             return CreateWindowExW(
                 dwExStyle,
@@ -138,7 +137,7 @@ internal static unsafe partial class User32
                 hWndParent,
                 hMenu,
                 hInstance,
-                (LPVOID)lpParam
+                new(param)
             );
         }
     }

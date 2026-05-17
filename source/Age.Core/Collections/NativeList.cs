@@ -134,7 +134,7 @@ public unsafe partial struct NativeList<T>(int capacity, bool fixedSize = false)
         new(this);
 
     public override readonly string ToString() =>
-        $"Count = {this.Count}";
+        this.IsCreated ? $"Count = {this.Count}" : "";
 
     public static implicit operator T*(NativeList<T> value) => value.Buffer;
     public static implicit operator Span<T>(NativeList<T> value) => value.AsSpan();

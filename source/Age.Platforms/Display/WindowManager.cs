@@ -1,21 +1,29 @@
 using System.Diagnostics.CodeAnalysis;
 using Age.Core;
-using Age.Core.Extensions;
+using Age.Numerics;
 
 namespace Age.Platforms.Display;
 
-public sealed partial class WindowManager : Disposable
+public unsafe sealed partial class WindowManager : Disposable
 {
-    private readonly List<Window> windows = [];
-
     public string Id { get; }
 
     [AllowNull]
     public static WindowManager Instance { get; private set; }
 
-    public ReadOnlySpan<Window> Windows => this.windows.AsSpan();
-
     public partial WindowManager(string id);
 
     protected override partial void OnDisposed(bool disposing);
+
+    internal partial void CloseWindow(Window window);
+    internal partial WindowState* CreateWindow(string title, Size<int> size, Window? parent);
+    internal partial void FlushWindowEvents(Window window);
+    internal partial string? GetClipboardData(Window window);
+    internal partial void HideWindow(Window window);
+    internal partial void MaximizeWindow(Window window);
+    internal partial void MinimizeWindow(Window window);
+    internal partial void RestoreWindow(Window window);
+    internal partial void SetWindowClipboardData(Window window, string value);
+    internal partial void SetWindowTitle(Window window, string value);
+    internal partial void ShowWindow(Window window);
 }

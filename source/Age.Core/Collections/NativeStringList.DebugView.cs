@@ -9,6 +9,6 @@ public partial struct NativeStringList
     internal readonly struct DebugView(NativeStringList source)
     {
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public readonly string[] Elements => source.ToArray();
+        public readonly string[]? Elements => source.IsCreated ? source.ToArray() : null;
     }
 }

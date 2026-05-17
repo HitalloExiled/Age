@@ -6,8 +6,6 @@ namespace Age.Platforms.Display;
 
 public unsafe partial class Window
 {
-    internal WindowState* State { get; }
-
     public partial Cursor Cursor
     {
         get;
@@ -28,11 +26,11 @@ public unsafe partial class Window
 
     public partial string Title
     {
-        get => this.title;
+        get;
         set => throw new NotImplementedException();
     }
 
-    public partial nint Surface => (nint)this.State->Surface;
+    public nint Surface => (nint)this.State->Surface;
 
     public partial Window(string? title, Size<uint>? size, Window? parent)
     {
@@ -41,8 +39,6 @@ public unsafe partial class Window
 
         this.Parent?.Children.Add(this);
     }
-
-    internal partial void UpdateCursor() => throw new NotImplementedException();
 
     public partial void Close()
     {

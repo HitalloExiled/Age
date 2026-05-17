@@ -197,11 +197,17 @@ public unsafe partial struct UnsafeDictionary
         if (set->collection.Entries.Dynamic == 1)
         {
             UnsafeHashCollection.Free(&set->collection);
+
+            *set = default;
+
+            NativeMemory.Free(set);
         }
+        else
+        {
+            *set = default;
 
-        *set = default;
-
-        NativeMemory.Free(set);
+            NativeMemory.AlignedFree(set);
+        }
     }
 
     public static V Get<K, V>(UnsafeDictionary* dictionary, K key)

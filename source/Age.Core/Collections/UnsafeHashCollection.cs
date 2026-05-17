@@ -79,7 +79,7 @@ internal unsafe partial struct UnsafeHashCollection
         Debug.Assert(collection->Entries.Dynamic == 1);
 
         NativeMemory.Free(collection->Buckets);
-        NativeMemory.Free(collection->Entries.Pointer);
+        UnsafeBuffer.Free(&collection->Entries);
 
         *collection = default;
     }

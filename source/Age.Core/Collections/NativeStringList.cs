@@ -52,6 +52,9 @@ public unsafe partial struct NativeStringList : IDisposable
 
     public int Count { get; private set; }
 
+    public readonly bool IsCreated  => this.Buffer != null;
+    public readonly bool IsDisposed => this.Buffer == null;
+
     public readonly bool IsEmpty
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -145,4 +148,7 @@ public unsafe partial struct NativeStringList : IDisposable
 
     public readonly string[] ToArray() =>
         Array.ToUTF8StringArray(this.Buffer, (uint)this.Count);
+
+    public override readonly string ToString() =>
+        this.IsCreated ? $"Count = {this.Count}" : "";
 }

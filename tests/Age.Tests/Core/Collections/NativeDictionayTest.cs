@@ -40,6 +40,19 @@ public class NativeDictionayTest
     }
 
     [Fact]
+    public void CreateFixed()
+    {
+        using NativeDictionary<int, long> dictionary = new(3, true)
+        {
+            [100] = 1,
+            [200] = 2,
+            [300] = 3,
+        };
+
+        AssertIt(dictionary, [new(100, 1), new(200, 2), new(300, 3)], 3);
+    }
+
+    [Fact]
     public void Add()
     {
         using var dictionary = new NativeDictionary<int, int>(0);

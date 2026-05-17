@@ -116,8 +116,7 @@ public unsafe partial struct NativeArray<T>(int size) : IDisposable where T : un
         this.AsSpan().ToArray();
 
     public override readonly string ToString() =>
-        $"Length = {this.Length}";
-
+        this.IsCreated ? $"Length = {this.Length}" : "";
 
     public static implicit operator Span<T>(NativeArray<T> value) => value.AsSpan();
     public static implicit operator T*(NativeArray<T> value) => value.Buffer;

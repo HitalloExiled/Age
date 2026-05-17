@@ -7,6 +7,6 @@ public partial struct NativeArray<T> where T : unmanaged
     internal struct DebugView(NativeArray<T> source)
     {
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public readonly T[] Elements => source.ToArray();
+        public readonly T[]? Elements => source.IsCreated ? source.ToArray() : null;
     }
 }

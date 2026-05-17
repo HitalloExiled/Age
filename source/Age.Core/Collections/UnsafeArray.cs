@@ -105,7 +105,7 @@ public unsafe partial struct UnsafeArray
 
         *array = default;
 
-        NativeMemory.Free(array);
+        NativeMemory.AlignedFree(array);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

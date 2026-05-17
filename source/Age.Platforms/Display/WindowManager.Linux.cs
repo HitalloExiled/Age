@@ -147,7 +147,7 @@ public unsafe sealed partial class WindowManager
 
     private bool stopped;
 
-    public nint Display => (nint)this.registryState->Display;
+    public nint                 Display => (nint)this.registryState->Display;
 
     public partial WindowManager(string id)
     {
@@ -932,10 +932,18 @@ public unsafe sealed partial class WindowManager
         NativeMemory.Free(this.registryState);
     }
 
-    internal WindowState* CreateState(Window window, Size<uint> size)
+    internal partial void CloseWindow(Window window)
     {
-        this.windows.Add(window);
+        wp_viewport_destroy(window.State->Viewport);
+        wl_surface_destroy(window.State->Surface);
 
+        window.State->Dispose();
+
+        NativeMemory.Free(window.State);
+    }
+
+    internal partial WindowState* CreateWindow(Window window, Size<uint> size, Window? parent)
+    {
         var state = NativeMemory.Alloc(
             new WindowState
             {
@@ -993,17 +1001,8 @@ public unsafe sealed partial class WindowManager
         return state;
     }
 
-    internal void ReleaseState(Window window)
-    {
-        this.windows.Remove(window);
-
-         wp_viewport_destroy(window.State->Viewport);
-        wl_surface_destroy(window.State->Surface);
-
-        window.State->Dispose();
-
-        NativeMemory.Free(window.State);
-    }
+    internal partial void FlushEvents(Window window)
+    { }
 
     internal static void UpdateSize(WindowState* state, Size<int> size)
     {

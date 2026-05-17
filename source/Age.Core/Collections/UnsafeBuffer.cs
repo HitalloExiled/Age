@@ -13,7 +13,8 @@ internal unsafe struct UnsafeBuffer
     public int Stride;
     public int Dynamic;
 
-    internal readonly ReadOnlySpan<byte> Bytes => new(this.Pointer, this.Length * this.Stride);
+    internal readonly ReadOnlySpan<byte> Bytes      => new(this.Pointer, this.Length * this.Stride);
+    internal readonly int                BytesCount => this.Length * this.Stride;
 
     public static void Copy(UnsafeBuffer source, int sourceIndex, UnsafeBuffer destination, int destinationIndex, int count)
     {
@@ -67,7 +68,7 @@ internal unsafe struct UnsafeBuffer
 
         Debug.Assert(buffer->Pointer != null);
 
-        NativeMemory.Free(buffer->Pointer);
+        NativeMemory.AlignedFree(buffer->Pointer);
 
         *buffer = default;
     }
@@ -143,24 +144,39 @@ internal unsafe struct UnsafeBuffer
 
         var size = count * buffer.Stride;
 
-        var source      = new Span<byte>((byte*)buffer.Pointer + (fromIndex * buffer.Stride), size);
-        var destination = new Span<byte>((byte*)buffer.Pointer + (toIndex * buffer.Stride), size);
+        var from = fromIndex * buffer.Stride;
+        var to   = toIndex   * buffer.Stride;
+
+        var source      = new Span<byte>((byte*)buffer.Pointer + from, size);
+        var destination = new Span<byte>((byte*)buffer.Pointer + to, size);
 
         source.CopyTo(destination);
     }
 
-    public static void ResizeDynamic(UnsafeBuffer* buffer, int length, bool clearNew)
+    public static void ResizeDynamic(UnsafeBuffer* buffer, int length, bool zeroed)
     {
         Debug.Assert(buffer != null);
         Debug.Assert(buffer->Dynamic == 1);
         Debug.Assert(buffer->Stride > 0);
 
-        buffer->Pointer = NativeMemory.Realloc(buffer->Pointer, (nuint)(length * buffer->Stride));
+        var alignment = Marshal.GetAlignment(buffer->Stride);
 
-        if (clearNew)
-        {
-            NativeMemory.Clear((byte*)buffer->Pointer + (buffer->Length * buffer->Stride), (nuint)((length - buffer->Length) * buffer->Stride));
-        }
+        var bytesCount = length * buffer->Stride;
+        var newBuffer  = zeroed
+            ? NativeMemory.AlignedAllocZeroed((nuint)bytesCount, (nuint)alignment)
+            : NativeMemory.AlignedAlloc((nuint)bytesCount, (nuint)alignment);
+
+        var source = buffer->BytesCount < bytesCount
+            ? buffer->Bytes
+            : buffer->Bytes[..bytesCount];
+
+        var destination = new Span<byte>(newBuffer, bytesCount);
+
+        source.CopyTo(destination);
+
+        NativeMemory.AlignedFree(buffer->Pointer);
+
+        buffer->Pointer = newBuffer;
 
         buffer->Length = length;
     }

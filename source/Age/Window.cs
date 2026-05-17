@@ -140,7 +140,7 @@ public sealed class Window : Viewport
         this.window = new DisplayWindow(title, size, parent?.window);
 
 #if WINDOWS
-        this.Surface = VulkanRenderer.Singleton.CreateSurface(this.window.Surface, this.window.ClientSize);
+        this.Surface = VulkanRenderer.Singleton.CreateSurface(this.window.Handle, this.window.Size);
 #else
         this.Surface = VulkanRenderer.Singleton.CreateSurface(WindowManager.Instance.Display, this.window.Surface, this.window.Size);
 #endif

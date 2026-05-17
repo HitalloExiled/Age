@@ -22,6 +22,22 @@ public class NativeListTest
     }
 
     [Fact]
+    public void Create()
+    {
+        using NativeList<int> list = [1, 2, 3];
+
+        AssertIt(list, [1, 2, 3], 3);
+    }
+
+    [Fact]
+    public void CreateFixed()
+    {
+        using NativeList<int> list = new([1, 2, 3], true);
+
+        AssertIt(list, [1, 2, 3], 3);
+    }
+
+    [Fact]
     public void Add()
     {
         using NativeList<int> list = [1, 2, 3];

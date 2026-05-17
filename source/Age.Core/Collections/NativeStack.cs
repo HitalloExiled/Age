@@ -124,7 +124,7 @@ public unsafe partial struct NativeStack<T>(int capacity, bool fixedSize = false
     }
 
     public override readonly string ToString() =>
-        $"Count = {this.Count}";
+        this.IsCreated ? $"Count = {this.Count}" : "";
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool TryPeek(out T item) =>
