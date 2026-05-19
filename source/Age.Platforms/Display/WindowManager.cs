@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Age.Core;
+using Age.Core.Collections;
 using Age.Numerics;
 
 namespace Age.Platforms.Display;
@@ -17,7 +18,7 @@ public unsafe sealed partial class WindowManager : Disposable
 
     internal partial void CloseWindow(Window window);
     internal partial WindowState* CreateWindow(string title, Size<int> size, Window? parent);
-    internal partial void FlushWindowEvents(Window window);
+    internal partial NativeArray<WindowMessage> FlushWindowEvents(Window window);
     internal partial string? GetClipboardData(Window window);
     internal partial void HideWindow(Window window);
     internal partial void MaximizeWindow(Window window);

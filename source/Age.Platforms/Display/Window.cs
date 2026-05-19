@@ -9,7 +9,7 @@ public delegate void WindowContextEventHandler(in WindowContextEvent mouseEvent)
 public delegate void WindowKeyEventHandler(Key key);
 public delegate void WindowInputEventHandler(char character);
 
-public partial class Window : Disposable
+public unsafe partial class Window : Disposable
 {
     #region events
     public event WindowMouseEventHandler?   Click;
@@ -33,22 +33,54 @@ public partial class Window : Disposable
 
     private string title;
 
-    internal unsafe WindowState* State { get; }
+    internal WindowState* State { get; }
+
+    public Cursor Cursor
+    {
+        get;
+        set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            WindowManager.Instance.UpdateCursor(field = value);
+        }
+    }
 
     public bool IsClosed    { get; private set; }
     public bool IsMaximized { get; private set; }
     public bool IsMinimized { get; private set; }
     public bool IsVisible   { get; private set; } = true;
 
-    public partial Cursor Cursor { get; set; }
-    public partial string Title  { get; set; }
+    public string Title
+    {
+        get => this.title;
+        set
+        {
+            if (this.title == value)
+            {
+                return;
+            }
+
+            WindowManager.Instance.SetWindowTitle(this, this.title = value);
+        }
+    }
 
     public ReadOnlySpan<Window> Children => this.children.AsSpan();
     public Window?              Parent   { get; }
+    public Size<uint>           Size     => this.State->Size.Cast<uint>();
 
-    public partial Size<uint> Size { get; }
+    public Window(string? title, Size<uint>? size, Window? parent)
+    {
+        this.title  = title ?? "Untitled";
+        this.Parent = parent;
 
-    public partial Window(string? title = default, Size<uint>? size = default, Window? parent = null);
+        parent?.children.Add(this);
+
+        this.State = WindowManager.Instance.CreateWindow(this.title, (size ?? defaultSize).Cast<int>(), parent);
+    }
 
     protected override void OnDisposed(bool disposing)
     {
@@ -80,18 +112,14 @@ public partial class Window : Disposable
     public string? GetClipboardData() =>
         WindowManager.Instance.GetClipboardData(this);
 
-    public unsafe void DoEvents()
+    public void DoEvents()
     {
-        WindowManager.Instance.FlushWindowEvents(this);
-
-        using var messages = this.State->GetMessages();
+        using var messages = WindowManager.Instance.FlushWindowEvents(this);;
 
         if (messages.IsEmpty)
         {
             return;
         }
-
-        WindowChanges windowChanges = default;
 
         foreach (var message in messages)
         {
@@ -163,25 +191,13 @@ public partial class Window : Disposable
                     break;
 
                 case MessageKind.Resized:
-                    windowChanges |= WindowChanges.Size;
+                    this.Resized?.Invoke();
 
                     break;
             }
         }
 
         this.State->ClearMessages();
-
-        if (windowChanges.HasFlags(WindowChanges.Close))
-        {
-            this.Close();
-
-            return;
-        }
-
-        if (windowChanges.HasFlags(WindowChanges.Size))
-        {
-            this.Resized?.Invoke();
-        }
     }
 
     public void Hide() =>

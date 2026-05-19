@@ -28,6 +28,7 @@ using static Age.Platforms.Linux.Wayland.XdgActivationV1ClientProtocol;
 using static Age.Platforms.Linux.Wayland.XdgDecorationUnstableV1ClientProtocol;
 using static Age.Platforms.Linux.Wayland.XdgShellClientProtocol;
 using static Age.Platforms.Linux.Wayland.XdgSystemBellV1ClientProtocol;
+using Age.Core.Collections;
 
 namespace Age.Platforms.Display;
 
@@ -783,11 +784,6 @@ public unsafe sealed partial class WindowManager
 
         this.eventLoopThread.Join();
 
-        foreach (var window in this.windows)
-        {
-            window.Close();
-        }
-
         using var seats = this.registryState->GetSeats();
 
         foreach (var seat in seats)
@@ -942,7 +938,7 @@ public unsafe sealed partial class WindowManager
         NativeMemory.Free(window.State);
     }
 
-    internal partial WindowState* CreateWindow(Window window, Size<uint> size, Window? parent)
+    internal partial WindowState* CreateWindow(string title, Size<int> size, Window? parent)
     {
         var state = NativeMemory.Alloc(
             new WindowState
@@ -1001,8 +997,35 @@ public unsafe sealed partial class WindowManager
         return state;
     }
 
-    internal partial void FlushEvents(Window window)
-    { }
+    internal partial NativeArray<WindowMessage> FlushWindowEvents(Window window) =>
+        window.State->GetMessages();
+
+    internal partial string? GetClipboardData(Window window) =>
+        throw new NotImplementedException();
+
+    internal partial void HideWindow(Window window) =>
+        throw new NotImplementedException();
+
+    internal partial void MaximizeWindow(Window window) =>
+        throw new NotImplementedException();
+
+    internal partial void MinimizeWindow(Window window) =>
+        throw new NotImplementedException();
+
+    internal partial void RestoreWindow(Window window) =>
+        throw new NotImplementedException();
+
+    internal partial void SetWindowClipboardData(Window window, string value) =>
+        throw new NotImplementedException();
+
+    internal partial void SetWindowTitle(Window window, string value) =>
+        throw new NotImplementedException();
+
+    internal partial void ShowWindow(Window window) =>
+        throw new NotImplementedException();
+
+    internal void UpdateCursor(Cursor cursor) =>
+        throw new NotImplementedException();
 
     internal static void UpdateSize(WindowState* state, Size<int> size)
     {

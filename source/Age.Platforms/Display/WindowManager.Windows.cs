@@ -290,13 +290,15 @@ public unsafe sealed partial class WindowManager
         return state;
     }
 
-    internal partial void FlushWindowEvents(Window window)
+    internal partial NativeArray<WindowMessage> FlushWindowEvents(Window window)
     {
         while (User32.PeekMessageW(out var msg, window.Handle, 0, 0, User32.PEEK_MESSAGE.PM_REMOVE))
         {
             User32.TranslateMessage(msg);
             User32.DispatchMessageW(msg);
         }
+
+        return window.State->GetMessages();
     }
 
     internal partial string? GetClipboardData(Window window)
