@@ -1,14 +1,14 @@
+using Age.Core.Extensions;
+using Age.Core;
+using Age.Graphs;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.Scenes;
 
-using DisplayWindow = Age.Platforms.Display.Window;
+using DisplayWindow           = Age.Platforms.Display.Window;
 using WindowMouseEventHandler = Age.Platforms.Display.WindowMouseEventHandler;
-using Age.Core;
-using Age.Graphs;
-using Age.Core.Extensions;
 
 namespace Age;
 
@@ -172,7 +172,7 @@ public sealed class Window : Viewport
     {
         var createInfo = new RenderTarget.MultiPassCreateInfo
         {
-            Size        = this.window.Size,
+            Size = new(image.Extent.Width, image.Extent.Height),
             Attachments =
             [
                 RenderTarget.CreateInfo.ColorAttachmentInfo.From(image, ImageLayout.PresentSrcKHR),

@@ -541,6 +541,11 @@ internal sealed unsafe partial class VulkanContext : Disposable
         {
             if (surface.Visible)
             {
+                if (surface.IsDirty)
+                {
+                    this.RecreateSwapchain(surface);
+                }
+
                 uint imageIndex = 0;
                 try
                 {
@@ -577,12 +582,13 @@ internal sealed unsafe partial class VulkanContext : Disposable
 
         var visibleSurfaces = Surface.Visibles;
 
-        var fence          = this.fences[this.currentFrame];
-        var imageIndices   = new uint[visibleSurfaces.Length];
-        var swapchains     = new VkHandle<VkSwapchainKHR>[visibleSurfaces.Length];
-        var waitSemaphores = new VkHandle<VkSemaphore>[visibleSurfaces.Length];
-        var waitStages     = new VkPipelineStageFlags[visibleSurfaces.Length];
-        var results        = new VkResult[visibleSurfaces.Length];
+        var fence =  this.fences[this.currentFrame];
+
+        Span<uint>                     imageIndices   = stackalloc uint[visibleSurfaces.Length];
+        Span<VkHandle<VkSwapchainKHR>> swapchains     = stackalloc VkHandle<VkSwapchainKHR>[visibleSurfaces.Length];
+        Span<VkHandle<VkSemaphore>>    waitSemaphores = stackalloc VkHandle<VkSemaphore>[visibleSurfaces.Length];
+        Span<VkPipelineStageFlags>     waitStages     = stackalloc VkPipelineStageFlags[visibleSurfaces.Length];
+        Span<VkResult>                 results        = stackalloc VkResult[visibleSurfaces.Length];
 
         for (var i = 0; i < visibleSurfaces.Length; i++)
         {
