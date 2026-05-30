@@ -1,7 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
-using Age.Core;
 using Age.Core.Collections;
+using Age.Core;
 using Age.Numerics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Age.Platforms.Display;
 

@@ -248,8 +248,7 @@ internal static unsafe class TabletUnstableV2ClientProtocol
             wl_proxy_get_version((wl_proxy*)
             zwp_tablet_manager_v2),
             0,
-            default,
-            seat
+            [default, seat]
         );
 
     public static int zwp_tablet_seat_v2_add_listener(zwp_tablet_seat_v2* zwp_tablet_seat_v2, zwp_tablet_seat_v2_listener* listener, void* data) =>

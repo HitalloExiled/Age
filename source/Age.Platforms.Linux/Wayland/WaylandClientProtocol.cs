@@ -9,8 +9,10 @@ internal struct wl_data_device;
 internal struct wl_data_device_manager;
 internal struct wl_data_offer;
 internal struct wl_display;
+internal struct wl_keyboard;
 internal struct wl_object;
 internal struct wl_output;
+internal struct wl_pointer;
 internal struct wl_proxy;
 internal struct wl_registry;
 internal struct wl_seat;
@@ -29,6 +31,11 @@ internal unsafe static partial class WaylandClientProtocol
     public const int WL_MARSHAL_FLAG_DESTROY                = 1 << 0;
     public const int WL_REGISTRY_BIND                       = 0;
     public const int WL_SHM_CREATE_POOL                     = 0;
+
+    public const int WL_SEAT_GET_POINTER  = 0;
+    public const int WL_SEAT_GET_KEYBOARD = 1;
+    public const int WL_SEAT_GET_TOUCH    = 2;
+    public const int WL_SEAT_RELEASE      = 3;
 
     public const uint WL_SURFACE_DESTROY              = 0;
     public const uint WL_SURFACE_ATTACH               = 1;
@@ -53,6 +60,7 @@ internal unsafe static partial class WaylandClientProtocol
     public static wl_interface* wl_compositor_interface          = GetInterface<wl_interface>(nameof(wl_compositor_interface));
     public static wl_interface* wl_data_device_interface         = GetInterface<wl_interface>(nameof(wl_data_device_interface));
     public static wl_interface* wl_data_device_manager_interface = GetInterface<wl_interface>(nameof(wl_data_device_manager_interface));
+    public static wl_interface* wl_keyboard_interface            = GetInterface<wl_interface>(nameof(wl_keyboard_interface));
     public static wl_interface* wl_output_interface              = GetInterface<wl_interface>(nameof(wl_output_interface));
     public static wl_interface* wl_pointer_interface             = GetInterface<wl_interface>(nameof(wl_pointer_interface));
     public static wl_interface* wl_region_interface              = GetInterface<wl_interface>(nameof(wl_region_interface));
@@ -70,6 +78,14 @@ internal unsafe static partial class WaylandClientProtocol
 
     [LibraryImport(LIBRARY)]
     public static partial wl_display* wl_display_connect(byte* name);
+
+    #region wl_callback
+    public static void wl_callback_destroy(wl_callback* wl_callback) =>
+        wl_proxy_destroy((wl_proxy*)wl_callback);
+
+    public static void wl_callback_set_user_data(wl_callback* wl_callback, void* user_data) =>
+	    wl_proxy_set_user_data((wl_proxy*) wl_callback, user_data);
+    #endregion
 
     #region wl_display
     [LibraryImport(LIBRARY)]
@@ -115,27 +131,27 @@ internal unsafe static partial class WaylandClientProtocol
 
     #region wl_proxy
     [LibraryImport(LIBRARY)]
-    public static partial void wl_proxy_destroy(wl_proxy* proxy);
+    public static partial int wl_proxy_add_listener(wl_proxy* proxy, void** implementation, void* data);
 
     [LibraryImport(LIBRARY)]
-    public static partial void* wl_proxy_get_user_data(wl_proxy* proxy);
+    public static partial void wl_proxy_destroy(wl_proxy* proxy);
 
     [LibraryImport(LIBRARY)]
     public static partial byte** wl_proxy_get_tag(wl_proxy* proxy);
 
     [LibraryImport(LIBRARY)]
+    public static partial void* wl_proxy_get_user_data(wl_proxy* proxy);
+
+    [LibraryImport(LIBRARY)]
     public static partial uint32_t wl_proxy_get_version(wl_proxy* proxy);
-
-    [LibraryImport(LIBRARY)]
-    public static partial int wl_proxy_add_listener(wl_proxy* proxy, void** implementation, void* data);
-
-    [LibraryImport(LIBRARY)]
-    public static partial wl_proxy* wl_proxy_marshal_flags(wl_proxy* proxy, uint32_t opcode, wl_interface* @interface, uint32_t version, uint32_t flags);
 
     [LibraryImport(LIBRARY)]
     public static partial wl_proxy* wl_proxy_marshal_array_flags(wl_proxy* proxy, uint32_t opcode, wl_interface* @interface, uint32_t version, uint32_t flags, wl_argument* args);
 
-    public static wl_proxy* wl_proxy_marshal_flags(wl_proxy* proxy, uint32_t opcode, wl_interface* @interface, uint32_t version, uint32_t flags, params ReadOnlySpan<wl_argument> args)
+    [LibraryImport(LIBRARY)]
+    public static partial wl_proxy* wl_proxy_marshal_flags(wl_proxy* proxy, uint32_t opcode, wl_interface* @interface, uint32_t version, uint32_t flags);
+
+    public static wl_proxy* wl_proxy_marshal_flags(wl_proxy* proxy, uint32_t opcode, wl_interface* @interface, uint32_t version, uint32_t flags, ReadOnlySpan<wl_argument> args)
     {
         fixed (wl_argument* pArgs = args)
         {
@@ -145,6 +161,9 @@ internal unsafe static partial class WaylandClientProtocol
 
     [LibraryImport(LIBRARY)]
     public static partial void wl_proxy_set_tag(wl_proxy* proxy, byte** tag);
+
+    [LibraryImport(LIBRARY)]
+    public static partial void wl_proxy_set_user_data(wl_proxy *proxy, void *user_data);
     #endregion
 
     #region wl_proxy - wl_buffer
@@ -174,7 +193,7 @@ internal unsafe static partial class WaylandClientProtocol
             wl_surface_interface,
             wl_proxy_get_version((wl_proxy*)wl_compositor),
             0,
-            (wl_argument*)null
+            [default]
         );
 
     public static void wl_compositor_destroy(wl_compositor* wl_compositor) =>
@@ -194,9 +213,16 @@ internal unsafe static partial class WaylandClientProtocol
             wl_data_device_interface,
             wl_proxy_get_version((wl_proxy*)wl_data_device_manager),
             0,
-            default,
-            seat
+            [default, seat]
         );
+    #endregion
+
+    #region wl_proxy - wl_keyboard
+    public static int wl_keyboard_add_listener(wl_keyboard* wl_keyboard, wl_keyboard_listener* listener, void* data) =>
+        wl_proxy_add_listener((wl_proxy*)wl_keyboard, (void**)listener, data);
+
+    public static void wl_keyboard_destroy(wl_keyboard* wl_keyboard) =>
+        wl_proxy_destroy((wl_proxy*)wl_keyboard);
     #endregion
 
     #region wl_proxy - wl_output
@@ -205,6 +231,14 @@ internal unsafe static partial class WaylandClientProtocol
 
     public static void wl_output_destroy(wl_output* wl_output) =>
         wl_proxy_destroy((wl_proxy*)wl_output);
+    #endregion
+
+    #region wl_proxy - wl_pointer
+    public static int wl_pointer_add_listener(wl_pointer* wl_pointer, wl_pointer_listener* listener, void* data) =>
+        wl_proxy_add_listener((wl_proxy*)wl_pointer, (void**)listener, data);
+
+    public static void wl_pointer_destroy(wl_pointer* wl_pointer) =>
+        wl_proxy_destroy((wl_proxy*)wl_pointer);
     #endregion
 
     #region wl_proxy - wl_registry
@@ -218,10 +252,7 @@ internal unsafe static partial class WaylandClientProtocol
             @interface,
             version,
             0,
-            name,
-            @interface->name,
-            version,
-            default
+            [name, @interface->name, version, default]
         );
 
     public static void wl_registry_destroy(wl_registry* wl_registry) =>
@@ -236,9 +267,7 @@ internal unsafe static partial class WaylandClientProtocol
             wl_shm_pool_interface,
             wl_proxy_get_version((wl_proxy*)wl_shm),
             0,
-            default,
-            fd,
-            size
+            [default, fd, size]
         );
 
     public static void wl_shm_destroy(wl_shm* wl_shm) =>
@@ -261,12 +290,7 @@ internal unsafe static partial class WaylandClientProtocol
             wl_buffer_interface,
             wl_proxy_get_version((wl_proxy*)wl_shm_pool),
             0,
-            default,
-            offset,
-            width,
-            height,
-            stride,
-            format
+            [default, offset, width, height, stride, format]
         );
 
     #region wl_proxy - wl_surface
@@ -280,9 +304,7 @@ internal unsafe static partial class WaylandClientProtocol
             null,
             wl_proxy_get_version((wl_proxy*)wl_surface),
             0,
-            buffer,
-            x,
-            y
+            [buffer, x, y]
         );
 
     public static void wl_surface_commit(wl_surface* wl_surface) =>
@@ -301,10 +323,7 @@ internal unsafe static partial class WaylandClientProtocol
             null,
             wl_proxy_get_version((wl_proxy*)wl_surface),
             0,
-            x,
-            y,
-            width,
-            height
+            [x, y, width, height]
         );
 
     public static void wl_surface_destroy(wl_surface* wl_surface) =>
@@ -323,18 +342,38 @@ internal unsafe static partial class WaylandClientProtocol
             wl_callback_interface,
             wl_proxy_get_version((wl_proxy*)wl_surface),
             0,
-            (wl_argument*)null
+            [default]
         );
     #endregion
 
     #region wl_proxy - wl_seat
-    public static void* wl_seat_get_user_data(wl_seat* wl_seat) =>
-        wl_proxy_get_user_data((wl_proxy*)wl_seat);
-
     public static int wl_seat_add_listener(wl_seat* wl_seat, wl_seat_listener* listener, void* data) =>
         wl_proxy_add_listener((wl_proxy*)wl_seat, (void**)listener, data);
 
     public static void wl_seat_destroy(wl_seat* wl_seat) =>
         wl_proxy_destroy((wl_proxy*)wl_seat);
+
+    public static wl_pointer* wl_seat_get_pointer(wl_seat* wl_seat) =>
+        (wl_pointer*)wl_proxy_marshal_flags(
+            (wl_proxy*)wl_seat,
+            WL_SEAT_GET_POINTER,
+            wl_pointer_interface,
+            wl_proxy_get_version((wl_proxy*)wl_seat),
+            0,
+            [default]
+        );
+
+    public static wl_keyboard* wl_seat_get_keyboard(wl_seat* wl_seat) =>
+        (wl_keyboard*)wl_proxy_marshal_flags(
+            (wl_proxy*)wl_seat,
+            WL_SEAT_GET_KEYBOARD,
+            wl_keyboard_interface,
+            wl_proxy_get_version((wl_proxy*)wl_seat),
+            0,
+            [default]
+        );
+
+    public static void* wl_seat_get_user_data(wl_seat* wl_seat) =>
+        wl_proxy_get_user_data((wl_proxy*)wl_seat);
     #endregion
 }

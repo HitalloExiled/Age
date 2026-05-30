@@ -82,7 +82,6 @@ internal static unsafe class FractionalScaleV1ClientProtocol
             wp_fractional_scale_v1_interface,
             wl_proxy_get_version((wl_proxy*)wp_fractional_scale_manager_v1),
             0,
-            default,
-            surface
+            [default, surface]
         );
 }

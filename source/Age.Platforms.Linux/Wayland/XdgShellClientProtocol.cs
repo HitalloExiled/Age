@@ -189,8 +189,7 @@ internal static unsafe class XdgShellClientProtocol
             xdg_surface_interface,
             wl_proxy_get_version((wl_proxy*)xdg_wm_base),
             0,
-            default,
-            surface
+            [default, surface]
         );
 
     public static void xdg_surface_set_window_geometry(xdg_surface* xdg_surface, int32_t x, int32_t y, int32_t width, int32_t height) =>
@@ -200,10 +199,7 @@ internal static unsafe class XdgShellClientProtocol
             null,
             wl_proxy_get_version((wl_proxy*)xdg_surface),
             0,
-            x,
-            y,
-            width,
-            height
+            [x, y, width, height]
         );
 
     #endregion

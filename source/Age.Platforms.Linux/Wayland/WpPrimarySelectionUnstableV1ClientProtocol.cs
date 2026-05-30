@@ -127,7 +127,6 @@ internal unsafe static class WpPrimarySelectionUnstableV1ClientProtocol
             zwp_primary_selection_device_v1_interface,
             wl_proxy_get_version((wl_proxy*)zwp_primary_selection_device_manager_v1),
             0,
-            default,
-            seat
+            [default, seat]
         );
 }

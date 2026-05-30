@@ -15,6 +15,8 @@ internal unsafe static partial class Libc
     public const int   PROT_READ         = 0x1;
     public const int   PROT_WRITE        = 0x2;
 
+    public const int MAP_PRIVATE = 0x02;
+
     [LibraryImport(LIBRARY)]
     public static partial int close(int __fd);
 

@@ -45,15 +45,14 @@ public sealed class Engine : Disposable
     {
         if (disposing)
         {
+            GC.Collect();
+
             this.textureStorage.Dispose();
             this.textStorage.Dispose();
             this.shaderStorage.Dispose();
             this.renderingService.Dispose();
-            this.windowManager.Dispose();
-
-            GC.Collect();
-
             this.renderer.Dispose();
+            this.windowManager.Dispose();
         }
     }
 

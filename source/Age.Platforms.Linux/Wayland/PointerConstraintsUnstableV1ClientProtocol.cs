@@ -6,12 +6,21 @@ using static Age.Platforms.Linux.Wayland.WaylandClientProtocol;
 
 namespace Age.Platforms.Linux.Wayland;
 
+internal struct zwp_confined_pointer_v1;
+internal struct zwp_locked_pointer_v1;
 internal struct zwp_pointer_constraints_v1;
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline")]
 internal static unsafe class PointerConstraintsUnstableV1ClientProtocol
 {
+    private const uint ZWP_CONFINED_POINTER_V1_DESTROY    = 0;
+    private const uint ZWP_CONFINED_POINTER_V1_SET_REGION = 1;
+
     private const uint ZWP_POINTER_CONSTRAINTS_V1_DESTROY = 0;
+
+    private const uint  ZWP_LOCKED_POINTER_V1_DESTROY                  = 0;
+    private const uint  ZWP_LOCKED_POINTER_V1_SET_CURSOR_POSITION_HINT = 1;
+    private const uint  ZWP_LOCKED_POINTER_V1_SET_REGION               = 2;
 
     private static readonly wl_interface** pointer_constraints_unstable_v1_types;
 
@@ -104,4 +113,22 @@ internal static unsafe class PointerConstraintsUnstableV1ClientProtocol
             wl_proxy_get_version((wl_proxy*)zwp_pointer_constraints_v1),
             WL_MARSHAL_FLAG_DESTROY
         );
+
+    public static void zwp_confined_pointer_v1_destroy(zwp_confined_pointer_v1* zwp_confined_pointer_v1) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)zwp_confined_pointer_v1,
+            ZWP_CONFINED_POINTER_V1_DESTROY,
+            default,
+            wl_proxy_get_version((wl_proxy*)zwp_confined_pointer_v1),
+            WL_MARSHAL_FLAG_DESTROY
+        );
+
+    public static void zwp_locked_pointer_v1_destroy(zwp_locked_pointer_v1* zwp_locked_pointer_v1) =>
+    wl_proxy_marshal_flags(
+        (wl_proxy*)zwp_locked_pointer_v1,
+        ZWP_LOCKED_POINTER_V1_DESTROY,
+        default,
+        wl_proxy_get_version((wl_proxy*)zwp_locked_pointer_v1),
+        WL_MARSHAL_FLAG_DESTROY
+    );
 }

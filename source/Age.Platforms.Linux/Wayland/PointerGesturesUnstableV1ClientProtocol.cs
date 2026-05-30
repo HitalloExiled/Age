@@ -6,11 +6,17 @@ using static Age.Platforms.Linux.Wayland.WaylandClientProtocol;
 
 namespace Age.Platforms.Linux.Wayland;
 
+internal struct zwp_pointer_gesture_pinch_v1;
 internal struct zwp_pointer_gestures_v1;
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline")]
 internal static unsafe class PointerGesturesUnstableV1ClientProtocol
 {
+    private const uint ZWP_POINTER_GESTURES_V1_GET_SWIPE_GESTURE = 0;
+    private const uint ZWP_POINTER_GESTURES_V1_GET_PINCH_GESTURE = 1;
+    private const uint ZWP_POINTER_GESTURES_V1_RELEASE           = 2;
+    private const uint ZWP_POINTER_GESTURES_V1_GET_HOLD_GESTURE  = 3;
+
     private static readonly wl_interface** pointer_gestures_unstable_v1_types;
 
     private readonly static wl_message* zwp_pointer_gestures_v1_requests;
@@ -116,4 +122,17 @@ internal static unsafe class PointerGesturesUnstableV1ClientProtocol
 
     public static void zwp_pointer_gestures_v1_destroy(zwp_pointer_gestures_v1* zwp_pointer_gestures_v1) =>
         wl_proxy_destroy((wl_proxy*)zwp_pointer_gestures_v1);
+
+    public static int zwp_pointer_gesture_pinch_v1_add_listener(zwp_pointer_gesture_pinch_v1* zwp_pointer_gesture_pinch_v1, zwp_pointer_gesture_pinch_v1_listener* listener, void* data) =>
+        wl_proxy_add_listener((wl_proxy*)zwp_pointer_gesture_pinch_v1, (void**)listener, data);
+
+    public static zwp_pointer_gesture_pinch_v1* zwp_pointer_gestures_v1_get_pinch_gesture(zwp_pointer_gestures_v1* zwp_pointer_gestures_v1, wl_pointer* pointer) =>
+        (zwp_pointer_gesture_pinch_v1*)wl_proxy_marshal_flags(
+            (wl_proxy*)zwp_pointer_gestures_v1,
+            ZWP_POINTER_GESTURES_V1_GET_PINCH_GESTURE,
+            zwp_pointer_gesture_pinch_v1_interface,
+            wl_proxy_get_version((wl_proxy*)zwp_pointer_gestures_v1),
+            0,
+            [default, pointer]
+        );
 }

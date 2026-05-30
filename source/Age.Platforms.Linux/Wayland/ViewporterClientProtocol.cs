@@ -79,8 +79,7 @@ internal static unsafe class ViewporterProtocol
             null,
             wl_proxy_get_version((wl_proxy*)wp_viewport),
             0,
-            width,
-            height
+            [width, height]
         );
 
     public static wp_viewport* wp_viewporter_get_viewport(wp_viewporter* wp_viewporter, wl_surface* surface) =>
@@ -90,8 +89,7 @@ internal static unsafe class ViewporterProtocol
             wp_viewport_interface,
             wl_proxy_get_version((wl_proxy*)wp_viewporter),
             0,
-            default,
-            surface
+            [default, surface]
         );
 
     public static void wp_viewporter_destroy(wp_viewporter* wp_viewporter) =>
