@@ -200,7 +200,7 @@ public sealed partial class RenderTree
 
     private void OnKeyDown(Key key)
     {
-        if (key == Key.C && Input.IsKeyPressed(Key.Control) && this.focusedText?.CopySelected() is string selectedText)
+        if (key == Key.C && Input.IsKeyPressed(Key.Ctrl) && this.focusedText?.CopySelected() is string selectedText)
         {
             this.Window.SetClipboardData(selectedText);
         }

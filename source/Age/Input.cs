@@ -80,7 +80,7 @@ public static class Input
             modifiers |= KeyStates.Shift;
         }
 
-        if (keys.ContainsKey(Key.Control))
+        if (keys.ContainsKey(Key.Ctrl))
         {
             modifiers |= KeyStates.Control;
         }

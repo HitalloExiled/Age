@@ -1,4 +1,5 @@
 #if LINUX
+using Age.Core.Collections;
 using Age.Core.Exceptions;
 using Age.Core.Extensions;
 using Age.Core;
@@ -6,6 +7,8 @@ using Age.Numerics;
 using Age.Platforms.Linux.Libc;
 using Age.Platforms.Linux.LibDecor;
 using Age.Platforms.Linux.LibWaylandClient;
+using Age.Platforms.Linux.LibXKBCommon;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -29,10 +32,6 @@ using static Age.Platforms.Linux.LibWaylandClient.xdg_decoration;
 using static Age.Platforms.Linux.LibWaylandClient.xdg_shell;
 using static Age.Platforms.Linux.LibWaylandClient.xdg_system_bell;
 using static Age.Platforms.Linux.LibXKBCommon.lib_xkbommon;
-using Age.Core.Collections;
-using System.Diagnostics;
-using Age.Platforms.Linux.LibXKBCommon;
-using System.IO.MemoryMappedFiles;
 
 namespace Age.Platforms.Display;
 

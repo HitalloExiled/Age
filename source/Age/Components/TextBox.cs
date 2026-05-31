@@ -156,7 +156,7 @@ public partial class TextBox : Element
 
         switch (keyEvent.Key)
         {
-            case Key.Delete:
+            case Key.KeyDelete:
                 if (!this.Text.Buffer.IsEmpty)
                 {
                     this.SaveHistory();

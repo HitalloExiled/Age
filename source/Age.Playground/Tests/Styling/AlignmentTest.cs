@@ -112,11 +112,11 @@ public static class AlignmentTest
             {
                 switch (keyEvent.Key)
                 {
-                    case Key.Add:
+                    case Key.NumPadAdd:
                         borderSize++;
                         break;
 
-                    case Key.Subtract:
+                    case Key.NumPadSubtract:
                         borderSize = borderSize.ClampSubtract(1);
                         break;
                 }
