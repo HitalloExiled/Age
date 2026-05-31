@@ -1,5 +1,5 @@
 #if LINUX
-using Age.Platforms.Linux.Wayland;
+using Age.Platforms.Linux.LibWaylandClient;
 
 namespace Age.Platforms.Display;
 

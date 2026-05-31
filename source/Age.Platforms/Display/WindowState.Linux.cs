@@ -1,5 +1,5 @@
 #if LINUX
-using Age.Platforms.Linux.Wayland;
+using Age.Platforms.Linux.LibWaylandClient;
 using Age.Platforms.Linux.LibDecor;
 using Age.Core;
 using Age.Core.Collections;

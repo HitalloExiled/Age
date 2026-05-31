@@ -1,7 +1,7 @@
 #if LINUX
 using Age.Core;
-using Age.Platforms.Linux.Wayland;
-using Age.Platforms.Linux.XKBCommon;
+using Age.Platforms.Linux.LibWaylandClient;
+using Age.Platforms.Linux.LibXKBCommon;
 
 namespace Age.Platforms.Display;
 

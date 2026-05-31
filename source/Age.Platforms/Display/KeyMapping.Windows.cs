@@ -1,4 +1,4 @@
-#if LINUX
+#if WINDOWS
 namespace Age.Platforms.Display;
 
 public enum KeyLocation
@@ -8,19 +8,19 @@ public enum KeyLocation
 	Right
 };
 
-public static partial class KeyMapping
+public static class KeyMapping
 {
     private static readonly Dictionary<uint, Key> keys = [];
     private static readonly Dictionary<uint, Key> scancodes = [];
     private static readonly Dictionary<uint, KeyLocation> locations = [];
 
-    public static partial Key GetKeycode(uint code) =>
+    public static Key GetKeycode(uint code) =>
         keys.TryGetValue(code, out var value) ? value : default;
 
-    public static partial Key GetScancode(uint code) =>
+    public static Key GetScancode(uint code) =>
         scancodes.TryGetValue(code, out var value) ? value : default;
 
-    public static partial KeyLocation GetLocation(uint code) =>
+    public static KeyLocation GetLocation(uint code) =>
         locations.TryGetValue(code, out var value) ? value : default;
 }
 #endif

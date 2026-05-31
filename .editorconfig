@@ -365,6 +365,10 @@ dotnet_diagnostic.RCS1036.severity = suggestion # Remove unnecessary blank line 
 [**/obj/**.cs]
 dotnet_diagnostic.CS8019.severity = none # Unnecessary using directive
 
+[*.{g,designer,generated}.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none
+
 [**/Native/**.cs]
 dotnet_diagnostic.IDE1006.severity = none # Naming rule violation
 dotnet_diagnostic.RCS1135.severity = none # Declare enum member with zero value (when enum has FlagsAttribute)
