@@ -2,8 +2,14 @@ namespace Age.Platforms.Display;
 
 public record struct WindowKeyEvent
 {
-    public Key      Key;
-    public Modifier Modifiers;
+    public required Key Key;
+    public required Key PhysicalKey;
 
-    public char Char;
+    public required char Char;
+
+    public required bool        IsPressed;
+    public required KeyLocation Location;
+    public required Modifier    Modifiers;
+
+    public bool Echo;
 }

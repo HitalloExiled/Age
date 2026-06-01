@@ -9,6 +9,8 @@ internal enum MessageKind : byte
     Context,
     CursorChanged,
     DoubleClick,
+    FocusIn,
+    FocusOut,
     Input,
     Key,
     KeyDown,
@@ -35,7 +37,10 @@ internal struct MessageUnion
     public WindowMouseEvent MouseEvent;
 
     [FieldOffset(0)]
-    public WindowContextEvent WindowContextEvent;
+    public WindowContextEvent ContextEvent;
+
+    [FieldOffset(0)]
+    public WindowKeyEvent KeyEvent;
 }
 
 internal readonly struct WindowMessage
@@ -56,7 +61,10 @@ internal readonly struct WindowMessage
         this.Value = new() { MouseEvent = mouseEvent };
 
     private WindowMessage(MessageKind kind, in WindowContextEvent windowContextEvent) : this(kind) =>
-        this.Value = new() { WindowContextEvent = windowContextEvent };
+        this.Value = new() { ContextEvent = windowContextEvent };
+
+    private WindowMessage(MessageKind kind, in WindowKeyEvent windowKeyEvent) : this(kind) =>
+        this.Value = new() { KeyEvent = windowKeyEvent };
 
     public static WindowMessage Click(WindowMouseEvent mouseEvent) =>
         new(MessageKind.Click, mouseEvent);
@@ -73,8 +81,14 @@ internal readonly struct WindowMessage
     public static WindowMessage DoubleClick(WindowMouseEvent mouseEvent) =>
         new(MessageKind.DoubleClick, mouseEvent);
 
+    public static WindowMessage FocusIn() =>
+        new(MessageKind.Resized);
+
     public static WindowMessage Input(char input) =>
         new(MessageKind.Input, input);
+
+    public static WindowMessage Key(WindowKeyEvent keyEvent) =>
+        new(MessageKind.Key, keyEvent);
 
     public static WindowMessage KeyDown(Key key) =>
         new(MessageKind.KeyDown, key);
@@ -102,4 +116,6 @@ internal readonly struct WindowMessage
 
     public override string ToString() =>
         this.Kind.ToString();
+
+
 }

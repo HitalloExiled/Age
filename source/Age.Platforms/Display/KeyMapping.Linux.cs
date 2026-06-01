@@ -3,7 +3,7 @@ using Age.Platforms.Linux.LibXKBCommon;
 
 namespace Age.Platforms.Display;
 
-public enum KeyLocation
+public enum KeyLocation : byte
 {
 	Unspecified,
 	Left,
@@ -360,7 +360,9 @@ public static partial class KeyMapping
     }
 
     public static partial Key GetKeycode(uint code) =>
-        keys.TryGetValue((xkbcommon_keysyms)code, out var value) ? value : default;
+        code >= 32 && code < 0x7E
+            ? (Key)code
+            : keys.TryGetValue((xkbcommon_keysyms)code, out var value) ? value : default;
 
     public static partial KeyLocation GetLocation(uint code) =>
         locations.TryGetValue(code, out var value) ? value : default;

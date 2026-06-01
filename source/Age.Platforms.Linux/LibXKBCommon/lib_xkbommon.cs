@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Age.Platforms.Linux.LibXKBCommon;
 
+internal struct xkb_compose_state;
 internal struct xkb_context;
 internal struct xkb_keymap;
 internal struct xkb_state;
@@ -34,6 +35,15 @@ internal unsafe static partial class lib_xkbommon
 
     [LibraryImport(LIBRARY)]
     public static partial void xkb_context_unref(xkb_context* context);
+
+    [LibraryImport(LIBRARY)]
+    public static partial xkb_compose_feed_result xkb_compose_state_feed(xkb_compose_state *state, xkb_keysym_t keysym);
+
+    [LibraryImport(LIBRARY)]
+    public static partial xkb_compose_status xkb_compose_state_get_status(xkb_compose_state *state);
+
+    [LibraryImport(LIBRARY)]
+    public static partial int xkb_compose_state_get_utf8(xkb_compose_state *state, byte *buffer, size_t size);
 
     [LibraryImport(LIBRARY)]
     public static partial int xkb_keymap_key_get_syms_by_level(

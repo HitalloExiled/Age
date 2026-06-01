@@ -1,5 +1,6 @@
 #if LINUX
 using Age.Core;
+using Age.Core.Collections;
 using Age.Platforms.Linux.LibWaylandClient;
 using Age.Platforms.Linux.LibXKBCommon;
 
@@ -12,6 +13,7 @@ public unsafe partial class WindowManager
         public required RegistryState* Registry;
         public required Named<wl_seat> Seat;
 
+        public WindowState*                     ActiveWindow;
         public zwp_confined_pointer_v1*         ConfinedPointer;
         public wl_callback*                     CursorFrameCallback;
         public wp_cursor_shape_device_v1*       CursorShapeDevice;
@@ -27,9 +29,12 @@ public unsafe partial class WindowManager
         public zwp_relative_pointer_v1*         RelativePointer;
         public zwp_tablet_seat_v2*              TabletSeat;
         public zwp_text_input_v3*               TextInput;
+        public xkb_compose_state*               XkbComposeState;
         public xkb_context*                     XkbContext;
         public xkb_keymap*                      XkbKeymap;
         public xkb_state*                       XkbState;
+
+        public NativeDictionary<uint, Key> PressedKeycodes;
 
         public uint CurrentLayoutIndex;
         public uint LastKeyPressedSerial;
@@ -41,6 +46,12 @@ public unsafe partial class WindowManager
         public bool CtrlPressed;
         public bool MetaPressed;
         public bool ShiftPressed;
+
+        public SeatState() =>
+            this.PressedKeycodes = [];
+
+        public void Dispose() =>
+            this.PressedKeycodes.Dispose();
     }
 }
 #endif

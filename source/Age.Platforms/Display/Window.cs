@@ -136,7 +136,7 @@ public unsafe partial class Window : Disposable
                     return;
 
                 case MessageKind.Context:
-                    this.Context?.Invoke(message.Value.WindowContextEvent);
+                    this.Context?.Invoke(message.Value.ContextEvent);
 
                     break;
 
@@ -196,8 +196,6 @@ public unsafe partial class Window : Disposable
                     break;
             }
         }
-
-        this.State->ClearMessages();
     }
 
     public void Hide() =>

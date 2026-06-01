@@ -235,89 +235,190 @@ public unsafe sealed partial class WindowManager
     private static SeatState* GetSeatState(wl_seat* seat) =>
         seat != null && ProxyIsAge((wl_proxy*)seat) ? (SeatState*)wl_seat_get_user_data(seat) : default;
 
-    private static WindowKeyEvent GetKeyEvent(SeatState *p_ss, uint p_keycode, bool p_pressed)
+    private static WindowState* GetWindowState(wl_surface* surface) =>
+        surface != null && ProxyIsAge((wl_proxy*)surface) ? (WindowState*)wl_surface_get_user_data(surface) : default;
+
+    private static WindowKeyEvent GetKeyEvent(SeatState *seatState, uint keycode, bool pressed)
     {
-        var keyEvent = new WindowKeyEvent();
+        Debug.Assert(seatState != null);
 
-        // ERR_FAIL_NULL_V(p_ss, event);
+        var shiftedKey = KeyMapping.GetKeycode(xkb_state_key_get_one_sym(seatState->XkbState, keycode));
 
-        var shifted_key = KeyMapping.GetKeycode(xkb_state_key_get_one_sym(p_ss->XkbState, p_keycode));
-
-        var plain_key = Key.None;
+        var plainKey = Key.None;
 
         uint* syms = null;
 
-        var num_sys = xkb_keymap_key_get_syms_by_level(p_ss->XkbKeymap, p_keycode, p_ss->CurrentLayoutIndex, 0, &syms);
+        var numSys = xkb_keymap_key_get_syms_by_level(seatState->XkbKeymap, keycode, seatState->CurrentLayoutIndex, 0, &syms);
 
-        if (num_sys > 0 && syms != null)
+        if (numSys > 0 && syms != null)
         {
-            plain_key = KeyMapping.GetKeycode(syms[0]);
+            plainKey = KeyMapping.GetKeycode(syms[0]);
         }
 
-        var physical_keycode = KeyMapping.GetScancode(p_keycode);
-        var key_location     = KeyMapping.GetLocation(p_keycode);
-        var unicode          = xkb_state_key_get_utf32(p_ss->XkbState, p_keycode);
+        var physicalKey = KeyMapping.GetScancode(keycode);
+        var keyLocation = KeyMapping.GetLocation(keycode);
+        var unicode     = xkb_state_key_get_utf32(seatState->XkbState, keycode);
 
-        var keycode = Key.None;
+        var key = Key.None;
 
-        // if ((shifted_key & Key::SPECIAL) != Key::NONE || (plain_key & Key::SPECIAL) != Key::NONE) {
-        //     keycode = shifted_key;
-        // }
-
-        if (keycode == default)
+        if ((shiftedKey & Key.Special) != Key.None || (plainKey & Key.Special) != Key.None)
         {
-            keycode = plain_key;
+            key = shiftedKey;
         }
 
-        if (keycode == default)
+        if (key == default)
         {
-            keycode = physical_keycode;
+            key = plainKey;
         }
 
-        if (keycode >= Key.A + 32 && keycode <= Key.Z + 32)
+        if (key == default)
         {
-            keycode -= 'a' - 'A';
+            key = physicalKey;
         }
 
-        if (physical_keycode == default && keycode == default && unicode == 0)
+        if (key >= Key.A + 32 && key <= Key.Z + 32)
         {
-            return keyEvent;
+            key -= 'a' - 'A';
         }
 
-        // event.instantiate();
+        if (physicalKey == default && key == default && unicode == 0)
+        {
+            return default;
+        }
 
-        // event->set_window_id(p_ss->focused_id);
+        Modifier modifiers = default;
 
-        // // Set all pressed modifiers.
-        // event->set_shift_pressed(p_ss->shift_pressed);
-        // event->set_ctrl_pressed(p_ss->ctrl_pressed);
-        // event->set_alt_pressed(p_ss->alt_pressed);
-        // event->set_meta_pressed(p_ss->meta_pressed);
+        if (seatState->ShiftPressed)
+        {
+            modifiers |= Modifier.Shift;
+        }
 
-        // event->set_pressed(p_pressed);
-        // event->set_keycode(keycode);
-        // event->set_physical_keycode(physical_keycode);
-        // event->set_location(key_location);
+        if (seatState->CtrlPressed)
+        {
+            modifiers |= Modifier.Ctrl;
+        }
 
-        // if (unicode != 0) {
-        //     event->set_key_label(fix_key_label(unicode, keycode));
-        // } else {
-        //     event->set_key_label(keycode);
-        // }
+        if (seatState->AltPressed)
+        {
+            modifiers |= Modifier.Alt;
+        }
 
-        // if (p_pressed) {
-        //     event->set_unicode(fix_unicode(unicode));
-        // }
+        if (seatState->MetaPressed)
+        {
+            modifiers |= Modifier.Meta;
+        }
 
-        // // Taken from DisplayServerX11.
-        // if (event->get_keycode() == Key::BACKTAB) {
-        //     // Make it consistent across platforms.
-        //     event->set_keycode(Key::TAB);
-        //     event->set_physical_keycode(Key::TAB);
-        //     event->set_shift_pressed(true);
-        // }
+        var @char = (char)unicode;
 
-        return keyEvent;
+        return new WindowKeyEvent
+        {
+            Char        = char.IsAscii(@char) ? (char)unicode : default,
+            IsPressed   = pressed,
+            Key         = key,
+            Location    = keyLocation,
+            Modifiers   = modifiers,
+            PhysicalKey = physicalKey,
+        };
+    }
+
+    private static WindowKeyEvent GetUnstuckKeyEvent(SeatState *seatState, uint keycode, bool pressed, Key key)
+    {
+        WindowKeyEvent windowKeyEvent = default;
+
+        if (pressed)
+        {
+            if (seatState->PressedKeycodes.TryGetValue(keycode, out var oldKey) && oldKey != key)
+            {
+                Logger.Warn($"{oldKey} and {key} have same keycode. Generating release event for {oldKey}");
+
+                windowKeyEvent = GetKeyEvent(seatState, keycode, false);
+
+                if (windowKeyEvent != default)
+                {
+                    windowKeyEvent = windowKeyEvent with { Key = oldKey };
+                }
+            }
+
+            seatState->PressedKeycodes[keycode] = key;
+        }
+        else
+        {
+            seatState->PressedKeycodes.Remove(keycode);
+        }
+
+        return windowKeyEvent;
+    }
+
+    private static void HandleKeyEvent(SeatState *seatState, uint keycode, bool pressed, bool echo)
+    {
+        Debug.Assert(seatState != null);
+
+        var lastKey = Key.None;
+
+        var composeStatus = xkb_compose_state_get_status(seatState->XkbComposeState);
+
+        if (pressed)
+        {
+            var keysym        = xkb_state_key_get_one_sym(seatState->XkbState, keycode);
+            var composeResult = xkb_compose_state_feed(seatState->XkbComposeState, keysym);
+
+            composeStatus = xkb_compose_state_get_status(seatState->XkbComposeState);
+
+            if (composeResult == xkb_compose_feed_result.XKB_COMPOSE_FEED_ACCEPTED && composeStatus == xkb_compose_status.XKB_COMPOSE_COMPOSED)
+            {
+                var buffer     = stackalloc byte[256];
+                var bufferSize = xkb_compose_state_get_utf8(seatState->XkbComposeState, buffer, 255);
+
+                var decoded = Encoding.UTF8.GetString(buffer, bufferSize);
+
+                var windowKeyEvent = GetKeyEvent(seatState, keycode, pressed);
+
+                if (windowKeyEvent != default)
+                {
+                    for (var i = 0; i < decoded.Length; ++i)
+                    {
+                        if (windowKeyEvent == default)
+                        {
+                            continue;
+                        }
+
+                        var composedWindowKeyEvent = windowKeyEvent with
+                        {
+                            Char = decoded[i],
+                            Echo = echo,
+                        };
+
+                        seatState->ActiveWindow->AddMessage(WindowMessage.Key(composedWindowKeyEvent));
+                    }
+                }
+            }
+        }
+
+        if (lastKey == Key.None && composeStatus == xkb_compose_status.XKB_COMPOSE_NOTHING)
+        {
+            // If we continued with other compose status (e.g. XKB_COMPOSE_COMPOSING) we
+            // would get the composing keys _and_ the result.
+            var windowKeyEvent = GetKeyEvent(seatState, keycode, pressed);
+
+            if (windowKeyEvent != default)
+            {
+                windowKeyEvent = windowKeyEvent with { Echo = echo };
+
+                seatState->ActiveWindow->AddMessage(WindowMessage.Key(windowKeyEvent));
+
+                lastKey = windowKeyEvent.Key;
+            }
+        }
+
+        if (lastKey != Key.None)
+        {
+            var unstuckKeyEvent = GetUnstuckKeyEvent(seatState, keycode, pressed, lastKey);
+
+            if (unstuckKeyEvent != default)
+            {
+                seatState->ActiveWindow->AddMessage(WindowMessage.Key(unstuckKeyEvent));
+            }
+        }
     }
 
     #region Unmanaged Callers
@@ -366,8 +467,18 @@ public unsafe sealed partial class WindowManager
         Console.WriteLine(nameof(OnFrameCallbackListenerDone));
 
     [UnmanagedCallersOnly]
-    private static void OnKeyboardEnter(void* data, wl_keyboard* pointer, uint serial, wl_surface* surface, wl_array* keys) =>
-        Console.WriteLine(nameof(OnKeyboardEnter));
+    private static void OnKeyboardEnter(void* data, wl_keyboard* pointer, uint serial, wl_surface* surface, wl_array* keys)
+    {
+        var seatState  = (SeatState*)data;
+        var windowState = GetWindowState(surface);
+
+        Debug.Assert(seatState != null);
+        Debug.Assert(windowState != null);
+
+        seatState->ActiveWindow = windowState;
+
+        windowState->AddMessage(WindowMessage.FocusIn());
+    }
 
     [UnmanagedCallersOnly]
     private static void OnKeyboardKey(void* data, wl_keyboard* pointer, uint serial, uint time, uint key, uint state)
@@ -376,52 +487,27 @@ public unsafe sealed partial class WindowManager
 
         Debug.Assert(ss != null);
 
-        // if (seatState->focused_id == DisplayServer::INVALID_WINDOW_ID) {
-        //     return;
-        // }
-
-        // WaylandThread *wayland_thread = ss->wayland_thread;
-        // ERR_FAIL_NULL(wayland_thread);
-
         // We have to add 8 to the scancode to get an XKB-compatible keycode.
-        var xkb_keycode = key + 8;
+        var xkbKeycode = key + 8;
 
         var pressed = ((wl_keyboard_key_state)state).HasFlags(wl_keyboard_key_state.WL_KEYBOARD_KEY_STATE_PRESSED);
 
         if (pressed)
         {
-            if (xkb_keymap_key_repeats(ss->XkbKeymap, xkb_keycode) == 1)
+            if (xkb_keymap_key_repeats(ss->XkbKeymap, xkbKeycode) == 1)
             {
                 ss->LastRepeatStartMsec = DateTime.Now.Ticks;
-                ss->RepeatingKeycode = xkb_keycode;
+                ss->RepeatingKeycode = xkbKeycode;
             }
 
             ss->LastKeyPressedSerial = serial;
         }
-        else if (ss->RepeatingKeycode == xkb_keycode)
+        else if (ss->RepeatingKeycode == xkbKeycode)
         {
             ss->RepeatingKeycode = XKB_KEYCODE_INVALID;
         }
 
-        var keyEvent = GetKeyEvent(ss, xkb_keycode, pressed);
-
-        if (keyEvent == default)
-        {
-            return;
-        }
-
-        // Ref<InputEventKey> uk = _seat_state_get_unstuck_key_event(ss, xkb_keycode, pressed, k->get_keycode());
-        // if (uk.is_valid()) {
-        //     Ref<InputEventMessage> u_msg;
-        //     u_msg.instantiate();
-        //     u_msg->event = uk;
-        //     wayland_thread->push_message(u_msg);
-        // }
-
-        // Ref<InputEventMessage> msg;
-        // msg.instantiate();
-        // msg->event = k;
-        // wayland_thread->push_message(msg);
+        HandleKeyEvent(ss, xkbKeycode, pressed, false);
     }
 
     [UnmanagedCallersOnly]

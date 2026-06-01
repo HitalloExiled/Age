@@ -344,6 +344,9 @@ internal unsafe static partial class lib_wayland_client
             0,
             [default]
         );
+
+    public static void* wl_surface_get_user_data(wl_surface* wl_surface) =>
+        wl_proxy_get_user_data((wl_proxy*)wl_surface);
     #endregion
 
     #region wl_proxy - wl_seat
