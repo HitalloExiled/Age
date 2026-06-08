@@ -20,11 +20,11 @@ public static class Input
     private static Point<ushort> previousMousePosition;
     public static MouseButton PrimaryButton { get; private set; }
 
-    private static void OnKeyDown(Key key) =>
-        keys.TryAdd(key, currentIteration);
+    private static void OnKeyDown(in WindowKeyEvent windowKeyEvent) =>
+        keys.TryAdd(windowKeyEvent.Key, currentIteration);
 
-    private static void OnKeyUp(Key key) =>
-        keys.Remove(key);
+    private static void OnKeyUp(in WindowKeyEvent windowKeyEvent) =>
+        keys.Remove(windowKeyEvent.Key);
 
     private static void OnMouseDown(in WindowMouseEvent mouseEvent)
     {
@@ -36,7 +36,7 @@ public static class Input
     private static void OnMouseMove(in WindowMouseEvent mouseEvent)
     {
         previousMousePosition = mousePosition;
-        mousePosition = new(mouseEvent.X, mouseEvent.Y);
+        mousePosition         = new(mouseEvent.X, mouseEvent.Y);
     }
 
     private static void OnMouseUp(in WindowMouseEvent mouseEvent) =>
@@ -71,24 +71,29 @@ public static class Input
         mouseWheel = 0;
     }
 
-    public static KeyStates GetModifiers()
+    public static Modifier GetModifiers()
     {
-        KeyStates modifiers = default;
+        Modifier modifiers = default;
 
         if (keys.ContainsKey(Key.Shift))
         {
-            modifiers |= KeyStates.Shift;
+            modifiers |= Modifier.Shift;
         }
 
         if (keys.ContainsKey(Key.Ctrl))
         {
-            modifiers |= KeyStates.Control;
+            modifiers |= Modifier.Ctrl;
         }
 
-        // if (keys.ContainsKey(Key.Alt))
-        // {
-        //     modifiers |= KeyStates.Alt;
-        // }
+        if (keys.ContainsKey(Key.Alt))
+        {
+            modifiers |= Modifier.Alt;
+        }
+
+        if (keys.ContainsKey(Key.Meta))
+        {
+            modifiers |= Modifier.Meta;
+        }
 
         return modifiers;
     }

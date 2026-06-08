@@ -15,6 +15,12 @@ public static partial class Extension
         }
     }
 
+    extension(string value)
+    {
+        public UnmanagedString ToUnmanaged() =>
+            new(value);
+    }
+
     extension(ReadOnlySpan<char> value)
     {
         public int CountNonWhitespaceCharacters()
@@ -50,6 +56,4 @@ public static partial class Extension
             }
         }
     }
-
-
 }

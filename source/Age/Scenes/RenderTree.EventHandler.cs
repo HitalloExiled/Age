@@ -128,14 +128,14 @@ public sealed partial class RenderTree
             keyStates |= MouseKeyStates.RightButton;
         }
 
-        if (modifiers.HasFlags(KeyStates.Shift))
+        if (modifiers.HasFlags(Modifier.Shift))
         {
             keyStates |= MouseKeyStates.Shift;
         }
 
-        if (modifiers.HasFlags(KeyStates.Control))
+        if (modifiers.HasFlags(Modifier.Ctrl))
         {
-            keyStates |= MouseKeyStates.Control;
+            keyStates |= MouseKeyStates.Ctrl;
         }
 
         var windowMouseEvent = new WindowMouseEvent
@@ -198,9 +198,9 @@ public sealed partial class RenderTree
         element?.InvokeDoubleClick(mouseEvent, element != node);
     }
 
-    private void OnKeyDown(Key key)
+    private void OnKeyDown(in WindowKeyEvent windowKeyEvent)
     {
-        if (key == Key.C && Input.IsKeyPressed(Key.Ctrl) && this.focusedText?.CopySelected() is string selectedText)
+        if (windowKeyEvent.Key == Key.C && Input.IsKeyPressed(Key.Ctrl) && this.focusedText?.CopySelected() is string selectedText)
         {
             this.Window.SetClipboardData(selectedText);
         }

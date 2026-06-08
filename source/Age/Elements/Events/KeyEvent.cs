@@ -5,7 +5,7 @@ namespace Age.Elements.Events;
 
 public struct KeyEvent
 {
-    public Key       Key;
-    public KeyStates Modifiers;
-    public bool      Holding;
+    public Key      Key;
+    public Modifier Modifiers;
+    public bool     Holding;
 }

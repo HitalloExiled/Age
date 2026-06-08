@@ -19,24 +19,67 @@ using static Age.Platforms.Linux.LibDecor.lib_decor;
 using static Age.Platforms.Linux.LibWaylandClient.cursor_shape;
 using static Age.Platforms.Linux.LibWaylandClient.fractional_scale;
 using static Age.Platforms.Linux.LibWaylandClient.idle_inhibit;
+using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 using static Age.Platforms.Linux.LibWaylandClient.pointer_constraints;
 using static Age.Platforms.Linux.LibWaylandClient.pointer_gestures;
+using static Age.Platforms.Linux.LibWaylandClient.primary_selection;
 using static Age.Platforms.Linux.LibWaylandClient.relative_pointer;
 using static Age.Platforms.Linux.LibWaylandClient.tablet;
 using static Age.Platforms.Linux.LibWaylandClient.text_input;
 using static Age.Platforms.Linux.LibWaylandClient.viewporter;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
-using static Age.Platforms.Linux.LibWaylandClient.primary_selection;
 using static Age.Platforms.Linux.LibWaylandClient.xdg_activation;
 using static Age.Platforms.Linux.LibWaylandClient.xdg_decoration;
 using static Age.Platforms.Linux.LibWaylandClient.xdg_shell;
 using static Age.Platforms.Linux.LibWaylandClient.xdg_system_bell;
+using static Age.Platforms.Linux.LibWaylandCursor.lib_wayland_cursor;
 using static Age.Platforms.Linux.LibXKBCommon.lib_xkbommon;
 
 namespace Age.Platforms.Display;
 
 public unsafe sealed partial class WindowManager
 {
+    private static string[] cursorNames =
+    [
+        "left_ptr",       /// <see cref="Cursor.Arrow"/>
+        "left_ptr_watch", /// <see cref="Cursor.Busy"/>
+        "cross",          /// <see cref="Cursor.Cross"/>
+        "fleur",          /// <see cref="Cursor.Drag"/>
+        "dnd-move",       /// <see cref="Cursor.Drop"/>
+        "crossed_circle", /// <see cref="Cursor.Forbidden"/>
+        "hand2",          /// <see cref="Cursor.Hand"/>
+        "question_arrow", /// <see cref="Cursor.Help"/>
+        "h_double_arrow", /// <see cref="Cursor.HorizontalResize"/>
+        "col_resize",     /// <see cref="Cursor.HorizontalSplit"/>
+        "move",           /// <see cref="Cursor.Move"/>
+        "size_bdiag",     /// <see cref="Cursor.ResizeNESW"/>
+        "size_fdiag",     /// <see cref="Cursor.ResizeNWSE"/>
+        "xterm",          /// <see cref="Cursor.Text"/>
+        "v_double_arrow", /// <see cref="Cursor.VerticalResize"/>
+        "row_resize",     /// <see cref="Cursor.VerticalSplit"/>
+        "watch",          /// <see cref="Cursor.Wait"/>
+    ];
+
+    private static string?[] cursorNamesFallback =
+    [
+        null,                /// <see cref="Cursor.Arrow"/>
+        "progress",          /// <see cref="Cursor.Busy"/>
+        "cross",             /// <see cref="Cursor.Cross"/>
+        "grabbing",          /// <see cref="Cursor.Drag"/>
+        "hand1",             /// <see cref="Cursor.Drop"/>
+        "forbidden",         /// <see cref="Cursor.Forbidden"/>
+        "pointer",           /// <see cref="Cursor.Hand"/>
+        "help",              /// <see cref="Cursor.Help"/>
+        "ew-resize",         /// <see cref="Cursor.HorizontalResize"/>
+        "sb_h_double_arrow", /// <see cref="Cursor.HorizontalSplit"/>
+        "fleur",             /// <see cref="Cursor.Move"/>
+        "fd_double_arrow",   /// <see cref="Cursor.ResizeNESW"/>
+        "bd_double_arrow",   /// <see cref="Cursor.ResizeNWSE"/>
+        null,                /// <see cref="Cursor.Text"/>
+        "ns-resize",         /// <see cref="Cursor.VerticalResize"/>
+        "sb_v_double_arrow", /// <see cref="Cursor.VerticalSplit"/>
+        "wait",              /// <see cref="Cursor.Wait"/>
+    ];
+
     #region Unmanaged Listeners
     [FixedAddressValueType]
     private static readonly wl_data_device_listener dataDeviceListener = new()
@@ -229,6 +272,27 @@ public unsafe sealed partial class WindowManager
         NullReferenceException.ThrowIfNull(this.registryState->Compositor, "Can't obtain the Wayland compositor global.");
         NullReferenceException.ThrowIfNull(this.registryState->WmBase, "Can't obtain the Wayland XDG shell global.");
 
+        if (Environment.GetEnvironmentVariable("XCURSOR_THEME") is string cursorTheme)
+        {
+            this.registryState->CursorThemeName = MemoryMarshal.CreateUTF8StringBuffer(cursorTheme);
+        }
+
+        if (Environment.GetEnvironmentVariable("XCURSOR_SIZE") is string cursorSize)
+        {
+            var unscaledCursorSize = int.Parse(cursorSize);
+
+            if (unscaledCursorSize > 0)
+            {
+                this.registryState->UnscaledCursorSize = unscaledCursorSize;
+            }
+            else
+            {
+                Logger.Warn("Detected invalid cursor size preference, defaulting to 24.");
+            }
+        }
+
+        this.LoadCursorTheme();
+
         this.eventLoopThread.Start();
     }
 
@@ -369,7 +433,11 @@ public unsafe sealed partial class WindowManager
                 var buffer     = stackalloc byte[256];
                 var bufferSize = xkb_compose_state_get_utf8(seatState->XkbComposeState, buffer, 255);
 
-                var decoded = Encoding.UTF8.GetString(buffer, bufferSize);
+                var chatCount = Encoding.UTF8.GetCharCount(buffer, bufferSize);
+
+                Span<char> decoded = stackalloc char[chatCount];
+
+                Encoding.UTF8.GetChars(new Span<byte>(buffer, bufferSize), decoded);
 
                 var windowKeyEvent = GetKeyEvent(seatState, keycode, pressed);
 
@@ -388,7 +456,7 @@ public unsafe sealed partial class WindowManager
                             Echo = echo,
                         };
 
-                        seatState->ActiveWindow->AddMessage(WindowMessage.Key(composedWindowKeyEvent));
+                        seatState->ActiveWindow->AddMessage(WindowMessage.KeyPress(composedWindowKeyEvent));
                     }
                 }
             }
@@ -404,7 +472,7 @@ public unsafe sealed partial class WindowManager
             {
                 windowKeyEvent = windowKeyEvent with { Echo = echo };
 
-                seatState->ActiveWindow->AddMessage(WindowMessage.Key(windowKeyEvent));
+                seatState->ActiveWindow->AddMessage(WindowMessage.KeyPress(windowKeyEvent));
 
                 lastKey = windowKeyEvent.Key;
             }
@@ -416,7 +484,7 @@ public unsafe sealed partial class WindowManager
 
             if (unstuckKeyEvent != default)
             {
-                seatState->ActiveWindow->AddMessage(WindowMessage.Key(unstuckKeyEvent));
+                seatState->ActiveWindow->AddMessage(WindowMessage.KeyPress(unstuckKeyEvent));
             }
         }
     }
@@ -483,9 +551,9 @@ public unsafe sealed partial class WindowManager
     [UnmanagedCallersOnly]
     private static void OnKeyboardKey(void* data, wl_keyboard* pointer, uint serial, uint time, uint key, uint state)
     {
-        var ss = (SeatState*)data;
+        var seatState = (SeatState*)data;
 
-        Debug.Assert(ss != null);
+        Debug.Assert(seatState != null);
 
         // We have to add 8 to the scancode to get an XKB-compatible keycode.
         var xkbKeycode = key + 8;
@@ -494,20 +562,20 @@ public unsafe sealed partial class WindowManager
 
         if (pressed)
         {
-            if (xkb_keymap_key_repeats(ss->XkbKeymap, xkbKeycode) == 1)
+            if (xkb_keymap_key_repeats(seatState->XkbKeymap, xkbKeycode) == 1)
             {
-                ss->LastRepeatStartMsec = DateTime.Now.Ticks;
-                ss->RepeatingKeycode = xkbKeycode;
+                seatState->LastRepeatStartMsec = DateTime.Now.Ticks;
+                seatState->RepeatingKeycode    = xkbKeycode;
             }
 
-            ss->LastKeyPressedSerial = serial;
+            seatState->LastKeyPressedSerial = serial;
         }
-        else if (ss->RepeatingKeycode == xkbKeycode)
+        else if (seatState->RepeatingKeycode == xkbKeycode)
         {
-            ss->RepeatingKeycode = XKB_KEYCODE_INVALID;
+            seatState->RepeatingKeycode = XKB_KEYCODE_INVALID;
         }
 
-        HandleKeyEvent(ss, xkbKeycode, pressed, false);
+        HandleKeyEvent(seatState, xkbKeycode, pressed, false);
     }
 
     [UnmanagedCallersOnly]
@@ -542,11 +610,77 @@ public unsafe sealed partial class WindowManager
         xkb_state_unref(seatState->XkbState);
 
         seatState->XkbState = xkb_state_new(seatState->XkbKeymap);
+
+        xkb_compose_table_unref(seatState->XkbComposeTable);
+
+        var locale = Environment.GetEnvironmentVariable("LC_ALL")
+            ?? Environment.GetEnvironmentVariable("LC_CTYPE")
+            ?? Environment.GetEnvironmentVariable("LANG")
+            ?? "C";
+
+        using var uLocale = locale.ToUnmanaged();
+
+        seatState->XkbComposeTable = xkb_compose_table_new_from_locale(
+            seatState->XkbContext,
+            uLocale,
+            xkb_compose_compile_flags.XKB_COMPOSE_COMPILE_NO_FLAGS
+        );
+
+        xkb_compose_state_unref(seatState->XkbComposeState);
+
+        seatState->XkbComposeState = xkb_compose_state_new(seatState->XkbComposeTable, xkb_compose_state_flags.XKB_COMPOSE_STATE_NO_FLAGS);
+
+        xkb_state_update_mask(
+            seatState->XkbState,
+            seatState->ModsDepressed,
+            seatState->ModsLatched,
+            seatState->ModsLocked,
+            0,
+            0,
+            seatState->CurrentLayoutIndex
+        );
     }
 
     [UnmanagedCallersOnly]
-    private static void OnKeyboardLeave(void* data, wl_keyboard* pointer, uint serial, wl_surface* surface) =>
-        Console.WriteLine(nameof(OnKeyboardLeave));
+    private static void OnKeyboardLeave(void* data, wl_keyboard* pointer, uint serial, wl_surface* surface)
+    {
+        if (surface == null || !ProxyIsAge((wl_proxy*)surface))
+        {
+            return;
+        }
+
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+
+        seatState->RepeatingKeycode = XKB_KEYCODE_INVALID;
+
+        if (seatState->ActiveWindow == null)
+        {
+            // We're probably on a decoration or some other third-party thing.
+            return;
+        }
+
+        var windowState = seatState->ActiveWindow;
+
+        Debug.Assert(windowState != null);
+
+        windowState->AddMessage(WindowMessage.FocusOut());
+
+        windowState = null;
+
+        seatState->ShiftPressed = false;
+        seatState->CtrlPressed  = false;
+        seatState->AltPressed   = false;
+        seatState->MetaPressed  = false;
+
+        if (seatState->XkbState != null)
+        {
+            xkb_state_update_mask(seatState->XkbState, 0, 0, 0, 0, 0, 0);
+        }
+
+        Logger.Warn($"Keyboard unfocused window {(nint)windowState}");
+    }
 
     [UnmanagedCallersOnly]
     private static void OnKeyboardModifiers(void* data, wl_keyboard* pointer, uint serial, uint modsDepressed, uint modsLatched, uint modsLocked, uint group)
@@ -555,7 +689,15 @@ public unsafe sealed partial class WindowManager
 
         Debug.Assert(seatState != null);
 
-        xkb_state_update_mask(seatState->XkbState, modsDepressed, modsLatched, modsLocked, seatState->CurrentLayoutIndex, seatState->CurrentLayoutIndex, group);
+        xkb_state_update_mask(
+            seatState->XkbState,
+            modsDepressed,
+            modsLatched,
+            modsLocked,
+            seatState->CurrentLayoutIndex,
+            seatState->CurrentLayoutIndex,
+            group
+        );
 
         using var shift = new UnmanagedString(XKB_MOD_NAME_SHIFT);
         using var ctrl  = new UnmanagedString(XKB_MOD_NAME_CTRL);
@@ -578,7 +720,7 @@ public unsafe sealed partial class WindowManager
         Debug.Assert(seatState != null);
 
         seatState->RepeatKeyDelayMsec   = 1000 / rate;
-	    seatState->RepeatStartDelayMsec = delay;
+        seatState->RepeatStartDelayMsec = delay;
     }
 
     [UnmanagedCallersOnly]
@@ -803,7 +945,7 @@ public unsafe sealed partial class WindowManager
                 new SeatState
                 {
                     Registry = registryState,
-                    Seat          = new(name, seat),
+                    Seat     = new(name, seat),
                 }
             );
 
@@ -829,7 +971,8 @@ public unsafe sealed partial class WindowManager
                 }
             }
 
-            if (seatState->TextInput == default && registryState->TextInputManager != default) {
+            if (seatState->TextInput == default && registryState->TextInputManager != default)
+            {
                 // IME.
                 seatState->TextInput = zwp_text_input_manager_v3_get_text_input(registryState->TextInputManager, seat);
 
@@ -1309,6 +1452,52 @@ public unsafe sealed partial class WindowManager
         }
     }
 
+    private void LoadCursorTheme()
+    {
+        if (this.registryState->CursorTheme != null)
+        {
+            wl_cursor_theme_destroy(this.registryState->CursorTheme);
+
+            this.registryState->CursorTheme = null;
+        }
+
+        if (this.registryState->CursorThemeName == null)
+        {
+            this.registryState->CursorThemeName = MemoryMarshal.CreateUTF8StringBuffer("default");
+        }
+
+        var cursorSize = this.registryState->UnscaledCursorSize * 1;
+
+        this.registryState->CursorTheme = wl_cursor_theme_load(this.registryState->CursorThemeName, cursorSize, this.registryState->Shm);
+
+        Debug.Assert(this.registryState->CursorTheme != null);
+
+        for (var i = 0; i < Cursor.Length; i++)
+        {
+            using var cursorName = cursorNames[i].ToUnmanaged();
+
+            var cursor = wl_cursor_theme_get_cursor(this.registryState->CursorTheme, cursorName);
+
+            if (cursor == null && cursorNamesFallback[i] != null)
+            {
+                using var cursorNameFallback = cursorNamesFallback[i]!.ToUnmanaged();
+
+                cursor = wl_cursor_theme_get_cursor(this.registryState->CursorTheme, cursorNameFallback);
+            }
+
+            if (cursor != null && cursor->image_count > 0)
+            {
+                this.registryState->Cursors[i] = cursor;
+            }
+            else
+            {
+                this.registryState->Cursors[i] = null;
+
+                Logger.Warn($"Failed loading cursor: {cursorNames[i]}");
+            }
+        }
+    }
+
     protected override partial void OnDisposed(bool disposing)
     {
         this.stopped = true;
@@ -1380,7 +1569,10 @@ public unsafe sealed partial class WindowManager
             wl_output_destroy(output);
         }
 
-        // wl_cursor_theme_destroy(cursorTheme);
+        NativeMemory.Free(this.registryState->CursorThemeName);
+
+        wl_cursor_theme_destroy(this.registryState->CursorTheme);
+
         if (this.registryState->IdleInhibitManager != default)
         {
             zwp_idle_inhibit_manager_v1_destroy(this.registryState->IdleInhibitManager);
@@ -1473,7 +1665,7 @@ public unsafe sealed partial class WindowManager
 
     internal partial WindowState* CreateWindow(string title, Size<int> size, Window? parent)
     {
-        var state = NativeMemory.Alloc(
+        var windowState = NativeMemory.Alloc(
             new WindowState
             {
                 Surface = wl_compositor_create_surface(this.registryState->Compositor),
@@ -1481,57 +1673,63 @@ public unsafe sealed partial class WindowManager
             }
         );
 
-        SetProxyTag((wl_proxy*)state->Surface);
+        SetProxyTag((wl_proxy*)windowState->Surface);
 
         fixed (wl_surface_listener* pSurfaceListener = &surfaceListener)
         {
-            wl_surface_add_listener(state->Surface, pSurfaceListener, null);
+            wl_surface_add_listener(windowState->Surface, pSurfaceListener, windowState);
         }
 
         if (this.registryState->Viewporter != default)
         {
-            state->Viewport = wp_viewporter_get_viewport(this.registryState->Viewporter, state->Surface);
+            windowState->Viewport = wp_viewporter_get_viewport(this.registryState->Viewporter, windowState->Surface);
 
             if (this.registryState->FractionalScaleManager != default)
             {
-                state->FractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale(this.registryState->FractionalScaleManager, state->Surface);
+                windowState->FractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale(this.registryState->FractionalScaleManager, windowState->Surface);
 
                 fixed (wp_fractional_scale_v1_listener* pFractionalScaleListener = &fractionalScaleListener)
                 {
-                    wp_fractional_scale_v1_add_listener(state->FractionalScale, pFractionalScaleListener, state);
+                    wp_fractional_scale_v1_add_listener(windowState->FractionalScale, pFractionalScaleListener, windowState);
                 }
             }
         }
 
         fixed (libdecor_frame_interface* pFrameInterface = &frameInterface)
         {
-            state->Frame = libdecor_decorate(this.registryState->LibdecorContext, state->Surface, pFrameInterface, state);
+            windowState->Frame = libdecor_decorate(this.registryState->LibdecorContext, windowState->Surface, pFrameInterface, windowState);
         }
 
-        libdecor_frame_map(state->Frame);
+        libdecor_frame_map(windowState->Frame);
 
-        state->FrameCallBack = wl_surface_frame(state->Surface);
+        windowState->FrameCallBack = wl_surface_frame(windowState->Surface);
 
         fixed (wl_callback_listener* pFrameCallbackListener = &frameCallbackListener)
         {
-            wl_callback_add_listener(state->FrameCallBack, pFrameCallbackListener, state);
+            wl_callback_add_listener(windowState->FrameCallBack, pFrameCallbackListener, windowState);
         }
 
-        wl_surface_commit(state->Surface);
+        wl_surface_commit(windowState->Surface);
 
         _ = wl_display_roundtrip(this.registryState->Display);
 
-        UpdateSize(state, state->Size);
+        UpdateSize(windowState, windowState->Size);
 
         using var uId = new UnmanagedString(this.Id);
 
-        libdecor_frame_set_app_id(state->Frame, uId);
+        libdecor_frame_set_app_id(windowState->Frame, uId);
 
-        return state;
+        return windowState;
     }
 
-    internal partial NativeArray<WindowMessage> FlushWindowEvents(Window window) =>
-        window.State->GetMessages();
+    internal partial NativeArray<WindowMessage> FlushWindowEvents(Window window)
+    {
+        var messages = window.State->GetMessages();
+
+        window.State->ClearMessages();
+
+        return messages;
+    }
 
     internal partial string? GetClipboardData(Window window) =>
         throw new NotImplementedException();
@@ -1551,8 +1749,12 @@ public unsafe sealed partial class WindowManager
     internal partial void SetWindowClipboardData(Window window, string value) =>
         throw new NotImplementedException();
 
-    internal partial void SetWindowTitle(Window window, string value) =>
-        throw new NotImplementedException();
+    internal partial void SetWindowTitle(Window window, string value)
+    {
+        using var title = value.ToUnmanaged();
+
+        libdecor_frame_set_title(window.State->Frame, title);
+}
 
     internal partial void ShowWindow(Window window) =>
         throw new NotImplementedException();

@@ -33,7 +33,13 @@ internal unsafe static partial class lib_decor
     public static partial void libdecor_frame_close(libdecor_frame* frame);
 
     [LibraryImport(LIBRARY)]
+    public static partial char* libdecor_frame_get_title(libdecor_frame* frame);
+
+    [LibraryImport(LIBRARY)]
     public static partial void libdecor_frame_set_app_id(libdecor_frame* frame, byte* app_id);
+
+    [LibraryImport(LIBRARY)]
+    public static partial void libdecor_frame_set_title(libdecor_frame* frame, byte* title);
 
     [LibraryImport(LIBRARY)]
     public static partial void libdecor_frame_map(libdecor_frame* frame);

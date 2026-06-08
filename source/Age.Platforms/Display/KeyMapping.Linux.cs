@@ -44,7 +44,7 @@ public static partial class KeyMapping
         [xkbcommon_keysyms.XKB_KEY_Caps_Lock]            = Key.Capslock,
         [xkbcommon_keysyms.XKB_KEY_Num_Lock]             = Key.Numlock,
         [xkbcommon_keysyms.XKB_KEY_Scroll_Lock]          = Key.Scrolllock,
-        [xkbcommon_keysyms.XKB_KEY_less]                 = Key.Quoteleft,
+        [xkbcommon_keysyms.XKB_KEY_less]                 = Key.QuoteLeft,
         [xkbcommon_keysyms.XKB_KEY_grave]                = Key.Section,
         [xkbcommon_keysyms.XKB_KEY_Super_L]              = Key.Meta,
         [xkbcommon_keysyms.XKB_KEY_Super_R]              = Key.Meta,
@@ -140,21 +140,21 @@ public static partial class KeyMapping
         [xkbcommon_keysyms.XKB_KEY_XF86Stop]             = Key.Stop,
         [xkbcommon_keysyms.XKB_KEY_XF86Refresh]          = Key.Refresh,
         [xkbcommon_keysyms.XKB_KEY_XF86Favorites]        = Key.Favorites,
-        [xkbcommon_keysyms.XKB_KEY_XF86OpenURL]          = Key.Openurl,
+        [xkbcommon_keysyms.XKB_KEY_XF86OpenURL]          = Key.OpenUrl,
         [xkbcommon_keysyms.XKB_KEY_XF86HomePage]         = Key.Homepage,
         [xkbcommon_keysyms.XKB_KEY_XF86Search]           = Key.Search,
-        [xkbcommon_keysyms.XKB_KEY_XF86AudioLowerVolume] = Key.Volumedown,
-        [xkbcommon_keysyms.XKB_KEY_XF86AudioMute]        = Key.Volumemute,
-        [xkbcommon_keysyms.XKB_KEY_XF86AudioRaiseVolume] = Key.Volumeup,
-        [xkbcommon_keysyms.XKB_KEY_XF86AudioPlay]        = Key.Mediaplay,
-        [xkbcommon_keysyms.XKB_KEY_XF86AudioStop]        = Key.Mediastop,
-        [xkbcommon_keysyms.XKB_KEY_XF86AudioPrev]        = Key.Mediaprevious,
-        [xkbcommon_keysyms.XKB_KEY_XF86AudioNext]        = Key.Medianext,
-        [xkbcommon_keysyms.XKB_KEY_XF86AudioRecord]      = Key.Mediarecord,
+        [xkbcommon_keysyms.XKB_KEY_XF86AudioLowerVolume] = Key.VolumeDown,
+        [xkbcommon_keysyms.XKB_KEY_XF86AudioMute]        = Key.VolumeMute,
+        [xkbcommon_keysyms.XKB_KEY_XF86AudioRaiseVolume] = Key.VolumeUp,
+        [xkbcommon_keysyms.XKB_KEY_XF86AudioPlay]        = Key.MediaPlay,
+        [xkbcommon_keysyms.XKB_KEY_XF86AudioStop]        = Key.MediaStop,
+        [xkbcommon_keysyms.XKB_KEY_XF86AudioPrev]        = Key.MediaPrevious,
+        [xkbcommon_keysyms.XKB_KEY_XF86AudioNext]        = Key.MediaNext,
+        [xkbcommon_keysyms.XKB_KEY_XF86AudioRecord]      = Key.MediaRecord,
         [xkbcommon_keysyms.XKB_KEY_XF86Standby]          = Key.Standby,
         // Launch keys.
-        [xkbcommon_keysyms.XKB_KEY_XF86Mail]             = Key.Launchmail,
-        [xkbcommon_keysyms.XKB_KEY_XF86AudioMedia]       = Key.Launchmedia,
+        [xkbcommon_keysyms.XKB_KEY_XF86Mail]             = Key.LaunchMail,
+        [xkbcommon_keysyms.XKB_KEY_XF86AudioMedia]       = Key.LaunchMedia,
         [xkbcommon_keysyms.XKB_KEY_XF86MyComputer]       = Key.Launch0,
         [xkbcommon_keysyms.XKB_KEY_XF86Calculator]       = Key.Launch1,
         [xkbcommon_keysyms.XKB_KEY_XF86Launch0]          = Key.Launch2,
@@ -165,12 +165,12 @@ public static partial class KeyMapping
         [xkbcommon_keysyms.XKB_KEY_XF86Launch5]          = Key.Launch7,
         [xkbcommon_keysyms.XKB_KEY_XF86Launch6]          = Key.Launch8,
         [xkbcommon_keysyms.XKB_KEY_XF86Launch7]          = Key.Launch9,
-        [xkbcommon_keysyms.XKB_KEY_XF86Launch8]          = Key.Launcha,
-        [xkbcommon_keysyms.XKB_KEY_XF86Launch9]          = Key.Launchb,
-        [xkbcommon_keysyms.XKB_KEY_XF86LaunchA]          = Key.Launchc,
-        [xkbcommon_keysyms.XKB_KEY_XF86LaunchB]          = Key.Launchd,
-        [xkbcommon_keysyms.XKB_KEY_XF86LaunchC]          = Key.Launche,
-        [xkbcommon_keysyms.XKB_KEY_XF86LaunchD]          = Key.Launchf,
+        [xkbcommon_keysyms.XKB_KEY_XF86Launch8]          = Key.LaunchA,
+        [xkbcommon_keysyms.XKB_KEY_XF86Launch9]          = Key.LaunchB,
+        [xkbcommon_keysyms.XKB_KEY_XF86LaunchA]          = Key.LaunchC,
+        [xkbcommon_keysyms.XKB_KEY_XF86LaunchB]          = Key.LaunchD,
+        [xkbcommon_keysyms.XKB_KEY_XF86LaunchC]          = Key.LaunchE,
+        [xkbcommon_keysyms.XKB_KEY_XF86LaunchD]          = Key.LaunchF,
     };
 
     private static readonly Dictionary<uint, KeyLocation> locations = new()
@@ -216,8 +216,8 @@ public static partial class KeyMapping
         [0x1F] = Key.I,
         [0x20] = Key.O,
         [0x21] = Key.P,
-        [0x22] = Key.Braceleft,
-        [0x23] = Key.Braceright,
+        [0x22] = Key.BraceLeft,
+        [0x23] = Key.BraceRight,
         [0x24] = Key.Enter,
         [0x25] = Key.Ctrl, // Left
         [0x26] = Key.A,
@@ -276,7 +276,7 @@ public static partial class KeyMapping
         [0x5B] = Key.NumPadPeriod,
         //[0x5C]
         //[0x5D] // Zenkaku Hankaku
-        [0x5E] = Key.Quoteleft,
+        [0x5E] = Key.QuoteLeft,
         [0x5F] = Key.F11,
         [0x60] = Key.F12,
         //[0x61] // Romaji
@@ -303,9 +303,9 @@ public static partial class KeyMapping
         [0x76] = Key.Insert,
         [0x77] = Key.KeyDelete,
         //[0x78] // Macro
-        [0x79] = Key.Volumemute,
-        [0x7A] = Key.Volumedown,
-        [0x7B] = Key.Volumeup,
+        [0x79] = Key.VolumeMute,
+        [0x7A] = Key.VolumeDown,
+        [0x7B] = Key.VolumeUp,
         //[0x7C] // Power
         [0x7D] = Key.Equal, // KP_Equal
         //[0x7E] // KP_PlusMinus

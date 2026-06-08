@@ -108,7 +108,7 @@ public static class AlignmentTest
                 return;
             }
 
-            if (keyEvent.Modifiers.HasFlags(KeyStates.Control))
+            if (keyEvent.Modifiers.HasFlags(Modifier.Ctrl))
             {
                 switch (keyEvent.Key)
                 {

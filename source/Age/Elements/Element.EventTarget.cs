@@ -304,15 +304,15 @@ public abstract partial class Element
         }
     }
 
-    private void OnKeyDown(Key key)
+    private void OnKeyDown(in WindowKeyEvent windowKeyEvent)
     {
         if (this.AllowInputEvents)
         {
             var keyEvent = new KeyEvent
             {
-                Key       = key,
-                Holding   = !AgeInput.IsKeyJustPressed(key),
-                Modifiers = AgeInput.GetModifiers(),
+                Key       = windowKeyEvent.Key,
+                Holding   = windowKeyEvent.Echo,
+                Modifiers = windowKeyEvent.Modifiers,
             };
 
             this.KeyDownEvent?.Invoke(keyEvent);
@@ -329,15 +329,15 @@ public abstract partial class Element
         }
     }
 
-    private void OnKeyUp(Key key)
+    private void OnKeyUp(in WindowKeyEvent windowKeyEvent)
     {
         if (this.AllowInputEvents)
         {
             var keyEvent = new KeyEvent
             {
-                Key       = key,
-                Holding   = !AgeInput.IsKeyJustPressed(key),
-                Modifiers = AgeInput.GetModifiers(),
+                Key       = windowKeyEvent.Key,
+                Holding   = windowKeyEvent.Echo,
+                Modifiers = windowKeyEvent.Modifiers,
             };
 
             this.KeyUpEvent?.Invoke(keyEvent);

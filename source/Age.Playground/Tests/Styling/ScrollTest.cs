@@ -301,9 +301,9 @@ public static class ScrollTest
 
         var isExpanded = false;
 
-        canvas.Scene?.Viewport?.Window?.KeyDown += (key) =>
+        canvas.Scene?.Viewport?.Window?.KeyDown += (in keyEvent) =>
         {
-            if (key == Key.Space)
+            if (keyEvent.Key == Key.Space)
             {
                  scrollParent.Style.Size = (isExpanded = !isExpanded) ? new(400) : new(200);
                 //scrollParent.Style.Overflow = (isExpanded = !isExpanded) ? default : Overflow.Scroll;

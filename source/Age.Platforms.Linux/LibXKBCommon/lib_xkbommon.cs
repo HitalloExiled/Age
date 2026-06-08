@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 namespace Age.Platforms.Linux.LibXKBCommon;
 
 internal struct xkb_compose_state;
+internal struct xkb_compose_table;
 internal struct xkb_context;
 internal struct xkb_keymap;
 internal struct xkb_state;
@@ -37,13 +38,25 @@ internal unsafe static partial class lib_xkbommon
     public static partial void xkb_context_unref(xkb_context* context);
 
     [LibraryImport(LIBRARY)]
-    public static partial xkb_compose_feed_result xkb_compose_state_feed(xkb_compose_state *state, xkb_keysym_t keysym);
+    public static partial xkb_compose_feed_result xkb_compose_state_feed(xkb_compose_state* state, xkb_keysym_t keysym);
 
     [LibraryImport(LIBRARY)]
-    public static partial xkb_compose_status xkb_compose_state_get_status(xkb_compose_state *state);
+    public static partial xkb_compose_status xkb_compose_state_get_status(xkb_compose_state* state);
 
     [LibraryImport(LIBRARY)]
-    public static partial int xkb_compose_state_get_utf8(xkb_compose_state *state, byte *buffer, size_t size);
+    public static partial int xkb_compose_state_get_utf8(xkb_compose_state* state, byte* buffer, size_t size);
+
+    [LibraryImport(LIBRARY)]
+    public static partial xkb_compose_state* xkb_compose_state_new(xkb_compose_table* table, xkb_compose_state_flags flags);
+
+    [LibraryImport(LIBRARY)]
+    public static partial void xkb_compose_state_unref(xkb_compose_state* state);
+
+    [LibraryImport(LIBRARY)]
+    public static partial xkb_compose_table* xkb_compose_table_new_from_locale(xkb_context* context, byte* locale, xkb_compose_compile_flags flags);
+
+    [LibraryImport(LIBRARY)]
+    public static partial void xkb_compose_table_unref(xkb_compose_table* table);
 
     [LibraryImport(LIBRARY)]
     public static partial int xkb_keymap_key_get_syms_by_level(
@@ -58,6 +71,13 @@ internal unsafe static partial class lib_xkbommon
     public static partial int xkb_keymap_key_repeats(xkb_keymap* keymap, xkb_keycode_t key);
 
     [LibraryImport(LIBRARY)]
+    public static partial xkb_keymap* xkb_keymap_new_from_names(
+        xkb_context* context,
+        xkb_rule_names* names,
+        xkb_keymap_compile_flags flags
+    );
+
+    [LibraryImport(LIBRARY)]
     public static partial xkb_keymap* xkb_keymap_new_from_string(
         xkb_context*             context,
         byte*                    @string,
@@ -66,10 +86,13 @@ internal unsafe static partial class lib_xkbommon
     );
 
     [LibraryImport(LIBRARY)]
-    public static partial void xkb_keymap_unref(xkb_keymap *keymap);
+    public static partial void xkb_keymap_unref(xkb_keymap* keymap);
 
     [LibraryImport(LIBRARY)]
     public static partial xkb_keysym_t xkb_state_key_get_one_sym(xkb_state* state, xkb_keycode_t key);
+
+    [LibraryImport(LIBRARY)]
+    public static partial int xkb_state_key_get_utf8(xkb_state* state, xkb_keycode_t key, byte* buffer, size_t size);
 
     [LibraryImport(LIBRARY)]
     public static partial uint32_t xkb_state_key_get_utf32(xkb_state* state, xkb_keycode_t key);

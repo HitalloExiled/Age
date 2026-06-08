@@ -6,7 +6,7 @@ namespace Age.Platforms.Display;
 
 public delegate void WindowMouseEventHandler(in WindowMouseEvent mouseEvent);
 public delegate void WindowContextEventHandler(in WindowContextEvent mouseEvent);
-public delegate void WindowKeyEventHandler(Key key);
+public delegate void WindowKeyEventHandler(in WindowKeyEvent keyEvent);
 public delegate void WindowInputEventHandler(char character);
 
 public unsafe partial class Window : Disposable
@@ -114,7 +114,7 @@ public unsafe partial class Window : Disposable
 
     public void DoEvents()
     {
-        using var messages = WindowManager.Instance.FlushWindowEvents(this);;
+        using var messages = WindowManager.Instance.FlushWindowEvents(this);
 
         if (messages.IsEmpty)
         {
@@ -155,18 +155,15 @@ public unsafe partial class Window : Disposable
 
                     break;
 
-                case MessageKind.KeyPress:
-                    this.KeyPress?.Invoke(message.Value.Key);
-
-                    break;
-
                 case MessageKind.KeyDown:
-                    this.KeyDown?.Invoke(message.Value.Key);
+                    this.KeyDown?.Invoke(message.Value.KeyEvent);
+                    this.KeyPress?.Invoke(message.Value.KeyEvent);
 
                     break;
 
                 case MessageKind.KeyUp:
-                    this.KeyUp?.Invoke(message.Value.Key);
+                    this.KeyUp?.Invoke(message.Value.KeyEvent);
+                    this.KeyPress?.Invoke(message.Value.KeyEvent);
 
                     break;
 

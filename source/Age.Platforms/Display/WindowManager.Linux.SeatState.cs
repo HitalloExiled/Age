@@ -30,6 +30,7 @@ public unsafe partial class WindowManager
         public zwp_tablet_seat_v2*              TabletSeat;
         public zwp_text_input_v3*               TextInput;
         public xkb_compose_state*               XkbComposeState;
+        public xkb_compose_table*               XkbComposeTable;
         public xkb_context*                     XkbContext;
         public xkb_keymap*                      XkbKeymap;
         public xkb_state*                       XkbState;
@@ -38,6 +39,9 @@ public unsafe partial class WindowManager
 
         public uint CurrentLayoutIndex;
         public uint LastKeyPressedSerial;
+        public uint ModsDepressed;
+        public uint ModsLatched;
+        public uint ModsLocked;
         public uint RepeatingKeycode;
         public int  RepeatKeyDelayMsec;
         public int  RepeatStartDelayMsec;

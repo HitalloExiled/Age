@@ -12,9 +12,7 @@ internal enum MessageKind : byte
     FocusIn,
     FocusOut,
     Input,
-    Key,
     KeyDown,
-    KeyPress,
     KeyUp,
     Mouse,
     MouseDown,
@@ -82,22 +80,22 @@ internal readonly struct WindowMessage
         new(MessageKind.DoubleClick, mouseEvent);
 
     public static WindowMessage FocusIn() =>
-        new(MessageKind.Resized);
+        new(MessageKind.FocusIn);
+
+    public static WindowMessage FocusOut() =>
+        new(MessageKind.FocusOut);
 
     public static WindowMessage Input(char input) =>
         new(MessageKind.Input, input);
 
-    public static WindowMessage Key(WindowKeyEvent keyEvent) =>
-        new(MessageKind.Key, keyEvent);
+    public static WindowMessage KeyDown(WindowKeyEvent windowKeyEvent) =>
+        new(MessageKind.KeyDown, windowKeyEvent);
 
-    public static WindowMessage KeyDown(Key key) =>
-        new(MessageKind.KeyDown, key);
+    public static WindowMessage KeyPress(WindowKeyEvent windowKeyEvent) =>
+        new(windowKeyEvent.IsPressed ? MessageKind.KeyDown : MessageKind.KeyUp, windowKeyEvent);
 
-    public static WindowMessage KeyPress(Key key) =>
-        new(MessageKind.KeyPress, key);
-
-    public static WindowMessage KeyUp(Key key) =>
-        new(MessageKind.KeyUp, key);
+    public static WindowMessage KeyUp(WindowKeyEvent windowKeyEvent) =>
+        new(MessageKind.KeyUp, windowKeyEvent);
 
     public static WindowMessage MouseDown(in WindowMouseEvent mouseEvent) =>
         new(MessageKind.MouseDown, mouseEvent);
