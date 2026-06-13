@@ -4,13 +4,15 @@ using Age.Platforms.Linux.LibDecor;
 using Age.Core;
 using Age.Core.Collections;
 using Age.Numerics;
+using System.Runtime.InteropServices;
+using Age.Core.Extensions;
 
 namespace Age.Platforms.Display;
 
 internal unsafe struct WindowState
 {
     #region 8-bytes
-    public required wl_surface* Surface;
+    public wl_surface* Surface;
 
     public wp_fractional_scale_v1* FractionalScale;
     public libdecor_frame*         Frame;
@@ -24,7 +26,7 @@ internal unsafe struct WindowState
     #region 4-bytes
     private UnsafeLock @lock;
 
-    public required Size<int> Size;
+    public Size<int> Size;
     #endregion
 
     #region 1-byte
@@ -32,11 +34,30 @@ internal unsafe struct WindowState
     public bool       Suspended;
     #endregion
 
-    public WindowState() =>
+    private WindowState(wl_surface* surface, in Size<int> size)
+    {
+        this.Surface  = surface;
+        this.Size     = size;
         this.messages = [];
+    }
 
-    public void Dispose() =>
+    public static WindowState* Allocate(wl_surface* surface, in Size<int> size) =>
+        NativeMemory.Alloc(new WindowState(surface, size));
+
+    public static void Free(WindowState* windowState)
+    {
+        windowState->Dispose();
+
+        NativeMemory.Free(windowState);
+    }
+
+    public void Dispose()
+    {
+        viewporter.wp_viewport_destroy(this.Viewport);
+        lib_wayland_client.wl_surface_destroy(this.Surface);
+
         this.messages.Dispose();
+    }
 
     public void AddMessage(in WindowMessage windowMessage)
     {

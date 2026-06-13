@@ -7,6 +7,7 @@ using Age.Numerics;
 using Age.Platforms.Linux.Libc;
 using Age.Platforms.Linux.LibDecor;
 using Age.Platforms.Linux.LibWaylandClient;
+using Age.Platforms.Linux.LibWaylandCursor;
 using Age.Platforms.Linux.LibXKBCommon;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -43,6 +44,8 @@ public unsafe sealed partial class WindowManager
         "left_ptr",       /// <see cref="Cursor.Arrow"/>
         "left_ptr_watch", /// <see cref="Cursor.Busy"/>
         "cross",          /// <see cref="Cursor.Cross"/>
+        "size_bdiag",     /// <see cref="Cursor.DiagonalResizeNESW"/>
+        "size_fdiag",     /// <see cref="Cursor.DiagonalResizeNWSE"/>
         "fleur",          /// <see cref="Cursor.Drag"/>
         "dnd-move",       /// <see cref="Cursor.Drop"/>
         "crossed_circle", /// <see cref="Cursor.Forbidden"/>
@@ -51,8 +54,6 @@ public unsafe sealed partial class WindowManager
         "h_double_arrow", /// <see cref="Cursor.HorizontalResize"/>
         "col_resize",     /// <see cref="Cursor.HorizontalSplit"/>
         "move",           /// <see cref="Cursor.Move"/>
-        "size_bdiag",     /// <see cref="Cursor.ResizeNESW"/>
-        "size_fdiag",     /// <see cref="Cursor.ResizeNWSE"/>
         "xterm",          /// <see cref="Cursor.Text"/>
         "v_double_arrow", /// <see cref="Cursor.VerticalResize"/>
         "row_resize",     /// <see cref="Cursor.VerticalSplit"/>
@@ -64,6 +65,8 @@ public unsafe sealed partial class WindowManager
         null,                /// <see cref="Cursor.Arrow"/>
         "progress",          /// <see cref="Cursor.Busy"/>
         "cross",             /// <see cref="Cursor.Cross"/>
+        "fd_double_arrow",   /// <see cref="Cursor.DiagonalResizeNESW"/>
+        "bd_double_arrow",   /// <see cref="Cursor.DiagonalResizeNWSE"/>
         "grabbing",          /// <see cref="Cursor.Drag"/>
         "hand1",             /// <see cref="Cursor.Drop"/>
         "forbidden",         /// <see cref="Cursor.Forbidden"/>
@@ -72,15 +75,40 @@ public unsafe sealed partial class WindowManager
         "ew-resize",         /// <see cref="Cursor.HorizontalResize"/>
         "sb_h_double_arrow", /// <see cref="Cursor.HorizontalSplit"/>
         "fleur",             /// <see cref="Cursor.Move"/>
-        "fd_double_arrow",   /// <see cref="Cursor.ResizeNESW"/>
-        "bd_double_arrow",   /// <see cref="Cursor.ResizeNWSE"/>
         null,                /// <see cref="Cursor.Text"/>
         "ns-resize",         /// <see cref="Cursor.VerticalResize"/>
         "sb_v_double_arrow", /// <see cref="Cursor.VerticalSplit"/>
         "wait",              /// <see cref="Cursor.Wait"/>
     ];
 
+    private static readonly wp_cursor_shape_device_v1_shape[] standardCursors =
+    [
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_DEFAULT,     /// <see cref="Cursor.Arrow"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_WAIT,        /// <see cref="Cursor.Busy"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_CROSSHAIR,   /// <see cref="Cursor.Cross"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_NESW_RESIZE, /// <see cref="Cursor.DiagonalResizeNESW"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_NWSE_RESIZE, /// <see cref="Cursor.DiagonalResizeNWSE"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_GRAB,        /// <see cref="Cursor.Drag"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_GRABBING,    /// <see cref="Cursor.Drop"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_NO_DROP,     /// <see cref="Cursor.Forbidden"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_POINTER,     /// <see cref="Cursor.Hand"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_HELP,        /// <see cref="Cursor.Help"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_EW_RESIZE,   /// <see cref="Cursor.HorizontalResize"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_COL_RESIZE,  /// <see cref="Cursor.HorizontalSplit"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_MOVE,        /// <see cref="Cursor.Move"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_PROGRESS,    /// <see cref="Cursor.Progress"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_TEXT,        /// <see cref="Cursor.Text"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_NS_RESIZE,   /// <see cref="Cursor.VerticalResize"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_ROW_RESIZE,  /// <see cref="Cursor.VerticalSplit"/>
+    ];
+
     #region Unmanaged Listeners
+    [FixedAddressValueType]
+    private static readonly wl_callback_listener cursorFrameCallbackListener = new()
+    {
+		done = &OnCursorFrameCallbackDone,
+	};
+
     [FixedAddressValueType]
     private static readonly wl_data_device_listener dataDeviceListener = new()
     {
@@ -229,11 +257,59 @@ public unsafe sealed partial class WindowManager
 
     private readonly static byte** pTag = (byte**)NativeMemory.Alloc((nint)MemoryMarshal.CreateUTF8StringBuffer("Age"));
 
-    private readonly Lock           @lock = new();
-    private readonly Thread         eventLoopThread;
-    private readonly RegistryState* registryState = NativeMemory.Alloc(new RegistryState());
+    private readonly Lock                             @lock = new();
+    private readonly Thread                           eventLoopThread;
+    private readonly RegistryState*                   registryState = RegistryState.Allocate();
 
     private bool stopped;
+
+    public partial Cursor Cursor
+    {
+        get => this.registryState->CursorState->Cursor;
+        set
+        {
+            if (this.registryState->CursorState->Cursor == value)
+            {
+                return;
+            }
+
+            this.registryState->CursorState->Cursor = value;
+
+            this.UpdateCursor();
+        }
+    }
+
+    public partial int CursorScale
+    {
+        get => this.registryState->CursorState->CursorScale;
+        set
+        {
+            if (this.registryState->CursorState->CursorScale == value)
+            {
+                return;
+            }
+
+            this.registryState->CursorState->CursorScale = value;
+
+            this.UpdateCursor();
+        }
+    }
+
+    public partial bool CursorVisible
+    {
+        get => this.registryState->CursorState->CursorVisible;
+        set
+        {
+            if (this.registryState->CursorState->CursorVisible == value)
+            {
+                return;
+            }
+
+            this.registryState->CursorState->CursorVisible = value;
+
+            this.UpdateCursor();
+        }
+    }
 
     public nint Display => (nint)this.registryState->Display;
 
@@ -302,17 +378,17 @@ public unsafe sealed partial class WindowManager
     private static WindowState* GetWindowState(wl_surface* surface) =>
         surface != null && ProxyIsAge((wl_proxy*)surface) ? (WindowState*)wl_surface_get_user_data(surface) : default;
 
-    private static WindowKeyEvent GetKeyEvent(SeatState *seatState, uint keycode, bool pressed)
+    private static WindowKeyEvent GetKeyEvent(KeyboardState *keyboardState, uint keycode, bool pressed)
     {
-        Debug.Assert(seatState != null);
+        Debug.Assert(keyboardState != null);
 
-        var shiftedKey = KeyMapping.GetKeycode(xkb_state_key_get_one_sym(seatState->XkbState, keycode));
+        var shiftedKey = KeyMapping.GetKeycode(xkb_state_key_get_one_sym(keyboardState->State, keycode));
 
         var plainKey = Key.None;
 
         uint* syms = null;
 
-        var numSys = xkb_keymap_key_get_syms_by_level(seatState->XkbKeymap, keycode, seatState->CurrentLayoutIndex, 0, &syms);
+        var numSys = xkb_keymap_key_get_syms_by_level(keyboardState->Keymap, keycode, keyboardState->CurrentLayoutIndex, 0, &syms);
 
         if (numSys > 0 && syms != null)
         {
@@ -321,7 +397,7 @@ public unsafe sealed partial class WindowManager
 
         var physicalKey = KeyMapping.GetScancode(keycode);
         var keyLocation = KeyMapping.GetLocation(keycode);
-        var unicode     = xkb_state_key_get_utf32(seatState->XkbState, keycode);
+        var unicode     = xkb_state_key_get_utf32(keyboardState->State, keycode);
 
         var key = Key.None;
 
@@ -352,22 +428,22 @@ public unsafe sealed partial class WindowManager
 
         Modifier modifiers = default;
 
-        if (seatState->ShiftPressed)
+        if (keyboardState->ShiftPressed)
         {
             modifiers |= Modifier.Shift;
         }
 
-        if (seatState->CtrlPressed)
+        if (keyboardState->CtrlPressed)
         {
             modifiers |= Modifier.Ctrl;
         }
 
-        if (seatState->AltPressed)
+        if (keyboardState->AltPressed)
         {
             modifiers |= Modifier.Alt;
         }
 
-        if (seatState->MetaPressed)
+        if (keyboardState->MetaPressed)
         {
             modifiers |= Modifier.Meta;
         }
@@ -385,17 +461,17 @@ public unsafe sealed partial class WindowManager
         };
     }
 
-    private static WindowKeyEvent GetUnstuckKeyEvent(SeatState *seatState, uint keycode, bool pressed, Key key)
+    private static WindowKeyEvent GetUnstuckKeyEvent(KeyboardState* keyboardState, uint keycode, bool pressed, Key key)
     {
         WindowKeyEvent windowKeyEvent = default;
 
         if (pressed)
         {
-            if (seatState->PressedKeycodes.TryGetValue(keycode, out var oldKey) && oldKey != key)
+            if (keyboardState->PressedKeycodes.TryGetValue(keycode, out var oldKey) && oldKey != key)
             {
                 Logger.Warn($"{oldKey} and {key} have same keycode. Generating release event for {oldKey}");
 
-                windowKeyEvent = GetKeyEvent(seatState, keycode, false);
+                windowKeyEvent = GetKeyEvent(keyboardState, keycode, false);
 
                 if (windowKeyEvent != default)
                 {
@@ -403,35 +479,35 @@ public unsafe sealed partial class WindowManager
                 }
             }
 
-            seatState->PressedKeycodes[keycode] = key;
+            keyboardState->PressedKeycodes[keycode] = key;
         }
         else
         {
-            seatState->PressedKeycodes.Remove(keycode);
+            keyboardState->PressedKeycodes.Remove(keycode);
         }
 
         return windowKeyEvent;
     }
 
-    private static void HandleKeyEvent(SeatState *seatState, uint keycode, bool pressed, bool echo)
+    private static void HandleKeyEvent(KeyboardState* keyboardState, uint keycode, bool pressed, bool echo)
     {
-        Debug.Assert(seatState != null);
+        Debug.Assert(keyboardState != null);
 
         var lastKey = Key.None;
 
-        var composeStatus = xkb_compose_state_get_status(seatState->XkbComposeState);
+        var composeStatus = xkb_compose_state_get_status(keyboardState->ComposeState);
 
         if (pressed)
         {
-            var keysym        = xkb_state_key_get_one_sym(seatState->XkbState, keycode);
-            var composeResult = xkb_compose_state_feed(seatState->XkbComposeState, keysym);
+            var keysym        = xkb_state_key_get_one_sym(keyboardState->State, keycode);
+            var composeResult = xkb_compose_state_feed(keyboardState->ComposeState, keysym);
 
-            composeStatus = xkb_compose_state_get_status(seatState->XkbComposeState);
+            composeStatus = xkb_compose_state_get_status(keyboardState->ComposeState);
 
             if (composeResult == xkb_compose_feed_result.XKB_COMPOSE_FEED_ACCEPTED && composeStatus == xkb_compose_status.XKB_COMPOSE_COMPOSED)
             {
                 var buffer     = stackalloc byte[256];
-                var bufferSize = xkb_compose_state_get_utf8(seatState->XkbComposeState, buffer, 255);
+                var bufferSize = xkb_compose_state_get_utf8(keyboardState->ComposeState, buffer, 255);
 
                 var chatCount = Encoding.UTF8.GetCharCount(buffer, bufferSize);
 
@@ -439,7 +515,7 @@ public unsafe sealed partial class WindowManager
 
                 Encoding.UTF8.GetChars(new Span<byte>(buffer, bufferSize), decoded);
 
-                var windowKeyEvent = GetKeyEvent(seatState, keycode, pressed);
+                var windowKeyEvent = GetKeyEvent(keyboardState, keycode, pressed);
 
                 if (windowKeyEvent != default)
                 {
@@ -456,7 +532,7 @@ public unsafe sealed partial class WindowManager
                             Echo = echo,
                         };
 
-                        seatState->ActiveWindow->AddMessage(WindowMessage.KeyPress(composedWindowKeyEvent));
+                        keyboardState->SeatState->ActiveWindow->AddMessage(WindowMessage.KeyPress(composedWindowKeyEvent));
                     }
                 }
             }
@@ -466,13 +542,13 @@ public unsafe sealed partial class WindowManager
         {
             // If we continued with other compose status (e.g. XKB_COMPOSE_COMPOSING) we
             // would get the composing keys _and_ the result.
-            var windowKeyEvent = GetKeyEvent(seatState, keycode, pressed);
+            var windowKeyEvent = GetKeyEvent(keyboardState, keycode, pressed);
 
             if (windowKeyEvent != default)
             {
                 windowKeyEvent = windowKeyEvent with { Echo = echo };
 
-                seatState->ActiveWindow->AddMessage(WindowMessage.KeyPress(windowKeyEvent));
+                keyboardState->SeatState->ActiveWindow->AddMessage(WindowMessage.KeyPress(windowKeyEvent));
 
                 lastKey = windowKeyEvent.Key;
             }
@@ -480,26 +556,30 @@ public unsafe sealed partial class WindowManager
 
         if (lastKey != Key.None)
         {
-            var unstuckKeyEvent = GetUnstuckKeyEvent(seatState, keycode, pressed, lastKey);
+            var unstuckKeyEvent = GetUnstuckKeyEvent(keyboardState, keycode, pressed, lastKey);
 
             if (unstuckKeyEvent != default)
             {
-                seatState->ActiveWindow->AddMessage(WindowMessage.KeyPress(unstuckKeyEvent));
+                keyboardState->SeatState->ActiveWindow->AddMessage(WindowMessage.KeyPress(unstuckKeyEvent));
             }
         }
     }
 
     #region Unmanaged Callers
     [UnmanagedCallersOnly]
-    private static void OnBufferRelease(void* data, wl_buffer* buffer)
+    private static void OnCursorFrameCallbackDone(void* data, wl_callback* callback, uint timeMs)
     {
-        var bufferData = (BufferData*)data;
+        wl_callback_destroy(callback);
 
-        wl_buffer_destroy(buffer);
+        var state = (CursorState*)data;
 
-        _ = munmap(bufferData->Data, bufferData->Size);
+        Debug.Assert(state != null);
 
-        NativeMemory.Free(bufferData);
+        state->CursorFrameCallback = null;
+
+        state->CursorTimeMs = timeMs;
+
+        UpdateCursor(state);
     }
 
     [UnmanagedCallersOnly]
@@ -555,6 +635,10 @@ public unsafe sealed partial class WindowManager
 
         Debug.Assert(seatState != null);
 
+        var keyboardState = seatState->RegistryState->KeyboardState;
+
+        Debug.Assert(keyboardState != null);
+
         // We have to add 8 to the scancode to get an XKB-compatible keycode.
         var xkbKeycode = key + 8;
 
@@ -562,20 +646,20 @@ public unsafe sealed partial class WindowManager
 
         if (pressed)
         {
-            if (xkb_keymap_key_repeats(seatState->XkbKeymap, xkbKeycode) == 1)
+            if (xkb_keymap_key_repeats(keyboardState->Keymap, xkbKeycode) == 1)
             {
-                seatState->LastRepeatStartMsec = DateTime.Now.Ticks;
-                seatState->RepeatingKeycode    = xkbKeycode;
+                keyboardState->LastRepeatStartMsec = DateTime.Now.Ticks;
+                keyboardState->RepeatingKeycode    = xkbKeycode;
             }
 
-            seatState->LastKeyPressedSerial = serial;
+            keyboardState->LastKeyPressedSerial = serial;
         }
-        else if (seatState->RepeatingKeycode == xkbKeycode)
+        else if (keyboardState->RepeatingKeycode == xkbKeycode)
         {
-            seatState->RepeatingKeycode = XKB_KEYCODE_INVALID;
+            keyboardState->RepeatingKeycode = XKB_KEYCODE_INVALID;
         }
 
-        HandleKeyEvent(seatState, xkbKeycode, pressed, false);
+        HandleKeyEvent(keyboardState, xkbKeycode, pressed, false);
     }
 
     [UnmanagedCallersOnly]
@@ -587,31 +671,35 @@ public unsafe sealed partial class WindowManager
 
         Debug.Assert(seatState != null);
 
-        if (seatState->KeymapBuffer != default)
+        var keyboard = seatState->RegistryState->KeyboardState;
+
+        Debug.Assert(keyboard != null);
+
+        if (keyboard->KeymapBuffer != default)
         {
             // We have already a mapped buffer, so we unmap it. There's no need to reset
             // its pointer or size, as we're gonna set them below.
-            _ = munmap(seatState->KeymapBuffer, (ulong)seatState->KeymapBuffer.Length);
+            _ = munmap(keyboard->KeymapBuffer, (ulong)keyboard->KeymapBuffer.Length);
 
-            seatState->KeymapBuffer = default;
+            keyboard->KeymapBuffer = default;
         }
 
-        seatState->KeymapBuffer = new((byte*)mmap(null, size, PROT_READ, MAP_PRIVATE, fd, 0), (int)size);
+        keyboard->KeymapBuffer = new((byte*)mmap(null, size, PROT_READ, MAP_PRIVATE, fd, 0), (int)size);
 
-        xkb_keymap_unref(seatState->XkbKeymap);
+        xkb_keymap_unref(keyboard->Keymap);
 
-        seatState->XkbKeymap = xkb_keymap_new_from_string(
-            seatState->XkbContext,
-            seatState->KeymapBuffer,
+        keyboard->Keymap = xkb_keymap_new_from_string(
+            keyboard->Context,
+            keyboard->KeymapBuffer,
             xkb_keymap_format.XKB_KEYMAP_FORMAT_TEXT_V1,
             xkb_keymap_compile_flags.XKB_KEYMAP_COMPILE_NO_FLAGS
         );
 
-        xkb_state_unref(seatState->XkbState);
+        xkb_state_unref(keyboard->State);
 
-        seatState->XkbState = xkb_state_new(seatState->XkbKeymap);
+        keyboard->State = xkb_state_new(keyboard->Keymap);
 
-        xkb_compose_table_unref(seatState->XkbComposeTable);
+        xkb_compose_table_unref(keyboard->ComposeTable);
 
         var locale = Environment.GetEnvironmentVariable("LC_ALL")
             ?? Environment.GetEnvironmentVariable("LC_CTYPE")
@@ -620,24 +708,24 @@ public unsafe sealed partial class WindowManager
 
         using var uLocale = locale.ToUnmanaged();
 
-        seatState->XkbComposeTable = xkb_compose_table_new_from_locale(
-            seatState->XkbContext,
+        keyboard->ComposeTable = xkb_compose_table_new_from_locale(
+            keyboard->Context,
             uLocale,
             xkb_compose_compile_flags.XKB_COMPOSE_COMPILE_NO_FLAGS
         );
 
-        xkb_compose_state_unref(seatState->XkbComposeState);
+        xkb_compose_state_unref(keyboard->ComposeState);
 
-        seatState->XkbComposeState = xkb_compose_state_new(seatState->XkbComposeTable, xkb_compose_state_flags.XKB_COMPOSE_STATE_NO_FLAGS);
+        keyboard->ComposeState = xkb_compose_state_new(keyboard->ComposeTable, xkb_compose_state_flags.XKB_COMPOSE_STATE_NO_FLAGS);
 
         xkb_state_update_mask(
-            seatState->XkbState,
-            seatState->ModsDepressed,
-            seatState->ModsLatched,
-            seatState->ModsLocked,
+            keyboard->State,
+            keyboard->ModsDepressed,
+            keyboard->ModsLatched,
+            keyboard->ModsLocked,
             0,
             0,
-            seatState->CurrentLayoutIndex
+            keyboard->CurrentLayoutIndex
         );
     }
 
@@ -653,7 +741,11 @@ public unsafe sealed partial class WindowManager
 
         Debug.Assert(seatState != null);
 
-        seatState->RepeatingKeycode = XKB_KEYCODE_INVALID;
+        var keyboard = seatState->RegistryState->KeyboardState;
+
+        Debug.Assert(seatState != null);
+
+        keyboard->RepeatingKeycode = XKB_KEYCODE_INVALID;
 
         if (seatState->ActiveWindow == null)
         {
@@ -669,14 +761,14 @@ public unsafe sealed partial class WindowManager
 
         windowState = null;
 
-        seatState->ShiftPressed = false;
-        seatState->CtrlPressed  = false;
-        seatState->AltPressed   = false;
-        seatState->MetaPressed  = false;
+        keyboard->ShiftPressed = false;
+        keyboard->CtrlPressed  = false;
+        keyboard->AltPressed   = false;
+        keyboard->MetaPressed  = false;
 
-        if (seatState->XkbState != null)
+        if (keyboard->State != null)
         {
-            xkb_state_update_mask(seatState->XkbState, 0, 0, 0, 0, 0, 0);
+            xkb_state_update_mask(keyboard->State, 0, 0, 0, 0, 0, 0);
         }
 
         Logger.Warn($"Keyboard unfocused window {(nint)windowState}");
@@ -689,13 +781,17 @@ public unsafe sealed partial class WindowManager
 
         Debug.Assert(seatState != null);
 
+        var keyboard = seatState->RegistryState->KeyboardState;
+
+        Debug.Assert(keyboard != null);
+
         xkb_state_update_mask(
-            seatState->XkbState,
+            keyboard->State,
             modsDepressed,
             modsLatched,
             modsLocked,
-            seatState->CurrentLayoutIndex,
-            seatState->CurrentLayoutIndex,
+            keyboard->CurrentLayoutIndex,
+            keyboard->CurrentLayoutIndex,
             group
         );
 
@@ -704,12 +800,12 @@ public unsafe sealed partial class WindowManager
         using var alt   = new UnmanagedString(XKB_MOD_NAME_ALT);
         using var logo  = new UnmanagedString(XKB_MOD_NAME_LOGO);
 
-        seatState->ShiftPressed = xkb_state_mod_name_is_active(seatState->XkbState, shift, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1;
-        seatState->CtrlPressed  = xkb_state_mod_name_is_active(seatState->XkbState, ctrl,  xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1;
-        seatState->AltPressed   = xkb_state_mod_name_is_active(seatState->XkbState, alt,   xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1;
-        seatState->MetaPressed  = xkb_state_mod_name_is_active(seatState->XkbState, logo,  xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1;
+        keyboard->ShiftPressed = xkb_state_mod_name_is_active(keyboard->State, shift, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1;
+        keyboard->CtrlPressed  = xkb_state_mod_name_is_active(keyboard->State, ctrl,  xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1;
+        keyboard->AltPressed   = xkb_state_mod_name_is_active(keyboard->State, alt,   xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1;
+        keyboard->MetaPressed  = xkb_state_mod_name_is_active(keyboard->State, logo,  xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1;
 
-        seatState->CurrentLayoutIndex = group;
+        keyboard->CurrentLayoutIndex = group;
     }
 
     [UnmanagedCallersOnly]
@@ -719,8 +815,12 @@ public unsafe sealed partial class WindowManager
 
         Debug.Assert(seatState != null);
 
-        seatState->RepeatKeyDelayMsec   = 1000 / rate;
-        seatState->RepeatStartDelayMsec = delay;
+        var keyboard = seatState->RegistryState->KeyboardState;
+
+        Debug.Assert(keyboard != null);
+
+        keyboard->RepeatKeyDelayMsec   = 1000 / rate;
+        keyboard->RepeatStartDelayMsec = delay;
     }
 
     [UnmanagedCallersOnly]
@@ -819,8 +919,41 @@ public unsafe sealed partial class WindowManager
         Console.WriteLine(nameof(OnOutputScale));
 
     [UnmanagedCallersOnly]
-    private static void OnPointerEnter(void* data, wl_pointer* pointer, uint serial, wl_surface* surface, int surfaceX, int surfaceY) =>
-        Console.WriteLine(nameof(OnPointerEnter));
+    private static void OnPointerEnter(void* data, wl_pointer* pointer, uint serial, wl_surface* surface, int surfaceX, int surfaceY)
+    {
+        var windowState = GetWindowState(surface);
+
+        if (windowState == null)
+        {
+            return;
+        }
+
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+
+        seatState->ActiveWindow  = windowState;
+
+        Debug.Assert(seatState->ExtendedState != default && seatState->ExtendedState.Kind == SeatKind.Cursor);
+
+        var cursorState = (CursorState*)(void*)seatState->ExtendedState.Data;
+
+        Debug.Assert(cursorState->CursorSurface != null);
+
+        cursorState->PointerEnterSerial = serial;
+
+        cursorState->Position.X = surfaceX; // Really needs wl_fixed_to_double ??
+        cursorState->Position.Y = surfaceY; // Really needs wl_fixed_to_double ??
+
+        UpdateCursor(cursorState);
+
+        if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
+        {
+            delegate* unmanaged<void*, wl_pointer*, void> onPointerFrame = &OnPointerFrame;
+
+            onPointerFrame(data, pointer);
+        }
+    }
 
     [UnmanagedCallersOnly]
     private static void OnPointerLeave(void* data, wl_pointer* pointer, uint serial, wl_surface* surface) =>
@@ -923,7 +1056,7 @@ public unsafe sealed partial class WindowManager
 
             registryState->AddOutput(output);
 
-            var screenState = NativeMemory.Alloc<ScreenState>();
+            var screenState = ScreenState.Allocate();
 
             registryState->AddScreenState(name, screenState);
 
@@ -941,13 +1074,7 @@ public unsafe sealed partial class WindowManager
 
             SetProxyTag((wl_proxy*)seat);
 
-            var seatState = NativeMemory.Alloc(
-                new SeatState
-                {
-                    Registry = registryState,
-                    Seat     = new(name, seat),
-                }
-            );
+            var seatState = SeatState.Allocate(new(name, seat), registryState);
 
             if (seatState->DataDevice == default && registryState->DataDeviceManager != default)
             {
@@ -1159,7 +1286,7 @@ public unsafe sealed partial class WindowManager
 
         if (registryState->RemoveScreenState(name, out var screenState))
         {
-            NativeMemory.Free(screenState);
+            ScreenState.Free(screenState);
         }
     }
 
@@ -1190,36 +1317,44 @@ public unsafe sealed partial class WindowManager
 
         if (seatCapabilities.HasFlags(wl_seat_capability.WL_SEAT_CAPABILITY_POINTER))
         {
-            if (seatState->Pointer == null)
+            if (seatState->RegistryState->CursorState == null)
             {
-                seatState->CursorSurface = wl_compositor_create_surface(seatState->Registry->Compositor);
-                wl_surface_commit(seatState->CursorSurface);
+                var cursorState = seatState->RegistryState->CursorState = CursorState.Allocate(seatState);
 
-                seatState->Pointer = wl_seat_get_pointer(seat);
+                var cursorSurface = wl_compositor_create_surface(seatState->RegistryState->Compositor);
+
+                wl_surface_commit(cursorSurface);
+
+                var pointer = wl_seat_get_pointer(seat);
+
+                cursorState->CursorSurface = wl_compositor_create_surface(seatState->RegistryState->Compositor);
+                wl_surface_commit(cursorState->CursorSurface);
+
+                cursorState->Pointer = wl_seat_get_pointer(seat);
 
                 fixed (wl_pointer_listener* pPointerListener = &pointerListener)
                 {
-                    wl_pointer_add_listener(seatState->Pointer, pPointerListener, seatState);
+                    wl_pointer_add_listener(cursorState->Pointer, pPointerListener, seatState);
                 }
 
-                if (seatState->Registry->CursorShapeManager != default)
+                if (seatState->RegistryState->CursorShapeManager != default)
                 {
-                    seatState->CursorShapeDevice = wp_cursor_shape_manager_v1_get_pointer(seatState->Registry->CursorShapeManager, seatState->Pointer);
+                    cursorState->CursorShapeDevice = wp_cursor_shape_manager_v1_get_pointer(seatState->RegistryState->CursorShapeManager, cursorState->Pointer);
                 }
 
-                if (seatState->Registry->RelativePointerManager != default)
+                if (seatState->RegistryState->RelativePointerManager != default)
                 {
-                    seatState->RelativePointer = zwp_relative_pointer_manager_v1_get_relative_pointer(seatState->Registry->RelativePointerManager, seatState->Pointer);
+                    cursorState->RelativePointer = zwp_relative_pointer_manager_v1_get_relative_pointer(seatState->RegistryState->RelativePointerManager, cursorState->Pointer);
 
                     fixed (zwp_relative_pointer_v1_listener* pRelativePointerListener = &relativePointerListener)
                     {
-                        zwp_relative_pointer_v1_add_listener(seatState->RelativePointer, pRelativePointerListener, seatState);
+                        zwp_relative_pointer_v1_add_listener(cursorState->RelativePointer, pRelativePointerListener, seatState);
                     }
                 }
 
-                if (seatState->Registry->PointerGestures != default)
+                if (seatState->RegistryState->PointerGestures != default)
                 {
-                    seatState->PointerGesturePinch = zwp_pointer_gestures_v1_get_pinch_gesture(seatState->Registry->PointerGestures, seatState->Pointer);
+                    seatState->PointerGesturePinch = zwp_pointer_gestures_v1_get_pinch_gesture(seatState->RegistryState->PointerGestures, cursorState->Pointer);
 
                     fixed (zwp_pointer_gesture_pinch_v1_listener* pPointerGesturePinchListener = &pointerGesturePinchListener)
                     {
@@ -1230,83 +1365,30 @@ public unsafe sealed partial class WindowManager
         }
         else
         {
-            if (seatState->CursorFrameCallback != null)
-            {
-                // TODO: Try understand that fix
-                // Just in case. I got bitten by weird race-like conditions already.
-                wl_callback_set_user_data(seatState->CursorFrameCallback, null);
-
-                wl_callback_destroy(seatState->CursorFrameCallback);
-
-                seatState->CursorFrameCallback = null;
-            }
-
-            if (seatState->CursorSurface != null)
-            {
-                wl_surface_destroy(seatState->CursorSurface);
-                seatState->CursorSurface = null;
-            }
-
-            if (seatState->Pointer != null)
-            {
-                wl_pointer_destroy(seatState->Pointer);
-                seatState->Pointer = null;
-            }
-
-            if (seatState->CursorShapeDevice != null)
-            {
-                wp_cursor_shape_device_v1_destroy(seatState->CursorShapeDevice);
-                seatState->CursorShapeDevice = null;
-            }
-
-            if (seatState->RelativePointer != null)
-            {
-                zwp_relative_pointer_v1_destroy(seatState->RelativePointer);
-                seatState->RelativePointer = null;
-            }
-
-            if (seatState->ConfinedPointer != null)
-            {
-                zwp_confined_pointer_v1_destroy(seatState->ConfinedPointer);
-                seatState->ConfinedPointer = null;
-            }
-
-            if (seatState->LockedPointer != null)
-            {
-                zwp_locked_pointer_v1_destroy(seatState->LockedPointer);
-                seatState->LockedPointer = null;
-            }
+            seatState->RegistryState->DisposeCursoState();
         }
 
         if (seatCapabilities.HasFlags(wl_seat_capability.WL_SEAT_CAPABILITY_KEYBOARD))
         {
-            if (seatState->Keyboard == null)
+            if (seatState->RegistryState->KeyboardState == null)
             {
-                seatState->XkbContext = xkb_context_new(xkb_context_flags.XKB_CONTEXT_NO_FLAGS);
+                var keyboard = wl_seat_get_keyboard(seat);
 
-                Debug.Assert(seatState->XkbContext != null);
+                var keyboardState = seatState->RegistryState->KeyboardState = KeyboardState.Allocate(keyboard, seatState);
 
-                seatState->Keyboard = wl_seat_get_keyboard(seat);
+                keyboardState->Context = xkb_context_new(xkb_context_flags.XKB_CONTEXT_NO_FLAGS);
+
+                Debug.Assert(keyboardState->Context != null);
 
                 fixed (wl_keyboard_listener* pKeyboardListener = &keyboardListener)
                 {
-                    wl_keyboard_add_listener(seatState->Keyboard, pKeyboardListener, seatState);
+                    wl_keyboard_add_listener(keyboardState->Keyboard, pKeyboardListener, seatState);
                 }
             }
         }
-        else
+        else if (seatState->RegistryState->KeyboardState != null)
         {
-            if (seatState->XkbContext != null)
-            {
-                xkb_context_unref(seatState->XkbContext);
-                seatState->XkbContext = null;
-            }
 
-            if (seatState->Keyboard != null)
-            {
-                wl_keyboard_destroy(seatState->Keyboard);
-                seatState->Keyboard = null;
-            }
         }
     }
 
@@ -1379,6 +1461,79 @@ public unsafe sealed partial class WindowManager
         NullReferenceException.ThrowIfNull(proxy);
 
         wl_proxy_set_tag(proxy, pTag);
+    }
+
+    private static void UpdateCursor(CursorState* cursorState)
+    {
+        Debug.Assert(cursorState != null);
+
+        wl_buffer* cursorBuffer = null;
+
+        var hotspotX = 0;
+        var hotspotY = 0;
+        var scale    = 1;
+
+        if (cursorState->CursorVisible)
+        {
+            if (cursorState->CustomCursors.TryGetValue((uint)cursorState->Cursor, out var custom_cursor))
+            {
+                cursorBuffer = custom_cursor.Buffer;
+                hotspotX     = custom_cursor.Hotspot.X;
+                hotspotY     = custom_cursor.Hotspot.Y;
+
+                scale = 1;
+            }
+            else if (cursorState->SeatState->RegistryState->CursorShapeManager != default)
+            {
+                var shape = standardCursors[(uint)cursorState->Cursor];
+
+                wp_cursor_shape_device_v1_set_shape(cursorState->CursorShapeDevice, cursorState->PointerEnterSerial, (uint)shape);
+
+                return;
+            }
+            else
+            {
+                var cursor = (wl_cursor*)cursorState->SeatState->RegistryState->Cursors[(int)cursorState->Cursor];
+
+                if (cursor == null)
+                {
+                    return;
+                }
+
+                var frameIndex = 0;
+
+                if (cursor->image_count > 1)
+                {
+                    frameIndex = wl_cursor_frame(cursor, cursorState->CursorTimeMs);
+
+                    if (cursorState->CursorFrameCallback == null)
+                    {
+                        cursorState->CursorFrameCallback = wl_surface_frame(cursorState->CursorSurface);
+
+                        fixed (wl_callback_listener* pCursorFrameCallbackListener = &cursorFrameCallbackListener)
+                        {
+                            wl_callback_add_listener(cursorState->CursorFrameCallback, pCursorFrameCallbackListener, cursorState);
+                        }
+                    }
+                }
+
+                var cursorImage = cursor->images[frameIndex];
+
+                scale = cursorState->CursorScale;
+
+                cursorBuffer = wl_cursor_image_get_buffer(cursorImage);
+
+                hotspotX = (int)(cursorImage->hotspotX / scale);
+                hotspotY = (int)(cursorImage->hotspotY / scale);
+            }
+        }
+
+        wl_pointer_set_cursor(cursorState->Pointer, cursorState->PointerEnterSerial, cursorState->CursorSurface, hotspotX, hotspotY);
+        wl_surface_set_buffer_scale(cursorState->CursorSurface, scale);
+        wl_surface_attach(cursorState->CursorSurface, cursorBuffer, 0, 0);
+        wl_surface_damage_buffer(cursorState->CursorSurface, 0, 0, int.MaxValue, int.MaxValue);
+
+        wl_surface_commit(cursorState->CursorSurface);
     }
 
     private void EventLoop()
@@ -1498,6 +1653,7 @@ public unsafe sealed partial class WindowManager
         }
     }
 
+
     protected override partial void OnDisposed(bool disposing)
     {
         this.stopped = true;
@@ -1506,171 +1662,17 @@ public unsafe sealed partial class WindowManager
 
         this.eventLoopThread.Join();
 
-        using var seats = this.registryState->GetSeats();
-
-        foreach (var seat in seats)
-        {
-            var seatState = GetSeatState(seat);
-
-            wl_seat_destroy(seat);
-
-            // if (seatState->Pointer)
-            // {
-            //     wl_pointer_destroy(seatState->Pointer);
-            // }
-
-            // if (seatState->CursorFrameCallback) {
-            //     // We don't need to set a null userdata for safety as the thread is done.
-            //     wl_callback_destroy(seatState->CursorFrameCallback);
-            // }
-
-            // if (seatState->CursorSurface)
-            // {
-            //     wl_surface_destroy(seatState->CursorSurface);
-            // }
-
-            // if (seatState->WlDataDevice)
-            // {
-            //     wl_data_device_destroy(seatState->WlDataDevice);
-            // }
-
-            // if (seatState->WpCursorShapeDevice)
-            // {
-            //     wp_cursor_shape_device_v1_destroy(seatState->WpCursorShapeDevice);
-            // }
-
-            // if (seatState->WpRelativePointer)
-            // {
-            //     zwp_relative_pointer_v1_destroy(seatState->WpRelativePointer);
-            // }
-
-            // if (seatState->WpLockedPointer)
-            // {
-            //     zwp_locked_pointer_v1_destroy(seatState->WpLockedPointer);
-            // }
-
-            // if (seatState->WpConfinedPointer)
-            // {
-            //     zwp_confined_pointer_v1_destroy(seatState->WpConfinedPointer);
-            // }
-
-            // if (seatState->WpTabletSeat)
-            // {
-            //     zwp_tablet_seat_v2_destroy(seatState->WpTabletSeat);
-            // }
-
-            NativeMemory.Free(seatState);
-        }
-
-        using var outputs = this.registryState->GetOutputs();
-
-        foreach (var output in outputs)
-        {
-            wl_output_destroy(output);
-        }
-
-        NativeMemory.Free(this.registryState->CursorThemeName);
-
-        wl_cursor_theme_destroy(this.registryState->CursorTheme);
-
-        if (this.registryState->IdleInhibitManager != default)
-        {
-            zwp_idle_inhibit_manager_v1_destroy(this.registryState->IdleInhibitManager);
-        }
-
-        if (this.registryState->PointerConstraints != default)
-        {
-            zwp_pointer_constraints_v1_destroy(this.registryState->PointerConstraints);
-        }
-
-        if (this.registryState->PointerGestures != default)
-        {
-            zwp_pointer_gestures_v1_destroy(this.registryState->PointerGestures);
-        }
-
-        if (this.registryState->RelativePointerManager != default)
-        {
-            zwp_relative_pointer_manager_v1_destroy(this.registryState->RelativePointerManager);
-        }
-
-        if (this.registryState->Activation != default)
-        {
-            xdg_activation_v1_destroy(this.registryState->Activation);
-        }
-
-        if (this.registryState->SystemBell != default)
-        {
-            xdg_system_bell_v1_destroy(this.registryState->SystemBell);
-        }
-
-        if (this.registryState->DecorationManager != default)
-        {
-            zxdg_decoration_manager_v1_destroy(this.registryState->DecorationManager);
-        }
-
-        if (this.registryState->CursorShapeManager != default)
-        {
-            wp_cursor_shape_manager_v1_destroy(this.registryState->CursorShapeManager);
-        }
-
-        if (this.registryState->FractionalScaleManager != default)
-        {
-            wp_fractional_scale_manager_v1_destroy(this.registryState->FractionalScaleManager);
-        }
-
-        if (this.registryState->Viewporter != default)
-        {
-            wp_viewporter_destroy(this.registryState->Viewporter);
-        }
-
-        if (this.registryState->WmBase != default)
-        {
-            xdg_wm_base_destroy(this.registryState->WmBase);
-        }
-
-        if (this.registryState->Shm != default)
-        {
-            wl_shm_destroy(this.registryState->Shm);
-        }
-
-        if (this.registryState->Compositor != default)
-        {
-            wl_compositor_destroy(this.registryState->Compositor);
-        }
-
-        if (this.registryState->Registry != default)
-        {
-            wl_registry_destroy(this.registryState->Registry);
-        }
-
-        if (this.registryState->Display != default)
-        {
-            wl_display_disconnect(this.registryState->Display);
-        }
-
-        this.registryState->Dispose();
-
-        NativeMemory.Free(this.registryState);
+        RegistryState.Free(this.registryState);
     }
 
-    internal partial void CloseWindow(Window window)
-    {
-        wp_viewport_destroy(window.State->Viewport);
-        wl_surface_destroy(window.State->Surface);
-
-        window.State->Dispose();
-
-        NativeMemory.Free(window.State);
-    }
+    internal partial void CloseWindow(Window window) =>
+        WindowState.Free(window.State);
 
     internal partial WindowState* CreateWindow(string title, Size<int> size, Window? parent)
     {
-        var windowState = NativeMemory.Alloc(
-            new WindowState
-            {
-                Surface = wl_compositor_create_surface(this.registryState->Compositor),
-                Size    = size.Cast<int>(),
-            }
+        var windowState = WindowState.Allocate
+            (wl_compositor_create_surface(this.registryState->Compositor),
+            size
         );
 
         SetProxyTag((wl_proxy*)windowState->Surface);
@@ -1754,41 +1756,41 @@ public unsafe sealed partial class WindowManager
         using var title = value.ToUnmanaged();
 
         libdecor_frame_set_title(window.State->Frame, title);
-}
+    }
 
     internal partial void ShowWindow(Window window) =>
         throw new NotImplementedException();
 
-    internal void UpdateCursor(Cursor cursor) =>
-        throw new NotImplementedException();
+    internal partial void UpdateCursor() =>
+        UpdateCursor(this.registryState->CursorState);
 
-    internal static void UpdateSize(WindowState* state, Size<int> size)
+    internal static void UpdateSize(WindowState* windowState, Size<int> size)
     {
         var sizeHasChanged = false;
 
-        if (state->Size != size)
+        if (windowState->Size != size)
         {
-            state->Size = size;
+            windowState->Size = size;
 
             sizeHasChanged = true;
         }
 
-        if (state->Surface != null && state->Viewport != null)
+        if (windowState->Surface != null && windowState->Viewport != null)
         {
-            wp_viewport_set_destination(state->Viewport, size.Width, size.Height);
+            wp_viewport_set_destination(windowState->Viewport, size.Width, size.Height);
         }
 
         var libdecorState = libdecor_state_new(size.Width, size.Height);
 
-        libdecor_frame_commit(state->Frame, libdecorState, state->PendingLibdecorConfiguration);
+        libdecor_frame_commit(windowState->Frame, libdecorState, windowState->PendingLibdecorConfiguration);
         libdecor_state_free(libdecorState);
 
         if (sizeHasChanged)
         {
-            state->AddMessage(WindowMessage.Resized());
+            windowState->AddMessage(WindowMessage.Resized());
         }
 
-        state->PendingLibdecorConfiguration = null;
+        windowState->PendingLibdecorConfiguration = null;
     }
 }
 #endif

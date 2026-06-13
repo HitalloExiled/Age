@@ -16,6 +16,7 @@ internal struct zwp_tablet_v2;
 internal static unsafe class tablet
 {
     private const uint ZWP_TABLET_MANAGER_V2_GET_TABLET_SEAT = 0;
+    private const uint ZWP_TABLET_SEAT_V2_DESTROY = 0;
 
     private static readonly wl_interface** tablet_unstable_v2_types;
 
@@ -253,4 +254,13 @@ internal static unsafe class tablet
 
     public static int zwp_tablet_seat_v2_add_listener(zwp_tablet_seat_v2* zwp_tablet_seat_v2, zwp_tablet_seat_v2_listener* listener, void* data) =>
         wl_proxy_add_listener((wl_proxy*)zwp_tablet_seat_v2, (void**)listener, data);
+
+    public static void zwp_tablet_seat_v2_destroy(zwp_tablet_seat_v2* zwp_tablet_seat_v2) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)zwp_tablet_seat_v2,
+            ZWP_TABLET_SEAT_V2_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)zwp_tablet_seat_v2),
+            WL_MARSHAL_FLAG_DESTROY
+        );
 }

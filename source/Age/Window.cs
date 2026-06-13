@@ -103,8 +103,8 @@ public sealed class Window : Viewport
 
     public Cursor Cursor
     {
-        get => this.window.Cursor;
-        set => this.window.Cursor = value;
+        get => DisplayWindow.Cursor;
+        set => DisplayWindow.Cursor = value;
     }
 
     public override Size<uint> Size

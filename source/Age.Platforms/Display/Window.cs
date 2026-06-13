@@ -35,18 +35,10 @@ public unsafe partial class Window : Disposable
 
     internal WindowState* State { get; }
 
-    public Cursor Cursor
+    public static Cursor Cursor
     {
-        get;
-        set
-        {
-            if (field == value)
-            {
-                return;
-            }
-
-            WindowManager.Instance.UpdateCursor(field = value);
-        }
+        get => WindowManager.Instance.Cursor;
+        set => WindowManager.Instance.Cursor = value;
     }
 
     public bool IsClosed    { get; private set; }
@@ -141,7 +133,7 @@ public unsafe partial class Window : Disposable
                     break;
 
                 case MessageKind.CursorChanged:
-                    WindowManager.Instance.UpdateCursor(this.Cursor);
+                    WindowManager.Instance.UpdateCursor();
 
                     break;
 

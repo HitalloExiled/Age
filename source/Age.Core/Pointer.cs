@@ -2,6 +2,26 @@ using System.Runtime.CompilerServices;
 
 namespace Age.Core;
 
+public unsafe struct Pointer(void* value)
+{
+    public void* Value = value;
+
+    public readonly bool Equals(Pointer other) =>
+        this.Value == other.Value;
+
+    public override readonly bool Equals(object? obj) =>
+        obj is Pointer pointer && this.Equals(pointer);
+
+    public override readonly int GetHashCode() =>
+        ((nint)this.Value).GetHashCode();
+
+    public static bool operator ==(Pointer left, Pointer right) => left.Equals(right);
+    public static bool operator !=(Pointer left, Pointer right) => !(left == right);
+
+    public static implicit operator void*(Pointer ptr) => ptr.Value;
+    public static implicit operator Pointer(void* ptr) => new(ptr);
+}
+
 public unsafe struct Pointer<T>(T* value) : IEquatable<Pointer<T>> where T : unmanaged, allows ref struct
 {
     public T* Value = value;
@@ -29,7 +49,6 @@ public unsafe struct Pointer<T>(T* value) : IEquatable<Pointer<T>> where T : unm
 
     public static implicit operator T*(Pointer<T> ptr) => ptr.Value;
     public static implicit operator Pointer<T>(T* ptr) => new(ptr);
-
 }
 
 public unsafe static class PointerHelper

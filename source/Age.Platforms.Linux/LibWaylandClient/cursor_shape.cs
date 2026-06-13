@@ -94,4 +94,14 @@ internal static unsafe class cursor_shape
             0,
             [default, pointer]
         );
+
+    public static void wp_cursor_shape_device_v1_set_shape(wp_cursor_shape_device_v1* wp_cursor_shape_device_v1, uint32_t serial, uint32_t shape) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wp_cursor_shape_device_v1,
+            WP_CURSOR_SHAPE_DEVICE_V1_SET_SHAPE,
+            null,
+            wl_proxy_get_version((wl_proxy*)wp_cursor_shape_device_v1),
+            0,
+            [serial, shape]
+        );
 }

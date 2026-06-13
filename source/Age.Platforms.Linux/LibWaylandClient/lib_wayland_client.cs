@@ -22,36 +22,55 @@ internal struct wl_surface;
 
 internal unsafe static partial class lib_wayland_client
 {
-    public const string LIBRARY = "libwayland-client.so.0";
+    private const string LIBRARY = "libwayland-client.so.0";
 
-    public const int WL_BUFFER_DESTROY                      = 0;
-    public const int WL_COMPOSITOR_CREATE_SURFACE           = 0;
-    public const int WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE = 1;
-    public const int WL_DISPLAY_GET_REGISTRY                = 1;
-    public const int WL_MARSHAL_FLAG_DESTROY                = 1 << 0;
-    public const int WL_REGISTRY_BIND                       = 0;
-    public const int WL_SHM_CREATE_POOL                     = 0;
+    private const int WL_BUFFER_DESTROY                      = 0;
+    private const int WL_COMPOSITOR_CREATE_SURFACE           = 0;
+    private const int WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE = 1;
+    private const int WL_DISPLAY_GET_REGISTRY                = 1;
 
-    public const int WL_SEAT_GET_POINTER  = 0;
-    public const int WL_SEAT_GET_KEYBOARD = 1;
-    public const int WL_SEAT_GET_TOUCH    = 2;
-    public const int WL_SEAT_RELEASE      = 3;
+    private const int WL_POINTER_SET_CURSOR = 0;
+    private const int WL_POINTER_RELEASE    = 1;
 
-    public const uint WL_SURFACE_DESTROY              = 0;
-    public const uint WL_SURFACE_ATTACH               = 1;
-    public const uint WL_SURFACE_DAMAGE               = 2;
-    public const uint WL_SURFACE_FRAME                = 3;
-    public const uint WL_SURFACE_SET_OPAQUE_REGION    = 4;
-    public const uint WL_SURFACE_SET_INPUT_REGION     = 5;
-    public const uint WL_SURFACE_COMMIT               = 6;
-    public const uint WL_SURFACE_SET_BUFFER_TRANSFORM = 7;
-    public const uint WL_SURFACE_SET_BUFFER_SCALE     = 8;
-    public const uint WL_SURFACE_DAMAGE_BUFFER        = 9;
-    public const uint WL_SURFACE_OFFSET               = 10;
+    private const int WL_REGISTRY_BIND   = 0;
+    private const int WL_SHM_CREATE_POOL = 0;
 
-    public const uint WL_SHM_POOL_CREATE_BUFFER = 0;
-    public const uint WL_SHM_POOL_DESTROY       = 1;
-    public const uint WL_SHM_POOL_RESIZE        = 2;
+    private const int WL_SEAT_GET_POINTER  = 0;
+    private const int WL_SEAT_GET_KEYBOARD = 1;
+    private const int WL_SEAT_GET_TOUCH    = 2;
+    private const int WL_SEAT_RELEASE      = 3;
+
+    private const uint WL_SURFACE_DESTROY              = 0;
+    private const uint WL_SURFACE_ATTACH               = 1;
+    private const uint WL_SURFACE_DAMAGE               = 2;
+    private const uint WL_SURFACE_FRAME                = 3;
+    private const uint WL_SURFACE_SET_OPAQUE_REGION    = 4;
+    private const uint WL_SURFACE_SET_INPUT_REGION     = 5;
+    private const uint WL_SURFACE_COMMIT               = 6;
+    private const uint WL_SURFACE_SET_BUFFER_TRANSFORM = 7;
+    private const uint WL_SURFACE_SET_BUFFER_SCALE     = 8;
+    private const uint WL_SURFACE_DAMAGE_BUFFER        = 9;
+    private const uint WL_SURFACE_OFFSET               = 10;
+
+    private const uint WL_SHM_POOL_CREATE_BUFFER = 0;
+    private const uint WL_SHM_POOL_DESTROY       = 1;
+    private const uint WL_SHM_POOL_RESIZE        = 2;
+
+    public const int WL_MARSHAL_FLAG_DESTROY = 1 << 0;
+
+    public const uint WL_POINTER_ENTER_SINCE_VERSION                   = 1;
+    public const uint WL_POINTER_LEAVE_SINCE_VERSION                   = 1;
+    public const uint WL_POINTER_MOTION_SINCE_VERSION                  = 1;
+    public const uint WL_POINTER_BUTTON_SINCE_VERSION                  = 1;
+    public const uint WL_POINTER_AXIS_SINCE_VERSION                    = 1;
+    public const uint WL_POINTER_FRAME_SINCE_VERSION                   = 5;
+    public const uint WL_POINTER_AXIS_SOURCE_SINCE_VERSION             = 5;
+    public const uint WL_POINTER_AXIS_STOP_SINCE_VERSION               = 5;
+    public const uint WL_POINTER_AXIS_DISCRETE_SINCE_VERSION           = 5;
+    public const uint WL_POINTER_AXIS_VALUE120_SINCE_VERSION           = 8;
+    public const uint WL_POINTER_AXIS_RELATIVE_DIRECTION_SINCE_VERSION = 9;
+    public const uint WL_POINTER_SET_CURSOR_SINCE_VERSION              = 1;
+    public const uint WL_POINTER_RELEASE_SINCE_VERSION                 = 3;
 
     private static readonly nint handle = NativeLibrary.Load(LIBRARY);
 
@@ -203,6 +222,9 @@ internal unsafe static partial class lib_wayland_client
     #region wl_proxy - wl_data_device
     public static int wl_data_device_add_listener(wl_data_device* wl_data_device, wl_data_device_listener* listener, void* data) =>
         wl_proxy_add_listener((wl_proxy*)wl_data_device, (void**)listener, data);
+
+    public static void wl_data_device_destroy(wl_data_device* wl_data_device) =>
+        wl_proxy_destroy((wl_proxy*)wl_data_device);
     #endregion
 
     #region wl_proxy - wl_data_device_manager
@@ -239,6 +261,19 @@ internal unsafe static partial class lib_wayland_client
 
     public static void wl_pointer_destroy(wl_pointer* wl_pointer) =>
         wl_proxy_destroy((wl_proxy*)wl_pointer);
+
+    public static uint wl_pointer_get_version(wl_pointer* wl_pointer) =>
+        wl_proxy_get_version((wl_proxy*)wl_pointer);
+
+    public static void wl_pointer_set_cursor(wl_pointer* wl_pointer, uint32_t serial, wl_surface* surface, int32_t hotspot_x, int32_t hotspot_y) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wl_pointer,
+            WL_POINTER_SET_CURSOR,
+            null,
+            wl_proxy_get_version((wl_proxy*)wl_pointer),
+            0,
+            [serial, surface, hotspot_x, hotspot_y]
+        );
     #endregion
 
     #region wl_proxy - wl_registry
@@ -307,6 +342,16 @@ internal unsafe static partial class lib_wayland_client
             [buffer, x, y]
         );
 
+    public static void wl_surface_set_buffer_scale(wl_surface* wl_surface, int32_t scale) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wl_surface,
+            WL_SURFACE_SET_BUFFER_SCALE,
+            null,
+            wl_proxy_get_version((wl_proxy*)wl_surface),
+            0,
+            [scale]
+        );
+
     public static void wl_surface_commit(wl_surface* wl_surface) =>
         wl_proxy_marshal_flags(
             (wl_proxy*)wl_surface,
@@ -320,6 +365,16 @@ internal unsafe static partial class lib_wayland_client
         wl_proxy_marshal_flags(
             (wl_proxy*)wl_surface,
             WL_SURFACE_DAMAGE,
+            null,
+            wl_proxy_get_version((wl_proxy*)wl_surface),
+            0,
+            [x, y, width, height]
+        );
+
+    public static void wl_surface_damage_buffer(wl_surface* wl_surface, int32_t x, int32_t y, int32_t width, int32_t height) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wl_surface,
+            WL_SURFACE_DAMAGE_BUFFER,
             null,
             wl_proxy_get_version((wl_proxy*)wl_surface),
             0,

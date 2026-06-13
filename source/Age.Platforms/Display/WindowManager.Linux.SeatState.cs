@@ -1,8 +1,7 @@
 #if LINUX
-using Age.Core;
-using Age.Core.Collections;
+using System.Runtime.InteropServices;
+using Age.Core.Extensions;
 using Age.Platforms.Linux.LibWaylandClient;
-using Age.Platforms.Linux.LibXKBCommon;
 
 namespace Age.Platforms.Display;
 
@@ -10,52 +9,49 @@ public unsafe partial class WindowManager
 {
     private struct SeatState
     {
-        public required RegistryState* Registry;
-        public required Named<wl_seat> Seat;
+        public RegistryState* RegistryState;
+        public Named<wl_seat> Seat;
 
         public WindowState*                     ActiveWindow;
-        public zwp_confined_pointer_v1*         ConfinedPointer;
-        public wl_callback*                     CursorFrameCallback;
-        public wp_cursor_shape_device_v1*       CursorShapeDevice;
-        public wl_surface*                      CursorSurface;
         public wl_data_device*                  DataDevice;
-        public wl_keyboard*                     Keyboard;
-        public NativeBuffer<byte>               KeymapBuffer;
-        public long                             LastRepeatStartMsec;
-        public zwp_locked_pointer_v1*           LockedPointer;
-        public wl_pointer*                      Pointer;
+        public ExtendedState                    ExtendedState;
         public zwp_pointer_gesture_pinch_v1*    PointerGesturePinch;
         public zwp_primary_selection_device_v1* PrimarySelectionDevice;
-        public zwp_relative_pointer_v1*         RelativePointer;
         public zwp_tablet_seat_v2*              TabletSeat;
         public zwp_text_input_v3*               TextInput;
-        public xkb_compose_state*               XkbComposeState;
-        public xkb_compose_table*               XkbComposeTable;
-        public xkb_context*                     XkbContext;
-        public xkb_keymap*                      XkbKeymap;
-        public xkb_state*                       XkbState;
 
-        public NativeDictionary<uint, Key> PressedKeycodes;
+        private SeatState(Named<wl_seat> seat, RegistryState* registry)
+        {
+            this.Seat     = seat;
+            this.RegistryState = registry;
+        }
 
-        public uint CurrentLayoutIndex;
-        public uint LastKeyPressedSerial;
-        public uint ModsDepressed;
-        public uint ModsLatched;
-        public uint ModsLocked;
-        public uint RepeatingKeycode;
-        public int  RepeatKeyDelayMsec;
-        public int  RepeatStartDelayMsec;
+        public static SeatState* Allocate(Named<wl_seat> seat, RegistryState* registry) =>
+            NativeMemory.Alloc(new SeatState(seat, registry));
 
-        public bool AltPressed;
-        public bool CtrlPressed;
-        public bool MetaPressed;
-        public bool ShiftPressed;
+        public void Dispose()
+        {
+            if (this.DataDevice != null)
+            {
+                lib_wayland_client.wl_data_device_destroy(this.DataDevice);
 
-        public SeatState() =>
-            this.PressedKeycodes = [];
+                this.DataDevice = null;
+            }
 
-        public void Dispose() =>
-            this.PressedKeycodes.Dispose();
+            if (this.TabletSeat != null)
+            {
+                tablet.zwp_tablet_seat_v2_destroy(this.TabletSeat);
+
+                this.TabletSeat = null;
+            }
+        }
+
+        internal static void Free(SeatState* seatState)
+        {
+            seatState->Dispose();
+
+            NativeMemory.Free(seatState);
+        }
     }
 }
 #endif

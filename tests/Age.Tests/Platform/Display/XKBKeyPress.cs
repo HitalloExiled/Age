@@ -1,8 +1,8 @@
 #if LINUX
-using System.Text;
 using Age.Core.Extensions;
-using Age.Platforms.Linux;
 using Age.Platforms.Linux.LibXKBCommon;
+using Age.Platforms.Linux;
+using System.Text;
 
 using static Age.Platforms.Linux.LibXKBCommon.lib_xkbommon;
 
@@ -64,17 +64,17 @@ public class XKBKeyPress
 
         var sym_a = xkb_state_key_get_one_sym(state, KEY_a);
 
-        Assert.Equal((uint)xkbcommon_keysyms.XKB_KEY_A, sym_tilde);
+        Assert.Equal((uint)xkbcommon_keysyms.XKB_KEY_a, sym_a);
 
         xkb_compose_state_feed(composeState, sym_a);
 
         Assert.Equal(xkb_compose_status.XKB_COMPOSE_COMPOSED, xkb_compose_state_get_status(composeState));
 
-        var composed_txt = stackalloc byte[16];
+        var composed = stackalloc byte[16];
 
-        _ = xkb_compose_state_get_utf8(composeState, composed_txt, 16 - 1);
+        _ = xkb_compose_state_get_utf8(composeState, composed, 16 - 1);
 
-        Assert.Equal("ã", Encoding.GetStringFromNullTerminated(composed_txt));
+        Assert.Equal("ã", Encoding.GetStringFromNullTerminated(composed));
 
         xkb_compose_state_unref(composeState);
         xkb_compose_table_unref(composeTable);

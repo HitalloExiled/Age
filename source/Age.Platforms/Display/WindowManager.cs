@@ -9,6 +9,11 @@ public unsafe sealed partial class WindowManager : Disposable
 {
     public string Id { get; }
 
+    public partial Cursor Cursor { get; set; }
+
+    public partial int  CursorScale   { get; set; }
+    public partial bool CursorVisible { get; set; }
+
     [AllowNull]
     public static WindowManager Instance { get; private set; }
 
@@ -27,4 +32,5 @@ public unsafe sealed partial class WindowManager : Disposable
     internal partial void SetWindowClipboardData(Window window, string value);
     internal partial void SetWindowTitle(Window window, string value);
     internal partial void ShowWindow(Window window);
+    internal partial void UpdateCursor();
 }
