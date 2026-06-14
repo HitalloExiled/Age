@@ -34,6 +34,7 @@ using static Age.Platforms.Linux.LibWaylandClient.xdg_shell;
 using static Age.Platforms.Linux.LibWaylandClient.xdg_system_bell;
 using static Age.Platforms.Linux.LibWaylandCursor.lib_wayland_cursor;
 using static Age.Platforms.Linux.LibXKBCommon.lib_xkbommon;
+using Age.Platforms.Linux;
 
 namespace Age.Platforms.Display;
 
@@ -426,28 +427,6 @@ public unsafe sealed partial class WindowManager
             return default;
         }
 
-        Modifier modifiers = default;
-
-        if (keyboardState->ShiftPressed)
-        {
-            modifiers |= Modifier.Shift;
-        }
-
-        if (keyboardState->CtrlPressed)
-        {
-            modifiers |= Modifier.Ctrl;
-        }
-
-        if (keyboardState->AltPressed)
-        {
-            modifiers |= Modifier.Alt;
-        }
-
-        if (keyboardState->MetaPressed)
-        {
-            modifiers |= Modifier.Meta;
-        }
-
         var @char = (char)unicode;
 
         return new WindowKeyEvent
@@ -456,7 +435,7 @@ public unsafe sealed partial class WindowManager
             IsPressed   = pressed,
             Key         = key,
             Location    = keyLocation,
-            Modifiers   = modifiers,
+            Modifiers   = keyboardState->Modifiers,
             PhysicalKey = physicalKey,
         };
     }
@@ -497,6 +476,8 @@ public unsafe sealed partial class WindowManager
 
         var composeStatus = xkb_compose_state_get_status(keyboardState->ComposeState);
 
+        var registryState = keyboardState->SeatState->RegistryState;
+
         if (pressed)
         {
             var keysym        = xkb_state_key_get_one_sym(keyboardState->State, keycode);
@@ -532,7 +513,7 @@ public unsafe sealed partial class WindowManager
                             Echo = echo,
                         };
 
-                        keyboardState->SeatState->ActiveWindow->AddMessage(WindowMessage.KeyPress(composedWindowKeyEvent));
+                        registryState->ActiveWindow->AddMessage(WindowMessage.KeyPress(composedWindowKeyEvent));
                     }
                 }
             }
@@ -548,7 +529,7 @@ public unsafe sealed partial class WindowManager
             {
                 windowKeyEvent = windowKeyEvent with { Echo = echo };
 
-                keyboardState->SeatState->ActiveWindow->AddMessage(WindowMessage.KeyPress(windowKeyEvent));
+                registryState->ActiveWindow->AddMessage(WindowMessage.KeyPress(windowKeyEvent));
 
                 lastKey = windowKeyEvent.Key;
             }
@@ -560,7 +541,7 @@ public unsafe sealed partial class WindowManager
 
             if (unstuckKeyEvent != default)
             {
-                keyboardState->SeatState->ActiveWindow->AddMessage(WindowMessage.KeyPress(unstuckKeyEvent));
+                registryState->ActiveWindow->AddMessage(WindowMessage.KeyPress(unstuckKeyEvent));
             }
         }
     }
@@ -623,7 +604,7 @@ public unsafe sealed partial class WindowManager
         Debug.Assert(seatState != null);
         Debug.Assert(windowState != null);
 
-        seatState->ActiveWindow = windowState;
+        seatState->RegistryState->ActiveWindow = windowState;
 
         windowState->AddMessage(WindowMessage.FocusIn());
     }
@@ -747,13 +728,13 @@ public unsafe sealed partial class WindowManager
 
         keyboard->RepeatingKeycode = XKB_KEYCODE_INVALID;
 
-        if (seatState->ActiveWindow == null)
+        if (seatState->RegistryState->ActiveWindow == null)
         {
             // We're probably on a decoration or some other third-party thing.
             return;
         }
 
-        var windowState = seatState->ActiveWindow;
+        var windowState = seatState->RegistryState->ActiveWindow;
 
         Debug.Assert(windowState != null);
 
@@ -761,10 +742,7 @@ public unsafe sealed partial class WindowManager
 
         windowState = null;
 
-        keyboard->ShiftPressed = false;
-        keyboard->CtrlPressed  = false;
-        keyboard->AltPressed   = false;
-        keyboard->MetaPressed  = false;
+        keyboard->Modifiers = default;
 
         if (keyboard->State != null)
         {
@@ -800,10 +778,27 @@ public unsafe sealed partial class WindowManager
         using var alt   = new UnmanagedString(XKB_MOD_NAME_ALT);
         using var logo  = new UnmanagedString(XKB_MOD_NAME_LOGO);
 
-        keyboard->ShiftPressed = xkb_state_mod_name_is_active(keyboard->State, shift, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1;
-        keyboard->CtrlPressed  = xkb_state_mod_name_is_active(keyboard->State, ctrl,  xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1;
-        keyboard->AltPressed   = xkb_state_mod_name_is_active(keyboard->State, alt,   xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1;
-        keyboard->MetaPressed  = xkb_state_mod_name_is_active(keyboard->State, logo,  xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1;
+        Debug.Assert(keyboard->Modifiers == default);
+
+        if (xkb_state_mod_name_is_active(keyboard->State, shift, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
+        {
+            keyboard->Modifiers |= Modifier.Shift;
+        }
+
+        if (xkb_state_mod_name_is_active(keyboard->State, ctrl, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
+        {
+            keyboard->Modifiers |= Modifier.Ctrl;
+        }
+
+        if (xkb_state_mod_name_is_active(keyboard->State, alt, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
+        {
+            keyboard->Modifiers |= Modifier.Alt;
+        }
+
+        if (xkb_state_mod_name_is_active(keyboard->State, logo, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
+        {
+            keyboard->Modifiers |= Modifier.Meta;
+        }
 
         keyboard->CurrentLayoutIndex = group;
     }
@@ -931,19 +926,20 @@ public unsafe sealed partial class WindowManager
         var seatState = (SeatState*)data;
 
         Debug.Assert(seatState != null);
-
-        seatState->ActiveWindow  = windowState;
-
         Debug.Assert(seatState->ExtendedState != default && seatState->ExtendedState.Kind == SeatKind.Cursor);
 
         var cursorState = (CursorState*)(void*)seatState->ExtendedState.Data;
+
+        seatState->RegistryState->ActiveWindow = windowState;
 
         Debug.Assert(cursorState->CursorSurface != null);
 
         cursorState->PointerEnterSerial = serial;
 
-        cursorState->Position.X = surfaceX; // Really needs wl_fixed_to_double ??
-        cursorState->Position.Y = surfaceY; // Really needs wl_fixed_to_double ??
+        var pointerData = &cursorState->PointerDataBuffer;
+
+        pointerData->Position.X = surfaceX; // Really needs wl_fixed_to_double ??
+        pointerData->Position.Y = surfaceY; // Really needs wl_fixed_to_double ??
 
         UpdateCursor(cursorState);
 
@@ -956,24 +952,352 @@ public unsafe sealed partial class WindowManager
     }
 
     [UnmanagedCallersOnly]
-    private static void OnPointerLeave(void* data, wl_pointer* pointer, uint serial, wl_surface* surface) =>
-        Console.WriteLine(nameof(OnPointerLeave));
+    private static void OnPointerLeave(void* data, wl_pointer* pointer, uint serial, wl_surface* surface)
+    {
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+
+        if (seatState->RegistryState->ActiveWindow == null)
+        {
+            return;
+        }
+
+        seatState->RegistryState->ActiveWindow = null;
+
+        if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
+        {
+            delegate* unmanaged<void*, wl_pointer*, void> onPointerFrame = &OnPointerFrame;
+
+            onPointerFrame(data, pointer);
+        }
+    }
 
     [UnmanagedCallersOnly]
-    private static void OnPointerMotion(void* data, wl_pointer* pointer, uint time, int surfaceX, int surfaceY) =>
-        Console.WriteLine(nameof(OnPointerMotion));
+    private static void OnPointerMotion(void* data, wl_pointer* pointer, uint time, int surfaceX, int surfaceY)
+    {
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+        Debug.Assert(seatState->ExtendedState != default && seatState->ExtendedState.Kind == SeatKind.Cursor);
+
+        var cursorState = (CursorState*)(void*)seatState->ExtendedState.Data;
+
+        var pointerData = &cursorState->PointerDataBuffer;
+
+        pointerData->Position.X = surfaceX; //wl_fixed_to_double(surface_x);
+        pointerData->Position.Y = surfaceY; //wl_fixed_to_double(surface_y);
+        pointerData->MotionTime = time;
+
+        if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
+        {
+            delegate* unmanaged<void*, wl_pointer*, void> onPointerFrame = &OnPointerFrame;
+
+            onPointerFrame(data, pointer);
+        }
+    }
 
     [UnmanagedCallersOnly]
-    private static void OnPointerButton(void* data, wl_pointer* pointer, uint serial, uint time, uint button, uint state) =>
-        Console.WriteLine(nameof(OnPointerButton));
+    private static void OnPointerButton(void* data, wl_pointer* pointer, uint serial, uint time, uint button, uint state)
+    {
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+        Debug.Assert(seatState->ExtendedState != default && seatState->ExtendedState.Kind == SeatKind.Cursor);
+
+        var cursorState = (CursorState*)(void*)seatState->ExtendedState.Data;
+
+        var buttonPressed = MouseButton.None;
+
+        switch ((input_event_codes)button)
+        {
+            case input_event_codes.BTN_LEFT:
+                buttonPressed = MouseButton.Left;
+                break;
+
+            case input_event_codes.BTN_RIGHT:
+                buttonPressed = MouseButton.Right;
+                break;
+
+            case input_event_codes.BTN_MIDDLE:
+                buttonPressed = MouseButton.Middle;
+                break;
+
+            case input_event_codes.BTN_SIDE:
+                buttonPressed = MouseButton.MbXbutton1;
+                break;
+
+            case input_event_codes.BTN_EXTRA:
+                buttonPressed = MouseButton.MbXbutton2;
+                break;
+        }
+
+        var pointerData = &cursorState->PointerDataBuffer;
+
+        if ((state & (uint)wl_pointer_button_state.WL_POINTER_BUTTON_STATE_PRESSED) != 0)
+        {
+            pointerData->PressedButton |= buttonPressed;
+            pointerData->LastButtonPressed = buttonPressed;
+            pointerData->DoubleClickBegun  = true;
+        }
+        else
+        {
+            pointerData->PressedButton = default;
+        }
+
+        pointerData->ButtonTime   = time;
+        pointerData->ButtonSerial = serial;
+
+        if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
+        {
+            delegate* unmanaged<void*, wl_pointer*, void> onPointerFrame = &OnPointerFrame;
+
+            onPointerFrame(data, pointer);
+        }
+    }
 
     [UnmanagedCallersOnly]
-    private static void OnPointerAxis(void* data, wl_pointer* pointer, uint time, uint axis, int value) =>
-        Console.WriteLine(nameof(OnPointerAxis));
+    private static void OnPointerAxis(void* data, wl_pointer* pointer, uint time, uint axis, int value)
+    {
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+        Debug.Assert(seatState->ExtendedState != default && seatState->ExtendedState.Kind == SeatKind.Cursor);
+
+        var cursorState = (CursorState*)(void*)seatState->ExtendedState.Data;
+
+        var pointerData = &cursorState->PointerDataBuffer;
+
+        switch ((wl_pointer_axis)axis)
+        {
+            case wl_pointer_axis.WL_POINTER_AXIS_VERTICAL_SCROLL:
+                pointerData->Scroll.Y = value;// wl_fixed_to_double(value);
+                break;
+
+            case wl_pointer_axis.WL_POINTER_AXIS_HORIZONTAL_SCROLL:
+                pointerData->Scroll.X = value;// wl_fixed_to_double(value);
+                break;
+        }
+
+        pointerData->ButtonTime = time;
+
+        if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
+        {
+            delegate* unmanaged<void*, wl_pointer*, void> onPointerFrame = &OnPointerFrame;
+
+            onPointerFrame(data, pointer);
+        }
+    }
 
     [UnmanagedCallersOnly]
-    private static void OnPointerFrame(void* data, wl_pointer* pointer) =>
-        Console.WriteLine(nameof(OnPointerFrame));
+    private static void OnPointerFrame(void* data, wl_pointer* pointer)
+    {
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+        Debug.Assert(seatState->ExtendedState != default && seatState->ExtendedState.Kind == SeatKind.Cursor);
+
+        var cursorState = (CursorState*)(void*)seatState->ExtendedState.Data;
+
+        var previousPointerData = &cursorState->PointerData;
+        var pointerData         = &cursorState->PointerDataBuffer;
+
+        var hoverChanged = false;
+
+        WindowState* windowState = null;
+
+        var registryState = seatState->RegistryState;
+
+        if (pointerData->PointedId != previousPointerData->PointedId)
+        {
+            if (previousPointerData->PointedId != null)
+            {
+                pointerData->PressedButton = default;
+            }
+
+            hoverChanged = true;
+
+            if (previousPointerData->PointedId != null)
+            {
+                windowState = previousPointerData->PointedId;
+            }
+        }
+
+        if (windowState == null && pointerData->PointedId != null)
+        {
+            windowState = pointerData->PointedId;
+        }
+
+        if (windowState != null)
+        {
+            const int SCALE = 1;
+
+            registryState->CurrentSeat = seatState->Seat;
+
+            if (previousPointerData->MotionTime != pointerData->MotionTime || previousPointerData->RelativeMotionTime != pointerData->RelativeMotionTime)
+            {
+                var deltaPosisiton = (pointerData->Position - previousPointerData->Position) * SCALE;
+
+                Point<ushort> relative;
+                Point<ushort> velocity;
+
+                if (previousPointerData->RelativeMotionTime != pointerData->RelativeMotionTime)
+                {
+                    var time_delta = pointerData->RelativeMotionTime - previousPointerData->RelativeMotionTime;
+
+                    relative = (pointerData->RelativeMotion * SCALE).ToPoint<ushort>();
+                    velocity = (deltaPosisiton / time_delta).Cast<ushort>();
+                }
+                else
+                {
+                    var deltaTime = pointerData->MotionTime - previousPointerData->MotionTime;
+
+                    relative = deltaPosisiton.Cast<ushort>();
+                    velocity = (deltaPosisiton / deltaTime).Cast<ushort>();
+                }
+
+                var mouseEvent = new WindowMouseEvent
+                {
+                    Button         = default,
+                    Modifiers      = seatState->RegistryState->KeyboardState->Modifiers,
+                    PressedButtons = pointerData->PressedButton,
+                    PrimaryButton  = default,
+                    Relative       = relative,
+                    ScrollDelta    = default,
+                    Velocity       = velocity,
+                    X              = (ushort)(pointerData->Position.X * SCALE),
+                    Y              = (ushort)(pointerData->Position.Y * SCALE),
+                };
+
+                pointerData->PointedId->AddMessage(WindowMessage.MouseMove(mouseEvent));
+            }
+
+            if (pointerData->DiscreteScrollVector120 - previousPointerData->DiscreteScrollVector120 != default)
+            {
+                if (pointerData->Scroll.Y != 0)
+                {
+                    var button = pointerData->Scroll.Y > 0 ? MouseButton.WheelDown : MouseButton.WheelUp;
+
+                    pointerData->PressedButton |= button;
+                }
+
+                if (pointerData->Scroll.X != 0)
+                {
+                    var button = pointerData->Scroll.X > 0 ? MouseButton.WheelRight : MouseButton.WheelLeft;
+
+                    pointerData->PressedButton |= button;
+                }
+            }
+            else if (pointerData->Scroll - previousPointerData->Scroll != default)
+            {
+                // This is a continuous scroll, so we'll emit a pan gesture.
+            }
+
+            if (previousPointerData->PressedButton != pointerData->PressedButton)
+            {
+                var deltaButtons = previousPointerData->PressedButton ^ pointerData->PressedButton;
+
+                Span<MouseButton> buttonsToTest =
+                [
+                    MouseButton.Left,
+                    MouseButton.Middle,
+                    MouseButton.Right,
+                    MouseButton.WheelUp,
+                    MouseButton.WheelDown,
+                    MouseButton.WheelLeft,
+                    MouseButton.WheelRight,
+                    MouseButton.MbXbutton1,
+                    MouseButton.MbXbutton2,
+                ];
+
+                foreach (var button in buttonsToTest)
+                {
+                    if (deltaButtons.HasFlags(button))
+                    {
+                        var scrollDelta = 0;
+
+                        if (button == MouseButton.WheelUp || button == MouseButton.WheelDown)
+                        {
+                            scrollDelta = (int)Math.Abs(pointerData->DiscreteScrollVector120.Y / (float)120);
+                        }
+
+                        if (button == MouseButton.WheelRight || button == MouseButton.WheelLeft)
+                        {
+                            scrollDelta = (int)Math.Abs(pointerData->DiscreteScrollVector120.X / (float)120);
+                        }
+
+                        var mouseEvent = new WindowMouseEvent
+                        {
+                            Button         = button,
+                            Modifiers      = registryState->KeyboardState->Modifiers,
+                            PressedButtons = pointerData->PressedButton,
+                            PrimaryButton  = default,
+                            Relative       = default,
+                            ScrollDelta    = scrollDelta,
+                            Velocity       = default,
+                            X              = (ushort)(pointerData->Position.X * SCALE),
+                            Y              = (ushort)(pointerData->Position.Y * SCALE),
+                        };
+
+                        var pressed = false;
+
+                        if (pointerData->PressedButton.HasFlags(button))
+                        {
+                            pointerData->LastPressedPosition = pointerData->Position;
+
+                            pressed = true;
+                        }
+
+                        var isDoubleClick = previousPointerData->DoubleClickBegun
+                            && pressed
+                            && pointerData->LastButtonPressed == previousPointerData->LastButtonPressed
+                            && pointerData->ButtonTime - previousPointerData->ButtonTime < 400
+                            && ((previousPointerData->LastPressedPosition * SCALE) - (pointerData->LastPressedPosition * SCALE)).ToVector2().Length < 5;
+
+                        if (isDoubleClick)
+                        {
+                            pointerData->DoubleClickBegun = false;
+                            registryState->ActiveWindow->AddMessage(WindowMessage.DoubleClick(mouseEvent));
+                        }
+                        else
+                        {
+                            registryState->ActiveWindow->AddMessage(WindowMessage.Click(mouseEvent));
+                        }
+
+                        if (button is MouseButton.WheelUp or MouseButton.WheelDown or MouseButton.WheelLeft or MouseButton.WheelRight)
+                        {
+                            pointerData->PressedButton = default;
+
+                            var mouseWheelEvent = new WindowMouseEvent
+                            {
+                                Button         = button,
+                                Modifiers      = registryState->KeyboardState->Modifiers,
+                                PressedButtons = default,
+                                PrimaryButton  = default,
+                                Relative       = default,
+                                ScrollDelta    = scrollDelta,
+                                Velocity       = default,
+                                X              = mouseEvent.X,
+                                Y              = mouseEvent.Y,
+                            };
+
+                            registryState->ActiveWindow->AddMessage(WindowMessage.MouseWheel(mouseWheelEvent));
+                        }
+                    }
+                }
+            }
+        }
+
+        pointerData->Scroll                  = default;
+        pointerData->DiscreteScrollVector120 = default;
+
+        *previousPointerData = *pointerData;
+
+        if (hoverChanged)
+        {
+            registryState->ActiveWindow->AddMessage(WindowMessage.FocusIn());
+        }
+    }
 
     [UnmanagedCallersOnly]
     private static void OnPointerAxisSource(void* data, wl_pointer* pointer, uint axisSource) =>

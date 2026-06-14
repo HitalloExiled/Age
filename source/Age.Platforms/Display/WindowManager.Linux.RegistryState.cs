@@ -23,10 +23,11 @@ public unsafe sealed partial class WindowManager
         public NativeArray<Pointer<wl_cursor>> Cursors;
 
         public Named<xdg_activation_v1>                 Activation;
+        public WindowState*                             ActiveWindow;
         public Named<wl_compositor>                     Compositor;
         public wl_seat*                                 CurrentSeat;
-        public CursorState*                             CursorState;
         public Named<wp_cursor_shape_manager_v1>        CursorShapeManager;
+        public CursorState*                             CursorState;
         public wl_cursor_theme*                         CursorTheme;
         public byte*                                    CursorThemeName;
         public Named<wl_data_device_manager>            DataDeviceManager;

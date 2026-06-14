@@ -106,46 +106,49 @@ public sealed partial class RenderTree
     {
         var position = Input.GetMousePosition();
 
-        var button    = MouseButton.None;
-        var keyStates = MouseKeyStates.None;
-        var modifiers = Input.GetModifiers();
+        var button         = MouseButton.None;
+        var modifiers      = Input.GetModifiers();
+        var pressedButtons = MouseButton.None;
 
         if (Input.IsMouseButtonPressed(MouseButton.Left))
         {
             button = MouseButton.Left;
-            keyStates |= MouseKeyStates.LeftButton;
+            pressedButtons |= MouseButton.Left;
         }
 
         if (Input.IsMouseButtonPressed(MouseButton.Middle))
         {
             button = MouseButton.Middle;
-            keyStates |= MouseKeyStates.MiddleButton;
+            pressedButtons |= MouseButton.Middle;
         }
 
         if (Input.IsMouseButtonPressed(MouseButton.Right))
         {
             button = MouseButton.Right;
-            keyStates |= MouseKeyStates.RightButton;
+            pressedButtons |= MouseButton.Right;
         }
 
         if (modifiers.HasFlags(Modifier.Shift))
         {
-            keyStates |= MouseKeyStates.Shift;
+            modifiers |= Modifier.Shift;
         }
 
         if (modifiers.HasFlags(Modifier.Ctrl))
         {
-            keyStates |= MouseKeyStates.Ctrl;
+            modifiers |= Modifier.Ctrl;
         }
 
         var windowMouseEvent = new WindowMouseEvent
         {
-            X             = position.X,
-            Y             = position.Y,
-            Button        = button,
-            PrimaryButton = Input.PrimaryButton,
-            KeyStates     = keyStates,
-            Delta         = Input.GetMouseWheel(),
+            Button         = button,
+            Modifiers      = modifiers,
+            PressedButtons = pressedButtons,
+            PrimaryButton  = Input.PrimaryButton,
+            ScrollDelta    = Input.GetMouseWheel(),
+            X              = position.X,
+            Y              = position.Y,
+            Relative       = default,
+            Velocity       = default,
         };
 
         this.hoveredVirtualChild?.HandleMouseOut(windowMouseEvent);
@@ -224,7 +227,7 @@ public sealed partial class RenderTree
             {
                 text.HandleActivate();
 
-                if (mouseEvent.KeyStates.HasFlags(MouseKeyStates.Shift) && this.focusedText == text)
+                if (mouseEvent.Modifiers.HasFlags(Modifier.Shift) && this.focusedText == text)
                 {
                     text.HandleVirtualChildMouseDown(mouseEvent, virtualChildIndex, false);
                 }

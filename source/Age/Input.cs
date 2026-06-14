@@ -43,7 +43,7 @@ public static class Input
         mouseButtons.Remove(mouseEvent.Button);
 
     private static void OnMouseWheel(in WindowMouseEvent mouseEvent) =>
-        mouseWheel = mouseEvent.Delta;
+        mouseWheel = mouseEvent.ScrollDelta;
 
     internal static void ListenInputEvents(Window window)
     {

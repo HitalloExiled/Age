@@ -250,17 +250,7 @@ public abstract partial class Element
         this.SetCursor(this.ComputedStyle.Cursor);
 
     private MouseEvent CreateEvent(in WindowMouseEvent mouseEvent, bool indirect) =>
-        new()
-        {
-            Target        = this,
-            Button        = mouseEvent.Button,
-            Delta         = mouseEvent.Delta,
-            KeyStates     = mouseEvent.KeyStates,
-            PrimaryButton = mouseEvent.PrimaryButton,
-            X             = mouseEvent.X,
-            Y             = mouseEvent.Y,
-            Indirect      = indirect,
-        };
+        new(this, mouseEvent, indirect);
 
     private ContextEvent CreateEvent(in WindowContextEvent windowContextEvent) =>
         new()
@@ -448,18 +438,18 @@ public abstract partial class Element
     public void Blur()
     {
         this.RemoveState(State.Focused);
-        this.BluredEvent?.Invoke(new() { Target = this });
+        this.BluredEvent?.Invoke(new(this));
     }
 
     public void Click()
     {
         this.AddState(State.Active);
-        this.ClickedEvent?.Invoke(new() { Target = this });
+        this.ClickedEvent?.Invoke(new(this));
     }
 
     public void Focus()
     {
         this.AddState(State.Focused);
-        this.FocusedEvent?.Invoke(new() { Target = this });
+        this.FocusedEvent?.Invoke(new(this));
     }
 }

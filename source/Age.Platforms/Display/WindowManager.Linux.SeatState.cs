@@ -12,7 +12,6 @@ public unsafe partial class WindowManager
         public RegistryState* RegistryState;
         public Named<wl_seat> Seat;
 
-        public WindowState*                     ActiveWindow;
         public wl_data_device*                  DataDevice;
         public ExtendedState                    ExtendedState;
         public zwp_pointer_gesture_pinch_v1*    PointerGesturePinch;
@@ -22,7 +21,7 @@ public unsafe partial class WindowManager
 
         private SeatState(Named<wl_seat> seat, RegistryState* registry)
         {
-            this.Seat     = seat;
+            this.Seat          = seat;
             this.RegistryState = registry;
         }
 

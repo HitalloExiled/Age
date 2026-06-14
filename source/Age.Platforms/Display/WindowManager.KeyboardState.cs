@@ -25,19 +25,15 @@ public unsafe partial class WindowManager
 
         public NativeDictionary<uint, Key> PressedKeycodes = [];
 
-        public uint CurrentLayoutIndex;
-        public uint LastKeyPressedSerial;
-        public uint ModsDepressed;
-        public uint ModsLatched;
-        public uint ModsLocked;
-        public uint RepeatingKeycode;
-        public int  RepeatKeyDelayMsec;
-        public int  RepeatStartDelayMsec;
-
-        public bool AltPressed;
-        public bool CtrlPressed;
-        public bool MetaPressed;
-        public bool ShiftPressed;
+        public uint     CurrentLayoutIndex;
+        public uint     LastKeyPressedSerial;
+        public Modifier Modifiers;
+        public uint     ModsDepressed;
+        public uint     ModsLatched;
+        public uint     ModsLocked;
+        public uint     RepeatingKeycode;
+        public int      RepeatKeyDelayMsec;
+        public int      RepeatStartDelayMsec;
 
         private KeyboardState(wl_keyboard* keyboard, SeatState* seatState)
         {

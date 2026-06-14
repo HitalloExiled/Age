@@ -9,6 +9,37 @@ namespace Age.Platforms.Display;
 
 public unsafe partial class WindowManager
 {
+    private struct PointerData
+    {
+		#region 8-bytes
+        public WindowState* PointedId;
+        public WindowState* LastPointedId;
+        #endregion
+
+		#region 4-bytes
+        public uint                   ButtonSerial;
+        public uint                   ButtonTime;
+        public Point<int>             DiscreteScrollVector120;
+        public bool                   DoubleClickBegun;
+        public Point<float>           LastPressedPosition;
+        public uint                   MotionTime;
+        public uint                   PinchScale = 1;
+        public Point<float>           Position;
+        public Vector2<float>         RelativeMotion;
+        public uint                   RelativeMotionTime;
+        public wl_pointer_axis_source ScrollType = wl_pointer_axis_source.WL_POINTER_AXIS_SOURCE_WHEEL;
+        public Vector2<float>         Scroll;
+        #endregion
+
+        #region 2-byte
+        public MouseButton LastButtonPressed;
+        public MouseButton PressedButton;
+        #endregion
+
+        public PointerData()
+        { }
+    };
+
     private struct CursorState
     {
         #region 8-bytes
@@ -23,18 +54,21 @@ public unsafe partial class WindowManager
         public zwp_locked_pointer_v1*     LockedPointer;
         public wl_pointer*                Pointer;
         public zwp_relative_pointer_v1*   RelativePointer;
+
+        public PointerData PointerData       = new();
+        public PointerData PointerDataBuffer = new();
         #endregion
 
         #region 4-bytes
         public int  CursorScale;
         public uint CursorTimeMs;
         public uint PointerEnterSerial;
-        public Point<float> Position;
         #endregion
 
         #region 1-byte
         public Cursor Cursor;
         public bool   CursorVisible = true;
+        public bool   DoubleClickBegun;
         #endregion
 
         private CursorState(SeatState* seatState)

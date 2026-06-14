@@ -64,18 +64,18 @@ public abstract partial class Element
 
     private void ApplyScroll(in WindowMouseEvent mouseEvent)
     {
-        if (this.CanScrollX && mouseEvent.KeyStates.HasFlags(MouseKeyStates.Shift))
+        if (this.CanScrollX && mouseEvent.Modifiers.HasFlags(Modifier.Shift))
         {
             this.Scroll = this.Scroll with
             {
-                X = (uint)(this.contentOffset.X + (10 * -mouseEvent.Delta))
+                X = (uint)(this.contentOffset.X + (10 * -mouseEvent.ScrollDelta))
             };
         }
         else if (this.CanScrollY)
         {
             this.Scroll = this.Scroll with
             {
-                Y = (uint)(this.Scroll.Y + (10 * -mouseEvent.Delta))
+                Y = (uint)(this.Scroll.Y + (10 * -mouseEvent.ScrollDelta))
             };
         }
     }
