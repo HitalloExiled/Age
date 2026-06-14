@@ -10,14 +10,15 @@
   <Folder Name="/source/">
     <Project Path="source/Age.Core/Age.Core.csproj" />
     <Project Path="source/Age.Numerics/Age.Numerics.csproj" />
-    <Project Path="source/Age.Platforms/Age.Platforms.csproj" />
-    <Project Path="source/Age.Platforms.Windows/Age.Platforms.Windows.csproj" />
     <Project Path="source/Age.Platforms.Linux/Age.Platforms.Linux.csproj" />
+    <Project Path="source/Age.Platforms.Windows/Age.Platforms.Windows.csproj" />
+    <Project Path="source/Age.Platforms/Age.Platforms.csproj" />
     <Project Path="source/Age.Playground/Age.Playground.csproj" />
     <Project Path="source/Age.Rendering/Age.Rendering.csproj" />
     <Project Path="source/Age.Resources/Age.Resources.csproj" />
     <Project Path="source/Age.StoryBook/Age.StoryBook.csproj" />
     <Project Path="source/Age/Age.csproj" />
+    <Project Path="source/ThirdParty.FreeDesktop/ThirdParty.FreeDesktop.csproj" />
     <Project Path="source/ThirdParty.Skia/ThirdParty.Skia.csproj" />
     <Project Path="source/ThirdParty.Slang/ThirdParty.Slang.csproj" />
     <Project Path="source/ThirdParty.Vulkan/ThirdParty.Vulkan.csproj" />
