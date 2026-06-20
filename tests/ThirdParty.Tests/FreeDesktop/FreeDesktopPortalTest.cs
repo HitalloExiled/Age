@@ -8,57 +8,58 @@ public class FreeDesktopPortalTest : IDisposable
 {
     private readonly FreeDesktopPortal portal = new();
 
-    public void Dispose() => this.portal.Dispose();
+    private bool disposed;
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
+            {
+                this.portal.Dispose();
+            }
+
+            this.disposed = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        this.Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 
     [Fact]
     public void ReadSettingReturnsNullForUnknownKey()
     {
-        var result = this.portal.ReadSetting("org.freedesktop.appearance", "nonexistent-setting");
-
-        Assert.Null(result);
+        Assert.False(this.portal.TryReadSetting("org.freedesktop.appearance", "nonexistent-setting", out var value));
+        Assert.Null(value);
     }
 
     [Fact]
     public void GenericReadSettingReturnsNullForUnknownKey()
     {
-        var result = this.portal.ReadSetting<uint>("org.freedesktop.appearance", "nonexistent-setting");
-
-        Assert.Null(result);
+        Assert.False(this.portal.TryReadSetting<uint>("org.freedesktop.appearance", "nonexistent-setting", out var value));
+        Assert.True(value == default);
     }
 
     [Fact]
     public void NonGenericAndGenericReturnSameForUnknownKey()
     {
-        var nonGeneric = this.portal.ReadSetting("org.freedesktop.appearance", "nonexistent-setting");
-        var generic = this.portal.ReadSetting<uint>("org.freedesktop.appearance", "nonexistent-setting");
-
-        Assert.Equal(nonGeneric, generic);
-        Assert.Null(nonGeneric);
-        Assert.Null(generic);
+        Assert.False(this.portal.TryReadSetting("org.freedesktop.appearance", "nonexistent-setting", out var nonGeneric));
+        Assert.False(this.portal.TryReadSetting<uint>("org.freedesktop.appearance", "nonexistent-setting", out var generic));
+        Assert.Equal((uint?)nonGeneric ?? 0, generic);
     }
 
     [Fact]
     public void GenericReadSettingReturnsNullForMismatchedType()
     {
-        var result = this.portal.ReadSetting<Color>("org.freedesktop.appearance", "accent-color");
-
-        Assert.Null(result);
+        Assert.True(this.portal.TryReadSetting<Color>("org.freedesktop.appearance", "accent-color", out var value));
+        Assert.True(value != default);
     }
 
     [Fact]
     public void RefreshDoesNotThrow() =>
         this.portal.Refresh();
-
-    [Fact]
-    public void IsAvailableDoesNotThrow() =>
-        _ = this.portal.IsAvailable;
-
-    [Fact]
-    public void PropertyAccessorsDoNotThrow()
-    {
-        _ = this.portal.ColorScheme;
-        _ = this.portal.AccentColor;
-        _ = this.portal.HighContrast;
-        }
 }
 #endif

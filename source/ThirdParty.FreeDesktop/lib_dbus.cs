@@ -7,7 +7,7 @@ internal struct DBusMessage;
 
 internal unsafe static partial class lib_dbus
 {
-    private const string LIBRARY = "libdbus-1.so";
+    private const string LIBRARY = "libdbus-1.so.3";
 
     #region dbus-protocol
     public const int DBUS_TYPE_INVALID     = 0;

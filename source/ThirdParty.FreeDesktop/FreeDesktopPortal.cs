@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Age.Core;
 using Age.Numerics;
@@ -12,23 +13,35 @@ public sealed unsafe class FreeDesktopPortal : Disposable
     private const string SETTINGS_IFACE = "org.freedesktop.portal.Settings";
     private const int    TIMEOUT_MS     = 5000;
 
-    private readonly Lock cacheLock = new();
-
-    private Color?                    accentColor;
-    private ColorScheme               colorScheme;
-    private DBusConnection*           connection;
-    private bool?                     highContrast;
-    private bool                      isAvailable;
-    private Thread?                   monitorThread;
+    private readonly Lock             cacheLock     = new();
     private readonly ManualResetEvent stopRequested = new(false);
 
-    public Color? AccentColor
+    private Color           accentColor;
+    private ColorScheme     colorScheme;
+    private DBusConnection* connection;
+    private int             doubleClick;
+    private bool            highContrast;
+    private bool            leftHanded;
+    private Thread?         monitorThread;
+
+    public Color AccentColor
     {
         get
         {
             lock (this.cacheLock)
             {
                 return this.accentColor;
+            }
+        }
+    }
+
+    public int DoubleClick
+    {
+        get
+        {
+            lock (this.cacheLock)
+            {
+                return this.doubleClick;
             }
         }
     }
@@ -44,7 +57,7 @@ public sealed unsafe class FreeDesktopPortal : Disposable
         }
     }
 
-    public bool? HighContrast
+    public bool HighContrast
     {
         get
         {
@@ -55,11 +68,20 @@ public sealed unsafe class FreeDesktopPortal : Disposable
         }
     }
 
-    public bool IsAvailable => this.isAvailable;
+    public bool LeftHanded
+    {
+        get
+        {
+            lock (this.cacheLock)
+            {
+                return this.leftHanded;
+            }
+        }
+    }
 
     public event Action? SettingsChanged;
 
-    public FreeDesktopPortal()
+    public FreeDesktopPortal(bool watch = false)
     {
         DBusError error;
         lib_dbus.dbus_error_init(&error);
@@ -71,12 +93,14 @@ public sealed unsafe class FreeDesktopPortal : Disposable
             return;
         }
 
-        this.isAvailable = true;
         this.AddMatchRule();
         this.Refresh();
 
-        this.monitorThread = new Thread(this.MonitorLoop) { IsBackground = true, Name = "PortalMonitor" };
-        this.monitorThread.Start();
+        if (watch)
+        {
+            this.monitorThread = new Thread(this.MonitorLoop) { IsBackground = true, Name = "PortalMonitor" };
+            this.monitorThread.Start();
+        }
     }
 
     private static T GetBasic<T>(DBusMessageIter* iter) where T : unmanaged
@@ -84,6 +108,54 @@ public sealed unsafe class FreeDesktopPortal : Disposable
         T val;
         lib_dbus.dbus_message_iter_get_basic(iter, &val);
         return val;
+    }
+
+    private DBusMessage* CallReadMethod(string @namespace, string key)
+    {
+        base.ThrowIfDisposed();
+
+        using var busName = new UnmanagedString(BUS_NAME);
+        using var objPath = new UnmanagedString(BUS_PATH);
+        using var iface   = new UnmanagedString(SETTINGS_IFACE);
+        using var method  = new UnmanagedString("Read");
+        using var ns      = new UnmanagedString(@namespace);
+        using var k       = new UnmanagedString(key);
+
+        var message = lib_dbus.dbus_message_new_method_call(busName, objPath, iface, method);
+
+        if (message == null)
+        {
+            return null;
+        }
+
+        DBusMessageIter iter;
+        lib_dbus.dbus_message_iter_init_append(message, &iter);
+
+        byte* nsPtr = ns;
+        byte* kPtr  = k;
+
+        _ = lib_dbus.dbus_message_iter_append_basic(&iter, lib_dbus.DBUS_TYPE_STRING, &nsPtr);
+        _ = lib_dbus.dbus_message_iter_append_basic(&iter, lib_dbus.DBUS_TYPE_STRING, &kPtr);
+
+        DBusError error;
+        lib_dbus.dbus_error_init(&error);
+
+        var reply = lib_dbus.dbus_connection_send_with_reply_and_block(this.connection, message, TIMEOUT_MS, &error);
+
+        lib_dbus.dbus_message_unref(message);
+
+        if (reply == null || lib_dbus.dbus_error_is_set(&error) != 0)
+        {
+            if (reply != null)
+            {
+                lib_dbus.dbus_message_unref(reply);
+            }
+
+            lib_dbus.dbus_error_free(&error);
+            return null;
+        }
+
+        return reply;
     }
 
     private static object?[]? GetContainer(DBusMessageIter* iter)
@@ -150,16 +222,16 @@ public sealed unsafe class FreeDesktopPortal : Disposable
             ? GetContainer(iter)
             : type switch
             {
-                int t when t == lib_dbus.DBUS_TYPE_UINT32                                                                   => GetBasic<uint>(iter),
-                int t when t == lib_dbus.DBUS_TYPE_BOOLEAN                                                                  => GetBasic<uint>(iter) != 0,
-                int t when t == lib_dbus.DBUS_TYPE_DOUBLE                                                                   => GetBasic<double>(iter),
-                int t when t == lib_dbus.DBUS_TYPE_BYTE                                                                     => GetBasic<byte>(iter),
-                int t when t == lib_dbus.DBUS_TYPE_INT16                                                                    => GetBasic<short>(iter),
-                int t when t == lib_dbus.DBUS_TYPE_UINT16                                                                   => GetBasic<ushort>(iter),
-                int t when t == lib_dbus.DBUS_TYPE_INT32                                                                    => GetBasic<int>(iter),
-                int t when t == lib_dbus.DBUS_TYPE_INT64                                                                    => GetBasic<long>(iter),
-                int t when t == lib_dbus.DBUS_TYPE_UINT64                                                                   => GetBasic<ulong>(iter),
-                int t when t is lib_dbus.DBUS_TYPE_STRING or lib_dbus.DBUS_TYPE_OBJECT_PATH or lib_dbus.DBUS_TYPE_SIGNATURE => GetString(iter),
+                lib_dbus.DBUS_TYPE_UINT32                                                                   => GetBasic<uint>(iter),
+                lib_dbus.DBUS_TYPE_BOOLEAN                                                                  => GetBasic<uint>(iter) != 0,
+                lib_dbus.DBUS_TYPE_DOUBLE                                                                   => GetBasic<double>(iter),
+                lib_dbus.DBUS_TYPE_BYTE                                                                     => GetBasic<byte>(iter),
+                lib_dbus.DBUS_TYPE_INT16                                                                    => GetBasic<short>(iter),
+                lib_dbus.DBUS_TYPE_UINT16                                                                   => GetBasic<ushort>(iter),
+                lib_dbus.DBUS_TYPE_INT32                                                                    => GetBasic<int>(iter),
+                lib_dbus.DBUS_TYPE_INT64                                                                    => GetBasic<long>(iter),
+                lib_dbus.DBUS_TYPE_UINT64                                                                   => GetBasic<ulong>(iter),
+                lib_dbus.DBUS_TYPE_STRING or lib_dbus.DBUS_TYPE_OBJECT_PATH or lib_dbus.DBUS_TYPE_SIGNATURE => GetString(iter),
                 _ => null
             };
     }
@@ -200,57 +272,126 @@ public sealed unsafe class FreeDesktopPortal : Disposable
         }
     }
 
-    private object? ReadSettingCore(string @namespace, string key)
+    private static Color ParseArrayColor(DBusMessageIter* iter)
     {
-        if (!this.isAvailable || this.connection == null)
+        DBusMessageIter sub;
+        lib_dbus.dbus_message_iter_recurse(iter, &sub);
+
+        if (lib_dbus.dbus_message_iter_get_arg_type(&sub) != lib_dbus.DBUS_TYPE_DOUBLE)
         {
-            return null;
+            return default;
         }
 
-        using var busName = new UnmanagedString(BUS_NAME);
-        using var objPath = new UnmanagedString(BUS_PATH);
-        using var iface   = new UnmanagedString(SETTINGS_IFACE);
-        using var method  = new UnmanagedString("Read");
-        using var ns      = new UnmanagedString(@namespace);
-        using var k       = new UnmanagedString(key);
+        var r = GetBasic<double>(&sub);
 
-        var message = lib_dbus.dbus_message_new_method_call(busName, objPath, iface, method);
-
-        if (message == null)
+        if (lib_dbus.dbus_message_iter_next(&sub) == 0)
         {
-            return null;
+            return default;
         }
 
-        DBusMessageIter iter;
-        lib_dbus.dbus_message_iter_init_append(message, &iter);
-
-        byte* nsPtr = ns;
-        byte* kPtr = k;
-
-        _ = lib_dbus.dbus_message_iter_append_basic(&iter, lib_dbus.DBUS_TYPE_STRING, &nsPtr);
-        _ = lib_dbus.dbus_message_iter_append_basic(&iter, lib_dbus.DBUS_TYPE_STRING, &kPtr);
-
-        DBusError error;
-        lib_dbus.dbus_error_init(&error);
-
-        var reply = lib_dbus.dbus_connection_send_with_reply_and_block(this.connection, message, TIMEOUT_MS, &error);
-
-        lib_dbus.dbus_message_unref(message);
-
-        if (reply == null || lib_dbus.dbus_error_is_set(&error) != 0)
+        if (lib_dbus.dbus_message_iter_get_arg_type(&sub) != lib_dbus.DBUS_TYPE_DOUBLE)
         {
-            if (reply != null)
-            {
-                lib_dbus.dbus_message_unref(reply);
-            }
+            return default;
+        }
 
-            lib_dbus.dbus_error_free(&error);
-            return null;
+        var g = GetBasic<double>(&sub);
+
+        if (lib_dbus.dbus_message_iter_next(&sub) == 0)
+        {
+            return default;
+        }
+
+        if (lib_dbus.dbus_message_iter_get_arg_type(&sub) != lib_dbus.DBUS_TYPE_DOUBLE)
+        {
+            return default;
+        }
+
+        var b = GetBasic<double>(&sub);
+
+        return new((float)r, (float)g, (float)b);
+    }
+
+    private static T ParseVariantReply<T>(DBusMessage* reply) where T : unmanaged
+    {
+        DBusMessageIter iter0, iter1, iter2;
+
+        if (lib_dbus.dbus_message_iter_init(reply, &iter0) == 0)
+        {
+            return default;
+        }
+
+        if (lib_dbus.dbus_message_iter_get_arg_type(&iter0) != lib_dbus.DBUS_TYPE_VARIANT)
+        {
+            return default;
+        }
+
+        lib_dbus.dbus_message_iter_recurse(&iter0, &iter1);
+        if (lib_dbus.dbus_message_iter_get_arg_type(&iter1) != lib_dbus.DBUS_TYPE_VARIANT)
+        {
+            return default;
+        }
+
+        lib_dbus.dbus_message_iter_recurse(&iter1, &iter2);
+
+        var type = lib_dbus.dbus_message_iter_get_arg_type(&iter2);
+
+        return type switch
+        {
+            lib_dbus.DBUS_TYPE_UINT32                             when typeof(T) == typeof(uint)   => As(GetBasic<uint>(&iter2)),
+            lib_dbus.DBUS_TYPE_BOOLEAN                            when typeof(T) == typeof(bool)   => As(GetBasic<uint>(&iter2) != 0),
+            lib_dbus.DBUS_TYPE_DOUBLE                             when typeof(T) == typeof(double) => As(GetBasic<double>(&iter2)),
+            lib_dbus.DBUS_TYPE_BYTE                               when typeof(T) == typeof(byte)   => As(GetBasic<byte>(&iter2)),
+            lib_dbus.DBUS_TYPE_INT16                              when typeof(T) == typeof(short)  => As(GetBasic<short>(&iter2)),
+            lib_dbus.DBUS_TYPE_UINT16                             when typeof(T) == typeof(ushort) => As(GetBasic<ushort>(&iter2)),
+            lib_dbus.DBUS_TYPE_INT32                              when typeof(T) == typeof(int)    => As(GetBasic<int>(&iter2)),
+            lib_dbus.DBUS_TYPE_INT64                              when typeof(T) == typeof(long)   => As(GetBasic<long>(&iter2)),
+            lib_dbus.DBUS_TYPE_UINT64                             when typeof(T) == typeof(ulong)  => As(GetBasic<ulong>(&iter2)),
+            lib_dbus.DBUS_TYPE_ARRAY or lib_dbus.DBUS_TYPE_STRUCT when typeof(T) == typeof(Color)  => As(ParseArrayColor(&iter2)),
+            _ => default
+        };
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static T As<TFrom>(TFrom value) => Unsafe.As<TFrom, T>(ref value);
+    }
+
+    private bool TryReadSettingCore(string @namespace, string key, out object? value)
+    {
+        var reply = this.CallReadMethod(@namespace, key);
+
+        if (reply == null)
+        {
+            value = default;
+
+            return false;
         }
 
         var result = ParseVariantReply(reply);
+
         lib_dbus.dbus_message_unref(reply);
-        return result;
+
+        value = result;
+
+        return true;
+    }
+
+    private bool TryReadSettingCore<T>(string @namespace, string key, out T value) where T : unmanaged
+    {
+        var reply = this.CallReadMethod(@namespace, key);
+
+        if (reply == null)
+        {
+            value = default;
+
+            return false;
+        }
+
+        var result = ParseVariantReply<T>(reply);
+
+        lib_dbus.dbus_message_unref(reply);
+
+        value = result;
+
+        return true;
     }
 
     private void RemoveMatchRule()
@@ -282,75 +423,108 @@ public sealed unsafe class FreeDesktopPortal : Disposable
             lib_dbus.dbus_connection_unref(this.connection);
             this.connection = null;
         }
-
-        this.isAvailable = false;
     }
+
+    public bool TryReadSetting(string @namespace, string key, out object? value) =>
+        this.TryReadSettingCore(@namespace, key, out value);
 
     public object? ReadSetting(string @namespace, string key) =>
-        ReadSettingCore(@namespace, key);
+        this.TryReadSetting(@namespace, key, out var value) ? value : throw new InvalidOperationException($"Failed to read setting '{key}' from namespace '{@namespace}'.");
 
-    public T? ReadSetting<T>(string @namespace, string key) where T : struct
-    {
-        var value = ReadSettingCore(@namespace, key);
-        return value is T t ? t : null;
-    }
+    public T? ReadSetting<T>(string @namespace, string key) =>
+        this.TryReadSetting<T>(@namespace, key, out var value) ? value : throw new InvalidOperationException($"Failed to read setting '{key}' of type '{typeof(T).Name}' from namespace '{@namespace}'.");
 
     public void Refresh()
     {
-        if (!this.isAvailable)
-        {
-            return;
-        }
+        this.ThrowIfDisposed();
 
-        ColorScheme prevColorScheme;
-        Color? prevAccent;
-        bool? prevHighContrast;
+        Color       previousAccentColor;
+        ColorScheme previousColorScheme;
+        int         previousDoubleClick;
+        bool        previousHighContrast;
+        bool        previousLeftHanded;
 
         lock (this.cacheLock)
         {
-            prevColorScheme = this.colorScheme;
-            prevAccent = this.accentColor;
-            prevHighContrast = this.highContrast;
+            previousAccentColor  = this.accentColor;
+            previousColorScheme  = this.colorScheme;
+            previousDoubleClick  = this.doubleClick;
+            previousHighContrast = this.highContrast;
+            previousLeftHanded   = this.leftHanded;
         }
-
-        var cs = this.ReadSettingCore("org.freedesktop.appearance", "color-scheme");
-        var ac = this.ReadSettingCore("org.freedesktop.appearance", "accent-color");
-        var hc = this.ReadSettingCore("org.gnome.desktop.a11y.interface", "high-contrast");
 
         var changed = false;
 
         lock (this.cacheLock)
         {
-            if (cs is uint csVal && (ColorScheme)csVal != prevColorScheme)
+            if (this.TryReadSettingCore<Color>("org.freedesktop.appearance", "accent-color", out var accentColor))
             {
-                this.colorScheme = (ColorScheme)csVal;
-                changed = true;
-            }
-
-            if (ac is object?[] arr && arr.Length == 3 &&
-                arr[0] is double r && arr[1] is double g && arr[2] is double b)
-            {
-                var newColor = new Color((float)r, (float)g, (float)b);
-                if (newColor != prevAccent)
+                if (accentColor != previousAccentColor)
                 {
-                    this.accentColor = newColor;
+                    this.accentColor = accentColor;
+
                     changed = true;
                 }
             }
-            else if (prevAccent != null)
+            else if (previousAccentColor != default)
             {
-                this.accentColor = null;
+                this.accentColor = default;
+
                 changed = true;
             }
 
-            if (hc is bool hcVal && hcVal != prevHighContrast)
+            if (this.TryReadSettingCore<int>("org.gnome.desktop.peripherals.mouse", "double-click", out var doubleClick))
             {
-                this.highContrast = hcVal;
+                if (doubleClick != previousDoubleClick)
+                {
+                    this.doubleClick = doubleClick;
+
+                    changed = true;
+                }
+            }
+            else if (previousDoubleClick != default)
+            {
+                this.doubleClick = default;
+
                 changed = true;
             }
-            else if (hc == null && prevHighContrast != null)
+
+            if (this.TryReadSettingCore<uint>("org.freedesktop.appearance", "color-scheme", out var colorScheme) && (ColorScheme)colorScheme != previousColorScheme)
             {
-                this.highContrast = null;
+                this.colorScheme = (ColorScheme)colorScheme;
+
+                changed = true;
+            }
+
+            if (this.TryReadSettingCore<bool>("org.gnome.desktop.a11y.interface", "high-contrast", out var highContrast))
+            {
+                if (highContrast != previousHighContrast)
+                {
+                    this.highContrast = highContrast;
+
+                    changed = true;
+                }
+            }
+            else if (previousHighContrast != default)
+            {
+                this.highContrast = default;
+
+                changed = true;
+            }
+
+            if (this.TryReadSettingCore<bool>("org.gnome.desktop.peripherals.mouse", "left-handed", out var leftHanded))
+            {
+                if (leftHanded != previousLeftHanded)
+                {
+                    this.leftHanded = leftHanded;
+
+                    changed = true;
+                }
+            }
+            else if (previousLeftHanded != default)
+            {
+                this.leftHanded = default;
+
                 changed = true;
             }
         }
@@ -359,5 +533,79 @@ public sealed unsafe class FreeDesktopPortal : Disposable
         {
             SettingsChanged?.Invoke();
         }
+    }
+
+    public bool TryReadSetting<T>(string @namespace, string key, out T? value)
+    {
+        var found = false;
+        value = default;
+
+        if (typeof(T) == typeof(uint))
+        {
+            found = this.TryReadSettingCore<uint>(@namespace, key, out var result);
+            value = Unsafe.As<uint, T>(ref result);
+        }
+
+        if (typeof(T) == typeof(bool))
+        {
+            found = this.TryReadSettingCore<bool>(@namespace, key, out var result);
+            value = Unsafe.As<bool, T>(ref result);
+        }
+
+        if (typeof(T) == typeof(double))
+        {
+            found = this.TryReadSettingCore<double>(@namespace, key, out var result);
+            value = Unsafe.As<double, T>(ref result);
+        }
+
+        if (typeof(T) == typeof(byte))
+        {
+            found = this.TryReadSettingCore<byte>(@namespace, key, out var result);
+            value = Unsafe.As<byte, T>(ref result);
+        }
+
+        if (typeof(T) == typeof(short))
+        {
+            found = this.TryReadSettingCore<short>(@namespace, key, out var result);
+            value = Unsafe.As<short, T>(ref result);
+        }
+
+        if (typeof(T) == typeof(ushort))
+        {
+            found = this.TryReadSettingCore<ushort>(@namespace, key, out var result);
+            value = Unsafe.As<ushort, T>(ref result);
+        }
+
+        if (typeof(T) == typeof(int))
+        {
+            found = this.TryReadSettingCore<int>(@namespace, key, out var result);
+            value = Unsafe.As<int, T>(ref result);
+        }
+
+        if (typeof(T) == typeof(long))
+        {
+            found = this.TryReadSettingCore<long>(@namespace, key, out var result);
+            value = Unsafe.As<long, T>(ref result);
+        }
+
+        if (typeof(T) == typeof(ulong))
+        {
+            found = this.TryReadSettingCore<ulong>(@namespace, key, out var result);
+            value = Unsafe.As<ulong, T>(ref result);
+        }
+
+        if (typeof(T) == typeof(Color))
+        {
+            found = this.TryReadSettingCore<Color>(@namespace, key, out var result);
+            value = Unsafe.As<Color, T>(ref result);
+        }
+
+        if (!found)
+        {
+            found = this.TryReadSettingCore(@namespace, key, out var result);
+            value = result is T v ? v : default;
+        }
+
+        return found;
     }
 }
