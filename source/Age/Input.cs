@@ -18,7 +18,8 @@ public static class Input
     private static Point<ushort> mousePosition;
     private static float         mouseWheel;
     private static Point<ushort> previousMousePosition;
-    public static MouseButton PrimaryButton { get; private set; }
+
+    public static bool LeftHanded { get; private set; }
 
     private static void OnKeyDown(in WindowKeyEvent windowKeyEvent) =>
         keys.TryAdd(windowKeyEvent.Key, currentIteration);
@@ -28,7 +29,7 @@ public static class Input
 
     private static void OnMouseDown(in WindowMouseEvent mouseEvent)
     {
-        PrimaryButton = mouseEvent.PrimaryButton;
+        LeftHanded = mouseEvent.LeftHanded;
 
         mouseButtons.TryAdd(mouseEvent.Button, currentIteration);
     }

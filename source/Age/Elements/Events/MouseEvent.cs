@@ -21,9 +21,9 @@ public readonly struct MouseEvent
     public float         Delta                  => this.windowMouseEvent.ScrollDelta;
     public bool          IsHoldingPrimaryButton => this.windowMouseEvent.IsHoldingPrimaryButton;
     public bool          IsPrimaryButtonPressed => this.windowMouseEvent.IsPrimaryButtonPressed;
+    public bool          LeftHanded             => this.windowMouseEvent.LeftHanded;
     public Modifier      Modifiers              => this.windowMouseEvent.Modifiers;
     public MouseButton   PressedButtons         => this.windowMouseEvent.PressedButtons;
-    public MouseButton   PrimaryButton          => this.windowMouseEvent.PrimaryButton;
     public Point<ushort> Relative               => this.windowMouseEvent.Relative;
     public Point<ushort> Velocity               => this.windowMouseEvent.Velocity;
     public ushort        X                      => this.windowMouseEvent.X;

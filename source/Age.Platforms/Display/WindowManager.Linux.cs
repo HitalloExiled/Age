@@ -35,6 +35,7 @@ using static Age.Platforms.Linux.LibWaylandClient.xdg_system_bell;
 using static Age.Platforms.Linux.LibWaylandCursor.lib_wayland_cursor;
 using static Age.Platforms.Linux.LibXKBCommon.lib_xkbommon;
 using Age.Platforms.Linux;
+using ThirdParty.FreeDesktop;
 
 namespace Age.Platforms.Display;
 
@@ -258,9 +259,9 @@ public unsafe sealed partial class WindowManager
 
     private readonly static byte** pTag = (byte**)NativeMemory.Alloc((nint)MemoryMarshal.CreateUTF8StringBuffer("Age"));
 
-    private readonly Lock                             @lock = new();
-    private readonly Thread                           eventLoopThread;
-    private readonly RegistryState*                   registryState = RegistryState.Allocate();
+    private readonly Lock           @lock = new();
+    private readonly Thread         eventLoopThread;
+    private readonly RegistryState* registryState = RegistryState.Allocate();
 
     private bool stopped;
 
@@ -322,6 +323,11 @@ public unsafe sealed partial class WindowManager
 
         this.Id              = id;
         this.eventLoopThread = new(this.EventLoop);
+
+        using var freeDesktopPortal = new FreeDesktopPortal();
+
+        this.registryState->DoubleClikInterval = freeDesktopPortal.DoubleClick;
+        this.registryState->LeftHandedMouse    = freeDesktopPortal.LeftHanded;
 
         var display = this.registryState->Display = wl_display_connect(null);
 
@@ -926,9 +932,8 @@ public unsafe sealed partial class WindowManager
         var seatState = (SeatState*)data;
 
         Debug.Assert(seatState != null);
-        Debug.Assert(seatState->ExtendedState != default && seatState->ExtendedState.Kind == SeatKind.Cursor);
 
-        var cursorState = (CursorState*)(void*)seatState->ExtendedState.Data;
+        var cursorState = (CursorState*)(void*)seatState->RegistryState->CursorState;
 
         seatState->RegistryState->ActiveWindow = windowState;
 
@@ -979,9 +984,8 @@ public unsafe sealed partial class WindowManager
         var seatState = (SeatState*)data;
 
         Debug.Assert(seatState != null);
-        Debug.Assert(seatState->ExtendedState != default && seatState->ExtendedState.Kind == SeatKind.Cursor);
 
-        var cursorState = (CursorState*)(void*)seatState->ExtendedState.Data;
+        var cursorState = (CursorState*)(void*)seatState->RegistryState->CursorState;
 
         var pointerData = &cursorState->PointerDataBuffer;
 
@@ -1003,9 +1007,8 @@ public unsafe sealed partial class WindowManager
         var seatState = (SeatState*)data;
 
         Debug.Assert(seatState != null);
-        Debug.Assert(seatState->ExtendedState != default && seatState->ExtendedState.Kind == SeatKind.Cursor);
 
-        var cursorState = (CursorState*)(void*)seatState->ExtendedState.Data;
+        var cursorState = (CursorState*)(void*)seatState->RegistryState->CursorState;
 
         var buttonPressed = MouseButton.None;
 
@@ -1062,9 +1065,8 @@ public unsafe sealed partial class WindowManager
         var seatState = (SeatState*)data;
 
         Debug.Assert(seatState != null);
-        Debug.Assert(seatState->ExtendedState != default && seatState->ExtendedState.Kind == SeatKind.Cursor);
 
-        var cursorState = (CursorState*)(void*)seatState->ExtendedState.Data;
+        var cursorState = (CursorState*)(void*)seatState->RegistryState->CursorState;
 
         var pointerData = &cursorState->PointerDataBuffer;
 
@@ -1095,9 +1097,8 @@ public unsafe sealed partial class WindowManager
         var seatState = (SeatState*)data;
 
         Debug.Assert(seatState != null);
-        Debug.Assert(seatState->ExtendedState != default && seatState->ExtendedState.Kind == SeatKind.Cursor);
 
-        var cursorState = (CursorState*)(void*)seatState->ExtendedState.Data;
+        var cursorState = (CursorState*)(void*)seatState->RegistryState->CursorState;
 
         var previousPointerData = &cursorState->PointerData;
         var pointerData         = &cursorState->PointerDataBuffer;
@@ -1159,9 +1160,9 @@ public unsafe sealed partial class WindowManager
                 var mouseEvent = new WindowMouseEvent
                 {
                     Button         = default,
+                    LeftHanded     = registryState->LeftHandedMouse,
                     Modifiers      = seatState->RegistryState->KeyboardState->Modifiers,
                     PressedButtons = pointerData->PressedButton,
-                    PrimaryButton  = default,
                     Relative       = relative,
                     ScrollDelta    = default,
                     Velocity       = velocity,
@@ -1229,9 +1230,9 @@ public unsafe sealed partial class WindowManager
                         var mouseEvent = new WindowMouseEvent
                         {
                             Button         = button,
+                            LeftHanded     = registryState->LeftHandedMouse,
                             Modifiers      = registryState->KeyboardState->Modifiers,
                             PressedButtons = pointerData->PressedButton,
-                            PrimaryButton  = default,
                             Relative       = default,
                             ScrollDelta    = scrollDelta,
                             Velocity       = default,
@@ -1251,7 +1252,7 @@ public unsafe sealed partial class WindowManager
                         var isDoubleClick = previousPointerData->DoubleClickBegun
                             && pressed
                             && pointerData->LastButtonPressed == previousPointerData->LastButtonPressed
-                            && pointerData->ButtonTime - previousPointerData->ButtonTime < 400
+                            && pointerData->ButtonTime - previousPointerData->ButtonTime < registryState->DoubleClikInterval
                             && ((previousPointerData->LastPressedPosition * SCALE) - (pointerData->LastPressedPosition * SCALE)).ToVector2().Length < 5;
 
                         if (isDoubleClick)
@@ -1271,9 +1272,9 @@ public unsafe sealed partial class WindowManager
                             var mouseWheelEvent = new WindowMouseEvent
                             {
                                 Button         = button,
+                                LeftHanded     = registryState->LeftHandedMouse,
                                 Modifiers      = registryState->KeyboardState->Modifiers,
                                 PressedButtons = default,
-                                PrimaryButton  = default,
                                 Relative       = default,
                                 ScrollDelta    = scrollDelta,
                                 Velocity       = default,

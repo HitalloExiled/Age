@@ -71,12 +71,8 @@ public unsafe partial class WindowManager
         public bool   DoubleClickBegun;
         #endregion
 
-        private CursorState(SeatState* seatState)
-        {
+        private CursorState(SeatState* seatState) =>
             this.SeatState = seatState;
-
-            seatState->ExtendedState = new(SeatKind.Cursor, seatState);
-        }
 
         public static CursorState* Allocate(SeatState* seatState) =>
             NativeMemory.Alloc(new CursorState(seatState));

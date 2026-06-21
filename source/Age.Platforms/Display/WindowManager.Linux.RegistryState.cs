@@ -53,7 +53,12 @@ public unsafe sealed partial class WindowManager
         #region 4-bytes
         private UnsafeLock @lock;
 
+        public int DoubleClikInterval;
         public int UnscaledCursorSize = 24;
+        #endregion
+
+        #region 1-bytes
+        public bool LeftHandedMouse;
         #endregion
 
         public RegistryState()

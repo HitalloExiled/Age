@@ -13,7 +13,6 @@ public unsafe partial class WindowManager
         public Named<wl_seat> Seat;
 
         public wl_data_device*                  DataDevice;
-        public ExtendedState                    ExtendedState;
         public zwp_pointer_gesture_pinch_v1*    PointerGesturePinch;
         public zwp_primary_selection_device_v1* PrimarySelectionDevice;
         public zwp_tablet_seat_v2*              TabletSeat;

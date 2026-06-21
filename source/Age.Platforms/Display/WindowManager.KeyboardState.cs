@@ -39,8 +39,6 @@ public unsafe partial class WindowManager
         {
             this.Keyboard  = keyboard;
             this.SeatState = seatState;
-
-            seatState->ExtendedState = new(SeatKind.Keyboard, seatState);
         }
 
         public static KeyboardState* Allocate(wl_keyboard* keyboard, SeatState* seatState) =>

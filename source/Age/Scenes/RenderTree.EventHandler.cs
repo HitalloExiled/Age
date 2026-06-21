@@ -143,7 +143,7 @@ public sealed partial class RenderTree
             Button         = button,
             Modifiers      = modifiers,
             PressedButtons = pressedButtons,
-            PrimaryButton  = Input.PrimaryButton,
+            LeftHanded     = Input.LeftHanded,
             ScrollDelta    = Input.GetMouseWheel(),
             X              = position.X,
             Y              = position.Y,
