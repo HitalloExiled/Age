@@ -12,16 +12,16 @@ public record struct WindowMouseEvent
     public required Modifier    Modifiers;
     public required MouseButton PressedButtons;
 
-    public required Point<ushort> Relative;
-    public required Point<ushort> Velocity;
+    public required Point<short> Relative;
+    public required Point<short> Velocity;
 
     public required float ScrollDelta;
 
     public required bool LeftHanded;
 
     public readonly bool IsPrimaryButtonPressed =>
-        (this.LeftHanded && this.Button == MouseButton.Left) || this.Button == MouseButton.Right;
+        this.LeftHanded ? this.Button == MouseButton.Right : this.Button == MouseButton.Left;
 
     public readonly bool IsHoldingPrimaryButton =>
-        (this.LeftHanded && this.PressedButtons.HasFlags(MouseButton.Left)) || this.PressedButtons.HasFlags(MouseButton.Right);
+        this.LeftHanded ? this.PressedButtons.HasFlags(MouseButton.Right) : this.PressedButtons.HasFlags(MouseButton.Left);
 }

@@ -10,6 +10,7 @@ namespace Age.Platforms.Linux.LibWaylandClient;
 internal struct zwp_primary_selection_device_manager_v1;
 internal struct zwp_primary_selection_device_v1;
 internal struct zwp_primary_selection_offer_v1;
+internal struct zwp_primary_selection_source_v1;
 internal struct zwp_text_input_manager_v3;
 internal struct zwp_text_input_v3;
 
@@ -128,5 +129,96 @@ internal unsafe static class primary_selection
             wl_proxy_get_version((wl_proxy*)zwp_primary_selection_device_manager_v1),
             0,
             [default, seat]
+        );
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static zwp_primary_selection_source_v1* zwp_primary_selection_device_manager_v1_create_source(zwp_primary_selection_device_manager_v1* manager) =>
+        (zwp_primary_selection_source_v1*)wl_proxy_marshal_flags(
+            (wl_proxy*)manager,
+            0, /* create_source */
+            zwp_primary_selection_source_v1_interface,
+            wl_proxy_get_version((wl_proxy*)manager),
+            0
+        );
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void zwp_primary_selection_device_manager_v1_destroy(zwp_primary_selection_device_manager_v1* manager) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)manager,
+            2, /* destroy */
+            null,
+            wl_proxy_get_version((wl_proxy*)manager),
+            WL_MARSHAL_FLAG_DESTROY
+        );
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void zwp_primary_selection_device_v1_set_selection(zwp_primary_selection_device_v1* device, zwp_primary_selection_source_v1* source, uint32_t serial) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)device,
+            0, /* set_selection */
+            null,
+            wl_proxy_get_version((wl_proxy*)device),
+            0,
+            [source, serial]
+        );
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void zwp_primary_selection_device_v1_destroy(zwp_primary_selection_device_v1* device) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)device,
+            1, /* destroy */
+            null,
+            wl_proxy_get_version((wl_proxy*)device),
+            WL_MARSHAL_FLAG_DESTROY
+        );
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int zwp_primary_selection_offer_v1_add_listener(zwp_primary_selection_offer_v1* offer, zwp_primary_selection_offer_v1_listener* listener, void* data) =>
+        wl_proxy_add_listener((wl_proxy*)offer, (void**)listener, data);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void zwp_primary_selection_offer_v1_receive(zwp_primary_selection_offer_v1* offer, byte* mimeType, int fd) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)offer,
+            0, /* receive */
+            null,
+            wl_proxy_get_version((wl_proxy*)offer),
+            0,
+            [mimeType, fd]
+        );
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void zwp_primary_selection_offer_v1_destroy(zwp_primary_selection_offer_v1* offer) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)offer,
+            1, /* destroy */
+            null,
+            wl_proxy_get_version((wl_proxy*)offer),
+            WL_MARSHAL_FLAG_DESTROY
+        );
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int zwp_primary_selection_source_v1_add_listener(zwp_primary_selection_source_v1* source, zwp_primary_selection_source_v1_listener* listener, void* data) =>
+        wl_proxy_add_listener((wl_proxy*)source, (void**)listener, data);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void zwp_primary_selection_source_v1_offer(zwp_primary_selection_source_v1* source, byte* mimeType) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)source,
+            0, /* offer */
+            null,
+            wl_proxy_get_version((wl_proxy*)source),
+            0,
+            [mimeType]
+        );
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void zwp_primary_selection_source_v1_destroy(zwp_primary_selection_source_v1* source) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)source,
+            1, /* destroy */
+            null,
+            wl_proxy_get_version((wl_proxy*)source),
+            WL_MARSHAL_FLAG_DESTROY
         );
 }

@@ -24,8 +24,8 @@ public readonly struct MouseEvent
     public bool          LeftHanded             => this.windowMouseEvent.LeftHanded;
     public Modifier      Modifiers              => this.windowMouseEvent.Modifiers;
     public MouseButton   PressedButtons         => this.windowMouseEvent.PressedButtons;
-    public Point<ushort> Relative               => this.windowMouseEvent.Relative;
-    public Point<ushort> Velocity               => this.windowMouseEvent.Velocity;
+    public Point<short>  Relative               => this.windowMouseEvent.Relative;
+    public Point<short>  Velocity               => this.windowMouseEvent.Velocity;
     public ushort        X                      => this.windowMouseEvent.X;
     public ushort        Y                      => this.windowMouseEvent.Y;
 

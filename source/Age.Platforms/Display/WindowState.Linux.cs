@@ -20,7 +20,8 @@ internal unsafe struct WindowState
     public libdecor_configuration* PendingLibdecorConfiguration;
     public wp_viewport*            Viewport;
 
-    private NativeList<WindowMessage> messages;
+    private NativeList<WindowMessage>      messages;
+    private NativeList<Pointer<wl_output>> outputs;
     #endregion
 
     #region 4-bytes
@@ -39,6 +40,7 @@ internal unsafe struct WindowState
         this.Surface  = surface;
         this.Size     = size;
         this.messages = [];
+        this.outputs  = [];
     }
 
     public static WindowState* Allocate(wl_surface* surface, in Size<int> size) =>
@@ -57,6 +59,7 @@ internal unsafe struct WindowState
         lib_wayland_client.wl_surface_destroy(this.Surface);
 
         this.messages.Dispose();
+        this.outputs.Dispose();
     }
 
     public void AddMessage(in WindowMessage windowMessage)
@@ -64,6 +67,14 @@ internal unsafe struct WindowState
         using (UnsafeLock.Lock(ref this.@lock))
         {
             this.messages.Add(windowMessage);
+        }
+    }
+
+    public void AddOutput(wl_output* output)
+    {
+        using (UnsafeLock.Lock(ref this.@lock))
+        {
+            this.outputs.Add(output);
         }
     }
 
@@ -80,6 +91,14 @@ internal unsafe struct WindowState
         using (UnsafeLock.Lock(ref this.@lock))
         {
             return this.messages.ToNativeArray();
+        }
+    }
+
+    public void RemoveOutput(wl_output* output)
+    {
+        using (UnsafeLock.Lock(ref this.@lock))
+        {
+            this.outputs.Remove(output);
         }
     }
 }

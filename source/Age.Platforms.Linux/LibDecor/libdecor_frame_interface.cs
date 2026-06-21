@@ -2,26 +2,26 @@ namespace Age.Platforms.Linux.LibDecor;
 
 internal unsafe struct libdecor_frame_interface
 {
-    public required delegate* unmanaged<
+    public delegate* unmanaged<
         libdecor_frame*         /* frame */,
         libdecor_configuration* /* configuration */,
         void*                   /* user_data */,
         void
     > configure;
 
-    public required delegate* unmanaged<
+    public delegate* unmanaged<
         libdecor_frame* /* frame */,
         void*           /* user_data */,
         void
     > close;
 
-    public required delegate* unmanaged<
+    public delegate* unmanaged<
         libdecor_frame* /* frame */,
         void*           /* user_data */,
         void
     > commit;
 
-    public required delegate* unmanaged<
+    public delegate* unmanaged<
         libdecor_frame* /* frame */,
         byte*           /* seat_name */,
         void*           /* user_data */,

@@ -13,10 +13,9 @@ public unsafe partial class WindowManager
         public Named<wl_seat> Seat;
 
         public wl_data_device*                  DataDevice;
-        public zwp_pointer_gesture_pinch_v1*    PointerGesturePinch;
         public zwp_primary_selection_device_v1* PrimarySelectionDevice;
-        public zwp_tablet_seat_v2*              TabletSeat;
-        public zwp_text_input_v3*               TextInput;
+        public zwp_primary_selection_offer_v1*  PrimarySelectionCurrentOffer;
+        public zwp_primary_selection_source_v1* PrimarySelectionCurrentSource;
 
         private SeatState(Named<wl_seat> seat, RegistryState* registry)
         {
@@ -34,13 +33,6 @@ public unsafe partial class WindowManager
                 lib_wayland_client.wl_data_device_destroy(this.DataDevice);
 
                 this.DataDevice = null;
-            }
-
-            if (this.TabletSeat != null)
-            {
-                tablet.zwp_tablet_seat_v2_destroy(this.TabletSeat);
-
-                this.TabletSeat = null;
             }
         }
 

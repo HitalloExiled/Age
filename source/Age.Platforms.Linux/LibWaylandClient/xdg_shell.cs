@@ -17,6 +17,7 @@ internal static unsafe class xdg_shell
     private const uint XDG_SURFACE_SET_WINDOW_GEOMETRY = 3;
     private const uint XDG_WM_BASE_DESTROY             = 0;
     private const uint XDG_WM_BASE_GET_XDG_SURFACE     = 2;
+    private const uint XDG_WM_BASE_PONG                = 3;
 
     private static readonly wl_interface** xdg_shell_types;
 
@@ -208,6 +209,16 @@ internal static unsafe class xdg_shell
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int xdg_wm_base_add_listener(xdg_wm_base* xdg_wm_base, xdg_wm_base_listener* listener, void* data) =>
         wl_proxy_add_listener((wl_proxy*)xdg_wm_base, (void**)listener, data);
+
+    public static void xdg_wm_base_pong(xdg_wm_base* xdg_wm_base, uint32_t serial) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)xdg_wm_base,
+            XDG_WM_BASE_PONG,
+            null,
+            wl_proxy_get_version((wl_proxy*)xdg_wm_base),
+            0,
+            [serial]
+        );
 
     public static void xdg_wm_base_destroy(xdg_wm_base* xdg_wm_base) =>
         wl_proxy_marshal_flags(

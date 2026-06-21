@@ -12,8 +12,8 @@ public unsafe partial class WindowManager
     private struct PointerData
     {
 		#region 8-bytes
-        public WindowState* PointedId;
-        public WindowState* LastPointedId;
+        public WindowState* WindowState;
+        public WindowState* LastWindowState;
         #endregion
 
 		#region 4-bytes
@@ -68,7 +68,6 @@ public unsafe partial class WindowManager
         #region 1-byte
         public Cursor Cursor;
         public bool   CursorVisible = true;
-        public bool   DoubleClickBegun;
         #endregion
 
         private CursorState(SeatState* seatState) =>

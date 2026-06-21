@@ -1,7 +1,7 @@
 #if LINUX
 using Age.Core.Collections;
-using Age.Core.Exceptions;
 using Age.Core.Extensions;
+using Age.Core.Exceptions;
 using Age.Core;
 using Age.Numerics;
 using Age.Platforms.Linux.Libc;
@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using ThirdParty.FreeDesktop;
 
 using static Age.Platforms.Linux.AsmGenericErrno;
 using static Age.Platforms.Linux.Libc.lib_c;
@@ -22,11 +23,8 @@ using static Age.Platforms.Linux.LibWaylandClient.fractional_scale;
 using static Age.Platforms.Linux.LibWaylandClient.idle_inhibit;
 using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 using static Age.Platforms.Linux.LibWaylandClient.pointer_constraints;
-using static Age.Platforms.Linux.LibWaylandClient.pointer_gestures;
 using static Age.Platforms.Linux.LibWaylandClient.primary_selection;
 using static Age.Platforms.Linux.LibWaylandClient.relative_pointer;
-using static Age.Platforms.Linux.LibWaylandClient.tablet;
-using static Age.Platforms.Linux.LibWaylandClient.text_input;
 using static Age.Platforms.Linux.LibWaylandClient.viewporter;
 using static Age.Platforms.Linux.LibWaylandClient.xdg_activation;
 using static Age.Platforms.Linux.LibWaylandClient.xdg_decoration;
@@ -35,7 +33,6 @@ using static Age.Platforms.Linux.LibWaylandClient.xdg_system_bell;
 using static Age.Platforms.Linux.LibWaylandCursor.lib_wayland_cursor;
 using static Age.Platforms.Linux.LibXKBCommon.lib_xkbommon;
 using Age.Platforms.Linux;
-using ThirdParty.FreeDesktop;
 
 namespace Age.Platforms.Display;
 
@@ -161,17 +158,6 @@ public unsafe sealed partial class WindowManager
     };
 
     [FixedAddressValueType]
-    private static readonly wl_output_listener outputListener = new()
-    {
-        geometry    = &OnOutputGeometry,
-        mode        = &OnOutputMode,
-        done        = &OnOutputDone,
-        scale       = &OnOutputScale,
-        name        = &OnOutputName,
-        description = &OnOutputDescription,
-    };
-
-    [FixedAddressValueType]
     private static readonly wl_pointer_listener pointerListener = new()
     {
         enter                   = &OnPointerEnter,
@@ -188,18 +174,23 @@ public unsafe sealed partial class WindowManager
     };
 
     [FixedAddressValueType]
-    private static readonly zwp_pointer_gesture_pinch_v1_listener pointerGesturePinchListener = new()
-    {
-        begin  = &OnPointerGesturePinchV1Begin,
-        update = &OnPointerGesturePinchV1Update,
-        end    = &OnPointerGesturePinchV1End,
-    };
-
-    [FixedAddressValueType]
     private static readonly zwp_primary_selection_device_v1_listener primarySelectionDeviceListener = new()
     {
         data_offer = &OnPrimarySelectionDevicedataOffer,
         selection  = &OnPrimarySelectionDeviceselection,
+    };
+
+    [FixedAddressValueType]
+    private static readonly zwp_primary_selection_offer_v1_listener primarySelectionOfferListener = new()
+    {
+        offer = &OnPrimarySelectionOffer,
+    };
+
+    [FixedAddressValueType]
+    private static readonly zwp_primary_selection_source_v1_listener primarySelectionSourceListener = new()
+    {
+        send      = &OnPrimarySelectionSourceSend,
+        cancelled = &OnPrimarySelectionSourceCancelled,
     };
 
     [FixedAddressValueType]
@@ -229,25 +220,6 @@ public unsafe sealed partial class WindowManager
         leave                      = &OnSurfaceLeave,
         preferred_buffer_scale     = &OnSurfacePreferredBufferScale,
         preferred_buffer_transform = &OnSurfacePreferredBufferTransform,
-    };
-
-    [FixedAddressValueType]
-    private static readonly zwp_tablet_seat_v2_listener tabletSeatListener = new()
-    {
-        tablet_added = &OnTabletSeatTabletAdded,
-        tool_added   = &OnTabletSeatToolAdded,
-        pad_added    = &OnTabletSeatPadAdded,
-    };
-
-    [FixedAddressValueType]
-    private static readonly zwp_text_input_v3_listener textInputListener = new()
-    {
-        enter                   = &OnTextInputEnter,
-        leave                   = &OnTextInputLeave,
-        preedit_string          = &OnTextInputPreeditString,
-        commit_string           = &OnTextInputCommitString,
-        delete_surrounding_text = &OnTextInputDeleteSurroundingText,
-        done                    = &OnTextInputDone,
     };
 
     [FixedAddressValueType]
@@ -598,8 +570,8 @@ public unsafe sealed partial class WindowManager
         Console.WriteLine(nameof(OnFractionalScalePreferredScale));
 
     [UnmanagedCallersOnly]
-    private static void OnFrameCallbackListenerDone(void* data, wl_callback* callback, uint callbackData) =>
-        Console.WriteLine(nameof(OnFrameCallbackListenerDone));
+    private static void OnFrameCallbackListenerDone(void* data, wl_callback* callback, uint callbackData)
+    { }
 
     [UnmanagedCallersOnly]
     private static void OnKeyboardEnter(void* data, wl_keyboard* pointer, uint serial, wl_surface* surface, wl_array* keys)
@@ -769,13 +741,18 @@ public unsafe sealed partial class WindowManager
 
         Debug.Assert(keyboard != null);
 
+        keyboard->ModsDepressed      = modsDepressed;
+        keyboard->ModsLatched        = modsLatched;
+        keyboard->ModsLocked         = modsLocked;
+        keyboard->CurrentLayoutIndex = group;
+
         xkb_state_update_mask(
             keyboard->State,
             modsDepressed,
             modsLatched,
             modsLocked,
-            keyboard->CurrentLayoutIndex,
-            keyboard->CurrentLayoutIndex,
+            0,
+            0,
             group
         );
 
@@ -943,8 +920,10 @@ public unsafe sealed partial class WindowManager
 
         var pointerData = &cursorState->PointerDataBuffer;
 
-        pointerData->Position.X = surfaceX; // Really needs wl_fixed_to_double ??
-        pointerData->Position.Y = surfaceY; // Really needs wl_fixed_to_double ??
+        pointerData->WindowState     = windowState;
+        pointerData->LastWindowState = windowState;
+        pointerData->Position.X    = (float)lib_wayland_client.wl_fixed_to_double(surfaceX);
+        pointerData->Position.Y    = (float)lib_wayland_client.wl_fixed_to_double(surfaceY);
 
         UpdateCursor(cursorState);
 
@@ -968,6 +947,12 @@ public unsafe sealed partial class WindowManager
             return;
         }
 
+        var cursorState = (CursorState*)(void*)seatState->RegistryState->CursorState;
+
+        var pointerData = &cursorState->PointerDataBuffer;
+
+        pointerData->WindowState = null;
+
         seatState->RegistryState->ActiveWindow = null;
 
         if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
@@ -989,8 +974,8 @@ public unsafe sealed partial class WindowManager
 
         var pointerData = &cursorState->PointerDataBuffer;
 
-        pointerData->Position.X = surfaceX; //wl_fixed_to_double(surface_x);
-        pointerData->Position.Y = surfaceY; //wl_fixed_to_double(surface_y);
+        pointerData->Position.X = (float)lib_wayland_client.wl_fixed_to_double(surfaceX);
+        pointerData->Position.Y = (float)lib_wayland_client.wl_fixed_to_double(surfaceY);
         pointerData->MotionTime = time;
 
         if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
@@ -1045,7 +1030,7 @@ public unsafe sealed partial class WindowManager
         }
         else
         {
-            pointerData->PressedButton = default;
+            pointerData->PressedButton &= ~buttonPressed;
         }
 
         pointerData->ButtonTime   = time;
@@ -1073,11 +1058,11 @@ public unsafe sealed partial class WindowManager
         switch ((wl_pointer_axis)axis)
         {
             case wl_pointer_axis.WL_POINTER_AXIS_VERTICAL_SCROLL:
-                pointerData->Scroll.Y = value;// wl_fixed_to_double(value);
+                pointerData->Scroll.Y = (float)lib_wayland_client.wl_fixed_to_double(value);
                 break;
 
             case wl_pointer_axis.WL_POINTER_AXIS_HORIZONTAL_SCROLL:
-                pointerData->Scroll.X = value;// wl_fixed_to_double(value);
+                pointerData->Scroll.X = (float)lib_wayland_client.wl_fixed_to_double(value);
                 break;
         }
 
@@ -1109,24 +1094,24 @@ public unsafe sealed partial class WindowManager
 
         var registryState = seatState->RegistryState;
 
-        if (pointerData->PointedId != previousPointerData->PointedId)
+        if (pointerData->WindowState != previousPointerData->WindowState)
         {
-            if (previousPointerData->PointedId != null)
+            if (previousPointerData->WindowState != null)
             {
                 pointerData->PressedButton = default;
             }
 
             hoverChanged = true;
 
-            if (previousPointerData->PointedId != null)
+            if (previousPointerData->WindowState != null)
             {
-                windowState = previousPointerData->PointedId;
+                windowState = previousPointerData->WindowState;
             }
         }
 
-        if (windowState == null && pointerData->PointedId != null)
+        if (windowState == null && pointerData->WindowState != null)
         {
-            windowState = pointerData->PointedId;
+            windowState = pointerData->WindowState;
         }
 
         if (windowState != null)
@@ -1139,22 +1124,22 @@ public unsafe sealed partial class WindowManager
             {
                 var deltaPosisiton = (pointerData->Position - previousPointerData->Position) * SCALE;
 
-                Point<ushort> relative;
-                Point<ushort> velocity;
+                Point<short> relative;
+                Point<short> velocity;
 
                 if (previousPointerData->RelativeMotionTime != pointerData->RelativeMotionTime)
                 {
                     var time_delta = pointerData->RelativeMotionTime - previousPointerData->RelativeMotionTime;
 
-                    relative = (pointerData->RelativeMotion * SCALE).ToPoint<ushort>();
-                    velocity = (deltaPosisiton / time_delta).Cast<ushort>();
+                    relative = (pointerData->RelativeMotion * SCALE).ToPoint<short>();
+                    velocity = (deltaPosisiton / time_delta).Cast<short>();
                 }
                 else
                 {
                     var deltaTime = pointerData->MotionTime - previousPointerData->MotionTime;
 
-                    relative = deltaPosisiton.Cast<ushort>();
-                    velocity = (deltaPosisiton / deltaTime).Cast<ushort>();
+                    relative = deltaPosisiton.Cast<short>();
+                    velocity = (deltaPosisiton / deltaTime).Cast<short>();
                 }
 
                 var mouseEvent = new WindowMouseEvent
@@ -1170,7 +1155,7 @@ public unsafe sealed partial class WindowManager
                     Y              = (ushort)(pointerData->Position.Y * SCALE),
                 };
 
-                pointerData->PointedId->AddMessage(WindowMessage.MouseMove(mouseEvent));
+                pointerData->WindowState->AddMessage(WindowMessage.MouseMove(mouseEvent));
             }
 
             if (pointerData->DiscreteScrollVector120 - previousPointerData->DiscreteScrollVector120 != default)
@@ -1263,6 +1248,15 @@ public unsafe sealed partial class WindowManager
                         else
                         {
                             registryState->ActiveWindow->AddMessage(WindowMessage.Click(mouseEvent));
+
+                            if (pressed)
+                            {
+                                registryState->ActiveWindow->AddMessage(WindowMessage.MouseDown(mouseEvent));
+                            }
+                            else
+                            {
+                                registryState->ActiveWindow->AddMessage(WindowMessage.MouseUp(mouseEvent));
+                            }
                         }
 
                         if (button is MouseButton.WheelUp or MouseButton.WheelDown or MouseButton.WheelLeft or MouseButton.WheelRight)
@@ -1294,43 +1288,79 @@ public unsafe sealed partial class WindowManager
 
         *previousPointerData = *pointerData;
 
-        if (hoverChanged)
+        if (hoverChanged && registryState->ActiveWindow != null)
         {
             registryState->ActiveWindow->AddMessage(WindowMessage.FocusIn());
         }
     }
 
     [UnmanagedCallersOnly]
-    private static void OnPointerAxisSource(void* data, wl_pointer* pointer, uint axisSource) =>
-        Console.WriteLine(nameof(OnPointerAxisSource));
+    private static void OnPointerAxisDiscrete(void* data, wl_pointer* pointer, uint axis, int discrete)
+    {
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+
+        var cursorState = (CursorState*)(void*)seatState->RegistryState->CursorState;
+
+        var pointerData = &cursorState->PointerDataBuffer;
+
+        switch ((wl_pointer_axis)axis)
+        {
+            case wl_pointer_axis.WL_POINTER_AXIS_VERTICAL_SCROLL:
+                pointerData->DiscreteScrollVector120.Y = discrete * 120;
+                break;
+
+            case wl_pointer_axis.WL_POINTER_AXIS_HORIZONTAL_SCROLL:
+                pointerData->DiscreteScrollVector120.X = discrete * 120;
+                break;
+        }
+    }
 
     [UnmanagedCallersOnly]
-    private static void OnPointerAxisStop(void* data, wl_pointer* pointer, uint time, uint axis) =>
-        Console.WriteLine(nameof(OnPointerAxisStop));
+    private static void OnPointerAxisRelativeDirection(void* data, wl_pointer* pointer, uint axis, uint direction)
+    { }
 
     [UnmanagedCallersOnly]
-    private static void OnPointerAxisDiscrete(void* data, wl_pointer* pointer, uint axis, int discrete) =>
-        Console.WriteLine(nameof(OnPointerAxisDiscrete));
+    private static void OnPointerAxisSource(void* data, wl_pointer* pointer, uint axisSource)
+    {
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+
+        var cursorState = (CursorState*)(void*)seatState->RegistryState->CursorState;
+
+        var pointerData = &cursorState->PointerDataBuffer;
+
+        pointerData->ScrollType = (wl_pointer_axis_source)axisSource;
+    }
 
     [UnmanagedCallersOnly]
-    private static void OnPointerAxisValue120(void* data, wl_pointer* pointer, uint axis, int value120) =>
-        Console.WriteLine(nameof(OnPointerAxisValue120));
+    private static void OnPointerAxisStop(void* data, wl_pointer* pointer, uint time, uint axis)
+    { }
 
     [UnmanagedCallersOnly]
-    private static void OnPointerAxisRelativeDirection(void* data, wl_pointer* pointer, uint axis, uint direction) =>
-        Console.WriteLine(nameof(OnPointerAxisRelativeDirection));
+    private static void OnPointerAxisValue120(void* data, wl_pointer* pointer, uint axis, int value120)
+    {
+        var seatState = (SeatState*)data;
 
-    [UnmanagedCallersOnly]
-    private static void OnPointerGesturePinchV1Begin(void* data, zwp_pointer_gesture_pinch_v1* pointer, uint serial, uint time, wl_surface* surface, uint fingers) =>
-        Console.WriteLine(nameof(OnPointerGesturePinchV1Begin));
+        Debug.Assert(seatState != null);
 
-    [UnmanagedCallersOnly]
-    private static void OnPointerGesturePinchV1Update(void* data, zwp_pointer_gesture_pinch_v1* pointer, uint time, int dx, int dy, int scale, int rotation) =>
-        Console.WriteLine(nameof(OnPointerGesturePinchV1Update));
+        var cursorState = (CursorState*)(void*)seatState->RegistryState->CursorState;
 
-    [UnmanagedCallersOnly]
-    private static void OnPointerGesturePinchV1End(void* data, zwp_pointer_gesture_pinch_v1* pointer, uint serial, uint time, int cancelled) =>
-        Console.WriteLine(nameof(OnPointerGesturePinchV1End));
+        var pointerData = &cursorState->PointerDataBuffer;
+
+        switch ((wl_pointer_axis)axis)
+        {
+            case wl_pointer_axis.WL_POINTER_AXIS_VERTICAL_SCROLL:
+                pointerData->DiscreteScrollVector120.Y += value120;
+                break;
+
+            case wl_pointer_axis.WL_POINTER_AXIS_HORIZONTAL_SCROLL:
+                pointerData->DiscreteScrollVector120.X += value120;
+                break;
+        }
+    }
 
     [UnmanagedCallersOnly]
     private static void OnRegistryGlobal(void* data, wl_registry* registry, uint name, byte* @interface, uint version)
@@ -1375,24 +1405,6 @@ public unsafe sealed partial class WindowManager
             return;
         }
 
-        if (string.Compare(@interface, wl_output_interface->name))
-        {
-            var output = (wl_output*)wl_registry_bind(registry, name, wl_output_interface, Math.Clamp(version, 1, 4));
-
-            registryState->AddOutput(output);
-
-            var screenState = ScreenState.Allocate();
-
-            registryState->AddScreenState(name, screenState);
-
-            SetProxyTag((wl_proxy*)output);
-
-            fixed (wl_output_listener* pOutputListener = &outputListener)
-            {
-                wl_output_add_listener(output, pOutputListener, screenState);
-            }
-        }
-
         if (string.Compare(@interface, wl_seat_interface->name))
         {
             var seat = (wl_seat*)wl_registry_bind(registry, name, wl_seat_interface, Math.Clamp(version, 1, 9));
@@ -1420,17 +1432,6 @@ public unsafe sealed partial class WindowManager
                 fixed (zwp_primary_selection_device_v1_listener* pPrimarySelectionDeviceListener = &primarySelectionDeviceListener)
                 {
                     zwp_primary_selection_device_v1_add_listener(seatState->PrimarySelectionDevice, pPrimarySelectionDeviceListener, seatState);
-                }
-            }
-
-            if (seatState->TextInput == default && registryState->TextInputManager != default)
-            {
-                // IME.
-                seatState->TextInput = zwp_text_input_manager_v3_get_text_input(registryState->TextInputManager, seat);
-
-                fixed (zwp_text_input_v3_listener* pTextInputListener = &textInputListener)
-                {
-                    zwp_text_input_v3_add_listener(seatState->TextInput, pTextInputListener, seatState);
                 }
             }
 
@@ -1545,62 +1546,9 @@ public unsafe sealed partial class WindowManager
             return;
         }
 
-        if (string.Compare(@interface, zwp_pointer_gestures_v1_interface->name))
-        {
-            registryState->PointerGestures = new(name, (zwp_pointer_gestures_v1*)wl_registry_bind(registry, name, zwp_pointer_gestures_v1_interface, 1));
-
-            return;
-        }
-
         if (string.Compare(@interface, zwp_idle_inhibit_manager_v1_interface->name))
         {
             registryState->IdleInhibitManager = new(name, (zwp_idle_inhibit_manager_v1*)wl_registry_bind(registry, name, zwp_idle_inhibit_manager_v1_interface, 1));
-
-            return;
-        }
-
-        if (string.Compare(@interface, zwp_tablet_manager_v2_interface->name))
-        {
-            registryState->TabletManager = new(name, (zwp_tablet_manager_v2*)wl_registry_bind(registry, name, zwp_tablet_manager_v2_interface, 1));
-
-            using var seats = registryState->GetSeats();
-
-            foreach (var seat in seats)
-            {
-                var seatState = GetSeatState(seat);
-
-                NullReferenceException.ThrowIfNull(seatState);
-
-                seatState->TabletSeat = zwp_tablet_manager_v2_get_tablet_seat(registryState->TabletManager, seat);
-
-                fixed (zwp_tablet_seat_v2_listener* pTabletSeatListener = &tabletSeatListener)
-                {
-                    zwp_tablet_seat_v2_add_listener(seatState->TabletSeat, pTabletSeatListener, seatState);
-                }
-            }
-
-            return;
-        }
-
-        if (string.Compare(@interface, zwp_text_input_manager_v3_interface->name))
-        {
-            registryState->TextInputManager = new(name, (zwp_text_input_manager_v3*)wl_registry_bind(registry, name, zwp_text_input_manager_v3_interface, 1));
-
-            using var seats = registryState->GetSeats();
-
-            foreach (var seat in seats)
-            {
-                var seatState = GetSeatState(seat);
-
-                NullReferenceException.ThrowIfNull(seatState);
-
-                seatState->TextInput = zwp_text_input_manager_v3_get_text_input(registryState->TextInputManager, seat);
-
-                fixed (zwp_text_input_v3_listener* pTextInputListener = &textInputListener)
-                {
-                    zwp_text_input_v3_add_listener(seatState->TextInput, pTextInputListener, seatState);
-                }
-            }
         }
     }
 
@@ -1608,24 +1556,76 @@ public unsafe sealed partial class WindowManager
     private static void OnRegistryGlobalRemove(void* data, wl_registry* registry, uint name)
     {
         var registryState = (RegistryState*)data;
+    }
 
-        if (registryState->RemoveScreenState(name, out var screenState))
+    [UnmanagedCallersOnly]
+    private static void OnPrimarySelectionDevicedataOffer(void* data, zwp_primary_selection_device_v1* zwp_primary_selection_device_v1, zwp_primary_selection_offer_v1* id)
+    {
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+
+        fixed (zwp_primary_selection_offer_v1_listener* pOfferListener = &primarySelectionOfferListener)
         {
-            ScreenState.Free(screenState);
+            zwp_primary_selection_offer_v1_add_listener(id, pOfferListener, seatState);
         }
     }
 
     [UnmanagedCallersOnly]
-    private static void OnPrimarySelectionDeviceselection(void* data, zwp_primary_selection_device_v1* zwp_primary_selection_device_v1, zwp_primary_selection_offer_v1* offer) =>
-        Console.WriteLine(nameof(OnPrimarySelectionDeviceselection));
+    private static void OnPrimarySelectionDeviceselection(void* data, zwp_primary_selection_device_v1* zwp_primary_selection_device_v1, zwp_primary_selection_offer_v1* offer)
+    {
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+
+        if (seatState->PrimarySelectionCurrentOffer != null && seatState->PrimarySelectionCurrentOffer != offer)
+        {
+            zwp_primary_selection_offer_v1_destroy(seatState->PrimarySelectionCurrentOffer);
+        }
+
+        seatState->PrimarySelectionCurrentOffer = offer;
+    }
 
     [UnmanagedCallersOnly]
-    private static void OnPrimarySelectionDevicedataOffer(void* data, zwp_primary_selection_device_v1* zwp_primary_selection_device_v1, zwp_primary_selection_offer_v1* id) =>
-        Console.WriteLine(nameof(OnPrimarySelectionDevicedataOffer));
+    private static void OnPrimarySelectionOffer(void* data, zwp_primary_selection_offer_v1* zwp_primary_selection_offer_v1, byte* mimeType)
+    {
+    }
 
     [UnmanagedCallersOnly]
-    private static void OnRelativePointerV1RelativeMotion(void* data, zwp_relative_pointer_v1* pointer, uint utimeHi, uint utimeLo, int dx, int dy, int dxUnaccel, int dyUnaccel) =>
-        Console.WriteLine(nameof(OnRelativePointerV1RelativeMotion));
+    private static void OnPrimarySelectionSourceSend(void* data, zwp_primary_selection_source_v1* zwp_primary_selection_source_v1, byte* mimeType, int fd)
+    {
+    }
+
+    [UnmanagedCallersOnly]
+    private static void OnPrimarySelectionSourceCancelled(void* data, zwp_primary_selection_source_v1* zwp_primary_selection_source_v1)
+    {
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+
+        if (seatState->PrimarySelectionCurrentSource != null)
+        {
+            primary_selection.zwp_primary_selection_source_v1_destroy(seatState->PrimarySelectionCurrentSource);
+
+            seatState->PrimarySelectionCurrentSource = null;
+        }
+    }
+
+    [UnmanagedCallersOnly]
+    private static void OnRelativePointerV1RelativeMotion(void* data, zwp_relative_pointer_v1* pointer, uint utimeHi, uint utimeLo, int dx, int dy, int dxUnaccel, int dyUnaccel)
+    {
+        var seatState = (SeatState*)data;
+
+        Debug.Assert(seatState != null);
+
+        var cursorState = (CursorState*)(void*)seatState->RegistryState->CursorState;
+
+        var pointerData = &cursorState->PointerDataBuffer;
+
+        pointerData->RelativeMotion.X    = (float)lib_wayland_client.wl_fixed_to_double(dx);
+        pointerData->RelativeMotion.Y    = (float)lib_wayland_client.wl_fixed_to_double(dy);
+        pointerData->RelativeMotionTime  = (utimeHi << 32) | utimeLo;
+    }
 
     [UnmanagedCallersOnly]
     private static void OnSeatName(void* data, wl_seat* seat, byte* name) =>
@@ -1676,16 +1676,6 @@ public unsafe sealed partial class WindowManager
                         zwp_relative_pointer_v1_add_listener(cursorState->RelativePointer, pRelativePointerListener, seatState);
                     }
                 }
-
-                if (seatState->RegistryState->PointerGestures != default)
-                {
-                    seatState->PointerGesturePinch = zwp_pointer_gestures_v1_get_pinch_gesture(seatState->RegistryState->PointerGestures, cursorState->Pointer);
-
-                    fixed (zwp_pointer_gesture_pinch_v1_listener* pPointerGesturePinchListener = &pointerGesturePinchListener)
-                    {
-                        zwp_pointer_gesture_pinch_v1_add_listener(seatState->PointerGesturePinch, pPointerGesturePinchListener, seatState);
-                    }
-                }
             }
         }
         else
@@ -1718,14 +1708,6 @@ public unsafe sealed partial class WindowManager
     }
 
     [UnmanagedCallersOnly]
-    private static void OnSurfaceEnter(void* data, wl_surface* surface, wl_output* output) =>
-        Console.WriteLine(nameof(OnSurfaceEnter));
-
-    [UnmanagedCallersOnly]
-    private static void OnSurfaceLeave(void* data, wl_surface* surface, wl_output* output) =>
-        Console.WriteLine(nameof(OnSurfaceLeave));
-
-    [UnmanagedCallersOnly]
     private static void OnSurfacePreferredBufferScale(void* data, wl_surface* surface, int factor) =>
         Console.WriteLine(nameof(OnSurfacePreferredBufferScale));
 
@@ -1734,44 +1716,34 @@ public unsafe sealed partial class WindowManager
         Console.WriteLine(nameof(OnSurfacePreferredBufferTransform));
 
     [UnmanagedCallersOnly]
-    private static void OnTabletSeatPadAdded(void* data, zwp_tablet_seat_v2* tabletSeat, zwp_tablet_pad_v2* id) =>
-        Console.WriteLine(nameof(OnTabletSeatPadAdded));
+    private static void OnSurfaceEnter(void* data, wl_surface* surface, wl_output* output)
+    {
+        var windowState = GetWindowState(surface);
+
+        if (windowState == null)
+        {
+            return;
+        }
+
+        windowState->AddOutput(output);
+    }
 
     [UnmanagedCallersOnly]
-    private static void OnTabletSeatTabletAdded(void* data, zwp_tablet_seat_v2* tabletSeat, zwp_tablet_v2* id) =>
-        Console.WriteLine(nameof(OnTabletSeatTabletAdded));
+    private static void OnSurfaceLeave(void* data, wl_surface* surface, wl_output* output)
+    {
+        var windowState = GetWindowState(surface);
 
-    [UnmanagedCallersOnly]
-    private static void OnTabletSeatToolAdded(void* data, zwp_tablet_seat_v2* tabletSeat, zwp_tablet_tool_v2* id) =>
-        Console.WriteLine(nameof(OnTabletSeatToolAdded));
+        if (windowState == null)
+        {
+            return;
+        }
 
-    [UnmanagedCallersOnly]
-    private static void OnTextInputCommitString(void* data, zwp_text_input_v3* textInput, byte* text) =>
-        Console.WriteLine(nameof(OnTextInputCommitString));
-
-    [UnmanagedCallersOnly]
-    private static void OnTextInputDeleteSurroundingText(void* data, zwp_text_input_v3* textInput, uint beforeLength, uint afterLength) =>
-        Console.WriteLine(nameof(OnTextInputDeleteSurroundingText));
-
-    [UnmanagedCallersOnly]
-    private static void OnTextInputDone(void* data, zwp_text_input_v3* textInput, uint serial) =>
-        Console.WriteLine(nameof(OnTextInputDone));
-
-    [UnmanagedCallersOnly]
-    private static void OnTextInputEnter(void* data, zwp_text_input_v3* textInput, wl_surface* surface) =>
-        Console.WriteLine(nameof(OnTextInputEnter));
-
-    [UnmanagedCallersOnly]
-    private static void OnTextInputLeave(void* data, zwp_text_input_v3* textInput, wl_surface* surface) =>
-        Console.WriteLine(nameof(OnTextInputLeave));
-
-    [UnmanagedCallersOnly]
-    private static void OnTextInputPreeditString(void* data, zwp_text_input_v3* textInput, byte* text, int cursorBegin, int cursorEnd) =>
-        Console.WriteLine(nameof(OnTextInputPreeditString));
+        windowState->RemoveOutput(output);
+    }
 
     [UnmanagedCallersOnly]
     private static void OnWmBasePing(void* data, xdg_wm_base* wmBase, uint serial) =>
-        Console.WriteLine(nameof(OnWmBasePing));
+        xdg_wm_base_pong(wmBase, serial);
     #endregion
 
     private static bool ProxyIsAge(wl_proxy* proxy)
@@ -1800,11 +1772,11 @@ public unsafe sealed partial class WindowManager
 
         if (cursorState->CursorVisible)
         {
-            if (cursorState->CustomCursors.TryGetValue((uint)cursorState->Cursor, out var custom_cursor))
+            if (cursorState->CustomCursors.TryGetValue((uint)cursorState->Cursor, out var customCursor))
             {
-                cursorBuffer = custom_cursor.Buffer;
-                hotspotX     = custom_cursor.Hotspot.X;
-                hotspotY     = custom_cursor.Hotspot.Y;
+                cursorBuffer = customCursor.Buffer;
+                hotspotX     = customCursor.Hotspot.X;
+                hotspotY     = customCursor.Hotspot.Y;
 
                 scale = 1;
             }
@@ -2075,6 +2047,8 @@ public unsafe sealed partial class WindowManager
 
     internal partial void SetWindowClipboardData(Window window, string value) =>
         throw new NotImplementedException();
+
+    internal partial void SetCursorCustomImage(Cursor cursor, CursorImage image, Point<int> hotpot) => throw new NotImplementedException();
 
     internal partial void SetWindowTitle(Window window, string value)
     {

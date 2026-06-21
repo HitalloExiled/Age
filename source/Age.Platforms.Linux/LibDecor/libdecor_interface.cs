@@ -2,7 +2,7 @@ namespace Age.Platforms.Linux.LibDecor;
 
 internal unsafe struct libdecor_interface
 {
-    public required delegate* unmanaged<
+    public delegate* unmanaged<
         libdecor*      /* context */,
         libdecor_error /* error */,
         byte*          /* message */,

@@ -16,9 +16,7 @@ public unsafe sealed partial class WindowManager
     private struct RegistryState : IDisposable
     {
         #region 8-bytes
-        private NativeDictionary<uint, Pointer<ScreenState>> screenStates;
-        private NativeList<Pointer<wl_output>>               outputs;
-        private NativeList<Pointer<wl_seat>>                 seats;
+        private NativeList<Pointer<wl_seat>>   seats;
 
         public NativeArray<Pointer<wl_cursor>> Cursors;
 
@@ -38,14 +36,11 @@ public unsafe sealed partial class WindowManager
         public KeyboardState*                           KeyboardState;
         public libdecor*                                LibdecorContext;
         public Named<zwp_pointer_constraints_v1>        PointerConstraints;
-        public Named<zwp_pointer_gestures_v1>           PointerGestures;
         public zwp_primary_selection_device_manager_v1* PrimarySelectionDeviceManager;
         public wl_registry*                             Registry;
         public Named<zwp_relative_pointer_manager_v1>   RelativePointerManager;
         public Named<wl_shm>                            Shm;
         public Named<xdg_system_bell_v1>                SystemBell;
-        public Named<zwp_tablet_manager_v2>             TabletManager;
-        public Named<zwp_text_input_manager_v3>         TextInputManager;
         public Named<wp_viewporter>                     Viewporter;
         public Named<xdg_wm_base>                       WmBase;
         #endregion
@@ -63,9 +58,7 @@ public unsafe sealed partial class WindowManager
 
         public RegistryState()
         {
-            this.outputs      = [];
-            this.screenStates = [];
-            this.seats        = [];
+            this.seats = [];
 
             this.Cursors = new(Cursor.Length);
         }
@@ -96,13 +89,6 @@ public unsafe sealed partial class WindowManager
             this.DisposeCursoState();
             this.DisposeKeyboardState();
 
-            using var outputs = this.GetOutputs();
-
-            foreach (var output in outputs)
-            {
-                lib_wayland_client.wl_output_destroy(output);
-            }
-
             NativeMemory.Free(this.CursorThemeName);
 
             lib_wayland_cursor.wl_cursor_theme_destroy(this.CursorTheme);
@@ -115,11 +101,6 @@ public unsafe sealed partial class WindowManager
             if (this.PointerConstraints != default)
             {
                 pointer_constraints.zwp_pointer_constraints_v1_destroy(this.PointerConstraints);
-            }
-
-            if (this.PointerGestures != default)
-            {
-                pointer_gestures.zwp_pointer_gestures_v1_destroy(this.PointerGestures);
             }
 
             if (this.RelativePointerManager != default)
@@ -182,8 +163,6 @@ public unsafe sealed partial class WindowManager
                 lib_wayland_client.wl_display_disconnect(this.Display);
             }
 
-            this.outputs.Dispose();
-            this.screenStates.Dispose();
             this.seats.Dispose();
 
             this.Cursors.Dispose();
@@ -213,22 +192,6 @@ public unsafe sealed partial class WindowManager
             }
         }
 
-        public void AddOutput(Pointer<wl_output> output)
-        {
-            using (UnsafeLock.Lock(ref this.@lock))
-            {
-                this.outputs.Add(output);
-            }
-        }
-
-        public void AddScreenState(uint name, Pointer<ScreenState> screenState)
-        {
-            using (UnsafeLock.Lock(ref this.@lock))
-            {
-                this.screenStates.Add(name, screenState);
-            }
-        }
-
         public void AddSeat(Pointer<wl_seat> seat)
         {
             using (UnsafeLock.Lock(ref this.@lock))
@@ -237,35 +200,11 @@ public unsafe sealed partial class WindowManager
             }
         }
 
-        public NativeArray<Pointer<wl_output>> GetOutputs()
-        {
-            using (UnsafeLock.Lock(ref this.@lock))
-            {
-                return this.outputs.ToNativeArray();
-            }
-        }
-
-        public NativeArray<Pointer<ScreenState>> GetScreenStates()
-        {
-            using (UnsafeLock.Lock(ref this.@lock))
-            {
-                return this.screenStates.Values.ToNativeArray();
-            }
-        }
-
         public NativeArray<Pointer<wl_seat>> GetSeats()
         {
             using (UnsafeLock.Lock(ref this.@lock))
             {
                 return this.seats.ToNativeArray();
-            }
-        }
-
-        public bool RemoveScreenState(uint name, out Pointer<ScreenState> screenState)
-        {
-            using (UnsafeLock.Lock(ref this.@lock))
-            {
-                return this.screenStates.Remove(name, out screenState);
             }
         }
     }
