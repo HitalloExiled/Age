@@ -135,8 +135,6 @@ public sealed class StoryBook : UIScene
         textBoxLink.Clicked  += (in _) => this.SetPage(new TextBoxPage());
 
         emptyLink.Clicked += (in _) => this.outlet.DetachChildren();
-
-        this.AppendChild(this.Canvas);
     }
 
     public void SetPage<T>(T page) where T : Page

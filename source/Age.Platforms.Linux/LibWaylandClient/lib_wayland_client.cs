@@ -8,6 +8,7 @@ internal struct wl_compositor;
 internal struct wl_data_device;
 internal struct wl_data_device_manager;
 internal struct wl_data_offer;
+internal struct wl_data_source;
 internal struct wl_display;
 internal struct wl_keyboard;
 internal struct wl_object;
@@ -27,6 +28,15 @@ internal unsafe static partial class lib_wayland_client
     private const int WL_BUFFER_DESTROY                      = 0;
     private const int WL_COMPOSITOR_CREATE_SURFACE           = 0;
     private const int WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE = 1;
+    private const int WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE = 0;
+
+    private const int WL_DATA_DEVICE_SET_SELECTION = 0;
+
+    private const int WL_DATA_SOURCE_OFFER    = 0;
+    private const int WL_DATA_SOURCE_DESTROY  = 1;
+
+    private const int WL_DATA_OFFER_RECEIVE = 0;
+    private const int WL_DATA_OFFER_DESTROY = 1;
     private const int WL_DISPLAY_GET_REGISTRY                = 1;
 
     private const int WL_POINTER_SET_CURSOR = 0;
@@ -87,6 +97,7 @@ internal unsafe static partial class lib_wayland_client
     public static wl_interface* wl_seat_interface                = GetInterface<wl_interface>(nameof(wl_seat_interface));
     public static wl_interface* wl_shm_interface                 = GetInterface<wl_interface>(nameof(wl_shm_interface));
     public static wl_interface* wl_shm_pool_interface            = GetInterface<wl_interface>(nameof(wl_shm_pool_interface));
+    public static wl_interface* wl_data_source_interface         = GetInterface<wl_interface>(nameof(wl_data_source_interface));
     public static wl_interface* wl_surface_interface             = GetInterface<wl_interface>(nameof(wl_surface_interface));
 
     private static T* GetInterface<T>(string name) where T : unmanaged =>
@@ -225,6 +236,16 @@ internal unsafe static partial class lib_wayland_client
 
     public static void wl_data_device_destroy(wl_data_device* wl_data_device) =>
         wl_proxy_destroy((wl_proxy*)wl_data_device);
+
+    public static void wl_data_device_set_selection(wl_data_device* wl_data_device, wl_data_source* source, uint32_t serial) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wl_data_device,
+            WL_DATA_DEVICE_SET_SELECTION,
+            null,
+            wl_proxy_get_version((wl_proxy*)wl_data_device),
+            0,
+            [source, serial]
+        );
     #endregion
 
     #region wl_proxy - wl_data_device_manager
@@ -236,6 +257,67 @@ internal unsafe static partial class lib_wayland_client
             wl_proxy_get_version((wl_proxy*)wl_data_device_manager),
             0,
             [default, seat]
+        );
+
+    public static wl_data_source* wl_data_device_manager_create_data_source(wl_data_device_manager* wl_data_device_manager) =>
+        (wl_data_source*)wl_proxy_marshal_flags(
+            (wl_proxy*)wl_data_device_manager,
+            WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE,
+            wl_data_source_interface,
+            wl_proxy_get_version((wl_proxy*)wl_data_device_manager),
+            0,
+            [default]
+        );
+    #endregion
+
+    #region wl_proxy - wl_data_source
+    public static int wl_data_source_add_listener(wl_data_source* wl_data_source, wl_data_source_listener* listener, void* data) =>
+        wl_proxy_add_listener((wl_proxy*)wl_data_source, (void**)listener, data);
+
+    public static void wl_data_source_offer(wl_data_source* wl_data_source, byte* mime_type) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wl_data_source,
+            WL_DATA_SOURCE_OFFER,
+            null,
+            wl_proxy_get_version((wl_proxy*)wl_data_source),
+            0,
+            [mime_type]
+        );
+
+    public static void wl_data_source_destroy(wl_data_source* wl_data_source) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wl_data_source,
+            WL_DATA_SOURCE_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)wl_data_source),
+            WL_MARSHAL_FLAG_DESTROY
+        );
+
+    public static void* wl_data_source_get_user_data(wl_data_source* wl_data_source) =>
+        wl_proxy_get_user_data((wl_proxy*)wl_data_source);
+    #endregion
+
+    #region wl_proxy - wl_data_offer
+    public static int wl_data_offer_add_listener(wl_data_offer* wl_data_offer, wl_data_offer_listener* listener, void* data) =>
+        wl_proxy_add_listener((wl_proxy*)wl_data_offer, (void**)listener, data);
+
+    public static void wl_data_offer_receive(wl_data_offer* wl_data_offer, byte* mime_type, int32_t fd) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wl_data_offer,
+            WL_DATA_OFFER_RECEIVE,
+            null,
+            wl_proxy_get_version((wl_proxy*)wl_data_offer),
+            0,
+            [mime_type, fd]
+        );
+
+    public static void wl_data_offer_destroy(wl_data_offer* wl_data_offer) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wl_data_offer,
+            WL_DATA_OFFER_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)wl_data_offer),
+            WL_MARSHAL_FLAG_DESTROY
         );
     #endregion
 

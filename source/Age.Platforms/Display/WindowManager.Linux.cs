@@ -1,7 +1,7 @@
 #if LINUX
 using Age.Core.Collections;
-using Age.Core.Extensions;
 using Age.Core.Exceptions;
+using Age.Core.Extensions;
 using Age.Core;
 using Age.Numerics;
 using Age.Platforms.Linux.Libc;
@@ -38,6 +38,8 @@ namespace Age.Platforms.Display;
 
 public unsafe sealed partial class WindowManager
 {
+    private const int CURSOR_LENGTH = 17;
+
     private static string[] cursorNames =
     [
         "left_ptr",       /// <see cref="Cursor.Arrow"/>
@@ -83,7 +85,7 @@ public unsafe sealed partial class WindowManager
     private static readonly wp_cursor_shape_device_v1_shape[] standardCursors =
     [
 		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_DEFAULT,     /// <see cref="Cursor.Arrow"/>
-		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_WAIT,        /// <see cref="Cursor.Busy"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_PROGRESS,    /// <see cref="Cursor.Busy"/>
 		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_CROSSHAIR,   /// <see cref="Cursor.Cross"/>
 		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_NESW_RESIZE, /// <see cref="Cursor.DiagonalResizeNESW"/>
 		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_NWSE_RESIZE, /// <see cref="Cursor.DiagonalResizeNWSE"/>
@@ -95,10 +97,10 @@ public unsafe sealed partial class WindowManager
 		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_EW_RESIZE,   /// <see cref="Cursor.HorizontalResize"/>
 		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_COL_RESIZE,  /// <see cref="Cursor.HorizontalSplit"/>
 		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_MOVE,        /// <see cref="Cursor.Move"/>
-		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_PROGRESS,    /// <see cref="Cursor.Progress"/>
 		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_TEXT,        /// <see cref="Cursor.Text"/>
 		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_NS_RESIZE,   /// <see cref="Cursor.VerticalResize"/>
 		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_ROW_RESIZE,  /// <see cref="Cursor.VerticalSplit"/>
+		wp_cursor_shape_device_v1_shape.WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_WAIT,        /// <see cref="Cursor.Wait"/>
     ];
 
     #region Unmanaged Listeners
@@ -191,6 +193,21 @@ public unsafe sealed partial class WindowManager
     {
         send      = &OnPrimarySelectionSourceSend,
         cancelled = &OnPrimarySelectionSourceCancelled,
+    };
+
+    [FixedAddressValueType]
+    private static readonly wl_data_offer_listener dataOfferListener = new()
+    {
+        offer          = &OnDataOfferOffer,
+        source_actions = &OnDataOfferSourceActions,
+        action         = &OnDataOfferAction,
+    };
+
+    [FixedAddressValueType]
+    private static readonly wl_data_source_listener dataSourceListener = new()
+    {
+        send      = &OnDataSourceSend,
+        cancelled = &OnDataSourceCancelled,
     };
 
     [FixedAddressValueType]
@@ -351,6 +368,23 @@ public unsafe sealed partial class WindowManager
         this.eventLoopThread.Start();
     }
 
+    private static void AddKeyPressMessages(RegistryState* registryState, WindowKeyEvent composedWindowKeyEvent)
+    {
+        if (composedWindowKeyEvent.IsPressed)
+        {
+            registryState->ActiveWindow->AddMessage(WindowMessage.KeyDown(composedWindowKeyEvent));
+
+            if (composedWindowKeyEvent.Char != default)
+            {
+                registryState->ActiveWindow->AddMessage(WindowMessage.Input(composedWindowKeyEvent.Char));
+            }
+        }
+        else
+        {
+            registryState->ActiveWindow->AddMessage(WindowMessage.KeyUp(composedWindowKeyEvent));
+        }
+    }
+
     private static SeatState* GetSeatState(wl_seat* seat) =>
         seat != null && ProxyIsAge((wl_proxy*)seat) ? (SeatState*)wl_seat_get_user_data(seat) : default;
 
@@ -491,7 +525,7 @@ public unsafe sealed partial class WindowManager
                             Echo = echo,
                         };
 
-                        registryState->ActiveWindow->AddMessage(WindowMessage.KeyPress(composedWindowKeyEvent));
+                        AddKeyPressMessages(registryState, composedWindowKeyEvent);
                     }
                 }
             }
@@ -507,7 +541,7 @@ public unsafe sealed partial class WindowManager
             {
                 windowKeyEvent = windowKeyEvent with { Echo = echo };
 
-                registryState->ActiveWindow->AddMessage(WindowMessage.KeyPress(windowKeyEvent));
+                AddKeyPressMessages(registryState, windowKeyEvent);
 
                 lastKey = windowKeyEvent.Key;
             }
@@ -519,7 +553,7 @@ public unsafe sealed partial class WindowManager
 
             if (unstuckKeyEvent != default)
             {
-                registryState->ActiveWindow->AddMessage(WindowMessage.KeyPress(unstuckKeyEvent));
+                AddKeyPressMessages(registryState, unstuckKeyEvent);
             }
         }
     }
@@ -558,12 +592,95 @@ public unsafe sealed partial class WindowManager
         Console.WriteLine(nameof(OnDataDeviceMotion));
 
     [UnmanagedCallersOnly]
-    private static void OnDataDeviceDataOffer(void* data, wl_data_device* dataDevice, wl_data_offer* id) =>
-        Console.WriteLine(nameof(OnDataDeviceDataOffer));
+    private static void OnDataDeviceDataOffer(void* data, wl_data_device* dataDevice, wl_data_offer* id)
+    {
+        var seatState = (SeatState*)data;
+
+        if (seatState == null)
+        {
+            return;
+        }
+
+        fixed (wl_data_offer_listener* pOfferListener = &dataOfferListener)
+        {
+            wl_data_offer_add_listener(id, pOfferListener, seatState);
+        }
+    }
 
     [UnmanagedCallersOnly]
-    private static void OnDataDeviceSelection(void* data, wl_data_device* dataDevice, wl_data_offer* id) =>
-        Console.WriteLine(nameof(OnDataDeviceSelection));
+    private static void OnDataDeviceSelection(void* data, wl_data_device* dataDevice, wl_data_offer* id)
+    {
+        var seatState = (SeatState*)data;
+
+        if (seatState == null)
+        {
+            return;
+        }
+
+        if (seatState->DataOfferSelection != null && seatState->DataOfferSelection != id)
+        {
+            wl_data_offer_destroy(seatState->DataOfferSelection);
+
+            seatState->DataOfferSelection = null;
+        }
+
+        seatState->DataOfferSelection = id;
+    }
+
+    [UnmanagedCallersOnly]
+    private static void OnDataOfferAction(void* data, wl_data_offer* offer, uint dndAction)
+    { }
+
+    [UnmanagedCallersOnly]
+    private static void OnDataOfferOffer(void* data, wl_data_offer* offer, byte* mimeType)
+    { }
+
+    [UnmanagedCallersOnly]
+    private static void OnDataOfferSourceActions(void* data, wl_data_offer* offer, uint sourceActions)
+    { }
+
+    [UnmanagedCallersOnly]
+    private static void OnDataSourceSend(void* data, wl_data_source* source, byte* mimeType, int fd)
+    {
+        var seatState = (SeatState*)data;
+
+        if (seatState == null || seatState->ClipboardDataSourceData == null)
+        {
+            _ = close(fd);
+
+            return;
+        }
+
+        _ = write(fd, seatState->ClipboardDataSourceData, (nuint)seatState->ClipboardDataSourceLength);
+        _ = close(fd);
+    }
+
+    [UnmanagedCallersOnly]
+    private static void OnDataSourceCancelled(void* data, wl_data_source* source)
+    {
+        var seatState = (SeatState*)data;
+
+        if (seatState == null)
+        {
+            return;
+        }
+
+        if (seatState->DataSourceSelection != null)
+        {
+            wl_data_source_destroy(seatState->DataSourceSelection);
+
+            seatState->DataSourceSelection = null;
+        }
+
+        if (seatState->ClipboardDataSourceData != null)
+        {
+            NativeMemory.Free(seatState->ClipboardDataSourceData);
+
+            seatState->ClipboardDataSourceData = null;
+        }
+
+        seatState->ClipboardDataSourceLength = 0;
+    }
 
     [UnmanagedCallersOnly]
     private static void OnFractionalScalePreferredScale(void* data, wp_fractional_scale_v1* fractionalScale, uint scale) =>
@@ -607,8 +724,8 @@ public unsafe sealed partial class WindowManager
         {
             if (xkb_keymap_key_repeats(keyboardState->Keymap, xkbKeycode) == 1)
             {
-                keyboardState->LastRepeatStartMsec = DateTime.Now.Ticks;
-                keyboardState->RepeatingKeycode    = xkbKeycode;
+                keyboardState->LastRepeatStartMs = (ulong)TimeSpan.FromTicks(DateTime.UtcNow.Ticks).TotalMilliseconds;
+                keyboardState->RepeatingKeycode  = xkbKeycode;
             }
 
             keyboardState->LastKeyPressedSerial = serial;
@@ -761,29 +878,30 @@ public unsafe sealed partial class WindowManager
         using var alt   = new UnmanagedString(XKB_MOD_NAME_ALT);
         using var logo  = new UnmanagedString(XKB_MOD_NAME_LOGO);
 
-        Debug.Assert(keyboard->Modifiers == default);
+        Modifier modifiers = default;
 
         if (xkb_state_mod_name_is_active(keyboard->State, shift, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
         {
-            keyboard->Modifiers |= Modifier.Shift;
+            modifiers |= Modifier.Shift;
         }
 
         if (xkb_state_mod_name_is_active(keyboard->State, ctrl, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
         {
-            keyboard->Modifiers |= Modifier.Ctrl;
+            modifiers |= Modifier.Ctrl;
         }
 
         if (xkb_state_mod_name_is_active(keyboard->State, alt, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
         {
-            keyboard->Modifiers |= Modifier.Alt;
+            modifiers |= Modifier.Alt;
         }
 
         if (xkb_state_mod_name_is_active(keyboard->State, logo, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
         {
-            keyboard->Modifiers |= Modifier.Meta;
+            modifiers |= Modifier.Meta;
         }
 
         keyboard->CurrentLayoutIndex = group;
+        keyboard->Modifiers          = modifiers;
     }
 
     [UnmanagedCallersOnly]
@@ -797,8 +915,8 @@ public unsafe sealed partial class WindowManager
 
         Debug.Assert(keyboard != null);
 
-        keyboard->RepeatKeyDelayMsec   = 1000 / rate;
-        keyboard->RepeatStartDelayMsec = delay;
+        keyboard->RepeatKeyDelayMs   = (ulong)(rate > 0 ? 1000 / rate : rate);
+        keyboard->RepeatStartDelayMs = (ulong)delay;
     }
 
     [UnmanagedCallersOnly]
@@ -869,32 +987,25 @@ public unsafe sealed partial class WindowManager
     }
 
     [UnmanagedCallersOnly]
-    private static void OnLibdecorFrameDismissPopup(libdecor_frame* frame, byte* seatName, void* userData) =>
-        Logger.Debug(nameof(OnLibdecorFrameDismissPopup));
+    private static void OnLibdecorFrameDismissPopup(libdecor_frame* frame, byte* seatName, void* userData) { }
 
     [UnmanagedCallersOnly]
-    private static void OnOutputDescription(void* data, wl_output* output, byte* description) =>
-        Console.WriteLine(nameof(OnOutputDescription));
+    private static void OnOutputDescription(void* data, wl_output* output, byte* description) { }
 
     [UnmanagedCallersOnly]
-    private static void OnOutputDone(void* data, wl_output* output) =>
-        Console.WriteLine(nameof(OnOutputDone));
+    private static void OnOutputDone(void* data, wl_output* output) { }
 
     [UnmanagedCallersOnly]
-    private static void OnOutputGeometry(void* data, wl_output* output, int x, int y, int physicalWidth, int physicalHeight, int subpixel, byte* make, byte* model, int transform) =>
-        Console.WriteLine(nameof(OnOutputGeometry));
+    private static void OnOutputGeometry(void* data, wl_output* output, int x, int y, int physicalWidth, int physicalHeight, int subpixel, byte* make, byte* model, int transform) { }
 
     [UnmanagedCallersOnly]
-    private static void OnOutputMode(void* data, wl_output* output, uint flags, int width, int height, int refresh) =>
-        Console.WriteLine(nameof(OnOutputMode));
+    private static void OnOutputMode(void* data, wl_output* output, uint flags, int width, int height, int refresh) { }
 
     [UnmanagedCallersOnly]
-    private static void OnOutputName(void* data, wl_output* output, byte* name) =>
-        Console.WriteLine(nameof(OnOutputName));
+    private static void OnOutputName(void* data, wl_output* output, byte* name) { }
 
     [UnmanagedCallersOnly]
-    private static void OnOutputScale(void* data, wl_output* output, int factor) =>
-        Console.WriteLine(nameof(OnOutputScale));
+    private static void OnOutputScale(void* data, wl_output* output, int factor) { }
 
     [UnmanagedCallersOnly]
     private static void OnPointerEnter(void* data, wl_pointer* pointer, uint serial, wl_surface* surface, int surfaceX, int surfaceY)
@@ -922,8 +1033,8 @@ public unsafe sealed partial class WindowManager
 
         pointerData->WindowState     = windowState;
         pointerData->LastWindowState = windowState;
-        pointerData->Position.X    = (float)lib_wayland_client.wl_fixed_to_double(surfaceX);
-        pointerData->Position.Y    = (float)lib_wayland_client.wl_fixed_to_double(surfaceY);
+        pointerData->Position.X    = (float)wl_fixed_to_double(surfaceX);
+        pointerData->Position.Y    = (float)wl_fixed_to_double(surfaceY);
 
         UpdateCursor(cursorState);
 
@@ -974,8 +1085,8 @@ public unsafe sealed partial class WindowManager
 
         var pointerData = &cursorState->PointerDataBuffer;
 
-        pointerData->Position.X = (float)lib_wayland_client.wl_fixed_to_double(surfaceX);
-        pointerData->Position.Y = (float)lib_wayland_client.wl_fixed_to_double(surfaceY);
+        pointerData->Position.X = (float)wl_fixed_to_double(surfaceX);
+        pointerData->Position.Y = (float)wl_fixed_to_double(surfaceY);
         pointerData->MotionTime = time;
 
         if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
@@ -1058,11 +1169,11 @@ public unsafe sealed partial class WindowManager
         switch ((wl_pointer_axis)axis)
         {
             case wl_pointer_axis.WL_POINTER_AXIS_VERTICAL_SCROLL:
-                pointerData->Scroll.Y = (float)lib_wayland_client.wl_fixed_to_double(value);
+                pointerData->Scroll.Y = (float)wl_fixed_to_double(value);
                 break;
 
             case wl_pointer_axis.WL_POINTER_AXIS_HORIZONTAL_SCROLL:
-                pointerData->Scroll.X = (float)lib_wayland_client.wl_fixed_to_double(value);
+                pointerData->Scroll.X = (float)wl_fixed_to_double(value);
                 break;
         }
 
@@ -1240,23 +1351,24 @@ public unsafe sealed partial class WindowManager
                             && pointerData->ButtonTime - previousPointerData->ButtonTime < registryState->DoubleClikInterval
                             && ((previousPointerData->LastPressedPosition * SCALE) - (pointerData->LastPressedPosition * SCALE)).ToVector2().Length < 5;
 
+                        if (pressed)
+                        {
+                            registryState->ActiveWindow->AddMessage(WindowMessage.MouseDown(mouseEvent));
+                        }
+                        else
+                        {
+                            registryState->ActiveWindow->AddMessage(WindowMessage.MouseUp(mouseEvent));
+
+                            if (mouseEvent.IsPrimaryButtonPressed)
+                            {
+                                registryState->ActiveWindow->AddMessage(WindowMessage.Click(mouseEvent));
+                            }
+                        }
+
                         if (isDoubleClick)
                         {
                             pointerData->DoubleClickBegun = false;
                             registryState->ActiveWindow->AddMessage(WindowMessage.DoubleClick(mouseEvent));
-                        }
-                        else
-                        {
-                            registryState->ActiveWindow->AddMessage(WindowMessage.Click(mouseEvent));
-
-                            if (pressed)
-                            {
-                                registryState->ActiveWindow->AddMessage(WindowMessage.MouseDown(mouseEvent));
-                            }
-                            else
-                            {
-                                registryState->ActiveWindow->AddMessage(WindowMessage.MouseUp(mouseEvent));
-                            }
                         }
 
                         if (button is MouseButton.WheelUp or MouseButton.WheelDown or MouseButton.WheelLeft or MouseButton.WheelRight)
@@ -1397,7 +1509,7 @@ public unsafe sealed partial class WindowManager
 
                     fixed (wl_data_device_listener* pDataDeviceListener = &dataDeviceListener)
                     {
-                        wl_data_device_add_listener(seatState->DataDevice, pDataDeviceListener, null);
+                        wl_data_device_add_listener(seatState->DataDevice, pDataDeviceListener, seatState);
                     }
                 }
             }
@@ -1605,7 +1717,7 @@ public unsafe sealed partial class WindowManager
 
         if (seatState->PrimarySelectionCurrentSource != null)
         {
-            primary_selection.zwp_primary_selection_source_v1_destroy(seatState->PrimarySelectionCurrentSource);
+            zwp_primary_selection_source_v1_destroy(seatState->PrimarySelectionCurrentSource);
 
             seatState->PrimarySelectionCurrentSource = null;
         }
@@ -1622,8 +1734,8 @@ public unsafe sealed partial class WindowManager
 
         var pointerData = &cursorState->PointerDataBuffer;
 
-        pointerData->RelativeMotion.X    = (float)lib_wayland_client.wl_fixed_to_double(dx);
-        pointerData->RelativeMotion.Y    = (float)lib_wayland_client.wl_fixed_to_double(dy);
+        pointerData->RelativeMotion.X    = (float)wl_fixed_to_double(dx);
+        pointerData->RelativeMotion.Y    = (float)wl_fixed_to_double(dy);
         pointerData->RelativeMotionTime  = (utimeHi << 32) | utimeLo;
     }
 
@@ -1833,6 +1945,42 @@ public unsafe sealed partial class WindowManager
         wl_surface_commit(cursorState->CursorSurface);
     }
 
+    private void EchoKeyboardKeys()
+    {
+        if (this.registryState->KeyboardState == null)
+        {
+            return;
+        }
+
+        var keyboardState = this.registryState->KeyboardState;
+
+        if (keyboardState->RepeatKeyDelayMs != 0 && keyboardState->RepeatingKeycode != lib_xkbommon.XKB_KEYCODE_INVALID)
+        {
+            var ms = (ulong)TimeSpan.FromTicks(DateTime.UtcNow.Ticks).TotalMilliseconds;
+
+            var delayedStart = keyboardState->LastRepeatStartMs + keyboardState->RepeatStartDelayMs;
+
+            if (keyboardState->LastRepeatMs < delayedStart)
+            {
+                keyboardState->LastRepeatMs = delayedStart;
+            }
+
+            if (ms >= delayedStart)
+            {
+                var delta = ms - keyboardState->LastRepeatMs;
+
+                var keysAmount = (int)(delta / keyboardState->RepeatKeyDelayMs);
+
+                for (var i = 0; i < keysAmount; i++)
+                {
+                    HandleKeyEvent(keyboardState, keyboardState->RepeatingKeycode, true, true);
+                }
+
+                keyboardState->LastRepeatMs += delta - (delta % keyboardState->RepeatKeyDelayMs);
+            }
+        }
+    }
+
     private void EventLoop()
     {
         var display = this.registryState->Display;
@@ -1924,7 +2072,7 @@ public unsafe sealed partial class WindowManager
 
         Debug.Assert(this.registryState->CursorTheme != null);
 
-        for (var i = 0; i < Cursor.Length; i++)
+        for (var i = 0; i < CURSOR_LENGTH; i++)
         {
             using var cursorName = cursorNames[i].ToUnmanaged();
 
@@ -1950,7 +2098,6 @@ public unsafe sealed partial class WindowManager
         }
     }
 
-
     protected override partial void OnDisposed(bool disposing)
     {
         this.stopped = true;
@@ -1962,8 +2109,12 @@ public unsafe sealed partial class WindowManager
         RegistryState.Free(this.registryState);
     }
 
-    internal partial void CloseWindow(Window window) =>
+    internal partial void CloseWindow(Window window)
+    {
         WindowState.Free(window.State);
+
+        _ = wl_display_roundtrip(this.registryState->Display);
+    }
 
     internal partial WindowState* CreateWindow(string title, Size<int> size, Window? parent)
     {
@@ -2001,11 +2152,11 @@ public unsafe sealed partial class WindowManager
 
         libdecor_frame_map(windowState->Frame);
 
-        windowState->FrameCallBack = wl_surface_frame(windowState->Surface);
+        windowState->FrameCallback = wl_surface_frame(windowState->Surface);
 
         fixed (wl_callback_listener* pFrameCallbackListener = &frameCallbackListener)
         {
-            wl_callback_add_listener(windowState->FrameCallBack, pFrameCallbackListener, windowState);
+            wl_callback_add_listener(windowState->FrameCallback, pFrameCallbackListener, windowState);
         }
 
         wl_surface_commit(windowState->Surface);
@@ -2023,6 +2174,8 @@ public unsafe sealed partial class WindowManager
 
     internal partial NativeArray<WindowMessage> FlushWindowEvents(Window window)
     {
+        this.EchoKeyboardKeys();
+
         var messages = window.State->GetMessages();
 
         window.State->ClearMessages();
@@ -2030,25 +2183,240 @@ public unsafe sealed partial class WindowManager
         return messages;
     }
 
-    internal partial string? GetClipboardData(Window window) =>
-        throw new NotImplementedException();
+    internal partial string? GetClipboardData(Window window)
+    {
+        var seatState = this.registryState->CurrentSeat != null ? GetSeatState(this.registryState->CurrentSeat) : null;
+
+        if (seatState == null || seatState->DataOfferSelection == null)
+        {
+            return null;
+        }
+
+        var offer = seatState->DataOfferSelection;
+
+        var pipeFds = stackalloc int[2];
+
+        var pipeResult = pipe(pipeFds);
+
+        if (pipeResult != 0)
+        {
+            return null;
+        }
+
+        var readFd  = pipeFds[0];
+        var writeFd = pipeFds[1];
+
+        using var mimeType = new UnmanagedString("text/plain;charset=utf-8");
+
+        wl_data_offer_receive(offer, mimeType, writeFd);
+
+        _ = wl_display_flush(this.registryState->Display);
+
+        _ = close(writeFd);
+
+        var buffer = (byte*)NativeMemory.Alloc(4096);
+
+        var totalRead = 0;
+        var capacity  = 4096;
+
+        nint bytesRead;
+
+        while ((bytesRead = read(readFd, &buffer[totalRead], (nuint)(capacity - totalRead))) > 0)
+        {
+            totalRead += (int)bytesRead;
+
+            if (totalRead >= capacity)
+            {
+                capacity *= 2;
+
+                buffer = (byte*)NativeMemory.Realloc(buffer, (nuint)capacity);
+            }
+        }
+
+        _ = close(readFd);
+
+        wl_data_offer_destroy(offer);
+
+        seatState->DataOfferSelection = null;
+
+        if (totalRead == 0)
+        {
+            NativeMemory.Free(buffer);
+
+            return null;
+        }
+
+        var result = Encoding.UTF8.GetString(new Span<byte>(buffer, totalRead));
+
+        NativeMemory.Free(buffer);
+
+        return result;
+    }
 
     internal partial void HideWindow(Window window) =>
-        throw new NotImplementedException();
+        libdecor_frame_set_minimized(window.State->Frame);
 
     internal partial void MaximizeWindow(Window window) =>
-        throw new NotImplementedException();
+        libdecor_frame_set_maximized(window.State->Frame);
 
     internal partial void MinimizeWindow(Window window) =>
-        throw new NotImplementedException();
+        libdecor_frame_set_minimized(window.State->Frame);
 
-    internal partial void RestoreWindow(Window window) =>
-        throw new NotImplementedException();
+    internal partial void RestoreWindow(Window window)
+    {
+        switch (window.State->Mode)
+        {
+            case WindowMode.Maximized:
+                libdecor_frame_unset_maximized(window.State->Frame);
+                break;
 
-    internal partial void SetWindowClipboardData(Window window, string value) =>
-        throw new NotImplementedException();
+            case WindowMode.Fullscreen:
+                libdecor_frame_unset_fullscreen(window.State->Frame);
+                break;
+        }
+    }
 
-    internal partial void SetCursorCustomImage(Cursor cursor, CursorImage image, Point<int> hotpot) => throw new NotImplementedException();
+    internal partial void SetWindowClipboardData(Window window, string value)
+    {
+        var seatState = this.registryState->CurrentSeat != null ? GetSeatState(this.registryState->CurrentSeat) : null;
+
+        if (seatState == null)
+        {
+            return;
+        }
+
+        if (seatState->DataSourceSelection != null)
+        {
+            wl_data_source_destroy(seatState->DataSourceSelection);
+
+            seatState->DataSourceSelection = null;
+        }
+
+        if (seatState->ClipboardDataSourceData != null)
+        {
+            NativeMemory.Free(seatState->ClipboardDataSourceData);
+
+            seatState->ClipboardDataSourceData = null;
+        }
+
+        seatState->ClipboardDataSourceLength = 0;
+
+        var source = wl_data_device_manager_create_data_source(seatState->RegistryState->DataDeviceManager);
+
+        if (source == null)
+        {
+            return;
+        }
+
+        fixed (wl_data_source_listener* pListener = &dataSourceListener)
+        {
+            wl_data_source_add_listener(source, pListener, seatState);
+        }
+
+        using var mimeType = new UnmanagedString("text/plain;charset=utf-8");
+
+        wl_data_source_offer(source, mimeType);
+
+        var bytesCount = Encoding.UTF8.GetByteCount(value);
+
+        seatState->ClipboardDataSourceData = (byte*)NativeMemory.Alloc((nuint)bytesCount);
+
+        Encoding.UTF8.GetBytes(value, new Span<byte>(seatState->ClipboardDataSourceData, bytesCount));
+
+        seatState->ClipboardDataSourceLength = bytesCount;
+
+        var keyboardSerial = seatState->RegistryState->KeyboardState != null ? seatState->RegistryState->KeyboardState->LastKeyPressedSerial : 0u;
+        var pointerSerial  = seatState->RegistryState->CursorState != null ? seatState->RegistryState->CursorState->PointerDataBuffer.ButtonSerial : 0u;
+        var serial         = Math.Max(keyboardSerial, pointerSerial);
+
+        wl_data_device_set_selection(seatState->DataDevice, source, serial);
+
+        _ = wl_display_roundtrip(this.registryState->Display);
+
+        seatState->DataSourceSelection = source;
+    }
+
+    internal partial void SetCursorCustomImage(Cursor cursor, CursorImage image, Point<int> hotpot)
+    {
+        var cursorState = this.registryState->CursorState;
+
+        if (cursorState == null)
+        {
+            return;
+        }
+
+        var pixelSize = image.Size.Width * image.Size.Height * sizeof(uint);
+
+        const uint WL_SHM_FORMAT_ARGB8888 = 0;
+
+        using var memfdName = new UnmanagedString("age-cursor");
+
+        var fd = memfd_create(memfdName, 0);
+
+        if (fd == -1)
+        {
+            return;
+        }
+
+        _ = ftruncate(fd, (int)pixelSize);
+
+        var poolData = (byte*)mmap(
+            null,
+            pixelSize,
+            PROT_READ | PROT_WRITE,
+            MAP_SHARED,
+            fd,
+            0
+        );
+
+        if (poolData == MAP_FAILED)
+        {
+            _ = close(fd);
+
+            return;
+        }
+
+        fixed (uint* pPixels = image.Pixels)
+        {
+            Unsafe.CopyBlock(poolData, pPixels, pixelSize);
+        }
+
+        _ = munmap(poolData, pixelSize);
+
+        var pool = wl_shm_create_pool(this.registryState->Shm, fd, (int)pixelSize);
+
+        _ = close(fd);
+
+        var buffer = wl_shm_pool_create_buffer(
+            pool,
+            0,
+            (int)image.Size.Width,
+            (int)image.Size.Height,
+            (int)(image.Size.Width * sizeof(uint)),
+            WL_SHM_FORMAT_ARGB8888
+        );
+
+        wl_shm_pool_destroy(pool);
+
+        if (cursorState->CustomCursors.TryGetValue((uint)cursor, out var existingCursor))
+        {
+            wl_buffer_destroy(existingCursor.Buffer);
+
+            cursorState->CustomCursors.Remove((uint)cursor);
+        }
+
+        cursorState->CustomCursors[(uint)cursor] = new()
+        {
+            Buffer     = buffer,
+            BufferData = default,
+            Hotspot    = hotpot,
+        };
+
+        if (cursorState->Cursor == cursor)
+        {
+            this.UpdateCursor();
+        }
+    }
 
     internal partial void SetWindowTitle(Window window, string value)
     {

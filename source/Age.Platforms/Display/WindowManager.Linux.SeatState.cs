@@ -12,10 +12,14 @@ public unsafe partial class WindowManager
         public RegistryState* RegistryState;
         public Named<wl_seat> Seat;
 
+        public byte*                            ClipboardDataSourceData;
+        public int                              ClipboardDataSourceLength;
         public wl_data_device*                  DataDevice;
-        public zwp_primary_selection_device_v1* PrimarySelectionDevice;
+        public wl_data_offer*                   DataOfferSelection;
+        public wl_data_source*                  DataSourceSelection;
         public zwp_primary_selection_offer_v1*  PrimarySelectionCurrentOffer;
         public zwp_primary_selection_source_v1* PrimarySelectionCurrentSource;
+        public zwp_primary_selection_device_v1* PrimarySelectionDevice;
 
         private SeatState(Named<wl_seat> seat, RegistryState* registry)
         {
@@ -34,6 +38,29 @@ public unsafe partial class WindowManager
 
                 this.DataDevice = null;
             }
+
+            if (this.DataOfferSelection != null)
+            {
+                lib_wayland_client.wl_data_offer_destroy(this.DataOfferSelection);
+
+                this.DataOfferSelection = null;
+            }
+
+            if (this.DataSourceSelection != null)
+            {
+                lib_wayland_client.wl_data_source_destroy(this.DataSourceSelection);
+
+                this.DataSourceSelection = null;
+            }
+
+            if (this.ClipboardDataSourceData != null)
+            {
+                NativeMemory.Free(this.ClipboardDataSourceData);
+
+                this.ClipboardDataSourceData = null;
+            }
+
+            this.ClipboardDataSourceLength = 0;
         }
 
         internal static void Free(SeatState* seatState)

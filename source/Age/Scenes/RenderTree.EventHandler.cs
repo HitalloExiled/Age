@@ -279,10 +279,10 @@ public sealed partial class RenderTree
             {
                 this.pressedVirtualChild = null;
 
-                this.pressedElement = element;
-
                 if (mouseEvent.IsPrimaryButtonPressed)
                 {
+                    this.pressedElement = element;
+
                     element.InvokeActivate();
                 }
 

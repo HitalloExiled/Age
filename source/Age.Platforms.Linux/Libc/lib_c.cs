@@ -17,6 +17,8 @@ internal unsafe static partial class lib_c
 
     public const int MAP_PRIVATE = 0x02;
 
+    public static void* MAP_FAILED => (void*)(nint)(-1);
+
     [LibraryImport(LIBRARY)]
     public static partial int close(int __fd);
 
@@ -33,5 +35,14 @@ internal unsafe static partial class lib_c
     public static partial int munmap(void* __addr, size_t __len);
 
     [LibraryImport(LIBRARY)]
+    public static partial int pipe(int* pipefd);
+
+    [LibraryImport(LIBRARY)]
     public static partial int poll(pollfd* __fds, nfds_t __nfds, int __timeout);
+
+    [LibraryImport(LIBRARY)]
+    public static partial nint read(int __fd, void* __buf, nuint __nbytes);
+
+    [LibraryImport(LIBRARY)]
+    public static partial nint write(int __fd, void* __buf, nuint __n);
 }

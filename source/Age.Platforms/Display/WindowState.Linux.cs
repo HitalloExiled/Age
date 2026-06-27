@@ -16,7 +16,7 @@ internal unsafe struct WindowState
 
     public wp_fractional_scale_v1* FractionalScale;
     public libdecor_frame*         Frame;
-    public wl_callback*            FrameCallBack;
+    public wl_callback*            FrameCallback;
     public libdecor_configuration* PendingLibdecorConfiguration;
     public wp_viewport*            Viewport;
 
@@ -55,8 +55,10 @@ internal unsafe struct WindowState
 
     public void Dispose()
     {
-        viewporter.wp_viewport_destroy(this.Viewport);
+        lib_decor.libdecor_frame_unref(this.Frame);
+        lib_wayland_client.wl_callback_destroy(this.FrameCallback);
         lib_wayland_client.wl_surface_destroy(this.Surface);
+        viewporter.wp_viewport_destroy(this.Viewport);
 
         this.messages.Dispose();
         this.outputs.Dispose();

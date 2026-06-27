@@ -37,20 +37,22 @@ public class CheckBox : Element
         get;
         set
         {
-            if (field != value)
+            if (field == value)
             {
-                this.Icon.IconName = value switch
-                {
-                    CheckBoxState.Unchecked     => UNCHECKED,
-                    CheckBoxState.Checked       => CHECKED,
-                    CheckBoxState.Indeterminate => INDETERMINATE,
-                    _                           => throw new NotSupportedException(),
-                };
-
-                field = value;
-
-                this.Changed?.Invoke();
+                return;
             }
+
+            this.Icon.IconName = value switch
+            {
+                CheckBoxState.Unchecked     => UNCHECKED,
+                CheckBoxState.Checked       => CHECKED,
+                CheckBoxState.Indeterminate => INDETERMINATE,
+                _                           => throw new NotSupportedException(),
+            };
+
+            field = value;
+
+            this.Changed?.Invoke();
         }
     }
 

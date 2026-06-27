@@ -60,7 +60,7 @@ public unsafe sealed partial class WindowManager
         {
             this.seats = [];
 
-            this.Cursors = new(Cursor.Length);
+            this.Cursors = new(CURSOR_LENGTH);
         }
 
         public static RegistryState* Allocate() =>

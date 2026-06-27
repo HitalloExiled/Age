@@ -64,10 +64,10 @@ internal readonly struct WindowMessage
     private WindowMessage(MessageKind kind, in WindowKeyEvent windowKeyEvent) : this(kind) =>
         this.Value = new() { KeyEvent = windowKeyEvent };
 
-    public static WindowMessage Click(WindowMouseEvent mouseEvent) =>
+    public static WindowMessage Click(in WindowMouseEvent mouseEvent) =>
         new(MessageKind.Click, mouseEvent);
 
-    public static WindowMessage Context(WindowContextEvent mouseEvent) =>
+    public static WindowMessage Context(in WindowContextEvent mouseEvent) =>
         new(MessageKind.Context, mouseEvent);
 
     public static WindowMessage Closed() =>
@@ -76,7 +76,7 @@ internal readonly struct WindowMessage
     internal static WindowMessage CursorChanged() =>
         new(MessageKind.CursorChanged);
 
-    public static WindowMessage DoubleClick(WindowMouseEvent mouseEvent) =>
+    public static WindowMessage DoubleClick(in WindowMouseEvent mouseEvent) =>
         new(MessageKind.DoubleClick, mouseEvent);
 
     public static WindowMessage FocusIn() =>
@@ -88,13 +88,10 @@ internal readonly struct WindowMessage
     public static WindowMessage Input(char input) =>
         new(MessageKind.Input, input);
 
-    public static WindowMessage KeyDown(WindowKeyEvent windowKeyEvent) =>
+    public static WindowMessage KeyDown(in WindowKeyEvent windowKeyEvent) =>
         new(MessageKind.KeyDown, windowKeyEvent);
 
-    public static WindowMessage KeyPress(WindowKeyEvent windowKeyEvent) =>
-        new(windowKeyEvent.IsPressed ? MessageKind.KeyDown : MessageKind.KeyUp, windowKeyEvent);
-
-    public static WindowMessage KeyUp(WindowKeyEvent windowKeyEvent) =>
+    public static WindowMessage KeyUp(in WindowKeyEvent windowKeyEvent) =>
         new(MessageKind.KeyUp, windowKeyEvent);
 
     public static WindowMessage MouseDown(in WindowMouseEvent mouseEvent) =>

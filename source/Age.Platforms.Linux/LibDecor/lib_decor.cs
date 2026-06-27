@@ -45,6 +45,24 @@ internal unsafe static partial class lib_decor
     public static partial void libdecor_frame_map(libdecor_frame* frame);
 
     [LibraryImport(LIBRARY)]
+    public static partial void libdecor_frame_set_minimized(libdecor_frame* frame);
+
+    [LibraryImport(LIBRARY)]
+    public static partial void libdecor_frame_set_maximized(libdecor_frame* frame);
+
+    [LibraryImport(LIBRARY)]
+    public static partial void libdecor_frame_unset_maximized(libdecor_frame* frame);
+
+    [LibraryImport(LIBRARY)]
+    public static partial void libdecor_frame_set_fullscreen(libdecor_frame* frame, wl_output* output);
+
+    [LibraryImport(LIBRARY)]
+    public static partial void libdecor_frame_unset_fullscreen(libdecor_frame* frame);
+
+    [LibraryImport(LIBRARY)]
+    public static partial void libdecor_frame_unref(libdecor_frame* frame);
+
+    [LibraryImport(LIBRARY)]
     public static partial libdecor* libdecor_new(wl_display* display, libdecor_interface* iface);
 
     [LibraryImport(LIBRARY)]

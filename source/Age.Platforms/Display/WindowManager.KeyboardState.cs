@@ -20,7 +20,10 @@ public unsafe partial class WindowManager
         public xkb_context*       Context;
         public xkb_keymap*        Keymap;
         public NativeBuffer<byte> KeymapBuffer;
-        public long               LastRepeatStartMsec;
+        public ulong              LastRepeatMs;
+        public ulong              LastRepeatStartMs;
+        public ulong              RepeatKeyDelayMs;
+        public ulong              RepeatStartDelayMs;
         public xkb_state*         State;
 
         public NativeDictionary<uint, Key> PressedKeycodes = [];
@@ -31,9 +34,7 @@ public unsafe partial class WindowManager
         public uint     ModsDepressed;
         public uint     ModsLatched;
         public uint     ModsLocked;
-        public uint     RepeatingKeycode;
-        public int      RepeatKeyDelayMsec;
-        public int      RepeatStartDelayMsec;
+        public uint     RepeatingKeycode = lib_xkbommon.XKB_KEYCODE_INVALID;
 
         private KeyboardState(wl_keyboard* keyboard, SeatState* seatState)
         {
