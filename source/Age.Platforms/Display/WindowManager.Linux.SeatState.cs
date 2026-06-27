@@ -41,7 +41,7 @@ public unsafe partial class WindowManager
 
             if (this.DataOfferSelection != null)
             {
-                lib_wayland_client.wl_data_offer_destroy(this.DataOfferSelection);
+                lib_wayland_client.wl_data_offer_destroy(this.DataOfferSelection); // Investigate
 
                 this.DataOfferSelection = null;
             }

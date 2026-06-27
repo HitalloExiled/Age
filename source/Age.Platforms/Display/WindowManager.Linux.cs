@@ -1481,21 +1481,21 @@ public unsafe sealed partial class WindowManager
 
         if (string.Compare(@interface, wl_shm_interface->name))
         {
-            registryState->Shm = new(name, (wl_shm*)wl_registry_bind(registry, name, wl_shm_interface, Math.Clamp(version, 1, 6)));
+            registryState->Shm = register(name, (wl_shm*)wl_registry_bind(registry, name, wl_shm_interface, Math.Clamp(version, 1, 6)));
 
             return;
         }
 
         if (string.Compare(@interface, wl_compositor_interface->name))
         {
-            registryState->Compositor = new(name, (wl_compositor*)wl_registry_bind(registry, name, wl_compositor_interface, Math.Clamp(version, 1, 6)));
+            registryState->Compositor = register(name, (wl_compositor*)wl_registry_bind(registry, name, wl_compositor_interface, Math.Clamp(version, 1, 6)));
 
             return;
         }
 
         if (string.Compare(@interface, wl_data_device_manager_interface->name))
         {
-            registryState->DataDeviceManager = new(name, (wl_data_device_manager*)wl_registry_bind(registry, name, wl_data_device_manager_interface, Math.Clamp(version, 1, 6)));
+            registryState->DataDeviceManager = register(name, (wl_data_device_manager*)wl_registry_bind(registry, name, wl_data_device_manager_interface, Math.Clamp(version, 1, 6)));
 
             using var seats = registryState->GetSeats();
 
@@ -1523,7 +1523,7 @@ public unsafe sealed partial class WindowManager
 
             SetProxyTag((wl_proxy*)seat);
 
-            var seatState = SeatState.Allocate(new(name, seat), registryState);
+            var seatState = SeatState.Allocate(register(name, seat), registryState);
 
             if (seatState->DataDevice == default && registryState->DataDeviceManager != default)
             {
@@ -1564,7 +1564,7 @@ public unsafe sealed partial class WindowManager
 
         if (string.Compare(@interface, xdg_wm_base_interface->name))
         {
-            registryState->WmBase = new(name, (xdg_wm_base*)wl_registry_bind(registry, name, xdg_wm_base_interface, Math.Clamp(version, 1, 6)));
+            registryState->WmBase = register(name, (xdg_wm_base*)wl_registry_bind(registry, name, xdg_wm_base_interface, Math.Clamp(version, 1, 6)));
 
             fixed (xdg_wm_base_listener* pWmBaseListener = &wmBaseListener)
             {
@@ -1576,21 +1576,21 @@ public unsafe sealed partial class WindowManager
 
         if (string.Compare(@interface, wp_viewporter_interface->name))
         {
-            registryState->Viewporter = new(name, (wp_viewporter*)wl_registry_bind(registry, name, wp_viewporter_interface, 1));
+            registryState->Viewporter = register(name, (wp_viewporter*)wl_registry_bind(registry, name, wp_viewporter_interface, 1));
 
             return;
         }
 
         if (string.Compare(@interface, wp_cursor_shape_manager_v1_interface->name))
         {
-            registryState->CursorShapeManager = new(name, (wp_cursor_shape_manager_v1*)wl_registry_bind(registry, name, wp_cursor_shape_manager_v1_interface, 1));
+            registryState->CursorShapeManager = register(name, (wp_cursor_shape_manager_v1*)wl_registry_bind(registry, name, wp_cursor_shape_manager_v1_interface, 1));
 
             return;
         }
 
         if (string.Compare(@interface, wp_fractional_scale_manager_v1_interface->name))
         {
-            registryState->FractionalScaleManager = new(name, (wp_fractional_scale_manager_v1*)wl_registry_bind(registry, name, wp_fractional_scale_manager_v1_interface, 1));
+            registryState->FractionalScaleManager = register(name, (wp_fractional_scale_manager_v1*)wl_registry_bind(registry, name, wp_fractional_scale_manager_v1_interface, 1));
 
             return;
 
@@ -1601,21 +1601,21 @@ public unsafe sealed partial class WindowManager
 
         if (string.Compare(@interface, zxdg_decoration_manager_v1_interface->name))
         {
-            registryState->DecorationManager = new(name, (zxdg_decoration_manager_v1*)wl_registry_bind(registry, name, zxdg_decoration_manager_v1_interface, 1));
+            registryState->DecorationManager = register(name, (zxdg_decoration_manager_v1*)wl_registry_bind(registry, name, zxdg_decoration_manager_v1_interface, 1));
 
             return;
         }
 
         if (string.Compare(@interface, xdg_system_bell_v1_interface->name))
         {
-            registryState->SystemBell = new(name, (xdg_system_bell_v1*)wl_registry_bind(registry, name, xdg_system_bell_v1_interface, 1));
+            registryState->SystemBell = register(name, (xdg_system_bell_v1*)wl_registry_bind(registry, name, xdg_system_bell_v1_interface, 1));
 
             return;
         }
 
         if (string.Compare(@interface, xdg_activation_v1_interface->name))
         {
-            registryState->Activation = new(name, (xdg_activation_v1*)wl_registry_bind(registry, name, xdg_activation_v1_interface, 1));
+            registryState->Activation = register(name, (xdg_activation_v1*)wl_registry_bind(registry, name, xdg_activation_v1_interface, 1));
 
             return;
         }
@@ -1646,21 +1646,29 @@ public unsafe sealed partial class WindowManager
 
         if (string.Compare(@interface, zwp_relative_pointer_manager_v1_interface->name))
         {
-            registryState->RelativePointerManager = new(name, (zwp_relative_pointer_manager_v1*)wl_registry_bind(registry, name, zwp_relative_pointer_manager_v1_interface, 1));
+            registryState->RelativePointerManager = register(name, (zwp_relative_pointer_manager_v1*)wl_registry_bind(registry, name, zwp_relative_pointer_manager_v1_interface, 1));
 
             return;
         }
 
         if (string.Compare(@interface, zwp_pointer_constraints_v1_interface->name))
         {
-            registryState->PointerConstraints = new(name, (zwp_pointer_constraints_v1*)wl_registry_bind(registry, name, zwp_pointer_constraints_v1_interface, 1));
+            registryState->PointerConstraints = register(name, (zwp_pointer_constraints_v1*)wl_registry_bind(registry, name, zwp_pointer_constraints_v1_interface, 1));
 
             return;
         }
 
         if (string.Compare(@interface, zwp_idle_inhibit_manager_v1_interface->name))
         {
-            registryState->IdleInhibitManager = new(name, (zwp_idle_inhibit_manager_v1*)wl_registry_bind(registry, name, zwp_idle_inhibit_manager_v1_interface, 1));
+            registryState->IdleInhibitManager = register(name, (zwp_idle_inhibit_manager_v1*)wl_registry_bind(registry, name, zwp_idle_inhibit_manager_v1_interface, 1));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        Named<T> register<T>(uint name, T* value) where T : unmanaged
+        {
+            registryState->BoundGlobalNames.Add(name);
+
+            return new(name, value);
         }
     }
 
@@ -1668,6 +1676,8 @@ public unsafe sealed partial class WindowManager
     private static void OnRegistryGlobalRemove(void* data, wl_registry* registry, uint name)
     {
         var registryState = (RegistryState*)data;
+
+        registryState->TryDestroyNamedGlobal(name);
     }
 
     [UnmanagedCallersOnly]
