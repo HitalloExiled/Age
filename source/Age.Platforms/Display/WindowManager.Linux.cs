@@ -466,6 +466,7 @@ public unsafe sealed partial class WindowManager
         return new WindowKeyEvent
         {
             Char        = char.IsAscii(@char) ? (char)unicode : default,
+            Echo        = false,
             IsPressed   = pressed,
             Key         = key,
             Location    = keyLocation,
@@ -1353,6 +1354,19 @@ public unsafe sealed partial class WindowManager
                             if (mouseEvent.IsPrimaryButtonPressed)
                             {
                                 registryState->ActiveWindow->AddMessage(WindowMessage.Click(mouseEvent));
+                            }
+
+                            if (registryState->LeftHandedMouse ? button == MouseButton.Left : button == MouseButton.Right)
+                            {
+                                var contextEvent = new WindowContextEvent
+                                {
+                                    X       = mouseEvent.X,
+                                    Y       = mouseEvent.Y,
+                                    ScreenX = mouseEvent.X,
+                                    ScreenY = mouseEvent.Y,
+                                };
+
+                                registryState->ActiveWindow->AddMessage(WindowMessage.Context(contextEvent));
                             }
                         }
 
@@ -2332,8 +2346,10 @@ public unsafe sealed partial class WindowManager
         return result;
     }
 
-    internal partial void HideWindow(Window window) =>
-        lib_decor.libdecor_frame_set_minimized(window.State->Frame);
+    internal partial void HideWindow(Window window)
+    {
+        // No-op: Wayland has no true window hiding; use MinimizeWindow instead.
+    }
 
     internal partial void MaximizeWindow(Window window) =>
         lib_decor.libdecor_frame_set_maximized(window.State->Frame);
@@ -2422,8 +2438,10 @@ public unsafe sealed partial class WindowManager
         lib_decor.libdecor_frame_set_title(window.State->Frame, title);
     }
 
-    internal partial void ShowWindow(Window window) =>
-        throw new NotImplementedException();
+    internal partial void ShowWindow(Window window)
+    {
+        // No-op: the window is already shown after creation via libdecor_frame_map.
+    }
 
     internal partial void UpdateCursor()
     {

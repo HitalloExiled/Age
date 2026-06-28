@@ -16,6 +16,8 @@ public unsafe partial class Window : Disposable
     public event Action?                    Closed;
     public event WindowContextEventHandler? Context;
     public event WindowMouseEventHandler?   DoubleClick;
+    public event Action?                    FocusIn;
+    public event Action?                    FocusOut;
     public event WindowInputEventHandler?   Input;
     public event WindowKeyEventHandler?     KeyDown;
     public event WindowKeyEventHandler?     KeyPress;
@@ -139,6 +141,16 @@ public unsafe partial class Window : Disposable
 
                 case MessageKind.DoubleClick:
                     this.DoubleClick?.Invoke(message.Value.MouseEvent);
+
+                    break;
+
+                case MessageKind.FocusIn:
+                    this.FocusIn?.Invoke();
+
+                    break;
+
+                case MessageKind.FocusOut:
+                    this.FocusOut?.Invoke();
 
                     break;
 

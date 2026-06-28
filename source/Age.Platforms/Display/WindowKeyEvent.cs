@@ -11,5 +11,5 @@ public record struct WindowKeyEvent
     public required KeyLocation Location;
     public required Modifier    Modifiers;
 
-    public bool Echo;
+    public required bool Echo;
 }

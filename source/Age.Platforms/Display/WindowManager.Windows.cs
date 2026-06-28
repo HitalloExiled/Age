@@ -1,6 +1,7 @@
 #if WINDOWS
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Core.Exceptions;
 using Age.Numerics;
@@ -10,6 +11,64 @@ namespace Age.Platforms.Display;
 
 public unsafe sealed partial class WindowManager
 {
+    private static readonly Dictionary<Cursor, User32.IDC_STANDARD_CURSORS> standardCursors = new()
+    {
+        [Cursor.Arrow]              = User32.IDC_STANDARD_CURSORS.IDC_ARROW,
+        [Cursor.Busy]               = User32.IDC_STANDARD_CURSORS.IDC_WAIT,
+        [Cursor.Cross]              = User32.IDC_STANDARD_CURSORS.IDC_CROSS,
+        [Cursor.DiagonalResizeNESW] = User32.IDC_STANDARD_CURSORS.IDC_SIZENWSE,
+        [Cursor.DiagonalResizeNWSE] = User32.IDC_STANDARD_CURSORS.IDC_SIZENESW,
+        [Cursor.Drag]               = User32.IDC_STANDARD_CURSORS.IDC_SIZEALL,
+        [Cursor.Drop]               = User32.IDC_STANDARD_CURSORS.IDC_HAND,
+        [Cursor.Forbidden]          = User32.IDC_STANDARD_CURSORS.IDC_NO,
+        [Cursor.Hand]               = User32.IDC_STANDARD_CURSORS.IDC_HAND,
+        [Cursor.Help]               = User32.IDC_STANDARD_CURSORS.IDC_HELP,
+        [Cursor.HorizontalResize]   = User32.IDC_STANDARD_CURSORS.IDC_SIZEWE,
+        [Cursor.HorizontalSplit]    = User32.IDC_STANDARD_CURSORS.IDC_SIZEWE,
+        [Cursor.Move]               = User32.IDC_STANDARD_CURSORS.IDC_SIZEALL,
+        [Cursor.Text]               = User32.IDC_STANDARD_CURSORS.IDC_IBEAM,
+        [Cursor.VerticalResize]     = User32.IDC_STANDARD_CURSORS.IDC_SIZENS,
+        [Cursor.VerticalSplit]      = User32.IDC_STANDARD_CURSORS.IDC_SIZENS,
+        [Cursor.Wait]               = User32.IDC_STANDARD_CURSORS.IDC_WAIT,
+    };
+
+    private static Point<int>  previousMousePosition;
+    private static long        previousMouseTime;
+    private static MouseButton pressedButtons;
+
+    public partial Cursor Cursor
+    {
+        get;
+        set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+            this.UpdateCursor();
+        }
+    }
+
+    public partial int CursorScale { get; set => field = value; }
+
+    public partial bool CursorVisible
+    {
+        get;
+        set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+
+            this.UpdateCursor();
+        }
+    }
+
     public partial WindowManager(string id)
     {
         SingletonViolationException.ThrowIfNoSingleton(Instance);
@@ -42,44 +101,104 @@ public unsafe sealed partial class WindowManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static short LoWord(uint value) => (short)((int)value & 0xffff);
+    public static short LoWord(uint value) =>
+        (short)((int)value & 0xffff);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static short LoWord(nint value) => LoWord((uint)value);
+    public static short LoWord(nint value) =>
+        LoWord((uint)value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static short HiWord(uint value) => (short)((value >> 16) & 0xffff);
+    public static short HiWord(uint value) =>
+        (short)((value >> 16) & 0xffff);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static short HiWord(nint value) => HiWord((uint)value);
+    public static short HiWord(nint value) =>
+        HiWord((uint)value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static ushort GetXLParam(LPARAM lParam) => (ushort)short.Max(0, LoWord(lParam));
+    private static ushort GetXLParam(LPARAM lParam) =>
+        (ushort)short.Max(0, LoWord(lParam));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static ushort GetYLParam(LPARAM lParam) => (ushort)short.Max(0, HiWord(lParam));
+    private static ushort GetYLParam(LPARAM lParam) =>
+        (ushort)short.Max(0, HiWord(lParam));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static int GetKeyStateWParam(WPARAM wParam) => LoWord(wParam);
+    private static int GetKeyStateWParam(WPARAM wParam) =>
+        LoWord(wParam);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static int GetWheelDeltaWParam(WPARAM wParam) => HiWord(wParam);
+    private static Modifier GetModifierState()
+    {
+        var modifiers = Modifier.None;
+
+        if (User32.GetKeyState(User32.VIRTUAL_KEYS.VK_SHIFT) < 0)
+        {
+            modifiers |= Modifier.Shift;
+        }
+
+        if (User32.GetKeyState(User32.VIRTUAL_KEYS.VK_CONTROL) < 0)
+        {
+            modifiers |= Modifier.Ctrl;
+        }
+
+        if (User32.GetKeyState(User32.VIRTUAL_KEYS.VK_MENU) < 0)
+        {
+            modifiers |= Modifier.Alt;
+        }
+
+        if ((User32.GetKeyState(User32.VIRTUAL_KEYS.VK_LWIN) < 0) || (User32.GetKeyState(User32.VIRTUAL_KEYS.VK_RWIN) < 0))
+        {
+            modifiers |= Modifier.Meta;
+        }
+
+        return modifiers;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static WindowMouseEvent GetMouseEventArgs(MouseButton button, User32.WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam) =>
         new()
         {
-            X             = GetXLParam(lParam),
-            Y             = GetYLParam(lParam),
-            Button        = button,
-            PrimaryButton = GetPrimaryButton(),
-            KeyStates     = (MouseKeyStates)GetKeyStateWParam(wParam),
-            Delta         = msg == User32.WINDOW_MESSAGE.WM_MOUSEWHEEL ? (GetWheelDeltaWParam(wParam) / (float)User32.WHEEL_DELTA) : 0,
+            X              = GetXLParam(lParam),
+            Y              = GetYLParam(lParam),
+            Button         = button,
+            LeftHanded     = GetPrimaryButtonLeftHanded(),
+            Modifiers      = GetModifierState(),
+            ScrollDelta    = msg is User32.WINDOW_MESSAGE.WM_MOUSEWHEEL or User32.WINDOW_MESSAGE.WM_MOUSEHWHEEL ? (GetWheelDeltaWParam(wParam) / (float)User32.WHEEL_DELTA) : 0,
+            PressedButtons = pressedButtons,
+            Relative       = default,
+            Velocity       = default,
         };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static MouseButton GetPrimaryButton() =>
-        User32.GetSystemMetrics(User32.SYSTEM_METRIC.SM_SWAPBUTTON) == 0 ? MouseButton.Left : MouseButton.Right;
+    private static bool GetPrimaryButtonLeftHanded() =>
+        User32.GetSystemMetrics(User32.SYSTEM_METRIC.SM_SWAPBUTTON) != 0;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static int GetWheelDeltaWParam(WPARAM wParam) =>
+        HiWord(wParam);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static WindowKeyEvent GetWindowKeyEvent(WPARAM wParam, LPARAM lParam, bool isPressed)
+    {
+        var vk       = (uint)wParam.Value;
+        var key      = KeyMapping.GetKeycode(vk);
+        var scancode = (uint)((lParam.Value >> 16) & 0xFF);
+        var extended = ((lParam.Value >> 24) & 1) != 0;
+        var location = KeyMapping.GetLocation(vk, scancode, extended);
+
+        return new WindowKeyEvent
+        {
+            Key         = key,
+            PhysicalKey = KeyMapping.GetScancode(scancode, extended),
+            Modifiers   = GetModifierState(),
+            Location    = location,
+            IsPressed   = isPressed,
+            Char        = default,
+            Echo        = isPressed && ((lParam.Value >> 30) & 1) != 0,
+        };
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal Size<uint> GetWindowSize(HWND hwnd)
@@ -91,23 +210,7 @@ public unsafe sealed partial class WindowManager
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static User32.IDC_STANDARD_CURSORS ToIdcStandardCursors(Cursor cursor) =>
-        cursor switch
-        {
-            Cursor.Arrow            => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
-            Cursor.Busy             => User32.IDC_STANDARD_CURSORS.IDC_WAIT,
-            Cursor.Cross            => User32.IDC_STANDARD_CURSORS.IDC_CROSS,
-            Cursor.DiagonalResize1  => User32.IDC_STANDARD_CURSORS.IDC_SIZENWSE,
-            Cursor.DiagonalResize2  => User32.IDC_STANDARD_CURSORS.IDC_SIZENESW,
-            Cursor.Hand             => User32.IDC_STANDARD_CURSORS.IDC_HAND,
-            Cursor.Help             => User32.IDC_STANDARD_CURSORS.IDC_HELP,
-            Cursor.HorizontalResize => User32.IDC_STANDARD_CURSORS.IDC_SIZEWE,
-            Cursor.Move             => User32.IDC_STANDARD_CURSORS.IDC_SIZEALL,
-            Cursor.Progress         => User32.IDC_STANDARD_CURSORS.IDC_APPSTARTING,
-            Cursor.Text             => User32.IDC_STANDARD_CURSORS.IDC_IBEAM,
-            Cursor.Unavailable      => User32.IDC_STANDARD_CURSORS.IDC_NO,
-            Cursor.VerticalResize   => User32.IDC_STANDARD_CURSORS.IDC_SIZENS,
-            _ => User32.IDC_STANDARD_CURSORS.IDC_ARROW,
-        };
+        standardCursors.TryGetValue(cursor, out var standardCursor) ? standardCursor: User32.IDC_STANDARD_CURSORS.IDC_ARROW;
 
     [UnmanagedCallersOnly]
     private static LRESULT WndProc(HWND hwnd, User32.WINDOW_MESSAGE msg, WPARAM wParam, LPARAM lParam)
@@ -122,35 +225,65 @@ public unsafe sealed partial class WindowManager
         var state = (WindowState*)(void*)User32.GetWindowLongPtrW(hwnd, User32.WINDOW_LONG_INDEX.GWLP_USERDATA);
 
         MouseButton      button     = default;
-        Key              key        = default;
         WindowMouseEvent mouseEvent = default;
 
         switch (msg)
         {
+            case User32.WINDOW_MESSAGE.WM_SETFOCUS:
+                state->AddMessage(WindowMessage.FocusIn());
+
+                return 0;
+            case User32.WINDOW_MESSAGE.WM_KILLFOCUS:
+                state->AddMessage(WindowMessage.FocusOut());
+
+                return 0;
             case User32.WINDOW_MESSAGE.WM_CHAR:
                 state->AddMessage(WindowMessage.Input((char)wParam.Value));
 
                 return 0;
             case User32.WINDOW_MESSAGE.WM_KEYDOWN:
-                key = (Key)wParam.Value;
-
-                state->AddMessage(WindowMessage.KeyDown(key));
-                state->AddMessage(WindowMessage.KeyPress(key));
+            case User32.WINDOW_MESSAGE.WM_SYSKEYDOWN:
+                state->AddMessage(WindowMessage.KeyDown(GetWindowKeyEvent(wParam, lParam, true)));
 
                 return 0;
             case User32.WINDOW_MESSAGE.WM_KEYUP:
-                key = (Key)wParam.Value;
-
-                state->AddMessage(WindowMessage.KeyUp(key));
-                state->AddMessage(WindowMessage.KeyPress(key));
+            case User32.WINDOW_MESSAGE.WM_SYSKEYUP:
+                state->AddMessage(WindowMessage.KeyUp(GetWindowKeyEvent(wParam, lParam, false)));
 
                 return 0;
             case User32.WINDOW_MESSAGE.WM_MOUSEMOVE:
-                state->AddMessage(WindowMessage.MouseMove(GetMouseEventArgs(MouseButton.None, msg, wParam, lParam)));
+                var pos      = new Point<int>(GetXLParam(lParam), GetYLParam(lParam));
+                var delta    = pos - previousMousePosition;
+                var relative = delta.Cast<short>();
+                var elapsed  = Environment.TickCount64 - previousMouseTime;
+                var velocity = elapsed > 0 ? (delta.Cast<float>() / elapsed).Cast<short>() : default;
+
+                previousMousePosition = pos;
+                previousMouseTime     = Environment.TickCount64;
+
+                mouseEvent = GetMouseEventArgs(MouseButton.None, msg, wParam, lParam) with
+                {
+                    Relative = relative,
+                    Velocity = velocity,
+                };
+
+                state->AddMessage(WindowMessage.MouseMove(mouseEvent));
 
                 return 0;
             case User32.WINDOW_MESSAGE.WM_MOUSEWHEEL:
-                state->AddMessage(WindowMessage.MouseWheel(GetMouseEventArgs(MouseButton.None, msg, wParam, lParam)));
+            case User32.WINDOW_MESSAGE.WM_MOUSEHWHEEL:
+                var wheelDelta = GetWheelDeltaWParam(wParam);
+
+                var wheellButton = msg switch
+                {
+                    User32.WINDOW_MESSAGE.WM_MOUSEWHEEL  => wheelDelta > 0 ? MouseButton.WheelUp : MouseButton.WheelDown,
+                    User32.WINDOW_MESSAGE.WM_MOUSEHWHEEL => wheelDelta > 0 ? MouseButton.WheelRight : MouseButton.WheelLeft,
+                    _ => default
+                };
+
+                mouseEvent = GetMouseEventArgs(wheellButton, msg, wParam, lParam);
+
+                state->AddMessage(WindowMessage.MouseWheel(mouseEvent));
 
                 return 0;
             case User32.WINDOW_MESSAGE.WM_LBUTTONDOWN:
@@ -166,7 +299,11 @@ public unsafe sealed partial class WindowManager
                     _ => default,
                 };
 
-                state->AddMessage(WindowMessage.MouseDown(GetMouseEventArgs(button, msg, wParam, lParam)));
+                pressedButtons |= button;
+
+                mouseEvent = GetMouseEventArgs(button, msg, wParam, lParam);
+
+                state->AddMessage(WindowMessage.MouseDown(mouseEvent));
 
                 return 0;
             case User32.WINDOW_MESSAGE.WM_LBUTTONDBLCLK:
@@ -181,6 +318,8 @@ public unsafe sealed partial class WindowManager
                     User32.WINDOW_MESSAGE.WM_RBUTTONDBLCLK => MouseButton.Right,
                     _ => default,
                 };
+
+                pressedButtons |= button;
 
                 mouseEvent = GetMouseEventArgs(button, msg, wParam, lParam);
 
@@ -199,16 +338,60 @@ public unsafe sealed partial class WindowManager
                     _ => default,
                 };
 
+                pressedButtons &= ~button;
+
                 User32.ReleaseCapture();
 
                 mouseEvent = GetMouseEventArgs(button, msg, wParam, lParam);
 
                 state->AddMessage(WindowMessage.MouseUp(mouseEvent));
 
-                if (button == mouseEvent.PrimaryButton)
+                if (mouseEvent.IsPrimaryButtonPressed)
                 {
                     state->AddMessage(WindowMessage.Click(mouseEvent));
                 }
+
+                return 0;
+            case User32.WINDOW_MESSAGE.WM_XBUTTONDOWN:
+                User32.SetCapture(hwnd);
+
+                button = HiWord(wParam) == (short)User32.MOUSE_BUTTON.XBUTTON1 ? MouseButton.MbXbutton1 : MouseButton.MbXbutton2;
+
+                pressedButtons |= button;
+
+                mouseEvent = GetMouseEventArgs(button, msg, wParam, lParam);
+
+                state->AddMessage(WindowMessage.MouseDown(mouseEvent));
+
+                return 0;
+            case User32.WINDOW_MESSAGE.WM_XBUTTONUP:
+                button = HiWord(wParam) == (short)User32.MOUSE_BUTTON.XBUTTON1 ? MouseButton.MbXbutton1 : MouseButton.MbXbutton2;
+
+                pressedButtons &= ~button;
+
+                User32.ReleaseCapture();
+
+                mouseEvent = GetMouseEventArgs(button, msg, wParam, lParam);
+
+                state->AddMessage(WindowMessage.MouseUp(mouseEvent));
+
+                if (mouseEvent.IsPrimaryButtonPressed)
+                {
+                    state->AddMessage(WindowMessage.Click(mouseEvent));
+                }
+
+                return 0;
+            case User32.WINDOW_MESSAGE.WM_XBUTTONDBLCLK:
+                User32.SetCapture(hwnd);
+
+                button = HiWord(wParam) == (short)User32.MOUSE_BUTTON.XBUTTON1 ? MouseButton.MbXbutton1 : MouseButton.MbXbutton2;
+
+                pressedButtons |= button;
+
+                mouseEvent = GetMouseEventArgs(button, msg, wParam, lParam);
+
+                state->AddMessage(WindowMessage.MouseDown(mouseEvent));
+                state->AddMessage(WindowMessage.DoubleClick(mouseEvent));
 
                 return 0;
             case User32.WINDOW_MESSAGE.WM_CONTEXTMENU:
@@ -343,7 +526,7 @@ public unsafe sealed partial class WindowManager
     internal partial void ShowWindow(Window window) =>
         User32.ShowWindow(window.Handle, User32.SHOW_WINDOW_COMMANDS.SW_SHOW);
 
-    internal void UpdateCursor(Cursor cursor) =>
-        User32.SetCursor(User32.LoadCursorW(default, ToIdcStandardCursors(cursor)));
+    internal partial void UpdateCursor() =>
+        User32.SetCursor(User32.LoadCursorW(default, ToIdcStandardCursors(this.Cursor)));
 }
 #endif

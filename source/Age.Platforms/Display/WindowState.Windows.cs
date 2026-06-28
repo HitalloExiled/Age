@@ -20,11 +20,6 @@ internal unsafe struct WindowState
     public Size<int> Size;
     #endregion
 
-    #region 1-byte
-    public WindowMode Mode;
-    public bool       Suspended;
-    #endregion
-
     public WindowState() =>
         this.messages = [];
 
