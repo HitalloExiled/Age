@@ -2,7 +2,6 @@ using Age.Core.Extensions;
 using System.Runtime.InteropServices;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -64,18 +63,18 @@ internal static unsafe class xdg_activation
 
         xdg_activation_v1_types[1] = xdg_activation_token_v1_interface;
 
-        xdg_activation_v1_types[3] = wl_surface_interface;
+        xdg_activation_v1_types[3] = lib_wayland_client.wl_surface_interface;
 
-        xdg_activation_v1_types[5] = wl_seat_interface;
-        xdg_activation_v1_types[6] = wl_surface_interface;
+        xdg_activation_v1_types[5] = lib_wayland_client.wl_seat_interface;
+        xdg_activation_v1_types[6] = lib_wayland_client.wl_surface_interface;
     }
 
     public static void xdg_activation_v1_destroy(xdg_activation_v1* xdg_activation_v1) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)xdg_activation_v1,
             XDG_ACTIVATION_V1_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)xdg_activation_v1),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)xdg_activation_v1),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 }

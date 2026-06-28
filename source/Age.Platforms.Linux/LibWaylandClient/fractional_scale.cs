@@ -2,7 +2,6 @@ using System.Runtime.InteropServices;
 using Age.Core.Extensions;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -62,36 +61,36 @@ internal static unsafe class fractional_scale
         );
 
         fractional_scale_v1_types[1] = wp_fractional_scale_v1_interface;
-        fractional_scale_v1_types[2] = wl_surface_interface;
+        fractional_scale_v1_types[2] = lib_wayland_client.wl_surface_interface;
     }
 
     public static int wp_fractional_scale_v1_add_listener(wp_fractional_scale_v1* wp_fractional_scale_v1, wp_fractional_scale_v1_listener* listener, void* data) =>
-        wl_proxy_add_listener((wl_proxy*)wp_fractional_scale_v1, (void**)listener, data);
+        lib_wayland_client.wl_proxy_add_listener((wl_proxy*)wp_fractional_scale_v1, (void**)listener, data);
 
     public static void wp_fractional_scale_v1_destroy(wp_fractional_scale_v1* wp_fractional_scale_v1) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)wp_fractional_scale_v1,
             WP_FRACTIONAL_SCALE_V1_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)wp_fractional_scale_v1),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)wp_fractional_scale_v1),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 
     public static void wp_fractional_scale_manager_v1_destroy(wp_fractional_scale_manager_v1* wp_fractional_scale_manager_v1) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)wp_fractional_scale_manager_v1,
             WP_FRACTIONAL_SCALE_MANAGER_V1_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)wp_fractional_scale_manager_v1),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)wp_fractional_scale_manager_v1),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 
     public static wp_fractional_scale_v1* wp_fractional_scale_manager_v1_get_fractional_scale(wp_fractional_scale_manager_v1* wp_fractional_scale_manager_v1, wl_surface* surface) =>
-        (wp_fractional_scale_v1*)wl_proxy_marshal_flags(
+        (wp_fractional_scale_v1*)lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)wp_fractional_scale_manager_v1,
             WP_FRACTIONAL_SCALE_MANAGER_V1_GET_FRACTIONAL_SCALE,
             wp_fractional_scale_v1_interface,
-            wl_proxy_get_version((wl_proxy*)wp_fractional_scale_manager_v1),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)wp_fractional_scale_manager_v1),
             0,
             [default, surface]
         );

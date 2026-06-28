@@ -2,7 +2,6 @@ using System.Runtime.InteropServices;
 using Age.Core.Extensions;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -222,45 +221,45 @@ internal static unsafe class tablet
         );
 
         tablet_unstable_v2_types[3] = zwp_tablet_seat_v2_interface;
-        tablet_unstable_v2_types[4] = wl_seat_interface;
+        tablet_unstable_v2_types[4] = lib_wayland_client.wl_seat_interface;
         tablet_unstable_v2_types[5] = zwp_tablet_v2_interface;
         tablet_unstable_v2_types[6] = zwp_tablet_tool_v2_interface;
         tablet_unstable_v2_types[7] = zwp_tablet_pad_v2_interface;
 
-        tablet_unstable_v2_types[9] = wl_surface_interface;
+        tablet_unstable_v2_types[9] = lib_wayland_client.wl_surface_interface;
 
         tablet_unstable_v2_types[13] = zwp_tablet_v2_interface;
-        tablet_unstable_v2_types[14] = wl_surface_interface;
+        tablet_unstable_v2_types[14] = lib_wayland_client.wl_surface_interface;
         tablet_unstable_v2_types[15] = zwp_tablet_pad_ring_v2_interface;
         tablet_unstable_v2_types[16] = zwp_tablet_pad_strip_v2_interface;
         tablet_unstable_v2_types[17] = zwp_tablet_pad_group_v2_interface;
 
         tablet_unstable_v2_types[19] = zwp_tablet_v2_interface;
-        tablet_unstable_v2_types[20] = wl_surface_interface;
+        tablet_unstable_v2_types[20] = lib_wayland_client.wl_surface_interface;
 
-        tablet_unstable_v2_types[22] = wl_surface_interface;
+        tablet_unstable_v2_types[22] = lib_wayland_client.wl_surface_interface;
     }
 
     public static zwp_tablet_seat_v2* zwp_tablet_manager_v2_get_tablet_seat(zwp_tablet_manager_v2* zwp_tablet_manager_v2, wl_seat* seat) =>
-        (zwp_tablet_seat_v2*)wl_proxy_marshal_flags(
+        (zwp_tablet_seat_v2*)lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)zwp_tablet_manager_v2,
             ZWP_TABLET_MANAGER_V2_GET_TABLET_SEAT,
             zwp_tablet_seat_v2_interface,
-            wl_proxy_get_version((wl_proxy*)
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)
             zwp_tablet_manager_v2),
             0,
             [default, seat]
         );
 
     public static int zwp_tablet_seat_v2_add_listener(zwp_tablet_seat_v2* zwp_tablet_seat_v2, zwp_tablet_seat_v2_listener* listener, void* data) =>
-        wl_proxy_add_listener((wl_proxy*)zwp_tablet_seat_v2, (void**)listener, data);
+        lib_wayland_client.wl_proxy_add_listener((wl_proxy*)zwp_tablet_seat_v2, (void**)listener, data);
 
     public static void zwp_tablet_seat_v2_destroy(zwp_tablet_seat_v2* zwp_tablet_seat_v2) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)zwp_tablet_seat_v2,
             ZWP_TABLET_SEAT_V2_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)zwp_tablet_seat_v2),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)zwp_tablet_seat_v2),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 }

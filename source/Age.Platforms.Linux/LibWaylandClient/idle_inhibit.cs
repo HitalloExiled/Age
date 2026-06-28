@@ -2,7 +2,6 @@ using Age.Core.Extensions;
 using System.Runtime.InteropServices;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -53,15 +52,15 @@ internal static unsafe class idle_inhibit
         );
 
         idle_inhibit_unstable_v1_types[0] = zwp_idle_inhibitor_v1_interface;
-        idle_inhibit_unstable_v1_types[1] = wl_surface_interface;
+        idle_inhibit_unstable_v1_types[1] = lib_wayland_client.wl_surface_interface;
     }
 
     public static void zwp_idle_inhibit_manager_v1_destroy(zwp_idle_inhibit_manager_v1* zwp_idle_inhibit_manager_v1) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)zwp_idle_inhibit_manager_v1,
             ZWP_IDLE_INHIBIT_MANAGER_V1_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)zwp_idle_inhibit_manager_v1),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)zwp_idle_inhibit_manager_v1),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 }

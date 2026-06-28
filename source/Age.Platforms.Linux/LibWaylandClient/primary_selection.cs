@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using Age.Core.Extensions;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -118,7 +117,7 @@ internal unsafe static class primary_selection
 
         wp_primary_selection_unstable_v1_types[2] = zwp_primary_selection_source_v1_interface;
         wp_primary_selection_unstable_v1_types[3] = zwp_primary_selection_device_v1_interface;
-        wp_primary_selection_unstable_v1_types[4] = wl_seat_interface;
+        wp_primary_selection_unstable_v1_types[4] = lib_wayland_client.wl_seat_interface;
         wp_primary_selection_unstable_v1_types[5] = zwp_primary_selection_source_v1_interface;
 
         wp_primary_selection_unstable_v1_types[7] = zwp_primary_selection_offer_v1_interface;
@@ -127,111 +126,111 @@ internal unsafe static class primary_selection
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int zwp_primary_selection_device_v1_add_listener(zwp_primary_selection_device_v1* zwp_primary_selection_device_v1, zwp_primary_selection_device_v1_listener* listener, void* data) =>
-        wl_proxy_add_listener((wl_proxy*)zwp_primary_selection_device_v1, (void**)listener, data);
+        lib_wayland_client.wl_proxy_add_listener((wl_proxy*)zwp_primary_selection_device_v1, (void**)listener, data);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static zwp_primary_selection_device_v1* zwp_primary_selection_device_manager_v1_get_device(zwp_primary_selection_device_manager_v1* zwp_primary_selection_device_manager_v1, wl_seat* seat) =>
-        (zwp_primary_selection_device_v1*)wl_proxy_marshal_flags(
+        (zwp_primary_selection_device_v1*)lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)zwp_primary_selection_device_manager_v1,
             ZWP_PRIMARY_SELECTION_DEVICE_MANAGER_V1_GET_DEVICE,
             zwp_primary_selection_device_v1_interface,
-            wl_proxy_get_version((wl_proxy*)zwp_primary_selection_device_manager_v1),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)zwp_primary_selection_device_manager_v1),
             0,
             [default, seat]
         );
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static zwp_primary_selection_source_v1* zwp_primary_selection_device_manager_v1_create_source(zwp_primary_selection_device_manager_v1* manager) =>
-        (zwp_primary_selection_source_v1*)wl_proxy_marshal_flags(
+        (zwp_primary_selection_source_v1*)lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)manager,
             ZWP_PRIMARY_SELECTION_DEVICE_MANAGER_V1_CREATE_SOURCE,
             zwp_primary_selection_source_v1_interface,
-            wl_proxy_get_version((wl_proxy*)manager),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)manager),
             0
         );
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void zwp_primary_selection_device_manager_v1_destroy(zwp_primary_selection_device_manager_v1* manager) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)manager,
             ZWP_PRIMARY_SELECTION_DEVICE_MANAGER_V1_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)manager),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)manager),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void zwp_primary_selection_device_v1_set_selection(zwp_primary_selection_device_v1* device, zwp_primary_selection_source_v1* source, uint32_t serial) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)device,
             ZWP_PRIMARY_SELECTION_DEVICE_V1_SET_SELECTION,
             null,
-            wl_proxy_get_version((wl_proxy*)device),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)device),
             0,
             [source, serial]
         );
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void zwp_primary_selection_device_v1_destroy(zwp_primary_selection_device_v1* device) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)device,
             ZWP_PRIMARY_SELECTION_DEVICE_V1_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)device),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)device),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int zwp_primary_selection_offer_v1_add_listener(zwp_primary_selection_offer_v1* offer, zwp_primary_selection_offer_v1_listener* listener, void* data) =>
-        wl_proxy_add_listener((wl_proxy*)offer, (void**)listener, data);
+        lib_wayland_client.wl_proxy_add_listener((wl_proxy*)offer, (void**)listener, data);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void zwp_primary_selection_offer_v1_receive(zwp_primary_selection_offer_v1* offer, byte* mimeType, int fd) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)offer,
             ZWP_PRIMARY_SELECTION_OFFER_V1_RECEIVE,
             null,
-            wl_proxy_get_version((wl_proxy*)offer),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)offer),
             0,
             [mimeType, fd]
         );
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void* zwp_primary_selection_offer_v1_get_user_data(zwp_primary_selection_offer_v1* zwp_primary_selection_offer_v1) =>
-        wl_proxy_get_user_data((wl_proxy*)zwp_primary_selection_offer_v1);
+        lib_wayland_client.wl_proxy_get_user_data((wl_proxy*)zwp_primary_selection_offer_v1);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void zwp_primary_selection_offer_v1_destroy(zwp_primary_selection_offer_v1* offer) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)offer,
             ZWP_PRIMARY_SELECTION_OFFER_V1_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)offer),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)offer),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int zwp_primary_selection_source_v1_add_listener(zwp_primary_selection_source_v1* source, zwp_primary_selection_source_v1_listener* listener, void* data) =>
-        wl_proxy_add_listener((wl_proxy*)source, (void**)listener, data);
+        lib_wayland_client.wl_proxy_add_listener((wl_proxy*)source, (void**)listener, data);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void zwp_primary_selection_source_v1_offer(zwp_primary_selection_source_v1* source, byte* mimeType) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)source,
             ZWP_PRIMARY_SELECTION_SOURCE_V1_OFFER,
             null,
-            wl_proxy_get_version((wl_proxy*)source),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)source),
             0,
             [mimeType]
         );
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void zwp_primary_selection_source_v1_destroy(zwp_primary_selection_source_v1* source) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)source,
             ZWP_PRIMARY_SELECTION_SOURCE_V1_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)source),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)source),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 }

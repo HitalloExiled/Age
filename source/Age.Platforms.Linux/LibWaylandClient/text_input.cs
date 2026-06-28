@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using Age.Core.Extensions;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -68,24 +67,24 @@ internal unsafe static class text_input
             )
         );
 
-        text_input_unstable_v3_types[4] = wl_surface_interface;
-        text_input_unstable_v3_types[5] = wl_surface_interface;
+        text_input_unstable_v3_types[4] = lib_wayland_client.wl_surface_interface;
+        text_input_unstable_v3_types[5] = lib_wayland_client.wl_surface_interface;
         text_input_unstable_v3_types[6] = zwp_text_input_v3_interface;
-        text_input_unstable_v3_types[7] = wl_seat_interface;
+        text_input_unstable_v3_types[7] = lib_wayland_client.wl_seat_interface;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static zwp_text_input_v3* zwp_text_input_manager_v3_get_text_input(zwp_text_input_manager_v3* zwp_text_input_manager_v3, wl_seat* seat) =>
-        (zwp_text_input_v3*)wl_proxy_marshal_flags(
+        (zwp_text_input_v3*)lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)zwp_text_input_manager_v3,
             ZWP_TEXT_INPUT_MANAGER_V3_GET_TEXT_INPUT,
             zwp_text_input_v3_interface,
-            wl_proxy_get_version((wl_proxy*)zwp_text_input_manager_v3),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)zwp_text_input_manager_v3),
             0,
             [default, seat]
         );
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int zwp_text_input_v3_add_listener(zwp_text_input_v3* zwp_text_input_v3, zwp_text_input_v3_listener* listener, void* data) =>
-        wl_proxy_add_listener((wl_proxy*)zwp_text_input_v3, (void**)listener, data);
+        lib_wayland_client.wl_proxy_add_listener((wl_proxy*)zwp_text_input_v3, (void**)listener, data);
 }

@@ -2,7 +2,6 @@ using Age.Core.Extensions;
 using System.Runtime.InteropServices;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -107,31 +106,31 @@ internal static unsafe class pointer_gestures
         );
 
         pointer_gestures_unstable_v1_types[5]  = zwp_pointer_gesture_swipe_v1_interface;
-        pointer_gestures_unstable_v1_types[6]  = wl_pointer_interface;
+        pointer_gestures_unstable_v1_types[6]  = lib_wayland_client.wl_pointer_interface;
         pointer_gestures_unstable_v1_types[7]  = zwp_pointer_gesture_pinch_v1_interface;
-        pointer_gestures_unstable_v1_types[8]  = wl_pointer_interface;
+        pointer_gestures_unstable_v1_types[8]  = lib_wayland_client.wl_pointer_interface;
         pointer_gestures_unstable_v1_types[9]  = zwp_pointer_gesture_hold_v1_interface;
-        pointer_gestures_unstable_v1_types[10] = wl_pointer_interface;
+        pointer_gestures_unstable_v1_types[10] = lib_wayland_client.wl_pointer_interface;
 
-        pointer_gestures_unstable_v1_types[13] = wl_surface_interface;
+        pointer_gestures_unstable_v1_types[13] = lib_wayland_client.wl_surface_interface;
 
-        pointer_gestures_unstable_v1_types[17] = wl_surface_interface;
+        pointer_gestures_unstable_v1_types[17] = lib_wayland_client.wl_surface_interface;
 
-        pointer_gestures_unstable_v1_types[21] = wl_surface_interface;
+        pointer_gestures_unstable_v1_types[21] = lib_wayland_client.wl_surface_interface;
     }
 
     public static void zwp_pointer_gestures_v1_destroy(zwp_pointer_gestures_v1* zwp_pointer_gestures_v1) =>
-        wl_proxy_destroy((wl_proxy*)zwp_pointer_gestures_v1);
+        lib_wayland_client.wl_proxy_destroy((wl_proxy*)zwp_pointer_gestures_v1);
 
     public static int zwp_pointer_gesture_pinch_v1_add_listener(zwp_pointer_gesture_pinch_v1* zwp_pointer_gesture_pinch_v1, zwp_pointer_gesture_pinch_v1_listener* listener, void* data) =>
-        wl_proxy_add_listener((wl_proxy*)zwp_pointer_gesture_pinch_v1, (void**)listener, data);
+        lib_wayland_client.wl_proxy_add_listener((wl_proxy*)zwp_pointer_gesture_pinch_v1, (void**)listener, data);
 
     public static zwp_pointer_gesture_pinch_v1* zwp_pointer_gestures_v1_get_pinch_gesture(zwp_pointer_gestures_v1* zwp_pointer_gestures_v1, wl_pointer* pointer) =>
-        (zwp_pointer_gesture_pinch_v1*)wl_proxy_marshal_flags(
+        (zwp_pointer_gesture_pinch_v1*)lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)zwp_pointer_gestures_v1,
             ZWP_POINTER_GESTURES_V1_GET_PINCH_GESTURE,
             zwp_pointer_gesture_pinch_v1_interface,
-            wl_proxy_get_version((wl_proxy*)zwp_pointer_gestures_v1),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)zwp_pointer_gestures_v1),
             0,
             [default, pointer]
         );

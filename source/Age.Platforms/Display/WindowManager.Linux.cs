@@ -1,6 +1,5 @@
 #if LINUX
 using Age.Core.Collections;
-using Age.Core.Exceptions;
 using Age.Core.Extensions;
 using Age.Core;
 using Age.Numerics;
@@ -9,30 +8,13 @@ using Age.Platforms.Linux.LibDecor;
 using Age.Platforms.Linux.LibWaylandClient;
 using Age.Platforms.Linux.LibWaylandCursor;
 using Age.Platforms.Linux.LibXKBCommon;
+using Age.Platforms.Linux;
+using Age.Core.Exceptions;
+using ThirdParty.FreeDesktop;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using ThirdParty.FreeDesktop;
-
-using static Age.Platforms.Linux.errno_base;
-using static Age.Platforms.Linux.Libc.lib_c;
-using static Age.Platforms.Linux.LibDecor.lib_decor;
-using static Age.Platforms.Linux.LibWaylandClient.cursor_shape;
-using static Age.Platforms.Linux.LibWaylandClient.fractional_scale;
-using static Age.Platforms.Linux.LibWaylandClient.idle_inhibit;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
-using static Age.Platforms.Linux.LibWaylandClient.pointer_constraints;
-using static Age.Platforms.Linux.LibWaylandClient.primary_selection;
-using static Age.Platforms.Linux.LibWaylandClient.relative_pointer;
-using static Age.Platforms.Linux.LibWaylandClient.viewporter;
-using static Age.Platforms.Linux.LibWaylandClient.xdg_activation;
-using static Age.Platforms.Linux.LibWaylandClient.xdg_decoration;
-using static Age.Platforms.Linux.LibWaylandClient.xdg_shell;
-using static Age.Platforms.Linux.LibWaylandClient.xdg_system_bell;
-using static Age.Platforms.Linux.LibWaylandCursor.lib_wayland_cursor;
-using static Age.Platforms.Linux.LibXKBCommon.lib_xkbommon;
-using Age.Platforms.Linux;
 
 namespace Age.Platforms.Display;
 
@@ -318,27 +300,27 @@ public unsafe sealed partial class WindowManager
         this.registryState->DoubleClikInterval = freeDesktopPortal.DoubleClick;
         this.registryState->LeftHandedMouse    = freeDesktopPortal.LeftHanded;
 
-        var display = this.registryState->Display = wl_display_connect(null);
+        var display = this.registryState->Display = lib_wayland_client.wl_display_connect(null);
 
         NullReferenceException.ThrowIfNull(display, "Can't connect to a Wayland display.");
 
         fixed (libdecor_interface* pLibdecorInterface = &libdecorInterface)
         {
-            var libdecorContext = this.registryState->LibdecorContext = libdecor_new(display, pLibdecorInterface);
+            var libdecorContext = this.registryState->LibdecorContext = lib_decor.libdecor_new(display, pLibdecorInterface);
 
             NullReferenceException.ThrowIfNull(libdecorContext, "Can't create libdecor Context.");
         }
 
-        var registry = this.registryState->Registry = wl_display_get_registry(display);
+        var registry = this.registryState->Registry = lib_wayland_client.wl_display_get_registry(display);
 
         NullReferenceException.ThrowIfNull(registry, "Can't obtain the Wayland registry global.");
 
         fixed (wl_registry_listener* pRegistryListener = &registryListener)
         {
-            wl_registry_add_listener(registry, pRegistryListener, this.registryState);
+            lib_wayland_client.wl_registry_add_listener(registry, pRegistryListener, this.registryState);
         }
 
-        _ = wl_display_roundtrip(display);
+        _ = lib_wayland_client.wl_display_roundtrip(display);
 
         NullReferenceException.ThrowIfNull(this.registryState->Shm, "Can't obtain the Wayland shared memory global.");
         NullReferenceException.ThrowIfNull(this.registryState->Compositor, "Can't obtain the Wayland compositor global.");
@@ -346,7 +328,7 @@ public unsafe sealed partial class WindowManager
 
         if (Environment.GetEnvironmentVariable("XCURSOR_THEME") is string cursorTheme)
         {
-            this.registryState->CursorThemeName = MemoryMarshal.CreateUTF8StringBuffer(cursorTheme);
+            this.registryState->CursorThemeName = new(cursorTheme);
         }
 
         if (Environment.GetEnvironmentVariable("XCURSOR_SIZE") is string cursorSize)
@@ -393,22 +375,22 @@ public unsafe sealed partial class WindowManager
         {
             var name = new NativeString($"/wl_shm-age-${Guid.NewGuid()}");
 
-            var fd = shm_open(name, fcntl_linux.O_RDWR | fcntl_linux.O_CREAT | fcntl_linux.O_EXCL, 0600);
+            var fd = lib_c.shm_open(name, fcntl_linux.O_RDWR | fcntl_linux.O_CREAT | fcntl_linux.O_EXCL, 0600);
 
             if (fd >= 0)
             {
-                _ = shm_unlink(name);
+                _ = lib_c.shm_unlink(name);
 
                 int ret;
 
                 do
                 {
-                    ret = ftruncate(fd, size);
-                } while (ret < 0 && Marshal.GetLastPInvokeError() == EINTR);
+                    ret = lib_c.ftruncate(fd, size);
+                } while (ret < 0 && Marshal.GetLastPInvokeError() == errno_base.EINTR);
 
                 if (ret < 0)
                 {
-                    _ = close(fd);
+                    _ = lib_c.close(fd);
 
                     return -1;
                 }
@@ -417,31 +399,31 @@ public unsafe sealed partial class WindowManager
             }
 
             retries--;
-        } while (retries > 0 && Marshal.GetLastPInvokeError() == EEXIST);
+        } while (retries > 0 && Marshal.GetLastPInvokeError() == errno_base.EEXIST);
 
         return -1;
     }
 
     private static OfferState* GetOfferState(zwp_primary_selection_offer_v1* offer) =>
-        offer != null && ProxyIsAge((wl_proxy*)offer) ? (OfferState*)zwp_primary_selection_offer_v1_get_user_data(offer) : null;
+        offer != null && ProxyIsAge((wl_proxy*)offer) ? (OfferState*)primary_selection.zwp_primary_selection_offer_v1_get_user_data(offer) : null;
 
     private static SeatState* GetSeatState(wl_seat* seat) =>
-        seat != null && ProxyIsAge((wl_proxy*)seat) ? (SeatState*)wl_seat_get_user_data(seat) : null;
+        seat != null && ProxyIsAge((wl_proxy*)seat) ? (SeatState*)lib_wayland_client.wl_seat_get_user_data(seat) : null;
 
     private static WindowState* GetWindowState(wl_surface* surface) =>
-        surface != null && ProxyIsAge((wl_proxy*)surface) ? (WindowState*)wl_surface_get_user_data(surface) : null;
+        surface != null && ProxyIsAge((wl_proxy*)surface) ? (WindowState*)lib_wayland_client.wl_surface_get_user_data(surface) : null;
 
     private static WindowKeyEvent GetKeyEvent(SeatState* seatState, uint keycode, bool pressed)
     {
         Debug.Assert(seatState != null);
 
-        var shiftedKey = KeyMapping.GetKeycode(xkb_state_key_get_one_sym(seatState->XKBState, keycode));
+        var shiftedKey = KeyMapping.GetKeycode(lib_xkbommon.xkb_state_key_get_one_sym(seatState->XKBState, keycode));
 
         var plainKey = Key.None;
 
         uint* syms = null;
 
-        var numSys = xkb_keymap_key_get_syms_by_level(seatState->XKBKeymap, keycode, seatState->CurrentLayoutIndex, 0, &syms);
+        var numSys = lib_xkbommon.xkb_keymap_key_get_syms_by_level(seatState->XKBKeymap, keycode, seatState->CurrentLayoutIndex, 0, &syms);
 
         if (numSys > 0 && syms != null)
         {
@@ -450,7 +432,7 @@ public unsafe sealed partial class WindowManager
 
         var physicalKey = KeyMapping.GetScancode(keycode);
         var keyLocation = KeyMapping.GetLocation(keycode);
-        var unicode     = xkb_state_key_get_utf32(seatState->XKBState, keycode);
+        var unicode     = lib_xkbommon.xkb_state_key_get_utf32(seatState->XKBState, keycode);
 
         var key = Key.None;
 
@@ -526,21 +508,21 @@ public unsafe sealed partial class WindowManager
 
         var lastKey = Key.None;
 
-        var composeStatus = xkb_compose_state_get_status(seatState->XKBComposeState);
+        var composeStatus = lib_xkbommon.xkb_compose_state_get_status(seatState->XKBComposeState);
 
         var registryState = seatState->RegistryState;
 
         if (pressed)
         {
-            var keysym        = xkb_state_key_get_one_sym(seatState->XKBState, keycode);
-            var composeResult = xkb_compose_state_feed(seatState->XKBComposeState, keysym);
+            var keysym        = lib_xkbommon.xkb_state_key_get_one_sym(seatState->XKBState, keycode);
+            var composeResult = lib_xkbommon.xkb_compose_state_feed(seatState->XKBComposeState, keysym);
 
-            composeStatus = xkb_compose_state_get_status(seatState->XKBComposeState);
+            composeStatus = lib_xkbommon.xkb_compose_state_get_status(seatState->XKBComposeState);
 
             if (composeResult == xkb_compose_feed_result.XKB_COMPOSE_FEED_ACCEPTED && composeStatus == xkb_compose_status.XKB_COMPOSE_COMPOSED)
             {
                 var buffer     = stackalloc byte[256];
-                var bufferSize = xkb_compose_state_get_utf8(seatState->XKBComposeState, buffer, 255);
+                var bufferSize = lib_xkbommon.xkb_compose_state_get_utf8(seatState->XKBComposeState, buffer, 255);
 
                 var chatCount = Encoding.UTF8.GetCharCount(buffer, bufferSize);
 
@@ -602,7 +584,7 @@ public unsafe sealed partial class WindowManager
     [UnmanagedCallersOnly]
     private static void OnCursorFrameCallbackDone(void* data, wl_callback* callback, uint timeMs)
     {
-        wl_callback_destroy(callback);
+        lib_wayland_client.wl_callback_destroy(callback);
 
         var seatState = (SeatState*)data;
 
@@ -642,7 +624,7 @@ public unsafe sealed partial class WindowManager
 
         fixed (wl_data_offer_listener* pOfferListener = &dataOfferListener)
         {
-            wl_data_offer_add_listener(id, pOfferListener, seatState);
+            lib_wayland_client.wl_data_offer_add_listener(id, pOfferListener, seatState);
         }
     }
 
@@ -658,7 +640,7 @@ public unsafe sealed partial class WindowManager
 
         if (seatState->DataOfferSelection != null && seatState->DataOfferSelection != id)
         {
-            wl_data_offer_destroy(seatState->DataOfferSelection);
+            lib_wayland_client.wl_data_offer_destroy(seatState->DataOfferSelection);
 
             seatState->DataOfferSelection = null;
         }
@@ -685,13 +667,13 @@ public unsafe sealed partial class WindowManager
 
         if (seatState == null || seatState->ClipboardDataSourceData == null)
         {
-            _ = close(fd);
+            _ = lib_c.close(fd);
 
             return;
         }
 
-        _ = write(fd, seatState->ClipboardDataSourceData, (nuint)seatState->ClipboardDataSourceLength);
-        _ = close(fd);
+        _ = lib_c.write(fd, seatState->ClipboardDataSourceData, (nuint)seatState->ClipboardDataSourceLength);
+        _ = lib_c.close(fd);
     }
 
     [UnmanagedCallersOnly]
@@ -706,7 +688,7 @@ public unsafe sealed partial class WindowManager
 
         if (seatState->DataSourceSelection != null)
         {
-            wl_data_source_destroy(seatState->DataSourceSelection);
+            lib_wayland_client.wl_data_source_destroy(seatState->DataSourceSelection);
 
             seatState->DataSourceSelection = null;
         }
@@ -757,7 +739,7 @@ public unsafe sealed partial class WindowManager
 
         if (pressed)
         {
-            if (xkb_keymap_key_repeats(seatState->XKBKeymap, xkbKeycode) == 1)
+            if (lib_xkbommon.xkb_keymap_key_repeats(seatState->XKBKeymap, xkbKeycode) == 1)
             {
                 seatState->LastRepeatStartMs = (ulong)TimeSpan.FromTicks(DateTime.UtcNow.Ticks).TotalMilliseconds;
                 seatState->RepeatingKeycode  = xkbKeycode;
@@ -767,7 +749,7 @@ public unsafe sealed partial class WindowManager
         }
         else if (seatState->RepeatingKeycode == xkbKeycode)
         {
-            seatState->RepeatingKeycode = XKB_KEYCODE_INVALID;
+            seatState->RepeatingKeycode = lib_xkbommon.XKB_KEYCODE_INVALID;
         }
 
         HandleKeyEvent(seatState, xkbKeycode, pressed, false);
@@ -786,27 +768,27 @@ public unsafe sealed partial class WindowManager
         {
             // We have already a mapped buffer, so we unmap it. There's no need to reset
             // its pointer or size, as we're gonna set them below.
-            _ = munmap(seatState->KeymapBuffer, seatState->KeymapBuffer.Length);
+            _ = lib_c.munmap(seatState->KeymapBuffer, seatState->KeymapBuffer.Length);
 
             seatState->KeymapBuffer = default;
         }
 
-        seatState->KeymapBuffer = new((byte*)mmap(null, size, PROT_READ, MAP_PRIVATE, fd, 0), size);
+        seatState->KeymapBuffer = new((byte*)lib_c.mmap(null, size, lib_c.PROT_READ, lib_c.MAP_PRIVATE, fd, 0), size);
 
-        xkb_keymap_unref(seatState->XKBKeymap);
+        lib_xkbommon.xkb_keymap_unref(seatState->XKBKeymap);
 
-        seatState->XKBKeymap = xkb_keymap_new_from_string(
+        seatState->XKBKeymap = lib_xkbommon.xkb_keymap_new_from_string(
             seatState->XKBContext,
             seatState->KeymapBuffer,
             xkb_keymap_format.XKB_KEYMAP_FORMAT_TEXT_V1,
             xkb_keymap_compile_flags.XKB_KEYMAP_COMPILE_NO_FLAGS
         );
 
-        xkb_state_unref(seatState->XKBState);
+        lib_xkbommon.xkb_state_unref(seatState->XKBState);
 
-        seatState->XKBState = xkb_state_new(seatState->XKBKeymap);
+        seatState->XKBState = lib_xkbommon.xkb_state_new(seatState->XKBKeymap);
 
-        xkb_compose_table_unref(seatState->XKBComposeTable);
+        lib_xkbommon.xkb_compose_table_unref(seatState->XKBComposeTable);
 
         var locale = Environment.GetEnvironmentVariable("LC_ALL")
             ?? Environment.GetEnvironmentVariable("LC_CTYPE")
@@ -815,17 +797,17 @@ public unsafe sealed partial class WindowManager
 
         using var uLocale = locale.ToUnmanaged();
 
-        seatState->XKBComposeTable = xkb_compose_table_new_from_locale(
+        seatState->XKBComposeTable = lib_xkbommon.xkb_compose_table_new_from_locale(
             seatState->XKBContext,
             uLocale,
             xkb_compose_compile_flags.XKB_COMPOSE_COMPILE_NO_FLAGS
         );
 
-        xkb_compose_state_unref(seatState->XKBComposeState);
+        lib_xkbommon.xkb_compose_state_unref(seatState->XKBComposeState);
 
-        seatState->XKBComposeState = xkb_compose_state_new(seatState->XKBComposeTable, xkb_compose_state_flags.XKB_COMPOSE_STATE_NO_FLAGS);
+        seatState->XKBComposeState = lib_xkbommon.xkb_compose_state_new(seatState->XKBComposeTable, xkb_compose_state_flags.XKB_COMPOSE_STATE_NO_FLAGS);
 
-        xkb_state_update_mask(
+        lib_xkbommon.xkb_state_update_mask(
             seatState->XKBState,
             seatState->ModsDepressed,
             seatState->ModsLatched,
@@ -850,7 +832,7 @@ public unsafe sealed partial class WindowManager
 
         Debug.Assert(seatState != null);
 
-        seatState->RepeatingKeycode = XKB_KEYCODE_INVALID;
+        seatState->RepeatingKeycode = lib_xkbommon.XKB_KEYCODE_INVALID;
 
         if (seatState->RegistryState->ActiveWindow == null)
         {
@@ -870,7 +852,7 @@ public unsafe sealed partial class WindowManager
 
         if (seatState->XKBState != null)
         {
-            xkb_state_update_mask(seatState->XKBState, 0, 0, 0, 0, 0, 0);
+            lib_xkbommon.xkb_state_update_mask(seatState->XKBState, 0, 0, 0, 0, 0, 0);
         }
 
         Logger.Warn($"Keyboard unfocused window {(nint)windowState}");
@@ -888,7 +870,7 @@ public unsafe sealed partial class WindowManager
         seatState->ModsLocked         = modsLocked;
         seatState->CurrentLayoutIndex = group;
 
-        xkb_state_update_mask(
+        lib_xkbommon.xkb_state_update_mask(
             seatState->XKBState,
             modsDepressed,
             modsLatched,
@@ -898,29 +880,29 @@ public unsafe sealed partial class WindowManager
             group
         );
 
-        using var shift = new NativeString(XKB_MOD_NAME_SHIFT);
-        using var ctrl  = new NativeString(XKB_MOD_NAME_CTRL);
-        using var alt   = new NativeString(XKB_MOD_NAME_ALT);
-        using var logo  = new NativeString(XKB_MOD_NAME_LOGO);
+        using var shift = new NativeString(lib_xkbommon.XKB_MOD_NAME_SHIFT);
+        using var ctrl  = new NativeString(lib_xkbommon.XKB_MOD_NAME_CTRL);
+        using var alt   = new NativeString(lib_xkbommon.XKB_MOD_NAME_ALT);
+        using var logo  = new NativeString(lib_xkbommon.XKB_MOD_NAME_LOGO);
 
         Modifier modifiers = default;
 
-        if (xkb_state_mod_name_is_active(seatState->XKBState, shift, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
+        if (lib_xkbommon.xkb_state_mod_name_is_active(seatState->XKBState, shift, lib_xkbommon.xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
         {
             modifiers |= Modifier.Shift;
         }
 
-        if (xkb_state_mod_name_is_active(seatState->XKBState, ctrl, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
+        if (lib_xkbommon.xkb_state_mod_name_is_active(seatState->XKBState, ctrl, lib_xkbommon.xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
         {
             modifiers |= Modifier.Ctrl;
         }
 
-        if (xkb_state_mod_name_is_active(seatState->XKBState, alt, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
+        if (lib_xkbommon.xkb_state_mod_name_is_active(seatState->XKBState, alt, lib_xkbommon.xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
         {
             modifiers |= Modifier.Alt;
         }
 
-        if (xkb_state_mod_name_is_active(seatState->XKBState, logo, xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
+        if (lib_xkbommon.xkb_state_mod_name_is_active(seatState->XKBState, logo, lib_xkbommon.xkb_state_component.XKB_STATE_MODS_DEPRESSED) == 1)
         {
             modifiers |= Modifier.Meta;
         }
@@ -970,7 +952,7 @@ public unsafe sealed partial class WindowManager
         int width;
         int height;
 
-        if (!libdecor_configuration_get_content_size(configuration, frame, &width, &height))
+        if (!lib_decor.libdecor_configuration_get_content_size(configuration, frame, &width, &height))
         {
             width  = state->Size.Width;
             height = state->Size.Height;
@@ -986,7 +968,7 @@ public unsafe sealed partial class WindowManager
         state->Mode      = WindowMode.Windowed;
         state->Suspended = false;
 
-        if (libdecor_configuration_get_window_state(configuration, &windowState))
+        if (lib_decor.libdecor_configuration_get_window_state(configuration, &windowState))
         {
             if (windowState.HasFlags(libdecor_window_state.LIBDECOR_WINDOW_STATE_MAXIMIZED))
             {
@@ -1052,12 +1034,12 @@ public unsafe sealed partial class WindowManager
 
         pointerData->WindowState     = windowState;
         pointerData->LastWindowState = windowState;
-        pointerData->Position.X    = (float)wl_fixed_to_double(surfaceX);
-        pointerData->Position.Y    = (float)wl_fixed_to_double(surfaceY);
+        pointerData->Position.X    = (float)lib_wayland_client.wl_fixed_to_double(surfaceX);
+        pointerData->Position.Y    = (float)lib_wayland_client.wl_fixed_to_double(surfaceY);
 
         UpdateCursor(seatState);
 
-        if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
+        if (lib_wayland_client.wl_pointer_get_version(pointer) < lib_wayland_client.WL_POINTER_FRAME_SINCE_VERSION)
         {
             delegate* unmanaged<void*, wl_pointer*, void> onPointerFrame = &OnPointerFrame;
 
@@ -1083,7 +1065,7 @@ public unsafe sealed partial class WindowManager
 
         seatState->RegistryState->ActiveWindow = null;
 
-        if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
+        if (lib_wayland_client.wl_pointer_get_version(pointer) < lib_wayland_client.WL_POINTER_FRAME_SINCE_VERSION)
         {
             delegate* unmanaged<void*, wl_pointer*, void> onPointerFrame = &OnPointerFrame;
 
@@ -1100,11 +1082,11 @@ public unsafe sealed partial class WindowManager
 
         var pointerData = &seatState->PointerDataBuffer;
 
-        pointerData->Position.X = (float)wl_fixed_to_double(surfaceX);
-        pointerData->Position.Y = (float)wl_fixed_to_double(surfaceY);
+        pointerData->Position.X = (float)lib_wayland_client.wl_fixed_to_double(surfaceX);
+        pointerData->Position.Y = (float)lib_wayland_client.wl_fixed_to_double(surfaceY);
         pointerData->MotionTime = time;
 
-        if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
+        if (lib_wayland_client.wl_pointer_get_version(pointer) < lib_wayland_client.WL_POINTER_FRAME_SINCE_VERSION)
         {
             delegate* unmanaged<void*, wl_pointer*, void> onPointerFrame = &OnPointerFrame;
 
@@ -1160,7 +1142,7 @@ public unsafe sealed partial class WindowManager
         pointerData->ButtonTime   = time;
         pointerData->ButtonSerial = serial;
 
-        if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
+        if (lib_wayland_client.wl_pointer_get_version(pointer) < lib_wayland_client.WL_POINTER_FRAME_SINCE_VERSION)
         {
             delegate* unmanaged<void*, wl_pointer*, void> onPointerFrame = &OnPointerFrame;
 
@@ -1180,17 +1162,17 @@ public unsafe sealed partial class WindowManager
         switch ((wl_pointer_axis)axis)
         {
             case wl_pointer_axis.WL_POINTER_AXIS_VERTICAL_SCROLL:
-                pointerData->Scroll.Y = (float)wl_fixed_to_double(value);
+                pointerData->Scroll.Y = (float)lib_wayland_client.wl_fixed_to_double(value);
                 break;
 
             case wl_pointer_axis.WL_POINTER_AXIS_HORIZONTAL_SCROLL:
-                pointerData->Scroll.X = (float)wl_fixed_to_double(value);
+                pointerData->Scroll.X = (float)lib_wayland_client.wl_fixed_to_double(value);
                 break;
         }
 
         pointerData->ButtonTime = time;
 
-        if (wl_pointer_get_version(pointer) < WL_POINTER_FRAME_SINCE_VERSION)
+        if (lib_wayland_client.wl_pointer_get_version(pointer) < lib_wayland_client.WL_POINTER_FRAME_SINCE_VERSION)
         {
             delegate* unmanaged<void*, wl_pointer*, void> onPointerFrame = &OnPointerFrame;
 
@@ -1482,23 +1464,23 @@ public unsafe sealed partial class WindowManager
     {
         var registryState = (RegistryState*)data;
 
-        if (string.Compare(@interface, wl_shm_interface->name))
+        if (string.Compare(@interface, lib_wayland_client.wl_shm_interface->name))
         {
-            registryState->Shm = register(name, (wl_shm*)wl_registry_bind(registry, name, wl_shm_interface, Math.Clamp(version, 1, 6)));
+            registryState->Shm = register(name, (wl_shm*)lib_wayland_client.wl_registry_bind(registry, name, lib_wayland_client.wl_shm_interface, Math.Clamp(version, 1, 6)));
 
             return;
         }
 
-        if (string.Compare(@interface, wl_compositor_interface->name))
+        if (string.Compare(@interface, lib_wayland_client.wl_compositor_interface->name))
         {
-            registryState->Compositor = register(name, (wl_compositor*)wl_registry_bind(registry, name, wl_compositor_interface, Math.Clamp(version, 1, 6)));
+            registryState->Compositor = register(name, (wl_compositor*)lib_wayland_client.wl_registry_bind(registry, name, lib_wayland_client.wl_compositor_interface, Math.Clamp(version, 1, 6)));
 
             return;
         }
 
-        if (string.Compare(@interface, wl_data_device_manager_interface->name))
+        if (string.Compare(@interface, lib_wayland_client.wl_data_device_manager_interface->name))
         {
-            registryState->DataDeviceManager = register(name, (wl_data_device_manager*)wl_registry_bind(registry, name, wl_data_device_manager_interface, Math.Clamp(version, 1, 6)));
+            registryState->DataDeviceManager = register(name, (wl_data_device_manager*)lib_wayland_client.wl_registry_bind(registry, name, lib_wayland_client.wl_data_device_manager_interface, Math.Clamp(version, 1, 6)));
 
             using var seats = registryState->GetSeats();
 
@@ -1508,11 +1490,11 @@ public unsafe sealed partial class WindowManager
 
                 if (seatState->DataDevice == default)
                 {
-                    seatState->DataDevice = wl_data_device_manager_get_data_device(registryState->DataDeviceManager, seat);
+                    seatState->DataDevice = lib_wayland_client.wl_data_device_manager_get_data_device(registryState->DataDeviceManager, seat);
 
                     fixed (wl_data_device_listener* pDataDeviceListener = &dataDeviceListener)
                     {
-                        wl_data_device_add_listener(seatState->DataDevice, pDataDeviceListener, seatState);
+                        lib_wayland_client.wl_data_device_add_listener(seatState->DataDevice, pDataDeviceListener, seatState);
                     }
                 }
             }
@@ -1520,9 +1502,9 @@ public unsafe sealed partial class WindowManager
             return;
         }
 
-        if (string.Compare(@interface, wl_seat_interface->name))
+        if (string.Compare(@interface, lib_wayland_client.wl_seat_interface->name))
         {
-            var seat = (wl_seat*)wl_registry_bind(registry, name, wl_seat_interface, Math.Clamp(version, 1, 9));
+            var seat = (wl_seat*)lib_wayland_client.wl_registry_bind(registry, name, lib_wayland_client.wl_seat_interface, Math.Clamp(version, 1, 9));
 
             SetProxyTag((wl_proxy*)seat);
 
@@ -1531,22 +1513,22 @@ public unsafe sealed partial class WindowManager
             if (seatState->DataDevice == default && registryState->DataDeviceManager != default)
             {
                 // Clipboard & DnD.
-                seatState->DataDevice = wl_data_device_manager_get_data_device(registryState->DataDeviceManager, seat);
+                seatState->DataDevice = lib_wayland_client.wl_data_device_manager_get_data_device(registryState->DataDeviceManager, seat);
 
                 fixed (wl_data_device_listener* pDataDeviceListener = &dataDeviceListener)
                 {
-                    wl_data_device_add_listener(seatState->DataDevice, pDataDeviceListener, seatState);
+                    lib_wayland_client.wl_data_device_add_listener(seatState->DataDevice, pDataDeviceListener, seatState);
                 }
             }
 
             if (seatState->PrimarySelectionDevice == default && registryState->PrimarySelectionDeviceManager != default)
             {
                 // Primary selection.
-                seatState->PrimarySelectionDevice = zwp_primary_selection_device_manager_v1_get_device(registryState->PrimarySelectionDeviceManager, seat);
+                seatState->PrimarySelectionDevice = primary_selection.zwp_primary_selection_device_manager_v1_get_device(registryState->PrimarySelectionDeviceManager, seat);
 
                 fixed (zwp_primary_selection_device_v1_listener* pPrimarySelectionDeviceListener = &primarySelectionDeviceListener)
                 {
-                    zwp_primary_selection_device_v1_add_listener(seatState->PrimarySelectionDevice, pPrimarySelectionDeviceListener, seatState);
+                    primary_selection.zwp_primary_selection_device_v1_add_listener(seatState->PrimarySelectionDevice, pPrimarySelectionDeviceListener, seatState);
                 }
             }
 
@@ -1554,7 +1536,7 @@ public unsafe sealed partial class WindowManager
 
             fixed (wl_seat_listener* pSeatListener = &seatListener)
             {
-                wl_seat_add_listener(seat, pSeatListener, seatState);
+                lib_wayland_client.wl_seat_add_listener(seat, pSeatListener, seatState);
             }
 
             if (registryState->CurrentSeatState == default)
@@ -1565,35 +1547,35 @@ public unsafe sealed partial class WindowManager
             return;
         }
 
-        if (string.Compare(@interface, xdg_wm_base_interface->name))
+        if (string.Compare(@interface, xdg_shell.xdg_wm_base_interface->name))
         {
-            registryState->WmBase = register(name, (xdg_wm_base*)wl_registry_bind(registry, name, xdg_wm_base_interface, Math.Clamp(version, 1, 6)));
+            registryState->WmBase = register(name, (xdg_wm_base*)lib_wayland_client.wl_registry_bind(registry, name, xdg_shell.xdg_wm_base_interface, Math.Clamp(version, 1, 6)));
 
             fixed (xdg_wm_base_listener* pWmBaseListener = &wmBaseListener)
             {
-                xdg_wm_base_add_listener(registryState->WmBase, pWmBaseListener, null);
+                xdg_shell.xdg_wm_base_add_listener(registryState->WmBase, pWmBaseListener, null);
             }
 
             return;
         }
 
-        if (string.Compare(@interface, wp_viewporter_interface->name))
+        if (string.Compare(@interface, viewporter.wp_viewporter_interface->name))
         {
-            registryState->Viewporter = register(name, (wp_viewporter*)wl_registry_bind(registry, name, wp_viewporter_interface, 1));
+            registryState->Viewporter = register(name, (wp_viewporter*)lib_wayland_client.wl_registry_bind(registry, name, viewporter.wp_viewporter_interface, 1));
 
             return;
         }
 
-        if (string.Compare(@interface, wp_cursor_shape_manager_v1_interface->name))
+        if (string.Compare(@interface, cursor_shape.wp_cursor_shape_manager_v1_interface->name))
         {
-            registryState->CursorShapeManager = register(name, (wp_cursor_shape_manager_v1*)wl_registry_bind(registry, name, wp_cursor_shape_manager_v1_interface, 1));
+            registryState->CursorShapeManager = register(name, (wp_cursor_shape_manager_v1*)lib_wayland_client.wl_registry_bind(registry, name, cursor_shape.wp_cursor_shape_manager_v1_interface, 1));
 
             return;
         }
 
-        if (string.Compare(@interface, wp_fractional_scale_manager_v1_interface->name))
+        if (string.Compare(@interface, fractional_scale.wp_fractional_scale_manager_v1_interface->name))
         {
-            registryState->FractionalScaleManager = register(name, (wp_fractional_scale_manager_v1*)wl_registry_bind(registry, name, wp_fractional_scale_manager_v1_interface, 1));
+            registryState->FractionalScaleManager = register(name, (wp_fractional_scale_manager_v1*)lib_wayland_client.wl_registry_bind(registry, name, fractional_scale.wp_fractional_scale_manager_v1_interface, 1));
 
             return;
 
@@ -1602,30 +1584,30 @@ public unsafe sealed partial class WindowManager
             // knows), add a conditional branch for creating the add-on object.
         }
 
-        if (string.Compare(@interface, zxdg_decoration_manager_v1_interface->name))
+        if (string.Compare(@interface, xdg_decoration.zxdg_decoration_manager_v1_interface->name))
         {
-            registryState->DecorationManager = register(name, (zxdg_decoration_manager_v1*)wl_registry_bind(registry, name, zxdg_decoration_manager_v1_interface, 1));
+            registryState->DecorationManager = register(name, (zxdg_decoration_manager_v1*)lib_wayland_client.wl_registry_bind(registry, name, xdg_decoration.zxdg_decoration_manager_v1_interface, 1));
 
             return;
         }
 
-        if (string.Compare(@interface, xdg_system_bell_v1_interface->name))
+        if (string.Compare(@interface, xdg_system_bell.xdg_system_bell_v1_interface->name))
         {
-            registryState->SystemBell = register(name, (xdg_system_bell_v1*)wl_registry_bind(registry, name, xdg_system_bell_v1_interface, 1));
+            registryState->SystemBell = register(name, (xdg_system_bell_v1*)lib_wayland_client.wl_registry_bind(registry, name, xdg_system_bell.xdg_system_bell_v1_interface, 1));
 
             return;
         }
 
-        if (string.Compare(@interface, xdg_activation_v1_interface->name))
+        if (string.Compare(@interface, xdg_activation.xdg_activation_v1_interface->name))
         {
-            registryState->Activation = register(name, (xdg_activation_v1*)wl_registry_bind(registry, name, xdg_activation_v1_interface, 1));
+            registryState->Activation = register(name, (xdg_activation_v1*)lib_wayland_client.wl_registry_bind(registry, name, xdg_activation.xdg_activation_v1_interface, 1));
 
             return;
         }
 
-        if (string.Compare(@interface, zwp_primary_selection_device_manager_v1_interface->name))
+        if (string.Compare(@interface, primary_selection.zwp_primary_selection_device_manager_v1_interface->name))
         {
-            registryState->PrimarySelectionDeviceManager = register(name, (zwp_primary_selection_device_manager_v1*)wl_registry_bind(registry, name, zwp_primary_selection_device_manager_v1_interface, 1));
+            registryState->PrimarySelectionDeviceManager = register(name, (zwp_primary_selection_device_manager_v1*)lib_wayland_client.wl_registry_bind(registry, name, primary_selection.zwp_primary_selection_device_manager_v1_interface, 1));
 
             using var seats = registryState->GetSeats();
 
@@ -1637,33 +1619,33 @@ public unsafe sealed partial class WindowManager
 
                 if (seatState->PrimarySelectionDevice == default)
                 {
-                    seatState->PrimarySelectionDevice = zwp_primary_selection_device_manager_v1_get_device(registryState->PrimarySelectionDeviceManager, seat);
+                    seatState->PrimarySelectionDevice = primary_selection.zwp_primary_selection_device_manager_v1_get_device(registryState->PrimarySelectionDeviceManager, seat);
 
                     fixed (zwp_primary_selection_device_v1_listener* pPrimarySelectionDeviceListener = &primarySelectionDeviceListener)
                     {
-                        zwp_primary_selection_device_v1_add_listener(seatState->PrimarySelectionDevice, pPrimarySelectionDeviceListener, seatState);
+                        primary_selection.zwp_primary_selection_device_v1_add_listener(seatState->PrimarySelectionDevice, pPrimarySelectionDeviceListener, seatState);
                     }
                 }
             }
         }
 
-        if (string.Compare(@interface, zwp_relative_pointer_manager_v1_interface->name))
+        if (string.Compare(@interface, relative_pointer.zwp_relative_pointer_manager_v1_interface->name))
         {
-            registryState->RelativePointerManager = register(name, (zwp_relative_pointer_manager_v1*)wl_registry_bind(registry, name, zwp_relative_pointer_manager_v1_interface, 1));
+            registryState->RelativePointerManager = register(name, (zwp_relative_pointer_manager_v1*)lib_wayland_client.wl_registry_bind(registry, name, relative_pointer.zwp_relative_pointer_manager_v1_interface, 1));
 
             return;
         }
 
-        if (string.Compare(@interface, zwp_pointer_constraints_v1_interface->name))
+        if (string.Compare(@interface, pointer_constraints.zwp_pointer_constraints_v1_interface->name))
         {
-            registryState->PointerConstraints = register(name, (zwp_pointer_constraints_v1*)wl_registry_bind(registry, name, zwp_pointer_constraints_v1_interface, 1));
+            registryState->PointerConstraints = register(name, (zwp_pointer_constraints_v1*)lib_wayland_client.wl_registry_bind(registry, name, pointer_constraints.zwp_pointer_constraints_v1_interface, 1));
 
             return;
         }
 
-        if (string.Compare(@interface, zwp_idle_inhibit_manager_v1_interface->name))
+        if (string.Compare(@interface, idle_inhibit.zwp_idle_inhibit_manager_v1_interface->name))
         {
-            registryState->IdleInhibitManager = register(name, (zwp_idle_inhibit_manager_v1*)wl_registry_bind(registry, name, zwp_idle_inhibit_manager_v1_interface, 1));
+            registryState->IdleInhibitManager = register(name, (zwp_idle_inhibit_manager_v1*)lib_wayland_client.wl_registry_bind(registry, name, idle_inhibit.zwp_idle_inhibit_manager_v1_interface, 1));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1692,7 +1674,7 @@ public unsafe sealed partial class WindowManager
 
         fixed (zwp_primary_selection_offer_v1_listener* pOfferListener = &primarySelectionOfferListener)
         {
-            zwp_primary_selection_offer_v1_add_listener(id, pOfferListener, seatState);
+            primary_selection.zwp_primary_selection_offer_v1_add_listener(id, pOfferListener, seatState);
         }
     }
 
@@ -1705,7 +1687,7 @@ public unsafe sealed partial class WindowManager
 
         if (seatState->PrimarySelectionOffer != null && seatState->PrimarySelectionOffer != offer)
         {
-            zwp_primary_selection_offer_v1_destroy(seatState->PrimarySelectionOffer);
+            primary_selection.zwp_primary_selection_offer_v1_destroy(seatState->PrimarySelectionOffer);
         }
 
         seatState->PrimarySelectionOffer = offer;
@@ -1730,7 +1712,7 @@ public unsafe sealed partial class WindowManager
 
         if (seatState->PrimarySelectionSource != null)
         {
-            zwp_primary_selection_source_v1_destroy(seatState->PrimarySelectionSource);
+            primary_selection.zwp_primary_selection_source_v1_destroy(seatState->PrimarySelectionSource);
 
             seatState->PrimarySelectionSource = null;
         }
@@ -1745,8 +1727,8 @@ public unsafe sealed partial class WindowManager
 
         var pointerData = &seatState->PointerDataBuffer;
 
-        pointerData->RelativeMotion.X   = (float)wl_fixed_to_double(dx);
-        pointerData->RelativeMotion.Y   = (float)wl_fixed_to_double(dy);
+        pointerData->RelativeMotion.X   = (float)lib_wayland_client.wl_fixed_to_double(dx);
+        pointerData->RelativeMotion.Y   = (float)lib_wayland_client.wl_fixed_to_double(dy);
         pointerData->RelativeMotionTime = (utimeHi << 32) | utimeLo;
     }
 
@@ -1767,35 +1749,35 @@ public unsafe sealed partial class WindowManager
         {
             if (seatState->Pointer == null)
             {
-                var cursorSurface = wl_compositor_create_surface(seatState->RegistryState->Compositor);
+                var cursorSurface = lib_wayland_client.wl_compositor_create_surface(seatState->RegistryState->Compositor);
 
-                wl_surface_commit(cursorSurface);
+                lib_wayland_client.wl_surface_commit(cursorSurface);
 
-                seatState->Pointer = wl_seat_get_pointer(seat);
+                seatState->Pointer = lib_wayland_client.wl_seat_get_pointer(seat);
 
-                seatState->CursorSurface = wl_compositor_create_surface(seatState->RegistryState->Compositor);
+                seatState->CursorSurface = lib_wayland_client.wl_compositor_create_surface(seatState->RegistryState->Compositor);
 
-                wl_surface_commit(seatState->CursorSurface);
+                lib_wayland_client.wl_surface_commit(seatState->CursorSurface);
 
-                seatState->Pointer = wl_seat_get_pointer(seat);
+                seatState->Pointer = lib_wayland_client.wl_seat_get_pointer(seat);
 
                 fixed (wl_pointer_listener* pPointerListener = &pointerListener)
                 {
-                    wl_pointer_add_listener(seatState->Pointer, pPointerListener, seatState);
+                    lib_wayland_client.wl_pointer_add_listener(seatState->Pointer, pPointerListener, seatState);
                 }
 
                 if (seatState->RegistryState->CursorShapeManager != default)
                 {
-                    seatState->CursorShapeDevice = wp_cursor_shape_manager_v1_get_pointer(seatState->RegistryState->CursorShapeManager, seatState->Pointer);
+                    seatState->CursorShapeDevice = cursor_shape.wp_cursor_shape_manager_v1_get_pointer(seatState->RegistryState->CursorShapeManager, seatState->Pointer);
                 }
 
                 if (seatState->RegistryState->RelativePointerManager != default)
                 {
-                    seatState->RelativePointer = zwp_relative_pointer_manager_v1_get_relative_pointer(seatState->RegistryState->RelativePointerManager, seatState->Pointer);
+                    seatState->RelativePointer = relative_pointer.zwp_relative_pointer_manager_v1_get_relative_pointer(seatState->RegistryState->RelativePointerManager, seatState->Pointer);
 
                     fixed (zwp_relative_pointer_v1_listener* pRelativePointerListener = &relativePointerListener)
                     {
-                        zwp_relative_pointer_v1_add_listener(seatState->RelativePointer, pRelativePointerListener, seatState);
+                        relative_pointer.zwp_relative_pointer_v1_add_listener(seatState->RelativePointer, pRelativePointerListener, seatState);
                     }
                 }
             }
@@ -1804,51 +1786,51 @@ public unsafe sealed partial class WindowManager
         {
             if (seatState->CursorFrameCallback == null)
             {
-                wl_callback_set_user_data(seatState->CursorFrameCallback, null);
+                lib_wayland_client.wl_callback_set_user_data(seatState->CursorFrameCallback, null);
 
-                wl_callback_destroy(seatState->CursorFrameCallback);
+                lib_wayland_client.wl_callback_destroy(seatState->CursorFrameCallback);
 
                 seatState->CursorFrameCallback = null;
             }
 
             if (seatState->CursorSurface == null)
             {
-                wl_surface_destroy(seatState->CursorSurface);
+                lib_wayland_client.wl_surface_destroy(seatState->CursorSurface);
 
                 seatState->CursorSurface = null;
             }
 
             if (seatState->Pointer == null)
             {
-                wl_pointer_destroy(seatState->Pointer);
+                lib_wayland_client.wl_pointer_destroy(seatState->Pointer);
 
                 seatState->Pointer = null;
             }
 
             if (seatState->CursorShapeDevice == null)
             {
-                wp_cursor_shape_device_v1_destroy(seatState->CursorShapeDevice);
+                cursor_shape.wp_cursor_shape_device_v1_destroy(seatState->CursorShapeDevice);
 
                 seatState->CursorShapeDevice = null;
             }
 
             if (seatState->RelativePointer == null)
             {
-                zwp_relative_pointer_v1_destroy(seatState->RelativePointer);
+                relative_pointer.zwp_relative_pointer_v1_destroy(seatState->RelativePointer);
 
                 seatState->RelativePointer = null;
             }
 
             if (seatState->ConfinedPointer == null)
             {
-                zwp_confined_pointer_v1_destroy(seatState->ConfinedPointer);
+                pointer_constraints.zwp_confined_pointer_v1_destroy(seatState->ConfinedPointer);
 
                 seatState->ConfinedPointer = null;
             }
 
             if (seatState->LockedPointer == null)
             {
-                zwp_locked_pointer_v1_destroy(seatState->LockedPointer);
+                pointer_constraints.zwp_locked_pointer_v1_destroy(seatState->LockedPointer);
 
                 seatState->LockedPointer = null;
             }
@@ -1858,15 +1840,15 @@ public unsafe sealed partial class WindowManager
         {
             if (seatState->Keyboard == null)
             {
-                seatState->Keyboard = wl_seat_get_keyboard(seat);
+                seatState->Keyboard = lib_wayland_client.wl_seat_get_keyboard(seat);
 
-                seatState->XKBContext = xkb_context_new(xkb_context_flags.XKB_CONTEXT_NO_FLAGS);
+                seatState->XKBContext = lib_xkbommon.xkb_context_new(xkb_context_flags.XKB_CONTEXT_NO_FLAGS);
 
                 Debug.Assert(seatState->XKBContext != null);
 
                 fixed (wl_keyboard_listener* pKeyboardListener = &keyboardListener)
                 {
-                    wl_keyboard_add_listener(seatState->Keyboard, pKeyboardListener, seatState);
+                    lib_wayland_client.wl_keyboard_add_listener(seatState->Keyboard, pKeyboardListener, seatState);
                 }
             }
         }
@@ -1874,42 +1856,42 @@ public unsafe sealed partial class WindowManager
         {
             if (seatState->XKBContext == null)
             {
-                xkb_context_unref(seatState->XKBContext);
+                lib_xkbommon.xkb_context_unref(seatState->XKBContext);
 
                 seatState->XKBContext = null;
             }
 
             if (seatState->XKBComposeTable == null)
             {
-                xkb_compose_table_unref(seatState->XKBComposeTable);
+                lib_xkbommon.xkb_compose_table_unref(seatState->XKBComposeTable);
 
                 seatState->XKBComposeTable = null;
             }
 
             if (seatState->XKBComposeState == null)
             {
-                xkb_compose_state_unref(seatState->XKBComposeState);
+                lib_xkbommon.xkb_compose_state_unref(seatState->XKBComposeState);
 
                 seatState->XKBComposeState = null;
             }
 
             if (seatState->XKBKeymap == null)
             {
-                xkb_keymap_unref(seatState->XKBKeymap);
+                lib_xkbommon.xkb_keymap_unref(seatState->XKBKeymap);
 
                 seatState->XKBKeymap = null;
             }
 
             if (seatState->XKBState == null)
             {
-                xkb_state_unref(seatState->XKBState);
+                lib_xkbommon.xkb_state_unref(seatState->XKBState);
 
                 seatState->XKBState = null;
             }
 
             if (seatState->Keyboard == null)
             {
-                wl_keyboard_destroy(seatState->Keyboard);
+                lib_wayland_client.wl_keyboard_destroy(seatState->Keyboard);
 
                 seatState->Keyboard = null;
             }
@@ -1952,21 +1934,21 @@ public unsafe sealed partial class WindowManager
 
     [UnmanagedCallersOnly]
     private static void OnWmBasePing(void* data, xdg_wm_base* wmBase, uint serial) =>
-        xdg_wm_base_pong(wmBase, serial);
+        xdg_shell.xdg_wm_base_pong(wmBase, serial);
     #endregion
 
     private static bool ProxyIsAge(wl_proxy* proxy)
     {
         NullReferenceException.ThrowIfNull(proxy);
 
-        return wl_proxy_get_tag(proxy) == pTag;
+        return lib_wayland_client.wl_proxy_get_tag(proxy) == pTag;
     }
 
     private static void SetProxyTag(wl_proxy* proxy)
     {
         NullReferenceException.ThrowIfNull(proxy);
 
-        wl_proxy_set_tag(proxy, pTag);
+        lib_wayland_client.wl_proxy_set_tag(proxy, pTag);
     }
 
     private static void UpdateCursor(SeatState* seatState)
@@ -1990,7 +1972,7 @@ public unsafe sealed partial class WindowManager
             {
                 var shape = standardCursors[(uint)seatState->RegistryState->Cursor];
 
-                wp_cursor_shape_device_v1_set_shape(seatState->CursorShapeDevice, seatState->PointerEnterSerial, (uint)shape);
+                cursor_shape.wp_cursor_shape_device_v1_set_shape(seatState->CursorShapeDevice, seatState->PointerEnterSerial, (uint)shape);
 
                 return;
             }
@@ -2007,15 +1989,15 @@ public unsafe sealed partial class WindowManager
 
                 if (cursor->image_count > 1)
                 {
-                    frameIndex = wl_cursor_frame(cursor, (uint)seatState->CursorTimeMs);
+                    frameIndex = lib_wayland_cursor.wl_cursor_frame(cursor, (uint)seatState->CursorTimeMs);
 
                     if (seatState->CursorFrameCallback == null)
                     {
-                        seatState->CursorFrameCallback = wl_surface_frame(seatState->CursorSurface);
+                        seatState->CursorFrameCallback = lib_wayland_client.wl_surface_frame(seatState->CursorSurface);
 
                         fixed (wl_callback_listener* pCursorFrameCallbackListener = &cursorFrameCallbackListener)
                         {
-                            wl_callback_add_listener(seatState->CursorFrameCallback, pCursorFrameCallbackListener, seatState);
+                            lib_wayland_client.wl_callback_add_listener(seatState->CursorFrameCallback, pCursorFrameCallbackListener, seatState);
                         }
                     }
                 }
@@ -2024,19 +2006,18 @@ public unsafe sealed partial class WindowManager
 
                 scale = seatState->RegistryState->CursorScale;
 
-                cursorBuffer = wl_cursor_image_get_buffer(cursorImage);
+                cursorBuffer = lib_wayland_cursor.wl_cursor_image_get_buffer(cursorImage);
 
                 hotspotX = (int)(cursorImage->hotspotX / scale);
                 hotspotY = (int)(cursorImage->hotspotY / scale);
             }
         }
 
-        wl_pointer_set_cursor(seatState->Pointer, seatState->PointerEnterSerial, seatState->CursorSurface, hotspotX, hotspotY);
-        wl_surface_set_buffer_scale(seatState->CursorSurface, scale);
-        wl_surface_attach(seatState->CursorSurface, cursorBuffer, 0, 0);
-        wl_surface_damage_buffer(seatState->CursorSurface, 0, 0, int.MaxValue, int.MaxValue);
-
-        wl_surface_commit(seatState->CursorSurface);
+        lib_wayland_client.wl_pointer_set_cursor(seatState->Pointer, seatState->PointerEnterSerial, seatState->CursorSurface, hotspotX, hotspotY);
+        lib_wayland_client.wl_surface_set_buffer_scale(seatState->CursorSurface, scale);
+        lib_wayland_client.wl_surface_attach(seatState->CursorSurface, cursorBuffer, 0, 0);
+        lib_wayland_client.wl_surface_damage_buffer(seatState->CursorSurface, 0, 0, int.MaxValue, int.MaxValue);
+        lib_wayland_client.wl_surface_commit(seatState->CursorSurface);
     }
 
     private void EchoKeyboardKeys()
@@ -2081,33 +2062,33 @@ public unsafe sealed partial class WindowManager
 
         var poolFd = new pollfd
         {
-            fd     = wl_display_get_fd(display),
-            events = POLLIN | POLLHUP
+            fd     = lib_wayland_client.wl_display_get_fd(display),
+            events = lib_c.POLLIN | lib_c.POLLHUP
         };
 
         while (true)
         {
-            while (wl_display_prepare_read(display) != 0)
+            while (lib_wayland_client.wl_display_prepare_read(display) != 0)
             {
                 lock (this.@lock)
                 {
-                    if (wl_display_dispatch_pending(display) == -1)
+                    if (lib_wayland_client.wl_display_dispatch_pending(display) == -1)
                     {
                         break;
                     }
                 }
             }
 
-            var werror = wl_display_get_error(display);
+            var werror = lib_wayland_client.wl_display_get_error(display);
 
             if (werror > 0)
             {
-                if (werror == EPROTO)
+                if (werror == errno_base.EPROTO)
                 {
                     wl_interface* @interface;
                     uint id;
 
-                    var error_code = wl_display_get_protocol_error(display, &@interface, &id);
+                    var error_code = lib_wayland_client.wl_display_get_protocol_error(display, &@interface, &id);
 
                     var insterfaceName = Encoding.GetStringFromNullTerminated(@interface->name) ?? "unknown";
 
@@ -2119,29 +2100,29 @@ public unsafe sealed partial class WindowManager
                 }
             }
 
-            _ = wl_display_flush(display);
+            _ = lib_wayland_client.wl_display_flush(display);
 
-            _ = poll(&poolFd, 1, -1);
+            _ = lib_c.poll(&poolFd, 1, -1);
 
             if (this.stopped)
             {
-                wl_display_cancel_read(display);
+                lib_wayland_client.wl_display_cancel_read(display);
 
                 break;
             }
 
-            if ((poolFd.revents | POLLIN) != 0)
+            if ((poolFd.revents | lib_c.POLLIN) != 0)
             {
-                _ = wl_display_read_events(display);
+                _ = lib_wayland_client.wl_display_read_events(display);
             }
             else
             {
-                wl_display_cancel_read(display);
+                lib_wayland_client.wl_display_cancel_read(display);
             }
 
             lock (this.@lock)
             {
-                _ = wl_display_dispatch_pending(display);
+                _ = lib_wayland_client.wl_display_dispatch_pending(display);
             }
         }
     }
@@ -2150,19 +2131,19 @@ public unsafe sealed partial class WindowManager
     {
         if (this.registryState->CursorTheme != null)
         {
-            wl_cursor_theme_destroy(this.registryState->CursorTheme);
+            lib_wayland_cursor.wl_cursor_theme_destroy(this.registryState->CursorTheme);
 
             this.registryState->CursorTheme = null;
         }
 
-        if (this.registryState->CursorThemeName == null)
+        if (this.registryState->CursorThemeName == default)
         {
-            this.registryState->CursorThemeName = MemoryMarshal.CreateUTF8StringBuffer("default");
+            this.registryState->CursorThemeName = new("default");
         }
 
         var cursorSize = this.registryState->UnscaledCursorSize * 1;
 
-        this.registryState->CursorTheme = wl_cursor_theme_load(this.registryState->CursorThemeName, cursorSize, this.registryState->Shm);
+        this.registryState->CursorTheme = lib_wayland_cursor.wl_cursor_theme_load(this.registryState->CursorThemeName, cursorSize, this.registryState->Shm);
 
         Debug.Assert(this.registryState->CursorTheme != null);
 
@@ -2170,13 +2151,13 @@ public unsafe sealed partial class WindowManager
         {
             using var cursorName = cursorNames[i].ToUnmanaged();
 
-            var cursor = wl_cursor_theme_get_cursor(this.registryState->CursorTheme, cursorName);
+            var cursor = lib_wayland_cursor.wl_cursor_theme_get_cursor(this.registryState->CursorTheme, cursorName);
 
             if (cursor == null && cursorNamesFallback[i] != null)
             {
                 using var cursorNameFallback = cursorNamesFallback[i]!.ToUnmanaged();
 
-                cursor = wl_cursor_theme_get_cursor(this.registryState->CursorTheme, cursorNameFallback);
+                cursor = lib_wayland_cursor.wl_cursor_theme_get_cursor(this.registryState->CursorTheme, cursorNameFallback);
             }
 
             if (cursor != null && cursor->image_count > 0)
@@ -2196,7 +2177,7 @@ public unsafe sealed partial class WindowManager
     {
         this.stopped = true;
 
-        _ = wl_display_roundtrip(this.registryState->Display);
+        _ = lib_wayland_client.wl_display_roundtrip(this.registryState->Display);
 
         this.eventLoopThread.Join();
 
@@ -2209,13 +2190,13 @@ public unsafe sealed partial class WindowManager
 
         this.registryState->Windows.Remove(window.State);
 
-        _ = wl_display_roundtrip(this.registryState->Display);
+        _ = lib_wayland_client.wl_display_roundtrip(this.registryState->Display);
     }
 
     internal partial WindowState* CreateWindow(string title, Size<int> size, Window? parent)
     {
-        var windowState = WindowState.Allocate
-            (wl_compositor_create_surface(this.registryState->Compositor),
+        var windowState = WindowState.Allocate(
+            lib_wayland_client.wl_compositor_create_surface(this.registryState->Compositor),
             size
         );
 
@@ -2223,47 +2204,47 @@ public unsafe sealed partial class WindowManager
 
         fixed (wl_surface_listener* pSurfaceListener = &surfaceListener)
         {
-            wl_surface_add_listener(windowState->Surface, pSurfaceListener, windowState);
+            lib_wayland_client.wl_surface_add_listener(windowState->Surface, pSurfaceListener, windowState);
         }
 
         if (this.registryState->Viewporter != default)
         {
-            windowState->Viewport = wp_viewporter_get_viewport(this.registryState->Viewporter, windowState->Surface);
+            windowState->Viewport = viewporter.wp_viewporter_get_viewport(this.registryState->Viewporter, windowState->Surface);
 
             if (this.registryState->FractionalScaleManager != default)
             {
-                windowState->FractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale(this.registryState->FractionalScaleManager, windowState->Surface);
+                windowState->FractionalScale = fractional_scale.wp_fractional_scale_manager_v1_get_fractional_scale(this.registryState->FractionalScaleManager, windowState->Surface);
 
                 fixed (wp_fractional_scale_v1_listener* pFractionalScaleListener = &fractionalScaleListener)
                 {
-                    wp_fractional_scale_v1_add_listener(windowState->FractionalScale, pFractionalScaleListener, windowState);
+                    fractional_scale.wp_fractional_scale_v1_add_listener(windowState->FractionalScale, pFractionalScaleListener, windowState);
                 }
             }
         }
 
         fixed (libdecor_frame_interface* pFrameInterface = &frameInterface)
         {
-            windowState->Frame = libdecor_decorate(this.registryState->LibdecorContext, windowState->Surface, pFrameInterface, windowState);
+            windowState->Frame = lib_decor.libdecor_decorate(this.registryState->LibdecorContext, windowState->Surface, pFrameInterface, windowState);
         }
 
-        libdecor_frame_map(windowState->Frame);
+        lib_decor.libdecor_frame_map(windowState->Frame);
 
-        windowState->FrameCallback = wl_surface_frame(windowState->Surface);
+        windowState->FrameCallback = lib_wayland_client.wl_surface_frame(windowState->Surface);
 
         fixed (wl_callback_listener* pFrameCallbackListener = &frameCallbackListener)
         {
-            wl_callback_add_listener(windowState->FrameCallback, pFrameCallbackListener, windowState);
+            lib_wayland_client.wl_callback_add_listener(windowState->FrameCallback, pFrameCallbackListener, windowState);
         }
 
-        wl_surface_commit(windowState->Surface);
+        lib_wayland_client.wl_surface_commit(windowState->Surface);
 
-        _ = wl_display_roundtrip(this.registryState->Display);
+        _ = lib_wayland_client.wl_display_roundtrip(this.registryState->Display);
 
         UpdateSize(windowState, windowState->Size);
 
         using var uId = new NativeString(this.Id);
 
-        libdecor_frame_set_app_id(windowState->Frame, uId);
+        lib_decor.libdecor_frame_set_app_id(windowState->Frame, uId);
 
         this.registryState->Windows.Add(windowState);
 
@@ -2294,7 +2275,7 @@ public unsafe sealed partial class WindowManager
 
         var pipeFds = stackalloc int[2];
 
-        var pipeResult = pipe(pipeFds);
+        var pipeResult = lib_c.pipe(pipeFds);
 
         if (pipeResult != 0)
         {
@@ -2306,11 +2287,11 @@ public unsafe sealed partial class WindowManager
 
         using var mimeType = new NativeString("text/plain;charset=utf-8");
 
-        wl_data_offer_receive(offer, mimeType, writeFd);
+        lib_wayland_client.wl_data_offer_receive(offer, mimeType, writeFd);
 
-        _ = wl_display_flush(this.registryState->Display);
+        _ = lib_wayland_client.wl_display_flush(this.registryState->Display);
 
-        _ = close(writeFd);
+        _ = lib_c.close(writeFd);
 
         var buffer = (byte*)NativeMemory.Alloc(4096);
 
@@ -2319,7 +2300,7 @@ public unsafe sealed partial class WindowManager
 
         nint bytesRead;
 
-        while ((bytesRead = read(readFd, &buffer[totalRead], (nuint)(capacity - totalRead))) > 0)
+        while ((bytesRead = lib_c.read(readFd, &buffer[totalRead], (nuint)(capacity - totalRead))) > 0)
         {
             totalRead += (int)bytesRead;
 
@@ -2331,9 +2312,9 @@ public unsafe sealed partial class WindowManager
             }
         }
 
-        _ = close(readFd);
+        _ = lib_c.close(readFd);
 
-        wl_data_offer_destroy(offer);
+        lib_wayland_client.wl_data_offer_destroy(offer);
 
         seatState->DataOfferSelection = null;
 
@@ -2352,24 +2333,24 @@ public unsafe sealed partial class WindowManager
     }
 
     internal partial void HideWindow(Window window) =>
-        libdecor_frame_set_minimized(window.State->Frame);
+        lib_decor.libdecor_frame_set_minimized(window.State->Frame);
 
     internal partial void MaximizeWindow(Window window) =>
-        libdecor_frame_set_maximized(window.State->Frame);
+        lib_decor.libdecor_frame_set_maximized(window.State->Frame);
 
     internal partial void MinimizeWindow(Window window) =>
-        libdecor_frame_set_minimized(window.State->Frame);
+        lib_decor.libdecor_frame_set_minimized(window.State->Frame);
 
     internal partial void RestoreWindow(Window window)
     {
         switch (window.State->Mode)
         {
             case WindowMode.Maximized:
-                libdecor_frame_unset_maximized(window.State->Frame);
+                lib_decor.libdecor_frame_unset_maximized(window.State->Frame);
                 break;
 
             case WindowMode.Fullscreen:
-                libdecor_frame_unset_fullscreen(window.State->Frame);
+                lib_decor.libdecor_frame_unset_fullscreen(window.State->Frame);
                 break;
         }
     }
@@ -2385,7 +2366,7 @@ public unsafe sealed partial class WindowManager
 
         if (seatState->DataSourceSelection != null)
         {
-            wl_data_source_destroy(seatState->DataSourceSelection);
+            lib_wayland_client.wl_data_source_destroy(seatState->DataSourceSelection);
 
             seatState->DataSourceSelection = null;
         }
@@ -2399,7 +2380,7 @@ public unsafe sealed partial class WindowManager
 
         seatState->ClipboardDataSourceLength = 0;
 
-        var source = wl_data_device_manager_create_data_source(seatState->RegistryState->DataDeviceManager);
+        var source = lib_wayland_client.wl_data_device_manager_create_data_source(seatState->RegistryState->DataDeviceManager);
 
         if (source == null)
         {
@@ -2408,12 +2389,12 @@ public unsafe sealed partial class WindowManager
 
         fixed (wl_data_source_listener* pListener = &dataSourceListener)
         {
-            wl_data_source_add_listener(source, pListener, seatState);
+            lib_wayland_client.wl_data_source_add_listener(source, pListener, seatState);
         }
 
         using var mimeType = new NativeString("text/plain;charset=utf-8");
 
-        wl_data_source_offer(source, mimeType);
+        lib_wayland_client.wl_data_source_offer(source, mimeType);
 
         var bytesCount = Encoding.UTF8.GetByteCount(value);
 
@@ -2427,9 +2408,9 @@ public unsafe sealed partial class WindowManager
         var pointerSerial  = seatState->PointerDataBuffer.ButtonSerial;
         var serial         = Math.Max(keyboardSerial, pointerSerial);
 
-        wl_data_device_set_selection(seatState->DataDevice, source, serial);
+        lib_wayland_client.wl_data_device_set_selection(seatState->DataDevice, source, serial);
 
-        _ = wl_display_roundtrip(this.registryState->Display);
+        _ = lib_wayland_client.wl_display_roundtrip(this.registryState->Display);
 
         seatState->DataSourceSelection = source;
     }
@@ -2438,7 +2419,7 @@ public unsafe sealed partial class WindowManager
     {
         using var title = value.ToUnmanaged();
 
-        libdecor_frame_set_title(window.State->Frame, title);
+        lib_decor.libdecor_frame_set_title(window.State->Frame, title);
     }
 
     internal partial void ShowWindow(Window window) =>
@@ -2471,13 +2452,13 @@ public unsafe sealed partial class WindowManager
 
         if (windowState->Surface != null && windowState->Viewport != null)
         {
-            wp_viewport_set_destination(windowState->Viewport, size.Width, size.Height);
+            viewporter.wp_viewport_set_destination(windowState->Viewport, size.Width, size.Height);
         }
 
-        var libdecorState = libdecor_state_new(size.Width, size.Height);
+        var libdecorState = lib_decor.libdecor_state_new(size.Width, size.Height);
 
-        libdecor_frame_commit(windowState->Frame, libdecorState, windowState->PendingLibdecorConfiguration);
-        libdecor_state_free(libdecorState);
+        lib_decor.libdecor_frame_commit(windowState->Frame, libdecorState, windowState->PendingLibdecorConfiguration);
+        lib_decor.libdecor_state_free(libdecorState);
 
         if (sizeHasChanged)
         {

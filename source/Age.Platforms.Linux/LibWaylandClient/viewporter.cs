@@ -2,7 +2,6 @@ using System.Runtime.InteropServices;
 using Age.Core.Extensions;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -60,44 +59,44 @@ internal static unsafe class viewporter
         );
 
         viewporter_types[4] = wp_viewport_interface;
-        viewporter_types[5] = wl_surface_interface;
+        viewporter_types[5] = lib_wayland_client.wl_surface_interface;
     }
 
     public static void wp_viewport_destroy(wp_viewport* wp_viewport) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)wp_viewport,
             WP_VIEWPORT_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)wp_viewport),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)wp_viewport),
             WL_MARSHAL_FLAG_DESTROY
         );
 
     public static void wp_viewport_set_destination(wp_viewport* wp_viewport, int32_t width, int32_t height) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)wp_viewport,
             WP_VIEWPORT_SET_DESTINATION,
             null,
-            wl_proxy_get_version((wl_proxy*)wp_viewport),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)wp_viewport),
             0,
             [width, height]
         );
 
     public static wp_viewport* wp_viewporter_get_viewport(wp_viewporter* wp_viewporter, wl_surface* surface) =>
-        (wp_viewport*)wl_proxy_marshal_flags(
+        (wp_viewport*)lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)wp_viewporter,
             WP_VIEWPORTER_GET_VIEWPORT,
             wp_viewport_interface,
-            wl_proxy_get_version((wl_proxy*)wp_viewporter),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)wp_viewporter),
             0,
             [default, surface]
         );
 
     public static void wp_viewporter_destroy(wp_viewporter* wp_viewporter) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)wp_viewporter,
             WP_VIEWPORTER_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)wp_viewporter),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)wp_viewporter),
             WL_MARSHAL_FLAG_DESTROY
         );
 }

@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using Age.Core.Extensions;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -153,20 +152,20 @@ internal static unsafe class xdg_shell
 
         xdg_shell_types[4]  = xdg_positioner_interface;
         xdg_shell_types[5]  = xdg_surface_interface;
-        xdg_shell_types[6]  = wl_surface_interface;
+        xdg_shell_types[6]  = lib_wayland_client.wl_surface_interface;
         xdg_shell_types[7]  = xdg_toplevel_interface;
         xdg_shell_types[8]  = xdg_popup_interface;
         xdg_shell_types[9]  = xdg_surface_interface;
         xdg_shell_types[10] = xdg_positioner_interface;
         xdg_shell_types[11] = xdg_toplevel_interface;
-        xdg_shell_types[12] = wl_seat_interface;
+        xdg_shell_types[12] = lib_wayland_client.wl_seat_interface;
 
-        xdg_shell_types[16] = wl_seat_interface;
+        xdg_shell_types[16] = lib_wayland_client.wl_seat_interface;
 
-        xdg_shell_types[18] = wl_seat_interface;
+        xdg_shell_types[18] = lib_wayland_client.wl_seat_interface;
 
-        xdg_shell_types[21] = wl_output_interface;
-        xdg_shell_types[22] = wl_seat_interface;
+        xdg_shell_types[21] = lib_wayland_client.wl_output_interface;
+        xdg_shell_types[22] = lib_wayland_client.wl_seat_interface;
 
         xdg_shell_types[24] = xdg_positioner_interface;
     }
@@ -174,24 +173,24 @@ internal static unsafe class xdg_shell
     #region wl_proxy - xdg_surface
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int xdg_surface_add_listener(xdg_surface* proxy, xdg_surface_listener* implementation, void* data) =>
-        wl_proxy_add_listener((wl_proxy*)proxy, (void**)implementation, data);
+        lib_wayland_client.wl_proxy_add_listener((wl_proxy*)proxy, (void**)implementation, data);
 
     public static xdg_surface* xdg_wm_base_get_xdg_surface(xdg_wm_base* xdg_wm_base, wl_surface* surface) =>
-        (xdg_surface*)wl_proxy_marshal_flags(
+        (xdg_surface*)lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)xdg_wm_base,
             XDG_WM_BASE_GET_XDG_SURFACE,
             xdg_surface_interface,
-            wl_proxy_get_version((wl_proxy*)xdg_wm_base),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)xdg_wm_base),
             0,
             [default, surface]
         );
 
     public static void xdg_surface_set_window_geometry(xdg_surface* xdg_surface, int32_t x, int32_t y, int32_t width, int32_t height) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)xdg_surface,
             XDG_SURFACE_SET_WINDOW_GEOMETRY,
             null,
-            wl_proxy_get_version((wl_proxy*)xdg_surface),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)xdg_surface),
             0,
             [x, y, width, height]
         );
@@ -201,32 +200,32 @@ internal static unsafe class xdg_shell
     #region wl_proxy - xdg_toplevel
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int xdg_toplevel_add_listener(xdg_toplevel* xdg_toplevel, xdg_toplevel_listener* listener, void* data) =>
-        wl_proxy_add_listener((wl_proxy*)xdg_toplevel, (void**)listener, data);
+        lib_wayland_client.wl_proxy_add_listener((wl_proxy*)xdg_toplevel, (void**)listener, data);
 
     #endregion
 
     #region wl_proxy - xdg_wm_base
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int xdg_wm_base_add_listener(xdg_wm_base* xdg_wm_base, xdg_wm_base_listener* listener, void* data) =>
-        wl_proxy_add_listener((wl_proxy*)xdg_wm_base, (void**)listener, data);
+        lib_wayland_client.wl_proxy_add_listener((wl_proxy*)xdg_wm_base, (void**)listener, data);
 
     public static void xdg_wm_base_pong(xdg_wm_base* xdg_wm_base, uint32_t serial) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)xdg_wm_base,
             XDG_WM_BASE_PONG,
             null,
-            wl_proxy_get_version((wl_proxy*)xdg_wm_base),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)xdg_wm_base),
             0,
             [serial]
         );
 
     public static void xdg_wm_base_destroy(xdg_wm_base* xdg_wm_base) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)xdg_wm_base,
             XDG_WM_BASE_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)xdg_wm_base),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)xdg_wm_base),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
     #endregion
 }

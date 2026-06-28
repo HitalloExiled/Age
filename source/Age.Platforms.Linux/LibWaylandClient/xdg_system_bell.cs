@@ -2,7 +2,6 @@ using System.Runtime.InteropServices;
 using Age.Core.Extensions;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -38,15 +37,15 @@ internal static unsafe class xdg_system_bell
             )
         );
 
-        xdg_system_bell_v1_types[0] = wl_surface_interface;
+        xdg_system_bell_v1_types[0] = lib_wayland_client.wl_surface_interface;
     }
 
     public static void xdg_system_bell_v1_destroy(xdg_system_bell_v1* xdg_system_bell_v1) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)xdg_system_bell_v1,
             XDG_SYSTEM_BELL_V1_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)xdg_system_bell_v1),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)xdg_system_bell_v1),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 }

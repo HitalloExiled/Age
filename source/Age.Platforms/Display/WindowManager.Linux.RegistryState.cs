@@ -28,7 +28,7 @@ public unsafe sealed partial class WindowManager
         public SeatState*                                     CurrentSeatState;
         public Named<wp_cursor_shape_manager_v1>              CursorShapeManager;
         public wl_cursor_theme*                               CursorTheme;
-        public byte*                                          CursorThemeName;
+        public NativeString                                   CursorThemeName;
         public Named<wl_data_device_manager>                  DataDeviceManager;
         public Named<zxdg_decoration_manager_v1>              DecorationManager;
         public wl_display*                                    Display;
@@ -81,7 +81,7 @@ public unsafe sealed partial class WindowManager
 
         public void Dispose()
         {
-            NativeMemory.Free(this.CursorThemeName);
+            this.CursorThemeName.Dispose();
 
             lib_wayland_cursor.wl_cursor_theme_destroy(this.CursorTheme);
 

@@ -2,7 +2,6 @@ using Age.Core.Extensions;
 using System.Runtime.InteropServices;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -92,43 +91,43 @@ internal static unsafe class pointer_constraints
         );
 
         pointer_constraints_unstable_v1_types[2] = zwp_locked_pointer_v1_interface;
-        pointer_constraints_unstable_v1_types[3] = wl_surface_interface;
-        pointer_constraints_unstable_v1_types[4] = wl_pointer_interface;
-        pointer_constraints_unstable_v1_types[5] = wl_region_interface;
+        pointer_constraints_unstable_v1_types[3] = lib_wayland_client.wl_surface_interface;
+        pointer_constraints_unstable_v1_types[4] = lib_wayland_client.wl_pointer_interface;
+        pointer_constraints_unstable_v1_types[5] = lib_wayland_client.wl_region_interface;
 
         pointer_constraints_unstable_v1_types[7] = zwp_confined_pointer_v1_interface;
-        pointer_constraints_unstable_v1_types[8] = wl_surface_interface;
-        pointer_constraints_unstable_v1_types[9] = wl_pointer_interface;
-        pointer_constraints_unstable_v1_types[10] = wl_region_interface;
+        pointer_constraints_unstable_v1_types[8] = lib_wayland_client.wl_surface_interface;
+        pointer_constraints_unstable_v1_types[9] = lib_wayland_client.wl_pointer_interface;
+        pointer_constraints_unstable_v1_types[10] = lib_wayland_client.wl_region_interface;
 
-        pointer_constraints_unstable_v1_types[12] = wl_region_interface;
-        pointer_constraints_unstable_v1_types[13] = wl_region_interface;
+        pointer_constraints_unstable_v1_types[12] = lib_wayland_client.wl_region_interface;
+        pointer_constraints_unstable_v1_types[13] = lib_wayland_client.wl_region_interface;
     }
 
     public static void zwp_pointer_constraints_v1_destroy(zwp_pointer_constraints_v1* zwp_pointer_constraints_v1) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)zwp_pointer_constraints_v1,
             ZWP_POINTER_CONSTRAINTS_V1_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)zwp_pointer_constraints_v1),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)zwp_pointer_constraints_v1),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 
     public static void zwp_confined_pointer_v1_destroy(zwp_confined_pointer_v1* zwp_confined_pointer_v1) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)zwp_confined_pointer_v1,
             ZWP_CONFINED_POINTER_V1_DESTROY,
             default,
-            wl_proxy_get_version((wl_proxy*)zwp_confined_pointer_v1),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)zwp_confined_pointer_v1),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 
     public static void zwp_locked_pointer_v1_destroy(zwp_locked_pointer_v1* zwp_locked_pointer_v1) =>
-    wl_proxy_marshal_flags(
-        (wl_proxy*)zwp_locked_pointer_v1,
-        ZWP_LOCKED_POINTER_V1_DESTROY,
-        default,
-        wl_proxy_get_version((wl_proxy*)zwp_locked_pointer_v1),
-        WL_MARSHAL_FLAG_DESTROY
-    );
+        lib_wayland_client.wl_proxy_marshal_flags(
+            (wl_proxy*)zwp_locked_pointer_v1,
+            ZWP_LOCKED_POINTER_V1_DESTROY,
+            default,
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)zwp_locked_pointer_v1),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
+        );
 }

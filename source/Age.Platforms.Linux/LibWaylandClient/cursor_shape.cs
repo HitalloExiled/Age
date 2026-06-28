@@ -2,8 +2,6 @@ using System.Runtime.InteropServices;
 using Age.Core.Extensions;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.tablet;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -62,45 +60,45 @@ internal static unsafe class cursor_shape
         );
 
         cursor_shape_v1_types[2] = wp_cursor_shape_device_v1_interface;
-        cursor_shape_v1_types[3] = wl_pointer_interface;
+        cursor_shape_v1_types[3] = lib_wayland_client.wl_pointer_interface;
         cursor_shape_v1_types[4] = wp_cursor_shape_device_v1_interface;
-        cursor_shape_v1_types[5] = zwp_tablet_tool_v2_interface;
+        cursor_shape_v1_types[5] = tablet.zwp_tablet_tool_v2_interface;
     }
 
     public static void wp_cursor_shape_device_v1_destroy(wp_cursor_shape_device_v1* wp_cursor_shape_device_v1) =>
-    wl_proxy_marshal_flags(
-        (wl_proxy*)wp_cursor_shape_device_v1,
-        WP_CURSOR_SHAPE_DEVICE_V1_DESTROY,
-        default,
-        wl_proxy_get_version((wl_proxy*)wp_cursor_shape_device_v1),
-        WL_MARSHAL_FLAG_DESTROY
-    );
+        lib_wayland_client.wl_proxy_marshal_flags(
+            (wl_proxy*)wp_cursor_shape_device_v1,
+            WP_CURSOR_SHAPE_DEVICE_V1_DESTROY,
+            default,
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)wp_cursor_shape_device_v1),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
+        );
 
     public static void wp_cursor_shape_manager_v1_destroy(wp_cursor_shape_manager_v1* wp_cursor_shape_manager_v1) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)wp_cursor_shape_manager_v1,
             WP_CURSOR_SHAPE_MANAGER_V1_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)wp_cursor_shape_manager_v1),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)wp_cursor_shape_manager_v1),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 
     public static wp_cursor_shape_device_v1* wp_cursor_shape_manager_v1_get_pointer(wp_cursor_shape_manager_v1* wp_cursor_shape_manager_v1, wl_pointer* pointer) =>
-        (wp_cursor_shape_device_v1*)wl_proxy_marshal_flags(
+        (wp_cursor_shape_device_v1*)lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)wp_cursor_shape_manager_v1,
             WP_CURSOR_SHAPE_MANAGER_V1_GET_POINTER,
             wp_cursor_shape_device_v1_interface,
-            wl_proxy_get_version((wl_proxy*)wp_cursor_shape_manager_v1),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)wp_cursor_shape_manager_v1),
             0,
             [default, pointer]
         );
 
     public static void wp_cursor_shape_device_v1_set_shape(wp_cursor_shape_device_v1* wp_cursor_shape_device_v1, uint32_t serial, uint32_t shape) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)wp_cursor_shape_device_v1,
             WP_CURSOR_SHAPE_DEVICE_V1_SET_SHAPE,
             null,
-            wl_proxy_get_version((wl_proxy*)wp_cursor_shape_device_v1),
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)wp_cursor_shape_device_v1),
             0,
             [serial, shape]
         );

@@ -2,8 +2,6 @@ using System.Runtime.InteropServices;
 using Age.Core.Extensions;
 
 using static Age.Platforms.Linux.LibWaylandClient.Helper;
-using static Age.Platforms.Linux.LibWaylandClient.lib_wayland_client;
-using static Age.Platforms.Linux.LibWaylandClient.xdg_shell;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
 
@@ -61,15 +59,15 @@ internal static unsafe class xdg_decoration
         );
 
         xdg_decoration_unstable_v1_types[1] = zxdg_toplevel_decoration_v1_interface;
-        xdg_decoration_unstable_v1_types[2] = xdg_toplevel_interface;
+        xdg_decoration_unstable_v1_types[2] = xdg_shell.xdg_toplevel_interface;
     }
 
     public static void zxdg_decoration_manager_v1_destroy(zxdg_decoration_manager_v1* zxdg_decoration_manager_v1) =>
-        wl_proxy_marshal_flags(
+        lib_wayland_client.wl_proxy_marshal_flags(
             (wl_proxy*)zxdg_decoration_manager_v1,
             ZXDG_DECORATION_MANAGER_V1_DESTROY,
             null,
-            wl_proxy_get_version((wl_proxy*)zxdg_decoration_manager_v1),
-            WL_MARSHAL_FLAG_DESTROY
+            lib_wayland_client.wl_proxy_get_version((wl_proxy*)zxdg_decoration_manager_v1),
+            lib_wayland_client.WL_MARSHAL_FLAG_DESTROY
         );
 }

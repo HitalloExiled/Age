@@ -1,6 +1,6 @@
+using Age.Core.Extensions;
 using System.Runtime.InteropServices;
 using System.Text;
-using Age.Core.Extensions;
 
 namespace Age.Core;
 
@@ -8,8 +8,13 @@ public readonly unsafe struct NativeString(string? value) : IDisposable, IEquata
 {
     private readonly byte* buffer = MemoryMarshal.CreateUTF8StringBuffer(value);
 
-    public readonly void Dispose() =>
-        NativeMemory.Free(this.buffer);
+    public readonly void Dispose()
+    {
+        if (this.buffer != null)
+        {
+            NativeMemory.Free(this.buffer);
+        }
+    }
 
     public bool Equals(NativeString other) =>
         this.buffer == other.buffer;
@@ -21,7 +26,7 @@ public readonly unsafe struct NativeString(string? value) : IDisposable, IEquata
         ((nint)this.buffer).GetHashCode();
 
     public override readonly string? ToString() =>
-        Encoding.GetStringFromNullTerminated(this.buffer);
+        this.buffer == null ? null : Encoding.GetStringFromNullTerminated(this.buffer);
 
     public static implicit operator byte*(NativeString unmanageString) => unmanageString.buffer;
 
