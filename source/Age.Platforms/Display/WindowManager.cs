@@ -29,7 +29,6 @@ public unsafe sealed partial class WindowManager : Disposable
     internal partial void MaximizeWindow(Window window);
     internal partial void MinimizeWindow(Window window);
     internal partial void RestoreWindow(Window window);
-    internal partial void SetCursorCustomImage(Cursor cursor, CursorImage image, Point<int> hotpot);
     internal partial void SetWindowClipboardData(Window window, string value);
     internal partial void SetWindowTitle(Window window, string value);
     internal partial void ShowWindow(Window window);

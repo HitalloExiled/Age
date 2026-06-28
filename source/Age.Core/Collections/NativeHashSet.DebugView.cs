@@ -7,6 +7,6 @@ public partial struct NativeHashSet<T>
     internal struct DebugView(NativeHashSet<T> set)
     {
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public readonly T[] Items => set.ToNativeArray().ToArray();
+        public readonly T[] Items => set.IsCreated ? set.ToArray() : [];
     }
 }

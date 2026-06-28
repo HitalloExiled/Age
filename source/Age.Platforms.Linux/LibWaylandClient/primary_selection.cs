@@ -17,7 +17,16 @@ internal struct zwp_text_input_v3;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline")]
 internal unsafe static class primary_selection
 {
+    private const uint ZWP_PRIMARY_SELECTION_DEVICE_MANAGER_V1_CREATE_SOURCE = 0;
+    private const uint ZWP_PRIMARY_SELECTION_DEVICE_MANAGER_V1_DESTROY = 2;
     private const uint ZWP_PRIMARY_SELECTION_DEVICE_MANAGER_V1_GET_DEVICE = 1;
+
+    private const uint ZWP_PRIMARY_SELECTION_DEVICE_V1_DESTROY = 1;
+    private const uint ZWP_PRIMARY_SELECTION_DEVICE_V1_SET_SELECTION = 0;
+    private const uint ZWP_PRIMARY_SELECTION_OFFER_V1_DESTROY = 1;
+    private const uint ZWP_PRIMARY_SELECTION_OFFER_V1_RECEIVE = 0;
+    private const uint ZWP_PRIMARY_SELECTION_SOURCE_V1_DESTROY = 1;
+    private const uint ZWP_PRIMARY_SELECTION_SOURCE_V1_OFFER = 0;
 
     private static readonly wl_interface** wp_primary_selection_unstable_v1_types;
 
@@ -135,7 +144,7 @@ internal unsafe static class primary_selection
     public static zwp_primary_selection_source_v1* zwp_primary_selection_device_manager_v1_create_source(zwp_primary_selection_device_manager_v1* manager) =>
         (zwp_primary_selection_source_v1*)wl_proxy_marshal_flags(
             (wl_proxy*)manager,
-            0, /* create_source */
+            ZWP_PRIMARY_SELECTION_DEVICE_MANAGER_V1_CREATE_SOURCE,
             zwp_primary_selection_source_v1_interface,
             wl_proxy_get_version((wl_proxy*)manager),
             0
@@ -145,7 +154,7 @@ internal unsafe static class primary_selection
     public static void zwp_primary_selection_device_manager_v1_destroy(zwp_primary_selection_device_manager_v1* manager) =>
         wl_proxy_marshal_flags(
             (wl_proxy*)manager,
-            2, /* destroy */
+            ZWP_PRIMARY_SELECTION_DEVICE_MANAGER_V1_DESTROY,
             null,
             wl_proxy_get_version((wl_proxy*)manager),
             WL_MARSHAL_FLAG_DESTROY
@@ -155,7 +164,7 @@ internal unsafe static class primary_selection
     public static void zwp_primary_selection_device_v1_set_selection(zwp_primary_selection_device_v1* device, zwp_primary_selection_source_v1* source, uint32_t serial) =>
         wl_proxy_marshal_flags(
             (wl_proxy*)device,
-            0, /* set_selection */
+            ZWP_PRIMARY_SELECTION_DEVICE_V1_SET_SELECTION,
             null,
             wl_proxy_get_version((wl_proxy*)device),
             0,
@@ -166,7 +175,7 @@ internal unsafe static class primary_selection
     public static void zwp_primary_selection_device_v1_destroy(zwp_primary_selection_device_v1* device) =>
         wl_proxy_marshal_flags(
             (wl_proxy*)device,
-            1, /* destroy */
+            ZWP_PRIMARY_SELECTION_DEVICE_V1_DESTROY,
             null,
             wl_proxy_get_version((wl_proxy*)device),
             WL_MARSHAL_FLAG_DESTROY
@@ -180,7 +189,7 @@ internal unsafe static class primary_selection
     public static void zwp_primary_selection_offer_v1_receive(zwp_primary_selection_offer_v1* offer, byte* mimeType, int fd) =>
         wl_proxy_marshal_flags(
             (wl_proxy*)offer,
-            0, /* receive */
+            ZWP_PRIMARY_SELECTION_OFFER_V1_RECEIVE,
             null,
             wl_proxy_get_version((wl_proxy*)offer),
             0,
@@ -188,10 +197,14 @@ internal unsafe static class primary_selection
         );
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void* zwp_primary_selection_offer_v1_get_user_data(zwp_primary_selection_offer_v1* zwp_primary_selection_offer_v1) =>
+        wl_proxy_get_user_data((wl_proxy*)zwp_primary_selection_offer_v1);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void zwp_primary_selection_offer_v1_destroy(zwp_primary_selection_offer_v1* offer) =>
         wl_proxy_marshal_flags(
             (wl_proxy*)offer,
-            1, /* destroy */
+            ZWP_PRIMARY_SELECTION_OFFER_V1_DESTROY,
             null,
             wl_proxy_get_version((wl_proxy*)offer),
             WL_MARSHAL_FLAG_DESTROY
@@ -205,7 +218,7 @@ internal unsafe static class primary_selection
     public static void zwp_primary_selection_source_v1_offer(zwp_primary_selection_source_v1* source, byte* mimeType) =>
         wl_proxy_marshal_flags(
             (wl_proxy*)source,
-            0, /* offer */
+            ZWP_PRIMARY_SELECTION_SOURCE_V1_OFFER,
             null,
             wl_proxy_get_version((wl_proxy*)source),
             0,
@@ -216,7 +229,7 @@ internal unsafe static class primary_selection
     public static void zwp_primary_selection_source_v1_destroy(zwp_primary_selection_source_v1* source) =>
         wl_proxy_marshal_flags(
             (wl_proxy*)source,
-            1, /* destroy */
+            ZWP_PRIMARY_SELECTION_SOURCE_V1_DESTROY,
             null,
             wl_proxy_get_version((wl_proxy*)source),
             WL_MARSHAL_FLAG_DESTROY

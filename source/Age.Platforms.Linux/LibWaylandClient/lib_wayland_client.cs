@@ -246,6 +246,9 @@ internal unsafe static partial class lib_wayland_client
             0,
             [source, serial]
         );
+
+    public static void wl_data_device_manager_destroy(wl_data_device_manager* wl_data_device_manager) =>
+        wl_proxy_destroy((wl_proxy*)wl_data_device_manager);
     #endregion
 
     #region wl_proxy - wl_data_device_manager

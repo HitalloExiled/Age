@@ -32,8 +32,8 @@ where T : unmanaged, IEquatable<T>
     public readonly bool Contains(T item) =>
         UnsafeHashSet.Contains(this.inner, item);
 
-    public readonly void CopyTo(Span<T> destination, int destinationIndex) =>
-        UnsafeHashSet.CopyTo<T>(this.inner, Unsafe.AsPointer(ref destination[destinationIndex]), 0);
+    public readonly void CopyTo(Span<T> destination) =>
+        UnsafeHashSet.CopyTo(this.inner, destination);
 
     public void Dispose()
     {
@@ -48,6 +48,16 @@ where T : unmanaged, IEquatable<T>
     public readonly bool Remove(T item) =>
         UnsafeHashSet.Remove(this.inner, item);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly T[] ToArray()
+    {
+        var array = new T[this.Count];
+
+        this.CopyTo(array);
+
+        return array;
+    }
+
     public readonly NativeArray<T> ToNativeArray()
     {
         if (this.Count == 0)
@@ -57,7 +67,7 @@ where T : unmanaged, IEquatable<T>
 
         var arr = new NativeArray<T>(this.Count);
 
-        UnsafeHashSet.CopyTo<T>(this.inner, arr.Buffer, 0);
+        UnsafeHashSet.CopyTo<T>(this.inner, arr);
 
         return arr;
     }

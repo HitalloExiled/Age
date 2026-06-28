@@ -29,7 +29,7 @@ public unsafe class GlobalSession : SlangUnknown
 
     public SlangProfileID FindProfile(string name)
     {
-        using var pName = new UnmanagedString(name);
+        using var pName = new NativeString(name);
 
         return this.Handle->Vtbl->FindProfile(this.Handle, pName);
     }

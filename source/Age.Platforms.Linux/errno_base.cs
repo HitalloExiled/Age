@@ -1,6 +1,6 @@
 namespace Age.Platforms.Linux;
 
-public static class AsmGenericErrno
+public static class errno_base
 {
     public const uint EPERM   = 1;	/* Operation not permitted */
     public const uint ENOENT  = 2;	/* No such file or directory */

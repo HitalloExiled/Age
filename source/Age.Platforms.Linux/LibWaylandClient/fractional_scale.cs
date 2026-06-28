@@ -15,6 +15,8 @@ internal static unsafe class fractional_scale
     private const uint WP_FRACTIONAL_SCALE_MANAGER_V1_DESTROY              = 0;
     private const uint WP_FRACTIONAL_SCALE_MANAGER_V1_GET_FRACTIONAL_SCALE = 1;
 
+    private const uint WP_FRACTIONAL_SCALE_V1_DESTROY = 0;
+
     private static readonly wl_interface** fractional_scale_v1_types;
 
     private readonly static wl_message* wp_fractional_scale_manager_v1_requests;
@@ -65,6 +67,15 @@ internal static unsafe class fractional_scale
 
     public static int wp_fractional_scale_v1_add_listener(wp_fractional_scale_v1* wp_fractional_scale_v1, wp_fractional_scale_v1_listener* listener, void* data) =>
         wl_proxy_add_listener((wl_proxy*)wp_fractional_scale_v1, (void**)listener, data);
+
+    public static void wp_fractional_scale_v1_destroy(wp_fractional_scale_v1* wp_fractional_scale_v1) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wp_fractional_scale_v1,
+            WP_FRACTIONAL_SCALE_V1_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)wp_fractional_scale_v1),
+            WL_MARSHAL_FLAG_DESTROY
+        );
 
     public static void wp_fractional_scale_manager_v1_destroy(wp_fractional_scale_manager_v1* wp_fractional_scale_manager_v1) =>
         wl_proxy_marshal_flags(

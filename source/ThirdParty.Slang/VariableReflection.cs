@@ -47,7 +47,7 @@ public unsafe class VariableReflection : Managed<VariableReflection>
 
     public Attribute? FindUserAttributeByName(string name)
     {
-        using var pName = new UnmanagedString(name);
+        using var pName = new NativeString(name);
 
         var handle = PInvoke.spReflectionVariable_FindUserAttributeByName(this.Handle, this.Session.GlobalSession.Handle, pName);
 

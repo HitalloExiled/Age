@@ -75,7 +75,7 @@ public unsafe class TypeReflection : Managed<TypeReflection>
 
     public Attribute FindUserAttributeByName(string name)
     {
-        var pName = new UnmanagedString(name);
+        var pName = new NativeString(name);
 
         return new(this.Session, PInvoke.spReflectionType_FindUserAttributeByName(this.Handle, pName));
     }

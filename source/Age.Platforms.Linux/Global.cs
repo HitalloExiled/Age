@@ -1,5 +1,6 @@
 global using __off_t            = long;
 global using int32_t            = int;
+global using mode_t             = uint;
 global using nfds_t             = ulong;
 global using size_t             = ulong;
 global using uint32_t           = uint;

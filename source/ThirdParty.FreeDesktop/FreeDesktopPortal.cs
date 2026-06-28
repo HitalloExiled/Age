@@ -114,12 +114,12 @@ public sealed unsafe class FreeDesktopPortal : Disposable
     {
         base.ThrowIfDisposed();
 
-        using var busName = new UnmanagedString(BUS_NAME);
-        using var objPath = new UnmanagedString(BUS_PATH);
-        using var iface   = new UnmanagedString(SETTINGS_IFACE);
-        using var method  = new UnmanagedString("Read");
-        using var ns      = new UnmanagedString(@namespace);
-        using var k       = new UnmanagedString(key);
+        using var busName = new NativeString(BUS_NAME);
+        using var objPath = new NativeString(BUS_PATH);
+        using var iface   = new NativeString(SETTINGS_IFACE);
+        using var method  = new NativeString("Read");
+        using var ns      = new NativeString(@namespace);
+        using var k       = new NativeString(key);
 
         var message = lib_dbus.dbus_message_new_method_call(busName, objPath, iface, method);
 
@@ -238,7 +238,7 @@ public sealed unsafe class FreeDesktopPortal : Disposable
 
     private void AddMatchRule()
     {
-        using var rule = new UnmanagedString(MATCH_RULE);
+        using var rule = new NativeString(MATCH_RULE);
 
         DBusError error;
         lib_dbus.dbus_error_init(&error);
@@ -252,8 +252,8 @@ public sealed unsafe class FreeDesktopPortal : Disposable
 
     private void MonitorLoop()
     {
-        using var signalIface  = new UnmanagedString(SETTINGS_IFACE);
-        using var signalMember = new UnmanagedString("SettingChanged");
+        using var signalIface  = new NativeString(SETTINGS_IFACE);
+        using var signalMember = new NativeString("SettingChanged");
 
         while (!this.stopRequested.WaitOne(0))
         {
@@ -396,7 +396,7 @@ public sealed unsafe class FreeDesktopPortal : Disposable
 
     private void RemoveMatchRule()
     {
-        using var rule = new UnmanagedString(MATCH_RULE);
+        using var rule = new NativeString(MATCH_RULE);
         DBusError error;
         lib_dbus.dbus_error_init(&error);
         lib_dbus.dbus_bus_remove_match(this.connection, rule, &error);

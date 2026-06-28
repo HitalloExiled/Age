@@ -44,5 +44,11 @@ internal unsafe static partial class lib_c
     public static partial nint read(int __fd, void* __buf, nuint __nbytes);
 
     [LibraryImport(LIBRARY)]
+    public static partial int shm_open (byte* __name, int __oflag, mode_t __mode);
+
+    [LibraryImport(LIBRARY)]
+    public static partial int shm_unlink (byte* __name);
+
+    [LibraryImport(LIBRARY)]
     public static partial nint write(int __fd, void* __buf, nuint __n);
 }

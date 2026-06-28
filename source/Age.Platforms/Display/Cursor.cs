@@ -1,6 +1,6 @@
 namespace Age.Platforms.Display;
 
-public enum Cursor : byte
+public enum Cursor
 {
     Arrow,
 	Busy,

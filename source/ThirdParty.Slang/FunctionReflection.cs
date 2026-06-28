@@ -30,7 +30,7 @@ public unsafe class FunctionReflection : Managed<FunctionReflection>
 
     public Attribute? FindAttributeByName(string name)
     {
-        var uName = new UnmanagedString(name);
+        var uName = new NativeString(name);
 
         var handle = PInvoke.spReflectionFunction_FindUserAttributeByName(this.Handle, this.Session.GlobalSession.Handle, uName);
 

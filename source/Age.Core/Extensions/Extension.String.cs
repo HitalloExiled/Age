@@ -17,7 +17,7 @@ public static partial class Extension
 
     extension(string value)
     {
-        public UnmanagedString ToUnmanaged() =>
+        public NativeString ToUnmanaged() =>
             new(value);
     }
 

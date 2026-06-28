@@ -104,20 +104,17 @@ public unsafe partial struct UnsafeHashSet
         return UnsafeHashCollection.Find(&set->collection, key, key.GetHashCode()) != null;
     }
 
-    public static void CopyTo<T>(UnsafeHashSet* set, void* destination, int destinationIndex)
+    public static void CopyTo<T>(UnsafeHashSet* set, Span<T> destination)
     where T : unmanaged
     {
-        ArgumentNullException.ThrowIfNull(destination);
-        ArgumentOutOfRangeException.ThrowIfNegative(destinationIndex);
-
         AssertSafeGuards<T>(set);
 
         var enumerator = GetEnumerator<T>(set);
-        var dest       = (T*)destination;
+        var dest       = destination;
 
         for (var i = 0; enumerator.MoveNext(); i++)
         {
-            dest[destinationIndex + i] = enumerator.Current;
+            dest[i] = enumerator.Current;
         }
     }
 
