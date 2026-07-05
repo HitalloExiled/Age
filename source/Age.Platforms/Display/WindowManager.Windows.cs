@@ -475,6 +475,8 @@ public unsafe sealed partial class WindowManager
 
     internal partial NativeArray<WindowMessage> FlushWindowEvents(Window window)
     {
+        window.State->ClearMessages();
+
         while (User32.PeekMessageW(out var msg, window.Handle, 0, 0, User32.PEEK_MESSAGE.PM_REMOVE))
         {
             User32.TranslateMessage(msg);
