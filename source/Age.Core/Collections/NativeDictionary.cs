@@ -47,6 +47,10 @@ where V : unmanaged
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal readonly UnsafeDictionary* GetUnsafeDictionary() =>
+        this.inner;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly void Add(K key, V value) =>
         UnsafeDictionary.Add(this.inner, key, value);
 

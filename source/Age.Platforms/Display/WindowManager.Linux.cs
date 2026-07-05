@@ -160,8 +160,8 @@ public unsafe sealed partial class WindowManager
     [FixedAddressValueType]
     private static readonly zwp_primary_selection_device_v1_listener primarySelectionDeviceListener = new()
     {
-        data_offer = &OnPrimarySelectionDevicedataOffer,
-        selection  = &OnPrimarySelectionDeviceselection,
+        data_offer = &OnPrimarySelectionDeviceDataOffer,
+        selection  = &OnPrimarySelectionDeviceSelection,
     };
 
     [FixedAddressValueType]
@@ -404,6 +404,9 @@ public unsafe sealed partial class WindowManager
         return -1;
     }
 
+    private static OfferState* GetOfferState(wl_data_offer* offer) =>
+        offer != null && ProxyIsAge((wl_proxy*)offer) ? (OfferState*)lib_wayland_client.wl_data_offer_get_user_data(offer) : null;
+
     private static OfferState* GetOfferState(zwp_primary_selection_offer_v1* offer) =>
         offer != null && ProxyIsAge((wl_proxy*)offer) ? (OfferState*)primary_selection.zwp_primary_selection_offer_v1_get_user_data(offer) : null;
 
@@ -598,6 +601,17 @@ public unsafe sealed partial class WindowManager
     }
 
     [UnmanagedCallersOnly]
+    private static void OnDataDeviceDataOffer(void* data, wl_data_device* dataDevice, wl_data_offer* id)
+    {
+        SetProxyTag((wl_proxy*)id);
+
+        fixed (wl_data_offer_listener* pOfferListener = &dataOfferListener)
+        {
+            lib_wayland_client.wl_data_offer_add_listener(id, pOfferListener, OfferState.Allocate());
+        }
+    }
+
+    [UnmanagedCallersOnly]
     private static void OnDataDeviceDrop(void* data, wl_data_device* dataDevice) =>
         Logger.Debug(nameof(OnDataDeviceDrop));
 
@@ -614,36 +628,16 @@ public unsafe sealed partial class WindowManager
         Logger.Debug(nameof(OnDataDeviceMotion));
 
     [UnmanagedCallersOnly]
-    private static void OnDataDeviceDataOffer(void* data, wl_data_device* dataDevice, wl_data_offer* id)
-    {
-        var seatState = (SeatState*)data;
-
-        if (seatState == null)
-        {
-            return;
-        }
-
-        fixed (wl_data_offer_listener* pOfferListener = &dataOfferListener)
-        {
-            lib_wayland_client.wl_data_offer_add_listener(id, pOfferListener, seatState);
-        }
-    }
-
-    [UnmanagedCallersOnly]
     private static void OnDataDeviceSelection(void* data, wl_data_device* dataDevice, wl_data_offer* id)
     {
         var seatState = (SeatState*)data;
 
-        if (seatState == null)
-        {
-            return;
-        }
+        Debug.Assert(seatState != null);
 
-        if (seatState->DataOfferSelection != null && seatState->DataOfferSelection != id)
+        if (seatState->DataOfferSelection != null)
         {
+            OfferState.Free(GetOfferState(seatState->DataOfferSelection));
             lib_wayland_client.wl_data_offer_destroy(seatState->DataOfferSelection);
-
-            seatState->DataOfferSelection = null;
         }
 
         seatState->DataOfferSelection = id;
@@ -1680,31 +1674,30 @@ public unsafe sealed partial class WindowManager
     }
 
     [UnmanagedCallersOnly]
-    private static void OnPrimarySelectionDevicedataOffer(void* data, zwp_primary_selection_device_v1* zwp_primary_selection_device_v1, zwp_primary_selection_offer_v1* id)
+    private static void OnPrimarySelectionDeviceDataOffer(void* data, zwp_primary_selection_device_v1* zwp_primary_selection_device_v1, zwp_primary_selection_offer_v1* offer)
     {
-        var seatState = (SeatState*)data;
-
-        Debug.Assert(seatState != null);
+        SetProxyTag((wl_proxy*)offer);
 
         fixed (zwp_primary_selection_offer_v1_listener* pOfferListener = &primarySelectionOfferListener)
         {
-            primary_selection.zwp_primary_selection_offer_v1_add_listener(id, pOfferListener, seatState);
+            primary_selection.zwp_primary_selection_offer_v1_add_listener(offer, pOfferListener, OfferState.Allocate());
         }
     }
 
     [UnmanagedCallersOnly]
-    private static void OnPrimarySelectionDeviceselection(void* data, zwp_primary_selection_device_v1* zwp_primary_selection_device_v1, zwp_primary_selection_offer_v1* offer)
+    private static void OnPrimarySelectionDeviceSelection(void* data, zwp_primary_selection_device_v1* zwp_primary_selection_device_v1, zwp_primary_selection_offer_v1* id)
     {
         var seatState = (SeatState*)data;
 
         Debug.Assert(seatState != null);
 
-        if (seatState->PrimarySelectionOffer != null && seatState->PrimarySelectionOffer != offer)
+        if (seatState->PrimarySelectionOffer != null)
         {
+            OfferState.Free(GetOfferState(seatState->PrimarySelectionOffer));
             primary_selection.zwp_primary_selection_offer_v1_destroy(seatState->PrimarySelectionOffer);
         }
 
-        seatState->PrimarySelectionOffer = offer;
+        seatState->PrimarySelectionOffer = id;
     }
 
     [UnmanagedCallersOnly]
@@ -2102,7 +2095,7 @@ public unsafe sealed partial class WindowManager
                     wl_interface* @interface;
                     uint id;
 
-                    var error_code = lib_wayland_client.wl_display_get_protocol_error(display, &@interface, &id);
+                    var errorCode = lib_wayland_client.wl_display_get_protocol_error(display, &@interface, &id);
 
                     var insterfaceName = Encoding.GetStringFromNullTerminated(@interface->name) ?? "unknown";
 

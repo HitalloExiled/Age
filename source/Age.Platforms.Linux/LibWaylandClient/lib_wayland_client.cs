@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Age.Platforms.Linux.LibWaylandClient;
@@ -35,9 +36,11 @@ internal unsafe static partial class lib_wayland_client
     private const int WL_DATA_SOURCE_OFFER    = 0;
     private const int WL_DATA_SOURCE_DESTROY  = 1;
 
-    private const int WL_DATA_OFFER_RECEIVE = 0;
-    private const int WL_DATA_OFFER_DESTROY = 1;
-    private const int WL_DISPLAY_GET_REGISTRY                = 1;
+    private const int WL_DATA_OFFER_ACCEPT  = 0;
+    private const int WL_DATA_OFFER_RECEIVE = 1;
+    private const int WL_DATA_OFFER_DESTROY = 2;
+
+    private const int WL_DISPLAY_GET_REGISTRY = 1;
 
     private const int WL_POINTER_SET_CURSOR = 0;
     private const int WL_POINTER_RELEASE    = 1;
@@ -110,9 +113,11 @@ internal unsafe static partial class lib_wayland_client
     public static partial wl_display* wl_display_connect(byte* name);
 
     #region wl_callback
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void wl_callback_destroy(wl_callback* wl_callback) =>
         wl_proxy_destroy((wl_proxy*)wl_callback);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void wl_callback_set_user_data(wl_callback* wl_callback, void* user_data) =>
 	    wl_proxy_set_user_data((wl_proxy*) wl_callback, user_data);
     #endregion
@@ -165,6 +170,9 @@ internal unsafe static partial class lib_wayland_client
 
     [LibraryImport(LIBRARY)]
     public static partial void wl_proxy_destroy(wl_proxy* proxy);
+
+    [LibraryImport(LIBRARY)]
+    public static partial uint32_t wl_proxy_get_id(wl_proxy* proxy);
 
     [LibraryImport(LIBRARY)]
     public static partial byte** wl_proxy_get_tag(wl_proxy* proxy);
@@ -273,7 +281,38 @@ internal unsafe static partial class lib_wayland_client
         );
     #endregion
 
+    #region wl_proxy - wl_data_offer
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int wl_data_offer_add_listener(wl_data_offer* wl_data_offer, wl_data_offer_listener* listener, void* data) =>
+        wl_proxy_add_listener((wl_proxy*)wl_data_offer, (void**)listener, data);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void wl_data_offer_destroy(wl_data_offer* wl_data_offer) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wl_data_offer,
+            WL_DATA_OFFER_DESTROY,
+            null,
+            wl_proxy_get_version((wl_proxy*)wl_data_offer),
+            WL_MARSHAL_FLAG_DESTROY
+        );
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void* wl_data_offer_get_user_data(wl_data_offer* wl_data_offer) =>
+        wl_proxy_get_user_data((wl_proxy*)wl_data_offer);
+
+    public static void wl_data_offer_receive(wl_data_offer* wl_data_offer, byte* mime_type, int32_t fd) =>
+        wl_proxy_marshal_flags(
+            (wl_proxy*)wl_data_offer,
+            WL_DATA_OFFER_RECEIVE,
+            null,
+            wl_proxy_get_version((wl_proxy*)wl_data_offer),
+            0,
+            [mime_type, fd]
+        );
+    #endregion
+
     #region wl_proxy - wl_data_source
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int wl_data_source_add_listener(wl_data_source* wl_data_source, wl_data_source_listener* listener, void* data) =>
         wl_proxy_add_listener((wl_proxy*)wl_data_source, (void**)listener, data);
 
@@ -298,30 +337,6 @@ internal unsafe static partial class lib_wayland_client
 
     public static void* wl_data_source_get_user_data(wl_data_source* wl_data_source) =>
         wl_proxy_get_user_data((wl_proxy*)wl_data_source);
-    #endregion
-
-    #region wl_proxy - wl_data_offer
-    public static int wl_data_offer_add_listener(wl_data_offer* wl_data_offer, wl_data_offer_listener* listener, void* data) =>
-        wl_proxy_add_listener((wl_proxy*)wl_data_offer, (void**)listener, data);
-
-    public static void wl_data_offer_receive(wl_data_offer* wl_data_offer, byte* mime_type, int32_t fd) =>
-        wl_proxy_marshal_flags(
-            (wl_proxy*)wl_data_offer,
-            WL_DATA_OFFER_RECEIVE,
-            null,
-            wl_proxy_get_version((wl_proxy*)wl_data_offer),
-            0,
-            [mime_type, fd]
-        );
-
-    public static void wl_data_offer_destroy(wl_data_offer* wl_data_offer) =>
-        wl_proxy_marshal_flags(
-            (wl_proxy*)wl_data_offer,
-            WL_DATA_OFFER_DESTROY,
-            null,
-            wl_proxy_get_version((wl_proxy*)wl_data_offer),
-            WL_MARSHAL_FLAG_DESTROY
-        );
     #endregion
 
     #region wl_proxy - wl_keyboard
