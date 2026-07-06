@@ -28,10 +28,12 @@ internal unsafe static partial class lib_wayland_client
 
     private const int WL_BUFFER_DESTROY                      = 0;
     private const int WL_COMPOSITOR_CREATE_SURFACE           = 0;
-    private const int WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE = 1;
-    private const int WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE = 0;
 
-    private const int WL_DATA_DEVICE_SET_SELECTION = 0;
+    private const int WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE = 0;
+    private const int WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE    = 1;
+
+    private const int WL_DATA_DEVICE_START_DRAG    = 0;
+    private const int WL_DATA_DEVICE_SET_SELECTION = 1;
 
     private const int WL_DATA_SOURCE_OFFER    = 0;
     private const int WL_DATA_SOURCE_DESTROY  = 1;
@@ -42,10 +44,8 @@ internal unsafe static partial class lib_wayland_client
 
     private const int WL_DISPLAY_GET_REGISTRY = 1;
 
-    private const int WL_POINTER_SET_CURSOR = 0;
-    private const int WL_POINTER_RELEASE    = 1;
+    private const int WL_REGISTRY_BIND = 0;
 
-    private const int WL_REGISTRY_BIND   = 0;
     private const int WL_SHM_CREATE_POOL = 0;
 
     private const int WL_SEAT_GET_POINTER  = 0;
@@ -71,19 +71,22 @@ internal unsafe static partial class lib_wayland_client
 
     public const int WL_MARSHAL_FLAG_DESTROY = 1 << 0;
 
+    private const int WL_POINTER_SET_CURSOR                            = 0;
+    private const int WL_POINTER_RELEASE                               = 1;
+
     public const uint WL_POINTER_ENTER_SINCE_VERSION                   = 1;
     public const uint WL_POINTER_LEAVE_SINCE_VERSION                   = 1;
     public const uint WL_POINTER_MOTION_SINCE_VERSION                  = 1;
     public const uint WL_POINTER_BUTTON_SINCE_VERSION                  = 1;
     public const uint WL_POINTER_AXIS_SINCE_VERSION                    = 1;
+    public const uint WL_POINTER_SET_CURSOR_SINCE_VERSION              = 1;
+    public const uint WL_POINTER_RELEASE_SINCE_VERSION                 = 3;
     public const uint WL_POINTER_FRAME_SINCE_VERSION                   = 5;
     public const uint WL_POINTER_AXIS_SOURCE_SINCE_VERSION             = 5;
     public const uint WL_POINTER_AXIS_STOP_SINCE_VERSION               = 5;
     public const uint WL_POINTER_AXIS_DISCRETE_SINCE_VERSION           = 5;
     public const uint WL_POINTER_AXIS_VALUE120_SINCE_VERSION           = 8;
     public const uint WL_POINTER_AXIS_RELATIVE_DIRECTION_SINCE_VERSION = 9;
-    public const uint WL_POINTER_SET_CURSOR_SINCE_VERSION              = 1;
-    public const uint WL_POINTER_RELEASE_SINCE_VERSION                 = 3;
 
     private static readonly nint handle = NativeLibrary.Load(LIBRARY);
 
