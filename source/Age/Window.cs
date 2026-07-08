@@ -1,13 +1,14 @@
+using Age.Core.Extensions;
+using Age.Core;
+using Age.Graphs;
 using Age.Numerics;
 using Age.Platforms.Display;
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
 using Age.Scenes;
 
-using DisplayWindow = Age.Platforms.Display.Window;
+using DisplayWindow           = Age.Platforms.Display.Window;
 using WindowMouseEventHandler = Age.Platforms.Display.WindowMouseEventHandler;
-using Age.Core;
-using Age.Graphs;
 
 namespace Age;
 
@@ -96,19 +97,19 @@ public sealed class Window : Viewport
     private readonly RenderTarget[] renderTargets;
     private readonly DisplayWindow  window;
 
-    public static IReadOnlyList<Window> Windows => windows;
+    public static ReadOnlySpan<Window> Windows => windows.AsSpan();
 
     public Surface Surface { get; }
 
     public Cursor Cursor
     {
-        get => this.window.Cursor;
-        set => this.window.Cursor = value;
+        get => DisplayWindow.Cursor;
+        set => DisplayWindow.Cursor = value;
     }
 
     public override Size<uint> Size
     {
-        get => this.window.ClientSize;
+        get => this.window.Size;
         set => Logger.Warn("Window size cant be modified");
     }
 
@@ -132,12 +133,18 @@ public sealed class Window : Viewport
     public override RenderTarget RenderTarget => this.renderTargets[this.Surface.CurrentBuffer];
     public override Texture2D    Texture      => Texture2D.Empty;
 
-    public Window(string title, in Size<uint> size, in Point<int> position, Window? parent = null)
+    public Window(string title, in Size<uint> size, Window? parent = null)
     {
         this.MakeSubtreeStatePristine();
 
-        this.window        = new DisplayWindow(title, size, position, parent?.window);
-        this.Surface       = VulkanRenderer.Singleton.CreateSurface(this.window.Handle, this.window.ClientSize);
+        this.window = new DisplayWindow(title, size, parent?.window);
+
+#if WINDOWS
+        this.Surface = VulkanRenderer.Singleton.CreateSurface(this.window.Handle, this.window.Size);
+#else
+        this.Surface = VulkanRenderer.Singleton.CreateSurface(WindowManager.Instance.Display, this.window.Surface, this.window.Size);
+#endif
+
         this.renderTargets = new RenderTarget[this.Surface.Swapchain.Images.Length];
 
         this.Surface.SwapchainRecreated += this.CreateRenderTargets;
@@ -165,7 +172,7 @@ public sealed class Window : Viewport
     {
         var createInfo = new RenderTarget.MultiPassCreateInfo
         {
-            Size        = this.window.ClientSize,
+            Size = new(image.Extent.Width, image.Extent.Height),
             Attachments =
             [
                 RenderTarget.CreateInfo.ColorAttachmentInfo.From(image, ImageLayout.PresentSrcKHR),
@@ -219,7 +226,7 @@ public sealed class Window : Viewport
     {
         if (this.Surface.Visible = this.window.IsVisible && !this.window.IsMinimized)
         {
-            this.Surface.Size = this.window.ClientSize;
+            this.Surface.Size = this.window.Size;
         }
     }
 

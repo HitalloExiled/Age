@@ -5,7 +5,6 @@ using Age.Rendering.Vulkan;
 using Age.Services;
 using Age.Shaders;
 using Age.Storage;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
@@ -16,27 +15,18 @@ namespace Age.Passes;
 
 public sealed class UISceneEncodePass : UIScenePass
 {
-    [AllowNull]
-    private CommandBuffer commandBuffer;
+    private CommandBuffer?               commandBuffer;
+    private Geometry2DStencilMaskShader? geometry2DStencilMaskWriterShader;
+    private Geometry2DStencilMaskShader? geometry2DStencilMaskEraserShader;
+    private RenderTarget?                renderTarget;
+    private Geometry2DEncodeShader?      shader;
 
-    [AllowNull]
-    private Geometry2DStencilMaskShader geometry2DStencilMaskWriterShader;
-
-    [AllowNull]
-    private Geometry2DStencilMaskShader geometry2DStencilMaskEraserShader;
-
-    [AllowNull]
-    private RenderTarget renderTarget;
-
-    [AllowNull]
-    private Geometry2DEncodeShader shader;
-
-    protected override CommandBuffer               CommandBuffer                     => this.commandBuffer;
+    protected override CommandBuffer               CommandBuffer                     => this.commandBuffer!;
     protected override CommandFilter               CommandFilter                     => CommandFilter.Encode;
-    protected override Geometry2DStencilMaskShader Geometry2DStencilMaskEraserShader => this.geometry2DStencilMaskEraserShader;
-    protected override Geometry2DStencilMaskShader Geometry2DStencilMaskWriterShader => this.geometry2DStencilMaskWriterShader;
-    protected override RenderTarget                RenderTarget                      => this.renderTarget;
-    protected override Geometry2DEncodeShader      Shader                            => this.shader;
+    protected override Geometry2DStencilMaskShader Geometry2DStencilMaskEraserShader => this.geometry2DStencilMaskEraserShader!;
+    protected override Geometry2DStencilMaskShader Geometry2DStencilMaskWriterShader => this.geometry2DStencilMaskWriterShader!;
+    protected override RenderTarget                RenderTarget                      => this.renderTarget!;
+    protected override Geometry2DEncodeShader      Shader                            => this.shader!;
 
     public override Texture2D Output => this.renderTarget?.ColorAttachments[0].Texture ?? Texture2D.Default;
     public override string    Name   => nameof(UISceneEncodePass);
@@ -88,24 +78,30 @@ public sealed class UISceneEncodePass : UIScenePass
 
             this.renderTarget?.Dispose();
             this.commandBuffer?.Dispose();
+
+            this.renderTarget  = null;
+            this.commandBuffer = null;
         }
 
         if (this.shader != null)
         {
             this.shader.Changed -= RenderingService.Singleton.RequestDraw;
             this.shader.Dispose();
+            this.shader = null;
         }
 
         if (this.geometry2DStencilMaskWriterShader != null)
         {
             this.geometry2DStencilMaskWriterShader.Changed -= RenderingService.Singleton.RequestDraw;
             this.geometry2DStencilMaskWriterShader.Dispose();
+            this.geometry2DStencilMaskWriterShader = null;
         }
 
         if (this.geometry2DStencilMaskEraserShader != null)
         {
             this.geometry2DStencilMaskEraserShader.Changed -= RenderingService.Singleton.RequestDraw;
             this.geometry2DStencilMaskEraserShader.Dispose();
+            this.geometry2DStencilMaskEraserShader = null;
         }
     }
 

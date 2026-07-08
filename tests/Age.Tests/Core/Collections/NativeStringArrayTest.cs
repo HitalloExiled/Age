@@ -56,23 +56,10 @@ public class NativeStringArrayTest
     [Fact]
     public void DisposeShouldPass()
     {
-        var list = new[]
-        {
-            "One",
-        };
+        var array = new NativeStringArray(["one"]);
 
-        var stringArrayPtr = new NativeStringArray(list);
-
-        stringArrayPtr.Dispose();
-        stringArrayPtr.Dispose();
-
-        Assert.True(true);
-    }
-
-    [Fact]
-    public void DestructorShouldPass()
-    {
-        _ = new NativeStringArray(Array.Empty<string>());
+        array.Dispose();
+        array.Dispose();
 
         Assert.True(true);
     }

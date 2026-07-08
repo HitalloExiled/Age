@@ -1,49 +1,66 @@
+using Age.Core.Extensions;
 using Age.Numerics;
 using Age.Platforms.Display;
 
 namespace Age;
 
-file struct KeyState(Key key, ulong iteration)
-{
-    public ulong Iteration = iteration;
-    public Key   Key       = key;
-}
-
 public static class Input
 {
-    private static readonly Dictionary<Key, ulong>         keys         = [];
-    private static readonly Dictionary<MouseButton, ulong> mouseButtons = [];
+    private static readonly Dictionary<MouseButton, ulong> pressedMouseButtons = [];
+    private static readonly Dictionary<Key, ulong>         pressedKeys  = [];
+    private static readonly HashSet<Key>                   releasedKeys = [];
 
-    private static uint          currentIteration;
+    private static ulong         iteration;
     private static Point<ushort> mousePosition;
     private static float         mouseWheel;
+    private static MouseButton   mousePressedButtons;
     private static Point<ushort> previousMousePosition;
-    public static MouseButton PrimaryButton { get; private set; }
+    private static MouseButton   releasedMouseButtons;
 
-    private static void OnKeyDown(Key key) =>
-        keys.TryAdd(key, currentIteration);
+    public static bool LeftHanded { get; private set; }
 
-    private static void OnKeyUp(Key key) =>
-        keys.Remove(key);
+    private static void OnKeyDown(in WindowKeyEvent windowKeyEvent)
+    {
+        if (!windowKeyEvent.Echo)
+        {
+            pressedKeys.TryAdd(windowKeyEvent.Key, iteration);
+        }
+    }
+
+    private static void OnKeyUp(in WindowKeyEvent windowKeyEvent)
+    {
+        if (!windowKeyEvent.Echo)
+        {
+            pressedKeys.Remove(windowKeyEvent.Key);
+            releasedKeys.Add(windowKeyEvent.Key);
+        }
+    }
 
     private static void OnMouseDown(in WindowMouseEvent mouseEvent)
     {
-        PrimaryButton = mouseEvent.PrimaryButton;
+        LeftHanded          = mouseEvent.LeftHanded;
+        mousePressedButtons = mouseEvent.PressedButtons;
 
-        mouseButtons.TryAdd(mouseEvent.Button, currentIteration);
+        pressedMouseButtons.TryAdd(mouseEvent.Button, iteration);
     }
 
     private static void OnMouseMove(in WindowMouseEvent mouseEvent)
     {
         previousMousePosition = mousePosition;
-        mousePosition = new(mouseEvent.X, mouseEvent.Y);
+        mousePosition         = new(mouseEvent.X, mouseEvent.Y);
     }
 
-    private static void OnMouseUp(in WindowMouseEvent mouseEvent) =>
-        mouseButtons.Remove(mouseEvent.Button);
+    private static void OnMouseUp(in WindowMouseEvent mouseEvent)
+    {
+        mousePressedButtons = mouseEvent.PressedButtons;
+
+        pressedMouseButtons.Remove(mouseEvent.Button);
+
+        releasedMouseButtons |= mouseEvent.Button;
+    }
 
     private static void OnMouseWheel(in WindowMouseEvent mouseEvent) =>
-        mouseWheel = mouseEvent.Delta;
+        mouseWheel = mouseEvent.ScrollDelta;
 
     internal static void ListenInputEvents(Window window)
     {
@@ -67,34 +84,45 @@ public static class Input
 
     internal static void Update()
     {
-        currentIteration++;
+        iteration++;
         mouseWheel = 0;
+
+        releasedKeys.Clear();
+        releasedMouseButtons = default;
     }
 
-    public static KeyStates GetModifiers()
+    public static Modifier GetModifiers()
     {
-        KeyStates modifiers = default;
+        Modifier modifiers = default;
 
-        if (keys.ContainsKey(Key.Shift))
+        if (pressedKeys.ContainsKey(Key.Shift))
         {
-            modifiers |= KeyStates.Shift;
+            modifiers |= Modifier.Shift;
         }
 
-        if (keys.ContainsKey(Key.Control))
+        if (pressedKeys.ContainsKey(Key.Ctrl))
         {
-            modifiers |= KeyStates.Control;
+            modifiers |= Modifier.Ctrl;
         }
 
-        // if (keys.ContainsKey(Key.Alt))
-        // {
-        //     modifiers |= KeyStates.Alt;
-        // }
+        if (pressedKeys.ContainsKey(Key.Alt))
+        {
+            modifiers |= Modifier.Alt;
+        }
+
+        if (pressedKeys.ContainsKey(Key.Meta))
+        {
+            modifiers |= Modifier.Meta;
+        }
 
         return modifiers;
     }
 
     public static Point<ushort> GetMousePosition() =>
         mousePosition;
+
+    public static MouseButton GetMousePressedButtons() =>
+        mousePressedButtons;
 
     public static Point<short> GetMouseDeltaPosition() =>
         mousePosition.Cast<short>() - previousMousePosition.Cast<short>();
@@ -103,20 +131,20 @@ public static class Input
         mouseWheel;
 
     public static bool IsKeyJustPressed(Key key) =>
-        keys.TryGetValue(key, out var iteration) && currentIteration == iteration;
+        pressedKeys.TryGetValue(key, out var keyIteration) && keyIteration == iteration;
+
+    public static bool IsKeyJustReleased(Key key) =>
+        releasedKeys.Contains(key);
 
     public static bool IsKeyPressed(Key key) =>
-        keys.TryGetValue(key, out var iteration) && iteration > 0;
-
-    public static bool IsKeyReleased(Key key) =>
-        keys.TryGetValue(key, out var iteration) && iteration == 0;
-
-    public static bool IsMouseButtonJustPressed(MouseButton mouseButton) =>
-        mouseButtons.TryGetValue(mouseButton, out var iteration) && currentIteration == iteration;
+        pressedKeys.ContainsKey(key);
 
     public static bool IsMouseButtonPressed(MouseButton mouseButton) =>
-        mouseButtons.TryGetValue(mouseButton, out var iteration) && iteration > 0;
+        pressedMouseButtons.ContainsKey(mouseButton);
 
-    public static bool IsMouseButtonReleased(MouseButton mouseButton) =>
-        mouseButtons.TryGetValue(mouseButton, out var iteration) && iteration == 0;
+    public static bool IsMouseButtonJustPressed(MouseButton mouseButton) =>
+        pressedMouseButtons.TryGetValue(mouseButton, out var mouseButtonIteration) && mouseButtonIteration == iteration;
+
+    public static bool IsMouseButtonJustReleased(MouseButton mouseButton) =>
+        releasedMouseButtons.HasFlags(mouseButton);
 }

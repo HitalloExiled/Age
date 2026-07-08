@@ -13,7 +13,7 @@ public unsafe class Session : SlangUnknown
 
     public Module? LoadModule(string moduleName)
     {
-        using var pModuleName = new UnmanagedString(moduleName);
+        using var pModuleName = new NativeString(moduleName);
 
         var pModule = this.Handle->Vtbl->LoadModule(this.Handle, pModuleName, null);
 
@@ -24,8 +24,8 @@ public unsafe class Session : SlangUnknown
     {
         fixed (byte* pSouce = source)
         {
-            using var pModuleName = new UnmanagedString(moduleName);
-            using var pPath       = new UnmanagedString(path);
+            using var pModuleName = new NativeString(moduleName);
+            using var pPath       = new NativeString(path);
 
             var blob = PInvoke.slang_createBlob(pSouce, (ulong)source.Length);
 
@@ -37,9 +37,9 @@ public unsafe class Session : SlangUnknown
 
     public Module? LoadModuleFromSourceString(string moduleName, string path, string content)
     {
-            using var pModuleName = new UnmanagedString(moduleName);
-            using var pPath       = new UnmanagedString(path);
-            using var pContent    = new UnmanagedString(content);
+            using var pModuleName = new NativeString(moduleName);
+            using var pPath       = new NativeString(path);
+            using var pContent    = new NativeString(content);
 
             var pModule = this.Handle->Vtbl->LoadModuleFromSourceString(this.Handle, pModuleName, pPath, pContent, null);
 

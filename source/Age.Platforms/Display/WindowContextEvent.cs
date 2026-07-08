@@ -6,4 +6,4 @@ public struct WindowContextEvent
     public ushort Y;
     public ushort ScreenX;
     public ushort ScreenY;
-};
+}

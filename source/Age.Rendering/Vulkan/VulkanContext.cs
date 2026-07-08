@@ -12,6 +12,7 @@ using ThirdParty.Vulkan.Extensions;
 using ThirdParty.Vulkan.Flags;
 using static Age.Core.PointerHelper;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace Age.Rendering.Vulkan;
 
@@ -185,7 +186,17 @@ internal sealed unsafe partial class VulkanContext : Disposable
     {
         var properties = VkInstance.EnumerateLayerProperties();
 
-        return validationLayers.Overlaps(properties.Select(x => Marshal.PtrToStringAnsi((nint)x.LayerName)!));
+        var layers = new string[properties.Length];
+
+        for (var i = 0; i < properties.Length; i++)
+        {
+            fixed (byte* pLayerName = properties[i].LayerName)
+            {
+                layers[i] = Encoding.GetStringFromNullTerminated(pLayerName)!;
+            }
+        }
+
+        return validationLayers.Overlaps(layers);
     }
 
     private void CreateDevice(out VkDevice device, out VkSwapchainExtensionKHR swapchainExtension, out VkQueue graphicsQueue, out VkQueue presentationQueue)
@@ -530,6 +541,11 @@ internal sealed unsafe partial class VulkanContext : Disposable
         {
             if (surface.Visible)
             {
+                if (surface.IsDirty)
+                {
+                    this.RecreateSwapchain(surface);
+                }
+
                 uint imageIndex = 0;
                 try
                 {
@@ -566,12 +582,13 @@ internal sealed unsafe partial class VulkanContext : Disposable
 
         var visibleSurfaces = Surface.Visibles;
 
-        var fence          = this.fences[this.currentFrame];
-        var imageIndices   = new uint[visibleSurfaces.Length];
-        var swapchains     = new VkHandle<VkSwapchainKHR>[visibleSurfaces.Length];
-        var waitSemaphores = new VkHandle<VkSemaphore>[visibleSurfaces.Length];
-        var waitStages     = new VkPipelineStageFlags[visibleSurfaces.Length];
-        var results        = new VkResult[visibleSurfaces.Length];
+        var fence =  this.fences[this.currentFrame];
+
+        Span<uint>                     imageIndices   = stackalloc uint[visibleSurfaces.Length];
+        Span<VkHandle<VkSwapchainKHR>> swapchains     = stackalloc VkHandle<VkSwapchainKHR>[visibleSurfaces.Length];
+        Span<VkHandle<VkSemaphore>>    waitSemaphores = stackalloc VkHandle<VkSemaphore>[visibleSurfaces.Length];
+        Span<VkPipelineStageFlags>     waitStages     = stackalloc VkPipelineStageFlags[visibleSurfaces.Length];
+        Span<VkResult>                 results        = stackalloc VkResult[visibleSurfaces.Length];
 
         for (var i = 0; i < visibleSurfaces.Length; i++)
         {

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace Age.Core.Collections;
 
 [DebuggerTypeProxy(typeof(RentedArray<>.DebugView))]
-public ref partial struct RentedArray<T>(int size)
+public partial struct RentedArray<T>(int size)
 {
     private readonly T[] source = ArrayPool<T>.Shared.Rent(size);
 

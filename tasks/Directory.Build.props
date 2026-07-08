@@ -12,10 +12,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Remove="../../tasks/Build.Tasks/Build.Tasks.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Roslynator.Analyzers" Version="4.15.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>

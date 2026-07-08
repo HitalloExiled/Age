@@ -1,4 +1,5 @@
 using Age.Core.Collections;
+using Age.Core.Extensions;
 
 namespace Age.Tests.Core.Collections;
 
@@ -16,12 +17,10 @@ public unsafe class NativeArrayTest
     {
         using var array = new NativeArray<int>(4);
 
-        var ptr = array.Buffer;
-
-        ptr[0] = 1;
-        ptr[1] = 2;
-        ptr[2] = 3;
-        ptr[3] = 4;
+        array[0] = 1;
+        array[1] = 2;
+        array[2] = 3;
+        array[3] = 4;
 
         AssertIt(array, [1, 2, 3, 4]);
 
@@ -38,13 +37,6 @@ public unsafe class NativeArrayTest
     {
         using NativeArray<int> array = [1, 2, 3, 4];
 
-        var ptr = array.Buffer;
-
-        ptr[0] = 1;
-        ptr[1] = 2;
-        ptr[2] = 3;
-        ptr[3] = 4;
-
         AssertIt(array, [1, 2, 3, 4]);
 
         array[0] = 2;
@@ -56,11 +48,17 @@ public unsafe class NativeArrayTest
     }
 
     [Fact]
-    public void GenericPointerAccessAfterDisposedShouldThows()
+    public void Enumerate()
     {
-        var pointer = new NativeArray<int>(4);
-        pointer.Dispose();
+        using var array = new NativeArray<int>([1, 2, 3, 4, 5, 6]);
 
-        Assert.Throws<ObjectDisposedException>(() => pointer[0] == 1);
+        var list = new List<int>(6);
+
+        foreach (var item in array)
+        {
+            list.Add(item);
+        }
+
+        AssertIt(array, list.AsSpan());
     }
 }

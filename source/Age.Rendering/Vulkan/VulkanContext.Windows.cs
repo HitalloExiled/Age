@@ -1,8 +1,4 @@
-#if !Windows
-#define Windows
-#endif
-
-#if Windows
+#if WINDOWS
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Age.Numerics;

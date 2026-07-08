@@ -18,7 +18,7 @@ public sealed unsafe class Module : ComponentType
     {
         IEntryPoint* pEntryPoint;
 
-        using var pName = new UnmanagedString(name);
+        using var pName = new NativeString(name);
 
         SlangException.Check(this.Handle->Vtbl->FindEntryPointByName(this.Handle, pName, &pEntryPoint), $"Failed to find {nameof(EntryPoint)} with the name ${name}");
 

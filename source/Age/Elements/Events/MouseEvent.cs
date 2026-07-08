@@ -1,24 +1,41 @@
-using Age.Core.Extensions;
+using Age.Numerics;
 using Age.Platforms.Display;
 
 namespace Age.Elements.Events;
 
-public struct MouseEvent
+public readonly struct MouseEvent
 {
-    public required Element Target;
+    #region 8-bytes
+    public Element Target { get; }
+    #endregion
 
-    public MouseButton    Button;
-    public float          Delta;
-    public MouseKeyStates KeyStates;
-    public MouseButton    PrimaryButton;
-    public ushort         X;
-    public ushort         Y;
+    #region 4-bytes
+    private readonly WindowMouseEvent windowMouseEvent;
+    #endregion
 
-    public bool Indirect;
+    #region 1-byte
+    public bool Indirect { get; }
+    #endregion
 
-    public readonly bool IsPrimaryButtonPressed => this.Button == this.PrimaryButton;
+    public MouseButton   Button                 => this.windowMouseEvent.Button;
+    public float         Delta                  => this.windowMouseEvent.ScrollDelta;
+    public bool          IsHoldingPrimaryButton => this.windowMouseEvent.IsHoldingPrimaryButton;
+    public bool          IsPrimaryButtonPressed => this.windowMouseEvent.IsPrimaryButtonPressed;
+    public bool          LeftHanded             => this.windowMouseEvent.LeftHanded;
+    public Modifier      Modifiers              => this.windowMouseEvent.Modifiers;
+    public MouseButton   PressedButtons         => this.windowMouseEvent.PressedButtons;
+    public Point<short>  Relative               => this.windowMouseEvent.Relative;
+    public Point<short>  Velocity               => this.windowMouseEvent.Velocity;
+    public ushort        X                      => this.windowMouseEvent.X;
+    public ushort        Y                      => this.windowMouseEvent.Y;
 
-    public readonly bool IsHoldingPrimaryButton =>
-        (this.PrimaryButton == MouseButton.Left && this.KeyStates.HasFlags(MouseKeyStates.LeftButton))
-        || (this.PrimaryButton == MouseButton.Right && this.KeyStates.HasFlags(MouseKeyStates.RightButton));
+    internal MouseEvent(Element target) =>
+        this.Target = target;
+
+    internal MouseEvent(Element target, in WindowMouseEvent windowMouseEvent, bool indirect)
+    {
+        this.Target           = target;
+        this.windowMouseEvent = windowMouseEvent;
+        this.Indirect         = indirect;
+    }
 }

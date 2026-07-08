@@ -164,9 +164,6 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         }
     }
 
-    public Surface CreateSurface(nint handle, Size<uint> clientSize) =>
-        this.Context.CreateSurface(handle, clientSize);
-
     public void DeferredDispose(IDisposable disposable)
     {
         lock (this.@lock)
@@ -221,4 +218,5 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
     public void WaitIdle() =>
         this.Context.Device.WaitIdle();
+    internal Surface? CreateSurface(object display, nint surface, Size<uint> clientSize) => throw new NotImplementedException();
 }

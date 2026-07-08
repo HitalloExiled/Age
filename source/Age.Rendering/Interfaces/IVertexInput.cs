@@ -6,5 +6,5 @@ namespace Age.Rendering.Interfaces;
 public interface IVertexInput
 {
     public abstract static VkVertexInputBindingDescription GetBindings();
-    public abstract static NativeRefArray<VkVertexInputAttributeDescription> GetAttributes();
+    public abstract static NativeArray<VkVertexInputAttributeDescription> GetAttributes();
 }

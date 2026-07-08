@@ -232,7 +232,7 @@ public sealed class Image : Resource<VkImage>
     {
         using var buffer = this.ReadBuffer(aspectMask, out var data);
 
-        var pixels = new NativeArray<T>(this.Extent.Width * this.Extent.Height);
+        var pixels = new NativeArray<T>((int)(this.Extent.Width * this.Extent.Height));
 
         try
         {

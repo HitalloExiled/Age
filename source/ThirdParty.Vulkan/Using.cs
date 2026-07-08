@@ -16,4 +16,7 @@ global using VkPipelineViewportStateCreateFlags        = uint;
 global using VkSamplerCreateFlags                      = uint;
 global using VkSemaphoreCreateFlags                    = uint;
 global using VkShaderModuleCreateFlags                 = uint;
+global using VkWaylandSurfaceCreateFlagsKHR            = uint;
 global using VkWin32SurfaceCreateFlagsKHR              = uint;
+global using wl_display                                = nint;
+global using wl_surface                                = nint;

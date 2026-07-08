@@ -6,7 +6,6 @@ using Age.Scenes;
 using Age.Services;
 using Age.Shaders;
 using Age.Storage;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using ThirdParty.Vulkan.Enums;
@@ -18,18 +17,13 @@ namespace Age.Passes;
 
 public class Scene3DEncodePass : Scene3DPass
 {
-    [AllowNull]
-    private CommandBuffer commandBuffer;
-
-    [AllowNull]
-    private RenderTarget renderTarget;
-
-    [AllowNull]
-    private Geometry3DEncodeShader shader;
+    private CommandBuffer?          commandBuffer;
+    private RenderTarget?           renderTarget;
+    private Geometry3DEncodeShader? shader;
 
     public override string Name => nameof(Scene3DEncodePass);
 
-    protected override CommandBuffer CommandBuffer => this.commandBuffer;
+    protected override CommandBuffer CommandBuffer => this.commandBuffer!;
     protected override CommandFilter CommandFilter => CommandFilter.Encode;
 
     private void RecreateRenderTarget()
@@ -109,12 +103,16 @@ public class Scene3DEncodePass : Scene3DPass
 
             this.renderTarget?.Dispose();
             this.commandBuffer?.Dispose();
+
+            this.renderTarget  = null;
+            this.commandBuffer = null;
         }
 
         if (this.shader != null)
         {
             this.shader.Changed -= RenderingService.Singleton.RequestDraw;
             this.shader.Dispose();
+            this.shader = null;
         }
     }
 
@@ -126,6 +124,8 @@ public class Scene3DEncodePass : Scene3DPass
 
     protected override void Record(Camera3D camera, MeshCommand command)
     {
+        Debug.Assert(this.shader != null);
+
         var commandBuffer = this.CommandBuffer;
 
         var mesh       = Unsafe.As<Mesh>(command.Owner);

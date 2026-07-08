@@ -1,0 +1,14 @@
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)../Directory.Build.props" />
+
+  <Target Name="EnsureTasksBuilt" BeforeTargets="BeforeBuild">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)../tasks/Build.Tasks/Build.Tasks.csproj" Targets="Restore;Build" Properties="Configuration=Release;Platform=AnyCPU" />
+  </Target>
+
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../tasks/Build.Tasks/Build.Tasks.csproj" ReferenceOutputAssembly="false" OutputItemType="BuildTasks" />
+  </ItemGroup>
+
+  <UsingTask TaskName="Build.Tasks.DownloadFileUnzip" AssemblyFile="$(MSBuildThisFileDirectory)../tasks/Build.Tasks/bin/Release/netstandard2.1/Build.Tasks.dll" />
+</Project>
+

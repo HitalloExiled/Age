@@ -14,7 +14,9 @@ public partial struct InlineList16<T> : IEquatable<InlineList16<T>>
 
     private InlineArray16<T> buffer;
 
-    public int Count { get; private set; }
+    private int count;
+
+    public readonly int Count => this.count;
 
     public T this[int index]
     {
@@ -42,74 +44,23 @@ public partial struct InlineList16<T> : IEquatable<InlineList16<T>>
     {
         InlineListException.ThrowsIfExceeds(size, CAPACITY);
 
-        this.Count = size;
+        this.count = size;
     }
 
-    public InlineList16(params ReadOnlySpan<T> elements) : this(elements.Length)
-    {
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(elements.Length, CAPACITY);
-
+    public InlineList16(params ReadOnlySpan<T> elements) : this(elements.Length) =>
         elements.CopyTo(this.buffer);
-    }
 
-    public void Add(T item)
-    {
-        InlineListException.ThrowsIfExceeds(this.Count + 1, CAPACITY);
-
-        this.buffer[this.Count++] = item;
-    }
-
-    public void Remove(T item) =>
-        this.RemoveAt(this.AsSpan().IndexOf(item), 1);
-
-    public void RemoveAt(int index) =>
-        this.RemoveAt(index, 1);
-
-    public void RemoveAt(int startIndex, int count)
-    {
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(startIndex, this.Count);
-        ArgumentOutOfRangeException.ThrowIfLessThan(count - startIndex, 0);
-
-        var endIndex = startIndex + count;
-        var length   = this.Count - endIndex;
-
-        var span = this.AsSpan();
-
-        if (length > 0)
-        {
-            var source      = span.Slice(endIndex, length);
-            var destination = span.Slice(startIndex, length);
-
-            source.CopyTo(destination);
-        }
-
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            span[(startIndex + length)..].Clear();
-        }
-
-        this.Count = int.Max(this.Count - count, 0);
-    }
+    public void Add(T item) =>
+        InlineListHelper<T>.Add(this.buffer, item, CAPACITY, ref this.count);
 
     public Span<T> AsSpan() =>
         MemoryMarshal.CreateSpan(ref this.buffer[0], this.Count);
 
-    public void Clear()
-    {
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            this.AsSpan().Clear();
-        }
+    public void Clear() =>
+        InlineListHelper<T>.Clear(this.buffer, ref this.count);
 
-        this.Count = 0;
-    }
-
-    public void CopyTo(ref InlineList16<T> other)
-    {
-        MemoryMarshal.CreateSpan(ref this.buffer[0], CAPACITY).CopyTo(MemoryMarshal.CreateSpan(ref other.buffer[0], CAPACITY));
-
-        other.Count = this.Count;
-    }
+    public readonly void CopyTo(ref InlineList16<T> other) =>
+        InlineListHelper<T>.CopyTo(this, other, ref other.count);
 
     public override bool Equals([NotNullWhen(true)] object? obj) =>
         obj is InlineList16<T> other && this.Equals(other);
@@ -123,7 +74,16 @@ public partial struct InlineList16<T> : IEquatable<InlineList16<T>>
     public override int GetHashCode() =>
         Span<T>.CombineHashCode(this.AsSpan());
 
-    public static implicit operator InlineList16<T>(Span<T> elements)    => new(elements);
+    public void Remove(T item) =>
+        InlineListHelper<T>.Remove(this.buffer, item, ref this.count);
+
+    public void RemoveAt(int index) =>
+        InlineListHelper<T>.RemoveAt(this.buffer, index, ref this.count);
+
+    public void RemoveAt(int startIndex, int count) =>
+        InlineListHelper<T>.RemoveAt(this.buffer, startIndex, count, ref this.count);
+
+    public static implicit operator InlineList16<T>(Span<T> elements) => new(elements);
     public static implicit operator Span<T>(InlineList16<T> inlineArray) => inlineArray.AsSpan();
 
     public static bool operator ==(InlineList16<T> left, InlineList16<T> right) => left.Equals(right);

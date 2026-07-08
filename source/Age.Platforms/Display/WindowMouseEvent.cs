@@ -1,19 +1,27 @@
 using Age.Core.Extensions;
+using Age.Numerics;
 
 namespace Age.Platforms.Display;
 
-public struct WindowMouseEvent
+public record struct WindowMouseEvent
 {
-    public ushort         X;
-    public ushort         Y;
-    public MouseButton    Button;
-    public MouseButton    PrimaryButton;
-    public MouseKeyStates KeyStates;
-    public float          Delta;
+    public required ushort X;
+    public required ushort Y;
 
-    public readonly bool IsPrimaryButtonPressed => this.Button == this.PrimaryButton;
+    public required MouseButton Button;
+    public required Modifier    Modifiers;
+    public required MouseButton PressedButtons;
+
+    public required Point<short> Relative;
+    public required Point<short> Velocity;
+
+    public required float ScrollDelta;
+
+    public required bool LeftHanded;
+
+    public readonly bool IsPrimaryButtonPressed =>
+        this.LeftHanded ? this.Button == MouseButton.Right : this.Button == MouseButton.Left;
 
     public readonly bool IsHoldingPrimaryButton =>
-        (this.PrimaryButton == MouseButton.Left && this.KeyStates.HasFlags(MouseKeyStates.LeftButton))
-        || (this.PrimaryButton == MouseButton.Right && this.KeyStates.HasFlags(MouseKeyStates.RightButton));
-};
+        this.LeftHanded ? this.PressedButtons.HasFlags(MouseButton.Right) : this.PressedButtons.HasFlags(MouseButton.Left);
+}

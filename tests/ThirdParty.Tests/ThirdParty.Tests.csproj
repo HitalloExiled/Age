@@ -25,13 +25,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\source\ThirdParty.Skia\ThirdParty.Skia.csproj" />
-    <ProjectReference Include="..\..\source\ThirdParty.Slang\ThirdParty.Slang.csproj" />
-    <ProjectReference Include="..\..\source\ThirdParty.Vulkan\ThirdParty.Vulkan.csproj" />
+    <ProjectReference Include="../../source/ThirdParty.FreeDesktop/ThirdParty.FreeDesktop.csproj" />
+    <ProjectReference Include="../../source/ThirdParty.Skia/ThirdParty.Skia.csproj" />
+    <ProjectReference Include="../../source/ThirdParty.Slang/ThirdParty.Slang.csproj" />
+    <ProjectReference Include="../../source/ThirdParty.Vulkan/ThirdParty.Vulkan.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <None Include="./Skia/Svg/Files/*.svg"  CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
 </Project>

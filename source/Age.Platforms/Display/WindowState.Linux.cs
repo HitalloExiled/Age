@@ -1,0 +1,107 @@
+#if LINUX
+using Age.Platforms.Linux.LibWaylandClient;
+using Age.Platforms.Linux.LibDecor;
+using Age.Core;
+using Age.Core.Collections;
+using Age.Numerics;
+using System.Runtime.InteropServices;
+using Age.Core.Extensions;
+
+namespace Age.Platforms.Display;
+
+internal unsafe struct WindowState
+{
+    #region 8-bytes
+    public wl_surface* Surface;
+
+    public wp_fractional_scale_v1* FractionalScale;
+    public libdecor_frame*         Frame;
+    public wl_callback*            FrameCallback;
+    public libdecor_configuration* PendingLibdecorConfiguration;
+    public wp_viewport*            Viewport;
+
+    private NativeList<WindowMessage>      messages;
+    private NativeList<Pointer<wl_output>> outputs;
+    #endregion
+
+    #region 4-bytes
+    private UnsafeLock @lock;
+
+    public Size<int> Size;
+    #endregion
+
+    #region 1-byte
+    public WindowMode Mode;
+    public bool       Suspended;
+    #endregion
+
+    private WindowState(wl_surface* surface, in Size<int> size)
+    {
+        this.Surface  = surface;
+        this.Size     = size;
+        this.messages = [];
+        this.outputs  = [];
+    }
+
+    public static WindowState* Allocate(wl_surface* surface, in Size<int> size) =>
+        NativeMemory.Alloc(new WindowState(surface, size));
+
+    public static void Free(WindowState* windowState)
+    {
+        windowState->Dispose();
+
+        NativeMemory.Free(windowState);
+    }
+
+    public void Dispose()
+    {
+        lib_decor.libdecor_frame_unref(this.Frame);
+        lib_wayland_client.wl_callback_destroy(this.FrameCallback);
+        lib_wayland_client.wl_surface_destroy(this.Surface);
+        viewporter.wp_viewport_destroy(this.Viewport);
+
+        this.messages.Dispose();
+        this.outputs.Dispose();
+    }
+
+    public void AddMessage(in WindowMessage windowMessage)
+    {
+        using (UnsafeLock.Lock(ref this.@lock))
+        {
+            this.messages.Add(windowMessage);
+        }
+    }
+
+    public void AddOutput(wl_output* output)
+    {
+        using (UnsafeLock.Lock(ref this.@lock))
+        {
+            this.outputs.Add(output);
+        }
+    }
+
+    public void ClearMessages()
+    {
+        using (UnsafeLock.Lock(ref this.@lock))
+        {
+            this.messages.Clear();
+        }
+    }
+
+    public NativeArray<WindowMessage> GetMessages()
+    {
+        using (UnsafeLock.Lock(ref this.@lock))
+        {
+            return this.messages.ToNativeArray();
+        }
+    }
+
+    public void RemoveOutput(wl_output* output)
+    {
+        using (UnsafeLock.Lock(ref this.@lock))
+        {
+            this.outputs.Remove(output);
+        }
+    }
+}
+#endif

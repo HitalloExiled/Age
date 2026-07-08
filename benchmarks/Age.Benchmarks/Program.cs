@@ -9,4 +9,5 @@ var config = DefaultConfig.Instance;
 // _ = BenchmarkRunner.Run<TypeCastBenchmarks>(config, args);
 // _ = BenchmarkRunner.Run<StringVsStringBuilderBenchmarks>(config, args);
 // _ = BenchmarkRunner.Run<ComposedTreeTraversalEnumeratorBenchmarks>(config, args);
-_ = BenchmarkRunner.Run<VirtualVSNonVirtualBenchmarks>(config, args);
+// _ = BenchmarkRunner.Run<VirtualVSNonVirtualBenchmarks>(config, args);
+_ = BenchmarkRunner.Run<ListIndexOfBenchmark>(config, args);

@@ -3,10 +3,10 @@ using Age.Core.Collections;
 using Age.Core.Extensions;
 using Age.Elements;
 using Age.Elements.Events;
+using Age.Platforms.Display;
 using Age.Themes;
 
 using Key       = Age.Platforms.Display.Key;
-using KeyStates = Age.Platforms.Display.KeyStates;
 
 namespace Age.Components;
 
@@ -156,12 +156,12 @@ public partial class TextBox : Element
 
         switch (keyEvent.Key)
         {
-            case Key.Delete:
+            case Key.KeyDelete:
                 if (!this.Text.Buffer.IsEmpty)
                 {
                     this.SaveHistory();
 
-                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(Modifier.Shift))
                     {
                         var currentLine = this.Text.GetCharacterLine(this.GetTrimmedCursorPosition());
 
@@ -247,7 +247,7 @@ public partial class TextBox : Element
 
                     this.Text.CursorPosition--;
 
-                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(Modifier.Shift))
                     {
                         this.Text.Selection = this.Text.Selection?.WithEnd(this.Text.CursorPosition) ?? new(cursorPosition, this.Text.CursorPosition);
                     }
@@ -268,7 +268,7 @@ public partial class TextBox : Element
 
                     this.Text.CursorPosition++;
 
-                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(Modifier.Shift))
                     {
                         this.Text.Selection = this.Text.Selection?.WithEnd(this.Text.CursorPosition) ?? new(cursorPosition, this.Text.CursorPosition);
                     }
@@ -300,7 +300,7 @@ public partial class TextBox : Element
 
                     this.Text.CursorPosition = position;
 
-                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(Modifier.Shift))
                     {
                         this.Text.Selection = this.Text.Selection?.WithEnd(this.Text.CursorPosition) ?? new(cursorPosition, this.Text.CursorPosition);
                     }
@@ -336,7 +336,7 @@ public partial class TextBox : Element
 
                     this.Text.CursorPosition = position;
 
-                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(Modifier.Shift))
                     {
                         this.Text.Selection = this.Text.Selection?.WithEnd(this.Text.CursorPosition) ?? new(cursorPosition, this.Text.CursorPosition);
                     }
@@ -355,11 +355,11 @@ public partial class TextBox : Element
 
                     var cursorPosition = this.Text.CursorPosition;
 
-                    this.Text.CursorPosition = (!this.Multiline || keyEvent.Modifiers.HasFlags(KeyStates.Control))
+                    this.Text.CursorPosition = (!this.Multiline || keyEvent.Modifiers.HasFlags(Modifier.Ctrl))
                         ? 0u
                         : this.Text.GetCharacterLine(this.GetTrimmedCursorPosition()).Start;
 
-                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(Modifier.Shift))
                     {
                         this.Text.Selection = this.Text.Selection?.WithEnd(this.Text.CursorPosition) ?? new(cursorPosition, this.Text.CursorPosition);
                     }
@@ -380,7 +380,7 @@ public partial class TextBox : Element
 
                     uint position;
 
-                    if (!this.Multiline || keyEvent.Modifiers.HasFlags(KeyStates.Control))
+                    if (!this.Multiline || keyEvent.Modifiers.HasFlags(Modifier.Ctrl))
                     {
                         position = (uint)this.Text.Buffer.Length;
                     }
@@ -393,7 +393,7 @@ public partial class TextBox : Element
 
                     this.Text.CursorPosition = position;
 
-                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(Modifier.Shift))
                     {
                         this.Text.Selection = this.Text.Selection?.WithEnd(this.Text.CursorPosition) ?? new(cursorPosition, this.Text.CursorPosition);
                     }
@@ -406,7 +406,7 @@ public partial class TextBox : Element
                 break;
 
             case Key.A:
-                if (!this.Text.Buffer.IsEmpty && keyEvent.Modifiers.HasFlags(KeyStates.Control))
+                if (!this.Text.Buffer.IsEmpty && keyEvent.Modifiers.HasFlags(Modifier.Ctrl))
                 {
                     this.Text.Selection = new(0, (uint)this.Text.Buffer.Length);
 
@@ -417,7 +417,7 @@ public partial class TextBox : Element
 
             case Key.V:
                 {
-                    if (keyEvent.Modifiers.HasFlags(KeyStates.Control))
+                    if (keyEvent.Modifiers.HasFlags(Modifier.Ctrl))
                     {
                         this.SaveHistory();
 
@@ -443,7 +443,7 @@ public partial class TextBox : Element
 
             case Key.X:
                 {
-                    if (keyEvent.Modifiers.HasFlags(KeyStates.Control))
+                    if (keyEvent.Modifiers.HasFlags(Modifier.Ctrl))
                     {
                         this.SaveHistory();
 
@@ -457,9 +457,9 @@ public partial class TextBox : Element
                 break;
 
             case Key.Z:
-                if (keyEvent.Modifiers.HasFlags(KeyStates.Control))
+                if (keyEvent.Modifiers.HasFlags(Modifier.Ctrl))
                 {
-                    if (keyEvent.Modifiers.HasFlags(KeyStates.Shift))
+                    if (keyEvent.Modifiers.HasFlags(Modifier.Shift))
                     {
                         this.Redo();
                     }

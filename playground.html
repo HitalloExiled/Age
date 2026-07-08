@@ -233,8 +233,12 @@
         }
     };
 
+    parent.addEventListener("mousedown", event => console.log(`#${event.target.id} [mousedown]`))
+    parent.addEventListener("click", event => console.log(`#${event.target.id} [click]`))
+    parent.addEventListener("dblclick", event => console.log(`#${event.target.id} [dblclick]`))
     parent.addEventListener("mouseup", event => console.log(`#${event.target.id} [mouseup]`))
-    parent.addEventListener("pointerup", event => console.log(`#${event.target.id} [pointerup]`))
+
+    // parent.addEventListener("pointerup", event => console.log(`#${event.target.id} [pointerup]`))
     document.addEventListener("keydown", keydownHandler)
 
 

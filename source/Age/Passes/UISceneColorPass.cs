@@ -13,20 +13,17 @@ namespace Age.Passes;
 
 public class UISceneColorPass : UIScenePass
 {
-    [AllowNull]
-    private Geometry2DStencilMaskShader geometry2DStencilMaskWriterShader;
+    private Geometry2DStencilMaskShader? geometry2DStencilMaskWriterShader;
 
-    [AllowNull]
-    private Geometry2DStencilMaskShader geometry2DStencilMaskEraserShader;
+    private Geometry2DStencilMaskShader? geometry2DStencilMaskEraserShader;
 
-    [AllowNull]
-    private Geometry2DColorShader shader;
+    private Geometry2DColorShader? shader;
 
     protected override CommandBuffer               CommandBuffer                     => VulkanRenderer.Singleton.CurrentCommandBuffer;
     protected override CommandFilter               CommandFilter                     => CommandFilter.Color;
-    protected override Geometry2DStencilMaskShader Geometry2DStencilMaskEraserShader => this.geometry2DStencilMaskEraserShader;
-    protected override Geometry2DStencilMaskShader Geometry2DStencilMaskWriterShader => this.geometry2DStencilMaskWriterShader;
-    protected override Geometry2DColorShader       Shader                            => this.shader;
+    protected override Geometry2DStencilMaskShader Geometry2DStencilMaskEraserShader => this.geometry2DStencilMaskEraserShader!;
+    protected override Geometry2DStencilMaskShader Geometry2DStencilMaskWriterShader => this.geometry2DStencilMaskWriterShader!;
+    protected override Geometry2DColorShader       Shader                            => this.shader!;
 
     public override string Name => nameof(UISceneColorPass);
 
@@ -52,14 +49,26 @@ public class UISceneColorPass : UIScenePass
     {
         base.OnDisconnecting();
 
-        this.shader.Changed -= RenderingService.Singleton.RequestDraw;
-        this.shader.Dispose();
+        if (this.shader != null)
+        {
+            this.shader.Changed -= RenderingService.Singleton.RequestDraw;
+            this.shader.Dispose();
+            this.shader = null;
+        }
 
-        this.geometry2DStencilMaskWriterShader.Changed -= RenderingService.Singleton.RequestDraw;
-        this.geometry2DStencilMaskWriterShader.Dispose();
+        if (this.geometry2DStencilMaskWriterShader != null)
+        {
+            this.geometry2DStencilMaskWriterShader.Changed -= RenderingService.Singleton.RequestDraw;
+            this.geometry2DStencilMaskWriterShader.Dispose();
+            this.geometry2DStencilMaskWriterShader = null;
+        }
 
-        this.geometry2DStencilMaskEraserShader.Changed -= RenderingService.Singleton.RequestDraw;
-        this.geometry2DStencilMaskEraserShader.Dispose();
+        if (this.geometry2DStencilMaskEraserShader != null)
+        {
+            this.geometry2DStencilMaskEraserShader.Changed -= RenderingService.Singleton.RequestDraw;
+            this.geometry2DStencilMaskEraserShader.Dispose();
+            this.geometry2DStencilMaskEraserShader = null;
+        }
     }
 
     protected override void Record(RectCommand command)

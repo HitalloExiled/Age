@@ -108,15 +108,15 @@ public static class AlignmentTest
                 return;
             }
 
-            if (keyEvent.Modifiers.HasFlags(KeyStates.Control))
+            if (keyEvent.Modifiers.HasFlags(Modifier.Ctrl))
             {
                 switch (keyEvent.Key)
                 {
-                    case Key.Add:
+                    case Key.NumPadAdd:
                         borderSize++;
                         break;
 
-                    case Key.Subtract:
+                    case Key.NumPadSubtract:
                         borderSize = borderSize.ClampSubtract(1);
                         break;
                 }

@@ -11,7 +11,7 @@ public unsafe class FileSystem : SlangCastable
 
     public Blob LoadFile(string path)
     {
-        using var uPath = new UnmanagedString(path);
+        using var uPath = new NativeString(path);
 
         var blob = new Blob();
 

@@ -41,8 +41,8 @@ public partial class ShaderCompiler : Disposable
 
     private Session CreateSession()
     {
-        using NativeStringRefArray       searchPath = [Shader.ShadersPath];
-        using NativeRefArray<TargetDesc> targets    =
+        using NativeStringArray       searchPath = [Shader.ShadersPath];
+        using NativeArray<TargetDesc> targets    =
         [
             new()
             {
@@ -94,7 +94,7 @@ public partial class ShaderCompiler : Disposable
         this.session.Dispose();
         this.session = this.CreateSession();
 
-        using var bytes = FileReader.ReadAllBytesAsRef(filepath);
+        using var bytes = FileReader.ReadAllBytes(filepath);
 
         var dependencyHasChanged = !this.watcher!.Files.TryGetValue(filepath, out var fileEntry) || fileEntry.Hash != MD5Hash.Create(bytes);
 
@@ -138,9 +138,9 @@ public partial class ShaderCompiler : Disposable
     {
         var reflection = program.GetLayout()!;
 
-        using var bindings                       = new NativeRefList<VkDescriptorSetLayoutBinding>((int)reflection.ParameterCount);
-        using var pipelineShaderStageCreateInfos = new NativeRefList<VkPipelineShaderStageCreateInfo>((int)reflection.EntryPointCount);
-        using var pushConstantRanges             = new NativeRefList<VkPushConstantRange>();
+        using var bindings                       = new NativeList<VkDescriptorSetLayoutBinding>((int)reflection.ParameterCount);
+        using var pipelineShaderStageCreateInfos = new NativeList<VkPipelineShaderStageCreateInfo>((int)reflection.EntryPointCount);
+        using var pushConstantRanges             = new NativeList<VkPushConstantRange>();
 
         var entryPoints = reflection.EntryPoints;
         var parameters  = reflection.Parameters;
@@ -175,7 +175,7 @@ public partial class ShaderCompiler : Disposable
             pipelineShaderStageCreateInfos.Add(createInfo);
         }
 
-        using var uniformBindings = new NativeRefList<VkDescriptorType>(parameters.Length);
+        using var uniformBindings = new NativeList<VkDescriptorType>(parameters.Length);
 
         for (var i = 0; i < parameters.Length; i++)
         {
@@ -407,7 +407,7 @@ public partial class ShaderCompiler : Disposable
 
                 lock (entry.Lock)
                 {
-                    using var source = FileReader.ReadAllBytesAsRef(shader.Filepath);
+                    using var source = FileReader.ReadAllBytes(shader.Filepath);
 
                     var hasChanged = dependencyHasChanged || !this.watcher!.Files.TryGetValue(shader.Filepath, out var fileEntry) || fileEntry.Hash != MD5Hash.Create(source);
 
@@ -484,7 +484,7 @@ public partial class ShaderCompiler : Disposable
             this.watcher.Watch(shader.Share(), shaderOptions);
         }
 
-        using var source = FileReader.ReadAllBytesAsRef(shader.Filepath);
+        using var source = FileReader.ReadAllBytes(shader.Filepath);
 
         this.CompileShader(shader, source, shaderOptions);
     }

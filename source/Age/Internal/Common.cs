@@ -21,7 +21,7 @@ public static class Common
 
             static SKColor convert(ulong value) => new(ColorFormatConverter.RGBAtoBGRA(ColorFormatConverter.RGBA64toRGBA32(value)));
 
-            pixels = [.. data.Select(convert)];
+            pixels = [.. data.ToArray().Select(convert)];
         }
         else
         {
@@ -29,7 +29,7 @@ public static class Common
 
             static SKColor convert(uint value) => new(value);
 
-            pixels = [.. data.Select(convert)];
+            pixels = [.. data.ToArray().Select(convert)];
         }
 
         var bitmap = new SKBitmap((int)texture.Extent.Width, (int)texture.Extent.Height)

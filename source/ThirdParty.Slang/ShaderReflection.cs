@@ -84,7 +84,7 @@ public unsafe class ShaderReflection : Managed<ShaderReflection>
 
     public EntryPointReflection? FindEntryPointByName(string name)
     {
-        using var pName = new UnmanagedString(name);
+        using var pName = new NativeString(name);
         {
             var handle = PInvoke.spReflection_findEntryPointByName(this.Handle, pName);
 
@@ -94,7 +94,7 @@ public unsafe class ShaderReflection : Managed<ShaderReflection>
 
     public FunctionReflection? FindFunctionByName(string name)
     {
-        using var pName = new UnmanagedString(name);
+        using var pName = new NativeString(name);
 
         var handle = PInvoke.spReflection_FindFunctionByName(this.Handle, pName);
 
@@ -103,7 +103,7 @@ public unsafe class ShaderReflection : Managed<ShaderReflection>
 
     public FunctionReflection? FindFunctionByNameInType(TypeReflection reflType, string name)
     {
-        using var pName = new UnmanagedString(name);
+        using var pName = new NativeString(name);
 
         var handle = PInvoke.spReflection_FindFunctionByNameInType(this.Handle, reflType.Handle, pName);
 
@@ -112,7 +112,7 @@ public unsafe class ShaderReflection : Managed<ShaderReflection>
 
     public TypeReflection? FindTypeByName(string name)
     {
-        using var pName = new UnmanagedString(name);
+        using var pName = new NativeString(name);
 
         var handle = PInvoke.spReflection_FindTypeByName(this.Handle, pName);
 
@@ -121,7 +121,7 @@ public unsafe class ShaderReflection : Managed<ShaderReflection>
 
     public TypeParameterReflection? FindTypeParameter(string name)
     {
-        using var pName = new UnmanagedString(name);
+        using var pName = new NativeString(name);
 
         var handle = PInvoke.spReflection_FindTypeParameter(this.Handle, pName);
 
@@ -130,7 +130,7 @@ public unsafe class ShaderReflection : Managed<ShaderReflection>
 
     public VariableReflection? FindVarByNameInType(TypeReflection type, string name)
     {
-        using var pName = new UnmanagedString(name);
+        using var pName = new NativeString(name);
 
         var handle = PInvoke.spReflection_FindVarByNameInType(this.Handle, type.Handle, pName);
 

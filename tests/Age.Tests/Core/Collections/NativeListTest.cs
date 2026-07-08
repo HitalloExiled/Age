@@ -9,7 +9,9 @@ public class NativeListTest
         Assert.Equal(capacity, list.Capacity);
         Assert.Equal(values.Length, list.Count);
 
-        Assert.True(list.AsSpan().SequenceEqual(values));
+        var span = list.AsSpan();
+
+        Assert.True(span.SequenceEqual(values));
     }
 
     private static void AssertIt(Span<int> list, ReadOnlySpan<int> values)
@@ -17,6 +19,22 @@ public class NativeListTest
         Assert.Equal(values.Length, list.Length);
 
         Assert.True(list.SequenceEqual(values));
+    }
+
+    [Fact]
+    public void Create()
+    {
+        using NativeList<int> list = [1, 2, 3];
+
+        AssertIt(list, [1, 2, 3], 3);
+    }
+
+    [Fact]
+    public void CreateFixed()
+    {
+        using NativeList<int> list = new([1, 2, 3], true);
+
+        AssertIt(list, [1, 2, 3], 3);
     }
 
     [Fact]
@@ -174,5 +192,16 @@ public class NativeListTest
         Assert.Equal(3, list.Capacity);
 
         Assert.Throws<ArgumentOutOfRangeException>(() => list.Capacity = 2);
+    }
+
+    [Fact]
+    public void DisposeShouldPass()
+    {
+        var list = new NativeList<int>([1]);
+
+        list.Dispose();
+        list.Dispose();
+
+        Assert.True(true);
     }
 }

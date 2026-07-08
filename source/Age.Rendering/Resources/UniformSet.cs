@@ -57,7 +57,7 @@ public sealed class UniformSet : Resource
     public unsafe void Update(ReadOnlySpan<Uniform> uniforms)
     {
         using var disposables = new Disposables();
-        using var writes      = new NativeRefList<VkWriteDescriptorSet>();
+        using var writes      = new NativeList<VkWriteDescriptorSet>();
 
         foreach (var uniform in uniforms)
         {

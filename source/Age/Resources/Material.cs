@@ -13,12 +13,15 @@ public sealed class Material : Disposable
 
     protected override void OnDisposed(bool disposing)
     {
-        if (this.Diffuse != Texture2D.Default)
+        if (disposing)
         {
-            this.Diffuse.Dispose();
-        }
+            if (this.Diffuse != Texture2D.Default)
+            {
+                this.Diffuse.Dispose();
+            }
 
-        this.shader?.Dispose();
+            this.shader?.Dispose();
+        }
     }
 
     internal Shader GetShader(RenderTarget renderTarget, in ShaderOptions shaderOptions) =>

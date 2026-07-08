@@ -1,20 +1,23 @@
 using Age.Core;
+using Age.Core.Extensions;
 using Age.Numerics;
 
 namespace Age.Platforms.Display;
 
 public delegate void WindowMouseEventHandler(in WindowMouseEvent mouseEvent);
 public delegate void WindowContextEventHandler(in WindowContextEvent mouseEvent);
-public delegate void WindowKeyEventHandler(Key key);
+public delegate void WindowKeyEventHandler(in WindowKeyEvent keyEvent);
 public delegate void WindowInputEventHandler(char character);
 
-public partial class Window : Disposable
+public unsafe partial class Window : Disposable
 {
     #region events
     public event WindowMouseEventHandler?   Click;
     public event Action?                    Closed;
     public event WindowContextEventHandler? Context;
     public event WindowMouseEventHandler?   DoubleClick;
+    public event Action?                    FocusIn;
+    public event Action?                    FocusOut;
     public event WindowInputEventHandler?   Input;
     public event WindowKeyEventHandler?     KeyDown;
     public event WindowKeyEventHandler?     KeyPress;
@@ -26,125 +29,51 @@ public partial class Window : Disposable
     public event Action?                    Resized;
     #endregion events
 
-    private static string? className;
+    private static Size<uint> defaultSize = new(800, 600);
 
-    protected static Dictionary<nint, Window> WindowsMap { get; } = [];
+    private readonly List<Window> children = [];
 
-    public static IEnumerable<Window> Windows => WindowsMap.Values;
+    private string title;
 
-    protected static bool Registered { get; set; }
+    internal WindowState* State { get; }
 
-    private Point<int>    position;
-    private Size<uint>    size;
-    private string        title;
-    private WindowChanges windowChanges;
+    public static Cursor Cursor
+    {
+        get => WindowManager.Instance.Cursor;
+        set => WindowManager.Instance.Cursor = value;
+    }
 
-    protected List<Window> Children { get; } = [];
-
-    public Window? Parent { get; }
-
-    public nint Handle      { get; private set; }
     public bool IsClosed    { get; private set; }
     public bool IsMaximized { get; private set; }
     public bool IsMinimized { get; private set; }
     public bool IsVisible   { get; private set; } = true;
-
-    public Size<uint> ClientSize => this.PlatformGetClientSize();
-
-    public Cursor Cursor
-    {
-        get;
-        set
-        {
-            if (field != value)
-            {
-                field = value;
-                PlatformSetCursor(value);
-            }
-        }
-    }
-
-    public Point<int> Position
-    {
-        get => this.position;
-        set
-        {
-            if (this.position != value)
-            {
-                this.position = value;
-                this.PlatformSetPosition(value);
-            }
-        }
-    }
-
-    public Size<uint> Size
-    {
-        get => this.size;
-        set
-        {
-            if (this.size != value)
-            {
-                this.size = value;
-                this.PlatformSetSize(value);
-            }
-        }
-    }
 
     public string Title
     {
         get => this.title;
         set
         {
-            if (this.title != value)
+            if (this.title == value)
             {
-                this.title = value;
-                this.PlatformSetTitle(value);
+                return;
             }
+
+            WindowManager.Instance.SetWindowTitle(this, this.title = value);
         }
     }
 
-    public Window(string title, Size<uint> size, Point<int> position, Window? parent = null)
+    public ReadOnlySpan<Window> Children => this.children.AsSpan();
+    public Window?              Parent   { get; }
+    public Size<uint>           Size     => this.State->Size.Cast<uint>();
+
+    public Window(string? title, Size<uint>? size, Window? parent)
     {
-        this.title    = title;
-        this.size     = size;
-        this.position = position;
-        this.Parent   = parent;
+        this.title  = title ?? "Untitled";
+        this.Parent = parent;
 
-        this.PlatformCreate(title, size, position, parent);
+        parent?.children.Add(this);
 
-        parent?.Children.Add(this);
-    }
-
-    public static void Register(string className)
-    {
-        if (Registered)
-        {
-            throw new Exception("Windows class already registered");
-        }
-
-        PlatformRegister(className);
-
-        Registered = true;
-
-        Window.className = className;
-    }
-
-    public static void CloseAll()
-    {
-        foreach (var window in WindowsMap.Values)
-        {
-            window.Close();
-        }
-
-        WindowsMap.Clear();
-    }
-
-    public static void DoEventsAll()
-    {
-        foreach (var window in WindowsMap.Values)
-        {
-            window.DoEvents();
-        }
+        this.State = WindowManager.Instance.CreateWindow(this.title, (size ?? defaultSize).Cast<int>(), parent);
     }
 
     protected override void OnDisposed(bool disposing)
@@ -159,60 +88,132 @@ public partial class Window : Disposable
     {
         if (!this.IsClosed)
         {
+            foreach (var child in this.children)
+            {
+                child.Close();
+            }
+
             this.IsClosed = true;
 
-            this.PlatformClose();
-
-            this.Parent?.Children.Remove(this);
-
             Closed?.Invoke();
+
+            WindowManager.Instance.CloseWindow(this);
+
+            this.Parent?.children.Remove(this);
         }
     }
 
     public string? GetClipboardData() =>
-        this.PlatformGetClipboardData();
+        WindowManager.Instance.GetClipboardData(this);
+
+    public void DoEvents()
+    {
+        using var messages = WindowManager.Instance.FlushWindowEvents(this);
+
+        if (messages.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (var message in messages)
+        {
+            switch (message.Kind)
+            {
+                case MessageKind.Click:
+                    this.Click?.Invoke(message.Value.MouseEvent);
+
+                    break;
+
+                case MessageKind.Closed:
+                    this.Close();
+
+                    return;
+
+                case MessageKind.Context:
+                    this.Context?.Invoke(message.Value.ContextEvent);
+
+                    break;
+
+                case MessageKind.CursorChanged:
+                    WindowManager.Instance.UpdateCursor();
+
+                    break;
+
+                case MessageKind.DoubleClick:
+                    this.DoubleClick?.Invoke(message.Value.MouseEvent);
+
+                    break;
+
+                case MessageKind.FocusIn:
+                    this.FocusIn?.Invoke();
+
+                    break;
+
+                case MessageKind.FocusOut:
+                    this.FocusOut?.Invoke();
+
+                    break;
+
+                case MessageKind.Input:
+                    this.Input?.Invoke(message.Value.Input);
+
+                    break;
+
+                case MessageKind.KeyDown:
+                    this.KeyDown?.Invoke(message.Value.KeyEvent);
+                    this.KeyPress?.Invoke(message.Value.KeyEvent);
+
+                    break;
+
+                case MessageKind.KeyUp:
+                    this.KeyUp?.Invoke(message.Value.KeyEvent);
+                    this.KeyPress?.Invoke(message.Value.KeyEvent);
+
+                    break;
+
+                case MessageKind.MouseDown:
+                    this.MouseDown?.Invoke(message.Value.MouseEvent);
+
+                    break;
+
+                case MessageKind.MouseMove:
+                    this.MouseMove?.Invoke(message.Value.MouseEvent);
+
+                    break;
+
+                case MessageKind.MouseUp:
+                    this.MouseUp?.Invoke(message.Value.MouseEvent);
+
+                    break;
+
+                case MessageKind.MouseWheel:
+                    this.MouseWheel?.Invoke(message.Value.MouseEvent);
+
+                    break;
+
+                case MessageKind.Resized:
+                    this.Resized?.Invoke();
+
+                    break;
+            }
+        }
+    }
+
+    public void Hide() =>
+        WindowManager.Instance.HideWindow(this);
+
+    public void Maximize() =>
+        WindowManager.Instance.MaximizeWindow(this);
+
+    public void Minimize() =>
+        WindowManager.Instance.MinimizeWindow(this);
+
+    public void Restore() =>
+        WindowManager.Instance.RestoreWindow(this);
 
     public void SetClipboardData(string value) =>
-        this.PlatformSetClipboardData(value);
+        WindowManager.Instance.SetWindowClipboardData(this, value);
 
-    public void DoEvents() =>
-        this.PlatformDoEvents();
-
-    public void Hide()
-    {
-        this.PlatformHide();
-
-        this.IsVisible = false;
-    }
-
-    public void Maximize()
-    {
-        this.PlatformMaximize();
-
-        this.IsMaximized = true;
-        this.IsMinimized = false;
-    }
-
-    public void Minimize()
-    {
-        this.PlatformMinimize();
-
-        this.IsMaximized = false;
-        this.IsMinimized = true;
-    }
-
-    public void Restore()
-    {
-        this.PlatformRestore();
-
-        this.IsMaximized = false;
-        this.IsMinimized = false;
-    }
-
-    public void Show()
-    {
-        this.PlatformShow();
-
-        this.IsVisible = true;
-    }
+    public void Show() =>
+        WindowManager.Instance.ShowWindow(this);
 }

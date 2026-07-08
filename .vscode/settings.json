@@ -6,6 +6,7 @@
     },
     "files.exclude": {
         "**/*.bkp": true,
+        "**/*.lscache": true,
         "**/*.spv": true,
         "**/.DS_Store": true,
         "**/.git": true,
@@ -19,5 +20,8 @@
         "**/Thumbs.db": true,
         ".coverage": true,
         "BenchmarkDotNet.Artifacts": true
-    }
+    },
+    // "lldb.showDisassembly": "never",
+    "lldb.suppressMissingSourceFiles": true,
+    "lldb.library": "/usr/lib64/liblldb.so",
 }

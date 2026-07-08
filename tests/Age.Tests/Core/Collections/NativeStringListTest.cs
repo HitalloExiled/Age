@@ -80,7 +80,7 @@ public class NativeStringListTest
     [Fact]
     public void IncreaseCapacity()
     {
-        using var list = new NativeStringList(["one", "two", "three"]);
+        var list = new NativeStringList(["one", "two", "three"]);
 
         AssertList(list, 3, ["one", "two", "three"]);
 
@@ -93,17 +93,32 @@ public class NativeStringListTest
         list.Add("six");
 
         AssertList(list, 6, ["one", "two", "three", "four", "five", "six"]);
+
+        list.Dispose();
     }
 
     [Fact]
     public void DecreaseCapacity()
     {
-        using var list = new NativeStringList(["one", "two", "three", "four", "five", "six"]);
+        var list = new NativeStringList(4);
 
-        AssertList(list, 6, ["one", "two", "three", "four", "five", "six"]);
+        Assert.Equal(0, list.Count);
+        Assert.Equal(4, list.Capacity);
+
+        list.Add("0");
+        list.Add("1");
+        list.Add("2");
+
+        Assert.Equal(3, list.Count);
+        Assert.Equal(4, list.Capacity);
 
         list.Capacity = 3;
 
-        AssertList(list, 3, ["one", "two", "three"]);
+        Assert.Equal(3, list.Count);
+        Assert.Equal(3, list.Capacity);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => list.Capacity = 2);
+
+        list.Dispose();
     }
 }

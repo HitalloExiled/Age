@@ -10,8 +10,8 @@ public class GlobalSessionTest
     {
         using var globalSession = new GlobalSession(0);
 
-        using NativeStringRefArray       searchPath = [Path.GetFullPath(Path.Join(Path.RootLocation, "Slang/Shaders"))];
-        using NativeRefArray<TargetDesc> targets =
+        using NativeStringArray       searchPath = [Path.GetFullPath(Path.Join(Path.RootLocation, "Slang/Shaders"))];
+        using NativeArray<TargetDesc> targets =
         [
             new()
             {

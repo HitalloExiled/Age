@@ -87,7 +87,7 @@ public sealed class Editor : UIScene
                 currentIndex = 0;
             }
         }
-        else if (keyEvent.Modifiers.HasFlags(KeyStates.Control) && keyEvent.Key == Key.P)
+        else if (keyEvent.Modifiers.HasFlags(Modifier.Ctrl) && keyEvent.Key == Key.P)
         {
             this.PrintCanvasIndex();
             reload = false;

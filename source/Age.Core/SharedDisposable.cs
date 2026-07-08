@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Age.Core;
@@ -7,9 +8,8 @@ where T : SharedDisposable<T>
 {
     public event Action? Disposed;
 
-    private int disposedState;
-
-    private int users = 1;
+    private volatile int disposedState;
+    private volatile int users = 1;
 
     public bool IsDisposed => this.disposedState == 1;
     public int  Users      => this.users;
@@ -31,6 +31,8 @@ where T : SharedDisposable<T>
         if (disposing)
         {
             var count = Interlocked.Decrement(ref this.users);
+
+            Debug.Assert(count > -1);
 
             if (count > 0)
             {
