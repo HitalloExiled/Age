@@ -1337,57 +1337,62 @@ public unsafe sealed partial class WindowManager
                             && pointerData->ButtonTime - previousPointerData->ButtonTime < registryState->DoubleClikInterval
                             && ((previousPointerData->LastPressedPosition * SCALE) - (pointerData->LastPressedPosition * SCALE)).ToVector2().Length < 5;
 
-                        if (pressed)
-                        {
-                            registryState->ActiveWindow->AddMessage(WindowMessage.MouseDown(mouseEvent));
-                        }
-                        else
-                        {
-                            registryState->ActiveWindow->AddMessage(WindowMessage.MouseUp(mouseEvent));
+                        pointerData->DoubleClickBegun = !isDoubleClick;
 
-                            if (mouseEvent.IsPrimaryButtonPressed)
+                        if (registryState->ActiveWindow != null)
+                        {
+                            if (pressed)
                             {
-                                registryState->ActiveWindow->AddMessage(WindowMessage.Click(mouseEvent));
+                                registryState->ActiveWindow->AddMessage(WindowMessage.MouseDown(mouseEvent));
+                            }
+                            else
+                            {
+                                registryState->ActiveWindow->AddMessage(WindowMessage.MouseUp(mouseEvent));
+
+                                if (mouseEvent.IsPrimaryButtonPressed)
+                                {
+                                    registryState->ActiveWindow->AddMessage(WindowMessage.Click(mouseEvent));
+                                }
+
+                                if (registryState->LeftHandedMouse ? button == MouseButton.Left : button == MouseButton.Right)
+                                {
+                                    var contextEvent = new WindowContextEvent
+                                    {
+                                        X       = mouseEvent.X,
+                                        Y       = mouseEvent.Y,
+                                        ScreenX = mouseEvent.X,
+                                        ScreenY = mouseEvent.Y,
+                                    };
+
+                                    registryState->ActiveWindow->AddMessage(WindowMessage.Context(contextEvent));
+                                }
                             }
 
-                            if (registryState->LeftHandedMouse ? button == MouseButton.Left : button == MouseButton.Right)
+                            if (isDoubleClick)
                             {
-                                var contextEvent = new WindowContextEvent
+
+                                registryState->ActiveWindow->AddMessage(WindowMessage.DoubleClick(mouseEvent));
+                            }
+
+                            if (button is MouseButton.WheelUp or MouseButton.WheelDown or MouseButton.WheelLeft or MouseButton.WheelRight)
+                            {
+                                pointerData->PressedButton = default;
+
+                                var mouseWheelEvent = new WindowMouseEvent
                                 {
-                                    X       = mouseEvent.X,
-                                    Y       = mouseEvent.Y,
-                                    ScreenX = mouseEvent.X,
-                                    ScreenY = mouseEvent.Y,
+                                    Button         = button,
+                                    LeftHanded     = registryState->LeftHandedMouse,
+                                    Modifiers      = seatState->Modifiers,
+                                    PressedButtons = default,
+                                    Relative       = default,
+                                    ScrollDelta    = scrollDelta,
+                                    Velocity       = default,
+                                    X              = mouseEvent.X,
+                                    Y              = mouseEvent.Y,
                                 };
 
-                                registryState->ActiveWindow->AddMessage(WindowMessage.Context(contextEvent));
+                                registryState->ActiveWindow->AddMessage(WindowMessage.MouseWheel(mouseWheelEvent));
                             }
-                        }
-
-                        if (isDoubleClick)
-                        {
-                            pointerData->DoubleClickBegun = false;
-                            registryState->ActiveWindow->AddMessage(WindowMessage.DoubleClick(mouseEvent));
-                        }
-
-                        if (button is MouseButton.WheelUp or MouseButton.WheelDown or MouseButton.WheelLeft or MouseButton.WheelRight)
-                        {
-                            pointerData->PressedButton = default;
-
-                            var mouseWheelEvent = new WindowMouseEvent
-                            {
-                                Button         = button,
-                                LeftHanded     = registryState->LeftHandedMouse,
-                                Modifiers      = seatState->Modifiers,
-                                PressedButtons = default,
-                                Relative       = default,
-                                ScrollDelta    = scrollDelta,
-                                Velocity       = default,
-                                X              = mouseEvent.X,
-                                Y              = mouseEvent.Y,
-                            };
-
-                            registryState->ActiveWindow->AddMessage(WindowMessage.MouseWheel(mouseWheelEvent));
                         }
                     }
                 }
