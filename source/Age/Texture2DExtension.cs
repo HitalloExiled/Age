@@ -7,8 +7,8 @@ namespace Age;
 
 public static class Texture2DExtension
 {
-    private static readonly Texture2D @default = CreateAndStore("Default", Color.Margenta);
-    private static readonly Texture2D empty    = CreateAndStore("Empty", default);
+    private static readonly Lazy<Texture2D> @default = new(() => CreateAndStore("Default", Color.Margenta));
+    private static readonly Lazy<Texture2D> empty    = new(() => CreateAndStore("Empty", default));
 
     private static Texture2D CreateAndStore(string name, in Color color)
     {
@@ -21,8 +21,8 @@ public static class Texture2DExtension
 
     extension(Texture2D)
     {
-        public static Texture2D Default => @default;
-        public static Texture2D Empty   => empty;
+        public static Texture2D Default => @default.Value;
+        public static Texture2D Empty   => empty.Value;
 
         public static Texture2D Load(string path)
         {
