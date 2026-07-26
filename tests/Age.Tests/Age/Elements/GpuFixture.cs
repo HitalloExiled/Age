@@ -17,6 +17,20 @@ public class GpuFixture : IDisposable
     static GpuFixture()
     {
         var candidates = new List<string>();
+        var sdkRoot    = Environment.GetEnvironmentVariable("VULKAN_SDK");
+
+        if (sdkRoot != null)
+        {
+            if (OperatingSystem.IsLinux())
+            {
+                candidates.Add(Path.Combine(sdkRoot, "VkICD_mock_icd.json"));
+            }
+
+            if (OperatingSystem.IsWindows())
+            {
+                candidates.Add(Path.Combine(sdkRoot, "Source", "layers", "generated", "mock_icd", "VkICD_mock_icd.json"));
+            }
+        }
 
         if (OperatingSystem.IsLinux())
         {
@@ -24,16 +38,6 @@ public class GpuFixture : IDisposable
                 "/usr/share/vulkan/icd.d/lvp_icd.x86_64.json",
                 "/usr/share/vulkan/icd.d/lvp_icd.i686.json",
             ]);
-        }
-
-        if (OperatingSystem.IsWindows())
-        {
-            var sdkRoot = Environment.GetEnvironmentVariable("VULKAN_SDK");
-
-            if (sdkRoot != null)
-            {
-                candidates.Add(Path.Combine(sdkRoot, "Source", "layers", "generated", "mock_icd", "VkICD_mock_icd.json"));
-            }
         }
 
         lavapipePath = candidates.FirstOrDefault(File.Exists);
