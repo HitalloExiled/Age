@@ -22,7 +22,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void Create()
+    public void Create_AllocatesWithInitialElements()
     {
         using NativeList<int> list = [1, 2, 3];
 
@@ -30,7 +30,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void CreateFixed()
+    public void CreateFixed_AllocatesFixedSizeList()
     {
         using NativeList<int> list = new([1, 2, 3], true);
 
@@ -38,7 +38,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void Add()
+    public void Add_AppendsElement()
     {
         using NativeList<int> list = [1, 2, 3];
 
@@ -50,7 +50,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void Insert()
+    public void Insert_InsertsElementAtPosition()
     {
         using NativeList<int> list = [1, 3, 4];
 
@@ -70,7 +70,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void Index()
+    public void Index_AccessesElementsByIndex()
     {
         using NativeList<int> list = [1, 2, 3];
 
@@ -79,7 +79,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void Slice()
+    public void Slice_ReturnsSubspan()
     {
         using NativeList<int> list = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
@@ -89,7 +89,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void Remove()
+    public void Remove_RemovesElementByValue()
     {
         using var list = new NativeList<int>([4, 5, 6]);
 
@@ -101,7 +101,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void RemoveAt()
+    public void RemoveAt_RemovesElementByIndex()
     {
         using var list = new NativeList<int>([4, 5, 6]);
 
@@ -113,7 +113,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void RemoveWithLength()
+    public void RemoveWithLength_RemovesRangeOfElements()
     {
         using var list = new NativeList<int>([1, 2, 3, 4, 5, 6]);
 
@@ -129,7 +129,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void Clear()
+    public void Clear_RemovesAllElements()
     {
         using var list = new NativeList<int>([4, 5, 6]);
 
@@ -147,7 +147,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void IncreaseCapacity()
+    public void IncreaseCapacity_ExpandsCapacity()
     {
         using var list = new NativeList<int>([1, 2, 3]);
 
@@ -172,7 +172,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void DecreaseCapacity()
+    public void DecreaseCapacity_ShrinksCapacity()
     {
         using var list = new NativeList<int>(4);
 
@@ -195,7 +195,7 @@ public class NativeListTest
     }
 
     [Fact]
-    public void DisposeShouldPass()
+    public void DisposeShouldPass_DoesNotThrowOnDoubleDispose()
     {
         var list = new NativeList<int>([1]);
 

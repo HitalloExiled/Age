@@ -21,7 +21,7 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_WithDependents_ReturnsDefault()
+    public void WithDependents_ReturnsDefault()
     {
         var (window, uiScene) = SetupTree();
 
@@ -40,7 +40,7 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_AfterConnect_TriggersUpdateDisposition()
+    public void AfterConnect_TriggersUpdateDisposition()
     {
         var (window, uiScene) = SetupTree();
 
@@ -57,7 +57,7 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_PendingLayouts_ResolvesPercentageWidth()
+    public void PendingLayouts_ResolvesPercentageWidth()
     {
         var (window, uiScene) = SetupTree();
 
@@ -89,7 +89,7 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_ByDefault_ReturnsZero()
+    public void ByDefault_ReturnsZero()
     {
         var (window, uiScene) = SetupTree();
 
@@ -109,7 +109,7 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_WithMargin_ReturnsEdges()
+    public void WithMargin_ReturnsEdges()
     {
         var (window, uiScene) = SetupTree();
 
@@ -124,7 +124,7 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_WithPadding_ReturnsEdges()
+    public void WithPadding_ReturnsEdges()
     {
         var (window, uiScene) = SetupTree();
 
@@ -139,7 +139,7 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_WithBorder_ReturnsEdges()
+    public void WithBorder_ReturnsEdges()
     {
         var (window, uiScene) = SetupTree();
 
@@ -154,7 +154,7 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_Size_SetsBoundings()
+    public void Size_SetsBoundings()
     {
         var (window, uiScene) = SetupTree();
 
@@ -171,7 +171,7 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_PaddingAndBorder_IncreaseBoundings()
+    public void PaddingAndBorder_IncreaseBoundings()
     {
         var (window, uiScene) = SetupTree();
 
@@ -194,7 +194,7 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_BoxSizingBorder_ContentShrinks()
+    public void BoxSizingBorder_ContentShrinks()
     {
         var (window, uiScene) = SetupTree();
 
@@ -219,7 +219,7 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_ContentAccumulatesFromChildren()
+    public void ContentAccumulatesFromChildren()
     {
         var (window, uiScene) = SetupTree();
 
@@ -238,7 +238,7 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_WithAllProperties_ReturnsExpectedValues()
+    public void WithAllProperties_ReturnsExpectedValues()
     {
         var (window, uiScene) = SetupTree();
 

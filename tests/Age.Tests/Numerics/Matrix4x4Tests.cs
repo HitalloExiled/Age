@@ -7,7 +7,7 @@ namespace Age.Tests.Numerics;
 public class Matrix4x4Tests
 {
     [Fact]
-    public void Constructor()
+    public void Constructor_CreatesFromValues()
     {
         var actual   = new Matrix4x4<float>(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4);
         var expected = new Mat4x4(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4);
@@ -16,7 +16,7 @@ public class Matrix4x4Tests
     }
 
     [Fact]
-    public void Constructor2()
+    public void Constructor2_CreatesFromVectors()
     {
         var actual   = new Matrix4x4<float>(new(1, 1, 1, 1), new(2, 2, 2, 2), new(3, 3, 3, 3), new(4, 4, 4, 4));
         var expected = new Mat4x4(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4);
@@ -25,7 +25,7 @@ public class Matrix4x4Tests
     }
 
     [Fact]
-    public void Indexer()
+    public void Indexer_ReturnsElement()
     {
         var actual = Matrix4x4<float>.Identity;
 
@@ -33,14 +33,14 @@ public class Matrix4x4Tests
     }
 
     [Fact]
-    public void IsIdentity()
+    public void IsIdentity_ReturnsCorrectBool()
     {
         Assert.False(new Matrix4x4<float>().IsIdentity);
         Assert.True(Matrix4x4<float>.Identity.IsIdentity);
     }
 
     [Fact]
-    public void LookingAt()
+    public void LookingAt_CreatesLookAtMatrix()
     {
         var actual   = Matrix4x4<float>.LookingAt(new(2), new(), new(0, 0, 1));
         var expected = Mat4x4.CreateLookAt(new(2), new(), new(0, 0, 1));
@@ -49,7 +49,7 @@ public class Matrix4x4Tests
     }
 
     [Fact]
-    public void Perspective()
+    public void Perspective_CreatesPerspectiveMatrix()
     {
         var actual   = Matrix4x4<float>.Perspective(800, 400, 0.1f, 10);
         var expected = Mat4x4.CreatePerspective(800, 400, 0.1f, 10);
@@ -58,7 +58,7 @@ public class Matrix4x4Tests
     }
 
     [Fact]
-    public void PerspectiveWithPositiveInfinityFarPlane()
+    public void PerspectiveWithInfinityFarPlane_CreatesPerspectiveMatrix()
     {
         var actual   = Matrix4x4<float>.Perspective(800, 400, 0.1f, float.PositiveInfinity);
         var expected = Mat4x4.CreatePerspective(800, 400, 0.1f, float.PositiveInfinity);
@@ -67,7 +67,7 @@ public class Matrix4x4Tests
     }
 
     [Fact]
-    public void PerspectiveFov()
+    public void PerspectiveFov_CreatesPerspectiveFovMatrix()
     {
         var actual   = Matrix4x4<float>.PerspectiveFov(Angle.DegreesToRadians(45f), 800 / 400, 0.1f, 10);
         var expected = Mat4x4.CreatePerspectiveFieldOfView(Angle.DegreesToRadians(45f), 800 / 400, 0.1f, 10);
@@ -76,7 +76,7 @@ public class Matrix4x4Tests
     }
 
     [Fact]
-    public void PerspectiveFovWithPositiveInfinityFarPlane()
+    public void PerspectiveFovWithInfinityFarPlane_CreatesPerspectiveFovMatrix()
     {
         var actual   = Matrix4x4<float>.PerspectiveFov(Angle.DegreesToRadians(45f), 800 / 400, 0.1f, float.PositiveInfinity);
         var expected = Mat4x4.CreatePerspectiveFieldOfView(Angle.DegreesToRadians(45f), 800 / 400, 0.1f, float.PositiveInfinity);
@@ -94,7 +94,7 @@ public class Matrix4x4Tests
     // }
 
     [Fact]
-    public void Rotation()
+    public void Rotation_SetsAndGetsRotation()
     {
         // TODO: Review after implements 3D transform on viewport
         static void rotateAndAssert(double angle)
@@ -122,7 +122,7 @@ public class Matrix4x4Tests
     }
 
     [Fact]
-    public void PerspectiveWithInvalidFovShouldThrows()
+    public void PerspectiveWithInvalidFov_ThrowsOnInvalid()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => Matrix4x4<float>.Perspective(800, 400, 0, 10));
         Assert.Throws<ArgumentOutOfRangeException>(() => Matrix4x4<float>.Perspective(800, 400, 0.1f, 0));
@@ -130,7 +130,7 @@ public class Matrix4x4Tests
     }
 
     [Fact]
-    public void PerspectiveFovWithInvalidFovShouldThrows()
+    public void PerspectiveFovWithInvalidFov_ThrowsOnInvalid()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => Matrix4x4<float>.PerspectiveFov(-1, 800 / 400, 0.1f, 10));
         Assert.Throws<ArgumentOutOfRangeException>(() => Matrix4x4<float>.PerspectiveFov((float)Math.PI, 800 / 400, 0.1f, 10));

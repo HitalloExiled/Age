@@ -13,7 +13,7 @@ public unsafe class NativeArrayTest
     }
 
     [Fact]
-    public void Create()
+    public void Create_AllocatesAndSetsElements()
     {
         using var array = new NativeArray<int>(4);
 
@@ -33,7 +33,7 @@ public unsafe class NativeArrayTest
     }
 
     [Fact]
-    public void CreateInitialized()
+    public void CreateInitialized_AllocatesWithInitialValues()
     {
         using NativeArray<int> array = [1, 2, 3, 4];
 
@@ -48,7 +48,7 @@ public unsafe class NativeArrayTest
     }
 
     [Fact]
-    public void Enumerate()
+    public void Enumerate_IteratesOverAllElements()
     {
         using var array = new NativeArray<int>([1, 2, 3, 4, 5, 6]);
 

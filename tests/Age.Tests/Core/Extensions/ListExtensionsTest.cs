@@ -5,7 +5,7 @@ namespace Age.Tests.Core.Extensions;
 public class ListExtensionsTest
 {
     [Fact]
-    public void Replace()
+    public void RangeReplace_ReplacesCorrectly()
     {
         List<int> source = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 

@@ -14,7 +14,7 @@ public class DropoutStackTest
     }
 
     [Fact]
-    public void Push()
+    public void Push_AddsElementsAndDropsOldest()
     {
         var stack = new DropoutStack<int>(3);
 
@@ -48,7 +48,7 @@ public class DropoutStackTest
     }
 
     [Fact]
-    public void Pop()
+    public void Pop_RemovesAndReturnsTopElement()
     {
         var stack = new DropoutStack<int>(5);
 

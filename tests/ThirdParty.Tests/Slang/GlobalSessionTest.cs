@@ -6,7 +6,7 @@ namespace ThirdParty.Tests.Slang;
 public class GlobalSessionTest
 {
     [Fact]
-    public void CreateGlobalSession()
+    public void CreateSession_LoadsModule()
     {
         using var globalSession = new GlobalSession(0);
 

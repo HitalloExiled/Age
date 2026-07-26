@@ -3,7 +3,7 @@ namespace Age.Tests.Age.Styling;
 public class StyleTest
 {
     [Fact]
-    public void TestName()
+    public void DefaultState_DoesNotThrow()
     {
         // Given
 

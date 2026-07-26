@@ -26,7 +26,7 @@ public class RenderableTest
     }
 
     [Fact]
-    public void SplitList()
+    public void SplitList_ManagesItemsCorrectly()
     {
         var splitList = new Renderable<Command2D>.SplitList();
 
@@ -67,7 +67,7 @@ public class RenderableTest
     }
 
     [Fact]
-    public void AddPreAndPost()
+    public void AddPreAndPost_AddsPreThenPostCommands()
     {
         var splitList = new Renderable<Command2D>.SplitList();
 
@@ -104,7 +104,7 @@ public class RenderableTest
     }
 
     [Fact]
-    public void AddPostAndPre()
+    public void AddPostAndPre_AddsPostThenPreCommands()
     {
         var splitList = new Renderable<Command2D>.SplitList();
 
@@ -141,7 +141,7 @@ public class RenderableTest
     }
 
     [Fact]
-    public void SplitListWithSeparator()
+    public void SplitListWithSeparator_ManagesSplitWithSeparator()
     {
         var splitList = new Renderable<Command2D>.SplitList();
 

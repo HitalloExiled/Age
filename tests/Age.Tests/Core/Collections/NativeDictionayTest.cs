@@ -27,7 +27,7 @@ public class NativeDictionayTest
     }
 
     [Fact]
-    public void Create()
+    public void Create_AllocatesWithInitialEntries()
     {
         using NativeDictionary<int, long> dictionary = new()
         {
@@ -40,7 +40,7 @@ public class NativeDictionayTest
     }
 
     [Fact]
-    public void CreateFixed()
+    public void CreateFixed_AllocatesFixedSizeDictionary()
     {
         using NativeDictionary<int, long> dictionary = new(3, true)
         {
@@ -53,7 +53,7 @@ public class NativeDictionayTest
     }
 
     [Fact]
-    public void Add()
+    public void Add_InsertsKeyValuePairs()
     {
         using var dictionary = new NativeDictionary<int, int>(0);
 
@@ -69,7 +69,7 @@ public class NativeDictionayTest
     }
 
     [Fact]
-    public void Set()
+    public void Set_OverwritesExistingKeyValue()
     {
         using var dictionary = new NativeDictionary<int, int>();
 
@@ -83,7 +83,7 @@ public class NativeDictionayTest
     }
 
     [Fact]
-    public void Remove()
+    public void Remove_DeletesEntries()
     {
         using var dictionary = new NativeDictionary<int, int>(4);
 
@@ -112,7 +112,7 @@ public class NativeDictionayTest
     }
 
     [Fact]
-    public void RemoveAndOut()
+    public void RemoveAndOut_RemovesAndReturnsValue()
     {
         using var dictionary = new NativeDictionary<int, int>(4);
 
@@ -129,7 +129,7 @@ public class NativeDictionayTest
     }
 
     [Fact]
-    public void DisposeShouldPass()
+    public void DisposeShouldPass_DoesNotThrowOnDoubleDispose()
     {
         var list = new NativeDictionary<int, int>
         {

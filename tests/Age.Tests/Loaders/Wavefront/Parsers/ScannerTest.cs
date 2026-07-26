@@ -8,7 +8,7 @@ public partial class ScannerTest
 {
     [Theory]
     [MemberData(nameof(Scenarios.Valid), MemberType= typeof(Scenarios))]
-    public void ValidScenarios(ValidScenario scenario)
+    public void ValidScenarios_ReturnsCorrectToken(ValidScenario scenario)
     {
         if (scenario.Skip)
         {
@@ -26,7 +26,7 @@ public partial class ScannerTest
 
     [Theory]
     [MemberData(nameof(Scenarios.Invalid), MemberType= typeof(Scenarios))]
-    public void InvalidScenarios(InvalidScenario scenario)
+    public void InvalidScenarios_ThrowsOnInvalid(InvalidScenario scenario)
     {
         if (scenario.Skip)
         {

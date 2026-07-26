@@ -11,7 +11,7 @@ public class InlineList4Tests
     }
 
     [Fact]
-    public void AddAndRemove()
+    public void AddAndRemove_UpdatesListCorrectly()
     {
         var list = new InlineList4<int>();
 
@@ -45,7 +45,7 @@ public class InlineList4Tests
     }
 
     [Fact]
-    public void RemoveWithReferences()
+    public void RemoveWithReferences_RemovesReferenceTypeElements()
     {
         InlineList4<string> list = ["1", "2", "3", "4"];
 
@@ -65,7 +65,7 @@ public class InlineList4Tests
     }
 
     [Fact]
-    public void Clear()
+    public void Clear_RemovesAllElements()
     {
         InlineList4<int> list = [1, 2, 3, 4];
 
@@ -77,7 +77,7 @@ public class InlineList4Tests
     }
 
     [Fact]
-    public void ClearWithReferences()
+    public void ClearWithReferences_ClearsReferenceTypeElements()
     {
         InlineList4<string> list = ["1", "2", "3", "4"];
 
@@ -89,7 +89,7 @@ public class InlineList4Tests
     }
 
     [Fact]
-    public void Compare()
+    public void Compare_ReturnsEqualForIdenticalLists()
     {
         var a = new InlineList4<int>(1, 2, 3, 4);
         var b = new InlineList4<int>(1, 2, 3, 4);
@@ -99,6 +99,6 @@ public class InlineList4Tests
     }
 
     [Fact]
-    public void ThrowIfExceeds() =>
+    public void ThrowIfExceeds_ThrowsInlineListException() =>
         Assert.Throws<InlineListException>(() => new InlineList4<int>(5));
 }

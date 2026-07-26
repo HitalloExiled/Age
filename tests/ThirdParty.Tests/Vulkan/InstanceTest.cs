@@ -8,13 +8,13 @@ namespace ThirdParty.Tests.Vulkan;
 public class InstanceTest(VulkanFixture fixture)
 {
     [Fact]
-    public void Instance_Create_Succeeds()
+    public void Create_Succeeds()
     {
         Assert.NotNull(fixture.Instance);
     }
 
     [Fact]
-    public void Instance_EnumeratePhysicalDevices_ReturnsDevices()
+    public void EnumeratePhysicalDevices_ReturnsDevices()
     {
         var devices = fixture.Instance.EnumeratePhysicalDevices();
 

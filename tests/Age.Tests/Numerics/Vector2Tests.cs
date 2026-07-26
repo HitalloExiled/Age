@@ -5,7 +5,7 @@ namespace Age.Tests.Numerics;
 public class Vector2Tests
 {
     [Fact]
-    public void Add()
+    public void Add_AddsVectors()
     {
         var v1 = new Vector2<float>(1, 0);
         var v2 = new Vector2<float>(1, 0.5f);
@@ -17,7 +17,7 @@ public class Vector2Tests
     }
 
     [Fact]
-    public void AddValue()
+    public void AddValue_AddsScalar()
     {
         const int OFFSET = 5;
 
@@ -30,7 +30,7 @@ public class Vector2Tests
     }
 
     [Fact]
-    public void Angle()
+    public void Angle_ReturnsAngleBetweenVectors()
     {
         var v1 = new Vector2<float>(1, 0);
         var v2 = new Vector2<float>(1, 0);

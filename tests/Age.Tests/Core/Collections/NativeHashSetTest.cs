@@ -5,7 +5,7 @@ namespace Age.Tests.Core.Collections;
 public unsafe class NativeHashSetTest
 {
     [Fact]
-    public void Create()
+    public void Create_AllocatesWithInitialCapacity()
     {
         using var set = new NativeHashSet<int>(4);
 
@@ -17,7 +17,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void CreateFixed()
+    public void CreateFixed_SetsFixedSize()
     {
         using var set = new NativeHashSet<int>(8, true);
 
@@ -25,7 +25,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void Add()
+    public void Add_InsertsNewElements()
     {
         using var set = new NativeHashSet<int>(4);
 
@@ -40,7 +40,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void AddDuplicate()
+    public void AddDuplicate_ReturnsFalseForDuplicateElement()
     {
         using var set = new NativeHashSet<int>(4);
 
@@ -51,7 +51,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void Remove()
+    public void Remove_DeletesExistingElement()
     {
         using var set = new NativeHashSet<int>(4);
 
@@ -67,7 +67,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void RemoveNonExisting()
+    public void RemoveNonExisting_ReturnsFalse()
     {
         using var set = new NativeHashSet<int>(4);
 
@@ -75,7 +75,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void Contains()
+    public void Contains_ChecksElementExistence()
     {
         using var set = new NativeHashSet<int>(4);
 
@@ -88,7 +88,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void Clear()
+    public void Clear_RemovesAllElements()
     {
         using var set = new NativeHashSet<int>(4);
 
@@ -107,7 +107,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void ToNativeArray()
+    public void ToNativeArray_ReturnsArrayWithAllElements()
     {
         using var set = new NativeHashSet<int>(8);
 
@@ -132,7 +132,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void ToNativeArrayEmpty()
+    public void ToNativeArrayEmpty_ReturnsUncreatedArray()
     {
         using var set = new NativeHashSet<int>(4);
 
@@ -142,7 +142,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void Enumerate()
+    public void Enumerate_IteratesOverAllElements()
     {
         using var set = new NativeHashSet<int>(8);
 
@@ -166,7 +166,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void EnumerateEmpty()
+    public void EnumerateEmpty_DoesNotIterate()
     {
         using var set = new NativeHashSet<int>(4);
 
@@ -177,7 +177,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void LargeCount()
+    public void LargeCount_HandlesManyElements()
     {
         using var set = new NativeHashSet<int>(16);
 
@@ -195,7 +195,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void RemoveAndReAdd()
+    public void RemoveAndReAdd_AllowsReinsertionAfterRemoval()
     {
         using var set = new NativeHashSet<int>(4);
 
@@ -209,7 +209,7 @@ public unsafe class NativeHashSetTest
     }
 
     [Fact]
-    public void DisposeShouldPass()
+    public void DisposeShouldPass_DoesNotThrowOnDoubleDispose()
     {
         var set = new NativeHashSet<int>(4);
 

@@ -77,7 +77,7 @@ public class LayerTest
     }
 
     [Fact]
-    public void TestName()
+    public void CreateBorderPathWithRadius_SavesImage()
     {
         var size = new Size<uint>(200, 100);
         var border = new Border

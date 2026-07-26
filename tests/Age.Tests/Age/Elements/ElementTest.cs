@@ -12,7 +12,7 @@ public class ElementTest
     }
 
     [Fact]
-    public void ElementSibling()
+    public void WithNonElementNodes_ReturnsElementSiblings()
     {
         var parent = new FlexBox();
 
@@ -41,7 +41,7 @@ public class ElementTest
     }
 
     [Fact]
-    public void ElementSiblingSingleNode()
+    public void SingleChild_ReturnsElementSiblings()
     {
         var parent = new FlexBox();
 

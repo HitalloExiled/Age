@@ -30,21 +30,21 @@ public class FreeDesktopPortalTest : IDisposable
     }
 
     [Fact]
-    public void ReadSettingReturnsNullForUnknownKey()
+    public void ReadUnknownKey_ReturnsNull()
     {
         Assert.False(this.portal.TryReadSetting("org.freedesktop.appearance", "nonexistent-setting", out var value));
         Assert.Null(value);
     }
 
     [Fact]
-    public void GenericReadSettingReturnsNullForUnknownKey()
+    public void ReadUnknownKeyGeneric_ReturnsDefault()
     {
         Assert.False(this.portal.TryReadSetting<uint>("org.freedesktop.appearance", "nonexistent-setting", out var value));
         Assert.True(value == default);
     }
 
     [Fact]
-    public void NonGenericAndGenericReturnSameForUnknownKey()
+    public void ReadUnknownKey_NonGenericAndGenericMatch()
     {
         Assert.False(this.portal.TryReadSetting("org.freedesktop.appearance", "nonexistent-setting", out var nonGeneric));
         Assert.False(this.portal.TryReadSetting<uint>("org.freedesktop.appearance", "nonexistent-setting", out var generic));
@@ -52,14 +52,14 @@ public class FreeDesktopPortalTest : IDisposable
     }
 
     [Fact]
-    public void GenericReadSettingReturnsNullForMismatchedType()
+    public void ReadMismatchedType_ReturnsDefault()
     {
         Assert.True(this.portal.TryReadSetting<Color>("org.freedesktop.appearance", "accent-color", out var value));
         Assert.True(value != default);
     }
 
     [Fact]
-    public void RefreshDoesNotThrow() =>
+    public void Refresh_DoesNotThrow() =>
         this.portal.Refresh();
 }
 #endif

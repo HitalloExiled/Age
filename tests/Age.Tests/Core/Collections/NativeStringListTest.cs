@@ -16,7 +16,7 @@ public class NativeStringListTest
     }
 
     [Fact]
-    public void Add()
+    public void Add_CreatesWithInitialStrings()
     {
         using NativeStringList list = ["one", "two", "three"];
 
@@ -24,7 +24,7 @@ public class NativeStringListTest
     }
 
     [Fact]
-    public void AddAndModify()
+    public void AddAndModify_ModifiesExistingElements()
     {
         using NativeStringList list = ["one", "two", "three"];
 
@@ -38,7 +38,7 @@ public class NativeStringListTest
     }
 
     [Fact]
-    public void Remove()
+    public void Remove_RemovesElementByIndex()
     {
         using var list = new NativeStringList(["four", "five", "six"]);
 
@@ -50,7 +50,7 @@ public class NativeStringListTest
     }
 
     [Fact]
-    public void RemoveWithLength()
+    public void RemoveWithLength_RemovesRangeOfElements()
     {
         using var list = new NativeStringList(["one", "two", "three", "four", "five", "six"]);
 
@@ -66,7 +66,7 @@ public class NativeStringListTest
     }
 
     [Fact]
-    public void Clear()
+    public void Clear_RemovesAllElements()
     {
         using var list = new NativeStringList(["four", "five", "six"]);
 
@@ -78,7 +78,7 @@ public class NativeStringListTest
     }
 
     [Fact]
-    public void IncreaseCapacity()
+    public void IncreaseCapacity_ExpandsCapacity()
     {
         var list = new NativeStringList(["one", "two", "three"]);
 
@@ -98,7 +98,7 @@ public class NativeStringListTest
     }
 
     [Fact]
-    public void DecreaseCapacity()
+    public void DecreaseCapacity_ShrinksCapacity()
     {
         var list = new NativeStringList(4);
 

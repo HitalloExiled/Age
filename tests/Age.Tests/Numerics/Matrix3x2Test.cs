@@ -13,7 +13,7 @@ public class Matrix3x2Test
 
     [Theory]
     [MemberData(nameof(TranslateData), MemberType = typeof(Matrix3x2Test))]
-    public void CreateTranslated(Vector2<float> position)
+    public void CreateTranslated_SetsTranslation(Vector2<float> position)
     {
         var matrix = Matrix3x2<float>.Translated(position);
 
@@ -26,7 +26,7 @@ public class Matrix3x2Test
 
     [Theory]
     [MemberData(nameof(RotateData), MemberType = typeof(Matrix3x2Test))]
-    public void CreateRotated(float angle)
+    public void CreateRotated_SetsRotation(float angle)
     {
         var rotation = Angle.DegreesToRadians(angle);
 
@@ -40,7 +40,7 @@ public class Matrix3x2Test
 
     [Theory]
     [MemberData(nameof(ScaleData), MemberType = typeof(Matrix3x2Test))]
-    public void CreateScaled(Vector2<float> scale)
+    public void CreateScaled_SetsScale(Vector2<float> scale)
     {
         var matrix = Matrix3x2<float>.Scaled(scale);
 
@@ -57,7 +57,7 @@ public class Matrix3x2Test
 
     [Theory]
     [MemberData(nameof(RotateAndTranslateData), MemberType = typeof(Matrix3x2Test))]
-    public void RotateAndTranslate((float Rotation, Vector2<float> Translation) data)
+    public void RotateAndTranslate_AppliesRotationAndTranslation((float Rotation, Vector2<float> Translation) data)
     {
         var rotation = Angle.DegreesToRadians(data.Rotation);
 
@@ -79,7 +79,7 @@ public class Matrix3x2Test
 
     [Theory]
     [MemberData(nameof(ScaleAndRotateData), MemberType = typeof(Matrix3x2Test))]
-    public void ScaleAndRotate((float Rotation, Vector2<float> Scale) data)
+    public void ScaleAndRotate_AppliesScaleAndRotation((float Rotation, Vector2<float> Scale) data)
     {
         var rotation = Angle.DegreesToRadians(data.Rotation);
 
@@ -101,7 +101,7 @@ public class Matrix3x2Test
 
     [Theory]
     [MemberData(nameof(ScaleRotateAndTranslateData), MemberType = typeof(Matrix3x2Test))]
-    public void ScaleRotateAndTranslate((Vector2<float> Translation, float Rotation, Vector2<float> Scale) data)
+    public void ScaleRotateAndTranslate_AppliesAllTransforms((Vector2<float> Translation, float Rotation, Vector2<float> Scale) data)
     {
         var rotation = Angle.DegreesToRadians(data.Rotation);
 
@@ -116,7 +116,7 @@ public class Matrix3x2Test
     }
 
     [Fact]
-    public void Inverse()
+    public void Inverse_ReturnsCorrectInverse()
     {
         var parent = Matrix3x2<float>.Translated(1, 0)
             * Matrix3x2<float>.Rotated(Angle.DegreesToRadians(45f))

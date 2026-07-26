@@ -11,7 +11,7 @@ public class BitTest
         Assert.True(actual.SequenceEqual(expected));
 
     [Fact]
-    public void Combine32()
+    public void Combine32_CombinesCorrectly()
     {
         var actual   = Bit.Combine(0x0, 0xFF, 0x0, 0xFF);
         var expected = BitConverter.ToUInt32([0x0, 0xFF, 0x0, 0xFF]);
@@ -20,7 +20,7 @@ public class BitTest
     }
 
     [Fact]
-    public void Combine64()
+    public void Combine64_CombinesCorrectly()
     {
         var value    = Bit.Combine(0x0, 0xFFFF, 0x0, 0xFFFF);
         var expected = BitConverter.ToUInt64([0x0, 0x0, 0xFF, 0xFF, 0x0, 0x0, 0xFF, 0xFF]);
@@ -29,7 +29,7 @@ public class BitTest
     }
 
     [Fact]
-    public void Split32()
+    public void Split32_SplitsCorrectly()
     {
         var value = BitConverter.ToUInt32([0x0, 0xFF, 0x0, 0xFF]);
 
@@ -39,7 +39,7 @@ public class BitTest
     }
 
     [Fact]
-    public void Split64()
+    public void Split64_SplitsCorrectly()
     {
         var value = BitConverter.ToUInt64([0x0, 0x0, 0xFF, 0xFF, 0x0, 0x0, 0xFF, 0xFF]);
 

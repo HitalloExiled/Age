@@ -12,7 +12,7 @@ public class RefStringBufferTest
     }
 
     [Fact]
-    public void Append()
+    public void Append_AppendsString()
     {
         using var buffer = new RefStringBuffer(32);
 
@@ -26,7 +26,7 @@ public class RefStringBufferTest
     }
 
     [Fact]
-    public void Insert()
+    public void Insert_InsertsString()
     {
         using var buffer = new RefStringBuffer("HelloWorld");
 
@@ -42,7 +42,7 @@ public class RefStringBufferTest
     }
 
     [Fact]
-    public void Remove()
+    public void Remove_RemovesString()
     {
         using var buffer = new RefStringBuffer("Hello World!!!");
 

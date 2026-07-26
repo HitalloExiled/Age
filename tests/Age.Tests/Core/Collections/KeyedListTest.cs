@@ -14,7 +14,7 @@ public partial class KeyedListTest
     }
 
     [Fact]
-    public void AddToEnum8b()
+    public void AddToEnum8b_AddsAndSortsEntries()
     {
         var list = new KeyedList<Enum8b, string>
         {
@@ -34,7 +34,7 @@ public partial class KeyedListTest
     }
 
     [Fact]
-    public void AddToEnum16b()
+    public void AddToEnum16b_AddsAndSortsEntries()
     {
         var list = new KeyedList<Enum16b, string>
         {
@@ -54,7 +54,7 @@ public partial class KeyedListTest
     }
 
     [Fact]
-    public void AddToEnum32b()
+    public void AddToEnum32b_AddsAndSortsEntries()
     {
         var list = new KeyedList<Enum32b, string>
         {
@@ -74,7 +74,7 @@ public partial class KeyedListTest
     }
 
     [Fact]
-    public void AddToEnum64b()
+    public void AddToEnum64b_AddsAndRemovesEntries()
     {
         var list = new KeyedList<Enum64b, string>
         {
