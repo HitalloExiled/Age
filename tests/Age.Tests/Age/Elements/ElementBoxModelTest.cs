@@ -1,5 +1,6 @@
 using Age.Elements;
 using Age.Numerics;
+using Age.Scenes;
 using Age.Styling;
 
 namespace Age.Tests.Age.Elements;
@@ -9,18 +10,27 @@ namespace Age.Tests.Age.Elements;
 [Collection("GPU")]
 public class ElementBoxModelTest(GpuFixture _)
 {
-    [Fact]
-    public void BoxModel_PendingLayouts_WithDependents()
+    private static (Window window, UIScene uiScene) SetupTree()
     {
+        var window  = WindowTestExtensions.CreateTestWindow();
+        var uiScene = new UIScene();
+
+        window.AppendChild(uiScene);
+
+        return (window, uiScene);
+    }
+
+    [Fact]
+    public void BoxModel_WithDependents_ReturnsDefault()
+    {
+        var (window, uiScene) = SetupTree();
+
         var parent = new FlexBox();
-        var child  = new TestElement();
+        var child  = new TestElement { Style = { Size = new(Unit.Pc(50), Unit.Pc(50)) } };
 
+        uiScene.Canvas.AppendChild(parent);
         parent.AppendChild(child);
-        parent.Connect();
-
-        ElementAccessor.GetDependents(parent).Add(child);
-
-        ElementAccessor.MakeDirty(parent);
+        window.Connect();
 
         var boxModel = parent.GetBoxModel();
 
@@ -30,18 +40,16 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_PendingLayouts_TriggersUpdateDisposition()
+    public void BoxModel_AfterConnect_TriggersUpdateDisposition()
     {
+        var (window, uiScene) = SetupTree();
+
         var parent = new FlexBox();
         var child  = new TestElement();
 
+        uiScene.Canvas.AppendChild(parent);
         parent.AppendChild(child);
-        parent.Connect();
-
-        ElementAccessor.GetDependents(parent).Add(child);
-        ElementAccessor.GetChildsChanged(child) = true;
-
-        ElementAccessor.MakeDirty(parent);
+        window.Connect();
 
         var boxModel = parent.GetBoxModel();
 
@@ -51,37 +59,44 @@ public class ElementBoxModelTest(GpuFixture _)
     [Fact]
     public void BoxModel_PendingLayouts_ResolvesPercentageWidth()
     {
-        var parent = new FlexBox();
-        var child  = new TestElement();
+        var (window, uiScene) = SetupTree();
 
-        parent.AppendChild(child);
-        parent.Connect();
+        var parent = new FlexBox
+        {
+            Style =
+            {
+                Size = new(200, 100),
+            },
+            Children =
+            [
+                new TestElement
+                {
+                    Style =
+                    {
+                        Size  = new(Unit.Pc(50), Unit.Pc(50)),
+                    }
+                }
+            ]
+        };
 
-        ElementAccessor.GetSize(parent)      = new(200, 100);
-        ElementAccessor.GetBoundings(parent) = new(200, 100);
+        uiScene.Canvas.AppendChild(parent);
 
-        ElementAccessor.GetSize(child) = new(50, 30);
-
-        child.ComputedStyle.Size = new(Unit.Pc(50), Unit.Pc(50));
-
-        ElementAccessor.GetContentDependencies(parent) = default; // Dependency.None
-        ElementAccessor.GetParentDependencies(child)   = Element.Dependency.Width; // Dependency.Width
-
-        ElementAccessor.GetDependents(parent).Add(child);
-        ElementAccessor.GetChildsChanged(parent) = true;
-
-        ElementAccessor.MakeDirty(parent);
+        window.Connect();
 
         var boxModel = parent.GetBoxModel();
 
-        Assert.False(boxModel.Equals(default));
+        Assert.Equal(new Size<uint>(100, 50), boxModel.Content);
     }
+
     [Fact]
-    public void BoxModel_Default_AllZero()
+    public void BoxModel_ByDefault_ReturnsZero()
     {
+        var (window, uiScene) = SetupTree();
+
         var element = new TestElement();
 
-        element.Connect();
+        uiScene.Canvas.AppendChild(element);
+        window.Connect();
 
         var boxModel = element.GetBoxModel();
 
@@ -94,14 +109,14 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_Margin_SetsCorrectly()
+    public void BoxModel_WithMargin_ReturnsEdges()
     {
-        var element = new TestElement();
+        var (window, uiScene) = SetupTree();
 
-        element.Connect();
+        var element = new TestElement { Style = { Margin = new StyleRectEdges(Unit.Px(5), Unit.Px(10), Unit.Px(3), Unit.Px(8)) } };
 
-        element.ComputedStyle.Margin = new StyleRectEdges(Unit.Px(5), Unit.Px(10), Unit.Px(3), Unit.Px(8));
-        ElementAccessor.MakeDirty(element);
+        uiScene.Canvas.AppendChild(element);
+        window.Connect();
 
         var boxModel = element.GetBoxModel();
 
@@ -109,14 +124,14 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_Padding_SetsCorrectly()
+    public void BoxModel_WithPadding_ReturnsEdges()
     {
-        var element = new TestElement();
+        var (window, uiScene) = SetupTree();
 
-        element.Connect();
+        var element = new TestElement { Style = { Padding = new StyleRectEdges(Unit.Px(7), Unit.Px(4)) } };
 
-        element.ComputedStyle.Padding = new StyleRectEdges(Unit.Px(4), Unit.Px(7));
-        ElementAccessor.MakeDirty(element);
+        uiScene.Canvas.AppendChild(element);
+        window.Connect();
 
         var boxModel = element.GetBoxModel();
 
@@ -124,14 +139,14 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_Border_SetsCorrectly()
+    public void BoxModel_WithBorder_ReturnsEdges()
     {
-        var element = new TestElement();
+        var (window, uiScene) = SetupTree();
 
-        element.Connect();
+        var element = new TestElement { Style = { Border = new Border(thickness: 3, radius: 0, color: Color.White) } };
 
-        ElementAccessor.GetBorder(element) = new() { Top = 3, Right = 3, Bottom = 3, Left = 3 };
-        ElementAccessor.MakeDirty(element);
+        uiScene.Canvas.AppendChild(element);
+        window.Connect();
 
         var boxModel = element.GetBoxModel();
 
@@ -141,12 +156,12 @@ public class ElementBoxModelTest(GpuFixture _)
     [Fact]
     public void BoxModel_Size_SetsBoundings()
     {
-        var element = new TestElement();
+        var (window, uiScene) = SetupTree();
 
-        element.Connect();
+        var element = new TestElement { Style = { Size = new SizeUnit(Unit.Px(100), Unit.Px(50)) } };
 
-        ElementAccessor.GetSize(element)    = new(100, 50);
-        ElementAccessor.GetBoundings(element) = new(100, 50);
+        uiScene.Canvas.AppendChild(element);
+        window.Connect();
 
         var boxModel = element.GetBoxModel();
 
@@ -158,14 +173,20 @@ public class ElementBoxModelTest(GpuFixture _)
     [Fact]
     public void BoxModel_PaddingAndBorder_IncreaseBoundings()
     {
-        var element = new TestElement();
+        var (window, uiScene) = SetupTree();
 
-        element.Connect();
+        var element = new TestElement
+        {
+            Style =
+            {
+                Size    = new SizeUnit(Unit.Px(100), Unit.Px(50)),
+                Padding = new StyleRectEdges(Unit.Px(5)),
+                Border  = new Border(thickness: 2, radius: 0, color: Color.White),
+            }
+        };
 
-        ElementAccessor.GetSize(element)      = new(100, 50);
-        ElementAccessor.GetPadding(element)   = new() { Top = 5, Right = 5, Bottom = 5, Left = 5 };
-        ElementAccessor.GetBorder(element)    = new() { Top = 2, Right = 2, Bottom = 2, Left = 2 };
-        ElementAccessor.GetBoundings(element) = new(114, 64);
+        uiScene.Canvas.AppendChild(element);
+        window.Connect();
 
         var boxModel = element.GetBoxModel();
 
@@ -175,20 +196,24 @@ public class ElementBoxModelTest(GpuFixture _)
     [Fact]
     public void BoxModel_BoxSizingBorder_ContentShrinks()
     {
-        var element = new TestElement();
+        var (window, uiScene) = SetupTree();
 
-        element.Connect();
+        var element = new TestElement
+        {
+            Style =
+            {
+                Size      = new SizeUnit(Unit.Px(96), Unit.Px(46)),
+                Padding   = new StyleRectEdges(Unit.Px(5)),
+                Border    = new Border(thickness: 2, radius: 0, color: Color.White),
+                BoxSizing = BoxSizing.Border,
+            }
+        };
 
-        ElementAccessor.GetSize(element)      = new(96, 46);
-        ElementAccessor.GetPadding(element)   = new() { Top = 5, Right = 5, Bottom = 5, Left = 5 };
-        ElementAccessor.GetBorder(element)    = new() { Top = 2, Right = 2, Bottom = 2, Left = 2 };
-        ElementAccessor.GetBoundings(element) = new(110, 60);
+        uiScene.Canvas.AppendChild(element);
+        window.Connect();
 
         var boxModel = element.GetBoxModel();
 
-        // box-sizing: border subtracts only border from resolved size
-        // size = (100-4, 50-4) = (96, 46)
-        // Boundings = size(96,46) + padding(10,10) + border(4,4) = (110, 60)
         Assert.Equal(new Size<int>(110, 60), boxModel.Boundings.Size);
         Assert.Equal(default, boxModel.Content);
     }
@@ -196,20 +221,16 @@ public class ElementBoxModelTest(GpuFixture _)
     [Fact]
     public void BoxModel_ContentAccumulatesFromChildren()
     {
-        var parent = new FlexBox();
-        var child1 = new TestElement();
-        var child2 = new TestElement();
+        var (window, uiScene) = SetupTree();
 
+        var parent = new FlexBox();
+        var child1 = new TestElement { Style = { Size = new SizeUnit(Unit.Px(30), Unit.Px(20)) } };
+        var child2 = new TestElement { Style = { Size = new SizeUnit(Unit.Px(50), Unit.Px(40)) } };
+
+        uiScene.Canvas.AppendChild(parent);
         parent.AppendChild(child1);
         parent.AppendChild(child2);
-        parent.Connect();
-
-        // Set children's sizes directly (no dirty → CalculateLayout won't overwrite)
-        ElementAccessor.GetSize(child1) = new(30, 20);
-        ElementAccessor.GetSize(child2) = new(50, 40);
-
-        // Mark parent dirty so its CalculateLayout accumulates children
-        ElementAccessor.MakeDirty(parent);
+        window.Connect();
 
         var boxModel = parent.GetBoxModel();
 
@@ -217,29 +238,33 @@ public class ElementBoxModelTest(GpuFixture _)
     }
 
     [Fact]
-    public void BoxModel_MarginPaddingBorderCombined_AllFieldsMatch()
+    public void BoxModel_WithAllProperties_ReturnsExpectedValues()
     {
-        var element = new TestElement();
+        var (window, uiScene) = SetupTree();
 
-        element.Connect();
+        var element = new TestElement
+        {
+            Style =
+            {
+                Margin  = new StyleRectEdges(Unit.Px(3), Unit.Px(6), Unit.Px(9), Unit.Px(12)),
+                Padding = new StyleRectEdges(Unit.Px(8), Unit.Px(4)),
+                Border  = new Border(
+                    new BorderSide { Thickness = 2, Color = Color.White },
+                    new BorderSide { Thickness = 3, Color = Color.White }
+                ),
+                Size = new SizeUnit(Unit.Px(200), Unit.Px(100)),
+            }
+        };
 
-        ElementAccessor.GetMargin(element)   = new() { Top = 3, Right = 6, Bottom = 9, Left = 12 };
-        ElementAccessor.GetPadding(element)  = new() { Top = 8, Right = 4, Bottom = 8, Left = 4 };
-        ElementAccessor.GetBorder(element)   = new() { Top = 3, Right = 2, Bottom = 3, Left = 2 };
-        ElementAccessor.GetSize(element)     = new(200, 100);
-        ElementAccessor.GetBoundings(element) = new(212, 122);
+        uiScene.Canvas.AppendChild(element);
+        window.Connect();
 
         var boxModel = element.GetBoxModel();
 
-        // margin: top=3, right=6, bottom=9, left=12 (from StyleRectEdges TRBL)
         Assert.Equal(new RectEdges { Top = 3, Right = 6, Bottom = 9, Left = 12 }, boxModel.Margin);
-        // padding: top=8, right=4, bottom=8, left=4 (StyleRectEdges(h=4, v=8))
         Assert.Equal(new RectEdges { Top = 8, Right = 4, Bottom = 8, Left = 4 }, boxModel.Padding);
-        // border: top=3, right=2, bottom=3, left=2 (Border(horizontal=2, vertical=3))
         Assert.Equal(new RectEdges { Top = 3, Right = 2, Bottom = 3, Left = 2 }, boxModel.Border);
-        // content: no children
         Assert.Equal(default, boxModel.Content);
-        // Boundings: size(200,100) + padding(8,16) + border(4,6) = (212, 122)
         Assert.Equal(new Size<int>(212, 122), boxModel.Boundings.Size);
     }
 }

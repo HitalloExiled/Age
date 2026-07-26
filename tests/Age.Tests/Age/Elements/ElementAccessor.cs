@@ -30,9 +30,6 @@ internal static class ElementAccessor
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "childsChanged")]
     internal static extern ref bool GetChildsChanged(Element element);
 
-    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "contentDependencies")]
-    internal static extern ref Element.Dependency GetContentDependencies(Element element);
-
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "parentDependencies")]
     internal static extern ref Element.Dependency GetParentDependencies(Element element);
 
