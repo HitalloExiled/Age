@@ -185,7 +185,7 @@ public unsafe partial struct UnsafeList
 
         if (index < count)
         {
-            UnsafeBuffer.Move(list->items, index, index + 1, count - index + 1);
+            UnsafeBuffer.Move(list->items, index, index + 1, count - index);
         }
 
         *list->items.Element<T>(index) = item;

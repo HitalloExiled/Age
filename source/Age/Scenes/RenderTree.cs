@@ -30,8 +30,6 @@ public sealed partial class RenderTree : Disposable
     {
         this.viewports.Add(window);
 
-        window.Connect();
-
         window.Closed      += this.Dispose;
         window.Context     += this.OnContext;
         window.DoubleClick += this.OnDoubleClick;

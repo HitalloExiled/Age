@@ -414,7 +414,7 @@ public sealed partial class RenderTree
             {
                 if (element == null)
                 {
-                    this.Window.Cursor = default;
+                    Window.Cursor = default;
                 }
                 else if (this.hoveredText?.CompositeParentElement == element)
                 {

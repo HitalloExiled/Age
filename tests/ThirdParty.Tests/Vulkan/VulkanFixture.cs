@@ -2,6 +2,8 @@ using ThirdParty.Vulkan;
 
 namespace ThirdParty.Tests.Vulkan;
 
+#pragma warning disable CA1810
+
 public class VulkanFixture : IDisposable
 {
     private static readonly string? icdPath;

@@ -18,15 +18,8 @@ public abstract partial class Element
         {
             if (field != value)
             {
-                if (field != null)
-                {
-                    field.PropertyChanged -= this.OnPropertyChanged;
-                }
-
-                if (value != null)
-                {
-                    value.PropertyChanged += this.OnPropertyChanged;
-                }
+                field?.PropertyChanged -= this.OnPropertyChanged;
+                value?.PropertyChanged += this.OnPropertyChanged;
 
                 field = value;
 

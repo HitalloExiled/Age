@@ -97,15 +97,15 @@ public sealed class Window : Viewport
     private readonly RenderTarget[] renderTargets;
     private readonly DisplayWindow  window;
 
-    public static ReadOnlySpan<Window> Windows => windows.AsSpan();
-
-    public Surface Surface { get; }
-
-    public Cursor Cursor
+    public static Cursor Cursor
     {
         get => DisplayWindow.Cursor;
         set => DisplayWindow.Cursor = value;
     }
+
+    public static ReadOnlySpan<Window> Windows => windows.AsSpan();
+
+    public Surface Surface { get; }
 
     public override Size<uint> Size
     {
@@ -157,18 +157,11 @@ public sealed class Window : Viewport
 
         this.RenderGraph = RenderGraph.CreateDefault(this);
         this.RenderTree  = new RenderTree(this);
+
+        this.Connect();
     }
 
-    private void CreateRenderTargets()
-    {
-        for (var i = 0; i < this.Surface.Swapchain.Images.Length; i++)
-        {
-            this.renderTargets[i]?.Dispose();
-            this.renderTargets[i] = this.CreateRenderTarget(this.Surface.Swapchain.Images[i]);
-        }
-    }
-
-    private RenderTarget CreateRenderTarget(Image image)
+    private static RenderTarget CreateRenderTarget(Image image)
     {
         var createInfo = new RenderTarget.MultiPassCreateInfo
         {
@@ -220,6 +213,15 @@ public sealed class Window : Viewport
         };
 
         return new(createInfo);
+    }
+
+    private void CreateRenderTargets()
+    {
+        for (var i = 0; i < this.Surface.Swapchain.Images.Length; i++)
+        {
+            this.renderTargets[i]?.Dispose();
+            this.renderTargets[i] = CreateRenderTarget(this.Surface.Swapchain.Images[i]);
+        }
     }
 
     private void OnWindowResized()

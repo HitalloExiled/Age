@@ -8,10 +8,7 @@ namespace ThirdParty.Tests.Vulkan;
 public class InstanceTest(VulkanFixture fixture)
 {
     [Fact]
-    public void Create_Succeeds()
-    {
-        Assert.NotNull(fixture.Instance);
-    }
+    public void Create_Succeeds() => Assert.NotNull(fixture.Instance);
 
     [Fact]
     public void EnumeratePhysicalDevices_ReturnsDevices()
@@ -22,7 +19,7 @@ public class InstanceTest(VulkanFixture fixture)
     }
 
     [Fact]
-    public unsafe void PhysicalDevice_GetProperties_ReturnsProperties()
+    public void PhysicalDevice_GetProperties_ReturnsProperties()
     {
         var physicalDevice = fixture.Instance.EnumeratePhysicalDevices()[0];
 

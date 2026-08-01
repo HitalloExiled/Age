@@ -172,7 +172,7 @@ public abstract class Layoutable : Spatial<Command2D, Matrix3x2<float>>
     {
         Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-        this.Scene.Viewport.Window.Cursor = cursor ?? default;
+        Window.Cursor = cursor ?? default;
     }
 
     private protected void UpdateLayoutIndependentAncestor()
