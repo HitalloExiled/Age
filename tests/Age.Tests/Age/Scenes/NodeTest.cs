@@ -97,7 +97,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void AppendChild()
+    public void AppendChild_AppendsToChildren()
     {
         var parent = new TestNode("parent");
         var child1 = new TestNode("child1");
@@ -121,7 +121,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void AppendChildren()
+    public void AppendChildren_AppendsToChildren()
     {
         var parent = new TestNode("parent");
         var child1 = new TestNode("child1");
@@ -144,7 +144,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void PrependChild()
+    public void PrependChild_PrependsToChildren()
     {
         var parent = new TestNode("parent");
         var child1 = new TestNode("child1");
@@ -165,7 +165,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void PrependChildren()
+    public void PrependChildren_PrependsToChildren()
     {
         var parent = new TestNode("parent");
         var child1 = new TestNode("child1");
@@ -188,7 +188,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void RemoveChild()
+    public void DetachChild_DetachesFromChildren()
     {
         var parent = new TestNode("parent");
         var child1 = new TestNode("child1");
@@ -241,7 +241,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void RemoveChildren()
+    public void DetachChildren_DetachesAllChildren()
     {
         var parent = new TestNode("parent");
         var child1 = new TestNode("child1");
@@ -260,7 +260,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void RemoveChildrenInRange()
+    public void DetachChildrenInRange_DetachesSpecifiedRange()
     {
         var parent = new TestNode("parent");
         var child1 = new TestNode("child1");
@@ -325,7 +325,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void InsertBefore()
+    public void InsertBefore_InsertsNodeBeforeTarget()
     {
         var parent = new TestNode("parent");
         var child0 = new TestNode("child.0");
@@ -348,7 +348,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void InsertAfter()
+    public void InsertAfter_InsertsNodeAfterTarget()
     {
         var parent = new TestNode("parent");
         var child1 = new TestNode("child.1");
@@ -369,7 +369,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void InsertNodesBefore()
+    public void InsertNodesBefore_InsertsNodesBeforeTarget()
     {
         var parent = new TestNode("parent");
         var child1 = new TestNode("child.1");
@@ -404,7 +404,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void InsertNodesAfter()
+    public void InsertNodesAfter_InsertsNodesAfterTarget()
     {
         var parent = new TestNode("parent");
         var child1 = new TestNode("child.1");
@@ -439,7 +439,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void ReplaceNode()
+    public void Replace_ReplacesNodeWithAnother()
     {
         var parent = new TestNode("parent");
         var child0 = new TestNode("child.0");
@@ -467,7 +467,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void ReplaceNodeWith()
+    public void ReplaceWith_ReplacesNodeWithMultipleNodes()
     {
         var parent  = new TestNode("parent");
         var child0  = new TestNode("child.0");
@@ -516,7 +516,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void Enumerate()
+    public void Enumerate_EnumeratesAllChildren()
     {
         var child1 = new TestNode("$.1");
         var child2 = new TestNode("$.2");
@@ -539,7 +539,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void GetCommonAncestor()
+    public void GetCommonAncestor_ReturnsCommonAncestor()
     {
         var tree  = TreeFactory.Linear<TestNode>(static name => new(name), 3, 3);
         var nodes = TreeFactory.Flatten(tree).ToDictionary(static x => x.Name!, static x => x);
@@ -553,7 +553,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void SelectBetween()
+    public void SelectBetween_SelectsNodesInOrderAndReverse()
     {
         #region Arrange
         /*
@@ -656,7 +656,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void Depth()
+    public void Depth_ReturnsCorrectDepths()
     {
         var root = TreeFactory.Linear<TestNode>(static name => new(name), 5, 1);
         var flat = TreeFactory.Flatten(root);
@@ -685,7 +685,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void CompositeDepth()
+    public void CompositeDepth_ReturnsCorrectCompositeDepths()
     {
         var root  = new NestedHostTestNode("$", 2);
         var flat  = TreeFactory.Flatten(root);
@@ -735,7 +735,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void Compare()
+    public void CompareTo_ComparesNodesCorrectly()
     {
         var tree = TreeFactory.Linear<TestNode>(static name => new(name), [2, 2, 5]);
 
@@ -768,7 +768,7 @@ public class NodeTest
     }
 
     [Fact]
-    public void GetPathToCommonComposedAncestor()
+    public void GetCompositePathBetween_ReturnsCompositePath()
     {
         var treeA  = TreeFactory.Linear<TestNode>(static name => new(name), [2, 2, 1, 1]);
         var nodesA = TreeFactory.Flatten(treeA).ToDictionary(x => x.Name!, x => x);

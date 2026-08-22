@@ -22,7 +22,7 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
     private bool disposingPendingResources;
 
-    internal VulkanContext Context { get; } = new();
+    internal VulkanContext Context { get; }
 
     public uint CurrentFrame => this.Context.Frame.Index;
 
@@ -47,9 +47,10 @@ public sealed unsafe partial class VulkanRenderer : Disposable
     public TextureFormat StencilBufferFormat  { get; private set; }
     public SampleCount   MaxUsableSampleCount { get; private set; }
 
-    public VulkanRenderer()
+    public VulkanRenderer(bool headless = false)
     {
         Singleton = this;
+        this.Context = new(headless);
 
         this.Context.DeviceInitialized += this.OnContextDeviceInitialized;
     }
@@ -164,6 +165,9 @@ public sealed unsafe partial class VulkanRenderer : Disposable
         }
     }
 
+    public Surface CreateSurface(Size<uint> clientSize) =>
+        this.Context.CreateSurface(clientSize);
+
     public void DeferredDispose(IDisposable disposable)
     {
         lock (this.@lock)
@@ -218,5 +222,4 @@ public sealed unsafe partial class VulkanRenderer : Disposable
 
     public void WaitIdle() =>
         this.Context.Device.WaitIdle();
-    internal Surface? CreateSurface(object display, nint surface, Size<uint> clientSize) => throw new NotImplementedException();
 }

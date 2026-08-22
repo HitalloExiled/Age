@@ -5,7 +5,7 @@ namespace Age.Tests.Core.Collections;
 public class NativeStringArrayTest
 {
     [Fact]
-    public void AllocateAndSet()
+    public void AllocateAndSet_AllocatesAndSetsStringElements()
     {
         var list = new[]
         {
@@ -24,7 +24,7 @@ public class NativeStringArrayTest
     }
 
     [Fact]
-    public void ToArrayShouldPass()
+    public void ToArrayShouldPass_ReturnsCopyOfStrings()
     {
         var list = new[]
         {
@@ -39,7 +39,7 @@ public class NativeStringArrayTest
     }
 
     [Fact]
-    public unsafe void ImplicitOperatorShouldPass()
+    public unsafe void ImplicitOperator_ConvertsToPointer()
     {
         var list = new[]
         {
@@ -54,7 +54,7 @@ public class NativeStringArrayTest
     }
 
     [Fact]
-    public void DisposeShouldPass()
+    public void DisposeShouldPass_DoesNotThrowOnDoubleDispose()
     {
         var array = new NativeStringArray(["one"]);
 

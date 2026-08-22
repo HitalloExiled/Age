@@ -5,7 +5,7 @@ namespace Age.Tests.Age.Scenes;
 public class TraversalEnumeratorTest
 {
     [Fact]
-    public void Enumerate()
+    public void Enumerate_EnumeratesAllNodes()
     {
         var tree = TreeFactory.Linear<TestNode>(static name => new(name), 2, 3);
 
@@ -38,7 +38,7 @@ public class TraversalEnumeratorTest
     }
 
     [Fact]
-    public void SkipToNextSibling()
+    public void SkipToNextSibling_SkipsSiblings()
     {
         var tree = TreeFactory.Linear<TestNode>(static name => new(name), 2, 3);
 

@@ -31,7 +31,7 @@ public class SkSvgTest
     }
 
     [Fact]
-    public void Load()
+    public void LoadFile_RendersPicture()
     {
         const string NAME = "text_path";
         var filename = GetAssetPath(NAME);
@@ -44,7 +44,7 @@ public class SkSvgTest
     }
 
     [Fact]
-    public void LoadAll()
+    public void LoadAllFiles_RendersEach()
     {
         var iconsDirectory = new DirectoryInfo(iconsFolder);
 

@@ -24,7 +24,7 @@ file sealed class Window : Viewport
 public partial class RenderGraphTest
 {
     [Fact]
-    public void Execute()
+    public void Execute_ExecutesPipelineCorrectly()
     {
         var context  = new RenderContext();
         var pipeline = new RenderGraph(new Window());
@@ -127,7 +127,7 @@ public partial class RenderGraphTest
     }
 
     [Fact]
-    public void ThrowIfCiclic()
+    public void Connect_ThrowsOnCyclicConnection()
     {
         var pipeline = new RenderGraph(new Window());
 

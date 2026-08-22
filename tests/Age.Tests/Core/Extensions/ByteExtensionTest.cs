@@ -6,10 +6,10 @@ namespace Age.Tests.Core.Extensions;
 public class ByteExtensionTest
 {
     [Fact]
-    public void ConvertToStringShoulPass() =>
+    public void DefaultEncoding_ReturnsString() =>
         Assert.Equal("Hello", Encoding.Default.GetBytes("Hello").ConvertToString());
 
     [Fact]
-    public void ConvertToStringWithEncodignShoulPass() =>
+    public void SpecificEncoding_ReturnsString() =>
         Assert.Equal("Hello", Encoding.UTF8.GetBytes("Hello").ConvertToString(Encoding.UTF8));
 }

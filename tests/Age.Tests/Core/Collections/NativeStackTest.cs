@@ -13,7 +13,7 @@ public class NativeStackTest
     }
 
     [Fact]
-    public void Create()
+    public void Create_AllocatesWithInitialElements()
     {
         using NativeStack<int> stack = [1, 2, 3, 4];
 
@@ -21,7 +21,7 @@ public class NativeStackTest
     }
 
     [Fact]
-    public void Push()
+    public void Push_AddsElementsToTop()
     {
         using var stack = new NativeStack<int>();
 
@@ -35,7 +35,7 @@ public class NativeStackTest
     }
 
     [Fact]
-    public void Pop()
+    public void Pop_RemovesTopElement()
     {
         using var stack = new NativeStack<int>();
 
@@ -59,7 +59,7 @@ public class NativeStackTest
     }
 
     [Fact]
-    public void Peek()
+    public void Peek_ReturnsTopElementWithoutRemoving()
     {
         using var stack = new NativeStack<int>();
 
@@ -71,7 +71,7 @@ public class NativeStackTest
     }
 
     [Fact]
-    public void Clear()
+    public void Clear_RemovesAllElements()
     {
         using var stack = new NativeStack<int>();
 
@@ -87,7 +87,7 @@ public class NativeStackTest
     }
 
     [Fact]
-    public void IncreaseCapacity()
+    public void IncreaseCapacity_ExpandsCapacity()
     {
         using var stack = new NativeStack<int>(4);
 
@@ -109,7 +109,7 @@ public class NativeStackTest
     }
 
     [Fact]
-    public void DecreaseCapacity()
+    public void DecreaseCapacity_ShrinksCapacity()
     {
         using var stack = new NativeStack<int>(4);
 
@@ -132,7 +132,7 @@ public class NativeStackTest
     }
 
     [Fact]
-    public void Enumerate()
+    public void Enumerate_IteratesInLifoOrder()
     {
         using var stack = new NativeStack<int>(6);
 
@@ -155,7 +155,7 @@ public class NativeStackTest
     }
 
     [Fact]
-    public void ToArray()
+    public void ToArray_ReturnsArrayInLifoOrder()
     {
         using var stack = new NativeStack<int>(6);
 
@@ -172,7 +172,7 @@ public class NativeStackTest
     }
 
     [Fact]
-    public void DisposeShouldPass()
+    public void DisposeShouldPass_DoesNotThrowOnDoubleDispose()
     {
         var stack = new NativeStack<int>([1]);
 

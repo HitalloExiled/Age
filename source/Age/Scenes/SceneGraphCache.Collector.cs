@@ -14,7 +14,7 @@ internal partial class SceneGraphCache
     {
         private static readonly ObjectPool<Collector<Command2D>> collector2DPool = new();
         private static readonly ObjectPool<Collector<Command3D>> collector3DPool = new();
-        private static readonly List<Renderable>        stage           = [];
+        private static readonly List<Renderable>                 stage           = [];
 
         private static void Collect(Renderable target, int index, CommandBuffer<Command2D> commandBuffer, List<Renderable> stage, List<Renderable> nodes)
         {
@@ -306,7 +306,10 @@ internal partial class SceneGraphCache
             {
                 this.AccumulatePreCommands(subtree, out var preOffset);
 
-                this.ApplyOffset(subtree, new(subtreeRange.Start + 1, subtreeRange.End), preOffset, false);
+                if (subtreeRange.Length > 0)
+                {
+                    this.ApplyOffset(subtree, new(subtreeRange.Start + 1, subtreeRange.End), preOffset, false);
+                }
 
                 var pre = this.Commands.AsSpan();
 

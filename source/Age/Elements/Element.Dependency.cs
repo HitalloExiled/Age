@@ -5,7 +5,7 @@ namespace Age.Elements;
 public abstract partial class Element
 {
     [Flags]
-    private enum Dependency : byte
+    internal enum Dependency : byte
     {
         None    = 0,
         Width   = 1 << 0,

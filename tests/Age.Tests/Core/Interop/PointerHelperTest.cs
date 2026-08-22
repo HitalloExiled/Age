@@ -7,7 +7,7 @@ namespace Age.Tests.Core.Interop;
 public class PointerHelperTest
 {
     [Fact]
-    public unsafe void NullIfDefaultShouldPass()
+    public unsafe void NullIfDefault_ReturnsNullForDefaultValue()
     {
         var defaultValue           = 0;
         var nonDefaultValue        = 1;

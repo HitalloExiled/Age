@@ -5,10 +5,6 @@ namespace Age.Scenes;
 
 public abstract class Renderable : Node
 {
-#pragma warning disable IDE0032 // Use auto property
-    private bool visible = true;
-#pragma warning restore IDE0032 // Use auto property
-
     internal DirtState DirtState { get; set; }
 
     internal ShortRange SubtreeRange
@@ -31,19 +27,21 @@ public abstract class Renderable : Node
 
     public bool Visible
     {
-        get => this.visible;
+        get;
         set
         {
-            if (this.visible != value)
+            if (field == value)
             {
-                this.visible = value;
-
-                this.OnVisibilityChangedInternal();
-                this.OnVisibilityChanged();
-                this.MarkSubtreeDirty();
+                return;
             }
+
+            field = value;
+
+            this.OnVisibilityChangedInternal();
+            this.OnVisibilityChanged();
+            this.MarkSubtreeDirty();
         }
-    }
+    } = true;
 
     private protected virtual void OnIndexChangedInternal() { }
     private protected virtual void OnVisibilityChangedInternal() { }

@@ -7,7 +7,7 @@ public class SpanExtensionTest
     private sealed record Dummy(string Name, int Index);
 
     [Fact]
-    public void TimSort()
+    public void TimSort_SortsCorrectly()
     {
         int[] expected =
         [
@@ -42,7 +42,7 @@ public class SpanExtensionTest
     }
 
     [Fact]
-    public void TimSortWithComparer()
+    public void TimSortWithComparer_SortsByIndex()
     {
         Dummy[] expected =
         [

@@ -24,14 +24,15 @@ internal sealed unsafe partial class VulkanContext : Disposable
 
     private static readonly HashSet<string> validationLayers = [VkConstants.VK_LAYER_KHRONOS_VALIDATION];
 
-    private readonly VkDebugUtilsExtensionEXT? debugUtilsExtension;
-    private readonly VkDebugUtilsMessengerEXT? debugUtilsMessenger;
-    private readonly bool                      enableValidationLayers = Debugger.IsAttached;
-    private readonly VkFence[]                 fences = new VkFence[MAX_FRAMES_IN_FLIGHT];
-    private readonly Frame[]                   frames = new Frame[MAX_FRAMES_IN_FLIGHT];
-    private readonly VkInstance                instance;
-    private readonly VkSemaphore[]             renderingFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
-    private readonly VkSurfaceExtensionKHR     surfaceExtension;
+    private readonly VkDebugUtilsExtensionEXT?      debugUtilsExtension;
+    private readonly VkDebugUtilsMessengerEXT?      debugUtilsMessenger;
+    private readonly bool                           enableValidationLayers = Debugger.IsAttached;
+    private readonly VkFence[]                      fences = new VkFence[MAX_FRAMES_IN_FLIGHT];
+    private readonly Frame[]                        frames = new Frame[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkHeadlessSurfaceExtensionEXT? headlessSurfaceExtension;
+    private readonly VkInstance                     instance;
+    private readonly VkSemaphore[]                  renderingFinishedSemaphores = new VkSemaphore[MAX_FRAMES_IN_FLIGHT];
+    private readonly VkSurfaceExtensionKHR          surfaceExtension;
 
     [AllowNull]
     private VkCommandPool commandPool;
@@ -56,25 +57,32 @@ internal sealed unsafe partial class VulkanContext : Disposable
     [AllowNull]
     private VkSwapchainExtensionKHR swapchainExtension;
 
-    private Span<string> RequiredExtensions
+private Span<string> RequiredExtensions
+{
+    get
     {
-        get
+        var extensions = new List<string>
         {
-            var extensions = new List<string>
-            {
-                VkSurfaceExtensionKHR.Name,
-            };
+            VkSurfaceExtensionKHR.Name,
+        };
 
-            extensions.AddRange(this.platformExtensions);
-
-            if (this.enableValidationLayers)
-            {
-                extensions.Add(VkDebugUtilsExtensionEXT.Name);
-            }
-
-            return extensions.AsSpan();
+        if (this.Headless)
+        {
+            extensions.Add(VkHeadlessSurfaceExtensionEXT.Name);
         }
+        else
+        {
+            extensions.AddRange(this.platformExtensions);
+        }
+
+        if (this.enableValidationLayers)
+        {
+            extensions.Add(VkDebugUtilsExtensionEXT.Name);
+        }
+
+        return extensions.AsSpan();
     }
+}
 
     public ref Frame Frame => ref this.frames[this.currentFrame];
 
@@ -82,8 +90,12 @@ internal sealed unsafe partial class VulkanContext : Disposable
     public VkQueue  GraphicsQueue => this.graphicsQueue;
     public VkFormat ScreenFormat  => this.surfaceFormat.Format;
 
-    public VulkanContext()
+    public bool Headless { get; }
+
+    public VulkanContext(bool headless = false)
     {
+        this.Headless = headless;
+
         if (this.enableValidationLayers && !CheckValidationLayerSupport())
         {
             throw new Exception("validation layers requested, but not available!");
@@ -130,8 +142,9 @@ internal sealed unsafe partial class VulkanContext : Disposable
             this.instance         = new VkInstance(instanceCreateInfo);
             this.surfaceExtension = this.instance.GetExtension<VkSurfaceExtensionKHR>();
 
-            this.debugUtilsExtension = default;
-            this.debugUtilsMessenger = default;
+            this.debugUtilsExtension      = default;
+            this.debugUtilsMessenger      = default;
+            this.headlessSurfaceExtension = default;
 
             if (this.enableValidationLayers)
             {
@@ -142,6 +155,11 @@ internal sealed unsafe partial class VulkanContext : Disposable
         }
 
         this.PlatformInitialize();
+
+        if (this.Headless)
+        {
+            this.headlessSurfaceExtension = this.instance.GetExtension<VkHeadlessSurfaceExtensionEXT>();
+        }
     }
 
     private static VkExtent2D ChooseSwapExtent(Size<uint> size, VkSurfaceCapabilitiesKHR capabilities)
@@ -266,7 +284,7 @@ internal sealed unsafe partial class VulkanContext : Disposable
                 ImageArrayLayers      = 1,
                 ImageColorSpace       = this.surfaceFormat.ColorSpace,
                 ImageExtent           = extent,
-                PresentMode           = VkPresentModeKHR.Immediate,
+                PresentMode           = this.Headless ? VkPresentModeKHR.Mailbox : VkPresentModeKHR.Immediate,
                 ImageFormat           = this.surfaceFormat.Format,
                 ImageUsage            = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst,
                 ImageSharingMode      = VkSharingMode.Exclusive,
@@ -487,6 +505,14 @@ internal sealed unsafe partial class VulkanContext : Disposable
         }
 
         return new(vkSurfaceKHR, size, semaphores, swapchain);
+    }
+
+    public Surface CreateSurface(Size<uint> size)
+    {
+        var createInfo = new VkHeadlessSurfaceCreateInfoEXT();
+        var vkSurface  = this.headlessSurfaceExtension!.CreateSurface(createInfo);
+
+        return this.CreateSurface(vkSurface, size);
     }
 
     public VkCommandBuffer AllocateCommand(VkCommandBufferLevel commandBufferLevel) =>

@@ -33,7 +33,7 @@ public partial class CompositeTraversalEnumeratorTest
     }
 
     [Fact]
-    public void TraverseCompositeTree()
+    public void Traverse_EnumeratesAllNodes()
     {
         var tree = TreeFactory.Linear<HostNode>(static (name) => new(name), 1, 2, "$");
 
@@ -80,7 +80,7 @@ public partial class CompositeTraversalEnumeratorTest
     }
 
     [Fact]
-    public void SkipToNextSibling()
+    public void SkipToNextSibling_SkipsSiblings()
     {
         var tree = TreeFactory.Linear<HostNode>(static (name) => new(name), 1, 2, "$");
 

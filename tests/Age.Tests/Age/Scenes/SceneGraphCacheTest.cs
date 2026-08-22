@@ -57,7 +57,7 @@ public partial class SceneGraphCacheTest
     }
 
     [Fact]
-    public void BuildOnce()
+    public void BuildOnce_BuildsSceneGraph()
     {
         var cache = new SceneGraphCache();
 
@@ -270,7 +270,7 @@ public partial class SceneGraphCacheTest
     }
 
     [Fact]
-    public void Rebuild()
+    public void Rebuild_RebuildsAfterTreeChanges()
     {
         var cache = new SceneGraphCache();
 
@@ -405,7 +405,7 @@ public partial class SceneGraphCacheTest
     }
 
     [Fact]
-    public void DirtCommands()
+    public void DirtCommands_UpdatesCommandsOnDirtyNodes()
     {
         var cache = new SceneGraphCache();
 
@@ -524,7 +524,7 @@ public partial class SceneGraphCacheTest
     }
 
     [Fact]
-    public void InvalidatedSubTree()
+    public void InvalidatedSubTree_AccumulatesDirtTrees()
     {
         var cache = new SceneGraphCache();
 

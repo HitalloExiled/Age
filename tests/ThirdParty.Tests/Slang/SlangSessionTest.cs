@@ -6,7 +6,7 @@ namespace ThirdParty.Tests.Slang;
 public class SessionTest
 {
     [Fact]
-    public void Compile()
+    public void CompileShader_ReturnsCode()
     {
         using var globalSession = new GlobalSession(0);
 
@@ -63,7 +63,7 @@ public class SessionTest
     }
 
     [Fact]
-    public void Reflection()
+    public void GetLayout_ReturnsFields()
     {
         using var globalSession = new GlobalSession(0);
 

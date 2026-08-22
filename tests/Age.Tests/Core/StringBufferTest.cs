@@ -12,7 +12,7 @@ public class StringBufferTest
     }
 
     [Fact]
-    public void Append()
+    public void Append_AppendsString()
     {
         var buffer = new StringBuffer();
 
@@ -26,7 +26,7 @@ public class StringBufferTest
     }
 
     [Fact]
-    public void Insert()
+    public void Insert_InsertsString()
     {
         var buffer = new StringBuffer("HelloWorld");
 
@@ -42,7 +42,7 @@ public class StringBufferTest
     }
 
     [Fact]
-    public void Remove()
+    public void Remove_RemovesString()
     {
         var buffer = new StringBuffer("Hello World!!!");
 

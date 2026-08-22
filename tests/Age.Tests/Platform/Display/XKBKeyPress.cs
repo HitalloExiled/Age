@@ -13,7 +13,7 @@ namespace Age.Tests.Platform.Display;
 public class XKBKeyPress
 {
     [Fact]
-    public unsafe void KeyPress()
+    public unsafe void KeyPress_ComposesCharacterCorrectly()
     {
         const uint KEY_a     = (uint)input_event_codes.KEY_A + 8;
         const uint TILDE_KEY = (uint)input_event_codes.KEY_APOSTROPHE + 8;

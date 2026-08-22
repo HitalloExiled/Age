@@ -997,11 +997,6 @@ public abstract partial class Element
         if (!this.contentDependencies.HasFlags(Dependency.Height))
         {
             ResolveDimension(fontSize, this.ComputedStyle.Size?.Height, this.ComputedStyle.MinSize?.Height, this.ComputedStyle.MaxSize?.Height, ref value, ref resolved);
-
-            if (this.ComputedStyle.BoxSizing == BoxSizing.Border)
-            {
-                value = value.ClampSubtract(this.border.Vertical);
-            }
         }
 
         return resolved;
@@ -1163,10 +1158,6 @@ public abstract partial class Element
         {
             ResolveDimension(fontSize, this.ComputedStyle.Size?.Width, this.ComputedStyle.MinSize?.Width, this.ComputedStyle.MaxSize?.Width, ref value, ref resolved);
 
-            if (this.ComputedStyle.BoxSizing == BoxSizing.Border)
-            {
-                value = value.ClampSubtract(this.border.Horizontal);
-            }
         }
 
         return resolved;

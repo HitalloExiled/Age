@@ -3,7 +3,7 @@ namespace ThirdParty.Tests.Vulkan;
 public class VersionTest
 {
     [Fact]
-    public void Instanciate()
+    public void WithValues_StoresCorrectly()
     {
         var version = new ThirdParty.Vulkan.VkVersion(6, 5, 3, 7);
 

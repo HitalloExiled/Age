@@ -5,7 +5,7 @@ namespace Age.Tests.Numerics;
 public class RectTests
 {
     [Fact]
-    public void Grow()
+    public void Grow_ExpandsRectCorrectly()
     {
         var actual = new Rect<int>();
 

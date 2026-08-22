@@ -14,7 +14,7 @@ public class TextBoxTest
     }
 
     [Fact]
-    public void LineInfoEmptyString()
+    public void EmptyString_ReturnsEmptyLineInfo()
     {
         const string TEXT = "";
 
@@ -32,7 +32,7 @@ public class TextBoxTest
     }
 
     [Fact]
-    public void LineInfoSingleCharacter()
+    public void SingleCharacter_ReturnsLineInfo()
     {
         const string TEXT = "x";
 
@@ -50,7 +50,7 @@ public class TextBoxTest
     }
 
     [Fact]
-    public void LineInfoSingleNewLine()
+    public void SingleNewLine_ReturnsLineInfo()
     {
         const string TEXT = "\n";
 
@@ -68,7 +68,7 @@ public class TextBoxTest
     }
 
     [Fact]
-    public void LineInfoMultiplesSingleNewLine()
+    public void MultipleNewLines_ReturnsLineInfo()
     {
         const string TEXT = "\n\n\n";
 
@@ -86,7 +86,7 @@ public class TextBoxTest
     }
 
     [Fact]
-    public void LineInfoWithNewLine()
+    public void WithNewLine_ReturnsLineInfo()
     {
         const string TEXT = "1111\n2222";
 
@@ -104,7 +104,7 @@ public class TextBoxTest
     }
 
     [Fact]
-    public void LineInfoFromTheMidleWithNewLine()
+    public void FromMiddleWithNewLine_ReturnsLineInfo()
     {
         const string TEXT = "1111\n2222\n3333";
 
@@ -122,7 +122,7 @@ public class TextBoxTest
     }
 
     [Fact]
-    public void NextLineWithTraillingNewLine()
+    public void TrailingNewLine_ReturnsLineInfo()
     {
         const string TEXT = "\n1111\n";
 
@@ -140,7 +140,7 @@ public class TextBoxTest
     }
 
     [Fact]
-    public void LineInfoWithNewLineAndCarriageReturn()
+    public void WithNewLineAndCarriageReturn_ReturnsLineInfo()
     {
         const string TEXT = "1111\n\r2222";
 
@@ -158,7 +158,7 @@ public class TextBoxTest
     }
 
     [Fact]
-    public void LineInfoFromTheMidleWithNewLineAndCarriageReturn()
+    public void FromMiddleWithNewLineAndCarriageReturn_ReturnsLineInfo()
     {
         const string TEXT = "1111\n\r2222\n\r3333";
 
@@ -176,7 +176,7 @@ public class TextBoxTest
     }
 
     [Fact]
-    public void NextLineWithTraillingNewLineAndCarriageReturn()
+    public void TrailingNewLineAndCarriageReturn_ReturnsLineInfo()
     {
         const string TEXT = "\n\r1111\n\r";
 
@@ -194,7 +194,7 @@ public class TextBoxTest
     }
 
     [Fact]
-    public void LineInfoWithCursorOutsideContent()
+    public void CursorOutsideContent_ReturnsLineInfo()
     {
         const string TEXT = "xyz";
 

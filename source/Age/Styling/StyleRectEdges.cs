@@ -19,7 +19,7 @@ public record StyleRectEdges
         this.Left   = left;
     }
 
-    public StyleRectEdges(Unit? horizontal, Unit? vertical) : this(vertical, horizontal, vertical, horizontal)
+    public StyleRectEdges(Unit? vertical, Unit? horizontal) : this(vertical, horizontal, vertical, horizontal)
     { }
 
     public StyleRectEdges(Unit? value) : this(value, value, value, value)
