@@ -1,19 +1,27 @@
-using System.Diagnostics;
+using Age.Core.Extensions;
 using Age.Graphs;
 using Age.Numerics;
 using Age.Rendering.Resources;
+using System.Diagnostics;
 
 namespace Age.Scenes;
+
+[Flags]
+public enum SceneFilter
+{
+    None    = 0,
+    World2D = 1 << 0,
+    World3D = 1 << 1,
+    All     = World2D | World3D
+}
 
 public abstract class Viewport : Renderable
 {
     public abstract event Action? Resized;
 
-    private readonly Empty scene2DSlot = new();
-    private readonly Empty scene3DSlot = new();
-    private readonly Empty uiSceneSlot = new();
-
     internal RenderContext RenderContext { get; } = new();
+
+    private readonly Empty sceneSlot = Empty.Pool.Get();
 
     public Camera2D? Camera2D { get; set; }
     public Camera3D? Camera3D { get; set; }
@@ -23,7 +31,26 @@ public abstract class Viewport : Renderable
     public abstract RenderTarget RenderTarget { get; }
     public abstract Texture2D    Texture      { get; }
 
-    public Scene2D? Scene2D
+    public SceneFilter Filter
+    {
+        get;
+        set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+
+            if (this.IsConnected)
+            {
+                this.BindScene();
+            }
+        }
+    } = SceneFilter.All;
+
+    public new Scene? Scene
     {
         get;
         set
@@ -35,55 +62,14 @@ public abstract class Viewport : Renderable
 
             if (value?.Parent == null)
             {
-                this.RenderContext.ClearOverride2D();
+                this.RenderContext.ClearOverrides();
 
-                ReplaceSlot(this.scene2DSlot, field, value);
+                ReplaceSlot(this.sceneSlot, field, value);
             }
             else if (this.IsConnected)
             {
-                this.RenderContext.Override2D(value.Viewport!.RenderContext);
+                this.BindScene();
             }
-
-            field = value;
-        }
-    }
-
-    public Scene3D? Scene3D
-    {
-        get;
-        set
-        {
-            if (field == value)
-            {
-                return;
-            }
-
-            if (value?.Parent == null)
-            {
-                this.RenderContext.ClearOverride3D();
-
-                ReplaceSlot(this.scene3DSlot, field, value);
-            }
-            else if (this.IsConnected)
-            {
-                this.RenderContext.Override3D(value.Viewport!.RenderContext);
-            }
-
-            field = value;
-        }
-    }
-
-    public UIScene? UIScene
-    {
-        get;
-        set
-        {
-            if (field == value)
-            {
-                return;
-            }
-
-            ReplaceSlot(this.uiSceneSlot, field, value);
 
             field = value;
         }
@@ -95,29 +81,34 @@ public abstract class Viewport : Renderable
 
     protected Viewport()
     {
-        this.Children =
-        [
-            this.scene3DSlot,
-            this.scene2DSlot,
-            this.uiSceneSlot,
-        ];
+        this.AppendChild(this.sceneSlot);
 
         this.Seal();
+    }
+
+    private void BindScene()
+    {
+        if (this.Scene == null || this.Scene.Parent == this)
+        {
+            return;
+        }
+
+        this.RenderContext.ClearOverrides();
+
+        if (this.Filter.HasFlags(SceneFilter.World2D))
+        {
+            this.RenderContext.Override2D(this.Scene.Viewport!.RenderContext);
+        }
+
+        if (this.Filter.HasFlags(SceneFilter.World3D))
+        {
+            this.RenderContext.Override3D(this.Scene.Viewport!.RenderContext);
+        }
     }
 
     private protected override void OnConnectedInternal()
     {
         base.OnConnectedInternal();
-
-        if (this.Scene2D != null && this.Scene2D.Parent != this)
-        {
-            this.RenderContext.Override2D(this.Scene2D.Viewport!.RenderContext);
-        }
-
-        if (this.Scene3D != null && this.Scene3D.Parent != this)
-        {
-            this.RenderContext.Override3D(this.Scene3D.Viewport!.RenderContext);
-        }
 
         if (this is Window window)
         {
@@ -125,11 +116,13 @@ public abstract class Viewport : Renderable
         }
         else
         {
-            Debug.Assert(this.Scene?.Window != null);
+            Debug.Assert(base.Scene != null);
 
-            this.Window = this.Scene.Window;
+            this.Window = base.Scene.Window!;
 
             this.Window.RenderTree.AddViewport(this);
+
+            this.BindScene();
         }
     }
 
@@ -146,5 +139,12 @@ public abstract class Viewport : Renderable
         }
 
         this.Window = null;
+    }
+
+    private protected override void OnDisposedInternal()
+    {
+        base.OnDisposedInternal();
+
+        Empty.Pool.Return(this.sceneSlot);
     }
 }

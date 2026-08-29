@@ -152,7 +152,7 @@ public partial class TextBox : Element
 
     private void OnKeyDown(in KeyEvent keyEvent)
     {
-        var window = this.Scene!.Viewport!.Window!;
+        var window = this.Window!;
 
         switch (keyEvent.Key)
         {

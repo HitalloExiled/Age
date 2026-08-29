@@ -26,6 +26,9 @@
                     "VK_INSTANCE_LAYERS": "VK_LAYER_KHRONOS_validation",
                     "WAYLAND_DEBUG": "0",
                 }
+            },
+            "env": {
+                "AGE_SHADERS_PATH": "${workspaceFolder}/source/Age/Shaders",
             }
         },
         {

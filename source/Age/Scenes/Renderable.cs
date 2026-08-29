@@ -117,7 +117,7 @@ public abstract partial class Renderable<T> : Renderable where T : Command
         }
     }
 
-    public Window? Window => this.Scene?.Window;
+    public Window? Window => this.Scene?.Viewport?.Window;
 
     private protected void AddCommand(T command)
     {

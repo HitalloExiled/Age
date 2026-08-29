@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Age.Core;
 using Age.Core.Extensions;
 using Age.Rendering.Resources;
@@ -17,22 +16,15 @@ public partial class ShaderCompiler
 
         private bool disposed;
 
-        private readonly FileSystemWatcher fileSystemWatcher;
-        private readonly string            shadersPath;
+        private readonly FileSystemWatcher fileSystemWatcher = new(Shader.ShadersPath)
+        {
+            EnableRaisingEvents = true,
+            IncludeSubdirectories = true,
+        };
 
         public Dictionary<string, HashSet<string>>                 Dependencies  { get; } = [];
         public Dictionary<string, FileEntry>                       Files         { get; } = [];
         public Dictionary<string, Dictionary<Shader, ShaderEntry>> ShaderEntries { get; } = [];
-
-        public Watcher()
-        {
-            this.shadersPath       = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age/Shaders") : Path.Join(AppContext.BaseDirectory, "Shaders"));
-            this.fileSystemWatcher = new(this.shadersPath)
-            {
-                EnableRaisingEvents   = true,
-                IncludeSubdirectories = true,
-            };
-        }
 
         protected virtual void Dispose(bool disposing)
         {
@@ -69,7 +61,7 @@ public partial class ShaderCompiler
             {
                 entries = [];
 
-                this.fileSystemWatcher.Filters.Add(Path.GetRelativePath(this.shadersPath, shader.Filepath));
+                this.fileSystemWatcher.Filters.Add(Path.GetRelativePath(Shader.ShadersPath, shader.Filepath));
             }
 
             entries!.Add(shader, new(shader, shaderOptions));
@@ -84,7 +76,7 @@ public partial class ShaderCompiler
             {
                 dependents = [];
 
-                this.fileSystemWatcher.Filters.Add(Path.GetRelativePath(this.shadersPath, dependecy));
+                this.fileSystemWatcher.Filters.Add(Path.GetRelativePath(Shader.ShadersPath, dependecy));
             }
 
             dependents!.Add(dependent.Filepath);
@@ -96,7 +88,7 @@ public partial class ShaderCompiler
             {
                 entry.Dispose();
 
-                this.fileSystemWatcher.Filters.Remove(Path.GetRelativePath(this.shadersPath, shader.Filepath));
+                this.fileSystemWatcher.Filters.Remove(Path.GetRelativePath(Shader.ShadersPath, shader.Filepath));
 
                 foreach (var dependent in this.Dependencies.Values)
                 {
@@ -116,7 +108,7 @@ public partial class ShaderCompiler
                 if (dependents.Count == 0)
                 {
                     this.Dependencies.Remove(dependecy);
-                    this.fileSystemWatcher.Filters.Remove(Path.GetRelativePath(this.shadersPath, dependecy));
+                    this.fileSystemWatcher.Filters.Remove(Path.GetRelativePath(Shader.ShadersPath, dependecy));
 
                     clear = true;
                 }

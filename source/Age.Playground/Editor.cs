@@ -3,7 +3,7 @@ using Age.Elements.Events;
 using Age.Elements;
 using Age.Platforms.Display;
 using Age.Playground.Tests.Components;
-using Age.Playground.Tests.Scene;
+using Age.Playground.Tests.Scenes;
 using Age.Playground.Tests.Styling;
 using Age.Playground.Tests;
 using Age.Scenes;
@@ -18,7 +18,7 @@ internal record struct Page(string Title, Setup Setup);
 
 internal delegate void Setup(Canvas canvas);
 
-public sealed class Editor : UIScene
+public sealed class Editor : Scene
 {
     private readonly Page[] pages;
     private int index;
@@ -54,6 +54,7 @@ public sealed class Editor : UIScene
             new(nameof(SubViewportTest), SubViewportTest.Setup),
         ];
 
+        this.Canvas = new();
         this.Canvas.KeyDown += this.OnCanvasKeyDown;
     }
 
@@ -118,9 +119,9 @@ public sealed class Editor : UIScene
 
     private void PrintCanvasIndex()
     {
-        Debug.Assert(this.Scene?.Viewport != null);
+        Debug.Assert(this.Viewport != null);
 
-        var encodeCompositeRenderPass = this.Scene.Viewport.RenderGraph.GetNode<EncodeCompositeRenderPass>();
+        var encodeCompositeRenderPass = this.Viewport.RenderGraph.GetNode<EncodeCompositeRenderPass>();
 
         Common.SaveImage(encodeCompositeRenderPass.Output!, VkImageAspectFlags.Color, "CanvasEncode.png");
     }
@@ -129,7 +130,7 @@ public sealed class Editor : UIScene
     {
         var start = Stopwatch.GetTimestamp();
 
-        this.Canvas.DisposeChildren();
+        this.Canvas!.DisposeChildren();
 
         this.setup.Invoke(this.Canvas);
 

@@ -6,6 +6,6 @@ Logger.Level = LogLevel.Info;
 
 using var engine = new Engine("StoryBook", new(800, 800));
 
-engine.Window.UIScene = new StoryBook();
+engine.Window.Scene = new StoryBook();
 
 engine.Run();

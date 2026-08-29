@@ -26,7 +26,7 @@ public sealed class Canvas : Element
 
         Debug.Assert(this.Scene?.Viewport?.Window != null);
 
-        var viewport = this.Scene?.Viewport;
+        var viewport = this.Scene.Viewport;
 
         viewport!.Window!.RenderTree.AddDeferredUpdate(this.UpdateDirtyLayout);
 

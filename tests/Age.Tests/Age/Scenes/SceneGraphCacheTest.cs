@@ -1,8 +1,12 @@
 using System.Runtime.CompilerServices;
 using Age.Commands;
+using Age.Elements;
 using Age.Scenes;
+using Age.Tests.Age.Fixtures;
 
 namespace Age.Tests.Age.Scenes;
+
+#pragma warning disable CS9113
 
 file static class Entensions
 {
@@ -21,7 +25,8 @@ file static class Entensions
     }
 }
 
-public partial class SceneGraphCacheTest
+[Collection("GPU")]
+public partial class SceneGraphCacheTest(GpuFixture _)
 {
     private sealed record ComponentCommand : Command2D;
     private sealed record SpriteCommand : Command2D;
@@ -61,103 +66,170 @@ public partial class SceneGraphCacheTest
     {
         var cache = new SceneGraphCache();
 
-        var window = new Window
+        var window = Window.CreateMock();
+
+        window.Scene = new Scene
         {
-            Scene3D = new()
-            {
-                Name = "$3D",
-            },
-            Scene2D = new()
-            {
-                Name = "$2D",
-                Children =
-                [
-                    TreeFactory.Linear<Sprite, Command2D, SpriteCommand>(2, 2, 2, -1, "$2D.1"),
-                    new SubViewport("$2D.2")
+            Name    = "$",
+            Children =
+            [
+                new World3D
+                {
+                    Name = "$.1",
+                },
+                new World2D
+                {
+                    Name = "$.2",
+                    Children =
+                    [
+                        TreeFactory.Linear<Sprite, Command2D, SpriteCommand>(2, 2, 2, -1, "$.2.1"),
+                    ]
+                },
+                new Canvas
+                {
+                    Name = "$.3",
+                    Children =
+                    [
+                        TreeFactory.Linear<SealedComponent, Command2D, ComponentCommand>(static name => new(name), 1, 1, 3, 1, "$.3.1"),
+                        TreeFactory.Linear<Component, Command2D, ComponentCommand>(2, 2, 2, -1, "$.3.3"),
+                    ],
+                },
+                new SubViewport(new(400))
+                {
+                    Name  = "$.4",
+                    Scene = new()
                     {
-                        Scene3D = new()
+                        Name = "$.4.1",
+                        World3D = new()
                         {
-                            Name     = "$2D.2.#3D",
+                            Name     = "$.4.1.1",
                             Children =
                             [
-                                TreeFactory.Linear<Model, Command3D, MeshCommand>(2, 2, 2, -1, "$2D.2.#3D.01"),
+                                TreeFactory.Linear<Model, Command3D, MeshCommand>(2, 2, 2, -1, "$.4.1.1.1"),
                             ],
                         }
-                    },
-                    TreeFactory.Linear<SealedComponent, Command2D, ComponentCommand>(static name => new(name), 1, 1, 3, 1, "$2D.3"),
-                    TreeFactory.Linear<Component, Command2D, ComponentCommand>(2, 2, 2, -1, "$2D.4"),
-                ]
-            },
+                    }
+                },
+            ],
         };
-
-        window.Connect();
 
         cache.InvalidatedSubTree(window);
         cache.Build();
 
         var flat     = TreeFactory.Flatten(window).IgnoreEmpty();
-        var expected = new NodeRange[44]
+        var expected = new NodeRange[47]
         {
-            new(flat[0], new(0, 44)), // Window
-                new(flat[1], new(1, 2)), // Scene3D
+            #region Window
+            new(flat[0], new(0, 44)),
+                #region Scene
+                new(flat[1], new(1, 2)),
+                    new(flat[1], new(1, 2)), // World3D
 
-                new(flat[2], new(2, 44)), // Scene2D
-                    new(flat[3], new(3, 10), new(0, 2, 14)), // Sprite
-                        new(flat[4], new(4, 7), new(2, 4, 8, 8)), // Sprite
-                            new(flat[5], new(5, 6), new(4, 6)), // Sprite
-                            new(flat[6], new(6, 7), new(6, 8)), // Sprite
+                    #region World2D
+                    new(flat[2], new(2, 44)),
+                        #region Sprite
+                        new(flat[3], new(3, 10), new(0, 2, 14)),
+                            #region Sprite
+                            new(flat[4], new(4, 7), new(2, 4, 8, 8)),
+                                new(flat[5], new(5, 6), new(4, 6)), // Sprite
+                                new(flat[6], new(6, 7), new(6, 8)), // Sprite
+                            #endregion Sprite
 
-                        new(flat[7], new(7, 10), new(8, 10, 14)), // Sprite
-                            new(flat[8], new(8, 9), new(10, 12)), // Sprite
-                            new(flat[9], new(9, 10), new(12, 14)), // Sprite
+                            #region Sprite
+                            new(flat[7], new(7, 10), new(8, 10, 14)),
+                                new(flat[8], new(8, 9), new(10, 12)), // Sprite
+                                new(flat[9], new(9, 10), new(12, 14)), // Sprite
+                            #endregion Sprite
+                        #endregion Sprite
+                    #endregion World2D
 
-                    new(flat[10], new(10, 19)), // SubViewport
-                        new(flat[11], new(11, 19)), // Scene3D
-                            new(flat[12], new(12, 19), new(0, 2, 14)), // Model
-                                new(flat[13], new(13, 16), new(2, 4, 8)), // Model
-                                    new(flat[14], new(14, 15), new(4, 6)), // Model
-                                    new(flat[15], new(15, 16), new(6, 8)), // Model
+                    #region Canvas
+                    new(flat[19], new(19, 37), new(14, 15, 102, 104)),
+                        #region SealedComponent
+                        new(flat[19], new(19, 37), new(14, 15, 102, 104)),
+                            #region #ShadowRoot
+                            new(flat[20], new(20, 28), new(15, 15, 57, 57)),
+                                #region Component
+                                new(flat[21], new(21, 25), new(15, 18, 36, 39)),
+                                    new(flat[22], new(22, 23), new(18, 21, 21, 24)), // Component
+                                    new(flat[23], new(23, 24), new(24, 27, 27, 30)), // Component
+                                    new(flat[24], new(24, 25), new(30, 33, 33, 36)), // Component
+                                #endregion Component
 
-                                new(flat[16], new(16, 19), new(8, 10, 14)), // Model
-                                    new(flat[17], new(17, 18), new(10, 12)), // Model
-                                    new(flat[18], new(18, 19), new(12, 14)), // Model
+                                #region Component
+                                new(flat[25], new(25, 28), new(39, 41, 53, 57)),
+                                    new(flat[26], new(26, 27), new(41, 43, 43, 47)), // Component
+                                    new(flat[27], new(27, 28), new(47, 49, 49, 53)), // Component
+                                #endregion Component
+                            #endregion #ShadowRoot
 
-                    new(flat[19], new(19, 37), new(14, 15, 102, 104)), // SealedComponent
-                        new(flat[20], new(20, 28), new(15, 15, 57, 57)), // #ShadowRoot
-                            new(flat[21], new(21, 25), new(15, 18, 36, 39)), // Component
-                                new(flat[22], new(22, 23), new(18, 21, 21, 24)), // Component
-                                new(flat[23], new(23, 24), new(24, 27, 27, 30)), // Component
-                                new(flat[24], new(24, 25), new(30, 33, 33, 36)), // Component
+                            #region SealedComponent
+                            new(flat[28], new(28, 37), new(57, 58, 100, 102)),
+                                #region #ShadowRoot
+                                new(flat[29], new(29, 37), new(58, 58, 100, 100)),
+                                    #region Component
+                                    new(flat[30], new(30, 34), new(58, 61, 79, 82)),
+                                        new(flat[31], new(31, 32), new(61, 64, 64, 67)), // Component
+                                        new(flat[32], new(32, 33), new(67, 70, 70, 73)), // Component
+                                        new(flat[33], new(33, 34), new(73, 76, 76, 79)), // Component
+                                    #endregion Component
 
-                            new(flat[25], new(25, 28), new(39, 41, 53, 57)), // Component
-                                new(flat[26], new(26, 27), new(41, 43, 43, 47)), // Component
-                                new(flat[27], new(27, 28), new(47, 49, 49, 53)), // Component
+                                    #region Component
+                                    new(flat[34], new(34, 37), new(82, 84, 96, 100)),
+                                        new(flat[35], new(35, 36), new(84, 86, 86, 90)), // Component
+                                        new(flat[36], new(36, 37), new(90, 92, 92, 96)), // Component
+                                    #endregion Component
+                                #endregion #ShadowRoot
+                            #endregion SealedComponent
+                        #endregion SealedComponent
 
-                        new(flat[28], new(28, 37), new(57, 58, 100, 102)), // SealedComponent
-                            new(flat[29], new(29, 37), new(58, 58, 100, 100)), // #ShadowRoot
-                                new(flat[30], new(30, 34), new(58, 61, 79, 82)), // Component
-                                    new(flat[31], new(31, 32), new(61, 64, 64, 67)), // Component
-                                    new(flat[32], new(32, 33), new(67, 70, 70, 73)), // Component
-                                    new(flat[33], new(33, 34), new(73, 76, 76, 79)), // Component
+                        #region Component
+                        new(flat[37], new(37, 44), new(104, 106, 118)),
+                            #region Component
+                            new(flat[38], new(38, 41), new(106, 108, 112)),
+                                new(flat[39], new(39, 40), new(108, 110)), // Component
+                                new(flat[40], new(40, 41), new(110, 112)), // Component
+                            #endregion Component
 
-                                new(flat[34], new(34, 37), new(82, 84, 96, 100)), // Component
-                                    new(flat[35], new(35, 36), new(84, 86, 86, 90)), // Component
-                                    new(flat[36], new(36, 37), new(90, 92, 92, 96)), // Component
+                            #region Component
+                            new(flat[41], new(41, 44), new(112, 114, 118)),
+                                new(flat[42], new(42, 43), new(114, 116)), // Component
+                                new(flat[43], new(43, 44), new(116, 118)), // Component
+                            #endregion Component
+                        #endregion Component
+                    #endregion Canvas
 
-                    new(flat[37], new(37, 44), new(104, 106, 118)), // Component
-                        new(flat[38], new(38, 41), new(106, 108, 112)), // Component
-                            new(flat[39], new(39, 40), new(108, 110)), // Component
-                            new(flat[40], new(40, 41), new(110, 112)), // Component
+                    #region SubViewport
+                    new(flat[10], new(10, 19)),
+                        #region Scene
+                        new(flat[11], new(11, 19)),
+                            #region World3D
+                            new(flat[11], new(11, 19)),
+                                #region Model
+                                new(flat[12], new(12, 19), new(0, 2, 14)),
+                                    #region Model
+                                    new(flat[13], new(13, 16), new(2, 4, 8)),
+                                        new(flat[14], new(14, 15), new(4, 6)), // Model
+                                        new(flat[15], new(15, 16), new(6, 8)), // Model
+                                    #endregion Model
 
-                        new(flat[41], new(41, 44), new(112, 114, 118)), // Component
-                            new(flat[42], new(42, 43), new(114, 116)), // Component
-                            new(flat[43], new(43, 44), new(116, 118)), // Component
+                                    #region Model
+                                    new(flat[16], new(16, 19), new(8, 10, 14)),
+                                        new(flat[17], new(17, 18), new(10, 12)), // Model
+                                        new(flat[18], new(18, 19), new(12, 14)), // Model
+                                    #endregion Model
+                                #endregion Model
+                            #endregion World3D
+                        #endregion Scene
+                    #endregion SubViewport
+                #endregion Scene
+            #endregion Window
         };
 
         var actual = cache.NodesList.Select(ToNodeRange).ToArray();
 
         // Uncomment if you is lost
-        // Emit(expected, actual);
+        Emit(expected, actual);
 
         Assert.Equal(expected, actual);
 
@@ -274,10 +346,11 @@ public partial class SceneGraphCacheTest
     {
         var cache = new SceneGraphCache();
 
-        var window = new Window
+        var window = Window.CreateMock();
+
+        window.Scene = new()
         {
-            Name    = "$",
-            Scene2D = new()
+            World2D = new()
             {
                 Name     = "$2D",
                 Children =
@@ -409,10 +482,11 @@ public partial class SceneGraphCacheTest
     {
         var cache = new SceneGraphCache();
 
-        var window = new Window
+        var window = Window.CreateMock();
+
+        window.Scene = new()
         {
-            Name    = "$",
-            Scene2D = new()
+            World2D = new()
             {
                 Name     = "$2D",
                 Children =
@@ -528,10 +602,11 @@ public partial class SceneGraphCacheTest
     {
         var cache = new SceneGraphCache();
 
-        var window = new Window
+        var window = Window.CreateMock();
+
+        window.Scene = new()
         {
-            Name    = "$",
-            Scene2D = new()
+            World2D = new()
             {
                 Name     = "$2D",
                 Children =

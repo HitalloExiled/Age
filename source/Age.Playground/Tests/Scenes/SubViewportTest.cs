@@ -4,28 +4,34 @@ using Age.Scenes;
 using Age.Styling;
 using System.Diagnostics;
 
-namespace Age.Playground.Tests.Scene;
+namespace Age.Playground.Tests.Scenes;
 
 public static class SubViewportTest
 {
+    private static DemoScene? scene;
+
     public static void Setup(Canvas canvas)
     {
         const uint BORDER_SIZE = 2;
 
-        var scene = new DemoScene();
+        scene?.Dispose();
+        scene = new DemoScene();
 
-        Debug.Assert(canvas.Scene?.Viewport != null);
+        Debug.Assert(canvas.Scene != null);
 
-        canvas.Scene.Viewport.Scene3D?.Dispose();
-        canvas.Scene.Viewport.Scene3D = scene;
+        canvas.Scene.AppendChild(scene);
 
-        var subViewportFree = new SubViewport(new(608)) { Name = "Free", Camera3D = scene.FreeCamera,  Scene3D = scene };
-        var subViewportX    = new SubViewport(new(200)) { Name = "X",    Camera3D = scene.RedCamera,   Scene3D = scene };
-        var subViewportY    = new SubViewport(new(200)) { Name = "Y",    Camera3D = scene.GreenCamera, Scene3D = scene };
-        var subViewportZ    = new SubViewport(new(200)) { Name = "Z",    Camera3D = scene.BlueCamera,  Scene3D = scene };
+        var subViewportFree = new SubViewport(new(608)) { Name = "Free", Scene = scene, Filter = SceneFilter.World3D, Camera3D = scene.FreeCamera };
+        var subViewportX    = new SubViewport(new(200)) { Name = "X",    Scene = scene, Filter = SceneFilter.World3D, Camera3D = scene.RedCamera };
+        var subViewportY    = new SubViewport(new(200)) { Name = "Y",    Scene = scene, Filter = SceneFilter.World3D, Camera3D = scene.GreenCamera };
+        var subViewportZ    = new SubViewport(new(200)) { Name = "Z",    Scene = scene, Filter = SceneFilter.World3D, Camera3D = scene.BlueCamera };
 
-        canvas.Scene.Viewport.Scene2D?.Dispose();
-        canvas.Scene.Viewport.Scene2D = new Scene2D { Children = [subViewportFree, subViewportX, subViewportY, subViewportZ] };
+        canvas.Scene.AppendChildren([
+            subViewportFree,
+            subViewportX,
+            subViewportY,
+            subViewportZ,
+        ]);
 
         var root = new FlexBox
         {

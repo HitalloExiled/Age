@@ -37,4 +37,10 @@ public class RenderContext
         this.buffer2D.Clear();
         this.buffer3D.Clear();
     }
+
+    public void ClearOverrides()
+    {
+        this.ClearOverride2D();
+        this.ClearOverride3D();
+    }
 }

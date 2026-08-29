@@ -4,6 +4,7 @@ using Age.Commands;
 using Age.Core;
 using Age.Core.Extensions;
 using Age.Core.Interfaces;
+using Age.Elements;
 using Age.Graphs;
 
 namespace Age.Scenes;
@@ -44,22 +45,22 @@ internal partial class SceneGraphCache
             {
                 CollectViewport(viewport, subtreeRange.Start, stage, nodes);
             }
-            else if ((subtree as Scene ?? subtree.Scene) is Scene scene)
+            else
             {
-                var renderContext = scene.Viewport!.RenderContext;
+                var renderContext = subtree.Scene!.Viewport!.RenderContext;
 
-                switch (scene)
+                switch (subtree)
                 {
-                    case Scene3D:
+                    case World3D:
                         Collect(subtree, subtreeRange.Start, renderContext.Buffer3D, stage, nodes);
                         break;
 
-                    case Scene2D:
+                    case World2D:
                         Collect(subtree, subtreeRange.Start, renderContext.Buffer2D, stage, nodes);
 
                         break;
 
-                    case UIScene:
+                    case Canvas:
                         Collect(subtree, subtreeRange.Start, renderContext.UIBuffer, stage, nodes);
 
                         break;
@@ -107,25 +108,34 @@ internal partial class SceneGraphCache
 
             stage.Add(viewport);
 
-            foreach (var child in viewport)
+            if (viewport.FirstChild is Scene scene)
             {
-                switch (child)
+                stage.Add(scene);
+
+                scene.SubtreeRange = ShortRange.CreateWithLength(index + stage.Count, 1);
+
+                foreach (var child in scene)
                 {
-                    case Scene3D scene3D:
-                        Collect(scene3D, index, viewport.RenderContext.Buffer3D, stage, nodes);
+                    switch (child)
+                    {
+                        case World3D world3D:
+                            Collect(world3D, index, viewport.RenderContext.Buffer3D, stage, nodes);
 
-                        break;
+                            break;
 
-                    case Scene2D scene2D:
-                        Collect(scene2D, index, viewport.RenderContext.Buffer2D, stage, nodes);
+                        case World2D world2D:
+                            Collect(world2D, index, viewport.RenderContext.Buffer2D, stage, nodes);
 
-                        break;
+                            break;
 
-                    case UIScene uiScene:
-                        Collect(uiScene, index, viewport.RenderContext.UIBuffer, stage, nodes);
+                        case Canvas canvas:
+                            Collect(canvas, index, viewport.RenderContext.UIBuffer, stage, nodes);
 
-                        break;
+                            break;
+                    }
                 }
+
+                scene.SubtreeRange = scene.SubtreeRange.WithEnd(index + stage.Count);
             }
 
             viewport.SubtreeRange = viewport.SubtreeRange.WithEnd(index + stage.Count);
@@ -280,18 +290,18 @@ internal partial class SceneGraphCache
                     break;
 
                 default:
-                    this.Collect((Scene)subtree);
+                    this.CollectWorld(subtree);
 
                     break;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Collect<T>(T scene) where T : Scene
+        private void CollectWorld(Renderable world)
         {
-            this.StartSubtreeRange(scene);
-            this.CollectSubtree(scene);
-            this.EndSubtreeRange(scene);
+            this.StartSubtreeRange(world);
+            this.CollectSubtree(world);
+            this.EndSubtreeRange(world);
             this.UpdateBuffer(0..);
         }
 

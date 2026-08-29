@@ -4,7 +4,7 @@ using Age.Platforms.Display;
 using Age.Scenes;
 using Age.Tests.Age.Acessors;
 
-namespace Age.Tests.Age.Elements;
+namespace Age.Tests.Age;
 
 internal static class WindowTestExtensions
 {
@@ -21,11 +21,11 @@ internal static class WindowTestExtensions
         WindowAccessor.GetRenderTree(window)    = renderTree;
         WindowAccessor.GetRenderContext(window) = new();
 
-        var uiSceneSlot = new Empty();
+        var sceneSlot = new Empty();
 
-        WindowAccessor.GetUiSceneSlot(window) = uiSceneSlot;
+        WindowAccessor.GetSceneSlot(window) = sceneSlot;
 
-        window.AppendChild(uiSceneSlot);
+        window.AppendChild(sceneSlot);
     }
 
     private static RenderTree CreateMockRenderTree()
@@ -33,8 +33,9 @@ internal static class WindowTestExtensions
         var renderTree = (RenderTree)RuntimeHelpers.GetUninitializedObject(typeof(RenderTree));
 
         RenderTreeAccessor.GetSceneGraphCache(renderTree) = new();
-        RenderTreeAccessor.GetTimers(renderTree) = [];
-        RenderTreeAccessor.GetUpdatesQueue(renderTree)    = [];
+        RenderTreeAccessor.GetTimers(renderTree)       = [];
+        RenderTreeAccessor.GetUpdatesQueue(renderTree) = [];
+        RenderTreeAccessor.GetViewports(renderTree)    = [];
 
         return renderTree;
     }
@@ -51,7 +52,7 @@ internal static class WindowTestExtensions
 
             window.Connect();
 
-            window.UIScene = new();
+            window.Scene = new();
 
             window.RenderTree.Initialize();
 

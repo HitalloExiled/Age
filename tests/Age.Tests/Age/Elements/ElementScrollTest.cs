@@ -1,6 +1,7 @@
 using Age.Elements;
 using Age.Numerics;
 using Age.Styling;
+using Age.Tests.Age.Fixtures;
 
 namespace Age.Tests.Age.Elements;
 
@@ -23,7 +24,7 @@ public class ElementScrollTest(GpuFixture _)
             },
         };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
 
         window.RenderTree.Update();
 
@@ -56,7 +57,7 @@ public class ElementScrollTest(GpuFixture _)
             ],
         };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
 
         window.RenderTree.Update();
 
@@ -89,7 +90,7 @@ public class ElementScrollTest(GpuFixture _)
             ],
         };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
 
         window.RenderTree.Update();
 
@@ -122,7 +123,7 @@ public class ElementScrollTest(GpuFixture _)
             ],
         };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
 
         window.RenderTree.Update();
 
@@ -155,7 +156,7 @@ public class ElementScrollTest(GpuFixture _)
             ],
         };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
 
         window.RenderTree.Update();
 

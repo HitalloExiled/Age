@@ -100,8 +100,6 @@ public abstract class Layoutable : Spatial<Command2D, Matrix3x2<float>>
         }
     }
 
-    public new UIScene? Scene => base.Scene as UIScene;
-
     public override Matrix3x2<float> Matrix => this.CombinedMatrix * this.CompositeParentMatrix;
 
     private protected static ulong CombineIds(int elementIndex, int childIndex) =>
@@ -146,7 +144,7 @@ public abstract class Layoutable : Spatial<Command2D, Matrix3x2<float>>
 
     private protected void RequestUpdate(bool affectsBoundings)
     {
-        var tree = this.Scene?.Viewport?.Window?.RenderTree;
+        var tree = this.Window?.RenderTree;
 
         for (var current = this; ; current = current.CompositeParentElement!)
         {
@@ -170,7 +168,7 @@ public abstract class Layoutable : Spatial<Command2D, Matrix3x2<float>>
 
     private protected void SetCursor(Cursor? cursor)
     {
-        Debug.Assert(this.Scene?.Viewport?.Window != null);
+        Debug.Assert(this.Scene?.Window != null);
 
         Window.Cursor = cursor ?? default;
     }

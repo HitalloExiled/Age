@@ -1,18 +1,20 @@
 using Age.Rendering.Resources;
 using Age.Rendering.Vulkan;
+using Age.Services;
 using Age.Storage;
 
-namespace Age.Tests.Age.Elements;
+namespace Age.Tests.Age.Fixtures;
 
 public class GpuFixture : IDisposable
 {
     private static readonly string? lavapipePath;
 
-    private readonly Surface     tempSurface;
-    private readonly TextStorage textStorage;
-
-    public VulkanRenderer  Renderer       { get; }
-    public TextureStorage  TextureStorage { get; }
+    private readonly VulkanRenderer   renderer;
+    private readonly RenderingService renderingService;
+    private readonly ShaderStorage    shaderStorage;
+    private readonly Surface          surface;
+    private readonly TextStorage      textStorage;
+    private readonly TextureStorage   textureStorage;
 
     static GpuFixture()
     {
@@ -54,31 +56,41 @@ public class GpuFixture : IDisposable
 
         try
         {
-            this.Renderer       = new VulkanRenderer(headless: true);
-            this.tempSurface    = this.Renderer.CreateSurface(new(1, 1));
-            this.TextureStorage = new TextureStorage(this.Renderer);
-            this.textStorage    = new TextStorage(this.Renderer);
+            this.renderer         = new(headless: true);
+            this.textureStorage   = new(this.renderer);
+            this.textStorage      = new(this.renderer);
+            this.shaderStorage    = new(this.renderer);
+            this.renderingService = new(this.renderer);
+
+            this.surface = this.renderer.CreateSurface(new(1, 1));
         }
         catch
         {
+            this.surface?.Dispose();
+
             this.textStorage?.Dispose();
-            this.TextureStorage?.Dispose();
-            this.tempSurface?.Dispose();
-            this.Renderer?.Dispose();
+            this.textureStorage?.Dispose();
+            this.renderer?.Dispose();
+            this.renderingService?.Dispose();
+            this.shaderStorage?.Dispose();
+
             Assert.Skip("Vulkan initialization failed with software ICD");
         }
     }
 
     public void Dispose()
     {
+        this.surface.Dispose();
+
+        this.renderer.Dispose();
+        this.renderingService.Dispose();
+        this.shaderStorage.Dispose();
         this.textStorage.Dispose();
-        this.TextureStorage.Dispose();
-        this.tempSurface.Dispose();
-        this.Renderer.Dispose();
+        this.textureStorage.Dispose();
 
         GC.SuppressFinalize(this);
     }
 }
 
 [CollectionDefinition("GPU")]
-public class GpuCollection : ICollectionFixture<GpuFixture> { }
+public class GpuCollection : ICollectionFixture<GpuFixture>;

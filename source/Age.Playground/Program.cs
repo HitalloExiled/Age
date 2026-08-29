@@ -6,6 +6,6 @@ Logger.Level = LogLevel.Info;
 
 using var engine = new Engine("Age", new(800, 800));
 
-engine.Window.UIScene = new Editor();
+engine.Window.Scene = new Editor();
 
 engine.Run();

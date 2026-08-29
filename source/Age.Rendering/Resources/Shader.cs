@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using ThirdParty.Vulkan.Enums;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
-using System.Diagnostics;
 using Age.Core.Collections;
 
 namespace Age.Rendering.Resources;
@@ -17,7 +16,7 @@ public interface IShaderFactory<T> where T : Shader
 
 public abstract class Shader(string filepath, VkRenderPass renderPass) : SharedDisposable<Shader>
 {
-    public static string ShadersPath { get; } = Path.GetFullPath(Debugger.IsAttached ? Path.Join(Directory.GetCurrentDirectory(), "source/Age/Shaders") : Path.Join(AppContext.BaseDirectory, "Shaders"));
+    public static string ShadersPath { get; } = Path.GetFullPath(Environment.GetEnvironmentVariable("AGE_SHADERS_PATH") ?? Path.Join(AppContext.BaseDirectory, "Shaders"));
 
     public event Action? Changed;
 
@@ -53,7 +52,7 @@ where TVertexInput : IVertexInput
     protected Shader(string file, RenderTarget renderTarget) : this(file, renderTarget.RenderPass) { }
 
     internal override NativeArray<VkVertexInputAttributeDescription> GetAttributes() => TVertexInput.GetAttributes();
-    internal override VkVertexInputBindingDescription             GetBindings()   => TVertexInput.GetBindings();
+    internal override VkVertexInputBindingDescription                GetBindings()   => TVertexInput.GetBindings();
 
     protected override void OnDisposed(bool disposing)
     {

@@ -13,8 +13,8 @@ internal static class WindowAccessor
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "renderTargets")]
     internal static extern ref RenderTarget[] GetRenderTargets(Window window);
 
-    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "uiSceneSlot")]
-    internal static extern ref Empty GetUiSceneSlot(Viewport window);
+    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "sceneSlot")]
+    internal static extern ref Empty GetSceneSlot(Viewport window);
 
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "<RenderTree>k__BackingField")]
     internal static extern ref RenderTree GetRenderTree(Window window);

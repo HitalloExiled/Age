@@ -3,6 +3,7 @@ using Age.Numerics;
 using Age.Rendering.Resources;
 using Age.Scenes;
 using Age.Styling;
+using Age.Tests.Age.Fixtures;
 using Image = Age.Styling.Image;
 
 namespace Age.Tests.Age.Elements;
@@ -34,7 +35,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -63,7 +64,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -91,7 +92,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -119,7 +120,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -148,7 +149,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -177,7 +178,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -205,7 +206,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -233,7 +234,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -247,7 +248,7 @@ public class ElementLayoutTest(GpuFixture _)
 
         var element = new TestElement { Style = { Size = new SizeUnit(Unit.Em(2), Unit.Em(3)) } };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         window.RenderTree.Update();
 
         Assert.Equal(new Size<int>(32, 48), element.GetBoxModel().Boundings.Size);
@@ -260,7 +261,7 @@ public class ElementLayoutTest(GpuFixture _)
 
         var element = new TestElement { Style = { MinSize = new SizeUnit(Unit.Px(50), Unit.Px(50)) } };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         window.RenderTree.Update();
 
         Assert.Equal(new Size<int>(50, 50), element.GetBoxModel().Boundings.Size);
@@ -273,7 +274,7 @@ public class ElementLayoutTest(GpuFixture _)
 
         var element = new TestElement { Style = { MinSize = new SizeUnit(Unit.Em(3), Unit.Em(3)) } };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         window.RenderTree.Update();
 
         Assert.Equal(new Size<int>(48, 48), element.GetBoxModel().Boundings.Size);
@@ -287,7 +288,7 @@ public class ElementLayoutTest(GpuFixture _)
         var element = new TestElement { Style = { MaxSize = new SizeUnit(Unit.Px(100), Unit.Px(100)) } };
         var child   = new TestElement { Style = { Size = new SizeUnit(Unit.Px(200), Unit.Px(200)) } };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         element.AppendChild(child);
         window.RenderTree.Update();
 
@@ -302,7 +303,7 @@ public class ElementLayoutTest(GpuFixture _)
         var element = new TestElement { Style = { MaxSize = new SizeUnit(Unit.Em(5), Unit.Em(5)) } };
         var child   = new TestElement { Style = { Size = new SizeUnit(Unit.Px(200), Unit.Px(200)) } };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         element.AppendChild(child);
         window.RenderTree.Update();
 
@@ -325,7 +326,7 @@ public class ElementLayoutTest(GpuFixture _)
         var child1 = new TestElement { Style = { Size = new SizeUnit(Unit.Px(30), Unit.Px(20)) } };
         var child2 = new TestElement { Style = { Size = new SizeUnit(Unit.Px(50), Unit.Px(40)) } };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child1);
         parent.AppendChild(child2);
         window.RenderTree.Update();
@@ -342,7 +343,7 @@ public class ElementLayoutTest(GpuFixture _)
         var visible = new TestElement { Style = { Size = new SizeUnit(Unit.Px(30), Unit.Px(20)) } };
         var hidden  = new TestElement { Style = { Size = new SizeUnit(Unit.Px(80), Unit.Px(70)) } };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(visible);
         parent.AppendChild(hidden);
         hidden.Visible = false;
@@ -359,7 +360,7 @@ public class ElementLayoutTest(GpuFixture _)
         var parent = new FlexBox();
         var child  = new TestElement { Style = { Size = new SizeUnit(Unit.Px(30), Unit.Px(20)) } };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         parent.AppendChild(new Empty());
         window.RenderTree.Update();
@@ -376,7 +377,7 @@ public class ElementLayoutTest(GpuFixture _)
         var layoutable = new TestLayoutable();
         var child      = new TestElement { Style = { Size = new SizeUnit(Unit.Px(30), Unit.Px(20)) } };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(layoutable);
         parent.AppendChild(child);
         window.RenderTree.Update();
@@ -404,7 +405,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         child.Visible = false;
         child.Visible = true;
@@ -440,7 +441,7 @@ public class ElementLayoutTest(GpuFixture _)
         var first  = new TestElement { Style = { Size = new SizeUnit(Unit.Px(50), Unit.Px(40)) } };
         var second = new TestElement { Style = { Size = new SizeUnit(Unit.Px(50), Unit.Px(40)) } };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(first);
         parent.AppendChild(second);
         window.RenderTree.Update();
@@ -481,7 +482,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -503,7 +504,7 @@ public class ElementLayoutTest(GpuFixture _)
         };
         var child = new TestElement { Style = { Size = new SizeUnit(Unit.Px(50), Unit.Px(40)) } };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -532,7 +533,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -560,7 +561,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -580,7 +581,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(child);
+        window.Scene!.Canvas!.AppendChild(child);
         window.RenderTree.Update();
 
         Assert.Equal(Color.Red, child.ComputedStyle.BackgroundColor);
@@ -599,7 +600,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(child);
+        window.Scene!.Canvas!.AppendChild(child);
         window.RenderTree.Update();
 
         Assert.NotNull(child.ComputedStyle.BackgroundImage);
@@ -625,7 +626,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(child);
+        window.Scene!.Canvas!.AppendChild(child);
         window.RenderTree.Update();
 
         Assert.Equal(new Size<int>(100, 50), child.GetBoxModel().Boundings.Size);
@@ -651,7 +652,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(child);
+        window.Scene!.Canvas!.AppendChild(child);
         window.RenderTree.Update();
 
         child.Style.Size = new SizeUnit(0, 0);
@@ -680,7 +681,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(child);
+        window.Scene!.Canvas!.AppendChild(child);
         window.RenderTree.Update();
 
         child.Style.Size = new SizeUnit(0, 0);
@@ -709,7 +710,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(child);
+        window.Scene!.Canvas!.AppendChild(child);
         window.RenderTree.Update();
 
         Assert.Equal(new Size<int>(100, 50), child.GetBoxModel().Boundings.Size);
@@ -728,7 +729,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(child);
+        window.Scene!.Canvas!.AppendChild(child);
         window.RenderTree.Update();
 
         Assert.NotNull(child.ComputedStyle.Border);
@@ -751,7 +752,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(child);
+        window.Scene!.Canvas!.AppendChild(child);
         window.RenderTree.Update();
 
         Assert.Equal(new SizeUnit(), child.ComputedStyle.Size);
@@ -778,7 +779,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -806,7 +807,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -830,7 +831,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(child);
+        window.Scene!.Canvas!.AppendChild(child);
         window.RenderTree.Update();
 
         Assert.Equal(Overflow.Clipping, child.ComputedStyle.Overflow);
@@ -860,7 +861,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -889,7 +890,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -918,7 +919,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -943,7 +944,7 @@ public class ElementLayoutTest(GpuFixture _)
         };
         var layoutable = new TestLayoutable();
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(layoutable);
         window.RenderTree.Update();
 
@@ -973,7 +974,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -1002,7 +1003,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -1029,7 +1030,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -1050,7 +1051,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(child);
+        window.Scene!.Canvas!.AppendChild(child);
         window.RenderTree.Update();
 
         Assert.Equal(new Size<int>(32, 32), child.GetBoxModel().Boundings.Size);
@@ -1071,7 +1072,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -1099,7 +1100,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -1120,7 +1121,7 @@ public class ElementLayoutTest(GpuFixture _)
         };
         var child = new TestElement();
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -1150,7 +1151,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -1180,7 +1181,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -1211,7 +1212,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -1236,7 +1237,7 @@ public class ElementLayoutTest(GpuFixture _)
         var first = new TestLayoutable();
         var second = new TestLayoutable();
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(first);
         parent.AppendChild(second);
         window.RenderTree.Update();
@@ -1264,7 +1265,7 @@ public class ElementLayoutTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 

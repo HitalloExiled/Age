@@ -33,4 +33,11 @@
     <ProjectReference Include="..\..\source\Age.Resources\Age.Resources.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="../../source/Age/Shaders/**/*.frag"  CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../source/Age/Shaders/**/*.glsl"  CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../source/Age/Shaders/**/*.slang" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../source/Age/Shaders/**/*.vert"  CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

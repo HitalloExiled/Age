@@ -11,7 +11,7 @@ using Age.Rendering.Resources;
 
 namespace Age.Playground;
 
-public class DemoScene : Scene3D
+public class DemoScene : Scene
 {
     public override string NodeName => nameof(DemoScene);
     private readonly Mesh axis;
@@ -46,16 +46,21 @@ public class DemoScene : Scene3D
             Transform = Transform3D.Translated(new(0, 0, 10)),
         };
 
-        this.AppendChild(this.FreeCamera);
-        this.AppendChild(this.RedCamera);
-        this.AppendChild(this.GreenCamera);
-        this.AppendChild(this.BlueCamera);
-
         this.axis = LoadMesh("Axis.obj", "Axis.png");
         this.mesh = LoadMesh("viking_room_2.obj", "viking_room.png");
 
-        this.AppendChild(this.axis);
-        this.AppendChild(this.mesh);
+        this.World3D = new()
+        {
+            Children =
+            [
+                this.FreeCamera,
+                this.RedCamera,
+                this.GreenCamera,
+                this.BlueCamera,
+                this.axis,
+                this.mesh,
+            ]
+        };
 
         this.FreeCamera.LookAt(this.mesh, Vector3<float>.Up);
         this.RedCamera.LookAt(this.mesh, Vector3<float>.Up);

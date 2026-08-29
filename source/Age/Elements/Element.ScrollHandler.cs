@@ -224,9 +224,9 @@ public abstract partial class Element
     {
         if (ActiveScrollBarTarget == this)
         {
-            Debug.Assert(this.Scene?.Viewport?.Window != null);
+            Debug.Assert(this?.Window != null);
 
-            this.Scene.Viewport.Window.RenderTree.MouseMoved -= this.OnRenderTreeMouseMoved;
+            this.Window.RenderTree.MouseMoved -= this.OnRenderTreeMouseMoved;
             this.HandleScrollBarMouseMoved(windowMouseEvent);
         }
         else if (this.CanScroll && !this.IsScrollBarVisible)
@@ -273,9 +273,9 @@ public abstract partial class Element
             IsHoveringScrollBarX = false;
             IsHoveringScrollBarY = false;
 
-            Debug.Assert(this.Scene?.Viewport?.Window != null);
+            Debug.Assert(this?.Window != null);
 
-            this.Scene.Viewport.Window.RenderTree.MouseMoved += this.OnRenderTreeMouseMoved;
+            this.Window.RenderTree.MouseMoved += this.OnRenderTreeMouseMoved;
             this.HandleScrollBarMouseMoved(windowMouseEvent);
 
             return;
@@ -389,9 +389,9 @@ public abstract partial class Element
                 }
             }
 
-            Debug.Assert(this.Scene?.Viewport?.Window != null);
+            Debug.Assert(this.Window != null);
 
-            this.Scene.Viewport.Window.RenderTree.MouseMoved -= this.OnRenderTreeMouseMoved;
+            this.Window.RenderTree.MouseMoved -= this.OnRenderTreeMouseMoved;
         }
     }
 

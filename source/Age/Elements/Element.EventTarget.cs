@@ -82,7 +82,7 @@ public abstract partial class Element
             {
                 this.AddEvent(EventProperty.Input, value, out var added);
 
-                if (this.Scene?.Viewport?.Window is Window window && added)
+                if (this.Window is Window window && added)
                 {
                     window.Input += this.OnInput;
                 }
@@ -94,7 +94,7 @@ public abstract partial class Element
             {
                 this.RemoveEvent(EventProperty.Input, value, out var removed);
 
-                if (this.Scene?.Viewport?.Window is Window window && removed)
+                if (this.Window is Window window && removed)
                 {
                     window.Input -= this.OnInput;
                 }
@@ -110,7 +110,7 @@ public abstract partial class Element
             {
                 this.AddEvent(EventProperty.KeyDown, value, out var added);
 
-                if (this.Scene?.Viewport?.Window is Window window && added)
+                if (this.Window is Window window && added)
                 {
                     window.KeyDown += this.OnKeyDown;
                 }
@@ -122,7 +122,7 @@ public abstract partial class Element
             {
                 this.RemoveEvent(EventProperty.KeyDown, value, out var removed);
 
-                if (this.Scene?.Viewport?.Window is Window window && removed)
+                if (this.Window is Window window && removed)
                 {
                     window.KeyDown -= this.OnKeyDown;
                 }
@@ -138,7 +138,7 @@ public abstract partial class Element
             {
                 this.AddEvent(EventProperty.KeyUp, value, out var added);
 
-                if (this.Scene?.Viewport?.Window is Window window  && added)
+                if (this.Window is Window window && added)
                 {
                     window.KeyUp += this.OnKeyUp;
                 }
@@ -150,7 +150,7 @@ public abstract partial class Element
             {
                 this.RemoveEvent(EventProperty.KeyUp, value, out var removed);
 
-                if (this.Scene?.Viewport?.Window is Window window && removed)
+                if (this.Window is Window window && removed)
                 {
                     window.KeyUp -= this.OnKeyUp;
                 }
@@ -208,7 +208,7 @@ public abstract partial class Element
             {
                 this.AddEvent(EventProperty.MouseWheel, value, out var added);
 
-                if (this.Scene?.Viewport?.Window is Window window  && added)
+                if (this.Window is Window window && added)
                 {
                     window.MouseWheel += this.OnMouseWheel;
                 }
@@ -220,7 +220,7 @@ public abstract partial class Element
             {
                 this.RemoveEvent(EventProperty.MouseWheel, value, out var removed);
 
-                if (this.Scene?.Viewport?.Window is Window window && removed)
+                if (this.Window is Window window && removed)
                 {
                     window.MouseWheel -= this.OnMouseWheel;
                 }

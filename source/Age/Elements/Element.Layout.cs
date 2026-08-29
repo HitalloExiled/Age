@@ -983,7 +983,7 @@ public abstract partial class Element
 
         if (property.HasAnyFlag(TRANSFORM_AFFECTED_PROPERTIES | LAYOUT_AFFECTED_PROPERTIES))
         {
-            this.Scene!.Viewport!.Window!.RenderTree.RequestMouseEvent();
+            this!.Window!.RenderTree.RequestMouseEvent();
         }
 
         this.RequestUpdate(affectsBoundings);

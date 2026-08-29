@@ -1,6 +1,7 @@
 using Age.Elements;
 using Age.Numerics;
 using Age.Styling;
+using Age.Tests.Age.Fixtures;
 
 namespace Age.Tests.Age.Elements;
 
@@ -17,7 +18,7 @@ public class ElementBoxModelTest(GpuFixture _)
         var parent = new FlexBox();
         var child  = new TestElement { Style = { Size = new(Unit.Pc(50), Unit.Pc(50)) } };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -36,7 +37,7 @@ public class ElementBoxModelTest(GpuFixture _)
         var parent = new FlexBox();
         var child  = new TestElement();
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
@@ -68,7 +69,7 @@ public class ElementBoxModelTest(GpuFixture _)
             ]
         };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
 
         window.RenderTree.Update();
 
@@ -84,7 +85,7 @@ public class ElementBoxModelTest(GpuFixture _)
 
         var element = new TestElement();
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         window.RenderTree.Update();
 
         var boxModel = element.GetBoxModel();
@@ -104,7 +105,7 @@ public class ElementBoxModelTest(GpuFixture _)
 
         var element = new TestElement { Style = { Margin = new StyleRectEdges(Unit.Px(5), Unit.Px(10), Unit.Px(3), Unit.Px(8)) } };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         window.RenderTree.Update();
 
         var boxModel = element.GetBoxModel();
@@ -119,7 +120,7 @@ public class ElementBoxModelTest(GpuFixture _)
 
         var element = new TestElement { Style = { Padding = new StyleRectEdges(Unit.Px(7), Unit.Px(4)) } };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         window.RenderTree.Update();
 
         var boxModel = element.GetBoxModel();
@@ -134,7 +135,7 @@ public class ElementBoxModelTest(GpuFixture _)
 
         var element = new TestElement { Style = { Border = new Border(thickness: 3, radius: 0, color: Color.White) } };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         window.RenderTree.Update();
 
         var boxModel = element.GetBoxModel();
@@ -149,7 +150,7 @@ public class ElementBoxModelTest(GpuFixture _)
 
         var element = new TestElement { Style = { Size = new SizeUnit(Unit.Px(100), Unit.Px(50)) } };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         window.RenderTree.Update();
 
         var boxModel = element.GetBoxModel();
@@ -174,7 +175,7 @@ public class ElementBoxModelTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         window.RenderTree.Update();
 
         var boxModel = element.GetBoxModel();
@@ -198,7 +199,7 @@ public class ElementBoxModelTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         window.RenderTree.Update();
 
         var boxModel = element.GetBoxModel();
@@ -216,7 +217,7 @@ public class ElementBoxModelTest(GpuFixture _)
         var child1 = new TestElement { Style = { Size = new SizeUnit(Unit.Px(30), Unit.Px(20)) } };
         var child2 = new TestElement { Style = { Size = new SizeUnit(Unit.Px(50), Unit.Px(40)) } };
 
-        window.UIScene!.Canvas.AppendChild(parent);
+        window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child1);
         parent.AppendChild(child2);
         window.RenderTree.Update();
@@ -245,7 +246,7 @@ public class ElementBoxModelTest(GpuFixture _)
             }
         };
 
-        window.UIScene!.Canvas.AppendChild(element);
+        window.Scene!.Canvas!.AppendChild(element);
         window.RenderTree.Update();
 
         var boxModel = element.GetBoxModel();
