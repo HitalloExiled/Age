@@ -1,6 +1,5 @@
 using Age.Core.Extensions;
 using Age.Elements.Events;
-using Age.Elements;
 using Age.Platforms.Display;
 using Age.Playground.Tests.Components;
 using Age.Playground.Tests.Scenes;

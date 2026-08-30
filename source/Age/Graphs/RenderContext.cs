@@ -1,5 +1,6 @@
 using Age.Core.Extensions;
 using Age.Commands;
+using Age.Scenes;
 
 namespace Age.Graphs;
 
@@ -10,37 +11,32 @@ public sealed class CommandBuffer<T> : List<T> where T : Command
 
 public class RenderContext
 {
-    private readonly CommandBuffer<Command2D> buffer2D = [];
-    private readonly CommandBuffer<Command3D> buffer3D = [];
+    public Canvas?  Canvas  { get; private set; }
+    public World2D? World2D { get; private set; }
+    public World3D? World3D { get; private set; }
 
-    private CommandBuffer<Command2D>? buffer2DOverride;
-    private CommandBuffer<Command3D>? buffer3DOverride;
+    public void BindCanvas(Canvas canvas) =>
+        this.Canvas = canvas;
 
-    public CommandBuffer<Command2D> Buffer2D => this.buffer2DOverride ?? this.buffer2D;
-    public CommandBuffer<Command3D> Buffer3D => this.buffer3DOverride ?? this.buffer3D;
-    public CommandBuffer<Command2D> UIBuffer { get; } = [];
+    public void BindWorld2D(World2D world2D) =>
+        this.World2D = world2D;
 
-    public void ClearOverride2D() =>
-        this.buffer2DOverride = null;
+    public void BindWorld3D(World3D world3D) =>
+        this.World3D = world3D;
 
-    public void ClearOverride3D() =>
-        this.buffer3DOverride = null;
+    public void ClearCanvas() =>
+        this.World3D = null;
 
-    public void Override2D(RenderContext renderContext) =>
-        this.buffer2DOverride = renderContext.Buffer2D;
+    public void ClearWorld2D() =>
+        this.World2D = null;
 
-    public void Override3D(RenderContext renderContext) =>
-        this.buffer3DOverride = renderContext.Buffer3D;
+    public void ClearWorld3D() =>
+        this.World3D = null;
 
-    public void Clear()
+    public void ClearBinds()
     {
-        this.buffer2D.Clear();
-        this.buffer3D.Clear();
-    }
-
-    public void ClearOverrides()
-    {
-        this.ClearOverride2D();
-        this.ClearOverride3D();
+        this.ClearCanvas();
+        this.ClearWorld2D();
+        this.ClearWorld3D();
     }
 }

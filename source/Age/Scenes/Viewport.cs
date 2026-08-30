@@ -62,7 +62,7 @@ public abstract class Viewport : Renderable
 
             if (value?.Parent == null)
             {
-                this.RenderContext.ClearOverrides();
+                this.RenderContext.ClearBinds();
 
                 ReplaceSlot(this.sceneSlot, field, value);
             }
@@ -88,21 +88,28 @@ public abstract class Viewport : Renderable
 
     private void BindScene()
     {
-        if (this.Scene == null || this.Scene.Parent == this)
+        this.RenderContext.ClearBinds();
+
+        if (this.Scene == null)
         {
             return;
         }
 
-        this.RenderContext.ClearOverrides();
+        var sceneOwner = this.Scene.Parent == this;
 
-        if (this.Filter.HasFlags(SceneFilter.World2D))
+        if ((sceneOwner || this.Filter.HasFlags(SceneFilter.World3D)) && this.Scene.World3D is World3D world3D)
         {
-            this.RenderContext.Override2D(this.Scene.Viewport!.RenderContext);
+            this.RenderContext.BindWorld3D(world3D);
         }
 
-        if (this.Filter.HasFlags(SceneFilter.World3D))
+        if ((sceneOwner || this.Filter.HasFlags(SceneFilter.World2D)) && this.Scene.World2D is World2D world2D)
         {
-            this.RenderContext.Override3D(this.Scene.Viewport!.RenderContext);
+            this.RenderContext.BindWorld2D(world2D);
+        }
+
+        if (sceneOwner && this.Scene.Canvas is Canvas canvas)
+        {
+            this.RenderContext.BindCanvas(canvas);
         }
     }
 
@@ -130,8 +137,8 @@ public abstract class Viewport : Renderable
     {
         base.OnDisconnectingInternal();
 
-        this.RenderContext.ClearOverride2D();
-        this.RenderContext.ClearOverride3D();
+        this.RenderContext.ClearWorld2D();
+        this.RenderContext.ClearWorld3D();
 
         if (this.Window != this)
         {

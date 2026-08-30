@@ -88,7 +88,7 @@ public abstract partial class Scene3DPass : RenderPass
 
         if (this.Viewport!.Camera3D is Camera3D camera)
         {
-            foreach (var command in context.Buffer3D)
+            foreach (var command in context.World3D!.CommandBuffer)
             {
                 if (this.CommandFilter.HasAnyFlag(command.CommandFilter))
                 {

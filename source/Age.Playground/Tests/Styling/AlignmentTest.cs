@@ -4,6 +4,7 @@ using Age.Styling;
 using Age.Platforms.Display;
 using Age.Extensions;
 using Age.Core.Extensions;
+using Age.Scenes;
 
 namespace Age.Playground.Tests.Styling;
 

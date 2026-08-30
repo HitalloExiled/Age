@@ -1,6 +1,7 @@
 using Age.Core.Collections;
 using Age.Elements.Events;
 using Age.Platforms.Display;
+using Age.Scenes;
 using AgeInput = Age.Input;
 
 namespace Age.Elements;

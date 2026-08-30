@@ -123,7 +123,7 @@ public abstract class UIScenePass : RenderPass
     }
 
     protected override void Record(RenderContext context) =>
-        this.Record(context.UIBuffer.Commands);
+        this.Record(context.Canvas!.CommandBuffer.Commands);
 
     protected void Record<T>(ReadOnlySpan<T> commands) where T : Command
     {

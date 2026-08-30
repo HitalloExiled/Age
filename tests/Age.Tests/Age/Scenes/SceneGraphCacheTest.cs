@@ -71,35 +71,35 @@ public partial class SceneGraphCacheTest(GpuFixture _)
         window.Scene = new Scene
         {
             Name    = "$",
-            Children =
+            World3D = new World3D
+            {
+                Name = "$.1",
+            },
+            World2D = new World2D
+            {
+                Name     = "$.2",
+                Children =
+                [
+                    TreeFactory.Linear<Sprite, Command2D, SpriteCommand>(2, 2, 2, -1, "$.2.1"),
+                ]
+            },
+            Canvas = new Canvas
+            {
+                Name     = "$.3",
+                Children =
+                [
+                    TreeFactory.Linear<SealedComponent, Command2D, ComponentCommand>(static name => new(name), 1, 1, 3, 1, "$.3.1"),
+                    TreeFactory.Linear<Component, Command2D, ComponentCommand>(2, 2, 2, -1, "$.3.3"),
+                ],
+            },
+            SubViewports =
             [
-                new World3D
-                {
-                    Name = "$.1",
-                },
-                new World2D
-                {
-                    Name = "$.2",
-                    Children =
-                    [
-                        TreeFactory.Linear<Sprite, Command2D, SpriteCommand>(2, 2, 2, -1, "$.2.1"),
-                    ]
-                },
-                new Canvas
-                {
-                    Name = "$.3",
-                    Children =
-                    [
-                        TreeFactory.Linear<SealedComponent, Command2D, ComponentCommand>(static name => new(name), 1, 1, 3, 1, "$.3.1"),
-                        TreeFactory.Linear<Component, Command2D, ComponentCommand>(2, 2, 2, -1, "$.3.3"),
-                    ],
-                },
                 new SubViewport(new(400))
                 {
                     Name  = "$.4",
                     Scene = new()
                     {
-                        Name = "$.4.1",
+                        Name    = "$.4.1",
                         World3D = new()
                         {
                             Name     = "$.4.1.1",

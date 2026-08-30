@@ -1,5 +1,3 @@
-using Age.Elements;
-
 namespace Age.Scenes;
 
 public class Scene : Renderable
@@ -59,9 +57,51 @@ public class Scene : Renderable
         }
     }
 
-    public override string NodeName => nameof(Scenes.Scene);
+    public Scene[] Scenes
+    {
+        get
+        {
+            var scenes = new List<Scene>();
 
-    public Scene() => this.AppendChildren([this.world3DSlot, this.world2DSlot, this.canvasSlot]);
+            foreach (var item in this)
+            {
+                if (item is Scene scene)
+                {
+                    scenes.Add(scene);
+                }
+            }
+
+            return [.. scenes];
+        }
+        set => this.AppendChildren(value);
+    }
+
+    public SubViewport[] SubViewports
+    {
+        get
+        {
+            var subViewports = new List<SubViewport>();
+
+            foreach (var item in this)
+            {
+                if (item is SubViewport scene)
+                {
+                    subViewports.Add(scene);
+                }
+            }
+
+            return [.. subViewports];
+        }
+        set => this.AppendChildren(value);
+    }
+
+    public override string NodeName => nameof(Age.Scenes.Scene);
+
+    public Scene()
+    {
+        this.AppendChildren([this.world3DSlot, this.world2DSlot, this.canvasSlot]);
+        this.Seal();
+    }
 
     private protected override void OnDisposedInternal()
     {

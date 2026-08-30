@@ -1,5 +1,6 @@
 using Age.Elements;
 using Age.Numerics;
+using Age.Scenes;
 using Age.Styling;
 
 namespace Age.Playground.Tests.Styling;

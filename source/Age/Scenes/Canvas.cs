@@ -1,13 +1,18 @@
 using System.Diagnostics;
+using Age.Commands;
+using Age.Elements;
+using Age.Graphs;
 using Age.Numerics;
 
-namespace Age.Elements;
+namespace Age.Scenes;
 
 public sealed class Canvas : Element
 {
     // private const ushort PADDING = 8;
 
-    public override string NodeName => nameof(Elements.Canvas);
+    internal CommandBuffer<Command2D> CommandBuffer { get; } = [];
+
+    public override string NodeName => nameof(Scenes.Canvas);
 
     public Canvas() =>
         this.Style = new()

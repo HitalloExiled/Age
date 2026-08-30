@@ -2,6 +2,7 @@ using Age.Components;
 using Age.Elements;
 using Age.Numerics;
 using Age.Platforms.Display;
+using Age.Scenes;
 using Age.Styling;
 
 namespace Age.Playground.Tests.Styling;

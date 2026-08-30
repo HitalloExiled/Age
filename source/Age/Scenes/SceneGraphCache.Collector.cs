@@ -4,7 +4,6 @@ using Age.Commands;
 using Age.Core;
 using Age.Core.Extensions;
 using Age.Core.Interfaces;
-using Age.Elements;
 using Age.Graphs;
 
 namespace Age.Scenes;
@@ -47,21 +46,30 @@ internal partial class SceneGraphCache
             }
             else
             {
-                var renderContext = subtree.Scene!.Viewport!.RenderContext;
-
                 switch (subtree)
                 {
-                    case World3D:
-                        Collect(subtree, subtreeRange.Start, renderContext.Buffer3D, stage, nodes);
-                        break;
-
-                    case World2D:
-                        Collect(subtree, subtreeRange.Start, renderContext.Buffer2D, stage, nodes);
+                    case World3D world3D:
+                        Collect(subtree, subtreeRange.Start, world3D.CommandBuffer, stage, nodes);
 
                         break;
 
-                    case Canvas:
-                        Collect(subtree, subtreeRange.Start, renderContext.UIBuffer, stage, nodes);
+                    case World2D world2D:
+                        Collect(subtree, subtreeRange.Start, world2D.CommandBuffer, stage, nodes);
+
+                        break;
+
+                    case Canvas canvas:
+                        Collect(subtree, subtreeRange.Start, canvas.CommandBuffer, stage, nodes);
+
+                        break;
+
+                    case Scene scene:
+                        CollectScene(scene, subtreeRange.Start, stage, nodes);
+
+                        break;
+
+                    case SubViewport subViewport:
+                        CollectViewport(subViewport, subtreeRange.Start, stage, nodes);
 
                         break;
                 }
@@ -102,6 +110,40 @@ internal partial class SceneGraphCache
             }
         }
 
+        private static void CollectScene(Scene scene, int index, List<Renderable> stage, List<Renderable> nodes)
+        {
+            foreach (var child in scene)
+            {
+                switch (child)
+                {
+                    case World3D world3D:
+                        Collect(world3D, index, world3D.CommandBuffer, stage, nodes);
+
+                        break;
+
+                    case World2D world2D:
+                        Collect(world2D, index, world2D.CommandBuffer, stage, nodes);
+
+                        break;
+
+                    case Canvas canvas:
+                        Collect(canvas, index, canvas.CommandBuffer, stage, nodes);
+
+                        break;
+
+                    case Scene nestedScene:
+                        CollectScene(nestedScene, index, stage, nodes);
+
+                        break;
+
+                    case SubViewport subViewport:
+                        CollectViewport(subViewport, index, stage, nodes);
+
+                        break;
+                }
+            }
+        }
+
         public static void CollectViewport(Viewport viewport, int index, List<Renderable> stage, List<Renderable> nodes)
         {
             viewport.SubtreeRange = ShortRange.CreateWithLength(index + stage.Count, 1);
@@ -114,26 +156,7 @@ internal partial class SceneGraphCache
 
                 scene.SubtreeRange = ShortRange.CreateWithLength(index + stage.Count, 1);
 
-                foreach (var child in scene)
-                {
-                    switch (child)
-                    {
-                        case World3D world3D:
-                            Collect(world3D, index, viewport.RenderContext.Buffer3D, stage, nodes);
-
-                            break;
-
-                        case World2D world2D:
-                            Collect(world2D, index, viewport.RenderContext.Buffer2D, stage, nodes);
-
-                            break;
-
-                        case Canvas canvas:
-                            Collect(canvas, index, viewport.RenderContext.UIBuffer, stage, nodes);
-
-                            break;
-                    }
-                }
+                CollectScene(scene, index, stage, nodes);
 
                 scene.SubtreeRange = scene.SubtreeRange.WithEnd(index + stage.Count);
             }
