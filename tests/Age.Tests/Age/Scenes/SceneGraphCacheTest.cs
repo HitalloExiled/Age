@@ -92,7 +92,7 @@ public partial class SceneGraphCacheTest(GpuFixture _)
                     TreeFactory.Linear<Component, Command2D, ComponentCommand>(2, 2, 2, -1, "$.3.3"),
                 ],
             },
-            SubViewports =
+            Children =
             [
                 new SubViewport(new(400))
                 {
