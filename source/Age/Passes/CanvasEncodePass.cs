@@ -13,7 +13,7 @@ using Age.Rendering.Uniforms;
 
 namespace Age.Passes;
 
-public sealed class UISceneEncodePass : UIScenePass
+public sealed class CanvasEncodePass : CanvasPass
 {
     private CommandBuffer?               commandBuffer;
     private Geometry2DStencilMaskShader? geometry2DStencilMaskWriterShader;
@@ -29,7 +29,7 @@ public sealed class UISceneEncodePass : UIScenePass
     protected override Geometry2DEncodeShader      Shader                            => this.shader!;
 
     public override Texture2D Output => this.renderTarget?.ColorAttachments[0].Texture ?? Texture2D.Default;
-    public override string    Name   => nameof(UISceneEncodePass);
+    public override string    Name   => nameof(CanvasEncodePass);
 
     private void RecreateRenderTarget()
     {

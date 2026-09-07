@@ -21,7 +21,7 @@ public abstract class Viewport : Renderable
 
     internal RenderContext RenderContext { get; } = new();
 
-    private readonly Empty sceneSlot = Empty.Pool.Get();
+    private readonly Empty sceneSlot = new();
 
     public Camera2D? Camera2D { get; set; }
     public Camera3D? Camera3D { get; set; }
@@ -66,12 +66,13 @@ public abstract class Viewport : Renderable
 
                 ReplaceSlot(this.sceneSlot, field, value);
             }
-            else if (this.IsConnected)
+
+            field = value;
+
+            if (this.IsConnected)
             {
                 this.BindScene();
             }
-
-            field = value;
         }
     }
 
@@ -128,9 +129,9 @@ public abstract class Viewport : Renderable
             this.Window = base.Scene.Window!;
 
             this.Window.RenderTree.AddViewport(this);
-
-            this.BindScene();
         }
+
+        this.BindScene();
     }
 
     private protected override void OnDisconnectingInternal()
@@ -146,12 +147,5 @@ public abstract class Viewport : Renderable
         }
 
         this.Window = null;
-    }
-
-    private protected override void OnDisposedInternal()
-    {
-        base.OnDisposedInternal();
-
-        Empty.Pool.Return(this.sceneSlot);
     }
 }

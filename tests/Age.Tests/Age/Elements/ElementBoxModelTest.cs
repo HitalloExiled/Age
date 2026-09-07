@@ -15,6 +15,8 @@ public class ElementBoxModelTest(GpuFixture _)
     {
         var window = Window.CreateMock();
 
+        window.Scene!.Canvas = new();
+
         var parent = new FlexBox();
         var child  = new TestElement { Style = { Size = new(Unit.Pc(50), Unit.Pc(50)) } };
 
@@ -33,6 +35,8 @@ public class ElementBoxModelTest(GpuFixture _)
     public void AfterConnect_TriggersUpdateDisposition()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var parent = new FlexBox();
         var child  = new TestElement();
@@ -50,6 +54,8 @@ public class ElementBoxModelTest(GpuFixture _)
     public void PendingLayouts_ResolvesPercentageWidth()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var parent = new FlexBox
         {
@@ -82,6 +88,8 @@ public class ElementBoxModelTest(GpuFixture _)
     public void ByDefault_ReturnsZero()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new TestElement();
 
@@ -102,6 +110,8 @@ public class ElementBoxModelTest(GpuFixture _)
     public void WithMargin_ReturnsEdges()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new TestElement { Style = { Margin = new StyleRectEdges(Unit.Px(5), Unit.Px(10), Unit.Px(3), Unit.Px(8)) } };
 
@@ -117,6 +127,8 @@ public class ElementBoxModelTest(GpuFixture _)
     public void WithPadding_ReturnsEdges()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new TestElement { Style = { Padding = new StyleRectEdges(Unit.Px(7), Unit.Px(4)) } };
 
@@ -132,6 +144,8 @@ public class ElementBoxModelTest(GpuFixture _)
     public void WithBorder_ReturnsEdges()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new TestElement { Style = { Border = new Border(thickness: 3, radius: 0, color: Color.White) } };
 
@@ -147,6 +161,8 @@ public class ElementBoxModelTest(GpuFixture _)
     public void Size_SetsBoundings()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new TestElement { Style = { Size = new SizeUnit(Unit.Px(100), Unit.Px(50)) } };
 
@@ -164,6 +180,8 @@ public class ElementBoxModelTest(GpuFixture _)
     public void PaddingAndBorder_IncreaseBoundings()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new TestElement
         {
@@ -187,6 +205,8 @@ public class ElementBoxModelTest(GpuFixture _)
     public void BoxSizingBorder_ContentShrinks()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new TestElement
         {
@@ -212,6 +232,8 @@ public class ElementBoxModelTest(GpuFixture _)
     public void ContentAccumulatesFromChildren()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var parent = new FlexBox();
         var child1 = new TestElement { Style = { Size = new SizeUnit(Unit.Px(30), Unit.Px(20)) } };
@@ -231,6 +253,8 @@ public class ElementBoxModelTest(GpuFixture _)
     public void WithAllProperties_ReturnsExpectedValues()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new TestElement
         {

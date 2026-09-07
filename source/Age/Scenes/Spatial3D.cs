@@ -27,8 +27,6 @@ public abstract class Spatial3D : Spatial<Command3D, Matrix4x4<float>>
 
     public Transform3D LocalTransform { get; set; } = Transform3D.Identity;
 
-    public sealed override Matrix4x4<float> Matrix => this.Transform;
-
     public Vector3<float> Pivot { get; set; }
 
     public Transform3D Transform
@@ -36,4 +34,7 @@ public abstract class Spatial3D : Spatial<Command3D, Matrix4x4<float>>
         get => this.PivotedMatrix * this.CompositeParentMatrix;
         set => this.LocalTransform = Matrix4x4<float>.Translated(-this.Pivot) * value.Matrix * this.CompositeParentMatrix.Inverse() * Matrix4x4<float>.Translated(this.Pivot);
     }
+
+    public sealed override Matrix4x4<float> Matrix => this.Transform;
+    public World3D? World3D => this.Scene?.World3D;
 }

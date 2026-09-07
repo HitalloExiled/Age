@@ -33,7 +33,7 @@ public sealed class Canvas : Element
 
         var viewport = this.Scene.Viewport;
 
-        viewport!.Window!.RenderTree.AddDeferredUpdate(this.UpdateDirtyLayout);
+        viewport.Window.RenderTree.AddDeferredUpdate(this.UpdateDirtyLayout);
 
         viewport.Resized += this.OnViewportResized;
 

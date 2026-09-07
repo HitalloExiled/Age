@@ -4,7 +4,7 @@ using Age.Scenes;
 
 namespace Age.Passes;
 
-public partial class Scene3DPass
+public partial class Geometry3DPass
 {
     protected readonly struct FrameResource
     {

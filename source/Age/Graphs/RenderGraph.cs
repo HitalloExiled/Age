@@ -171,8 +171,8 @@ public sealed class RenderGraph(Viewport viewport) : Disposable
         var renderGraph = new RenderGraph(viewport);
 
         // renderGraph.Connect(new UISceneEncodePass());
-        renderGraph.Connect(new EncodeCompositeRenderPass([new Scene3DEncodePass(), new UISceneEncodePass()]));
-        renderGraph.Connect(new ColorCompositeRenderPass([new Scene3DColorPass(), new UISceneColorPass()]));
+        renderGraph.Connect(new EncodeCompositeRenderPass([new Geometry3DEncodePass(), new CanvasEncodePass()]));
+        renderGraph.Connect(new ColorCompositeRenderPass([new Geometry3DColorPass(), new CanvasColorPass()]));
 
         return renderGraph;
     }

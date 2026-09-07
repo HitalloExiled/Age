@@ -14,6 +14,8 @@ public class ElementScrollTest(GpuFixture _)
     public void Scroll_ZeroContent_ClampsToZero()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new FlexBox
         {
@@ -37,6 +39,8 @@ public class ElementScrollTest(GpuFixture _)
     public void Scroll_ContentLargerThanSize_ClampsToMax()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new FlexBox
         {
@@ -70,6 +74,8 @@ public class ElementScrollTest(GpuFixture _)
     public void Scroll_WithinBounds_DoesNotClamp()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new FlexBox
         {
@@ -103,6 +109,8 @@ public class ElementScrollTest(GpuFixture _)
     public void Scroll_ContentSmallerThanSize_ClampsToZero()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new FlexBox
         {
@@ -136,6 +144,8 @@ public class ElementScrollTest(GpuFixture _)
     public void Scroll_IndependentAxes()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
+
 
         var element = new FlexBox
         {

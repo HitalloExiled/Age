@@ -15,13 +15,13 @@ using ThirdParty.Vulkan.Flags;
 
 namespace Age.Passes;
 
-public class Scene3DEncodePass : Scene3DPass
+public class Geometry3DEncodePass : Geometry3DPass
 {
     private CommandBuffer?          commandBuffer;
     private RenderTarget?           renderTarget;
     private Geometry3DEncodeShader? shader;
 
-    public override string Name => nameof(Scene3DEncodePass);
+    public override string Name => nameof(Geometry3DEncodePass);
 
     protected override CommandBuffer CommandBuffer => this.commandBuffer!;
     protected override CommandFilter CommandFilter => CommandFilter.Encode;

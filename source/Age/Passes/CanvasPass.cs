@@ -8,10 +8,11 @@ using Age.Shaders;
 using System.Diagnostics.CodeAnalysis;
 using ThirdParty.Vulkan.Flags;
 using ThirdParty.Vulkan;
+using Age.Scenes;
 
 namespace Age.Passes;
 
-public abstract class UIScenePass : RenderPass
+public abstract class CanvasPass : RenderPass
 {
     private readonly Stack<StencilLayer> stencilStack = [];
 
@@ -33,7 +34,7 @@ public abstract class UIScenePass : RenderPass
     [AllowNull]
     public override Texture2D Output => this.RenderGraph?.Viewport.Texture ?? Texture2D.Default;
 
-    protected UIScenePass()
+    protected CanvasPass()
     {
         Span<Geometry2DShader.Vertex> vertices =
         [
@@ -122,8 +123,15 @@ public abstract class UIScenePass : RenderPass
         }
     }
 
-    protected override void Record(RenderContext context) =>
-        this.Record(context.Canvas!.CommandBuffer.Commands);
+    protected override void Record(RenderContext context)
+    {
+        if (context.Canvas == null)
+        {
+            return;
+        }
+
+        this.Record(context.Canvas.CommandBuffer.Commands);
+    }
 
     protected void Record<T>(ReadOnlySpan<T> commands) where T : Command
     {

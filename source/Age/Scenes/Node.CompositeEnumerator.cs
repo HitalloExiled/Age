@@ -4,7 +4,7 @@ namespace Age.Scenes;
 
 public abstract partial class Node
 {
-    internal struct CompositeEnumerator(Node node) : IEnumerator<Node>
+    internal struct CompositeEnumerator(Node node) : IEnumerator<Node>, IEnumerable<Node>
     {
         private Node? current;
         private int   state;
@@ -14,8 +14,17 @@ public abstract partial class Node
 
         readonly object IEnumerator.Current => this.Current;
 
+        readonly IEnumerator<Node> IEnumerable<Node>.GetEnumerator() =>
+            this.GetEnumerator();
+
+        readonly IEnumerator IEnumerable.GetEnumerator() =>
+            this.GetEnumerator();
+
         public readonly void Dispose()
         { }
+
+        public readonly CompositeEnumerator GetEnumerator() =>
+            this;
 
         public bool MoveNext()
         {

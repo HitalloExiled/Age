@@ -6,9 +6,9 @@ using Age.Scenes;
 
 namespace Age.Passes;
 
-public class Scene3DColorPass : Scene3DPass
+public class Geometry3DColorPass : Geometry3DPass
 {
-    public override string Name => nameof(Scene3DColorPass);
+    public override string Name => nameof(Geometry3DColorPass);
 
     protected override CommandFilter CommandFilter => CommandFilter.Color;
 

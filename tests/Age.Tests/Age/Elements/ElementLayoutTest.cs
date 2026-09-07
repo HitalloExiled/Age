@@ -17,6 +17,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void PercentageSize_WithPixelMinAndMax_ClampsToMin()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -46,6 +47,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void PercentageSize_WithPixelMinAndMax_ClampsToMax()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -75,6 +77,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void PercentageSize_WithPixelMinOnly_ClampsToMin()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -103,6 +106,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void PercentageSize_WithPixelMaxOnly_ClampsToMax()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -131,6 +135,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void PixelSize_WithPercentageMinAndMax_NoClamp()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -160,6 +165,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void PixelSize_WithPercentageMinAndMax_ClampsToMin()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -189,6 +195,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void PixelSize_WithPercentageMinOnly_ClampsToMin()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -217,6 +224,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void PixelSize_WithPercentageMaxOnly_ClampsToMax()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -245,6 +253,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void EmSize_ResolvesAgainstFontSize()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var element = new TestElement { Style = { Size = new SizeUnit(Unit.Em(2), Unit.Em(3)) } };
 
@@ -258,6 +267,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void MinSizePixel_Resolves()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var element = new TestElement { Style = { MinSize = new SizeUnit(Unit.Px(50), Unit.Px(50)) } };
 
@@ -271,6 +281,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void MinSizeEm_Resolves()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var element = new TestElement { Style = { MinSize = new SizeUnit(Unit.Em(3), Unit.Em(3)) } };
 
@@ -284,6 +295,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void MaxSizePixel_ClampsContent()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var element = new TestElement { Style = { MaxSize = new SizeUnit(Unit.Px(100), Unit.Px(100)) } };
         var child   = new TestElement { Style = { Size = new SizeUnit(Unit.Px(200), Unit.Px(200)) } };
@@ -299,6 +311,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void MaxSizeEm_ClampsContent()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var element = new TestElement { Style = { MaxSize = new SizeUnit(Unit.Em(5), Unit.Em(5)) } };
         var child   = new TestElement { Style = { Size = new SizeUnit(Unit.Px(200), Unit.Px(200)) } };
@@ -314,6 +327,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void VerticalStack_AccumulatesContent()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -338,6 +352,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void InvisibleChild_NotCounted()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent  = new FlexBox();
         var visible = new TestElement { Style = { Size = new SizeUnit(Unit.Px(30), Unit.Px(20)) } };
@@ -356,6 +371,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void NonLayoutableChild_Ignored()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox();
         var child  = new TestElement { Style = { Size = new SizeUnit(Unit.Px(30), Unit.Px(20)) } };
@@ -372,6 +388,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void LayoutableChild_NotElement_UsesBoundings()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent     = new FlexBox();
         var layoutable = new TestLayoutable();
@@ -389,6 +406,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void VisibilityChanged_HiddenToVisible_AddsDependent()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -428,6 +446,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void ContentJustification_OffsetsChildren(StackDirection direction, ContentJustification justification, int expectedFirst, int expectedSecond)
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -465,6 +484,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void Alignment_Center_OffsetsBothAxes()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -493,6 +513,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void ItemsAlignment_Center_OffsetsVerticalAxis()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -515,6 +536,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void VerticalStack_NoJustification_ChildCenterAligns()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -544,6 +566,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void Alignment_Bottom_OffsetsToBottom()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -572,6 +595,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void OnStyleChanged_BackgroundColor_UpdatesBoxColor()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var child = new TestElement
         {
@@ -591,6 +615,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void OnStyleChanged_BackgroundImage_MissingUri_DisposesCommand()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var child = new TestElement
         {
@@ -610,6 +635,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void ResolveImageSize_Fit_UsesElementBoundings()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         using var texture = new Texture2D(new Texture2D.CreateInfo { Size = new(1) });
 
@@ -636,6 +662,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void ResolveImageSize_KeepAspect_ScaledToSmallestDimension()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         using var texture = new Texture2D(new Texture2D.CreateInfo { Size = new(2, 1) });
 
@@ -665,6 +692,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void ResolveImageSize_Size_NoRepeat_ResolvesExplicitSize()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         using var texture = new Texture2D(new Texture2D.CreateInfo { Size = new(1) });
 
@@ -694,6 +722,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void ResolveImageSize_Size_Repeat_RepeatsAcrossBoundings()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         using var texture = new Texture2D(new Texture2D.CreateInfo { Size = new(1) });
 
@@ -720,6 +749,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void OnStyleChanged_BorderClearedToNull_ResetsBorder()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var child = new TestElement
         {
@@ -743,6 +773,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void OnStyleChanged_AllNullSize_MakesContentDependent()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var child = new TestElement
         {
@@ -762,6 +793,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void OnStyleChanged_RelativeMarginAndPadding_AddsParentDependencies()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -791,6 +823,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void OnStyleChanged_RemovingRelativeSize_RemovesFromDependents()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -821,6 +854,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void OnStyleChanged_OverflowClipping_ReleasesScrollBarAndCreatesStencil()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var child = new TestElement
         {
@@ -845,6 +879,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void DetachChild_WithRelativeVisibleElement_RemovesFromDependents()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -874,6 +909,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void DetachChild_WithIndependentVisibleElement_DoesNotTouchDependents()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -903,6 +939,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void DetachChild_WithInvisibleElement_SkipsRenderableBookkeeping()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -934,6 +971,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void DetachChild_WithNonElementLayoutable_RemovesLayoutable()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -957,6 +995,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void VerticalStack_ChildWithinSpace_ReservesAvailableSpace()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -986,6 +1025,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void VerticalStack_ChildExceedingSpace_ClampsToAvailable()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -1014,6 +1054,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void HorizontalStack_ChildExceedingSpace_ClampsToAvailable()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -1041,6 +1082,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void EmMarginAndPadding_ResolvesToFontSize()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var child = new TestElement
         {
@@ -1061,6 +1103,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void AutoSizeParent_WithPercentageMarginChild_GrowsContent()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox();
         var child = new TestElement
@@ -1085,6 +1128,8 @@ public class ElementLayoutTest(GpuFixture _)
     {
         var window = Window.CreateMock();
 
+        window.Scene!.Canvas = new();
+
         var parent = new FlexBox
         {
             Style =
@@ -1092,25 +1137,20 @@ public class ElementLayoutTest(GpuFixture _)
                 Size = new(200, 100),
             }
         };
-        var child = new TestLayoutable
-        {
-            Style = new Style
-            {
-                Baseline = Unit.Px(20),
-            }
-        };
+        var child = new Text("Hello");
 
         window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
         window.RenderTree.Update();
 
-        Assert.Equal(20, parent.BaseLine);
+        Assert.Equal(15, parent.BaseLine);
     }
 
     [Fact]
     public void InlineChildBaseline_ElementWithoutAlignment_RaisesParentBaseline()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -1119,7 +1159,8 @@ public class ElementLayoutTest(GpuFixture _)
                 Size = new(200, 100),
             }
         };
-        var child = new TestElement();
+
+        var child = new Text("Hello World!!!");
 
         window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
@@ -1128,13 +1169,14 @@ public class ElementLayoutTest(GpuFixture _)
         parent.Style.Size = new(220, 100);
         window.RenderTree.Update();
 
-        Assert.Equal(20, parent.BaseLine);
+        Assert.Equal(15, parent.BaseLine);
     }
 
     [Fact]
     public void InlineChildBaseline_ElementCenterAlignment_KeepsParentBaseline()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -1165,6 +1207,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void InlineChildBaseline_ElementTopAlignment_KeepsParentBaseline()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -1195,6 +1238,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void InlineChildBaseline_ElementStartInVerticalStack_KeepsParentBaseline()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -1226,6 +1270,7 @@ public class ElementLayoutTest(GpuFixture _)
     public void InlineChildBaseline_LowerSecondChild_KeepsHighest()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -1234,21 +1279,22 @@ public class ElementLayoutTest(GpuFixture _)
                 Size = new(200, 100),
             }
         };
-        var first = new TestLayoutable();
-        var second = new TestLayoutable();
+        var first = new Text("Hello");
+        var second = new Text("World");
 
         window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(first);
         parent.AppendChild(second);
         window.RenderTree.Update();
 
-        Assert.Equal(30, parent.BaseLine);
+        Assert.Equal(15, parent.BaseLine);
     }
 
     [Fact]
     public void InlineChildBaseline_ElementLeftInHorizontalStack_RaisesParentBaseline()
     {
         var window = Window.CreateMock();
+        window.Scene!.Canvas = new();
 
         var parent = new FlexBox
         {
@@ -1257,13 +1303,7 @@ public class ElementLayoutTest(GpuFixture _)
                 Size = new(200, 100),
             }
         };
-        var child = new TestElement
-        {
-            Style =
-            {
-                Alignment = Alignment.Left,
-            }
-        };
+        var child = new Text("Hello");
 
         window.Scene!.Canvas!.AppendChild(parent);
         parent.AppendChild(child);
@@ -1272,7 +1312,7 @@ public class ElementLayoutTest(GpuFixture _)
         parent.Style.Size = new(220, 100);
         window.RenderTree.Update();
 
-        Assert.Equal(20, parent.BaseLine);
+        Assert.Equal(15, parent.BaseLine);
     }
 
     private sealed class TestLayoutable : Layoutable

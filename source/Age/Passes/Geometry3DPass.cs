@@ -18,7 +18,7 @@ using Buffer = Age.Rendering.Resources.Buffer;
 
 namespace Age.Passes;
 
-public abstract partial class Scene3DPass : RenderPass
+public abstract partial class Geometry3DPass : RenderPass
 {
     protected FrameResource[] FrameResources { get; } = new FrameResource[VulkanContext.MAX_FRAMES_IN_FLIGHT];
 
@@ -29,7 +29,7 @@ public abstract partial class Scene3DPass : RenderPass
 
     protected abstract CommandFilter CommandFilter { get; }
 
-    protected Scene3DPass() =>
+    protected Geometry3DPass() =>
         this.FrameResources.AsSpan().Fill(new());
 
     protected UniformSet GetUniformSet(Shader shader, Material material, Camera3D camera, BufferHandlePair cameraBuffer)
@@ -82,13 +82,18 @@ public abstract partial class Scene3DPass : RenderPass
 
     protected override void Record(RenderContext context)
     {
+        if (context.World3D == null)
+        {
+            return;
+        }
+
         var commandBuffer = this.CommandBuffer;
 
         commandBuffer.SetStencilReference(VkStencilFaceFlags.FrontAndBack, 0);
 
         if (this.Viewport!.Camera3D is Camera3D camera)
         {
-            foreach (var command in context.World3D!.CommandBuffer)
+            foreach (var command in context.World3D.CommandBuffer)
             {
                 if (this.CommandFilter.HasAnyFlag(command.CommandFilter))
                 {

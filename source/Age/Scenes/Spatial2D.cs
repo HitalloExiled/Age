@@ -33,4 +33,6 @@ public abstract class Spatial2D : Spatial<Command2D, Matrix3x2<float>>
     }
 
     public sealed override Matrix3x2<float> Matrix => this.Transform.Matrix;
+
+    public World2D? World2D => this.Scene?.World2D;
 }

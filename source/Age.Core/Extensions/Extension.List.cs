@@ -3,6 +3,12 @@ using System.Runtime.InteropServices;
 
 namespace Age.Core.Extensions;
 
+file static class ListUnsafeAcessor<T>
+{
+    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_items")]
+    public static extern ref T[] GetListItems(List<T> list);
+}
+
 public static partial class Extension
 {
     private static void Resize<T>(List<T> source, int size)
@@ -13,6 +19,34 @@ public static partial class Extension
 
     extension<T>(List<T> source)
     {
+        public Memory<T> AsMemory()
+        {
+            var items = ListUnsafeAcessor<T>.GetListItems(source);
+
+            return new Memory<T>(items, 0, source.Count);
+        }
+
+        public Memory<U> AsMemory<U>() where U : T =>
+            Unsafe.As<List<U>>(source).AsMemory();
+
+        public Memory<T> AsMemory(int start) =>
+            source.AsMemory()[start..];
+
+        public Memory<U> AsMemory<U>(int start) where U : T =>
+            source.AsMemory<T, U>()[start..];
+
+        public Memory<T> AsMemory(int start, int length) =>
+            source.AsMemory().Slice(start, length);
+
+        public Memory<U> AsMemory<U>(int start, int length) where U : T =>
+            source.AsMemory<T, U>().Slice(start, length);
+
+        public Memory<T> AsMemory(Range range) =>
+            source.AsMemory()[range];
+
+        public Memory<U> AsMemory<U>(Range range) where U : T =>
+            source.AsMemory<T, U>()[range];
+
         public Span<T> AsSpan() =>
             CollectionsMarshal.AsSpan(source);
 

@@ -2,9 +2,9 @@ namespace Age.Scenes;
 
 public class Scene : Renderable
 {
-    private readonly Empty canvasSlot  = Empty.Pool.Get();
-    private readonly Empty world2DSlot = Empty.Pool.Get();
-    private readonly Empty world3DSlot = Empty.Pool.Get();
+    private readonly Empty canvasSlot  = new();
+    private readonly Empty world2DSlot = new();
+    private readonly Empty world3DSlot = new();
 
     public Viewport? Viewport => this.Parent as Viewport;
     public Window?   Window   => this.Viewport?.Window;
@@ -76,39 +76,14 @@ public class Scene : Renderable
         set => this.AppendChildren(value);
     }
 
-    public SubViewport[] SubViewports
-    {
-        get
-        {
-            var subViewports = new List<SubViewport>();
-
-            foreach (var item in this)
-            {
-                if (item is SubViewport scene)
-                {
-                    subViewports.Add(scene);
-                }
-            }
-
-            return [.. subViewports];
-        }
-        set => this.AppendChildren(value);
-    }
-
     public override string NodeName => nameof(Age.Scenes.Scene);
 
     public Scene()
     {
-        this.AppendChildren([this.world3DSlot, this.world2DSlot, this.canvasSlot]);
-        this.Seal();
-    }
+        var composition = new Composition();
 
-    private protected override void OnDisposedInternal()
-    {
-        base.OnDisposedInternal();
+        composition.AppendChildren([this.world3DSlot, this.world2DSlot, this.canvasSlot]);
 
-        Empty.Pool.Return(this.canvasSlot);
-        Empty.Pool.Return(this.world2DSlot);
-        Empty.Pool.Return(this.world3DSlot);
+        this.AttachShadowRoot(composition);
     }
 }

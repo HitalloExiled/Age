@@ -1,30 +1,45 @@
 <Scene name="main">
-    <Resources>
-        <Material id="mirror">
-            <Diffuse texture="#mirror-viewport"/>
-        </Material>
-    </Resources>
-    <Scene id="compass">
-        <World3D>
-            <Camera3 active="true"></Camera3D>
-            <Mesh shape="res://compass.blend" material="#mirror"></Mesh>
-        </World3D>
-        <Canvas>Compass</Canvas>
-    </Scene>
+  <Composition>
     <World3D>...</World3D>
+
     <World2D>
-        <Sprite texture="#map-viewport" />
+      <Sprite texture="#map-viewport" />
     </World2D>
+
     <Canvas>
-        <EmbeddedViewport viewport="#compass-viewport"></EmbeddedViewport>
+      <EmbeddedViewport viewport="#compass-viewport"></EmbeddedViewport>
     </Canvas>
-    <SubViewport id="map-viewport" scene="res://map.scene" size="200 200"></SubViewport>
-    <SubViewport id="compass-viewport" scene="#compass" filter="3D UI" size="100 100"></SubViewport>
-    <SubViewport id="mirror-viewport">
-        <Scene>
-            <World3D>
-                ...
-            </World3D>
-        </Scene>
-    </SubViewport>
+  </Composition>
+
+  <Resources>
+    <Material id="mirror">
+      <Diffuse texture="#mirror-viewport" />
+    </Material>
+  </Resources>
+
+  <Scene id="compass">
+    <Composition>
+
+      <World3D>
+        <Camera3D active="true"></Camera3D>
+        <Mesh shape="res://compass.blend" material="#mirror"></Mesh>
+      </World3D>
+
+      <Canvas>Compass</Canvas>
+
+    </Composition>
+  </Scene>
+
+  <SubViewport id="map-viewport" scene="res://map.scene" size="200 200"></SubViewport>
+  <SubViewport id="compass-viewport" scene="#compass" filter="3D" size="100 100"></SubViewport>
+
+  <SubViewport id="mirror-viewport">
+    <Scene>
+      <Composition>
+        <World3D>...</World3D>
+        <World2D>...</World2D>
+        <Canvas>...</Canvas>
+      </Composition>
+    </Scene>
+  </SubViewport>
 </Scene>

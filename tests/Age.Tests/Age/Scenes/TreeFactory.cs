@@ -32,7 +32,14 @@ public static class TreeFactory
 
         while (traversal.MoveNext())
         {
-            nodes.Add(traversal.Current);
+            if (traversal.Current is not Renderable renderable || renderable.Visible)
+            {
+                nodes.Add(traversal.Current);
+            }
+            else
+            {
+                traversal.SkipToNextSibling();
+            }
         }
 
         return [..nodes];

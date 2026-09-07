@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using Age.Commands;
 using Age.Rendering.Resources;
 using Age.Rendering.Uniforms;
@@ -11,7 +10,7 @@ using ThirdParty.Vulkan.Enums;
 
 namespace Age.Passes;
 
-public class UISceneColorPass : UIScenePass
+public class CanvasColorPass : CanvasPass
 {
     private Geometry2DStencilMaskShader? geometry2DStencilMaskWriterShader;
 
@@ -25,7 +24,7 @@ public class UISceneColorPass : UIScenePass
     protected override Geometry2DStencilMaskShader Geometry2DStencilMaskWriterShader => this.geometry2DStencilMaskWriterShader!;
     protected override Geometry2DColorShader       Shader                            => this.shader!;
 
-    public override string Name => nameof(UISceneColorPass);
+    public override string Name => nameof(CanvasColorPass);
 
     protected override void OnConnected()
     {
